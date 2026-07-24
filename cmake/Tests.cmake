@@ -30,3 +30,12 @@ fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
         src/domain/linking/LinkingEngine.cpp)
+
+fsorg_add_qt_test(fsorg-enabled-state-resolver-tests enabled-state-resolver
+        tests/domain/linking/tst_enabled_state_resolver.cpp
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/linking/EnabledStateResolver.cpp)

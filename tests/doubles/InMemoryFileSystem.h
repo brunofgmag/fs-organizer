@@ -4,7 +4,9 @@
 #include <filesystem>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
+#include <vector>
 
 class InMemoryFileSystem
 {
@@ -29,9 +31,19 @@ public:
         nodes_[Key(path)] = Node{NodeKind::Link, {}, false};
     }
 
+    void MarkVolumeUnavailable(const std::filesystem::path& path)
+    {
+        unavailableVolumes_.insert(path.root_name().generic_string());
+    }
+
+    [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const
+    {
+        return !unavailableVolumes_.contains(path.root_name().generic_string());
+    }
+
     [[nodiscard]] bool Exists(const std::filesystem::path& path) const
     {
-        return nodes_.find(Key(path)) != nodes_.end();
+        return nodes_.contains(Key(path));
     }
 
     [[nodiscard]] bool IsDirectory(const std::filesystem::path& path) const
@@ -62,6 +74,26 @@ public:
         nodes_.erase(Key(path));
     }
 
+    [[nodiscard]] std::vector<std::filesystem::path>
+    ChildrenOf(const std::filesystem::path& path) const
+    {
+        const std::string parent = Key(path);
+        std::vector<std::filesystem::path> children;
+        for (const auto& entry: nodes_)
+        {
+            if (entry.second.kind == NodeKind::File)
+            {
+                continue;
+            }
+            const std::filesystem::path candidate(entry.first);
+            if (candidate.parent_path().generic_string() == parent)
+            {
+                children.push_back(candidate);
+            }
+        }
+        return children;
+    }
+
 private:
     enum class NodeKind
     {
@@ -83,6 +115,7 @@ private:
     }
 
     std::map<std::string, Node> nodes_;
+    std::set<std::string> unavailableVolumes_;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H
