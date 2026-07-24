@@ -19,8 +19,8 @@ public:
 
     [[nodiscard]] virtual bool IsReparsePoint(const std::filesystem::path& path) const = 0;
 
-    [[nodiscard]] virtual std::optional<std::filesystem::path>
-    ReadLinkTarget(const std::filesystem::path& path) const = 0;
+    [[nodiscard]] virtual std::optional<std::filesystem::path> ReadLinkTarget(
+        const std::filesystem::path& path) const = 0;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_PORTS_LINK_SERVICE_H

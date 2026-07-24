@@ -1,0 +1,48 @@
+name: Domain Tests
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+    paths-ignore:
+      - '.github/**'
+      - '**.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: domain-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  domain:
+    name: Build and test the domain on Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4.3.1
+        with:
+          version: 6.8.3
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          cache: true
+
+      - name: Configure
+        run: >
+          cmake -S . -B build/tests-only
+          -DFSORG_TESTS_ONLY=ON
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+
+      - name: Build
+        run: cmake --build build/tests-only --parallel
+
+      - name: Test
+        run: ctest --test-dir build/tests-only --output-on-failure

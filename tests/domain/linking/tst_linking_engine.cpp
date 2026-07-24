@@ -10,14 +10,14 @@ class LinkingEngineTest : public QObject
     Q_OBJECT
 
 private slots:
-    void EnablingIntoAFreeDestinationLinksToTheAddonFolder();
-    void DisablingRemovesTheReparseNodeAndLeavesTheTargetIntact();
-    void DisablingRefusesWhenThePathIsNotAReparsePoint();
-    void EnablingRefusesWhenTheDestinationHoldsARealFolder();
-    void EnablingReplacesAStaleLinkAtTheDestination();
-    void EnablingRefusesWhenTheDestinationHoldsALiveForeignLink();
-    void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
-    void ADanglingLinkStillCountsAsAnExistingEntry();
+    static void EnablingIntoAFreeDestinationLinksToTheAddonFolder();
+    static void DisablingRemovesTheReparseNodeAndLeavesTheTargetIntact();
+    static void DisablingRefusesWhenThePathIsNotAReparsePoint();
+    static void EnablingRefusesWhenTheDestinationHoldsARealFolder();
+    static void EnablingReplacesAStaleLinkAtTheDestination();
+    static void EnablingRefusesWhenTheDestinationHoldsALiveForeignLink();
+    static void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
+    static void ADanglingLinkStillCountsAsAnExistingEntry();
 };
 
 namespace
@@ -119,8 +119,7 @@ void LinkingEngineTest::EnablingReplacesAStaleLinkAtTheDestination()
 
 void LinkingEngineTest::EnablingRefusesWhenTheDestinationHoldsALiveForeignLink()
 {
-    const std::filesystem::path foreignTarget =
-            "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
+    const std::filesystem::path foreignTarget = "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
 
     Fixture f;
     f.fileSystem.AddDirectory("D:/Library/Sceneries/fsdreamteam-gsx-pro");

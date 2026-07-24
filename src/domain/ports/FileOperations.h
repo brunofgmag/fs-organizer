@@ -8,8 +8,7 @@ class FileOperations
 public:
     virtual ~FileOperations() = default;
 
-    [[nodiscard]] virtual bool EntryExistsWithoutFollowingLinks(
-            const std::filesystem::path& path) const = 0;
+    [[nodiscard]] virtual bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual bool TargetDirectoryExists(const std::filesystem::path& path) const = 0;
 };
