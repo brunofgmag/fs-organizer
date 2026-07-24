@@ -39,3 +39,36 @@ fsorg_add_qt_test(fsorg-enabled-state-resolver-tests enabled-state-resolver
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h
         src/domain/linking/EnabledStateResolver.cpp)
+
+fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
+        tests/infrastructure/catalog/tst_json_manifest_parser.cpp
+        src/infrastructure/catalog/JsonManifestParser.cpp)
+
+fsorg_add_qt_test(fsorg-filesystem-scanner-tests filesystem-scanner
+        tests/infrastructure/catalog/tst_filesystem_scanner.cpp
+        tests/support/PathPrinting.h
+        src/infrastructure/catalog/JsonManifestParser.cpp
+        src/infrastructure/catalog/FilesystemScanner.cpp)
+
+fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
+        tests/infrastructure/sim/tst_windows_simulator_locator.cpp
+        tests/support/PathPrinting.h
+        src/infrastructure/sim/WindowsSimulatorLocator.cpp)
+
+if (WIN32)
+    fsorg_add_qt_test(fsorg-windows-link-service-tests windows-link-service
+            tests/infrastructure/link/tst_windows_link_service.cpp
+            tests/support/PathPrinting.h
+            src/domain/support/PathUtils.h
+            src/infrastructure/link/WindowsLinkService.cpp)
+
+    fsorg_add_qt_test(fsorg-windows-file-operations-tests windows-file-operations
+            tests/infrastructure/fileops/tst_windows_file_operations.cpp
+            tests/support/PathPrinting.h
+            src/infrastructure/link/WindowsLinkService.cpp
+            src/infrastructure/fileops/WindowsFileOperations.cpp)
+
+    fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
+            tests/infrastructure/sim/tst_windows_process_probe.cpp
+            src/infrastructure/sim/WindowsProcessProbe.cpp)
+endif ()

@@ -10,6 +10,7 @@ include(cmake/Sources.cmake)
 
 if (NOT FSORG_TESTS_ONLY)
     include(cmake/AppTarget.cmake)
+    include(cmake/Tools.cmake)
 endif ()
 
 if (BUILD_TESTING)
