@@ -1,0 +1,25 @@
+name: Merge Validator
+
+on:
+  pull_request:
+    branches: [ develop ]
+    paths-ignore:
+      - '.github/**'
+      - '**.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: merge-validator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    uses: brunofgmag/gsx-integrator-ci/.github/workflows/merge-validator.yml@main
+    with:
+      fork-tests-only: true
+      tests-only-flag: FSORG_TESTS_ONLY
+    secrets: inherit

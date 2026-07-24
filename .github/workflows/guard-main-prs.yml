@@ -1,0 +1,13 @@
+name: Guard main PRs
+
+on:
+  pull_request_target:
+    types: [ opened, reopened, edited ]
+    branches: [ main ]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close-unauthorized:
+    uses: brunofgmag/gsx-integrator-ci/.github/workflows/guard-main-prs.yml@main

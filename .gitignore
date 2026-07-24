@@ -1,0 +1,45 @@
+# IDE
+.vscode/
+.idea/
+.zed/
+cmake-build-*/
+out/
+*.swp
+*.swo
+*~
+
+# Build
+build/
+dist/
+*.o
+*.a
+*.so
+*.dll
+*.exe
+moc_*.cpp
+qrc_*.cpp
+.qmake.stash
+
+# AI/Tools
+.claude/
+.cursor/
+.copilot/
+.github/copilot/
+.venv/
+__pycache__/
+.agents/
+.serena/
+.ai/
+.superpowers/
+
+# Reports
+graphify-out/
+docs/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log

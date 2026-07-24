@@ -1,0 +1,30 @@
+#!/bin/sh
+# pre-commit: local sanity build and test run.
+#
+# Install once per clone:   git config core.hooksPath .githooks
+
+changed=$(git diff --cached --name-only --diff-filter=ACMR \
+          -- 'src/**' 'tests/**' 'cmake/**' 'tools/**' \
+             'CMakeLists.txt' 'CMakePresets.json' 'build.ps1' 'run-tests.ps1')
+
+if [ -z "$changed" ]; then
+  exit 0
+fi
+
+echo "[pre-commit] sources changed -> building and testing locally (Release)..."
+
+if command -v pwsh >/dev/null 2>&1; then
+  PS=pwsh
+else
+  PS=powershell
+fi
+
+"$PS" -NoProfile -ExecutionPolicy Bypass -File ./build.ps1 -Config Release -RunTests
+if [ $? -ne 0 ]; then
+  echo "[pre-commit] build or tests failed - aborting commit." >&2
+  echo "[pre-commit] fix the failure before committing." >&2
+  exit 1
+fi
+
+echo "[pre-commit] local build and tests OK (artifacts not staged)."
+exit 0
