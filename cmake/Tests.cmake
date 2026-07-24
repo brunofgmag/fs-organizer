@@ -23,3 +23,10 @@ endfunction()
 
 fsorg_add_qt_test(fsorg-smoke-tests smoke
         tests/tst_smoke.cpp)
+
+fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
+        tests/domain/linking/tst_linking_engine.cpp
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/InMemoryFileSystem.h
+        src/domain/linking/LinkingEngine.cpp)

@@ -1,0 +1,28 @@
+#ifndef FS_ORGANIZER_DOMAIN_LINKING_LINKING_ENGINE_H
+#define FS_ORGANIZER_DOMAIN_LINKING_LINKING_ENGINE_H
+
+#include <filesystem>
+
+#include "domain/model/Addon.h"
+#include "domain/model/LinkOutcome.h"
+#include "domain/model/LinkType.h"
+#include "domain/ports/FileOperations.h"
+#include "domain/ports/LinkService.h"
+
+class LinkingEngine
+{
+public:
+    LinkingEngine(LinkService& linkService, const FileOperations& fileOperations);
+
+    [[nodiscard]] LinkOutcome Enable(const Addon& addon,
+                                     const std::filesystem::path& destinationRoot,
+                                     LinkType linkType) const;
+
+    [[nodiscard]] LinkOutcome Disable(const std::filesystem::path& linkPath) const;
+
+private:
+    LinkService& linkService_;
+    const FileOperations& fileOperations_;
+};
+
+#endif
