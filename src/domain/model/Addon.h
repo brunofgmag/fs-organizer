@@ -5,7 +5,7 @@
 
 struct Addon
 {
-    std::filesystem::path FolderPath;
+    std::filesystem::path folderPath;
 };
 
-#endif
+#endif // FS_ORGANIZER_DOMAIN_MODEL_ADDON_H

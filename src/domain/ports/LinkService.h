@@ -11,11 +11,11 @@ class LinkService
 public:
     virtual ~LinkService() = default;
 
-    virtual bool CreateLink(const std::filesystem::path& linkPath,
-                            const std::filesystem::path& target,
-                            LinkType linkType) = 0;
+    [[nodiscard]] virtual bool CreateLink(const std::filesystem::path& linkPath,
+                                          const std::filesystem::path& target,
+                                          LinkType linkType) = 0;
 
-    virtual bool RemoveLink(const std::filesystem::path& linkPath) = 0;
+    [[nodiscard]] virtual bool RemoveReparseNode(const std::filesystem::path& linkPath) = 0;
 
     [[nodiscard]] virtual bool IsReparsePoint(const std::filesystem::path& path) const = 0;
 
@@ -23,4 +23,4 @@ public:
     ReadLinkTarget(const std::filesystem::path& path) const = 0;
 };
 
-#endif
+#endif // FS_ORGANIZER_DOMAIN_PORTS_LINK_SERVICE_H

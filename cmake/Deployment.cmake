@@ -27,10 +27,6 @@ if (MSVC)
     add_custom_command(TARGET ${APP_NAME} POST_BUILD
             COMMAND "${WINDEPLOYQT_EXECUTABLE}"
             "$<IF:$<CONFIG:Debug>,--debug,--release>"
-            --no-translations
-            --no-system-d3d-compiler
-            --no-opengl-sw
-            --no-compiler-runtime
             "$<TARGET_FILE:${APP_NAME}>"
             COMMENT "Deploying the Qt runtime"
             VERBATIM)

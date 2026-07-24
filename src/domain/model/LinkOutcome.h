@@ -2,10 +2,10 @@
 #define FS_ORGANIZER_DOMAIN_MODEL_LINK_OUTCOME_H
 
 #include <optional>
-#include <string>
 #include <utility>
 
 #include "domain/model/CopyConflict.h"
+#include "domain/model/LinkFailure.h"
 #include "domain/model/OccupiedDestination.h"
 
 class LinkOutcome
@@ -13,35 +13,32 @@ class LinkOutcome
 public:
     [[nodiscard]] static LinkOutcome Success()
     {
-        return {true, {}, std::nullopt, std::nullopt};
+        return {LinkFailure::None, std::nullopt, std::nullopt};
     }
 
-    [[nodiscard]] static LinkOutcome Failure(std::string message)
+    [[nodiscard]] static LinkOutcome Failed(const LinkFailure failure)
     {
-        return {false, std::move(message), std::nullopt, std::nullopt};
+        return {failure, std::nullopt, std::nullopt};
     }
 
     [[nodiscard]] static LinkOutcome Conflicted(CopyConflict conflict)
     {
-        std::string message = conflict.DestinationPath.string() + " already holds a real folder";
-        return {false, std::move(message), std::move(conflict), std::nullopt};
+        return {LinkFailure::DestinationHoldsRealFolder, std::move(conflict), std::nullopt};
     }
 
     [[nodiscard]] static LinkOutcome Occupied(OccupiedDestination occupation)
     {
-        std::string message = occupation.DestinationPath.string() + " already links to "
-            + occupation.ExistingTarget.string();
-        return {false, std::move(message), std::nullopt, std::move(occupation)};
+        return {LinkFailure::DestinationHoldsLiveLink, std::nullopt, std::move(occupation)};
     }
 
     [[nodiscard]] bool Succeeded() const
     {
-        return succeeded_;
+        return failure_ == LinkFailure::None;
     }
 
-    [[nodiscard]] const std::string& Message() const
+    [[nodiscard]] LinkFailure Failure() const
     {
-        return message_;
+        return failure_;
     }
 
     [[nodiscard]] const std::optional<CopyConflict>& Conflict() const
@@ -55,21 +52,16 @@ public:
     }
 
 private:
-    LinkOutcome(const bool succeeded,
-                std::string message,
+    LinkOutcome(const LinkFailure failure,
                 std::optional<CopyConflict> conflict,
                 std::optional<OccupiedDestination> occupation)
-        : succeeded_(succeeded),
-          message_(std::move(message)),
-          conflict_(std::move(conflict)),
-          occupation_(std::move(occupation))
+        : failure_(failure), conflict_(std::move(conflict)), occupation_(std::move(occupation))
     {
     }
 
-    bool succeeded_;
-    std::string message_;
+    LinkFailure failure_;
     std::optional<CopyConflict> conflict_;
     std::optional<OccupiedDestination> occupation_;
 };
 
-#endif
+#endif // FS_ORGANIZER_DOMAIN_MODEL_LINK_OUTCOME_H

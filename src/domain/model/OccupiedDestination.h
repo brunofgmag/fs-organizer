@@ -5,8 +5,8 @@
 
 struct OccupiedDestination
 {
-    std::filesystem::path DestinationPath;
-    std::filesystem::path ExistingTarget;
+    std::filesystem::path destinationPath;
+    std::filesystem::path existingTarget;
 };
 
-#endif
+#endif // FS_ORGANIZER_DOMAIN_MODEL_OCCUPIED_DESTINATION_H

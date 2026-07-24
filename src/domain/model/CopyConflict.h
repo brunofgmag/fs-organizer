@@ -5,8 +5,8 @@
 
 struct CopyConflict
 {
-    std::filesystem::path DestinationPath;
-    std::filesystem::path LibraryPath;
+    std::filesystem::path destinationPath;
+    std::filesystem::path libraryPath;
 };
 
-#endif
+#endif // FS_ORGANIZER_DOMAIN_MODEL_COPY_CONFLICT_H

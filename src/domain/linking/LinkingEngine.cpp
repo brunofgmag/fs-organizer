@@ -9,30 +9,35 @@ LinkOutcome LinkingEngine::Enable(const Addon& addon,
                                   const std::filesystem::path& destinationRoot,
                                   const LinkType linkType) const
 {
-    const std::filesystem::path linkPath = destinationRoot / addon.FolderPath.filename();
+    const std::filesystem::path linkPath = destinationRoot / addon.folderPath.filename();
 
-    if (fileOperations_.DirectoryExists(linkPath))
+    if (fileOperations_.EntryExistsWithoutFollowingLinks(linkPath))
     {
         if (!linkService_.IsReparsePoint(linkPath))
         {
-            return LinkOutcome::Conflicted(CopyConflict{linkPath, addon.FolderPath});
+            return LinkOutcome::Conflicted(CopyConflict{linkPath, addon.folderPath});
         }
 
         const std::optional<std::filesystem::path> target = linkService_.ReadLinkTarget(linkPath);
-        if (target.has_value() && fileOperations_.DirectoryExists(*target))
+        if (!target.has_value())
+        {
+            return LinkOutcome::Failed(LinkFailure::UnreadableLinkTarget);
+        }
+
+        if (fileOperations_.TargetDirectoryExists(*target))
         {
             return LinkOutcome::Occupied(OccupiedDestination{linkPath, *target});
         }
 
-        if (!linkService_.RemoveLink(linkPath))
+        if (!linkService_.RemoveReparseNode(linkPath))
         {
-            return LinkOutcome::Failure("could not replace the stale link at " + linkPath.string());
+            return LinkOutcome::Failed(LinkFailure::CouldNotReplaceStaleLink);
         }
     }
 
-    if (!linkService_.CreateLink(linkPath, addon.FolderPath, linkType))
+    if (!linkService_.CreateLink(linkPath, addon.folderPath, linkType))
     {
-        return LinkOutcome::Failure("could not create the link at " + linkPath.string());
+        return LinkOutcome::Failed(LinkFailure::CouldNotCreateLink);
     }
 
     return LinkOutcome::Success();
@@ -42,12 +47,12 @@ LinkOutcome LinkingEngine::Disable(const std::filesystem::path& linkPath) const
 {
     if (!linkService_.IsReparsePoint(linkPath))
     {
-        return LinkOutcome::Failure(linkPath.string() + " is not a reparse point");
+        return LinkOutcome::Failed(LinkFailure::PathIsNotAReparsePoint);
     }
 
-    if (!linkService_.RemoveLink(linkPath))
+    if (!linkService_.RemoveReparseNode(linkPath))
     {
-        return LinkOutcome::Failure("could not remove the link at " + linkPath.string());
+        return LinkOutcome::Failed(LinkFailure::CouldNotRemoveLink);
     }
 
     return LinkOutcome::Success();
