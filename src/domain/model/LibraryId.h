@@ -1,0 +1,8 @@
+#ifndef FS_ORGANIZER_DOMAIN_MODEL_LIBRARY_ID_H
+#define FS_ORGANIZER_DOMAIN_MODEL_LIBRARY_ID_H
+
+#include <string>
+
+using LibraryId = std::string;
+
+#endif // FS_ORGANIZER_DOMAIN_MODEL_LIBRARY_ID_H

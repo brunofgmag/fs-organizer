@@ -16,6 +16,25 @@ function(configure_fsorg_test TARGET_NAME TEST_NAME)
     endif ()
 endfunction()
 
+function(configure_fsorg_gui_test TARGET_NAME TEST_NAME)
+    target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Widgets dwmapi)
+
+    set_tests_properties(${TEST_NAME} PROPERTIES
+            ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1;QT_QPA_PLATFORM=offscreen")
+
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "$<TARGET_FILE:Qt6::Gui>"
+            "$<TARGET_FILE:Qt6::Widgets>"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>"
+            COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
+            VERBATIM)
+endfunction()
+
 function(fsorg_add_qt_test TARGET_NAME TEST_NAME)
     add_executable(${TARGET_NAME} ${ARGN})
     configure_fsorg_test(${TARGET_NAME} ${TEST_NAME})
@@ -23,6 +42,11 @@ endfunction()
 
 fsorg_add_qt_test(fsorg-smoke-tests smoke
         tests/tst_smoke.cpp)
+
+add_test(NAME no-literal-colors
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-literal-colors.cmake")
 
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
@@ -50,6 +74,22 @@ fsorg_add_qt_test(fsorg-filesystem-scanner-tests filesystem-scanner
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp)
 
+fsorg_add_qt_test(fsorg-json-settings-repository-tests json-settings-repository
+        tests/infrastructure/settings/tst_json_settings_repository.cpp
+        tests/support/PathPrinting.h
+        src/infrastructure/settings/JsonSettingsRepository.cpp)
+
+fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
+        tests/viewmodel/tst_setup_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSimulatorLocator.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h
+        src/viewmodel/SetupViewModel.cpp)
+
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp
         tests/support/PathPrinting.h
@@ -67,6 +107,12 @@ if (WIN32)
             tests/support/PathPrinting.h
             src/infrastructure/link/WindowsLinkService.cpp
             src/infrastructure/fileops/WindowsFileOperations.cpp)
+
+    fsorg_add_qt_test(fsorg-main-window-tests main-window
+            tests/view/tst_main_window.cpp
+            src/view/MainWindow.cpp
+            src/infrastructure/platform/WindowsTitleBar.cpp)
+    configure_fsorg_gui_test(fsorg-main-window-tests main-window)
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
             tests/infrastructure/sim/tst_windows_process_probe.cpp

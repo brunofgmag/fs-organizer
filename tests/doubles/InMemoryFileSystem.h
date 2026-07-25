@@ -41,6 +41,16 @@ public:
         return !unavailableVolumes_.contains(path.root_name().generic_string());
     }
 
+    void MarkReadOnly(const std::filesystem::path& path)
+    {
+        readOnlyPaths_.insert(Key(path));
+    }
+
+    [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const
+    {
+        return IsDirectory(path) && !readOnlyPaths_.contains(Key(path));
+    }
+
     [[nodiscard]] bool Exists(const std::filesystem::path& path) const
     {
         return nodes_.contains(Key(path));
@@ -79,7 +89,7 @@ public:
     {
         const std::string parent = Key(path);
         std::vector<std::filesystem::path> children;
-        for (const auto& entry: nodes_)
+        for (const auto& entry : nodes_)
         {
             if (entry.second.kind == NodeKind::File)
             {
@@ -116,6 +126,7 @@ private:
 
     std::map<std::string, Node> nodes_;
     std::set<std::string> unavailableVolumes_;
+    std::set<std::string> readOnlyPaths_;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H

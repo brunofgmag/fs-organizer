@@ -13,6 +13,8 @@ public:
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;
+
+    [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const override;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILE_OPERATIONS_H

@@ -9,6 +9,7 @@ add_executable(fsorg-probe
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/link/WindowsLinkService.cpp
+        src/infrastructure/platform/WindowsKnownFolders.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp

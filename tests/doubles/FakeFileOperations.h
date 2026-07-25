@@ -13,7 +13,7 @@ public:
     }
 
     [[nodiscard]] bool EntryExistsWithoutFollowingLinks(
-            const std::filesystem::path& path) const override
+        const std::filesystem::path& path) const override
     {
         return fileSystem_.Exists(path);
     }
@@ -32,6 +32,11 @@ public:
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override
     {
         return fileSystem_.VolumeIsAvailable(path);
+    }
+
+    [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const override
+    {
+        return fileSystem_.IsWritable(path);
     }
 
 private:

@@ -17,6 +17,8 @@ public:
         const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual bool VolumeIsAvailable(const std::filesystem::path& path) const = 0;
+
+    [[nodiscard]] virtual bool IsWritable(const std::filesystem::path& path) const = 0;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_PORTS_FILE_OPERATIONS_H

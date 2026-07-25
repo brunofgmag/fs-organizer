@@ -47,7 +47,7 @@ std::vector<std::filesystem::path> WindowsFileOperations::ChildDirectories(
     const std::filesystem::directory_iterator entries(
         path, std::filesystem::directory_options::skip_permission_denied, error);
 
-    for (const std::filesystem::directory_entry& entry: entries)
+    for (const std::filesystem::directory_entry& entry : entries)
     {
         const DWORD attributes = AttributesWithoutFollowingLinks(entry.path());
         if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
@@ -68,4 +68,28 @@ bool WindowsFileOperations::VolumeIsAvailable(const std::filesystem::path& path)
     }
 
     return GetDriveTypeW(NativePath(root).c_str()) != DRIVE_NO_ROOT_DIR;
+}
+
+bool WindowsFileOperations::IsWritable(const std::filesystem::path& path) const
+{
+    if (!TargetDirectoryExists(path))
+    {
+        return false;
+    }
+
+    const HANDLE probe = CreateFileW(NativePath(path / ".fsorg-write-probe").c_str(),
+                                     GENERIC_WRITE,
+                                     0,
+                                     nullptr,
+                                     CREATE_ALWAYS,
+                                     FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+                                     nullptr);
+    if (probe == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    CloseHandle(probe);
+
+    return true;
 }

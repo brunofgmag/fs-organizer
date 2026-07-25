@@ -1,39 +1,11 @@
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
-#include <windows.h>
-#include <shlobj.h>
-
-#include <string>
-
-namespace
-{
-    std::filesystem::path KnownFolder(const KNOWNFOLDERID& folderId)
-    {
-        PWSTR raw = nullptr;
-        if (SHGetKnownFolderPath(folderId, 0, nullptr, &raw) != S_OK)
-        {
-            CoTaskMemFree(raw);
-            return {};
-        }
-
-        std::filesystem::path folder(raw);
-        CoTaskMemFree(raw);
-
-        return folder;
-    }
-}
+#include "infrastructure/platform/WindowsKnownFolders.h"
 
 std::vector<UserCfgLocation> WindowsUserCfgLocations()
 {
-    const std::filesystem::path roaming = KnownFolder(FOLDERID_RoamingAppData);
-    const std::filesystem::path local = KnownFolder(FOLDERID_LocalAppData);
+    const std::filesystem::path roaming = RoamingAppDataFolder();
+    const std::filesystem::path local = LocalAppDataFolder();
 
     return {
         {
