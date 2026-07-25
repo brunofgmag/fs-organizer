@@ -108,11 +108,13 @@ if (WIN32)
             src/infrastructure/link/WindowsLinkService.cpp
             src/infrastructure/fileops/WindowsFileOperations.cpp)
 
-    fsorg_add_qt_test(fsorg-main-window-tests main-window
-            tests/view/tst_main_window.cpp
-            src/view/MainWindow.cpp
-            src/infrastructure/platform/WindowsTitleBar.cpp)
-    configure_fsorg_gui_test(fsorg-main-window-tests main-window)
+    if (NOT FSORG_TESTS_ONLY)
+        fsorg_add_qt_test(fsorg-main-window-tests main-window
+                tests/view/tst_main_window.cpp
+                src/view/MainWindow.cpp
+                src/infrastructure/platform/WindowsTitleBar.cpp)
+        configure_fsorg_gui_test(fsorg-main-window-tests main-window)
+    endif ()
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
             tests/infrastructure/sim/tst_windows_process_probe.cpp
