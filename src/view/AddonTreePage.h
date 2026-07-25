@@ -19,6 +19,8 @@ class AddonTreePage final : public QWidget
 public:
     AddonTreePage(AddonTreeViewModel& viewModel, AddonTreeModel& model, QWidget* parent = nullptr);
 
+    void RefreshUndoState() const;
+
 signals:
     void StatusChanged(const QString& message);
 

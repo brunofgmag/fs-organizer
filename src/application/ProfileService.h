@@ -46,6 +46,8 @@ public:
 
     [[nodiscard]] bool CanUndo() const;
 
+    void ForgetUndo();
+
     [[nodiscard]] std::vector<LinkOperationResult> UndoLastBatch();
 
 private:

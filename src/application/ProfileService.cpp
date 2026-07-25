@@ -290,6 +290,11 @@ bool ProfileService::CanUndo() const
     return !undo_.empty();
 }
 
+void ProfileService::ForgetUndo()
+{
+    undo_.clear();
+}
+
 std::vector<LinkOperationResult> ProfileService::UndoLastBatch()
 {
     const std::vector<Step> steps = std::exchange(undo_, {});

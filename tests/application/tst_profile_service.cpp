@@ -34,6 +34,7 @@ private slots:
     static void RepointingReplacesTheDeadLinkWithTheLibraryAddon();
     static void UndoingARepairRecreatesTheDeadLink();
     static void UndoingARepointRestoresTheDeadLink();
+    static void ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBatch();
 };
 
 namespace
@@ -467,6 +468,23 @@ void ProfileServiceTest::UndoingARepointRestoresTheDeadLink()
     QCOMPARE(reverted.size(), std::size_t{2});
     QCOMPARE(f.fileSystem.LinkTarget("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"),
              std::optional<std::filesystem::path>("D:/Old Library/pmdg-aircraft-77w"));
+}
+
+void ProfileServiceTest::ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBatch()
+{
+    Fixture f;
+    const SimulatorProfile profile = Profile();
+
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+    QCOMPARE(f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true).size(),
+             std::size_t{1});
+    QVERIFY(f.service.CanUndo());
+
+    f.service.ForgetUndo();
+
+    QVERIFY(!f.service.CanUndo());
+    QVERIFY(f.service.UndoLastBatch().empty());
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)

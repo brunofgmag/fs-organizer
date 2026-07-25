@@ -181,9 +181,14 @@ void AddonTreePage::OnToggleRequested(const TreeNode* node) const
     viewModel_.Toggle(Chosen(node));
 }
 
-void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& results)
+void AddonTreePage::RefreshUndoState() const
 {
     undo_->setEnabled(viewModel_.CanUndo());
+}
+
+void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& results)
+{
+    RefreshUndoState();
 
     std::vector<LinkOperationResult> failed;
     std::ranges::copy_if(results, std::back_inserter(failed), [](const LinkOperationResult& result)
@@ -216,8 +221,8 @@ void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& resu
     report.exec();
 
     emit StatusChanged(tr("%1 · %2")
-                       .arg(tr("%n operação(ões) concluída(s)", nullptr, done),
-                            tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
+        .arg(tr("%n operação(ões) concluída(s)", nullptr, done),
+             tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
 }
 
 void AddonTreePage::OnScanFinished()

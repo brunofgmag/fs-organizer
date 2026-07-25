@@ -89,6 +89,9 @@ int main(int argc, char* argv[])
     QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &communityViewModel,
                      &CommunityViewModel::Show);
 
+    QObject::connect(&communityViewModel, &CommunityViewModel::RepairFinished, page,
+                     &AddonTreePage::RefreshUndoState);
+
     QObject::connect(&window, &MainWindow::PageSelected, &communityViewModel,
                      [&communityViewModel, communityPage](const QWidget* selected)
                      {
