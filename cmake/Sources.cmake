@@ -15,7 +15,7 @@ set(APPLICATION_SOURCES
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
-        src/infrastructure/fileops/WindowsFileOperations.cpp
+        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/link/WindowsLinkService.cpp

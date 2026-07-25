@@ -4,7 +4,7 @@
 #include "application/ProfileService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
+#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
@@ -27,11 +27,11 @@ namespace
 
     bool RunSetup(SettingsRepository& settings,
                   const SimulatorLocator& locator,
-                  const FileOperations& fileOperations,
+                  const FilesystemProbe& filesystemProbe,
                   const LibraryIdGenerator& identities,
                   const CatalogScanner& catalog)
     {
-        SetupViewModel viewModel(locator, fileOperations, settings, identities, catalog);
+        SetupViewModel viewModel(locator, filesystemProbe, settings, identities, catalog);
         viewModel.Detect();
 
         SetupWizard wizard(viewModel);
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     QApplication::setStyle(QString::fromLatin1(kNativeStyle));
 
     WindowsLinkService linkService;
-    const WindowsFileOperations fileOperations;
+    const WindowsFilesystemProbe filesystemProbe;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const FilesystemScanner catalog(manifestParser);
@@ -60,13 +60,13 @@ int main(int argc, char* argv[])
     JsonlOperationJournal journal(JournalFilePath());
 
     if (settings.Load().profiles.empty()
-        && !RunSetup(settings, locator, fileOperations, identities, catalog))
+        && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
     {
         return 0;
     }
 
-    const LinkingEngine linking(linkService, fileOperations);
-    const EntryClassifier classifier(linkService, fileOperations);
+    const LinkingEngine linking(linkService, filesystemProbe);
+    const EntryClassifier classifier(linkService, filesystemProbe);
     ProfileService profileService(catalog, classifier, linking, journal, clock, identities, LinkType::Junction);
 
     MainWindow window(settings.Load());
@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
     QObject::connect(&window, &MainWindow::AddProfileRequested, &window,
                      [&]
                      {
-                         if (RunSetup(settings, locator, fileOperations, identities, catalog))
+                         if (RunSetup(settings, locator, filesystemProbe, identities, catalog))
                          {
                              window.ShowProfiles(settings.Load());
                              treeViewModel.ShowActiveProfile();

@@ -9,7 +9,7 @@
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/Library.h"
 #include "domain/ports/CatalogScanner.h"
-#include "domain/ports/FileOperations.h"
+#include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/SimulatorLocator.h"
 #include "viewmodel/DestinationCheck.h"
 #include "application/model/LibraryReport.h"
@@ -21,7 +21,7 @@ class SetupViewModel final : public QObject
 
 public:
     SetupViewModel(const SimulatorLocator& locator,
-                   const FileOperations& fileOperations,
+                   const FilesystemProbe& filesystemProbe,
                    SettingsRepository& settings,
                    const LibraryIdGenerator& identities,
                    const CatalogScanner& catalog,
@@ -46,7 +46,7 @@ public:
 
 private:
     const SimulatorLocator& locator_;
-    const FileOperations& fileOperations_;
+    const FilesystemProbe& filesystemProbe_;
     SettingsRepository& settings_;
     const LibraryIdGenerator& identities_;
     const CatalogScanner& catalog_;

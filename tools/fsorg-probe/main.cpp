@@ -11,7 +11,7 @@
 #include "domain/tree/AddonTree.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
+#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
@@ -250,12 +250,12 @@ int main(int argc, char* argv[])
     }
 
     const WindowsLinkService linkService;
-    const WindowsFileOperations fileOperations;
+    const WindowsFilesystemProbe filesystemProbe;
     const JsonManifestParser manifestParser;
     const FilesystemScanner scanner(manifestParser);
     const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
-    const EntryClassifier classifier(linkService, fileOperations);
+    const EntryClassifier classifier(linkService, filesystemProbe);
 
     Out() << "Simulador em execução: " << (processProbe.SimulatorIsRunning() ? "sim" : "não") << "\n";
 

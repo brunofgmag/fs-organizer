@@ -1,13 +1,13 @@
-#ifndef FS_ORGANIZER_DOMAIN_PORTS_FILE_OPERATIONS_H
-#define FS_ORGANIZER_DOMAIN_PORTS_FILE_OPERATIONS_H
+#ifndef FS_ORGANIZER_DOMAIN_PORTS_FILESYSTEM_PROBE_H
+#define FS_ORGANIZER_DOMAIN_PORTS_FILESYSTEM_PROBE_H
 
 #include <filesystem>
 #include <vector>
 
-class FileOperations
+class FilesystemProbe
 {
 public:
-    virtual ~FileOperations() = default;
+    virtual ~FilesystemProbe() = default;
 
     [[nodiscard]] virtual bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const = 0;
 
@@ -18,7 +18,7 @@ public:
 
     [[nodiscard]] virtual bool VolumeIsAvailable(const std::filesystem::path& path) const = 0;
 
-    [[nodiscard]] virtual bool IsWritable(const std::filesystem::path& path) const = 0;
+    [[nodiscard]] virtual bool ProbeWritable(const std::filesystem::path& path) const = 0;
 };
 
-#endif // FS_ORGANIZER_DOMAIN_PORTS_FILE_OPERATIONS_H
+#endif // FS_ORGANIZER_DOMAIN_PORTS_FILESYSTEM_PROBE_H

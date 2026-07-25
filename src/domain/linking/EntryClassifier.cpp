@@ -73,8 +73,8 @@ std::vector<std::filesystem::path> EnabledAddonFolders(const std::vector<Destina
     return folders;
 }
 
-EntryClassifier::EntryClassifier(const LinkService& linkService, const FileOperations& fileOperations)
-    : linkService_(linkService), fileOperations_(fileOperations)
+EntryClassifier::EntryClassifier(const LinkService& linkService, const FilesystemProbe& filesystemProbe)
+    : linkService_(linkService), filesystemProbe_(filesystemProbe)
 {
 }
 
@@ -86,7 +86,7 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(
 
     for (const std::filesystem::path& root : destinationRoots)
     {
-        for (const std::filesystem::path& child : fileOperations_.ChildDirectories(root))
+        for (const std::filesystem::path& child : filesystemProbe_.ChildDirectories(root))
         {
             entries.push_back(ClassifyEntry(child, libraryRoots));
         }
@@ -113,11 +113,11 @@ DestinationEntry EntryClassifier::ClassifyEntry(
 
     entry.target = NormalizeReparseTarget(*target);
 
-    if (!fileOperations_.VolumeIsAvailable(entry.target))
+    if (!filesystemProbe_.VolumeIsAvailable(entry.target))
     {
         entry.classification = EntryClassification::Unavailable;
     }
-    else if (!fileOperations_.TargetDirectoryExists(entry.target))
+    else if (!filesystemProbe_.TargetDirectoryExists(entry.target))
     {
         entry.classification = EntryClassification::Broken;
     }

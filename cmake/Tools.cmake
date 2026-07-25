@@ -8,7 +8,7 @@ add_executable(fsorg-probe
         src/domain/tree/AddonTree.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
-        src/infrastructure/fileops/WindowsFileOperations.cpp
+        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp

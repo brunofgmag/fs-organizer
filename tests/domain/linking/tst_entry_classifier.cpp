@@ -2,7 +2,7 @@
 
 #include "domain/linking/EntryClassifier.h"
 #include "tests/support/PathPrinting.h"
-#include "tests/doubles/FakeFileOperations.h"
+#include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
@@ -29,8 +29,8 @@ namespace
     {
         InMemoryFileSystem fileSystem;
         FakeLinkService linkService{fileSystem};
-        FakeFileOperations fileOperations{fileSystem};
-        EntryClassifier classifier{linkService, fileOperations};
+        FakeFilesystemProbe filesystemProbe{fileSystem};
+        EntryClassifier classifier{linkService, filesystemProbe};
     };
 }
 

@@ -55,14 +55,14 @@ fsorg_add_qt_test(fsorg-path-utils-tests path-utils
 
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
-        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
         src/domain/linking/LinkingEngine.cpp)
 
 fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         tests/domain/linking/tst_entry_classifier.cpp
-        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h
@@ -80,7 +80,7 @@ fsorg_add_qt_test(fsorg-repair-plan-tests repair-plan
 
 fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         tests/domain/tree/tst_addon_tree.cpp
-        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
@@ -110,7 +110,7 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/application/tst_profile_service.cpp
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
-        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
         tests/doubles/InMemoryFileSystem.h
@@ -147,7 +147,7 @@ fsorg_add_qt_test(fsorg-json-settings-repository-tests json-settings-repository
 fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/viewmodel/tst_setup_view_model.cpp
         tests/doubles/FakeCatalogScanner.h
-        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLibraryIdGenerator.h
         tests/doubles/FakeSettingsRepository.h
         tests/doubles/FakeSimulatorLocator.h
@@ -186,7 +186,7 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/viewmodel/tst_community_view_model.cpp
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
-        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
         tests/doubles/InMemoryFileSystem.h
@@ -216,11 +216,11 @@ if (WIN32)
             src/domain/support/PathUtils.h
             src/infrastructure/link/WindowsLinkService.cpp)
 
-    fsorg_add_qt_test(fsorg-windows-file-operations-tests windows-file-operations
-            tests/infrastructure/fileops/tst_windows_file_operations.cpp
+    fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
+            tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
             tests/support/PathPrinting.h
             src/infrastructure/link/WindowsLinkService.cpp
-            src/infrastructure/fileops/WindowsFileOperations.cpp)
+            src/infrastructure/fileops/WindowsFilesystemProbe.cpp)
 
     if (NOT FSORG_TESTS_ONLY)
         fsorg_add_qt_test(fsorg-main-window-tests main-window

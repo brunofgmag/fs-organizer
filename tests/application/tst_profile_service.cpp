@@ -4,7 +4,7 @@
 #include "domain/linking/RepairPlan.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
-#include "tests/doubles/FakeFileOperations.h"
+#include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
@@ -119,13 +119,13 @@ namespace
 
         InMemoryFileSystem fileSystem;
         FakeLinkService linkService{fileSystem};
-        FakeFileOperations fileOperations{fileSystem};
+        FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
         FakeLibraryIdGenerator identities;
-        LinkingEngine linking{linkService, fileOperations};
-        EntryClassifier classifier{linkService, fileOperations};
+        LinkingEngine linking{linkService, filesystemProbe};
+        EntryClassifier classifier{linkService, filesystemProbe};
         ProfileService service{catalog, classifier, linking, journal, clock, identities, LinkType::Junction};
     };
 }

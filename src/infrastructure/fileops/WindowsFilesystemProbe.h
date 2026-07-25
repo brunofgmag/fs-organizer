@@ -1,9 +1,9 @@
-#ifndef FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILE_OPERATIONS_H
-#define FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILE_OPERATIONS_H
+#ifndef FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILESYSTEM_PROBE_H
+#define FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILESYSTEM_PROBE_H
 
-#include "domain/ports/FileOperations.h"
+#include "domain/ports/FilesystemProbe.h"
 
-class WindowsFileOperations final : public FileOperations
+class WindowsFilesystemProbe final : public FilesystemProbe
 {
 public:
     [[nodiscard]] bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const override;
@@ -14,7 +14,7 @@ public:
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;
 
-    [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const override;
+    [[nodiscard]] bool ProbeWritable(const std::filesystem::path& path) const override;
 };
 
-#endif // FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILE_OPERATIONS_H
+#endif // FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILESYSTEM_PROBE_H

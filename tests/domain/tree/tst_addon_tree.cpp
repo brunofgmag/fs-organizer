@@ -2,7 +2,7 @@
 
 #include "domain/linking/EntryClassifier.h"
 #include "domain/tree/AddonTree.h"
-#include "tests/doubles/FakeFileOperations.h"
+#include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
@@ -162,8 +162,8 @@ void AddonTreeTest::AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked()
     fileSystem.AddLink("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w", folder);
 
     const FakeLinkService linkService(fileSystem);
-    const FakeFileOperations fileOperations(fileSystem);
-    const EntryClassifier classifier(linkService, fileOperations);
+    const FakeFilesystemProbe filesystemProbe(fileSystem);
+    const EntryClassifier classifier(linkService, filesystemProbe);
 
     const std::vector<DestinationEntry> entries = classifier.Resolve(
         {"E:/Flight Simulator 2024/Community", "E:/Flight Simulator 2024/Community2024"},

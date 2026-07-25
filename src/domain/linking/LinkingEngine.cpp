@@ -1,7 +1,7 @@
 #include "domain/linking/LinkingEngine.h"
 
-LinkingEngine::LinkingEngine(LinkService& linkService, const FileOperations& fileOperations)
-    : linkService_(linkService), fileOperations_(fileOperations)
+LinkingEngine::LinkingEngine(LinkService& linkService, const FilesystemProbe& filesystemProbe)
+    : linkService_(linkService), filesystemProbe_(filesystemProbe)
 {
 }
 
@@ -11,7 +11,7 @@ LinkOutcome LinkingEngine::Enable(const Addon& addon,
 {
     const std::filesystem::path linkPath = destinationRoot / addon.folderPath.filename();
 
-    if (fileOperations_.EntryExistsWithoutFollowingLinks(linkPath))
+    if (filesystemProbe_.EntryExistsWithoutFollowingLinks(linkPath))
     {
         if (!linkService_.IsReparsePoint(linkPath))
         {
@@ -24,7 +24,7 @@ LinkOutcome LinkingEngine::Enable(const Addon& addon,
             return LinkOutcome::Failed(LinkFailure::UnreadableLinkTarget);
         }
 
-        if (fileOperations_.TargetDirectoryExists(*target))
+        if (filesystemProbe_.TargetDirectoryExists(*target))
         {
             return LinkOutcome::Occupied(OccupiedDestination{linkPath, *target});
         }

@@ -61,14 +61,14 @@ namespace
 }
 
 SetupViewModel::SetupViewModel(const SimulatorLocator& locator,
-                               const FileOperations& fileOperations,
+                               const FilesystemProbe& filesystemProbe,
                                SettingsRepository& settings,
                                const LibraryIdGenerator& identities,
                                const CatalogScanner& catalog,
                                QObject* parent)
     : QObject(parent),
       locator_(locator),
-      fileOperations_(fileOperations),
+      filesystemProbe_(filesystemProbe),
       settings_(settings),
       identities_(identities),
       catalog_(catalog)
@@ -87,12 +87,12 @@ std::vector<SimulatorCandidate> SetupViewModel::Candidates() const
 
 DestinationCheck SetupViewModel::CheckDestination(const std::filesystem::path& path) const
 {
-    if (!fileOperations_.TargetDirectoryExists(path))
+    if (!filesystemProbe_.TargetDirectoryExists(path))
     {
         return DestinationCheck::RejectedMissing;
     }
 
-    if (!fileOperations_.IsWritable(path))
+    if (!filesystemProbe_.ProbeWritable(path))
     {
         return DestinationCheck::RejectedNotWritable;
     }

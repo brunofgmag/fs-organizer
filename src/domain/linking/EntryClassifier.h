@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "domain/model/DestinationEntry.h"
-#include "domain/ports/FileOperations.h"
+#include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/LinkService.h"
 
 [[nodiscard]] std::vector<std::filesystem::path> EnabledAddonFolders(
@@ -14,7 +14,7 @@
 class EntryClassifier
 {
 public:
-    EntryClassifier(const LinkService& linkService, const FileOperations& fileOperations);
+    EntryClassifier(const LinkService& linkService, const FilesystemProbe& filesystemProbe);
 
     [[nodiscard]] std::vector<DestinationEntry> Resolve(
         const std::vector<std::filesystem::path>& destinationRoots,
@@ -26,7 +26,7 @@ private:
         const std::vector<std::filesystem::path>& libraryRoots) const;
 
     const LinkService& linkService_;
-    const FileOperations& fileOperations_;
+    const FilesystemProbe& filesystemProbe_;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_LINKING_ENTRY_CLASSIFIER_H

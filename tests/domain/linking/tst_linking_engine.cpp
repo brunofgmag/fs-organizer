@@ -1,7 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "domain/linking/LinkingEngine.h"
-#include "tests/doubles/FakeFileOperations.h"
+#include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
@@ -26,8 +26,8 @@ namespace
     {
         InMemoryFileSystem fileSystem;
         FakeLinkService linkService{fileSystem};
-        FakeFileOperations fileOperations{fileSystem};
-        LinkingEngine engine{linkService, fileOperations};
+        FakeFilesystemProbe filesystemProbe{fileSystem};
+        LinkingEngine engine{linkService, filesystemProbe};
     };
 }
 
@@ -157,8 +157,8 @@ void LinkingEngineTest::ADanglingLinkStillCountsAsAnExistingEntry()
     f.fileSystem.AddLink("E:/Sim/Community/ag-airport-bgqq-qaanaaq",
                          "D:/Library/Sceneries/ag-airport-bgqq-qaanaaq");
 
-    QVERIFY(!f.fileOperations.TargetDirectoryExists("D:/Library/Sceneries/ag-airport-bgqq-qaanaaq"));
-    QVERIFY(f.fileOperations.EntryExistsWithoutFollowingLinks("E:/Sim/Community/ag-airport-bgqq-qaanaaq"));
+    QVERIFY(!f.filesystemProbe.TargetDirectoryExists("D:/Library/Sceneries/ag-airport-bgqq-qaanaaq"));
+    QVERIFY(f.filesystemProbe.EntryExistsWithoutFollowingLinks("E:/Sim/Community/ag-airport-bgqq-qaanaaq"));
 }
 
 QTEST_APPLESS_MAIN(LinkingEngineTest)

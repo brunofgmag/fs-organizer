@@ -6,13 +6,13 @@
 #include "domain/model/Addon.h"
 #include "domain/model/LinkOutcome.h"
 #include "domain/model/LinkType.h"
-#include "domain/ports/FileOperations.h"
+#include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/LinkService.h"
 
 class LinkingEngine
 {
 public:
-    LinkingEngine(LinkService& linkService, const FileOperations& fileOperations);
+    LinkingEngine(LinkService& linkService, const FilesystemProbe& filesystemProbe);
 
     [[nodiscard]] LinkOutcome Enable(const Addon& addon,
                                      const std::filesystem::path& destinationRoot,
@@ -22,7 +22,7 @@ public:
 
 private:
     LinkService& linkService_;
-    const FileOperations& fileOperations_;
+    const FilesystemProbe& filesystemProbe_;
 };
 
 #endif

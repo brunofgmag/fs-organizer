@@ -1,4 +1,4 @@
-#include "infrastructure/fileops/WindowsFileOperations.h"
+#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -27,18 +27,18 @@ namespace
     }
 }
 
-bool WindowsFileOperations::EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const
+bool WindowsFilesystemProbe::EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const
 {
     return AttributesWithoutFollowingLinks(path) != INVALID_FILE_ATTRIBUTES;
 }
 
-bool WindowsFileOperations::TargetDirectoryExists(const std::filesystem::path& path) const
+bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& path) const
 {
     std::error_code error;
     return std::filesystem::is_directory(path, error);
 }
 
-std::vector<std::filesystem::path> WindowsFileOperations::ChildDirectories(
+std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildDirectories(
     const std::filesystem::path& path) const
 {
     std::vector<std::filesystem::path> children;
@@ -59,7 +59,7 @@ std::vector<std::filesystem::path> WindowsFileOperations::ChildDirectories(
     return children;
 }
 
-bool WindowsFileOperations::VolumeIsAvailable(const std::filesystem::path& path) const
+bool WindowsFilesystemProbe::VolumeIsAvailable(const std::filesystem::path& path) const
 {
     const std::filesystem::path root = path.root_path();
     if (root.empty())
@@ -70,7 +70,7 @@ bool WindowsFileOperations::VolumeIsAvailable(const std::filesystem::path& path)
     return GetDriveTypeW(NativePath(root).c_str()) != DRIVE_NO_ROOT_DIR;
 }
 
-bool WindowsFileOperations::IsWritable(const std::filesystem::path& path) const
+bool WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& path) const
 {
     if (!TargetDirectoryExists(path))
     {

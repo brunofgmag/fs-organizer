@@ -3,11 +3,11 @@
 
 #include <windows.h>
 
-#include "infrastructure/fileops/WindowsFileOperations.h"
+#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "tests/support/PathPrinting.h"
 
-class WindowsFileOperationsTest : public QObject
+class WindowsFilesystemProbeTest : public QObject
 {
     Q_OBJECT
 
@@ -50,34 +50,34 @@ namespace
     };
 }
 
-void WindowsFileOperationsTest::ADanglingJunctionIsStillAnEntryThatOccupiesItsPath()
+void WindowsFilesystemProbeTest::ADanglingJunctionIsStillAnEntryThatOccupiesItsPath()
 {
     const Disk disk;
     const std::filesystem::path linkPath = disk.AddDanglingJunction("Community/ag-airport-bgqq");
 
-    const WindowsFileOperations fileOperations;
+    const WindowsFilesystemProbe filesystemProbe;
 
     QVERIFY(!std::filesystem::exists(linkPath));
-    QVERIFY(fileOperations.EntryExistsWithoutFollowingLinks(linkPath));
-    QVERIFY(!fileOperations.TargetDirectoryExists(linkPath));
+    QVERIFY(filesystemProbe.EntryExistsWithoutFollowingLinks(linkPath));
+    QVERIFY(!filesystemProbe.TargetDirectoryExists(linkPath));
 }
 
-void WindowsFileOperationsTest::ChildDirectoriesReportsDanglingJunctionsToo()
+void WindowsFilesystemProbeTest::ChildDirectoriesReportsDanglingJunctionsToo()
 {
     const Disk disk;
     const std::filesystem::path destination = disk.AddFolder("Community");
     const std::filesystem::path physical = disk.AddFolder("Community/asfs");
     const std::filesystem::path dangling = disk.AddDanglingJunction("Community/ag-airport-bgqq");
 
-    const WindowsFileOperations fileOperations;
-    const std::vector<std::filesystem::path> children = fileOperations.ChildDirectories(destination);
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::vector<std::filesystem::path> children = filesystemProbe.ChildDirectories(destination);
 
     QCOMPARE(children.size(), std::size_t{2});
     QVERIFY(std::ranges::find(children, physical) != children.end());
     QVERIFY(std::ranges::find(children, dangling) != children.end());
 }
 
-void WindowsFileOperationsTest::AnUnmountedDriveLetterIsNotAnAvailableVolume()
+void WindowsFilesystemProbeTest::AnUnmountedDriveLetterIsNotAnAvailableVolume()
 {
     const DWORD mounted = GetLogicalDrives();
     char absentLetter = 0;
@@ -92,15 +92,15 @@ void WindowsFileOperationsTest::AnUnmountedDriveLetterIsNotAnAvailableVolume()
     QVERIFY2(absentLetter != 0, "every drive letter from D to Z is mounted on this machine");
 
     const Disk disk;
-    const WindowsFileOperations fileOperations;
+    const WindowsFilesystemProbe filesystemProbe;
 
     const auto absent =
         std::filesystem::path(std::string(1, absentLetter) + ":/Portable Library/orbx-airport");
 
-    QVERIFY(!fileOperations.VolumeIsAvailable(absent));
-    QVERIFY(fileOperations.VolumeIsAvailable(disk.Root()));
+    QVERIFY(!filesystemProbe.VolumeIsAvailable(absent));
+    QVERIFY(filesystemProbe.VolumeIsAvailable(disk.Root()));
 }
 
-QTEST_APPLESS_MAIN(WindowsFileOperationsTest)
+QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)
 
-#include "tst_windows_file_operations.moc"
+#include "tst_windows_filesystem_probe.moc"

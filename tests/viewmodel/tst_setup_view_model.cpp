@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "tests/doubles/FakeCatalogScanner.h"
-#include "tests/doubles/FakeFileOperations.h"
+#include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSimulatorLocator.h"
@@ -85,11 +85,11 @@ namespace
     {
         InMemoryFileSystem fileSystem;
         FakeSimulatorLocator locator{{}};
-        FakeFileOperations fileOperations{fileSystem};
+        FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeSettingsRepository settings;
         FakeLibraryIdGenerator identities;
         FakeCatalogScanner catalog;
-        SetupViewModel viewModel{locator, fileOperations, settings, identities, catalog};
+        SetupViewModel viewModel{locator, filesystemProbe, settings, identities, catalog};
     };
 }
 
@@ -102,12 +102,12 @@ void SetupViewModelTest::EveryDetectedCandidateIsProposedNotJustTheFirst()
     });
 
     InMemoryFileSystem fileSystem;
-    const FakeFileOperations fileOperations(fileSystem);
+    const FakeFilesystemProbe filesystemProbe(fileSystem);
     FakeSettingsRepository settings;
     const FakeLibraryIdGenerator identities;
     const FakeCatalogScanner catalog;
 
-    SetupViewModel viewModel(locator, fileOperations, settings, identities, catalog);
+    SetupViewModel viewModel(locator, filesystemProbe, settings, identities, catalog);
     viewModel.Detect();
 
     const std::vector<SimulatorCandidate> proposed = viewModel.Candidates();

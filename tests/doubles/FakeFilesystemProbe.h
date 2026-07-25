@@ -1,13 +1,13 @@
-#ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
-#define FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
+#ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILESYSTEM_PROBE_H
+#define FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILESYSTEM_PROBE_H
 
-#include "domain/ports/FileOperations.h"
+#include "domain/ports/FilesystemProbe.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
-class FakeFileOperations final : public FileOperations
+class FakeFilesystemProbe final : public FilesystemProbe
 {
 public:
-    explicit FakeFileOperations(InMemoryFileSystem& fileSystem)
+    explicit FakeFilesystemProbe(InMemoryFileSystem& fileSystem)
         : fileSystem_(fileSystem)
     {
     }
@@ -34,7 +34,7 @@ public:
         return fileSystem_.VolumeIsAvailable(path);
     }
 
-    [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const override
+    [[nodiscard]] bool ProbeWritable(const std::filesystem::path& path) const override
     {
         return fileSystem_.IsWritable(path);
     }
@@ -43,4 +43,4 @@ private:
     InMemoryFileSystem& fileSystem_;
 };
 
-#endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
+#endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILESYSTEM_PROBE_H
