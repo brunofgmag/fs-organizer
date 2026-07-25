@@ -13,7 +13,7 @@ LinkOutcome LinkingEngine::Enable(const Addon& addon,
 
     if (filesystemProbe_.EntryExistsWithoutFollowingLinks(linkPath))
     {
-        if (!linkService_.IsReparsePoint(linkPath))
+        if (!filesystemProbe_.IsReparsePoint(linkPath))
         {
             return LinkOutcome::Conflicted(CopyConflict{linkPath, addon.folderPath});
         }
@@ -45,7 +45,7 @@ LinkOutcome LinkingEngine::Enable(const Addon& addon,
 
 LinkOutcome LinkingEngine::Disable(const std::filesystem::path& linkPath) const
 {
-    if (!linkService_.IsReparsePoint(linkPath))
+    if (!filesystemProbe_.IsReparsePoint(linkPath))
     {
         return LinkOutcome::Failed(LinkFailure::PathIsNotAReparsePoint);
     }

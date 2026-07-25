@@ -5,9 +5,14 @@ enum class ImportResult
 {
     Completed,
     Cancelled,
+    SourceIsNotUnderADestination,
+    SourceIsAReparsePoint,
     CouldNotCheckFreeSpace,
     NotEnoughFreeSpace,
-    CouldNotCopy
+    CouldNotCopy,
+    VerificationFailed,
+    CouldNotMoveIntoPlace,
+    CouldNotRemoveSource
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_IMPORT_RESULT_H

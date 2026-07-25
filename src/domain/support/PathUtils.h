@@ -25,6 +25,16 @@
     return key;
 }
 
+[[nodiscard]] inline bool PathIsInside(const std::filesystem::path& path, const std::filesystem::path& root)
+{
+    const std::string candidate = ComparablePath(path);
+    const std::string base = ComparablePath(root);
+
+    return candidate == base
+        || (candidate.size() > base.size() && candidate.compare(0, base.size(), base) == 0
+            && candidate[base.size()] == '/');
+}
+
 [[nodiscard]] inline std::filesystem::path NormalizeReparseTarget(const std::filesystem::path& target)
 {
     std::string text = target.string();

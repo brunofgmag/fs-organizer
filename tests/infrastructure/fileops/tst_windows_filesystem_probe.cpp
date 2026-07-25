@@ -15,6 +15,7 @@ private slots:
     static void ADanglingJunctionIsStillAnEntryThatOccupiesItsPath();
     static void ChildDirectoriesReportsDanglingJunctionsToo();
     static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
+    static void AJunctionIsAReparsePointAndARealFolderIsNot();
 };
 
 namespace
@@ -99,6 +100,19 @@ void WindowsFilesystemProbeTest::AnUnmountedDriveLetterIsNotAnAvailableVolume()
 
     QVERIFY(!filesystemProbe.VolumeIsAvailable(absent));
     QVERIFY(filesystemProbe.VolumeIsAvailable(disk.Root()));
+}
+
+void WindowsFilesystemProbeTest::AJunctionIsAReparsePointAndARealFolderIsNot()
+{
+    const Disk disk;
+    const std::filesystem::path physical = disk.AddFolder("Community/asfs");
+    const std::filesystem::path dangling = disk.AddDanglingJunction("Community/ag-airport-bgqq");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.IsReparsePoint(dangling));
+    QVERIFY(!filesystemProbe.IsReparsePoint(physical));
+    QVERIFY(!filesystemProbe.IsReparsePoint(disk.Root() / "Community/never-created"));
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

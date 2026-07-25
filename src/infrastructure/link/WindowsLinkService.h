@@ -12,8 +12,6 @@ public:
 
     [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override;
 
-    [[nodiscard]] bool IsReparsePoint(const std::filesystem::path& path) const override;
-
     [[nodiscard]] std::optional<std::filesystem::path> ReadLinkTarget(const std::filesystem::path& path) const override;
 };
 

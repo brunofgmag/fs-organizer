@@ -29,11 +29,6 @@ public:
         return fileSystem_.RemoveNode(linkPath);
     }
 
-    [[nodiscard]] bool IsReparsePoint(const std::filesystem::path& path) const override
-    {
-        return fileSystem_.IsLink(path);
-    }
-
     [[nodiscard]] std::optional<std::filesystem::path>
     ReadLinkTarget(const std::filesystem::path& path) const override
     {

@@ -32,6 +32,13 @@ bool WindowsFilesystemProbe::EntryExistsWithoutFollowingLinks(const std::filesys
     return AttributesWithoutFollowingLinks(path) != INVALID_FILE_ATTRIBUTES;
 }
 
+bool WindowsFilesystemProbe::IsReparsePoint(const std::filesystem::path& path) const
+{
+    const DWORD attributes = AttributesWithoutFollowingLinks(path);
+
+    return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+}
+
 bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& path) const
 {
     std::error_code error;

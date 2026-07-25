@@ -16,6 +16,11 @@ public:
         copyFailsPartWayThrough_ = true;
     }
 
+    void MakeTheCopyDropAFile()
+    {
+        copyDropsAFile_ = true;
+    }
+
     [[nodiscard]] CopyOutcome CopyTree(
         const std::filesystem::path& source,
         const std::filesystem::path& destination,
@@ -49,7 +54,11 @@ public:
             }
 
             const std::uintmax_t size = fileSystem_.FileSize(file);
-            fileSystem_.AddFile(landing, size);
+            if (!copyDropsAFile_ || file != files.back())
+            {
+                fileSystem_.AddFile(landing, size);
+            }
+
             copied += size;
 
             if (copyFailsPartWayThrough_)
@@ -61,6 +70,12 @@ public:
         return CopyOutcome::Completed;
     }
 
+    [[nodiscard]] bool Move(const std::filesystem::path& source,
+                            const std::filesystem::path& destination) override
+    {
+        return fileSystem_.MoveTree(source, destination);
+    }
+
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override
     {
         return fileSystem_.RemoveTree(path);
@@ -69,6 +84,7 @@ public:
 private:
     InMemoryFileSystem& fileSystem_;
     bool copyFailsPartWayThrough_ = false;
+    bool copyDropsAFile_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H

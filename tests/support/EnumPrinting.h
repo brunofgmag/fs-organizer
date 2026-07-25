@@ -64,9 +64,15 @@ namespace QTest
         {
         case ImportResult::Completed: return qstrdup("Completed");
         case ImportResult::Cancelled: return qstrdup("Cancelled");
+        case ImportResult::SourceIsNotUnderADestination:
+            return qstrdup("SourceIsNotUnderADestination");
+        case ImportResult::SourceIsAReparsePoint: return qstrdup("SourceIsAReparsePoint");
         case ImportResult::CouldNotCheckFreeSpace: return qstrdup("CouldNotCheckFreeSpace");
         case ImportResult::NotEnoughFreeSpace: return qstrdup("NotEnoughFreeSpace");
         case ImportResult::CouldNotCopy: return qstrdup("CouldNotCopy");
+        case ImportResult::VerificationFailed: return qstrdup("VerificationFailed");
+        case ImportResult::CouldNotMoveIntoPlace: return qstrdup("CouldNotMoveIntoPlace");
+        case ImportResult::CouldNotRemoveSource: return qstrdup("CouldNotRemoveSource");
         }
 
         return qstrdup("ImportResult(?)");

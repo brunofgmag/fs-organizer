@@ -1,7 +1,10 @@
 #include "domain/importing/ImportEngine.h"
 
+#include <algorithm>
 #include <numeric>
 #include <ranges>
+
+#include "domain/support/PathUtils.h"
 
 namespace
 {
@@ -19,6 +22,33 @@ namespace
 
         return staging;
     }
+
+    bool IsUnderADestination(const SimulatorProfile& profile, const std::filesystem::path& path)
+    {
+        return std::ranges::any_of(profile.destinations,
+                                   [&path](const std::filesystem::path& destination)
+                                   {
+                                       return PathIsInside(path, destination)
+                                           && ComparablePath(path) != ComparablePath(destination);
+                                   });
+    }
+
+    bool FingerprintsMatch(std::vector<FileFingerprint> left, std::vector<FileFingerprint> right)
+    {
+        const auto byPath = [](const FileFingerprint& a, const FileFingerprint& b)
+        {
+            return a.relativePath < b.relativePath;
+        };
+
+        std::ranges::sort(left, byPath);
+        std::ranges::sort(right, byPath);
+
+        return std::ranges::equal(left, right,
+                                  [](const FileFingerprint& a, const FileFingerprint& b)
+                                  {
+                                      return a.relativePath == b.relativePath && a.size == b.size;
+                                  });
+    }
 }
 
 ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe, FileOperations& files)
@@ -26,11 +56,24 @@ ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe, FileOperation
 {
 }
 
-ImportOutcome ImportEngine::Import(const SimulatorProfile&,
+ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
                                    const ImportRequest& request,
                                    const std::function<bool(const CopyProgress&)>& onProgress) const
 {
-    if (const ImportOutcome room = CheckFreeSpace(request); !room.Succeeded())
+    if (!IsUnderADestination(profile, request.source))
+    {
+        return ImportOutcome::Stopped(ImportResult::SourceIsNotUnderADestination);
+    }
+
+    if (filesystemProbe_.IsReparsePoint(request.source))
+    {
+        return ImportOutcome::Stopped(ImportResult::SourceIsAReparsePoint);
+    }
+
+    const std::vector<FileFingerprint> source = filesystemProbe_.FingerprintTree(request.source);
+
+    if (const ImportOutcome room = CheckFreeSpace(request.target, TotalSizeOf(source));
+        !room.Succeeded())
     {
         return room;
     }
@@ -43,15 +86,29 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile&,
         return copy;
     }
 
+    if (!FingerprintsMatch(source, filesystemProbe_.FingerprintTree(staging)))
+    {
+        return ImportOutcome::Stopped(ImportResult::VerificationFailed);
+    }
+
+    if (!files_.Move(staging, request.target))
+    {
+        return ImportOutcome::Stopped(ImportResult::CouldNotMoveIntoPlace);
+    }
+
+    if (!files_.RemoveTree(request.source))
+    {
+        return ImportOutcome::Stopped(ImportResult::CouldNotRemoveSource);
+    }
+
     return ImportOutcome::Completed();
 }
 
-ImportOutcome ImportEngine::CheckFreeSpace(const ImportRequest& request) const
+ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& target, const std::uintmax_t sourceSize) const
 {
-    const std::uintmax_t needed =
-        TotalSizeOf(filesystemProbe_.FingerprintTree(request.source)) + kFreeSpaceMargin;
+    const std::uintmax_t needed = sourceSize + kFreeSpaceMargin;
 
-    const std::optional<std::uintmax_t> free = filesystemProbe_.FreeSpaceOn(request.target);
+    const std::optional<std::uintmax_t> free = filesystemProbe_.FreeSpaceOn(target);
     if (!free.has_value())
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotCheckFreeSpace);

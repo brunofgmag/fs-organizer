@@ -56,7 +56,6 @@ void WindowsLinkServiceTest::AJunctionReadsBackTheTargetItWasCreatedWith()
     WindowsLinkService linkService;
 
     QVERIFY(linkService.CreateLink(linkPath, target, LinkType::Junction));
-    QVERIFY(linkService.IsReparsePoint(linkPath));
 
     const std::optional<std::filesystem::path> readBack = linkService.ReadLinkTarget(linkPath);
     QVERIFY(readBack.has_value());

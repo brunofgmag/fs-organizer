@@ -166,6 +166,37 @@ public:
         return true;
     }
 
+    bool MoveTree(const std::filesystem::path& source, const std::filesystem::path& destination)
+    {
+        const std::string from = Key(source);
+        if (!nodes_.contains(from) || nodes_.contains(Key(destination)))
+        {
+            return false;
+        }
+
+        const std::string to = Key(destination);
+        std::map<std::string, Node> moved;
+        for (const auto& [key, node] : nodes_)
+        {
+            if (key == from)
+            {
+                moved.emplace(to, node);
+            }
+            else if (IsUnder(key, from))
+            {
+                moved.emplace(to + key.substr(from.size()), node);
+            }
+            else
+            {
+                moved.emplace(key, node);
+            }
+        }
+
+        nodes_ = std::move(moved);
+        
+        return true;
+    }
+
     bool RemoveTree(const std::filesystem::path& path)
     {
         const std::string root = Key(path);

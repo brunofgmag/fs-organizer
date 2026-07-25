@@ -18,6 +18,11 @@ public:
         return fileSystem_.Exists(path);
     }
 
+    [[nodiscard]] bool IsReparsePoint(const std::filesystem::path& path) const override
+    {
+        return fileSystem_.IsLink(path);
+    }
+
     [[nodiscard]] bool TargetDirectoryExists(const std::filesystem::path& path) const override
     {
         return fileSystem_.IsDirectory(path);

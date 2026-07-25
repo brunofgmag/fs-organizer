@@ -148,14 +148,6 @@ bool WindowsLinkService::RemoveReparseNode(const std::filesystem::path& linkPath
     return RemoveDirectoryW(NativePath(linkPath).c_str()) != FALSE;
 }
 
-bool WindowsLinkService::IsReparsePoint(const std::filesystem::path& path) const
-{
-    const DWORD attributes = GetFileAttributesW(NativePath(path).c_str());
-
-    return attributes != INVALID_FILE_ATTRIBUTES
-        && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
-}
-
 std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(
     const std::filesystem::path& path) const
 {

@@ -15,6 +15,11 @@ private slots:
     static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
     static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
     static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
+    static void AFinishedImportLandsTheAddonInTheLibraryAndClearsTheDestination();
+    static void AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs();
+    static void AFolderOutsideTheConfiguredDestinationsIsNeverImported();
+    static void ADestinationRootIsNotAFolderInsideItself();
+    static void AForeignLinkIsNeverImportedAsIfItWereAFolder();
 };
 
 namespace
@@ -118,6 +123,90 @@ void ImportEngineTest::ACopyThatFailsKeepsItsStagingForTheResumeToFind()
     QVERIFY(f.fileSystem.Exists(kStaging));
     QVERIFY(!f.fileSystem.Exists(kTarget));
     f.VerifySimBridgeIsStillWhereItWas();
+}
+
+void ImportEngineTest::AFinishedImportLandsTheAddonInTheLibraryAndClearsTheDestination()
+{
+    Fixture f;
+    f.AddSimBridgeToTheDestination();
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), ImportResult::Completed);
+    QVERIFY(f.fileSystem.Exists(kTarget / "manifest.json"));
+    QVERIFY(f.fileSystem.Exists(kTarget / "dist/simbridge.exe"));
+    QCOMPARE(f.fileSystem.FileSize(kTarget / "dist/simbridge.exe"), 400 * kMegabyte);
+    QVERIFY(!f.fileSystem.Exists(kStaging));
+    QVERIFY(!f.fileSystem.Exists(kSource));
+}
+
+void ImportEngineTest::AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs()
+{
+    Fixture f;
+    f.AddSimBridgeToTheDestination();
+    f.files.MakeTheCopyDropAFile();
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), ImportResult::VerificationFailed);
+    f.VerifySimBridgeIsStillWhereItWas();
+    QVERIFY(!f.fileSystem.Exists(kTarget));
+    QVERIFY(f.fileSystem.Exists(kStaging));
+}
+
+void ImportEngineTest::AFolderOutsideTheConfiguredDestinationsIsNeverImported()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory("E:/Packages/orbx-central");
+    f.fileSystem.AddFile("E:/Packages/orbx-central/manifest.json", 2 * kMegabyte);
+    f.fileSystem.AddDirectory("D:/Library/Utils");
+
+    const ImportRequest request{"E:/Packages/orbx-central", "D:/Library/Utils/orbx-central"};
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
+
+    QCOMPARE(outcome.Result(), ImportResult::SourceIsNotUnderADestination);
+    QVERIFY(f.fileSystem.Exists("E:/Packages/orbx-central/manifest.json"));
+    QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/orbx-central"));
+    QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/orbx-central.fsorg-partial"));
+}
+
+void ImportEngineTest::ADestinationRootIsNotAFolderInsideItself()
+{
+    Fixture f;
+    f.AddSimBridgeToTheDestination();
+
+    const ImportRequest request{"E:/Sim/Community", "D:/Library/Utils/Community"};
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
+
+    QCOMPARE(outcome.Result(), ImportResult::SourceIsNotUnderADestination);
+    QVERIFY(f.fileSystem.Exists("E:/Sim/Community"));
+    f.VerifySimBridgeIsStillWhereItWas();
+}
+
+void ImportEngineTest::AForeignLinkIsNeverImportedAsIfItWereAFolder()
+{
+    const std::filesystem::path foreign =
+        "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
+
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory(foreign);
+    f.fileSystem.AddFile(foreign / "manifest.json", 2 * kMegabyte);
+    f.fileSystem.AddLink("E:/Sim/Community/fsdreamteam-gsx-pro", foreign);
+    f.fileSystem.AddDirectory("D:/Library/Utils");
+
+    const ImportRequest request{"E:/Sim/Community/fsdreamteam-gsx-pro",
+                                "D:/Library/Utils/fsdreamteam-gsx-pro"};
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
+
+    QCOMPARE(outcome.Result(), ImportResult::SourceIsAReparsePoint);
+    QVERIFY(f.fileSystem.IsLink("E:/Sim/Community/fsdreamteam-gsx-pro"));
+    QVERIFY(f.fileSystem.Exists(foreign / "manifest.json"));
+    QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/fsdreamteam-gsx-pro"));
 }
 
 QTEST_APPLESS_MAIN(ImportEngineTest)

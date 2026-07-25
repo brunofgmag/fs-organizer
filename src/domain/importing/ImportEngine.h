@@ -23,7 +23,7 @@ public:
                                        const std::function<bool(const CopyProgress&)>& onProgress) const;
 
 private:
-    [[nodiscard]] ImportOutcome CheckFreeSpace(const ImportRequest& request) const;
+    [[nodiscard]] ImportOutcome CheckFreeSpace(const std::filesystem::path& target, std::uintmax_t sourceSize) const;
 
     [[nodiscard]] ImportOutcome CopyToStaging(const std::filesystem::path& source,
                                               const std::filesystem::path& staging,

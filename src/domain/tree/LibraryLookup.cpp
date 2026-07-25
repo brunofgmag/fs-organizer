@@ -6,22 +6,11 @@
 
 #include "domain/support/PathUtils.h"
 
-namespace
-{
-    bool IsInside(const std::string& path, const std::string& root)
-    {
-        return path == root || (path.size() > root.size() && path.compare(0, root.size(), root) == 0
-            && path[root.size()] == '/');
-    }
-}
-
 const Library* LibraryContaining(const std::vector<Library>& libraries, const std::filesystem::path& path)
 {
-    const std::string candidate = ComparablePath(path);
-
-    const auto match = std::ranges::find_if(libraries, [&candidate](const Library& library)
+    const auto match = std::ranges::find_if(libraries, [&path](const Library& library)
     {
-        return IsInside(candidate, ComparablePath(library.path));
+        return PathIsInside(path, library.path);
     });
 
     return match == libraries.end() ? nullptr : &*match;

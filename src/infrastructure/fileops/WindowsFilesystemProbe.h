@@ -10,6 +10,8 @@ public:
 
     [[nodiscard]] bool TargetDirectoryExists(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] bool IsReparsePoint(const std::filesystem::path& path) const override;
+
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;

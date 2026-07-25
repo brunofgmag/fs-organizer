@@ -17,8 +17,6 @@ public:
 
     [[nodiscard]] virtual bool RemoveReparseNode(const std::filesystem::path& linkPath) = 0;
 
-    [[nodiscard]] virtual bool IsReparsePoint(const std::filesystem::path& path) const = 0;
-
     [[nodiscard]] virtual std::optional<std::filesystem::path> ReadLinkTarget(
         const std::filesystem::path& path) const = 0;
 };
