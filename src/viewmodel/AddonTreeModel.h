@@ -6,7 +6,7 @@
 
 #include <QtCore/QAbstractItemModel>
 
-#include "application/model/TreeSnapshot.h"
+#include "application/model/ProfileSnapshot.h"
 #include "domain/model/SimulatorProfile.h"
 
 class AddonTreeModel final : public QAbstractItemModel
@@ -16,13 +16,13 @@ class AddonTreeModel final : public QAbstractItemModel
 public:
     explicit AddonTreeModel(QObject* parent = nullptr);
 
-    void ShowSnapshot(TreeSnapshot snapshot, SimulatorProfile profile);
+    void ShowSnapshot(ProfileSnapshot snapshot, SimulatorProfile profile);
 
     void RefreshEnabled(std::vector<DestinationEntry> entries);
 
     void ShowProfile(SimulatorProfile profile);
 
-    [[nodiscard]] const TreeSnapshot& Snapshot() const;
+    [[nodiscard]] const ProfileSnapshot& Snapshot() const;
 
     [[nodiscard]] static const TreeNode* NodeAt(const QModelIndex& position);
 
@@ -62,7 +62,7 @@ private:
 
     [[nodiscard]] const std::vector<Item*>& ChildrenOf(const QModelIndex& parent) const;
 
-    TreeSnapshot snapshot_;
+    ProfileSnapshot snapshot_;
     SimulatorProfile profile_;
     std::vector<std::unique_ptr<Item>> items_;
     std::vector<Item*> roots_;

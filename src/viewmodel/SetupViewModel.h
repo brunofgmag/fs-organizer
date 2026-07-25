@@ -12,6 +12,7 @@
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/SimulatorLocator.h"
 #include "viewmodel/DestinationCheck.h"
+#include "application/model/LibraryReport.h"
 #include "viewmodel/RegisteredLibrary.h"
 
 class SetupViewModel final : public QObject
@@ -36,7 +37,7 @@ public:
 
     void ChooseCandidate(std::size_t index);
 
-    [[nodiscard]] LibraryCheck RegisterLibrary(const std::filesystem::path& path,
+    [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path,
                                                const std::string& label);
 
     [[nodiscard]] std::vector<RegisteredLibrary> Libraries() const;

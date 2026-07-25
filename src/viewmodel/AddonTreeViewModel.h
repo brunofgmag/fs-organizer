@@ -6,7 +6,7 @@
 
 #include <QtCore/QObject>
 
-#include "application/AddonService.h"
+#include "application/ProfileService.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/ports/ProcessProbe.h"
 #include "viewmodel/AddonTreeModel.h"
@@ -18,7 +18,7 @@ class AddonTreeViewModel final : public QObject
     Q_OBJECT
 
 public:
-    AddonTreeViewModel(AddonService& service,
+    AddonTreeViewModel(ProfileService& service,
                        SettingsRepository& settings,
                        const ProcessProbe& probe,
                        AddonTreeModel& model,
@@ -64,12 +64,12 @@ private:
 
     void SaveProfile() const;
 
-    AddonService& service_;
+    ProfileService& service_;
     SettingsRepository& settings_;
     const ProcessProbe& probe_;
     AddonTreeModel& model_;
     SimulatorProfile profile_;
-    TreeSnapshot scanned_;
+    ProfileSnapshot scanned_;
     QThread* scan_ = nullptr;
     bool rescanWhenIdle_ = false;
     bool warnedAboutSimulator_ = false;

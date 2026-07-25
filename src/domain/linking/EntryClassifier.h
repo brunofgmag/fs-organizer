@@ -1,5 +1,5 @@
-#ifndef FS_ORGANIZER_DOMAIN_LINKING_ENABLED_STATE_RESOLVER_H
-#define FS_ORGANIZER_DOMAIN_LINKING_ENABLED_STATE_RESOLVER_H
+#ifndef FS_ORGANIZER_DOMAIN_LINKING_ENTRY_CLASSIFIER_H
+#define FS_ORGANIZER_DOMAIN_LINKING_ENTRY_CLASSIFIER_H
 
 #include <filesystem>
 #include <vector>
@@ -11,10 +11,10 @@
 [[nodiscard]] std::vector<std::filesystem::path> EnabledAddonFolders(
     const std::vector<DestinationEntry>& entries);
 
-class EnabledStateResolver
+class EntryClassifier
 {
 public:
-    EnabledStateResolver(const LinkService& linkService, const FileOperations& fileOperations);
+    EntryClassifier(const LinkService& linkService, const FileOperations& fileOperations);
 
     [[nodiscard]] std::vector<DestinationEntry> Resolve(
         const std::vector<std::filesystem::path>& destinationRoots,
@@ -29,4 +29,4 @@ private:
     const FileOperations& fileOperations_;
 };
 
-#endif // FS_ORGANIZER_DOMAIN_LINKING_ENABLED_STATE_RESOLVER_H
+#endif // FS_ORGANIZER_DOMAIN_LINKING_ENTRY_CLASSIFIER_H

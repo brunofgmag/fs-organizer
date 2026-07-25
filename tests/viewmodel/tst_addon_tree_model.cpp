@@ -59,9 +59,9 @@ namespace
         return profile;
     }
 
-    TreeSnapshot SnapshotWith(const std::vector<std::filesystem::path>& enabled)
+    ProfileSnapshot SnapshotWith(const std::vector<std::filesystem::path>& enabled)
     {
-        TreeSnapshot snapshot;
+        ProfileSnapshot snapshot;
         snapshot.libraries = {LibraryTree()};
         snapshot.enabled = EnabledAddons(enabled);
 

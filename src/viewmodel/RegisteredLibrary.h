@@ -5,12 +5,6 @@
 
 #include "domain/model/Library.h"
 
-enum class LibraryCheck : int
-{
-    Accepted = 0,
-    RejectedInsideAnotherLibrary = 1,
-};
-
 struct RegisteredLibrary
 {
     Library library;

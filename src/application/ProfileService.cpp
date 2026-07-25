@@ -1,4 +1,4 @@
-#include "application/AddonService.h"
+#include "application/ProfileService.h"
 
 #include <set>
 #include <string>
@@ -30,15 +30,15 @@ namespace
     }
 }
 
-AddonService::AddonService(const CatalogScanner& catalog,
-                           const EnabledStateResolver& resolver,
+ProfileService::ProfileService(const CatalogScanner& catalog,
+                           const EntryClassifier& classifier,
                            const LinkingEngine& linking,
                            OperationJournal& journal,
                            const Clock& clock,
                            const LibraryIdGenerator& identities,
                            const LinkType linkType)
     : catalog_(catalog),
-      resolver_(resolver),
+      classifier_(classifier),
       linking_(linking),
       journal_(journal),
       clock_(clock),
@@ -47,17 +47,19 @@ AddonService::AddonService(const CatalogScanner& catalog,
 {
 }
 
-LibraryReport AddonService::RegisterLibrary(SimulatorProfile& profile,
+LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile,
                                             const std::filesystem::path& path) const
 {
     const TreeNode tree = catalog_.Scan(path);
 
     LibraryReport report;
-    report.accepted = LibraryContaining(profile, path) == nullptr;
+    report.check = LibraryContaining(profile, path) == nullptr
+                       ? LibraryCheck::Accepted
+                       : LibraryCheck::RejectedInsideAnotherLibrary;
     report.categories = tree.children.size();
     report.addons = CountAddons(tree);
 
-    if (report.accepted)
+    if (report.Accepted())
     {
         profile.libraries.push_back(Library{identities_.Generate(), path, path.filename().string()});
     }
@@ -65,9 +67,9 @@ LibraryReport AddonService::RegisterLibrary(SimulatorProfile& profile,
     return report;
 }
 
-TreeSnapshot AddonService::Scan(const SimulatorProfile& profile) const
+ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile) const
 {
-    TreeSnapshot snapshot;
+    ProfileSnapshot snapshot;
 
     for (const Library& library : profile.libraries)
     {
@@ -80,13 +82,13 @@ TreeSnapshot AddonService::Scan(const SimulatorProfile& profile) const
     return snapshot;
 }
 
-std::vector<DestinationEntry> AddonService::ResolveEntries(const SimulatorProfile& profile) const
+std::vector<DestinationEntry> ProfileService::ResolveEntries(const SimulatorProfile& profile) const
 {
-    return resolver_.Resolve(profile.destinations, LibraryRoots(profile));
+    return classifier_.Resolve(profile.destinations, LibraryRoots(profile));
 }
 
-std::vector<AddonService::Step> AddonService::PlanSteps(const SimulatorProfile& profile,
-                                                        const TreeSnapshot& snapshot,
+std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfile& profile,
+                                                        const ProfileSnapshot& snapshot,
                                                         const std::vector<const TreeNode*>& nodes,
                                                         const bool enable)
 {
@@ -125,7 +127,7 @@ std::vector<AddonService::Step> AddonService::PlanSteps(const SimulatorProfile& 
     return steps;
 }
 
-std::vector<AddonService::Step> AddonService::StepsFor(
+std::vector<ProfileService::Step> ProfileService::StepsFor(
     const SimulatorProfile& profile,
     const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
     const TreeNode& addon,
@@ -155,7 +157,7 @@ std::vector<AddonService::Step> AddonService::StepsFor(
     return steps;
 }
 
-AddonService::Step AddonService::Inverse(const Step& step)
+ProfileService::Step ProfileService::Inverse(const Step& step)
 {
     return {
         step.kind == OperationKind::EnableAddon
@@ -165,7 +167,7 @@ AddonService::Step AddonService::Inverse(const Step& step)
     };
 }
 
-LinkOperationResult AddonService::Run(const Step& step) const
+LinkOperationResult ProfileService::Run(const Step& step) const
 {
     const LinkOutcome outcome = step.kind == OperationKind::EnableAddon
                                     ? linking_.Enable(Addon{step.addonFolder, Manifest{}},
@@ -180,8 +182,8 @@ LinkOperationResult AddonService::Run(const Step& step) const
     return LinkOperationResult{step.addonId, step.addonFolder, step.linkPath, step.kind, outcome};
 }
 
-std::vector<LinkOperationResult> AddonService::SetEnabled(const SimulatorProfile& profile,
-                                                          const TreeSnapshot& snapshot,
+std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfile& profile,
+                                                          const ProfileSnapshot& snapshot,
                                                           const std::vector<const TreeNode*>& nodes,
                                                           const bool enable)
 {
@@ -210,12 +212,12 @@ std::vector<LinkOperationResult> AddonService::SetEnabled(const SimulatorProfile
     return results;
 }
 
-bool AddonService::CanUndo() const
+bool ProfileService::CanUndo() const
 {
     return !undo_.empty();
 }
 
-std::vector<LinkOperationResult> AddonService::UndoLastBatch()
+std::vector<LinkOperationResult> ProfileService::UndoLastBatch()
 {
     const std::vector<Step> steps = std::exchange(undo_, {});
 

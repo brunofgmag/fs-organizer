@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <utility>
 
-#include "domain/linking/EnabledStateResolver.h"
+#include "domain/linking/EntryClassifier.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -33,7 +33,7 @@ AddonTreeModel::AddonTreeModel(QObject* parent) : QAbstractItemModel(parent)
 {
 }
 
-void AddonTreeModel::ShowSnapshot(TreeSnapshot snapshot, SimulatorProfile profile)
+void AddonTreeModel::ShowSnapshot(ProfileSnapshot snapshot, SimulatorProfile profile)
 {
     beginResetModel();
 
@@ -59,7 +59,7 @@ void AddonTreeModel::ShowProfile(SimulatorProfile profile)
     AnnounceValues({});
 }
 
-const TreeSnapshot& AddonTreeModel::Snapshot() const
+const ProfileSnapshot& AddonTreeModel::Snapshot() const
 {
     return snapshot_;
 }

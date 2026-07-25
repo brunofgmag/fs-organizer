@@ -1,5 +1,5 @@
 set(DOMAIN_SOURCES
-        src/domain/linking/EnabledStateResolver.cpp
+        src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
@@ -8,7 +8,7 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
-        src/application/AddonService.cpp
+        src/application/ProfileService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES

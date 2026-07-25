@@ -1,6 +1,6 @@
 #include <QtTest/QtTest>
 
-#include "application/AddonService.h"
+#include "application/ProfileService.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -11,7 +11,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class AddonServiceTest : public QObject
+class ProfileServiceTest : public QObject
 {
     Q_OBJECT
 
@@ -97,17 +97,17 @@ namespace
             catalog.SetTree(kLibrary, LibraryTree());
         }
 
-        [[nodiscard]] TreeSnapshot Snapshot(const SimulatorProfile& profile) const
+        [[nodiscard]] ProfileSnapshot Snapshot(const SimulatorProfile& profile) const
         {
             return service.Scan(profile);
         }
 
-        [[nodiscard]] static std::vector<const TreeNode*> Aircrafts(const TreeSnapshot& snapshot)
+        [[nodiscard]] static std::vector<const TreeNode*> Aircrafts(const ProfileSnapshot& snapshot)
         {
             return {&snapshot.libraries.front().children.front()};
         }
 
-        [[nodiscard]] static const TreeNode* AddonAt(const TreeSnapshot& snapshot, const std::size_t index)
+        [[nodiscard]] static const TreeNode* AddonAt(const ProfileSnapshot& snapshot, const std::size_t index)
         {
             return &snapshot.libraries.front().children.front().children[index];
         }
@@ -120,16 +120,16 @@ namespace
         FakeClock clock;
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, fileOperations};
-        EnabledStateResolver resolver{linkService, fileOperations};
-        AddonService service{catalog, resolver, linking, journal, clock, identities, LinkType::Junction};
+        EntryClassifier classifier{linkService, fileOperations};
+        ProfileService service{catalog, classifier, linking, journal, clock, identities, LinkType::Junction};
     };
 }
 
-void AddonServiceTest::MarkingACategoryEnablesEveryAddonUnderIt()
+void ProfileServiceTest::MarkingACategoryEnablesEveryAddonUnderIt()
 {
     Fixture f;
     const SimulatorProfile profile = Profile();
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
@@ -140,13 +140,13 @@ void AddonServiceTest::MarkingACategoryEnablesEveryAddonUnderIt()
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/fenix-a320"));
 }
 
-void AddonServiceTest::ABatchKeepsGoingAfterAFailureAndReportsOneResultPerItem()
+void ProfileServiceTest::ABatchKeepsGoingAfterAFailureAndReportsOneResultPerItem()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w");
 
     const SimulatorProfile profile = Profile();
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
@@ -157,13 +157,13 @@ void AddonServiceTest::ABatchKeepsGoingAfterAFailureAndReportsOneResultPerItem()
     QVERIFY(results[2].outcome.Succeeded());
 }
 
-void AddonServiceTest::AFailedItemInABatchDoesNotUndoTheItemsThatWorked()
+void ProfileServiceTest::AFailedItemInABatchDoesNotUndoTheItemsThatWorked()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w");
 
     const SimulatorProfile profile = Profile();
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
@@ -174,14 +174,14 @@ void AddonServiceTest::AFailedItemInABatchDoesNotUndoTheItemsThatWorked()
     QVERIFY(f.fileSystem.IsDirectory("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
 }
 
-void AddonServiceTest::AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccupied()
+void ProfileServiceTest::AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccupied()
 {
     Fixture f;
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
 
     const SimulatorProfile profile = Profile();
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
@@ -193,7 +193,7 @@ void AddonServiceTest::AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccupi
     }
 }
 
-void AddonServiceTest::DisablingAnAddonRemovesItsLinkInEveryDestination()
+void ProfileServiceTest::DisablingAnAddonRemovesItsLinkInEveryDestination()
 {
     const std::filesystem::path folder = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
 
@@ -202,7 +202,7 @@ void AddonServiceTest::DisablingAnAddonRemovesItsLinkInEveryDestination()
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w", folder);
 
     const SimulatorProfile profile = Profile();
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, false);
@@ -213,11 +213,11 @@ void AddonServiceTest::DisablingAnAddonRemovesItsLinkInEveryDestination()
     QVERIFY(f.fileSystem.IsDirectory(folder));
 }
 
-void AddonServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()
+void ProfileServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()
 {
     Fixture f;
     const SimulatorProfile profile = Profile({{kLibraryId, "Aircrafts", kCommunity2024}});
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true);
@@ -228,13 +228,13 @@ void AddonServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w"));
 }
 
-void AddonServiceTest::EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot()
+void ProfileServiceTest::EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w");
 
     const SimulatorProfile profile = Profile();
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
@@ -253,16 +253,16 @@ void AddonServiceTest::EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot()
     QCOMPARE(f.journal.appended[1].failure, LinkFailure::None);
 }
 
-void AddonServiceTest::UndoRevertsTheLastBatchAndNothingElse()
+void ProfileServiceTest::UndoRevertsTheLastBatchAndNothingElse()
 {
     Fixture f;
     const SimulatorProfile profile = Profile();
 
-    const TreeSnapshot first = f.Snapshot(profile);
+    const ProfileSnapshot first = f.Snapshot(profile);
     const std::vector<LinkOperationResult> kept =
         f.service.SetEnabled(profile, first, {Fixture::AddonAt(first, 0), Fixture::AddonAt(first, 1)}, true);
 
-    const TreeSnapshot second = f.Snapshot(profile);
+    const ProfileSnapshot second = f.Snapshot(profile);
     const std::vector<LinkOperationResult> undone =
         f.service.SetEnabled(profile, second, {Fixture::AddonAt(second, 2)}, true);
 
@@ -279,13 +279,13 @@ void AddonServiceTest::UndoRevertsTheLastBatchAndNothingElse()
     QVERIFY(!f.service.CanUndo());
 }
 
-void AddonServiceTest::UndoOnlyRevertsWhatTheBatchActuallyDid()
+void ProfileServiceTest::UndoOnlyRevertsWhatTheBatchActuallyDid()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w");
 
     const SimulatorProfile profile = Profile();
-    const TreeSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
         f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
@@ -298,14 +298,14 @@ void AddonServiceTest::UndoOnlyRevertsWhatTheBatchActuallyDid()
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/fenix-a320"));
 }
 
-void AddonServiceTest::ThereIsNothingToUndoBeforeTheFirstBatch()
+void ProfileServiceTest::ThereIsNothingToUndoBeforeTheFirstBatch()
 {
     const Fixture f;
 
     QVERIFY(!f.service.CanUndo());
 }
 
-void AddonServiceTest::RegisteringALibraryReportsWhatIsInsideAndRefusesANestedFolder()
+void ProfileServiceTest::RegisteringALibraryReportsWhatIsInsideAndRefusesANestedFolder()
 {
     Fixture f;
     SimulatorProfile profile = Profile();
@@ -313,28 +313,28 @@ void AddonServiceTest::RegisteringALibraryReportsWhatIsInsideAndRefusesANestedFo
 
     const LibraryReport accepted = f.service.RegisterLibrary(profile, kLibrary);
 
-    QVERIFY(accepted.accepted);
+    QVERIFY(accepted.Accepted());
     QCOMPARE(accepted.categories, std::size_t{1});
     QCOMPARE(accepted.addons, std::size_t{3});
     QCOMPARE(profile.libraries.size(), std::size_t{1});
 
     const LibraryReport nested = f.service.RegisterLibrary(profile, "D:/MSFS 2024/Aircrafts");
 
-    QVERIFY(!nested.accepted);
+    QVERIFY(!nested.Accepted());
     QCOMPARE(nested.addons, std::size_t{0});
     QCOMPARE(profile.libraries.size(), std::size_t{1});
 }
 
-void AddonServiceTest::ABatchWithNothingToDoDoesNotThrowAwayThePreviousUndo()
+void ProfileServiceTest::ABatchWithNothingToDoDoesNotThrowAwayThePreviousUndo()
 {
     Fixture f;
     const SimulatorProfile profile = Profile();
 
-    const TreeSnapshot before = f.Snapshot(profile);
+    const ProfileSnapshot before = f.Snapshot(profile);
     const std::vector<LinkOperationResult> done =
         f.service.SetEnabled(profile, before, {Fixture::AddonAt(before, 0)}, true);
 
-    const TreeSnapshot after = f.Snapshot(profile);
+    const ProfileSnapshot after = f.Snapshot(profile);
     const std::vector<LinkOperationResult> again =
         f.service.SetEnabled(profile, after, {Fixture::AddonAt(after, 0)}, true);
 
@@ -346,18 +346,18 @@ void AddonServiceTest::ABatchWithNothingToDoDoesNotThrowAwayThePreviousUndo()
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
 }
 
-void AddonServiceTest::ABatchWhereEveryStepFailedKeepsThePreviousUndo()
+void ProfileServiceTest::ABatchWhereEveryStepFailedKeepsThePreviousUndo()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/aerosoft-crj");
 
     const SimulatorProfile profile = Profile();
 
-    const TreeSnapshot before = f.Snapshot(profile);
+    const ProfileSnapshot before = f.Snapshot(profile);
     const std::vector<LinkOperationResult> done =
         f.service.SetEnabled(profile, before, {Fixture::AddonAt(before, 0)}, true);
 
-    const TreeSnapshot after = f.Snapshot(profile);
+    const ProfileSnapshot after = f.Snapshot(profile);
     const std::vector<LinkOperationResult> failed =
         f.service.SetEnabled(profile, after, {Fixture::AddonAt(after, 1)}, true);
 
@@ -370,6 +370,6 @@ void AddonServiceTest::ABatchWhereEveryStepFailedKeepsThePreviousUndo()
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
 }
 
-QTEST_APPLESS_MAIN(AddonServiceTest)
+QTEST_APPLESS_MAIN(ProfileServiceTest)
 
-#include "tst_addon_service.moc"
+#include "tst_profile_service.moc"

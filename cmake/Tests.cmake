@@ -60,14 +60,14 @@ fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/doubles/InMemoryFileSystem.h
         src/domain/linking/LinkingEngine.cpp)
 
-fsorg_add_qt_test(fsorg-enabled-state-resolver-tests enabled-state-resolver
-        tests/domain/linking/tst_enabled_state_resolver.cpp
+fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
+        tests/domain/linking/tst_entry_classifier.cpp
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h
-        src/domain/linking/EnabledStateResolver.cpp)
+        src/domain/linking/EntryClassifier.cpp)
 
 fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         tests/domain/tree/tst_addon_tree.cpp
@@ -78,7 +78,7 @@ fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         tests/support/PathPrinting.h
         src/domain/model/EnabledAddons.h
         src/domain/support/PathUtils.h
-        src/domain/linking/EnabledStateResolver.cpp
+        src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp)
 
 fsorg_add_qt_test(fsorg-effective-destination-tests effective-destination
@@ -97,8 +97,8 @@ fsorg_add_qt_test(fsorg-toggle-direction-tests toggle-direction
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/ToggleDirection.cpp)
 
-fsorg_add_qt_test(fsorg-addon-service-tests addon-service
-        tests/application/tst_addon_service.cpp
+fsorg_add_qt_test(fsorg-profile-service-tests profile-service
+        tests/application/tst_profile_service.cpp
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -107,13 +107,13 @@ fsorg_add_qt_test(fsorg-addon-service-tests addon-service
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/linking/EnabledStateResolver.cpp
+        src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/ToggleDirection.cpp
-        src/application/AddonService.cpp)
+        src/application/ProfileService.cpp)
 
 fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
         tests/infrastructure/catalog/tst_json_manifest_parser.cpp
@@ -150,7 +150,7 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
 fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         tests/viewmodel/tst_addon_tree_model.cpp
         tests/support/PathPrinting.h
-        src/domain/linking/EnabledStateResolver.cpp
+        src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp

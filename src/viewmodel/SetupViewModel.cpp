@@ -117,11 +117,11 @@ void SetupViewModel::ChooseCandidate(const std::size_t index)
     chosen_ = index;
 }
 
-LibraryCheck SetupViewModel::RegisterLibrary(const std::filesystem::path& path, const std::string& label)
+LibraryReport SetupViewModel::RegisterLibrary(const std::filesystem::path& path, const std::string& label)
 {
     if (IsInsideARegisteredLibrary(libraries_, path))
     {
-        return LibraryCheck::RejectedInsideAnotherLibrary;
+        return {LibraryCheck::RejectedInsideAnotherLibrary};
     }
 
     const TreeNode tree = catalog_.Scan(path);
@@ -133,7 +133,7 @@ LibraryCheck SetupViewModel::RegisterLibrary(const std::filesystem::path& path, 
 
     libraries_.push_back(registered);
 
-    return LibraryCheck::Accepted;
+    return {LibraryCheck::Accepted, registered.categories, registered.addons};
 }
 
 std::vector<RegisteredLibrary> SetupViewModel::Libraries() const

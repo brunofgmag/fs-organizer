@@ -23,7 +23,7 @@ namespace
     }
 }
 
-AddonTreeViewModel::AddonTreeViewModel(AddonService& service,
+AddonTreeViewModel::AddonTreeViewModel(ProfileService& service,
                                        SettingsRepository& settings,
                                        const ProcessProbe& probe,
                                        AddonTreeModel& model,
@@ -96,7 +96,7 @@ void AddonTreeViewModel::AdoptScan()
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes)
 {
-    const TreeSnapshot& snapshot = model_.Snapshot();
+    const ProfileSnapshot& snapshot = model_.Snapshot();
 
     Toggle(nodes, ShouldEnable(profile_, snapshot.entries, snapshot.enabled, nodes));
 }
@@ -178,7 +178,7 @@ LibraryReport AddonTreeViewModel::AddLibrary(const std::filesystem::path& path)
 {
     const LibraryReport report = service_.RegisterLibrary(profile_, path);
 
-    if (report.accepted)
+    if (report.Accepted())
     {
         SaveProfile();
         StartScan();

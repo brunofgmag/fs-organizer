@@ -4,7 +4,7 @@ endif ()
 
 add_executable(fsorg-probe
         tools/fsorg-probe/main.cpp
-        src/domain/linking/EnabledStateResolver.cpp
+        src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp

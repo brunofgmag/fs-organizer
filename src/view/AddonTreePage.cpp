@@ -314,7 +314,7 @@ void AddonTreePage::BrowseForLibrary()
 
     const LibraryReport report = viewModel_.AddLibrary(std::filesystem::path(chosen.toStdWString()));
 
-    if (!report.accepted)
+    if (!report.Accepted())
     {
         QMessageBox::warning(
             this, tr("Biblioteca repetida"),

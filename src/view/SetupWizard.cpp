@@ -177,8 +177,7 @@ void SetupWizard::BrowseForLibrary()
     }
 
     const std::filesystem::path path(chosen.toStdWString());
-    if (viewModel_.RegisterLibrary(path, path.filename().string())
-        == LibraryCheck::RejectedInsideAnotherLibrary)
+    if (!viewModel_.RegisterLibrary(path, path.filename().string()).Accepted())
     {
         QMessageBox::warning(
             this, tr("Biblioteca repetida"),

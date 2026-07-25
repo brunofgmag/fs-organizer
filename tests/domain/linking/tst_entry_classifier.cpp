@@ -1,12 +1,12 @@
 #include <QtTest/QtTest>
 
-#include "domain/linking/EnabledStateResolver.h"
+#include "domain/linking/EntryClassifier.h"
 #include "tests/support/PathPrinting.h"
 #include "tests/doubles/FakeFileOperations.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
-class EnabledStateResolverTest : public QObject
+class EntryClassifierTest : public QObject
 {
     Q_OBJECT
 
@@ -30,11 +30,11 @@ namespace
         InMemoryFileSystem fileSystem;
         FakeLinkService linkService{fileSystem};
         FakeFileOperations fileOperations{fileSystem};
-        EnabledStateResolver resolver{linkService, fileOperations};
+        EntryClassifier classifier{linkService, fileOperations};
     };
 }
 
-void EnabledStateResolverTest::ALinkIntoALibraryIsManaged()
+void EntryClassifierTest::ALinkIntoALibraryIsManaged()
 {
     Fixture f;
     f.fileSystem.AddDirectory("D:/Library/Aircrafts/aerosoft-crj");
@@ -42,14 +42,14 @@ void EnabledStateResolverTest::ALinkIntoALibraryIsManaged()
     f.fileSystem.AddLink("E:/Sim/Community/aerosoft-crj", "D:/Library/Aircrafts/aerosoft-crj");
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
 
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().classification, EntryClassification::Managed);
     QCOMPARE(entries.front().target, std::filesystem::path("D:/Library/Aircrafts/aerosoft-crj"));
 }
 
-void EnabledStateResolverTest::ALiveLinkOutsideEveryLibraryIsExternal()
+void EntryClassifierTest::ALiveLinkOutsideEveryLibraryIsExternal()
 {
     const std::filesystem::path foreignTarget =
         "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
@@ -60,14 +60,14 @@ void EnabledStateResolverTest::ALiveLinkOutsideEveryLibraryIsExternal()
     f.fileSystem.AddLink("E:/Sim/Community/fsdreamteam-gsx-pro", foreignTarget);
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
 
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().classification, EntryClassification::External);
     QCOMPARE(entries.front().target, foreignTarget);
 }
 
-void EnabledStateResolverTest::ALinkWhoseTargetIsGoneIsBroken()
+void EntryClassifierTest::ALinkWhoseTargetIsGoneIsBroken()
 {
     Fixture f;
     f.fileSystem.AddDirectory("D:/Library");
@@ -76,13 +76,13 @@ void EnabledStateResolverTest::ALinkWhoseTargetIsGoneIsBroken()
                          "D:/Library/Sceneries/ag-airport-bgqq-qaanaaq");
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
 
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().classification, EntryClassification::Broken);
 }
 
-void EnabledStateResolverTest::ALinkOnAnAbsentVolumeIsUnavailableRatherThanBroken()
+void EntryClassifierTest::ALinkOnAnAbsentVolumeIsUnavailableRatherThanBroken()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Sim/Community");
@@ -90,13 +90,13 @@ void EnabledStateResolverTest::ALinkOnAnAbsentVolumeIsUnavailableRatherThanBroke
     f.fileSystem.MarkVolumeUnavailable("Z:/");
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community"}, {"Z:/Portable Library"});
+        f.classifier.Resolve({"E:/Sim/Community"}, {"Z:/Portable Library"});
 
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().classification, EntryClassification::Unavailable);
 }
 
-void EnabledStateResolverTest::APhysicalFolderIsUnmanaged()
+void EntryClassifierTest::APhysicalFolderIsUnmanaged()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Sim/Community");
@@ -104,14 +104,14 @@ void EnabledStateResolverTest::APhysicalFolderIsUnmanaged()
     f.fileSystem.AddFile("E:/Sim/Community/asfs/manifest.json");
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
 
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().classification, EntryClassification::Unmanaged);
     QVERIFY(entries.front().target.empty());
 }
 
-void EnabledStateResolverTest::AnAddonLinkedInTwoDestinationsIsDuplicated()
+void EntryClassifierTest::AnAddonLinkedInTwoDestinationsIsDuplicated()
 {
     const std::filesystem::path addonFolder = "D:/Library/Aircrafts/pmdg-aircraft-77w";
 
@@ -123,7 +123,7 @@ void EnabledStateResolverTest::AnAddonLinkedInTwoDestinationsIsDuplicated()
     f.fileSystem.AddLink("E:/Sim/Community2024/pmdg-aircraft-77w", addonFolder);
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community", "E:/Sim/Community2024"}, {"D:/Library"});
+        f.classifier.Resolve({"E:/Sim/Community", "E:/Sim/Community2024"}, {"D:/Library"});
 
     QCOMPARE(entries.size(), std::size_t{2});
     for (const DestinationEntry& entry: entries)
@@ -132,7 +132,7 @@ void EnabledStateResolverTest::AnAddonLinkedInTwoDestinationsIsDuplicated()
     }
 }
 
-void EnabledStateResolverTest::AnExtendedLengthPrefixOnTheTargetIsNormalized()
+void EntryClassifierTest::AnExtendedLengthPrefixOnTheTargetIsNormalized()
 {
     const std::filesystem::path realTarget =
         "E:/Aerosoft One Library/Add-ons/aerosoft-aircraft-a346-pro";
@@ -144,14 +144,14 @@ void EnabledStateResolverTest::AnExtendedLengthPrefixOnTheTargetIsNormalized()
                          R"(\\?\E:\Aerosoft One Library\Add-ons\aerosoft-aircraft-a346-pro)");
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"C:/Packages/Community"}, {"E:/Aerosoft One Library"});
+        f.classifier.Resolve({"C:/Packages/Community"}, {"E:/Aerosoft One Library"});
 
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().target, realTarget);
     QCOMPARE(entries.front().classification, EntryClassification::Managed);
 }
 
-void EnabledStateResolverTest::LibraryMatchingIgnoresPathCase()
+void EntryClassifierTest::LibraryMatchingIgnoresPathCase()
 {
     Fixture f;
     f.fileSystem.AddDirectory("D:/Library/Aircrafts/aerosoft-crj");
@@ -159,13 +159,13 @@ void EnabledStateResolverTest::LibraryMatchingIgnoresPathCase()
     f.fileSystem.AddLink("E:/Sim/Community/aerosoft-crj", "D:/Library/Aircrafts/aerosoft-crj");
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community"}, {"d:/library"});
+        f.classifier.Resolve({"E:/Sim/Community"}, {"d:/library"});
 
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().classification, EntryClassification::Managed);
 }
 
-void EnabledStateResolverTest::OnlyManagedEntriesReportTheirTargetAsAnEnabledAddon()
+void EntryClassifierTest::OnlyManagedEntriesReportTheirTargetAsAnEnabledAddon()
 {
     const std::filesystem::path enabledAddon = "D:/Library/Aircrafts/aerosoft-crj";
 
@@ -179,7 +179,7 @@ void EnabledStateResolverTest::OnlyManagedEntriesReportTheirTargetAsAnEnabledAdd
     f.fileSystem.AddDirectory("E:/Sim/Community/asfs");
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
     const std::vector<std::filesystem::path> enabled = EnabledAddonFolders(entries);
 
     QCOMPARE(entries.size(), std::size_t{4});
@@ -187,7 +187,7 @@ void EnabledStateResolverTest::OnlyManagedEntriesReportTheirTargetAsAnEnabledAdd
     QCOMPARE(enabled.front(), enabledAddon);
 }
 
-void EnabledStateResolverTest::ADuplicatedAddonIsStillEnabledAndReportedOnce()
+void EntryClassifierTest::ADuplicatedAddonIsStillEnabledAndReportedOnce()
 {
     const std::filesystem::path addonFolder = "D:/Library/Aircrafts/pmdg-aircraft-77w";
 
@@ -199,13 +199,13 @@ void EnabledStateResolverTest::ADuplicatedAddonIsStillEnabledAndReportedOnce()
     f.fileSystem.AddLink("E:/Sim/Community2024/pmdg-aircraft-77w", addonFolder);
 
     const std::vector<DestinationEntry> entries =
-        f.resolver.Resolve({"E:/Sim/Community", "E:/Sim/Community2024"}, {"D:/Library"});
+        f.classifier.Resolve({"E:/Sim/Community", "E:/Sim/Community2024"}, {"D:/Library"});
     const std::vector<std::filesystem::path> enabled = EnabledAddonFolders(entries);
 
     QCOMPARE(enabled.size(), std::size_t{1});
     QCOMPARE(enabled.front(), addonFolder);
 }
 
-QTEST_APPLESS_MAIN(EnabledStateResolverTest)
+QTEST_APPLESS_MAIN(EntryClassifierTest)
 
-#include "tst_enabled_state_resolver.moc"
+#include "tst_entry_classifier.moc"

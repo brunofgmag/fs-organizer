@@ -6,7 +6,7 @@
 #include <ranges>
 #include <set>
 
-#include "domain/linking/EnabledStateResolver.h"
+#include "domain/linking/EntryClassifier.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
@@ -216,14 +216,14 @@ namespace
             << conflicts.againstEveryFolder << " contra qualquer pasta da biblioteca\n";
     }
 
-    void ReportCandidate(const EnabledStateResolver& resolver,
+    void ReportCandidate(const EntryClassifier& classifier,
                          const SimulatorCandidate& candidate,
                          const std::vector<std::filesystem::path>& libraries,
                          const LibraryFacts& facts)
     {
         Out() << "\n" << VariantName(candidate.variant) << "  " << Show(candidate.packagesPath) << "\n";
 
-        const std::vector<DestinationEntry> entries = resolver.Resolve(candidate.destinations, libraries);
+        const std::vector<DestinationEntry> entries = classifier.Resolve(candidate.destinations, libraries);
 
         for (const std::filesystem::path& destination : candidate.destinations)
         {
@@ -255,7 +255,7 @@ int main(int argc, char* argv[])
     const FilesystemScanner scanner(manifestParser);
     const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
-    const EnabledStateResolver resolver(linkService, fileOperations);
+    const EntryClassifier classifier(linkService, fileOperations);
 
     Out() << "Simulador em execução: " << (processProbe.SimulatorIsRunning() ? "sim" : "não") << "\n";
 
@@ -264,7 +264,7 @@ int main(int argc, char* argv[])
 
     for (const SimulatorCandidate& candidate : locator.Locate())
     {
-        ReportCandidate(resolver, candidate, libraries, facts);
+        ReportCandidate(classifier, candidate, libraries, facts);
     }
 
     Out().flush();

@@ -1,6 +1,6 @@
 #include <QtWidgets/QApplication>
 
-#include "application/AddonService.h"
+#include "application/ProfileService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -63,12 +63,12 @@ int main(int argc, char* argv[])
     }
 
     const LinkingEngine linking(linkService, fileOperations);
-    const EnabledStateResolver resolver(linkService, fileOperations);
-    AddonService addons(catalog, resolver, linking, journal, clock, identities, LinkType::Junction);
+    const EntryClassifier classifier(linkService, fileOperations);
+    ProfileService profileService(catalog, classifier, linking, journal, clock, identities, LinkType::Junction);
 
     MainWindow window(settings.Load());
     AddonTreeModel model;
-    AddonTreeViewModel treeViewModel(addons, settings, processProbe, model);
+    AddonTreeViewModel treeViewModel(profileService, settings, processProbe, model);
     auto* page = new AddonTreePage(treeViewModel, model);
 
     window.ShowPage(page);

@@ -1,6 +1,6 @@
 #include <QtTest/QtTest>
 
-#include "domain/linking/EnabledStateResolver.h"
+#include "domain/linking/EntryClassifier.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeFileOperations.h"
 #include "tests/doubles/FakeLinkService.h"
@@ -163,9 +163,9 @@ void AddonTreeTest::AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked()
 
     const FakeLinkService linkService(fileSystem);
     const FakeFileOperations fileOperations(fileSystem);
-    const EnabledStateResolver resolver(linkService, fileOperations);
+    const EntryClassifier classifier(linkService, fileOperations);
 
-    const std::vector<DestinationEntry> entries = resolver.Resolve(
+    const std::vector<DestinationEntry> entries = classifier.Resolve(
         {"E:/Flight Simulator 2024/Community", "E:/Flight Simulator 2024/Community2024"},
         {"D:/MSFS 2024"});
 

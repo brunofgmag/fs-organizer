@@ -229,7 +229,7 @@ void SetupViewModelTest::RegisteringALibraryReportsTheCategoriesAndAddonsFoundIn
     f.catalog.SetTree("D:/MSFS 2024/Sceneries",
                       LibraryTree("D:/MSFS 2024/Sceneries", {}));
 
-    QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024"), LibraryCheck::Accepted);
+    QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024").check, LibraryCheck::Accepted);
 
     const std::vector<RegisteredLibrary> registered = f.viewModel.Libraries();
     QCOMPARE(registered.size(), std::size_t{1});
@@ -243,10 +243,10 @@ void SetupViewModelTest::AFolderInsideAnAlreadyRegisteredLibraryIsRefused()
     Fixture f;
     f.catalog.SetTree("D:/MSFS 2024", LibraryTree("D:/MSFS 2024", {{"Sceneries", 173}}));
 
-    QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024"), LibraryCheck::Accepted);
-    QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024/Sceneries", "Sceneries"),
+    QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024").check, LibraryCheck::Accepted);
+    QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024/Sceneries", "Sceneries").check,
              LibraryCheck::RejectedInsideAnotherLibrary);
-    QCOMPARE(f.viewModel.RegisterLibrary("d:/msfs 2024", "De novo"),
+    QCOMPARE(f.viewModel.RegisterLibrary("d:/msfs 2024", "De novo").check,
              LibraryCheck::RejectedInsideAnotherLibrary);
 
     QCOMPARE(f.viewModel.Libraries().size(), std::size_t{1});

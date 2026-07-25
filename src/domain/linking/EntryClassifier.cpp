@@ -1,4 +1,4 @@
-#include "domain/linking/EnabledStateResolver.h"
+#include "domain/linking/EntryClassifier.h"
 
 #include <algorithm>
 #include <map>
@@ -73,12 +73,12 @@ std::vector<std::filesystem::path> EnabledAddonFolders(const std::vector<Destina
     return folders;
 }
 
-EnabledStateResolver::EnabledStateResolver(const LinkService& linkService, const FileOperations& fileOperations)
+EntryClassifier::EntryClassifier(const LinkService& linkService, const FileOperations& fileOperations)
     : linkService_(linkService), fileOperations_(fileOperations)
 {
 }
 
-std::vector<DestinationEntry> EnabledStateResolver::Resolve(
+std::vector<DestinationEntry> EntryClassifier::Resolve(
     const std::vector<std::filesystem::path>& destinationRoots,
     const std::vector<std::filesystem::path>& libraryRoots) const
 {
@@ -97,7 +97,7 @@ std::vector<DestinationEntry> EnabledStateResolver::Resolve(
     return entries;
 }
 
-DestinationEntry EnabledStateResolver::ClassifyEntry(
+DestinationEntry EntryClassifier::ClassifyEntry(
     const std::filesystem::path& entryPath,
     const std::vector<std::filesystem::path>& libraryRoots) const
 {

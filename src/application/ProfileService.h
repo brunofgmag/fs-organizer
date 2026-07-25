@@ -1,5 +1,5 @@
-#ifndef FS_ORGANIZER_APPLICATION_ADDON_SERVICE_H
-#define FS_ORGANIZER_APPLICATION_ADDON_SERVICE_H
+#ifndef FS_ORGANIZER_APPLICATION_PROFILE_SERVICE_H
+#define FS_ORGANIZER_APPLICATION_PROFILE_SERVICE_H
 
 #include <map>
 #include <string>
@@ -7,27 +7,27 @@
 
 #include "application/model/LibraryReport.h"
 #include "application/model/LinkOperationResult.h"
-#include "application/model/TreeSnapshot.h"
+#include "application/model/ProfileSnapshot.h"
 #include "application/ports/Clock.h"
 #include "application/ports/LibraryIdGenerator.h"
 #include "application/ports/OperationJournal.h"
-#include "domain/linking/EnabledStateResolver.h"
+#include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/ports/CatalogScanner.h"
 
-class AddonService
+class ProfileService
 {
 public:
-    AddonService(const CatalogScanner& catalog,
-                 const EnabledStateResolver& resolver,
+    ProfileService(const CatalogScanner& catalog,
+                 const EntryClassifier& classifier,
                  const LinkingEngine& linking,
                  OperationJournal& journal,
                  const Clock& clock,
                  const LibraryIdGenerator& identities,
                  LinkType linkType);
 
-    [[nodiscard]] TreeSnapshot Scan(const SimulatorProfile& profile) const;
+    [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
 
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile,
                                                 const std::filesystem::path& path) const;
@@ -35,7 +35,7 @@ public:
     [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile) const;
 
     [[nodiscard]] std::vector<LinkOperationResult> SetEnabled(const SimulatorProfile& profile,
-                                                              const TreeSnapshot& snapshot,
+                                                              const ProfileSnapshot& snapshot,
                                                               const std::vector<const TreeNode*>& nodes,
                                                               bool enable);
 
@@ -53,7 +53,7 @@ private:
     };
 
     [[nodiscard]] static std::vector<Step> PlanSteps(const SimulatorProfile& profile,
-                                                     const TreeSnapshot& snapshot,
+                                                     const ProfileSnapshot& snapshot,
                                                      const std::vector<const TreeNode*>& nodes,
                                                      bool enable);
 
@@ -68,7 +68,7 @@ private:
     [[nodiscard]] LinkOperationResult Run(const Step& step) const;
 
     const CatalogScanner& catalog_;
-    const EnabledStateResolver& resolver_;
+    const EntryClassifier& classifier_;
     const LinkingEngine& linking_;
     OperationJournal& journal_;
     const Clock& clock_;
@@ -77,4 +77,4 @@ private:
     std::vector<Step> undo_;
 };
 
-#endif // FS_ORGANIZER_APPLICATION_ADDON_SERVICE_H
+#endif // FS_ORGANIZER_APPLICATION_PROFILE_SERVICE_H
