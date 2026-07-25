@@ -64,6 +64,8 @@ namespace QTest
         {
         case ImportResult::Completed: return qstrdup("Completed");
         case ImportResult::Cancelled: return qstrdup("Cancelled");
+        case ImportResult::TheSimulatorIsRunning: return qstrdup("TheSimulatorIsRunning");
+        case ImportResult::CouldNotQuarantine: return qstrdup("CouldNotQuarantine");
         case ImportResult::SourceIsNotUnderADestination:
             return qstrdup("SourceIsNotUnderADestination");
         case ImportResult::SourceIsAReparsePoint: return qstrdup("SourceIsAReparsePoint");
@@ -73,6 +75,7 @@ namespace QTest
         case ImportResult::VerificationFailed: return qstrdup("VerificationFailed");
         case ImportResult::CouldNotMoveIntoPlace: return qstrdup("CouldNotMoveIntoPlace");
         case ImportResult::CouldNotRemoveSource: return qstrdup("CouldNotRemoveSource");
+        case ImportResult::CouldNotCreateLink: return qstrdup("CouldNotCreateLink");
         }
 
         return qstrdup("ImportResult(?)");

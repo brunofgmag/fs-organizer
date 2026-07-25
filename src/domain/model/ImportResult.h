@@ -5,6 +5,8 @@ enum class ImportResult
 {
     Completed,
     Cancelled,
+    TheSimulatorIsRunning,
+    CouldNotQuarantine,
     SourceIsNotUnderADestination,
     SourceIsAReparsePoint,
     CouldNotCheckFreeSpace,
@@ -12,7 +14,8 @@ enum class ImportResult
     CouldNotCopy,
     VerificationFailed,
     CouldNotMoveIntoPlace,
-    CouldNotRemoveSource
+    CouldNotRemoveSource,
+    CouldNotCreateLink
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_IMPORT_RESULT_H

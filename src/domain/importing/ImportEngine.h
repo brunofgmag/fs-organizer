@@ -3,9 +3,11 @@
 
 #include <functional>
 
+#include "domain/linking/LinkingEngine.h"
 #include "domain/model/CopyOutcome.h"
 #include "domain/model/ImportOutcome.h"
 #include "domain/model/ImportRequest.h"
+#include "domain/model/LinkType.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/FilesystemProbe.h"
@@ -16,7 +18,10 @@ inline constexpr auto kStagingSuffix = ".fsorg-partial";
 class ImportEngine
 {
 public:
-    ImportEngine(const FilesystemProbe& filesystemProbe, FileOperations& files);
+    ImportEngine(const FilesystemProbe& filesystemProbe,
+                 FileOperations& files,
+                 const LinkingEngine& linking,
+                 LinkType linkType);
 
     [[nodiscard]] ImportOutcome Import(const SimulatorProfile& profile,
                                        const ImportRequest& request,
@@ -31,6 +36,8 @@ private:
 
     const FilesystemProbe& filesystemProbe_;
     FileOperations& files_;
+    const LinkingEngine& linking_;
+    LinkType linkType_;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_IMPORTING_IMPORT_ENGINE_H

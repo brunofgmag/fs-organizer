@@ -62,9 +62,27 @@ fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/linking/LinkingEngine.cpp
         src/domain/importing/ImportEngine.cpp)
+
+fsorg_add_qt_test(fsorg-import-service-tests import-service
+        tests/application/tst_import_service.cpp
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/importing/ImportEngine.cpp
+        src/application/ImportService.cpp)
 
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
@@ -228,6 +246,12 @@ if (WIN32)
             tests/support/PathPrinting.h
             src/domain/support/PathUtils.h
             src/infrastructure/link/WindowsLinkService.cpp)
+
+    fsorg_add_qt_test(fsorg-windows-file-operations-tests windows-file-operations
+            tests/infrastructure/fileops/tst_windows_file_operations.cpp
+            tests/support/PathPrinting.h
+            src/infrastructure/link/WindowsLinkService.cpp
+            src/infrastructure/fileops/WindowsFileOperations.cpp)
 
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp

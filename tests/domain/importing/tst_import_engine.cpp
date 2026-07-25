@@ -3,8 +3,10 @@
 #include "domain/importing/ImportEngine.h"
 #include "tests/doubles/FakeFileOperations.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
+#include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
+#include "tests/support/PathPrinting.h"
 
 class ImportEngineTest : public QObject
 {
@@ -15,11 +17,12 @@ private slots:
     static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
     static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
     static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
-    static void AFinishedImportLandsTheAddonInTheLibraryAndClearsTheDestination();
+    static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
     static void AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs();
     static void AFolderOutsideTheConfiguredDestinationsIsNeverImported();
     static void ADestinationRootIsNotAFolderInsideItself();
     static void AForeignLinkIsNeverImportedAsIfItWereAFolder();
+    static void AFinishedImportLeavesALinkWhereTheFolderUsedToBe();
 };
 
 namespace
@@ -36,7 +39,9 @@ namespace
         InMemoryFileSystem fileSystem;
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
-        ImportEngine engine{filesystemProbe, files};
+        FakeLinkService linkService{fileSystem};
+        LinkingEngine linking{linkService, filesystemProbe};
+        ImportEngine engine{filesystemProbe, files, linking, LinkType::Junction};
 
         SimulatorProfile profile{.destinations = {"E:/Sim/Community"},
                                  .defaultDestination = "E:/Sim/Community"};
@@ -125,7 +130,7 @@ void ImportEngineTest::ACopyThatFailsKeepsItsStagingForTheResumeToFind()
     f.VerifySimBridgeIsStillWhereItWas();
 }
 
-void ImportEngineTest::AFinishedImportLandsTheAddonInTheLibraryAndClearsTheDestination()
+void ImportEngineTest::AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway()
 {
     Fixture f;
     f.AddSimBridgeToTheDestination();
@@ -137,7 +142,8 @@ void ImportEngineTest::AFinishedImportLandsTheAddonInTheLibraryAndClearsTheDesti
     QVERIFY(f.fileSystem.Exists(kTarget / "dist/simbridge.exe"));
     QCOMPARE(f.fileSystem.FileSize(kTarget / "dist/simbridge.exe"), 400 * kMegabyte);
     QVERIFY(!f.fileSystem.Exists(kStaging));
-    QVERIFY(!f.fileSystem.Exists(kSource));
+    QVERIFY(!f.fileSystem.IsDirectory(kSource));
+    QVERIFY(!f.fileSystem.Exists(kSource / "dist/simbridge.exe"));
 }
 
 void ImportEngineTest::AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs()
@@ -207,6 +213,18 @@ void ImportEngineTest::AForeignLinkIsNeverImportedAsIfItWereAFolder()
     QVERIFY(f.fileSystem.IsLink("E:/Sim/Community/fsdreamteam-gsx-pro"));
     QVERIFY(f.fileSystem.Exists(foreign / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/fsdreamteam-gsx-pro"));
+}
+
+void ImportEngineTest::AFinishedImportLeavesALinkWhereTheFolderUsedToBe()
+{
+    Fixture f;
+    f.AddSimBridgeToTheDestination();
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), ImportResult::Completed);
+    QVERIFY(f.fileSystem.IsLink(kSource));
+    QCOMPARE(f.fileSystem.LinkTarget(kSource).value(), kTarget);
 }
 
 QTEST_APPLESS_MAIN(ImportEngineTest)

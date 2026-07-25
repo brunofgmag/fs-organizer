@@ -10,12 +10,14 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/ImportService.cpp
         src/application/ProfileService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
+        src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp

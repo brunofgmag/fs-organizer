@@ -51,8 +51,11 @@ namespace
     }
 }
 
-ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe, FileOperations& files)
-    : filesystemProbe_(filesystemProbe), files_(files)
+ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
+                           FileOperations& files,
+                           const LinkingEngine& linking,
+                           const LinkType linkType)
+    : filesystemProbe_(filesystemProbe), files_(files), linking_(linking), linkType_(linkType)
 {
 }
 
@@ -99,6 +102,11 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     if (!files_.RemoveTree(request.source))
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotRemoveSource);
+    }
+
+    if (!linking_.Enable(Addon{request.target}, request.source.parent_path(), linkType_).Succeeded())
+    {
+        return ImportOutcome::Stopped(ImportResult::CouldNotCreateLink);
     }
 
     return ImportOutcome::Completed();
