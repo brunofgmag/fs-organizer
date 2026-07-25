@@ -8,11 +8,19 @@
 
 [[nodiscard]] inline std::string ComparablePath(const std::filesystem::path& path)
 {
-    std::string key = path.lexically_normal().generic_string();
+    std::string text = path.generic_string();
+    std::ranges::replace(text, '\\', '/');
+
+    std::string key = std::filesystem::path(text).lexically_normal().generic_string();
     std::ranges::transform(key, key.begin(), [](const unsigned char character)
     {
         return static_cast<char>(std::tolower(character));
     });
+
+    while (key.size() > 1 && key.back() == '/' && key[key.size() - 2] != ':')
+    {
+        key.pop_back();
+    }
 
     return key;
 }

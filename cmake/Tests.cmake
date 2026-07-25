@@ -48,6 +48,11 @@ add_test(NAME no-literal-colors
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-literal-colors.cmake")
 
+fsorg_add_qt_test(fsorg-path-utils-tests path-utils
+        tests/domain/support/tst_path_utils.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
         tests/doubles/FakeFileOperations.h
