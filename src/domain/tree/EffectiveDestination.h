@@ -13,4 +13,7 @@
 [[nodiscard]] std::filesystem::path EffectiveDestination(const SimulatorProfile& profile,
                                                          const std::filesystem::path& addonFolder);
 
+[[nodiscard]] std::filesystem::path PlannedLinkPath(const SimulatorProfile& profile,
+                                                    const std::filesystem::path& addonFolder);
+
 #endif // FS_ORGANIZER_DOMAIN_TREE_EFFECTIVE_DESTINATION_H

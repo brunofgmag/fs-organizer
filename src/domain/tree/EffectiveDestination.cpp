@@ -59,3 +59,8 @@ std::filesystem::path EffectiveDestination(const SimulatorProfile& profile,
 
     return EffectiveDestination(profile, library->id, RelativeToLibrary(*library, addonFolder));
 }
+
+std::filesystem::path PlannedLinkPath(const SimulatorProfile& profile, const std::filesystem::path& addonFolder)
+{
+    return EffectiveDestination(profile, addonFolder) / addonFolder.filename();
+}

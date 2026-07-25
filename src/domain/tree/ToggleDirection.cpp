@@ -7,15 +7,6 @@
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
 
-namespace
-{
-    std::filesystem::path PlannedLinkPath(const SimulatorProfile& profile,
-                                          const std::filesystem::path& addonFolder)
-    {
-        return EffectiveDestination(profile, addonFolder) / addonFolder.filename();
-    }
-}
-
 bool LinksTo(const DestinationEntry& entry, const std::filesystem::path& addonFolder)
 {
     return (entry.classification == EntryClassification::Managed
