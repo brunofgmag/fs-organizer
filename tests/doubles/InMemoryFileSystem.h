@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <limits>
 #include <map>
 #include <optional>
 #include <ranges>
@@ -51,6 +52,29 @@ public:
     [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const
     {
         return IsDirectory(path) && !readOnlyPaths_.contains(Key(path));
+    }
+
+    void SetFreeSpace(const std::filesystem::path& path, const std::uintmax_t bytes)
+    {
+        freeSpace_[path.root_name().generic_string()] = bytes;
+    }
+
+    void MarkFreeSpaceUnknown(const std::filesystem::path& path)
+    {
+        unmeasurableVolumes_.insert(path.root_name().generic_string());
+    }
+
+    [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const
+    {
+        const std::string volume = path.root_name().generic_string();
+        if (unmeasurableVolumes_.contains(volume))
+        {
+            return std::nullopt;
+        }
+
+        const auto measured = freeSpace_.find(volume);
+        return measured == freeSpace_.end() ? std::numeric_limits<std::uintmax_t>::max()
+                                            : measured->second;
     }
 
     [[nodiscard]] bool Exists(const std::filesystem::path& path) const
@@ -197,6 +221,8 @@ private:
     }
 
     std::map<std::string, Node> nodes_;
+    std::map<std::string, std::uintmax_t> freeSpace_;
+    std::set<std::string> unmeasurableVolumes_;
     std::set<std::string> unavailableVolumes_;
     std::set<std::string> readOnlyPaths_;
 };

@@ -1,0 +1,21 @@
+#ifndef FS_ORGANIZER_DOMAIN_PORTS_FILE_OPERATIONS_H
+#define FS_ORGANIZER_DOMAIN_PORTS_FILE_OPERATIONS_H
+
+#include <filesystem>
+#include <functional>
+
+#include "domain/model/CopyOutcome.h"
+
+class FileOperations
+{
+public:
+    virtual ~FileOperations() = default;
+
+    [[nodiscard]] virtual CopyOutcome CopyTree(const std::filesystem::path& source,
+                                               const std::filesystem::path& destination,
+                                               const std::function<bool(const CopyProgress&)>& onProgress) = 0;
+
+    [[nodiscard]] virtual bool RemoveTree(const std::filesystem::path& path) = 0;
+};
+
+#endif // FS_ORGANIZER_DOMAIN_PORTS_FILE_OPERATIONS_H

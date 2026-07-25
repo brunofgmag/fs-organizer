@@ -1,4 +1,5 @@
 set(DOMAIN_SOURCES
+        src/domain/importing/ImportEngine.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp

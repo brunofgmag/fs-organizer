@@ -5,6 +5,7 @@
 
 #include "domain/model/CheckState.h"
 #include "domain/model/EntryClassification.h"
+#include "domain/model/ImportResult.h"
 #include "domain/model/LinkFailure.h"
 
 namespace QTest
@@ -54,6 +55,21 @@ namespace QTest
         }
 
         return qstrdup("LinkFailure(?)");
+    }
+
+    template <>
+    inline char* toString(const ImportResult& t)
+    {
+        switch (t)
+        {
+        case ImportResult::Completed: return qstrdup("Completed");
+        case ImportResult::Cancelled: return qstrdup("Cancelled");
+        case ImportResult::CouldNotCheckFreeSpace: return qstrdup("CouldNotCheckFreeSpace");
+        case ImportResult::NotEnoughFreeSpace: return qstrdup("NotEnoughFreeSpace");
+        case ImportResult::CouldNotCopy: return qstrdup("CouldNotCopy");
+        }
+
+        return qstrdup("ImportResult(?)");
     }
 }
 

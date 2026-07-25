@@ -93,3 +93,39 @@ bool WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& path) co
 
     return true;
 }
+
+std::optional<std::uintmax_t> WindowsFilesystemProbe::FreeSpaceOn(const std::filesystem::path& path) const
+{
+    ULARGE_INTEGER available{};
+    if (GetDiskFreeSpaceExW(NativePath(path).c_str(), &available, nullptr, nullptr) == 0)
+    {
+        return std::nullopt;
+    }
+
+    return available.QuadPart;
+}
+
+std::vector<FileFingerprint> WindowsFilesystemProbe::FingerprintTree(
+    const std::filesystem::path& root) const
+{
+    std::vector<FileFingerprint> files;
+
+    std::error_code error;
+    const std::filesystem::recursive_directory_iterator entries(
+        root, std::filesystem::directory_options::skip_permission_denied, error);
+
+    for (const std::filesystem::directory_entry& entry : entries)
+    {
+        if (!entry.is_regular_file(error))
+        {
+            continue;
+        }
+
+        files.push_back(FileFingerprint{
+            entry.path().lexically_relative(root),
+            entry.file_size(error)
+        });
+    }
+
+    return files;
+}

@@ -39,6 +39,26 @@ public:
         return fileSystem_.IsWritable(path);
     }
 
+    [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(
+        const std::filesystem::path& path) const override
+    {
+        return fileSystem_.FreeSpaceOn(path);
+    }
+
+    [[nodiscard]] std::vector<FileFingerprint> FingerprintTree(
+        const std::filesystem::path& root) const override
+    {
+        std::vector<FileFingerprint> files;
+        for (const std::filesystem::path& file : fileSystem_.FilesUnder(root))
+        {
+            files.push_back(FileFingerprint{
+                file.lexically_relative(root),
+                fileSystem_.FileSize(file)
+            });
+        }
+        return files;
+    }
+
 private:
     InMemoryFileSystem& fileSystem_;
 };

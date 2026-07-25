@@ -58,6 +58,14 @@ fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h)
 
+fsorg_add_qt_test(fsorg-import-engine-tests import-engine
+        tests/domain/importing/tst_import_engine.cpp
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        src/domain/importing/ImportEngine.cpp)
+
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
         tests/doubles/FakeFilesystemProbe.h
