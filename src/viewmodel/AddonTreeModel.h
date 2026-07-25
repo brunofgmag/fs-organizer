@@ -24,6 +24,8 @@ public:
 
     [[nodiscard]] const ProfileSnapshot& Snapshot() const;
 
+    [[nodiscard]] const SimulatorProfile& Profile() const;
+
     [[nodiscard]] static const TreeNode* NodeAt(const QModelIndex& position);
 
     [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex& parent) const override;

@@ -31,12 +31,17 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
+        src/viewmodel/CommunityModel.cpp
+        src/viewmodel/CommunityViewModel.cpp
         src/viewmodel/SetupViewModel.cpp
 )
 
 set(VIEW_SOURCES
         src/view/AddonTreePage.cpp
+        src/view/CommunityPage.cpp
+        src/view/FailureText.cpp
         src/view/MainWindow.cpp
+        src/view/RepairDialog.cpp
         src/view/SetupWizard.cpp
 )
 

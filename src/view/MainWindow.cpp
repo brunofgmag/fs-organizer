@@ -8,6 +8,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStatusBar>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 
 #include "infrastructure/platform/WindowsTitleBar.h"
@@ -29,11 +30,24 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
 
     pages_ = new QStackedWidget(this);
 
+    auto* sidebar = new QWidget(this);
+    sidebar->setMinimumWidth(148);
+    navigation_ = new QVBoxLayout(sidebar);
+    navigation_->setContentsMargins(8, 8, 8, 8);
+    navigation_->setSpacing(2);
+    navigation_->addStretch();
+
+    auto* body = new QWidget(this);
+    auto* row = new QHBoxLayout(body);
+    row->setContentsMargins(0, 0, 0, 0);
+    row->addWidget(sidebar);
+    row->addWidget(pages_, 1);
+
     auto* central = new QWidget(this);
     auto* layout = new QVBoxLayout(central);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(CreateHeader());
-    layout->addWidget(pages_, 1);
+    layout->addWidget(body, 1);
 
     setCentralWidget(central);
 
@@ -89,10 +103,34 @@ void MainWindow::ShowProfiles(const AppSettings& settings)
     profiles_->setCurrentIndex(active >= 0 ? active : 0);
 }
 
-void MainWindow::ShowPage(QWidget* page) const
+QToolButton* MainWindow::AddPage(const QString& label, QWidget* page)
 {
     pages_->addWidget(page);
-    pages_->setCurrentWidget(page);
+
+    auto* button = new QToolButton(this);
+    button->setText(label);
+    button->setCheckable(true);
+    button->setAutoExclusive(true);
+    button->setAutoRaise(true);
+    button->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    button->setMinimumHeight(32);
+
+    navigation_->insertWidget(navigation_->count() - 1, button);
+
+    connect(button, &QToolButton::clicked, this, [this, page]
+    {
+        pages_->setCurrentWidget(page);
+        emit PageSelected(page);
+    });
+
+    if (pages_->count() == 1)
+    {
+        button->setChecked(true);
+        pages_->setCurrentWidget(page);
+    }
+
+    return button;
 }
 
 void MainWindow::ShowStatus(const QString& message) const

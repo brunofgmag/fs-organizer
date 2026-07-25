@@ -1,4 +1,5 @@
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QToolButton>
 
 #include "application/ProfileService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
@@ -14,8 +15,10 @@
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "view/AddonTreePage.h"
+#include "view/CommunityPage.h"
 #include "view/MainWindow.h"
 #include "view/SetupWizard.h"
+#include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/SetupViewModel.h"
 
 namespace
@@ -71,9 +74,37 @@ int main(int argc, char* argv[])
     AddonTreeViewModel treeViewModel(profileService, settings, processProbe, model);
     auto* page = new AddonTreePage(treeViewModel, model);
 
-    window.ShowPage(page);
+    CommunityModel communityModel;
+    CommunityViewModel communityViewModel(profileService, model, communityModel);
+    auto* communityPage = new CommunityPage(communityViewModel, communityModel);
+
+    window.AddPage(QObject::tr("Árvore"), page);
+    QToolButton* communityButton =
+        window.AddPage(QStringLiteral("Community"), communityPage);
 
     QObject::connect(page, &AddonTreePage::StatusChanged, &window, &MainWindow::ShowStatus);
+    QObject::connect(communityPage, &CommunityPage::StatusChanged, &window,
+                     &MainWindow::ShowStatus);
+
+    QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &communityViewModel,
+                     &CommunityViewModel::Show);
+
+    QObject::connect(&window, &MainWindow::PageSelected, &communityViewModel,
+                     [&communityViewModel, communityPage](const QWidget* selected)
+                     {
+                         if (selected == communityPage)
+                         {
+                             communityViewModel.Show();
+                         }
+                     });
+
+    QObject::connect(&communityViewModel, &CommunityViewModel::AttentionChanged, communityButton,
+                     [communityButton](const std::size_t count)
+                     {
+                         communityButton->setText(count > 0
+                                                      ? QStringLiteral("Community (%1)").arg(count)
+                                                      : QStringLiteral("Community"));
+                     });
     QObject::connect(&treeViewModel, &AddonTreeViewModel::RestartPendingChanged, &window,
                      &MainWindow::ShowRestartPending);
     QObject::connect(&window, &MainWindow::ProfileChosen, &treeViewModel,

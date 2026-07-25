@@ -176,6 +176,34 @@ fsorg_add_qt_test(fsorg-addon-tree-filter-model-tests addon-tree-filter-model
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp)
 
+fsorg_add_qt_test(fsorg-community-model-tests community-model
+        tests/viewmodel/tst_community_model.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/viewmodel/CommunityModel.cpp)
+
+fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
+        tests/viewmodel/tst_community_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/linking/EntryClassifier.cpp
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/RepairPlan.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/ToggleDirection.cpp
+        src/application/ProfileService.cpp
+        src/viewmodel/AddonTreeModel.cpp
+        src/viewmodel/CommunityModel.cpp
+        src/viewmodel/CommunityViewModel.cpp)
+
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp
         tests/support/PathPrinting.h

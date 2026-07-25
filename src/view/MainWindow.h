@@ -10,6 +10,8 @@
 class QComboBox;
 class QLabel;
 class QStackedWidget;
+class QToolButton;
+class QVBoxLayout;
 
 class MainWindow final : public QMainWindow
 {
@@ -20,7 +22,7 @@ public:
 
     void ShowProfiles(const AppSettings& settings);
 
-    void ShowPage(QWidget* page) const;
+    QToolButton* AddPage(const QString& label, QWidget* page);
 
     void ShowStatus(const QString& message) const;
 
@@ -30,6 +32,8 @@ signals:
     void AddProfileRequested();
 
     void ProfileChosen(const std::string& profileId);
+
+    void PageSelected(QWidget* page);
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -42,6 +46,7 @@ private:
     AppSettings settings_;
     QComboBox* profiles_ = nullptr;
     QStackedWidget* pages_ = nullptr;
+    QVBoxLayout* navigation_ = nullptr;
     QLabel* restart_ = nullptr;
 };
 

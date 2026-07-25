@@ -64,6 +64,11 @@ const ProfileSnapshot& AddonTreeModel::Snapshot() const
     return snapshot_;
 }
 
+const SimulatorProfile& AddonTreeModel::Profile() const
+{
+    return profile_;
+}
+
 const TreeNode* AddonTreeModel::NodeAt(const QModelIndex& position)
 {
     return position.isValid() ? static_cast<const Item*>(position.internalPointer())->node : nullptr;
