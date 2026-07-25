@@ -5,6 +5,7 @@ endif ()
 add_executable(fsorg-probe
         tools/fsorg-probe/main.cpp
         src/domain/linking/EnabledStateResolver.cpp
+        src/domain/tree/AddonTree.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp

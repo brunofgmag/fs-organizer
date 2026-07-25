@@ -14,6 +14,8 @@ namespace
 {
     constexpr auto kApplicationFolderName = "fs-organizer";
     constexpr auto kSettingsFileName = "settings.json";
+    constexpr auto kJournalFolderName = "journal";
+    constexpr auto kJournalFileName = "operations.jsonl";
 
     std::filesystem::path KnownFolder(const KNOWNFOLDERID& folderId)
     {
@@ -44,4 +46,9 @@ std::filesystem::path LocalAppDataFolder()
 std::filesystem::path SettingsFilePath()
 {
     return LocalAppDataFolder() / kApplicationFolderName / kSettingsFileName;
+}
+
+std::filesystem::path JournalFilePath()
+{
+    return LocalAppDataFolder() / kApplicationFolderName / kJournalFolderName / kJournalFileName;
 }

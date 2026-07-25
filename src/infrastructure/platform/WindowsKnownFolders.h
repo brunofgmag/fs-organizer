@@ -9,4 +9,6 @@
 
 [[nodiscard]] std::filesystem::path SettingsFilePath();
 
+[[nodiscard]] std::filesystem::path JournalFilePath();
+
 #endif // FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_WINDOWS_KNOWN_FOLDERS_H

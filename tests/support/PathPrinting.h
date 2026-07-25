@@ -8,9 +8,9 @@
 namespace QTest
 {
     template <>
-    inline char* toString(const std::filesystem::path& path)
+    inline char* toString(const std::filesystem::path& t)
     {
-        return qstrdup(path.generic_string().c_str());
+        return qstrdup(t.generic_string().c_str());
     }
 }
 

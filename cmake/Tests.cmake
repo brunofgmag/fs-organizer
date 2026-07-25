@@ -69,6 +69,52 @@ fsorg_add_qt_test(fsorg-enabled-state-resolver-tests enabled-state-resolver
         src/domain/support/PathUtils.h
         src/domain/linking/EnabledStateResolver.cpp)
 
+fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
+        tests/domain/tree/tst_addon_tree.cpp
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/model/EnabledAddons.h
+        src/domain/support/PathUtils.h
+        src/domain/linking/EnabledStateResolver.cpp
+        src/domain/tree/AddonTree.cpp)
+
+fsorg_add_qt_test(fsorg-effective-destination-tests effective-destination
+        tests/domain/tree/tst_effective_destination.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp)
+
+fsorg_add_qt_test(fsorg-toggle-direction-tests toggle-direction
+        tests/domain/tree/tst_toggle_direction.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/ToggleDirection.cpp)
+
+fsorg_add_qt_test(fsorg-addon-service-tests addon-service
+        tests/application/tst_addon_service.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/linking/EnabledStateResolver.cpp
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/ToggleDirection.cpp
+        src/application/AddonService.cpp)
+
 fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
         tests/infrastructure/catalog/tst_json_manifest_parser.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp)
@@ -78,6 +124,10 @@ fsorg_add_qt_test(fsorg-filesystem-scanner-tests filesystem-scanner
         tests/support/PathPrinting.h
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp)
+
+fsorg_add_qt_test(fsorg-jsonl-operation-journal-tests jsonl-operation-journal
+        tests/infrastructure/journal/tst_jsonl_operation_journal.cpp
+        src/infrastructure/journal/JsonlOperationJournal.cpp)
 
 fsorg_add_qt_test(fsorg-json-settings-repository-tests json-settings-repository
         tests/infrastructure/settings/tst_json_settings_repository.cpp
@@ -93,6 +143,8 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/doubles/FakeSimulatorLocator.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/LibraryLookup.cpp
         src/viewmodel/SetupViewModel.cpp)
 
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator

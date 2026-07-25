@@ -8,6 +8,7 @@
 
 #include "domain/linking/EnabledStateResolver.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -72,7 +73,6 @@ namespace
 
         if (folder.kind == TreeNodeKind::Addon)
         {
-            ++facts.addons;
             ++facts.contentTypes[folder.addon->manifest.contentType];
             facts.addonFolderNames.insert(ComparablePath(folder.path.filename()));
             return;
@@ -96,7 +96,10 @@ namespace
 
         for (const std::filesystem::path& library : libraries)
         {
-            for (const TreeNode& category : scanner.Scan(library).children)
+            const TreeNode tree = scanner.Scan(library);
+            facts.addons += CountAddons(tree);
+
+            for (const TreeNode& category : tree.children)
             {
                 ++facts.categories;
 

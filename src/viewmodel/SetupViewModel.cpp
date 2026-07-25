@@ -4,6 +4,8 @@
 #include <ranges>
 
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
+#include "domain/tree/LibraryLookup.h"
 
 namespace
 {
@@ -27,30 +29,13 @@ namespace
     bool IsInsideARegisteredLibrary(const std::vector<RegisteredLibrary>& libraries,
                                     const std::filesystem::path& path)
     {
-        const std::string candidate = ComparablePath(path);
-
-        return std::ranges::any_of(libraries, [&candidate](const RegisteredLibrary& known)
+        std::vector<Library> known;
+        for (const RegisteredLibrary& registered : libraries)
         {
-            const std::string registered = ComparablePath(known.library.path);
-
-            return candidate == registered || candidate.starts_with(registered + "/");
-        });
-    }
-
-    std::size_t CountAddons(const TreeNode& node)
-    {
-        if (node.kind == TreeNodeKind::Addon)
-        {
-            return 1;
+            known.push_back(registered.library);
         }
 
-        std::size_t addons = 0;
-        for (const TreeNode& child : node.children)
-        {
-            addons += CountAddons(child);
-        }
-
-        return addons;
+        return LibraryContaining(known, path) != nullptr;
     }
 
     bool IsTaken(const std::vector<SimulatorProfile>& profiles, const std::string& id)

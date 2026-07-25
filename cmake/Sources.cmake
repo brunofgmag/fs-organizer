@@ -1,6 +1,14 @@
 set(DOMAIN_SOURCES
         src/domain/linking/EnabledStateResolver.cpp
         src/domain/linking/LinkingEngine.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/ToggleDirection.cpp
+)
+
+set(APPLICATION_SOURCES
+        src/application/AddonService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
@@ -8,6 +16,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
+        src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
         src/infrastructure/platform/WindowsTitleBar.cpp
@@ -29,6 +38,7 @@ set(VIEW_SOURCES
 set(APP_SOURCES
         src/main.cpp
         ${DOMAIN_SOURCES}
+        ${APPLICATION_SOURCES}
         ${INFRASTRUCTURE_SOURCES}
         ${VIEWMODEL_SOURCES}
         ${VIEW_SOURCES}

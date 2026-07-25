@@ -6,15 +6,12 @@
 #include <vector>
 
 #include "domain/model/Addon.h"
-#include "domain/model/CheckState.h"
 #include "domain/model/TreeNodeKind.h"
 
 struct TreeNode
 {
     TreeNodeKind kind = TreeNodeKind::Category;
     std::filesystem::path path;
-    CheckState checkState = CheckState::Unchecked;
-    std::optional<std::filesystem::path> destinationOverride;
     std::optional<Addon> addon;
     std::vector<TreeNode> children;
 };
