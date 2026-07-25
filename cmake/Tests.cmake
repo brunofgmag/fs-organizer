@@ -53,6 +53,11 @@ fsorg_add_qt_test(fsorg-path-utils-tests path-utils
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 
+fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
+        tests/doubles/tst_in_memory_file_system.cpp
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h)
+
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
         tests/doubles/FakeFilesystemProbe.h

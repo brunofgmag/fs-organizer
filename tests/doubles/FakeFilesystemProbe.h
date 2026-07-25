@@ -26,7 +26,7 @@ public:
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(
         const std::filesystem::path& path) const override
     {
-        return fileSystem_.ChildrenOf(path);
+        return fileSystem_.ChildDirectoriesOf(path);
     }
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override

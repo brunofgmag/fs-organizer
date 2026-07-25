@@ -26,12 +26,7 @@ public:
 
     [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override
     {
-        if (!fileSystem_.Exists(linkPath))
-        {
-            return false;
-        }
-        fileSystem_.RemoveNode(linkPath);
-        return true;
+        return fileSystem_.RemoveNode(linkPath);
     }
 
     [[nodiscard]] bool IsReparsePoint(const std::filesystem::path& path) const override
