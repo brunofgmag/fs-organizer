@@ -13,6 +13,7 @@ class JsonlOperationJournalTest : public QObject
 private slots:
     static void EachRecordBecomesOneLineWithEveryFieldOfTheOperation();
     static void AppendingNeverRewritesWhatWasAlreadyThere();
+    static void TheRepairKindsHaveTheirOwnStableNames();
 };
 
 namespace
@@ -83,6 +84,20 @@ void JsonlOperationJournalTest::AppendingNeverRewritesWhatWasAlreadyThere()
     QCOMPARE(lines.size(), 2);
     QVERIFY(lines.front().contains(QStringLiteral("\"kind\":\"enable\"")));
     QVERIFY(lines.back().contains(QStringLiteral("\"kind\":\"disable\"")));
+}
+
+void JsonlOperationJournalTest::TheRepairKindsHaveTheirOwnStableNames()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::RemoveBrokenLink, LinkFailure::None));
+    journal.Append(Record(OperationKind::RepointLink, LinkFailure::None));
+
+    const QStringList lines = LinesOf(storage.File());
+    QCOMPARE(lines.size(), 2);
+    QVERIFY(lines[0].contains(QStringLiteral("\"kind\":\"removeBrokenLink\"")));
+    QVERIFY(lines[1].contains(QStringLiteral("\"kind\":\"repointLink\"")));
 }
 
 QTEST_APPLESS_MAIN(JsonlOperationJournalTest)

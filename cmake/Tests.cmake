@@ -69,6 +69,15 @@ fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         src/domain/support/PathUtils.h
         src/domain/linking/EntryClassifier.cpp)
 
+fsorg_add_qt_test(fsorg-repair-plan-tests repair-plan
+        tests/domain/linking/tst_repair_plan.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/linking/RepairPlan.cpp)
+
 fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         tests/domain/tree/tst_addon_tree.cpp
         tests/doubles/FakeFileOperations.h
@@ -109,6 +118,7 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/support/PathPrinting.h
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/RepairPlan.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp

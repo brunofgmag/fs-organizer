@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_APPLICATION_PROFILE_SERVICE_H
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -13,6 +14,7 @@
 #include "application/ports/OperationJournal.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
+#include "domain/linking/RepairPlan.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/ports/CatalogScanner.h"
 
@@ -39,6 +41,9 @@ public:
                                                               const std::vector<const TreeNode*>& nodes,
                                                               bool enable);
 
+    [[nodiscard]] std::vector<LinkOperationResult> Repair(const SimulatorProfile& profile,
+                                                          const std::vector<RepairRequest>& requests);
+
     [[nodiscard]] bool CanUndo() const;
 
     [[nodiscard]] std::vector<LinkOperationResult> UndoLastBatch();
@@ -64,6 +69,12 @@ private:
         bool enable);
 
     [[nodiscard]] static Step Inverse(const Step& step);
+
+    [[nodiscard]] static std::optional<Step> PlanRepair(const SimulatorProfile& profile,
+                                                        const RepairRequest& request);
+
+    [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile,
+                                                   const RepairRequest& request);
 
     [[nodiscard]] LinkOperationResult Run(const Step& step) const;
 

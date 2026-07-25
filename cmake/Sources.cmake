@@ -1,6 +1,7 @@
 set(DOMAIN_SOURCES
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/RepairPlan.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp

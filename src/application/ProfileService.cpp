@@ -31,12 +31,12 @@ namespace
 }
 
 ProfileService::ProfileService(const CatalogScanner& catalog,
-                           const EntryClassifier& classifier,
-                           const LinkingEngine& linking,
-                           OperationJournal& journal,
-                           const Clock& clock,
-                           const LibraryIdGenerator& identities,
-                           const LinkType linkType)
+                               const EntryClassifier& classifier,
+                               const LinkingEngine& linking,
+                               OperationJournal& journal,
+                               const Clock& clock,
+                               const LibraryIdGenerator& identities,
+                               const LinkType linkType)
     : catalog_(catalog),
       classifier_(classifier),
       linking_(linking),
@@ -48,7 +48,7 @@ ProfileService::ProfileService(const CatalogScanner& catalog,
 }
 
 LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile,
-                                            const std::filesystem::path& path) const
+                                              const std::filesystem::path& path) const
 {
     const TreeNode tree = catalog_.Scan(path);
 
@@ -88,9 +88,9 @@ std::vector<DestinationEntry> ProfileService::ResolveEntries(const SimulatorProf
 }
 
 std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfile& profile,
-                                                        const ProfileSnapshot& snapshot,
-                                                        const std::vector<const TreeNode*>& nodes,
-                                                        const bool enable)
+                                                            const ProfileSnapshot& snapshot,
+                                                            const std::vector<const TreeNode*>& nodes,
+                                                            const bool enable)
 {
     std::vector<Step> steps;
     std::set<std::string> planned;
@@ -137,12 +137,10 @@ std::vector<ProfileService::Step> ProfileService::StepsFor(
 
     if (enable)
     {
-        const std::filesystem::path destination = EffectiveDestination(profile, addon.path);
-
         return {
             {
                 OperationKind::EnableAddon, identity, addon.path,
-                destination / addon.path.filename()
+                PlannedLinkPath(profile, addon.path)
             }
         };
     }
@@ -169,7 +167,9 @@ ProfileService::Step ProfileService::Inverse(const Step& step)
 
 LinkOperationResult ProfileService::Run(const Step& step) const
 {
-    const LinkOutcome outcome = step.kind == OperationKind::EnableAddon
+    const bool creates = step.kind == OperationKind::EnableAddon || step.kind == OperationKind::RepointLink;
+
+    const LinkOutcome outcome = creates
                                     ? linking_.Enable(Addon{step.addonFolder, Manifest{}},
                                                       step.linkPath.parent_path(), linkType_)
                                     : linking_.Disable(step.linkPath);
@@ -183,9 +183,9 @@ LinkOperationResult ProfileService::Run(const Step& step) const
 }
 
 std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfile& profile,
-                                                          const ProfileSnapshot& snapshot,
-                                                          const std::vector<const TreeNode*>& nodes,
-                                                          const bool enable)
+                                                            const ProfileSnapshot& snapshot,
+                                                            const std::vector<const TreeNode*>& nodes,
+                                                            const bool enable)
 {
     const std::vector<Step> steps = PlanSteps(profile, snapshot, nodes, enable);
 
@@ -199,6 +199,88 @@ std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfi
         if (result.outcome.Succeeded())
         {
             undo.push_back(Inverse(step));
+        }
+
+        results.push_back(std::move(result));
+    }
+
+    if (!undo.empty())
+    {
+        undo_ = std::move(undo);
+    }
+
+    return results;
+}
+
+std::optional<ProfileService::Step> ProfileService::PlanRepair(const SimulatorProfile& profile,
+                                                               const RepairRequest& request)
+{
+    const DestinationEntry& entry = request.candidate.entry;
+
+    if (request.action == RepairAction::Repoint)
+    {
+        if (!request.candidate.repointTo.has_value())
+        {
+            return std::nullopt;
+        }
+
+        return Step{
+            OperationKind::RepointLink,
+            IdentityOf(profile, *request.candidate.repointTo),
+            *request.candidate.repointTo, entry.path
+        };
+    }
+
+    return Step{
+        OperationKind::RemoveBrokenLink, IdentityOf(profile, entry.target),
+        entry.target, entry.path
+    };
+}
+
+std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile& profile,
+                                                          const RepairRequest& request)
+{
+    const DestinationEntry& entry = request.candidate.entry;
+
+    std::vector<Step> undo;
+
+    if (request.action == RepairAction::Repoint)
+    {
+        undo.push_back({
+            OperationKind::DisableAddon,
+            IdentityOf(profile, *request.candidate.repointTo),
+            *request.candidate.repointTo, entry.path
+        });
+    }
+
+    undo.push_back({
+        OperationKind::EnableAddon, IdentityOf(profile, entry.target),
+        entry.target, entry.path
+    });
+
+    return undo;
+}
+
+std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& profile,
+                                                        const std::vector<RepairRequest>& requests)
+{
+    std::vector<LinkOperationResult> results;
+    std::vector<Step> undo;
+
+    for (const RepairRequest& request : requests)
+    {
+        const std::optional<Step> step = PlanRepair(profile, request);
+        if (!step.has_value())
+        {
+            continue;
+        }
+
+        LinkOperationResult result = Run(*step);
+
+        if (result.outcome.Succeeded())
+        {
+            const std::vector<Step> inverse = Inverse(profile, request);
+            undo.insert(undo.end(), inverse.begin(), inverse.end());
         }
 
         results.push_back(std::move(result));

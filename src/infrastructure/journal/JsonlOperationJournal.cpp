@@ -28,7 +28,15 @@ namespace
 
     QString KindName(const OperationKind kind)
     {
-        return kind == OperationKind::EnableAddon ? "enable" : "disable";
+        switch (kind)
+        {
+        case OperationKind::EnableAddon: return "enable";
+        case OperationKind::DisableAddon: return "disable";
+        case OperationKind::RemoveBrokenLink: return "removeBrokenLink";
+        case OperationKind::RepointLink: return "repointLink";
+        }
+
+        return "unknown";
     }
 
     QString FailureName(const LinkFailure failure)
