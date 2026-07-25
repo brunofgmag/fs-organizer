@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <ranges>
 
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenu>
@@ -74,7 +76,9 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel, AddonTreeModel& mode
     : QWidget(parent), viewModel_(viewModel), model_(model)
 {
     tree_ = new QTreeView(this);
-    tree_->setModel(&model_);
+    filter_ = new AddonTreeFilterModel(this);
+    filter_->setSourceModel(&model_);
+    tree_->setModel(filter_);
     tree_->setHeaderHidden(true);
     tree_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree_->setUniformRowHeights(true);
@@ -120,16 +124,27 @@ QWidget* AddonTreePage::CreateActions()
     undo_ = new QPushButton(tr("Desfazer último lote"), bar);
     auto* rescan = new QPushButton(tr("Reler do disco"), bar);
 
+    auto* search = new QLineEdit(bar);
+    search->setPlaceholderText(tr("Buscar addon..."));
+    search->setClearButtonEnabled(true);
+    search->setMaximumWidth(220);
+
+    auto* hideEmpty = new QCheckBox(tr("Ocultar categorias vazias"), bar);
+
     undo_->setEnabled(false);
 
     connect(enable, &QPushButton::clicked, this, [this] { ToggleSelection(true); });
     connect(disable, &QPushButton::clicked, this, [this] { ToggleSelection(false); });
     connect(undo_, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::UndoLastBatch);
     connect(rescan, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::ShowActiveProfile);
+    connect(search, &QLineEdit::textChanged, filter_, &AddonTreeFilterModel::Search);
+    connect(hideEmpty, &QCheckBox::toggled, filter_, &AddonTreeFilterModel::HideEmptyCategories);
 
     auto* layout = new QHBoxLayout(bar);
     layout->addWidget(enable);
     layout->addWidget(disable);
+    layout->addWidget(search);
+    layout->addWidget(hideEmpty);
     layout->addStretch();
     layout->addWidget(undo_);
     layout->addWidget(rescan);
@@ -178,7 +193,7 @@ std::vector<const TreeNode*> AddonTreePage::Chosen(const TreeNode* clicked) cons
 
     for (const QModelIndex& position : tree_->selectionModel()->selectedIndexes())
     {
-        if (const TreeNode* node = model_.NodeAt(position))
+        if (const TreeNode* node = model_.NodeAt(filter_->mapToSource(position)))
         {
             nodes.push_back(node);
         }
@@ -282,7 +297,7 @@ void AddonTreePage::OnScanFinished()
 
 void AddonTreePage::ShowDestinationMenu(const QPoint& where)
 {
-    const TreeNode* node = model_.NodeAt(tree_->indexAt(where));
+    const TreeNode* node = model_.NodeAt(filter_->mapToSource(tree_->indexAt(where)));
     const SimulatorProfile& profile = viewModel_.Profile();
 
     if (node == nullptr || profile.destinations.size() < 2)

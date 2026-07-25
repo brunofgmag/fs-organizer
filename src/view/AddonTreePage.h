@@ -5,6 +5,7 @@
 
 #include <QtWidgets/QWidget>
 
+#include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeViewModel.h"
 
 class QPushButton;
@@ -44,6 +45,7 @@ private:
     AddonTreeModel& model_;
     QStackedWidget* pages_ = nullptr;
     QTreeView* tree_ = nullptr;
+    AddonTreeFilterModel* filter_ = nullptr;
     QPushButton* undo_ = nullptr;
 };
 

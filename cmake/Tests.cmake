@@ -166,6 +166,16 @@ fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         src/domain/tree/LibraryLookup.cpp
         src/viewmodel/AddonTreeModel.cpp)
 
+fsorg_add_qt_test(fsorg-addon-tree-filter-model-tests addon-tree-filter-model
+        tests/viewmodel/tst_addon_tree_filter_model.cpp
+        tests/support/PathPrinting.h
+        src/domain/linking/EntryClassifier.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/viewmodel/AddonTreeFilterModel.cpp
+        src/viewmodel/AddonTreeModel.cpp)
+
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp
         tests/support/PathPrinting.h

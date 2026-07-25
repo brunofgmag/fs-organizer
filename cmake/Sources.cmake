@@ -28,6 +28,7 @@ set(INFRASTRUCTURE_SOURCES
 )
 
 set(VIEWMODEL_SOURCES
+        src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
         src/viewmodel/SetupViewModel.cpp
