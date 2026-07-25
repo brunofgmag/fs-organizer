@@ -28,3 +28,10 @@ std::filesystem::path RelativeToLibrary(const Library& library, const std::files
 
     return folder.size() > root.size() ? folder.substr(root.size() + 1) : std::string{};
 }
+
+AddonId IdentityOf(const SimulatorProfile& profile, const std::filesystem::path& addonFolder)
+{
+    const Library* library = LibraryContaining(profile, addonFolder);
+
+    return AddonId{library == nullptr ? LibraryId{} : library->id, addonFolder.filename().string()};
+}

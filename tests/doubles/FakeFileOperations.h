@@ -21,10 +21,20 @@ public:
         copyDropsAFile_ = true;
     }
 
+    void MakeTheMoveFail()
+    {
+        moveFails_ = true;
+    }
+
+    void MakeTheRemovalFail()
+    {
+        removalFails_ = true;
+    }
+
     [[nodiscard]] CopyOutcome CopyTree(
         const std::filesystem::path& source,
         const std::filesystem::path& destination,
-        const std::function<bool(const CopyProgress&)>& onProgress) override
+        const std::function<bool(const CopyProgress &)>& onProgress) override
     {
         const std::vector<std::filesystem::path> files = fileSystem_.FilesUnder(source);
 
@@ -73,18 +83,20 @@ public:
     [[nodiscard]] bool Move(const std::filesystem::path& source,
                             const std::filesystem::path& destination) override
     {
-        return fileSystem_.MoveTree(source, destination);
+        return !moveFails_ && fileSystem_.MoveTree(source, destination);
     }
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override
     {
-        return fileSystem_.RemoveTree(path);
+        return !removalFails_ && fileSystem_.RemoveTree(path);
     }
 
 private:
     InMemoryFileSystem& fileSystem_;
     bool copyFailsPartWayThrough_ = false;
     bool copyDropsAFile_ = false;
+    bool moveFails_ = false;
+    bool removalFails_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H

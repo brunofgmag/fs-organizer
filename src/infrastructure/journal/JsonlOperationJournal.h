@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "application/ports/OperationJournal.h"
+#include "domain/ports/OperationJournal.h"
 
 class JsonlOperationJournal final : public OperationJournal
 {

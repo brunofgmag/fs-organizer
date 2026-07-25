@@ -60,20 +60,25 @@ fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
 
 fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
+        tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/linking/LinkingEngine.cpp
+        src/domain/tree/LibraryLookup.cpp
         src/domain/importing/ImportEngine.cpp)
 
 fsorg_add_qt_test(fsorg-import-service-tests import-service
         tests/application/tst_import_service.cpp
+        tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
         tests/doubles/FakeProcessProbe.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h

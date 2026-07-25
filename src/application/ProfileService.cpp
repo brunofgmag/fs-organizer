@@ -21,13 +21,6 @@ namespace
 
         return roots;
     }
-
-    AddonId IdentityOf(const SimulatorProfile& profile, const std::filesystem::path& addonFolder)
-    {
-        const Library* library = LibraryContaining(profile, addonFolder);
-
-        return AddonId{library == nullptr ? LibraryId{} : library->id, addonFolder.filename().string()};
-    }
 }
 
 ProfileService::ProfileService(const CatalogScanner& catalog,
@@ -174,10 +167,8 @@ LinkOperationResult ProfileService::Run(const Step& step) const
                                                       step.linkPath.parent_path(), linkType_)
                                     : linking_.Disable(step.linkPath);
 
-    journal_.Append(OperationRecord{
-        clock_.Now(), step.kind, step.addonId, step.addonFolder,
-        step.linkPath, outcome.Failure()
-    });
+    journal_.Append(OperationRecord::OfLink(clock_.Now(), step.kind, step.addonId, step.addonFolder,
+                                            step.linkPath, outcome.Failure()));
 
     return LinkOperationResult{step.addonId, step.addonFolder, step.linkPath, step.kind, outcome};
 }

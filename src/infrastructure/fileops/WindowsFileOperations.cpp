@@ -29,14 +29,12 @@ namespace
 
     bool IsReparsePoint(const DWORD attributes)
     {
-        return attributes != INVALID_FILE_ATTRIBUTES
-            && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+        return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
     }
 
     bool IsDirectory(const DWORD attributes)
     {
-        return attributes != INVALID_FILE_ATTRIBUTES
-            && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
     }
 
     struct Walk
@@ -69,7 +67,7 @@ namespace
 
     struct CopyState
     {
-        const std::function<bool(const CopyProgress&)>* onProgress = nullptr;
+        const std::function<bool(const CopyProgress &)>* onProgress = nullptr;
         std::uintmax_t copiedBefore = 0;
         std::uintmax_t totalBytes = 0;
         bool cancelled = false;
@@ -93,7 +91,8 @@ namespace
 
         const CopyProgress progress{
             state->copiedBefore + static_cast<std::uintmax_t>(transferred.QuadPart),
-            state->totalBytes};
+            state->totalBytes
+        };
 
         if (!(*state->onProgress)(progress))
         {
@@ -107,7 +106,7 @@ namespace
 
 CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
                                             const std::filesystem::path& destination,
-                                            const std::function<bool(const CopyProgress&)>& onProgress)
+                                            const std::function<bool(const CopyProgress &)>& onProgress)
 {
     const Walk walk = FilesUnder(source);
 

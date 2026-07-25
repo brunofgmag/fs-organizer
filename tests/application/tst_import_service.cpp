@@ -1,9 +1,11 @@
 #include <QtTest/QtTest>
 
 #include "application/ImportService.h"
+#include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
@@ -36,12 +38,16 @@ namespace
         FakeLinkService linkService{fileSystem};
         FakeProcessProbe processProbe;
         LinkingEngine linking{linkService, filesystemProbe};
-        ImportEngine engine{filesystemProbe, files, linking, LinkType::Junction};
+        FakeOperationJournal journal;
+        FakeClock clock;
+        ImportEngine engine{filesystemProbe, files, linking, journal, clock, LinkType::Junction};
         ImportService service{engine, processProbe, files, linking, LinkType::Junction};
 
-        SimulatorProfile profile{.destinations = {kDestination},
-                                 .defaultDestination = kDestination,
-                                 .libraries = {Library{"lib-1", kLibrary}}};
+        SimulatorProfile profile{
+            .destinations = {kDestination},
+            .defaultDestination = kDestination,
+            .libraries = {Library{"lib-1", kLibrary}}
+        };
 
         void AddBothCopies()
         {

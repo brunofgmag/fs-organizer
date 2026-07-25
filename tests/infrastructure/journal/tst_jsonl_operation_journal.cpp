@@ -14,6 +14,7 @@ private slots:
     static void EachRecordBecomesOneLineWithEveryFieldOfTheOperation();
     static void AppendingNeverRewritesWhatWasAlreadyThere();
     static void TheRepairKindsHaveTheirOwnStableNames();
+    static void AnImportRecordCarriesItsResultAndNoLinkFailure();
 };
 
 namespace
@@ -36,17 +37,22 @@ namespace
         return QString::fromStdString(content).split('\n', Qt::SkipEmptyParts);
     }
 
+    constexpr auto kMoment = std::chrono::seconds{1'769'000'000};
+    constexpr auto kSource = R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w)";
+    constexpr auto kTarget = R"(E:\Flight Simulator 2024\Community\pmdg-aircraft-77w)";
+
     OperationRecord Record(const OperationKind kind, const LinkFailure failure)
     {
-        OperationRecord record;
-        record.timestamp = std::chrono::system_clock::time_point{std::chrono::seconds{1'769'000'000}};
-        record.kind = kind;
-        record.addonId = AddonId{"library-1", "pmdg-aircraft-77w"};
-        record.source = R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w)";
-        record.target = R"(E:\Flight Simulator 2024\Community\pmdg-aircraft-77w)";
-        record.failure = failure;
+        return OperationRecord::OfLink(std::chrono::system_clock::time_point{kMoment}, kind,
+                                       AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget,
+                                       failure);
+    }
 
-        return record;
+    OperationRecord Record(const OperationKind kind, const ImportResult result)
+    {
+        return OperationRecord::OfImport(std::chrono::system_clock::time_point{kMoment}, kind,
+                                         AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget,
+                                         result);
     }
 }
 
@@ -98,6 +104,22 @@ void JsonlOperationJournalTest::TheRepairKindsHaveTheirOwnStableNames()
     QCOMPARE(lines.size(), 2);
     QVERIFY(lines[0].contains(QStringLiteral("\"kind\":\"removeBrokenLink\"")));
     QVERIFY(lines[1].contains(QStringLiteral("\"kind\":\"repointLink\"")));
+}
+
+void JsonlOperationJournalTest::AnImportRecordCarriesItsResultAndNoLinkFailure()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::ImportRemoveSource, ImportResult::CouldNotRemoveSource));
+
+    const QStringList lines = LinesOf(storage.File());
+    QCOMPARE(lines.size(), 1);
+
+    const QJsonObject written = QJsonDocument::fromJson(lines.front().toUtf8()).object();
+    QCOMPARE(written.value("kind").toString(), QStringLiteral("importRemoveSource"));
+    QCOMPARE(written.value("result").toString(), QStringLiteral("couldNotRemoveSource"));
+    QVERIFY(!written.contains(QStringLiteral("failure")));
 }
 
 QTEST_APPLESS_MAIN(JsonlOperationJournalTest)

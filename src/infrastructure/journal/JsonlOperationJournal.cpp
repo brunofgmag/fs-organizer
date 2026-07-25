@@ -20,6 +20,7 @@ namespace
     constexpr auto kSource = "source";
     constexpr auto kTarget = "target";
     constexpr auto kFailure = "failure";
+    constexpr auto kResult = "result";
 
     QString FromPath(const std::filesystem::path& path)
     {
@@ -34,6 +35,12 @@ namespace
         case OperationKind::DisableAddon: return "disable";
         case OperationKind::RemoveBrokenLink: return "removeBrokenLink";
         case OperationKind::RepointLink: return "repointLink";
+        case OperationKind::ImportCopyToStaging: return "importCopyToStaging";
+        case OperationKind::ImportVerifyStaging: return "importVerifyStaging";
+        case OperationKind::ImportMoveIntoPlace: return "importMoveIntoPlace";
+        case OperationKind::ImportRemoveSource: return "importRemoveSource";
+        case OperationKind::QuarantineFromDestination: return "quarantineFromDestination";
+        case OperationKind::QuarantineFromLibrary: return "quarantineFromLibrary";
         }
 
         return "unknown";
@@ -51,6 +58,28 @@ namespace
         case LinkFailure::CouldNotCreateLink: return "couldNotCreateLink";
         case LinkFailure::PathIsNotAReparsePoint: return "pathIsNotAReparsePoint";
         case LinkFailure::CouldNotRemoveLink: return "couldNotRemoveLink";
+        }
+
+        return "unknown";
+    }
+
+    QString ResultName(const ImportResult result)
+    {
+        switch (result)
+        {
+        case ImportResult::Completed: return "completed";
+        case ImportResult::Cancelled: return "cancelled";
+        case ImportResult::TheSimulatorIsRunning: return "theSimulatorIsRunning";
+        case ImportResult::CouldNotQuarantine: return "couldNotQuarantine";
+        case ImportResult::SourceIsNotUnderADestination: return "sourceIsNotUnderADestination";
+        case ImportResult::SourceIsAReparsePoint: return "sourceIsAReparsePoint";
+        case ImportResult::CouldNotCheckFreeSpace: return "couldNotCheckFreeSpace";
+        case ImportResult::NotEnoughFreeSpace: return "notEnoughFreeSpace";
+        case ImportResult::CouldNotCopy: return "couldNotCopy";
+        case ImportResult::VerificationFailed: return "verificationFailed";
+        case ImportResult::CouldNotMoveIntoPlace: return "couldNotMoveIntoPlace";
+        case ImportResult::CouldNotRemoveSource: return "couldNotRemoveSource";
+        case ImportResult::CouldNotCreateLink: return "couldNotCreateLink";
         }
 
         return "unknown";
@@ -78,7 +107,15 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     object[kAddon] = QString::fromStdString(record.addonId.folderName);
     object[kSource] = FromPath(record.source);
     object[kTarget] = FromPath(record.target);
-    object[kFailure] = FailureName(record.failure);
+
+    if (CarriesAnImportReason(record.kind))
+    {
+        object[kResult] = ResultName(record.importResult);
+    }
+    else
+    {
+        object[kFailure] = FailureName(record.failure);
+    }
 
     if (!stream_.is_open())
     {

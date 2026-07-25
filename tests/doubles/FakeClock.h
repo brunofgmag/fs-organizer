@@ -1,7 +1,7 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_CLOCK_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_CLOCK_H
 
-#include "application/ports/Clock.h"
+#include "domain/ports/Clock.h"
 
 class FakeClock final : public Clock
 {

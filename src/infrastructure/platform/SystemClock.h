@@ -1,7 +1,7 @@
 #ifndef FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_SYSTEM_CLOCK_H
 #define FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_SYSTEM_CLOCK_H
 
-#include "application/ports/Clock.h"
+#include "domain/ports/Clock.h"
 
 class SystemClock final : public Clock
 {

@@ -5,6 +5,7 @@
 #include <ranges>
 
 #include "domain/support/PathUtils.h"
+#include "domain/tree/LibraryLookup.h"
 
 namespace
 {
@@ -54,14 +55,17 @@ namespace
 ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
                            FileOperations& files,
                            const LinkingEngine& linking,
+                           OperationJournal& journal,
+                           const Clock& clock,
                            const LinkType linkType)
-    : filesystemProbe_(filesystemProbe), files_(files), linking_(linking), linkType_(linkType)
+    : filesystemProbe_(filesystemProbe), files_(files), linking_(linking), journal_(journal),
+      clock_(clock), linkType_(linkType)
 {
 }
 
 ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
                                    const ImportRequest& request,
-                                   const std::function<bool(const CopyProgress&)>& onProgress) const
+                                   const std::function<bool(const CopyProgress &)>& onProgress) const
 {
     if (!IsUnderADestination(profile, request.source))
     {
@@ -82,34 +86,57 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     }
 
     const std::filesystem::path staging = StagingPathFor(request.target);
+    const AddonId addon = IdentityOf(profile, request.target);
 
-    if (const ImportOutcome copy = CopyToStaging(request.source, staging, onProgress);
-        !copy.Succeeded())
+    const ImportOutcome copy = CopyToStaging(request.source, staging, onProgress);
+    RecordStep(addon, OperationKind::ImportCopyToStaging, request.source, staging, copy.Result());
+    if (!copy.Succeeded())
     {
         return copy;
     }
 
-    if (!FingerprintsMatch(source, filesystemProbe_.FingerprintTree(staging)))
+    const bool verified = FingerprintsMatch(source, filesystemProbe_.FingerprintTree(staging));
+    RecordStep(addon, OperationKind::ImportVerifyStaging, staging, request.target,
+               verified ? ImportResult::Completed : ImportResult::VerificationFailed);
+    if (!verified)
     {
         return ImportOutcome::Stopped(ImportResult::VerificationFailed);
     }
 
-    if (!files_.Move(staging, request.target))
+    const bool moved = files_.Move(staging, request.target);
+    RecordStep(addon, OperationKind::ImportMoveIntoPlace, staging, request.target,
+               moved ? ImportResult::Completed : ImportResult::CouldNotMoveIntoPlace);
+    if (!moved)
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotMoveIntoPlace);
     }
 
-    if (!files_.RemoveTree(request.source))
+    const bool removed = files_.RemoveTree(request.source);
+    RecordStep(addon, OperationKind::ImportRemoveSource, request.source, request.target,
+               removed ? ImportResult::Completed : ImportResult::CouldNotRemoveSource);
+    if (!removed)
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotRemoveSource);
     }
 
-    if (!linking_.Enable(Addon{request.target}, request.source.parent_path(), linkType_).Succeeded())
+    const LinkOutcome link = linking_.Enable(Addon{request.target}, request.source.parent_path(), linkType_);
+    journal_.Append(OperationRecord::OfLink(clock_.Now(), OperationKind::EnableAddon, addon,
+                                            request.target, request.source, link.Failure()));
+    if (!link.Succeeded())
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotCreateLink);
     }
 
     return ImportOutcome::Completed();
+}
+
+void ImportEngine::RecordStep(const AddonId& addon,
+                              const OperationKind kind,
+                              const std::filesystem::path& source,
+                              const std::filesystem::path& target,
+                              const ImportResult result) const
+{
+    journal_.Append(OperationRecord::OfImport(clock_.Now(), kind, addon, source, target, result));
 }
 
 ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& target, const std::uintmax_t sourceSize) const
@@ -132,7 +159,7 @@ ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& target, 
 
 ImportOutcome ImportEngine::CopyToStaging(const std::filesystem::path& source,
                                           const std::filesystem::path& staging,
-                                          const std::function<bool(const CopyProgress&)>& onProgress) const
+                                          const std::function<bool(const CopyProgress &)>& onProgress) const
 {
     switch (files_.CopyTree(source, staging, onProgress))
     {

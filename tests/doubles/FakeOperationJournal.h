@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "application/ports/OperationJournal.h"
+#include "domain/ports/OperationJournal.h"
 
 class FakeOperationJournal final : public OperationJournal
 {

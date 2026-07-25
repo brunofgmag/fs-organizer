@@ -12,11 +12,16 @@ public:
     {
     }
 
+    void MakeLinkCreationFail()
+    {
+        linkCreationFails_ = true;
+    }
+
     [[nodiscard]] bool CreateLink(const std::filesystem::path& linkPath,
                                   const std::filesystem::path& target,
                                   LinkType) override
     {
-        if (fileSystem_.Exists(linkPath))
+        if (linkCreationFails_ || fileSystem_.Exists(linkPath))
         {
             return false;
         }
@@ -37,6 +42,7 @@ public:
 
 private:
     InMemoryFileSystem& fileSystem_;
+    bool linkCreationFails_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_LINK_SERVICE_H

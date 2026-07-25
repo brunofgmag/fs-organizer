@@ -7,6 +7,7 @@
 #include "domain/model/EntryClassification.h"
 #include "domain/model/ImportResult.h"
 #include "domain/model/LinkFailure.h"
+#include "domain/model/OperationKind.h"
 
 namespace QTest
 {
@@ -79,6 +80,26 @@ namespace QTest
         }
 
         return qstrdup("ImportResult(?)");
+    }
+
+    template <>
+    inline char* toString(const OperationKind& t)
+    {
+        switch (t)
+        {
+        case OperationKind::EnableAddon: return qstrdup("EnableAddon");
+        case OperationKind::DisableAddon: return qstrdup("DisableAddon");
+        case OperationKind::RemoveBrokenLink: return qstrdup("RemoveBrokenLink");
+        case OperationKind::RepointLink: return qstrdup("RepointLink");
+        case OperationKind::ImportCopyToStaging: return qstrdup("ImportCopyToStaging");
+        case OperationKind::ImportVerifyStaging: return qstrdup("ImportVerifyStaging");
+        case OperationKind::ImportMoveIntoPlace: return qstrdup("ImportMoveIntoPlace");
+        case OperationKind::ImportRemoveSource: return qstrdup("ImportRemoveSource");
+        case OperationKind::QuarantineFromDestination: return qstrdup("QuarantineFromDestination");
+        case OperationKind::QuarantineFromLibrary: return qstrdup("QuarantineFromLibrary");
+        }
+
+        return qstrdup("OperationKind(?)");
     }
 }
 

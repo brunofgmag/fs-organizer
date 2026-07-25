@@ -9,25 +9,25 @@
 #include "application/model/LibraryReport.h"
 #include "application/model/LinkOperationResult.h"
 #include "application/model/ProfileSnapshot.h"
-#include "application/ports/Clock.h"
 #include "application/ports/LibraryIdGenerator.h"
-#include "application/ports/OperationJournal.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
 #include "domain/linking/RepairPlan.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/ports/CatalogScanner.h"
+#include "domain/ports/Clock.h"
+#include "domain/ports/OperationJournal.h"
 
 class ProfileService
 {
 public:
     ProfileService(const CatalogScanner& catalog,
-                 const EntryClassifier& classifier,
-                 const LinkingEngine& linking,
-                 OperationJournal& journal,
-                 const Clock& clock,
-                 const LibraryIdGenerator& identities,
-                 LinkType linkType);
+                   const EntryClassifier& classifier,
+                   const LinkingEngine& linking,
+                   OperationJournal& journal,
+                   const Clock& clock,
+                   const LibraryIdGenerator& identities,
+                   LinkType linkType);
 
     [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
 
@@ -70,11 +70,9 @@ private:
 
     [[nodiscard]] static Step Inverse(const Step& step);
 
-    [[nodiscard]] static std::optional<Step> PlanRepair(const SimulatorProfile& profile,
-                                                        const RepairRequest& request);
+    [[nodiscard]] static std::optional<Step> PlanRepair(const SimulatorProfile& profile, const RepairRequest& request);
 
-    [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile,
-                                                   const RepairRequest& request);
+    [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile, const RepairRequest& request);
 
     [[nodiscard]] LinkOperationResult Run(const Step& step) const;
 

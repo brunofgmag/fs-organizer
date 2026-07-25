@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <vector>
 
+#include "domain/model/AddonId.h"
 #include "domain/model/Library.h"
 #include "domain/model/SimulatorProfile.h"
 
@@ -15,5 +16,7 @@
 
 [[nodiscard]] std::filesystem::path RelativeToLibrary(const Library& library,
                                                       const std::filesystem::path& path);
+
+[[nodiscard]] AddonId IdentityOf(const SimulatorProfile& profile, const std::filesystem::path& addonFolder);
 
 #endif // FS_ORGANIZER_DOMAIN_TREE_LIBRARY_LOOKUP_H
