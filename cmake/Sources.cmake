@@ -27,10 +27,13 @@ set(INFRASTRUCTURE_SOURCES
 )
 
 set(VIEWMODEL_SOURCES
+        src/viewmodel/AddonTreeModel.cpp
+        src/viewmodel/AddonTreeViewModel.cpp
         src/viewmodel/SetupViewModel.cpp
 )
 
 set(VIEW_SOURCES
+        src/view/AddonTreePage.cpp
         src/view/MainWindow.cpp
         src/view/SetupWizard.cpp
 )

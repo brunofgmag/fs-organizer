@@ -29,10 +29,6 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
 
     pages_ = new QStackedWidget(this);
 
-    auto* placeholder = new QLabel(tr("A árvore de addons chega no próximo passo."), pages_);
-    placeholder->setAlignment(Qt::AlignCenter);
-    pages_->addWidget(placeholder);
-
     auto* central = new QWidget(this);
     auto* layout = new QVBoxLayout(central);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -40,6 +36,10 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
     layout->addWidget(pages_, 1);
 
     setCentralWidget(central);
+
+    restart_ = new QLabel(statusBar());
+    restart_->setVisible(false);
+    statusBar()->addPermanentWidget(restart_);
     statusBar()->showMessage(tr("Pronto."));
 
     ShowProfiles(settings);
@@ -89,16 +89,37 @@ void MainWindow::ShowProfiles(const AppSettings& settings)
     profiles_->setCurrentIndex(active >= 0 ? active : 0);
 }
 
+void MainWindow::ShowPage(QWidget* page) const
+{
+    pages_->addWidget(page);
+    pages_->setCurrentWidget(page);
+}
+
+void MainWindow::ShowStatus(const QString& message) const
+{
+    statusBar()->showMessage(message);
+}
+
+void MainWindow::ShowRestartPending(const bool pending) const
+{
+    restart_->setText(pending ? tr("Reinicie o simulador para aplicar.") : QString());
+    restart_->setVisible(pending);
+}
+
 void MainWindow::OnProfileActivated(const int index)
 {
-    if (profiles_->itemData(index).isValid())
+    const QVariant chosen = profiles_->itemData(index);
+
+    if (!chosen.isValid())
     {
+        ShowProfiles(settings_);
+        emit AddProfileRequested();
         return;
     }
 
-    ShowProfiles(settings_);
+    settings_.activeProfileId = chosen.toString().toStdString();
 
-    emit AddProfileRequested();
+    emit ProfileChosen(settings_.activeProfileId);
 }
 
 void MainWindow::showEvent(QShowEvent* event)

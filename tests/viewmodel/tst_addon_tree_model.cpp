@@ -1,0 +1,150 @@
+#include <QtTest/QAbstractItemModelTester>
+#include <QtTest/QtTest>
+
+#include "viewmodel/AddonTreeModel.h"
+
+class AddonTreeModelTest : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    static void TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester();
+    static void CheckStatesComeFromTheEnabledIndex();
+    static void ClickingACheckboxAsksInsteadOfChangingTheModel();
+    static void RefreshingTheIndexUpdatesCheckStatesWithoutResettingTheTree();
+    static void OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt();
+};
+
+namespace
+{
+    constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
+    constexpr auto kCommunity2024 = "E:/Flight Simulator 2024/Community2024";
+    constexpr auto kPmdg = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+    constexpr auto kCrj = "D:/MSFS 2024/Aircrafts/aerosoft-crj";
+
+    TreeNode AddonNode(const std::filesystem::path& path)
+    {
+        TreeNode node;
+        node.kind = TreeNodeKind::Addon;
+        node.path = path;
+        node.addon = Addon{path, Manifest{}};
+
+        return node;
+    }
+
+    TreeNode LibraryTree()
+    {
+        TreeNode aircrafts;
+        aircrafts.kind = TreeNodeKind::Category;
+        aircrafts.path = "D:/MSFS 2024/Aircrafts";
+        aircrafts.children = {AddonNode(kPmdg), AddonNode(kCrj)};
+
+        TreeNode library;
+        library.kind = TreeNodeKind::Library;
+        library.path = "D:/MSFS 2024";
+        library.children = {aircrafts};
+
+        return library;
+    }
+
+    SimulatorProfile Profile(std::vector<DestinationOverride> overrides = {})
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2024";
+        profile.destinations = {kCommunity, kCommunity2024};
+        profile.defaultDestination = kCommunity;
+        profile.libraries = {Library{"library-1", "D:/MSFS 2024", "Biblioteca do Bruno"}};
+        profile.destinationOverrides = std::move(overrides);
+
+        return profile;
+    }
+
+    TreeSnapshot SnapshotWith(const std::vector<std::filesystem::path>& enabled)
+    {
+        TreeSnapshot snapshot;
+        snapshot.libraries = {LibraryTree()};
+        snapshot.enabled = EnabledAddons(enabled);
+
+        return snapshot;
+    }
+
+    QModelIndex Category(const AddonTreeModel& model)
+    {
+        return model.index(0, 0, model.index(0, 0, {}));
+    }
+}
+
+void AddonTreeModelTest::TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester()
+{
+    AddonTreeModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowSnapshot(SnapshotWith({}), Profile());
+
+    QCOMPARE(model.rowCount({}), 1);
+    QCOMPARE(model.rowCount(model.index(0, 0, {})), 1);
+    QCOMPARE(model.rowCount(Category(model)), 2);
+    QCOMPARE(model.parent(Category(model)), model.index(0, 0, {}));
+    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(),
+             QStringLiteral("Biblioteca do Bruno"));
+}
+
+void AddonTreeModelTest::CheckStatesComeFromTheEnabledIndex()
+{
+    AddonTreeModel model;
+    model.ShowSnapshot(SnapshotWith({kPmdg}), Profile());
+
+    QCOMPARE(model.data(Category(model), Qt::CheckStateRole).toInt(), Qt::PartiallyChecked);
+    QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::CheckStateRole).toInt(), Qt::Checked);
+    QCOMPARE(model.data(model.index(1, 0, Category(model)), Qt::CheckStateRole).toInt(), Qt::Unchecked);
+}
+
+void AddonTreeModelTest::ClickingACheckboxAsksInsteadOfChangingTheModel()
+{
+    AddonTreeModel model;
+    model.ShowSnapshot(SnapshotWith({}), Profile());
+
+    const QSignalSpy asked(&model, &AddonTreeModel::ToggleRequested);
+
+    QVERIFY(!model.setData(Category(model), Qt::Checked, Qt::CheckStateRole));
+    QCOMPARE(asked.size(), 1);
+    QCOMPARE(model.data(Category(model), Qt::CheckStateRole).toInt(), Qt::Unchecked);
+}
+
+void AddonTreeModelTest::RefreshingTheIndexUpdatesCheckStatesWithoutResettingTheTree()
+{
+    AddonTreeModel model;
+    model.ShowSnapshot(SnapshotWith({}), Profile());
+
+    const QSignalSpy reset(&model, &AddonTreeModel::modelReset);
+    const QSignalSpy changed(&model, &AddonTreeModel::dataChanged);
+
+    DestinationEntry entry;
+    entry.path = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+    entry.target = kPmdg;
+    entry.classification = EntryClassification::Managed;
+
+    model.RefreshEnabled({entry});
+
+    QCOMPARE(reset.size(), 0);
+    QVERIFY(changed.size() > 0);
+    QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::CheckStateRole).toInt(), Qt::Checked);
+    QCOMPARE(model.data(Category(model), Qt::CheckStateRole).toInt(), Qt::PartiallyChecked);
+}
+
+void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
+{
+    AddonTreeModel model;
+    model.ShowSnapshot(SnapshotWith({}), Profile({{"library-1", "Aircrafts", kCommunity2024}}));
+
+    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(),
+             QStringLiteral("Biblioteca do Bruno"));
+    QCOMPARE(model.data(Category(model), Qt::DisplayRole).toString(),
+             QStringLiteral("Aircrafts  →  Community2024"));
+    QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::DisplayRole).toString(),
+             QStringLiteral("pmdg-aircraft-77w  →  Community2024"));
+}
+
+QTEST_MAIN(AddonTreeModelTest)
+
+#include "tst_addon_tree_model.moc"
