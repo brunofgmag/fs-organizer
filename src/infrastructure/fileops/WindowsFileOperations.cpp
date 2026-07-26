@@ -146,6 +146,13 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
 bool WindowsFileOperations::Move(const std::filesystem::path& source,
                                  const std::filesystem::path& destination)
 {
+    std::error_code error;
+    std::filesystem::create_directories(destination.parent_path(), error);
+    if (error)
+    {
+        return false;
+    }
+
     return MoveFileExW(NativePath(source).c_str(), NativePath(destination).c_str(), 0) != FALSE;
 }
 

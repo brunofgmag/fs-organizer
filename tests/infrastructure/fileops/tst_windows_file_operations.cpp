@@ -19,6 +19,7 @@ private slots:
     static void CopyingATreeReproducesEveryFileAndItsSize();
     static void CancellingTheProgressCallbackStopsTheCopy();
     static void MovingAcrossVolumesIsRefusedInsteadOfCopied();
+    static void MovingIntoAFolderThatDoesNotExistYetOpensTheWayThere();
 };
 
 namespace
@@ -168,6 +169,22 @@ void WindowsFileOperationsTest::MovingAcrossVolumesIsRefusedInsteadOfCopied()
 
     QVERIFY(std::filesystem::exists(source / "manifest.json"));
     QVERIFY(!std::filesystem::exists(landing));
+}
+
+void WindowsFileOperationsTest::MovingIntoAFolderThatDoesNotExistYetOpensTheWayThere()
+{
+    const Disk disk;
+    const std::filesystem::path source = disk.AddFolder("Library/Utils/tfdi-md11");
+    static_cast<void>(disk.AddFile("Library/Utils/tfdi-md11/manifest.json", "{}"));
+
+    const std::filesystem::path landing = disk.Root() / "Library" / "_fsorganizer-quarantine" / "tfdi-md11";
+    QVERIFY(!std::filesystem::exists(landing.parent_path()));
+
+    WindowsFileOperations files;
+    QVERIFY(files.Move(source, landing));
+
+    QVERIFY(std::filesystem::exists(landing / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(source));
 }
 
 QTEST_APPLESS_MAIN(WindowsFileOperationsTest)
