@@ -8,14 +8,10 @@
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
 #include "domain/tree/LibraryLookup.h"
+#include "support/PathText.h"
 
 namespace
 {
-    QString Show(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
-    }
-
     Qt::CheckState ToQt(const CheckState state)
     {
         switch (state)
@@ -48,6 +44,7 @@ void AddonTreeModel::RefreshEnabled(std::vector<DestinationEntry> entries)
 {
     snapshot_.entries = std::move(entries);
     snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
+    snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
 
     AnnounceValues({});
 }
@@ -130,7 +127,7 @@ QString AddonTreeModel::NameOf(const TreeNode& node) const
         }
     }
 
-    return Show(node.path.filename());
+    return AsText(node.path.filename());
 }
 
 const std::vector<AddonTreeModel::Item*>& AddonTreeModel::ChildrenOf(const QModelIndex& parent) const
@@ -178,9 +175,24 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
+    const CopyConflict* conflict = snapshot_.conflicts.OverTheLibraryAddon(node->path);
+
     if (role == Qt::CheckStateRole)
     {
         return ToQt(DeriveCheckState(*node, snapshot_.enabled));
+    }
+
+    if (role == ConflictRole)
+    {
+        return conflict != nullptr;
+    }
+
+    if (role == Qt::ToolTipRole)
+    {
+        return conflict == nullptr
+                   ? QVariant()
+                   : tr("Já existe uma pasta de verdade com esse nome no destino: %1")
+                     .arg(AsText(conflict->destinationPath));
     }
 
     if (role != Qt::DisplayRole)
@@ -188,13 +200,17 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
+    const QString name = conflict == nullptr
+                             ? NameOf(*node)
+                             : tr("%1 (em conflito)").arg(NameOf(*node));
+
     const std::filesystem::path destination = EffectiveDestination(profile_, node->path);
     if (ComparablePath(destination) == ComparablePath(profile_.defaultDestination))
     {
-        return NameOf(*node);
+        return name;
     }
 
-    return tr("%1  →  %2").arg(NameOf(*node), Show(destination.filename()));
+    return tr("%1  →  %2").arg(name, AsText(destination.filename()));
 }
 
 bool AddonTreeModel::setData(const QModelIndex& position, [[maybe_unused]] const QVariant& value,

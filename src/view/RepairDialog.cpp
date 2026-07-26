@@ -12,13 +12,7 @@
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QVBoxLayout>
 
-namespace
-{
-    QString Show(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
-    }
-}
+#include "support/PathText.h"
 
 RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidget* parent) : QDialog(parent)
 {
@@ -79,7 +73,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
     int row = 0;
     for (const RepairCandidate& candidate : candidates)
     {
-        auto* selected = new QCheckBox(Show(candidate.entry.path.filename()), group);
+        auto* selected = new QCheckBox(AsText(candidate.entry.path.filename()), group);
         selected->setChecked(checkedByDefault);
         grid->addWidget(selected, row, 0);
 
@@ -95,7 +89,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
 
         if (showOrigin)
         {
-            auto* origin = new QLabel(tr("aponta para: %1").arg(Show(candidate.entry.target)),
+            auto* origin = new QLabel(tr("aponta para: %1").arg(AsText(candidate.entry.target)),
                                       group);
             origin->setTextInteractionFlags(Qt::TextSelectableByMouse);
             origin->setWordWrap(true);

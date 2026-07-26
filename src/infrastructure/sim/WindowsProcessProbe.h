@@ -11,7 +11,7 @@ class WindowsProcessProbe final : public ProcessProbe
 public:
     explicit WindowsProcessProbe(std::vector<std::string> executableNames);
 
-    [[nodiscard]] bool SimulatorIsRunning() const override;
+    [[nodiscard]] std::optional<std::string> RunningSimulator() const override;
 
 private:
     std::vector<std::string> executableNames_;

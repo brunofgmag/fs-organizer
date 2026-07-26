@@ -12,6 +12,8 @@ private slots:
     static void ARootKeepsItsSeparator();
     static void AnEmptyPathHasAnEmptyKey();
     static void ReparsePrefixesAreStripped();
+    static void AFolderIsInsideTheRootOfItsOwnVolume();
+    static void ASiblingWhoseNameStartsWithTheRootIsNotInsideIt();
 };
 
 void PathUtilsTest::TwoPathsThatNameTheSameFolderShareAKey()
@@ -45,6 +47,20 @@ void PathUtilsTest::ReparsePrefixesAreStripped()
     QCOMPARE(NormalizeReparseTarget(R"(\??\E:\Library\Add-ons\aerosoft-aircraft-a346-pro)"), expected);
     QCOMPARE(NormalizeReparseTarget(R"(\\?\E:\Library\Add-ons\aerosoft-aircraft-a346-pro)"), expected);
     QCOMPARE(NormalizeReparseTarget(R"(\??\UNC\server\share)"), std::filesystem::path(R"(\\server\share)"));
+}
+
+void PathUtilsTest::AFolderIsInsideTheRootOfItsOwnVolume()
+{
+    QVERIFY(PathIsInside("D:/Library", "D:/"));
+    QVERIFY(PathIsInside("D:/Library/Aircrafts/pmdg-aircraft-77w", "D:/"));
+    QVERIFY(PathIsInside("D:/", "D:/"));
+    QVERIFY(!PathIsInside("E:/Library", "D:/"));
+}
+
+void PathUtilsTest::ASiblingWhoseNameStartsWithTheRootIsNotInsideIt()
+{
+    QVERIFY(!PathIsInside("D:/Library", "D:/Lib"));
+    QVERIFY(PathIsInside("D:/Lib/aerosoft-crj", "D:/Lib"));
 }
 
 QTEST_APPLESS_MAIN(PathUtilsTest)

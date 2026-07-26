@@ -13,6 +13,11 @@ public:
         appended.push_back(record);
     }
 
+    [[nodiscard]] std::vector<OperationRecord> Read() const override
+    {
+        return appended;
+    }
+
     std::vector<OperationRecord> appended;
 };
 

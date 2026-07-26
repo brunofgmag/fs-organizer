@@ -11,18 +11,9 @@ namespace
     std::optional<std::filesystem::path> ValidAddonNamed(const std::vector<TreeNode>& libraries,
                                                          const std::string& baseName)
     {
-        for (const TreeNode& library : libraries)
-        {
-            for (const TreeNode* addon : AddonsUnder(library))
-            {
-                if (EqualsIgnoringCase(addon->path.filename().string(), baseName))
-                {
-                    return addon->path;
-                }
-            }
-        }
+        const TreeNode* addon = AddonNamed(libraries, baseName);
 
-        return std::nullopt;
+        return addon == nullptr ? std::nullopt : std::optional(addon->path);
     }
 }
 

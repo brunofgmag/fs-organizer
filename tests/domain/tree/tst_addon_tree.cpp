@@ -23,6 +23,8 @@ private slots:
     static void AnEnabledAddonIsCheckedAndTheLookupIgnoresCase();
     static void AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked();
     static void ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddon();
+    static void EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibraryRoot();
+    static void TheLibrariesAnswerWhichOfThemHoldsAnAddonOfAGivenName();
 };
 
 namespace
@@ -184,6 +186,31 @@ void AddonTreeTest::ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddo
     QCOMPARE(DeriveCheckState(AddonNode(folder),
                               EnabledAddons({R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w\)"})),
              CheckState::Checked);
+}
+
+void AddonTreeTest::EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibraryRoot()
+{
+    const TreeNode library = ReferenceLibrary();
+
+    const std::vector<const TreeNode*> categories = CategoriesUnder(library);
+
+    QCOMPARE(categories.size(), std::size_t{4});
+    QCOMPARE(categories[0]->path, std::filesystem::path("D:/MSFS 2024"));
+    QCOMPARE(categories[1]->path, std::filesystem::path("D:/MSFS 2024/Aircrafts"));
+    QCOMPARE(categories[2]->path, std::filesystem::path("D:/MSFS 2024/Aircrafts/Fenix"));
+    QCOMPARE(categories[3]->path, std::filesystem::path("D:/MSFS 2024/Sceneries"));
+}
+
+void AddonTreeTest::TheLibrariesAnswerWhichOfThemHoldsAnAddonOfAGivenName()
+{
+    const std::vector<TreeNode> libraries{ReferenceLibrary()};
+
+    const TreeNode* found = AddonNamed(libraries, "PMDG-Aircraft-77W");
+    QVERIFY(found != nullptr);
+    QCOMPARE(found->path, std::filesystem::path("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
+
+    QCOMPARE(AddonNamed(libraries, "Aircrafts"), nullptr);
+    QCOMPARE(AddonNamed(libraries, "never-installed"), nullptr);
 }
 
 QTEST_APPLESS_MAIN(AddonTreeTest)

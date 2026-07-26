@@ -58,6 +58,19 @@ fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h)
 
+fsorg_add_qt_test(fsorg-journal-entries-tests journal-entries
+        tests/domain/journal/tst_journal_entries.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/journal/JournalEntries.cpp)
+
+fsorg_add_qt_test(fsorg-copy-conflicts-tests copy-conflicts
+        tests/domain/importing/tst_copy_conflicts.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/tree/AddonTree.cpp
+        src/domain/importing/CopyConflicts.cpp)
+
 fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
         tests/doubles/FakeClock.h
@@ -70,6 +83,7 @@ fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/support/PathPrinting.h
         src/domain/linking/LinkingEngine.cpp
         src/domain/tree/LibraryLookup.cpp
+        src/domain/importing/ImportPaths.h
         src/domain/importing/ImportEngine.cpp)
 
 fsorg_add_qt_test(fsorg-import-service-tests import-service
@@ -84,8 +98,10 @@ fsorg_add_qt_test(fsorg-import-service-tests import-service
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h
+        src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/tree/LibraryLookup.cpp
+        src/domain/importing/ImportPaths.h
         src/domain/importing/ImportEngine.cpp
         src/application/ImportService.cpp)
 
@@ -152,6 +168,7 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        src/domain/importing/CopyConflicts.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
@@ -168,6 +185,8 @@ fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
 fsorg_add_qt_test(fsorg-filesystem-scanner-tests filesystem-scanner
         tests/infrastructure/catalog/tst_filesystem_scanner.cpp
         tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h
+        src/domain/importing/ImportPaths.h
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp)
 
@@ -196,6 +215,7 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
 fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         tests/viewmodel/tst_addon_tree_model.cpp
         tests/support/PathPrinting.h
+        src/domain/importing/CopyConflicts.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
@@ -205,6 +225,7 @@ fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
 fsorg_add_qt_test(fsorg-addon-tree-filter-model-tests addon-tree-filter-model
         tests/viewmodel/tst_addon_tree_filter_model.cpp
         tests/support/PathPrinting.h
+        src/domain/importing/CopyConflicts.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
@@ -216,7 +237,21 @@ fsorg_add_qt_test(fsorg-community-model-tests community-model
         tests/viewmodel/tst_community_model.cpp
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        src/domain/tree/AddonTree.cpp
+        src/domain/importing/CopyConflicts.cpp
         src/viewmodel/CommunityModel.cpp)
+
+fsorg_add_qt_test(fsorg-journal-model-tests journal-model
+        tests/viewmodel/tst_journal_model.cpp
+        tests/support/PathPrinting.h
+        src/domain/journal/JournalEntries.cpp
+        src/viewmodel/FailureText.cpp
+        src/viewmodel/JournalModel.cpp)
+
+fsorg_add_qt_test(fsorg-quarantine-model-tests quarantine-model
+        tests/viewmodel/tst_quarantine_model.cpp
+        tests/support/PathPrinting.h
+        src/viewmodel/QuarantineModel.cpp)
 
 fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/viewmodel/tst_community_view_model.cpp
@@ -228,6 +263,7 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        src/domain/importing/CopyConflicts.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
@@ -258,6 +294,24 @@ if (WIN32)
             src/infrastructure/link/WindowsLinkService.cpp
             src/infrastructure/fileops/WindowsFileOperations.cpp)
 
+    fsorg_add_qt_test(fsorg-import-on-real-disk-tests import-on-real-disk
+            tests/infrastructure/importing/tst_import_on_real_disk.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/application/ImportService.cpp
+            src/domain/importing/ImportEngine.cpp
+            src/domain/importing/ImportPaths.h
+            src/domain/linking/EntryClassifier.cpp
+            src/domain/linking/LinkingEngine.cpp
+            src/domain/tree/LibraryLookup.cpp
+            src/infrastructure/catalog/FilesystemScanner.cpp
+            src/infrastructure/catalog/JsonManifestParser.cpp
+            src/infrastructure/fileops/WindowsFileOperations.cpp
+            src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+            src/infrastructure/journal/JsonlOperationJournal.cpp
+            src/infrastructure/link/WindowsLinkService.cpp
+            src/infrastructure/sim/WindowsProcessProbe.cpp)
+
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
             tests/support/PathPrinting.h
@@ -270,6 +324,11 @@ if (WIN32)
                 src/view/MainWindow.cpp
                 src/infrastructure/platform/WindowsTitleBar.cpp)
         configure_fsorg_gui_test(fsorg-main-window-tests main-window)
+
+        fsorg_add_qt_test(fsorg-table-columns-tests table-columns
+                tests/view/tst_table_columns.cpp
+                src/view/TableColumns.cpp)
+        configure_fsorg_gui_test(fsorg-table-columns-tests table-columns)
     endif ()
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe

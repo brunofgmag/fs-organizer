@@ -27,6 +27,8 @@ public:
 
     [[nodiscard]] std::size_t NeedsAttention() const;
 
+    [[nodiscard]] const ProfileSnapshot& Snapshot() const;
+
 signals:
     void RepairFinished(const std::vector<LinkOperationResult>& results);
 

@@ -13,6 +13,8 @@ private slots:
     static void ClickingACheckboxAsksInsteadOfChangingTheModel();
     static void RefreshingTheIndexUpdatesCheckStatesWithoutResettingTheTree();
     static void OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt();
+    static void AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip();
+    static void TheConflictIsRecomputedWhenTheIndexIsRefreshed();
 };
 
 namespace
@@ -143,6 +145,43 @@ void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
              QStringLiteral("Aircrafts  →  Community2024"));
     QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::DisplayRole).toString(),
              QStringLiteral("pmdg-aircraft-77w  →  Community2024"));
+}
+
+void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
+{
+    ProfileSnapshot snapshot = SnapshotWith({});
+    snapshot.conflicts = CopyConflicts{
+        {CopyConflict{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kPmdg}}
+    };
+
+    AddonTreeModel model;
+    model.ShowSnapshot(std::move(snapshot), Profile());
+
+    const QModelIndex conflicted = model.index(0, 0, Category(model));
+    QVERIFY(model.data(conflicted, AddonTreeModel::ConflictRole).toBool());
+    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(),
+             QStringLiteral("pmdg-aircraft-77w (em conflito)"));
+    QVERIFY(model.data(conflicted, Qt::ToolTipRole).toString().contains(
+        QStringLiteral("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w")));
+
+    const QModelIndex quiet = model.index(1, 0, Category(model));
+    QVERIFY(!model.data(quiet, AddonTreeModel::ConflictRole).toBool());
+    QCOMPARE(model.data(quiet, Qt::DisplayRole).toString(), QStringLiteral("aerosoft-crj"));
+}
+
+void AddonTreeModelTest::TheConflictIsRecomputedWhenTheIndexIsRefreshed()
+{
+    AddonTreeModel model;
+    model.ShowSnapshot(SnapshotWith({}), Profile());
+
+    DestinationEntry physical;
+    physical.path = "E:/Flight Simulator 2024/Community/aerosoft-crj";
+    physical.classification = EntryClassification::Unmanaged;
+
+    model.RefreshEnabled({physical});
+
+    QVERIFY(model.data(model.index(1, 0, Category(model)), AddonTreeModel::ConflictRole).toBool());
+    QVERIFY(!model.data(model.index(0, 0, Category(model)), AddonTreeModel::ConflictRole).toBool());
 }
 
 QTEST_MAIN(AddonTreeModelTest)

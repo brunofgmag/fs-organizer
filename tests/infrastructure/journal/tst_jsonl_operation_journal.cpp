@@ -15,6 +15,9 @@ private slots:
     static void AppendingNeverRewritesWhatWasAlreadyThere();
     static void TheRepairKindsHaveTheirOwnStableNames();
     static void AnImportRecordCarriesItsResultAndNoLinkFailure();
+    static void EveryKindAndEveryReasonSurvivesTheRoundTrip();
+    static void ReadingSkipsALineWrittenByANewerVersion();
+    static void AnAbsentJournalReadsAsNoHistoryAtAll();
 };
 
 namespace
@@ -120,6 +123,63 @@ void JsonlOperationJournalTest::AnImportRecordCarriesItsResultAndNoLinkFailure()
     QCOMPARE(written.value("kind").toString(), QStringLiteral("importRemoveSource"));
     QCOMPARE(written.value("result").toString(), QStringLiteral("couldNotRemoveSource"));
     QVERIFY(!written.contains(QStringLiteral("failure")));
+}
+
+void JsonlOperationJournalTest::EveryKindAndEveryReasonSurvivesTheRoundTrip()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+
+    std::vector<OperationRecord> written;
+    std::size_t reason = 0;
+    for (const OperationKind kind : kAllOperationKinds)
+    {
+        written.push_back(CarriesAnImportReason(kind)
+                              ? Record(kind, kAllImportResults[reason++ % kAllImportResults.size()])
+                              : Record(kind, kAllLinkFailures[reason++ % kAllLinkFailures.size()]));
+        journal.Append(written.back());
+    }
+
+    const std::vector<OperationRecord> read = journal.Read();
+    QCOMPARE(read.size(), written.size());
+
+    for (std::size_t position = 0; position < written.size(); ++position)
+    {
+        QCOMPARE(read[position].kind, written[position].kind);
+        QCOMPARE(read[position].timestamp, written[position].timestamp);
+        QCOMPARE(read[position].addonId.libraryId, written[position].addonId.libraryId);
+        QCOMPARE(read[position].addonId.folderName, written[position].addonId.folderName);
+        QCOMPARE(read[position].source, written[position].source);
+        QCOMPARE(read[position].target, written[position].target);
+        QCOMPARE(read[position].failure, written[position].failure);
+        QCOMPARE(read[position].importResult, written[position].importResult);
+    }
+}
+
+void JsonlOperationJournalTest::ReadingSkipsALineWrittenByANewerVersion()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+
+    std::ofstream stream(storage.File(), std::ios::binary | std::ios::app);
+    stream << R"({"kind":"teleportAddon","addon":"pmdg-aircraft-77w"})" << '\n';
+    stream << "isto nao e json" << '\n';
+    stream.close();
+
+    const std::vector<OperationRecord> read = journal.Read();
+
+    QCOMPARE(read.size(), std::size_t{1});
+    QCOMPARE(read.front().kind, OperationKind::EnableAddon);
+}
+
+void JsonlOperationJournalTest::AnAbsentJournalReadsAsNoHistoryAtAll()
+{
+    const Storage storage;
+
+    QVERIFY(JsonlOperationJournal(storage.File()).Read().empty());
 }
 
 QTEST_APPLESS_MAIN(JsonlOperationJournalTest)

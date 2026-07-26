@@ -24,6 +24,8 @@ public:
 signals:
     void StatusChanged(const QString& message);
 
+    void ConflictChosen(const CopyConflict& conflict);
+
 private:
     [[nodiscard]] QWidget* CreateActions();
 

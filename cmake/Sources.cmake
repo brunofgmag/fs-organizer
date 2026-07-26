@@ -1,5 +1,7 @@
 set(DOMAIN_SOURCES
+        src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ImportEngine.cpp
+        src/domain/journal/JournalEntries.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
@@ -36,16 +38,28 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/AddonTreeViewModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/FailureText.cpp
+        src/viewmodel/ImportViewModel.cpp
+        src/viewmodel/JournalModel.cpp
+        src/viewmodel/JournalViewModel.cpp
+        src/viewmodel/QuarantineModel.cpp
+        src/viewmodel/QuarantineViewModel.cpp
         src/viewmodel/SetupViewModel.cpp
 )
 
 set(VIEW_SOURCES
         src/view/AddonTreePage.cpp
         src/view/CommunityPage.cpp
-        src/view/FailureText.cpp
+        src/view/ConflictDialog.cpp
+        src/view/ImportDialog.cpp
+        src/view/JournalPage.cpp
         src/view/MainWindow.cpp
+        src/view/PlainTextDelegate.cpp
+        src/view/QuarantinePage.cpp
         src/view/RepairDialog.cpp
         src/view/SetupWizard.cpp
+        src/view/StagingLeftoverDialog.cpp
+        src/view/TableColumns.cpp
 )
 
 set(APP_SOURCES

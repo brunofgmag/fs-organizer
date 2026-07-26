@@ -30,26 +30,31 @@ WindowsProcessProbe::WindowsProcessProbe(std::vector<std::string> executableName
 {
 }
 
-bool WindowsProcessProbe::SimulatorIsRunning() const
+std::optional<std::string> WindowsProcessProbe::RunningSimulator() const
 {
     const HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snapshot == INVALID_HANDLE_VALUE)
     {
-        return false;
+        return std::nullopt;
     }
 
     PROCESSENTRY32W entry{};
     entry.dwSize = sizeof(entry);
 
-    bool running = false;
-    for (BOOL more = Process32FirstW(snapshot, &entry); more != FALSE && !running;
+    std::optional<std::string> running;
+    for (BOOL more = Process32FirstW(snapshot, &entry); more != FALSE && !running.has_value();
          more = Process32NextW(snapshot, &entry))
     {
         const std::string name = std::filesystem::path(entry.szExeFile).filename().string();
-        running = std::ranges::any_of(executableNames_, [&name](const std::string& candidate)
+        const auto match = std::ranges::find_if(executableNames_, [&name](const std::string& candidate)
         {
             return NamesMatch(name, candidate);
         });
+
+        if (match != executableNames_.end())
+        {
+            running = *match;
+        }
     }
 
     CloseHandle(snapshot);

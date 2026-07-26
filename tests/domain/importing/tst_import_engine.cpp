@@ -38,6 +38,7 @@ namespace
     constexpr std::uintmax_t kMegabyte = 1024 * 1024;
 
     const std::filesystem::path kSource = "E:/Sim/Community/flybywire-externaltools-simbridge";
+    const std::filesystem::path kCategory = "D:/Library/Utils";
     const std::filesystem::path kTarget = "D:/Library/Utils/flybywire-externaltools-simbridge";
     const std::filesystem::path kStaging =
         "D:/Library/Utils/flybywire-externaltools-simbridge.fsorg-partial";
@@ -59,7 +60,7 @@ namespace
             .libraries = {Library{"lib-1", "D:/Library"}}
         };
 
-        ImportRequest request{kSource, kTarget};
+        ImportRequest request{kSource, kCategory};
 
         void AddSimBridgeToTheDestination()
         {
@@ -182,7 +183,7 @@ void ImportEngineTest::AFolderOutsideTheConfiguredDestinationsIsNeverImported()
     f.fileSystem.AddFile("E:/Packages/orbx-central/manifest.json", 2 * kMegabyte);
     f.fileSystem.AddDirectory("D:/Library/Utils");
 
-    const ImportRequest request{"E:/Packages/orbx-central", "D:/Library/Utils/orbx-central"};
+    const ImportRequest request{"E:/Packages/orbx-central", kCategory};
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 
@@ -197,7 +198,7 @@ void ImportEngineTest::ADestinationRootIsNotAFolderInsideItself()
     Fixture f;
     f.AddSimBridgeToTheDestination();
 
-    const ImportRequest request{"E:/Sim/Community", "D:/Library/Utils/Community"};
+    const ImportRequest request{"E:/Sim/Community", kCategory};
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 
@@ -218,10 +219,7 @@ void ImportEngineTest::AForeignLinkIsNeverImportedAsIfItWereAFolder()
     f.fileSystem.AddLink("E:/Sim/Community/fsdreamteam-gsx-pro", foreign);
     f.fileSystem.AddDirectory("D:/Library/Utils");
 
-    const ImportRequest request{
-        "E:/Sim/Community/fsdreamteam-gsx-pro",
-        "D:/Library/Utils/fsdreamteam-gsx-pro"
-    };
+    const ImportRequest request{"E:/Sim/Community/fsdreamteam-gsx-pro", kCategory};
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 

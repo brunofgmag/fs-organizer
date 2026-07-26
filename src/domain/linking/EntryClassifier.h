@@ -11,6 +11,9 @@
 [[nodiscard]] std::vector<std::filesystem::path> EnabledAddonFolders(
     const std::vector<DestinationEntry>& entries);
 
+[[nodiscard]] std::vector<std::filesystem::path> LinksPointingAt(
+    const std::vector<DestinationEntry>& entries, const std::filesystem::path& addonFolder);
+
 class EntryClassifier
 {
 public:

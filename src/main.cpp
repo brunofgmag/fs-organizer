@@ -1,9 +1,13 @@
+#include <QtCore/QLibraryInfo>
+#include <QtCore/QTranslator>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QToolButton>
 
+#include "application/ImportService.h"
 #include "application/ProfileService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
@@ -16,14 +20,30 @@
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "view/AddonTreePage.h"
 #include "view/CommunityPage.h"
+#include "view/JournalPage.h"
 #include "view/MainWindow.h"
+#include "view/QuarantinePage.h"
 #include "view/SetupWizard.h"
+#include "view/StagingLeftoverDialog.h"
 #include "viewmodel/CommunityViewModel.h"
+#include "viewmodel/ImportViewModel.h"
+#include "viewmodel/JournalViewModel.h"
+#include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SetupViewModel.h"
 
 namespace
 {
     constexpr auto kNativeStyle = "windows11";
+    constexpr auto kInterfaceLanguage = "pt_BR";
+
+    void TranslateTheNativeWidgets(QTranslator& translator)
+    {
+        if (translator.load(QStringLiteral("qtbase_%1").arg(kInterfaceLanguage),
+                            QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
+        {
+            QCoreApplication::installTranslator(&translator);
+        }
+    }
 
     bool RunSetup(SettingsRepository& settings,
                   const SimulatorLocator& locator,
@@ -38,6 +58,28 @@ namespace
 
         return wizard.exec() == QDialog::Accepted;
     }
+
+    void OfferWhatALostImportLeftBehind(ImportViewModel& importViewModel, QWidget* parent)
+    {
+        const std::vector<StagingLeftover> leftovers = importViewModel.Leftovers();
+        if (leftovers.empty())
+        {
+            return;
+        }
+
+        StagingLeftoverDialog dialog(leftovers, parent);
+        if (dialog.exec() != QDialog::Accepted)
+        {
+            return;
+        }
+
+        static_cast<void>(importViewModel.DiscardLeftovers(dialog.ToDiscard()));
+
+        if (const std::vector<StagingLeftover> resumed = dialog.ToResume(); !resumed.empty())
+        {
+            importViewModel.Resume(resumed);
+        }
+    }
 }
 
 int main(int argc, char* argv[])
@@ -48,11 +90,15 @@ int main(int argc, char* argv[])
     QApplication::setOrganizationName(QStringLiteral("fs-organizer"));
     QApplication::setStyle(QString::fromLatin1(kNativeStyle));
 
+    QTranslator nativeWidgets;
+    TranslateTheNativeWidgets(nativeWidgets);
+
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
+    WindowsFileOperations files;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
-    const FilesystemScanner catalog(manifestParser);
+    const FilesystemScanner catalog(manifestParser, filesystemProbe);
     const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
@@ -69,22 +115,40 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     ProfileService profileService(catalog, classifier, linking, journal, clock, identities, LinkType::Junction);
 
+    const ImportEngine importEngine(filesystemProbe, files, linking, journal, clock, LinkType::Junction);
+    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking,
+                                      journal, clock, LinkType::Junction);
+
     MainWindow window(settings.Load());
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(profileService, settings, processProbe, model);
     auto* page = new AddonTreePage(treeViewModel, model);
 
+    ImportViewModel importViewModel(importService, profileService, processProbe, model);
+
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, model, communityModel);
-    auto* communityPage = new CommunityPage(communityViewModel, communityModel);
+    auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
+
+    QuarantineModel quarantineModel;
+    QuarantineViewModel quarantineViewModel(importService, profileService, model, quarantineModel);
+    auto* quarantinePage = new QuarantinePage(quarantineViewModel, quarantineModel);
+
+    JournalModel journalModel;
+    JournalViewModel journalViewModel(journal, model, journalModel);
+    auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
     window.AddPage(QObject::tr("Árvore"), page);
-    QToolButton* communityButton =
-        window.AddPage(QStringLiteral("Community"), communityPage);
+    QToolButton* communityButton = window.AddPage(QStringLiteral("Community"), communityPage);
+    window.AddPage(QObject::tr("Quarentena"), quarantinePage);
+    window.AddPage(QObject::tr("Diário"), journalPage);
 
     QObject::connect(page, &AddonTreePage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(communityPage, &CommunityPage::StatusChanged, &window,
                      &MainWindow::ShowStatus);
+    QObject::connect(quarantinePage, &QuarantinePage::StatusChanged, &window,
+                     &MainWindow::ShowStatus);
+    QObject::connect(journalPage, &JournalPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &communityViewModel,
                      &CommunityViewModel::Show);
@@ -92,12 +156,43 @@ int main(int argc, char* argv[])
     QObject::connect(&communityViewModel, &CommunityViewModel::RepairFinished, page,
                      &AddonTreePage::RefreshUndoState);
 
-    QObject::connect(&window, &MainWindow::PageSelected, &communityViewModel,
-                     [&communityViewModel, communityPage](const QWidget* selected)
+    QObject::connect(page, &AddonTreePage::ConflictChosen, communityPage,
+                     &CommunityPage::ResolveConflict);
+
+    const auto adoptWhatChangedOnDisk = [page, &treeViewModel, &quarantineViewModel]
+    {
+        page->RefreshUndoState();
+        quarantineViewModel.Show();
+        treeViewModel.ShowActiveProfile();
+    };
+
+    QObject::connect(&importViewModel, &ImportViewModel::Finished, page,
+                     [adoptWhatChangedOnDisk](const std::vector<ImportOperationResult>&)
+                     {
+                         adoptWhatChangedOnDisk();
+                     });
+    QObject::connect(&importViewModel, &ImportViewModel::ConflictResolved, page,
+                     adoptWhatChangedOnDisk);
+    QObject::connect(&quarantineViewModel, &QuarantineViewModel::Restored, page,
+                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
+                     {
+                         adoptWhatChangedOnDisk();
+                     });
+
+    QObject::connect(&window, &MainWindow::PageSelected, &window,
+                     [&](const QWidget* selected)
                      {
                          if (selected == communityPage)
                          {
                              communityViewModel.Show();
+                         }
+                         else if (selected == quarantinePage)
+                         {
+                             quarantineViewModel.Show();
+                         }
+                         else if (selected == journalPage)
+                         {
+                             journalViewModel.Show();
                          }
                      });
 
@@ -121,6 +216,18 @@ int main(int argc, char* argv[])
                              window.ShowProfiles(settings.Load());
                              treeViewModel.ShowActiveProfile();
                          }
+                     });
+
+    QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &window,
+                     [&, once = false]() mutable
+                     {
+                         if (once)
+                         {
+                             return;
+                         }
+
+                         once = true;
+                         OfferWhatALostImportLeftBehind(importViewModel, &window);
                      });
 
     treeViewModel.ShowActiveProfile();

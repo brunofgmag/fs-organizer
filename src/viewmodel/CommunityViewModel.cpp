@@ -38,14 +38,21 @@ std::size_t CommunityViewModel::NeedsAttention() const
     return attention_;
 }
 
+const ProfileSnapshot& CommunityViewModel::Snapshot() const
+{
+    return treeModel_.Snapshot();
+}
+
 void CommunityViewModel::Refresh()
 {
-    const std::vector<DestinationEntry>& entries = treeModel_.Snapshot().entries;
+    const ProfileSnapshot& snapshot = treeModel_.Snapshot();
+    const std::vector<DestinationEntry>& entries = snapshot.entries;
 
-    model_.ShowEntries(entries, treeModel_.Profile());
+    model_.ShowEntries(entries, treeModel_.Profile(), snapshot.conflicts);
 
     const std::size_t attention =
-        std::ranges::count_if(entries, [](const DestinationEntry& entry)
+        snapshot.conflicts.Count()
+        + std::ranges::count_if(entries, [](const DestinationEntry& entry)
         {
             return entry.classification == EntryClassification::Broken
                 || entry.classification == EntryClassification::Duplicated;

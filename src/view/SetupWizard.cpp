@@ -10,13 +10,10 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWizardPage>
 
+#include "support/PathText.h"
+
 namespace
 {
-    QString Show(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
-    }
-
     QString VariantLabel(const SimulatorVariant variant)
     {
         return variant == SimulatorVariant::MSFS2020
@@ -29,11 +26,11 @@ namespace
         QStringList names;
         for (const std::filesystem::path& destination : candidate.destinations)
         {
-            names.append(Show(destination.filename()));
+            names.append(AsText(destination.filename()));
         }
 
         return QStringLiteral("%1 — %2 (%3)")
-            .arg(VariantLabel(candidate.variant), Show(candidate.packagesPath), names.join(", "));
+            .arg(VariantLabel(candidate.variant), AsText(candidate.packagesPath), names.join(", "));
     }
 }
 
@@ -114,7 +111,7 @@ void SetupWizard::BrowseForDestination()
         return;
     }
 
-    const std::filesystem::path path(chosen.toStdWString());
+    const std::filesystem::path path = AsPath(chosen);
     if (!ConfirmDestination(path))
     {
         return;
@@ -176,7 +173,7 @@ void SetupWizard::BrowseForLibrary()
         return;
     }
 
-    const std::filesystem::path path(chosen.toStdWString());
+    const std::filesystem::path path = AsPath(chosen);
     if (!viewModel_.RegisterLibrary(path, path.filename().string()).Accepted())
     {
         QMessageBox::warning(
@@ -200,6 +197,6 @@ void SetupWizard::RefreshLibraries() const
 
         libraries_->addItem(QStringLiteral("%1 — %2 · %3, %4")
             .arg(QString::fromStdString(registered.library.label),
-                 Show(registered.library.path), categories, addons));
+                 AsText(registered.library.path), categories, addons));
     }
 }

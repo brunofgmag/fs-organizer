@@ -8,16 +8,16 @@ class FakeProcessProbe final : public ProcessProbe
 public:
     void ReportTheSimulatorAsRunning()
     {
-        running_ = true;
+        running_ = "FlightSimulator2024.exe";
     }
 
-    [[nodiscard]] bool SimulatorIsRunning() const override
+    [[nodiscard]] std::optional<std::string> RunningSimulator() const override
     {
         return running_;
     }
 
 private:
-    bool running_ = false;
+    std::optional<std::string> running_;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_PROCESS_PROBE_H

@@ -14,6 +14,11 @@ class AddonTreeModel final : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    enum Role
+    {
+        ConflictRole = Qt::UserRole,
+    };
+
     explicit AddonTreeModel(QObject* parent = nullptr);
 
     void ShowSnapshot(ProfileSnapshot snapshot, SimulatorProfile profile);

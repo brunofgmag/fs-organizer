@@ -2,24 +2,42 @@
 
 #include <utility>
 
-namespace
-{
-    QString Show(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
-    }
-}
+#include "support/PathText.h"
 
 CommunityModel::CommunityModel(QObject* parent) : QAbstractTableModel(parent)
 {
 }
 
-void CommunityModel::ShowEntries(std::vector<DestinationEntry> entries, SimulatorProfile profile)
+QString CommunityModel::ClassificationName(const EntryClassification classification)
+{
+    switch (classification)
+    {
+    case EntryClassification::Managed: return tr("Gerenciada");
+    case EntryClassification::External: return tr("Externa");
+    case EntryClassification::Broken: return tr("Quebrada");
+    case EntryClassification::Unavailable: return tr("Indisponível");
+    case EntryClassification::Unmanaged: return tr("Não gerenciada");
+    case EntryClassification::Duplicated: return tr("Duplicada");
+    }
+
+    return {};
+}
+
+void CommunityModel::ShowEntries(std::vector<DestinationEntry> entries, SimulatorProfile profile,
+                                 CopyConflicts conflicts)
 {
     beginResetModel();
     entries_ = std::move(entries);
     profile_ = std::move(profile);
+    conflicts_ = std::move(conflicts);
     endResetModel();
+}
+
+const CopyConflict* CommunityModel::ConflictAt(const QModelIndex& position) const
+{
+    const DestinationEntry* entry = EntryAt(position);
+
+    return entry == nullptr ? nullptr : conflicts_.OverTheDestinationEntry(entry->path);
 }
 
 const DestinationEntry* CommunityModel::EntryAt(const QModelIndex& position) const
@@ -50,9 +68,26 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
+    const CopyConflict* conflict = conflicts_.OverTheDestinationEntry(entry->path);
+
     if (role == ClassificationRole)
     {
         return static_cast<int>(entry->classification);
+    }
+
+    if (role == ConflictRole)
+    {
+        return conflict != nullptr;
+    }
+
+    if (role == Qt::ToolTipRole)
+    {
+        const QString text = data(position, Qt::DisplayRole).toString();
+
+        return conflict == nullptr
+                   ? QVariant(text)
+                   : tr("%1\nTambém existe na biblioteca: %2")
+                     .arg(text, AsText(conflict->libraryPath));
     }
 
     if (role != Qt::DisplayRole)
@@ -63,22 +98,15 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     switch (position.column())
     {
     case NameColumn:
-        return Show(entry->path.filename());
+        return AsText(entry->path.filename());
     case DestinationColumn:
-        return Show(entry->path.parent_path().filename());
+        return AsText(entry->path.parent_path().filename());
     case ClassificationColumn:
-        switch (entry->classification)
-        {
-        case EntryClassification::Managed: return tr("Gerenciada");
-        case EntryClassification::External: return tr("Externa");
-        case EntryClassification::Broken: return tr("Quebrada");
-        case EntryClassification::Unavailable: return tr("Indisponível");
-        case EntryClassification::Unmanaged: return tr("Não gerenciada");
-        case EntryClassification::Duplicated: return tr("Duplicada");
-        }
-        return {};
+        return conflict == nullptr
+                   ? ClassificationName(entry->classification)
+                   : tr("%1 · em conflito").arg(ClassificationName(entry->classification));
     case TargetColumn:
-        return entry->target.empty() ? QString() : Show(entry->target.generic_wstring());
+        return entry->target.empty() ? QString() : AsText(entry->target.generic_wstring());
     default:
         return {};
     }
@@ -109,17 +137,30 @@ CommunityFilterModel::CommunityFilterModel(QObject* parent) : QSortFilterProxyMo
 void CommunityFilterModel::ShowOnly(const std::optional<EntryClassification> classification)
 {
     classification_ = classification;
+    conflictedOnly_ = false;
+    invalidateRowsFilter();
+}
+
+void CommunityFilterModel::ShowOnlyTheConflicted(const bool only)
+{
+    conflictedOnly_ = only;
+    classification_.reset();
     invalidateRowsFilter();
 }
 
 bool CommunityFilterModel::filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const
 {
+    const QModelIndex position = sourceModel()->index(sourceRow, 0, sourceParent);
+
+    if (conflictedOnly_)
+    {
+        return sourceModel()->data(position, CommunityModel::ConflictRole).toBool();
+    }
+
     if (!classification_.has_value())
     {
         return true;
     }
-
-    const QModelIndex position = sourceModel()->index(sourceRow, 0, sourceParent);
 
     return sourceModel()->data(position, CommunityModel::ClassificationRole).toInt()
         == static_cast<int>(*classification_);

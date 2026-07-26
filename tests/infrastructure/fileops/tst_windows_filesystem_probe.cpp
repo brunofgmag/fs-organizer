@@ -16,6 +16,8 @@ private slots:
     static void ChildDirectoriesReportsDanglingJunctionsToo();
     static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
     static void AJunctionIsAReparsePointAndARealFolderIsNot();
+    static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
+    static void AFolderReportsWhenItWasLastWrittenTo();
 };
 
 namespace
@@ -113,6 +115,31 @@ void WindowsFilesystemProbeTest::AJunctionIsAReparsePointAndARealFolderIsNot()
     QVERIFY(filesystemProbe.IsReparsePoint(dangling));
     QVERIFY(!filesystemProbe.IsReparsePoint(physical));
     QVERIFY(!filesystemProbe.IsReparsePoint(disk.Root() / "Community/never-created"));
+}
+
+void WindowsFilesystemProbeTest::FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists()
+{
+    const Disk disk;
+    const std::filesystem::path category = disk.AddFolder("Utils");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.FreeSpaceOn(category).has_value());
+    QVERIFY(!filesystemProbe.FreeSpaceOn(category / "flybywire-externaltools-simbridge").has_value());
+}
+
+void WindowsFilesystemProbeTest::AFolderReportsWhenItWasLastWrittenTo()
+{
+    const Disk disk;
+    const std::filesystem::path folder = disk.AddFolder("Utils/simbridge");
+
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::optional<std::chrono::system_clock::time_point> written =
+        filesystemProbe.LastWriteTime(folder);
+
+    QVERIFY(written.has_value());
+    QVERIFY(std::chrono::abs(std::chrono::system_clock::now() - *written) < std::chrono::minutes{5});
+    QVERIFY(!filesystemProbe.LastWriteTime(folder / "never-existed").has_value());
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

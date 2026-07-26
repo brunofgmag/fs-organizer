@@ -5,10 +5,11 @@
 #include <string>
 #include <system_error>
 
+#include "domain/importing/ImportPaths.h"
+#include "domain/model/Manifest.h"
+
 namespace
 {
-    constexpr auto kManifestFileName = "manifest.json";
-
     std::string ReadWholeFile(const std::filesystem::path& path)
     {
         std::ifstream file(path, std::ios::binary);
@@ -16,20 +17,16 @@ namespace
         return {std::istreambuf_iterator(file), std::istreambuf_iterator<char>()};
     }
 
-    std::filesystem::path ManifestPathOf(const std::filesystem::path& folder)
-    {
-        return folder / kManifestFileName;
-    }
-
     bool HasManifest(const std::filesystem::path& folder)
     {
         std::error_code error;
 
-        return std::filesystem::exists(ManifestPathOf(folder), error);
+        return std::filesystem::exists(ManifestPathIn(folder), error);
     }
 }
 
-FilesystemScanner::FilesystemScanner(const ManifestParser& manifestParser) : manifestParser_(manifestParser)
+FilesystemScanner::FilesystemScanner(const ManifestParser& manifestParser, const FilesystemProbe& filesystemProbe)
+    : manifestParser_(manifestParser), filesystemProbe_(filesystemProbe)
 {
 }
 
@@ -51,7 +48,7 @@ TreeNode FilesystemScanner::ScanAddon(const std::filesystem::path& folder) const
     Addon addon;
     addon.folderPath = folder;
 
-    if (const std::optional<Manifest> manifest = manifestParser_.Parse(ReadWholeFile(ManifestPathOf(folder))))
+    if (const std::optional<Manifest> manifest = manifestParser_.Parse(ReadWholeFile(ManifestPathIn(folder))))
     {
         addon.manifest = *manifest;
     }
@@ -70,12 +67,11 @@ TreeNode FilesystemScanner::ScanCategory(const std::filesystem::path& folder) co
     node.kind = TreeNodeKind::Category;
     node.path = folder;
 
-    std::error_code error;
-    for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(folder, error))
+    for (const std::filesystem::path& child : filesystemProbe_.ChildDirectories(folder))
     {
-        if (entry.is_directory(error))
+        if (!CreatedByTheImporter(child))
         {
-            node.children.push_back(ScanFolder(entry.path()));
+            node.children.push_back(ScanFolder(child));
         }
     }
 

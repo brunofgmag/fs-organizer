@@ -21,6 +21,9 @@ public:
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override;
 
     [[nodiscard]] std::vector<FileFingerprint> FingerprintTree(const std::filesystem::path& root) const override;
+
+    [[nodiscard]] std::optional<std::chrono::system_clock::time_point> LastWriteTime(
+        const std::filesystem::path& path) const override;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILESYSTEM_PROBE_H

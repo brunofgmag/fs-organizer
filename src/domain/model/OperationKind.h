@@ -1,6 +1,9 @@
 #ifndef FS_ORGANIZER_DOMAIN_MODEL_OPERATION_KIND_H
 #define FS_ORGANIZER_DOMAIN_MODEL_OPERATION_KIND_H
 
+#include <array>
+#include <cstddef>
+
 enum class OperationKind : int
 {
     EnableAddon = 0,
@@ -13,7 +16,29 @@ enum class OperationKind : int
     ImportRemoveSource = 6,
     QuarantineFromDestination = 7,
     QuarantineFromLibrary = 8,
+    RestoreFromQuarantine = 10,
+    DiscardFromQuarantine = 11,
+    DiscardStaging = 12,
 };
+
+inline constexpr std::array kAllOperationKinds{
+    OperationKind::EnableAddon,
+    OperationKind::DisableAddon,
+    OperationKind::RemoveBrokenLink,
+    OperationKind::RepointLink,
+    OperationKind::ImportCopyToStaging,
+    OperationKind::ImportVerifyStaging,
+    OperationKind::ImportMoveIntoPlace,
+    OperationKind::ImportRemoveSource,
+    OperationKind::QuarantineFromDestination,
+    OperationKind::QuarantineFromLibrary,
+    OperationKind::RestoreFromQuarantine,
+    OperationKind::DiscardFromQuarantine,
+    OperationKind::DiscardStaging,
+};
+
+static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::DiscardStaging) + 1,
+              "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool CarriesAnImportReason(const OperationKind kind)
 {
@@ -25,6 +50,9 @@ enum class OperationKind : int
     case OperationKind::ImportRemoveSource:
     case OperationKind::QuarantineFromDestination:
     case OperationKind::QuarantineFromLibrary:
+    case OperationKind::RestoreFromQuarantine:
+    case OperationKind::DiscardFromQuarantine:
+    case OperationKind::DiscardStaging:
         return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:

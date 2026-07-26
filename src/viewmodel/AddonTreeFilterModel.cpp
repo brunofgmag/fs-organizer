@@ -1,6 +1,7 @@
 #include "viewmodel/AddonTreeFilterModel.h"
 
 #include "domain/tree/AddonTree.h"
+#include "support/PathText.h"
 #include "viewmodel/AddonTreeModel.h"
 
 AddonTreeFilterModel::AddonTreeFilterModel(QObject* parent) : QSortFilterProxyModel(parent)
@@ -33,7 +34,7 @@ bool AddonTreeFilterModel::filterAcceptsRow(const int sourceRow, const QModelInd
     if (node->kind == TreeNodeKind::Addon)
     {
         return search_.isEmpty()
-            || QString::fromStdWString(node->path.filename().wstring()).contains(search_, Qt::CaseInsensitive);
+            || AsText(node->path.filename()).contains(search_, Qt::CaseInsensitive);
     }
 
     if (hideEmpty_ && CountAddons(*node) == 0)

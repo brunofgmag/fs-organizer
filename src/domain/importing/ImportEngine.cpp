@@ -16,14 +16,6 @@ namespace
         return std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});
     }
 
-    std::filesystem::path StagingPathFor(const std::filesystem::path& target)
-    {
-        std::filesystem::path staging = target;
-        staging += kStagingSuffix;
-
-        return staging;
-    }
-
     bool IsUnderADestination(const SimulatorProfile& profile, const std::filesystem::path& path)
     {
         return std::ranges::any_of(profile.destinations,
@@ -65,8 +57,17 @@ ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
 
 ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
                                    const ImportRequest& request,
-                                   const std::function<bool(const CopyProgress &)>& onProgress) const
+                                   const std::function<bool(const CopyProgress &)>& onProgress,
+                                   const std::function<void(OperationKind)>& onStep) const
 {
+    const auto announce = [&onStep](const OperationKind kind)
+    {
+        if (onStep)
+        {
+            onStep(kind);
+        }
+    };
+
     if (!IsUnderADestination(profile, request.source))
     {
         return ImportOutcome::Stopped(ImportResult::SourceIsNotUnderADestination);
@@ -79,15 +80,17 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
 
     const std::vector<FileFingerprint> source = filesystemProbe_.FingerprintTree(request.source);
 
-    if (const ImportOutcome room = CheckFreeSpace(request.target, TotalSizeOf(source));
+    if (const ImportOutcome room = CheckFreeSpace(request.category, TotalSizeOf(source));
         !room.Succeeded())
     {
         return room;
     }
 
-    const std::filesystem::path staging = StagingPathFor(request.target);
-    const AddonId addon = IdentityOf(profile, request.target);
+    const std::filesystem::path target = request.Target();
+    const std::filesystem::path staging = StagingPathFor(target);
+    const AddonId addon = IdentityOf(profile, target);
 
+    announce(OperationKind::ImportCopyToStaging);
     const ImportOutcome copy = CopyToStaging(request.source, staging, onProgress);
     RecordStep(addon, OperationKind::ImportCopyToStaging, request.source, staging, copy.Result());
     if (!copy.Succeeded())
@@ -95,33 +98,37 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
         return copy;
     }
 
+    announce(OperationKind::ImportVerifyStaging);
     const bool verified = FingerprintsMatch(source, filesystemProbe_.FingerprintTree(staging));
-    RecordStep(addon, OperationKind::ImportVerifyStaging, staging, request.target,
+    RecordStep(addon, OperationKind::ImportVerifyStaging, staging, target,
                verified ? ImportResult::Completed : ImportResult::VerificationFailed);
     if (!verified)
     {
         return ImportOutcome::Stopped(ImportResult::VerificationFailed);
     }
 
-    const bool moved = files_.Move(staging, request.target);
-    RecordStep(addon, OperationKind::ImportMoveIntoPlace, staging, request.target,
+    announce(OperationKind::ImportMoveIntoPlace);
+    const bool moved = files_.Move(staging, target);
+    RecordStep(addon, OperationKind::ImportMoveIntoPlace, staging, target,
                moved ? ImportResult::Completed : ImportResult::CouldNotMoveIntoPlace);
     if (!moved)
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotMoveIntoPlace);
     }
 
+    announce(OperationKind::ImportRemoveSource);
     const bool removed = files_.RemoveTree(request.source);
-    RecordStep(addon, OperationKind::ImportRemoveSource, request.source, request.target,
+    RecordStep(addon, OperationKind::ImportRemoveSource, request.source, target,
                removed ? ImportResult::Completed : ImportResult::CouldNotRemoveSource);
     if (!removed)
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotRemoveSource);
     }
 
-    const LinkOutcome link = linking_.Enable(Addon{request.target}, request.source.parent_path(), linkType_);
+    announce(OperationKind::EnableAddon);
+    const LinkOutcome link = linking_.Enable(Addon{target}, request.source.parent_path(), linkType_);
     journal_.Append(OperationRecord::OfLink(clock_.Now(), OperationKind::EnableAddon, addon,
-                                            request.target, request.source, link.Failure()));
+                                            target, request.source, link.Failure()));
     if (!link.Succeeded())
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotCreateLink);
@@ -139,11 +146,12 @@ void ImportEngine::RecordStep(const AddonId& addon,
     journal_.Append(OperationRecord::OfImport(clock_.Now(), kind, addon, source, target, result));
 }
 
-ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& target, const std::uintmax_t sourceSize) const
+ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category,
+                                           const std::uintmax_t sourceSize) const
 {
     const std::uintmax_t needed = sourceSize + kFreeSpaceMargin;
 
-    const std::optional<std::uintmax_t> free = filesystemProbe_.FreeSpaceOn(target);
+    const std::optional<std::uintmax_t> free = filesystemProbe_.FreeSpaceOn(category);
     if (!free.has_value())
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotCheckFreeSpace);

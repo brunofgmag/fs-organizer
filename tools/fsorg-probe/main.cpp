@@ -16,6 +16,7 @@
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "support/PathText.h"
 
 namespace
 {
@@ -23,11 +24,6 @@ namespace
     {
         static QTextStream stream(stdout);
         return stream;
-    }
-
-    QString Show(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
     }
 
     QString VariantName(const SimulatorVariant variant)
@@ -121,7 +117,7 @@ namespace
         {
             if (arguments[index] == "--library")
             {
-                libraries.emplace_back(arguments[index + 1].toStdWString());
+                libraries.push_back(AsPath(arguments[index + 1]));
             }
         }
 
@@ -199,7 +195,7 @@ namespace
             }
         }
 
-        Out() << "\nDestino " << Show(destination) << " — " << entries.size() << " entradas\n";
+        Out() << "\nDestino " << AsText(destination) << " — " << entries.size() << " entradas\n";
 
         for (const auto& [classification, count] : counts)
         {
@@ -221,7 +217,7 @@ namespace
                          const std::vector<std::filesystem::path>& libraries,
                          const LibraryFacts& facts)
     {
-        Out() << "\n" << VariantName(candidate.variant) << "  " << Show(candidate.packagesPath) << "\n";
+        Out() << "\n" << VariantName(candidate.variant) << "  " << AsText(candidate.packagesPath) << "\n";
 
         const std::vector<DestinationEntry> entries = classifier.Resolve(candidate.destinations, libraries);
 
@@ -252,7 +248,7 @@ int main(int argc, char* argv[])
     const WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
     const JsonManifestParser manifestParser;
-    const FilesystemScanner scanner(manifestParser);
+    const FilesystemScanner scanner(manifestParser, filesystemProbe);
     const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const EntryClassifier classifier(linkService, filesystemProbe);

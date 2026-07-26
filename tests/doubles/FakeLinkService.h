@@ -17,6 +17,11 @@ public:
         linkCreationFails_ = true;
     }
 
+    void MakeLinkRemovalFail()
+    {
+        linkRemovalFails_ = true;
+    }
+
     [[nodiscard]] bool CreateLink(const std::filesystem::path& linkPath,
                                   const std::filesystem::path& target,
                                   LinkType) override
@@ -31,7 +36,7 @@ public:
 
     [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override
     {
-        return fileSystem_.RemoveNode(linkPath);
+        return !linkRemovalFails_ && fileSystem_.RemoveNode(linkPath);
     }
 
     [[nodiscard]] std::optional<std::filesystem::path>
@@ -43,6 +48,7 @@ public:
 private:
     InMemoryFileSystem& fileSystem_;
     bool linkCreationFails_ = false;
+    bool linkRemovalFails_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_LINK_SERVICE_H

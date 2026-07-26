@@ -12,6 +12,8 @@ private slots:
     static void TheTableShowsOneRowPerEntry();
     static void FilteringByEachClassificationReturnsExactlyItsSubset();
     static void ClearingTheFilterShowsEverythingAgain();
+    static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
+    static void EveryCellOffersItsWholeTextToWhoeverHoversIt();
 };
 
 namespace
@@ -59,7 +61,7 @@ namespace
 void CommunityModelTest::TheTableShowsOneRowPerEntry()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile());
+    model.ShowEntries(OneOfEachClass(), Profile(), {});
 
     QCOMPARE(model.rowCount({}), 6);
     QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), Qt::DisplayRole).toString(),
@@ -79,7 +81,7 @@ void CommunityModelTest::TheTableShowsOneRowPerEntry()
 void CommunityModelTest::FilteringByEachClassificationReturnsExactlyItsSubset()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile());
+    model.ShowEntries(OneOfEachClass(), Profile(), {});
 
     CommunityFilterModel filter;
     filter.setSourceModel(&model);
@@ -107,7 +109,7 @@ void CommunityModelTest::FilteringByEachClassificationReturnsExactlyItsSubset()
 void CommunityModelTest::ClearingTheFilterShowsEverythingAgain()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile());
+    model.ShowEntries(OneOfEachClass(), Profile(), {});
 
     CommunityFilterModel filter;
     filter.setSourceModel(&model);
@@ -117,6 +119,51 @@ void CommunityModelTest::ClearingTheFilterShowsEverythingAgain()
 
     filter.ShowOnly(std::nullopt);
     QCOMPARE(filter.rowCount({}), 6);
+}
+
+void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
+{
+    const CopyConflicts conflicts{
+        {CopyConflict{"E:/Flight Simulator 2024/Community/physical", "D:/MSFS 2024/Utils/physical"}}
+    };
+
+    CommunityModel model;
+    model.ShowEntries(OneOfEachClass(), Profile(), conflicts);
+
+    const QModelIndex conflicted = model.index(4, CommunityModel::ClassificationColumn);
+    QVERIFY(model.data(conflicted, CommunityModel::ConflictRole).toBool());
+    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(),
+             QStringLiteral("Não gerenciada · em conflito"));
+    QVERIFY(model.data(conflicted, Qt::ToolTipRole).toString().contains(
+        QStringLiteral("D:/MSFS 2024/Utils/physical")));
+
+    QVERIFY(!model.data(model.index(0, CommunityModel::ClassificationColumn),
+                        CommunityModel::ConflictRole).toBool());
+
+    CommunityFilterModel filter;
+    filter.setSourceModel(&model);
+    filter.ShowOnlyTheConflicted(true);
+
+    QCOMPARE(filter.rowCount({}), 1);
+    QCOMPARE(filter.data(filter.index(0, CommunityModel::NameColumn), Qt::DisplayRole).toString(),
+             QStringLiteral("physical"));
+}
+
+void CommunityModelTest::EveryCellOffersItsWholeTextToWhoeverHoversIt()
+{
+    CommunityModel model;
+    model.ShowEntries(OneOfEachClass(), Profile(), {});
+
+    for (int column = 0; column <= CommunityModel::TargetColumn; ++column)
+    {
+        const QModelIndex cell = model.index(0, column);
+
+        QCOMPARE(model.data(cell, Qt::ToolTipRole).toString(),
+                 model.data(cell, Qt::DisplayRole).toString());
+    }
+
+    QCOMPARE(model.data(model.index(0, CommunityModel::TargetColumn), Qt::ToolTipRole).toString(),
+             QStringLiteral("D:/MSFS 2024/Sceneries/managed"));
 }
 
 QTEST_APPLESS_MAIN(CommunityModelTest)

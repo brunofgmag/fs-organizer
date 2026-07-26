@@ -17,15 +17,8 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "domain/tree/AddonTree.h"
-#include "view/FailureText.h"
-
-namespace
-{
-    QString Show(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
-    }
-}
+#include "support/PathText.h"
+#include "viewmodel/FailureText.h"
 
 AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel, AddonTreeModel& model, QWidget* parent)
     : QWidget(parent), viewModel_(viewModel), model_(model)
@@ -260,20 +253,44 @@ void AddonTreePage::ShowDestinationMenu(const QPoint& where)
     const TreeNode* node = model_.NodeAt(filter_->mapToSource(tree_->indexAt(where)));
     const SimulatorProfile& profile = viewModel_.Profile();
 
-    if (node == nullptr || profile.destinations.size() < 2)
+    if (node == nullptr)
     {
         return;
     }
 
     QMenu menu(this);
-    menu.addAction(tr("Herdar o destino de cima"), this,
-                   [this, node] { viewModel_.OverrideDestination(node, {}); });
-    menu.addSeparator();
 
-    for (const std::filesystem::path& destination : profile.destinations)
+    if (const CopyConflict* conflict = model_.Snapshot().conflicts.OverTheLibraryAddon(node->path))
     {
-        menu.addAction(tr("Ligar em %1").arg(Show(destination.filename())), this,
-                       [this, node, destination] { viewModel_.OverrideDestination(node, destination); });
+        const CopyConflict chosen = *conflict;
+        menu.addAction(tr("Resolver o conflito de cópia..."), this,
+                       [this, chosen] { emit ConflictChosen(chosen); });
+    }
+
+    if (profile.destinations.size() >= 2)
+    {
+        if (!menu.isEmpty())
+        {
+            menu.addSeparator();
+        }
+
+        menu.addAction(tr("Herdar o destino de cima"), this,
+                       [this, node] { viewModel_.OverrideDestination(node, {}); });
+        menu.addSeparator();
+
+        for (const std::filesystem::path& destination : profile.destinations)
+        {
+            menu.addAction(tr("Ligar em %1").arg(AsText(destination.filename())), this,
+                           [this, node, destination]
+                           {
+                               viewModel_.OverrideDestination(node, destination);
+                           });
+        }
+    }
+
+    if (menu.isEmpty())
+    {
+        return;
     }
 
     menu.exec(tree_->viewport()->mapToGlobal(where));
@@ -287,7 +304,7 @@ void AddonTreePage::BrowseForLibrary()
         return;
     }
 
-    const LibraryReport report = viewModel_.AddLibrary(std::filesystem::path(chosen.toStdWString()));
+    const LibraryReport report = viewModel_.AddLibrary(AsPath(chosen));
 
     if (!report.Accepted())
     {

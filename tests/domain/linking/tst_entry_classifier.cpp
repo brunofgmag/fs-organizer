@@ -21,6 +21,7 @@ private slots:
     static void LibraryMatchingIgnoresPathCase();
     static void OnlyManagedEntriesReportTheirTargetAsAnEnabledAddon();
     static void ADuplicatedAddonIsStillEnabledAndReportedOnce();
+    static void EveryLinkThatPointsAtAnAddonFolderIsListedAcrossDestinations();
 };
 
 namespace
@@ -204,6 +205,30 @@ void EntryClassifierTest::ADuplicatedAddonIsStillEnabledAndReportedOnce()
 
     QCOMPARE(enabled.size(), std::size_t{1});
     QCOMPARE(enabled.front(), addonFolder);
+}
+
+void EntryClassifierTest::EveryLinkThatPointsAtAnAddonFolderIsListedAcrossDestinations()
+{
+    const std::filesystem::path addon = "D:/Library/Aircrafts/tfdi-md11";
+
+    Fixture f;
+    f.fileSystem.AddDirectory(addon);
+    f.fileSystem.AddDirectory("D:/Library/Aircrafts/aerosoft-crj");
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory("E:/Sim/Community2024");
+    f.fileSystem.AddLink("E:/Sim/Community/tfdi-md11", addon);
+    f.fileSystem.AddLink("E:/Sim/Community2024/tfdi-md11", addon);
+    f.fileSystem.AddLink("E:/Sim/Community2024/aerosoft-crj", "D:/Library/Aircrafts/aerosoft-crj");
+    f.fileSystem.AddDirectory("E:/Sim/Community2024/asfs");
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community", "E:/Sim/Community2024"}, {"D:/Library"});
+    const std::vector<std::filesystem::path> pointing = LinksPointingAt(entries, addon);
+
+    QCOMPARE(pointing.size(), std::size_t{2});
+    QCOMPARE(pointing.front(), std::filesystem::path("E:/Sim/Community/tfdi-md11"));
+    QCOMPARE(pointing.back(), std::filesystem::path("E:/Sim/Community2024/tfdi-md11"));
+    QVERIFY(LinksPointingAt(entries, "D:/Library/Aircrafts/never-linked").empty());
 }
 
 QTEST_APPLESS_MAIN(EntryClassifierTest)

@@ -1,5 +1,7 @@
 #include "domain/linking/LinkingEngine.h"
 
+#include "domain/support/PathUtils.h"
+
 LinkingEngine::LinkingEngine(LinkService& linkService, const FilesystemProbe& filesystemProbe)
     : linkService_(linkService), filesystemProbe_(filesystemProbe)
 {
@@ -24,9 +26,11 @@ LinkOutcome LinkingEngine::Enable(const Addon& addon,
             return LinkOutcome::Failed(LinkFailure::UnreadableLinkTarget);
         }
 
-        if (filesystemProbe_.TargetDirectoryExists(*target))
+        const std::filesystem::path pointsAt = NormalizeReparseTarget(*target);
+
+        if (filesystemProbe_.TargetDirectoryExists(pointsAt))
         {
-            return LinkOutcome::Occupied(OccupiedDestination{linkPath, *target});
+            return LinkOutcome::Occupied(OccupiedDestination{linkPath, pointsAt});
         }
 
         if (!linkService_.RemoveReparseNode(linkPath))

@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#include "domain/importing/ImportPaths.h"
 #include "domain/linking/LinkingEngine.h"
 #include "domain/model/CopyOutcome.h"
 #include "domain/model/ImportOutcome.h"
@@ -15,7 +16,6 @@
 #include "domain/ports/OperationJournal.h"
 
 inline constexpr std::uintmax_t kFreeSpaceMargin = 64ULL * 1024 * 1024;
-inline constexpr auto kStagingSuffix = ".fsorg-partial";
 
 class ImportEngine
 {
@@ -29,10 +29,12 @@ public:
 
     [[nodiscard]] ImportOutcome Import(const SimulatorProfile& profile,
                                        const ImportRequest& request,
-                                       const std::function<bool(const CopyProgress &)>& onProgress) const;
+                                       const std::function<bool(const CopyProgress &)>& onProgress,
+                                       const std::function<void(OperationKind)>& onStep = {}) const;
 
 private:
-    [[nodiscard]] ImportOutcome CheckFreeSpace(const std::filesystem::path& target, std::uintmax_t sourceSize) const;
+    [[nodiscard]] ImportOutcome CheckFreeSpace(const std::filesystem::path& category,
+                                               std::uintmax_t sourceSize) const;
 
     [[nodiscard]] ImportOutcome CopyToStaging(const std::filesystem::path& source,
                                               const std::filesystem::path& staging,

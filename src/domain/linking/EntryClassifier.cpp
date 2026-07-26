@@ -73,6 +73,27 @@ std::vector<std::filesystem::path> EnabledAddonFolders(const std::vector<Destina
     return folders;
 }
 
+std::vector<std::filesystem::path> LinksPointingAt(const std::vector<DestinationEntry>& entries,
+                                                   const std::filesystem::path& addonFolder)
+{
+    const std::string wanted = ComparablePath(addonFolder);
+
+    std::vector<std::filesystem::path> links;
+
+    for (const DestinationEntry& entry : entries)
+    {
+        const bool linked = entry.classification == EntryClassification::Managed
+            || entry.classification == EntryClassification::Duplicated;
+
+        if (linked && ComparablePath(entry.target) == wanted)
+        {
+            links.push_back(entry.path);
+        }
+    }
+
+    return links;
+}
+
 EntryClassifier::EntryClassifier(const LinkService& linkService, const FilesystemProbe& filesystemProbe)
     : linkService_(linkService), filesystemProbe_(filesystemProbe)
 {

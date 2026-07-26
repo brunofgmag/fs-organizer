@@ -71,6 +71,7 @@ ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile) const
 
     snapshot.entries = ResolveEntries(profile);
     snapshot.enabled = EnabledAddons(EnabledAddonFolders(snapshot.entries));
+    snapshot.conflicts = FindCopyConflicts(snapshot.entries, snapshot.libraries);
 
     return snapshot;
 }

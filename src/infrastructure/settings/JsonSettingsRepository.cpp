@@ -12,6 +12,8 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QString>
 
+#include "support/PathText.h"
+
 namespace
 {
     constexpr auto kActiveProfileId = "activeProfileId";
@@ -28,14 +30,9 @@ namespace
     constexpr auto kRelativePath = "relativePath";
     constexpr auto kDestination = "destination";
 
-    QString FromPath(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
-    }
-
     std::filesystem::path ToPath(const QJsonValue& value)
     {
-        return std::filesystem::path(value.toString().toStdWString());
+        return AsPath(value.toString());
     }
 
     QString VariantName(const SimulatorVariant variant)
@@ -54,7 +51,7 @@ namespace
     {
         QJsonObject object;
         object[kId] = QString::fromStdString(library.id);
-        object[kPath] = FromPath(library.path);
+        object[kPath] = AsText(library.path);
         object[kLabel] = QString::fromStdString(library.label);
 
         return object;
@@ -74,8 +71,8 @@ namespace
     {
         QJsonObject object;
         object[kLibraryId] = QString::fromStdString(destinationOverride.libraryId);
-        object[kRelativePath] = FromPath(destinationOverride.relativePath);
-        object[kDestination] = FromPath(destinationOverride.destination);
+        object[kRelativePath] = AsText(destinationOverride.relativePath);
+        object[kDestination] = AsText(destinationOverride.destination);
 
         return object;
     }
@@ -95,7 +92,7 @@ namespace
         QJsonArray destinations;
         for (const std::filesystem::path& destination : profile.destinations)
         {
-            destinations.append(FromPath(destination));
+            destinations.append(AsText(destination));
         }
 
         QJsonArray libraries;
@@ -114,7 +111,7 @@ namespace
         object[kId] = QString::fromStdString(profile.id);
         object[kVariant] = VariantName(profile.variant);
         object[kDestinations] = destinations;
-        object[kDefaultDestination] = FromPath(profile.defaultDestination);
+        object[kDefaultDestination] = AsText(profile.defaultDestination);
         object[kLibraries] = libraries;
         object[kDestinationOverrides] = overrides;
 

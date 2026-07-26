@@ -30,9 +30,17 @@
     const std::string candidate = ComparablePath(path);
     const std::string base = ComparablePath(root);
 
-    return candidate == base
-        || (candidate.size() > base.size() && candidate.compare(0, base.size(), base) == 0
-            && candidate[base.size()] == '/');
+    if (candidate == base)
+    {
+        return true;
+    }
+
+    if (candidate.size() <= base.size() || candidate.compare(0, base.size(), base) != 0)
+    {
+        return false;
+    }
+
+    return base.back() == '/' || candidate[base.size()] == '/';
 }
 
 [[nodiscard]] inline std::filesystem::path NormalizeReparseTarget(const std::filesystem::path& target)

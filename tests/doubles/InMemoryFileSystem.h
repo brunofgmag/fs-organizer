@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H
 #define FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H
 
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <limits>
@@ -75,6 +76,19 @@ public:
         const auto measured = freeSpace_.find(volume);
         return measured == freeSpace_.end() ? std::numeric_limits<std::uintmax_t>::max()
                                             : measured->second;
+    }
+
+    void SetLastWriteTime(const std::filesystem::path& path, const std::chrono::system_clock::time_point when)
+    {
+        written_[Key(path)] = when;
+    }
+
+    [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
+    LastWriteTime(const std::filesystem::path& path) const
+    {
+        const auto when = written_.find(Key(path));
+
+        return when == written_.end() ? std::nullopt : std::optional(when->second);
     }
 
     [[nodiscard]] bool Exists(const std::filesystem::path& path) const
@@ -252,6 +266,7 @@ private:
     }
 
     std::map<std::string, Node> nodes_;
+    std::map<std::string, std::chrono::system_clock::time_point> written_;
     std::map<std::string, std::uintmax_t> freeSpace_;
     std::set<std::string> unmeasurableVolumes_;
     std::set<std::string> unavailableVolumes_;

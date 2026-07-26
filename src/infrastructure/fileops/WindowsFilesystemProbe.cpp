@@ -112,6 +112,21 @@ std::optional<std::uintmax_t> WindowsFilesystemProbe::FreeSpaceOn(const std::fil
     return available.QuadPart;
 }
 
+std::optional<std::chrono::system_clock::time_point> WindowsFilesystemProbe::LastWriteTime(
+    const std::filesystem::path& path) const
+{
+    std::error_code error;
+    const std::filesystem::file_time_type written = std::filesystem::last_write_time(path, error);
+    if (error)
+    {
+        return std::nullopt;
+    }
+
+    return std::chrono::system_clock::now()
+        + std::chrono::duration_cast<std::chrono::system_clock::duration>(
+            written - std::filesystem::file_time_type::clock::now());
+}
+
 std::vector<FileFingerprint> WindowsFilesystemProbe::FingerprintTree(
     const std::filesystem::path& root) const
 {

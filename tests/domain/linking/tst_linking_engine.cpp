@@ -18,6 +18,7 @@ private slots:
     static void EnablingRefusesWhenTheDestinationHoldsALiveForeignLink();
     static void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
     static void ADanglingLinkStillCountsAsAnExistingEntry();
+    static void ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix();
 };
 
 namespace
@@ -159,6 +160,27 @@ void LinkingEngineTest::ADanglingLinkStillCountsAsAnExistingEntry()
 
     QVERIFY(!f.filesystemProbe.TargetDirectoryExists("D:/Library/Sceneries/ag-airport-bgqq-qaanaaq"));
     QVERIFY(f.filesystemProbe.EntryExistsWithoutFollowingLinks("E:/Sim/Community/ag-airport-bgqq-qaanaaq"));
+}
+
+void LinkingEngineTest::ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix()
+{
+    const std::filesystem::path foreignTarget = "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
+
+    Fixture f;
+    f.fileSystem.AddDirectory("D:/Library/Sceneries/fsdreamteam-gsx-pro");
+    f.fileSystem.AddDirectory(foreignTarget);
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddLink("E:/Sim/Community/fsdreamteam-gsx-pro",
+                         R"(\??\C:\Program Files (x86)\Addon Manager\MSFS\fsdreamteam-gsx-pro)");
+
+    const Addon addon{"D:/Library/Sceneries/fsdreamteam-gsx-pro"};
+    const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
+
+    QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
+    QVERIFY(outcome.Occupation().has_value());
+    QVERIFY(f.fileSystem.Exists(foreignTarget));
+    QCOMPARE(f.fileSystem.LinkTarget("E:/Sim/Community/fsdreamteam-gsx-pro").value(),
+             std::filesystem::path(R"(\??\C:\Program Files (x86)\Addon Manager\MSFS\fsdreamteam-gsx-pro)"));
 }
 
 QTEST_APPLESS_MAIN(LinkingEngineTest)

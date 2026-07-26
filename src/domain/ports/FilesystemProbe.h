@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_DOMAIN_PORTS_FILESYSTEM_PROBE_H
 #define FS_ORGANIZER_DOMAIN_PORTS_FILESYSTEM_PROBE_H
 
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -29,6 +30,9 @@ public:
     [[nodiscard]] virtual std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual std::vector<FileFingerprint> FingerprintTree(const std::filesystem::path& root) const = 0;
+
+    [[nodiscard]] virtual std::optional<std::chrono::system_clock::time_point> LastWriteTime(
+        const std::filesystem::path& path) const = 0;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_PORTS_FILESYSTEM_PROBE_H

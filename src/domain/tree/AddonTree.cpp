@@ -1,7 +1,24 @@
 #include "domain/tree/AddonTree.h"
 
+#include "domain/model/AddonId.h"
+
 namespace
 {
+    void CollectCategories(const TreeNode& node, std::vector<const TreeNode*>& categories)
+    {
+        if (node.kind == TreeNodeKind::Addon)
+        {
+            return;
+        }
+
+        categories.push_back(&node);
+
+        for (const TreeNode& child : node.children)
+        {
+            CollectCategories(child, categories);
+        }
+    }
+
     void CollectAddons(const TreeNode& node, std::vector<const TreeNode*>& addons)
     {
         if (node.kind == TreeNodeKind::Addon)
@@ -39,6 +56,30 @@ std::vector<const TreeNode*> AddonsUnder(const TreeNode& node)
     CollectAddons(node, addons);
 
     return addons;
+}
+
+std::vector<const TreeNode*> CategoriesUnder(const TreeNode& node)
+{
+    std::vector<const TreeNode*> categories;
+    CollectCategories(node, categories);
+
+    return categories;
+}
+
+const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& baseName)
+{
+    for (const TreeNode& library : libraries)
+    {
+        for (const TreeNode* addon : AddonsUnder(library))
+        {
+            if (EqualsIgnoringCase(addon->path.filename().string(), baseName))
+            {
+                return addon;
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 CheckState DeriveCheckState(const TreeNode& node, const EnabledAddons& enabled)

@@ -9,6 +9,7 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/StdFilesystemProbe.h"
 
 class FilesystemScannerTest : public QObject
 {
@@ -19,6 +20,7 @@ private slots:
     static void AnAddonCarriesTheMetadataFromItsManifest();
     static void AnEmptyFolderIsAnEmptyCategory();
     static void AFolderWithAnUnreadableManifestIsStillAnAddon();
+    static void WhatTheImporterCreatedIsNotPartOfTheLibrary();
 };
 
 namespace
@@ -46,6 +48,7 @@ namespace
     };
 
     const JsonManifestParser parser;
+    const StdFilesystemProbe probe;
 
     const TreeNode* ChildNamed(const TreeNode& parent, const std::string& name)
     {
@@ -64,7 +67,7 @@ void FilesystemScannerTest::ScanningStopsAtTheFirstManifest()
     library.AddManifest("Aircraft Mods/pmdg-aircraft-77w", R"({"title": "PMDG 777"})");
     library.AddManifest("Aircraft Mods/pmdg-aircraft-77w/SimObjects/inner", R"({"title": "Inner"})");
 
-    const FilesystemScanner scanner(parser);
+    const FilesystemScanner scanner(parser, probe);
     const TreeNode root = scanner.Scan(library.Root());
 
     QCOMPARE(root.kind, TreeNodeKind::Library);
@@ -91,7 +94,7 @@ void FilesystemScannerTest::AnAddonCarriesTheMetadataFromItsManifest()
       "package_version": "1.2.0"
     })");
 
-    const FilesystemScanner scanner(parser);
+    const FilesystemScanner scanner(parser, probe);
     const TreeNode root = scanner.Scan(library.Root());
     const TreeNode& addon = root.children.front().children.front();
 
@@ -109,7 +112,7 @@ void FilesystemScannerTest::AnEmptyFolderIsAnEmptyCategory()
     library.AddFolder("Liveries");
     library.AddManifest("Sceneries/tlc-bgjn", R"({"title": "Ilulissat"})");
 
-    const FilesystemScanner scanner(parser);
+    const FilesystemScanner scanner(parser, probe);
     const TreeNode root = scanner.Scan(library.Root());
 
     QCOMPARE(root.children.size(), std::size_t{2});
@@ -126,7 +129,7 @@ void FilesystemScannerTest::AFolderWithAnUnreadableManifestIsStillAnAddon()
     const Library library;
     library.AddManifest("Sceneries/half-written-addon", "{\"title\":");
 
-    const FilesystemScanner scanner(parser);
+    const FilesystemScanner scanner(parser, probe);
     const TreeNode root = scanner.Scan(library.Root());
 
     const TreeNode* sceneries = ChildNamed(root, "Sceneries");
@@ -137,6 +140,25 @@ void FilesystemScannerTest::AFolderWithAnUnreadableManifestIsStillAnAddon()
     QCOMPARE(addon->kind, TreeNodeKind::Addon);
     QVERIFY(addon->addon.has_value());
     QCOMPARE(addon->addon->manifest.title, std::string());
+}
+
+void FilesystemScannerTest::WhatTheImporterCreatedIsNotPartOfTheLibrary()
+{
+    const Library library;
+    library.AddManifest("Sceneries/tlc-bgjn", R"({"title": "Ilulissat"})");
+    library.AddManifest("_fsorganizer-quarantine/tlc-bgjn", R"({"title": "Ilulissat antigo"})");
+    library.AddManifest("Sceneries/fss-aircraft-727.fsorg-partial", R"({"title": "Meia importacao"})");
+
+    const FilesystemScanner scanner(parser, probe);
+    const TreeNode root = scanner.Scan(library.Root());
+
+    QCOMPARE(root.children.size(), std::size_t{1});
+    QVERIFY(ChildNamed(root, "_fsorganizer-quarantine") == nullptr);
+
+    const TreeNode* sceneries = ChildNamed(root, "Sceneries");
+    QVERIFY(sceneries != nullptr);
+    QCOMPARE(sceneries->children.size(), std::size_t{1});
+    QVERIFY(ChildNamed(*sceneries, "fss-aircraft-727.fsorg-partial") == nullptr);
 }
 
 QTEST_APPLESS_MAIN(FilesystemScannerTest)

@@ -1,6 +1,9 @@
 #ifndef FS_ORGANIZER_DOMAIN_MODEL_LINK_FAILURE_H
 #define FS_ORGANIZER_DOMAIN_MODEL_LINK_FAILURE_H
 
+#include <array>
+#include <cstddef>
+
 enum class LinkFailure : int
 {
     None = 0,
@@ -12,5 +15,19 @@ enum class LinkFailure : int
     PathIsNotAReparsePoint = 6,
     CouldNotRemoveLink = 7,
 };
+
+inline constexpr std::array kAllLinkFailures{
+    LinkFailure::None,
+    LinkFailure::DestinationHoldsRealFolder,
+    LinkFailure::DestinationHoldsLiveLink,
+    LinkFailure::UnreadableLinkTarget,
+    LinkFailure::CouldNotReplaceStaleLink,
+    LinkFailure::CouldNotCreateLink,
+    LinkFailure::PathIsNotAReparsePoint,
+    LinkFailure::CouldNotRemoveLink,
+};
+
+static_assert(kAllLinkFailures.size() == static_cast<std::size_t>(LinkFailure::CouldNotRemoveLink) + 1,
+              "Every LinkFailure belongs in kAllLinkFailures, and the last one carries the highest value.");
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_LINK_FAILURE_H

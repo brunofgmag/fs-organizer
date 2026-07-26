@@ -1,6 +1,9 @@
 #include "infrastructure/journal/JsonlOperationJournal.h"
 
+#include <array>
 #include <fstream>
+#include <optional>
+#include <string>
 #include <system_error>
 #include <utility>
 
@@ -10,6 +13,8 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QString>
 #include <QtCore/QTimeZone>
+
+#include "support/PathText.h"
 
 namespace
 {
@@ -21,11 +26,6 @@ namespace
     constexpr auto kTarget = "target";
     constexpr auto kFailure = "failure";
     constexpr auto kResult = "result";
-
-    QString FromPath(const std::filesystem::path& path)
-    {
-        return QString::fromStdWString(path.wstring());
-    }
 
     QString KindName(const OperationKind kind)
     {
@@ -41,6 +41,9 @@ namespace
         case OperationKind::ImportRemoveSource: return "importRemoveSource";
         case OperationKind::QuarantineFromDestination: return "quarantineFromDestination";
         case OperationKind::QuarantineFromLibrary: return "quarantineFromLibrary";
+        case OperationKind::RestoreFromQuarantine: return "restoreFromQuarantine";
+        case OperationKind::DiscardFromQuarantine: return "discardFromQuarantine";
+        case OperationKind::DiscardStaging: return "discardStaging";
         }
 
         return "unknown";
@@ -80,6 +83,10 @@ namespace
         case ImportResult::CouldNotMoveIntoPlace: return "couldNotMoveIntoPlace";
         case ImportResult::CouldNotRemoveSource: return "couldNotRemoveSource";
         case ImportResult::CouldNotCreateLink: return "couldNotCreateLink";
+        case ImportResult::TheOriginIsUnknown: return "theOriginIsUnknown";
+        case ImportResult::CouldNotRestore: return "couldNotRestore";
+        case ImportResult::CouldNotDiscard: return "couldNotDiscard";
+        case ImportResult::CouldNotRemoveTheLink: return "couldNotRemoveTheLink";
         }
 
         return "unknown";
@@ -91,6 +98,57 @@ namespace
             std::chrono::duration_cast<std::chrono::milliseconds>(timestamp.time_since_epoch()).count();
 
         return QDateTime::fromMSecsSinceEpoch(milliseconds, QTimeZone::UTC).toString(Qt::ISODate);
+    }
+
+    std::chrono::system_clock::time_point MomentFrom(const QString& text)
+    {
+        QDateTime moment = QDateTime::fromString(text, Qt::ISODate);
+        moment.setTimeZone(QTimeZone::UTC);
+
+        return std::chrono::system_clock::time_point{std::chrono::milliseconds{moment.toMSecsSinceEpoch()}};
+    }
+
+    template <typename Value, std::size_t Count, typename Naming>
+    std::optional<Value> ValueNamed(const std::array<Value, Count>& all, const Naming& nameOf, const QString& name)
+    {
+        for (const Value candidate : all)
+        {
+            if (nameOf(candidate) == name)
+            {
+                return candidate;
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    std::optional<OperationRecord> RecordFrom(const QJsonObject& object)
+    {
+        const std::optional<OperationKind> kind =
+            ValueNamed(kAllOperationKinds, KindName, object[kKind].toString());
+        if (!kind.has_value())
+        {
+            return std::nullopt;
+        }
+
+        const AddonId addon{object[kLibraryId].toString().toStdString(),
+                            object[kAddon].toString().toStdString()};
+        const auto timestamp = MomentFrom(object[kTimestamp].toString());
+        const std::filesystem::path source = AsPath(object[kSource].toString());
+        const std::filesystem::path target = AsPath(object[kTarget].toString());
+
+        if (CarriesAnImportReason(*kind))
+        {
+            return OperationRecord::OfImport(
+                timestamp, *kind, addon, source, target,
+                ValueNamed(kAllImportResults, ResultName, object[kResult].toString())
+                .value_or(ImportResult::Completed));
+        }
+
+        return OperationRecord::OfLink(
+            timestamp, *kind, addon, source, target,
+            ValueNamed(kAllLinkFailures, FailureName, object[kFailure].toString())
+            .value_or(LinkFailure::None));
     }
 }
 
@@ -105,8 +163,8 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     object[kKind] = KindName(record.kind);
     object[kLibraryId] = QString::fromStdString(record.addonId.libraryId);
     object[kAddon] = QString::fromStdString(record.addonId.folderName);
-    object[kSource] = FromPath(record.source);
-    object[kTarget] = FromPath(record.target);
+    object[kSource] = AsText(record.source);
+    object[kTarget] = AsText(record.target);
 
     if (CarriesAnImportReason(record.kind))
     {
@@ -128,4 +186,26 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     stream_.write(line.constData(), line.size());
     stream_.put('\n');
     stream_.flush();
+}
+
+std::vector<OperationRecord> JsonlOperationJournal::Read() const
+{
+    std::vector<OperationRecord> records;
+
+    std::ifstream file(file_, std::ios::binary);
+    for (std::string line; std::getline(file, line);)
+    {
+        const QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromStdString(line));
+        if (!document.isObject())
+        {
+            continue;
+        }
+
+        if (const std::optional<OperationRecord> record = RecordFrom(document.object()))
+        {
+            records.push_back(*record);
+        }
+    }
+
+    return records;
 }

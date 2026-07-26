@@ -13,6 +13,8 @@ public:
 
     void Append(const OperationRecord& record) override;
 
+    [[nodiscard]] std::vector<OperationRecord> Read() const override;
+
 private:
     std::filesystem::path file_;
     std::ofstream stream_;
