@@ -15,6 +15,13 @@ class QProgressDialog;
 class QPushButton;
 class QTableView;
 
+struct ImportableSelection
+{
+    std::vector<std::filesystem::path> folders;
+    int conflicted = 0;
+    int selected = 0;
+};
+
 class CommunityPage final : public QWidget
 {
     Q_OBJECT
@@ -56,7 +63,9 @@ private:
 
     [[nodiscard]] bool TheSimulatorIsInTheWay();
 
-    void UpdateSummary();
+    [[nodiscard]] ImportableSelection ChosenForImport() const;
+
+    void UpdateSummary() const;
 
     CommunityViewModel& viewModel_;
     ImportViewModel& importViewModel_;

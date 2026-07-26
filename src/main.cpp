@@ -112,11 +112,12 @@ int main(int argc, char* argv[])
 
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
-    ProfileService profileService(catalog, classifier, linking, journal, clock, identities, LinkType::Junction);
+    const OperationLog log(journal, clock);
+    ProfileService profileService(catalog, classifier, linking, log, identities, LinkType::Junction);
 
-    const ImportEngine importEngine(filesystemProbe, files, linking, journal, clock, LinkType::Junction);
-    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, journal,
-                                      clock, LinkType::Junction);
+    const ImportEngine importEngine(filesystemProbe, files, linking, log, LinkType::Junction);
+    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
+                                      LinkType::Junction);
 
     MainWindow window(settings.Load());
     AddonTreeModel model;

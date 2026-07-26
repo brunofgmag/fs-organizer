@@ -10,6 +10,7 @@
 #include "application/model/LinkOperationResult.h"
 #include "application/model/ProfileSnapshot.h"
 #include "application/ports/LibraryIdGenerator.h"
+#include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
 #include "domain/linking/RepairPlan.h"
@@ -24,8 +25,7 @@ public:
     ProfileService(const CatalogScanner& catalog,
                    const EntryClassifier& classifier,
                    const LinkingEngine& linking,
-                   OperationJournal& journal,
-                   const Clock& clock,
+                   const OperationLog& log,
                    const LibraryIdGenerator& identities,
                    LinkType linkType);
 
@@ -80,8 +80,7 @@ private:
     const CatalogScanner& catalog_;
     const EntryClassifier& classifier_;
     const LinkingEngine& linking_;
-    OperationJournal& journal_;
-    const Clock& clock_;
+    const OperationLog& log_;
     const LibraryIdGenerator& identities_;
     LinkType linkType_;
     std::vector<Step> undo_;

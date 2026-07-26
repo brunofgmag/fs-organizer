@@ -1,5 +1,8 @@
 #include <QtTest/QtTest>
 
+#include <variant>
+
+#include "domain/journal/OperationLog.h"
 #include "domain/importing/ImportEngine.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -51,7 +54,8 @@ namespace
         LinkingEngine linking{linkService, filesystemProbe};
         FakeOperationJournal journal;
         FakeClock clock;
-        ImportEngine engine{filesystemProbe, files, linking, journal, clock, LinkType::Junction};
+        OperationLog log{journal, clock};
+        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
 
         SimulatorProfile profile{.destinations = {"E:/Sim/Community"},
                                  .defaultDestination = "E:/Sim/Community",
@@ -260,11 +264,11 @@ void ImportEngineTest::EveryStepOfAFinishedImportReachesTheJournalInOrder()
 
     QCOMPARE(f.journal.appended[0].source, kSource);
     QCOMPARE(f.journal.appended[0].target, kStaging);
-    QCOMPARE(f.journal.appended[0].importResult, ImportResult::Completed);
+    QCOMPARE(std::get<ImportResult>(f.journal.appended[0].outcome), ImportResult::Completed);
 
     QCOMPARE(f.journal.appended[1].source, kStaging);
     QCOMPARE(f.journal.appended[1].target, kTarget);
-    QCOMPARE(f.journal.appended[1].importResult, ImportResult::Completed);
+    QCOMPARE(std::get<ImportResult>(f.journal.appended[1].outcome), ImportResult::Completed);
 
     QCOMPARE(f.journal.appended[2].source, kStaging);
     QCOMPARE(f.journal.appended[2].target, kTarget);
@@ -274,7 +278,7 @@ void ImportEngineTest::EveryStepOfAFinishedImportReachesTheJournalInOrder()
 
     QCOMPARE(f.journal.appended[4].source, kTarget);
     QCOMPARE(f.journal.appended[4].target, kSource);
-    QCOMPARE(f.journal.appended[4].failure, LinkFailure::None);
+    QCOMPARE(std::get<LinkFailure>(f.journal.appended[4].outcome), LinkFailure::None);
 }
 
 void ImportEngineTest::AVerificationThatFailsSaysSoInsteadOfLeavingTheJournalSilent()
@@ -287,7 +291,7 @@ void ImportEngineTest::AVerificationThatFailsSaysSoInsteadOfLeavingTheJournalSil
 
     QCOMPARE(f.journal.appended.size(), std::size_t{2});
     QCOMPARE(f.journal.appended[1].kind, OperationKind::ImportVerifyStaging);
-    QCOMPARE(f.journal.appended[1].importResult, ImportResult::VerificationFailed);
+    QCOMPARE(std::get<ImportResult>(f.journal.appended[1].outcome), ImportResult::VerificationFailed);
     QCOMPARE(f.journal.appended[1].source, kStaging);
     QCOMPARE(f.journal.appended[1].target, kTarget);
 }
@@ -302,7 +306,7 @@ void ImportEngineTest::ACopyThatFailsIsTheLastThingTheJournalHears()
 
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportCopyToStaging);
-    QCOMPARE(f.journal.appended[0].importResult, ImportResult::CouldNotCopy);
+    QCOMPARE(std::get<ImportResult>(f.journal.appended[0].outcome), ImportResult::CouldNotCopy);
     QCOMPARE(f.journal.appended[0].source, kSource);
     QCOMPARE(f.journal.appended[0].target, kStaging);
 }
@@ -317,7 +321,7 @@ void ImportEngineTest::AMoveThatFailsIsRecordedAndTheSourceSurvives()
 
     QCOMPARE(f.journal.appended.size(), std::size_t{3});
     QCOMPARE(f.journal.appended[2].kind, OperationKind::ImportMoveIntoPlace);
-    QCOMPARE(f.journal.appended[2].importResult, ImportResult::CouldNotMoveIntoPlace);
+    QCOMPARE(std::get<ImportResult>(f.journal.appended[2].outcome), ImportResult::CouldNotMoveIntoPlace);
     f.VerifySimBridgeIsStillWhereItWas();
 }
 
@@ -331,7 +335,7 @@ void ImportEngineTest::ARemovalThatFailsIsRecordedAndTheSourceSurvives()
 
     QCOMPARE(f.journal.appended.size(), std::size_t{4});
     QCOMPARE(f.journal.appended[3].kind, OperationKind::ImportRemoveSource);
-    QCOMPARE(f.journal.appended[3].importResult, ImportResult::CouldNotRemoveSource);
+    QCOMPARE(std::get<ImportResult>(f.journal.appended[3].outcome), ImportResult::CouldNotRemoveSource);
     f.VerifySimBridgeIsStillWhereItWas();
 }
 
@@ -345,7 +349,7 @@ void ImportEngineTest::ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled
 
     QCOMPARE(f.journal.appended.size(), std::size_t{5});
     QCOMPARE(f.journal.appended[4].kind, OperationKind::EnableAddon);
-    QCOMPARE(f.journal.appended[4].failure, LinkFailure::CouldNotCreateLink);
+    QCOMPARE(std::get<LinkFailure>(f.journal.appended[4].outcome), LinkFailure::CouldNotCreateLink);
     QCOMPARE(f.journal.appended[4].source, kTarget);
     QCOMPARE(f.journal.appended[4].target, kSource);
 }

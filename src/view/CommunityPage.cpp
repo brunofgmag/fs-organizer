@@ -158,35 +158,43 @@ bool CommunityPage::TheSimulatorIsInTheWay()
     return false;
 }
 
-void CommunityPage::StartImport()
+ImportableSelection CommunityPage::ChosenForImport() const
 {
-    std::vector<std::filesystem::path> folders;
-    int conflicted = 0;
+    const QModelIndexList rows = table_->selectionModel()->selectedRows();
 
-    for (const QModelIndex& position : table_->selectionModel()->selectedRows())
+    ImportableSelection chosen;
+    chosen.selected = static_cast<int>(rows.size());
+
+    for (const QModelIndex& position : rows)
     {
         const QModelIndex source = filter_->mapToSource(position);
         const DestinationEntry* entry = model_.EntryAt(source);
 
-        if (entry == nullptr || entry->classification != EntryClassification::Unmanaged)
-        {
-            continue;
-        }
-
         if (model_.ConflictAt(source) != nullptr)
         {
-            ++conflicted;
+            ++chosen.conflicted;
             continue;
         }
 
-        folders.push_back(entry->path);
+        if (entry != nullptr && entry->classification == EntryClassification::Unmanaged)
+        {
+            chosen.folders.push_back(entry->path);
+        }
     }
 
-    if (folders.empty())
+    return chosen;
+}
+
+void CommunityPage::StartImport()
+{
+    const ImportableSelection chosen = ChosenForImport();
+
+    if (chosen.folders.empty())
     {
-        emit StatusChanged(conflicted > 0 ? tr("Resolva o conflito antes de importar: a biblioteca já tem um addon "
-                                               "com esse nome.")
-                                          : tr("Selecione ao menos uma pasta não gerenciada."));
+        emit StatusChanged(chosen.conflicted > 0
+                               ? tr("Resolva o conflito antes de importar: a biblioteca já tem um addon "
+                                    "com esse nome.")
+                               : tr("Selecione ao menos uma pasta não gerenciada."));
         return;
     }
 
@@ -195,8 +203,8 @@ void CommunityPage::StartImport()
         return;
     }
 
-    ImportDialog dialog(folders, viewModel_.Snapshot().libraries, importViewModel_.Profile(),
-                        importViewModel_.TotalSizeOf(folders), this);
+    ImportDialog dialog(chosen.folders, viewModel_.Snapshot().libraries, importViewModel_.Profile(),
+                        importViewModel_.TotalSizeOf(chosen.folders), this);
 
     if (dialog.exec() != QDialog::Accepted)
     {
@@ -375,8 +383,7 @@ void CommunityPage::OnImportFinished(const std::vector<ImportOperationResult>& r
     {
         if (result.result != ImportResult::Completed)
         {
-            failed.append(
-                QStringLiteral("%1 — %2").arg(AsText(result.request.source.filename()), Explain(result.result)));
+            failed.append(Describe(result));
         }
     }
 
@@ -425,7 +432,7 @@ void CommunityPage::OnRepairFinished(const std::vector<LinkOperationResult>& res
                                          tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
 }
 
-void CommunityPage::UpdateSummary()
+void CommunityPage::UpdateSummary() const
 {
     const int rows = model_.rowCount({});
     int broken = 0;
@@ -449,21 +456,10 @@ void CommunityPage::UpdateSummary()
 
     repair_->setEnabled(broken > 0);
 
-    int importable = 0;
-    int selectedConflicts = 0;
-    for (const QModelIndex& position : table_->selectionModel()->selectedRows())
-    {
-        const QModelIndex source = filter_->mapToSource(position);
-        const DestinationEntry* entry = model_.EntryAt(source);
-        const bool inConflict = model_.ConflictAt(source) != nullptr;
+    const ImportableSelection chosen = ChosenForImport();
 
-        selectedConflicts += inConflict ? 1 : 0;
-        importable +=
-            entry != nullptr && entry->classification == EntryClassification::Unmanaged && !inConflict ? 1 : 0;
-    }
-
-    import_->setEnabled(importable > 0);
+    import_->setEnabled(!chosen.folders.empty());
     import_->setToolTip(
-        ReasonImportIsOff(importable, selectedConflicts, table_->selectionModel()->selectedRows().size()));
-    resolve_->setEnabled(selectedConflicts > 0);
+        ReasonImportIsOff(static_cast<int>(chosen.folders.size()), chosen.conflicted, chosen.selected));
+    resolve_->setEnabled(chosen.conflicted > 0);
 }

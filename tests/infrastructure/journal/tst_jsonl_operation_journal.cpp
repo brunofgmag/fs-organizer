@@ -1,6 +1,8 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
+#include <variant>
+
 #include <fstream>
 #include <iterator>
 
@@ -149,8 +151,7 @@ void JsonlOperationJournalTest::EveryKindAndEveryReasonSurvivesTheRoundTrip()
         QCOMPARE(read[position].addonId.folderName, written[position].addonId.folderName);
         QCOMPARE(read[position].source, written[position].source);
         QCOMPARE(read[position].target, written[position].target);
-        QCOMPARE(read[position].failure, written[position].failure);
-        QCOMPARE(read[position].importResult, written[position].importResult);
+        QCOMPARE(read[position].outcome, written[position].outcome);
     }
 }
 

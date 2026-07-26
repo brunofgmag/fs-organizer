@@ -1,6 +1,7 @@
 #include "domain/tree/AddonTree.h"
 
 #include "domain/model/AddonId.h"
+#include "domain/support/PathUtils.h"
 
 namespace
 {
@@ -76,6 +77,48 @@ const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::st
             {
                 return addon;
             }
+        }
+    }
+
+    return nullptr;
+}
+
+const TreeNode* AddonHoldingTheIdentity(const std::vector<TreeNode>& libraries,
+                                        const std::filesystem::path& wanted,
+                                        const std::filesystem::path& ignoring)
+{
+    const std::string baseName = wanted.filename().string();
+    const std::string excluded = ComparablePath(ignoring);
+
+    for (const TreeNode& library : libraries)
+    {
+        if (!PathIsInside(wanted, library.path))
+        {
+            continue;
+        }
+
+        for (const TreeNode* addon : AddonsUnder(library))
+        {
+            if (EqualsIgnoringCase(addon->path.filename().string(), baseName)
+                && ComparablePath(addon->path) != excluded)
+            {
+                return addon;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+const TreeNode* LibraryTreeAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& root)
+{
+    const std::string wanted = ComparablePath(root);
+
+    for (const TreeNode& library : libraries)
+    {
+        if (ComparablePath(library.path) == wanted)
+        {
+            return &library;
         }
     }
 

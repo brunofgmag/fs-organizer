@@ -10,6 +10,8 @@ public:
                                        const std::filesystem::path& destination,
                                        const std::function<bool(const CopyProgress&)>& onProgress) override;
 
+    [[nodiscard]] bool CreateFolder(const std::filesystem::path& path) override;
+
     [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override;
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override;

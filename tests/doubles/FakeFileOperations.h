@@ -31,6 +31,11 @@ public:
         removalFails_ = true;
     }
 
+    void MakeTheCreationFail()
+    {
+        creationFails_ = true;
+    }
+
     [[nodiscard]] CopyOutcome CopyTree(const std::filesystem::path& source,
                                        const std::filesystem::path& destination,
                                        const std::function<bool(const CopyProgress&)>& onProgress) override
@@ -77,6 +82,18 @@ public:
         return CopyOutcome::Completed;
     }
 
+    [[nodiscard]] bool CreateFolder(const std::filesystem::path& path) override
+    {
+        if (creationFails_ || fileSystem_.Exists(path))
+        {
+            return false;
+        }
+
+        fileSystem_.AddDirectory(path);
+
+        return true;
+    }
+
     [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override
     {
         return !moveFails_ && fileSystem_.MoveTree(source, destination);
@@ -93,6 +110,7 @@ private:
     bool copyDropsAFile_ = false;
     bool moveFails_ = false;
     bool removalFails_ = false;
+    bool creationFails_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H

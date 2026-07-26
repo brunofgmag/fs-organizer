@@ -8,6 +8,7 @@
 #include "domain/model/ImportResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
+#include "domain/model/OperationRecord.h"
 
 namespace QTest
 {
@@ -96,9 +97,26 @@ namespace QTest
         case OperationKind::ImportRemoveSource: return qstrdup("ImportRemoveSource");
         case OperationKind::QuarantineFromDestination: return qstrdup("QuarantineFromDestination");
         case OperationKind::QuarantineFromLibrary: return qstrdup("QuarantineFromLibrary");
+        case OperationKind::RestoreFromQuarantine: return qstrdup("RestoreFromQuarantine");
+        case OperationKind::DiscardFromQuarantine: return qstrdup("DiscardFromQuarantine");
+        case OperationKind::DiscardStaging: return qstrdup("DiscardStaging");
+        case OperationKind::MoveAddon: return qstrdup("MoveAddon");
+        case OperationKind::CreateCategory: return qstrdup("CreateCategory");
+        case OperationKind::RenameCategory: return qstrdup("RenameCategory");
         }
 
         return qstrdup("OperationKind(?)");
+    }
+
+    template<>
+    inline char* toString(const OperationOutcome& t)
+    {
+        if (const LinkFailure* failure = std::get_if<LinkFailure>(&t))
+        {
+            return toString(*failure);
+        }
+
+        return toString(std::get<ImportResult>(t));
     }
 }
 

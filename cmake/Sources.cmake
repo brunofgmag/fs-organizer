@@ -2,17 +2,22 @@ set(DOMAIN_SOURCES
         src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ImportEngine.cpp
         src/domain/journal/JournalEntries.cpp
+        src/domain/journal/OperationLog.cpp
+        src/domain/linking/DisableLinks.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
         src/domain/tree/AddonTree.cpp
+        src/domain/tree/CategorySuggester.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
 )
 
 set(APPLICATION_SOURCES
         src/application/ImportService.cpp
+        src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
 )
 

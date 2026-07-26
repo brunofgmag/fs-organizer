@@ -15,6 +15,8 @@ public:
                                                const std::filesystem::path& destination,
                                                const std::function<bool(const CopyProgress&)>& onProgress) = 0;
 
+    [[nodiscard]] virtual bool CreateFolder(const std::filesystem::path& path) = 0;
+
     [[nodiscard]] virtual bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) = 0;
 
     [[nodiscard]] virtual bool RemoveTree(const std::filesystem::path& path) = 0;

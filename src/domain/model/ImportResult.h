@@ -23,6 +23,9 @@ enum class ImportResult : int
     CouldNotRestore = 14,
     CouldNotDiscard = 15,
     CouldNotRemoveTheLink = 16,
+    TheIdentityIsTaken = 17,
+    TheTargetIsNotInALibrary = 18,
+    CouldNotCreateTheCategory = 19,
 };
 
 inline constexpr std::array kAllImportResults{
@@ -43,9 +46,12 @@ inline constexpr std::array kAllImportResults{
     ImportResult::CouldNotRestore,
     ImportResult::CouldNotDiscard,
     ImportResult::CouldNotRemoveTheLink,
+    ImportResult::TheIdentityIsTaken,
+    ImportResult::TheTargetIsNotInALibrary,
+    ImportResult::CouldNotCreateTheCategory,
 };
 
-static_assert(kAllImportResults.size() == static_cast<std::size_t>(ImportResult::CouldNotRemoveTheLink) + 1,
+static_assert(kAllImportResults.size() == static_cast<std::size_t>(ImportResult::CouldNotCreateTheCategory) + 1,
               "Every ImportResult belongs in kAllImportResults, and the last one carries the highest value.");
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_IMPORT_RESULT_H

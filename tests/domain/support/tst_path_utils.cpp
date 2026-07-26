@@ -14,6 +14,7 @@ private slots:
     static void ReparsePrefixesAreStripped();
     static void AFolderIsInsideTheRootOfItsOwnVolume();
     static void ASiblingWhoseNameStartsWithTheRootIsNotInsideIt();
+    static void NothingIsInsideARootThatWasNeverNamed();
 };
 
 void PathUtilsTest::TwoPathsThatNameTheSameFolderShareAKey()
@@ -61,6 +62,13 @@ void PathUtilsTest::ASiblingWhoseNameStartsWithTheRootIsNotInsideIt()
 {
     QVERIFY(!PathIsInside("D:/Library", "D:/Lib"));
     QVERIFY(PathIsInside("D:/Lib/aerosoft-crj", "D:/Lib"));
+}
+
+void PathUtilsTest::NothingIsInsideARootThatWasNeverNamed()
+{
+    QVERIFY(!PathIsInside("D:/Library/Aircrafts/aerosoft-crj", {}));
+    QVERIFY(!PathIsInside({}, "D:/Library"));
+    QVERIFY(PathIsInside({}, {}));
 }
 
 QTEST_APPLESS_MAIN(PathUtilsTest)

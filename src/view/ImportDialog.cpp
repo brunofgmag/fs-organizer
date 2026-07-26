@@ -1,6 +1,5 @@
 #include "view/ImportDialog.h"
 
-#include <algorithm>
 #include <utility>
 
 #include <QtWidgets/QComboBox>
@@ -14,20 +13,6 @@
 #include "domain/tree/AddonTree.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
-
-namespace
-{
-    const TreeNode* LibraryTreeAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& root)
-    {
-        const auto tree = std::ranges::find_if(libraries,
-                                               [&root](const TreeNode& candidate)
-                                               {
-                                                   return candidate.path == root;
-                                               });
-
-        return tree == libraries.end() ? nullptr : &*tree;
-    }
-}
 
 ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
                            const std::vector<TreeNode>& libraries,

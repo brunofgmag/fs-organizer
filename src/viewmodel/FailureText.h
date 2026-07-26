@@ -3,16 +3,25 @@
 
 #include <QtCore/QString>
 
+#include "application/model/FileOperationResult.h"
+#include "application/model/ImportOperationResult.h"
 #include "application/model/LinkOperationResult.h"
+#include "domain/model/CategoryRule.h"
 #include "domain/model/ImportResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
 
 [[nodiscard]] QString Explain(LinkFailure failure);
 
+[[nodiscard]] QString Explain(CategoryRule rule);
+
 [[nodiscard]] QString Explain(ImportResult result);
 
 [[nodiscard]] QString Describe(const LinkOperationResult& result);
+
+[[nodiscard]] QString Describe(const ImportOperationResult& result);
+
+[[nodiscard]] QString Describe(const FileOperationResult& result);
 
 [[nodiscard]] QString NameOfImportStep(OperationKind kind);
 

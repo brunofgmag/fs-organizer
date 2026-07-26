@@ -77,10 +77,11 @@ namespace
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
+        OperationLog log{journal, clock};
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, classifier, linking, journal, clock, identities, LinkType::Junction};
+        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
         AddonTreeModel treeModel;
         CommunityModel model;
         CommunityViewModel viewModel{service, treeModel, model};

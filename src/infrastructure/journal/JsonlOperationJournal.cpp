@@ -44,6 +44,9 @@ namespace
         case OperationKind::RestoreFromQuarantine: return "restoreFromQuarantine";
         case OperationKind::DiscardFromQuarantine: return "discardFromQuarantine";
         case OperationKind::DiscardStaging: return "discardStaging";
+        case OperationKind::MoveAddon: return "moveAddon";
+        case OperationKind::CreateCategory: return "createCategory";
+        case OperationKind::RenameCategory: return "renameCategory";
         }
 
         return "unknown";
@@ -135,7 +138,7 @@ namespace
         const std::filesystem::path source = AsPath(object[kSource].toString());
         const std::filesystem::path target = AsPath(object[kTarget].toString());
 
-        if (CarriesAnImportReason(*kind))
+        if (object.contains(kResult))
         {
             return OperationRecord::OfImport(timestamp, *kind, addon, source, target,
                                              ValueNamed(kAllImportResults, ResultName, object[kResult].toString())
@@ -162,13 +165,13 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     object[kSource] = AsText(record.source);
     object[kTarget] = AsText(record.target);
 
-    if (CarriesAnImportReason(record.kind))
+    if (const ImportResult* result = std::get_if<ImportResult>(&record.outcome))
     {
-        object[kResult] = ResultName(record.importResult);
+        object[kResult] = ResultName(*result);
     }
     else
     {
-        object[kFailure] = FailureName(record.failure);
+        object[kFailure] = FailureName(std::get<LinkFailure>(record.outcome));
     }
 
     if (!stream_.is_open())

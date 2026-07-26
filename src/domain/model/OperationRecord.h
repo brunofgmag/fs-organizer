@@ -4,11 +4,24 @@
 #include <chrono>
 #include <filesystem>
 #include <utility>
+#include <variant>
 
 #include "domain/model/AddonId.h"
 #include "domain/model/ImportResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
+
+using OperationOutcome = std::variant<LinkFailure, ImportResult>;
+
+[[nodiscard]] inline bool Succeeded(const OperationOutcome& outcome)
+{
+    if (const LinkFailure* failure = std::get_if<LinkFailure>(&outcome))
+    {
+        return *failure == LinkFailure::None;
+    }
+
+    return std::get<ImportResult>(outcome) == ImportResult::Completed;
+}
 
 struct OperationRecord
 {
@@ -25,7 +38,7 @@ struct OperationRecord
         record.addonId = std::move(addonId);
         record.source = std::move(source);
         record.target = std::move(target);
-        record.failure = failure;
+        record.outcome = failure;
 
         return record;
     }
@@ -43,7 +56,7 @@ struct OperationRecord
         record.addonId = std::move(addonId);
         record.source = std::move(source);
         record.target = std::move(target);
-        record.importResult = result;
+        record.outcome = result;
 
         return record;
     }
@@ -53,8 +66,7 @@ struct OperationRecord
     AddonId addonId;
     std::filesystem::path source;
     std::filesystem::path target;
-    LinkFailure failure = LinkFailure::None;
-    ImportResult importResult = ImportResult::Completed;
+    OperationOutcome outcome = LinkFailure::None;
 
 private:
     OperationRecord() = default;

@@ -1,11 +1,15 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
+#include <variant>
+
 #include <fstream>
 
 #include "application/ImportService.h"
+#include "application/LibraryOrganizer.h"
 #include "domain/importing/ImportEngine.h"
 #include "domain/importing/ImportPaths.h"
+#include "domain/journal/OperationLog.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -28,6 +32,8 @@ private slots:
     static void ALiveJunctionOfAnotherProgramIsNeverReplaced();
     static void TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds();
     static void RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder();
+    static void MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewFolder();
+    static void ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused();
 };
 
 namespace
@@ -88,7 +94,8 @@ namespace
         SystemClock clock;
         std::filesystem::path journalFile;
         JsonlOperationJournal journal{journalFile};
-        ImportEngine engine{filesystemProbe, files, linking, journal, clock, LinkType::Junction};
+        OperationLog log{journal, clock};
+        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
     };
 
     struct Service
@@ -98,8 +105,10 @@ namespace
         JsonManifestParser manifestParser;
         FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
         ImportService service{engine.engine,  processProbe,   engine.filesystemProbe, catalog,           engine.files,
-                              engine.linking, engine.journal, engine.clock,           LinkType::Junction};
+                              engine.linking, engine.log,     LinkType::Junction};
         EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
+        LibraryOrganizer organizer{catalog,      engine.filesystemProbe, engine.files, engine.linking,    classifier,
+                                   processProbe, engine.log,           LinkType::Junction};
 
         [[nodiscard]] std::vector<DestinationEntry> Entries(const Disk& disk) const
         {
@@ -141,7 +150,7 @@ void ImportOnRealDiskTest::APhysicalAddonReallyMovesIntoTheLibraryAndLeavesAJunc
 
     QCOMPARE(engine.journal.Read().size(), std::size_t{5});
     QCOMPARE(engine.journal.Read().back().kind, OperationKind::EnableAddon);
-    QCOMPARE(engine.journal.Read().front().importResult, ImportResult::Completed);
+    QCOMPARE(std::get<ImportResult>(engine.journal.Read().front().outcome), ImportResult::Completed);
 }
 
 void ImportOnRealDiskTest::AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFreeSpace()
@@ -178,7 +187,7 @@ void ImportOnRealDiskTest::TheSourceSurvivesWhenTheCopyFails()
     QVERIFY(std::filesystem::exists(request.source / "manifest.json"));
     QVERIFY(!std::filesystem::exists(disk.Category() / "fenix-a320"));
     QCOMPARE(engine.journal.Read().size(), std::size_t{1});
-    QCOMPARE(engine.journal.Read().front().importResult, ImportResult::CouldNotCopy);
+    QCOMPARE(std::get<ImportResult>(engine.journal.Read().front().outcome), ImportResult::CouldNotCopy);
 }
 
 void ImportOnRealDiskTest::ALiveJunctionOfAnotherProgramIsNeverReplaced()
@@ -226,7 +235,7 @@ void ImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
     const std::vector<OperationRecord> history = composed.engine.journal.Read();
     QCOMPARE(history.size(), std::size_t{1});
     QCOMPARE(history.front().kind, OperationKind::QuarantineFromLibrary);
-    QCOMPARE(history.front().importResult, ImportResult::Completed);
+    QCOMPARE(std::get<ImportResult>(history.front().outcome), ImportResult::Completed);
 }
 
 void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder()
@@ -254,6 +263,66 @@ void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder
     QCOMPARE(results.front().result, ImportResult::Completed);
     QVERIFY(std::filesystem::exists(conflict.libraryPath / "aircraft.cfg"));
     QVERIFY(!std::filesystem::exists(QuarantineFolderInside(disk.Root() / "Library") / "tfdidesign-aircraft-md11"));
+}
+
+void ImportOnRealDiskTest::MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewFolder()
+{
+    const Disk disk;
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+    static_cast<void>(disk.AddFolder("Library/Aircrafts (2024)"));
+    disk.AddFile("Library/Aircrafts/aerosoft-crj/manifest.json", R"({"title": "CRJ", "content_type": "AIRCRAFT"})");
+    disk.AddFile("Library/Aircrafts/aerosoft-crj/SimObjects/plane.cfg", std::string(2048, 'c'));
+
+    Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    SimulatorProfile profile = disk.Profile();
+
+    const std::filesystem::path addon = disk.Root() / "Library" / "Aircrafts" / "aerosoft-crj";
+    const std::filesystem::path link = disk.Destination() / "aerosoft-crj";
+
+    QVERIFY(
+        service.engine.linking.Enable(Addon{addon, Manifest{}}, disk.Destination(), LinkType::Junction).Succeeded());
+    QVERIFY(service.engine.filesystemProbe.IsReparsePoint(link));
+
+    const std::filesystem::path category = disk.Root() / "Library" / "Aircrafts (2024)";
+    const std::vector<FileOperationResult> results = service.organizer.Move(profile, {AddonMove{addon, category}});
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, ImportResult::Completed);
+
+    const std::filesystem::path landed = category / "aerosoft-crj";
+    QVERIFY(std::filesystem::exists(landed / "manifest.json"));
+    QCOMPARE(std::filesystem::file_size(landed / "SimObjects" / "plane.cfg"), std::uintmax_t{2048});
+    QVERIFY(!std::filesystem::exists(addon));
+
+    QVERIFY(service.engine.filesystemProbe.IsReparsePoint(link));
+    QCOMPARE(NormalizeReparseTarget(service.engine.linkService.ReadLinkTarget(link).value()), landed);
+
+    QCOMPARE(service.engine.journal.Read().size(), std::size_t{3});
+    QCOMPARE(service.engine.journal.Read()[0].kind, OperationKind::DisableAddon);
+    QCOMPARE(service.engine.journal.Read()[1].kind, OperationKind::MoveAddon);
+    QCOMPARE(service.engine.journal.Read()[1].target, landed);
+    QCOMPARE(service.engine.journal.Read()[2].kind, OperationKind::EnableAddon);
+}
+
+void ImportOnRealDiskTest::ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused()
+{
+    const Disk disk;
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+    static_cast<void>(disk.AddFolder("Library"));
+
+    Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const SimulatorProfile profile = disk.Profile();
+    const std::filesystem::path library = disk.Root() / "Library";
+
+    QCOMPARE(service.organizer.CreateCategory(profile, library, "Sceneries").result, ImportResult::Completed);
+    QVERIFY(std::filesystem::is_directory(library / "Sceneries"));
+
+    QCOMPARE(service.organizer.CreateCategory(profile, library, "Sceneries").result,
+             ImportResult::CouldNotCreateTheCategory);
+
+    QCOMPARE(service.organizer.CreateCategory(profile, disk.Destination(), "Sceneries").result,
+             ImportResult::TheTargetIsNotInALibrary);
+    QVERIFY(!std::filesystem::exists(disk.Destination() / "Sceneries"));
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)

@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "domain/importing/ImportPaths.h"
+#include "domain/journal/OperationLog.h"
 #include "domain/linking/LinkingEngine.h"
 #include "domain/model/CopyOutcome.h"
 #include "domain/model/ImportOutcome.h"
@@ -23,8 +24,7 @@ public:
     ImportEngine(const FilesystemProbe& filesystemProbe,
                  FileOperations& files,
                  const LinkingEngine& linking,
-                 OperationJournal& journal,
-                 const Clock& clock,
+                 const OperationLog& log,
                  LinkType linkType);
 
     [[nodiscard]] ImportOutcome Import(const SimulatorProfile& profile,
@@ -48,8 +48,7 @@ private:
     const FilesystemProbe& filesystemProbe_;
     FileOperations& files_;
     const LinkingEngine& linking_;
-    OperationJournal& journal_;
-    const Clock& clock_;
+    const OperationLog& log_;
     LinkType linkType_;
 };
 

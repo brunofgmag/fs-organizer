@@ -24,6 +24,21 @@ QString Explain(const LinkFailure failure)
     return {};
 }
 
+QString Explain(const CategoryRule rule)
+{
+    switch (rule)
+    {
+    case CategoryRule::TheNameSaysAirport: return QObject::tr("o nome da pasta diz \"airport\"");
+    case CategoryRule::TheNameSaysTraffic: return QObject::tr("o nome da pasta diz \"traffic\"");
+    case CategoryRule::TheContentTypeIsScenery: return QObject::tr("o manifesto declara content_type SCENERY");
+    case CategoryRule::TheContentTypeIsSound: return QObject::tr("o manifesto declara content_type SOUND");
+    case CategoryRule::TheContentTypeIsLivery: return QObject::tr("o manifesto declara content_type LIVERY");
+    case CategoryRule::None: break;
+    }
+
+    return {};
+}
+
 QString Explain(const ImportResult result)
 {
     switch (result)
@@ -52,9 +67,21 @@ QString Explain(const ImportResult result)
     case ImportResult::CouldNotDiscard: return QObject::tr("não foi possível descartar");
     case ImportResult::CouldNotRemoveTheLink:
         return QObject::tr("não foi possível remover um dos links que apontam para a cópia da biblioteca");
+    case ImportResult::TheIdentityIsTaken: return QObject::tr("esta biblioteca já tem um addon com esse nome de pasta");
+    case ImportResult::TheTargetIsNotInALibrary:
+        return QObject::tr("o destino da operação não está dentro de uma biblioteca do perfil");
+    case ImportResult::CouldNotCreateTheCategory: return QObject::tr("não foi possível criar a categoria");
     }
 
     return {};
+}
+
+namespace
+{
+    QString WhereTheOccupantIs(const std::filesystem::path& occupant)
+    {
+        return occupant.empty() ? QString{} : QObject::tr("\n    o ocupante está em: %1").arg(AsText(occupant));
+    }
 }
 
 QString Describe(const LinkOperationResult& result)
@@ -76,6 +103,18 @@ QString Describe(const LinkOperationResult& result)
     }
 
     return line;
+}
+
+QString Describe(const ImportOperationResult& result)
+{
+    return QStringLiteral("%1 — %2%3")
+        .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
+}
+
+QString Describe(const FileOperationResult& result)
+{
+    return QStringLiteral("%1 — %2%3")
+        .arg(AsText(result.path.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
 }
 
 QString NameOfImportStep(const OperationKind kind)

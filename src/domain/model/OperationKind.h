@@ -19,6 +19,9 @@ enum class OperationKind : int
     RestoreFromQuarantine = 10,
     DiscardFromQuarantine = 11,
     DiscardStaging = 12,
+    MoveAddon = 13,
+    CreateCategory = 14,
+    RenameCategory = 15,
 };
 
 inline constexpr std::array kAllOperationKinds{
@@ -35,9 +38,12 @@ inline constexpr std::array kAllOperationKinds{
     OperationKind::RestoreFromQuarantine,
     OperationKind::DiscardFromQuarantine,
     OperationKind::DiscardStaging,
+    OperationKind::MoveAddon,
+    OperationKind::CreateCategory,
+    OperationKind::RenameCategory,
 };
 
-static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::DiscardStaging) + 1,
+static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::RenameCategory) + 1,
               "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool CarriesAnImportReason(const OperationKind kind)
@@ -52,11 +58,39 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::QuarantineFromLibrary:
     case OperationKind::RestoreFromQuarantine:
     case OperationKind::DiscardFromQuarantine:
-    case OperationKind::DiscardStaging: return true;
+    case OperationKind::DiscardStaging:
+    case OperationKind::MoveAddon:
+    case OperationKind::CreateCategory:
+    case OperationKind::RenameCategory: return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:
     case OperationKind::RemoveBrokenLink:
     case OperationKind::RepointLink: return false;
+    }
+
+    return false;
+}
+
+[[nodiscard]] constexpr bool CreatesALink(const OperationKind kind)
+{
+    switch (kind)
+    {
+    case OperationKind::EnableAddon:
+    case OperationKind::RepointLink: return true;
+    case OperationKind::DisableAddon:
+    case OperationKind::RemoveBrokenLink:
+    case OperationKind::ImportCopyToStaging:
+    case OperationKind::ImportVerifyStaging:
+    case OperationKind::ImportMoveIntoPlace:
+    case OperationKind::ImportRemoveSource:
+    case OperationKind::QuarantineFromDestination:
+    case OperationKind::QuarantineFromLibrary:
+    case OperationKind::RestoreFromQuarantine:
+    case OperationKind::DiscardFromQuarantine:
+    case OperationKind::DiscardStaging:
+    case OperationKind::MoveAddon:
+    case OperationKind::CreateCategory:
+    case OperationKind::RenameCategory: return false;
     }
 
     return false;

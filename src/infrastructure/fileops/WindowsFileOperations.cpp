@@ -141,6 +141,19 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
     return CopyOutcome::Completed;
 }
 
+bool WindowsFileOperations::CreateFolder(const std::filesystem::path& path)
+{
+    if (AttributesWithoutFollowingLinks(path) != INVALID_FILE_ATTRIBUTES)
+    {
+        return false;
+    }
+
+    std::error_code error;
+    std::filesystem::create_directories(path, error);
+
+    return !error;
+}
+
 bool WindowsFileOperations::Move(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
     std::error_code error;

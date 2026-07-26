@@ -8,6 +8,7 @@
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
 #include "domain/tree/LibraryLookup.h"
+#include "domain/tree/LibraryTrees.h"
 
 namespace
 {
@@ -26,15 +27,13 @@ namespace
 ProfileService::ProfileService(const CatalogScanner& catalog,
                                const EntryClassifier& classifier,
                                const LinkingEngine& linking,
-                               OperationJournal& journal,
-                               const Clock& clock,
+                               const OperationLog& log,
                                const LibraryIdGenerator& identities,
                                const LinkType linkType)
     : catalog_(catalog),
       classifier_(classifier),
       linking_(linking),
-      journal_(journal),
-      clock_(clock),
+      log_(log),
       identities_(identities),
       linkType_(linkType)
 {
@@ -62,11 +61,7 @@ ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile) const
 {
     ProfileSnapshot snapshot;
 
-    for (const Library& library : profile.libraries)
-    {
-        snapshot.libraries.push_back(catalog_.Scan(library.path));
-    }
-
+    snapshot.libraries = LibraryTreesOf(catalog_, profile);
     snapshot.entries = ResolveEntries(profile);
     snapshot.enabled = EnabledAddons(EnabledAddonFolders(snapshot.entries));
     snapshot.conflicts = FindCopyConflicts(snapshot.entries, snapshot.libraries);
@@ -150,14 +145,12 @@ ProfileService::Step ProfileService::Inverse(const Step& step)
 
 LinkOperationResult ProfileService::Run(const Step& step) const
 {
-    const bool creates = step.kind == OperationKind::EnableAddon || step.kind == OperationKind::RepointLink;
-
-    const LinkOutcome outcome = creates
+    const LinkOutcome outcome = CreatesALink(step.kind)
         ? linking_.Enable(Addon{step.addonFolder, Manifest{}}, step.linkPath.parent_path(), linkType_)
         : linking_.Disable(step.linkPath);
 
-    journal_.Append(OperationRecord::OfLink(clock_.Now(), step.kind, step.addonId, step.addonFolder, step.linkPath,
-                                            outcome.Failure()));
+    log_.RecordLink(step.kind, step.addonId, step.addonFolder, step.linkPath,
+                                            outcome.Failure());
 
     return LinkOperationResult{step.addonId, step.addonFolder, step.linkPath, step.kind, outcome};
 }

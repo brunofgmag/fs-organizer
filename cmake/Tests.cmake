@@ -81,6 +81,7 @@ fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        src/domain/journal/OperationLog.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/tree/LibraryLookup.cpp
         src/domain/importing/ImportPaths.h
@@ -98,12 +99,39 @@ fsorg_add_qt_test(fsorg-import-service-tests import-service
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h
+        src/domain/journal/OperationLog.cpp
+        src/domain/linking/DisableLinks.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
+        src/domain/tree/AddonTree.cpp
         src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
         src/domain/importing/ImportPaths.h
         src/domain/importing/ImportEngine.cpp
         src/application/ImportService.cpp)
+
+fsorg_add_qt_test(fsorg-library-organizer-tests library-organizer
+        tests/application/tst_library_organizer.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/journal/OperationLog.cpp
+        src/domain/linking/DisableLinks.cpp
+        src/domain/linking/EntryClassifier.cpp
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
+        src/application/LibraryOrganizer.cpp)
 
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
@@ -142,6 +170,14 @@ fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp)
 
+fsorg_add_qt_test(fsorg-category-suggester-tests category-suggester
+        tests/domain/tree/tst_category_suggester.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/CategorySuggester.cpp)
+
 fsorg_add_qt_test(fsorg-effective-destination-tests effective-destination
         tests/domain/tree/tst_effective_destination.cpp
         tests/support/PathPrinting.h
@@ -168,6 +204,7 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        src/domain/journal/OperationLog.cpp
         src/domain/importing/CopyConflicts.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
@@ -175,6 +212,7 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
         src/application/ProfileService.cpp)
 
@@ -248,6 +286,10 @@ fsorg_add_qt_test(fsorg-journal-model-tests journal-model
         src/viewmodel/FailureText.cpp
         src/viewmodel/JournalModel.cpp)
 
+fsorg_add_qt_test(fsorg-failure-text-tests failure-text
+        tests/viewmodel/tst_failure_text.cpp
+        src/viewmodel/FailureText.cpp)
+
 fsorg_add_qt_test(fsorg-quarantine-model-tests quarantine-model
         tests/viewmodel/tst_quarantine_model.cpp
         tests/support/PathPrinting.h
@@ -263,6 +305,7 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        src/domain/journal/OperationLog.cpp
         src/domain/importing/CopyConflicts.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
@@ -270,6 +313,7 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
         src/application/ProfileService.cpp
         src/viewmodel/AddonTreeModel.cpp
@@ -298,12 +342,18 @@ if (WIN32)
             tests/infrastructure/importing/tst_import_on_real_disk.cpp
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
+            src/domain/journal/OperationLog.cpp
             src/application/ImportService.cpp
+            src/application/LibraryOrganizer.cpp
             src/domain/importing/ImportEngine.cpp
             src/domain/importing/ImportPaths.h
+            src/domain/linking/DisableLinks.cpp
             src/domain/linking/EntryClassifier.cpp
             src/domain/linking/LinkingEngine.cpp
+            src/domain/tree/AddonTree.cpp
+            src/domain/tree/EffectiveDestination.cpp
             src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
             src/infrastructure/catalog/FilesystemScanner.cpp
             src/infrastructure/catalog/JsonManifestParser.cpp
             src/infrastructure/fileops/WindowsFileOperations.cpp

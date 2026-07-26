@@ -47,14 +47,12 @@ namespace
 ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
                            FileOperations& files,
                            const LinkingEngine& linking,
-                           OperationJournal& journal,
-                           const Clock& clock,
+                           const OperationLog& log,
                            const LinkType linkType)
     : filesystemProbe_(filesystemProbe),
       files_(files),
       linking_(linking),
-      journal_(journal),
-      clock_(clock),
+      log_(log),
       linkType_(linkType)
 {
 }
@@ -130,8 +128,7 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
 
     announce(OperationKind::EnableAddon);
     const LinkOutcome link = linking_.Enable(Addon{target}, request.source.parent_path(), linkType_);
-    journal_.Append(OperationRecord::OfLink(clock_.Now(), OperationKind::EnableAddon, addon, target, request.source,
-                                            link.Failure()));
+    log_.RecordLink(OperationKind::EnableAddon, addon, target, request.source, link.Failure());
     if (!link.Succeeded())
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotCreateLink);
@@ -146,7 +143,7 @@ void ImportEngine::RecordStep(const AddonId& addon,
                               const std::filesystem::path& target,
                               const ImportResult result) const
 {
-    journal_.Append(OperationRecord::OfImport(clock_.Now(), kind, addon, source, target, result));
+    log_.RecordImport(kind, addon, source, target, result);
 }
 
 ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category, const std::uintmax_t sourceSize) const

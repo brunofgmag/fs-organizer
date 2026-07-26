@@ -139,7 +139,7 @@ void QuarantinePage::Report(const QString& title, const std::vector<FileOperatio
     {
         if (result.result != ImportResult::Completed)
         {
-            failed.append(QStringLiteral("%1 — %2").arg(AsText(result.path.filename()), Explain(result.result)));
+            failed.append(Describe(result));
         }
     }
 

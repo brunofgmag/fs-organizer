@@ -64,8 +64,7 @@ bool JournalEntry::Succeeded() const
 
 bool StepSucceeded(const OperationRecord& record)
 {
-    return CarriesAnImportReason(record.kind) ? record.importResult == ImportResult::Completed
-                                              : record.failure == LinkFailure::None;
+    return Succeeded(record.outcome);
 }
 
 std::vector<JournalEntry> GroupImportRuns(const std::vector<OperationRecord>& records)

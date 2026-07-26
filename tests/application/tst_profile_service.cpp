@@ -1,5 +1,8 @@
 #include <QtTest/QtTest>
 
+#include <variant>
+
+#include "domain/journal/OperationLog.h"
 #include "application/ProfileService.h"
 #include "domain/linking/RepairPlan.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -23,6 +26,7 @@ private slots:
     static void AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccupied();
     static void DisablingAnAddonRemovesItsLinkInEveryDestination();
     static void EnablingHonoursTheDestinationOverrideOfTheCategory();
+    static void TurningAnAddonOffAndOnAgainLeavesItInTheDestinationItLivedIn();
     static void EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot();
     static void UndoRevertsTheLastBatchAndNothingElse();
     static void UndoOnlyRevertsWhatTheBatchActuallyDid();
@@ -122,10 +126,11 @@ namespace
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
+        OperationLog log{journal, clock};
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, classifier, linking, journal, clock, identities, LinkType::Junction};
+        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
     };
 }
 
@@ -232,6 +237,30 @@ void ProfileServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w"));
 }
 
+void ProfileServiceTest::TurningAnAddonOffAndOnAgainLeavesItInTheDestinationItLivedIn()
+{
+    Fixture f;
+    const SimulatorProfile profile = Profile({{kLibraryId, "Aircrafts", kCommunity2024}});
+
+    const ProfileSnapshot enabled = f.Snapshot(profile);
+    QCOMPARE(f.service.SetEnabled(profile, enabled, {Fixture::AddonAt(enabled, 1)}, true).size(), std::size_t{1});
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community2024/aerosoft-crj"));
+
+    const ProfileSnapshot afterEnabling = f.Snapshot(profile);
+    QCOMPARE(f.service.SetEnabled(profile, afterEnabling, {Fixture::AddonAt(afterEnabling, 1)}, false).size(),
+             std::size_t{1});
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community2024/aerosoft-crj"));
+
+    const ProfileSnapshot afterDisabling = f.Snapshot(profile);
+    const std::vector<LinkOperationResult> again =
+        f.service.SetEnabled(profile, afterDisabling, {Fixture::AddonAt(afterDisabling, 1)}, true);
+
+    QCOMPARE(again.size(), std::size_t{1});
+    QCOMPARE(again.front().linkPath, std::filesystem::path("E:/Flight Simulator 2024/Community2024/aerosoft-crj"));
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community2024/aerosoft-crj"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
 void ProfileServiceTest::EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot()
 {
     Fixture f;
@@ -248,13 +277,13 @@ void ProfileServiceTest::EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot
 
     const OperationRecord& failed = f.journal.appended.front();
     QCOMPARE(failed.kind, OperationKind::EnableAddon);
-    QCOMPARE(failed.failure, LinkFailure::DestinationHoldsRealFolder);
+    QCOMPARE(std::get<LinkFailure>(failed.outcome), LinkFailure::DestinationHoldsRealFolder);
     QCOMPARE(failed.addonId, (AddonId{kLibraryId, "pmdg-aircraft-77w"}));
     QCOMPARE(failed.source, std::filesystem::path("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
     QCOMPARE(failed.target, std::filesystem::path("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QCOMPARE(failed.timestamp, f.clock.now);
 
-    QCOMPARE(f.journal.appended[1].failure, LinkFailure::None);
+    QCOMPARE(std::get<LinkFailure>(f.journal.appended[1].outcome), LinkFailure::None);
 }
 
 void ProfileServiceTest::UndoRevertsTheLastBatchAndNothingElse()

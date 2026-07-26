@@ -11,6 +11,7 @@
 #include "application/model/QuarantinedItem.h"
 #include "application/model/StagingLeftover.h"
 #include "domain/importing/ImportEngine.h"
+#include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/model/ConflictChoice.h"
 #include "domain/model/CopyConflict.h"
@@ -28,8 +29,7 @@ public:
                   const CatalogScanner& catalog,
                   FileOperations& files,
                   const LinkingEngine& linking,
-                  OperationJournal& journal,
-                  const Clock& clock,
+                  const OperationLog& log,
                   LinkType linkType);
 
     [[nodiscard]] std::vector<ImportOperationResult>
@@ -68,11 +68,6 @@ public:
     DiscardLeftovers(const SimulatorProfile& profile, const std::vector<StagingLeftover>& leftovers) const;
 
 private:
-    [[nodiscard]] bool UnlinkWhatPointsAtTheLoser(const SimulatorProfile& profile,
-                                                  const std::vector<DestinationEntry>& entries,
-                                                  const std::filesystem::path& loser,
-                                                  const AddonId& addon) const;
-
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
 
     [[nodiscard]] ImportResult RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
@@ -95,8 +90,7 @@ private:
     const CatalogScanner& catalog_;
     FileOperations& files_;
     const LinkingEngine& linking_;
-    OperationJournal& journal_;
-    const Clock& clock_;
+    const OperationLog& log_;
     LinkType linkType_;
 };
 

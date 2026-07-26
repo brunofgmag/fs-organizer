@@ -7,9 +7,12 @@
 #include <string>
 
 #include "domain/importing/ImportPaths.h"
+#include "domain/linking/DisableLinks.h"
 #include "domain/model/Manifest.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryLookup.h"
+#include "domain/tree/LibraryTrees.h"
 
 namespace
 {
@@ -88,7 +91,7 @@ namespace
 
         for (const OperationRecord& record : std::ranges::reverse_view(history))
         {
-            if (std::ranges::find(kinds, record.kind) != kinds.end() && record.importResult == ImportResult::Completed
+            if (std::ranges::find(kinds, record.kind) != kinds.end() && Succeeded(record.outcome)
                 && ComparablePath(record.target) == wanted)
             {
                 return &record;
@@ -105,8 +108,7 @@ ImportService::ImportService(const ImportEngine& engine,
                              const CatalogScanner& catalog,
                              FileOperations& files,
                              const LinkingEngine& linking,
-                             OperationJournal& journal,
-                             const Clock& clock,
+                             const OperationLog& log,
                              const LinkType linkType)
     : engine_(engine),
       processProbe_(processProbe),
@@ -114,8 +116,7 @@ ImportService::ImportService(const ImportEngine& engine,
       catalog_(catalog),
       files_(files),
       linking_(linking),
-      journal_(journal),
-      clock_(clock),
+      log_(log),
       linkType_(linkType)
 {
 }
@@ -128,14 +129,28 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
     std::vector<ImportOperationResult> results;
     results.reserve(requests.size());
 
-    const bool blocked = processProbe_.SimulatorIsRunning();
+    if (processProbe_.SimulatorIsRunning())
+    {
+        for (const ImportRequest& request : requests)
+        {
+            results.push_back(ImportOperationResult{request, ImportResult::TheSimulatorIsRunning});
+        }
+
+        return results;
+    }
+
+    const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
 
     for (const ImportRequest& request : requests)
     {
-        results.push_back(ImportOperationResult{request,
-                                                blocked
-                                                    ? ImportResult::TheSimulatorIsRunning
-                                                    : engine_.Import(profile, request, onProgress, onStep).Result()});
+        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, request.Target()))
+        {
+            results.push_back(ImportOperationResult{request, ImportResult::TheIdentityIsTaken, occupant->path});
+            continue;
+        }
+
+        results.push_back(
+            ImportOperationResult{request, engine_.Import(profile, request, onProgress, onStep).Result()});
     }
 
     return results;
@@ -160,16 +175,16 @@ ImportResult ImportService::ResolveConflict(const SimulatorProfile& profile,
 
     const AddonId addon = IdentityOf(profile, conflict.libraryPath);
 
-    if (!UnlinkWhatPointsAtTheLoser(profile, entries, resolution.loser, addon))
+    if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, resolution.loser), addon, resolution.loser))
     {
         return ImportResult::CouldNotRemoveTheLink;
     }
 
     const bool moved = files_.Move(resolution.loser, resolution.quarantine);
 
-    journal_.Append(OperationRecord::OfImport(clock_.Now(), resolution.kind, addon, resolution.loser,
+    log_.RecordImport(resolution.kind, addon, resolution.loser,
                                               resolution.quarantine,
-                                              moved ? ImportResult::Completed : ImportResult::CouldNotQuarantine));
+                                              moved ? ImportResult::Completed : ImportResult::CouldNotQuarantine);
 
     if (!moved)
     {
@@ -184,31 +199,10 @@ ImportResult ImportService::ResolveConflict(const SimulatorProfile& profile,
     const LinkOutcome link =
         linking_.Enable(Addon{conflict.libraryPath}, conflict.destinationPath.parent_path(), linkType_);
 
-    journal_.Append(OperationRecord::OfLink(clock_.Now(), OperationKind::EnableAddon, addon, conflict.libraryPath,
-                                            conflict.destinationPath, link.Failure()));
+    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath,
+                                            conflict.destinationPath, link.Failure());
 
     return link.Succeeded() ? ImportResult::Completed : ImportResult::CouldNotCreateLink;
-}
-
-bool ImportService::UnlinkWhatPointsAtTheLoser(const SimulatorProfile& profile,
-                                               const std::vector<DestinationEntry>& entries,
-                                               const std::filesystem::path& loser,
-                                               const AddonId& addon) const
-{
-    for (const std::filesystem::path& link : LinksPointingAt(entries, loser))
-    {
-        const LinkOutcome outcome = linking_.Disable(link);
-
-        journal_.Append(
-            OperationRecord::OfLink(clock_.Now(), OperationKind::DisableAddon, addon, link, loser, outcome.Failure()));
-
-        if (!outcome.Succeeded())
-        {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
@@ -252,13 +246,12 @@ void ImportService::Record(const SimulatorProfile& profile,
                            const std::filesystem::path& target,
                            const ImportResult result) const
 {
-    journal_.Append(
-        OperationRecord::OfImport(clock_.Now(), kind, IdentityOf(profile, addonFolder), source, target, result));
+    log_.RecordImport(kind, IdentityOf(profile, addonFolder), source, target, result);
 }
 
 std::vector<QuarantinedItem> ImportService::Quarantined(const SimulatorProfile& profile) const
 {
-    const std::vector<OperationRecord> history = journal_.Read();
+    const std::vector<OperationRecord> history = log_.History();
 
     std::vector<QuarantinedItem> items;
 
@@ -317,15 +310,30 @@ ImportResult ImportService::DiscardOne(const SimulatorProfile& profile, const Qu
 std::vector<FileOperationResult> ImportService::Restore(const SimulatorProfile& profile,
                                                         const std::vector<QuarantinedItem>& items) const
 {
-    const bool blocked = processProbe_.SimulatorIsRunning();
-
     std::vector<FileOperationResult> results;
     results.reserve(items.size());
 
+    if (processProbe_.SimulatorIsRunning())
+    {
+        for (const QuarantinedItem& item : items)
+        {
+            results.push_back(FileOperationResult{item.path, ImportResult::TheSimulatorIsRunning});
+        }
+
+        return results;
+    }
+
+    const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
+
     for (const QuarantinedItem& item : items)
     {
-        results.push_back(
-            FileOperationResult{item.path, blocked ? ImportResult::TheSimulatorIsRunning : RestoreOne(profile, item)});
+        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, item.origin))
+        {
+            results.push_back(FileOperationResult{item.path, ImportResult::TheIdentityIsTaken, occupant->path});
+            continue;
+        }
+
+        results.push_back(FileOperationResult{item.path, RestoreOne(profile, item)});
     }
 
     return results;
@@ -350,7 +358,7 @@ std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& 
 
 std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& profile) const
 {
-    const std::vector<OperationRecord> history = journal_.Read();
+    const std::vector<OperationRecord> history = log_.History();
 
     std::vector<StagingLeftover> leftovers;
     std::vector<std::filesystem::path> pending;
@@ -413,6 +421,7 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
                                                          const std::function<void(OperationKind)>& onStep) const
 {
     const bool blocked = processProbe_.SimulatorIsRunning();
+    const std::vector<TreeNode> libraries = blocked ? std::vector<TreeNode>{} : LibraryTreesOf(catalog_, profile);
 
     std::vector<ImportOperationResult> results;
     results.reserve(leftovers.size());
@@ -424,6 +433,12 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
         if (blocked)
         {
             results.push_back(ImportOperationResult{request, ImportResult::TheSimulatorIsRunning});
+            continue;
+        }
+
+        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, leftover.target))
+        {
+            results.push_back(ImportOperationResult{request, ImportResult::TheIdentityIsTaken, occupant->path});
             continue;
         }
 

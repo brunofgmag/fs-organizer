@@ -36,6 +36,11 @@
         return true;
     }
 
+    if (base.empty())
+    {
+        return false;
+    }
+
     if (candidate.size() <= base.size() || candidate.compare(0, base.size(), base) != 0)
     {
         return false;

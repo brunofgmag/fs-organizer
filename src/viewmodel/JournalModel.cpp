@@ -31,7 +31,12 @@ namespace
             return QObject::tr("concluída");
         }
 
-        return CarriesAnImportReason(record.kind) ? Explain(record.importResult) : Explain(record.failure);
+        return std::visit(
+            [](const auto value)
+            {
+                return Explain(value);
+            },
+            record.outcome);
     }
 }
 
@@ -66,6 +71,9 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::QuarantineFromLibrary: return tr("Quarentenar a cópia da biblioteca");
     case OperationKind::RestoreFromQuarantine: return tr("Restaurar da quarentena");
     case OperationKind::DiscardFromQuarantine: return tr("Descartar da quarentena");
+    case OperationKind::MoveAddon: return tr("Mover addon de categoria");
+    case OperationKind::CreateCategory: return tr("Criar categoria");
+    case OperationKind::RenameCategory: return tr("Renomear categoria");
     case OperationKind::DiscardStaging: return tr("Descartar uma importação pela metade");
     }
 
