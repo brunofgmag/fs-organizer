@@ -149,8 +149,7 @@ LinkOperationResult ProfileService::Run(const Step& step) const
         ? linking_.Enable(Addon{step.addonFolder, Manifest{}}, step.linkPath.parent_path(), linkType_)
         : linking_.Disable(step.linkPath);
 
-    log_.RecordLink(step.kind, step.addonId, step.addonFolder, step.linkPath,
-                                            outcome.Failure());
+    log_.RecordLink(step.kind, step.addonId, step.addonFolder, step.linkPath, outcome.Failure());
 
     return LinkOperationResult{step.addonId, step.addonFolder, step.linkPath, step.kind, outcome};
 }

@@ -71,8 +71,7 @@ namespace
         OperationLog log{journal, clock};
         FakeCatalogScanner catalog;
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
-        ImportService service{engine,  processProbe, filesystemProbe, catalog,           files,
-                              linking, log,           LinkType::Junction};
+        ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
 
         SimulatorProfile profile{.destinations = {kDestination},
                                  .defaultDestination = kDestination,

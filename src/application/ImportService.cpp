@@ -182,9 +182,8 @@ ImportResult ImportService::ResolveConflict(const SimulatorProfile& profile,
 
     const bool moved = files_.Move(resolution.loser, resolution.quarantine);
 
-    log_.RecordImport(resolution.kind, addon, resolution.loser,
-                                              resolution.quarantine,
-                                              moved ? ImportResult::Completed : ImportResult::CouldNotQuarantine);
+    log_.RecordImport(resolution.kind, addon, resolution.loser, resolution.quarantine,
+                      moved ? ImportResult::Completed : ImportResult::CouldNotQuarantine);
 
     if (!moved)
     {
@@ -199,8 +198,7 @@ ImportResult ImportService::ResolveConflict(const SimulatorProfile& profile,
     const LinkOutcome link =
         linking_.Enable(Addon{conflict.libraryPath}, conflict.destinationPath.parent_path(), linkType_);
 
-    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath,
-                                            conflict.destinationPath, link.Failure());
+    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, conflict.destinationPath, link.Failure());
 
     return link.Succeeded() ? ImportResult::Completed : ImportResult::CouldNotCreateLink;
 }

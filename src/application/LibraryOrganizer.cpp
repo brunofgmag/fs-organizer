@@ -175,8 +175,7 @@ bool LibraryOrganizer::Relink(const SimulatorProfile& profile,
     const std::filesystem::path destination = EffectiveDestination(profile, folder);
     const LinkOutcome outcome = linking_.Enable(Addon{folder, Manifest{}}, destination, linkType_);
 
-    log_.RecordLink(OperationKind::EnableAddon, addon, folder,
-                                            destination / folder.filename(), outcome.Failure());
+    log_.RecordLink(OperationKind::EnableAddon, addon, folder, destination / folder.filename(), outcome.Failure());
 
     return outcome.Succeeded();
 }

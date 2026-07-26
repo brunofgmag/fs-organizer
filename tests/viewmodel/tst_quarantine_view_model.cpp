@@ -79,8 +79,7 @@ namespace
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
-        ImportService service{engine,  processProbe, filesystemProbe, catalog,           files,
-                              linking, log,           LinkType::Junction};
+        ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
         ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
         AddonTreeModel treeModel;
         QuarantineModel model;

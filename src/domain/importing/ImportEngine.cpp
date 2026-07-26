@@ -49,11 +49,7 @@ ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
                            const LinkingEngine& linking,
                            const OperationLog& log,
                            const LinkType linkType)
-    : filesystemProbe_(filesystemProbe),
-      files_(files),
-      linking_(linking),
-      log_(log),
-      linkType_(linkType)
+    : filesystemProbe_(filesystemProbe), files_(files), linking_(linking), log_(log), linkType_(linkType)
 {
 }
 

@@ -104,11 +104,11 @@ namespace
         WindowsProcessProbe processProbe{std::vector<std::string>{}};
         JsonManifestParser manifestParser;
         FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
-        ImportService service{engine.engine,  processProbe,   engine.filesystemProbe, catalog,           engine.files,
-                              engine.linking, engine.log,     LinkType::Junction};
+        ImportService service{engine.engine,  processProbe, engine.filesystemProbe, catalog, engine.files,
+                              engine.linking, engine.log,   LinkType::Junction};
         EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
-        LibraryOrganizer organizer{catalog,      engine.filesystemProbe, engine.files, engine.linking,    classifier,
-                                   processProbe, engine.log,           LinkType::Junction};
+        LibraryOrganizer organizer{catalog,    engine.filesystemProbe, engine.files, engine.linking,
+                                   classifier, processProbe,           engine.log,   LinkType::Junction};
 
         [[nodiscard]] std::vector<DestinationEntry> Entries(const Disk& disk) const
         {

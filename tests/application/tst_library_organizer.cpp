@@ -69,8 +69,8 @@ namespace
         FakeClock clock;
         OperationLog log{journal, clock};
         FakeCatalogScanner catalog;
-        LibraryOrganizer organizer{catalog,      filesystemProbe, files, linking,           classifier,
-                                   processProbe, log, LinkType::Junction};
+        LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
+                                   classifier, processProbe,    log,   LinkType::Junction};
 
         SimulatorProfile profile{.destinations = {kDestination, kOtherDestination},
                                  .defaultDestination = kDestination,

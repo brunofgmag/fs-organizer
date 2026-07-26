@@ -459,7 +459,6 @@ void CommunityPage::UpdateSummary() const
     const ImportableSelection chosen = ChosenForImport();
 
     import_->setEnabled(!chosen.folders.empty());
-    import_->setToolTip(
-        ReasonImportIsOff(static_cast<int>(chosen.folders.size()), chosen.conflicted, chosen.selected));
+    import_->setToolTip(ReasonImportIsOff(static_cast<int>(chosen.folders.size()), chosen.conflicted, chosen.selected));
     resolve_->setEnabled(chosen.conflicted > 0);
 }
