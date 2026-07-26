@@ -1,7 +1,36 @@
 #!/bin/sh
-# pre-commit: local sanity build and test run.
+# pre-commit: local format check, then a sanity build and test run.
 #
 # Install once per clone:   git config core.hooksPath .githooks
+
+staged_cpp=$(git diff --cached --name-only --diff-filter=ACMR -- '*.h' '*.cpp')
+
+if [ -n "$staged_cpp" ]; then
+  if command -v clang-format >/dev/null 2>&1; then
+    CLANG_FORMAT=clang-format
+  else
+    CLANG_FORMAT=$(ls "/c/Program Files/LLVM/bin/clang-format.exe" \
+                      "/c/Program Files/Microsoft Visual Studio/2022"/*/VC/Tools/Llvm/x64/bin/clang-format.exe \
+                      2>/dev/null | head -n 1)
+  fi
+
+  if [ -z "$CLANG_FORMAT" ]; then
+    echo "[pre-commit] clang-format not found - aborting commit." >&2
+    echo "[pre-commit] install LLVM, or the C++ workload of Visual Studio, which ships one." >&2
+    exit 1
+  fi
+
+  echo "[pre-commit] checking the staged C++ against .clang-format..."
+
+  if ! echo "$staged_cpp" | xargs "$CLANG_FORMAT" --dry-run --Werror; then
+    echo "[pre-commit] formatting differs from .clang-format - aborting commit." >&2
+    echo "[pre-commit] fix it with:" >&2
+    echo "[pre-commit]   git diff --cached --name-only --diff-filter=ACMR -- '*.h' '*.cpp' | xargs clang-format -i" >&2
+    echo "[pre-commit] then stage the result. The hook reads the files on disk, not the index," >&2
+    echo "[pre-commit] so a partially staged file is judged by its working copy." >&2
+    exit 1
+  fi
+fi
 
 changed=$(git diff --cached --name-only --diff-filter=ACMR \
           -- 'src/**' 'tests/**' 'cmake/**' 'tools/**' \
