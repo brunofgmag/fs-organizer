@@ -1,8 +1,6 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
-#include <variant>
-
 #include <fstream>
 #include <iterator>
 
