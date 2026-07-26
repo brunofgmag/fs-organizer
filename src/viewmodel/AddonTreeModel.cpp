@@ -84,9 +84,7 @@ void AddonTreeModel::Rebuild()
 
 AddonTreeModel::Item* AddonTreeModel::AddItem(const TreeNode& node, Item* parent)
 {
-    const int row = parent == nullptr
-                        ? static_cast<int>(roots_.size())
-                        : static_cast<int>(parent->children.size());
+    const int row = parent == nullptr ? static_cast<int>(roots_.size()) : static_cast<int>(parent->children.size());
 
     items_.push_back(std::make_unique<Item>(Item{&node, parent, row, {}}));
     Item* item = items_.back().get();
@@ -190,9 +188,8 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
     if (role == Qt::ToolTipRole)
     {
         return conflict == nullptr
-                   ? QVariant()
-                   : tr("Já existe uma pasta de verdade com esse nome no destino: %1")
-                     .arg(AsText(conflict->destinationPath));
+            ? QVariant()
+            : tr("Já existe uma pasta de verdade com esse nome no destino: %1").arg(AsText(conflict->destinationPath));
     }
 
     if (role != Qt::DisplayRole)
@@ -200,9 +197,7 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
-    const QString name = conflict == nullptr
-                             ? NameOf(*node)
-                             : tr("%1 (em conflito)").arg(NameOf(*node));
+    const QString name = conflict == nullptr ? NameOf(*node) : tr("%1 (em conflito)").arg(NameOf(*node));
 
     const std::filesystem::path destination = EffectiveDestination(profile_, node->path);
     if (ComparablePath(destination) == ComparablePath(profile_.defaultDestination))
@@ -213,8 +208,7 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
     return tr("%1  →  %2").arg(name, AsText(destination.filename()));
 }
 
-bool AddonTreeModel::setData(const QModelIndex& position, [[maybe_unused]] const QVariant& value,
-                             const int role)
+bool AddonTreeModel::setData(const QModelIndex& position, [[maybe_unused]] const QVariant& value, const int role)
 {
     const TreeNode* node = NodeAt(position);
     if (role != Qt::CheckStateRole || node == nullptr)

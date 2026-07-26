@@ -32,11 +32,11 @@ public:
                   const Clock& clock,
                   LinkType linkType);
 
-    [[nodiscard]] std::vector<ImportOperationResult> Import(
-        const SimulatorProfile& profile,
-        const std::vector<ImportRequest>& requests,
-        const std::function<bool(const CopyProgress &)>& onProgress,
-        const std::function<void(OperationKind)>& onStep = {}) const;
+    [[nodiscard]] std::vector<ImportOperationResult>
+    Import(const SimulatorProfile& profile,
+           const std::vector<ImportRequest>& requests,
+           const std::function<bool(const CopyProgress&)>& onProgress,
+           const std::function<void(OperationKind)>& onStep = {}) const;
 
     [[nodiscard]] ImportResult ResolveConflict(const SimulatorProfile& profile,
                                                const std::vector<DestinationEntry>& entries,
@@ -58,14 +58,14 @@ public:
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers(const SimulatorProfile& profile) const;
 
-    [[nodiscard]] std::vector<ImportOperationResult> Resume(
-        const SimulatorProfile& profile,
-        const std::vector<StagingLeftover>& leftovers,
-        const std::function<bool(const CopyProgress &)>& onProgress,
-        const std::function<void(OperationKind)>& onStep = {}) const;
+    [[nodiscard]] std::vector<ImportOperationResult>
+    Resume(const SimulatorProfile& profile,
+           const std::vector<StagingLeftover>& leftovers,
+           const std::function<bool(const CopyProgress&)>& onProgress,
+           const std::function<void(OperationKind)>& onStep = {}) const;
 
-    [[nodiscard]] std::vector<FileOperationResult> DiscardLeftovers(
-        const SimulatorProfile& profile, const std::vector<StagingLeftover>& leftovers) const;
+    [[nodiscard]] std::vector<FileOperationResult>
+    DiscardLeftovers(const SimulatorProfile& profile, const std::vector<StagingLeftover>& leftovers) const;
 
 private:
     [[nodiscard]] bool UnlinkWhatPointsAtTheLoser(const SimulatorProfile& profile,

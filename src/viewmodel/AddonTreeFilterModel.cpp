@@ -33,8 +33,7 @@ bool AddonTreeFilterModel::filterAcceptsRow(const int sourceRow, const QModelInd
 
     if (node->kind == TreeNodeKind::Addon)
     {
-        return search_.isEmpty()
-            || AsText(node->path.filename()).contains(search_, Qt::CaseInsensitive);
+        return search_.isEmpty() || AsText(node->path.filename()).contains(search_, Qt::CaseInsensitive);
     }
 
     if (hideEmpty_ && CountAddons(*node) == 0)

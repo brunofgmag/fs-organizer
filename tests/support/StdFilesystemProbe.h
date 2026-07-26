@@ -29,15 +29,13 @@ public:
         return std::filesystem::is_symlink(std::filesystem::symlink_status(path, error));
     }
 
-    [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(
-        const std::filesystem::path& path) const override
+    [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
     {
         std::vector<std::filesystem::path> children;
 
         std::error_code error;
-        for (const std::filesystem::directory_entry& entry :
-             std::filesystem::directory_iterator(path, std::filesystem::directory_options::skip_permission_denied,
-                                                 error))
+        for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(
+                 path, std::filesystem::directory_options::skip_permission_denied, error))
         {
             if (entry.is_directory(error) || entry.is_symlink(error))
             {
@@ -66,16 +64,16 @@ public:
         return error ? std::nullopt : std::optional(space.available);
     }
 
-    [[nodiscard]] std::optional<std::chrono::system_clock::time_point> LastWriteTime(
-        const std::filesystem::path& path) const override
+    [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
+    LastWriteTime(const std::filesystem::path& path) const override
     {
         std::error_code error;
         const std::filesystem::file_time_type written = std::filesystem::last_write_time(path, error);
 
         return error ? std::nullopt
                      : std::optional(std::chrono::system_clock::now()
-                         + std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                             written - std::filesystem::file_time_type::clock::now()));
+                                     + std::chrono::duration_cast<std::chrono::system_clock::duration>(
+                                         written - std::filesystem::file_time_type::clock::now()));
     }
 
     [[nodiscard]] std::vector<FileFingerprint> FingerprintTree(const std::filesystem::path& root) const override
@@ -83,8 +81,7 @@ public:
         std::vector<FileFingerprint> files;
 
         std::error_code error;
-        for (const std::filesystem::directory_entry& entry :
-             std::filesystem::recursive_directory_iterator(
+        for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(
                  root, std::filesystem::directory_options::skip_permission_denied, error))
         {
             if (entry.is_regular_file(error))

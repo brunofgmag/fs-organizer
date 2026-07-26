@@ -97,9 +97,8 @@ namespace
         WindowsProcessProbe processProbe{std::vector<std::string>{}};
         JsonManifestParser manifestParser;
         FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
-        ImportService service{engine.engine,  processProbe, engine.filesystemProbe,
-                              catalog,        engine.files, engine.linking,
-                              engine.journal, engine.clock, LinkType::Junction};
+        ImportService service{engine.engine,  processProbe,   engine.filesystemProbe, catalog,           engine.files,
+                              engine.linking, engine.journal, engine.clock,           LinkType::Junction};
         EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
 
         [[nodiscard]] std::vector<DestinationEntry> Entries(const Disk& disk) const
@@ -158,9 +157,8 @@ void ImportOnRealDiskTest::AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFr
 
     Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
 
-    QCOMPARE(engine.engine
-             .Import(disk.Profile(), ImportRequest{disk.Destination() / "tlc-bgjn", disk.Category()}, {})
-             .Result(),
+    QCOMPARE(engine.engine.Import(disk.Profile(), ImportRequest{disk.Destination() / "tlc-bgjn", disk.Category()}, {})
+                 .Result(),
              ImportResult::Completed);
 }
 
@@ -217,8 +215,8 @@ void ImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
 
     const CopyConflict conflict{disk.Destination() / "tfdidesign-aircraft-md11",
                                 disk.Category() / "tfdidesign-aircraft-md11"};
-    const ImportResult result =
-        composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict, ConflictChoice::KeepTheDestinationCopy);
+    const ImportResult result = composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
+                                                                 ConflictChoice::KeepTheDestinationCopy);
 
     QCOMPARE(result, ImportResult::Completed);
     QVERIFY(std::filesystem::exists(quarantine / "tfdidesign-aircraft-md11" / "manifest.json"));
@@ -240,7 +238,8 @@ void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder
 
     const CopyConflict conflict{disk.Destination() / "tfdidesign-aircraft-md11",
                                 disk.Category() / "tfdidesign-aircraft-md11"};
-    QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict, ConflictChoice::KeepTheDestinationCopy),
+    QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
+                                              ConflictChoice::KeepTheDestinationCopy),
              ImportResult::Completed);
 
     std::filesystem::remove_all(disk.Category());

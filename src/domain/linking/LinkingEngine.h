@@ -14,9 +14,8 @@ class LinkingEngine
 public:
     LinkingEngine(LinkService& linkService, const FilesystemProbe& filesystemProbe);
 
-    [[nodiscard]] LinkOutcome Enable(const Addon& addon,
-                                     const std::filesystem::path& destinationRoot,
-                                     LinkType linkType) const;
+    [[nodiscard]] LinkOutcome
+    Enable(const Addon& addon, const std::filesystem::path& destinationRoot, LinkType linkType) const;
 
     [[nodiscard]] LinkOutcome Disable(const std::filesystem::path& linkPath) const;
 

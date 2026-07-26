@@ -58,10 +58,9 @@ void JournalPage::UpdateSummary()
 {
     const int entries = model_.rowCount({});
 
-    summary_->setText(entries == 0
-                          ? tr("O diário ainda não registrou nenhuma mudança no disco.")
-                          : tr("%n operação(ões) registrada(s), da mais recente para a mais antiga.",
-                               nullptr, entries));
+    summary_->setText(
+        entries == 0 ? tr("O diário ainda não registrou nenhuma mudança no disco.")
+                     : tr("%n operação(ões) registrada(s), da mais recente para a mais antiga.", nullptr, entries));
 
     for (int column = 0; column < model_.columnCount({}); ++column)
     {

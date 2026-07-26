@@ -22,8 +22,7 @@ namespace
 
     bool NeedsTheRichDelegate(const QStyleOptionViewItem& item)
     {
-        return !item.icon.isNull()
-            || (item.features & QStyleOptionViewItem::HasCheckIndicator) != 0
+        return !item.icon.isNull() || (item.features & QStyleOptionViewItem::HasCheckIndicator) != 0
             || item.text.contains(QLatin1Char('\n'));
     }
 }
@@ -32,8 +31,7 @@ PlainTextDelegate::PlainTextDelegate(QObject* parent) : QStyledItemDelegate(pare
 {
 }
 
-void PlainTextDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
-                              const QModelIndex& index) const
+void PlainTextDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     QStyleOptionViewItem item = option;
     initStyleOption(&item, index);
@@ -56,12 +54,10 @@ void PlainTextDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     }
 
     const int margin = style->pixelMetric(QStyle::PM_FocusFrameHMargin, &item, widget) + 1;
-    const QRect box = style->subElementRect(QStyle::SE_ItemViewItemText, &item, widget)
-                           .adjusted(margin, 0, -margin, 0);
+    const QRect box = style->subElementRect(QStyle::SE_ItemViewItemText, &item, widget).adjusted(margin, 0, -margin, 0);
     const QPalette::ColorGroup group = GroupFor(item.state);
-    const QPalette::ColorRole role = (item.state & QStyle::State_Selected) != 0
-                                         ? QPalette::HighlightedText
-                                         : QPalette::Text;
+    const QPalette::ColorRole role =
+        (item.state & QStyle::State_Selected) != 0 ? QPalette::HighlightedText : QPalette::Text;
 
     painter->save();
     painter->setFont(item.font);
@@ -70,8 +66,7 @@ void PlainTextDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     painter->restore();
 }
 
-QString PlainTextDelegate::Fitted(const QString& text, const QStyleOptionViewItem& item,
-                                  const int width) const
+QString PlainTextDelegate::Fitted(const QString& text, const QStyleOptionViewItem& item, const int width) const
 {
     if (item.textElideMode == Qt::ElideNone || width <= 0)
     {

@@ -52,10 +52,11 @@ namespace
 
     const TreeNode* ChildNamed(const TreeNode& parent, const std::string& name)
     {
-        const auto child = std::ranges::find_if(parent.children, [&name](const TreeNode& node)
-        {
-            return node.path.filename() == name;
-        });
+        const auto child = std::ranges::find_if(parent.children,
+                                                [&name](const TreeNode& node)
+                                                {
+                                                    return node.path.filename() == name;
+                                                });
 
         return child == parent.children.end() ? nullptr : &*child;
     }

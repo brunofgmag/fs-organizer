@@ -58,11 +58,10 @@ namespace
 void CopyConflictsTest::APhysicalFolderThatAlsoExistsInTheLibraryIsAConflict()
 {
     const std::vector<TreeNode> libraries{
-        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/flybywire-externaltools-simbridge")})})
-    };
+        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/flybywire-externaltools-simbridge")})})};
 
-    const CopyConflicts conflicts = FindCopyConflicts(
-        {PhysicalFolder(kCommunity / "flybywire-externaltools-simbridge")}, libraries);
+    const CopyConflicts conflicts =
+        FindCopyConflicts({PhysicalFolder(kCommunity / "flybywire-externaltools-simbridge")}, libraries);
 
     QCOMPARE(conflicts.Count(), std::size_t{1});
 
@@ -77,11 +76,9 @@ void CopyConflictsTest::APhysicalFolderThatAlsoExistsInTheLibraryIsAConflict()
 void CopyConflictsTest::AnEmptyFolderInTheLibraryIsNotAnAddonAndSoIsNotAConflict()
 {
     const std::vector<TreeNode> libraries{
-        LibraryWith({Category(kLibrary / "Utils", {Category(kLibrary / "Utils/fs2crew-cmd-center", {})})})
-    };
+        LibraryWith({Category(kLibrary / "Utils", {Category(kLibrary / "Utils/fs2crew-cmd-center", {})})})};
 
-    const CopyConflicts conflicts =
-        FindCopyConflicts({PhysicalFolder(kCommunity / "fs2crew-cmd-center")}, libraries);
+    const CopyConflicts conflicts = FindCopyConflicts({PhysicalFolder(kCommunity / "fs2crew-cmd-center")}, libraries);
 
     QCOMPARE(conflicts.Count(), std::size_t{0});
     QCOMPARE(conflicts.OverTheDestinationEntry(kCommunity / "fs2crew-cmd-center"), nullptr);
@@ -90,12 +87,10 @@ void CopyConflictsTest::AnEmptyFolderInTheLibraryIsNotAnAddonAndSoIsNotAConflict
 void CopyConflictsTest::AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict()
 {
     const std::vector<TreeNode> libraries{
-        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/simbridge")})})
-    };
+        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/simbridge")})})};
 
     const std::vector<DestinationEntry> entries{
-        DestinationEntry{kCommunity / "simbridge", kLibrary / "Utils/simbridge", EntryClassification::Managed}
-    };
+        DestinationEntry{kCommunity / "simbridge", kLibrary / "Utils/simbridge", EntryClassification::Managed}};
 
     QCOMPARE(FindCopyConflicts(entries, libraries).Count(), std::size_t{0});
 }
@@ -103,8 +98,7 @@ void CopyConflictsTest::AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict()
 void CopyConflictsTest::TheBaseNameIsComparedWithoutCaringAboutCase()
 {
     const std::vector<TreeNode> libraries{
-        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/SimBridge")})})
-    };
+        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/SimBridge")})})};
 
     const CopyConflicts conflicts = FindCopyConflicts({PhysicalFolder(kCommunity / "simbridge")}, libraries);
 
@@ -115,8 +109,7 @@ void CopyConflictsTest::TheBaseNameIsComparedWithoutCaringAboutCase()
 void CopyConflictsTest::TheSameNameInTwoDestinationsIsTwoConflicts()
 {
     const std::vector<TreeNode> libraries{
-        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/simbridge")})})
-    };
+        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/simbridge")})})};
 
     const CopyConflicts conflicts = FindCopyConflicts(
         {PhysicalFolder(kCommunity / "simbridge"), PhysicalFolder(kCommunity2024 / "simbridge")}, libraries);

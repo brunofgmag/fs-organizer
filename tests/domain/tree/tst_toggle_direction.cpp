@@ -69,10 +69,8 @@ void ToggleDirectionTest::EnablesWhenSomeAddonIsFreeToEnable()
 {
     const TreeNode category = Liveries();
     const EnabledAddons enabled({kLiveryA});
-    const std::vector<DestinationEntry> entries = {
-        OurLink("E:/Flight Simulator 2024/Community/livery-a", kLiveryA),
-        RealFolder("E:/Flight Simulator 2024/Community/livery-b")
-    };
+    const std::vector<DestinationEntry> entries = {OurLink("E:/Flight Simulator 2024/Community/livery-a", kLiveryA),
+                                                   RealFolder("E:/Flight Simulator 2024/Community/livery-b")};
 
     QVERIFY(ShouldEnable(Profile(), entries, enabled, {&category}));
 }
@@ -81,11 +79,9 @@ void ToggleDirectionTest::DisablesWhenEverythingEnableableIsAlreadyEnabled()
 {
     const TreeNode category = Liveries();
     const EnabledAddons enabled({kLiveryA, kLiveryC});
-    const std::vector<DestinationEntry> entries = {
-        OurLink("E:/Flight Simulator 2024/Community/livery-a", kLiveryA),
-        RealFolder("E:/Flight Simulator 2024/Community/livery-b"),
-        OurLink("E:/Flight Simulator 2024/Community/livery-c", kLiveryC)
-    };
+    const std::vector<DestinationEntry> entries = {OurLink("E:/Flight Simulator 2024/Community/livery-a", kLiveryA),
+                                                   RealFolder("E:/Flight Simulator 2024/Community/livery-b"),
+                                                   OurLink("E:/Flight Simulator 2024/Community/livery-c", kLiveryC)};
 
     QVERIFY(!ShouldEnable(Profile(), entries, enabled, {&category}));
 }
@@ -93,20 +89,16 @@ void ToggleDirectionTest::DisablesWhenEverythingEnableableIsAlreadyEnabled()
 void ToggleDirectionTest::TriesToEnableWhenEverythingIsBlockedAndOff()
 {
     const TreeNode category = Liveries();
-    const std::vector<DestinationEntry> entries = {
-        RealFolder("E:/Flight Simulator 2024/Community/livery-a"),
-        RealFolder("E:/Flight Simulator 2024/Community/livery-b"),
-        RealFolder("E:/Flight Simulator 2024/Community/livery-c")
-    };
+    const std::vector<DestinationEntry> entries = {RealFolder("E:/Flight Simulator 2024/Community/livery-a"),
+                                                   RealFolder("E:/Flight Simulator 2024/Community/livery-b"),
+                                                   RealFolder("E:/Flight Simulator 2024/Community/livery-c")};
 
     QVERIFY(ShouldEnable(Profile(), entries, EnabledAddons{}, {&category}));
 }
 
 void ToggleDirectionTest::ARealFolderAtTheEffectiveDestinationBlocks()
 {
-    const std::vector<DestinationEntry> entries = {
-        RealFolder("E:/Flight Simulator 2024/Community/livery-a")
-    };
+    const std::vector<DestinationEntry> entries = {RealFolder("E:/Flight Simulator 2024/Community/livery-a")};
 
     QVERIFY(DestinationBlocks(Profile(), entries, kLiveryA));
     QVERIFY(!DestinationBlocks(Profile(), entries, kLiveryB));
@@ -114,9 +106,7 @@ void ToggleDirectionTest::ARealFolderAtTheEffectiveDestinationBlocks()
 
 void ToggleDirectionTest::AnEntryLinkingToTheAddonDoesNotBlockIt()
 {
-    const std::vector<DestinationEntry> entries = {
-        OurLink("E:/Flight Simulator 2024/Community/livery-a", kLiveryA)
-    };
+    const std::vector<DestinationEntry> entries = {OurLink("E:/Flight Simulator 2024/Community/livery-a", kLiveryA)};
 
     QVERIFY(!DestinationBlocks(Profile(), entries, kLiveryA));
 }

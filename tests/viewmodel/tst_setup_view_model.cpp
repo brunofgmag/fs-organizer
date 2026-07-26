@@ -66,8 +66,7 @@ namespace
         return category;
     }
 
-    TreeNode LibraryTree(const std::filesystem::path& root,
-                         const std::vector<std::pair<std::string, int>>& categories)
+    TreeNode LibraryTree(const std::filesystem::path& root, const std::vector<std::pair<std::string, int>>& categories)
     {
         TreeNode library;
         library.kind = TreeNodeKind::Library;
@@ -121,8 +120,7 @@ void SetupViewModelTest::ADestinationThatDoesNotExistIsRejected()
 {
     const Fixture f;
 
-    QCOMPARE(f.viewModel.CheckDestination("E:/Flight Simulator 2024/Community"),
-             DestinationCheck::RejectedMissing);
+    QCOMPARE(f.viewModel.CheckDestination("E:/Flight Simulator 2024/Community"), DestinationCheck::RejectedMissing);
 }
 
 void SetupViewModelTest::ADestinationThatIsNotWritableIsRejected()
@@ -131,8 +129,7 @@ void SetupViewModelTest::ADestinationThatIsNotWritableIsRejected()
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community");
     f.fileSystem.MarkReadOnly("E:/Flight Simulator 2024/Community");
 
-    QCOMPARE(f.viewModel.CheckDestination("E:/Flight Simulator 2024/Community"),
-             DestinationCheck::RejectedNotWritable);
+    QCOMPARE(f.viewModel.CheckDestination("E:/Flight Simulator 2024/Community"), DestinationCheck::RejectedNotWritable);
 }
 
 void SetupViewModelTest::AFolderNotNamedCommunityIsAcceptedWithAWarning()
@@ -150,8 +147,7 @@ void SetupViewModelTest::ACommunityFolderIsAcceptedWithoutWarning()
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community2024");
     f.fileSystem.AddDirectory("C:/Packages/community");
 
-    QCOMPARE(f.viewModel.CheckDestination("E:/Flight Simulator 2024/Community2024"),
-             DestinationCheck::Accepted);
+    QCOMPARE(f.viewModel.CheckDestination("E:/Flight Simulator 2024/Community2024"), DestinationCheck::Accepted);
     QCOMPARE(f.viewModel.CheckDestination("C:/Packages/community"), DestinationCheck::Accepted);
 }
 
@@ -175,8 +171,7 @@ void SetupViewModelTest::CompletingSetupPersistsTheChosenCandidateWithItsLibrari
     Fixture f;
     f.locator = FakeSimulatorLocator({
         Candidate(SimulatorVariant::MSFS2020, "C:/Packages"),
-        Candidate(SimulatorVariant::MSFS2024, "E:/Flight Simulator 2024",
-                  {"Community", "Community2024"}),
+        Candidate(SimulatorVariant::MSFS2024, "E:/Flight Simulator 2024", {"Community", "Community2024"}),
     });
 
     f.viewModel.Detect();
@@ -192,8 +187,7 @@ void SetupViewModelTest::CompletingSetupPersistsTheChosenCandidateWithItsLibrari
     QCOMPARE(profile.id, std::string("msfs2024"));
     QCOMPARE(f.settings.stored.activeProfileId, profile.id);
     QCOMPARE(profile.destinations.size(), std::size_t{2});
-    QCOMPARE(profile.defaultDestination,
-             std::filesystem::path("E:/Flight Simulator 2024/Community"));
+    QCOMPARE(profile.defaultDestination, std::filesystem::path("E:/Flight Simulator 2024/Community"));
     QCOMPARE(profile.libraries.size(), std::size_t{1});
     QCOMPARE(profile.libraries.front().id, std::string("library-1"));
 }
@@ -216,18 +210,15 @@ void SetupViewModelTest::AManuallyPointedFolderBecomesACandidateThatCanBeChosen(
     const SimulatorProfile& profile = f.settings.stored.profiles.front();
     QCOMPARE(profile.variant, SimulatorVariant::MSFS2024);
     QCOMPARE(profile.destinations.size(), std::size_t{1});
-    QCOMPARE(profile.destinations.front(),
-             std::filesystem::path("X:/Somewhere Else/Community"));
+    QCOMPARE(profile.destinations.front(), std::filesystem::path("X:/Somewhere Else/Community"));
     QCOMPARE(profile.defaultDestination, std::filesystem::path("X:/Somewhere Else/Community"));
 }
 
 void SetupViewModelTest::RegisteringALibraryReportsTheCategoriesAndAddonsFoundInside()
 {
     Fixture f;
-    f.catalog.SetTree("D:/MSFS 2024",
-                      LibraryTree("D:/MSFS 2024", {{"Sceneries", 173}, {"Liveries", 27}}));
-    f.catalog.SetTree("D:/MSFS 2024/Sceneries",
-                      LibraryTree("D:/MSFS 2024/Sceneries", {}));
+    f.catalog.SetTree("D:/MSFS 2024", LibraryTree("D:/MSFS 2024", {{"Sceneries", 173}, {"Liveries", 27}}));
+    f.catalog.SetTree("D:/MSFS 2024/Sceneries", LibraryTree("D:/MSFS 2024/Sceneries", {}));
 
     QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024").check, LibraryCheck::Accepted);
 
@@ -246,8 +237,7 @@ void SetupViewModelTest::AFolderInsideAnAlreadyRegisteredLibraryIsRefused()
     QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024").check, LibraryCheck::Accepted);
     QCOMPARE(f.viewModel.RegisterLibrary("D:/MSFS 2024/Sceneries", "Sceneries").check,
              LibraryCheck::RejectedInsideAnotherLibrary);
-    QCOMPARE(f.viewModel.RegisterLibrary("d:/msfs 2024", "De novo").check,
-             LibraryCheck::RejectedInsideAnotherLibrary);
+    QCOMPARE(f.viewModel.RegisterLibrary("d:/msfs 2024", "De novo").check, LibraryCheck::RejectedInsideAnotherLibrary);
 
     QCOMPARE(f.viewModel.Libraries().size(), std::size_t{1});
 }

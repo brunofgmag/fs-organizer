@@ -19,10 +19,11 @@ namespace
 
     bool IsUnderAny(const std::filesystem::path& path, const std::vector<std::filesystem::path>& roots)
     {
-        return std::ranges::any_of(roots, [&path](const std::filesystem::path& root)
-        {
-            return IsUnder(path, root);
-        });
+        return std::ranges::any_of(roots,
+                                   [&path](const std::filesystem::path& root)
+                                   {
+                                       return IsUnder(path, root);
+                                   });
     }
 
     void MarkDuplicates(std::vector<DestinationEntry>& entries)
@@ -99,9 +100,8 @@ EntryClassifier::EntryClassifier(const LinkService& linkService, const Filesyste
 {
 }
 
-std::vector<DestinationEntry> EntryClassifier::Resolve(
-    const std::vector<std::filesystem::path>& destinationRoots,
-    const std::vector<std::filesystem::path>& libraryRoots) const
+std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::filesystem::path>& destinationRoots,
+                                                       const std::vector<std::filesystem::path>& libraryRoots) const
 {
     std::vector<DestinationEntry> entries;
 
@@ -118,9 +118,8 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(
     return entries;
 }
 
-DestinationEntry EntryClassifier::ClassifyEntry(
-    const std::filesystem::path& entryPath,
-    const std::vector<std::filesystem::path>& libraryRoots) const
+DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& entryPath,
+                                                const std::vector<std::filesystem::path>& libraryRoots) const
 {
     DestinationEntry entry;
     entry.path = entryPath;
@@ -144,9 +143,8 @@ DestinationEntry EntryClassifier::ClassifyEntry(
     }
     else
     {
-        entry.classification = IsUnderAny(entry.target, libraryRoots)
-                                   ? EntryClassification::Managed
-                                   : EntryClassification::External;
+        entry.classification =
+            IsUnderAny(entry.target, libraryRoots) ? EntryClassification::Managed : EntryClassification::External;
     }
 
     return entry;

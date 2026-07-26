@@ -45,7 +45,10 @@ namespace
             std::filesystem::create_directories(linkPath.parent_path());
 
             WindowsLinkService linkService;
-            [&] { QVERIFY(linkService.CreateLink(linkPath, target, LinkType::Junction)); }();
+            [&]
+            {
+                QVERIFY(linkService.CreateLink(linkPath, target, LinkType::Junction));
+            }();
             std::filesystem::remove_all(target);
 
             return linkPath;
@@ -97,8 +100,7 @@ void WindowsFilesystemProbeTest::AnUnmountedDriveLetterIsNotAnAvailableVolume()
     const Disk disk;
     const WindowsFilesystemProbe filesystemProbe;
 
-    const auto absent =
-        std::filesystem::path(std::string(1, absentLetter) + ":/Portable Library/orbx-airport");
+    const auto absent = std::filesystem::path(std::string(1, absentLetter) + ":/Portable Library/orbx-airport");
 
     QVERIFY(!filesystemProbe.VolumeIsAvailable(absent));
     QVERIFY(filesystemProbe.VolumeIsAvailable(disk.Root()));
@@ -134,8 +136,7 @@ void WindowsFilesystemProbeTest::AFolderReportsWhenItWasLastWrittenTo()
     const std::filesystem::path folder = disk.AddFolder("Utils/simbridge");
 
     const WindowsFilesystemProbe filesystemProbe;
-    const std::optional<std::chrono::system_clock::time_point> written =
-        filesystemProbe.LastWriteTime(folder);
+    const std::optional<std::chrono::system_clock::time_point> written = filesystemProbe.LastWriteTime(folder);
 
     QVERIFY(written.has_value());
     QVERIFY(std::chrono::abs(std::chrono::system_clock::now() - *written) < std::chrono::minutes{5});

@@ -23,7 +23,8 @@ QString CommunityModel::ClassificationName(const EntryClassification classificat
     return {};
 }
 
-void CommunityModel::ShowEntries(std::vector<DestinationEntry> entries, SimulatorProfile profile,
+void CommunityModel::ShowEntries(std::vector<DestinationEntry> entries,
+                                 SimulatorProfile profile,
                                  CopyConflicts conflicts)
 {
     beginResetModel();
@@ -84,10 +85,8 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     {
         const QString text = data(position, Qt::DisplayRole).toString();
 
-        return conflict == nullptr
-                   ? QVariant(text)
-                   : tr("%1\nTambém existe na biblioteca: %2")
-                     .arg(text, AsText(conflict->libraryPath));
+        return conflict == nullptr ? QVariant(text)
+                                   : tr("%1\nTambém existe na biblioteca: %2").arg(text, AsText(conflict->libraryPath));
     }
 
     if (role != Qt::DisplayRole)
@@ -97,23 +96,17 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
 
     switch (position.column())
     {
-    case NameColumn:
-        return AsText(entry->path.filename());
-    case DestinationColumn:
-        return AsText(entry->path.parent_path().filename());
+    case NameColumn: return AsText(entry->path.filename());
+    case DestinationColumn: return AsText(entry->path.parent_path().filename());
     case ClassificationColumn:
-        return conflict == nullptr
-                   ? ClassificationName(entry->classification)
-                   : tr("%1 · em conflito").arg(ClassificationName(entry->classification));
-    case TargetColumn:
-        return entry->target.empty() ? QString() : AsText(entry->target.generic_wstring());
-    default:
-        return {};
+        return conflict == nullptr ? ClassificationName(entry->classification)
+                                   : tr("%1 · em conflito").arg(ClassificationName(entry->classification));
+    case TargetColumn: return entry->target.empty() ? QString() : AsText(entry->target.generic_wstring());
+    default: return {};
     }
 }
 
-QVariant CommunityModel::headerData(const int section, const Qt::Orientation orientation,
-                                    const int role) const
+QVariant CommunityModel::headerData(const int section, const Qt::Orientation orientation, const int role) const
 {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
     {

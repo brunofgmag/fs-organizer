@@ -18,16 +18,16 @@ namespace
 
     std::filesystem::path DefaultDestination(const std::vector<std::filesystem::path>& destinations)
     {
-        const auto shared = std::ranges::find_if(destinations, [](const std::filesystem::path& path)
-        {
-            return ComparablePath(path.filename()) == kDestinationNamePrefix;
-        });
+        const auto shared = std::ranges::find_if(destinations,
+                                                 [](const std::filesystem::path& path)
+                                                 {
+                                                     return ComparablePath(path.filename()) == kDestinationNamePrefix;
+                                                 });
 
         return shared == destinations.end() ? destinations.back() : *shared;
     }
 
-    bool IsInsideARegisteredLibrary(const std::vector<RegisteredLibrary>& libraries,
-                                    const std::filesystem::path& path)
+    bool IsInsideARegisteredLibrary(const std::vector<RegisteredLibrary>& libraries, const std::filesystem::path& path)
     {
         std::vector<Library> known;
         for (const RegisteredLibrary& registered : libraries)
@@ -40,10 +40,11 @@ namespace
 
     bool IsTaken(const std::vector<SimulatorProfile>& profiles, const std::string& id)
     {
-        return std::ranges::any_of(profiles, [&id](const SimulatorProfile& profile)
-        {
-            return profile.id == id;
-        });
+        return std::ranges::any_of(profiles,
+                                   [&id](const SimulatorProfile& profile)
+                                   {
+                                       return profile.id == id;
+                                   });
     }
 
     std::string ProfileId(const SimulatorVariant variant, const std::vector<SimulatorProfile>& existing)
@@ -97,9 +98,7 @@ DestinationCheck SetupViewModel::CheckDestination(const std::filesystem::path& p
         return DestinationCheck::RejectedNotWritable;
     }
 
-    return LooksLikeADestination(path)
-               ? DestinationCheck::Accepted
-               : DestinationCheck::AcceptedButUnfamiliar;
+    return LooksLikeADestination(path) ? DestinationCheck::Accepted : DestinationCheck::AcceptedButUnfamiliar;
 }
 
 void SetupViewModel::AddManualCandidate(const std::filesystem::path& destination, const SimulatorVariant variant)

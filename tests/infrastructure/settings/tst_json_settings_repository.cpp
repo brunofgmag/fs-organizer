@@ -38,10 +38,7 @@ void JsonSettingsRepositoryTest::AProfileSurvivesTheRoundTrip()
     SimulatorProfile profile;
     profile.id = "msfs2024";
     profile.variant = SimulatorVariant::MSFS2024;
-    profile.destinations = {
-        "E:/Flight Simulator 2024/Community",
-        "E:/Flight Simulator 2024/Community2024"
-    };
+    profile.destinations = {"E:/Flight Simulator 2024/Community", "E:/Flight Simulator 2024/Community2024"};
     profile.defaultDestination = "E:/Flight Simulator 2024/Community2024";
 
     AppSettings written;
@@ -58,10 +55,8 @@ void JsonSettingsRepositoryTest::AProfileSurvivesTheRoundTrip()
     QCOMPARE(read.profiles.front().id, std::string("msfs2024"));
     QCOMPARE(read.profiles.front().variant, SimulatorVariant::MSFS2024);
     QCOMPARE(read.profiles.front().destinations.size(), std::size_t{2});
-    QCOMPARE(read.profiles.front().destinations.front(),
-             std::filesystem::path("E:/Flight Simulator 2024/Community"));
-    QCOMPARE(read.profiles.front().defaultDestination,
-             std::filesystem::path("E:/Flight Simulator 2024/Community2024"));
+    QCOMPARE(read.profiles.front().destinations.front(), std::filesystem::path("E:/Flight Simulator 2024/Community"));
+    QCOMPARE(read.profiles.front().defaultDestination, std::filesystem::path("E:/Flight Simulator 2024/Community2024"));
 }
 
 void JsonSettingsRepositoryTest::LibrariesKeepTheirIdentityAcrossTheRoundTrip()
@@ -107,17 +102,11 @@ void JsonSettingsRepositoryTest::TwoProfilesWithDestinationsAndOverridesSurviveT
     SimulatorProfile modern;
     modern.id = "msfs2024";
     modern.variant = SimulatorVariant::MSFS2024;
-    modern.destinations = {
-        "E:/Flight Simulator 2024/Community",
-        "E:/Flight Simulator 2024/Community2024"
-    };
+    modern.destinations = {"E:/Flight Simulator 2024/Community", "E:/Flight Simulator 2024/Community2024"};
     modern.defaultDestination = "E:/Flight Simulator 2024/Community2024";
     modern.libraries = {Library{libraryId, "D:/MSFS 2024", "MSFS 2024"}};
     modern.destinationOverrides = {
-        DestinationOverride{
-            libraryId, "Aircraft Mods/pmdg-aircraft-77w",
-            "E:/Flight Simulator 2024/Community"
-        },
+        DestinationOverride{libraryId, "Aircraft Mods/pmdg-aircraft-77w", "E:/Flight Simulator 2024/Community"},
         DestinationOverride{libraryId, "Sceneries", "E:/Flight Simulator 2024/Community2024"},
     };
 
@@ -142,8 +131,7 @@ void JsonSettingsRepositoryTest::TwoProfilesWithDestinationsAndOverridesSurviveT
     QCOMPARE(overrides.size(), std::size_t{2});
     QCOMPARE(overrides[0].libraryId, libraryId);
     QCOMPARE(overrides[0].relativePath, std::filesystem::path("Aircraft Mods/pmdg-aircraft-77w"));
-    QCOMPARE(overrides[0].destination,
-             std::filesystem::path("E:/Flight Simulator 2024/Community"));
+    QCOMPARE(overrides[0].destination, std::filesystem::path("E:/Flight Simulator 2024/Community"));
     QCOMPARE(overrides[1].relativePath, std::filesystem::path("Sceneries"));
 }
 

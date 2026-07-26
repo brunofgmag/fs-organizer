@@ -15,8 +15,8 @@ namespace
             std::chrono::duration_cast<std::chrono::milliseconds>(timestamp.time_since_epoch()).count();
 
         return QDateTime::fromMSecsSinceEpoch(milliseconds, QTimeZone::UTC)
-               .toLocalTime()
-               .toString(QStringLiteral("dd/MM/yyyy HH:mm"));
+            .toLocalTime()
+            .toString(QStringLiteral("dd/MM/yyyy HH:mm"));
     }
 }
 
@@ -33,8 +33,7 @@ void QuarantineModel::ShowItems(std::vector<QuarantinedItem> items)
 
 const QuarantinedItem* QuarantineModel::ItemAt(const QModelIndex& position) const
 {
-    if (!position.isValid() || position.row() < 0
-        || static_cast<std::size_t>(position.row()) >= items_.size())
+    if (!position.isValid() || position.row() < 0 || static_cast<std::size_t>(position.row()) >= items_.size())
     {
         return nullptr;
     }
@@ -77,21 +76,15 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
 
     switch (position.column())
     {
-    case NameColumn:
-        return AsText(item->path.filename());
-    case OriginColumn:
-        return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("(o diário não sabe)");
-    case WhenColumn:
-        return item->quarantinedAt.has_value() ? Moment(*item->quarantinedAt) : QString();
-    case WhereColumn:
-        return AsText(item->path.parent_path());
-    default:
-        return {};
+    case NameColumn: return AsText(item->path.filename());
+    case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("(o diário não sabe)");
+    case WhenColumn: return item->quarantinedAt.has_value() ? Moment(*item->quarantinedAt) : QString();
+    case WhereColumn: return AsText(item->path.parent_path());
+    default: return {};
     }
 }
 
-QVariant QuarantineModel::headerData(const int section, const Qt::Orientation orientation,
-                                     const int role) const
+QVariant QuarantineModel::headerData(const int section, const Qt::Orientation orientation, const int role) const
 {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
     {

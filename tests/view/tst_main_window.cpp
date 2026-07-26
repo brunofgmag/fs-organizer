@@ -27,12 +27,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {"E:/Flight Simulator 2024/Community"};
         profile.defaultDestination = "E:/Flight Simulator 2024/Community";
-        profile.libraries = {
-            Library{
-                "{f81d4fae-7dec-11d0-a765-00a0c91e6bf6}", "D:/MSFS 2024",
-                "MSFS 2024"
-            }
-        };
+        profile.libraries = {Library{"{f81d4fae-7dec-11d0-a765-00a0c91e6bf6}", "D:/MSFS 2024", "MSFS 2024"}};
 
         AppSettings settings;
         settings.profiles = {profile};

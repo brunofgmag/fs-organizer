@@ -30,11 +30,12 @@ std::filesystem::path EffectiveDestination(const SimulatorProfile& profile,
 {
     for (std::string key = RelativeKey(relativePath);; key = ParentOf(key))
     {
-        const auto match = std::ranges::find_if(
-            profile.destinationOverrides, [&libraryId, &key](const DestinationOverride& candidate)
-            {
-                return candidate.libraryId == libraryId && RelativeKey(candidate.relativePath) == key;
-            });
+        const auto match = std::ranges::find_if(profile.destinationOverrides,
+                                                [&libraryId, &key](const DestinationOverride& candidate)
+                                                {
+                                                    return candidate.libraryId == libraryId
+                                                        && RelativeKey(candidate.relativePath) == key;
+                                                });
 
         if (match != profile.destinationOverrides.end())
         {
@@ -48,8 +49,7 @@ std::filesystem::path EffectiveDestination(const SimulatorProfile& profile,
     }
 }
 
-std::filesystem::path EffectiveDestination(const SimulatorProfile& profile,
-                                           const std::filesystem::path& addonFolder)
+std::filesystem::path EffectiveDestination(const SimulatorProfile& profile, const std::filesystem::path& addonFolder)
 {
     const Library* library = LibraryContaining(profile, addonFolder);
     if (library == nullptr)

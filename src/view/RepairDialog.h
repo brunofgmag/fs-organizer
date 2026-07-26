@@ -15,8 +15,7 @@ class RepairDialog final : public QDialog
     Q_OBJECT
 
 public:
-    explicit RepairDialog(const std::vector<RepairCandidate>& candidates,
-                          QWidget* parent = nullptr);
+    explicit RepairDialog(const std::vector<RepairCandidate>& candidates, QWidget* parent = nullptr);
 
     [[nodiscard]] std::vector<RepairRequest> ChosenRequests() const;
 

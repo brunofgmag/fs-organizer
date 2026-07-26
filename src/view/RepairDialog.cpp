@@ -89,8 +89,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
 
         if (showOrigin)
         {
-            auto* origin = new QLabel(tr("aponta para: %1").arg(AsText(candidate.entry.target)),
-                                      group);
+            auto* origin = new QLabel(tr("aponta para: %1").arg(AsText(candidate.entry.target)), group);
             origin->setTextInteractionFlags(Qt::TextSelectableByMouse);
             origin->setWordWrap(true);
             origin->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
@@ -115,12 +114,8 @@ std::vector<RepairRequest> RepairDialog::ChosenRequests() const
             continue;
         }
 
-        requests.push_back({
-            row.candidate,
-            row.action->currentIndex() == 1
-                ? RepairAction::Repoint
-                : RepairAction::RemoveDeadNode
-        });
+        requests.push_back(
+            {row.candidate, row.action->currentIndex() == 1 ? RepairAction::Repoint : RepairAction::RemoveDeadNode});
     }
 
     return requests;

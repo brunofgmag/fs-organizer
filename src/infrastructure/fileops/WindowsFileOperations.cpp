@@ -67,7 +67,7 @@ namespace
 
     struct CopyState
     {
-        const std::function<bool(const CopyProgress &)>* onProgress = nullptr;
+        const std::function<bool(const CopyProgress&)>* onProgress = nullptr;
         std::uintmax_t copiedBefore = 0;
         std::uintmax_t totalBytes = 0;
         bool cancelled = false;
@@ -89,10 +89,8 @@ namespace
             return PROGRESS_CONTINUE;
         }
 
-        const CopyProgress progress{
-            state->copiedBefore + static_cast<std::uintmax_t>(transferred.QuadPart),
-            state->totalBytes
-        };
+        const CopyProgress progress{state->copiedBefore + static_cast<std::uintmax_t>(transferred.QuadPart),
+                                    state->totalBytes};
 
         if (!(*state->onProgress)(progress))
         {
@@ -106,7 +104,7 @@ namespace
 
 CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
                                             const std::filesystem::path& destination,
-                                            const std::function<bool(const CopyProgress &)>& onProgress)
+                                            const std::function<bool(const CopyProgress&)>& onProgress)
 {
     const Walk walk = FilesUnder(source);
 
@@ -130,8 +128,8 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
         }
 
         BOOL cancelFlag = FALSE;
-        if (CopyFileExW(NativePath(file).c_str(), NativePath(landing).c_str(), ReportProgress,
-                        &state, &cancelFlag, COPY_FILE_FAIL_IF_EXISTS)
+        if (CopyFileExW(NativePath(file).c_str(), NativePath(landing).c_str(), ReportProgress, &state, &cancelFlag,
+                        COPY_FILE_FAIL_IF_EXISTS)
             == FALSE)
         {
             return state.cancelled ? CopyOutcome::Cancelled : CopyOutcome::Failed;
@@ -143,8 +141,7 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
     return CopyOutcome::Completed;
 }
 
-bool WindowsFileOperations::Move(const std::filesystem::path& source,
-                                 const std::filesystem::path& destination)
+bool WindowsFileOperations::Move(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
     std::error_code error;
     std::filesystem::create_directories(destination.parent_path(), error);
@@ -175,8 +172,8 @@ bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)
     }
 
     std::error_code error;
-    const std::filesystem::directory_iterator children(
-        path, std::filesystem::directory_options::skip_permission_denied, error);
+    const std::filesystem::directory_iterator children(path, std::filesystem::directory_options::skip_permission_denied,
+                                                       error);
     if (error)
     {
         return false;

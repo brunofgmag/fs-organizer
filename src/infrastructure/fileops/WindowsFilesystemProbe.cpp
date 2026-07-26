@@ -45,14 +45,13 @@ bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& 
     return std::filesystem::is_directory(path, error);
 }
 
-std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildDirectories(
-    const std::filesystem::path& path) const
+std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildDirectories(const std::filesystem::path& path) const
 {
     std::vector<std::filesystem::path> children;
 
     std::error_code error;
-    const std::filesystem::directory_iterator entries(
-        path, std::filesystem::directory_options::skip_permission_denied, error);
+    const std::filesystem::directory_iterator entries(path, std::filesystem::directory_options::skip_permission_denied,
+                                                      error);
 
     for (const std::filesystem::directory_entry& entry : entries)
     {
@@ -84,13 +83,8 @@ bool WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& path) co
         return false;
     }
 
-    const HANDLE probe = CreateFileW(NativePath(path / ".fsorg-write-probe").c_str(),
-                                     GENERIC_WRITE,
-                                     0,
-                                     nullptr,
-                                     CREATE_ALWAYS,
-                                     FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-                                     nullptr);
+    const HANDLE probe = CreateFileW(NativePath(path / ".fsorg-write-probe").c_str(), GENERIC_WRITE, 0, nullptr,
+                                     CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
     if (probe == INVALID_HANDLE_VALUE)
     {
         return false;
@@ -112,8 +106,8 @@ std::optional<std::uintmax_t> WindowsFilesystemProbe::FreeSpaceOn(const std::fil
     return available.QuadPart;
 }
 
-std::optional<std::chrono::system_clock::time_point> WindowsFilesystemProbe::LastWriteTime(
-    const std::filesystem::path& path) const
+std::optional<std::chrono::system_clock::time_point>
+WindowsFilesystemProbe::LastWriteTime(const std::filesystem::path& path) const
 {
     std::error_code error;
     const std::filesystem::file_time_type written = std::filesystem::last_write_time(path, error);
@@ -124,11 +118,10 @@ std::optional<std::chrono::system_clock::time_point> WindowsFilesystemProbe::Las
 
     return std::chrono::system_clock::now()
         + std::chrono::duration_cast<std::chrono::system_clock::duration>(
-            written - std::filesystem::file_time_type::clock::now());
+               written - std::filesystem::file_time_type::clock::now());
 }
 
-std::vector<FileFingerprint> WindowsFilesystemProbe::FingerprintTree(
-    const std::filesystem::path& root) const
+std::vector<FileFingerprint> WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
 {
     std::vector<FileFingerprint> files;
 
@@ -143,10 +136,7 @@ std::vector<FileFingerprint> WindowsFilesystemProbe::FingerprintTree(
             continue;
         }
 
-        files.push_back(FileFingerprint{
-            entry.path().lexically_relative(root),
-            entry.file_size(error)
-        });
+        files.push_back(FileFingerprint{entry.path().lexically_relative(root), entry.file_size(error)});
     }
 
     return files;

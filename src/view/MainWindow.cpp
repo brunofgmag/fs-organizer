@@ -17,9 +17,8 @@ namespace
 {
     QString ProfileLabel(const SimulatorProfile& profile)
     {
-        return profile.variant == SimulatorVariant::MSFS2020
-                   ? QObject::tr("Flight Simulator 2020")
-                   : QObject::tr("Flight Simulator 2024");
+        return profile.variant == SimulatorVariant::MSFS2020 ? QObject::tr("Flight Simulator 2020")
+                                                             : QObject::tr("Flight Simulator 2024");
     }
 }
 
@@ -59,7 +58,10 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
     ShowProfiles(settings);
 
     connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this,
-            [this] { ApplySystemTitleBarTheme(*this); });
+            [this]
+            {
+                ApplySystemTitleBarTheme(*this);
+            });
 }
 
 QWidget* MainWindow::CreateHeader()
@@ -118,11 +120,12 @@ QToolButton* MainWindow::AddPage(const QString& label, QWidget* page)
 
     navigation_->insertWidget(navigation_->count() - 1, button);
 
-    connect(button, &QToolButton::clicked, this, [this, page]
-    {
-        pages_->setCurrentWidget(page);
-        emit PageSelected(page);
-    });
+    connect(button, &QToolButton::clicked, this,
+            [this, page]
+            {
+                pages_->setCurrentWidget(page);
+                emit PageSelected(page);
+            });
 
     if (pages_->count() == 1)
     {

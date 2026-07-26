@@ -31,8 +31,7 @@ public:
 
     [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
 
-    [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile,
-                                                const std::filesystem::path& path) const;
+    [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;
 
     [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile) const;
 
@@ -64,11 +63,11 @@ private:
                                                      const std::vector<const TreeNode*>& nodes,
                                                      bool enable);
 
-    [[nodiscard]] static std::vector<Step> StepsFor(
-        const SimulatorProfile& profile,
-        const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
-        const TreeNode& addon,
-        bool enable);
+    [[nodiscard]] static std::vector<Step>
+    StepsFor(const SimulatorProfile& profile,
+             const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
+             const TreeNode& addon,
+             bool enable);
 
     [[nodiscard]] static Step Inverse(const Step& step);
 

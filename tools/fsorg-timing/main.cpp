@@ -56,7 +56,7 @@ namespace
 
     std::vector<Measurement> measurements;
 
-    template <typename Work>
+    template<typename Work>
     void Measure(const QString& stage, const bool onTheMainThread, Work&& work)
     {
         QElapsedTimer timer;
@@ -69,10 +69,11 @@ namespace
 
     const SimulatorProfile* ActiveProfile(const AppSettings& settings)
     {
-        const auto match = std::ranges::find_if(settings.profiles, [&settings](const SimulatorProfile& profile)
-        {
-            return profile.id == settings.activeProfileId;
-        });
+        const auto match = std::ranges::find_if(settings.profiles,
+                                                [&settings](const SimulatorProfile& profile)
+                                                {
+                                                    return profile.id == settings.activeProfileId;
+                                                });
 
         if (match != settings.profiles.end())
         {
@@ -96,22 +97,18 @@ namespace
     void Report()
     {
         Out() << "\n"
-            << QStringLiteral("etapa").leftJustified(34)
-            << QStringLiteral("thread").leftJustified(10)
-            << "ms\n";
+              << QStringLiteral("etapa").leftJustified(34) << QStringLiteral("thread").leftJustified(10) << "ms\n";
 
         for (const Measurement& measurement : measurements)
         {
             Out() << measurement.stage.leftJustified(34)
-                << QString(measurement.onTheMainThread ? "principal" : "worker").leftJustified(10)
-                << measurement.elapsed << "\n";
+                  << QString(measurement.onTheMainThread ? "principal" : "worker").leftJustified(10)
+                  << measurement.elapsed << "\n";
         }
 
-        Out() << "\ntotal na thread principal: " << MainThreadTotal() << " ms (orçamento "
-            << kBudgetForTheMainThread << " ms)\n";
-        Out() << (MainThreadTotal() > kBudgetForTheMainThread
-                      ? "VERMELHO: a interface congela\n"
-                      : "VERDE\n");
+        Out() << "\ntotal na thread principal: " << MainThreadTotal() << " ms (orçamento " << kBudgetForTheMainThread
+              << " ms)\n";
+        Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "VERMELHO: a interface congela\n" : "VERDE\n");
         Out().flush();
     }
 }
@@ -153,8 +150,8 @@ int main(int argc, char* argv[])
     ProfileService profileService(catalog, classifier, linking, journal, clock, identities, LinkType::Junction);
 
     const ImportEngine importEngine(filesystemProbe, files, linking, journal, clock, LinkType::Junction);
-    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking,
-                                      journal, clock, LinkType::Junction);
+    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, journal,
+                                      clock, LinkType::Junction);
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--journal-scroll")))
     {
@@ -207,21 +204,35 @@ int main(int argc, char* argv[])
     CommunityViewModel communityViewModel(profileService, model, communityModel);
 
     ProfileSnapshot snapshot;
-    Measure("ProfileService::Scan", false, [&] { snapshot = profileService.Scan(profile); });
+    Measure("ProfileService::Scan", false,
+            [&]
+            {
+                snapshot = profileService.Scan(profile);
+            });
 
-    Measure("AddonTreeModel::ShowSnapshot", true, [&] { model.ShowSnapshot(snapshot, profile); });
-    Measure("CommunityViewModel::Show", true, [&] { communityViewModel.Show(); });
-    Measure("ImportService::Leftovers", true, [&]
-    {
-        static_cast<void>(importService.Leftovers(profile));
-    });
-    Measure("ImportService::Quarantined", true, [&]
-    {
-        static_cast<void>(importService.Quarantined(profile));
-    });
+    Measure("AddonTreeModel::ShowSnapshot", true,
+            [&]
+            {
+                model.ShowSnapshot(snapshot, profile);
+            });
+    Measure("CommunityViewModel::Show", true,
+            [&]
+            {
+                communityViewModel.Show();
+            });
+    Measure("ImportService::Leftovers", true,
+            [&]
+            {
+                static_cast<void>(importService.Leftovers(profile));
+            });
+    Measure("ImportService::Quarantined", true,
+            [&]
+            {
+                static_cast<void>(importService.Quarantined(profile));
+            });
 
-    Out() << "perfil: " << QString::fromStdString(profile.id) << "  bibliotecas: "
-        << profile.libraries.size() << "  entradas: " << snapshot.entries.size() << "\n";
+    Out() << "perfil: " << QString::fromStdString(profile.id) << "  bibliotecas: " << profile.libraries.size()
+          << "  entradas: " << snapshot.entries.size() << "\n";
 
     Report();
 

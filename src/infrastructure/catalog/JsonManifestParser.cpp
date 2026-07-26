@@ -16,8 +16,8 @@ namespace
 
 std::optional<Manifest> JsonManifestParser::Parse(const std::string_view content) const
 {
-    const QJsonDocument document = QJsonDocument::fromJson(
-        QByteArray::fromRawData(content.data(), static_cast<qsizetype>(content.size())));
+    const QJsonDocument document =
+        QJsonDocument::fromJson(QByteArray::fromRawData(content.data(), static_cast<qsizetype>(content.size())));
 
     if (!document.isObject())
     {

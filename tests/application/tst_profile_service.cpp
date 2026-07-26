@@ -66,13 +66,11 @@ namespace
 
     TreeNode LibraryTree()
     {
-        TreeNode node = CategoryNode(kLibrary, {
-                                         CategoryNode("D:/MSFS 2024/Aircrafts", {
-                                                          AddonNode("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"),
-                                                          AddonNode("D:/MSFS 2024/Aircrafts/aerosoft-crj"),
-                                                          AddonNode("D:/MSFS 2024/Aircrafts/fenix-a320")
-                                                      })
-                                     });
+        TreeNode node = CategoryNode(kLibrary,
+                                     {CategoryNode("D:/MSFS 2024/Aircrafts",
+                                                   {AddonNode("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"),
+                                                    AddonNode("D:/MSFS 2024/Aircrafts/aerosoft-crj"),
+                                                    AddonNode("D:/MSFS 2024/Aircrafts/fenix-a320")})});
         node.kind = TreeNodeKind::Library;
 
         return node;
@@ -395,8 +393,7 @@ namespace
 void ProfileServiceTest::RepairingRemovesTheDeadNodeAndJournalsIt()
 {
     Fixture f;
-    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone",
-                         "D:/Removed Library/gone");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed Library/gone");
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> results =
@@ -409,15 +406,13 @@ void ProfileServiceTest::RepairingRemovesTheDeadNodeAndJournalsIt()
 
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.journal.appended.front().kind, OperationKind::RemoveBrokenLink);
-    QCOMPARE(f.journal.appended.front().target,
-             std::filesystem::path("E:/Flight Simulator 2024/Community/gone"));
+    QCOMPARE(f.journal.appended.front().target, std::filesystem::path("E:/Flight Simulator 2024/Community/gone"));
 }
 
 void ProfileServiceTest::RepointingReplacesTheDeadLinkWithTheLibraryAddon()
 {
     Fixture f;
-    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
-                         "D:/Old Library/pmdg-aircraft-77w");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", "D:/Old Library/pmdg-aircraft-77w");
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> results =
@@ -434,8 +429,7 @@ void ProfileServiceTest::RepointingReplacesTheDeadLinkWithTheLibraryAddon()
 void ProfileServiceTest::UndoingARepairRecreatesTheDeadLink()
 {
     Fixture f;
-    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone",
-                         "D:/Removed Library/gone");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed Library/gone");
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> repaired =
@@ -454,8 +448,7 @@ void ProfileServiceTest::UndoingARepairRecreatesTheDeadLink()
 void ProfileServiceTest::UndoingARepointRestoresTheDeadLink()
 {
     Fixture f;
-    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
-                         "D:/Old Library/pmdg-aircraft-77w");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", "D:/Old Library/pmdg-aircraft-77w");
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> repaired =
@@ -476,8 +469,7 @@ void ProfileServiceTest::ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBa
     const SimulatorProfile profile = Profile();
 
     const ProfileSnapshot snapshot = f.Snapshot(profile);
-    QCOMPARE(f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true).size(),
-             std::size_t{1});
+    QCOMPARE(f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true).size(), std::size_t{1});
     QVERIFY(f.service.CanUndo());
 
     f.service.ForgetUndo();

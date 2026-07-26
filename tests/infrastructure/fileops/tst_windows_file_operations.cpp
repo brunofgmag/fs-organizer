@@ -40,8 +40,7 @@ namespace
             return folder;
         }
 
-        [[nodiscard]] std::filesystem::path AddFile(const std::string& relativePath,
-                                                    const std::string& content) const
+        [[nodiscard]] std::filesystem::path AddFile(const std::string& relativePath, const std::string& content) const
         {
             const std::filesystem::path file = Root() / relativePath;
             std::filesystem::create_directories(file.parent_path());
@@ -80,8 +79,7 @@ void WindowsFileOperationsTest::RemovingATreeAtAJunctionNeverReachesTheTarget()
     const Disk disk;
     const std::filesystem::path target = disk.AddFolder("Library/aerosoft-crj");
     const std::filesystem::path manifest = disk.AddFile("Library/aerosoft-crj/manifest.json", "{}");
-    const std::filesystem::path deep =
-        disk.AddFile("Library/aerosoft-crj/SimObjects/model.gltf", "vertices");
+    const std::filesystem::path deep = disk.AddFile("Library/aerosoft-crj/SimObjects/model.gltf", "vertices");
 
     const std::filesystem::path linkPath = disk.Root() / "Community/aerosoft-crj";
     std::filesystem::create_directories(linkPath.parent_path());
@@ -126,8 +124,7 @@ void WindowsFileOperationsTest::CopyingATreeReproducesEveryFileAndItsSize()
 
     QVERIFY(std::filesystem::exists(landing / "manifest.json"));
     QVERIFY(std::filesystem::exists(landing / "scenery/objects.bgl"));
-    QCOMPARE(std::filesystem::file_size(landing / "scenery/objects.bgl"),
-             std::uintmax_t{15});
+    QCOMPARE(std::filesystem::file_size(landing / "scenery/objects.bgl"), std::uintmax_t{15});
     QVERIFY(std::filesystem::exists(source / "manifest.json"));
 }
 
@@ -141,8 +138,11 @@ void WindowsFileOperationsTest::CancellingTheProgressCallbackStopsTheCopy()
     const std::filesystem::path landing = disk.Root() / "Library/asfs.fsorg-partial";
 
     WindowsFileOperations files;
-    const CopyOutcome outcome =
-        files.CopyTree(source, landing, [](const CopyProgress&) { return false; });
+    const CopyOutcome outcome = files.CopyTree(source, landing,
+                                               [](const CopyProgress&)
+                                               {
+                                                   return false;
+                                               });
 
     QCOMPARE(outcome, CopyOutcome::Cancelled);
     QVERIFY(std::filesystem::exists(source / "a.bin"));
@@ -161,8 +161,7 @@ void WindowsFileOperationsTest::MovingAcrossVolumesIsRefusedInsteadOfCopied()
         QSKIP("this machine has a single fixed volume, so the refusal cannot be observed");
     }
 
-    const auto landing =
-        std::filesystem::path(std::string(1, other) + ":/fsorg-cross-volume-move-probe");
+    const auto landing = std::filesystem::path(std::string(1, other) + ":/fsorg-cross-volume-move-probe");
 
     WindowsFileOperations files;
     QVERIFY(!files.Move(source, landing));

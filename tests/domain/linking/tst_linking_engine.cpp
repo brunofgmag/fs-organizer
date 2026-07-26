@@ -155,8 +155,7 @@ void LinkingEngineTest::ADanglingLinkStillCountsAsAnExistingEntry()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Sim/Community");
-    f.fileSystem.AddLink("E:/Sim/Community/ag-airport-bgqq-qaanaaq",
-                         "D:/Library/Sceneries/ag-airport-bgqq-qaanaaq");
+    f.fileSystem.AddLink("E:/Sim/Community/ag-airport-bgqq-qaanaaq", "D:/Library/Sceneries/ag-airport-bgqq-qaanaaq");
 
     QVERIFY(!f.filesystemProbe.TargetDirectoryExists("D:/Library/Sceneries/ag-airport-bgqq-qaanaaq"));
     QVERIFY(f.filesystemProbe.EntryExistsWithoutFollowingLinks("E:/Sim/Community/ag-airport-bgqq-qaanaaq"));

@@ -7,8 +7,7 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                                          const AddonTreeModel& treeModel,
                                          QuarantineModel& model,
                                          QObject* parent)
-    : QObject(parent), service_(service), profileService_(profileService), treeModel_(treeModel),
-      model_(model)
+    : QObject(parent), service_(service), profileService_(profileService), treeModel_(treeModel), model_(model)
 {
 }
 
@@ -23,10 +22,11 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
 
     Show();
 
-    if (std::ranges::any_of(results, [](const FileOperationResult& result)
-    {
-        return result.result == ImportResult::Completed;
-    }))
+    if (std::ranges::any_of(results,
+                            [](const FileOperationResult& result)
+                            {
+                                return result.result == ImportResult::Completed;
+                            }))
     {
         profileService_.ForgetUndo();
     }

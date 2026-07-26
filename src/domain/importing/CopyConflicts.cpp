@@ -46,8 +46,7 @@ std::size_t CopyConflicts::Count() const
     return found_.size();
 }
 
-CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries,
-                                const std::vector<TreeNode>& libraries)
+CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, const std::vector<TreeNode>& libraries)
 {
     std::vector<CopyConflict> found;
 

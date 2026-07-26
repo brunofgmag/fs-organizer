@@ -27,14 +27,14 @@ namespace
         return std::chrono::system_clock::time_point{std::chrono::seconds{1'769'000'000}};
     }
 
-    OperationRecord Step(const OperationKind kind, const std::string& folder,
-                         const ImportResult result = ImportResult::Completed)
+    OperationRecord
+    Step(const OperationKind kind, const std::string& folder, const ImportResult result = ImportResult::Completed)
     {
         return OperationRecord::OfImport(Moment(), kind, AddonId{"lib-1", folder}, kSource, kTarget, result);
     }
 
-    OperationRecord Link(const OperationKind kind, const std::string& folder,
-                         const LinkFailure failure = LinkFailure::None)
+    OperationRecord
+    Link(const OperationKind kind, const std::string& folder, const LinkFailure failure = LinkFailure::None)
     {
         return OperationRecord::OfLink(Moment(), kind, AddonId{"lib-1", folder}, kTarget, kSource, failure);
     }
@@ -42,10 +42,8 @@ namespace
     std::vector<OperationRecord> AFinishedImportOf(const std::string& folder)
     {
         return {
-            Step(OperationKind::ImportCopyToStaging, folder),
-            Step(OperationKind::ImportVerifyStaging, folder),
-            Step(OperationKind::ImportMoveIntoPlace, folder),
-            Step(OperationKind::ImportRemoveSource, folder),
+            Step(OperationKind::ImportCopyToStaging, folder), Step(OperationKind::ImportVerifyStaging, folder),
+            Step(OperationKind::ImportMoveIntoPlace, folder), Step(OperationKind::ImportRemoveSource, folder),
             Link(OperationKind::EnableAddon, folder),
         };
     }

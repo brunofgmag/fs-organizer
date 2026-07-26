@@ -124,10 +124,12 @@ void TableColumnsTest::AWiderWindowGoesToTheColumnThatTakesTheSlack()
     const int slackBefore = table.Width(kSlack);
 
     table.view.resize(1200, 300);
-    static_cast<void>(QTest::qWaitFor([&table, slackBefore]
-    {
-        return table.Width(kSlack) != slackBefore;
-    }, 1000));
+    static_cast<void>(QTest::qWaitFor(
+        [&table, slackBefore]
+        {
+            return table.Width(kSlack) != slackBefore;
+        },
+        1000));
 
     QCOMPARE(table.Width(0), narrow);
     QVERIFY(table.Width(kSlack) > slackBefore);

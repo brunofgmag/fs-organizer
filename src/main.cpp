@@ -105,8 +105,7 @@ int main(int argc, char* argv[])
     JsonSettingsRepository settings(SettingsFilePath());
     JsonlOperationJournal journal(JournalFilePath());
 
-    if (settings.Load().profiles.empty()
-        && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
+    if (settings.Load().profiles.empty() && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
     {
         return 0;
     }
@@ -116,8 +115,8 @@ int main(int argc, char* argv[])
     ProfileService profileService(catalog, classifier, linking, journal, clock, identities, LinkType::Junction);
 
     const ImportEngine importEngine(filesystemProbe, files, linking, journal, clock, LinkType::Junction);
-    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking,
-                                      journal, clock, LinkType::Junction);
+    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, journal,
+                                      clock, LinkType::Junction);
 
     MainWindow window(settings.Load());
     AddonTreeModel model;
@@ -144,20 +143,15 @@ int main(int argc, char* argv[])
     window.AddPage(QObject::tr("Diário"), journalPage);
 
     QObject::connect(page, &AddonTreePage::StatusChanged, &window, &MainWindow::ShowStatus);
-    QObject::connect(communityPage, &CommunityPage::StatusChanged, &window,
-                     &MainWindow::ShowStatus);
-    QObject::connect(quarantinePage, &QuarantinePage::StatusChanged, &window,
-                     &MainWindow::ShowStatus);
+    QObject::connect(communityPage, &CommunityPage::StatusChanged, &window, &MainWindow::ShowStatus);
+    QObject::connect(quarantinePage, &QuarantinePage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(journalPage, &JournalPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
-    QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &communityViewModel,
-                     &CommunityViewModel::Show);
+    QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &communityViewModel, &CommunityViewModel::Show);
 
-    QObject::connect(&communityViewModel, &CommunityViewModel::RepairFinished, page,
-                     &AddonTreePage::RefreshUndoState);
+    QObject::connect(&communityViewModel, &CommunityViewModel::RepairFinished, page, &AddonTreePage::RefreshUndoState);
 
-    QObject::connect(page, &AddonTreePage::ConflictChosen, communityPage,
-                     &CommunityPage::ResolveConflict);
+    QObject::connect(page, &AddonTreePage::ConflictChosen, communityPage, &CommunityPage::ResolveConflict);
 
     const auto adoptWhatChangedOnDisk = [page, &treeViewModel, &quarantineViewModel]
     {
@@ -171,8 +165,7 @@ int main(int argc, char* argv[])
                      {
                          adoptWhatChangedOnDisk();
                      });
-    QObject::connect(&importViewModel, &ImportViewModel::ConflictResolved, page,
-                     adoptWhatChangedOnDisk);
+    QObject::connect(&importViewModel, &ImportViewModel::ConflictResolved, page, adoptWhatChangedOnDisk);
     QObject::connect(&quarantineViewModel, &QuarantineViewModel::Restored, page,
                      [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
                      {
@@ -199,14 +192,12 @@ int main(int argc, char* argv[])
     QObject::connect(&communityViewModel, &CommunityViewModel::AttentionChanged, communityButton,
                      [communityButton](const std::size_t count)
                      {
-                         communityButton->setText(count > 0
-                                                      ? QStringLiteral("Community (%1)").arg(count)
-                                                      : QStringLiteral("Community"));
+                         communityButton->setText(count > 0 ? QStringLiteral("Community (%1)").arg(count)
+                                                            : QStringLiteral("Community"));
                      });
     QObject::connect(&treeViewModel, &AddonTreeViewModel::RestartPendingChanged, &window,
                      &MainWindow::ShowRestartPending);
-    QObject::connect(&window, &MainWindow::ProfileChosen, &treeViewModel,
-                     &AddonTreeViewModel::ChooseProfile);
+    QObject::connect(&window, &MainWindow::ProfileChosen, &treeViewModel, &AddonTreeViewModel::ChooseProfile);
 
     QObject::connect(&window, &MainWindow::AddProfileRequested, &window,
                      [&]

@@ -8,20 +8,16 @@
 namespace
 {
     constexpr std::array kImportRunSteps{
-        OperationKind::ImportCopyToStaging,
-        OperationKind::ImportVerifyStaging,
-        OperationKind::ImportMoveIntoPlace,
-        OperationKind::ImportRemoveSource,
-        OperationKind::EnableAddon,
+        OperationKind::ImportCopyToStaging, OperationKind::ImportVerifyStaging, OperationKind::ImportMoveIntoPlace,
+        OperationKind::ImportRemoveSource,  OperationKind::EnableAddon,
     };
 
     std::optional<std::size_t> PositionInTheRun(const OperationKind kind)
     {
         const auto step = std::ranges::find(kImportRunSteps, kind);
 
-        return step == kImportRunSteps.end()
-                   ? std::nullopt
-                   : std::optional(static_cast<std::size_t>(step - kImportRunSteps.begin()));
+        return step == kImportRunSteps.end() ? std::nullopt
+                                             : std::optional(static_cast<std::size_t>(step - kImportRunSteps.begin()));
     }
 
     std::size_t StepsOfTheRunStartingAt(const std::vector<OperationRecord>& records, const std::size_t first)
@@ -68,9 +64,8 @@ bool JournalEntry::Succeeded() const
 
 bool StepSucceeded(const OperationRecord& record)
 {
-    return CarriesAnImportReason(record.kind)
-               ? record.importResult == ImportResult::Completed
-               : record.failure == LinkFailure::None;
+    return CarriesAnImportReason(record.kind) ? record.importResult == ImportResult::Completed
+                                              : record.failure == LinkFailure::None;
 }
 
 std::vector<JournalEntry> GroupImportRuns(const std::vector<OperationRecord>& records)
@@ -79,9 +74,8 @@ std::vector<JournalEntry> GroupImportRuns(const std::vector<OperationRecord>& re
 
     for (std::size_t first = 0; first < records.size();)
     {
-        const std::size_t taken = records[first].kind == OperationKind::ImportCopyToStaging
-                                      ? StepsOfTheRunStartingAt(records, first)
-                                      : 1;
+        const std::size_t taken =
+            records[first].kind == OperationKind::ImportCopyToStaging ? StepsOfTheRunStartingAt(records, first) : 1;
 
         entries.push_back(JournalEntry{{records.begin() + static_cast<std::ptrdiff_t>(first),
                                         records.begin() + static_cast<std::ptrdiff_t>(first + taken)}});

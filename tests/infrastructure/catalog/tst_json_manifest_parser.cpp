@@ -53,8 +53,7 @@ void JsonManifestParserTest::FreeTextFieldsSurviveWhateverTheAuthorWrote()
 {
     const JsonManifestParser parser;
 
-    const std::optional<Manifest> lowercase =
-        parser.Parse(R"({"content_type": "misc", "title": "AIGAIM AI Traffic"})");
+    const std::optional<Manifest> lowercase = parser.Parse(R"({"content_type": "misc", "title": "AIGAIM AI Traffic"})");
     const std::optional<Manifest> spaced = parser.Parse(R"({"content_type": "Sound Set"})");
     const std::optional<Manifest> blank = parser.Parse(R"({"content_type": "", "creator": ""})");
 

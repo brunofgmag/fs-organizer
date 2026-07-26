@@ -7,8 +7,7 @@
 class FakeLinkService final : public LinkService
 {
 public:
-    explicit FakeLinkService(InMemoryFileSystem& fileSystem)
-        : fileSystem_(fileSystem)
+    explicit FakeLinkService(InMemoryFileSystem& fileSystem) : fileSystem_(fileSystem)
     {
     }
 
@@ -22,9 +21,8 @@ public:
         linkRemovalFails_ = true;
     }
 
-    [[nodiscard]] bool CreateLink(const std::filesystem::path& linkPath,
-                                  const std::filesystem::path& target,
-                                  LinkType) override
+    [[nodiscard]] bool
+    CreateLink(const std::filesystem::path& linkPath, const std::filesystem::path& target, LinkType) override
     {
         if (linkCreationFails_ || fileSystem_.Exists(linkPath))
         {
@@ -39,8 +37,7 @@ public:
         return !linkRemovalFails_ && fileSystem_.RemoveNode(linkPath);
     }
 
-    [[nodiscard]] std::optional<std::filesystem::path>
-    ReadLinkTarget(const std::filesystem::path& path) const override
+    [[nodiscard]] std::optional<std::filesystem::path> ReadLinkTarget(const std::filesystem::path& path) const override
     {
         return fileSystem_.LinkTarget(path);
     }

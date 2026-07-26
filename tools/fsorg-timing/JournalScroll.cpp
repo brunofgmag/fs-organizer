@@ -63,8 +63,7 @@ namespace
     double PaintCostOf(QTreeView& view)
     {
         QScrollBar* bar = view.verticalScrollBar();
-        QImage canvas(view.viewport()->size() * view.devicePixelRatio(),
-                      QImage::Format_ARGB32_Premultiplied);
+        QImage canvas(view.viewport()->size() * view.devicePixelRatio(), QImage::Format_ARGB32_Premultiplied);
         canvas.setDevicePixelRatio(view.devicePixelRatio());
 
         std::vector<double> rounds;
@@ -125,9 +124,8 @@ namespace
 
         for (int notch = 0; notch < kNotches; ++notch)
         {
-            QWheelEvent wheel(QPointF(200, 200), view.viewport()->mapToGlobal(QPointF(200, 200)),
-                              QPoint(0, 0), QPoint(0, -120), Qt::NoButton, Qt::NoModifier,
-                              Qt::NoScrollPhase, false);
+            QWheelEvent wheel(QPointF(200, 200), view.viewport()->mapToGlobal(QPointF(200, 200)), QPoint(0, 0),
+                              QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
 
             QApplication::sendEvent(view.viewport(), &wheel);
             QApplication::processEvents();
@@ -143,15 +141,13 @@ namespace
         const double cost = PaintCostOf(view);
         const double repainted = WhatANotchRepaints(view);
 
-        Out() << what.leftJustified(32)
-            << QString::number(cost, 'f', 2).rightJustified(6) << " ms por pintura"
-            << "   repinta " << QString::number(repainted, 'f', 0) << " de "
-            << view.viewport()->height() << " px por entalhe\n";
+        Out() << what.leftJustified(32) << QString::number(cost, 'f', 2).rightJustified(6) << " ms por pintura"
+              << "   repinta " << QString::number(repainted, 'f', 0) << " de " << view.viewport()->height()
+              << " px por entalhe\n";
         Out().flush();
     }
 
-    QStandardItemModel* ConstantModel(const int rows, const int columns, const QString& text,
-                                      QObject* parent)
+    QStandardItemModel* ConstantModel(const int rows, const int columns, const QString& text, QObject* parent)
     {
         auto* dumb = new QStandardItemModel(rows, columns, parent);
 
@@ -201,8 +197,8 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const SimulatorProf
     }
 
     Out() << "linhas: " << model.rowCount({}) << "  abrir a aba: " << opening << " ms"
-        << "  dpr " << view->devicePixelRatio()
-        << "  viewport " << view->viewport()->width() << "x" << view->viewport()->height() << "\n\n";
+          << "  dpr " << view->devicePixelRatio() << "  viewport " << view->viewport()->width() << "x"
+          << view->viewport()->height() << "\n\n";
 
     const double asShipped = PaintCostOf(*view);
     ReportView("pagina do diario", *view);
@@ -245,8 +241,8 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const SimulatorProf
         bare.hide();
     }
 
-    Out() << "\ndelegate do Qt " << QString::number(withTheStockDelegate, 'f', 2)
-        << " ms -> nosso " << QString::number(asShipped, 'f', 2) << " ms\n";
+    Out() << "\ndelegate do Qt " << QString::number(withTheStockDelegate, 'f', 2) << " ms -> nosso "
+          << QString::number(asShipped, 'f', 2) << " ms\n";
     Out() << "orçamento por quadro: " << kBudgetPerFrame << " ms\n";
     Out() << (asShipped > kBudgetPerFrame ? "VERMELHO: o scroll engasga\n" : "VERDE\n");
     Out().flush();

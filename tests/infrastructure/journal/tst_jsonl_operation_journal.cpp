@@ -47,15 +47,13 @@ namespace
     OperationRecord Record(const OperationKind kind, const LinkFailure failure)
     {
         return OperationRecord::OfLink(std::chrono::system_clock::time_point{kMoment}, kind,
-                                       AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget,
-                                       failure);
+                                       AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, failure);
     }
 
     OperationRecord Record(const OperationKind kind, const ImportResult result)
     {
         return OperationRecord::OfImport(std::chrono::system_clock::time_point{kMoment}, kind,
-                                         AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget,
-                                         result);
+                                         AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, result);
     }
 }
 
@@ -74,8 +72,7 @@ void JsonlOperationJournalTest::EachRecordBecomesOneLineWithEveryFieldOfTheOpera
     QCOMPARE(written.value("kind").toString(), QStringLiteral("enable"));
     QCOMPARE(written.value("libraryId").toString(), QStringLiteral("library-1"));
     QCOMPARE(written.value("addon").toString(), QStringLiteral("pmdg-aircraft-77w"));
-    QCOMPARE(written.value("source").toString(),
-             QStringLiteral(R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w)"));
+    QCOMPARE(written.value("source").toString(), QStringLiteral(R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w)"));
     QCOMPARE(written.value("target").toString(),
              QStringLiteral(R"(E:\Flight Simulator 2024\Community\pmdg-aircraft-77w)"));
     QCOMPARE(written.value("failure").toString(), QStringLiteral("destinationHoldsRealFolder"));

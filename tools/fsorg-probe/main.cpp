@@ -130,10 +130,11 @@ namespace
         const std::string wanted = ComparablePath(destination);
 
         std::vector<DestinationEntry> here;
-        std::ranges::copy_if(entries, std::back_inserter(here), [&wanted](const DestinationEntry& entry)
-        {
-            return ComparablePath(entry.path.parent_path()) == wanted;
-        });
+        std::ranges::copy_if(entries, std::back_inserter(here),
+                             [&wanted](const DestinationEntry& entry)
+                             {
+                                 return ComparablePath(entry.path.parent_path()) == wanted;
+                             });
 
         return here;
     }
@@ -173,8 +174,7 @@ namespace
 
         for (const auto& [contentType, count] : facts.contentTypes)
         {
-            Out() << (contentType.empty() ? "<vazio>" : QString::fromStdString(contentType))
-                << "=" << count << " ";
+            Out() << (contentType.empty() ? "<vazio>" : QString::fromStdString(contentType)) << "=" << count << " ";
         }
 
         Out() << "\n";
@@ -203,13 +203,13 @@ namespace
         }
 
         Out() << "    dos Unmanaged, " << unmanagedWithManifest << " com manifest e "
-            << counts[EntryClassification::Unmanaged] - unmanagedWithManifest << " sem\n";
+              << counts[EntryClassification::Unmanaged] - unmanagedWithManifest << " sem\n";
     }
 
     void ReportConflicts(const ConflictCounts& conflicts)
     {
         Out() << "    conflitos de cópia: " << conflicts.againstAddons << " contra addons, "
-            << conflicts.againstEveryFolder << " contra qualquer pasta da biblioteca\n";
+              << conflicts.againstEveryFolder << " contra qualquer pasta da biblioteca\n";
     }
 
     void ReportCandidate(const EntryClassifier& classifier,
@@ -235,8 +235,7 @@ int main(int argc, char* argv[])
 {
     const QCoreApplication application(argc, argv);
 
-    const std::vector<std::filesystem::path> libraries =
-        ParseLibraryArguments(QCoreApplication::arguments());
+    const std::vector<std::filesystem::path> libraries = ParseLibraryArguments(QCoreApplication::arguments());
 
     if (libraries.empty())
     {

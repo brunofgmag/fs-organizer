@@ -11,7 +11,7 @@
 
 namespace QTest
 {
-    template <>
+    template<>
     inline char* toString(const CheckState& t)
     {
         switch (t)
@@ -24,7 +24,7 @@ namespace QTest
         return qstrdup("CheckState(?)");
     }
 
-    template <>
+    template<>
     inline char* toString(const EntryClassification& t)
     {
         switch (t)
@@ -40,7 +40,7 @@ namespace QTest
         return qstrdup("EntryClassification(?)");
     }
 
-    template <>
+    template<>
     inline char* toString(const LinkFailure& t)
     {
         switch (t)
@@ -58,7 +58,7 @@ namespace QTest
         return qstrdup("LinkFailure(?)");
     }
 
-    template <>
+    template<>
     inline char* toString(const ImportResult& t)
     {
         switch (t)
@@ -67,8 +67,7 @@ namespace QTest
         case ImportResult::Cancelled: return qstrdup("Cancelled");
         case ImportResult::TheSimulatorIsRunning: return qstrdup("TheSimulatorIsRunning");
         case ImportResult::CouldNotQuarantine: return qstrdup("CouldNotQuarantine");
-        case ImportResult::SourceIsNotUnderADestination:
-            return qstrdup("SourceIsNotUnderADestination");
+        case ImportResult::SourceIsNotUnderADestination: return qstrdup("SourceIsNotUnderADestination");
         case ImportResult::SourceIsAReparsePoint: return qstrdup("SourceIsAReparsePoint");
         case ImportResult::CouldNotCheckFreeSpace: return qstrdup("CouldNotCheckFreeSpace");
         case ImportResult::NotEnoughFreeSpace: return qstrdup("NotEnoughFreeSpace");
@@ -82,7 +81,7 @@ namespace QTest
         return qstrdup("ImportResult(?)");
     }
 
-    template <>
+    template<>
     inline char* toString(const OperationKind& t)
     {
         switch (t)

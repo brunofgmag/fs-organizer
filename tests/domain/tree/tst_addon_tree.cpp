@@ -59,17 +59,13 @@ namespace
 
     TreeNode ReferenceLibrary()
     {
-        return LibraryNode("D:/MSFS 2024", {
-                               CategoryNode("D:/MSFS 2024/Aircrafts", {
-                                                AddonNode("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"),
-                                                CategoryNode("D:/MSFS 2024/Aircrafts/Fenix", {
-                                                                 AddonNode("D:/MSFS 2024/Aircrafts/Fenix/fenix-a320")
-                                                             })
-                                            }),
-                               CategoryNode("D:/MSFS 2024/Sceneries", {
-                                                AddonNode("D:/MSFS 2024/Sceneries/ag-airport-bgqq-qaanaaq")
-                                            })
-                           });
+        return LibraryNode(
+            "D:/MSFS 2024",
+            {CategoryNode("D:/MSFS 2024/Aircrafts",
+                          {AddonNode("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"),
+                           CategoryNode("D:/MSFS 2024/Aircrafts/Fenix",
+                                        {AddonNode("D:/MSFS 2024/Aircrafts/Fenix/fenix-a320")})}),
+             CategoryNode("D:/MSFS 2024/Sceneries", {AddonNode("D:/MSFS 2024/Sceneries/ag-airport-bgqq-qaanaaq")})});
     }
 }
 
@@ -93,10 +89,8 @@ void AddonTreeTest::MarkingACategoryReachesEveryAddonUnderIt()
 void AddonTreeTest::ACategoryWhoseAddonsAreAllEnabledIsChecked()
 {
     const TreeNode library = ReferenceLibrary();
-    const EnabledAddons enabled({
-        "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
-        "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320"
-    });
+    const EnabledAddons enabled(
+        {"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w", "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320"});
 
     QCOMPARE(DeriveCheckState(library.children.front(), enabled), CheckState::Checked);
 }
@@ -127,15 +121,11 @@ void AddonTreeTest::ACategoryWithoutAddonsIsUnchecked()
 void AddonTreeTest::TheLibraryRootRollsUpFromEveryCategory()
 {
     const TreeNode library = ReferenceLibrary();
-    const EnabledAddons everything({
-        "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
-        "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320",
-        "D:/MSFS 2024/Sceneries/ag-airport-bgqq-qaanaaq"
-    });
-    const EnabledAddons oneCategory({
-        "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
-        "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320"
-    });
+    const EnabledAddons everything({"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
+                                    "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320",
+                                    "D:/MSFS 2024/Sceneries/ag-airport-bgqq-qaanaaq"});
+    const EnabledAddons oneCategory(
+        {"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w", "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320"});
 
     QCOMPARE(DeriveCheckState(library, everything), CheckState::Checked);
     QCOMPARE(DeriveCheckState(library, oneCategory), CheckState::Partial);
@@ -168,23 +158,19 @@ void AddonTreeTest::AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked()
     const EntryClassifier classifier(linkService, filesystemProbe);
 
     const std::vector<DestinationEntry> entries = classifier.Resolve(
-        {"E:/Flight Simulator 2024/Community", "E:/Flight Simulator 2024/Community2024"},
-        {"D:/MSFS 2024"});
+        {"E:/Flight Simulator 2024/Community", "E:/Flight Simulator 2024/Community2024"}, {"D:/MSFS 2024"});
 
     QCOMPARE(entries.front().classification, EntryClassification::Duplicated);
-    QCOMPARE(DeriveCheckState(AddonNode(folder), EnabledAddons(EnabledAddonFolders(entries))),
-             CheckState::Checked);
+    QCOMPARE(DeriveCheckState(AddonNode(folder), EnabledAddons(EnabledAddonFolders(entries))), CheckState::Checked);
 }
 
 void AddonTreeTest::ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddon()
 {
     const std::filesystem::path folder = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
 
-    QCOMPARE(DeriveCheckState(AddonNode(folder),
-                              EnabledAddons({"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/"})),
+    QCOMPARE(DeriveCheckState(AddonNode(folder), EnabledAddons({"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/"})),
              CheckState::Checked);
-    QCOMPARE(DeriveCheckState(AddonNode(folder),
-                              EnabledAddons({R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w\)"})),
+    QCOMPARE(DeriveCheckState(AddonNode(folder), EnabledAddons({R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w\)"})),
              CheckState::Checked);
 }
 

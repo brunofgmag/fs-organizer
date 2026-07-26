@@ -37,8 +37,7 @@ public:
 
     void ChooseCandidate(std::size_t index);
 
-    [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path,
-                                               const std::string& label);
+    [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path, const std::string& label);
 
     [[nodiscard]] std::vector<RegisteredLibrary> Libraries() const;
 

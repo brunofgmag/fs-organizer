@@ -14,8 +14,7 @@ class StagingLeftoverDialog final : public QDialog
     Q_OBJECT
 
 public:
-    explicit StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers,
-                                   QWidget* parent = nullptr);
+    explicit StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers, QWidget* parent = nullptr);
 
     [[nodiscard]] std::vector<StagingLeftover> ToResume() const;
 

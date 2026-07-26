@@ -9,16 +9,15 @@
 
 #include "support/PathText.h"
 
-StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers,
-                                             QWidget* parent)
+StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers, QWidget* parent)
     : QDialog(parent)
 {
     setWindowTitle(tr("Importações que ficaram pela metade"));
 
-    auto* explanation = new QLabel(
-        tr("Uma importação foi interrompida antes de terminar. Os arquivos originais continuam onde "
-            "estavam: nada foi removido do destino."),
-        this);
+    auto* explanation =
+        new QLabel(tr("Uma importação foi interrompida antes de terminar. Os arquivos originais continuam onde "
+                      "estavam: nada foi removido do destino."),
+                   this);
     explanation->setWordWrap(true);
 
     auto* grid = new QGridLayout;
@@ -44,11 +43,10 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
         grid->addWidget(action, row, 1);
         ++row;
 
-        auto* origin = new QLabel(
-            leftover.CanBeResumed()
-                ? tr("veio de: %1").arg(AsText(leftover.source))
-                : tr("o diário não sabe de onde isto veio, então só o descarte é oferecido"),
-            this);
+        auto* origin = new QLabel(leftover.CanBeResumed()
+                                      ? tr("veio de: %1").arg(AsText(leftover.source))
+                                      : tr("o diário não sabe de onde isto veio, então só o descarte é oferecido"),
+                                  this);
         origin->setWordWrap(true);
         origin->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         grid->addWidget(origin, row, 0, 1, 2);

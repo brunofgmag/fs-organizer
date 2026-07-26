@@ -108,7 +108,7 @@ namespace
         return std::chrono::system_clock::time_point{std::chrono::milliseconds{moment.toMSecsSinceEpoch()}};
     }
 
-    template <typename Value, std::size_t Count, typename Naming>
+    template<typename Value, std::size_t Count, typename Naming>
     std::optional<Value> ValueNamed(const std::array<Value, Count>& all, const Naming& nameOf, const QString& name)
     {
         for (const Value candidate : all)
@@ -124,31 +124,27 @@ namespace
 
     std::optional<OperationRecord> RecordFrom(const QJsonObject& object)
     {
-        const std::optional<OperationKind> kind =
-            ValueNamed(kAllOperationKinds, KindName, object[kKind].toString());
+        const std::optional<OperationKind> kind = ValueNamed(kAllOperationKinds, KindName, object[kKind].toString());
         if (!kind.has_value())
         {
             return std::nullopt;
         }
 
-        const AddonId addon{object[kLibraryId].toString().toStdString(),
-                            object[kAddon].toString().toStdString()};
+        const AddonId addon{object[kLibraryId].toString().toStdString(), object[kAddon].toString().toStdString()};
         const auto timestamp = MomentFrom(object[kTimestamp].toString());
         const std::filesystem::path source = AsPath(object[kSource].toString());
         const std::filesystem::path target = AsPath(object[kTarget].toString());
 
         if (CarriesAnImportReason(*kind))
         {
-            return OperationRecord::OfImport(
-                timestamp, *kind, addon, source, target,
-                ValueNamed(kAllImportResults, ResultName, object[kResult].toString())
-                .value_or(ImportResult::Completed));
+            return OperationRecord::OfImport(timestamp, *kind, addon, source, target,
+                                             ValueNamed(kAllImportResults, ResultName, object[kResult].toString())
+                                                 .value_or(ImportResult::Completed));
         }
 
         return OperationRecord::OfLink(
             timestamp, *kind, addon, source, target,
-            ValueNamed(kAllLinkFailures, FailureName, object[kFailure].toString())
-            .value_or(LinkFailure::None));
+            ValueNamed(kAllLinkFailures, FailureName, object[kFailure].toString()).value_or(LinkFailure::None));
     }
 }
 

@@ -42,9 +42,7 @@ namespace
 
     SimulatorVariant VariantFromName(const QJsonValue& value)
     {
-        return value.toString() == "MSFS2020"
-                   ? SimulatorVariant::MSFS2020
-                   : SimulatorVariant::MSFS2024;
+        return value.toString() == "MSFS2020" ? SimulatorVariant::MSFS2020 : SimulatorVariant::MSFS2024;
     }
 
     QJsonObject ToJson(const Library& library)
@@ -153,8 +151,8 @@ AppSettings JsonSettingsRepository::Load() const
     std::ifstream stream(file_, std::ios::binary);
     const std::string content{std::istreambuf_iterator(stream), std::istreambuf_iterator<char>()};
 
-    const QJsonDocument document = QJsonDocument::fromJson(
-        QByteArray::fromRawData(content.data(), static_cast<qsizetype>(content.size())));
+    const QJsonDocument document =
+        QJsonDocument::fromJson(QByteArray::fromRawData(content.data(), static_cast<qsizetype>(content.size())));
     if (!document.isObject())
     {
         return {};

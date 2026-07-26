@@ -8,25 +8,22 @@
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/LinkService.h"
 
-[[nodiscard]] std::vector<std::filesystem::path> EnabledAddonFolders(
-    const std::vector<DestinationEntry>& entries);
+[[nodiscard]] std::vector<std::filesystem::path> EnabledAddonFolders(const std::vector<DestinationEntry>& entries);
 
-[[nodiscard]] std::vector<std::filesystem::path> LinksPointingAt(
-    const std::vector<DestinationEntry>& entries, const std::filesystem::path& addonFolder);
+[[nodiscard]] std::vector<std::filesystem::path> LinksPointingAt(const std::vector<DestinationEntry>& entries,
+                                                                 const std::filesystem::path& addonFolder);
 
 class EntryClassifier
 {
 public:
     EntryClassifier(const LinkService& linkService, const FilesystemProbe& filesystemProbe);
 
-    [[nodiscard]] std::vector<DestinationEntry> Resolve(
-        const std::vector<std::filesystem::path>& destinationRoots,
-        const std::vector<std::filesystem::path>& libraryRoots) const;
+    [[nodiscard]] std::vector<DestinationEntry> Resolve(const std::vector<std::filesystem::path>& destinationRoots,
+                                                        const std::vector<std::filesystem::path>& libraryRoots) const;
 
 private:
-    [[nodiscard]] DestinationEntry ClassifyEntry(
-        const std::filesystem::path& entryPath,
-        const std::vector<std::filesystem::path>& libraryRoots) const;
+    [[nodiscard]] DestinationEntry ClassifyEntry(const std::filesystem::path& entryPath,
+                                                 const std::vector<std::filesystem::path>& libraryRoots) const;
 
     const LinkService& linkService_;
     const FilesystemProbe& filesystemProbe_;

@@ -7,7 +7,7 @@
 
 namespace QTest
 {
-    template <>
+    template<>
     inline char* toString(const std::filesystem::path& t)
     {
         return qstrdup(t.generic_string().c_str());

@@ -18,10 +18,11 @@ namespace
 {
     bool NamesMatch(const std::string& left, const std::string& right)
     {
-        return std::ranges::equal(left, right, [](const unsigned char a, const unsigned char b)
-        {
-            return std::tolower(a) == std::tolower(b);
-        });
+        return std::ranges::equal(left, right,
+                                  [](const unsigned char a, const unsigned char b)
+                                  {
+                                      return std::tolower(a) == std::tolower(b);
+                                  });
     }
 }
 
@@ -46,10 +47,11 @@ std::optional<std::string> WindowsProcessProbe::RunningSimulator() const
          more = Process32NextW(snapshot, &entry))
     {
         const std::string name = std::filesystem::path(entry.szExeFile).filename().string();
-        const auto match = std::ranges::find_if(executableNames_, [&name](const std::string& candidate)
-        {
-            return NamesMatch(name, candidate);
-        });
+        const auto match = std::ranges::find_if(executableNames_,
+                                                [&name](const std::string& candidate)
+                                                {
+                                                    return NamesMatch(name, candidate);
+                                                });
 
         if (match != executableNames_.end())
         {

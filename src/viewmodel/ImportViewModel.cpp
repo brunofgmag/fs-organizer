@@ -12,8 +12,7 @@ ImportViewModel::ImportViewModel(const ImportService& service,
                                  const ProcessProbe& probe,
                                  const AddonTreeModel& treeModel,
                                  QObject* parent)
-    : QObject(parent), service_(service), profileService_(profileService), probe_(probe),
-      treeModel_(treeModel)
+    : QObject(parent), service_(service), profileService_(profileService), probe_(probe), treeModel_(treeModel)
 {
 }
 
@@ -32,11 +31,9 @@ std::optional<std::string> ImportViewModel::RunningSimulator() const
     return probe_.RunningSimulator();
 }
 
-ImportResult ImportViewModel::ResolveConflict(const CopyConflict& conflict,
-                                              const ConflictChoice choice)
+ImportResult ImportViewModel::ResolveConflict(const CopyConflict& conflict, const ConflictChoice choice)
 {
-    const ImportResult result =
-        service_.ResolveConflict(Profile(), treeModel_.Snapshot().entries, conflict, choice);
+    const ImportResult result = service_.ResolveConflict(Profile(), treeModel_.Snapshot().entries, conflict, choice);
 
     if (result == ImportResult::Completed)
     {
@@ -62,8 +59,7 @@ std::vector<StagingLeftover> ImportViewModel::Leftovers() const
     return service_.Leftovers(Profile());
 }
 
-std::vector<FileOperationResult> ImportViewModel::DiscardLeftovers(
-    const std::vector<StagingLeftover>& leftovers) const
+std::vector<FileOperationResult> ImportViewModel::DiscardLeftovers(const std::vector<StagingLeftover>& leftovers) const
 {
     return service_.DiscardLeftovers(Profile(), leftovers);
 }
@@ -77,53 +73,57 @@ void ImportViewModel::Import(const std::vector<ImportRequest>& requests)
 {
     const SimulatorProfile profile = Profile();
 
-    RunInAWorker([this, profile, requests]
-    {
-        std::vector<ImportOperationResult> results;
-
-        for (const ImportRequest& request : requests)
+    RunInAWorker(
+        [this, profile, requests]
         {
-            if (cancelled_)
+            std::vector<ImportOperationResult> results;
+
+            for (const ImportRequest& request : requests)
             {
-                results.push_back(ImportOperationResult{request, ImportResult::Cancelled});
-                continue;
+                if (cancelled_)
+                {
+                    results.push_back(ImportOperationResult{request, ImportResult::Cancelled});
+                    continue;
+                }
+
+                const int folder = ++folder_;
+                const auto onProgress = [this, folder](const CopyProgress& progress)
+                {
+                    emit Progressed(progress.copiedBytes, progress.totalBytes, folder);
+
+                    return !cancelled_;
+                };
+
+                const std::vector<ImportOperationResult> one =
+                    service_.Import(profile, {request}, onProgress, OnStep());
+
+                results.insert(results.end(), one.begin(), one.end());
             }
 
-            const int folder = ++folder_;
-            const auto onProgress = [this, folder](const CopyProgress& progress)
-            {
-                emit Progressed(progress.copiedBytes, progress.totalBytes, folder);
-
-                return !cancelled_;
-            };
-
-            const std::vector<ImportOperationResult> one =
-                service_.Import(profile, {request}, onProgress, OnStep());
-
-            results.insert(results.end(), one.begin(), one.end());
-        }
-
-        return results;
-    }, static_cast<int>(requests.size()));
+            return results;
+        },
+        static_cast<int>(requests.size()));
 }
 
 void ImportViewModel::Resume(const std::vector<StagingLeftover>& leftovers)
 {
     const SimulatorProfile profile = Profile();
 
-    RunInAWorker([this, profile, leftovers]
-    {
-        const auto onProgress = [this](const CopyProgress& progress)
+    RunInAWorker(
+        [this, profile, leftovers]
         {
-            emit Progressed(progress.copiedBytes, progress.totalBytes, folder_);
+            const auto onProgress = [this](const CopyProgress& progress)
+            {
+                emit Progressed(progress.copiedBytes, progress.totalBytes, folder_);
 
-            return !cancelled_;
-        };
+                return !cancelled_;
+            };
 
-        folder_ = 1;
+            folder_ = 1;
 
-        return service_.Resume(profile, leftovers, onProgress, OnStep());
-    }, static_cast<int>(leftovers.size()));
+            return service_.Resume(profile, leftovers, onProgress, OnStep());
+        },
+        static_cast<int>(leftovers.size()));
 }
 
 std::function<void(OperationKind)> ImportViewModel::OnStep()
@@ -137,8 +137,7 @@ std::function<void(OperationKind)> ImportViewModel::OnStep()
     };
 }
 
-void ImportViewModel::RunInAWorker(const std::function<std::vector<ImportOperationResult>()>& work,
-                                   const int folders)
+void ImportViewModel::RunInAWorker(const std::function<std::vector<ImportOperationResult>()>& work, const int folders)
 {
     if (worker_ != nullptr)
     {
@@ -151,7 +150,11 @@ void ImportViewModel::RunInAWorker(const std::function<std::vector<ImportOperati
 
     emit Started(folders);
 
-    worker_ = QThread::create([this, work] { results_ = work(); });
+    worker_ = QThread::create(
+        [this, work]
+        {
+            results_ = work();
+        });
 
     connect(worker_, &QThread::finished, this, &ImportViewModel::Adopt);
     worker_->start();
@@ -164,10 +167,11 @@ void ImportViewModel::Adopt()
 
     const std::vector<ImportOperationResult> results = std::exchange(results_, {});
 
-    if (std::ranges::any_of(results, [](const ImportOperationResult& result)
-    {
-        return result.result == ImportResult::Completed;
-    }))
+    if (std::ranges::any_of(results,
+                            [](const ImportOperationResult& result)
+                            {
+                                return result.result == ImportResult::Completed;
+                            }))
     {
         profileService_.ForgetUndo();
     }

@@ -52,15 +52,19 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel, AddonTreeModel& mode
     connect(&viewModel_, &AddonTreeViewModel::ScanFinished, this, &AddonTreePage::OnScanFinished);
 
     connect(&viewModel_, &AddonTreeViewModel::ScanStarted, this,
-            [this] { emit StatusChanged(tr("Lendo a biblioteca...")); });
+            [this]
+            {
+                emit StatusChanged(tr("Lendo a biblioteca..."));
+            });
 
-    connect(&viewModel_, &AddonTreeViewModel::SimulatorIsRunning, this, [this]
-    {
-        QMessageBox::information(
-            this, tr("Simulador aberto"),
-            tr("O simulador está em execução. Os links foram criados, mas ele só vai enxergar a "
-                "mudança depois de ser reiniciado."));
-    });
+    connect(&viewModel_, &AddonTreeViewModel::SimulatorIsRunning, this,
+            [this]
+            {
+                QMessageBox::information(
+                    this, tr("Simulador aberto"),
+                    tr("O simulador está em execução. Os links foram criados, mas ele só vai enxergar a "
+                       "mudança depois de ser reiniciado."));
+            });
 }
 
 QWidget* AddonTreePage::CreateActions()
@@ -81,8 +85,16 @@ QWidget* AddonTreePage::CreateActions()
 
     undo_->setEnabled(false);
 
-    connect(enable, &QPushButton::clicked, this, [this] { ToggleSelection(true); });
-    connect(disable, &QPushButton::clicked, this, [this] { ToggleSelection(false); });
+    connect(enable, &QPushButton::clicked, this,
+            [this]
+            {
+                ToggleSelection(true);
+            });
+    connect(disable, &QPushButton::clicked, this,
+            [this]
+            {
+                ToggleSelection(false);
+            });
     connect(undo_, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::UndoLastBatch);
     connect(rescan, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::ShowActiveProfile);
     connect(search, &QLineEdit::textChanged, filter_, &AddonTreeFilterModel::Search);
@@ -110,10 +122,10 @@ QWidget* AddonTreePage::CreateInvite()
     headline->setFont(headlineFont);
     headline->setAlignment(Qt::AlignHCenter);
 
-    auto* explanation = new QLabel(
-        tr("A biblioteca é a pasta raiz onde os seus addons ficam guardados, fora do simulador.\n"
-            "As subpastas dela viram categorias."),
-        invite);
+    auto* explanation =
+        new QLabel(tr("A biblioteca é a pasta raiz onde os seus addons ficam guardados, fora do simulador.\n"
+                      "As subpastas dela viram categorias."),
+                   invite);
     explanation->setAlignment(Qt::AlignHCenter);
 
     auto* add = new QPushButton(tr("Cadastrar biblioteca..."), invite);
@@ -152,9 +164,7 @@ std::vector<const TreeNode*> AddonTreePage::Chosen(const TreeNode* clicked) cons
         return nodes;
     }
 
-    return std::ranges::find(nodes, clicked) == nodes.end()
-               ? std::vector<const TreeNode*>{clicked}
-               : nodes;
+    return std::ranges::find(nodes, clicked) == nodes.end() ? std::vector<const TreeNode*>{clicked} : nodes;
 }
 
 void AddonTreePage::ToggleSelection(const bool enable)
@@ -184,18 +194,18 @@ void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& resu
     RefreshUndoState();
 
     std::vector<LinkOperationResult> failed;
-    std::ranges::copy_if(results, std::back_inserter(failed), [](const LinkOperationResult& result)
-    {
-        return !result.outcome.Succeeded();
-    });
+    std::ranges::copy_if(results, std::back_inserter(failed),
+                         [](const LinkOperationResult& result)
+                         {
+                             return !result.outcome.Succeeded();
+                         });
 
     const auto done = static_cast<int>(results.size() - failed.size());
 
     if (failed.empty())
     {
-        emit StatusChanged(results.empty()
-                               ? tr("Nada a fazer: a seleção já estava como você pediu.")
-                               : tr("%n operação(ões) concluída(s).", nullptr, done));
+        emit StatusChanged(results.empty() ? tr("Nada a fazer: a seleção já estava como você pediu.")
+                                           : tr("%n operação(ões) concluída(s).", nullptr, done));
         return;
     }
 
@@ -206,16 +216,14 @@ void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& resu
     }
 
     QMessageBox report(QMessageBox::Warning, tr("Nem tudo foi aplicado"),
-                       tr("%n operação(ões) falhou(aram). Nada foi apagado.", nullptr,
-                          static_cast<int>(failed.size())),
+                       tr("%n operação(ões) falhou(aram). Nada foi apagado.", nullptr, static_cast<int>(failed.size())),
                        QMessageBox::Ok, this);
     report.setInformativeText(tr("%n operação(ões) concluída(s).", nullptr, done));
     report.setDetailedText(lines.join('\n'));
     report.exec();
 
-    emit StatusChanged(tr("%1 · %2")
-        .arg(tr("%n operação(ões) concluída(s)", nullptr, done),
-             tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
+    emit StatusChanged(tr("%1 · %2").arg(tr("%n operação(ões) concluída(s)", nullptr, done),
+                                         tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
 }
 
 void AddonTreePage::OnScanFinished()
@@ -244,8 +252,8 @@ void AddonTreePage::OnScanFinished()
     tree_->expandToDepth(0);
 
     emit StatusChanged(tr("%1 · %2 habilitado(s)")
-                       .arg(tr("%n addon(s) na biblioteca", nullptr, static_cast<int>(addons)))
-                       .arg(enabled));
+                           .arg(tr("%n addon(s) na biblioteca", nullptr, static_cast<int>(addons)))
+                           .arg(enabled));
 }
 
 void AddonTreePage::ShowDestinationMenu(const QPoint& where)
@@ -264,7 +272,10 @@ void AddonTreePage::ShowDestinationMenu(const QPoint& where)
     {
         const CopyConflict chosen = *conflict;
         menu.addAction(tr("Resolver o conflito de cópia..."), this,
-                       [this, chosen] { emit ConflictChosen(chosen); });
+                       [this, chosen]
+                       {
+                           emit ConflictChosen(chosen);
+                       });
     }
 
     if (profile.destinations.size() >= 2)
@@ -275,7 +286,10 @@ void AddonTreePage::ShowDestinationMenu(const QPoint& where)
         }
 
         menu.addAction(tr("Herdar o destino de cima"), this,
-                       [this, node] { viewModel_.OverrideDestination(node, {}); });
+                       [this, node]
+                       {
+                           viewModel_.OverrideDestination(node, {});
+                       });
         menu.addSeparator();
 
         for (const std::filesystem::path& destination : profile.destinations)
@@ -308,16 +322,14 @@ void AddonTreePage::BrowseForLibrary()
 
     if (!report.Accepted())
     {
-        QMessageBox::warning(
-            this, tr("Biblioteca repetida"),
-            tr("Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz onde os "
-                "addons ficam guardados; as subpastas dela viram categorias."));
+        QMessageBox::warning(this, tr("Biblioteca repetida"),
+                             tr("Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz onde os "
+                                "addons ficam guardados; as subpastas dela viram categorias."));
         return;
     }
 
-    QMessageBox::information(
-        this, tr("Biblioteca cadastrada"),
-        tr("%1 — %2, %3")
-        .arg(chosen, tr("%n categoria(s)", nullptr, static_cast<int>(report.categories)),
-             tr("%n addon(s)", nullptr, static_cast<int>(report.addons))));
+    QMessageBox::information(this, tr("Biblioteca cadastrada"),
+                             tr("%1 — %2, %3")
+                                 .arg(chosen, tr("%n categoria(s)", nullptr, static_cast<int>(report.categories)),
+                                      tr("%n addon(s)", nullptr, static_cast<int>(report.addons))));
 }

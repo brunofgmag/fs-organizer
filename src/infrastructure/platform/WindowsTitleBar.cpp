@@ -22,8 +22,7 @@ void ApplySystemTitleBarTheme(const QWidget& window)
         return;
     }
 
-    const BOOL dark =
-        QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark ? TRUE : FALSE;
+    const BOOL dark = QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark ? TRUE : FALSE;
 
     DwmSetWindowAttribute(handle, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
 }

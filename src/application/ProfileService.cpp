@@ -40,15 +40,13 @@ ProfileService::ProfileService(const CatalogScanner& catalog,
 {
 }
 
-LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile,
-                                              const std::filesystem::path& path) const
+LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const
 {
     const TreeNode tree = catalog_.Scan(path);
 
     LibraryReport report;
-    report.check = LibraryContaining(profile, path) == nullptr
-                       ? LibraryCheck::Accepted
-                       : LibraryCheck::RejectedInsideAnotherLibrary;
+    report.check = LibraryContaining(profile, path) == nullptr ? LibraryCheck::Accepted
+                                                               : LibraryCheck::RejectedInsideAnotherLibrary;
     report.categories = tree.children.size();
     report.addons = CountAddons(tree);
 
@@ -121,22 +119,17 @@ std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfi
     return steps;
 }
 
-std::vector<ProfileService::Step> ProfileService::StepsFor(
-    const SimulatorProfile& profile,
-    const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
-    const TreeNode& addon,
-    const bool enable)
+std::vector<ProfileService::Step>
+ProfileService::StepsFor(const SimulatorProfile& profile,
+                         const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
+                         const TreeNode& addon,
+                         const bool enable)
 {
     const AddonId identity = IdentityOf(profile, addon.path);
 
     if (enable)
     {
-        return {
-            {
-                OperationKind::EnableAddon, identity, addon.path,
-                PlannedLinkPath(profile, addon.path)
-            }
-        };
+        return {{OperationKind::EnableAddon, identity, addon.path, PlannedLinkPath(profile, addon.path)}};
     }
 
     std::vector<Step> steps;
@@ -151,12 +144,8 @@ std::vector<ProfileService::Step> ProfileService::StepsFor(
 
 ProfileService::Step ProfileService::Inverse(const Step& step)
 {
-    return {
-        step.kind == OperationKind::EnableAddon
-            ? OperationKind::DisableAddon
-            : OperationKind::EnableAddon,
-        step.addonId, step.addonFolder, step.linkPath
-    };
+    return {step.kind == OperationKind::EnableAddon ? OperationKind::DisableAddon : OperationKind::EnableAddon,
+            step.addonId, step.addonFolder, step.linkPath};
 }
 
 LinkOperationResult ProfileService::Run(const Step& step) const
@@ -164,12 +153,11 @@ LinkOperationResult ProfileService::Run(const Step& step) const
     const bool creates = step.kind == OperationKind::EnableAddon || step.kind == OperationKind::RepointLink;
 
     const LinkOutcome outcome = creates
-                                    ? linking_.Enable(Addon{step.addonFolder, Manifest{}},
-                                                      step.linkPath.parent_path(), linkType_)
-                                    : linking_.Disable(step.linkPath);
+        ? linking_.Enable(Addon{step.addonFolder, Manifest{}}, step.linkPath.parent_path(), linkType_)
+        : linking_.Disable(step.linkPath);
 
-    journal_.Append(OperationRecord::OfLink(clock_.Now(), step.kind, step.addonId, step.addonFolder,
-                                            step.linkPath, outcome.Failure()));
+    journal_.Append(OperationRecord::OfLink(clock_.Now(), step.kind, step.addonId, step.addonFolder, step.linkPath,
+                                            outcome.Failure()));
 
     return LinkOperationResult{step.addonId, step.addonFolder, step.linkPath, step.kind, outcome};
 }
@@ -216,21 +204,14 @@ std::optional<ProfileService::Step> ProfileService::PlanRepair(const SimulatorPr
             return std::nullopt;
         }
 
-        return Step{
-            OperationKind::RepointLink,
-            IdentityOf(profile, *request.candidate.repointTo),
-            *request.candidate.repointTo, entry.path
-        };
+        return Step{OperationKind::RepointLink, IdentityOf(profile, *request.candidate.repointTo),
+                    *request.candidate.repointTo, entry.path};
     }
 
-    return Step{
-        OperationKind::RemoveBrokenLink, IdentityOf(profile, entry.target),
-        entry.target, entry.path
-    };
+    return Step{OperationKind::RemoveBrokenLink, IdentityOf(profile, entry.target), entry.target, entry.path};
 }
 
-std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile& profile,
-                                                          const RepairRequest& request)
+std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile& profile, const RepairRequest& request)
 {
     const DestinationEntry& entry = request.candidate.entry;
 
@@ -238,17 +219,11 @@ std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile
 
     if (request.action == RepairAction::Repoint)
     {
-        undo.push_back({
-            OperationKind::DisableAddon,
-            IdentityOf(profile, *request.candidate.repointTo),
-            *request.candidate.repointTo, entry.path
-        });
+        undo.push_back({OperationKind::DisableAddon, IdentityOf(profile, *request.candidate.repointTo),
+                        *request.candidate.repointTo, entry.path});
     }
 
-    undo.push_back({
-        OperationKind::EnableAddon, IdentityOf(profile, entry.target),
-        entry.target, entry.path
-    });
+    undo.push_back({OperationKind::EnableAddon, IdentityOf(profile, entry.target), entry.target, entry.path});
 
     return undo;
 }

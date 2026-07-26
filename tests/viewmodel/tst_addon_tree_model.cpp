@@ -87,8 +87,7 @@ void AddonTreeModelTest::TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester()
     QCOMPARE(model.rowCount(model.index(0, 0, {})), 1);
     QCOMPARE(model.rowCount(Category(model)), 2);
     QCOMPARE(model.parent(Category(model)), model.index(0, 0, {}));
-    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(),
-             QStringLiteral("Biblioteca do Bruno"));
+    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(), QStringLiteral("Biblioteca do Bruno"));
 }
 
 void AddonTreeModelTest::CheckStatesComeFromTheEnabledIndex()
@@ -139,10 +138,8 @@ void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
     AddonTreeModel model;
     model.ShowSnapshot(SnapshotWith({}), Profile({{"library-1", "Aircrafts", kCommunity2024}}));
 
-    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(),
-             QStringLiteral("Biblioteca do Bruno"));
-    QCOMPARE(model.data(Category(model), Qt::DisplayRole).toString(),
-             QStringLiteral("Aircrafts  →  Community2024"));
+    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(), QStringLiteral("Biblioteca do Bruno"));
+    QCOMPARE(model.data(Category(model), Qt::DisplayRole).toString(), QStringLiteral("Aircrafts  →  Community2024"));
     QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::DisplayRole).toString(),
              QStringLiteral("pmdg-aircraft-77w  →  Community2024"));
 }
@@ -150,19 +147,17 @@ void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
 void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
 {
     ProfileSnapshot snapshot = SnapshotWith({});
-    snapshot.conflicts = CopyConflicts{
-        {CopyConflict{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kPmdg}}
-    };
+    snapshot.conflicts = CopyConflicts{{CopyConflict{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kPmdg}}};
 
     AddonTreeModel model;
     model.ShowSnapshot(std::move(snapshot), Profile());
 
     const QModelIndex conflicted = model.index(0, 0, Category(model));
     QVERIFY(model.data(conflicted, AddonTreeModel::ConflictRole).toBool());
-    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(),
-             QStringLiteral("pmdg-aircraft-77w (em conflito)"));
-    QVERIFY(model.data(conflicted, Qt::ToolTipRole).toString().contains(
-        QStringLiteral("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w")));
+    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("pmdg-aircraft-77w (em conflito)"));
+    QVERIFY(model.data(conflicted, Qt::ToolTipRole)
+                .toString()
+                .contains(QStringLiteral("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w")));
 
     const QModelIndex quiet = model.index(1, 0, Category(model));
     QVERIFY(!model.data(quiet, AddonTreeModel::ConflictRole).toBool());

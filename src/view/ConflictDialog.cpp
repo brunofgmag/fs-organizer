@@ -28,8 +28,8 @@ namespace
             std::chrono::duration_cast<std::chrono::milliseconds>(when->time_since_epoch()).count();
 
         return QDateTime::fromMSecsSinceEpoch(milliseconds, QTimeZone::UTC)
-               .toLocalTime()
-               .toString(QStringLiteral("dd/MM/yyyy HH:mm"));
+            .toLocalTime()
+            .toString(QStringLiteral("dd/MM/yyyy HH:mm"));
     }
 
     QString WarningAbout(const std::vector<std::filesystem::path>& links)
@@ -41,15 +41,14 @@ namespace
         }
 
         return QObject::tr("A cópia da biblioteca está habilitada em %1. "
-                    "Ficar com a do destino remove esse(s) link(s) antes de mandá-la para a quarentena.")
-               .arg(destinations.join(QStringLiteral(", ")));
+                           "Ficar com a do destino remove esse(s) link(s) antes de mandá-la para a quarentena.")
+            .arg(destinations.join(QStringLiteral(", ")));
     }
 
     QString Version(const Manifest& manifest)
     {
-        return manifest.packageVersion.empty()
-                   ? QObject::tr("(sem versão no manifest)")
-                   : QString::fromStdString(manifest.packageVersion);
+        return manifest.packageVersion.empty() ? QObject::tr("(sem versão no manifest)")
+                                               : QString::fromStdString(manifest.packageVersion);
     }
 }
 
@@ -57,10 +56,9 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
 {
     setWindowTitle(tr("Duas cópias do mesmo addon"));
 
-    auto* explanation = new QLabel(
-        tr("Existe uma pasta de verdade no destino e um addon de mesmo nome na biblioteca. "
-            "Escolha qual fica: a outra vai para a quarentena, e nada é apagado."),
-        this);
+    auto* explanation = new QLabel(tr("Existe uma pasta de verdade no destino e um addon de mesmo nome na biblioteca. "
+                                      "Escolha qual fica: a outra vai para a quarentena, e nada é apagado."),
+                                   this);
     explanation->setWordWrap(true);
 
     auto* sides = new QHBoxLayout;
@@ -73,22 +71,22 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
 
-    QPushButton* keepDestination = buttons->addButton(tr("Ficar com a do destino"),
-                                                      QDialogButtonBox::AcceptRole);
-    QPushButton* keepLibrary = buttons->addButton(tr("Ficar com a da biblioteca"),
-                                                 QDialogButtonBox::AcceptRole);
+    QPushButton* keepDestination = buttons->addButton(tr("Ficar com a do destino"), QDialogButtonBox::AcceptRole);
+    QPushButton* keepLibrary = buttons->addButton(tr("Ficar com a da biblioteca"), QDialogButtonBox::AcceptRole);
     keepLibrary->setDefault(true);
 
-    connect(keepLibrary, &QPushButton::clicked, this, [this]
-    {
-        choice_ = ConflictChoice::KeepTheLibraryCopy;
-        accept();
-    });
-    connect(keepDestination, &QPushButton::clicked, this, [this]
-    {
-        choice_ = ConflictChoice::KeepTheDestinationCopy;
-        accept();
-    });
+    connect(keepLibrary, &QPushButton::clicked, this,
+            [this]
+            {
+                choice_ = ConflictChoice::KeepTheLibraryCopy;
+                accept();
+            });
+    connect(keepDestination, &QPushButton::clicked, this,
+            [this]
+            {
+                choice_ = ConflictChoice::KeepTheDestinationCopy;
+                accept();
+            });
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);

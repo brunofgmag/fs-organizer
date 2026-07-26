@@ -50,13 +50,13 @@ void CommunityViewModel::Refresh()
 
     model_.ShowEntries(entries, treeModel_.Profile(), snapshot.conflicts);
 
-    const std::size_t attention =
-        snapshot.conflicts.Count()
-        + std::ranges::count_if(entries, [](const DestinationEntry& entry)
-        {
-            return entry.classification == EntryClassification::Broken
-                || entry.classification == EntryClassification::Duplicated;
-        });
+    const std::size_t attention = snapshot.conflicts.Count()
+        + std::ranges::count_if(entries,
+                                [](const DestinationEntry& entry)
+                                {
+                                    return entry.classification == EntryClassification::Broken
+                                        || entry.classification == EntryClassification::Duplicated;
+                                });
 
     if (attention != attention_)
     {

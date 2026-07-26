@@ -14,10 +14,11 @@ namespace
 {
     const SimulatorProfile* ProfileById(const AppSettings& settings, const std::string& id)
     {
-        const auto match = std::ranges::find_if(settings.profiles, [&id](const SimulatorProfile& profile)
-        {
-            return profile.id == id;
-        });
+        const auto match = std::ranges::find_if(settings.profiles,
+                                                [&id](const SimulatorProfile& profile)
+                                                {
+                                                    return profile.id == id;
+                                                });
 
         return match == settings.profiles.end() ? nullptr : &*match;
     }
@@ -37,9 +38,8 @@ void AddonTreeViewModel::ShowActiveProfile()
     const AppSettings settings = settings_.Load();
     const SimulatorProfile* active = ProfileById(settings, settings.activeProfileId);
 
-    profile_ = active != nullptr
-                   ? *active
-                   : (settings.profiles.empty() ? SimulatorProfile{} : settings.profiles.front());
+    profile_ =
+        active != nullptr ? *active : (settings.profiles.empty() ? SimulatorProfile{} : settings.profiles.front());
 
     StartScan();
 }
@@ -65,7 +65,11 @@ void AddonTreeViewModel::StartScan()
     emit ScanStarted();
 
     const SimulatorProfile profile = profile_;
-    scan_ = QThread::create([this, profile] { scanned_ = service_.Scan(profile); });
+    scan_ = QThread::create(
+        [this, profile]
+        {
+            scanned_ = service_.Scan(profile);
+        });
 
     connect(scan_, &QThread::finished, this, &AddonTreeViewModel::AdoptScan);
     scan_->start();
@@ -126,10 +130,11 @@ void AddonTreeViewModel::ApplyResults(const std::vector<LinkOperationResult>& re
 
 void AddonTreeViewModel::NoteSimulatorState(const std::vector<LinkOperationResult>& results)
 {
-    const bool changed = std::ranges::any_of(results, [](const LinkOperationResult& result)
-    {
-        return result.outcome.Succeeded();
-    });
+    const bool changed = std::ranges::any_of(results,
+                                             [](const LinkOperationResult& result)
+                                             {
+                                                 return result.outcome.Succeeded();
+                                             });
 
     if (!changed || !probe_.SimulatorIsRunning())
     {
@@ -160,10 +165,12 @@ void AddonTreeViewModel::OverrideDestination(const TreeNode* node, const std::fi
     const std::filesystem::path relative = RelativeToLibrary(*library, node->path);
     const LibraryId libraryId = library->id;
 
-    std::erase_if(profile_.destinationOverrides, [&libraryId, &relative](const DestinationOverride& known)
-    {
-        return known.libraryId == libraryId && ComparablePath(known.relativePath) == ComparablePath(relative);
-    });
+    std::erase_if(profile_.destinationOverrides,
+                  [&libraryId, &relative](const DestinationOverride& known)
+                  {
+                      return known.libraryId == libraryId
+                          && ComparablePath(known.relativePath) == ComparablePath(relative);
+                  });
 
     if (!destination.empty())
     {

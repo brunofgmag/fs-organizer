@@ -8,10 +8,11 @@
 
 const Library* LibraryContaining(const std::vector<Library>& libraries, const std::filesystem::path& path)
 {
-    const auto match = std::ranges::find_if(libraries, [&path](const Library& library)
-    {
-        return PathIsInside(path, library.path);
-    });
+    const auto match = std::ranges::find_if(libraries,
+                                            [&path](const Library& library)
+                                            {
+                                                return PathIsInside(path, library.path);
+                                            });
 
     return match == libraries.end() ? nullptr : &*match;
 }

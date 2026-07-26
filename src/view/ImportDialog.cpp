@@ -19,10 +19,11 @@ namespace
 {
     const TreeNode* LibraryTreeAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& root)
     {
-        const auto tree = std::ranges::find_if(libraries, [&root](const TreeNode& candidate)
-        {
-            return candidate.path == root;
-        });
+        const auto tree = std::ranges::find_if(libraries,
+                                               [&root](const TreeNode& candidate)
+                                               {
+                                                   return candidate.path == root;
+                                               });
 
         return tree == libraries.end() ? nullptr : &*tree;
     }
@@ -47,10 +48,9 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     library_ = new QComboBox(this);
     for (const Library& library : profile.libraries)
     {
-        library_->addItem(library.label.empty()
-                              ? AsText(library.path)
-                              : QStringLiteral("%1 — %2").arg(QString::fromStdString(library.label),
-                                                              AsText(library.path)),
+        library_->addItem(library.label.empty() ? AsText(library.path)
+                                                : QStringLiteral("%1 — %2").arg(QString::fromStdString(library.label),
+                                                                                AsText(library.path)),
                           AsText(library.path));
     }
 
@@ -59,9 +59,10 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     landing_ = new QLabel(this);
     landing_->setWordWrap(true);
 
-    auto* total = new QLabel(
-        tr("%1 em %2 serão copiados para a biblioteca e substituídos por links.")
-        .arg(AsSize(totalBytes), tr("%n pasta(s)", nullptr, static_cast<int>(folders_.size()))), this);
+    auto* total =
+        new QLabel(tr("%1 em %2 serão copiados para a biblioteca e substituídos por links.")
+                       .arg(AsSize(totalBytes), tr("%n pasta(s)", nullptr, static_cast<int>(folders_.size()))),
+                   this);
     total->setWordWrap(true);
 
     auto* form = new QFormLayout;
@@ -76,12 +77,12 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    connect(library_, &QComboBox::currentIndexChanged, this,
-            &ImportDialog::ShowCategoriesOfTheChosenLibrary);
-    connect(category_, &QComboBox::currentIndexChanged, this, [this]
-    {
-        landing_->setText(ChosenRequests().empty() ? QString() : AsText(ChosenRequests().front().Target()));
-    });
+    connect(library_, &QComboBox::currentIndexChanged, this, &ImportDialog::ShowCategoriesOfTheChosenLibrary);
+    connect(category_, &QComboBox::currentIndexChanged, this,
+            [this]
+            {
+                landing_->setText(ChosenRequests().empty() ? QString() : AsText(ChosenRequests().front().Target()));
+            });
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(new QLabel(tr("Pastas selecionadas:"), this));
@@ -109,8 +110,7 @@ void ImportDialog::ShowCategoriesOfTheChosenLibrary()
     {
         const std::filesystem::path relative = folder->path.lexically_relative(tree->path);
 
-        category_->addItem(folder == tree ? tr("(raiz da biblioteca)") : AsText(relative),
-                           AsText(folder->path));
+        category_->addItem(folder == tree ? tr("(raiz da biblioteca)") : AsText(relative), AsText(folder->path));
     }
 }
 

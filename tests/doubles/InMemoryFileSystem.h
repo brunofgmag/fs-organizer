@@ -74,8 +74,7 @@ public:
         }
 
         const auto measured = freeSpace_.find(volume);
-        return measured == freeSpace_.end() ? std::numeric_limits<std::uintmax_t>::max()
-                                            : measured->second;
+        return measured == freeSpace_.end() ? std::numeric_limits<std::uintmax_t>::max() : measured->second;
     }
 
     void SetLastWriteTime(const std::filesystem::path& path, const std::chrono::system_clock::time_point when)
@@ -111,8 +110,7 @@ public:
         return KindOf(path) == NodeKind::Link;
     }
 
-    [[nodiscard]] std::optional<std::filesystem::path>
-    LinkTarget(const std::filesystem::path& path) const
+    [[nodiscard]] std::optional<std::filesystem::path> LinkTarget(const std::filesystem::path& path) const
     {
         const auto node = nodes_.find(Key(path));
         if (node == nodes_.end() || node->second.kind != NodeKind::Link || !node->second.readable)
@@ -128,8 +126,7 @@ public:
         return node == nodes_.end() ? 0 : node->second.size;
     }
 
-    [[nodiscard]] std::vector<std::filesystem::path>
-    ChildDirectoriesOf(const std::filesystem::path& path) const
+    [[nodiscard]] std::vector<std::filesystem::path> ChildDirectoriesOf(const std::filesystem::path& path) const
     {
         const std::string parent = Key(path);
         std::vector<std::filesystem::path> children;
@@ -148,8 +145,7 @@ public:
         return children;
     }
 
-    [[nodiscard]] std::vector<std::filesystem::path>
-    FilesUnder(const std::filesystem::path& path) const
+    [[nodiscard]] std::vector<std::filesystem::path> FilesUnder(const std::filesystem::path& path) const
     {
         std::vector<std::filesystem::path> files;
         for (const auto& [key, node] : nodes_)
@@ -207,7 +203,7 @@ public:
         }
 
         nodes_ = std::move(moved);
-        
+
         return true;
     }
 
@@ -219,10 +215,11 @@ public:
             return false;
         }
 
-        std::erase_if(nodes_, [&root](const auto& entry)
-        {
-            return entry.first == root || IsUnder(entry.first, root);
-        });
+        std::erase_if(nodes_,
+                      [&root](const auto& entry)
+                      {
+                          return entry.first == root || IsUnder(entry.first, root);
+                      });
         return true;
     }
 
@@ -262,7 +259,10 @@ private:
     [[nodiscard]] bool HasDescendants(const std::string& root) const
     {
         return std::ranges::any_of(nodes_ | std::views::keys,
-                                   [&root](const std::string& key) { return IsUnder(key, root); });
+                                   [&root](const std::string& key)
+                                   {
+                                       return IsUnder(key, root);
+                                   });
     }
 
     std::map<std::string, Node> nodes_;

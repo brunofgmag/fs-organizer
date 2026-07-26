@@ -97,15 +97,12 @@ void InMemoryFileSystemTest::FilesUnderReachesEveryDepthAndReportsSizes()
 {
     const InMemoryFileSystem fileSystem = AddonOnDiskAndLinkedIntoTheSimulator();
 
-    const std::vector<std::filesystem::path> files =
-        fileSystem.FilesUnder("D:/Library/Aircrafts/aerosoft-crj");
+    const std::vector<std::filesystem::path> files = fileSystem.FilesUnder("D:/Library/Aircrafts/aerosoft-crj");
 
     QCOMPARE(files,
-             (std::vector<std::filesystem::path>{
-                 "D:/Library/Aircrafts/aerosoft-crj/SimObjects/model.gltf",
-                 "D:/Library/Aircrafts/aerosoft-crj/manifest.json"}));
-    QCOMPARE(fileSystem.FileSize("D:/Library/Aircrafts/aerosoft-crj/SimObjects/model.gltf"),
-             std::uintmax_t{4096});
+             (std::vector<std::filesystem::path>{"D:/Library/Aircrafts/aerosoft-crj/SimObjects/model.gltf",
+                                                 "D:/Library/Aircrafts/aerosoft-crj/manifest.json"}));
+    QCOMPARE(fileSystem.FileSize("D:/Library/Aircrafts/aerosoft-crj/SimObjects/model.gltf"), std::uintmax_t{4096});
 }
 
 void InMemoryFileSystemTest::ChildDirectoriesReportsLinksButNeverFiles()
@@ -114,12 +111,9 @@ void InMemoryFileSystemTest::ChildDirectoriesReportsLinksButNeverFiles()
     fileSystem.AddFile("E:/Sim/Community/loose.txt");
     fileSystem.AddDirectory("E:/Sim/Community/asfs");
 
-    const std::vector<std::filesystem::path> children =
-        fileSystem.ChildDirectoriesOf("E:/Sim/Community");
+    const std::vector<std::filesystem::path> children = fileSystem.ChildDirectoriesOf("E:/Sim/Community");
 
-    QCOMPARE(children,
-             (std::vector<std::filesystem::path>{"E:/Sim/Community/aerosoft-crj",
-                                                 "E:/Sim/Community/asfs"}));
+    QCOMPARE(children, (std::vector<std::filesystem::path>{"E:/Sim/Community/aerosoft-crj", "E:/Sim/Community/asfs"}));
 }
 
 QTEST_APPLESS_MAIN(InMemoryFileSystemTest)

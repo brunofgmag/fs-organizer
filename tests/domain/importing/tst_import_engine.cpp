@@ -40,8 +40,7 @@ namespace
     const std::filesystem::path kSource = "E:/Sim/Community/flybywire-externaltools-simbridge";
     const std::filesystem::path kCategory = "D:/Library/Utils";
     const std::filesystem::path kTarget = "D:/Library/Utils/flybywire-externaltools-simbridge";
-    const std::filesystem::path kStaging =
-        "D:/Library/Utils/flybywire-externaltools-simbridge.fsorg-partial";
+    const std::filesystem::path kStaging = "D:/Library/Utils/flybywire-externaltools-simbridge.fsorg-partial";
 
     struct Fixture
     {
@@ -54,11 +53,9 @@ namespace
         FakeClock clock;
         ImportEngine engine{filesystemProbe, files, linking, journal, clock, LinkType::Junction};
 
-        SimulatorProfile profile{
-            .destinations = {"E:/Sim/Community"},
-            .defaultDestination = "E:/Sim/Community",
-            .libraries = {Library{"lib-1", "D:/Library"}}
-        };
+        SimulatorProfile profile{.destinations = {"E:/Sim/Community"},
+                                 .defaultDestination = "E:/Sim/Community",
+                                 .libraries = {Library{"lib-1", "D:/Library"}}};
 
         ImportRequest request{kSource, kCategory};
 
@@ -117,13 +114,12 @@ void ImportEngineTest::CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntac
     f.AddSimBridgeToTheDestination();
 
     int reports = 0;
-    const ImportOutcome outcome =
-        f.engine.Import(f.profile, f.request,
-                        [&reports](const CopyProgress&)
-                        {
-                            ++reports;
-                            return reports < 2;
-                        });
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request,
+                                                  [&reports](const CopyProgress&)
+                                                  {
+                                                      ++reports;
+                                                      return reports < 2;
+                                                  });
 
     QCOMPARE(outcome.Result(), ImportResult::Cancelled);
     QVERIFY(!f.fileSystem.Exists(kStaging));
@@ -209,8 +205,7 @@ void ImportEngineTest::ADestinationRootIsNotAFolderInsideItself()
 
 void ImportEngineTest::AForeignLinkIsNeverImportedAsIfItWereAFolder()
 {
-    const std::filesystem::path foreign =
-        "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
+    const std::filesystem::path foreign = "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
 
     Fixture f;
     f.fileSystem.AddDirectory("E:/Sim/Community");
@@ -250,11 +245,9 @@ void ImportEngineTest::EveryStepOfAFinishedImportReachesTheJournalInOrder()
 
     QCOMPARE(f.journal.appended.size(), std::size_t{5});
 
-    const std::vector kinds{
-        OperationKind::ImportCopyToStaging, OperationKind::ImportVerifyStaging,
-        OperationKind::ImportMoveIntoPlace, OperationKind::ImportRemoveSource,
-        OperationKind::EnableAddon
-    };
+    const std::vector kinds{OperationKind::ImportCopyToStaging, OperationKind::ImportVerifyStaging,
+                            OperationKind::ImportMoveIntoPlace, OperationKind::ImportRemoveSource,
+                            OperationKind::EnableAddon};
 
     for (std::size_t step = 0; step < kinds.size(); ++step)
     {

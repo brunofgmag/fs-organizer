@@ -45,7 +45,10 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     connect(empty_, &QPushButton::clicked, this, &QuarantinePage::EmptyTheQuarantine);
     connect(&model_, &QAbstractItemModel::modelReset, this, &QuarantinePage::UpdateSummary);
     connect(table_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
-            [this] { UpdateSummary(); });
+            [this]
+            {
+                UpdateSummary();
+            });
 
     connect(&viewModel_, &QuarantineViewModel::Restored, this,
             [this](const std::vector<FileOperationResult>& results)
@@ -99,8 +102,7 @@ void QuarantinePage::DiscardSelected()
 
     const QMessageBox::StandardButton answer = QMessageBox::question(
         this, tr("Descartar da quarentena"),
-        tr("%n item(ns) será(ão) apagado(s) do disco para sempre. Continuar?", nullptr,
-           static_cast<int>(items.size())),
+        tr("%n item(ns) será(ão) apagado(s) do disco para sempre. Continuar?", nullptr, static_cast<int>(items.size())),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
     if (answer == QMessageBox::Yes)
@@ -120,8 +122,8 @@ void QuarantinePage::EmptyTheQuarantine()
 
     const QMessageBox::StandardButton answer = QMessageBox::question(
         this, tr("Esvaziar a quarentena"),
-        tr("Tudo que está na quarentena, %n item(ns), será apagado do disco para sempre. Continuar?",
-           nullptr, static_cast<int>(items.size())),
+        tr("Tudo que está na quarentena, %n item(ns), será apagado do disco para sempre. Continuar?", nullptr,
+           static_cast<int>(items.size())),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
     if (answer == QMessageBox::Yes)
@@ -137,8 +139,7 @@ void QuarantinePage::Report(const QString& title, const std::vector<FileOperatio
     {
         if (result.result != ImportResult::Completed)
         {
-            failed.append(QStringLiteral("%1 — %2").arg(AsText(result.path.filename()),
-                                                        Explain(result.result)));
+            failed.append(QStringLiteral("%1 — %2").arg(AsText(result.path.filename()), Explain(result.result)));
         }
     }
 
@@ -151,8 +152,7 @@ void QuarantinePage::Report(const QString& title, const std::vector<FileOperatio
     }
 
     QMessageBox report(QMessageBox::Warning, title,
-                       tr("%n item(ns) não pôde(puderam) ser tratado(s).", nullptr,
-                          static_cast<int>(failed.size())),
+                       tr("%n item(ns) não pôde(puderam) ser tratado(s).", nullptr, static_cast<int>(failed.size())),
                        QMessageBox::Ok, this);
     report.setInformativeText(tr("%n item(ns) concluído(s).", nullptr, done));
     report.setDetailedText(failed.join('\n'));
@@ -164,9 +164,8 @@ void QuarantinePage::UpdateSummary()
     const int rows = model_.rowCount({});
     const auto selected = static_cast<int>(Selected().size());
 
-    summary_->setText(rows == 0
-                          ? tr("A quarentena está vazia. Nada que você escolheu descartar foi apagado.")
-                          : tr("%n item(ns) na quarentena.", nullptr, rows));
+    summary_->setText(rows == 0 ? tr("A quarentena está vazia. Nada que você escolheu descartar foi apagado.")
+                                : tr("%n item(ns) na quarentena.", nullptr, rows));
 
     restore_->setEnabled(selected > 0);
     discard_->setEnabled(selected > 0);

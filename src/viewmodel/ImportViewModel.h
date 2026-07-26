@@ -38,8 +38,8 @@ public:
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers() const;
 
-    [[nodiscard]] std::vector<FileOperationResult> DiscardLeftovers(
-        const std::vector<StagingLeftover>& leftovers) const;
+    [[nodiscard]] std::vector<FileOperationResult>
+    DiscardLeftovers(const std::vector<StagingLeftover>& leftovers) const;
 
     [[nodiscard]] bool SimulatorIsRunning() const;
 

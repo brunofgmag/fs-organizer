@@ -78,19 +78,12 @@ namespace
 
         auto* pathBuffer = reinterpret_cast<char*>(buffer->MountPoint.PathBuffer);
         std::memcpy(pathBuffer, substituteName.c_str(), substituteBytes + sizeof(WCHAR));
-        std::memcpy(pathBuffer + substituteBytes + sizeof(WCHAR),
-                    target.c_str(),
-                    printBytes + sizeof(WCHAR));
+        std::memcpy(pathBuffer + substituteBytes + sizeof(WCHAR), target.c_str(), printBytes + sizeof(WCHAR));
 
         DWORD returned = 0;
-        return DeviceIoControl(handle,
-                               FSCTL_SET_REPARSE_POINT,
-                               raw.data(),
-                               static_cast<DWORD>(raw.size()),
-                               nullptr,
-                               0,
-                               &returned,
-                               nullptr) != FALSE;
+        return DeviceIoControl(handle, FSCTL_SET_REPARSE_POINT, raw.data(), static_cast<DWORD>(raw.size()), nullptr, 0,
+                               &returned, nullptr)
+            != FALSE;
     }
 
     bool CreateJunction(const std::wstring& linkPath, const std::wstring& target)
@@ -100,13 +93,8 @@ namespace
             return false;
         }
 
-        const HANDLE handle = CreateFileW(linkPath.c_str(),
-                                          GENERIC_WRITE,
-                                          0,
-                                          nullptr,
-                                          OPEN_EXISTING,
-                                          FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
-                                          nullptr);
+        const HANDLE handle = CreateFileW(linkPath.c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+                                          FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
         if (handle == INVALID_HANDLE_VALUE)
         {
             RemoveDirectoryW(linkPath.c_str());
@@ -126,8 +114,7 @@ namespace
 
     bool CreateSymbolicDirectoryLink(const std::wstring& linkPath, const std::wstring& target)
     {
-        constexpr DWORD flags =
-            SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
+        constexpr DWORD flags = SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
 
         return CreateSymbolicLinkW(linkPath.c_str(), target.c_str(), flags) != FALSE;
     }
@@ -140,9 +127,8 @@ bool WindowsLinkService::CreateLink(const std::filesystem::path& linkPath,
     const std::wstring nativeLink = NativePath(linkPath);
     const std::wstring nativeTarget = NativePath(target);
 
-    return linkType == LinkType::Junction
-               ? CreateJunction(nativeLink, nativeTarget)
-               : CreateSymbolicDirectoryLink(nativeLink, nativeTarget);
+    return linkType == LinkType::Junction ? CreateJunction(nativeLink, nativeTarget)
+                                          : CreateSymbolicDirectoryLink(nativeLink, nativeTarget);
 }
 
 bool WindowsLinkService::RemoveReparseNode(const std::filesystem::path& linkPath)
@@ -150,16 +136,11 @@ bool WindowsLinkService::RemoveReparseNode(const std::filesystem::path& linkPath
     return RemoveDirectoryW(NativePath(linkPath).c_str()) != FALSE;
 }
 
-std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(
-    const std::filesystem::path& path) const
+std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(const std::filesystem::path& path) const
 {
-    const HANDLE handle = CreateFileW(NativePath(path).c_str(),
-                                      FILE_READ_ATTRIBUTES,
-                                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                      nullptr,
-                                      OPEN_EXISTING,
-                                      FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
-                                      nullptr);
+    const HANDLE handle = CreateFileW(NativePath(path).c_str(), FILE_READ_ATTRIBUTES,
+                                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                                      FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
     if (handle == INVALID_HANDLE_VALUE)
     {
         return std::nullopt;
@@ -167,14 +148,8 @@ std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(
 
     std::vector<char> raw(MAXIMUM_REPARSE_DATA_BUFFER_SIZE, 0);
     DWORD returned = 0;
-    const BOOL queried = DeviceIoControl(handle,
-                                         FSCTL_GET_REPARSE_POINT,
-                                         nullptr,
-                                         0,
-                                         raw.data(),
-                                         static_cast<DWORD>(raw.size()),
-                                         &returned,
-                                         nullptr);
+    const BOOL queried = DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0, raw.data(),
+                                         static_cast<DWORD>(raw.size()), &returned, nullptr);
     CloseHandle(handle);
 
     if (queried == FALSE)
@@ -204,8 +179,7 @@ std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(
         return std::nullopt;
     }
 
-    const std::wstring target(reinterpret_cast<const wchar_t*>(pathBuffer + nameOffset),
-                              nameLength / sizeof(WCHAR));
+    const std::wstring target(reinterpret_cast<const wchar_t*>(pathBuffer + nameOffset), nameLength / sizeof(WCHAR));
 
     return NormalizeReparseTarget(std::filesystem::path(target));
 }

@@ -7,9 +7,8 @@ LinkingEngine::LinkingEngine(LinkService& linkService, const FilesystemProbe& fi
 {
 }
 
-LinkOutcome LinkingEngine::Enable(const Addon& addon,
-                                  const std::filesystem::path& destinationRoot,
-                                  const LinkType linkType) const
+LinkOutcome
+LinkingEngine::Enable(const Addon& addon, const std::filesystem::path& destinationRoot, const LinkType linkType) const
 {
     const std::filesystem::path linkPath = destinationRoot / addon.folderPath.filename();
 

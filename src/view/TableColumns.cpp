@@ -14,14 +14,16 @@ namespace
     class WidthKeeper final : public QObject
     {
     public:
-        explicit WidthKeeper(QTableView* table)
-            : QObject(table), table_(table)
+        explicit WidthKeeper(QTableView* table) : QObject(table), table_(table)
         {
             table_->horizontalHeader()->setStretchLastSection(false);
             table_->viewport()->installEventFilter(this);
 
             connect(table_->model(), &QAbstractItemModel::modelReset, this,
-                    [this] { MeasureTheContentOnce(); });
+                    [this]
+                    {
+                        MeasureTheContentOnce();
+                    });
 
             connect(table_->horizontalHeader(), &QHeaderView::sectionResized, this,
                     [this](int, int, int)
@@ -106,9 +108,7 @@ namespace
             int taken = 0;
             for (int column = 0; column < header->count(); ++column)
             {
-                taken += column == slack || header->isSectionHidden(column)
-                             ? 0
-                             : header->sectionSize(column);
+                taken += column == slack || header->isSectionHidden(column) ? 0 : header->sectionSize(column);
             }
 
             applying_ = true;

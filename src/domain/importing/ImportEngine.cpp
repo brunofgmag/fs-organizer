@@ -50,14 +50,18 @@ ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
                            OperationJournal& journal,
                            const Clock& clock,
                            const LinkType linkType)
-    : filesystemProbe_(filesystemProbe), files_(files), linking_(linking), journal_(journal),
-      clock_(clock), linkType_(linkType)
+    : filesystemProbe_(filesystemProbe),
+      files_(files),
+      linking_(linking),
+      journal_(journal),
+      clock_(clock),
+      linkType_(linkType)
 {
 }
 
 ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
                                    const ImportRequest& request,
-                                   const std::function<bool(const CopyProgress &)>& onProgress,
+                                   const std::function<bool(const CopyProgress&)>& onProgress,
                                    const std::function<void(OperationKind)>& onStep) const
 {
     const auto announce = [&onStep](const OperationKind kind)
@@ -80,8 +84,7 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
 
     const std::vector<FileFingerprint> source = filesystemProbe_.FingerprintTree(request.source);
 
-    if (const ImportOutcome room = CheckFreeSpace(request.category, TotalSizeOf(source));
-        !room.Succeeded())
+    if (const ImportOutcome room = CheckFreeSpace(request.category, TotalSizeOf(source)); !room.Succeeded())
     {
         return room;
     }
@@ -127,8 +130,8 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
 
     announce(OperationKind::EnableAddon);
     const LinkOutcome link = linking_.Enable(Addon{target}, request.source.parent_path(), linkType_);
-    journal_.Append(OperationRecord::OfLink(clock_.Now(), OperationKind::EnableAddon, addon,
-                                            target, request.source, link.Failure()));
+    journal_.Append(OperationRecord::OfLink(clock_.Now(), OperationKind::EnableAddon, addon, target, request.source,
+                                            link.Failure()));
     if (!link.Succeeded())
     {
         return ImportOutcome::Stopped(ImportResult::CouldNotCreateLink);
@@ -146,8 +149,7 @@ void ImportEngine::RecordStep(const AddonId& addon,
     journal_.Append(OperationRecord::OfImport(clock_.Now(), kind, addon, source, target, result));
 }
 
-ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category,
-                                           const std::uintmax_t sourceSize) const
+ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category, const std::uintmax_t sourceSize) const
 {
     const std::uintmax_t needed = sourceSize + kFreeSpaceMargin;
 
@@ -167,17 +169,15 @@ ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category
 
 ImportOutcome ImportEngine::CopyToStaging(const std::filesystem::path& source,
                                           const std::filesystem::path& staging,
-                                          const std::function<bool(const CopyProgress &)>& onProgress) const
+                                          const std::function<bool(const CopyProgress&)>& onProgress) const
 {
     switch (files_.CopyTree(source, staging, onProgress))
     {
     case CopyOutcome::Cancelled:
         static_cast<void>(files_.RemoveTree(staging));
         return ImportOutcome::Stopped(ImportResult::Cancelled);
-    case CopyOutcome::Failed:
-        return ImportOutcome::Stopped(ImportResult::CouldNotCopy);
-    case CopyOutcome::Completed:
-        break;
+    case CopyOutcome::Failed: return ImportOutcome::Stopped(ImportResult::CouldNotCopy);
+    case CopyOutcome::Completed: break;
     }
 
     return ImportOutcome::Completed();

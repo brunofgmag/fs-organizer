@@ -31,10 +31,8 @@ namespace
         profile.id = "msfs2024";
         profile.destinations = {kCommunity, kCommunity2024};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {
-            Library{"library-1", "D:/MSFS 2024", "MSFS 2024"},
-            Library{"library-2", "F:/Extra Addons", "Extra Addons"}
-        };
+        profile.libraries = {Library{"library-1", "D:/MSFS 2024", "MSFS 2024"},
+                             Library{"library-2", "F:/Extra Addons", "Extra Addons"}};
         profile.destinationOverrides = std::move(overrides);
 
         return profile;
@@ -49,8 +47,7 @@ void EffectiveDestinationTest::WithoutAnyOverrideTheProfileDefaultWins()
 
 void EffectiveDestinationTest::AnOverrideOnTheAddonItselfWins()
 {
-    const SimulatorProfile profile =
-        ProfileWith({{"library-1", "Aircrafts/pmdg-aircraft-77w", kCommunity2024}});
+    const SimulatorProfile profile = ProfileWith({{"library-1", "Aircrafts/pmdg-aircraft-77w", kCommunity2024}});
 
     QCOMPARE(EffectiveDestination(profile, "library-1", "Aircrafts/pmdg-aircraft-77w"),
              std::filesystem::path(kCommunity2024));
@@ -66,10 +63,8 @@ void EffectiveDestinationTest::AnAddonInheritsTheOverrideOfItsCategory()
 
 void EffectiveDestinationTest::TheNearestOverrideGoingUpWins()
 {
-    const SimulatorProfile profile = ProfileWith({
-        {"library-1", "Aircrafts", kCommunity2024},
-        {"library-1", "Aircrafts/Fenix", kCommunity}
-    });
+    const SimulatorProfile profile =
+        ProfileWith({{"library-1", "Aircrafts", kCommunity2024}, {"library-1", "Aircrafts/Fenix", kCommunity}});
 
     QCOMPARE(EffectiveDestination(profile, "library-1", "Aircrafts/Fenix/fenix-a320"),
              std::filesystem::path(kCommunity));
@@ -91,10 +86,8 @@ void EffectiveDestinationTest::AnOverrideOnTheLibraryRootReachesEverythingInside
 
     QCOMPARE(EffectiveDestination(profile, "library-1", "Aircrafts/pmdg-aircraft-77w"),
              std::filesystem::path(kCommunity2024));
-    QCOMPARE(EffectiveDestination(profile, "library-1", ""),
-             std::filesystem::path(kCommunity2024));
-    QCOMPARE(EffectiveDestination(profile, "library-1", "."),
-             std::filesystem::path(kCommunity2024));
+    QCOMPARE(EffectiveDestination(profile, "library-1", ""), std::filesystem::path(kCommunity2024));
+    QCOMPARE(EffectiveDestination(profile, "library-1", "."), std::filesystem::path(kCommunity2024));
 }
 
 void EffectiveDestinationTest::TheRelativePathIsMatchedWithoutCaseOrSeparatorDifferences()
@@ -107,16 +100,13 @@ void EffectiveDestinationTest::TheRelativePathIsMatchedWithoutCaseOrSeparatorDif
 
 void EffectiveDestinationTest::AnAbsoluteAddonFolderFindsItsOwnLibraryAndOverride()
 {
-    const SimulatorProfile profile = ProfileWith({
-        {"library-1", "Aircrafts", kCommunity2024},
-        {"library-2", "Aircrafts", kCommunity2024}
-    });
+    const SimulatorProfile profile =
+        ProfileWith({{"library-1", "Aircrafts", kCommunity2024}, {"library-2", "Aircrafts", kCommunity2024}});
 
     QCOMPARE(LibraryContaining(profile, "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w")->id, std::string("library-1"));
     QCOMPARE(EffectiveDestination(profile, "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"),
              std::filesystem::path(kCommunity2024));
-    QCOMPARE(EffectiveDestination(profile, "D:/MSFS 2024/Sceneries/tlc-bgjn"),
-             std::filesystem::path(kCommunity));
+    QCOMPARE(EffectiveDestination(profile, "D:/MSFS 2024/Sceneries/tlc-bgjn"), std::filesystem::path(kCommunity));
     QCOMPARE(EffectiveDestination(profile, "d:/msfs 2024/aircrafts/aerosoft-crj"),
              std::filesystem::path(kCommunity2024));
 }

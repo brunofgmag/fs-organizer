@@ -20,8 +20,8 @@ namespace
             std::chrono::duration_cast<std::chrono::milliseconds>(timestamp.time_since_epoch()).count();
 
         return QDateTime::fromMSecsSinceEpoch(milliseconds, QTimeZone::UTC)
-               .toLocalTime()
-               .toString(QStringLiteral("dd/MM/yyyy HH:mm:ss"));
+            .toLocalTime()
+            .toString(QStringLiteral("dd/MM/yyyy HH:mm:ss"));
     }
 
     QString OutcomeOf(const OperationRecord& record)
@@ -74,19 +74,18 @@ QString JournalModel::KindLabel(const OperationKind kind)
 
 QString JournalModel::LibraryLabel(const LibraryId& libraryId) const
 {
-    const auto library = std::ranges::find_if(profile_.libraries, [&libraryId](const Library& candidate)
-    {
-        return EqualsIgnoringCase(candidate.id, libraryId);
-    });
+    const auto library = std::ranges::find_if(profile_.libraries,
+                                              [&libraryId](const Library& candidate)
+                                              {
+                                                  return EqualsIgnoringCase(candidate.id, libraryId);
+                                              });
 
     if (library == profile_.libraries.end())
     {
         return libraryId.empty() ? QString() : tr("(biblioteca removida)");
     }
 
-    return library->label.empty()
-               ? AsText(library->path.filename())
-               : QString::fromStdString(library->label);
+    return library->label.empty() ? AsText(library->path.filename()) : QString::fromStdString(library->label);
 }
 
 const JournalEntry* JournalModel::EntryAt(const QModelIndex& position) const
@@ -106,8 +105,7 @@ const OperationRecord* JournalModel::StepAt(const QModelIndex& position) const
         return nullptr;
     }
 
-    return &entries_[static_cast<std::size_t>(position.internalId())]
-            .steps[static_cast<std::size_t>(position.row())];
+    return &entries_[static_cast<std::size_t>(position.internalId())].steps[static_cast<std::size_t>(position.row())];
 }
 
 QModelIndex JournalModel::index(const int row, const int column, const QModelIndex& parent) const
@@ -117,9 +115,8 @@ QModelIndex JournalModel::index(const int row, const int column, const QModelInd
         return {};
     }
 
-    return parent.isValid()
-               ? createIndex(row, column, static_cast<quintptr>(parent.row()))
-               : createIndex(row, column, kNoParent);
+    return parent.isValid() ? createIndex(row, column, static_cast<quintptr>(parent.row()))
+                            : createIndex(row, column, kNoParent);
 }
 
 QModelIndex JournalModel::parent(const QModelIndex& child) const
@@ -169,8 +166,7 @@ QVariant JournalModel::EntryColumn(const JournalEntry& entry, const int column) 
     case LibraryColumn: return LibraryLabel(entry.First().addonId.libraryId);
     case SourceColumn: return AsText(entry.First().source);
     case TargetColumn: return AsText(entry.Last().target);
-    case OutcomeColumn:
-        return entry.Succeeded() ? tr("concluída") : OutcomeOf(entry.Last());
+    case OutcomeColumn: return entry.Succeeded() ? tr("concluída") : OutcomeOf(entry.Last());
     default: return {};
     }
 }
@@ -275,9 +271,10 @@ bool JournalFilterModel::filterAcceptsRow(const int sourceRow, const QModelIndex
 
     for (int column = 0; column < sourceModel()->columnCount(sourceParent); ++column)
     {
-        if (sourceModel()->data(position.siblingAtColumn(column), Qt::DisplayRole)
-            .toString()
-            .contains(search_, Qt::CaseInsensitive))
+        if (sourceModel()
+                ->data(position.siblingAtColumn(column), Qt::DisplayRole)
+                .toString()
+                .contains(search_, Qt::CaseInsensitive))
         {
             return true;
         }

@@ -15,8 +15,7 @@ public:
     void Search(const QString& text);
 
 protected:
-    [[nodiscard]] bool filterAcceptsRow(int sourceRow,
-                                        const QModelIndex& sourceParent) const override;
+    [[nodiscard]] bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
 
 private:
     bool hideEmpty_ = false;

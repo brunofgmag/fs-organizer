@@ -31,10 +31,9 @@ public:
         removalFails_ = true;
     }
 
-    [[nodiscard]] CopyOutcome CopyTree(
-        const std::filesystem::path& source,
-        const std::filesystem::path& destination,
-        const std::function<bool(const CopyProgress &)>& onProgress) override
+    [[nodiscard]] CopyOutcome CopyTree(const std::filesystem::path& source,
+                                       const std::filesystem::path& destination,
+                                       const std::function<bool(const CopyProgress&)>& onProgress) override
     {
         const std::vector<std::filesystem::path> files = fileSystem_.FilesUnder(source);
 
@@ -54,11 +53,9 @@ public:
                 return CopyOutcome::Cancelled;
             }
 
-            const std::filesystem::path landing =
-                destination / file.lexically_relative(source);
+            const std::filesystem::path landing = destination / file.lexically_relative(source);
             for (std::filesystem::path folder = landing.parent_path();
-                 folder != destination && folder.has_relative_path();
-                 folder = folder.parent_path())
+                 folder != destination && folder.has_relative_path(); folder = folder.parent_path())
             {
                 fileSystem_.AddDirectory(folder);
             }
@@ -80,8 +77,7 @@ public:
         return CopyOutcome::Completed;
     }
 
-    [[nodiscard]] bool Move(const std::filesystem::path& source,
-                            const std::filesystem::path& destination) override
+    [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override
     {
         return !moveFails_ && fileSystem_.MoveTree(source, destination);
     }

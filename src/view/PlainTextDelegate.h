@@ -12,8 +12,7 @@ class PlainTextDelegate final : public QStyledItemDelegate
 public:
     explicit PlainTextDelegate(QObject* parent = nullptr);
 
-    void paint(QPainter* painter, const QStyleOptionViewItem& option,
-               const QModelIndex& index) const override;
+    void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private:
     [[nodiscard]] QString Fitted(const QString& text, const QStyleOptionViewItem& item, int width) const;

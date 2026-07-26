@@ -11,11 +11,9 @@
 [[nodiscard]] const Library* LibraryContaining(const std::vector<Library>& libraries,
                                                const std::filesystem::path& path);
 
-[[nodiscard]] const Library* LibraryContaining(const SimulatorProfile& profile,
-                                               const std::filesystem::path& path);
+[[nodiscard]] const Library* LibraryContaining(const SimulatorProfile& profile, const std::filesystem::path& path);
 
-[[nodiscard]] std::filesystem::path RelativeToLibrary(const Library& library,
-                                                      const std::filesystem::path& path);
+[[nodiscard]] std::filesystem::path RelativeToLibrary(const Library& library, const std::filesystem::path& path);
 
 [[nodiscard]] AddonId IdentityOf(const SimulatorProfile& profile, const std::filesystem::path& addonFolder);
 

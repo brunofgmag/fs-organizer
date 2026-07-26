@@ -16,9 +16,8 @@ namespace
 {
     QString VariantLabel(const SimulatorVariant variant)
     {
-        return variant == SimulatorVariant::MSFS2020
-                   ? QObject::tr("Flight Simulator 2020")
-                   : QObject::tr("Flight Simulator 2024");
+        return variant == SimulatorVariant::MSFS2020 ? QObject::tr("Flight Simulator 2020")
+                                                     : QObject::tr("Flight Simulator 2024");
     }
 
     QString CandidateLabel(const SimulatorCandidate& candidate)
@@ -34,8 +33,7 @@ namespace
     }
 }
 
-SetupWizard::SetupWizard(SetupViewModel& viewModel, QWidget* parent)
-    : QWizard(parent), viewModel_(viewModel)
+SetupWizard::SetupWizard(SetupViewModel& viewModel, QWidget* parent) : QWizard(parent), viewModel_(viewModel)
 {
     setWindowTitle(tr("FS Organizer — primeira configuração"));
     setWizardStyle(ModernStyle);
@@ -45,11 +43,12 @@ SetupWizard::SetupWizard(SetupViewModel& viewModel, QWidget* parent)
     addPage(CreateSimulatorPage());
     addPage(CreateLibraryPage());
 
-    connect(this, &QWizard::accepted, this, [this]
-    {
-        viewModel_.ChooseCandidate(static_cast<std::size_t>(simulators_->currentRow()));
-        viewModel_.Complete();
-    });
+    connect(this, &QWizard::accepted, this,
+            [this]
+            {
+                viewModel_.ChooseCandidate(static_cast<std::size_t>(simulators_->currentRow()));
+                viewModel_.Complete();
+            });
 }
 
 QWizardPage* SetupWizard::CreateSimulatorPage()
@@ -62,10 +61,8 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
     RefreshCandidates();
 
     variant_ = new QComboBox(page);
-    variant_->addItem(VariantLabel(SimulatorVariant::MSFS2024),
-                      static_cast<int>(SimulatorVariant::MSFS2024));
-    variant_->addItem(VariantLabel(SimulatorVariant::MSFS2020),
-                      static_cast<int>(SimulatorVariant::MSFS2020));
+    variant_->addItem(VariantLabel(SimulatorVariant::MSFS2024), static_cast<int>(SimulatorVariant::MSFS2024));
+    variant_->addItem(VariantLabel(SimulatorVariant::MSFS2020), static_cast<int>(SimulatorVariant::MSFS2020));
 
     auto* browse = new QPushButton(tr("Apontar uma pasta manualmente..."), page);
     connect(browse, &QPushButton::clicked, this, &SetupWizard::BrowseForDestination);
@@ -88,7 +85,7 @@ QWizardPage* SetupWizard::CreateLibraryPage()
     auto* page = new QWizardPage;
     page->setTitle(tr("Bibliotecas"));
     page->setSubTitle(tr("Escolha a pasta raiz onde os seus addons ficam guardados, fora do "
-        "simulador. As subpastas dela viram categorias."));
+                         "simulador. As subpastas dela viram categorias."));
 
     libraries_ = new QListWidget(page);
 
@@ -104,8 +101,7 @@ QWizardPage* SetupWizard::CreateLibraryPage()
 
 void SetupWizard::BrowseForDestination()
 {
-    const QString chosen =
-        QFileDialog::getExistingDirectory(this, tr("Escolha a pasta de destino do simulador"));
+    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Escolha a pasta de destino do simulador"));
     if (chosen.isEmpty())
     {
         return;
@@ -117,8 +113,7 @@ void SetupWizard::BrowseForDestination()
         return;
     }
 
-    viewModel_.AddManualCandidate(
-        path, static_cast<SimulatorVariant>(variant_->currentData().toInt()));
+    viewModel_.AddManualCandidate(path, static_cast<SimulatorVariant>(variant_->currentData().toInt()));
 
     RefreshCandidates();
     simulators_->setCurrentRow(simulators_->count() - 1);
@@ -137,14 +132,12 @@ bool SetupWizard::ConfirmDestination(const std::filesystem::path& path)
         return false;
 
     case DestinationCheck::AcceptedButUnfamiliar:
-        QMessageBox::information(
-            this, tr("Confirme a pasta"),
-            tr("Essa pasta não se parece com um destino do simulador, que costuma se chamar "
-                "Community. Ela será usada assim mesmo."));
+        QMessageBox::information(this, tr("Confirme a pasta"),
+                                 tr("Essa pasta não se parece com um destino do simulador, que costuma se chamar "
+                                    "Community. Ela será usada assim mesmo."));
         return true;
 
-    case DestinationCheck::Accepted:
-        return true;
+    case DestinationCheck::Accepted: return true;
     }
 
     return false;
@@ -166,8 +159,7 @@ void SetupWizard::RefreshCandidates() const
 
 void SetupWizard::BrowseForLibrary()
 {
-    const QString chosen =
-        QFileDialog::getExistingDirectory(this, tr("Escolha a pasta da biblioteca"));
+    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Escolha a pasta da biblioteca"));
     if (chosen.isEmpty())
     {
         return;
@@ -176,10 +168,9 @@ void SetupWizard::BrowseForLibrary()
     const std::filesystem::path path = AsPath(chosen);
     if (!viewModel_.RegisterLibrary(path, path.filename().string()).Accepted())
     {
-        QMessageBox::warning(
-            this, tr("Biblioteca repetida"),
-            tr("Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz "
-                "onde os addons ficam guardados; as subpastas dela viram categorias."));
+        QMessageBox::warning(this, tr("Biblioteca repetida"),
+                             tr("Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz "
+                                "onde os addons ficam guardados; as subpastas dela viram categorias."));
         return;
     }
 
@@ -191,12 +182,11 @@ void SetupWizard::RefreshLibraries() const
     libraries_->clear();
     for (const RegisteredLibrary& registered : viewModel_.Libraries())
     {
-        const QString categories =
-            tr("%n categoria(s)", nullptr, static_cast<int>(registered.categories));
+        const QString categories = tr("%n categoria(s)", nullptr, static_cast<int>(registered.categories));
         const QString addons = tr("%n addon(s)", nullptr, static_cast<int>(registered.addons));
 
         libraries_->addItem(QStringLiteral("%1 — %2 · %3, %4")
-            .arg(QString::fromStdString(registered.library.label),
-                 AsText(registered.library.path), categories, addons));
+                                .arg(QString::fromStdString(registered.library.label), AsText(registered.library.path),
+                                     categories, addons));
     }
 }

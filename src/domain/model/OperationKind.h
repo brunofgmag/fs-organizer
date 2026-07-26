@@ -52,13 +52,11 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::QuarantineFromLibrary:
     case OperationKind::RestoreFromQuarantine:
     case OperationKind::DiscardFromQuarantine:
-    case OperationKind::DiscardStaging:
-        return true;
+    case OperationKind::DiscardStaging: return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:
     case OperationKind::RemoveBrokenLink:
-    case OperationKind::RepointLink:
-        return false;
+    case OperationKind::RepointLink: return false;
     }
 
     return false;

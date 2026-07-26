@@ -25,19 +25,18 @@ namespace
         return std::chrono::system_clock::time_point{std::chrono::seconds{1'769'000'000 + seconds}};
     }
 
-    OperationRecord Step(const OperationKind kind, const int seconds,
-                         const ImportResult result = ImportResult::Completed)
+    OperationRecord
+    Step(const OperationKind kind, const int seconds, const ImportResult result = ImportResult::Completed)
     {
-        return OperationRecord::OfImport(Moment(seconds), kind, AddonId{"lib-1", "simbridge"}, kSource,
-                                         kTarget, result);
+        return OperationRecord::OfImport(Moment(seconds), kind, AddonId{"lib-1", "simbridge"}, kSource, kTarget,
+                                         result);
     }
 
-    OperationRecord Link(const OperationKind kind, const int seconds,
-                         const LinkFailure failure = LinkFailure::None)
+    OperationRecord Link(const OperationKind kind, const int seconds, const LinkFailure failure = LinkFailure::None)
     {
         return OperationRecord::OfLink(Moment(seconds), kind, AddonId{"lib-1", "pmdg-aircraft-77w"},
-                                       "D:/Library/Aircrafts/pmdg-aircraft-77w",
-                                       "E:/Sim/Community/pmdg-aircraft-77w", failure);
+                                       "D:/Library/Aircrafts/pmdg-aircraft-77w", "E:/Sim/Community/pmdg-aircraft-77w",
+                                       failure);
     }
 
     SimulatorProfile Profile()
@@ -55,8 +54,8 @@ namespace
             Step(OperationKind::ImportVerifyStaging, 1),
             Step(OperationKind::ImportMoveIntoPlace, 2),
             Step(OperationKind::ImportRemoveSource, 3),
-            OperationRecord::OfLink(Moment(4), OperationKind::EnableAddon, AddonId{"lib-1", "simbridge"},
-                                    kTarget, kSource, LinkFailure::None),
+            OperationRecord::OfLink(Moment(4), OperationKind::EnableAddon, AddonId{"lib-1", "simbridge"}, kTarget,
+                                    kSource, LinkFailure::None),
             Link(OperationKind::DisableAddon, 5),
         };
     }
@@ -77,8 +76,7 @@ void JournalModelTest::AnImportIsOneRowWithItsStepsUnderneath()
     QVERIFY(run.data(JournalModel::SucceededRole).toBool());
 
     const QModelIndex firstStep = model.index(0, JournalModel::OperationColumn, model.index(1, 0, {}));
-    QCOMPARE(firstStep.data(Qt::DisplayRole).toString(),
-             QStringLiteral("Copiar para a área de staging"));
+    QCOMPARE(firstStep.data(Qt::DisplayRole).toString(), QStringLiteral("Copiar para a área de staging"));
     QCOMPARE(model.rowCount(firstStep), 0);
     QCOMPARE(model.parent(firstStep), model.index(1, 0, {}));
 }

@@ -93,8 +93,8 @@ namespace
         for (int move = 0; move < kMoves; ++move)
         {
             const QPointF where(200, 40 + move * 19);
-            QMouseEvent moved(QEvent::MouseMove, where, view.viewport()->mapToGlobal(where),
-                              Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+            QMouseEvent moved(QEvent::MouseMove, where, view.viewport()->mapToGlobal(where), Qt::NoButton, Qt::NoButton,
+                              Qt::NoModifier);
 
             QElapsedTimer timer;
             timer.start();
@@ -107,13 +107,11 @@ namespace
 
         view.viewport()->removeEventFilter(&spy);
 
-        Out() << what.leftJustified(34)
-            << "linhas " << QString::number(view.model()->rowCount({})).rightJustified(5)
-            << "   " << QString::number(Median(moves), 'f', 2).rightJustified(6)
-            << " ms por movimento"
-            << "   pinturas " << QString::number(spy.paints / double{kMoves}, 'f', 1)
-            << "   repinta " << QString::number(spy.repaintedHeight / double{kMoves}, 'f', 0)
-            << " de " << view.viewport()->height() << " px\n";
+        Out() << what.leftJustified(34) << "linhas " << QString::number(view.model()->rowCount({})).rightJustified(5)
+              << "   " << QString::number(Median(moves), 'f', 2).rightJustified(6) << " ms por movimento"
+              << "   pinturas " << QString::number(spy.paints / double{kMoves}, 'f', 1) << "   repinta "
+              << QString::number(spy.repaintedHeight / double{kMoves}, 'f', 0) << " de " << view.viewport()->height()
+              << " px\n";
         Out().flush();
     }
 
@@ -131,9 +129,8 @@ namespace
 
         for (int notch = 0; notch < kNotches; ++notch)
         {
-            QWheelEvent wheel(QPointF(200, 200), view.viewport()->mapToGlobal(QPointF(200, 200)),
-                              QPoint(0, 0), QPoint(0, -120), Qt::NoButton, Qt::NoModifier,
-                              Qt::NoScrollPhase, false);
+            QWheelEvent wheel(QPointF(200, 200), view.viewport()->mapToGlobal(QPointF(200, 200)), QPoint(0, 0),
+                              QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
 
             QElapsedTimer timer;
             timer.start();
@@ -146,19 +143,16 @@ namespace
 
         view.viewport()->removeEventFilter(&spy);
 
-        Out() << what.leftJustified(34)
-            << "linhas " << QString::number(view.model()->rowCount({})).rightJustified(5)
-            << "   " << QString::number(Median(notches), 'f', 2).rightJustified(6)
-            << " ms por entalhe"
-            << "   pinturas " << QString::number(spy.paints / double{kNotches}, 'f', 1)
-            << "   repinta " << QString::number(spy.repaintedHeight / double{kNotches}, 'f', 0)
-            << " de " << view.viewport()->height() << " px\n";
+        Out() << what.leftJustified(34) << "linhas " << QString::number(view.model()->rowCount({})).rightJustified(5)
+              << "   " << QString::number(Median(notches), 'f', 2).rightJustified(6) << " ms por entalhe"
+              << "   pinturas " << QString::number(spy.paints / double{kNotches}, 'f', 1) << "   repinta "
+              << QString::number(spy.repaintedHeight / double{kNotches}, 'f', 0) << " de " << view.viewport()->height()
+              << " px\n";
         Out().flush();
     }
 }
 
-int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel& viewModel,
-                         JournalModel& model)
+int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel& viewModel, JournalModel& model)
 {
     QObject::connect(&window, &MainWindow::PageSelected, &viewModel,
                      [&page, &viewModel](const QWidget* selected)
@@ -208,9 +202,9 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     }
 
     Out() << "entradas no diario: " << model.rowCount({})
-        << "  primeira abertura: " << QString::number(firstShow, 'f', 0) << " ms"
-        << "  segunda: " << QString::number(secondShow, 'f', 0) << " ms"
-        << "  viewport " << view->viewport()->width() << "x" << view->viewport()->height() << "\n";
+          << "  primeira abertura: " << QString::number(firstShow, 'f', 0) << " ms"
+          << "  segunda: " << QString::number(secondShow, 'f', 0) << " ms"
+          << "  viewport " << view->viewport()->width() << "x" << view->viewport()->height() << "\n";
 
     timer.restart();
     for (int column = 0; column < model.columnCount({}); ++column)
@@ -218,7 +212,7 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
         view->resizeColumnToContents(column);
     }
     Out() << "resizeColumnToContents nas 7 colunas: "
-        << QString::number(static_cast<double>(timer.nsecsElapsed()) / 1e6, 'f', 0) << " ms\n\n";
+          << QString::number(static_cast<double>(timer.nsecsElapsed()) / 1e6, 'f', 0) << " ms\n\n";
 
     ReportScroll("diario inteiro", *view);
     ReportHover("passando o mouse", *view);
@@ -229,7 +223,6 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     ReportScroll("  com o delegate do Qt", *view);
     view->setItemDelegate(ours);
     LetTheWindowSettle();
-
 
     if (auto* failuresOnly = page.findChild<QCheckBox*>())
     {
