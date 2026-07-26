@@ -59,8 +59,8 @@ void WindowsLinkServiceTest::AJunctionReadsBackTheTargetItWasCreatedWith()
 
     const std::optional<std::filesystem::path> readBack = linkService.ReadLinkTarget(linkPath);
     QVERIFY(readBack.has_value());
-    QVERIFY(readBack->string().starts_with(R"(\??\)"));
-    QCOMPARE(ComparablePath(NormalizeReparseTarget(*readBack)), ComparablePath(target));
+    QVERIFY(!readBack->string().starts_with(R"(\??\)"));
+    QCOMPARE(ComparablePath(*readBack), ComparablePath(target));
 }
 
 void WindowsLinkServiceTest::RemovingTheNodeSparesTheTargetAndEverythingInside()

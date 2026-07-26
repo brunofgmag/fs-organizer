@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "domain/support/PathUtils.h"
+
 namespace
 {
     constexpr DWORD kReparseHeaderBytes = 8;
@@ -205,5 +207,5 @@ std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(
     const std::wstring target(reinterpret_cast<const wchar_t*>(pathBuffer + nameOffset),
                               nameLength / sizeof(WCHAR));
 
-    return std::filesystem::path(target);
+    return NormalizeReparseTarget(std::filesystem::path(target));
 }
