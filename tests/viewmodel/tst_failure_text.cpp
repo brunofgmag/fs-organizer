@@ -8,7 +8,7 @@ class FailureTextTest : public QObject
     Q_OBJECT
 
 private slots:
-    static void EveryImportResultExceptSuccessCarriesAnExplanation();
+    static void EveryFileResultExceptSuccessCarriesAnExplanation();
     static void EveryLinkFailureExceptSuccessCarriesAnExplanation();
     static void EveryCategoryRuleThatMatchedSaysWhyItMatched();
     static void ARefusedImportNamesTheFolderAndWhyItWasRefused();
@@ -16,11 +16,11 @@ private slots:
     static void ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs();
 };
 
-void FailureTextTest::EveryImportResultExceptSuccessCarriesAnExplanation()
+void FailureTextTest::EveryFileResultExceptSuccessCarriesAnExplanation()
 {
-    for (const ImportResult result : kAllImportResults)
+    for (const FileResult result : kAllFileResults)
     {
-        if (result == ImportResult::Completed)
+        if (result == FileResult::Completed)
         {
             QVERIFY(Explain(result).isEmpty());
             continue;
@@ -61,28 +61,28 @@ void FailureTextTest::EveryCategoryRuleThatMatchedSaysWhyItMatched()
 void FailureTextTest::ARefusedImportNamesTheFolderAndWhyItWasRefused()
 {
     const ImportOperationResult result{ImportRequest{"E:/Sim/Community/simbridge", "D:/Library/Sceneries"},
-                                       ImportResult::NotEnoughFreeSpace};
+                                       FileResult::NotEnoughFreeSpace};
 
     const QString line = Describe(result);
 
     QVERIFY(line.contains(QStringLiteral("simbridge")));
-    QVERIFY(line.contains(Explain(ImportResult::NotEnoughFreeSpace)));
+    QVERIFY(line.contains(Explain(FileResult::NotEnoughFreeSpace)));
 }
 
 void FailureTextTest::AnIdentityAlreadyTakenSaysWhereTheOccupantIs()
 {
     const ImportOperationResult result{ImportRequest{"E:/Sim/Community/simbridge", "D:/Library/Sceneries"},
-                                       ImportResult::TheIdentityIsTaken, "D:/Library/Utils/simbridge"};
+                                       FileResult::TheIdentityIsTaken, "D:/Library/Utils/simbridge"};
 
     const QString line = Describe(result);
 
-    QVERIFY(line.contains(Explain(ImportResult::TheIdentityIsTaken)));
+    QVERIFY(line.contains(Explain(FileResult::TheIdentityIsTaken)));
     QVERIFY(line.contains(AsText("D:/Library/Utils/simbridge")));
 }
 
 void FailureTextTest::ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs()
 {
-    const FileOperationResult result{"D:/Library/_fsorganizer-quarantine/simbridge", ImportResult::TheIdentityIsTaken,
+    const FileOperationResult result{"D:/Library/_fsorganizer-quarantine/simbridge", FileResult::TheIdentityIsTaken,
                                      "D:/Library/Sceneries/simbridge"};
 
     const QString line = Describe(result);

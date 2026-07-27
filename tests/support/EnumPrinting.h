@@ -5,7 +5,7 @@
 
 #include "domain/model/CheckState.h"
 #include "domain/model/EntryClassification.h"
-#include "domain/model/ImportResult.h"
+#include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
 #include "domain/model/OperationRecord.h"
@@ -60,26 +60,26 @@ namespace QTest
     }
 
     template<>
-    inline char* toString(const ImportResult& t)
+    inline char* toString(const FileResult& t)
     {
         switch (t)
         {
-        case ImportResult::Completed: return qstrdup("Completed");
-        case ImportResult::Cancelled: return qstrdup("Cancelled");
-        case ImportResult::TheSimulatorIsRunning: return qstrdup("TheSimulatorIsRunning");
-        case ImportResult::CouldNotQuarantine: return qstrdup("CouldNotQuarantine");
-        case ImportResult::SourceIsNotUnderADestination: return qstrdup("SourceIsNotUnderADestination");
-        case ImportResult::SourceIsAReparsePoint: return qstrdup("SourceIsAReparsePoint");
-        case ImportResult::CouldNotCheckFreeSpace: return qstrdup("CouldNotCheckFreeSpace");
-        case ImportResult::NotEnoughFreeSpace: return qstrdup("NotEnoughFreeSpace");
-        case ImportResult::CouldNotCopy: return qstrdup("CouldNotCopy");
-        case ImportResult::VerificationFailed: return qstrdup("VerificationFailed");
-        case ImportResult::CouldNotMoveIntoPlace: return qstrdup("CouldNotMoveIntoPlace");
-        case ImportResult::CouldNotRemoveSource: return qstrdup("CouldNotRemoveSource");
-        case ImportResult::CouldNotCreateLink: return qstrdup("CouldNotCreateLink");
+        case FileResult::Completed: return qstrdup("Completed");
+        case FileResult::Cancelled: return qstrdup("Cancelled");
+        case FileResult::TheSimulatorIsRunning: return qstrdup("TheSimulatorIsRunning");
+        case FileResult::CouldNotQuarantine: return qstrdup("CouldNotQuarantine");
+        case FileResult::SourceIsNotUnderADestination: return qstrdup("SourceIsNotUnderADestination");
+        case FileResult::SourceIsAReparsePoint: return qstrdup("SourceIsAReparsePoint");
+        case FileResult::CouldNotCheckFreeSpace: return qstrdup("CouldNotCheckFreeSpace");
+        case FileResult::NotEnoughFreeSpace: return qstrdup("NotEnoughFreeSpace");
+        case FileResult::CouldNotCopy: return qstrdup("CouldNotCopy");
+        case FileResult::VerificationFailed: return qstrdup("VerificationFailed");
+        case FileResult::CouldNotMoveIntoPlace: return qstrdup("CouldNotMoveIntoPlace");
+        case FileResult::CouldNotRemoveSource: return qstrdup("CouldNotRemoveSource");
+        case FileResult::CouldNotCreateLink: return qstrdup("CouldNotCreateLink");
         }
 
-        return qstrdup("ImportResult(?)");
+        return qstrdup("FileResult(?)");
     }
 
     template<>
@@ -116,7 +116,7 @@ namespace QTest
             return toString(*failure);
         }
 
-        return toString(std::get<ImportResult>(t));
+        return toString(std::get<FileResult>(t));
     }
 }
 

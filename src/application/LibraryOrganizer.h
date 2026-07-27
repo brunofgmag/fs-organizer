@@ -49,7 +49,7 @@ private:
                 const AddonId& addon,
                 const std::filesystem::path& source,
                 const std::filesystem::path& target,
-                ImportResult result) const;
+                FileResult result) const;
 
     const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;

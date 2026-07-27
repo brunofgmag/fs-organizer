@@ -242,14 +242,14 @@ void CommunityPage::ResolveTheSelectedConflict()
 
     for (const CopyConflict& conflict : conflicts)
     {
-        const std::optional<ImportResult> result = ResolveOneConflict(conflict, ++asked, conflicts.size());
+        const std::optional<FileResult> result = ResolveOneConflict(conflict, ++asked, conflicts.size());
         if (!result.has_value())
         {
             --asked;
             break;
         }
 
-        resolved += *result == ImportResult::Completed ? 1 : 0;
+        resolved += *result == FileResult::Completed ? 1 : 0;
     }
 
     viewModel_.Show();
@@ -272,7 +272,7 @@ void CommunityPage::ResolveConflict(const CopyConflict& conflict)
     }
 }
 
-std::optional<ImportResult>
+std::optional<FileResult>
 CommunityPage::ResolveOneConflict(const CopyConflict& conflict, const std::size_t position, const std::size_t total)
 {
     ConflictDialog dialog(importViewModel_.DetailsOf(conflict), this);
@@ -286,12 +286,12 @@ CommunityPage::ResolveOneConflict(const CopyConflict& conflict, const std::size_
         return std::nullopt;
     }
 
-    const ImportResult result = importViewModel_.ResolveConflict(conflict, dialog.Choice());
+    const FileResult result = importViewModel_.ResolveConflict(conflict, dialog.Choice());
 
-    if (result != ImportResult::Completed)
+    if (result != FileResult::Completed)
     {
         QMessageBox::warning(this, tr("O conflito continua"),
-                             result == ImportResult::CouldNotRemoveTheLink
+                             result == FileResult::CouldNotRemoveTheLink
                                  ? tr("Nenhuma pasta foi movida: %1.").arg(Explain(result))
                                  : tr("Nada foi apagado: %1.").arg(Explain(result)));
     }
@@ -381,7 +381,7 @@ void CommunityPage::OnImportFinished(const std::vector<ImportOperationResult>& r
     QStringList failed;
     for (const ImportOperationResult& result : results)
     {
-        if (result.result != ImportResult::Completed)
+        if (result.result != FileResult::Completed)
         {
             failed.append(Describe(result));
         }

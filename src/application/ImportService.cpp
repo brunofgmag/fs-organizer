@@ -133,7 +133,7 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
     {
         for (const ImportRequest& request : requests)
         {
-            results.push_back(ImportOperationResult{request, ImportResult::TheSimulatorIsRunning});
+            results.push_back(ImportOperationResult{request, FileResult::TheSimulatorIsRunning});
         }
 
         return results;
@@ -145,7 +145,7 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
     {
         if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, request.Target()))
         {
-            results.push_back(ImportOperationResult{request, ImportResult::TheIdentityIsTaken, occupant->path});
+            results.push_back(ImportOperationResult{request, FileResult::TheIdentityIsTaken, occupant->path});
             continue;
         }
 
@@ -156,43 +156,43 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
     return results;
 }
 
-ImportResult ImportService::ResolveConflict(const SimulatorProfile& profile,
-                                            const std::vector<DestinationEntry>& entries,
-                                            const CopyConflict& conflict,
-                                            const ConflictChoice choice) const
+FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
+                                          const std::vector<DestinationEntry>& entries,
+                                          const CopyConflict& conflict,
+                                          const ConflictChoice choice) const
 {
     if (processProbe_.SimulatorIsRunning())
     {
-        return ImportResult::TheSimulatorIsRunning;
+        return FileResult::TheSimulatorIsRunning;
     }
 
     const Resolution resolution = ResolutionFor(profile, conflict, choice);
 
     if (resolution.quarantine.empty())
     {
-        return ImportResult::CouldNotQuarantine;
+        return FileResult::CouldNotQuarantine;
     }
 
     const AddonId addon = IdentityOf(profile, conflict.libraryPath);
 
     if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, resolution.loser), addon, resolution.loser))
     {
-        return ImportResult::CouldNotRemoveTheLink;
+        return FileResult::CouldNotRemoveTheLink;
     }
 
     const bool moved = files_.Move(resolution.loser, resolution.quarantine);
 
     log_.RecordImport(resolution.kind, addon, resolution.loser, resolution.quarantine,
-                      moved ? ImportResult::Completed : ImportResult::CouldNotQuarantine);
+                      moved ? FileResult::Completed : FileResult::CouldNotQuarantine);
 
     if (!moved)
     {
-        return ImportResult::CouldNotQuarantine;
+        return FileResult::CouldNotQuarantine;
     }
 
     if (!resolution.relinks)
     {
-        return ImportResult::Completed;
+        return FileResult::Completed;
     }
 
     const LinkOutcome link =
@@ -200,7 +200,7 @@ ImportResult ImportService::ResolveConflict(const SimulatorProfile& profile,
 
     log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, conflict.destinationPath, link.Failure());
 
-    return link.Succeeded() ? ImportResult::Completed : ImportResult::CouldNotCreateLink;
+    return link.Succeeded() ? FileResult::Completed : FileResult::CouldNotCreateLink;
 }
 
 ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
@@ -242,7 +242,7 @@ void ImportService::Record(const SimulatorProfile& profile,
                            const std::filesystem::path& addonFolder,
                            const std::filesystem::path& source,
                            const std::filesystem::path& target,
-                           const ImportResult result) const
+                           const FileResult result) const
 {
     log_.RecordImport(kind, IdentityOf(profile, addonFolder), source, target, result);
 }
@@ -269,35 +269,35 @@ std::vector<QuarantinedItem> ImportService::Quarantined(const SimulatorProfile& 
     return items;
 }
 
-ImportResult ImportService::RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
+FileResult ImportService::RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
 {
     if (!item.KnowsWhereItCameFrom())
     {
-        return ImportResult::TheOriginIsUnknown;
+        return FileResult::TheOriginIsUnknown;
     }
 
     if (filesystemProbe_.EntryExistsWithoutFollowingLinks(item.origin))
     {
-        return ImportResult::CouldNotRestore;
+        return FileResult::CouldNotRestore;
     }
 
     const bool moved = files_.Move(item.path, item.origin);
-    const ImportResult result = moved ? ImportResult::Completed : ImportResult::CouldNotRestore;
+    const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotRestore;
 
     Record(profile, OperationKind::RestoreFromQuarantine, item.origin, item.path, item.origin, result);
 
     return result;
 }
 
-ImportResult ImportService::DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
+FileResult ImportService::DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
 {
     if (!IsQuarantineFolder(item.path.parent_path()))
     {
-        return ImportResult::CouldNotDiscard;
+        return FileResult::CouldNotDiscard;
     }
 
     const bool removed = files_.RemoveTree(item.path);
-    const ImportResult result = removed ? ImportResult::Completed : ImportResult::CouldNotDiscard;
+    const FileResult result = removed ? FileResult::Completed : FileResult::CouldNotDiscard;
 
     Record(profile, OperationKind::DiscardFromQuarantine, item.origin.empty() ? item.path : item.origin, item.path, {},
            result);
@@ -315,7 +315,7 @@ std::vector<FileOperationResult> ImportService::Restore(const SimulatorProfile& 
     {
         for (const QuarantinedItem& item : items)
         {
-            results.push_back(FileOperationResult{item.path, ImportResult::TheSimulatorIsRunning});
+            results.push_back(FileOperationResult{item.path, FileResult::TheSimulatorIsRunning});
         }
 
         return results;
@@ -327,7 +327,7 @@ std::vector<FileOperationResult> ImportService::Restore(const SimulatorProfile& 
     {
         if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, item.origin))
         {
-            results.push_back(FileOperationResult{item.path, ImportResult::TheIdentityIsTaken, occupant->path});
+            results.push_back(FileOperationResult{item.path, FileResult::TheIdentityIsTaken, occupant->path});
             continue;
         }
 
@@ -348,7 +348,7 @@ std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& 
     for (const QuarantinedItem& item : items)
     {
         results.push_back(
-            FileOperationResult{item.path, blocked ? ImportResult::TheSimulatorIsRunning : DiscardOne(profile, item)});
+            FileOperationResult{item.path, blocked ? FileResult::TheSimulatorIsRunning : DiscardOne(profile, item)});
     }
 
     return results;
@@ -398,15 +398,15 @@ std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& pr
     return leftovers;
 }
 
-ImportResult ImportService::DiscardOneStaging(const SimulatorProfile& profile, const StagingLeftover& leftover) const
+FileResult ImportService::DiscardOneStaging(const SimulatorProfile& profile, const StagingLeftover& leftover) const
 {
     if (!IsStagingPath(leftover.staging))
     {
-        return ImportResult::CouldNotDiscard;
+        return FileResult::CouldNotDiscard;
     }
 
     const bool removed = files_.RemoveTree(leftover.staging);
-    const ImportResult result = removed ? ImportResult::Completed : ImportResult::CouldNotDiscard;
+    const FileResult result = removed ? FileResult::Completed : FileResult::CouldNotDiscard;
 
     Record(profile, OperationKind::DiscardStaging, leftover.target, leftover.staging, {}, result);
 
@@ -430,23 +430,23 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
 
         if (blocked)
         {
-            results.push_back(ImportOperationResult{request, ImportResult::TheSimulatorIsRunning});
+            results.push_back(ImportOperationResult{request, FileResult::TheSimulatorIsRunning});
             continue;
         }
 
         if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, leftover.target))
         {
-            results.push_back(ImportOperationResult{request, ImportResult::TheIdentityIsTaken, occupant->path});
+            results.push_back(ImportOperationResult{request, FileResult::TheIdentityIsTaken, occupant->path});
             continue;
         }
 
         if (!leftover.CanBeResumed())
         {
-            results.push_back(ImportOperationResult{request, ImportResult::TheOriginIsUnknown});
+            results.push_back(ImportOperationResult{request, FileResult::TheOriginIsUnknown});
             continue;
         }
 
-        if (const ImportResult discarded = DiscardOneStaging(profile, leftover); discarded != ImportResult::Completed)
+        if (const FileResult discarded = DiscardOneStaging(profile, leftover); discarded != FileResult::Completed)
         {
             results.push_back(ImportOperationResult{request, discarded});
             continue;
@@ -470,7 +470,7 @@ std::vector<FileOperationResult> ImportService::DiscardLeftovers(const Simulator
     for (const StagingLeftover& leftover : leftovers)
     {
         results.push_back(FileOperationResult{
-            leftover.staging, blocked ? ImportResult::TheSimulatorIsRunning : DiscardOneStaging(profile, leftover)});
+            leftover.staging, blocked ? FileResult::TheSimulatorIsRunning : DiscardOneStaging(profile, leftover)});
     }
 
     return results;

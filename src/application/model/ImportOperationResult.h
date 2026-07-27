@@ -4,12 +4,12 @@
 #include <filesystem>
 
 #include "domain/model/ImportRequest.h"
-#include "domain/model/ImportResult.h"
+#include "domain/model/FileResult.h"
 
 struct ImportOperationResult
 {
     ImportRequest request;
-    ImportResult result = ImportResult::Completed;
+    FileResult result = FileResult::Completed;
     std::filesystem::path occupant;
 };
 

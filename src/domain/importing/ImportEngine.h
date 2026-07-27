@@ -43,7 +43,7 @@ private:
                     OperationKind kind,
                     const std::filesystem::path& source,
                     const std::filesystem::path& target,
-                    ImportResult result) const;
+                    FileResult result) const;
 
     const FilesystemProbe& filesystemProbe_;
     FileOperations& files_;

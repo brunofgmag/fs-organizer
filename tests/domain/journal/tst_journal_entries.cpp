@@ -28,7 +28,7 @@ namespace
     }
 
     OperationRecord
-    Step(const OperationKind kind, const std::string& folder, const ImportResult result = ImportResult::Completed)
+    Step(const OperationKind kind, const std::string& folder, const FileResult result = FileResult::Completed)
     {
         return OperationRecord::OfImport(Moment(), kind, AddonId{"lib-1", folder}, kSource, kTarget, result);
     }
@@ -65,7 +65,7 @@ void JournalEntriesTest::AnImportThatStoppedHalfwayIsAnEntryWithTheStepsItGotThr
 {
     const std::vector<OperationRecord> records{
         Step(OperationKind::ImportCopyToStaging, "simbridge"),
-        Step(OperationKind::ImportVerifyStaging, "simbridge", ImportResult::VerificationFailed),
+        Step(OperationKind::ImportVerifyStaging, "simbridge", FileResult::VerificationFailed),
     };
 
     const std::vector<JournalEntry> entries = GroupImportRuns(records);

@@ -30,7 +30,7 @@ public:
 
     void Cancel();
 
-    [[nodiscard]] ImportResult ResolveConflict(const CopyConflict& conflict, ConflictChoice choice);
+    [[nodiscard]] FileResult ResolveConflict(const CopyConflict& conflict, ConflictChoice choice);
 
     [[nodiscard]] ConflictDetails DetailsOf(const CopyConflict& conflict) const;
 

@@ -38,10 +38,10 @@ public:
            const std::function<bool(const CopyProgress&)>& onProgress,
            const std::function<void(OperationKind)>& onStep = {}) const;
 
-    [[nodiscard]] ImportResult ResolveConflict(const SimulatorProfile& profile,
-                                               const std::vector<DestinationEntry>& entries,
-                                               const CopyConflict& conflict,
-                                               ConflictChoice choice) const;
+    [[nodiscard]] FileResult ResolveConflict(const SimulatorProfile& profile,
+                                             const std::vector<DestinationEntry>& entries,
+                                             const CopyConflict& conflict,
+                                             ConflictChoice choice) const;
 
     [[nodiscard]] ConflictDetails DetailsOf(const std::vector<DestinationEntry>& entries,
                                             const CopyConflict& conflict) const;
@@ -70,19 +70,18 @@ public:
 private:
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
 
-    [[nodiscard]] ImportResult RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
+    [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
 
-    [[nodiscard]] ImportResult DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
+    [[nodiscard]] FileResult DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
 
-    [[nodiscard]] ImportResult DiscardOneStaging(const SimulatorProfile& profile,
-                                                 const StagingLeftover& leftover) const;
+    [[nodiscard]] FileResult DiscardOneStaging(const SimulatorProfile& profile, const StagingLeftover& leftover) const;
 
     void Record(const SimulatorProfile& profile,
                 OperationKind kind,
                 const std::filesystem::path& addonFolder,
                 const std::filesystem::path& source,
                 const std::filesystem::path& target,
-                ImportResult result) const;
+                FileResult result) const;
 
     const ImportEngine& engine_;
     const ProcessProbe& processProbe_;

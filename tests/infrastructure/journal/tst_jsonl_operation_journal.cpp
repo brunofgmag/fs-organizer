@@ -50,7 +50,7 @@ namespace
                                        AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, failure);
     }
 
-    OperationRecord Record(const OperationKind kind, const ImportResult result)
+    OperationRecord Record(const OperationKind kind, const FileResult result)
     {
         return OperationRecord::OfImport(std::chrono::system_clock::time_point{kMoment}, kind,
                                          AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, result);
@@ -111,7 +111,7 @@ void JsonlOperationJournalTest::AnImportRecordCarriesItsResultAndNoLinkFailure()
     const Storage storage;
 
     JsonlOperationJournal journal(storage.File());
-    journal.Append(Record(OperationKind::ImportRemoveSource, ImportResult::CouldNotRemoveSource));
+    journal.Append(Record(OperationKind::ImportRemoveSource, FileResult::CouldNotRemoveSource));
 
     const QStringList lines = LinesOf(storage.File());
     QCOMPARE(lines.size(), 1);
@@ -132,8 +132,8 @@ void JsonlOperationJournalTest::EveryKindAndEveryReasonSurvivesTheRoundTrip()
     std::size_t reason = 0;
     for (const OperationKind kind : kAllOperationKinds)
     {
-        written.push_back(CarriesAnImportReason(kind)
-                              ? Record(kind, kAllImportResults[reason++ % kAllImportResults.size()])
+        written.push_back(CarriesAFileReason(kind)
+                              ? Record(kind, kAllFileResults[reason++ % kAllFileResults.size()])
                               : Record(kind, kAllLinkFailures[reason++ % kAllLinkFailures.size()]));
         journal.Append(written.back());
     }

@@ -125,7 +125,7 @@ void LibraryOrganizerTest::MovingAnEnabledAddonRecreatesTheLinkPointingAtTheNewP
     const std::vector<FileOperationResult> results = f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}});
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::Completed);
+    QCOMPARE(results.front().result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists(kMoved / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists(kAddon));
     QVERIFY(f.fileSystem.IsLink(kLink));
@@ -139,7 +139,7 @@ void LibraryOrganizerTest::MovingAnAddonDoesNotChangeItsIdentity()
 
     const AddonId before = IdentityOf(f.profile, kAddon);
 
-    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, ImportResult::Completed);
+    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, FileResult::Completed);
 
     const AddonId after = IdentityOf(f.profile, kMoved);
 
@@ -153,7 +153,7 @@ void LibraryOrganizerTest::MovingAnAddonToACategoryWithItsOwnDestinationRelinksT
     f.GiveTheCategoryItsOwnDestination(kAircrafts2024, kOtherDestination);
     f.EnableTheAddonIn(kDestination);
 
-    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, ImportResult::Completed);
+    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, FileResult::Completed);
 
     QVERIFY(!f.fileSystem.Exists(kLink));
     QVERIFY(f.fileSystem.IsLink(kOtherDestination / "aerosoft-crj"));
@@ -164,7 +164,7 @@ void LibraryOrganizerTest::MovingADisabledAddonLeavesTheDestinationAlone()
 {
     Fixture f;
 
-    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, ImportResult::Completed);
+    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, FileResult::Completed);
 
     QVERIFY(f.fileSystem.Exists(kMoved / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists(kLink));
@@ -181,7 +181,7 @@ void LibraryOrganizerTest::MovingIsRefusedWhenTheNameIsAlreadyTakenInTheLibrary(
 
     const std::vector<FileOperationResult> results = f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}});
 
-    QCOMPARE(results.front().result, ImportResult::TheIdentityIsTaken);
+    QCOMPARE(results.front().result, FileResult::TheIdentityIsTaken);
     QCOMPARE(results.front().occupant, kMoved);
     QVERIFY(f.fileSystem.Exists(kAddon / "manifest.json"));
     QCOMPARE(f.fileSystem.FileSize(kMoved / "manifest.json"), 2 * kMegabyte);
@@ -197,12 +197,12 @@ void LibraryOrganizerTest::NoFolderIsMovedWhileTheSimulatorIsRunning()
 
     const std::vector<FileOperationResult> results = f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}});
 
-    QCOMPARE(results.front().result, ImportResult::TheSimulatorIsRunning);
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
     QVERIFY(f.fileSystem.Exists(kAddon / "manifest.json"));
     QVERIFY(f.fileSystem.IsLink(kLink));
     QVERIFY(f.journal.appended.empty());
 
-    QCOMPARE(f.organizer.CreateCategory(f.profile, kLibrary, "Sceneries").result, ImportResult::TheSimulatorIsRunning);
+    QCOMPARE(f.organizer.CreateCategory(f.profile, kLibrary, "Sceneries").result, FileResult::TheSimulatorIsRunning);
     QVERIFY(!f.fileSystem.Exists("D:/Library/Sceneries"));
 }
 
@@ -211,7 +211,7 @@ void LibraryOrganizerTest::EveryStepOfAMoveIsJournalled()
     Fixture f;
     f.EnableTheAddonIn(kDestination);
 
-    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, ImportResult::Completed);
+    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, FileResult::Completed);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{3});
 
@@ -219,7 +219,7 @@ void LibraryOrganizerTest::EveryStepOfAMoveIsJournalled()
     QCOMPARE(f.journal.appended[0].source, kLink);
 
     QCOMPARE(f.journal.appended[1].kind, OperationKind::MoveAddon);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[1].outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[1].outcome), FileResult::Completed);
     QCOMPARE(f.journal.appended[1].source, kAddon);
     QCOMPARE(f.journal.appended[1].target, kMoved);
     QCOMPARE(f.journal.appended[1].addonId.folderName, std::string{"aerosoft-crj"});
@@ -236,7 +236,7 @@ void LibraryOrganizerTest::ACreatedCategoryIsAFolderInTheLibrary()
 
     const FileOperationResult result = f.organizer.CreateCategory(f.profile, kLibrary, "Sceneries");
 
-    QCOMPARE(result.result, ImportResult::Completed);
+    QCOMPARE(result.result, FileResult::Completed);
     QCOMPARE(result.path, std::filesystem::path{"D:/Library/Sceneries"});
     QVERIFY(f.fileSystem.IsDirectory("D:/Library/Sceneries"));
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
@@ -249,7 +249,7 @@ void LibraryOrganizerTest::ACategoryIsNotCreatedOutsideALibrary()
     Fixture f;
 
     QCOMPARE(f.organizer.CreateCategory(f.profile, kDestination, "Sceneries").result,
-             ImportResult::TheTargetIsNotInALibrary);
+             FileResult::TheTargetIsNotInALibrary);
     QVERIFY(!f.fileSystem.Exists("E:/Sim/Community/Sceneries"));
     QVERIFY(f.journal.appended.empty());
 }
@@ -261,7 +261,7 @@ void LibraryOrganizerTest::RenamingACategoryCarriesItsEnabledAddonsAlong()
 
     const FileOperationResult result = f.organizer.RenameCategory(f.profile, kAircrafts, "Airplanes");
 
-    QCOMPARE(result.result, ImportResult::Completed);
+    QCOMPARE(result.result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists("D:/Library/Airplanes/aerosoft-crj/manifest.json"));
     QVERIFY(!f.fileSystem.Exists(kAircrafts));
     QVERIFY(f.fileSystem.IsLink(kLink));

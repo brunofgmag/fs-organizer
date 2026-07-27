@@ -69,27 +69,27 @@ namespace
         return "unknown";
     }
 
-    QString ResultName(const ImportResult result)
+    QString ResultName(const FileResult result)
     {
         switch (result)
         {
-        case ImportResult::Completed: return "completed";
-        case ImportResult::Cancelled: return "cancelled";
-        case ImportResult::TheSimulatorIsRunning: return "theSimulatorIsRunning";
-        case ImportResult::CouldNotQuarantine: return "couldNotQuarantine";
-        case ImportResult::SourceIsNotUnderADestination: return "sourceIsNotUnderADestination";
-        case ImportResult::SourceIsAReparsePoint: return "sourceIsAReparsePoint";
-        case ImportResult::CouldNotCheckFreeSpace: return "couldNotCheckFreeSpace";
-        case ImportResult::NotEnoughFreeSpace: return "notEnoughFreeSpace";
-        case ImportResult::CouldNotCopy: return "couldNotCopy";
-        case ImportResult::VerificationFailed: return "verificationFailed";
-        case ImportResult::CouldNotMoveIntoPlace: return "couldNotMoveIntoPlace";
-        case ImportResult::CouldNotRemoveSource: return "couldNotRemoveSource";
-        case ImportResult::CouldNotCreateLink: return "couldNotCreateLink";
-        case ImportResult::TheOriginIsUnknown: return "theOriginIsUnknown";
-        case ImportResult::CouldNotRestore: return "couldNotRestore";
-        case ImportResult::CouldNotDiscard: return "couldNotDiscard";
-        case ImportResult::CouldNotRemoveTheLink: return "couldNotRemoveTheLink";
+        case FileResult::Completed: return "completed";
+        case FileResult::Cancelled: return "cancelled";
+        case FileResult::TheSimulatorIsRunning: return "theSimulatorIsRunning";
+        case FileResult::CouldNotQuarantine: return "couldNotQuarantine";
+        case FileResult::SourceIsNotUnderADestination: return "sourceIsNotUnderADestination";
+        case FileResult::SourceIsAReparsePoint: return "sourceIsAReparsePoint";
+        case FileResult::CouldNotCheckFreeSpace: return "couldNotCheckFreeSpace";
+        case FileResult::NotEnoughFreeSpace: return "notEnoughFreeSpace";
+        case FileResult::CouldNotCopy: return "couldNotCopy";
+        case FileResult::VerificationFailed: return "verificationFailed";
+        case FileResult::CouldNotMoveIntoPlace: return "couldNotMoveIntoPlace";
+        case FileResult::CouldNotRemoveSource: return "couldNotRemoveSource";
+        case FileResult::CouldNotCreateLink: return "couldNotCreateLink";
+        case FileResult::TheOriginIsUnknown: return "theOriginIsUnknown";
+        case FileResult::CouldNotRestore: return "couldNotRestore";
+        case FileResult::CouldNotDiscard: return "couldNotDiscard";
+        case FileResult::CouldNotRemoveTheLink: return "couldNotRemoveTheLink";
         }
 
         return "unknown";
@@ -140,9 +140,9 @@ namespace
 
         if (object.contains(kResult))
         {
-            return OperationRecord::OfImport(timestamp, *kind, addon, source, target,
-                                             ValueNamed(kAllImportResults, ResultName, object[kResult].toString())
-                                                 .value_or(ImportResult::Completed));
+            return OperationRecord::OfImport(
+                timestamp, *kind, addon, source, target,
+                ValueNamed(kAllFileResults, ResultName, object[kResult].toString()).value_or(FileResult::Completed));
         }
 
         return OperationRecord::OfLink(
@@ -165,7 +165,7 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     object[kSource] = AsText(record.source);
     object[kTarget] = AsText(record.target);
 
-    if (const ImportResult* result = std::get_if<ImportResult>(&record.outcome))
+    if (const FileResult* result = std::get_if<FileResult>(&record.outcome))
     {
         object[kResult] = ResultName(*result);
     }

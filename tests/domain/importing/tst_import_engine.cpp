@@ -93,7 +93,7 @@ void ImportEngineTest::AnImportThatDoesNotFitOnTheTargetVolumeTouchesNothing()
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::NotEnoughFreeSpace);
+    QCOMPARE(outcome.Result(), FileResult::NotEnoughFreeSpace);
     QVERIFY(!f.fileSystem.Exists(kTarget));
     QVERIFY(!f.fileSystem.Exists(kStaging));
     f.VerifySimBridgeIsStillWhereItWas();
@@ -107,7 +107,7 @@ void ImportEngineTest::AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::CouldNotCheckFreeSpace);
+    QCOMPARE(outcome.Result(), FileResult::CouldNotCheckFreeSpace);
     QVERIFY(!f.fileSystem.Exists(kTarget));
     f.VerifySimBridgeIsStillWhereItWas();
 }
@@ -125,7 +125,7 @@ void ImportEngineTest::CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntac
                                                       return reports < 2;
                                                   });
 
-    QCOMPARE(outcome.Result(), ImportResult::Cancelled);
+    QCOMPARE(outcome.Result(), FileResult::Cancelled);
     QVERIFY(!f.fileSystem.Exists(kStaging));
     QVERIFY(!f.fileSystem.Exists(kTarget));
     f.VerifySimBridgeIsStillWhereItWas();
@@ -139,7 +139,7 @@ void ImportEngineTest::ACopyThatFailsKeepsItsStagingForTheResumeToFind()
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::CouldNotCopy);
+    QCOMPARE(outcome.Result(), FileResult::CouldNotCopy);
     QVERIFY(f.fileSystem.Exists(kStaging));
     QVERIFY(!f.fileSystem.Exists(kTarget));
     f.VerifySimBridgeIsStillWhereItWas();
@@ -152,7 +152,7 @@ void ImportEngineTest::AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysic
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::Completed);
+    QCOMPARE(outcome.Result(), FileResult::Completed);
     QVERIFY(f.fileSystem.Exists(kTarget / "manifest.json"));
     QVERIFY(f.fileSystem.Exists(kTarget / "dist/simbridge.exe"));
     QCOMPARE(f.fileSystem.FileSize(kTarget / "dist/simbridge.exe"), 400 * kMegabyte);
@@ -169,7 +169,7 @@ void ImportEngineTest::AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs()
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::VerificationFailed);
+    QCOMPARE(outcome.Result(), FileResult::VerificationFailed);
     f.VerifySimBridgeIsStillWhereItWas();
     QVERIFY(!f.fileSystem.Exists(kTarget));
     QVERIFY(f.fileSystem.Exists(kStaging));
@@ -187,7 +187,7 @@ void ImportEngineTest::AFolderOutsideTheConfiguredDestinationsIsNeverImported()
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::SourceIsNotUnderADestination);
+    QCOMPARE(outcome.Result(), FileResult::SourceIsNotUnderADestination);
     QVERIFY(f.fileSystem.Exists("E:/Packages/orbx-central/manifest.json"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/orbx-central"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/orbx-central.fsorg-partial"));
@@ -202,7 +202,7 @@ void ImportEngineTest::ADestinationRootIsNotAFolderInsideItself()
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::SourceIsNotUnderADestination);
+    QCOMPARE(outcome.Result(), FileResult::SourceIsNotUnderADestination);
     QVERIFY(f.fileSystem.Exists("E:/Sim/Community"));
     f.VerifySimBridgeIsStillWhereItWas();
 }
@@ -222,7 +222,7 @@ void ImportEngineTest::AForeignLinkIsNeverImportedAsIfItWereAFolder()
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::SourceIsAReparsePoint);
+    QCOMPARE(outcome.Result(), FileResult::SourceIsAReparsePoint);
     QVERIFY(f.fileSystem.IsLink("E:/Sim/Community/fsdreamteam-gsx-pro"));
     QVERIFY(f.fileSystem.Exists(foreign / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/fsdreamteam-gsx-pro"));
@@ -235,7 +235,7 @@ void ImportEngineTest::AFinishedImportLeavesALinkWhereTheFolderUsedToBe()
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::Completed);
+    QCOMPARE(outcome.Result(), FileResult::Completed);
     QVERIFY(f.fileSystem.IsLink(kSource));
     QCOMPARE(f.fileSystem.LinkTarget(kSource).value(), kTarget);
 }
@@ -245,7 +245,7 @@ void ImportEngineTest::EveryStepOfAFinishedImportReachesTheJournalInOrder()
     Fixture f;
     f.AddSimBridgeToTheDestination();
 
-    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), ImportResult::Completed);
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{5});
 
@@ -264,11 +264,11 @@ void ImportEngineTest::EveryStepOfAFinishedImportReachesTheJournalInOrder()
 
     QCOMPARE(f.journal.appended[0].source, kSource);
     QCOMPARE(f.journal.appended[0].target, kStaging);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[0].outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[0].outcome), FileResult::Completed);
 
     QCOMPARE(f.journal.appended[1].source, kStaging);
     QCOMPARE(f.journal.appended[1].target, kTarget);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[1].outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[1].outcome), FileResult::Completed);
 
     QCOMPARE(f.journal.appended[2].source, kStaging);
     QCOMPARE(f.journal.appended[2].target, kTarget);
@@ -287,11 +287,11 @@ void ImportEngineTest::AVerificationThatFailsSaysSoInsteadOfLeavingTheJournalSil
     f.AddSimBridgeToTheDestination();
     f.files.MakeTheCopyDropAFile();
 
-    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), ImportResult::VerificationFailed);
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::VerificationFailed);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{2});
     QCOMPARE(f.journal.appended[1].kind, OperationKind::ImportVerifyStaging);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[1].outcome), ImportResult::VerificationFailed);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[1].outcome), FileResult::VerificationFailed);
     QCOMPARE(f.journal.appended[1].source, kStaging);
     QCOMPARE(f.journal.appended[1].target, kTarget);
 }
@@ -302,11 +302,11 @@ void ImportEngineTest::ACopyThatFailsIsTheLastThingTheJournalHears()
     f.AddSimBridgeToTheDestination();
     f.files.MakeTheCopyFailPartWayThrough();
 
-    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), ImportResult::CouldNotCopy);
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::CouldNotCopy);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportCopyToStaging);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[0].outcome), ImportResult::CouldNotCopy);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[0].outcome), FileResult::CouldNotCopy);
     QCOMPARE(f.journal.appended[0].source, kSource);
     QCOMPARE(f.journal.appended[0].target, kStaging);
 }
@@ -317,11 +317,11 @@ void ImportEngineTest::AMoveThatFailsIsRecordedAndTheSourceSurvives()
     f.AddSimBridgeToTheDestination();
     f.files.MakeTheMoveFail();
 
-    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), ImportResult::CouldNotMoveIntoPlace);
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::CouldNotMoveIntoPlace);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{3});
     QCOMPARE(f.journal.appended[2].kind, OperationKind::ImportMoveIntoPlace);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[2].outcome), ImportResult::CouldNotMoveIntoPlace);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[2].outcome), FileResult::CouldNotMoveIntoPlace);
     f.VerifySimBridgeIsStillWhereItWas();
 }
 
@@ -331,11 +331,11 @@ void ImportEngineTest::ARemovalThatFailsIsRecordedAndTheSourceSurvives()
     f.AddSimBridgeToTheDestination();
     f.files.MakeTheRemovalFail();
 
-    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), ImportResult::CouldNotRemoveSource);
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::CouldNotRemoveSource);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{4});
     QCOMPARE(f.journal.appended[3].kind, OperationKind::ImportRemoveSource);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[3].outcome), ImportResult::CouldNotRemoveSource);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[3].outcome), FileResult::CouldNotRemoveSource);
     f.VerifySimBridgeIsStillWhereItWas();
 }
 
@@ -345,7 +345,7 @@ void ImportEngineTest::ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled
     f.AddSimBridgeToTheDestination();
     f.linkService.MakeLinkCreationFail();
 
-    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), ImportResult::CouldNotCreateLink);
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::CouldNotCreateLink);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{5});
     QCOMPARE(f.journal.appended[4].kind, OperationKind::EnableAddon);

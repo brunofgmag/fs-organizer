@@ -17,7 +17,7 @@ void OperationLog::RecordImport(const OperationKind kind,
                                 const AddonId& addon,
                                 const std::filesystem::path& source,
                                 const std::filesystem::path& target,
-                                const ImportResult result) const
+                                const FileResult result) const
 {
     journal_.Append(OperationRecord::OfImport(clock_.Now(), kind, addon, source, target, result));
 }

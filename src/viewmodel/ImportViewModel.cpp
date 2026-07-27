@@ -31,11 +31,11 @@ std::optional<std::string> ImportViewModel::RunningSimulator() const
     return probe_.RunningSimulator();
 }
 
-ImportResult ImportViewModel::ResolveConflict(const CopyConflict& conflict, const ConflictChoice choice)
+FileResult ImportViewModel::ResolveConflict(const CopyConflict& conflict, const ConflictChoice choice)
 {
-    const ImportResult result = service_.ResolveConflict(Profile(), session_.Snapshot().entries, conflict, choice);
+    const FileResult result = service_.ResolveConflict(Profile(), session_.Snapshot().entries, conflict, choice);
 
-    if (result == ImportResult::Completed)
+    if (result == FileResult::Completed)
     {
         profileService_.ForgetUndo();
         emit ConflictResolved();
@@ -82,7 +82,7 @@ void ImportViewModel::Import(const std::vector<ImportRequest>& requests)
             {
                 if (cancelled_)
                 {
-                    results.push_back(ImportOperationResult{request, ImportResult::Cancelled});
+                    results.push_back(ImportOperationResult{request, FileResult::Cancelled});
                     continue;
                 }
 
@@ -170,7 +170,7 @@ void ImportViewModel::Adopt()
     if (std::ranges::any_of(results,
                             [](const ImportOperationResult& result)
                             {
-                                return result.result == ImportResult::Completed;
+                                return result.result == FileResult::Completed;
                             }))
     {
         profileService_.ForgetUndo();

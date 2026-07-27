@@ -56,7 +56,7 @@ private:
 
     void OnImportStep(const QString& step);
 
-    [[nodiscard]] std::optional<ImportResult>
+    [[nodiscard]] std::optional<FileResult>
     ResolveOneConflict(const CopyConflict& conflict, std::size_t position, std::size_t total);
 
     void OnImportFinished(const std::vector<ImportOperationResult>& results);

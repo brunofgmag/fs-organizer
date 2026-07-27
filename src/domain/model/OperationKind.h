@@ -46,7 +46,7 @@ inline constexpr std::array kAllOperationKinds{
 static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::RenameCategory) + 1,
               "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
-[[nodiscard]] constexpr bool CarriesAnImportReason(const OperationKind kind)
+[[nodiscard]] constexpr bool CarriesAFileReason(const OperationKind kind)
 {
     switch (kind)
     {

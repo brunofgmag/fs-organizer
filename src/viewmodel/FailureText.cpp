@@ -39,38 +39,38 @@ QString Explain(const CategoryRule rule)
     return {};
 }
 
-QString Explain(const ImportResult result)
+QString Explain(const FileResult result)
 {
     switch (result)
     {
-    case ImportResult::Completed: return {};
-    case ImportResult::Cancelled: return QObject::tr("cancelada por você");
-    case ImportResult::TheSimulatorIsRunning: return QObject::tr("o simulador está em execução");
-    case ImportResult::CouldNotQuarantine:
+    case FileResult::Completed: return {};
+    case FileResult::Cancelled: return QObject::tr("cancelada por você");
+    case FileResult::TheSimulatorIsRunning: return QObject::tr("o simulador está em execução");
+    case FileResult::CouldNotQuarantine:
         return QObject::tr("não foi possível mover a cópia perdedora para a quarentena");
-    case ImportResult::SourceIsNotUnderADestination:
+    case FileResult::SourceIsNotUnderADestination:
         return QObject::tr("a pasta não está dentro de um destino do perfil");
-    case ImportResult::SourceIsAReparsePoint: return QObject::tr("a entrada é um link, e não uma pasta de verdade");
-    case ImportResult::CouldNotCheckFreeSpace:
+    case FileResult::SourceIsAReparsePoint: return QObject::tr("a entrada é um link, e não uma pasta de verdade");
+    case FileResult::CouldNotCheckFreeSpace:
         return QObject::tr("não foi possível consultar o espaço livre do volume de destino");
-    case ImportResult::NotEnoughFreeSpace: return QObject::tr("não há espaço livre suficiente na biblioteca");
-    case ImportResult::CouldNotCopy:
+    case FileResult::NotEnoughFreeSpace: return QObject::tr("não há espaço livre suficiente na biblioteca");
+    case FileResult::CouldNotCopy:
         return QObject::tr("a cópia falhou, e o que já foi copiado continua onde está para a retomada");
-    case ImportResult::VerificationFailed:
+    case FileResult::VerificationFailed:
         return QObject::tr("a cópia não confere com a origem, então nada foi removido");
-    case ImportResult::CouldNotMoveIntoPlace: return QObject::tr("não foi possível pôr a cópia no lugar definitivo");
-    case ImportResult::CouldNotRemoveSource: return QObject::tr("não foi possível remover a pasta de origem");
-    case ImportResult::CouldNotCreateLink:
+    case FileResult::CouldNotMoveIntoPlace: return QObject::tr("não foi possível pôr a cópia no lugar definitivo");
+    case FileResult::CouldNotRemoveSource: return QObject::tr("não foi possível remover a pasta de origem");
+    case FileResult::CouldNotCreateLink:
         return QObject::tr("os arquivos já estão na biblioteca, mas o link não pôde ser criado");
-    case ImportResult::TheOriginIsUnknown: return QObject::tr("o diário não sabe de onde isto veio");
-    case ImportResult::CouldNotRestore: return QObject::tr("já existe alguma coisa no lugar de origem");
-    case ImportResult::CouldNotDiscard: return QObject::tr("não foi possível descartar");
-    case ImportResult::CouldNotRemoveTheLink:
+    case FileResult::TheOriginIsUnknown: return QObject::tr("o diário não sabe de onde isto veio");
+    case FileResult::CouldNotRestore: return QObject::tr("já existe alguma coisa no lugar de origem");
+    case FileResult::CouldNotDiscard: return QObject::tr("não foi possível descartar");
+    case FileResult::CouldNotRemoveTheLink:
         return QObject::tr("não foi possível remover um dos links que apontam para a cópia da biblioteca");
-    case ImportResult::TheIdentityIsTaken: return QObject::tr("esta biblioteca já tem um addon com esse nome de pasta");
-    case ImportResult::TheTargetIsNotInALibrary:
+    case FileResult::TheIdentityIsTaken: return QObject::tr("esta biblioteca já tem um addon com esse nome de pasta");
+    case FileResult::TheTargetIsNotInALibrary:
         return QObject::tr("o destino da operação não está dentro de uma biblioteca do perfil");
-    case ImportResult::CouldNotCreateTheCategory: return QObject::tr("não foi possível criar a categoria");
+    case FileResult::CouldNotCreateTheCategory: return QObject::tr("não foi possível criar a categoria");
     }
 
     return {};

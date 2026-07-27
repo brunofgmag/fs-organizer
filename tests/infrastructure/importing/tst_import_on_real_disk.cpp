@@ -137,7 +137,7 @@ void ImportOnRealDiskTest::APhysicalAddonReallyMovesIntoTheLibraryAndLeavesAJunc
     const ImportRequest request{disk.Destination() / "simbridge", disk.Category()};
     const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::Completed);
+    QCOMPARE(outcome.Result(), FileResult::Completed);
 
     const std::filesystem::path landed = disk.Category() / "simbridge";
     QVERIFY(std::filesystem::exists(landed / "manifest.json"));
@@ -150,7 +150,7 @@ void ImportOnRealDiskTest::APhysicalAddonReallyMovesIntoTheLibraryAndLeavesAJunc
 
     QCOMPARE(engine.journal.Read().size(), std::size_t{5});
     QCOMPARE(engine.journal.Read().back().kind, OperationKind::EnableAddon);
-    QCOMPARE(std::get<ImportResult>(engine.journal.Read().front().outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(engine.journal.Read().front().outcome), FileResult::Completed);
 }
 
 void ImportOnRealDiskTest::AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFreeSpace()
@@ -168,7 +168,7 @@ void ImportOnRealDiskTest::AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFr
 
     QCOMPARE(engine.engine.Import(disk.Profile(), ImportRequest{disk.Destination() / "tlc-bgjn", disk.Category()}, {})
                  .Result(),
-             ImportResult::Completed);
+             FileResult::Completed);
 }
 
 void ImportOnRealDiskTest::TheSourceSurvivesWhenTheCopyFails()
@@ -183,11 +183,11 @@ void ImportOnRealDiskTest::TheSourceSurvivesWhenTheCopyFails()
     const ImportRequest request{disk.Destination() / "fenix-a320", disk.Category()};
     const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
 
-    QCOMPARE(outcome.Result(), ImportResult::CouldNotCopy);
+    QCOMPARE(outcome.Result(), FileResult::CouldNotCopy);
     QVERIFY(std::filesystem::exists(request.source / "manifest.json"));
     QVERIFY(!std::filesystem::exists(disk.Category() / "fenix-a320"));
     QCOMPARE(engine.journal.Read().size(), std::size_t{1});
-    QCOMPARE(std::get<ImportResult>(engine.journal.Read().front().outcome), ImportResult::CouldNotCopy);
+    QCOMPARE(std::get<FileResult>(engine.journal.Read().front().outcome), FileResult::CouldNotCopy);
 }
 
 void ImportOnRealDiskTest::ALiveJunctionOfAnotherProgramIsNeverReplaced()
@@ -224,10 +224,10 @@ void ImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
 
     const CopyConflict conflict{disk.Destination() / "tfdidesign-aircraft-md11",
                                 disk.Category() / "tfdidesign-aircraft-md11"};
-    const ImportResult result = composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
-                                                                 ConflictChoice::KeepTheDestinationCopy);
+    const FileResult result = composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
+                                                               ConflictChoice::KeepTheDestinationCopy);
 
-    QCOMPARE(result, ImportResult::Completed);
+    QCOMPARE(result, FileResult::Completed);
     QVERIFY(std::filesystem::exists(quarantine / "tfdidesign-aircraft-md11" / "manifest.json"));
     QVERIFY(!std::filesystem::exists(conflict.libraryPath));
     QVERIFY(std::filesystem::exists(conflict.destinationPath / "aircraft.cfg"));
@@ -235,7 +235,7 @@ void ImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
     const std::vector<OperationRecord> history = composed.engine.journal.Read();
     QCOMPARE(history.size(), std::size_t{1});
     QCOMPARE(history.front().kind, OperationKind::QuarantineFromLibrary);
-    QCOMPARE(std::get<ImportResult>(history.front().outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(history.front().outcome), FileResult::Completed);
 }
 
 void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder()
@@ -249,7 +249,7 @@ void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder
                                 disk.Category() / "tfdidesign-aircraft-md11"};
     QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
                                               ConflictChoice::KeepTheDestinationCopy),
-             ImportResult::Completed);
+             FileResult::Completed);
 
     std::filesystem::remove_all(disk.Category());
 
@@ -260,7 +260,7 @@ void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder
     const std::vector<FileOperationResult> results = composed.service.Restore(disk.Profile(), quarantined);
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::Completed);
+    QCOMPARE(results.front().result, FileResult::Completed);
     QVERIFY(std::filesystem::exists(conflict.libraryPath / "aircraft.cfg"));
     QVERIFY(!std::filesystem::exists(QuarantineFolderInside(disk.Root() / "Library") / "tfdidesign-aircraft-md11"));
 }
@@ -287,7 +287,7 @@ void ImportOnRealDiskTest::MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewF
     const std::vector<FileOperationResult> results = service.organizer.Move(profile, {AddonMove{addon, category}});
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::Completed);
+    QCOMPARE(results.front().result, FileResult::Completed);
 
     const std::filesystem::path landed = category / "aerosoft-crj";
     QVERIFY(std::filesystem::exists(landed / "manifest.json"));
@@ -314,14 +314,14 @@ void ImportOnRealDiskTest::ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRef
     const SimulatorProfile profile = disk.Profile();
     const std::filesystem::path library = disk.Root() / "Library";
 
-    QCOMPARE(service.organizer.CreateCategory(profile, library, "Sceneries").result, ImportResult::Completed);
+    QCOMPARE(service.organizer.CreateCategory(profile, library, "Sceneries").result, FileResult::Completed);
     QVERIFY(std::filesystem::is_directory(library / "Sceneries"));
 
     QCOMPARE(service.organizer.CreateCategory(profile, library, "Sceneries").result,
-             ImportResult::CouldNotCreateTheCategory);
+             FileResult::CouldNotCreateTheCategory);
 
     QCOMPARE(service.organizer.CreateCategory(profile, disk.Destination(), "Sceneries").result,
-             ImportResult::TheTargetIsNotInALibrary);
+             FileResult::TheTargetIsNotInALibrary);
     QVERIFY(!std::filesystem::exists(disk.Destination() / "Sceneries"));
 }
 

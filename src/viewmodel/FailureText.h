@@ -7,7 +7,7 @@
 #include "application/model/ImportOperationResult.h"
 #include "application/model/LinkOperationResult.h"
 #include "domain/model/CategoryRule.h"
-#include "domain/model/ImportResult.h"
+#include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
 
@@ -15,7 +15,7 @@
 
 [[nodiscard]] QString Explain(CategoryRule rule);
 
-[[nodiscard]] QString Explain(ImportResult result);
+[[nodiscard]] QString Explain(FileResult result);
 
 [[nodiscard]] QString Describe(const LinkOperationResult& result);
 

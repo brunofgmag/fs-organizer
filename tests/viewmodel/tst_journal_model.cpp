@@ -25,8 +25,7 @@ namespace
         return std::chrono::system_clock::time_point{std::chrono::seconds{1'769'000'000 + seconds}};
     }
 
-    OperationRecord
-    Step(const OperationKind kind, const int seconds, const ImportResult result = ImportResult::Completed)
+    OperationRecord Step(const OperationKind kind, const int seconds, const FileResult result = FileResult::Completed)
     {
         return OperationRecord::OfImport(Moment(seconds), kind, AddonId{"lib-1", "simbridge"}, kSource, kTarget,
                                          result);

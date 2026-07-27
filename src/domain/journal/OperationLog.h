@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "domain/model/AddonId.h"
-#include "domain/model/ImportResult.h"
+#include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
 #include "domain/model/OperationRecord.h"
@@ -27,7 +27,7 @@ public:
                       const AddonId& addon,
                       const std::filesystem::path& source,
                       const std::filesystem::path& target,
-                      ImportResult result) const;
+                      FileResult result) const;
 
     [[nodiscard]] std::vector<OperationRecord> History() const;
 

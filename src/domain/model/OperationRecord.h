@@ -7,11 +7,11 @@
 #include <variant>
 
 #include "domain/model/AddonId.h"
-#include "domain/model/ImportResult.h"
+#include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
 
-using OperationOutcome = std::variant<LinkFailure, ImportResult>;
+using OperationOutcome = std::variant<LinkFailure, FileResult>;
 
 [[nodiscard]] inline bool Succeeded(const OperationOutcome& outcome)
 {
@@ -20,7 +20,7 @@ using OperationOutcome = std::variant<LinkFailure, ImportResult>;
         return *failure == LinkFailure::None;
     }
 
-    return std::get<ImportResult>(outcome) == ImportResult::Completed;
+    return std::get<FileResult>(outcome) == FileResult::Completed;
 }
 
 struct OperationRecord
@@ -48,7 +48,7 @@ struct OperationRecord
                                                   AddonId addonId,
                                                   std::filesystem::path source,
                                                   std::filesystem::path target,
-                                                  ImportResult result)
+                                                  FileResult result)
     {
         OperationRecord record;
         record.timestamp = timestamp;

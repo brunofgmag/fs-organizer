@@ -36,7 +36,7 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
     if (std::ranges::any_of(results,
                             [](const FileOperationResult& result)
                             {
-                                return result.result == ImportResult::Completed;
+                                return result.result == FileResult::Completed;
                             }))
     {
         profileService_.ForgetUndo();

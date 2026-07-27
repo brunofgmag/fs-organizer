@@ -68,12 +68,12 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
 
     if (!IsUnderADestination(profile, request.source))
     {
-        return ImportOutcome::Stopped(ImportResult::SourceIsNotUnderADestination);
+        return ImportOutcome::Stopped(FileResult::SourceIsNotUnderADestination);
     }
 
     if (filesystemProbe_.IsReparsePoint(request.source))
     {
-        return ImportOutcome::Stopped(ImportResult::SourceIsAReparsePoint);
+        return ImportOutcome::Stopped(FileResult::SourceIsAReparsePoint);
     }
 
     const std::vector<FileFingerprint> source = filesystemProbe_.FingerprintTree(request.source);
@@ -98,28 +98,28 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     announce(OperationKind::ImportVerifyStaging);
     const bool verified = FingerprintsMatch(source, filesystemProbe_.FingerprintTree(staging));
     RecordStep(addon, OperationKind::ImportVerifyStaging, staging, target,
-               verified ? ImportResult::Completed : ImportResult::VerificationFailed);
+               verified ? FileResult::Completed : FileResult::VerificationFailed);
     if (!verified)
     {
-        return ImportOutcome::Stopped(ImportResult::VerificationFailed);
+        return ImportOutcome::Stopped(FileResult::VerificationFailed);
     }
 
     announce(OperationKind::ImportMoveIntoPlace);
     const bool moved = files_.Move(staging, target);
     RecordStep(addon, OperationKind::ImportMoveIntoPlace, staging, target,
-               moved ? ImportResult::Completed : ImportResult::CouldNotMoveIntoPlace);
+               moved ? FileResult::Completed : FileResult::CouldNotMoveIntoPlace);
     if (!moved)
     {
-        return ImportOutcome::Stopped(ImportResult::CouldNotMoveIntoPlace);
+        return ImportOutcome::Stopped(FileResult::CouldNotMoveIntoPlace);
     }
 
     announce(OperationKind::ImportRemoveSource);
     const bool removed = files_.RemoveTree(request.source);
     RecordStep(addon, OperationKind::ImportRemoveSource, request.source, target,
-               removed ? ImportResult::Completed : ImportResult::CouldNotRemoveSource);
+               removed ? FileResult::Completed : FileResult::CouldNotRemoveSource);
     if (!removed)
     {
-        return ImportOutcome::Stopped(ImportResult::CouldNotRemoveSource);
+        return ImportOutcome::Stopped(FileResult::CouldNotRemoveSource);
     }
 
     announce(OperationKind::EnableAddon);
@@ -127,7 +127,7 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     log_.RecordLink(OperationKind::EnableAddon, addon, target, request.source, link.Failure());
     if (!link.Succeeded())
     {
-        return ImportOutcome::Stopped(ImportResult::CouldNotCreateLink);
+        return ImportOutcome::Stopped(FileResult::CouldNotCreateLink);
     }
 
     return ImportOutcome::Completed();
@@ -137,7 +137,7 @@ void ImportEngine::RecordStep(const AddonId& addon,
                               const OperationKind kind,
                               const std::filesystem::path& source,
                               const std::filesystem::path& target,
-                              const ImportResult result) const
+                              const FileResult result) const
 {
     log_.RecordImport(kind, addon, source, target, result);
 }
@@ -149,12 +149,12 @@ ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category
     const std::optional<std::uintmax_t> free = filesystemProbe_.FreeSpaceOn(category);
     if (!free.has_value())
     {
-        return ImportOutcome::Stopped(ImportResult::CouldNotCheckFreeSpace);
+        return ImportOutcome::Stopped(FileResult::CouldNotCheckFreeSpace);
     }
 
     if (*free < needed)
     {
-        return ImportOutcome::Stopped(ImportResult::NotEnoughFreeSpace);
+        return ImportOutcome::Stopped(FileResult::NotEnoughFreeSpace);
     }
 
     return ImportOutcome::Completed();
@@ -168,8 +168,8 @@ ImportOutcome ImportEngine::CopyToStaging(const std::filesystem::path& source,
     {
     case CopyOutcome::Cancelled:
         static_cast<void>(files_.RemoveTree(staging));
-        return ImportOutcome::Stopped(ImportResult::Cancelled);
-    case CopyOutcome::Failed: return ImportOutcome::Stopped(ImportResult::CouldNotCopy);
+        return ImportOutcome::Stopped(FileResult::Cancelled);
+    case CopyOutcome::Failed: return ImportOutcome::Stopped(FileResult::CouldNotCopy);
     case CopyOutcome::Completed: break;
     }
 

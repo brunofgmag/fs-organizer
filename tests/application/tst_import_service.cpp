@@ -131,7 +131,7 @@ void ImportServiceTest::NoFileIsTouchedWhileTheSimulatorIsRunning()
         f.service.Import(f.profile, {ImportRequest{kInDestination, "D:/Library/Utils"}}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::TheSimulatorIsRunning);
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
     QVERIFY(f.fileSystem.Exists(kInDestination / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/imported"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/imported.fsorg-partial"));
@@ -143,10 +143,10 @@ void ImportServiceTest::ResolvingAConflictSendsTheLoserToQuarantineAndDeletesNot
     f.AddBothCopies();
 
     const CopyConflict conflict{kInDestination, kInLibrary};
-    const ImportResult result =
+    const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy);
 
-    QCOMPARE(result, ImportResult::Completed);
+    QCOMPARE(result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists("E:/Sim/_fsorganizer-quarantine/simbridge/manifest.json"));
     QCOMPARE(f.fileSystem.FileSize("E:/Sim/_fsorganizer-quarantine/simbridge/manifest.json"), 2 * kMegabyte);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
@@ -160,10 +160,10 @@ void ImportServiceTest::KeepingTheDestinationCopySendsTheLibraryCopyToItsOwnQuar
     f.AddBothCopies();
 
     const CopyConflict conflict{kInDestination, kInLibrary};
-    const ImportResult result =
+    const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
 
-    QCOMPARE(result, ImportResult::Completed);
+    QCOMPARE(result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge/manifest.json"));
     QCOMPARE(f.fileSystem.FileSize("D:/Library/_fsorganizer-quarantine/simbridge/manifest.json"), 1 * kMegabyte);
     QVERIFY(f.fileSystem.IsDirectory(kInDestination));
@@ -178,13 +178,13 @@ void ImportServiceTest::QuarantiningTheDestinationCopyIsJournalledAlongWithTheLi
 
     const CopyConflict conflict{kInDestination, kInLibrary};
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy),
-             ImportResult::Completed);
+             FileResult::Completed);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{2});
 
     const OperationRecord& quarantine = f.journal.appended[0];
     QCOMPARE(quarantine.kind, OperationKind::QuarantineFromDestination);
-    QCOMPARE(std::get<ImportResult>(quarantine.outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(quarantine.outcome), FileResult::Completed);
     QCOMPARE(quarantine.timestamp, f.clock.now);
     QCOMPARE(quarantine.addonId.libraryId, LibraryId{"lib-1"});
     QCOMPARE(quarantine.addonId.folderName, std::string{"simbridge"});
@@ -204,11 +204,11 @@ void ImportServiceTest::QuarantiningTheLibraryCopyIsJournalledOnItsOwn()
 
     const CopyConflict conflict{kInDestination, kInLibrary};
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy),
-             ImportResult::Completed);
+             FileResult::Completed);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.journal.appended[0].kind, OperationKind::QuarantineFromLibrary);
-    QCOMPARE(std::get<ImportResult>(f.journal.appended[0].outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[0].outcome), FileResult::Completed);
     QCOMPARE(f.journal.appended[0].source, kInLibrary);
     QCOMPARE(f.journal.appended[0].target, std::filesystem::path{"D:/Library/_fsorganizer-quarantine/simbridge"});
 }
@@ -233,7 +233,7 @@ void ImportServiceTest::TheQuarantineIsListedFromTheDiskAndItsOriginComesFromThe
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
                                        ConflictChoice::KeepTheLibraryCopy),
-             ImportResult::Completed);
+             FileResult::Completed);
 
     const std::vector<QuarantinedItem> items = f.service.Quarantined(f.profile);
 
@@ -251,7 +251,7 @@ void ImportServiceTest::RestoringPutsTheFolderBackWhereItCameFromAndSaysSoInTheJ
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
                                        ConflictChoice::KeepTheDestinationCopy),
-             ImportResult::Completed);
+             FileResult::Completed);
 
     const std::vector<QuarantinedItem> items = f.service.Quarantined(f.profile);
     QCOMPARE(items.size(), std::size_t{1});
@@ -259,14 +259,14 @@ void ImportServiceTest::RestoringPutsTheFolderBackWhereItCameFromAndSaysSoInTheJ
     const std::vector<FileOperationResult> restored = f.service.Restore(f.profile, items);
 
     QCOMPARE(restored.size(), std::size_t{1});
-    QCOMPARE(restored.front().result, ImportResult::Completed);
+    QCOMPARE(restored.front().result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge"));
     QVERIFY(f.service.Quarantined(f.profile).empty());
 
     const OperationRecord& record = f.journal.appended.back();
     QCOMPARE(record.kind, OperationKind::RestoreFromQuarantine);
-    QCOMPARE(std::get<ImportResult>(record.outcome), ImportResult::Completed);
+    QCOMPARE(std::get<FileResult>(record.outcome), FileResult::Completed);
     QCOMPARE(record.source, std::filesystem::path{"D:/Library/_fsorganizer-quarantine/simbridge"});
     QCOMPARE(record.target, kInLibrary);
     QCOMPARE(record.addonId.libraryId, LibraryId{"lib-1"});
@@ -279,14 +279,14 @@ void ImportServiceTest::RestoringIsRefusedWhenSomethingElseAlreadyOccupiesTheOri
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
                                        ConflictChoice::KeepTheDestinationCopy),
-             ImportResult::Completed);
+             FileResult::Completed);
 
     f.fileSystem.AddDirectory(kInLibrary);
     f.fileSystem.AddFile(kInLibrary / "manifest.json", 3 * kMegabyte);
 
     const std::vector<FileOperationResult> restored = f.service.Restore(f.profile, f.service.Quarantined(f.profile));
 
-    QCOMPARE(restored.front().result, ImportResult::CouldNotRestore);
+    QCOMPARE(restored.front().result, FileResult::CouldNotRestore);
     QCOMPARE(f.fileSystem.FileSize(kInLibrary / "manifest.json"), 3 * kMegabyte);
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge/manifest.json"));
 }
@@ -303,7 +303,7 @@ void ImportServiceTest::AnItemWhoseOriginTheJournalNeverSawIsNotRestored()
     QCOMPARE(items.size(), std::size_t{1});
     QVERIFY(!items.front().KnowsWhereItCameFrom());
 
-    QCOMPARE(f.service.Restore(f.profile, items).front().result, ImportResult::TheOriginIsUnknown);
+    QCOMPARE(f.service.Restore(f.profile, items).front().result, FileResult::TheOriginIsUnknown);
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/orphan/manifest.json"));
     QVERIFY(f.journal.appended.empty());
 }
@@ -319,7 +319,7 @@ void ImportServiceTest::EmptyingTheQuarantineNeverReachesAnythingOutsideIt()
     const std::vector<FileOperationResult> discarded = f.service.Discard(f.profile, f.service.Quarantined(f.profile));
 
     QCOMPARE(discarded.size(), std::size_t{1});
-    QCOMPARE(discarded.front().result, ImportResult::Completed);
+    QCOMPARE(discarded.front().result, FileResult::Completed);
     QVERIFY(!f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/old-simbridge"));
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
     QVERIFY(f.fileSystem.Exists(kInDestination / "manifest.json"));
@@ -329,7 +329,7 @@ void ImportServiceTest::EmptyingTheQuarantineNeverReachesAnythingOutsideIt()
     const std::vector<FileOperationResult> refused =
         f.service.Discard(f.profile, {QuarantinedItem{kInLibrary, {}, std::nullopt}});
 
-    QCOMPARE(refused.front().result, ImportResult::CouldNotDiscard);
+    QCOMPARE(refused.front().result, FileResult::CouldNotDiscard);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
 }
 
@@ -344,8 +344,8 @@ void ImportServiceTest::NoQuarantineIsTouchedWhileTheSimulatorIsRunning()
     const std::vector<QuarantinedItem> items = f.service.Quarantined(f.profile);
     f.processProbe.ReportTheSimulatorAsRunning();
 
-    QCOMPARE(f.service.Restore(f.profile, items).front().result, ImportResult::TheSimulatorIsRunning);
-    QCOMPARE(f.service.Discard(f.profile, items).front().result, ImportResult::TheSimulatorIsRunning);
+    QCOMPARE(f.service.Restore(f.profile, items).front().result, FileResult::TheSimulatorIsRunning);
+    QCOMPARE(f.service.Discard(f.profile, items).front().result, FileResult::TheSimulatorIsRunning);
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/old-simbridge/manifest.json"));
     QVERIFY(f.journal.appended.empty());
 }
@@ -359,7 +359,7 @@ void ImportServiceTest::LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFro
 
     f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportCopyToStaging,
                                                AddonId{"lib-1", "imported"}, "E:/Sim/Community/imported",
-                                               "D:/Library/Utils/imported.fsorg-partial", ImportResult::Completed));
+                                               "D:/Library/Utils/imported.fsorg-partial", FileResult::Completed));
 
     const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
 
@@ -404,7 +404,7 @@ void ImportServiceTest::ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSourc
     const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, {leftover}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::Completed);
+    QCOMPARE(results.front().result, FileResult::Completed);
     QVERIFY(!f.fileSystem.Exists("D:/Library/Sceneries/orbx-yssy.fsorg-partial"));
     QVERIFY(f.fileSystem.Exists("D:/Library/Sceneries/orbx-yssy/manifest.json"));
     QVERIFY(f.fileSystem.IsLink("E:/Sim/Community/orbx-yssy"));
@@ -424,7 +424,7 @@ void ImportServiceTest::DiscardingALeftoverRemovesOnlyTheStaging()
         f.service.DiscardLeftovers(f.profile, f.service.Leftovers(f.profile));
 
     QCOMPARE(discarded.size(), std::size_t{1});
-    QCOMPARE(discarded.front().result, ImportResult::Completed);
+    QCOMPARE(discarded.front().result, FileResult::Completed);
     QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/imported.fsorg-partial"));
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
     QVERIFY(f.fileSystem.Exists(kInDestination / "manifest.json"));
@@ -433,7 +433,7 @@ void ImportServiceTest::DiscardingALeftoverRemovesOnlyTheStaging()
     const std::vector<FileOperationResult> refused =
         f.service.DiscardLeftovers(f.profile, {StagingLeftover{kInLibrary, kInLibrary, kInDestination}});
 
-    QCOMPARE(refused.front().result, ImportResult::CouldNotDiscard);
+    QCOMPARE(refused.front().result, FileResult::CouldNotDiscard);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
 }
 
@@ -444,10 +444,10 @@ void ImportServiceTest::KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuar
     f.AddALinkToTheLibraryCopyInAnotherDestination();
 
     const CopyConflict conflict{kInDestination, kInLibrary};
-    const ImportResult result =
+    const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
 
-    QCOMPARE(result, ImportResult::Completed);
+    QCOMPARE(result, FileResult::Completed);
     QVERIFY(!f.fileSystem.Exists(kLinkedElsewhere));
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge/manifest.json"));
     QVERIFY(!f.fileSystem.Exists(kInLibrary));
@@ -467,10 +467,10 @@ void ImportServiceTest::NothingIsMovedWhenALinkToTheLibraryCopyCannotBeRemoved()
     f.linkService.MakeLinkRemovalFail();
 
     const CopyConflict conflict{kInDestination, kInLibrary};
-    const ImportResult result =
+    const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
 
-    QCOMPARE(result, ImportResult::CouldNotRemoveTheLink);
+    QCOMPARE(result, FileResult::CouldNotRemoveTheLink);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
     QVERIFY(f.fileSystem.Exists(kLinkedElsewhere));
     QVERIFY(!f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge"));
@@ -487,7 +487,7 @@ void ImportServiceTest::ImportingIsRefusedWhenTheBaseNameAlreadyExistsInTheLibra
         f.service.Import(f.profile, {ImportRequest{kInDestination, "D:/Library/Sceneries"}}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::TheIdentityIsTaken);
+    QCOMPARE(results.front().result, FileResult::TheIdentityIsTaken);
     QCOMPARE(results.front().occupant, kInLibrary);
     QVERIFY(f.fileSystem.Exists(kInDestination / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists("D:/Library/Sceneries/simbridge"));
@@ -510,7 +510,7 @@ void ImportServiceTest::ResumingIsRefusedWhenTheBaseNameAppearedWhileTheImportWa
     const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, {leftover}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::TheIdentityIsTaken);
+    QCOMPARE(results.front().result, FileResult::TheIdentityIsTaken);
     QCOMPARE(results.front().occupant, kInLibrary);
     QVERIFY(f.fileSystem.Exists("D:/Library/Sceneries/simbridge.fsorg-partial/half.bin"));
     QVERIFY(f.journal.appended.empty());
@@ -523,7 +523,7 @@ void ImportServiceTest::RestoringIsRefusedWhenTheBaseNameTookTheIdentityElsewher
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
                                        ConflictChoice::KeepTheDestinationCopy),
-             ImportResult::Completed);
+             FileResult::Completed);
 
     f.fileSystem.AddDirectory("D:/Library/Sceneries");
     f.fileSystem.AddDirectory("D:/Library/Sceneries/simbridge");
@@ -533,7 +533,7 @@ void ImportServiceTest::RestoringIsRefusedWhenTheBaseNameTookTheIdentityElsewher
     const std::vector<FileOperationResult> restored = f.service.Restore(f.profile, f.service.Quarantined(f.profile));
 
     QCOMPARE(restored.size(), std::size_t{1});
-    QCOMPARE(restored.front().result, ImportResult::TheIdentityIsTaken);
+    QCOMPARE(restored.front().result, FileResult::TheIdentityIsTaken);
     QCOMPARE(restored.front().occupant, std::filesystem::path{"D:/Library/Sceneries/simbridge"});
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge/manifest.json"));
     QVERIFY(f.fileSystem.Exists("D:/Library/Sceneries/simbridge/manifest.json"));
@@ -553,7 +553,7 @@ void ImportServiceTest::TheIdentityIsOnlyTakenInsideTheLibraryThatHoldsIt()
         f.service.Import(f.profile, {ImportRequest{kInDestination, "F:/Spare/Utils"}}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
-    QCOMPARE(results.front().result, ImportResult::Completed);
+    QCOMPARE(results.front().result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists("F:/Spare/Utils/simbridge/manifest.json"));
 }
 

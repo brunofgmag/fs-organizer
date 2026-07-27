@@ -137,7 +137,7 @@ void QuarantinePage::Report(const QString& title, const std::vector<FileOperatio
     QStringList failed;
     for (const FileOperationResult& result : results)
     {
-        if (result.result != ImportResult::Completed)
+        if (result.result != FileResult::Completed)
         {
             failed.append(Describe(result));
         }
