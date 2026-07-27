@@ -96,16 +96,13 @@ namespace
     class PaintSpy final : public QObject
     {
     public:
-        int paints = 0;
         int repaintedHeight = 0;
 
-    protected:
         bool eventFilter(QObject* watched, QEvent* event) override
         {
-            if (event->type() == QEvent::Paint)
+            if (const auto* paint = dynamic_cast<QPaintEvent*>(event))
             {
-                ++paints;
-                repaintedHeight += static_cast<QPaintEvent*>(event)->region().boundingRect().height();
+                repaintedHeight += paint->region().boundingRect().height();
             }
 
             return QObject::eventFilter(watched, event);

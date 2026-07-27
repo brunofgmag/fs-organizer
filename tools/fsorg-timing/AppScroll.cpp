@@ -43,32 +43,16 @@ namespace
     public:
         int paints = 0;
         int repaintedHeight = 0;
-        double spent = 0;
 
-        void Forget()
-        {
-            paints = 0;
-            repaintedHeight = 0;
-            spent = 0;
-        }
-
-    protected:
         bool eventFilter(QObject* watched, QEvent* event) override
         {
-            if (event->type() != QEvent::Paint)
+            if (const auto* paint = dynamic_cast<QPaintEvent*>(event))
             {
-                return QObject::eventFilter(watched, event);
+                ++paints;
+                repaintedHeight += paint->region().boundingRect().height();
             }
 
-            ++paints;
-            repaintedHeight += static_cast<QPaintEvent*>(event)->region().boundingRect().height();
-
-            QElapsedTimer timer;
-            timer.start();
-            const bool handled = QObject::eventFilter(watched, event);
-            spent += static_cast<double>(timer.nsecsElapsed()) / 1e6;
-
-            return handled;
+            return QObject::eventFilter(watched, event);
         }
     };
 
@@ -79,7 +63,7 @@ namespace
         return samples.empty() ? 0 : samples.at(samples.size() / 2);
     }
 
-    void ReportHover(const QString& what, QTreeView& view)
+    void ReportHover(const QString& what, const QTreeView& view)
     {
         constexpr int kMoves = 30;
 
@@ -115,7 +99,7 @@ namespace
         Out().flush();
     }
 
-    void ReportScroll(const QString& what, QTreeView& view)
+    void ReportScroll(const QString& what, const QTreeView& view)
     {
         constexpr int kNotches = 30;
 
@@ -152,7 +136,7 @@ namespace
     }
 }
 
-int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel& viewModel, JournalModel& model)
+int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel& viewModel, const JournalModel& model)
 {
     QObject::connect(&window, &MainWindow::PageSelected, &viewModel,
                      [&page, &viewModel](const QWidget* selected)

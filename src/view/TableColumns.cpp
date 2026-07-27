@@ -40,7 +40,6 @@ namespace
             MeasureTheContentOnce();
         }
 
-    protected:
         bool eventFilter(QObject* watched, QEvent* event) override
         {
             if (event->type() == QEvent::Resize || event->type() == QEvent::Show)
