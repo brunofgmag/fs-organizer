@@ -188,7 +188,7 @@ void AddonTreeViewModelTest::RenamingACategoryToTheNameItAlreadyHasIsNotAFailure
 
     const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
 
-    f.viewModel.RenameCategory(&category, QStringLiteral("Aircrafts"));
+    QCOMPARE(f.viewModel.RenameCategory(&category, QStringLiteral("Aircrafts")), std::filesystem::path{kAircrafts});
 
     QCOMPARE(refused.size(), 0);
     QVERIFY(f.journal.appended.empty());
@@ -203,7 +203,7 @@ void AddonTreeViewModelTest::ARefusedRenameIsExplainedInsteadOfPassingSilently()
 
     const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
 
-    f.viewModel.RenameCategory(&category, QStringLiteral("Sceneries"));
+    QVERIFY(f.viewModel.RenameCategory(&category, QStringLiteral("Sceneries")).empty());
 
     QCOMPARE(refused.size(), 1);
     QVERIFY(!refused.front().front().toString().isEmpty());

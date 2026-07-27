@@ -41,7 +41,7 @@ public:
 
     void CreateCategory(const TreeNode* node, const QString& name);
 
-    void RenameCategory(const TreeNode* node, const QString& name);
+    [[nodiscard]] std::filesystem::path RenameCategory(const TreeNode* node, const QString& name);
 
     void RemoveCategory(const TreeNode* node);
 

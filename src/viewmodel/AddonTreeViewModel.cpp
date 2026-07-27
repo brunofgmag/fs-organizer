@@ -139,18 +139,18 @@ void AddonTreeViewModel::CreateCategory(const TreeNode* node, const QString& nam
     }
 }
 
-void AddonTreeViewModel::RenameCategory(const TreeNode* node, const QString& name)
+std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, const QString& name)
 {
     const QString wanted = name.trimmed();
     if (wanted.isEmpty())
     {
         emit Refused(tr("Dê um nome à categoria."));
-        return;
+        return {};
     }
 
     if (wanted.toStdString() == node->path.filename().string())
     {
-        return;
+        return node->path;
     }
 
     const FileOperationResult result = session_.RenameCategory(node->path, wanted.toStdString());
@@ -159,6 +159,10 @@ void AddonTreeViewModel::RenameCategory(const TreeNode* node, const QString& nam
     {
         emit Refused(Describe(result));
     }
+
+    const bool landed = result.result == FileResult::Completed || result.result == FileResult::CouldNotCreateLink;
+
+    return landed ? result.path : std::filesystem::path{};
 }
 
 bool AddonTreeViewModel::CanRemoveCategory(const TreeNode* node) const

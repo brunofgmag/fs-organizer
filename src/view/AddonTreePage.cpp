@@ -345,6 +345,37 @@ void AddonTreePage::NoteExpansion(const QModelIndex& position, const bool expand
     }
 }
 
+void AddonTreePage::CarryTheExpansion(const std::filesystem::path& from, const std::filesystem::path& to)
+{
+    const std::string moved = ComparablePath(from);
+    const std::string landing = ComparablePath(to);
+
+    if (moved == landing)
+    {
+        return;
+    }
+
+    std::set<std::string> carried;
+
+    for (const std::string& open : expanded_)
+    {
+        if (open == moved)
+        {
+            carried.insert(landing);
+        }
+        else if (open.size() > moved.size() && open.compare(0, moved.size(), moved) == 0 && open[moved.size()] == '/')
+        {
+            carried.insert(landing + open.substr(moved.size()));
+        }
+        else
+        {
+            carried.insert(open);
+        }
+    }
+
+    expanded_ = std::move(carried);
+}
+
 void AddonTreePage::RestoreExpansion(const QModelIndex& parent)
 {
     for (int row = 0; row < filter_->rowCount(parent); ++row)
@@ -456,7 +487,15 @@ void AddonTreePage::AddCategoryActions(QMenu& menu, const TreeNode* node)
                    [this, node]
                    {
                        const QString current = AsText(node->path.filename());
-                       viewModel_.RenameCategory(node, AskForACategoryName(this, tr("Renomear categoria"), current));
+                       const std::filesystem::path from = node->path;
+
+                       const std::filesystem::path landing = viewModel_.RenameCategory(
+                           node, AskForACategoryName(this, tr("Renomear categoria"), current));
+
+                       if (!landing.empty())
+                       {
+                           CarryTheExpansion(from, landing);
+                       }
                    });
 
     if (viewModel_.CanRemoveCategory(node))

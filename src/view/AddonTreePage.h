@@ -50,6 +50,8 @@ private:
 
     void NoteExpansion(const QModelIndex& position, bool expanded);
 
+    void CarryTheExpansion(const std::filesystem::path& from, const std::filesystem::path& to);
+
     void RestoreExpansion(const QModelIndex& parent);
 
     void CountAddons(const QModelIndex& parent, std::size_t& addons, std::size_t& enabled) const;
