@@ -93,6 +93,11 @@ void ImportDialog::ShowCategoriesOfTheChosenLibrary()
 
     for (const TreeNode* folder : CategoriesUnder(*tree))
     {
+        if (folder != tree && !HoldsAddonsOrWasDeclared(*folder))
+        {
+            continue;
+        }
+
         const std::filesystem::path relative = folder->path.lexically_relative(tree->path);
 
         category_->addItem(folder == tree ? tr("(raiz da biblioteca)") : AsText(relative), AsText(folder->path));
