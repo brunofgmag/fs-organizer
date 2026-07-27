@@ -154,6 +154,19 @@ bool WindowsFileOperations::CreateFolder(const std::filesystem::path& path)
     return !error;
 }
 
+bool WindowsFileOperations::WriteHiddenFile(const std::filesystem::path& path)
+{
+    const HANDLE file =
+        CreateFileW(NativePath(path).c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN, nullptr);
+
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    return CloseHandle(file) != FALSE;
+}
+
 bool WindowsFileOperations::Move(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
     std::error_code error;
@@ -164,6 +177,18 @@ bool WindowsFileOperations::Move(const std::filesystem::path& source, const std:
     }
 
     return MoveFileExW(NativePath(source).c_str(), NativePath(destination).c_str(), 0) != FALSE;
+}
+
+bool WindowsFileOperations::RemoveEmptyFolder(const std::filesystem::path& path)
+{
+    const DWORD attributes = AttributesWithoutFollowingLinks(path);
+
+    if (!IsDirectory(attributes) || IsReparsePoint(attributes))
+    {
+        return false;
+    }
+
+    return RemoveDirectoryW(NativePath(path).c_str()) != FALSE;
 }
 
 bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)

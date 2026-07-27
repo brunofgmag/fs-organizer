@@ -207,6 +207,29 @@ public:
         return true;
     }
 
+    bool RemoveEmptyDirectory(const std::filesystem::path& path)
+    {
+        const std::string root = Key(path);
+        if (KindOf(path) != NodeKind::Directory)
+        {
+            return false;
+        }
+
+        const bool occupied = std::ranges::any_of(nodes_,
+                                                  [&root](const auto& entry)
+                                                  {
+                                                      return IsUnder(entry.first, root);
+                                                  });
+        if (occupied)
+        {
+            return false;
+        }
+
+        nodes_.erase(root);
+
+        return true;
+    }
+
     bool RemoveTree(const std::filesystem::path& path)
     {
         const std::string root = Key(path);

@@ -75,6 +75,7 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::MoveAddon: return tr("Mover addon de categoria");
     case OperationKind::CreateCategory: return tr("Criar categoria");
     case OperationKind::RenameCategory: return tr("Renomear categoria");
+    case OperationKind::RemoveCategory: return tr("Apagar categoria");
     case OperationKind::DiscardStaging: return tr("Descartar uma importação pela metade");
     }
 

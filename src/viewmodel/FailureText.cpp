@@ -71,6 +71,9 @@ QString Explain(const FileResult result)
     case FileResult::TheTargetIsNotInALibrary:
         return QObject::tr("o destino da operação não está dentro de uma biblioteca do perfil");
     case FileResult::CouldNotCreateTheCategory: return QObject::tr("não foi possível criar a categoria");
+    case FileResult::TheCategoryStillHoldsAddons:
+        return QObject::tr("esta categoria ainda guarda addons, e só categoria vazia pode ser apagada");
+    case FileResult::CouldNotRemoveTheCategory: return QObject::tr("não foi possível apagar a categoria");
     }
 
     return {};

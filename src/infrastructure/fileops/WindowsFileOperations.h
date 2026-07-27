@@ -12,9 +12,13 @@ public:
 
     [[nodiscard]] bool CreateFolder(const std::filesystem::path& path) override;
 
+    [[nodiscard]] bool WriteHiddenFile(const std::filesystem::path& path) override;
+
     [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override;
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override;
+
+    [[nodiscard]] bool RemoveEmptyFolder(const std::filesystem::path& path) override;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_FILE_OPERATIONS_H

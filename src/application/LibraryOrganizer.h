@@ -35,6 +35,9 @@ public:
     [[nodiscard]] FileOperationResult
     RenameCategory(SimulatorProfile& profile, const std::filesystem::path& category, const std::string& name) const;
 
+    [[nodiscard]] FileOperationResult RemoveCategory(SimulatorProfile& profile,
+                                                     const std::filesystem::path& category) const;
+
     [[nodiscard]] std::vector<FileOperationResult> Move(SimulatorProfile& profile,
                                                         const std::vector<AddonMove>& moves) const;
 
@@ -44,6 +47,8 @@ private:
 
     [[nodiscard]] bool
     Relink(const SimulatorProfile& profile, const AddonId& addon, const std::filesystem::path& folder) const;
+
+    void DeclareACategory(const Library& library, const std::filesystem::path& folder) const;
 
     void Record(OperationKind kind,
                 const AddonId& addon,

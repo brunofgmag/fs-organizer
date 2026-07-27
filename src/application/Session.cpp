@@ -21,13 +21,19 @@ namespace
 
         return match == settings.profiles.end() ? nullptr : &*match;
     }
+
+    bool TheFolderLanded(const FileResult result)
+    {
+        return result == FileResult::Completed || result == FileResult::CouldNotCreateLink;
+    }
 }
 
 Session::Session(ProfileService& service,
+                 const LibraryOrganizer& organizer,
                  SettingsRepository& settings,
                  BackgroundRunner& runner,
                  SessionObserver& observer)
-    : service_(service), settings_(settings), runner_(runner), observer_(observer)
+    : service_(service), organizer_(organizer), settings_(settings), runner_(runner), observer_(observer)
 {
 }
 
@@ -86,12 +92,12 @@ LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
     return report;
 }
 
-void Session::OverrideDestination(const TreeNode& node, const std::filesystem::path& destination)
+bool Session::RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination)
 {
     const Library* library = LibraryContaining(profile_, node.path);
     if (library == nullptr)
     {
-        return;
+        return false;
     }
 
     const std::filesystem::path relative = RelativeToLibrary(*library, node.path);
@@ -109,9 +115,81 @@ void Session::OverrideDestination(const TreeNode& node, const std::filesystem::p
         profile_.destinationOverrides.push_back({libraryId, relative, destination});
     }
 
+    return true;
+}
+
+void Session::OverrideDestination(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& destination)
+{
+    bool remembered = false;
+
+    for (const TreeNode* node : nodes)
+    {
+        remembered = RememberTheDestination(*node, destination) || remembered;
+    }
+
+    if (!remembered)
+    {
+        return;
+    }
+
     Save(profile_);
 
     observer_.OnRefreshed();
+}
+
+FileOperationResult Session::CreateCategory(const std::filesystem::path& parent, const std::string& name)
+{
+    const FileOperationResult result = organizer_.CreateCategory(profile_, parent, name);
+
+    if (result.result == FileResult::Completed)
+    {
+        Scan(profile_);
+    }
+
+    return result;
+}
+
+FileOperationResult Session::RenameCategory(const std::filesystem::path& category, const std::string& name)
+{
+    const FileOperationResult result = organizer_.RenameCategory(profile_, category, name);
+
+    if (TheFolderLanded(result.result))
+    {
+        Save(profile_);
+        Scan(profile_);
+    }
+
+    return result;
+}
+
+FileOperationResult Session::RemoveCategory(const std::filesystem::path& category)
+{
+    const FileOperationResult result = organizer_.RemoveCategory(profile_, category);
+
+    if (result.result == FileResult::Completed)
+    {
+        Save(profile_);
+        Scan(profile_);
+    }
+
+    return result;
+}
+
+std::vector<FileOperationResult> Session::MoveAddons(const std::vector<AddonMove>& moves)
+{
+    std::vector<FileOperationResult> results = organizer_.Move(profile_, moves);
+
+    if (std::ranges::any_of(results,
+                            [](const FileOperationResult& result)
+                            {
+                                return TheFolderLanded(result.result);
+                            }))
+    {
+        Save(profile_);
+        Scan(profile_);
+    }
+
+    return results;
 }
 
 void Session::Scan(SimulatorProfile profile)

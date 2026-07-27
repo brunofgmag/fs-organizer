@@ -47,6 +47,7 @@ namespace
         case OperationKind::MoveAddon: return "moveAddon";
         case OperationKind::CreateCategory: return "createCategory";
         case OperationKind::RenameCategory: return "renameCategory";
+        case OperationKind::RemoveCategory: return "removeCategory";
         }
 
         return "unknown";
@@ -93,6 +94,8 @@ namespace
         case FileResult::TheIdentityIsTaken: return "theIdentityIsTaken";
         case FileResult::TheTargetIsNotInALibrary: return "theTargetIsNotInALibrary";
         case FileResult::CouldNotCreateTheCategory: return "couldNotCreateTheCategory";
+        case FileResult::TheCategoryStillHoldsAddons: return "theCategoryStillHoldsAddons";
+        case FileResult::CouldNotRemoveTheCategory: return "couldNotRemoveTheCategory";
         }
 
         return "unknown";

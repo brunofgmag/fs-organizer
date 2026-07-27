@@ -1,6 +1,7 @@
 #include "application/LibraryOrganizer.h"
 
 #include "domain/linking/DisableLinks.h"
+#include "domain/model/CategoryMarker.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -36,6 +37,41 @@ namespace
                 known.relativePath = landing / key.substr(moved.size() + 1);
             }
         }
+    }
+
+    const TreeNode* CategoryNamed(const TreeNode& tree, const std::filesystem::path& wanted)
+    {
+        const std::string key = ComparablePath(wanted);
+
+        for (const TreeNode* candidate : CategoriesUnder(tree))
+        {
+            if (ComparablePath(candidate->path) == key)
+            {
+                return candidate;
+            }
+        }
+
+        return nullptr;
+    }
+
+    void ForgetTheOverrides(SimulatorProfile& profile, const Library& library, const std::filesystem::path& folder)
+    {
+        const std::string gone = ComparablePath(RelativeToLibrary(library, folder));
+
+        std::erase_if(profile.destinationOverrides,
+                      [&library, &gone](const DestinationOverride& known)
+                      {
+                          if (known.libraryId != library.id)
+                          {
+                              return false;
+                          }
+
+                          const std::string key = ComparablePath(known.relativePath);
+
+                          return key == gone
+                              || (key.size() > gone.size() && key.compare(0, gone.size(), gone) == 0
+                                  && key[gone.size()] == '/');
+                      });
     }
 
     std::vector<std::filesystem::path> EnabledAddonsUnder(const TreeNode& library,
@@ -84,6 +120,16 @@ void LibraryOrganizer::Record(const OperationKind kind,
     log_.RecordImport(kind, addon, source, target, result);
 }
 
+void LibraryOrganizer::DeclareACategory(const Library& library, const std::filesystem::path& folder) const
+{
+    if (ComparablePath(folder) == ComparablePath(library.path))
+    {
+        return;
+    }
+
+    static_cast<void>(files_.WriteHiddenFile(CategoryMarkerPathIn(folder)));
+}
+
 FileOperationResult LibraryOrganizer::CreateCategory(const SimulatorProfile& profile,
                                                      const std::filesystem::path& parent,
                                                      const std::string& name) const
@@ -100,12 +146,55 @@ FileOperationResult LibraryOrganizer::CreateCategory(const SimulatorProfile& pro
         return FileOperationResult{folder, FileResult::TheTargetIsNotInALibrary};
     }
 
-    const bool created = files_.CreateFolder(folder);
+    const bool created = files_.CreateFolder(folder) && files_.WriteHiddenFile(CategoryMarkerPathIn(folder));
     const FileResult result = created ? FileResult::Completed : FileResult::CouldNotCreateTheCategory;
 
     Record(OperationKind::CreateCategory, IdentityOf(profile, folder), {}, folder, result);
 
     return FileOperationResult{folder, result};
+}
+
+FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
+                                                     const std::filesystem::path& category) const
+{
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return FileOperationResult{category, FileResult::TheSimulatorIsRunning};
+    }
+
+    const Library* library = LibraryContaining(profile, category);
+    if (library == nullptr || ComparablePath(category) == ComparablePath(library->path))
+    {
+        return FileOperationResult{category, FileResult::TheTargetIsNotInALibrary};
+    }
+
+    const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
+    const TreeNode* tree = LibraryTreeAt(libraries, library->path);
+    const TreeNode* scanned = tree == nullptr ? nullptr : CategoryNamed(*tree, category);
+
+    if (scanned == nullptr)
+    {
+        return FileOperationResult{category, FileResult::TheTargetIsNotInALibrary};
+    }
+
+    if (CountAddons(*scanned) > 0)
+    {
+        return FileOperationResult{category, FileResult::TheCategoryStillHoldsAddons};
+    }
+
+    static_cast<void>(files_.RemoveTree(CategoryMarkerPathIn(category)));
+
+    const bool removed = files_.RemoveEmptyFolder(category);
+    const FileResult result = removed ? FileResult::Completed : FileResult::CouldNotRemoveTheCategory;
+
+    if (removed)
+    {
+        ForgetTheOverrides(profile, *library, category);
+    }
+
+    Record(OperationKind::RemoveCategory, IdentityOf(profile, category), category, {}, result);
+
+    return FileOperationResult{category, result};
 }
 
 FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
@@ -215,6 +304,7 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
         return FileOperationResult{move.addonFolder, FileResult::CouldNotMoveIntoPlace};
     }
 
+    DeclareACategory(*library, move.addonFolder.parent_path());
     CarryTheOverrides(profile, *library, move.addonFolder, target);
 
     if (links.empty())

@@ -26,6 +26,8 @@ enum class FileResult : int
     TheIdentityIsTaken = 17,
     TheTargetIsNotInALibrary = 18,
     CouldNotCreateTheCategory = 19,
+    TheCategoryStillHoldsAddons = 20,
+    CouldNotRemoveTheCategory = 21,
 };
 
 inline constexpr std::array kAllFileResults{
@@ -49,9 +51,11 @@ inline constexpr std::array kAllFileResults{
     FileResult::TheIdentityIsTaken,
     FileResult::TheTargetIsNotInALibrary,
     FileResult::CouldNotCreateTheCategory,
+    FileResult::TheCategoryStillHoldsAddons,
+    FileResult::CouldNotRemoveTheCategory,
 };
 
-static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::CouldNotCreateTheCategory) + 1,
+static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::CouldNotRemoveTheCategory) + 1,
               "Every FileResult belongs in kAllFileResults, and the last one carries the highest value.");
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_FILE_RESULT_H

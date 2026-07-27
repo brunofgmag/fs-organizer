@@ -36,6 +36,11 @@ public:
         creationFails_ = true;
     }
 
+    void MakeTheHiddenWriteFail()
+    {
+        theHiddenWriteFails_ = true;
+    }
+
     [[nodiscard]] CopyOutcome CopyTree(const std::filesystem::path& source,
                                        const std::filesystem::path& destination,
                                        const std::function<bool(const CopyProgress&)>& onProgress) override
@@ -94,6 +99,18 @@ public:
         return true;
     }
 
+    [[nodiscard]] bool WriteHiddenFile(const std::filesystem::path& path) override
+    {
+        if (theHiddenWriteFails_)
+        {
+            return false;
+        }
+
+        fileSystem_.AddFile(path);
+
+        return true;
+    }
+
     [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override
     {
         return !moveFails_ && fileSystem_.MoveTree(source, destination);
@@ -104,6 +121,11 @@ public:
         return !removalFails_ && fileSystem_.RemoveTree(path);
     }
 
+    [[nodiscard]] bool RemoveEmptyFolder(const std::filesystem::path& path) override
+    {
+        return !removalFails_ && fileSystem_.RemoveEmptyDirectory(path);
+    }
+
 private:
     InMemoryFileSystem& fileSystem_;
     bool copyFailsPartWayThrough_ = false;
@@ -111,6 +133,7 @@ private:
     bool moveFails_ = false;
     bool removalFails_ = false;
     bool creationFails_ = false;
+    bool theHiddenWriteFails_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
