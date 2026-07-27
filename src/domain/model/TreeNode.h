@@ -20,6 +20,7 @@ struct TreeNode
     std::filesystem::path path;
     std::optional<Addon> addon;
     std::vector<TreeNode> children;
+    bool declaredAsCategory = false;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_TREE_NODE_H

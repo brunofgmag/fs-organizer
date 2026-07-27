@@ -10,6 +10,7 @@ class AddonTreeFilterModelTest : public QObject
 
 private slots:
     static void EmptyCategoriesAppearByDefaultAndHideOnDemand();
+    static void HidingEmptyCategoriesReachesTheDeclaredOnesToo();
     static void SearchingByNameKeepsTheAncestorsOfMatches();
     static void ClearingTheSearchRestoresTheTree();
 };
@@ -78,6 +79,35 @@ void AddonTreeFilterModelTest::EmptyCategoriesAppearByDefaultAndHideOnDemand()
 
     filter.HideEmptyCategories(false);
     QCOMPARE(filter.rowCount(filter.index(0, 0, {})), 2);
+}
+
+void AddonTreeFilterModelTest::HidingEmptyCategoriesReachesTheDeclaredOnesToo()
+{
+    TreeNode declared = CategoryNode("D:/MSFS 2024/Categoria Teste", {});
+    declared.declaredAsCategory = true;
+
+    TreeNode library =
+        CategoryNode("D:/MSFS 2024",
+                     {CategoryNode("D:/MSFS 2024/Aircrafts", {AddonNode("D:/MSFS 2024/Aircrafts/aerosoft-crj")}),
+                      CategoryNode("D:/MSFS 2024/navigraph-efb-chartsapp", {}), std::move(declared)});
+    library.kind = TreeNodeKind::Library;
+
+    ProfileSnapshot snapshot;
+    snapshot.libraries = {std::move(library)};
+
+    AddonTreeModel model;
+    model.Show(snapshot, Profile());
+
+    AddonTreeFilterModel filter;
+    filter.setSourceModel(&model);
+
+    QCOMPARE(filter.rowCount(filter.index(0, 0, {})), 3);
+
+    filter.HideEmptyCategories(true);
+
+    const QModelIndex shown = filter.index(0, 0, {});
+    QCOMPARE(filter.rowCount(shown), 1);
+    QCOMPARE(filter.data(filter.index(0, 0, shown), Qt::DisplayRole).toString(), QStringLiteral("Aircrafts"));
 }
 
 void AddonTreeFilterModelTest::SearchingByNameKeepsTheAncestorsOfMatches()

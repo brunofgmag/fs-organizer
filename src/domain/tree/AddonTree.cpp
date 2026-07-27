@@ -68,6 +68,11 @@ std::vector<const TreeNode*> CategoriesUnder(const TreeNode& node)
     return categories;
 }
 
+bool HoldsAddonsOrWasDeclared(const TreeNode& node)
+{
+    return node.declaredAsCategory || CountAddons(node) > 0;
+}
+
 const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& baseName)
 {
     for (const TreeNode& library : libraries)

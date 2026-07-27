@@ -22,11 +22,11 @@ const TreeNode* AddonNamed(std::vector<TreeNode>&& libraries, const std::string&
 
 [[nodiscard]] const TreeNode* AddonHoldingTheIdentity(const std::vector<TreeNode>& libraries,
                                                       const std::filesystem::path& wanted,
-                                                      const std::filesystem::path& ignoring = {});
+                                                      const std::filesystem::path& ignoring);
 
 const TreeNode* AddonHoldingTheIdentity(std::vector<TreeNode>&& libraries,
                                         const std::filesystem::path& wanted,
-                                        const std::filesystem::path& ignoring = {}) = delete;
+                                        const std::filesystem::path& ignoring) = delete;
 
 [[nodiscard]] const TreeNode* LibraryTreeAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& root);
 
@@ -35,6 +35,8 @@ const TreeNode* LibraryTreeAt(std::vector<TreeNode>&& libraries, const std::file
 [[nodiscard]] std::vector<const TreeNode*> CategoriesUnder(const TreeNode& node);
 
 std::vector<const TreeNode*> CategoriesUnder(TreeNode&& node) = delete;
+
+[[nodiscard]] bool HoldsAddonsOrWasDeclared(const TreeNode& node);
 
 [[nodiscard]] CheckState DeriveCheckState(const TreeNode& node, const EnabledAddons& enabled);
 

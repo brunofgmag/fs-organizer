@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 
+#include "domain/model/CategoryMarker.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "tests/support/PathPrinting.h"
@@ -19,6 +20,7 @@ private slots:
     static void ScanningStopsAtTheFirstManifest();
     static void AnAddonCarriesTheMetadataFromItsManifest();
     static void AnEmptyFolderIsAnEmptyCategory();
+    static void TheMarkerTellsADeclaredCategoryApartFromALeftoverFolder();
     static void AFolderWithAnUnreadableManifestIsStillAnAddon();
     static void WhatTheImporterCreatedIsNotPartOfTheLibrary();
 };
@@ -44,6 +46,12 @@ namespace
             AddFolder(relativePath);
             std::ofstream file(Root() / relativePath / "manifest.json", std::ios::binary);
             file << content;
+        }
+
+        void Declare(const std::string& relativePath) const
+        {
+            AddFolder(relativePath);
+            const std::ofstream marker(CategoryMarkerPathIn(Root() / relativePath), std::ios::binary);
         }
     };
 
@@ -123,6 +131,25 @@ void FilesystemScannerTest::AnEmptyFolderIsAnEmptyCategory()
     QCOMPARE(liveries->kind, TreeNodeKind::Category);
     QCOMPARE(liveries->children.size(), std::size_t{0});
     QVERIFY(!liveries->addon.has_value());
+}
+
+void FilesystemScannerTest::TheMarkerTellsADeclaredCategoryApartFromALeftoverFolder()
+{
+    const Library library;
+    library.AddFolder("Utils/navigraph-efb-chartsapp");
+    library.Declare("Categoria Teste");
+
+    const FilesystemScanner scanner(parser, probe);
+    const TreeNode root = scanner.Scan(library.Root());
+
+    const TreeNode* declared = ChildNamed(root, "Categoria Teste");
+    QVERIFY(declared != nullptr);
+    QVERIFY(declared->declaredAsCategory);
+
+    const TreeNode* utils = ChildNamed(root, "Utils");
+    QVERIFY(utils != nullptr);
+    QVERIFY(!utils->declaredAsCategory);
+    QVERIFY(!ChildNamed(*utils, "navigraph-efb-chartsapp")->declaredAsCategory);
 }
 
 void FilesystemScannerTest::AFolderWithAnUnreadableManifestIsStillAnAddon()

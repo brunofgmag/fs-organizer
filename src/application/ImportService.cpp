@@ -143,7 +143,7 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
 
     for (const ImportRequest& request : requests)
     {
-        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, request.Target()))
+        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, request.Target(), {}))
         {
             results.push_back(ImportOperationResult{request, FileResult::TheIdentityIsTaken, occupant->path});
             continue;
@@ -325,7 +325,7 @@ std::vector<FileOperationResult> ImportService::Restore(const SimulatorProfile& 
 
     for (const QuarantinedItem& item : items)
     {
-        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, item.origin))
+        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, item.origin, {}))
         {
             results.push_back(FileOperationResult{item.path, FileResult::TheIdentityIsTaken, occupant->path});
             continue;
@@ -434,7 +434,7 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
             continue;
         }
 
-        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, leftover.target))
+        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, leftover.target, {}))
         {
             results.push_back(ImportOperationResult{request, FileResult::TheIdentityIsTaken, occupant->path});
             continue;

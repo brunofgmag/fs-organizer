@@ -24,6 +24,7 @@ private slots:
     static void AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked();
     static void ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddon();
     static void EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibraryRoot();
+    static void AnEmptyFolderOnlyCountsAsACategoryOnceTheUserHasDeclaredIt();
     static void TheLibrariesAnswerWhichOfThemHoldsAnAddonOfAGivenName();
     static void AnIdentityNoAddonAnswersToIsFree();
     static void AnIdentityHeldInAnotherCategorySaysWhereTheOccupantIs();
@@ -183,6 +184,19 @@ void AddonTreeTest::ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddo
              CheckState::Checked);
 }
 
+void AddonTreeTest::AnEmptyFolderOnlyCountsAsACategoryOnceTheUserHasDeclaredIt()
+{
+    const TreeNode leftover = CategoryNode("D:/MSFS 2024/Utils/navigraph-efb-chartsapp", {});
+    QVERIFY(!HoldsAddonsOrWasDeclared(leftover));
+
+    TreeNode declared = leftover;
+    declared.declaredAsCategory = true;
+    QVERIFY(HoldsAddonsOrWasDeclared(declared));
+
+    const TreeNode populated = CategoryNode("D:/MSFS 2024/Aircrafts", {AddonNode("D:/MSFS 2024/Aircrafts/fenix-a320")});
+    QVERIFY(HoldsAddonsOrWasDeclared(populated));
+}
+
 void AddonTreeTest::EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibraryRoot()
 {
     const TreeNode library = ReferenceLibrary();
@@ -212,14 +226,14 @@ void AddonTreeTest::AnIdentityNoAddonAnswersToIsFree()
 {
     const std::vector<TreeNode> libraries{ReferenceLibrary()};
 
-    QCOMPARE(AddonHoldingTheIdentity(libraries, "D:/MSFS 2024/Sceneries/never-installed"), nullptr);
+    QCOMPARE(AddonHoldingTheIdentity(libraries, "D:/MSFS 2024/Sceneries/never-installed", {}), nullptr);
 }
 
 void AddonTreeTest::AnIdentityHeldInAnotherCategorySaysWhereTheOccupantIs()
 {
     const std::vector<TreeNode> libraries{ReferenceLibrary()};
 
-    const TreeNode* occupant = AddonHoldingTheIdentity(libraries, "D:/MSFS 2024/Sceneries/pmdg-aircraft-77w");
+    const TreeNode* occupant = AddonHoldingTheIdentity(libraries, "D:/MSFS 2024/Sceneries/pmdg-aircraft-77w", {});
 
     QVERIFY(occupant != nullptr);
     QCOMPARE(occupant->path, std::filesystem::path("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
@@ -231,16 +245,16 @@ void AddonTreeTest::TheSameNameInAnotherLibraryLeavesTheIdentityFree()
         ReferenceLibrary(),
         LibraryNode("F:/Spare", {CategoryNode("F:/Spare/Aircrafts", {AddonNode("F:/Spare/Aircrafts/fenix-a320")})})};
 
-    QCOMPARE(AddonHoldingTheIdentity(libraries, "D:/MSFS 2024/Sceneries/fenix-a320")->path,
+    QCOMPARE(AddonHoldingTheIdentity(libraries, "D:/MSFS 2024/Sceneries/fenix-a320", {})->path,
              std::filesystem::path("D:/MSFS 2024/Aircrafts/Fenix/fenix-a320"));
-    QCOMPARE(AddonHoldingTheIdentity(libraries, "F:/Spare/Sceneries/pmdg-aircraft-77w"), nullptr);
+    QCOMPARE(AddonHoldingTheIdentity(libraries, "F:/Spare/Sceneries/pmdg-aircraft-77w", {}), nullptr);
 }
 
 void AddonTreeTest::TheIdentityIsAskedWithoutDistinguishingCase()
 {
     const std::vector<TreeNode> libraries{ReferenceLibrary()};
 
-    QCOMPARE(AddonHoldingTheIdentity(libraries, R"(d:\msfs 2024\Sceneries\PMDG-Aircraft-77W)")->path,
+    QCOMPARE(AddonHoldingTheIdentity(libraries, R"(d:\msfs 2024\Sceneries\PMDG-Aircraft-77W)", {})->path,
              std::filesystem::path("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
 }
 
@@ -257,7 +271,7 @@ void AddonTreeTest::AFolderOutsideEveryLibraryHasNoIdentityToTake()
 {
     const std::vector<TreeNode> libraries{ReferenceLibrary()};
 
-    QCOMPARE(AddonHoldingTheIdentity(libraries, "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"), nullptr);
+    QCOMPARE(AddonHoldingTheIdentity(libraries, "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", {}), nullptr);
 }
 
 void AddonTreeTest::TheLibrariesAnswerWhichTreeStandsAtAGivenRoot()

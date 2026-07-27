@@ -6,6 +6,7 @@
 #include <system_error>
 
 #include "domain/importing/ImportPaths.h"
+#include "domain/model/CategoryMarker.h"
 #include "domain/model/Manifest.h"
 
 namespace
@@ -22,6 +23,13 @@ namespace
         std::error_code error;
 
         return std::filesystem::exists(ManifestPathIn(folder), error);
+    }
+
+    bool WasDeclaredACategory(const std::filesystem::path& folder)
+    {
+        std::error_code error;
+
+        return std::filesystem::exists(CategoryMarkerPathIn(folder), error);
     }
 }
 
@@ -66,6 +74,7 @@ TreeNode FilesystemScanner::ScanCategory(const std::filesystem::path& folder) co
     TreeNode node;
     node.kind = TreeNodeKind::Category;
     node.path = folder;
+    node.declaredAsCategory = WasDeclaredACategory(folder);
 
     for (const std::filesystem::path& child : filesystemProbe_.ChildDirectories(folder))
     {
