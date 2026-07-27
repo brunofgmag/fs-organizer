@@ -5,9 +5,28 @@
 #include <string>
 #include <vector>
 
-#include "domain/model/DestinationOverride.h"
 #include "domain/model/Library.h"
-#include "domain/model/SimulatorVariant.h"
+#include "domain/model/LibraryId.h"
+
+enum class SimulatorVariant : int
+{
+    MSFS2020 = 0,
+    MSFS2024 = 1,
+};
+
+struct DestinationOverride
+{
+    LibraryId libraryId;
+    std::filesystem::path relativePath;
+    std::filesystem::path destination;
+};
+
+struct SimulatorCandidate
+{
+    SimulatorVariant variant = SimulatorVariant::MSFS2024;
+    std::filesystem::path packagesPath;
+    std::vector<std::filesystem::path> destinations;
+};
 
 struct SimulatorProfile
 {

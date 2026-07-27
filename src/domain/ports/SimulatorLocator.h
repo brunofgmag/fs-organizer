@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "domain/model/SimulatorCandidate.h"
+#include "domain/model/SimulatorProfile.h"
 
 class SimulatorLocator
 {

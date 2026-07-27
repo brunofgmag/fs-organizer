@@ -6,7 +6,13 @@
 #include <vector>
 
 #include "domain/model/Addon.h"
-#include "domain/model/TreeNodeKind.h"
+
+enum class TreeNodeKind : int
+{
+    Library = 0,
+    Category = 1,
+    Addon = 2,
+};
 
 struct TreeNode
 {

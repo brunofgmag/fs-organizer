@@ -2,6 +2,7 @@
 
 #include "domain/model/AddonId.h"
 #include "domain/support/PathUtils.h"
+#include "domain/support/StringUtils.h"
 
 namespace
 {

@@ -4,7 +4,7 @@
 #include <QtTest/QtTest>
 
 #include "domain/model/CheckState.h"
-#include "domain/model/EntryClassification.h"
+#include "domain/model/DestinationEntry.h"
 #include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"

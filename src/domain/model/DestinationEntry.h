@@ -3,7 +3,15 @@
 
 #include <filesystem>
 
-#include "domain/model/EntryClassification.h"
+enum class EntryClassification : int
+{
+    Managed = 0,
+    External = 1,
+    Broken = 2,
+    Unavailable = 3,
+    Unmanaged = 4,
+    Duplicated = 5,
+};
 
 struct DestinationEntry
 {

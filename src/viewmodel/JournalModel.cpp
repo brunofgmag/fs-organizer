@@ -7,6 +7,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QTimeZone>
 
+#include "domain/support/StringUtils.h"
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
 

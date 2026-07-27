@@ -1,12 +1,18 @@
 #ifndef FS_ORGANIZER_DOMAIN_MODEL_LINK_OUTCOME_H
 #define FS_ORGANIZER_DOMAIN_MODEL_LINK_OUTCOME_H
 
+#include <filesystem>
 #include <optional>
 #include <utility>
 
 #include "domain/model/CopyConflict.h"
 #include "domain/model/LinkFailure.h"
-#include "domain/model/OccupiedDestination.h"
+
+struct OccupiedDestination
+{
+    std::filesystem::path destinationPath;
+    std::filesystem::path existingTarget;
+};
 
 class LinkOutcome
 {
