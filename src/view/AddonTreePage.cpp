@@ -409,7 +409,7 @@ void AddonTreePage::AddMoveAction(QMenu& menu, const TreeNode* node)
         return;
     }
 
-    const std::vector<std::filesystem::path> offered = viewModel_.CategoriesFor(node);
+    const std::vector<MoveTarget> offered = viewModel_.CategoriesFor(node);
     if (offered.empty())
     {
         return;
@@ -418,12 +418,12 @@ void AddonTreePage::AddMoveAction(QMenu& menu, const TreeNode* node)
     StartASection(menu);
 
     QMenu* where = menu.addMenu(tr("Mover para..."));
-    for (const std::filesystem::path& category : offered)
+    for (const MoveTarget& target : offered)
     {
-        where->addAction(AsText(category.filename()), this,
-                         [this, node, category]
+        where->addAction(AsText(target.relativePath), this,
+                         [this, node, target]
                          {
-                             viewModel_.MoveTo(Chosen(node), category);
+                             viewModel_.MoveTo(Chosen(node), target.category);
                          });
     }
 }

@@ -12,6 +12,7 @@
 #include "domain/tree/CategorySuggester.h"
 #include "domain/ports/ProcessProbe.h"
 #include "viewmodel/AddonTreeModel.h"
+#include "viewmodel/MoveTarget.h"
 #include "viewmodel/SessionNotifier.h"
 
 class AddonTreeViewModel final : public QObject
@@ -56,7 +57,7 @@ public:
 
     [[nodiscard]] std::size_t StrayAddonsUnder(const std::vector<const TreeNode*>& nodes) const;
 
-    [[nodiscard]] std::vector<std::filesystem::path> CategoriesFor(const TreeNode* node) const;
+    [[nodiscard]] std::vector<MoveTarget> CategoriesFor(const TreeNode* node) const;
 
     [[nodiscard]] std::vector<CategorySuggestion> SuggestionsFor(const TreeNode* node) const;
 

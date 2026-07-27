@@ -304,7 +304,7 @@ std::vector<CategorySuggestion> AddonTreeViewModel::SuggestionsFor(const TreeNod
     return tree == nullptr ? std::vector<CategorySuggestion>{} : SuggestCategories(*tree, AddonsUnder(*node));
 }
 
-std::vector<std::filesystem::path> AddonTreeViewModel::CategoriesFor(const TreeNode* node) const
+std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) const
 {
     const TreeNode* tree = LibraryTreeHolding(*node);
     if (tree == nullptr)
@@ -314,13 +314,13 @@ std::vector<std::filesystem::path> AddonTreeViewModel::CategoriesFor(const TreeN
 
     const std::string holding = ComparablePath(CategoryHolding(*node));
 
-    std::vector<std::filesystem::path> offered;
+    std::vector<MoveTarget> offered;
     for (const TreeNode* candidate : CategoriesUnder(*tree))
     {
         if (candidate->kind == TreeNodeKind::Category && ComparablePath(candidate->path) != holding
             && HoldsAddonsOrWasDeclared(*candidate))
         {
-            offered.push_back(candidate->path);
+            offered.push_back(MoveTarget{candidate->path, candidate->path.lexically_relative(tree->path)});
         }
     }
 

@@ -35,6 +35,7 @@ private slots:
     static void TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveTarget();
     static void TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonLoose();
     static void AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets();
+    static void ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart();
     static void AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo();
     static void AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees();
     static void AdoptingIsRefusedWhenTheEnabledAddonsPointAtDifferentDestinations();
@@ -241,10 +242,10 @@ void AddonTreeViewModelTest::TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveT
     Fixture f;
     const TreeNode addon = AddonNode(kAddon);
 
-    const std::vector<std::filesystem::path> offered = f.viewModel.CategoriesFor(&addon);
+    const std::vector<MoveTarget> offered = f.viewModel.CategoriesFor(&addon);
 
     QCOMPARE(offered.size(), std::size_t{1});
-    QCOMPARE(offered.front(), std::filesystem::path{kSceneries});
+    QCOMPARE(offered.front().category, std::filesystem::path{kSceneries});
 }
 
 void AddonTreeViewModelTest::TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonLoose()
@@ -252,9 +253,13 @@ void AddonTreeViewModelTest::TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonL
     Fixture f;
     const TreeNode addon = AddonNode(kAddon);
 
-    const std::vector<std::filesystem::path> offered = f.viewModel.CategoriesFor(&addon);
+    const std::vector<MoveTarget> offered = f.viewModel.CategoriesFor(&addon);
 
-    QVERIFY(std::ranges::find(offered, std::filesystem::path{kLibrary}) == offered.end());
+    QVERIFY(std::ranges::none_of(offered,
+                                 [](const MoveTarget& target)
+                                 {
+                                     return target.category == std::filesystem::path{kLibrary};
+                                 }));
 }
 
 void AddonTreeViewModelTest::AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets()
@@ -269,10 +274,33 @@ void AddonTreeViewModelTest::AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTarget
 
     const TreeNode addon = AddonNode(kAddon);
 
-    const std::vector<std::filesystem::path> offered = f.viewModel.CategoriesFor(&addon);
+    const std::vector<MoveTarget> offered = f.viewModel.CategoriesFor(&addon);
 
     QCOMPARE(offered.size(), std::size_t{1});
-    QCOMPARE(offered.front(), std::filesystem::path{kSceneries});
+    QCOMPARE(offered.front().category, std::filesystem::path{kSceneries});
+}
+
+void AddonTreeViewModelTest::ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart()
+{
+    Fixture f;
+    const std::filesystem::path nested = std::filesystem::path{kAircrafts} / "Liveries";
+    const std::filesystem::path loose = std::filesystem::path{kLibrary} / "Liveries";
+
+    TreeNode tree =
+        CategoryNode(kLibrary,
+                     {CategoryNode(kAircrafts, {AddonNode(kAddon), CategoryNode(nested, {AddonNode(nested / "one")})}),
+                      CategoryNode(loose, {AddonNode(loose / "two")})});
+    tree.kind = TreeNodeKind::Library;
+    f.catalog.SetTree(kLibrary, tree);
+    f.session.ShowActiveProfile();
+
+    const TreeNode addon = AddonNode(kAddon);
+
+    const std::vector<MoveTarget> offered = f.viewModel.CategoriesFor(&addon);
+
+    QCOMPARE(offered.size(), std::size_t{2});
+    QCOMPARE(offered.front().relativePath, std::filesystem::path{"Aircrafts/Liveries"});
+    QCOMPARE(offered.back().relativePath, std::filesystem::path{"Liveries"});
 }
 
 void AddonTreeViewModelTest::AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo()
