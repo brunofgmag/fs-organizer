@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "application/ImportService.h"
+#include "application/LibraryOrganizer.h"
 #include "application/ProfileService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -157,6 +158,8 @@ int main(int argc, char* argv[])
     const ImportEngine importEngine(filesystemProbe, files, linking, log, LinkType::Junction);
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
                                       LinkType::Junction);
+    const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
+                                     LinkType::Junction);
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--journal-scroll")))
     {
@@ -165,7 +168,7 @@ int main(int argc, char* argv[])
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
         SilentObserver silent;
-        Session session(justTheProfile, onlySettings, runInline, silent);
+        Session session(justTheProfile, organizer, onlySettings, runInline, silent);
         session.ShowActiveProfile();
 
         return MeasureTheJournalScroll(journal, session);
@@ -176,7 +179,7 @@ int main(int argc, char* argv[])
         MainWindow window(loaded);
         QtBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session(profileService, settings, runner, notifier);
+        Session session(profileService, organizer, settings, runner, notifier);
 
         AddonTreeModel treeModel;
         AddonTreeViewModel treeViewModel(session, profileService, processProbe, treeModel, notifier);
@@ -215,7 +218,7 @@ int main(int argc, char* argv[])
     CommunityModel communityModel;
     InlineRunner runInline;
     SessionNotifier notifier;
-    Session session(profileService, settings, runInline, notifier);
+    Session session(profileService, organizer, settings, runInline, notifier);
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
 
     Measure("Session::ShowActiveProfile", false,

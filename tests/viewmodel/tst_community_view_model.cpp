@@ -1,11 +1,14 @@
 #include <QtTest/QtTest>
 
+#include "application/LibraryOrganizer.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
+#include "tests/doubles/FakeFileOperations.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
+#include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
@@ -87,10 +90,14 @@ namespace
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
         ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
+        FakeFileOperations files{fileSystem};
+        FakeProcessProbe processProbe;
+        LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
+                                   classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, settings, runner, notifier};
+        Session session{service, organizer, settings, runner, notifier};
         CommunityModel model;
         CommunityViewModel viewModel{service, session, notifier, model};
     };

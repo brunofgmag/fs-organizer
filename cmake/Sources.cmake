@@ -9,6 +9,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/RepairPlan.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/CategorySuggester.cpp
+        src/domain/tree/DestinationDivergence.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
@@ -20,6 +21,7 @@ set(APPLICATION_SOURCES
         src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
+src/application/SetupService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
@@ -42,6 +44,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
+        src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
         src/viewmodel/FailureText.cpp
@@ -67,6 +70,7 @@ set(VIEW_SOURCES
         src/view/RepairDialog.cpp
         src/view/SetupWizard.cpp
         src/view/StagingLeftoverDialog.cpp
+        src/view/SuggestionDialog.cpp
         src/view/TableColumns.cpp
 )
 

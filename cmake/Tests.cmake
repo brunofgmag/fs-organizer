@@ -220,17 +220,21 @@ fsorg_add_qt_test(fsorg-session-tests session
         tests/application/tst_session.cpp
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLibraryIdGenerator.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/doubles/RecordingSessionObserver.h
+        tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/journal/OperationLog.cpp
         src/domain/importing/CopyConflicts.cpp
+        src/domain/linking/DisableLinks.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
@@ -239,6 +243,7 @@ fsorg_add_qt_test(fsorg-session-tests session
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
+        src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp)
 
@@ -274,6 +279,7 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/support/PathPrinting.h
         src/domain/tree/AddonTree.cpp
         src/domain/tree/LibraryLookup.cpp
+        src/application/SetupService.cpp
         src/viewmodel/SetupViewModel.cpp)
 
 fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
@@ -283,6 +289,7 @@ fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/DestinationDivergence.cpp
         src/domain/tree/LibraryLookup.cpp
         src/viewmodel/AddonTreeModel.cpp)
 
@@ -293,9 +300,18 @@ fsorg_add_qt_test(fsorg-addon-tree-filter-model-tests addon-tree-filter-model
         src/domain/linking/EntryClassifier.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/DestinationDivergence.cpp
         src/domain/tree/LibraryLookup.cpp
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp)
+
+fsorg_add_qt_test(fsorg-category-suggestion-model-tests category-suggestion-model
+        tests/viewmodel/tst_category_suggestion_model.cpp
+        tests/support/PathPrinting.h
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/CategorySuggester.cpp
+        src/viewmodel/CategorySuggestionModel.cpp
+        src/viewmodel/FailureText.cpp)
 
 fsorg_add_qt_test(fsorg-community-model-tests community-model
         tests/viewmodel/tst_community_model.cpp
@@ -321,13 +337,16 @@ fsorg_add_qt_test(fsorg-quarantine-model-tests quarantine-model
         tests/support/PathPrinting.h
         src/viewmodel/QuarantineModel.cpp)
 
-fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
-        tests/viewmodel/tst_community_view_model.cpp
+fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
+        tests/viewmodel/tst_addon_tree_view_model.cpp
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
@@ -335,6 +354,42 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/support/PathPrinting.h
         src/domain/journal/OperationLog.cpp
         src/domain/importing/CopyConflicts.cpp
+        src/domain/linking/DisableLinks.cpp
+        src/domain/linking/EntryClassifier.cpp
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/RepairPlan.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/CategorySuggester.cpp
+        src/domain/tree/DestinationDivergence.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
+        src/domain/tree/ToggleDirection.cpp
+        src/application/LibraryOrganizer.cpp
+        src/application/ProfileService.cpp
+        src/application/Session.cpp
+        src/viewmodel/AddonTreeModel.cpp
+        src/viewmodel/AddonTreeViewModel.cpp
+        src/viewmodel/FailureText.cpp
+        src/viewmodel/SessionNotifier.cpp)
+
+fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
+        tests/viewmodel/tst_community_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/journal/OperationLog.cpp
+        src/domain/importing/CopyConflicts.cpp
+        src/domain/linking/DisableLinks.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
@@ -343,6 +398,7 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
+        src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
         src/viewmodel/CommunityModel.cpp
@@ -377,6 +433,7 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
         src/application/ImportService.cpp
+        src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
         src/viewmodel/QuarantineModel.cpp

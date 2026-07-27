@@ -4,8 +4,10 @@
 #include <QtWidgets/QToolButton>
 
 #include "application/ImportService.h"
+#include "application/LibraryOrganizer.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/SetupService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -54,7 +56,8 @@ namespace
                   const LibraryIdGenerator& identities,
                   const CatalogScanner& catalog)
     {
-        SetupViewModel viewModel(locator, filesystemProbe, settings, identities, catalog);
+        SetupService service(locator, filesystemProbe, settings, identities, catalog);
+        SetupViewModel viewModel(service);
         viewModel.Detect();
 
         SetupWizard wizard(viewModel);
@@ -122,10 +125,13 @@ int main(int argc, char* argv[])
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
                                       LinkType::Junction);
 
+    const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
+                                     LinkType::Junction);
+
     MainWindow window(settings.Load());
     QtBackgroundRunner runner;
     SessionNotifier notifier;
-    Session session(profileService, settings, runner, notifier);
+    Session session(profileService, organizer, settings, runner, notifier);
 
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, processProbe, model, notifier);

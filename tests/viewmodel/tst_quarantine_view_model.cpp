@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 
+#include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -86,10 +87,12 @@ namespace
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
         ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
         ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
+        LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
+                                   classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{profiles, settings, runner, notifier};
+        Session session{profiles, organizer, settings, runner, notifier};
         QuarantineModel model;
         QuarantineViewModel viewModel{service, profiles, session, notifier, model};
     };
