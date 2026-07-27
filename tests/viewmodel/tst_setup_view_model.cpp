@@ -88,7 +88,8 @@ namespace
         FakeSettingsRepository settings;
         FakeLibraryIdGenerator identities;
         FakeCatalogScanner catalog;
-        SetupViewModel viewModel{locator, filesystemProbe, settings, identities, catalog};
+        SetupService service{locator, filesystemProbe, settings, identities, catalog};
+        SetupViewModel viewModel{service};
     };
 }
 
@@ -106,7 +107,8 @@ void SetupViewModelTest::EveryDetectedCandidateIsProposedNotJustTheFirst()
     const FakeLibraryIdGenerator identities;
     const FakeCatalogScanner catalog;
 
-    SetupViewModel viewModel(locator, filesystemProbe, settings, identities, catalog);
+    SetupService service(locator, filesystemProbe, settings, identities, catalog);
+    SetupViewModel viewModel(service);
     viewModel.Detect();
 
     const std::vector<SimulatorCandidate> proposed = viewModel.Candidates();
