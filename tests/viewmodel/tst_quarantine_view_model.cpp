@@ -10,7 +10,9 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/InMemoryFileSystem.h"
+#include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/QuarantineViewModel.h"
@@ -20,7 +22,7 @@ class QuarantineViewModelTest : public QObject
     Q_OBJECT
 
 private slots:
-    static void TheQuarantineListsWhatBelongsToTheProfileTheTreeIsShowing();
+    static void TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing();
     static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
 };
 
@@ -59,11 +61,14 @@ namespace
             fileSystem.AddDirectory(kLibrary);
             fileSystem.AddDirectory(kQuarantined);
             catalog.SetTree(kLibrary, LibraryTree());
+
+            settings.stored.profiles = {Profile()};
+            settings.stored.activeProfileId = Profile().id;
         }
 
         void ScanLands()
         {
-            treeModel.ShowSnapshot(profiles.Scan(Profile()), Profile());
+            session.ShowActiveProfile();
         }
 
         InMemoryFileSystem fileSystem;
@@ -81,13 +86,16 @@ namespace
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
         ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
         ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
-        AddonTreeModel treeModel;
+        FakeSettingsRepository settings;
+        InlineBackgroundRunner runner;
+        SessionNotifier notifier;
+        Session session{profiles, settings, runner, notifier};
         QuarantineModel model;
-        QuarantineViewModel viewModel{service, profiles, treeModel, model};
+        QuarantineViewModel viewModel{service, profiles, session, notifier, model};
     };
 }
 
-void QuarantineViewModelTest::TheQuarantineListsWhatBelongsToTheProfileTheTreeIsShowing()
+void QuarantineViewModelTest::TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing()
 {
     Fixture f;
     f.ScanLands();
@@ -107,10 +115,6 @@ void QuarantineViewModelTest::TheQuarantineCatchesUpWhenTheActiveProfileFinallyL
 
     f.ScanLands();
 
-    QEXPECT_FAIL("",
-                 "The quarantine reads the profile from AddonTreeModel, which only learns it when the scan lands, "
-                 "and nothing re-runs Show afterwards: ScanFinished reaches CommunityViewModel alone.",
-                 Abort);
     QCOMPARE(f.model.rowCount({}), 1);
 }
 

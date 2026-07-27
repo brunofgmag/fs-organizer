@@ -1,9 +1,5 @@
 #include "viewmodel/AddonTreeModel.h"
 
-#include <algorithm>
-#include <utility>
-
-#include "domain/linking/EntryClassifier.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -29,41 +25,26 @@ AddonTreeModel::AddonTreeModel(QObject* parent) : QAbstractItemModel(parent)
 {
 }
 
-void AddonTreeModel::ShowSnapshot(ProfileSnapshot snapshot, SimulatorProfile profile)
+void AddonTreeModel::Show(const ProfileSnapshot& snapshot, const SimulatorProfile& profile)
 {
     beginResetModel();
 
-    snapshot_ = std::move(snapshot);
-    profile_ = std::move(profile);
+    libraries_ = snapshot.libraries;
+    enabled_ = snapshot.enabled;
+    conflicts_ = snapshot.conflicts;
+    profile_ = profile;
     Rebuild();
 
     endResetModel();
 }
 
-void AddonTreeModel::RefreshEnabled(std::vector<DestinationEntry> entries)
+void AddonTreeModel::Refresh(const ProfileSnapshot& snapshot, const SimulatorProfile& profile)
 {
-    snapshot_.entries = std::move(entries);
-    snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
-    snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
+    enabled_ = snapshot.enabled;
+    conflicts_ = snapshot.conflicts;
+    profile_ = profile;
 
     AnnounceValues({});
-}
-
-void AddonTreeModel::ShowProfile(SimulatorProfile profile)
-{
-    profile_ = std::move(profile);
-
-    AnnounceValues({});
-}
-
-const ProfileSnapshot& AddonTreeModel::Snapshot() const
-{
-    return snapshot_;
-}
-
-const SimulatorProfile& AddonTreeModel::Profile() const
-{
-    return profile_;
 }
 
 const TreeNode* AddonTreeModel::NodeAt(const QModelIndex& position)
@@ -76,7 +57,7 @@ void AddonTreeModel::Rebuild()
     items_.clear();
     roots_.clear();
 
-    for (const TreeNode& library : snapshot_.libraries)
+    for (const TreeNode& library : libraries_)
     {
         roots_.push_back(AddItem(library, nullptr));
     }
@@ -173,16 +154,26 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
-    const CopyConflict* conflict = snapshot_.conflicts.OverTheLibraryAddon(node->path);
+    const CopyConflict* conflict = conflicts_.OverTheLibraryAddon(node->path);
 
     if (role == Qt::CheckStateRole)
     {
-        return ToQt(DeriveCheckState(*node, snapshot_.enabled));
+        return ToQt(DeriveCheckState(*node, enabled_));
     }
 
     if (role == ConflictRole)
     {
         return conflict != nullptr;
+    }
+
+    if (role == ConflictDetailsRole)
+    {
+        return conflict == nullptr ? QVariant() : QVariant::fromValue(*conflict);
+    }
+
+    if (role == EnabledRole)
+    {
+        return enabled_.Contains(node->path);
     }
 
     if (role == Qt::ToolTipRole)

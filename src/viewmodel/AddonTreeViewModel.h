@@ -7,26 +7,26 @@
 #include <QtCore/QObject>
 
 #include "application/ProfileService.h"
-#include "application/ports/SettingsRepository.h"
+#include "application/Session.h"
 #include "domain/ports/ProcessProbe.h"
 #include "viewmodel/AddonTreeModel.h"
-
-class QThread;
+#include "viewmodel/SessionNotifier.h"
 
 class AddonTreeViewModel final : public QObject
 {
     Q_OBJECT
 
 public:
-    AddonTreeViewModel(ProfileService& service,
-                       SettingsRepository& settings,
+    AddonTreeViewModel(Session& session,
+                       ProfileService& service,
                        const ProcessProbe& probe,
                        AddonTreeModel& model,
+                       const SessionNotifier& notifier,
                        QObject* parent = nullptr);
 
-    void ShowActiveProfile();
+    void ShowActiveProfile() const;
 
-    void ChooseProfile(const std::string& profileId);
+    void ChooseProfile(const std::string& profileId) const;
 
     void Toggle(const std::vector<const TreeNode*>& nodes);
 
@@ -34,18 +34,16 @@ public:
 
     void UndoLastBatch();
 
-    void OverrideDestination(const TreeNode* node, const std::filesystem::path& destination);
+    void OverrideDestination(const TreeNode* node, const std::filesystem::path& destination) const;
 
-    [[nodiscard]] LibraryReport AddLibrary(const std::filesystem::path& path);
+    [[nodiscard]] LibraryReport AddLibrary(const std::filesystem::path& path) const;
 
     [[nodiscard]] bool CanUndo() const;
 
     [[nodiscard]] const SimulatorProfile& Profile() const;
 
 signals:
-    void ScanStarted();
-
-    void ScanFinished();
+    void Shown();
 
     void BatchFinished(const std::vector<LinkOperationResult>& results);
 
@@ -54,24 +52,16 @@ signals:
     void RestartPendingChanged(bool pending);
 
 private:
-    void StartScan();
-
     void AdoptScan();
 
     void ApplyResults(const std::vector<LinkOperationResult>& results);
 
     void NoteSimulatorState(const std::vector<LinkOperationResult>& results);
 
-    void SaveProfile() const;
-
+    Session& session_;
     ProfileService& service_;
-    SettingsRepository& settings_;
     const ProcessProbe& probe_;
     AddonTreeModel& model_;
-    SimulatorProfile profile_;
-    ProfileSnapshot scanned_;
-    QThread* scan_ = nullptr;
-    bool rescanWhenIdle_ = false;
     bool warnedAboutSimulator_ = false;
     bool restartPending_ = false;
 };

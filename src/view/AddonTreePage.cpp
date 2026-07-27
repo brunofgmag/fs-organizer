@@ -16,11 +16,13 @@
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QVBoxLayout>
 
-#include "domain/tree/AddonTree.h"
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
 
-AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel, AddonTreeModel& model, QWidget* parent)
+AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
+                             AddonTreeModel& model,
+                             SessionNotifier& notifier,
+                             QWidget* parent)
     : QWidget(parent), viewModel_(viewModel), model_(model)
 {
     tree_ = new QTreeView(this);
@@ -49,9 +51,9 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel, AddonTreeModel& mode
     connect(tree_, &QTreeView::customContextMenuRequested, this, &AddonTreePage::ShowDestinationMenu);
     connect(&model_, &AddonTreeModel::ToggleRequested, this, &AddonTreePage::OnToggleRequested);
     connect(&viewModel_, &AddonTreeViewModel::BatchFinished, this, &AddonTreePage::OnBatchFinished);
-    connect(&viewModel_, &AddonTreeViewModel::ScanFinished, this, &AddonTreePage::OnScanFinished);
+    connect(&viewModel_, &AddonTreeViewModel::Shown, this, &AddonTreePage::OnShown);
 
-    connect(&viewModel_, &AddonTreeViewModel::ScanStarted, this,
+    connect(&notifier, &SessionNotifier::ScanStarted, this,
             [this]
             {
                 emit StatusChanged(tr("Lendo a biblioteca..."));
@@ -153,7 +155,7 @@ std::vector<const TreeNode*> AddonTreePage::Chosen(const TreeNode* clicked) cons
 
     for (const QModelIndex& position : tree_->selectionModel()->selectedIndexes())
     {
-        if (const TreeNode* node = model_.NodeAt(filter_->mapToSource(position)))
+        if (const TreeNode* node = AddonTreeModel::NodeAt(filter_->mapToSource(position)))
         {
             nodes.push_back(node);
         }
@@ -226,7 +228,24 @@ void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& resu
                                          tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
 }
 
-void AddonTreePage::OnScanFinished()
+void AddonTreePage::CountAddons(const QModelIndex& parent, std::size_t& addons, std::size_t& enabled) const
+{
+    for (int row = 0; row < model_.rowCount(parent); ++row)
+    {
+        const QModelIndex position = model_.index(row, 0, parent);
+        const TreeNode* node = AddonTreeModel::NodeAt(position);
+
+        if (node != nullptr && node->kind == TreeNodeKind::Addon)
+        {
+            ++addons;
+            enabled += model_.data(position, AddonTreeModel::EnabledRole).toBool() ? 1 : 0;
+        }
+
+        CountAddons(position, addons, enabled);
+    }
+}
+
+void AddonTreePage::OnShown()
 {
     const bool empty = viewModel_.Profile().libraries.empty();
     pages_->setCurrentIndex(empty ? 1 : 0);
@@ -240,14 +259,7 @@ void AddonTreePage::OnScanFinished()
     std::size_t addons = 0;
     std::size_t enabled = 0;
 
-    for (const TreeNode& library : model_.Snapshot().libraries)
-    {
-        for (const TreeNode* addon : AddonsUnder(library))
-        {
-            ++addons;
-            enabled += model_.Snapshot().enabled.Contains(addon->path) ? 1 : 0;
-        }
-    }
+    CountAddons({}, addons, enabled);
 
     tree_->expandToDepth(0);
 
@@ -258,7 +270,8 @@ void AddonTreePage::OnScanFinished()
 
 void AddonTreePage::ShowDestinationMenu(const QPoint& where)
 {
-    const TreeNode* node = model_.NodeAt(filter_->mapToSource(tree_->indexAt(where)));
+    const QModelIndex position = filter_->mapToSource(tree_->indexAt(where));
+    const TreeNode* node = AddonTreeModel::NodeAt(position);
     const SimulatorProfile& profile = viewModel_.Profile();
 
     if (node == nullptr)
@@ -268,9 +281,9 @@ void AddonTreePage::ShowDestinationMenu(const QPoint& where)
 
     QMenu menu(this);
 
-    if (const CopyConflict* conflict = model_.Snapshot().conflicts.OverTheLibraryAddon(node->path))
+    if (const QVariant conflict = model_.data(position, AddonTreeModel::ConflictDetailsRole); conflict.isValid())
     {
-        const CopyConflict chosen = *conflict;
+        const auto chosen = conflict.value<CopyConflict>();
         menu.addAction(tr("Resolver o conflito de cópia..."), this,
                        [this, chosen]
                        {

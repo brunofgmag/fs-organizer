@@ -9,6 +9,8 @@
 #include "application/model/ProfileSnapshot.h"
 #include "domain/model/SimulatorProfile.h"
 
+Q_DECLARE_METATYPE(CopyConflict)
+
 class AddonTreeModel final : public QAbstractItemModel
 {
     Q_OBJECT
@@ -17,19 +19,15 @@ public:
     enum Role
     {
         ConflictRole = Qt::UserRole,
+        ConflictDetailsRole,
+        EnabledRole,
     };
 
     explicit AddonTreeModel(QObject* parent = nullptr);
 
-    void ShowSnapshot(ProfileSnapshot snapshot, SimulatorProfile profile);
+    void Show(const ProfileSnapshot& snapshot, const SimulatorProfile& profile);
 
-    void RefreshEnabled(std::vector<DestinationEntry> entries);
-
-    void ShowProfile(SimulatorProfile profile);
-
-    [[nodiscard]] const ProfileSnapshot& Snapshot() const;
-
-    [[nodiscard]] const SimulatorProfile& Profile() const;
+    void Refresh(const ProfileSnapshot& snapshot, const SimulatorProfile& profile);
 
     [[nodiscard]] static const TreeNode* NodeAt(const QModelIndex& position);
 
@@ -69,7 +67,9 @@ private:
 
     [[nodiscard]] const std::vector<Item*>& ChildrenOf(const QModelIndex& parent) const;
 
-    ProfileSnapshot snapshot_;
+    std::vector<TreeNode> libraries_;
+    EnabledAddons enabled_;
+    CopyConflicts conflicts_;
     SimulatorProfile profile_;
     std::vector<std::unique_ptr<Item>> items_;
     std::vector<Item*> roots_;

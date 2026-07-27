@@ -24,6 +24,8 @@
 
 #include "AppScroll.h"
 #include "JournalScroll.h"
+#include "SessionForMeasuring.h"
+#include "application/Session.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/CommunityModel.h"
 #include "view/AddonTreePage.h"
@@ -35,7 +37,9 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
+#include "viewmodel/QtBackgroundRunner.h"
 #include "viewmodel/QuarantineViewModel.h"
+#include "viewmodel/SessionNotifier.h"
 
 namespace
 {
@@ -156,30 +160,40 @@ int main(int argc, char* argv[])
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--journal-scroll")))
     {
-        return MeasureTheJournalScroll(journal, profile);
+        const NoLibrariesToScan nothingToScan;
+        ProfileService justTheProfile(nothingToScan, classifier, linking, log, identities, LinkType::Junction);
+        OneProfileRepository onlySettings(profile);
+        InlineRunner runInline;
+        SilentObserver silent;
+        Session session(justTheProfile, onlySettings, runInline, silent);
+        session.ShowActiveProfile();
+
+        return MeasureTheJournalScroll(journal, session);
     }
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--app-journal")))
     {
         MainWindow window(loaded);
+        QtBackgroundRunner runner;
+        SessionNotifier notifier;
+        Session session(profileService, settings, runner, notifier);
+
         AddonTreeModel treeModel;
-        treeModel.ShowProfile(profile);
+        AddonTreeViewModel treeViewModel(session, profileService, processProbe, treeModel, notifier);
+        auto* treePage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
-        AddonTreeViewModel treeViewModel(profileService, settings, processProbe, treeModel);
-        auto* treePage = new AddonTreePage(treeViewModel, treeModel);
-
-        ImportViewModel importViewModel(importService, profileService, processProbe, treeModel);
+        ImportViewModel importViewModel(importService, profileService, processProbe, session);
 
         CommunityModel communityModel;
-        CommunityViewModel communityViewModel(profileService, treeModel, communityModel);
+        CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
         auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
         QuarantineModel quarantineModel;
-        QuarantineViewModel quarantineViewModel(importService, profileService, treeModel, quarantineModel);
+        QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel);
         auto* quarantinePage = new QuarantinePage(quarantineViewModel, quarantineModel);
 
         JournalModel journalModel;
-        JournalViewModel journalViewModel(journal, treeModel, journalModel);
+        JournalViewModel journalViewModel(journal, session, journalModel);
         auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
         window.AddPage(QStringLiteral("Árvore"), treePage);
@@ -187,11 +201,8 @@ int main(int argc, char* argv[])
         window.AddPage(QStringLiteral("Quarentena"), quarantinePage);
         window.AddPage(QStringLiteral("Diário"), journalPage);
 
-        QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &communityViewModel,
-                         &CommunityViewModel::Show);
-
         treeViewModel.ShowActiveProfile();
-        for (int pass = 0; pass < 400 && treeModel.Snapshot().entries.empty(); ++pass)
+        for (int pass = 0; pass < 400 && session.Snapshot().entries.empty(); ++pass)
         {
             QApplication::processEvents();
             QThread::msleep(5);
@@ -202,19 +213,21 @@ int main(int argc, char* argv[])
 
     AddonTreeModel model;
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, model, communityModel);
+    InlineRunner runInline;
+    SessionNotifier notifier;
+    Session session(profileService, settings, runInline, notifier);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
 
-    ProfileSnapshot snapshot;
-    Measure("ProfileService::Scan", false,
+    Measure("Session::ShowActiveProfile", false,
             [&]
             {
-                snapshot = profileService.Scan(profile);
+                session.ShowActiveProfile();
             });
 
-    Measure("AddonTreeModel::ShowSnapshot", true,
+    Measure("AddonTreeModel::Show", true,
             [&]
             {
-                model.ShowSnapshot(snapshot, profile);
+                model.Show(session.Snapshot(), session.Profile());
             });
     Measure("CommunityViewModel::Show", true,
             [&]
@@ -233,7 +246,7 @@ int main(int argc, char* argv[])
             });
 
     Out() << "perfil: " << QString::fromStdString(profile.id) << "  bibliotecas: " << profile.libraries.size()
-          << "  entradas: " << snapshot.entries.size() << "\n";
+          << "  entradas: " << session.Snapshot().entries.size() << "\n";
 
     Report();
 

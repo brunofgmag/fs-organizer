@@ -65,7 +65,7 @@ namespace
 void AddonTreeFilterModelTest::EmptyCategoriesAppearByDefaultAndHideOnDemand()
 {
     AddonTreeModel model;
-    model.ShowSnapshot(Snapshot(), Profile());
+    model.Show(Snapshot(), Profile());
 
     AddonTreeFilterModel filter;
     filter.setSourceModel(&model);
@@ -83,7 +83,7 @@ void AddonTreeFilterModelTest::EmptyCategoriesAppearByDefaultAndHideOnDemand()
 void AddonTreeFilterModelTest::SearchingByNameKeepsTheAncestorsOfMatches()
 {
     AddonTreeModel model;
-    model.ShowSnapshot(Snapshot(), Profile());
+    model.Show(Snapshot(), Profile());
 
     AddonTreeFilterModel filter;
     filter.setSourceModel(&model);
@@ -101,7 +101,7 @@ void AddonTreeFilterModelTest::SearchingByNameKeepsTheAncestorsOfMatches()
 void AddonTreeFilterModelTest::ClearingTheSearchRestoresTheTree()
 {
     AddonTreeModel model;
-    model.ShowSnapshot(Snapshot(), Profile());
+    model.Show(Snapshot(), Profile());
 
     AddonTreeFilterModel filter;
     filter.setSourceModel(&model);

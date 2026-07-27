@@ -6,8 +6,9 @@
 #include <QtCore/QObject>
 
 #include "application/ProfileService.h"
-#include "viewmodel/AddonTreeModel.h"
+#include "application/Session.h"
 #include "viewmodel/CommunityModel.h"
+#include "viewmodel/SessionNotifier.h"
 
 class CommunityViewModel final : public QObject
 {
@@ -15,7 +16,8 @@ class CommunityViewModel final : public QObject
 
 public:
     CommunityViewModel(ProfileService& service,
-                       AddonTreeModel& treeModel,
+                       Session& session,
+                       const SessionNotifier& notifier,
                        CommunityModel& model,
                        QObject* parent = nullptr);
 
@@ -38,7 +40,7 @@ private:
     void Refresh();
 
     ProfileService& service_;
-    AddonTreeModel& treeModel_;
+    Session& session_;
     CommunityModel& model_;
     std::size_t attention_ = 0;
 };

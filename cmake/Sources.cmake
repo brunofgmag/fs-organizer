@@ -19,6 +19,7 @@ set(APPLICATION_SOURCES
         src/application/ImportService.cpp
         src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
+        src/application/Session.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
@@ -47,8 +48,10 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
         src/viewmodel/JournalViewModel.cpp
+        src/viewmodel/QtBackgroundRunner.cpp
         src/viewmodel/QuarantineModel.cpp
         src/viewmodel/QuarantineViewModel.cpp
+        src/viewmodel/SessionNotifier.cpp
         src/viewmodel/SetupViewModel.cpp
 )
 

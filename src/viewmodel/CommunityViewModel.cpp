@@ -3,11 +3,13 @@
 #include <algorithm>
 
 CommunityViewModel::CommunityViewModel(ProfileService& service,
-                                       AddonTreeModel& treeModel,
+                                       Session& session,
+                                       const SessionNotifier& notifier,
                                        CommunityModel& model,
                                        QObject* parent)
-    : QObject(parent), service_(service), treeModel_(treeModel), model_(model)
+    : QObject(parent), service_(service), session_(session), model_(model)
 {
+    connect(&notifier, &SessionNotifier::ScanFinished, this, &CommunityViewModel::Show);
 }
 
 void CommunityViewModel::Show()
@@ -17,17 +19,16 @@ void CommunityViewModel::Show()
 
 std::vector<RepairCandidate> CommunityViewModel::PlanRepairs() const
 {
-    const ProfileSnapshot& snapshot = treeModel_.Snapshot();
+    const ProfileSnapshot& snapshot = session_.Snapshot();
 
-    return ::PlanRepairs(treeModel_.Profile(), snapshot.entries, snapshot.libraries);
+    return ::PlanRepairs(session_.Profile(), snapshot.entries, snapshot.libraries);
 }
 
 void CommunityViewModel::Repair(const std::vector<RepairRequest>& requests)
 {
-    const SimulatorProfile& profile = treeModel_.Profile();
-    const std::vector<LinkOperationResult> results = service_.Repair(profile, requests);
+    const std::vector<LinkOperationResult> results = service_.Repair(session_.Profile(), requests);
 
-    treeModel_.RefreshEnabled(service_.ResolveEntries(profile));
+    session_.RefreshEntries();
     Refresh();
 
     emit RepairFinished(results);
@@ -40,15 +41,15 @@ std::size_t CommunityViewModel::NeedsAttention() const
 
 const ProfileSnapshot& CommunityViewModel::Snapshot() const
 {
-    return treeModel_.Snapshot();
+    return session_.Snapshot();
 }
 
 void CommunityViewModel::Refresh()
 {
-    const ProfileSnapshot& snapshot = treeModel_.Snapshot();
+    const ProfileSnapshot& snapshot = session_.Snapshot();
     const std::vector<DestinationEntry>& entries = snapshot.entries;
 
-    model_.ShowEntries(entries, treeModel_.Profile(), snapshot.conflicts);
+    model_.ShowEntries(entries, session_.Profile(), snapshot.conflicts);
 
     const std::size_t attention = snapshot.conflicts.Count()
         + std::ranges::count_if(entries,

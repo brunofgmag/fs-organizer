@@ -10,15 +10,15 @@
 ImportViewModel::ImportViewModel(const ImportService& service,
                                  ProfileService& profileService,
                                  const ProcessProbe& probe,
-                                 const AddonTreeModel& treeModel,
+                                 const Session& session,
                                  QObject* parent)
-    : QObject(parent), service_(service), profileService_(profileService), probe_(probe), treeModel_(treeModel)
+    : QObject(parent), service_(service), profileService_(profileService), probe_(probe), session_(session)
 {
 }
 
 const SimulatorProfile& ImportViewModel::Profile() const
 {
-    return treeModel_.Profile();
+    return session_.Profile();
 }
 
 bool ImportViewModel::SimulatorIsRunning() const
@@ -33,7 +33,7 @@ std::optional<std::string> ImportViewModel::RunningSimulator() const
 
 ImportResult ImportViewModel::ResolveConflict(const CopyConflict& conflict, const ConflictChoice choice)
 {
-    const ImportResult result = service_.ResolveConflict(Profile(), treeModel_.Snapshot().entries, conflict, choice);
+    const ImportResult result = service_.ResolveConflict(Profile(), session_.Snapshot().entries, conflict, choice);
 
     if (result == ImportResult::Completed)
     {
@@ -46,7 +46,7 @@ ImportResult ImportViewModel::ResolveConflict(const CopyConflict& conflict, cons
 
 ConflictDetails ImportViewModel::DetailsOf(const CopyConflict& conflict) const
 {
-    return service_.DetailsOf(treeModel_.Snapshot().entries, conflict);
+    return service_.DetailsOf(session_.Snapshot().entries, conflict);
 }
 
 std::uintmax_t ImportViewModel::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const

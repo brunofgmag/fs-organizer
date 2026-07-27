@@ -5,6 +5,7 @@
 
 #include "application/ImportService.h"
 #include "application/ProfileService.h"
+#include "application/Session.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -28,7 +29,9 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
+#include "viewmodel/QtBackgroundRunner.h"
 #include "viewmodel/QuarantineViewModel.h"
+#include "viewmodel/SessionNotifier.h"
 #include "viewmodel/SetupViewModel.h"
 
 namespace
@@ -120,22 +123,26 @@ int main(int argc, char* argv[])
                                       LinkType::Junction);
 
     MainWindow window(settings.Load());
-    AddonTreeModel model;
-    AddonTreeViewModel treeViewModel(profileService, settings, processProbe, model);
-    auto* page = new AddonTreePage(treeViewModel, model);
+    QtBackgroundRunner runner;
+    SessionNotifier notifier;
+    Session session(profileService, settings, runner, notifier);
 
-    ImportViewModel importViewModel(importService, profileService, processProbe, model);
+    AddonTreeModel model;
+    AddonTreeViewModel treeViewModel(session, profileService, processProbe, model, notifier);
+    auto* page = new AddonTreePage(treeViewModel, model, notifier);
+
+    ImportViewModel importViewModel(importService, profileService, processProbe, session);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, model, communityModel);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;
-    QuarantineViewModel quarantineViewModel(importService, profileService, model, quarantineModel);
+    QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel);
     auto* quarantinePage = new QuarantinePage(quarantineViewModel, quarantineModel);
 
     JournalModel journalModel;
-    JournalViewModel journalViewModel(journal, model, journalModel);
+    JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
     window.AddPage(QObject::tr("Árvore"), page);
@@ -148,16 +155,13 @@ int main(int argc, char* argv[])
     QObject::connect(quarantinePage, &QuarantinePage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(journalPage, &JournalPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
-    QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &communityViewModel, &CommunityViewModel::Show);
-
     QObject::connect(&communityViewModel, &CommunityViewModel::RepairFinished, page, &AddonTreePage::RefreshUndoState);
 
     QObject::connect(page, &AddonTreePage::ConflictChosen, communityPage, &CommunityPage::ResolveConflict);
 
-    const auto adoptWhatChangedOnDisk = [page, &treeViewModel, &quarantineViewModel]
+    const auto adoptWhatChangedOnDisk = [page, &treeViewModel]
     {
         page->RefreshUndoState();
-        quarantineViewModel.Show();
         treeViewModel.ShowActiveProfile();
     };
 
@@ -210,7 +214,7 @@ int main(int argc, char* argv[])
                          }
                      });
 
-    QObject::connect(&treeViewModel, &AddonTreeViewModel::ScanFinished, &window,
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
                      [&, once = false]() mutable
                      {
                          if (once)

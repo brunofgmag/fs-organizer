@@ -7,6 +7,7 @@
 
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/SessionNotifier.h"
 
 class QPushButton;
 class QStackedWidget;
@@ -17,7 +18,10 @@ class AddonTreePage final : public QWidget
     Q_OBJECT
 
 public:
-    AddonTreePage(AddonTreeViewModel& viewModel, AddonTreeModel& model, QWidget* parent = nullptr);
+    AddonTreePage(AddonTreeViewModel& viewModel,
+                  AddonTreeModel& model,
+                  SessionNotifier& notifier,
+                  QWidget* parent = nullptr);
 
     void RefreshUndoState() const;
 
@@ -39,7 +43,9 @@ private:
 
     void OnBatchFinished(const std::vector<LinkOperationResult>& results);
 
-    void OnScanFinished();
+    void OnShown();
+
+    void CountAddons(const QModelIndex& parent, std::size_t& addons, std::size_t& enabled) const;
 
     void ShowDestinationMenu(const QPoint& where);
 

@@ -9,7 +9,7 @@
 
 #include "application/ImportService.h"
 #include "application/ProfileService.h"
-#include "viewmodel/AddonTreeModel.h"
+#include "application/Session.h"
 
 class QThread;
 
@@ -21,7 +21,7 @@ public:
     ImportViewModel(const ImportService& service,
                     ProfileService& profileService,
                     const ProcessProbe& probe,
-                    const AddonTreeModel& treeModel,
+                    const Session& session,
                     QObject* parent = nullptr);
 
     void Import(const std::vector<ImportRequest>& requests);
@@ -68,7 +68,7 @@ private:
     const ImportService& service_;
     ProfileService& profileService_;
     const ProcessProbe& probe_;
-    const AddonTreeModel& treeModel_;
+    const Session& session_;
     QThread* worker_ = nullptr;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};

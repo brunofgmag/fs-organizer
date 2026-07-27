@@ -3,8 +3,8 @@
 
 #include <QtCore/QObject>
 
+#include "application/Session.h"
 #include "domain/ports/OperationJournal.h"
-#include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/JournalModel.h"
 
 class JournalViewModel final : public QObject
@@ -13,7 +13,7 @@ class JournalViewModel final : public QObject
 
 public:
     JournalViewModel(const OperationJournal& journal,
-                     const AddonTreeModel& treeModel,
+                     const Session& session,
                      JournalModel& model,
                      QObject* parent = nullptr);
 
@@ -24,7 +24,7 @@ signals:
 
 private:
     const OperationJournal& journal_;
-    const AddonTreeModel& treeModel_;
+    const Session& session_;
     JournalModel& model_;
 };
 

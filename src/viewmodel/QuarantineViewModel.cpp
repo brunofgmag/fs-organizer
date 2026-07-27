@@ -4,21 +4,32 @@
 
 QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                                          ProfileService& profileService,
-                                         const AddonTreeModel& treeModel,
+                                         const Session& session,
+                                         const SessionNotifier& notifier,
                                          QuarantineModel& model,
                                          QObject* parent)
-    : QObject(parent), service_(service), profileService_(profileService), treeModel_(treeModel), model_(model)
+    : QObject(parent), service_(service), profileService_(profileService), session_(session), model_(model)
 {
+    connect(&notifier, &SessionNotifier::ScanFinished, this,
+            [this]
+            {
+                if (shown_)
+                {
+                    Show();
+                }
+            });
 }
 
 void QuarantineViewModel::Show()
 {
-    model_.ShowItems(service_.Quarantined(treeModel_.Profile()));
+    shown_ = true;
+
+    model_.ShowItems(service_.Quarantined(session_.Profile()));
 }
 
 void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
 {
-    const std::vector<FileOperationResult> results = service_.Restore(treeModel_.Profile(), items);
+    const std::vector<FileOperationResult> results = service_.Restore(session_.Profile(), items);
 
     Show();
 
@@ -36,7 +47,7 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
 
 void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
 {
-    const std::vector<FileOperationResult> results = service_.Discard(treeModel_.Profile(), items);
+    const std::vector<FileOperationResult> results = service_.Discard(session_.Profile(), items);
 
     Show();
 

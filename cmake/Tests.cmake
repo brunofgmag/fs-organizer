@@ -216,6 +216,32 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         src/domain/tree/ToggleDirection.cpp
         src/application/ProfileService.cpp)
 
+fsorg_add_qt_test(fsorg-session-tests session
+        tests/application/tst_session.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/RecordingSessionObserver.h
+        tests/support/PathPrinting.h
+        src/domain/journal/OperationLog.cpp
+        src/domain/importing/CopyConflicts.cpp
+        src/domain/linking/EntryClassifier.cpp
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/RepairPlan.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
+        src/domain/tree/ToggleDirection.cpp
+        src/application/ProfileService.cpp
+        src/application/Session.cpp)
+
 fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
         tests/infrastructure/catalog/tst_json_manifest_parser.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp)
@@ -302,7 +328,9 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeSettingsRepository.h
         tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/journal/OperationLog.cpp
@@ -316,9 +344,10 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
         src/application/ProfileService.cpp
-        src/viewmodel/AddonTreeModel.cpp
+        src/application/Session.cpp
         src/viewmodel/CommunityModel.cpp
-        src/viewmodel/CommunityViewModel.cpp)
+        src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/SessionNotifier.cpp)
 
 fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/viewmodel/tst_quarantine_view_model.cpp
@@ -330,7 +359,9 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
         tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
         tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/journal/OperationLog.cpp
@@ -347,9 +378,10 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         src/domain/tree/ToggleDirection.cpp
         src/application/ImportService.cpp
         src/application/ProfileService.cpp
-        src/viewmodel/AddonTreeModel.cpp
+        src/application/Session.cpp
         src/viewmodel/QuarantineModel.cpp
-        src/viewmodel/QuarantineViewModel.cpp)
+        src/viewmodel/QuarantineViewModel.cpp
+        src/viewmodel/SessionNotifier.cpp)
 
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp

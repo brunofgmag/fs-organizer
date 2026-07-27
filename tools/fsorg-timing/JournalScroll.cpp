@@ -18,7 +18,6 @@
 
 #include "view/JournalPage.h"
 #include "view/PlainTextDelegate.h"
-#include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/JournalModel.h"
 #include "viewmodel/JournalViewModel.h"
 
@@ -60,7 +59,7 @@ namespace
         return samples.at(samples.size() / 2);
     }
 
-    double PaintCostOf(QTreeView& view)
+    double PaintCostOf(const QTreeView& view)
     {
         QScrollBar* bar = view.verticalScrollBar();
         QImage canvas(view.viewport()->size() * view.devicePixelRatio(), QImage::Format_ARGB32_Premultiplied);
@@ -109,7 +108,7 @@ namespace
         }
     };
 
-    double WhatANotchRepaints(QTreeView& view)
+    double WhatANotchRepaints(const QTreeView& view)
     {
         constexpr int kNotches = 20;
 
@@ -133,7 +132,7 @@ namespace
         return spy.repaintedHeight / double{kNotches};
     }
 
-    void ReportView(const QString& what, QTreeView& view)
+    void ReportView(const QString& what, const QTreeView& view)
     {
         const double cost = PaintCostOf(view);
         const double repainted = WhatANotchRepaints(view);
@@ -161,7 +160,7 @@ namespace
 
 }
 
-int MeasureTheJournalScroll(const OperationJournal& journal, const SimulatorProfile& profile)
+int MeasureTheJournalScroll(const OperationJournal& journal, const Session& session)
 {
     const QStringList arguments = QCoreApplication::arguments();
     if (arguments.size() >= 4)
@@ -170,11 +169,8 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const SimulatorProf
         windowHeight = arguments.at(arguments.size() - 1).toInt();
     }
 
-    AddonTreeModel treeModel;
-    treeModel.ShowProfile(profile);
-
     JournalModel model;
-    JournalViewModel viewModel(journal, treeModel, model);
+    JournalViewModel viewModel(journal, session, model);
 
     JournalPage page(viewModel, model);
     ShowAtAFixedSize(page);

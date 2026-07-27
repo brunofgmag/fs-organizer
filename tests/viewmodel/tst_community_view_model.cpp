@@ -6,7 +6,9 @@
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
+#include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/InMemoryFileSystem.h"
+#include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/CommunityViewModel.h"
@@ -68,7 +70,10 @@ namespace
 
         void Seed(const SimulatorProfile& profile)
         {
-            treeModel.ShowSnapshot(service.Scan(profile), profile);
+            settings.stored.profiles = {profile};
+            settings.stored.activeProfileId = profile.id;
+
+            session.ShowActiveProfile();
         }
 
         InMemoryFileSystem fileSystem;
@@ -82,9 +87,12 @@ namespace
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
         ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
-        AddonTreeModel treeModel;
+        FakeSettingsRepository settings;
+        InlineBackgroundRunner runner;
+        SessionNotifier notifier;
+        Session session{service, settings, runner, notifier};
         CommunityModel model;
-        CommunityViewModel viewModel{service, treeModel, model};
+        CommunityViewModel viewModel{service, session, notifier, model};
     };
 }
 

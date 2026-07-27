@@ -7,8 +7,9 @@
 
 #include "application/ImportService.h"
 #include "application/ProfileService.h"
-#include "viewmodel/AddonTreeModel.h"
+#include "application/Session.h"
 #include "viewmodel/QuarantineModel.h"
+#include "viewmodel/SessionNotifier.h"
 
 class QuarantineViewModel final : public QObject
 {
@@ -17,7 +18,8 @@ class QuarantineViewModel final : public QObject
 public:
     QuarantineViewModel(const ImportService& service,
                         ProfileService& profileService,
-                        const AddonTreeModel& treeModel,
+                        const Session& session,
+                        const SessionNotifier& notifier,
                         QuarantineModel& model,
                         QObject* parent = nullptr);
 
@@ -35,8 +37,9 @@ signals:
 private:
     const ImportService& service_;
     ProfileService& profileService_;
-    const AddonTreeModel& treeModel_;
+    const Session& session_;
     QuarantineModel& model_;
+    bool shown_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_QUARANTINE_VIEW_MODEL_H
