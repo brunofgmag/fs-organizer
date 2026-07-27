@@ -6,6 +6,7 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -16,8 +17,26 @@
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QVBoxLayout>
 
+#include "domain/support/PathUtils.h"
 #include "support/PathText.h"
+#include "view/SuggestionDialog.h"
 #include "viewmodel/FailureText.h"
+
+namespace
+{
+    void StartASection(QMenu& menu)
+    {
+        if (!menu.isEmpty())
+        {
+            menu.addSeparator();
+        }
+    }
+
+    QString AskForACategoryName(QWidget* parent, const QString& title, const QString& current)
+    {
+        return QInputDialog::getText(parent, title, QObject::tr("Nome da categoria:"), QLineEdit::Normal, current);
+    }
+}
 
 AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                              AddonTreeModel& model,
@@ -48,8 +67,27 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(pages_);
 
-    connect(tree_, &QTreeView::customContextMenuRequested, this, &AddonTreePage::ShowDestinationMenu);
+    connect(tree_, &QTreeView::customContextMenuRequested, this, &AddonTreePage::ShowContextMenu);
     connect(&model_, &AddonTreeModel::ToggleRequested, this, &AddonTreePage::OnToggleRequested);
+
+    connect(&model_, &QAbstractItemModel::modelAboutToBeReset, this,
+            [this]
+            {
+                rebuilding_ = true;
+            });
+
+    connect(tree_, &QTreeView::expanded, this,
+            [this](const QModelIndex& position)
+            {
+                NoteExpansion(position, true);
+            });
+
+    connect(tree_, &QTreeView::collapsed, this,
+            [this](const QModelIndex& position)
+            {
+                NoteExpansion(position, false);
+            });
+
     connect(&viewModel_, &AddonTreeViewModel::BatchFinished, this, &AddonTreePage::OnBatchFinished);
     connect(&viewModel_, &AddonTreeViewModel::Shown, this, &AddonTreePage::OnShown);
 
@@ -57,6 +95,12 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
             [this]
             {
                 emit StatusChanged(tr("Lendo a biblioteca..."));
+            });
+
+    connect(&viewModel_, &AddonTreeViewModel::Refused, this,
+            [this](const QString& explanation)
+            {
+                QMessageBox::warning(this, tr("Nada foi alterado"), explanation);
             });
 
     connect(&viewModel_, &AddonTreeViewModel::SimulatorIsRunning, this,
@@ -261,18 +305,66 @@ void AddonTreePage::OnShown()
 
     CountAddons({}, addons, enabled);
 
-    tree_->expandToDepth(0);
+    rebuilding_ = false;
+
+    if (shownOnce_)
+    {
+        RestoreExpansion({});
+    }
+    else
+    {
+        shownOnce_ = true;
+        tree_->expandToDepth(0);
+    }
 
     emit StatusChanged(tr("%1 · %2 habilitado(s)")
                            .arg(tr("%n addon(s) na biblioteca", nullptr, static_cast<int>(addons)))
                            .arg(enabled));
 }
 
-void AddonTreePage::ShowDestinationMenu(const QPoint& where)
+void AddonTreePage::NoteExpansion(const QModelIndex& position, const bool expanded)
+{
+    if (rebuilding_)
+    {
+        return;
+    }
+
+    const TreeNode* node = AddonTreeModel::NodeAt(filter_->mapToSource(position));
+    if (node == nullptr)
+    {
+        return;
+    }
+
+    if (expanded)
+    {
+        expanded_.insert(ComparablePath(node->path));
+    }
+    else
+    {
+        expanded_.erase(ComparablePath(node->path));
+    }
+}
+
+void AddonTreePage::RestoreExpansion(const QModelIndex& parent)
+{
+    for (int row = 0; row < filter_->rowCount(parent); ++row)
+    {
+        const QModelIndex position = filter_->index(row, 0, parent);
+        const TreeNode* node = AddonTreeModel::NodeAt(filter_->mapToSource(position));
+
+        if (node != nullptr && expanded_.contains(ComparablePath(node->path)))
+        {
+            tree_->setExpanded(position, true);
+        }
+
+        RestoreExpansion(position);
+    }
+}
+
+void AddonTreePage::ShowContextMenu(const QPoint& where)
 {
     const QModelIndex position = filter_->mapToSource(tree_->indexAt(where));
     const TreeNode* node = AddonTreeModel::NodeAt(position);
-    const SimulatorProfile& profile = viewModel_.Profile();
 
     if (node == nullptr)
     {
@@ -281,39 +373,10 @@ void AddonTreePage::ShowDestinationMenu(const QPoint& where)
 
     QMenu menu(this);
 
-    if (const QVariant conflict = model_.data(position, AddonTreeModel::ConflictDetailsRole); conflict.isValid())
-    {
-        const auto chosen = conflict.value<CopyConflict>();
-        menu.addAction(tr("Resolver o conflito de cópia..."), this,
-                       [this, chosen]
-                       {
-                           emit ConflictChosen(chosen);
-                       });
-    }
-
-    if (profile.destinations.size() >= 2)
-    {
-        if (!menu.isEmpty())
-        {
-            menu.addSeparator();
-        }
-
-        menu.addAction(tr("Herdar o destino de cima"), this,
-                       [this, node]
-                       {
-                           viewModel_.OverrideDestination(node, {});
-                       });
-        menu.addSeparator();
-
-        for (const std::filesystem::path& destination : profile.destinations)
-        {
-            menu.addAction(tr("Ligar em %1").arg(AsText(destination.filename())), this,
-                           [this, node, destination]
-                           {
-                               viewModel_.OverrideDestination(node, destination);
-                           });
-        }
-    }
+    AddConflictAction(menu, position);
+    AddMoveAction(menu, node);
+    AddCategoryActions(menu, node);
+    AddDestinationActions(menu, node);
 
     if (menu.isEmpty())
     {
@@ -321,6 +384,187 @@ void AddonTreePage::ShowDestinationMenu(const QPoint& where)
     }
 
     menu.exec(tree_->viewport()->mapToGlobal(where));
+}
+
+void AddonTreePage::AddConflictAction(QMenu& menu, const QModelIndex& position)
+{
+    const QVariant conflict = model_.data(position, AddonTreeModel::ConflictDetailsRole);
+    if (!conflict.isValid())
+    {
+        return;
+    }
+
+    const auto chosen = conflict.value<CopyConflict>();
+    menu.addAction(tr("Resolver o conflito de cópia..."), this,
+                   [this, chosen]
+                   {
+                       emit ConflictChosen(chosen);
+                   });
+}
+
+void AddonTreePage::AddMoveAction(QMenu& menu, const TreeNode* node)
+{
+    if (node->kind != TreeNodeKind::Addon)
+    {
+        return;
+    }
+
+    const std::vector<std::filesystem::path> offered = viewModel_.CategoriesFor(node);
+    if (offered.empty())
+    {
+        return;
+    }
+
+    StartASection(menu);
+
+    QMenu* where = menu.addMenu(tr("Mover para..."));
+    for (const std::filesystem::path& category : offered)
+    {
+        where->addAction(AsText(category.filename()), this,
+                         [this, node, category]
+                         {
+                             viewModel_.MoveTo(Chosen(node), category);
+                         });
+    }
+}
+
+void AddonTreePage::AddCategoryActions(QMenu& menu, const TreeNode* node)
+{
+    StartASection(menu);
+
+    menu.addAction(tr("Nova categoria aqui..."), this,
+                   [this, node]
+                   {
+                       viewModel_.CreateCategory(node, AskForACategoryName(this, tr("Nova categoria"), {}));
+                   });
+
+    if (node->kind != TreeNodeKind::Addon)
+    {
+        menu.addAction(tr("Sugerir categorias..."), this,
+                       [this, node]
+                       {
+                           ShowSuggestions(node);
+                       });
+    }
+
+    if (node->kind != TreeNodeKind::Category)
+    {
+        return;
+    }
+
+    menu.addAction(tr("Renomear categoria..."), this,
+                   [this, node]
+                   {
+                       const QString current = AsText(node->path.filename());
+                       viewModel_.RenameCategory(node, AskForACategoryName(this, tr("Renomear categoria"), current));
+                   });
+
+    if (viewModel_.CanRemoveCategory(node))
+    {
+        menu.addAction(tr("Apagar categoria"), this,
+                       [this, node]
+                       {
+                           viewModel_.RemoveCategory(node);
+                       });
+    }
+}
+
+void AddonTreePage::ShowSuggestions(const TreeNode* node)
+{
+    SuggestionDialog dialog(viewModel_.SuggestionsFor(node), this);
+
+    if (!dialog.HasAnythingToShow())
+    {
+        QMessageBox::information(this, tr("Sugestões de categoria"),
+                                 tr("Nenhum addon daqui está numa categoria diferente da que as regras sugerem."));
+        return;
+    }
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        viewModel_.ApplySuggestions(dialog.Chosen());
+    }
+}
+
+void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
+{
+    if (viewModel_.StrayAddonsUnder({node}) == 0)
+    {
+        return;
+    }
+
+    menu.addAction(tr("Religar no destino do perfil"), this,
+                   [this, node]
+                   {
+                       viewModel_.RelinkToTheProfileDestination(Chosen(node));
+                   });
+
+    if (node->kind == TreeNodeKind::Category)
+    {
+        menu.addAction(tr("Adotar o destino em que os addons já estão"), this,
+                       [this, node]
+                       {
+                           viewModel_.AdoptDestination(node);
+                       });
+    }
+
+    menu.addSeparator();
+}
+
+void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
+{
+    const SimulatorProfile& profile = viewModel_.Profile();
+    if (profile.destinations.size() < 2)
+    {
+        return;
+    }
+
+    StartASection(menu);
+
+    AddStrayActions(menu, node);
+
+    menu.addAction(tr("Herdar o destino de cima"), this,
+                   [this, node]
+                   {
+                       ChooseDestination(Chosen(node), {});
+                   });
+    menu.addSeparator();
+
+    for (const std::filesystem::path& destination : profile.destinations)
+    {
+        menu.addAction(tr("Fixar o destino em %1").arg(AsText(destination.filename())), this,
+                       [this, node, destination]
+                       {
+                           ChooseDestination(Chosen(node), destination);
+                       });
+    }
+}
+
+bool AddonTreePage::AskWhetherToRelink(const std::size_t strayed)
+{
+    QMessageBox question(QMessageBox::Question, tr("Destino alterado"),
+                         tr("%n addon(s) daqui continuam ligados fora do destino que o perfil agora manda usar.",
+                            nullptr, static_cast<int>(strayed)),
+                         QMessageBox::NoButton, this);
+
+    QPushButton* relink = question.addButton(tr("Religar agora"), QMessageBox::AcceptRole);
+    question.addButton(tr("Deixar como está"), QMessageBox::RejectRole);
+    question.exec();
+
+    return question.clickedButton() == relink;
+}
+
+void AddonTreePage::ChooseDestination(const std::vector<const TreeNode*>& nodes,
+                                      const std::filesystem::path& destination)
+{
+    viewModel_.OverrideDestination(nodes, destination);
+
+    const std::size_t strayed = viewModel_.StrayAddonsUnder(nodes);
+
+    if (strayed > 0 && AskWhetherToRelink(strayed))
+    {
+        viewModel_.RelinkToTheProfileDestination(nodes);
+    }
 }
 
 void AddonTreePage::BrowseForLibrary()

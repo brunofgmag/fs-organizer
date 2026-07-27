@@ -1,6 +1,8 @@
 #ifndef FS_ORGANIZER_VIEW_ADDON_TREE_PAGE_H
 #define FS_ORGANIZER_VIEW_ADDON_TREE_PAGE_H
 
+#include <set>
+#include <string>
 #include <vector>
 
 #include <QtWidgets/QWidget>
@@ -9,6 +11,7 @@
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
+class QMenu;
 class QPushButton;
 class QStackedWidget;
 class QTreeView;
@@ -45,9 +48,29 @@ private:
 
     void OnShown();
 
+    void NoteExpansion(const QModelIndex& position, bool expanded);
+
+    void RestoreExpansion(const QModelIndex& parent);
+
     void CountAddons(const QModelIndex& parent, std::size_t& addons, std::size_t& enabled) const;
 
-    void ShowDestinationMenu(const QPoint& where);
+    void ShowContextMenu(const QPoint& where);
+
+    void AddConflictAction(QMenu& menu, const QModelIndex& position);
+
+    void AddMoveAction(QMenu& menu, const TreeNode* node);
+
+    void AddCategoryActions(QMenu& menu, const TreeNode* node);
+
+    void AddStrayActions(QMenu& menu, const TreeNode* node);
+
+    void AddDestinationActions(QMenu& menu, const TreeNode* node);
+
+    void ChooseDestination(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& destination);
+
+    [[nodiscard]] bool AskWhetherToRelink(std::size_t strayed);
+
+    void ShowSuggestions(const TreeNode* node);
 
     void BrowseForLibrary();
 
@@ -57,6 +80,9 @@ private:
     QTreeView* tree_ = nullptr;
     AddonTreeFilterModel* filter_ = nullptr;
     QPushButton* undo_ = nullptr;
+    std::set<std::string> expanded_;
+    bool rebuilding_ = false;
+    bool shownOnce_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_ADDON_TREE_PAGE_H
