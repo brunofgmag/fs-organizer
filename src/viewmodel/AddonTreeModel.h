@@ -21,6 +21,7 @@ public:
         ConflictRole = Qt::UserRole,
         ConflictDetailsRole,
         EnabledRole,
+        DivergentRole,
     };
 
     explicit AddonTreeModel(QObject* parent = nullptr);
@@ -65,9 +66,16 @@ private:
 
     [[nodiscard]] QString NameOf(const TreeNode& node) const;
 
+    [[nodiscard]] QString DisplayTextOf(const TreeNode& node, const CopyConflict* conflict) const;
+
+    [[nodiscard]] QString ToolTipOf(const TreeNode& node, const CopyConflict* conflict) const;
+
+    [[nodiscard]] std::filesystem::path WhereItIsLinked(const TreeNode& node) const;
+
     [[nodiscard]] const std::vector<Item*>& ChildrenOf(const QModelIndex& parent) const;
 
     std::vector<TreeNode> libraries_;
+    std::vector<DestinationEntry> entries_;
     EnabledAddons enabled_;
     CopyConflicts conflicts_;
     SimulatorProfile profile_;

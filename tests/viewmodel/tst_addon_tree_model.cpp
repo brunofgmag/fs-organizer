@@ -18,6 +18,8 @@ private slots:
     static void AConflictThatArrivesLaterShowsUpWithoutResettingTheTree();
     static void OnlyAnAddonFolderAnswersThatItIsEnabled();
     static void TheConflictItselfIsHandedOverForWhoeverHasToResolveIt();
+    static void OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent();
+    static void AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits();
 };
 
 namespace
@@ -76,6 +78,16 @@ namespace
     QModelIndex Category(const AddonTreeModel& model)
     {
         return model.index(0, 0, model.index(0, 0, {}));
+    }
+
+    QModelIndex AddonAt(const AddonTreeModel& model, const int row)
+    {
+        return model.index(row, 0, Category(model));
+    }
+
+    DestinationEntry LinkIn(const std::filesystem::path& destination, const std::filesystem::path& addonFolder)
+    {
+        return DestinationEntry{destination / addonFolder.filename(), addonFolder, EntryClassification::Managed};
     }
 }
 
@@ -205,6 +217,31 @@ void AddonTreeModelTest::TheConflictItselfIsHandedOverForWhoeverHasToResolveIt()
     QCOMPARE(details.value<CopyConflict>().libraryPath, std::filesystem::path(kPmdg));
 
     QVERIFY(!model.data(model.index(1, 0, Category(model)), AddonTreeModel::ConflictDetailsRole).isValid());
+}
+
+void AddonTreeModelTest::OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent()
+{
+    AddonTreeModel model;
+    ProfileSnapshot snapshot = SnapshotWith({kPmdg, kCrj});
+    snapshot.entries = {LinkIn(kCommunity2024, kPmdg), LinkIn(kCommunity, kCrj)};
+
+    model.Show(snapshot, Profile());
+
+    QVERIFY(model.data(AddonAt(model, 0), AddonTreeModel::DivergentRole).toBool());
+    QVERIFY(!model.data(AddonAt(model, 1), AddonTreeModel::DivergentRole).toBool());
+}
+
+void AddonTreeModelTest::AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits()
+{
+    AddonTreeModel model;
+    ProfileSnapshot snapshot = SnapshotWith({kPmdg, kCrj});
+    snapshot.entries = {LinkIn(kCommunity2024, kPmdg), LinkIn(kCommunity, kCrj)};
+
+    model.Show(snapshot, Profile());
+
+    QVERIFY(model.data(AddonAt(model, 0), Qt::DisplayRole).toString().contains(QStringLiteral("Community2024")));
+    QVERIFY(!model.data(AddonAt(model, 1), Qt::DisplayRole).toString().contains(QStringLiteral("Community2024")));
+    QVERIFY(model.data(AddonAt(model, 0), Qt::ToolTipRole).toString().contains(QStringLiteral("Community2024")));
 }
 
 QTEST_MAIN(AddonTreeModelTest)

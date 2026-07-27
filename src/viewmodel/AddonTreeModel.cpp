@@ -2,6 +2,7 @@
 
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
+#include "domain/tree/DestinationDivergence.h"
 #include "domain/tree/EffectiveDestination.h"
 #include "domain/tree/LibraryLookup.h"
 #include "support/PathText.h"
@@ -30,6 +31,7 @@ void AddonTreeModel::Show(const ProfileSnapshot& snapshot, const SimulatorProfil
     beginResetModel();
 
     libraries_ = snapshot.libraries;
+    entries_ = snapshot.entries;
     enabled_ = snapshot.enabled;
     conflicts_ = snapshot.conflicts;
     profile_ = profile;
@@ -40,6 +42,7 @@ void AddonTreeModel::Show(const ProfileSnapshot& snapshot, const SimulatorProfil
 
 void AddonTreeModel::Refresh(const ProfileSnapshot& snapshot, const SimulatorProfile& profile)
 {
+    entries_ = snapshot.entries;
     enabled_ = snapshot.enabled;
     conflicts_ = snapshot.conflicts;
     profile_ = profile;
@@ -176,11 +179,14 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return enabled_.Contains(node->path);
     }
 
+    if (role == DivergentRole)
+    {
+        return !WhereItIsLinked(*node).empty();
+    }
+
     if (role == Qt::ToolTipRole)
     {
-        return conflict == nullptr
-            ? QVariant()
-            : tr("Já existe uma pasta de verdade com esse nome no destino: %1").arg(AsText(conflict->destinationPath));
+        return ToolTipOf(*node, conflict);
     }
 
     if (role != Qt::DisplayRole)
@@ -188,15 +194,45 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
-    const QString name = conflict == nullptr ? NameOf(*node) : tr("%1 (em conflito)").arg(NameOf(*node));
+    return DisplayTextOf(*node, conflict);
+}
 
-    const std::filesystem::path destination = EffectiveDestination(profile_, node->path);
-    if (ComparablePath(destination) == ComparablePath(profile_.defaultDestination))
+QString AddonTreeModel::DisplayTextOf(const TreeNode& node, const CopyConflict* conflict) const
+{
+    QString text = conflict == nullptr ? NameOf(node) : tr("%1 (em conflito)").arg(NameOf(node));
+
+    const std::filesystem::path destination = EffectiveDestination(profile_, node.path);
+    if (ComparablePath(destination) != ComparablePath(profile_.defaultDestination))
     {
-        return name;
+        text = tr("%1  →  %2").arg(text, AsText(destination.filename()));
     }
 
-    return tr("%1  →  %2").arg(name, AsText(destination.filename()));
+    const std::filesystem::path linked = WhereItIsLinked(node);
+
+    return linked.empty() ? text : tr("%1  (ligado em %2)").arg(text, AsText(linked.filename()));
+}
+
+QString AddonTreeModel::ToolTipOf(const TreeNode& node, const CopyConflict* conflict) const
+{
+    if (conflict != nullptr)
+    {
+        return tr("Já existe uma pasta de verdade com esse nome no destino: %1").arg(AsText(conflict->destinationPath));
+    }
+
+    const std::filesystem::path linked = WhereItIsLinked(node);
+    if (linked.empty())
+    {
+        return {};
+    }
+
+    return tr("Este addon está ligado em %1, não no destino que o perfil manda usar, que é %2.")
+        .arg(AsText(linked), AsText(EffectiveDestination(profile_, node.path)));
+}
+
+std::filesystem::path AddonTreeModel::WhereItIsLinked(const TreeNode& node) const
+{
+    return node.kind == TreeNodeKind::Addon ? DestinationItStrayedTo(profile_, entries_, node.path)
+                                            : std::filesystem::path{};
 }
 
 bool AddonTreeModel::setData(const QModelIndex& position, [[maybe_unused]] const QVariant& value, const int role)
