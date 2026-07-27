@@ -90,6 +90,9 @@ namespace
         case FileResult::CouldNotRestore: return "couldNotRestore";
         case FileResult::CouldNotDiscard: return "couldNotDiscard";
         case FileResult::CouldNotRemoveTheLink: return "couldNotRemoveTheLink";
+        case FileResult::TheIdentityIsTaken: return "theIdentityIsTaken";
+        case FileResult::TheTargetIsNotInALibrary: return "theTargetIsNotInALibrary";
+        case FileResult::CouldNotCreateTheCategory: return "couldNotCreateTheCategory";
         }
 
         return "unknown";

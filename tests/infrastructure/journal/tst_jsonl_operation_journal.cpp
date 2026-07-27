@@ -129,13 +129,24 @@ void JsonlOperationJournalTest::EveryKindAndEveryReasonSurvivesTheRoundTrip()
     JsonlOperationJournal journal(storage.File());
 
     std::vector<OperationRecord> written;
-    std::size_t reason = 0;
     for (const OperationKind kind : kAllOperationKinds)
     {
-        written.push_back(CarriesAFileReason(kind)
-                              ? Record(kind, kAllFileResults[reason++ % kAllFileResults.size()])
-                              : Record(kind, kAllLinkFailures[reason++ % kAllLinkFailures.size()]));
-        journal.Append(written.back());
+        if (CarriesAFileReason(kind))
+        {
+            for (const FileResult result : kAllFileResults)
+            {
+                written.push_back(Record(kind, result));
+                journal.Append(written.back());
+            }
+
+            continue;
+        }
+
+        for (const LinkFailure failure : kAllLinkFailures)
+        {
+            written.push_back(Record(kind, failure));
+            journal.Append(written.back());
+        }
     }
 
     const std::vector<OperationRecord> read = journal.Read();

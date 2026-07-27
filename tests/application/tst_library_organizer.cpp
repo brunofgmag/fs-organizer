@@ -216,7 +216,8 @@ void LibraryOrganizerTest::EveryStepOfAMoveIsJournalled()
     QCOMPARE(f.journal.appended.size(), std::size_t{3});
 
     QCOMPARE(f.journal.appended[0].kind, OperationKind::DisableAddon);
-    QCOMPARE(f.journal.appended[0].source, kLink);
+    QCOMPARE(f.journal.appended[0].source, kAddon);
+    QCOMPARE(f.journal.appended[0].target, kLink);
 
     QCOMPARE(f.journal.appended[1].kind, OperationKind::MoveAddon);
     QCOMPARE(std::get<FileResult>(f.journal.appended[1].outcome), FileResult::Completed);

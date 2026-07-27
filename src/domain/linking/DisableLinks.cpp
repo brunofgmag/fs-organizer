@@ -10,7 +10,7 @@ bool DisableEveryLink(const LinkingEngine& linking,
     {
         const LinkOutcome outcome = linking.Disable(link);
 
-        log.RecordLink(OperationKind::DisableAddon, addon, link, folder, outcome.Failure());
+        log.RecordLink(OperationKind::DisableAddon, addon, folder, link, outcome.Failure());
 
         if (!outcome.Succeeded())
         {

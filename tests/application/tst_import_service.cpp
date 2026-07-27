@@ -455,7 +455,8 @@ void ImportServiceTest::KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuar
 
     QCOMPARE(f.journal.Read().size(), std::size_t{2});
     QCOMPARE(f.journal.Read().front().kind, OperationKind::DisableAddon);
-    QCOMPARE(f.journal.Read().front().source, kLinkedElsewhere);
+    QCOMPARE(f.journal.Read().front().source, kInLibrary);
+    QCOMPARE(f.journal.Read().front().target, kLinkedElsewhere);
     QCOMPARE(f.journal.Read().back().kind, OperationKind::QuarantineFromLibrary);
 }
 
