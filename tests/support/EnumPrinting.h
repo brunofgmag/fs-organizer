@@ -9,9 +9,22 @@
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
 #include "domain/model/OperationRecord.h"
+#include "domain/model/Preset.h"
 
 namespace QTest
 {
+    template<>
+    inline char* toString(const PresetAction& t)
+    {
+        switch (t)
+        {
+        case PresetAction::Enable: return qstrdup("Enable");
+        case PresetAction::Disable: return qstrdup("Disable");
+        }
+
+        return qstrdup("PresetAction(?)");
+    }
+
     template<>
     inline char* toString(const CheckState& t)
     {
@@ -77,6 +90,15 @@ namespace QTest
         case FileResult::CouldNotMoveIntoPlace: return qstrdup("CouldNotMoveIntoPlace");
         case FileResult::CouldNotRemoveSource: return qstrdup("CouldNotRemoveSource");
         case FileResult::CouldNotCreateLink: return qstrdup("CouldNotCreateLink");
+        case FileResult::TheOriginIsUnknown: return qstrdup("TheOriginIsUnknown");
+        case FileResult::CouldNotRestore: return qstrdup("CouldNotRestore");
+        case FileResult::CouldNotDiscard: return qstrdup("CouldNotDiscard");
+        case FileResult::CouldNotRemoveTheLink: return qstrdup("CouldNotRemoveTheLink");
+        case FileResult::TheIdentityIsTaken: return qstrdup("TheIdentityIsTaken");
+        case FileResult::TheTargetIsNotInALibrary: return qstrdup("TheTargetIsNotInALibrary");
+        case FileResult::CouldNotCreateTheCategory: return qstrdup("CouldNotCreateTheCategory");
+        case FileResult::TheCategoryStillHoldsAddons: return qstrdup("TheCategoryStillHoldsAddons");
+        case FileResult::CouldNotRemoveTheCategory: return qstrdup("CouldNotRemoveTheCategory");
         }
 
         return qstrdup("FileResult(?)");
@@ -103,6 +125,7 @@ namespace QTest
         case OperationKind::MoveAddon: return qstrdup("MoveAddon");
         case OperationKind::CreateCategory: return qstrdup("CreateCategory");
         case OperationKind::RenameCategory: return qstrdup("RenameCategory");
+        case OperationKind::RemoveCategory: return qstrdup("RemoveCategory");
         }
 
         return qstrdup("OperationKind(?)");
