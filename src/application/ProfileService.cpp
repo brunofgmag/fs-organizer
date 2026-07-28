@@ -154,12 +154,12 @@ LinkOperationResult ProfileService::Run(const Step& step) const
     return LinkOperationResult{step.addonId, step.addonFolder, step.linkPath, step.kind, outcome};
 }
 
-std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfile& profile,
-                                                            const ProfileSnapshot& snapshot,
-                                                            const std::vector<const TreeNode*>& nodes,
-                                                            const bool enable)
+std::vector<LinkOperationResult>
+ProfileService::SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const LinkBatch& batch)
 {
-    const std::vector<Step> steps = PlanSteps(profile, snapshot, nodes, enable);
+    std::vector<Step> steps = PlanSteps(profile, snapshot, batch.toDisable, false);
+    const std::vector<Step> enabling = PlanSteps(profile, snapshot, batch.toEnable, true);
+    steps.insert(steps.end(), enabling.begin(), enabling.end());
 
     std::vector<LinkOperationResult> results;
     std::vector<Step> undo;
@@ -178,10 +178,20 @@ std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfi
 
     if (!undo.empty())
     {
+        std::ranges::reverse(undo);
         undo_ = std::move(undo);
     }
 
     return results;
+}
+
+std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfile& profile,
+                                                            const ProfileSnapshot& snapshot,
+                                                            const std::vector<const TreeNode*>& nodes,
+                                                            const bool enable)
+{
+    return enable ? SetEnabled(profile, snapshot, LinkBatch{{}, nodes})
+                  : SetEnabled(profile, snapshot, LinkBatch{nodes, {}});
 }
 
 std::optional<ProfileService::Step> ProfileService::PlanRepair(const SimulatorProfile& profile,

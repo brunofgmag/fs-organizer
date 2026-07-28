@@ -39,6 +39,9 @@ private slots:
     static void UndoingARepairRecreatesTheDeadLink();
     static void UndoingARepointRestoresTheDeadLink();
     static void ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBatch();
+    static void ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece();
+    static void TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree();
+    static void UndoingASwapPutsTheOldAddonBackInTheDestination();
 };
 
 namespace
@@ -340,7 +343,7 @@ void ProfileServiceTest::ThereIsNothingToUndoBeforeTheFirstBatch()
 
 void ProfileServiceTest::RegisteringALibraryReportsWhatIsInsideAndRefusesANestedFolder()
 {
-    Fixture f;
+    const Fixture f;
     SimulatorProfile profile = Profile();
     profile.libraries.clear();
 
@@ -506,6 +509,93 @@ void ProfileServiceTest::ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBa
     QVERIFY(!f.service.CanUndo());
     QVERIFY(f.service.UndoLastBatch().empty());
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+}
+
+void ProfileServiceTest::ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(
+        profile, snapshot, LinkBatch{{Fixture::AddonAt(snapshot, 0)}, {Fixture::AddonAt(snapshot, 1)}});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{2});
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
+void ProfileServiceTest::TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("F:/Extra");
+    f.fileSystem.AddDirectory("F:/Extra/pmdg-aircraft-77w");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    TreeNode extra = CategoryNode("F:/Extra", {AddonNode("F:/Extra/pmdg-aircraft-77w")});
+    extra.kind = TreeNodeKind::Library;
+    f.catalog.SetTree("F:/Extra", extra);
+
+    SimulatorProfile profile = Profile();
+    profile.libraries.push_back(Library{"library-2", "F:/Extra", "Extra"});
+
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+    const TreeNode* replacement = &snapshot.libraries[1].children.front();
+
+    const std::vector<LinkOperationResult> results =
+        f.service.SetEnabled(profile, snapshot, LinkBatch{{Fixture::AddonAt(snapshot, 0)}, {replacement}});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    for (const LinkOperationResult& result : results)
+    {
+        QVERIFY(result.outcome.Succeeded());
+    }
+
+    QCOMPARE(f.fileSystem.LinkTarget("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"),
+             std::optional<std::filesystem::path>{"F:/Extra/pmdg-aircraft-77w"});
+}
+
+void ProfileServiceTest::UndoingASwapPutsTheOldAddonBackInTheDestination()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("F:/Extra");
+    f.fileSystem.AddDirectory("F:/Extra/pmdg-aircraft-77w");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    TreeNode extra = CategoryNode("F:/Extra", {AddonNode("F:/Extra/pmdg-aircraft-77w")});
+    extra.kind = TreeNodeKind::Library;
+    f.catalog.SetTree("F:/Extra", extra);
+
+    SimulatorProfile profile = Profile();
+    profile.libraries.push_back(Library{"library-2", "F:/Extra", "Extra"});
+
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+    const TreeNode* replacement = &snapshot.libraries[1].children.front();
+
+    QCOMPARE(f.service.SetEnabled(profile, snapshot, LinkBatch{{Fixture::AddonAt(snapshot, 0)}, {replacement}}).size(),
+             std::size_t{2});
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{2});
+    for (const LinkOperationResult& result : reverted)
+    {
+        QVERIFY(result.outcome.Succeeded());
+    }
+
+    QCOMPARE(f.fileSystem.LinkTarget("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"),
+             std::optional<std::filesystem::path>{"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"});
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)

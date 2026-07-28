@@ -19,6 +19,12 @@
 #include "domain/ports/Clock.h"
 #include "domain/ports/OperationJournal.h"
 
+struct LinkBatch
+{
+    std::vector<const TreeNode*> toDisable;
+    std::vector<const TreeNode*> toEnable;
+};
+
 class ProfileService
 {
 public:
@@ -39,6 +45,9 @@ public:
                                                               const ProfileSnapshot& snapshot,
                                                               const std::vector<const TreeNode*>& nodes,
                                                               bool enable);
+
+    [[nodiscard]] std::vector<LinkOperationResult>
+    SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const LinkBatch& batch);
 
     [[nodiscard]] std::vector<LinkOperationResult> Repair(const SimulatorProfile& profile,
                                                           const std::vector<RepairRequest>& requests);
