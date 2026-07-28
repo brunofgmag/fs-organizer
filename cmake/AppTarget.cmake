@@ -20,7 +20,7 @@ target_compile_definitions(${APP_NAME} PRIVATE
 )
 
 if (MSVC)
-    target_compile_options(${APP_NAME} PRIVATE /W4 /permissive- /Zc:preprocessor /external:W0)
+    target_compile_options(${APP_NAME} PRIVATE /permissive- /Zc:preprocessor)
 endif ()
 
 target_precompile_headers(${APP_NAME} PRIVATE

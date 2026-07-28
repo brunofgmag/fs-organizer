@@ -19,5 +19,7 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 
 if (MSVC)
-    add_compile_options(/MP /FS)
+    add_compile_options(/MP /FS /W4 /WX /external:W0)
+else ()
+    add_compile_options(-Wall -Wextra -Werror)
 endif ()

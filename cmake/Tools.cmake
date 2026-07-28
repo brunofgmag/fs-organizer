@@ -21,7 +21,7 @@ target_include_directories(fsorg-probe PRIVATE "${CMAKE_SOURCE_DIR}/src")
 target_compile_definitions(fsorg-probe PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 
 if (MSVC)
-    target_compile_options(fsorg-probe PRIVATE /W4 /permissive- /Zc:preprocessor /external:W0)
+    target_compile_options(fsorg-probe PRIVATE /permissive- /Zc:preprocessor)
 endif ()
 
 target_link_libraries(fsorg-probe PRIVATE Qt6::Core)
