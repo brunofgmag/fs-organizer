@@ -3,6 +3,6 @@
 
 class QTableView;
 
-void LetTheColumnsBeDraggedAndStillFillTheTable(QTableView* table);
+void LetTheColumnsBeDraggedAndStillFillTheTable(QTableView* table, int columnThatTakesTheSlack = -1);
 
 #endif // FS_ORGANIZER_VIEW_TABLE_COLUMNS_H

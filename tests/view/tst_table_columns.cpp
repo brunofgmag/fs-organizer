@@ -16,6 +16,9 @@ private slots:
     static void NarrowingOneColumnIsAbsorbedInsteadOfLeavingAGap();
     static void EveryColumnButTheOneThatTakesTheSlackCanBeDragged();
     static void AWiderWindowGoesToTheColumnThatTakesTheSlack();
+    static void ContentThatArrivesAfterTheHelperIsMeasuredJustTheSame();
+    static void ContentThatChangesWithoutNewRowsIsMeasuredAgain();
+    static void TheSlackCanBeGivenToAChosenColumnInsteadOfTheLast();
 };
 
 namespace
@@ -134,6 +137,93 @@ void TableColumnsTest::AWiderWindowGoesToTheColumnThatTakesTheSlack()
     QCOMPARE(table.Width(0), narrow);
     QVERIFY(table.Width(kSlack) > slackBefore);
     QCOMPARE(table.TotalWidth(), table.view.viewport()->width());
+}
+
+void TableColumnsTest::ContentThatArrivesAfterTheHelperIsMeasuredJustTheSame()
+{
+    QStandardItemModel model(0, kColumns);
+    QTableView view;
+
+    view.setModel(&model);
+    view.resize(800, 300);
+    LetTheColumnsBeDraggedAndStillFillTheTable(&view);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    const int narrowBefore = view.horizontalHeader()->sectionSize(0);
+
+    for (int row = 0; row < 6; ++row)
+    {
+        for (int column = 0; column < kColumns; ++column)
+        {
+            model.setItem(row, column,
+                          new QStandardItem(column == 0 ? QStringLiteral("tfdidesign-aircraft-md-11fge-md-11fpw-pack")
+                                                        : QStringLiteral("curto")));
+        }
+    }
+
+    QVERIFY(QTest::qWaitFor(
+        [&view, narrowBefore]
+        {
+            return view.horizontalHeader()->sectionSize(0) != narrowBefore;
+        },
+        1000));
+
+    QVERIFY(view.horizontalHeader()->sectionSize(0) > view.horizontalHeader()->sectionSize(1));
+    QCOMPARE(view.horizontalHeader()->sectionSize(kSlack),
+             view.viewport()->width() - view.horizontalHeader()->sectionSize(0)
+                 - view.horizontalHeader()->sectionSize(1) - view.horizontalHeader()->sectionSize(2));
+}
+
+void TableColumnsTest::ContentThatChangesWithoutNewRowsIsMeasuredAgain()
+{
+    const Table table;
+    const int narrowBefore = table.Width(0);
+
+    for (int row = 0; row < table.model.rowCount(); ++row)
+    {
+        table.model.item(row, 0)->setText(QStringLiteral("tfdidesign-md11f"));
+    }
+
+    QVERIFY(QTest::qWaitFor(
+        [&table, narrowBefore]
+        {
+            return table.Width(0) != narrowBefore;
+        },
+        1000));
+
+    QVERIFY(table.Width(0) > narrowBefore);
+    QCOMPARE(table.TotalWidth(), table.view.viewport()->width());
+}
+
+void TableColumnsTest::TheSlackCanBeGivenToAChosenColumnInsteadOfTheLast()
+{
+    QStandardItemModel model(6, kColumns);
+    QTableView view;
+
+    for (int row = 0; row < model.rowCount(); ++row)
+    {
+        for (int column = 0; column < kColumns; ++column)
+        {
+            model.setItem(row, column, new QStandardItem(QStringLiteral("cell %1").arg(column)));
+        }
+    }
+
+    view.setModel(&model);
+    view.resize(800, 300);
+    LetTheColumnsBeDraggedAndStillFillTheTable(&view, 0);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    const QHeaderView* header = view.horizontalHeader();
+    int total = 0;
+    for (int column = 0; column < kColumns; ++column)
+    {
+        total += header->sectionSize(column);
+    }
+
+    QCOMPARE(total, view.viewport()->width());
+    QVERIFY(header->sectionSize(0) > header->sectionSize(kColumns - 1));
 }
 
 QTEST_MAIN(TableColumnsTest)

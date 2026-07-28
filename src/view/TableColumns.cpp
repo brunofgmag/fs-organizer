@@ -14,7 +14,8 @@ namespace
     class WidthKeeper final : public QObject
     {
     public:
-        explicit WidthKeeper(QTableView* table) : QObject(table), table_(table)
+        WidthKeeper(QTableView* table, const int columnThatTakesTheSlack)
+            : QObject(table), table_(table), wanted_(columnThatTakesTheSlack)
         {
             table_->horizontalHeader()->setStretchLastSection(false);
             table_->viewport()->installEventFilter(this);
@@ -23,6 +24,12 @@ namespace
                     [this]
                     {
                         MeasureTheContentOnce();
+                    });
+
+            connect(table_->model(), &QAbstractItemModel::dataChanged, this,
+                    [this]
+                    {
+                        MeasureOnceTheContentSettles();
                     });
 
             connect(table_->horizontalHeader(), &QHeaderView::sectionResized, this,
@@ -51,9 +58,14 @@ namespace
         }
 
     private:
-        [[nodiscard]] int LastColumn() const
+        [[nodiscard]] int SlackColumn() const
         {
             const QHeaderView* header = table_->horizontalHeader();
+
+            if (wanted_ >= 0 && wanted_ < header->count() && !header->isSectionHidden(wanted_))
+            {
+                return wanted_;
+            }
 
             for (int column = header->count() - 1; column >= 0; --column)
             {
@@ -66,6 +78,25 @@ namespace
             return -1;
         }
 
+        void MeasureOnceTheContentSettles()
+        {
+            if (waiting_ || theirs_)
+            {
+                return;
+            }
+
+            waiting_ = true;
+
+            QMetaObject::invokeMethod(
+                this,
+                [this]
+                {
+                    waiting_ = false;
+                    MeasureTheContentOnce();
+                },
+                Qt::QueuedConnection);
+        }
+
         void MeasureTheContentOnce()
         {
             if (theirs_ || table_->model()->rowCount({}) == 0)
@@ -74,7 +105,7 @@ namespace
             }
 
             QHeaderView* header = table_->horizontalHeader();
-            const int slack = LastColumn();
+            const int slack = SlackColumn();
 
             applying_ = true;
             for (int column = 0; column < header->count(); ++column)
@@ -98,7 +129,7 @@ namespace
         void FillTheSlack()
         {
             QHeaderView* header = table_->horizontalHeader();
-            const int slack = LastColumn();
+            const int slack = SlackColumn();
             if (slack < 0)
             {
                 return;
@@ -116,12 +147,14 @@ namespace
         }
 
         QTableView* table_;
+        int wanted_ = -1;
         bool theirs_ = false;
         bool applying_ = false;
+        bool waiting_ = false;
     };
 }
 
-void LetTheColumnsBeDraggedAndStillFillTheTable(QTableView* table)
+void LetTheColumnsBeDraggedAndStillFillTheTable(QTableView* table, const int columnThatTakesTheSlack)
 {
-    new WidthKeeper(table);
+    new WidthKeeper(table, columnThatTakesTheSlack);
 }
