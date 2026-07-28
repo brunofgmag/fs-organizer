@@ -67,7 +67,7 @@ void CommunityModelTest::TheTableShowsOneRowPerEntry()
     QCOMPARE(model.data(model.index(5, CommunityModel::DestinationColumn), Qt::DisplayRole).toString(),
              QStringLiteral("Community2024"));
     QCOMPARE(model.data(model.index(0, CommunityModel::TargetColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("D:/MSFS 2024/Sceneries/managed"));
+             QStringLiteral(R"(D:\MSFS 2024\Sceneries\managed)"));
     QCOMPARE(model.data(model.index(4, CommunityModel::TargetColumn), Qt::DisplayRole).toString(), QString());
 }
 
@@ -120,7 +120,8 @@ void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
     const QModelIndex conflicted = model.index(4, CommunityModel::ClassificationColumn);
     QVERIFY(model.data(conflicted, CommunityModel::ConflictRole).toBool());
     QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("Não gerenciada · em conflito"));
-    QVERIFY(model.data(conflicted, Qt::ToolTipRole).toString().contains(QStringLiteral("D:/MSFS 2024/Utils/physical")));
+    QVERIFY(
+        model.data(conflicted, Qt::ToolTipRole).toString().contains(QStringLiteral(R"(D:\MSFS 2024\Utils\physical)")));
 
     QVERIFY(!model.data(model.index(0, CommunityModel::ClassificationColumn), CommunityModel::ConflictRole).toBool());
 
@@ -146,7 +147,7 @@ void CommunityModelTest::EveryCellOffersItsWholeTextToWhoeverHoversIt()
     }
 
     QCOMPARE(model.data(model.index(0, CommunityModel::TargetColumn), Qt::ToolTipRole).toString(),
-             QStringLiteral("D:/MSFS 2024/Sceneries/managed"));
+             QStringLiteral(R"(D:\MSFS 2024\Sceneries\managed)"));
 }
 
 QTEST_APPLESS_MAIN(CommunityModelTest)

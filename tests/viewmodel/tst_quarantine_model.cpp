@@ -8,7 +8,7 @@ class QuarantineModelTest : public QObject
 
 private slots:
     static void EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackTo();
-    static void AnItemWithoutAnOriginSaysSoInsteadOfShowingAnEmptyCell();
+    static void AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell();
     static void EveryCellOffersItsWholeTextToWhoeverHoversIt();
 };
 
@@ -33,23 +33,24 @@ void QuarantineModelTest::EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackT
     QCOMPARE(model.data(model.index(0, QuarantineModel::NameColumn), Qt::DisplayRole).toString(),
              QStringLiteral("simbridge"));
     QCOMPARE(model.data(model.index(0, QuarantineModel::OriginColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("E:/Sim/Community/simbridge"));
+             QStringLiteral(R"(E:\Sim\Community\simbridge)"));
     QCOMPARE(model.data(model.index(0, QuarantineModel::WhereColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("E:/Sim/_fsorganizer-quarantine"));
+             QStringLiteral(R"(E:\Sim\_fsorganizer-quarantine)"));
     QVERIFY(!model.data(model.index(0, QuarantineModel::WhenColumn), Qt::DisplayRole).toString().isEmpty());
 
     QVERIFY(model.ItemAt(model.index(1, 0)) != nullptr);
     QCOMPARE(model.Items().size(), std::size_t{2});
 }
 
-void QuarantineModelTest::AnItemWithoutAnOriginSaysSoInsteadOfShowingAnEmptyCell()
+void QuarantineModelTest::AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell()
 {
     QuarantineModel model;
     model.ShowItems(TwoItems());
 
     QCOMPARE(model.data(model.index(1, QuarantineModel::OriginColumn), Qt::DisplayRole).toString(),
              QStringLiteral("(o diário não sabe)"));
-    QCOMPARE(model.data(model.index(1, QuarantineModel::WhenColumn), Qt::DisplayRole).toString(), QString());
+    QCOMPARE(model.data(model.index(1, QuarantineModel::WhenColumn), Qt::DisplayRole).toString(),
+             QStringLiteral("(o diário não sabe)"));
 }
 
 void QuarantineModelTest::EveryCellOffersItsWholeTextToWhoeverHoversIt()
@@ -65,7 +66,7 @@ void QuarantineModelTest::EveryCellOffersItsWholeTextToWhoeverHoversIt()
     }
 
     QCOMPARE(model.data(model.index(0, QuarantineModel::OriginColumn), Qt::ToolTipRole).toString(),
-             QStringLiteral("E:/Sim/Community/simbridge"));
+             QStringLiteral(R"(E:\Sim\Community\simbridge)"));
 }
 
 QTEST_APPLESS_MAIN(QuarantineModelTest)

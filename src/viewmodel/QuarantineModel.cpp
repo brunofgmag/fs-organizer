@@ -78,7 +78,7 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
     {
     case NameColumn: return AsText(item->path.filename());
     case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("(o diário não sabe)");
-    case WhenColumn: return item->quarantinedAt.has_value() ? Moment(*item->quarantinedAt) : QString();
+    case WhenColumn: return item->quarantinedAt.has_value() ? Moment(*item->quarantinedAt) : tr("(o diário não sabe)");
     case WhereColumn: return AsText(item->path.parent_path());
     default: return {};
     }

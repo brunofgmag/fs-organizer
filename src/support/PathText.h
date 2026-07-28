@@ -7,7 +7,10 @@
 
 [[nodiscard]] inline QString AsText(const std::filesystem::path& path)
 {
-    return QString::fromStdWString(path.wstring());
+    std::filesystem::path shown = path;
+    shown.make_preferred();
+
+    return QString::fromStdWString(shown.wstring());
 }
 
 [[nodiscard]] inline std::filesystem::path AsPath(const QString& text)

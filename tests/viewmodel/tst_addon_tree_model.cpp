@@ -167,7 +167,7 @@ void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
     QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("pmdg-aircraft-77w (em conflito)"));
     QVERIFY(model.data(conflicted, Qt::ToolTipRole)
                 .toString()
-                .contains(QStringLiteral("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w")));
+                .contains(QStringLiteral(R"(E:\Flight Simulator 2024\Community\pmdg-aircraft-77w)")));
 
     const QModelIndex quiet = model.index(1, 0, Category(model));
     QVERIFY(!model.data(quiet, AddonTreeModel::ConflictRole).toBool());
