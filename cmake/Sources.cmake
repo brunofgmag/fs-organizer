@@ -7,6 +7,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
+        src/domain/preset/PresetPlan.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/CategorySuggester.cpp
         src/domain/tree/DestinationDivergence.cpp
@@ -19,6 +20,7 @@ set(DOMAIN_SOURCES
 set(APPLICATION_SOURCES
         src/application/ImportService.cpp
         src/application/LibraryOrganizer.cpp
+        src/application/PresetService.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
 src/application/SetupService.cpp
@@ -33,6 +35,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
+        src/infrastructure/preset/FilePresetRepository.cpp
         src/infrastructure/platform/WindowsTitleBar.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
@@ -51,6 +54,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
         src/viewmodel/JournalViewModel.cpp
+        src/viewmodel/PresetViewModel.cpp
         src/viewmodel/QtBackgroundRunner.cpp
         src/viewmodel/QuarantineModel.cpp
         src/viewmodel/QuarantineViewModel.cpp
@@ -66,12 +70,14 @@ set(VIEW_SOURCES
         src/view/JournalPage.cpp
         src/view/MainWindow.cpp
         src/view/PlainTextDelegate.cpp
+        src/view/PresetsPage.cpp
         src/view/QuarantinePage.cpp
         src/view/RepairDialog.cpp
         src/view/SetupWizard.cpp
         src/view/StagingLeftoverDialog.cpp
         src/view/SuggestionDialog.cpp
         src/view/TableColumns.cpp
+        src/view/WheelGuard.cpp
 )
 
 set(APP_SOURCES

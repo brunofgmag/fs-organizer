@@ -5,6 +5,7 @@
 
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
+#include "application/PresetService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "application/SetupService.h"
@@ -17,6 +18,7 @@
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/platform/WindowsKnownFolders.h"
+#include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
@@ -25,6 +27,7 @@
 #include "view/CommunityPage.h"
 #include "view/JournalPage.h"
 #include "view/MainWindow.h"
+#include "view/PresetsPage.h"
 #include "view/QuarantinePage.h"
 #include "view/SetupWizard.h"
 #include "view/StagingLeftoverDialog.h"
@@ -151,8 +154,14 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
+    FilePresetRepository presetRepository(PresetsFolderPath());
+    PresetService presetService(presetRepository, profileService);
+    PresetViewModel presetViewModel(session, presetService, processProbe);
+    auto* presetsPage = new PresetsPage(presetViewModel, notifier);
+
     window.AddPage(QObject::tr("Árvore"), page);
     QToolButton* communityButton = window.AddPage(QStringLiteral("Community"), communityPage);
+    window.AddPage(QObject::tr("Presets"), presetsPage);
     window.AddPage(QObject::tr("Quarentena"), quarantinePage);
     window.AddPage(QObject::tr("Diário"), journalPage);
 
@@ -160,6 +169,7 @@ int main(int argc, char* argv[])
     QObject::connect(communityPage, &CommunityPage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(quarantinePage, &QuarantinePage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(journalPage, &JournalPage::StatusChanged, &window, &MainWindow::ShowStatus);
+    QObject::connect(presetsPage, &PresetsPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::RepairFinished, page, &AddonTreePage::RefreshUndoState);
 
@@ -208,6 +218,13 @@ int main(int argc, char* argv[])
                      });
     QObject::connect(&treeViewModel, &AddonTreeViewModel::RestartPendingChanged, &window,
                      &MainWindow::ShowRestartPending);
+    QObject::connect(&presetViewModel, &PresetViewModel::RestartPendingChanged, &window,
+                     &MainWindow::ShowRestartPending);
+    QObject::connect(&presetViewModel, &PresetViewModel::Applied, page,
+                     [page](const QStringList&)
+                     {
+                         page->RefreshUndoState();
+                     });
     QObject::connect(&window, &MainWindow::ProfileChosen, &treeViewModel, &AddonTreeViewModel::ChooseProfile);
 
     QObject::connect(&window, &MainWindow::AddProfileRequested, &window,

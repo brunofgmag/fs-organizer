@@ -11,4 +11,6 @@
 
 [[nodiscard]] std::filesystem::path JournalFilePath();
 
+[[nodiscard]] std::filesystem::path PresetsFolderPath();
+
 #endif // FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_WINDOWS_KNOWN_FOLDERS_H
