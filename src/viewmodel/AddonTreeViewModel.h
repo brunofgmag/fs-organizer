@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H
 #define FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -35,6 +36,10 @@ public:
 
     void Toggle(const std::vector<const TreeNode*>& nodes, bool enable);
 
+    [[nodiscard]] bool WouldEnable(const std::vector<const TreeNode*>& nodes) const;
+
+    [[nodiscard]] std::size_t AddonsThatWouldChange(const std::vector<const TreeNode*>& nodes, bool enable) const;
+
     void UndoLastBatch();
 
     void OverrideDestination(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& destination) const;
@@ -45,7 +50,7 @@ public:
 
     void RemoveCategory(const TreeNode* node);
 
-    [[nodiscard]] bool CanRemoveCategory(const TreeNode* node) const;
+    [[nodiscard]] static bool CanRemoveCategory(const TreeNode* node);
 
     void MoveTo(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& category);
 

@@ -46,6 +46,7 @@ private slots:
     static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
     static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
     static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
+    static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
 };
 
 namespace
@@ -239,7 +240,7 @@ void AddonTreeViewModelTest::MovingASelectionWithNoAddonInItIsRefusedBeforeItRea
 
 void AddonTreeViewModelTest::TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveTarget()
 {
-    Fixture f;
+    const Fixture f;
     const TreeNode addon = AddonNode(kAddon);
 
     const std::vector<MoveTarget> offered = f.viewModel.CategoriesFor(&addon);
@@ -250,7 +251,7 @@ void AddonTreeViewModelTest::TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveT
 
 void AddonTreeViewModelTest::TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonLoose()
 {
-    Fixture f;
+    const Fixture f;
     const TreeNode addon = AddonNode(kAddon);
 
     const std::vector<MoveTarget> offered = f.viewModel.CategoriesFor(&addon);
@@ -377,6 +378,29 @@ void AddonTreeViewModelTest::OnlyACategoryHoldingAStrayAddonIsWorthOfferingTheAd
     f.LinkIn(kCommunity2024, kOtherAddon);
     f.session.ShowActiveProfile();
     QCOMPARE(f.viewModel.StrayAddonsUnder({&category}), std::size_t{1});
+}
+
+void AddonTreeViewModelTest::ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)});
+
+    QVERIFY(f.viewModel.WouldEnable({&category}));
+    QCOMPARE(f.viewModel.AddonsThatWouldChange({&category}, true), std::size_t{2});
+    QCOMPARE(f.viewModel.AddonsThatWouldChange({&category}, false), std::size_t{0});
+
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.viewModel.WouldEnable({&category}));
+    QCOMPARE(f.viewModel.AddonsThatWouldChange({&category}, true), std::size_t{1});
+    QCOMPARE(f.viewModel.AddonsThatWouldChange({&category}, false), std::size_t{1});
+
+    f.LinkIn(kCommunity, kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    QVERIFY(!f.viewModel.WouldEnable({&category}));
+    QCOMPARE(f.viewModel.AddonsThatWouldChange({&category}, false), std::size_t{2});
 }
 
 void AddonTreeViewModelTest::TurningAStrayAddonOffAndOnAgainLandsItInTheDestinationTheProfileMandates()

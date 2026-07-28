@@ -24,6 +24,8 @@
 
 namespace
 {
+    constexpr std::size_t kAskAboveThisMany = 10;
+
     void StartASection(QMenu& menu)
     {
         if (!menu.isEmpty())
@@ -40,7 +42,7 @@ namespace
 
 AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                              AddonTreeModel& model,
-                             SessionNotifier& notifier,
+                             const SessionNotifier& notifier,
                              QWidget* parent)
     : QWidget(parent), viewModel_(viewModel), model_(model)
 {
@@ -222,12 +224,38 @@ void AddonTreePage::ToggleSelection(const bool enable)
         return;
     }
 
-    viewModel_.Toggle(nodes, enable);
+    if (TheUserMeantIt(nodes, enable))
+    {
+        viewModel_.Toggle(nodes, enable);
+    }
 }
 
-void AddonTreePage::OnToggleRequested(const TreeNode* node) const
+void AddonTreePage::OnToggleRequested(const TreeNode* node)
 {
-    viewModel_.Toggle(Chosen(node));
+    const std::vector<const TreeNode*> nodes = Chosen(node);
+    const bool enable = viewModel_.WouldEnable(nodes);
+
+    if (TheUserMeantIt(nodes, enable))
+    {
+        viewModel_.Toggle(nodes, enable);
+    }
+}
+
+bool AddonTreePage::TheUserMeantIt(const std::vector<const TreeNode*>& nodes, const bool enable)
+{
+    const std::size_t many = viewModel_.AddonsThatWouldChange(nodes, enable);
+
+    if (many <= kAskAboveThisMany)
+    {
+        return true;
+    }
+
+    const QMessageBox::StandardButton answer =
+        QMessageBox::question(this, enable ? tr("Ligar em massa") : tr("Desligar em massa"),
+                              enable ? tr("Isto vai ligar %1 addons de uma vez.\n\nContinuar?").arg(many)
+                                     : tr("Isto vai desligar %1 addons de uma vez.\n\nContinuar?").arg(many));
+
+    return answer == QMessageBox::Yes;
 }
 
 void AddonTreePage::RefreshUndoState() const
@@ -586,7 +614,7 @@ bool AddonTreePage::AskWhetherToRelink(const std::size_t strayed)
                             nullptr, static_cast<int>(strayed)),
                          QMessageBox::NoButton, this);
 
-    QPushButton* relink = question.addButton(tr("Religar agora"), QMessageBox::AcceptRole);
+    const QPushButton* relink = question.addButton(tr("Religar agora"), QMessageBox::AcceptRole);
     question.addButton(tr("Deixar como está"), QMessageBox::RejectRole);
     question.exec();
 

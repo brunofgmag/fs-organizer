@@ -1,6 +1,8 @@
 #include "viewmodel/AddonTreeViewModel.h"
 
 #include <algorithm>
+#include <set>
+#include <string>
 
 #include <QtCore/QStringList>
 
@@ -61,9 +63,34 @@ void AddonTreeViewModel::AdoptScan()
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes)
 {
+    Toggle(nodes, WouldEnable(nodes));
+}
+
+bool AddonTreeViewModel::WouldEnable(const std::vector<const TreeNode*>& nodes) const
+{
     const ProfileSnapshot& snapshot = session_.Snapshot();
 
-    Toggle(nodes, ShouldEnable(session_.Profile(), snapshot.entries, snapshot.enabled, nodes));
+    return ShouldEnable(session_.Profile(), snapshot.entries, snapshot.enabled, nodes);
+}
+
+std::size_t AddonTreeViewModel::AddonsThatWouldChange(const std::vector<const TreeNode*>& nodes,
+                                                      const bool enable) const
+{
+    const ProfileSnapshot& snapshot = session_.Snapshot();
+    std::set<std::string> counted;
+
+    for (const TreeNode* node : nodes)
+    {
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            if (snapshot.enabled.Contains(addon->path) != enable)
+            {
+                counted.insert(ComparablePath(addon->path));
+            }
+        }
+    }
+
+    return counted.size();
 }
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes, const bool enable)
@@ -165,7 +192,7 @@ std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, c
     return landed ? result.path : std::filesystem::path{};
 }
 
-bool AddonTreeViewModel::CanRemoveCategory(const TreeNode* node) const
+bool AddonTreeViewModel::CanRemoveCategory(const TreeNode* node)
 {
     return node->kind == TreeNodeKind::Category && CountAddons(*node) == 0;
 }

@@ -23,7 +23,7 @@ class AddonTreePage final : public QWidget
 public:
     AddonTreePage(AddonTreeViewModel& viewModel,
                   AddonTreeModel& model,
-                  SessionNotifier& notifier,
+                  const SessionNotifier& notifier,
                   QWidget* parent = nullptr);
 
     void RefreshUndoState() const;
@@ -42,7 +42,9 @@ private:
 
     void ToggleSelection(bool enable);
 
-    void OnToggleRequested(const TreeNode* node) const;
+    void OnToggleRequested(const TreeNode* node);
+
+    [[nodiscard]] bool TheUserMeantIt(const std::vector<const TreeNode*>& nodes, bool enable);
 
     void OnBatchFinished(const std::vector<LinkOperationResult>& results);
 
