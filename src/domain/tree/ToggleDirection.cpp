@@ -7,11 +7,14 @@
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
 
-bool LinksTo(const DestinationEntry& entry, const std::filesystem::path& addonFolder)
+namespace
 {
-    return (entry.classification == EntryClassification::Managed
-            || entry.classification == EntryClassification::Duplicated)
-        && ComparablePath(entry.target) == ComparablePath(addonFolder);
+    bool LinksTo(const DestinationEntry& entry, const std::filesystem::path& addonFolder)
+    {
+        return (entry.classification == EntryClassification::Managed
+                || entry.classification == EntryClassification::Duplicated)
+            && ComparablePath(entry.target) == ComparablePath(addonFolder);
+    }
 }
 
 bool DestinationBlocks(const SimulatorProfile& profile,

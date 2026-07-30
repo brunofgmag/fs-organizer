@@ -161,6 +161,11 @@ ProfileService::SetEnabled(const SimulatorProfile& profile, const ProfileSnapsho
     const std::vector<Step> enabling = PlanSteps(profile, snapshot, batch.toEnable, true);
     steps.insert(steps.end(), enabling.begin(), enabling.end());
 
+    return RunAsOneBatch(steps);
+}
+
+std::vector<LinkOperationResult> ProfileService::RunAsOneBatch(const std::vector<Step>& steps)
+{
     std::vector<LinkOperationResult> results;
     std::vector<Step> undo;
 
@@ -183,6 +188,27 @@ ProfileService::SetEnabled(const SimulatorProfile& profile, const ProfileSnapsho
     }
 
     return results;
+}
+
+std::vector<LinkOperationResult> ProfileService::Relink(const SimulatorProfile& profile,
+                                                        const ProfileSnapshot& snapshot,
+                                                        const std::vector<const TreeNode*>& nodes)
+{
+    const std::vector<Step> unlinking = PlanSteps(profile, snapshot, nodes, false);
+
+    std::vector<Step> steps = unlinking;
+    std::set<std::string> relinked;
+
+    for (const Step& step : unlinking)
+    {
+        if (relinked.insert(ComparablePath(step.addonFolder)).second)
+        {
+            steps.push_back({OperationKind::EnableAddon, step.addonId, step.addonFolder,
+                             PlannedLinkPath(profile, step.addonFolder)});
+        }
+    }
+
+    return RunAsOneBatch(steps);
 }
 
 std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfile& profile,

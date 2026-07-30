@@ -11,7 +11,6 @@
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "domain/tree/CategorySuggester.h"
-#include "domain/ports/ProcessProbe.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/MoveTarget.h"
 #include "viewmodel/SessionNotifier.h"
@@ -23,7 +22,6 @@ class AddonTreeViewModel final : public QObject
 public:
     AddonTreeViewModel(Session& session,
                        ProfileService& service,
-                       const ProcessProbe& probe,
                        AddonTreeModel& model,
                        const SessionNotifier& notifier,
                        QObject* parent = nullptr);
@@ -77,10 +75,6 @@ signals:
 
     void BatchFinished(const std::vector<LinkOperationResult>& results);
 
-    void SimulatorIsRunning();
-
-    void RestartPendingChanged(bool pending);
-
     void Refused(const QString& explanation);
 
 private:
@@ -94,14 +88,9 @@ private:
 
     void ApplyResults(const std::vector<LinkOperationResult>& results);
 
-    void NoteSimulatorState(const std::vector<LinkOperationResult>& results);
-
     Session& session_;
     ProfileService& service_;
-    const ProcessProbe& probe_;
     AddonTreeModel& model_;
-    bool warnedAboutSimulator_ = false;
-    bool restartPending_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H

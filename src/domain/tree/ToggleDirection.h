@@ -9,8 +9,6 @@
 #include "domain/model/SimulatorProfile.h"
 #include "domain/model/TreeNode.h"
 
-[[nodiscard]] bool LinksTo(const DestinationEntry& entry, const std::filesystem::path& addonFolder);
-
 [[nodiscard]] bool DestinationBlocks(const SimulatorProfile& profile,
                                      const std::vector<DestinationEntry>& entries,
                                      const std::filesystem::path& addonFolder);

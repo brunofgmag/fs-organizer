@@ -49,6 +49,9 @@ public:
     [[nodiscard]] std::vector<LinkOperationResult>
     SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const LinkBatch& batch);
 
+    [[nodiscard]] std::vector<LinkOperationResult>
+    Relink(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const std::vector<const TreeNode*>& nodes);
+
     [[nodiscard]] std::vector<LinkOperationResult> Repair(const SimulatorProfile& profile,
                                                           const std::vector<RepairRequest>& requests);
 
@@ -85,6 +88,8 @@ private:
     [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile, const RepairRequest& request);
 
     [[nodiscard]] LinkOperationResult Run(const Step& step) const;
+
+    [[nodiscard]] std::vector<LinkOperationResult> RunAsOneBatch(const std::vector<Step>& steps);
 
     const CatalogScanner& catalog_;
     const EntryClassifier& classifier_;

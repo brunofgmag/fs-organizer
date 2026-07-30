@@ -62,4 +62,14 @@ inline constexpr std::array kAllFileResults{
 static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::CouldNotReadTheSource) + 1,
               "Every FileResult belongs in kAllFileResults, and the last one carries the highest value.");
 
+[[nodiscard]] constexpr bool Succeeded(const FileResult result)
+{
+    return result == FileResult::Completed;
+}
+
+[[nodiscard]] constexpr bool TheFolderLanded(const FileResult result)
+{
+    return Succeeded(result) || result == FileResult::CouldNotCreateLink;
+}
+
 #endif // FS_ORGANIZER_DOMAIN_MODEL_FILE_RESULT_H

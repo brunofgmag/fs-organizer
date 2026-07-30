@@ -38,6 +38,10 @@ std::vector<const TreeNode*> CategoriesUnder(TreeNode&& node) = delete;
 
 [[nodiscard]] bool HoldsAddonsOrWasDeclared(const TreeNode& node);
 
+[[nodiscard]] std::vector<const TreeNode*> CategoriesOfferedIn(const TreeNode& tree, bool offerTheRoot);
+
+std::vector<const TreeNode*> CategoriesOfferedIn(TreeNode&& tree, bool offerTheRoot) = delete;
+
 [[nodiscard]] CheckState DeriveCheckState(const TreeNode& node, const EnabledAddons& enabled);
 
 #endif // FS_ORGANIZER_DOMAIN_TREE_ADDON_TREE_H

@@ -10,7 +10,6 @@
 
 #include "application/PresetService.h"
 #include "application/Session.h"
-#include "domain/ports/ProcessProbe.h"
 
 struct PresetPreview
 {
@@ -26,7 +25,7 @@ class PresetViewModel final : public QObject
     Q_OBJECT
 
 public:
-    PresetViewModel(Session& session, PresetService& service, const ProcessProbe& probe, QObject* parent = nullptr);
+    PresetViewModel(Session& session, PresetService& service, QObject* parent = nullptr);
 
     [[nodiscard]] QStringList Names() const;
 
@@ -55,22 +54,13 @@ signals:
 
     void Applied(const QStringList& unresolved);
 
-    void SimulatorIsRunning();
-
-    void RestartPendingChanged(bool pending);
-
 private:
     void RefuseTheWriteOf(const QString& name);
 
     [[nodiscard]] bool Accepts(const QString& name);
 
-    void NoteSimulatorState(const std::vector<LinkOperationResult>& results);
-
     Session& session_;
     PresetService& service_;
-    const ProcessProbe& probe_;
-    bool warnedAboutSimulator_ = false;
-    bool restartPending_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_PRESET_VIEW_MODEL_H

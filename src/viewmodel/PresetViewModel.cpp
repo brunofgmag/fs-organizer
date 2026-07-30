@@ -5,8 +5,8 @@
 #include "domain/support/PathSegment.h"
 #include "domain/support/StringUtils.h"
 
-PresetViewModel::PresetViewModel(Session& session, PresetService& service, const ProcessProbe& probe, QObject* parent)
-    : QObject(parent), session_(session), service_(service), probe_(probe)
+PresetViewModel::PresetViewModel(Session& session, PresetService& service, QObject* parent)
+    : QObject(parent), session_(session), service_(service)
 {
 }
 
@@ -136,7 +136,7 @@ void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)
 
     session_.RefreshEntries();
 
-    NoteSimulatorState(report.results);
+    session_.NoteLinkResults(report.results);
 
     QStringList unresolved;
     for (const AddonId& addonId : report.unresolved)
@@ -178,30 +178,4 @@ bool PresetViewModel::Accepts(const QString& name)
     }
 
     return true;
-}
-
-void PresetViewModel::NoteSimulatorState(const std::vector<LinkOperationResult>& results)
-{
-    const bool changed = std::ranges::any_of(results,
-                                             [](const LinkOperationResult& result)
-                                             {
-                                                 return result.outcome.Succeeded();
-                                             });
-
-    if (!changed || !probe_.SimulatorIsRunning())
-    {
-        return;
-    }
-
-    if (!warnedAboutSimulator_)
-    {
-        warnedAboutSimulator_ = true;
-        emit SimulatorIsRunning();
-    }
-
-    if (!restartPending_)
-    {
-        restartPending_ = true;
-        emit RestartPendingChanged(true);
-    }
 }

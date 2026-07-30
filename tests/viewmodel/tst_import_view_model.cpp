@@ -28,6 +28,8 @@ private slots:
     static void AFolderAlreadyMeasuredAnswersWithoutTouchingTheDiskAgain();
     static void OnlyTheLastMeasurementAskedForIsReported();
     static void ForgettingSendsTheNextMeasurementBackToTheDisk();
+    static void CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo();
+    static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
 };
 
 namespace
@@ -86,9 +88,46 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{profiles, organizer, settings, runner, notifier};
+        Session session{profiles, organizer, settings, processProbe, runner, notifier};
         ImportViewModel viewModel{service, profiles, processProbe, session, runner};
     };
+}
+
+void ImportViewModelTest::CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo()
+{
+    Fixture f;
+
+    QObject::connect(&f.viewModel, &ImportViewModel::Progressed, &f.viewModel,
+                     [&f]
+                     {
+                         f.viewModel.Cancel();
+                     });
+
+    const QSignalSpy finished(&f.viewModel, &ImportViewModel::Finished);
+
+    f.viewModel.Import({ImportRequest{kSmall, kLibrary}, ImportRequest{kBig, kLibrary}});
+
+    QCOMPARE(finished.size(), 1);
+
+    const auto results = finished.front().front().value<std::vector<ImportOperationResult>>();
+    QCOMPARE(results.size(), std::size_t{2});
+    QVERIFY(!Succeeded(results.front().result));
+    QCOMPARE(results.back().result, FileResult::Cancelled);
+    QVERIFY(f.fileSystem.Exists(kSmall));
+    QVERIFY(f.fileSystem.Exists(kBig));
+}
+
+void ImportViewModelTest::AnImportGoesThroughTheRunnerTheViewModelWasGiven()
+{
+    Fixture f;
+    const QSignalSpy finished(&f.viewModel, &ImportViewModel::Finished);
+
+    const int beforeTheImport = f.runner.runs;
+
+    f.viewModel.Import({ImportRequest{kSmall, kLibrary}});
+
+    QCOMPARE(f.runner.runs, beforeTheImport + 1);
+    QCOMPARE(finished.size(), 1);
 }
 
 void ImportViewModelTest::MeasuringAddsUpEveryFolderItWasGiven()

@@ -6,6 +6,7 @@
 
 #include "application/model/AddonMove.h"
 #include "application/model/FileOperationResult.h"
+#include "domain/ports/ProcessProbe.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
@@ -15,7 +16,6 @@
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/OperationJournal.h"
-#include "domain/ports/ProcessProbe.h"
 
 class LibraryOrganizer
 {

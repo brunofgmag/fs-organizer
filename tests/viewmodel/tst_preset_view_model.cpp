@@ -122,10 +122,10 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, runner, notifier};
+        Session session{service, organizer, settings, processProbe, runner, notifier};
         FakePresetRepository repository;
         PresetService presets{repository, service};
-        PresetViewModel viewModel{session, presets, processProbe};
+        PresetViewModel viewModel{session, presets};
     };
 }
 

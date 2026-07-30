@@ -5,8 +5,6 @@
 #include <ranges>
 #include <utility>
 
-#include <QtCore/QThread>
-
 #include "viewmodel/FailureText.h"
 
 ImportViewModel::ImportViewModel(const ImportService& service,
@@ -43,7 +41,7 @@ FileResult ImportViewModel::ResolveConflict(const CopyConflict& conflict, const 
 {
     const FileResult result = service_.ResolveConflict(Profile(), session_.Snapshot().entries, conflict, choice);
 
-    if (result == FileResult::Completed)
+    if (Succeeded(result))
     {
         profileService_.ForgetUndo();
         emit ConflictResolved();
@@ -205,40 +203,40 @@ std::function<void(OperationKind)> ImportViewModel::OnStep()
     };
 }
 
-void ImportViewModel::RunInAWorker(const std::function<std::vector<ImportOperationResult>()>& work, const int folders)
+void ImportViewModel::RunInAWorker(std::function<std::vector<ImportOperationResult>()> work, const int folders)
 {
-    if (worker_ != nullptr)
+    if (running_)
     {
         return;
     }
 
+    running_ = true;
     cancelled_ = false;
     folder_ = 0;
-    results_.clear();
 
     emit Started(folders);
 
-    worker_ = QThread::create(
-        [this, work]
-        {
-            results_ = work();
-        });
+    const auto landed = std::make_shared<std::vector<ImportOperationResult>>();
 
-    connect(worker_, &QThread::finished, this, &ImportViewModel::Adopt);
-    worker_->start();
+    runner_.Run(
+        [work = std::move(work), landed]
+        {
+            *landed = work();
+        },
+        [this, landed]
+        {
+            Adopt(std::move(*landed));
+        });
 }
 
-void ImportViewModel::Adopt()
+void ImportViewModel::Adopt(std::vector<ImportOperationResult> results)
 {
-    worker_->deleteLater();
-    worker_ = nullptr;
-
-    const std::vector<ImportOperationResult> results = std::exchange(results_, {});
+    running_ = false;
 
     if (std::ranges::any_of(results,
                             [](const ImportOperationResult& result)
                             {
-                                return result.result == FileResult::Completed;
+                                return Succeeded(result.result);
                             }))
     {
         profileService_.ForgetUndo();

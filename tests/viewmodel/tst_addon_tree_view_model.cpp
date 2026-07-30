@@ -44,6 +44,8 @@ private slots:
     static void TurningAStrayAddonOffAndOnAgainLandsItInTheDestinationTheProfileMandates();
     static void RelinkingTouchesOnlyTheAddonsThatStrayedFromTheProfileDestination();
     static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
+    static void OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff();
+    static void RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink();
     static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
     static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
     static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
@@ -152,9 +154,9 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, runner, notifier};
+        Session session{service, organizer, settings, processProbe, runner, notifier};
         AddonTreeModel model;
-        AddonTreeViewModel viewModel{session, service, processProbe, model, notifier};
+        AddonTreeViewModel viewModel{session, service, model, notifier};
     };
 }
 
@@ -465,6 +467,40 @@ void AddonTreeViewModelTest::RelinkingWhatNeverStrayedIsRefusedInsteadOfChurning
 
     QCOMPARE(refused.size(), 1);
     QVERIFY(f.journal.appended.empty());
+}
+
+void AddonTreeViewModelTest::OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon)});
+
+    f.viewModel.OverrideDestination({&category}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    f.viewModel.RelinkToTheProfileDestination({&category});
+
+    QVERIFY(f.viewModel.CanUndo());
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity2024} / "pmdg-aircraft-77w"));
+
+    f.viewModel.UndoLastBatch();
+
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity} / "pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists(std::filesystem::path{kCommunity2024} / "pmdg-aircraft-77w"));
+}
+
+void AddonTreeViewModelTest::RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon)});
+
+    f.viewModel.Toggle({&category}, true);
+
+    QVERIFY(f.viewModel.CanUndo());
+
+    QVERIFY(!f.viewModel.RenameCategory(&category, "Aeronaves").empty());
+
+    QVERIFY(!f.viewModel.CanUndo());
 }
 
 void AddonTreeViewModelTest::TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary()

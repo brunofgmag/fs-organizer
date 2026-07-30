@@ -3,6 +3,7 @@
 #include <QtCore/QLibraryInfo>
 #include <QtCore/QTranslator>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QMessageBox>
 
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
@@ -24,6 +25,7 @@
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "support/PathText.h"
 #include "view/AddonTreePage.h"
 #include "view/CommunityPage.h"
 #include "view/JournalPage.h"
@@ -123,7 +125,19 @@ int main(int argc, char* argv[])
     JsonSettingsRepository settings(SettingsFilePath());
     JsonlOperationJournal journal(JournalFilePath());
 
-    if (settings.Load().profiles.empty() && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
+    const std::optional<AppSettings> stored = settings.Load();
+    if (!stored.has_value())
+    {
+        QMessageBox::critical(
+            nullptr, QObject::tr("Configuração ilegível"),
+            QObject::tr("O arquivo de configuração existe mas não pôde ser lido, então o FS Organizer não vai "
+                        "sobrescrevê-lo. Mova ou conserte %1 e abra o programa de novo.")
+                .arg(AsText(SettingsFilePath())));
+
+        return 1;
+    }
+
+    if (stored->profiles.empty() && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
     {
         return 0;
     }
@@ -140,13 +154,13 @@ int main(int argc, char* argv[])
     const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
                                      LinkType::Junction);
 
-    MainWindow window(settings.Load());
+    MainWindow window(settings.Load().value_or(AppSettings{}));
     QtBackgroundRunner runner;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, runner, notifier);
+    Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
     AddonTreeModel model;
-    AddonTreeViewModel treeViewModel(session, profileService, processProbe, model, notifier);
+    AddonTreeViewModel treeViewModel(session, profileService, model, notifier);
     auto* page = new AddonTreePage(treeViewModel, model, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
@@ -165,7 +179,7 @@ int main(int argc, char* argv[])
 
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService);
-    PresetViewModel presetViewModel(session, presetService, processProbe);
+    PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
     PageTab* libraryButton = window.AddPage(QObject::tr("Biblioteca"), page);
@@ -305,10 +319,7 @@ int main(int argc, char* argv[])
                          communityPage->StartImport();
                      });
 
-    QObject::connect(&treeViewModel, &AddonTreeViewModel::RestartPendingChanged, &window,
-                     &MainWindow::ShowRestartPending);
-    QObject::connect(&presetViewModel, &PresetViewModel::RestartPendingChanged, &window,
-                     &MainWindow::ShowRestartPending);
+    QObject::connect(&notifier, &SessionNotifier::RestartPendingChanged, &window, &MainWindow::ShowRestartPending);
     QObject::connect(&presetViewModel, &PresetViewModel::Applied, page,
                      [page](const QStringList&)
                      {
@@ -321,9 +332,19 @@ int main(int argc, char* argv[])
                      {
                          if (RunSetup(settings, locator, filesystemProbe, identities, catalog))
                          {
-                             window.ShowProfiles(settings.Load());
+                             window.ShowProfiles(settings.Load().value_or(AppSettings{}));
                              treeViewModel.ShowActiveProfile();
                          }
+                     });
+
+    QObject::connect(&notifier, &SessionNotifier::SettingsCouldNotBeSaved, &window,
+                     [&]
+                     {
+                         QMessageBox::warning(
+                             &window, QObject::tr("Não foi possível salvar"),
+                             QObject::tr("A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. "
+                                         "Na próxima abertura ela não vai estar registrada.")
+                                 .arg(AsText(SettingsFilePath())));
                      });
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,

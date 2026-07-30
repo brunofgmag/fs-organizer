@@ -18,12 +18,24 @@ public:
 
     void OnRefreshed() override;
 
+    void OnSettingsCouldNotBeSaved() override;
+
+    void OnSimulatorIsRunning() override;
+
+    void OnRestartPendingChanged(bool pending) override;
+
 signals:
     void ScanStarted();
 
     void ScanFinished();
 
     void Refreshed();
+
+    void SettingsCouldNotBeSaved();
+
+    void SimulatorIsRunning();
+
+    void RestartPendingChanged(bool pending);
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_SESSION_NOTIFIER_H

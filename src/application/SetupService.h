@@ -11,9 +11,9 @@
 #include "application/model/RegisteredLibrary.h"
 #include "application/ports/LibraryIdGenerator.h"
 #include "application/ports/SettingsRepository.h"
+#include "domain/ports/SimulatorLocator.h"
 #include "domain/ports/CatalogScanner.h"
 #include "domain/ports/FilesystemProbe.h"
-#include "domain/ports/SimulatorLocator.h"
 
 class SetupService
 {
@@ -38,7 +38,7 @@ public:
 
     [[nodiscard]] const std::vector<RegisteredLibrary>& Libraries() const;
 
-    void Complete() const;
+    [[nodiscard]] bool Complete() const;
 
 private:
     const SimulatorLocator& locator_;

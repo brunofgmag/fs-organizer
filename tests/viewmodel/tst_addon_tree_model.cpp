@@ -3,7 +3,8 @@
 
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/AddonTreeModel.h"
-#include "viewmodel/RowTags.h"
+#include "viewmodel/RowTagRoles.h"
+#include "viewmodel/TagTone.h"
 
 class AddonTreeModelTest : public QObject
 {

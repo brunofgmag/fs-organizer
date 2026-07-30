@@ -73,6 +73,31 @@ bool HoldsAddonsOrWasDeclared(const TreeNode& node)
     return node.declaredAsCategory || CountAddons(node) > 0;
 }
 
+std::vector<const TreeNode*> CategoriesOfferedIn(const TreeNode& tree, const bool offerTheRoot)
+{
+    std::vector<const TreeNode*> offered;
+
+    for (const TreeNode* candidate : CategoriesUnder(tree))
+    {
+        if (candidate == &tree)
+        {
+            if (offerTheRoot)
+            {
+                offered.push_back(candidate);
+            }
+
+            continue;
+        }
+
+        if (candidate->kind == TreeNodeKind::Category && HoldsAddonsOrWasDeclared(*candidate))
+        {
+            offered.push_back(candidate);
+        }
+    }
+
+    return offered;
+}
+
 const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& baseName)
 {
     for (const TreeNode& library : libraries)

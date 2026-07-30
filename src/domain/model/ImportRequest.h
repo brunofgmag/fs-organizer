@@ -3,6 +3,8 @@
 
 #include <filesystem>
 
+#include "domain/model/LandingPath.h"
+
 struct ImportRequest
 {
     std::filesystem::path source;
@@ -10,7 +12,7 @@ struct ImportRequest
 
     [[nodiscard]] std::filesystem::path Target() const
     {
-        return category / source.filename();
+        return LandingPathIn(category, source);
     }
 };
 

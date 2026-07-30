@@ -179,7 +179,7 @@ void SetupViewModelTest::CompletingSetupPersistsTheChosenCandidateWithItsLibrari
     f.viewModel.Detect();
     f.viewModel.ChooseCandidate(1);
     (void)f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024");
-    f.viewModel.Complete();
+    QVERIFY(f.viewModel.Complete());
 
     QCOMPARE(f.settings.saves, 1);
     QCOMPARE(f.settings.stored.profiles.size(), std::size_t{1});
@@ -205,7 +205,7 @@ void SetupViewModelTest::AManuallyPointedFolderBecomesACandidateThatCanBeChosen(
     QCOMPARE(f.viewModel.Candidates().size(), std::size_t{2});
 
     f.viewModel.ChooseCandidate(1);
-    f.viewModel.Complete();
+    QVERIFY(f.viewModel.Complete());
 
     QCOMPARE(f.settings.saves, 1);
 
@@ -261,7 +261,7 @@ void SetupViewModelTest::ASecondProfileIsAppendedAndKeepsADistinctIdentity()
 
     f.viewModel.Detect();
     f.viewModel.ChooseCandidate(0);
-    f.viewModel.Complete();
+    QVERIFY(f.viewModel.Complete());
 
     QCOMPARE(f.settings.stored.profiles.size(), std::size_t{2});
     QCOMPARE(f.settings.stored.profiles[0].id, std::string("msfs2024"));

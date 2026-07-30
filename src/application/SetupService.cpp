@@ -139,15 +139,21 @@ const std::vector<RegisteredLibrary>& SetupService::Libraries() const
     return libraries_;
 }
 
-void SetupService::Complete() const
+bool SetupService::Complete() const
 {
     if (chosen_ >= candidates_.size())
     {
-        return;
+        return false;
+    }
+
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        return false;
     }
 
     const SimulatorCandidate& candidate = candidates_[chosen_];
-    AppSettings settings = settings_.Load();
+    AppSettings settings = *loaded;
 
     SimulatorProfile profile;
     profile.id = ProfileId(candidate.variant, settings.profiles);
@@ -163,5 +169,5 @@ void SetupService::Complete() const
     settings.profiles.push_back(profile);
     settings.activeProfileId = profile.id;
 
-    settings_.Save(settings);
+    return settings_.Save(settings);
 }

@@ -2,6 +2,8 @@
 #include <QtTest/QtTest>
 
 #include <filesystem>
+#include <fstream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,6 +18,9 @@ private slots:
     static void AProfileSurvivesTheRoundTrip();
     static void LibrariesKeepTheirIdentityAcrossTheRoundTrip();
     static void TwoProfilesWithDestinationsAndOverridesSurviveTheRoundTrip();
+    static void AWriteTheDiskRefusesSaysSoInsteadOfClaimingItLanded();
+    static void SettingsThatCannotBeReadAreNotTheSameAsNoSettingsAtAll();
+    static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
 };
 
 namespace
@@ -29,6 +34,41 @@ namespace
             return std::filesystem::path(directory.path().toStdString()) / "settings.json";
         }
     };
+}
+
+void JsonSettingsRepositoryTest::AWriteTheDiskRefusesSaysSoInsteadOfClaimingItLanded()
+{
+    const Storage storage;
+
+    SimulatorProfile profile;
+    profile.id = std::string(300, 'p');
+
+    AppSettings written;
+    written.profiles = {profile};
+
+    JsonSettingsRepository unreachable(storage.File().parent_path() / std::string(300, 'd') / "settings.json");
+
+    QVERIFY(!unreachable.Save(written));
+}
+
+void JsonSettingsRepositoryTest::SettingsThatCannotBeReadAreNotTheSameAsNoSettingsAtAll()
+{
+    const Storage storage;
+
+    std::filesystem::create_directories(storage.File().parent_path());
+    std::ofstream(storage.File(), std::ios::binary) << "isto nao e json";
+
+    QVERIFY(!JsonSettingsRepository(storage.File()).Load().has_value());
+}
+
+void JsonSettingsRepositoryTest::AnAbsentFileReadsAsSettingsWithNoProfileYet()
+{
+    const Storage storage;
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QVERIFY(read->profiles.empty());
 }
 
 void JsonSettingsRepositoryTest::AProfileSurvivesTheRoundTrip()
@@ -46,9 +86,9 @@ void JsonSettingsRepositoryTest::AProfileSurvivesTheRoundTrip()
     written.activeProfileId = "msfs2024";
 
     JsonSettingsRepository repository(storage.File());
-    repository.Save(written);
+    QVERIFY(repository.Save(written));
 
-    const AppSettings read = JsonSettingsRepository(storage.File()).Load();
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
 
     QCOMPARE(read.activeProfileId, std::string("msfs2024"));
     QCOMPARE(read.profiles.size(), std::size_t{1});
@@ -80,8 +120,8 @@ void JsonSettingsRepositoryTest::LibrariesKeepTheirIdentityAcrossTheRoundTrip()
     AppSettings written;
     written.profiles = {profile};
 
-    JsonSettingsRepository(storage.File()).Save(written);
-    const AppSettings read = JsonSettingsRepository(storage.File()).Load();
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
 
     QCOMPARE(read.profiles.size(), std::size_t{1});
 
@@ -120,8 +160,8 @@ void JsonSettingsRepositoryTest::TwoProfilesWithDestinationsAndOverridesSurviveT
     written.profiles = {modern, legacy};
     written.activeProfileId = "msfs2024";
 
-    JsonSettingsRepository(storage.File()).Save(written);
-    const AppSettings read = JsonSettingsRepository(storage.File()).Load();
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
 
     QCOMPARE(read.profiles.size(), std::size_t{2});
     QCOMPARE(read.profiles[1].variant, SimulatorVariant::MSFS2020);

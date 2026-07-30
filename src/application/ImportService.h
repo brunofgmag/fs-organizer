@@ -10,6 +10,7 @@
 #include "application/model/ImportOperationResult.h"
 #include "application/model/QuarantinedItem.h"
 #include "application/model/StagingLeftover.h"
+#include "domain/ports/ProcessProbe.h"
 #include "domain/importing/ImportEngine.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
@@ -18,7 +19,6 @@
 #include "domain/ports/CatalogScanner.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/OperationJournal.h"
-#include "domain/ports/ProcessProbe.h"
 
 class ImportService
 {

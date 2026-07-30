@@ -18,3 +18,18 @@ void SessionNotifier::OnRefreshed()
 {
     emit Refreshed();
 }
+
+void SessionNotifier::OnSettingsCouldNotBeSaved()
+{
+    emit SettingsCouldNotBeSaved();
+}
+
+void SessionNotifier::OnSimulatorIsRunning()
+{
+    emit SimulatorIsRunning();
+}
+
+void SessionNotifier::OnRestartPendingChanged(const bool pending)
+{
+    emit RestartPendingChanged(pending);
+}

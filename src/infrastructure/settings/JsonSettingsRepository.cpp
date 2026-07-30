@@ -12,6 +12,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QString>
 
+#include "support/FileWriting.h"
 #include "support/PathText.h"
 
 namespace
@@ -146,8 +147,14 @@ JsonSettingsRepository::JsonSettingsRepository(std::filesystem::path file) : fil
 {
 }
 
-AppSettings JsonSettingsRepository::Load() const
+std::optional<AppSettings> JsonSettingsRepository::Load() const
 {
+    std::error_code error;
+    if (!std::filesystem::exists(file_, error) || error)
+    {
+        return AppSettings{};
+    }
+
     std::ifstream stream(file_, std::ios::binary);
     const std::string content{std::istreambuf_iterator(stream), std::istreambuf_iterator<char>()};
 
@@ -155,7 +162,7 @@ AppSettings JsonSettingsRepository::Load() const
         QJsonDocument::fromJson(QByteArray::fromRawData(content.data(), static_cast<qsizetype>(content.size())));
     if (!document.isObject())
     {
-        return {};
+        return std::nullopt;
     }
 
     const QJsonObject root = document.object();
@@ -171,7 +178,7 @@ AppSettings JsonSettingsRepository::Load() const
     return settings;
 }
 
-void JsonSettingsRepository::Save(const AppSettings& settings)
+bool JsonSettingsRepository::Save(const AppSettings& settings)
 {
     QJsonArray profiles;
     for (const SimulatorProfile& profile : settings.profiles)
@@ -187,6 +194,6 @@ void JsonSettingsRepository::Save(const AppSettings& settings)
     std::filesystem::create_directories(file_.parent_path(), error);
 
     const QByteArray json = QJsonDocument(root).toJson(QJsonDocument::Indented);
-    std::ofstream stream(file_, std::ios::binary | std::ios::trunc);
-    stream.write(json.constData(), json.size());
+
+    return WriteFileReplacing(file_, {json.constData(), static_cast<std::size_t>(json.size())});
 }

@@ -36,6 +36,7 @@ private slots:
     static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
     static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
     static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
+    static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
     static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
 };
 
@@ -121,7 +122,7 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         RecordingSessionObserver observer;
-        Session session{service, organizer, settings, runner, observer};
+        Session session{service, organizer, settings, processProbe, runner, observer};
     };
 }
 
@@ -335,6 +336,23 @@ void SessionTest::MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain()
     QCOMPARE(ComparablePath(f.settings.stored.profiles.front().destinationOverrides.front().relativePath),
              ComparablePath("Sceneries/pmdg-aircraft-77w"));
     QCOMPARE(f.observer.started, 2);
+}
+
+void SessionTest::TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink()
+{
+    Fixture f;
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const std::vector<LinkOperationResult> changed = {LinkOperationResult{
+        AddonId{"library-1", "pmdg-aircraft-77w"}, "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
+        "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", OperationKind::EnableAddon, LinkOutcome::Success()}};
+
+    f.session.NoteLinkResults(changed);
+    f.session.NoteLinkResults(changed);
+
+    QCOMPARE(f.observer.simulatorWarnings, 1);
+    QCOMPARE(f.observer.restartReports, 1);
+    QVERIFY(f.observer.restartPending);
 }
 
 QTEST_MAIN(SessionTest)

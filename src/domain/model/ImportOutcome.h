@@ -18,7 +18,7 @@ public:
 
     [[nodiscard]] bool Succeeded() const
     {
-        return result_ == FileResult::Completed;
+        return ::Succeeded(result_);
     }
 
     [[nodiscard]] FileResult Result() const

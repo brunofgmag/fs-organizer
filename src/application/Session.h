@@ -10,7 +10,9 @@
 #include "application/model/FileOperationResult.h"
 #include "application/model/LibraryReport.h"
 #include "application/model/ProfileSnapshot.h"
+#include "application/model/LinkOperationResult.h"
 #include "application/ports/BackgroundRunner.h"
+#include "domain/ports/ProcessProbe.h"
 #include "application/ports/SessionObserver.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/SimulatorProfile.h"
@@ -22,8 +24,11 @@ public:
     Session(ProfileService& service,
             const LibraryOrganizer& organizer,
             SettingsRepository& settings,
+            const ProcessProbe& probe,
             BackgroundRunner& runner,
             SessionObserver& observer);
+
+    void NoteLinkResults(const std::vector<LinkOperationResult>& results);
 
     void ShowActiveProfile();
 
@@ -61,6 +66,7 @@ private:
     ProfileService& service_;
     const LibraryOrganizer& organizer_;
     SettingsRepository& settings_;
+    const ProcessProbe& probe_;
     BackgroundRunner& runner_;
     SessionObserver& observer_;
     SimulatorProfile profile_;
@@ -69,6 +75,8 @@ private:
     ProfileSnapshot scanned_;
     std::optional<SimulatorProfile> queued_;
     bool running_ = false;
+    bool warnedAboutSimulator_ = false;
+    bool restartPending_ = false;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_SESSION_H

@@ -72,19 +72,18 @@ signals:
 private:
     [[nodiscard]] std::function<void(OperationKind)> OnStep();
 
-    void RunInAWorker(const std::function<std::vector<ImportOperationResult>()>& work, int folders);
+    void RunInAWorker(std::function<std::vector<ImportOperationResult>()> work, int folders);
 
-    void Adopt();
+    void Adopt(std::vector<ImportOperationResult> results);
 
     const ImportService& service_;
     ProfileService& profileService_;
     const ProcessProbe& probe_;
     const Session& session_;
     BackgroundRunner& runner_;
-    QThread* worker_ = nullptr;
+    bool running_ = false;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};
-    std::vector<ImportOperationResult> results_;
     std::map<std::filesystem::path, std::uintmax_t> sizeOf_;
     int asked_ = 0;
 };

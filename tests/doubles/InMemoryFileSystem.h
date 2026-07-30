@@ -257,7 +257,7 @@ private:
     struct Node
     {
         NodeKind kind = NodeKind::Directory;
-        std::filesystem::path target;
+        std::filesystem::path target{};
         bool readable = true;
         std::uintmax_t size = 0;
     };

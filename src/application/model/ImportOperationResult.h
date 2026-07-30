@@ -10,7 +10,7 @@ struct ImportOperationResult
 {
     ImportRequest request;
     FileResult result = FileResult::Completed;
-    std::filesystem::path occupant;
+    std::filesystem::path occupant{};
 };
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_IMPORT_OPERATION_RESULT_H

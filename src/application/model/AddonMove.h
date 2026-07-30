@@ -3,6 +3,8 @@
 
 #include <filesystem>
 
+#include "domain/model/LandingPath.h"
+
 struct AddonMove
 {
     std::filesystem::path addonFolder;
@@ -10,7 +12,7 @@ struct AddonMove
 
     [[nodiscard]] std::filesystem::path Target() const
     {
-        return category / addonFolder.filename();
+        return LandingPathIn(category, addonFolder);
     }
 };
 

@@ -31,7 +31,7 @@ public:
 
     [[nodiscard]] std::vector<RegisteredLibrary> Libraries() const;
 
-    void Complete() const;
+    [[nodiscard]] bool Complete() const;
 
 private:
     SetupService& service_;

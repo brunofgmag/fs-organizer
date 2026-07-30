@@ -8,7 +8,7 @@
 struct Addon
 {
     std::filesystem::path folderPath;
-    Manifest manifest;
+    Manifest manifest{};
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_ADDON_H

@@ -21,25 +21,47 @@ namespace
 
         return match == settings.profiles.end() ? nullptr : &*match;
     }
-
-    bool TheFolderLanded(const FileResult result)
-    {
-        return result == FileResult::Completed || result == FileResult::CouldNotCreateLink;
-    }
 }
 
 Session::Session(ProfileService& service,
                  const LibraryOrganizer& organizer,
                  SettingsRepository& settings,
+                 const ProcessProbe& probe,
                  BackgroundRunner& runner,
                  SessionObserver& observer)
-    : service_(service), organizer_(organizer), settings_(settings), runner_(runner), observer_(observer)
+    : service_(service), organizer_(organizer), settings_(settings), probe_(probe), runner_(runner), observer_(observer)
 {
+}
+
+void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results)
+{
+    const bool changed = std::ranges::any_of(results,
+                                             [](const LinkOperationResult& result)
+                                             {
+                                                 return result.outcome.Succeeded();
+                                             });
+
+    if (!changed || !probe_.SimulatorIsRunning())
+    {
+        return;
+    }
+
+    if (!warnedAboutSimulator_)
+    {
+        warnedAboutSimulator_ = true;
+        observer_.OnSimulatorIsRunning();
+    }
+
+    if (!restartPending_)
+    {
+        restartPending_ = true;
+        observer_.OnRestartPendingChanged(true);
+    }
 }
 
 void Session::ShowActiveProfile()
 {
-    const AppSettings settings = settings_.Load();
+    const AppSettings settings = settings_.Load().value_or(AppSettings{});
     const SimulatorProfile* active = ProfileById(settings, settings.activeProfileId);
 
     Scan(active != nullptr ? *active : (settings.profiles.empty() ? SimulatorProfile{} : settings.profiles.front()));
@@ -47,9 +69,21 @@ void Session::ShowActiveProfile()
 
 void Session::ChooseProfile(const std::string& profileId)
 {
-    AppSettings settings = settings_.Load();
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        observer_.OnSettingsCouldNotBeSaved();
+        return;
+    }
+
+    AppSettings settings = *loaded;
     settings.activeProfileId = profileId;
-    settings_.Save(settings);
+
+    if (!settings_.Save(settings))
+    {
+        observer_.OnSettingsCouldNotBeSaved();
+        return;
+    }
 
     ShowActiveProfile();
 }
@@ -132,6 +166,7 @@ void Session::OverrideDestination(const std::vector<const TreeNode*>& nodes, con
         return;
     }
 
+    service_.ForgetUndo();
     Save(profile_);
 
     observer_.OnRefreshed();
@@ -141,8 +176,9 @@ FileOperationResult Session::CreateCategory(const std::filesystem::path& parent,
 {
     const FileOperationResult result = organizer_.CreateCategory(profile_, parent, name);
 
-    if (result.result == FileResult::Completed)
+    if (Succeeded(result.result))
     {
+        service_.ForgetUndo();
         Scan(profile_);
     }
 
@@ -155,6 +191,7 @@ FileOperationResult Session::RenameCategory(const std::filesystem::path& categor
 
     if (TheFolderLanded(result.result))
     {
+        service_.ForgetUndo();
         Save(profile_);
         Scan(profile_);
     }
@@ -166,8 +203,9 @@ FileOperationResult Session::RemoveCategory(const std::filesystem::path& categor
 {
     const FileOperationResult result = organizer_.RemoveCategory(profile_, category);
 
-    if (result.result == FileResult::Completed)
+    if (Succeeded(result.result))
     {
+        service_.ForgetUndo();
         Save(profile_);
         Scan(profile_);
     }
@@ -185,6 +223,7 @@ std::vector<FileOperationResult> Session::MoveAddons(const std::vector<AddonMove
                                 return TheFolderLanded(result.result);
                             }))
     {
+        service_.ForgetUndo();
         Save(profile_);
         Scan(profile_);
     }
@@ -236,12 +275,25 @@ void Session::Adopt()
     scanned_ = {};
     scanning_ = {};
 
+    if (restartPending_ && !probe_.SimulatorIsRunning())
+    {
+        restartPending_ = false;
+        observer_.OnRestartPendingChanged(false);
+    }
+
     observer_.OnScanFinished();
 }
 
 void Session::Save(const SimulatorProfile& profile) const
 {
-    AppSettings settings = settings_.Load();
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        observer_.OnSettingsCouldNotBeSaved();
+        return;
+    }
+
+    AppSettings settings = *loaded;
 
     for (SimulatorProfile& stored : settings.profiles)
     {
@@ -251,5 +303,8 @@ void Session::Save(const SimulatorProfile& profile) const
         }
     }
 
-    settings_.Save(settings);
+    if (!settings_.Save(settings))
+    {
+        observer_.OnSettingsCouldNotBeSaved();
+    }
 }

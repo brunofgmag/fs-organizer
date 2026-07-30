@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
     JsonSettingsRepository settings(SettingsFilePath());
     JsonlOperationJournal journal(JournalFilePath());
 
-    const AppSettings loaded = settings.Load();
+    const AppSettings loaded = settings.Load().value_or(AppSettings{});
     const SimulatorProfile* active = ActiveProfile(loaded);
 
     if (active == nullptr)
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
         SilentObserver silent;
-        Session session(justTheProfile, organizer, onlySettings, runInline, silent);
+        Session session(justTheProfile, organizer, onlySettings, processProbe, runInline, silent);
         session.ShowActiveProfile();
 
         return MeasureTheJournalScroll(journal, session);
@@ -179,10 +179,10 @@ int main(int argc, char* argv[])
         MainWindow window(loaded);
         QtBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session(profileService, organizer, settings, runner, notifier);
+        Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
         AddonTreeModel treeModel;
-        AddonTreeViewModel treeViewModel(session, profileService, processProbe, treeModel, notifier);
+        AddonTreeViewModel treeViewModel(session, profileService, treeModel, notifier);
         auto* treePage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
     CommunityModel communityModel;
     InlineRunner runInline;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, runInline, notifier);
+    Session session(profileService, organizer, settings, processProbe, runInline, notifier);
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
 
     Measure("Session::ShowActiveProfile", false,

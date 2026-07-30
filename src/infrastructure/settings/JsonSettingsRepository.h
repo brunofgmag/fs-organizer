@@ -10,9 +10,9 @@ class JsonSettingsRepository final : public SettingsRepository
 public:
     explicit JsonSettingsRepository(std::filesystem::path file);
 
-    [[nodiscard]] AppSettings Load() const override;
+    [[nodiscard]] std::optional<AppSettings> Load() const override;
 
-    void Save(const AppSettings& settings) override;
+    [[nodiscard]] bool Save(const AppSettings& settings) override;
 
 private:
     std::filesystem::path file_;

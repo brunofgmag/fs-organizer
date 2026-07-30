@@ -11,6 +11,12 @@ public:
     virtual void OnScanFinished() = 0;
 
     virtual void OnRefreshed() = 0;
+
+    virtual void OnSettingsCouldNotBeSaved() = 0;
+
+    virtual void OnSimulatorIsRunning() = 0;
+
+    virtual void OnRestartPendingChanged(bool pending) = 0;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_PORTS_SESSION_OBSERVER_H

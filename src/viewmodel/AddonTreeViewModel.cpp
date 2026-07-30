@@ -23,11 +23,10 @@ namespace
 
 AddonTreeViewModel::AddonTreeViewModel(Session& session,
                                        ProfileService& service,
-                                       const ProcessProbe& probe,
                                        AddonTreeModel& model,
                                        const SessionNotifier& notifier,
                                        QObject* parent)
-    : QObject(parent), session_(session), service_(service), probe_(probe), model_(model)
+    : QObject(parent), session_(session), service_(service), model_(model)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &AddonTreeViewModel::AdoptScan);
 
@@ -51,12 +50,6 @@ void AddonTreeViewModel::ChooseProfile(const std::string& profileId) const
 void AddonTreeViewModel::AdoptScan()
 {
     model_.Show(session_.Snapshot(), session_.Profile());
-
-    if (!probe_.SimulatorIsRunning() && restartPending_)
-    {
-        restartPending_ = false;
-        emit RestartPendingChanged(false);
-    }
 
     emit Shown();
 }
@@ -112,35 +105,9 @@ void AddonTreeViewModel::ApplyResults(const std::vector<LinkOperationResult>& re
 {
     session_.RefreshEntries();
 
-    NoteSimulatorState(results);
+    session_.NoteLinkResults(results);
 
     emit BatchFinished(results);
-}
-
-void AddonTreeViewModel::NoteSimulatorState(const std::vector<LinkOperationResult>& results)
-{
-    const bool changed = std::ranges::any_of(results,
-                                             [](const LinkOperationResult& result)
-                                             {
-                                                 return result.outcome.Succeeded();
-                                             });
-
-    if (!changed || !probe_.SimulatorIsRunning())
-    {
-        return;
-    }
-
-    if (!warnedAboutSimulator_)
-    {
-        warnedAboutSimulator_ = true;
-        emit SimulatorIsRunning();
-    }
-
-    if (!restartPending_)
-    {
-        restartPending_ = true;
-        emit RestartPendingChanged(true);
-    }
 }
 
 void AddonTreeViewModel::OverrideDestination(const std::vector<const TreeNode*>& nodes,
@@ -160,7 +127,7 @@ void AddonTreeViewModel::CreateCategory(const TreeNode* node, const QString& nam
 
     const FileOperationResult result = session_.CreateCategory(CategoryHolding(*node), wanted.toStdString());
 
-    if (result.result != FileResult::Completed)
+    if (!Succeeded(result.result))
     {
         emit Refused(Describe(result));
     }
@@ -182,14 +149,12 @@ std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, c
 
     const FileOperationResult result = session_.RenameCategory(node->path, wanted.toStdString());
 
-    if (result.result != FileResult::Completed)
+    if (!Succeeded(result.result))
     {
         emit Refused(Describe(result));
     }
 
-    const bool landed = result.result == FileResult::Completed || result.result == FileResult::CouldNotCreateLink;
-
-    return landed ? result.path : std::filesystem::path{};
+    return TheFolderLanded(result.result) ? result.path : std::filesystem::path{};
 }
 
 bool AddonTreeViewModel::CanRemoveCategory(const TreeNode* node)
@@ -201,7 +166,7 @@ void AddonTreeViewModel::RemoveCategory(const TreeNode* node)
 {
     const FileOperationResult result = session_.RemoveCategory(node->path);
 
-    if (result.result != FileResult::Completed)
+    if (!Succeeded(result.result))
     {
         emit Refused(Describe(result));
     }
@@ -249,7 +214,7 @@ void AddonTreeViewModel::Perform(const std::vector<AddonMove>& moves)
 
     for (const FileOperationResult& result : session_.MoveAddons(moves))
     {
-        if (result.result != FileResult::Completed)
+        if (!Succeeded(result.result))
         {
             refusals.append(Describe(result));
         }
@@ -317,8 +282,7 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         return;
     }
 
-    Toggle(strayed, false);
-    Toggle(strayed, true);
+    ApplyResults(service_.Relink(session_.Profile(), session_.Snapshot(), strayed));
 }
 
 const TreeNode* AddonTreeViewModel::LibraryTreeHolding(const TreeNode& node) const
@@ -346,10 +310,9 @@ std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) 
     const std::string holding = ComparablePath(CategoryHolding(*node));
 
     std::vector<MoveTarget> offered;
-    for (const TreeNode* candidate : CategoriesUnder(*tree))
+    for (const TreeNode* candidate : CategoriesOfferedIn(*tree, false))
     {
-        if (candidate->kind == TreeNodeKind::Category && ComparablePath(candidate->path) != holding
-            && HoldsAddonsOrWasDeclared(*candidate))
+        if (ComparablePath(candidate->path) != holding)
         {
             offered.push_back(MoveTarget{candidate->path, candidate->path.lexically_relative(tree->path)});
         }

@@ -21,14 +21,16 @@ public:
         stored_.profiles = {std::move(profile)};
     }
 
-    [[nodiscard]] AppSettings Load() const override
+    [[nodiscard]] std::optional<AppSettings> Load() const override
     {
         return stored_;
     }
 
-    void Save(const AppSettings& settings) override
+    [[nodiscard]] bool Save(const AppSettings& settings) override
     {
         stored_ = settings;
+
+        return true;
     }
 
 private:
@@ -38,7 +40,7 @@ private:
 class InlineRunner final : public BackgroundRunner
 {
 public:
-    void Run(std::function<void()> work, std::function<void()> doneOnTheCallingThread) override
+    void Run(const std::function<void()> work, const std::function<void()> doneOnTheCallingThread) override
     {
         work();
         doneOnTheCallingThread();
@@ -66,6 +68,18 @@ public:
     }
 
     void OnRefreshed() override
+    {
+    }
+
+    void OnSettingsCouldNotBeSaved() override
+    {
+    }
+
+    void OnSimulatorIsRunning() override
+    {
+    }
+
+    void OnRestartPendingChanged(bool) override
     {
     }
 };

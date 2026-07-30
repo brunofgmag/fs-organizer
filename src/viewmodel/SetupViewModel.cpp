@@ -39,7 +39,7 @@ std::vector<RegisteredLibrary> SetupViewModel::Libraries() const
     return service_.Libraries();
 }
 
-void SetupViewModel::Complete() const
+bool SetupViewModel::Complete() const
 {
-    service_.Complete();
+    return service_.Complete();
 }

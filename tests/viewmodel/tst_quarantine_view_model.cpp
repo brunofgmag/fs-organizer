@@ -92,7 +92,7 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{profiles, organizer, settings, runner, notifier};
+        Session session{profiles, organizer, settings, processProbe, runner, notifier};
         QuarantineModel model;
         QuarantineViewModel viewModel{service, profiles, session, notifier, model};
     };

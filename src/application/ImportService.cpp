@@ -448,7 +448,7 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
             continue;
         }
 
-        if (const FileResult discarded = DiscardOneStaging(profile, leftover); discarded != FileResult::Completed)
+        if (const FileResult discarded = DiscardOneStaging(profile, leftover); !Succeeded(discarded))
         {
             results.push_back(ImportOperationResult{request, discarded});
             continue;

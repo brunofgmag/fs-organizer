@@ -20,7 +20,7 @@ using OperationOutcome = std::variant<LinkFailure, FileResult>;
         return *failure == LinkFailure::None;
     }
 
-    return std::get<FileResult>(outcome) == FileResult::Completed;
+    return Succeeded(std::get<FileResult>(outcome));
 }
 
 struct OperationRecord
