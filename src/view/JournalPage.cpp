@@ -10,6 +10,10 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "view/PlainTextDelegate.h"
+#include "view/panels/ContextPanel.h"
+#include "view/panels/ModelRowDetail.h"
+#include "view/theme/ModernistMetrics.h"
+#include "view/theme/ModernistPaint.h"
 
 JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidget* parent)
     : QWidget(parent), viewModel_(viewModel), model_(model)
@@ -24,28 +28,65 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     operations_->setSelectionBehavior(QAbstractItemView::SelectRows);
     operations_->header()->setStretchLastSection(true);
     operations_->setItemDelegate(new PlainTextDelegate(operations_));
-
-    summary_ = new QLabel(this);
+    DressTheHeaderOf(operations_->header());
 
     auto* search = new QLineEdit(this);
     search->setPlaceholderText(tr("Buscar addon, caminho ou operação..."));
     search->setClearButtonEnabled(true);
+    search->setMinimumWidth(220);
     search->setMaximumWidth(280);
 
     auto* failuresOnly = new QCheckBox(tr("Só o que falhou"), this);
     auto* reload = new QPushButton(tr("Reler o diário"), this);
 
-    auto* bar = new QHBoxLayout;
-    bar->addWidget(summary_, 1);
+    auto* toolbar = new QWidget(this);
+    toolbar->setObjectName(QStringLiteral("PageToolbar"));
+
+    auto* bar = new QHBoxLayout(toolbar);
+    bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+    bar->setSpacing(8);
     bar->addWidget(search);
     bar->addWidget(failuresOnly);
+    bar->addStretch();
     bar->addWidget(reload);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addLayout(bar);
-    layout->addWidget(operations_, 1);
+    panel_ = new ContextPanel(tr("Operação"), 400, this);
+    panel_->setObjectName(QStringLiteral("JournalOperationPanel"));
+    detail_ = new ModelRowDetail(panel_);
 
+    auto* promise = new QLabel(tr("O diário é append-only. Nada nesta tela escreve no disco."), panel_);
+    promise->setObjectName(QStringLiteral("PanelPromise"));
+    promise->setWordWrap(true);
+
+    panel_->Content()->insertWidget(0, detail_);
+    panel_->Content()->insertWidget(1, promise);
+    panel_->RestoreCollapsedState();
+    panel_->Summon(false);
+
+    auto* column = new QVBoxLayout;
+    column->setContentsMargins(0, 0, 0, 0);
+    column->setSpacing(0);
+    column->addWidget(toolbar);
+    column->addWidget(operations_, 1);
+
+    auto* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    layout->addLayout(column, 1);
+    layout->addWidget(panel_);
+
+    connect(operations_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
+            [this]
+            {
+                const QModelIndexList rows = operations_->selectionModel()->selectedRows();
+                panel_->Summon(!rows.isEmpty());
+
+                if (!rows.isEmpty())
+                {
+                    detail_->Show(filter_->mapToSource(rows.front()));
+                }
+            });
+    connect(panel_, &ContextPanel::CloseRequested, operations_->selectionModel(), &QItemSelectionModel::clearSelection);
     connect(search, &QLineEdit::textChanged, filter_, &JournalFilterModel::Search);
     connect(failuresOnly, &QCheckBox::toggled, filter_, &JournalFilterModel::ShowOnlyWhatFailed);
     connect(reload, &QPushButton::clicked, &viewModel_, &JournalViewModel::Show);
@@ -58,14 +99,14 @@ void JournalPage::UpdateSummary()
 {
     const int entries = model_.rowCount({});
 
-    summary_->setText(
+    emit SummaryChanged(
         entries == 0 ? tr("O diário ainda não registrou nenhuma mudança no disco.")
                      : tr("%n operação(ões) registrada(s), da mais recente para a mais antiga.", nullptr, entries));
+
+    emit AsideChanged(tr("o diário nunca é apagado pelo app"));
 
     for (int column = 0; column < model_.columnCount({}); ++column)
     {
         operations_->resizeColumnToContents(column);
     }
-
-    emit StatusChanged(summary_->text());
 }

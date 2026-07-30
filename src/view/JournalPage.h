@@ -5,6 +5,8 @@
 
 #include "viewmodel/JournalViewModel.h"
 
+class ContextPanel;
+class ModelRowDetail;
 class QLabel;
 class QTreeView;
 
@@ -16,7 +18,9 @@ public:
     JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidget* parent = nullptr);
 
 signals:
-    void StatusChanged(const QString& message);
+    void SummaryChanged(const QString& summary);
+
+    void AsideChanged(const QString& aside);
 
 private:
     void UpdateSummary();
@@ -25,7 +29,8 @@ private:
     JournalModel& model_;
     JournalFilterModel* filter_ = nullptr;
     QTreeView* operations_ = nullptr;
-    QLabel* summary_ = nullptr;
+    ContextPanel* panel_ = nullptr;
+    ModelRowDetail* detail_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_JOURNAL_PAGE_H
