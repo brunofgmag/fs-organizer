@@ -20,6 +20,12 @@ namespace
             table_->horizontalHeader()->setStretchLastSection(false);
             table_->viewport()->installEventFilter(this);
 
+            connect(table_, &QObject::destroyed, this,
+                    [this]
+                    {
+                        dying_ = true;
+                    });
+
             connect(table_->model(), &QAbstractItemModel::modelReset, this,
                     [this]
                     {
@@ -99,7 +105,7 @@ namespace
 
         void MeasureTheContentOnce()
         {
-            if (theirs_ || table_->model()->rowCount({}) == 0)
+            if (dying_ || theirs_ || table_->model()->rowCount({}) == 0)
             {
                 return;
             }
@@ -128,6 +134,11 @@ namespace
 
         void FillTheSlack()
         {
+            if (dying_)
+            {
+                return;
+            }
+
             QHeaderView* header = table_->horizontalHeader();
             const int slack = SlackColumn();
             if (slack < 0)
@@ -148,6 +159,7 @@ namespace
 
         QTableView* table_;
         int wanted_ = -1;
+        bool dying_ = false;
         bool theirs_ = false;
         bool applying_ = false;
         bool waiting_ = false;

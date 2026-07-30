@@ -13,6 +13,7 @@
 #include "domain/tree/AddonTree.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
+#include "view/theme/ModernistMetrics.h"
 
 ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
                            const std::vector<TreeNode>& libraries,
@@ -70,6 +71,7 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
             });
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(new QLabel(tr("Pastas selecionadas:"), this));
     layout->addWidget(chosen, 1);
     layout->addWidget(total);
@@ -81,7 +83,7 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     resize(640, 460);
 }
 
-void ImportDialog::ShowCategoriesOfTheChosenLibrary()
+void ImportDialog::ShowCategoriesOfTheChosenLibrary() const
 {
     category_->clear();
 

@@ -13,6 +13,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/theme/ModernistMetrics.h"
 
 RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidget* parent) : QDialog(parent)
 {
@@ -53,6 +54,7 @@ RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidg
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(scroll, 1);
     layout->addWidget(buttons);
 

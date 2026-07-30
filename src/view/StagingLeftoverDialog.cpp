@@ -8,6 +8,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/theme/ModernistMetrics.h"
 
 StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers, QWidget* parent)
     : QDialog(parent)
@@ -63,6 +64,7 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
     layout->addLayout(grid, 1);
     layout->addWidget(buttons);

@@ -10,6 +10,7 @@
 
 #include "view/PlainTextDelegate.h"
 #include "view/TableColumns.h"
+#include "view/theme/ModernistMetrics.h"
 
 SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& suggestions, QWidget* parent)
     : QDialog(parent)
@@ -54,6 +55,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
     layout->addWidget(all);
     layout->addWidget(table, 1);

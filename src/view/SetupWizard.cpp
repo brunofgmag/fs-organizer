@@ -11,6 +11,7 @@
 #include <QtWidgets/QWizardPage>
 
 #include "support/PathText.h"
+#include "view/theme/ModernistMetrics.h"
 
 namespace
 {
@@ -73,6 +74,7 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
     manual->addStretch();
 
     auto* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(new QLabel(tr("Instalações encontradas:"), page));
     layout->addWidget(simulators_);
     layout->addLayout(manual);
@@ -93,6 +95,7 @@ QWizardPage* SetupWizard::CreateLibraryPage()
     connect(add, &QPushButton::clicked, this, &SetupWizard::BrowseForLibrary);
 
     auto* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(libraries_);
     layout->addWidget(add);
 

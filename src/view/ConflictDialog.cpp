@@ -14,6 +14,7 @@
 
 #include "support/PathText.h"
 #include "support/SizeText.h"
+#include "view/theme/ModernistMetrics.h"
 
 namespace
 {
@@ -71,7 +72,7 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
 
-    QPushButton* keepDestination = buttons->addButton(tr("Ficar com a do destino"), QDialogButtonBox::AcceptRole);
+    const QPushButton* keepDestination = buttons->addButton(tr("Ficar com a do destino"), QDialogButtonBox::AcceptRole);
     QPushButton* keepLibrary = buttons->addButton(tr("Ficar com a da biblioteca"), QDialogButtonBox::AcceptRole);
     keepLibrary->setDefault(true);
 
@@ -90,6 +91,7 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
     layout->addLayout(sides, 1);
     layout->addWidget(warning);

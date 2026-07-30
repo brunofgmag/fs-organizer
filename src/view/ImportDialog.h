@@ -28,7 +28,7 @@ public:
     [[nodiscard]] std::vector<ImportRequest> ChosenRequests() const;
 
 private:
-    void ShowCategoriesOfTheChosenLibrary();
+    void ShowCategoriesOfTheChosenLibrary() const;
 
     std::vector<std::filesystem::path> folders_;
     const std::vector<TreeNode>& libraries_;
