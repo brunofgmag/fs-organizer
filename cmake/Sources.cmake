@@ -73,11 +73,23 @@ set(VIEW_SOURCES
         src/view/PresetsPage.cpp
         src/view/QuarantinePage.cpp
         src/view/RepairDialog.cpp
+        src/view/RestoreDialog.cpp
+        src/view/RowDelegate.cpp
         src/view/SetupWizard.cpp
         src/view/StagingLeftoverDialog.cpp
         src/view/SuggestionDialog.cpp
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
+        src/view/panels/ContextPanel.cpp
+        src/view/panels/EmptyState.cpp
+        src/view/panels/ModelRowDetail.cpp
+        src/view/panels/PanelRail.cpp
+        src/view/panels/TriageStrip.cpp
+        src/view/theme/ModernistPaint.cpp
+        src/view/theme/ModernistStyle.cpp
+        src/view/theme/ModernistTheme.cpp
+        src/view/theme/ModernistTones.cpp
+        src/view/theme/PageTab.cpp
 )
 
 set(APP_SOURCES
@@ -89,6 +101,7 @@ set(APP_SOURCES
         ${VIEW_SOURCES}
 )
 
-if (EXISTS "${CMAKE_SOURCE_DIR}/assets/branding/app.ico")
-    list(APPEND APP_SOURCES assets/app.rc)
-endif ()
+list(APPEND APP_SOURCES
+        assets/app.rc
+        assets/resources.qrc
+)

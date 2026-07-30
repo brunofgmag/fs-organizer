@@ -17,6 +17,10 @@ foreach (DIRECTORY IN LISTS SEARCHED_DIRECTORIES)
     file(GLOB_RECURSE WIDGET_SOURCES "${DIRECTORY}/*.cpp" "${DIRECTORY}/*.h")
 
     foreach (WIDGET_SOURCE IN LISTS WIDGET_SOURCES)
+        if (WIDGET_SOURCE MATCHES "/src/view/theme/")
+            continue()
+        endif ()
+
         file(STRINGS "${WIDGET_SOURCE}" LINES)
 
         set(LINE_NUMBER 0)
@@ -37,6 +41,7 @@ if (OFFENCES)
     message(FATAL_ERROR
             "Literal colours are not allowed in widget or viewmodel code.\n"
             "Use a QPalette role instead, so the app follows the system theme (ADR-0001).\n"
+            "The only place a colour may be literal is src/view/theme/, where the palettes live.\n"
             "${REPORT}")
 endif ()
 

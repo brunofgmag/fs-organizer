@@ -519,6 +519,41 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         src/viewmodel/QuarantineViewModel.cpp
         src/viewmodel/SessionNotifier.cpp)
 
+fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
+        tests/viewmodel/tst_import_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/journal/OperationLog.cpp
+        src/domain/importing/CopyConflicts.cpp
+        src/domain/importing/ImportEngine.cpp
+        src/domain/linking/DisableLinks.cpp
+        src/domain/linking/EntryClassifier.cpp
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/RepairPlan.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
+        src/domain/tree/ToggleDirection.cpp
+        src/application/ImportService.cpp
+        src/application/LibraryOrganizer.cpp
+        src/application/ProfileService.cpp
+        src/application/Session.cpp
+        src/viewmodel/FailureText.cpp
+        src/viewmodel/ImportViewModel.cpp
+        src/viewmodel/SessionNotifier.cpp)
+
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp
         tests/support/PathPrinting.h
@@ -594,7 +629,14 @@ if (WIN32)
     if (NOT FSORG_TESTS_ONLY)
         fsorg_add_qt_test(fsorg-main-window-tests main-window
                 tests/view/tst_main_window.cpp
+                assets/resources.qrc
                 src/view/MainWindow.cpp
+                src/view/panels/TriageStrip.cpp
+                src/view/theme/ModernistPaint.cpp
+                src/view/theme/ModernistStyle.cpp
+                src/view/theme/ModernistTheme.cpp
+                src/view/theme/ModernistTones.cpp
+                src/view/theme/PageTab.cpp
                 src/infrastructure/platform/WindowsTitleBar.cpp)
         configure_fsorg_gui_test(fsorg-main-window-tests main-window)
 
@@ -607,6 +649,123 @@ if (WIN32)
                 tests/view/tst_wheel_guard.cpp
                 src/view/WheelGuard.cpp)
         configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
+
+        fsorg_add_qt_test(fsorg-presets-page-tests presets-page
+                tests/view/tst_presets_page.cpp
+                assets/resources.qrc
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeClock.h
+                tests/doubles/FakeFileOperations.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeLinkService.h
+                tests/doubles/FakeOperationJournal.h
+                tests/doubles/FakePresetRepository.h
+                tests/doubles/FakeProcessProbe.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/doubles/InlineBackgroundRunner.h
+                tests/support/EnumPrinting.h
+                tests/support/PathPrinting.h
+                src/domain/journal/OperationLog.cpp
+                src/domain/importing/CopyConflicts.cpp
+                src/domain/linking/DisableLinks.cpp
+                src/domain/linking/EntryClassifier.cpp
+                src/domain/linking/LinkingEngine.cpp
+                src/domain/linking/RepairPlan.cpp
+                src/domain/preset/PresetPlan.cpp
+                src/domain/tree/AddonTree.cpp
+                src/domain/tree/EffectiveDestination.cpp
+                src/domain/tree/LibraryLookup.cpp
+                src/domain/tree/LibraryTrees.cpp
+                src/domain/tree/ToggleDirection.cpp
+                src/application/LibraryOrganizer.cpp
+                src/application/PresetService.cpp
+                src/application/ProfileService.cpp
+                src/application/Session.cpp
+                src/view/PresetsPage.cpp
+                src/view/RowDelegate.cpp
+                src/view/TableColumns.cpp
+                src/view/panels/ContextPanel.cpp
+                src/view/panels/EmptyState.cpp
+                src/view/panels/PanelRail.cpp
+                src/view/theme/ModernistPaint.cpp
+                src/view/theme/ModernistStyle.cpp
+                src/view/theme/ModernistTheme.cpp
+                src/view/theme/ModernistTones.cpp
+                src/viewmodel/PresetViewModel.cpp
+                src/viewmodel/SessionNotifier.cpp)
+        configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
+
+        fsorg_add_qt_test(fsorg-context-panel-tests context-panel
+                tests/view/tst_context_panel.cpp
+                src/view/panels/ContextPanel.cpp
+                src/view/panels/ModelRowDetail.cpp
+                src/view/panels/PanelRail.cpp
+                src/view/panels/TriageStrip.cpp
+                src/view/theme/ModernistPaint.cpp
+                src/view/theme/ModernistTones.cpp)
+        configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
+
+        fsorg_add_qt_test(fsorg-community-page-tests community-page
+                tests/view/tst_community_page.cpp
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeClock.h
+                tests/doubles/FakeFileOperations.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeLinkService.h
+                tests/doubles/FakeOperationJournal.h
+                tests/doubles/FakeProcessProbe.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/doubles/InlineBackgroundRunner.h
+                tests/support/EnumPrinting.h
+                tests/support/PathPrinting.h
+                assets/resources.qrc
+                src/domain/journal/OperationLog.cpp
+                src/domain/importing/CopyConflicts.cpp
+                src/domain/importing/ImportEngine.cpp
+                src/domain/linking/DisableLinks.cpp
+                src/domain/linking/EntryClassifier.cpp
+                src/domain/linking/LinkingEngine.cpp
+                src/domain/linking/RepairPlan.cpp
+                src/domain/tree/AddonTree.cpp
+                src/domain/tree/EffectiveDestination.cpp
+                src/domain/tree/LibraryLookup.cpp
+                src/domain/tree/LibraryTrees.cpp
+                src/domain/tree/ToggleDirection.cpp
+                src/application/ImportService.cpp
+                src/application/LibraryOrganizer.cpp
+                src/application/ProfileService.cpp
+                src/application/Session.cpp
+                src/view/CommunityPage.cpp
+                src/view/ConflictDialog.cpp
+                src/view/ImportDialog.cpp
+                src/view/RepairDialog.cpp
+                src/view/RowDelegate.cpp
+                src/view/TableColumns.cpp
+                src/view/panels/ContextPanel.cpp
+                src/view/panels/ModelRowDetail.cpp
+                src/view/panels/PanelRail.cpp
+                src/view/theme/ModernistPaint.cpp
+                src/view/theme/ModernistTones.cpp
+                src/viewmodel/CommunityModel.cpp
+                src/viewmodel/CommunityViewModel.cpp
+                src/viewmodel/FailureText.cpp
+                src/viewmodel/ImportViewModel.cpp
+                src/viewmodel/SessionNotifier.cpp)
+        configure_fsorg_gui_test(fsorg-community-page-tests community-page)
+
+        fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
+                tests/view/tst_modernist_theme.cpp
+                assets/resources.qrc
+                src/view/RowDelegate.cpp
+                src/view/theme/ModernistPaint.cpp
+                src/view/theme/ModernistStyle.cpp
+                src/view/theme/ModernistTheme.cpp
+                src/view/theme/ModernistTones.cpp)
+        configure_fsorg_gui_test(fsorg-modernist-theme-tests modernist-theme)
     endif ()
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe

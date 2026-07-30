@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="app-icon.png">branding/icon_256.png</file>
+        <file alias="app-icon_16.png">branding/icon_16.png</file>
+        <file alias="app-icon_24.png">branding/icon_24.png</file>
+        <file alias="app-icon_32.png">branding/icon_32.png</file>
+        <file alias="app-icon_48.png">branding/icon_48.png</file>
+        <file alias="app-icon_64.png">branding/icon_64.png</file>
+        <file alias="app-icon_128.png">branding/icon_128.png</file>
+        <file alias="app-icon_256.png">branding/icon_256.png</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file alias="Archivo-Regular.ttf">fonts/Archivo-Regular.ttf</file>
+        <file alias="Archivo-SemiBold.ttf">fonts/Archivo-SemiBold.ttf</file>
+        <file alias="Archivo-ExtraBold.ttf">fonts/Archivo-ExtraBold.ttf</file>
+    </qresource>
+</RCC>
