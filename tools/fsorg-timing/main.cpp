@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
         AddonTreeViewModel treeViewModel(session, profileService, processProbe, treeModel, notifier);
         auto* treePage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
-        ImportViewModel importViewModel(importService, profileService, processProbe, session);
+        ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
         CommunityModel communityModel;
         CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
