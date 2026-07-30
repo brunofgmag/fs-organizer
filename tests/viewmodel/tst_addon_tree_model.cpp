@@ -3,6 +3,7 @@
 
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/AddonTreeModel.h"
+#include "viewmodel/RowTags.h"
 
 class AddonTreeModelTest : public QObject
 {
@@ -20,6 +21,9 @@ private slots:
     static void TheConflictItselfIsHandedOverForWhoeverHasToResolveIt();
     static void OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent();
     static void AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits();
+    static void ABrokenLinkWearsTheTagAndAlarmsTheRow();
+    static void OnlyTheNameColumnCarriesTheCheckbox();
+    static void TheModelCountsAddonsAndHowManyAreEnabled();
 };
 
 namespace
@@ -89,6 +93,11 @@ namespace
     {
         return DestinationEntry{destination / addonFolder.filename(), addonFolder, EntryClassification::Managed};
     }
+
+    QString TextOf(const AddonTreeModel& model, const QModelIndex& row, const int column)
+    {
+        return model.data(row.siblingAtColumn(column), Qt::DisplayRole).toString();
+    }
 }
 
 void AddonTreeModelTest::TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester()
@@ -102,7 +111,8 @@ void AddonTreeModelTest::TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester()
     QCOMPARE(model.rowCount(model.index(0, 0, {})), 1);
     QCOMPARE(model.rowCount(Category(model)), 2);
     QCOMPARE(model.parent(Category(model)), model.index(0, 0, {}));
-    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(), QStringLiteral("Biblioteca do Bruno"));
+    QCOMPARE(model.columnCount({}), int{AddonTreeModel::Columns});
+    QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::AddonColumn), QStringLiteral("Biblioteca do Bruno"));
 }
 
 void AddonTreeModelTest::CheckStatesComeFromTheEnabledIndex()
@@ -148,10 +158,12 @@ void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
     AddonTreeModel model;
     model.Show(SnapshotWith({}), Profile({{"library-1", "Aircrafts", kCommunity2024}}));
 
-    QCOMPARE(model.data(model.index(0, 0, {}), Qt::DisplayRole).toString(), QStringLiteral("Biblioteca do Bruno"));
-    QCOMPARE(model.data(Category(model), Qt::DisplayRole).toString(), QStringLiteral("Aircrafts  →  Community2024"));
-    QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::DisplayRole).toString(),
-             QStringLiteral("pmdg-aircraft-77w  →  Community2024"));
+    QCOMPARE(TextOf(model, Category(model), AddonTreeModel::AddonColumn), QStringLiteral("Aircrafts"));
+    QCOMPARE(TextOf(model, Category(model), AddonTreeModel::DestinationColumn),
+             QStringLiteral("Community2024 · fixado"));
+    QCOMPARE(TextOf(model, AddonAt(model, 0), AddonTreeModel::DestinationColumn),
+             QStringLiteral("Community2024 · fixado"));
+    QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::DestinationColumn), QStringLiteral("Community"));
 }
 
 void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
@@ -164,14 +176,18 @@ void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
 
     const QModelIndex conflicted = model.index(0, 0, Category(model));
     QVERIFY(model.data(conflicted, AddonTreeModel::ConflictRole).toBool());
-    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("pmdg-aircraft-77w (em conflito)"));
+    QCOMPARE(TextOf(model, conflicted, AddonTreeModel::AddonColumn), QStringLiteral("pmdg-aircraft-77w"));
+    QCOMPARE(model.data(conflicted.siblingAtColumn(AddonTreeModel::AddonColumn), TagTextRole).toString(),
+             QStringLiteral("Em conflito"));
+    QVERIFY(model.data(conflicted, AlarmingRole).toBool());
     QVERIFY(model.data(conflicted, Qt::ToolTipRole)
                 .toString()
                 .contains(QStringLiteral(R"(E:\Flight Simulator 2024\Community\pmdg-aircraft-77w)")));
 
     const QModelIndex quiet = model.index(1, 0, Category(model));
     QVERIFY(!model.data(quiet, AddonTreeModel::ConflictRole).toBool());
-    QCOMPARE(model.data(quiet, Qt::DisplayRole).toString(), QStringLiteral("aerosoft-crj"));
+    QCOMPARE(TextOf(model, quiet, AddonTreeModel::AddonColumn), QStringLiteral("aerosoft-crj"));
+    QVERIFY(model.data(quiet.siblingAtColumn(AddonTreeModel::AddonColumn), TagTextRole).toString().isEmpty());
 }
 
 void AddonTreeModelTest::AConflictThatArrivesLaterShowsUpWithoutResettingTheTree()
@@ -239,9 +255,63 @@ void AddonTreeModelTest::AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits(
 
     model.Show(snapshot, Profile());
 
-    QVERIFY(model.data(AddonAt(model, 0), Qt::DisplayRole).toString().contains(QStringLiteral("Community2024")));
-    QVERIFY(!model.data(AddonAt(model, 1), Qt::DisplayRole).toString().contains(QStringLiteral("Community2024")));
+    QCOMPARE(TextOf(model, AddonAt(model, 0), AddonTreeModel::DestinationColumn), QStringLiteral("Community2024"));
+    QCOMPARE(TextOf(model, AddonAt(model, 1), AddonTreeModel::DestinationColumn), QStringLiteral("Community"));
+    QVERIFY(model.data(AddonAt(model, 0).siblingAtColumn(AddonTreeModel::DestinationColumn), AlertRole).toBool());
     QVERIFY(model.data(AddonAt(model, 0), Qt::ToolTipRole).toString().contains(QStringLiteral("Community2024")));
+}
+
+void AddonTreeModelTest::ABrokenLinkWearsTheTagAndAlarmsTheRow()
+{
+    AddonTreeModel model;
+    ProfileSnapshot snapshot = SnapshotWith({kPmdg, kCrj});
+    snapshot.entries = {
+        DestinationEntry{std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kPmdg, EntryClassification::Broken},
+        LinkIn(kCommunity, kCrj)};
+
+    model.Show(snapshot, Profile());
+
+    const QModelIndex broken = AddonAt(model, 0).siblingAtColumn(AddonTreeModel::AddonColumn);
+
+    QVERIFY(model.data(broken, AddonTreeModel::BrokenRole).toBool());
+    QCOMPARE(model.data(broken, TagTextRole).toString(), QStringLiteral("Sem alvo"));
+    QCOMPARE(model.data(broken, TagToneRole).toInt(), static_cast<int>(TagTone::Filled));
+    QVERIFY(model.data(broken, AlarmingRole).toBool());
+
+    QVERIFY(!model.data(AddonAt(model, 1), AddonTreeModel::BrokenRole).toBool());
+}
+
+void AddonTreeModelTest::OnlyTheNameColumnCarriesTheCheckbox()
+{
+    AddonTreeModel model;
+    model.Show(SnapshotWith({kPmdg}), Profile());
+
+    const QModelIndex named = AddonAt(model, 0);
+
+    QVERIFY(model.flags(named).testFlag(Qt::ItemIsUserCheckable));
+    QVERIFY(model.data(named, Qt::CheckStateRole).isValid());
+
+    const QModelIndex version = named.siblingAtColumn(AddonTreeModel::VersionColumn);
+
+    QVERIFY(!model.flags(version).testFlag(Qt::ItemIsUserCheckable));
+    QVERIFY(!model.data(version, Qt::CheckStateRole).isValid());
+}
+
+void AddonTreeModelTest::TheModelCountsAddonsAndHowManyAreEnabled()
+{
+    AddonTreeModel model;
+
+    QCOMPARE(model.AddonCount(), std::size_t{0});
+    QCOMPARE(model.EnabledCount(), std::size_t{0});
+
+    model.Show(SnapshotWith({kPmdg}), Profile());
+
+    QCOMPARE(model.AddonCount(), std::size_t{2});
+    QCOMPARE(model.EnabledCount(), std::size_t{1});
+
+    model.Refresh(SnapshotWith({kPmdg, kCrj}), Profile());
+
+    QCOMPARE(model.EnabledCount(), std::size_t{2});
 }
 
 QTEST_MAIN(AddonTreeModelTest)

@@ -1,11 +1,14 @@
 #include "viewmodel/AddonTreeModel.h"
 
+#include <algorithm>
+
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/DestinationDivergence.h"
 #include "domain/tree/EffectiveDestination.h"
 #include "domain/tree/LibraryLookup.h"
 #include "support/PathText.h"
+#include "viewmodel/RowTags.h"
 
 namespace
 {
@@ -55,6 +58,34 @@ const TreeNode* AddonTreeModel::NodeAt(const QModelIndex& position)
     return position.isValid() ? static_cast<const Item*>(position.internalPointer())->node : nullptr;
 }
 
+std::size_t AddonTreeModel::AddonCount() const
+{
+    std::size_t count = 0;
+    for (const std::unique_ptr<Item>& item : items_)
+    {
+        if (item->node->kind == TreeNodeKind::Addon)
+        {
+            ++count;
+        }
+    }
+
+    return count;
+}
+
+std::size_t AddonTreeModel::EnabledCount() const
+{
+    std::size_t count = 0;
+    for (const std::unique_ptr<Item>& item : items_)
+    {
+        if (item->node->kind == TreeNodeKind::Addon && enabled_.Contains(item->node->path))
+        {
+            ++count;
+        }
+    }
+
+    return count;
+}
+
 void AddonTreeModel::Rebuild()
 {
     items_.clear();
@@ -89,8 +120,7 @@ void AddonTreeModel::AnnounceValues(const QModelIndex& parent)
         return;
     }
 
-    emit dataChanged(index(0, 0, parent), index(static_cast<int>(children.size()) - 1, 0, parent),
-                     {Qt::CheckStateRole, Qt::DisplayRole});
+    emit dataChanged(index(0, 0, parent), index(static_cast<int>(children.size()) - 1, Columns - 1, parent));
 
     for (int row = 0; row < static_cast<int>(children.size()); ++row)
     {
@@ -110,6 +140,24 @@ QString AddonTreeModel::NameOf(const TreeNode& node) const
     }
 
     return AsText(node.path.filename());
+}
+
+QString AddonTreeModel::CountedSuffixOf(const TreeNode& node) const
+{
+    if (node.kind == TreeNodeKind::Addon)
+    {
+        return {};
+    }
+
+    const std::size_t addons = CountAddons(node);
+
+    if (node.kind == TreeNodeKind::Category)
+    {
+        return QString::number(addons);
+    }
+
+    return tr("%1 · %2").arg(tr("%n categoria(s)", nullptr, static_cast<int>(CategoriesUnder(node).size())),
+                             tr("%n addon(s)", nullptr, static_cast<int>(addons)));
 }
 
 const std::vector<AddonTreeModel::Item*>& AddonTreeModel::ChildrenOf(const QModelIndex& parent) const
@@ -146,7 +194,7 @@ int AddonTreeModel::rowCount(const QModelIndex& parent) const
 
 int AddonTreeModel::columnCount(const QModelIndex&) const
 {
-    return 1;
+    return Columns;
 }
 
 QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
@@ -158,10 +206,11 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
     }
 
     const CopyConflict* conflict = conflicts_.OverTheLibraryAddon(node->path);
+    const bool broken = LinksNowhere(*node);
 
     if (role == Qt::CheckStateRole)
     {
-        return ToQt(DeriveCheckState(*node, enabled_));
+        return position.column() == AddonColumn ? QVariant(ToQt(DeriveCheckState(*node, enabled_))) : QVariant();
     }
 
     if (role == ConflictRole)
@@ -184,6 +233,56 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return !WhereItIsLinked(*node).empty();
     }
 
+    if (role == BrokenRole)
+    {
+        return broken;
+    }
+
+    if (role == AlarmingRole)
+    {
+        return broken || conflict != nullptr;
+    }
+
+    if (role == TagTextRole)
+    {
+        if (position.column() != AddonColumn)
+        {
+            return {};
+        }
+
+        if (broken)
+        {
+            return tr("Sem alvo");
+        }
+
+        return conflict == nullptr ? QVariant() : QVariant(tr("Em conflito"));
+    }
+
+    if (role == TagToneRole)
+    {
+        return static_cast<int>(broken ? TagTone::Filled : TagTone::Outlined);
+    }
+
+    if (role == EmphasisRole)
+    {
+        return position.column() == AddonColumn && node->kind != TreeNodeKind::Addon;
+    }
+
+    if (role == QuietSuffixRole)
+    {
+        return position.column() == AddonColumn ? QVariant(CountedSuffixOf(*node)) : QVariant();
+    }
+
+    if (role == QuietRole)
+    {
+        return position.column() == VersionColumn || position.column() == DestinationColumn;
+    }
+
+    if (role == AlertRole)
+    {
+        return position.column() == DestinationColumn && WandersFromTheDefault(*node);
+    }
+
     if (role == Qt::ToolTipRole)
     {
         return ToolTipOf(*node, conflict);
@@ -194,22 +293,55 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
-    return DisplayTextOf(*node, conflict);
+    return DisplayTextOf(*node, position.column());
 }
 
-QString AddonTreeModel::DisplayTextOf(const TreeNode& node, const CopyConflict* conflict) const
+QVariant AddonTreeModel::headerData(const int section, const Qt::Orientation orientation, const int role) const
 {
-    QString text = conflict == nullptr ? NameOf(node) : tr("%1 (em conflito)").arg(NameOf(node));
-
-    const std::filesystem::path destination = EffectiveDestination(profile_, node.path);
-    if (ComparablePath(destination) != ComparablePath(profile_.defaultDestination))
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
     {
-        text = tr("%1  →  %2").arg(text, AsText(destination.filename()));
+        return {};
     }
 
-    const std::filesystem::path linked = WhereItIsLinked(node);
+    switch (section)
+    {
+    case AddonColumn: return tr("Addon");
+    case VersionColumn: return tr("Versão");
+    case DestinationColumn: return tr("Destino");
+    default: return {};
+    }
+}
 
-    return linked.empty() ? text : tr("%1  (ligado em %2)").arg(text, AsText(linked.filename()));
+QString AddonTreeModel::DisplayTextOf(const TreeNode& node, const int column) const
+{
+    switch (column)
+    {
+    case AddonColumn: return NameOf(node);
+
+    case VersionColumn:
+        return node.addon.has_value() ? QString::fromStdString(node.addon->manifest.packageVersion) : QString();
+
+    case DestinationColumn:
+    {
+        const std::filesystem::path strayed = WhereItIsLinked(node);
+        if (!strayed.empty())
+        {
+            return AsText(strayed.filename());
+        }
+
+        const std::filesystem::path destination = EffectiveDestination(profile_, node.path);
+        if (destination.empty())
+        {
+            return {};
+        }
+
+        return ComparablePath(destination) == ComparablePath(profile_.defaultDestination)
+            ? AsText(destination.filename())
+            : tr("%1 · fixado").arg(AsText(destination.filename()));
+    }
+
+    default: return {};
+    }
 }
 
 QString AddonTreeModel::ToolTipOf(const TreeNode& node, const CopyConflict* conflict) const
@@ -235,6 +367,35 @@ std::filesystem::path AddonTreeModel::WhereItIsLinked(const TreeNode& node) cons
                                             : std::filesystem::path{};
 }
 
+bool AddonTreeModel::WandersFromTheDefault(const TreeNode& node) const
+{
+    if (!WhereItIsLinked(node).empty())
+    {
+        return true;
+    }
+
+    const std::filesystem::path destination = EffectiveDestination(profile_, node.path);
+
+    return !destination.empty() && ComparablePath(destination) != ComparablePath(profile_.defaultDestination);
+}
+
+bool AddonTreeModel::LinksNowhere(const TreeNode& node) const
+{
+    if (node.kind != TreeNodeKind::Addon || !enabled_.Contains(node.path))
+    {
+        return false;
+    }
+
+    const std::string wanted = ComparablePath(EffectiveDestination(profile_, node.path) / node.path.filename());
+
+    return std::ranges::any_of(entries_,
+                               [&wanted](const DestinationEntry& entry)
+                               {
+                                   return entry.classification == EntryClassification::Broken
+                                       && ComparablePath(entry.path) == wanted;
+                               });
+}
+
 bool AddonTreeModel::setData(const QModelIndex& position, [[maybe_unused]] const QVariant& value, const int role)
 {
     const TreeNode* node = NodeAt(position);
@@ -255,5 +416,7 @@ Qt::ItemFlags AddonTreeModel::flags(const QModelIndex& position) const
         return Qt::NoItemFlags;
     }
 
-    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
+    constexpr Qt::ItemFlags common = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+
+    return position.column() == AddonColumn ? common | Qt::ItemIsUserCheckable : common;
 }

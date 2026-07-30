@@ -16,12 +16,21 @@ class AddonTreeModel final : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    enum Column
+    {
+        AddonColumn = 0,
+        VersionColumn = 1,
+        DestinationColumn = 2,
+        Columns = 3,
+    };
+
     enum Role
     {
         ConflictRole = Qt::UserRole,
         ConflictDetailsRole,
         EnabledRole,
         DivergentRole,
+        BrokenRole,
     };
 
     explicit AddonTreeModel(QObject* parent = nullptr);
@@ -32,6 +41,10 @@ public:
 
     [[nodiscard]] static const TreeNode* NodeAt(const QModelIndex& position);
 
+    [[nodiscard]] std::size_t AddonCount() const;
+
+    [[nodiscard]] std::size_t EnabledCount() const;
+
     [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex& parent) const override;
 
     [[nodiscard]] QModelIndex parent(const QModelIndex& child) const override;
@@ -41,6 +54,8 @@ public:
     [[nodiscard]] int columnCount(const QModelIndex& parent) const override;
 
     [[nodiscard]] QVariant data(const QModelIndex& position, int role) const override;
+
+    [[nodiscard]] QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     bool setData(const QModelIndex& position, const QVariant& value, int role) override;
 
@@ -66,11 +81,17 @@ private:
 
     [[nodiscard]] QString NameOf(const TreeNode& node) const;
 
-    [[nodiscard]] QString DisplayTextOf(const TreeNode& node, const CopyConflict* conflict) const;
+    [[nodiscard]] QString CountedSuffixOf(const TreeNode& node) const;
+
+    [[nodiscard]] QString DisplayTextOf(const TreeNode& node, int column) const;
 
     [[nodiscard]] QString ToolTipOf(const TreeNode& node, const CopyConflict* conflict) const;
 
     [[nodiscard]] std::filesystem::path WhereItIsLinked(const TreeNode& node) const;
+
+    [[nodiscard]] bool WandersFromTheDefault(const TreeNode& node) const;
+
+    [[nodiscard]] bool LinksNowhere(const TreeNode& node) const;
 
     [[nodiscard]] const std::vector<Item*>& ChildrenOf(const QModelIndex& parent) const;
 

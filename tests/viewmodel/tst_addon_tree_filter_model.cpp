@@ -107,7 +107,8 @@ void AddonTreeFilterModelTest::HidingEmptyCategoriesReachesTheDeclaredOnesToo()
 
     const QModelIndex shown = filter.index(0, 0, {});
     QCOMPARE(filter.rowCount(shown), 1);
-    QCOMPARE(filter.data(filter.index(0, 0, shown), Qt::DisplayRole).toString(), QStringLiteral("Aircrafts"));
+    QCOMPARE(filter.data(filter.index(0, AddonTreeModel::AddonColumn, shown), Qt::DisplayRole).toString(),
+             QStringLiteral("Aircrafts"));
 }
 
 void AddonTreeFilterModelTest::SearchingByNameKeepsTheAncestorsOfMatches()
@@ -125,7 +126,8 @@ void AddonTreeFilterModelTest::SearchingByNameKeepsTheAncestorsOfMatches()
     QCOMPARE(filter.rowCount(library), 1);
     const QModelIndex category = filter.index(0, 0, library);
     QCOMPARE(filter.rowCount(category), 1);
-    QCOMPARE(filter.data(filter.index(0, 0, category), Qt::DisplayRole).toString(), QStringLiteral("aerosoft-crj"));
+    QCOMPARE(filter.data(filter.index(0, AddonTreeModel::AddonColumn, category), Qt::DisplayRole).toString(),
+             QStringLiteral("aerosoft-crj"));
 }
 
 void AddonTreeFilterModelTest::ClearingTheSearchRestoresTheTree()
