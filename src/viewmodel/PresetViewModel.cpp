@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "domain/support/PathSegment.h"
 #include "domain/support/StringUtils.h"
 
 PresetViewModel::PresetViewModel(Session& session, PresetService& service, const ProcessProbe& probe, QObject* parent)
@@ -163,15 +164,11 @@ bool PresetViewModel::Accepts(const QString& name)
         return false;
     }
 
-    const QString forbidden = R"(<>:"/\|?*)";
-
-    for (const QChar character : wanted)
+    if (!PathSegment::From(wanted.toStdString()).has_value())
     {
-        if (forbidden.contains(character) || character < ' ')
-        {
-            emit Refused(tr("O nome do preset não pode conter %1.").arg(forbidden));
-            return false;
-        }
+        emit Refused(tr("O nome do preset não pode conter %1, nem terminar com espaço ou ponto.")
+                         .arg(QStringLiteral(R"(<>:"/\|?*)")));
+        return false;
     }
 
     if (Names().contains(wanted, Qt::CaseInsensitive))

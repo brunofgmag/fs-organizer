@@ -14,16 +14,17 @@ public:
 
     [[nodiscard]] std::optional<Preset> Load(const std::string& profileId, const std::string& name) const override;
 
-    bool Save(const std::string& profileId, const Preset& preset) override;
+    [[nodiscard]] bool Save(const std::string& profileId, const Preset& preset) override;
 
-    bool Rename(const std::string& profileId, const std::string& from, const std::string& to) override;
+    [[nodiscard]] bool Rename(const std::string& profileId, const std::string& from, const std::string& to) override;
 
     void Remove(const std::string& profileId, const std::string& name) override;
 
 private:
-    [[nodiscard]] std::filesystem::path FolderOf(const std::string& profileId) const;
+    [[nodiscard]] std::optional<std::filesystem::path> FolderOf(const std::string& profileId) const;
 
-    [[nodiscard]] std::filesystem::path FileOf(const std::string& profileId, const std::string& name) const;
+    [[nodiscard]] std::optional<std::filesystem::path> FileOf(const std::string& profileId,
+                                                              const std::string& name) const;
 
     std::filesystem::path root_;
 };

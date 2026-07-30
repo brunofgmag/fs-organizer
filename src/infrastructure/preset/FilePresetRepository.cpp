@@ -12,6 +12,10 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QString>
 
+#include "domain/support/PathSegment.h"
+#include "domain/support/PathUtils.h"
+#include "support/FileWriting.h"
+
 namespace
 {
     constexpr auto kName = "name";
@@ -57,15 +61,33 @@ FilePresetRepository::FilePresetRepository(std::filesystem::path root) : root_(s
 
 std::vector<std::string> FilePresetRepository::List(const std::string& profileId) const
 {
-    std::error_code error;
-    std::vector<std::string> names;
-
-    for (const std::filesystem::directory_entry& entry :
-         std::filesystem::directory_iterator(FolderOf(profileId), error))
+    const std::optional<std::filesystem::path> folder = FolderOf(profileId);
+    if (!folder.has_value())
     {
-        if (entry.is_regular_file(error) && entry.path().extension() == ".json")
+        return {};
+    }
+
+    std::error_code error;
+    std::filesystem::directory_iterator entry(*folder, error);
+    if (error)
+    {
+        return {};
+    }
+
+    std::vector<std::string> names;
+    const std::filesystem::directory_iterator end;
+
+    while (entry != end)
+    {
+        if (entry->is_regular_file(error) && entry->path().extension() == ".json")
         {
-            names.push_back(entry.path().stem().string());
+            names.push_back(entry->path().stem().string());
+        }
+
+        entry.increment(error);
+        if (error)
+        {
+            return {};
         }
     }
 
@@ -76,7 +98,13 @@ std::vector<std::string> FilePresetRepository::List(const std::string& profileId
 
 std::optional<Preset> FilePresetRepository::Load(const std::string& profileId, const std::string& name) const
 {
-    std::ifstream stream(FileOf(profileId, name), std::ios::binary);
+    const std::optional<std::filesystem::path> file = FileOf(profileId, name);
+    if (!file.has_value())
+    {
+        return std::nullopt;
+    }
+
+    std::ifstream stream(*file, std::ios::binary);
     const std::string content{std::istreambuf_iterator(stream), std::istreambuf_iterator<char>()};
 
     const QJsonDocument document =
@@ -112,15 +140,19 @@ bool FilePresetRepository::Save(const std::string& profileId, const Preset& pres
     root[kName] = QString::fromStdString(preset.name);
     root[kEntries] = entries;
 
+    const std::optional<std::filesystem::path> folder = FolderOf(profileId);
+    const std::optional<std::filesystem::path> file = FileOf(profileId, preset.name);
+    if (!folder.has_value() || !file.has_value())
+    {
+        return false;
+    }
+
     std::error_code error;
-    std::filesystem::create_directories(FolderOf(profileId), error);
+    std::filesystem::create_directories(*folder, error);
 
     const QByteArray json = QJsonDocument(root).toJson(QJsonDocument::Indented);
-    std::ofstream stream(FileOf(profileId, preset.name), std::ios::binary | std::ios::trunc);
-    stream.write(json.constData(), json.size());
-    stream.flush();
 
-    return stream.good();
+    return WriteFileReplacing(*file, {json.constData(), static_cast<std::size_t>(json.size())});
 }
 
 bool FilePresetRepository::Rename(const std::string& profileId, const std::string& from, const std::string& to)
@@ -132,6 +164,15 @@ bool FilePresetRepository::Rename(const std::string& profileId, const std::strin
         return false;
     }
 
+    const std::optional<std::filesystem::path> source = FileOf(profileId, from);
+    const std::optional<std::filesystem::path> destination = FileOf(profileId, to);
+    if (!source.has_value() || !destination.has_value())
+    {
+        return false;
+    }
+
+    const bool sameFile = ComparablePath(*source) == ComparablePath(*destination);
+
     preset->name = to;
 
     if (!Save(profileId, *preset))
@@ -139,23 +180,43 @@ bool FilePresetRepository::Rename(const std::string& profileId, const std::strin
         return false;
     }
 
-    Remove(profileId, from);
+    if (!sameFile)
+    {
+        Remove(profileId, from);
+    }
 
     return true;
 }
 
 void FilePresetRepository::Remove(const std::string& profileId, const std::string& name)
 {
+    const std::optional<std::filesystem::path> file = FileOf(profileId, name);
+    if (!file.has_value())
+    {
+        return;
+    }
+
     std::error_code error;
-    std::filesystem::remove(FileOf(profileId, name), error);
+    std::filesystem::remove(*file, error);
 }
 
-std::filesystem::path FilePresetRepository::FolderOf(const std::string& profileId) const
+std::optional<std::filesystem::path> FilePresetRepository::FolderOf(const std::string& profileId) const
 {
-    return root_ / profileId;
+    const std::optional<PathSegment> segment = PathSegment::From(profileId);
+
+    return segment.has_value() ? std::optional(root_ / segment->Text()) : std::nullopt;
 }
 
-std::filesystem::path FilePresetRepository::FileOf(const std::string& profileId, const std::string& name) const
+std::optional<std::filesystem::path> FilePresetRepository::FileOf(const std::string& profileId,
+                                                                  const std::string& name) const
 {
-    return FolderOf(profileId) / (name + ".json");
+    const std::optional<std::filesystem::path> folder = FolderOf(profileId);
+    const std::optional<PathSegment> segment = PathSegment::From(name);
+
+    if (!folder.has_value() || !segment.has_value())
+    {
+        return std::nullopt;
+    }
+
+    return *folder / (segment->Text() + ".json");
 }

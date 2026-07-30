@@ -46,7 +46,7 @@ public:
         return preset->second;
     }
 
-    bool Save(const std::string& profileId, const Preset& preset) override
+    [[nodiscard]] bool Save(const std::string& profileId, const Preset& preset) override
     {
         if (refusing_)
         {
@@ -58,7 +58,7 @@ public:
         return true;
     }
 
-    bool Rename(const std::string& profileId, const std::string& from, const std::string& to) override
+    [[nodiscard]] bool Rename(const std::string& profileId, const std::string& from, const std::string& to) override
     {
         const std::optional<Preset> preset = Load(profileId, from);
         if (!preset.has_value())
@@ -74,7 +74,10 @@ public:
             return false;
         }
 
-        Remove(profileId, from);
+        if (from != to)
+        {
+            Remove(profileId, from);
+        }
 
         return true;
     }

@@ -140,7 +140,7 @@ void PresetServiceTest::UpdatingRewritesTheEnabledEntriesAndKeepsTheDisableOnes(
     stored.name = "Voo curto";
     stored.entries = {PresetEntry{AddonId{kLibraryId, "fenix-a320"}, PresetAction::Enable},
                       PresetEntry{AddonId{kLibraryId, "pmdg-aircraft-77w"}, PresetAction::Disable}};
-    f.repository.Save(kProfileId, stored);
+    QVERIFY(f.repository.Save(kProfileId, stored));
 
     const SimulatorProfile profile = Profile();
 
@@ -165,7 +165,7 @@ void PresetServiceTest::UpdatingDropsADisableEntryForAnAddonThatIsOnAgain()
     Preset stored;
     stored.name = "Voo curto";
     stored.entries = {PresetEntry{AddonId{kLibraryId, "pmdg-aircraft-77w"}, PresetAction::Disable}};
-    f.repository.Save(kProfileId, stored);
+    QVERIFY(f.repository.Save(kProfileId, stored));
 
     const SimulatorProfile profile = Profile();
 
