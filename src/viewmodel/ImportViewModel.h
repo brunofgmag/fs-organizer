@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <functional>
+#include <map>
 #include <vector>
 
 #include <QtCore/QObject>
@@ -10,6 +11,7 @@
 #include "application/ImportService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/ports/BackgroundRunner.h"
 
 class QThread;
 
@@ -22,6 +24,7 @@ public:
                     ProfileService& profileService,
                     const ProcessProbe& probe,
                     const Session& session,
+                    BackgroundRunner& runner,
                     QObject* parent = nullptr);
 
     void Import(const std::vector<ImportRequest>& requests);
@@ -35,6 +38,10 @@ public:
     [[nodiscard]] ConflictDetails DetailsOf(const CopyConflict& conflict) const;
 
     [[nodiscard]] std::uintmax_t TotalSizeOf(const std::vector<std::filesystem::path>& folders) const;
+
+    void MeasureTotalSize(const std::vector<std::filesystem::path>& folders);
+
+    void ForgetMeasuredSizes();
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers() const;
 
@@ -58,6 +65,10 @@ signals:
 
     void ConflictResolved();
 
+    void SizeMeasuring();
+
+    void SizeMeasured(qulonglong bytes);
+
 private:
     [[nodiscard]] std::function<void(OperationKind)> OnStep();
 
@@ -69,10 +80,13 @@ private:
     ProfileService& profileService_;
     const ProcessProbe& probe_;
     const Session& session_;
+    BackgroundRunner& runner_;
     QThread* worker_ = nullptr;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};
     std::vector<ImportOperationResult> results_;
+    std::map<std::filesystem::path, std::uintmax_t> sizeOf_;
+    int asked_ = 0;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_IMPORT_VIEW_MODEL_H
