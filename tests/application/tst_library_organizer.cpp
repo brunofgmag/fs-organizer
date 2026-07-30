@@ -35,6 +35,7 @@ private slots:
     static void ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently();
     static void ACategoryIsNotCreatedOutsideALibrary();
     static void AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride();
+    static void AStaleOverrideBelowTheRemovedCategoryIsForgottenToo();
     static void ACategoryThatStillHoldsAnAddonIsNotRemovedEvenWhenTheTreeSaysItIsEmpty();
     static void AFolderTheScanNeverSawIsRefusedInsteadOfRemovedOnFaith();
     static void TheLibraryRootIsNeverRemovedAsIfItWereACategory();
@@ -333,6 +334,21 @@ void LibraryOrganizerTest::AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverr
     QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(kAircrafts2024)));
     QVERIFY(f.profile.destinationOverrides.empty());
     QCOMPARE(f.journal.appended.front().kind, OperationKind::RemoveCategory);
+}
+
+void LibraryOrganizerTest::AStaleOverrideBelowTheRemovedCategoryIsForgottenToo()
+{
+    Fixture f;
+    f.TheLibraryIsMadeOf({CategoryNode(kAircrafts, {AddonNode(kAddon)}), CategoryNode(kAircrafts2024, {})});
+    f.fileSystem.AddFile(CategoryMarkerPathIn(kAircrafts2024));
+    f.profile.destinationOverrides.push_back({"lib-1", "Aircrafts (2024)/gone-from-disk", kOtherDestination});
+    f.profile.destinationOverrides.push_back({"lib-1", "Aircrafts", kOtherDestination});
+
+    const FileOperationResult result = f.organizer.RemoveCategory(f.profile, kAircrafts2024);
+
+    QCOMPARE(result.result, FileResult::Completed);
+    QCOMPARE(f.profile.destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(f.profile.destinationOverrides.front().relativePath, std::filesystem::path{"Aircrafts"});
 }
 
 void LibraryOrganizerTest::ACategoryThatStillHoldsAnAddonIsNotRemovedEvenWhenTheTreeSaysItIsEmpty()

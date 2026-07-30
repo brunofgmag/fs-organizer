@@ -11,9 +11,7 @@ namespace
 {
     bool LinksTo(const DestinationEntry& entry, const std::filesystem::path& addonFolder)
     {
-        return (entry.classification == EntryClassification::Managed
-                || entry.classification == EntryClassification::Duplicated)
-            && ComparablePath(entry.target) == ComparablePath(addonFolder);
+        return CountsAsEnabled(entry.classification) && ComparablePath(entry.target) == ComparablePath(addonFolder);
     }
 }
 

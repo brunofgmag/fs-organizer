@@ -67,8 +67,7 @@ void CommunityViewModel::Refresh()
         .unmanaged = classified(EntryClassification::Unmanaged),
     };
 
-    if (breakdown.broken != breakdown_.broken || breakdown.conflicts != breakdown_.conflicts
-        || breakdown.duplicated != breakdown_.duplicated || breakdown.unmanaged != breakdown_.unmanaged)
+    if (breakdown != breakdown_)
     {
         breakdown_ = breakdown;
         emit BreakdownChanged(breakdown_);

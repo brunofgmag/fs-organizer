@@ -59,8 +59,7 @@ std::vector<std::filesystem::path> EnabledAddonFolders(const std::vector<Destina
 
     for (const DestinationEntry& entry : entries)
     {
-        if (entry.classification != EntryClassification::Managed
-            && entry.classification != EntryClassification::Duplicated)
+        if (!CountsAsEnabled(entry.classification))
         {
             continue;
         }
@@ -83,10 +82,7 @@ std::vector<std::filesystem::path> LinksPointingAt(const std::vector<Destination
 
     for (const DestinationEntry& entry : entries)
     {
-        const bool linked = entry.classification == EntryClassification::Managed
-            || entry.classification == EntryClassification::Duplicated;
-
-        if (linked && ComparablePath(entry.target) == wanted)
+        if (CountsAsEnabled(entry.classification) && ComparablePath(entry.target) == wanted)
         {
             links.push_back(entry.path);
         }

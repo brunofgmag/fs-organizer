@@ -56,21 +56,12 @@ namespace
 
     void ForgetTheOverrides(SimulatorProfile& profile, const Library& library, const std::filesystem::path& folder)
     {
-        const std::string gone = ComparablePath(RelativeToLibrary(library, folder));
+        const std::filesystem::path gone = RelativeToLibrary(library, folder);
 
         std::erase_if(profile.destinationOverrides,
                       [&library, &gone](const DestinationOverride& known)
                       {
-                          if (known.libraryId != library.id)
-                          {
-                              return false;
-                          }
-
-                          const std::string key = ComparablePath(known.relativePath);
-
-                          return key == gone
-                              || (key.size() > gone.size() && key.compare(0, gone.size(), gone) == 0
-                                  && key[gone.size()] == '/');
+                          return known.libraryId == library.id && PathIsInside(known.relativePath, gone);
                       });
     }
 
@@ -243,7 +234,7 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
 
     CarryTheOverrides(profile, *library, category, landing);
 
-    FileResult result = FileResult::Completed;
+    auto result = FileResult::Completed;
     for (const std::filesystem::path& addon : enabled)
     {
         const std::filesystem::path folder = landing / addon.lexically_relative(category);

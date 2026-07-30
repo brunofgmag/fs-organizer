@@ -13,6 +13,11 @@ enum class EntryClassification : int
     Duplicated = 5,
 };
 
+[[nodiscard]] constexpr bool CountsAsEnabled(const EntryClassification classification)
+{
+    return classification == EntryClassification::Managed || classification == EntryClassification::Duplicated;
+}
+
 struct DestinationEntry
 {
     std::filesystem::path path;

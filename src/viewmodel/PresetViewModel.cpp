@@ -122,8 +122,7 @@ PresetPreview PresetViewModel::Preview(const Preset& preset, const ApplyMode mod
     const auto leftAlone = std::ranges::count_if(snapshot.entries,
                                                  [](const DestinationEntry& entry)
                                                  {
-                                                     return entry.classification != EntryClassification::Managed
-                                                         && entry.classification != EntryClassification::Duplicated;
+                                                     return !CountsAsEnabled(entry.classification);
                                                  });
 
     return {plan.toEnable.size(), plan.toDisable.size(), plan.alreadyInPlace.size(), plan.unresolved.size(),

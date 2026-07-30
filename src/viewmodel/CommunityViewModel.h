@@ -16,6 +16,8 @@ struct AttentionBreakdown
     std::size_t conflicts = 0;
     std::size_t duplicated = 0;
     std::size_t unmanaged = 0;
+
+    [[nodiscard]] bool operator==(const AttentionBreakdown&) const = default;
 };
 
 class CommunityViewModel final : public QObject

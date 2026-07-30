@@ -85,8 +85,7 @@ std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfi
     std::multimap<std::string, const DestinationEntry*> linksByTarget;
     for (const DestinationEntry& entry : snapshot.entries)
     {
-        if (entry.classification == EntryClassification::Managed
-            || entry.classification == EntryClassification::Duplicated)
+        if (CountsAsEnabled(entry.classification))
         {
             linksByTarget.emplace(ComparablePath(entry.target), &entry);
         }
