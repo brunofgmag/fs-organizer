@@ -17,6 +17,7 @@ private slots:
     static void AnImportRecordCarriesItsResultAndNoLinkFailure();
     static void EveryKindAndEveryReasonSurvivesTheRoundTrip();
     static void ReadingSkipsALineWrittenByANewerVersion();
+    static void AnOutcomeThisVersionCannotReadIsNotASuccess();
     static void AnAbsentJournalReadsAsNoHistoryAtAll();
 };
 
@@ -180,6 +181,28 @@ void JsonlOperationJournalTest::ReadingSkipsALineWrittenByANewerVersion()
 
     QCOMPARE(read.size(), std::size_t{1});
     QCOMPARE(read.front().kind, OperationKind::EnableAddon);
+}
+
+void JsonlOperationJournalTest::AnOutcomeThisVersionCannotReadIsNotASuccess()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+
+    std::ofstream stream(storage.File(), std::ios::binary | std::ios::app);
+    stream << R"({"kind":"importCopyToStaging","addon":"pmdg-aircraft-77w","result":"theDiskCaughtFire"})" << '\n';
+    stream << R"({"kind":"enable","addon":"pmdg-aircraft-77w","failure":"theCableWasUnplugged"})" << '\n';
+    stream.close();
+
+    const std::vector<OperationRecord> read = journal.Read();
+
+    QCOMPARE(read.size(), std::size_t{3});
+    QVERIFY(Succeeded(read.front().outcome));
+    QVERIFY(!Succeeded(read[1].outcome));
+    QVERIFY(!Succeeded(read[2].outcome));
+    QCOMPARE(read[1].outcome, OperationOutcome{FileResult::TheOutcomeIsUnknown});
+    QCOMPARE(read[2].outcome, OperationOutcome{LinkFailure::TheOutcomeIsUnknown});
 }
 
 void JsonlOperationJournalTest::AnAbsentJournalReadsAsNoHistoryAtAll()

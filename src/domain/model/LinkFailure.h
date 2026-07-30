@@ -14,6 +14,7 @@ enum class LinkFailure : int
     CouldNotCreateLink = 5,
     PathIsNotAReparsePoint = 6,
     CouldNotRemoveLink = 7,
+    TheOutcomeIsUnknown = 8,
 };
 
 inline constexpr std::array kAllLinkFailures{
@@ -25,9 +26,10 @@ inline constexpr std::array kAllLinkFailures{
     LinkFailure::CouldNotCreateLink,
     LinkFailure::PathIsNotAReparsePoint,
     LinkFailure::CouldNotRemoveLink,
+    LinkFailure::TheOutcomeIsUnknown,
 };
 
-static_assert(kAllLinkFailures.size() == static_cast<std::size_t>(LinkFailure::CouldNotRemoveLink) + 1,
+static_assert(kAllLinkFailures.size() == static_cast<std::size_t>(LinkFailure::TheOutcomeIsUnknown) + 1,
               "Every LinkFailure belongs in kAllLinkFailures, and the last one carries the highest value.");
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_LINK_FAILURE_H

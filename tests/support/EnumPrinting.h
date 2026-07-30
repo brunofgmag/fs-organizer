@@ -67,6 +67,7 @@ namespace QTest
         case LinkFailure::CouldNotCreateLink: return qstrdup("CouldNotCreateLink");
         case LinkFailure::PathIsNotAReparsePoint: return qstrdup("PathIsNotAReparsePoint");
         case LinkFailure::CouldNotRemoveLink: return qstrdup("CouldNotRemoveLink");
+        case LinkFailure::TheOutcomeIsUnknown: return qstrdup("TheOutcomeIsUnknown");
         }
 
         return qstrdup("LinkFailure(?)");
@@ -99,6 +100,8 @@ namespace QTest
         case FileResult::CouldNotCreateTheCategory: return qstrdup("CouldNotCreateTheCategory");
         case FileResult::TheCategoryStillHoldsAddons: return qstrdup("TheCategoryStillHoldsAddons");
         case FileResult::CouldNotRemoveTheCategory: return qstrdup("CouldNotRemoveTheCategory");
+        case FileResult::TheOutcomeIsUnknown: return qstrdup("TheOutcomeIsUnknown");
+        case FileResult::CouldNotReadTheSource: return qstrdup("CouldNotReadTheSource");
         }
 
         return qstrdup("FileResult(?)");

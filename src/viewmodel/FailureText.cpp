@@ -18,6 +18,8 @@ QString Explain(const LinkFailure failure)
     case LinkFailure::CouldNotCreateLink: return QObject::tr("não foi possível criar o link");
     case LinkFailure::PathIsNotAReparsePoint: return QObject::tr("o caminho não é um link, então nada foi removido");
     case LinkFailure::CouldNotRemoveLink: return QObject::tr("não foi possível remover o link");
+    case LinkFailure::TheOutcomeIsUnknown:
+        return QObject::tr("o diário registra esta operação, mas não diz como ela terminou");
     case LinkFailure::None: break;
     }
 
@@ -74,6 +76,10 @@ QString Explain(const FileResult result)
     case FileResult::TheCategoryStillHoldsAddons:
         return QObject::tr("esta categoria ainda guarda addons, e só categoria vazia pode ser apagada");
     case FileResult::CouldNotRemoveTheCategory: return QObject::tr("não foi possível apagar a categoria");
+    case FileResult::TheOutcomeIsUnknown:
+        return QObject::tr("o diário registra esta operação, mas não diz como ela terminou");
+    case FileResult::CouldNotReadTheSource:
+        return QObject::tr("não foi possível percorrer a pasta de origem, então nada foi copiado");
     }
 
     return {};

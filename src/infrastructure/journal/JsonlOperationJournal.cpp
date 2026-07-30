@@ -65,6 +65,7 @@ namespace
         case LinkFailure::CouldNotCreateLink: return "couldNotCreateLink";
         case LinkFailure::PathIsNotAReparsePoint: return "pathIsNotAReparsePoint";
         case LinkFailure::CouldNotRemoveLink: return "couldNotRemoveLink";
+        case LinkFailure::TheOutcomeIsUnknown: return "theOutcomeIsUnknown";
         }
 
         return "unknown";
@@ -96,6 +97,8 @@ namespace
         case FileResult::CouldNotCreateTheCategory: return "couldNotCreateTheCategory";
         case FileResult::TheCategoryStillHoldsAddons: return "theCategoryStillHoldsAddons";
         case FileResult::CouldNotRemoveTheCategory: return "couldNotRemoveTheCategory";
+        case FileResult::TheOutcomeIsUnknown: return "theOutcomeIsUnknown";
+        case FileResult::CouldNotReadTheSource: return "couldNotReadTheSource";
         }
 
         return "unknown";
@@ -146,14 +149,14 @@ namespace
 
         if (object.contains(kResult))
         {
-            return OperationRecord::OfImport(
-                timestamp, *kind, addon, source, target,
-                ValueNamed(kAllFileResults, ResultName, object[kResult].toString()).value_or(FileResult::Completed));
+            return OperationRecord::OfImport(timestamp, *kind, addon, source, target,
+                                             ValueNamed(kAllFileResults, ResultName, object[kResult].toString())
+                                                 .value_or(FileResult::TheOutcomeIsUnknown));
         }
 
-        return OperationRecord::OfLink(
-            timestamp, *kind, addon, source, target,
-            ValueNamed(kAllLinkFailures, FailureName, object[kFailure].toString()).value_or(LinkFailure::None));
+        return OperationRecord::OfLink(timestamp, *kind, addon, source, target,
+                                       ValueNamed(kAllLinkFailures, FailureName, object[kFailure].toString())
+                                           .value_or(LinkFailure::TheOutcomeIsUnknown));
     }
 }
 
