@@ -13,6 +13,7 @@
 #include "domain/tree/AddonTree.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
+#include "view/WheelGuard.h"
 #include "view/theme/ModernistMetrics.h"
 
 ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
@@ -41,6 +42,9 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     }
 
     category_ = new QComboBox(this);
+
+    LetTheWheelScrollPastUnlessTheWidgetHasFocus(library_);
+    LetTheWheelScrollPastUnlessTheWidgetHasFocus(category_);
 
     landing_ = new QLabel(this);
     landing_->setWordWrap(true);

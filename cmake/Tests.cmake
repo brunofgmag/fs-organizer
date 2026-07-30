@@ -631,6 +631,7 @@ if (WIN32)
                 tests/view/tst_main_window.cpp
                 assets/resources.qrc
                 src/view/MainWindow.cpp
+                src/view/WheelGuard.cpp
                 src/view/panels/TriageStrip.cpp
                 src/view/theme/ModernistPaint.cpp
                 src/view/theme/ModernistStyle.cpp
@@ -745,6 +746,7 @@ if (WIN32)
                 src/view/RepairDialog.cpp
                 src/view/RowDelegate.cpp
                 src/view/TableColumns.cpp
+                src/view/WheelGuard.cpp
                 src/view/panels/ContextPanel.cpp
                 src/view/panels/ModelRowDetail.cpp
                 src/view/panels/PanelRail.cpp

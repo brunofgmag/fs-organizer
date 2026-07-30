@@ -15,6 +15,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "infrastructure/platform/WindowsTitleBar.h"
+#include "view/WheelGuard.h"
 #include "view/panels/TriageStrip.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistTheme.h"
@@ -84,6 +85,7 @@ QWidget* MainWindow::CreateHeader()
 
     profiles_ = new QComboBox(header);
     profiles_->setObjectName(QStringLiteral("ProfilePicker"));
+    LetTheWheelScrollPastUnlessTheWidgetHasFocus(profiles_);
 
     connect(profiles_, &QComboBox::activated, this, &MainWindow::OnProfileActivated);
 

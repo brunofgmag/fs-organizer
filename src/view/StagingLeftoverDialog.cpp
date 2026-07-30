@@ -8,6 +8,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/WheelGuard.h"
 #include "view/theme/ModernistMetrics.h"
 
 StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers, QWidget* parent)
@@ -40,7 +41,8 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
             action->addItem(tr("Retomar a importação"), Resume);
         }
         action->addItem(tr("Descartar a cópia pela metade"), Discard);
-        action->setCurrentIndex(leftover.CanBeResumed() ? 1 : 0);
+        action->setCurrentIndex(action->findData(leftover.CanBeResumed() ? Resume : LeaveItThere));
+        LetTheWheelScrollPastUnlessTheWidgetHasFocus(action);
         grid->addWidget(action, row, 1);
         ++row;
 

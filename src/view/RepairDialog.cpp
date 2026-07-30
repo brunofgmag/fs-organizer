@@ -13,6 +13,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/WheelGuard.h"
 #include "view/theme/ModernistMetrics.h"
 
 RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidget* parent) : QDialog(parent)
@@ -86,6 +87,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
             action->addItem(tr("Re-apontar para a biblioteca"));
         }
         action->setEnabled(action->count() > 1);
+        LetTheWheelScrollPastUnlessTheWidgetHasFocus(action);
         grid->addWidget(action, row, 1);
         ++row;
 
