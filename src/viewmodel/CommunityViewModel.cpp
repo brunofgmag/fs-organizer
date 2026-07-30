@@ -39,6 +39,11 @@ std::size_t CommunityViewModel::NeedsAttention() const
     return attention_;
 }
 
+AttentionBreakdown CommunityViewModel::Breakdown() const
+{
+    return breakdown_;
+}
+
 const ProfileSnapshot& CommunityViewModel::Snapshot() const
 {
     return session_.Snapshot();
@@ -51,13 +56,30 @@ void CommunityViewModel::Refresh()
 
     model_.ShowEntries(entries, session_.Profile(), snapshot.conflicts);
 
-    const std::size_t attention = snapshot.conflicts.Count()
-        + std::ranges::count_if(entries,
-                                [](const DestinationEntry& entry)
-                                {
-                                    return entry.classification == EntryClassification::Broken
-                                        || entry.classification == EntryClassification::Duplicated;
-                                });
+    const auto classified = [&entries](const EntryClassification wanted)
+    {
+        return static_cast<std::size_t>(std::ranges::count_if(entries,
+                                                              [wanted](const DestinationEntry& entry)
+                                                              {
+                                                                  return entry.classification == wanted;
+                                                              }));
+    };
+
+    const AttentionBreakdown breakdown{
+        .broken = classified(EntryClassification::Broken),
+        .conflicts = snapshot.conflicts.Count(),
+        .unmanaged = classified(EntryClassification::Unmanaged),
+    };
+
+    if (breakdown.broken != breakdown_.broken || breakdown.conflicts != breakdown_.conflicts
+        || breakdown.unmanaged != breakdown_.unmanaged)
+    {
+        breakdown_ = breakdown;
+        emit BreakdownChanged(breakdown_);
+    }
+
+    const std::size_t attention =
+        breakdown_.broken + breakdown_.conflicts + classified(EntryClassification::Duplicated);
 
     if (attention != attention_)
     {

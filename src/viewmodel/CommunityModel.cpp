@@ -3,6 +3,30 @@
 #include <utility>
 
 #include "support/PathText.h"
+#include "viewmodel/RowTags.h"
+
+namespace
+{
+    TagTone ToneOf(const EntryClassification classification, const bool conflicted)
+    {
+        if (conflicted || classification == EntryClassification::Broken)
+        {
+            return classification == EntryClassification::Broken ? TagTone::Filled : TagTone::Outlined;
+        }
+
+        switch (classification)
+        {
+        case EntryClassification::Unmanaged: return TagTone::Outlined;
+        case EntryClassification::External:
+        case EntryClassification::Duplicated:
+        case EntryClassification::Unavailable: return TagTone::Muted;
+        case EntryClassification::Managed:
+        case EntryClassification::Broken: break;
+        }
+
+        return TagTone::Line;
+    }
+}
 
 CommunityModel::CommunityModel(QObject* parent) : QAbstractTableModel(parent)
 {
@@ -79,6 +103,26 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     if (role == ConflictRole)
     {
         return conflict != nullptr;
+    }
+
+    if (role == AlarmingRole)
+    {
+        return conflict != nullptr || entry->classification == EntryClassification::Broken;
+    }
+
+    if (role == TagTextRole)
+    {
+        return position.column() == ClassificationColumn ? data(position, Qt::DisplayRole) : QVariant();
+    }
+
+    if (role == TagToneRole)
+    {
+        return static_cast<int>(ToneOf(entry->classification, conflict != nullptr));
+    }
+
+    if (role == QuietRole)
+    {
+        return position.column() == DestinationColumn || position.column() == TargetColumn;
     }
 
     if (role == Qt::ToolTipRole)

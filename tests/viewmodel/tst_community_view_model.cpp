@@ -23,6 +23,7 @@ class CommunityViewModelTest : public QObject
 private slots:
     static void ShowingFillsTheTableFromTheSharedSnapshot();
     static void RepairingRemovesTheDeadRowsAndDropsTheAttentionCount();
+    static void TheBreakdownSeparatesBrokenConflictedAndUnmanaged();
 };
 
 namespace
@@ -116,6 +117,22 @@ void CommunityViewModelTest::ShowingFillsTheTableFromTheSharedSnapshot()
 
     QCOMPARE(f.model.rowCount({}), 2);
     QCOMPARE(f.viewModel.NeedsAttention(), std::size_t{1});
+}
+
+void CommunityViewModelTest::TheBreakdownSeparatesBrokenConflictedAndUnmanaged()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/physical");
+
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    const AttentionBreakdown breakdown = f.viewModel.Breakdown();
+
+    QCOMPARE(breakdown.broken, std::size_t{1});
+    QCOMPARE(breakdown.conflicts, std::size_t{0});
+    QCOMPARE(breakdown.unmanaged, std::size_t{1});
 }
 
 void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCount()
