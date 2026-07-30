@@ -8,10 +8,12 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class QComboBox;
+class ContextPanel;
+class QButtonGroup;
 class QLabel;
 class QListWidget;
 class QPushButton;
+class QStackedWidget;
 class QTableWidget;
 class QTableWidgetItem;
 
@@ -25,7 +27,11 @@ public:
 signals:
     void StatusChanged(const QString& message);
 
+    void SummaryChanged(const QString& summary);
+
 private:
+    [[nodiscard]] QWidget* CreateNameColumn();
+
     [[nodiscard]] QString SelectedName() const;
 
     [[nodiscard]] ApplyMode Mode() const;
@@ -49,8 +55,11 @@ private:
     void ApplySelected();
 
     PresetViewModel& viewModel_;
+    QStackedWidget* pages_ = nullptr;
+    ContextPanel* panel_ = nullptr;
     QListWidget* names_ = nullptr;
-    QComboBox* mode_ = nullptr;
+    QButtonGroup* modes_ = nullptr;
+    QLabel* modeExplained_ = nullptr;
     QTableWidget* entries_ = nullptr;
     QLabel* preview_ = nullptr;
     QPushButton* apply_ = nullptr;

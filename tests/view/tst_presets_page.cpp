@@ -1,0 +1,196 @@
+#include <QtTest/QtTest>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QListWidget>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QTableWidget>
+
+#include "application/LibraryOrganizer.h"
+#include "tests/doubles/FakeCatalogScanner.h"
+#include "tests/doubles/FakeClock.h"
+#include "tests/doubles/FakeFileOperations.h"
+#include "tests/doubles/FakeFilesystemProbe.h"
+#include "tests/doubles/FakeLibraryIdGenerator.h"
+#include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeOperationJournal.h"
+#include "tests/doubles/FakePresetRepository.h"
+#include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/InMemoryFileSystem.h"
+#include "tests/doubles/InlineBackgroundRunner.h"
+#include "tests/support/EnumPrinting.h"
+#include "tests/support/PathPrinting.h"
+#include "view/PresetsPage.h"
+#include "view/theme/ModernistTheme.h"
+#include "viewmodel/PresetViewModel.h"
+#include "viewmodel/SessionNotifier.h"
+
+class PresetsPageTest : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    static void BuildingAndTearingDownAloneDoesNotCrash();
+    static void SelectingAPresetFillsThePanelPreview();
+    static void ApplyingFromThePanelGoesThroughTheViewModel();
+    static void TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt();
+};
+
+namespace
+{
+    constexpr auto kLibrary = "D:/MSFS 2024";
+    constexpr auto kAircrafts = "D:/MSFS 2024/Aircrafts";
+    constexpr auto kAddon = "D:/MSFS 2024/Aircrafts/aerosoft-crj";
+    constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
+    constexpr auto kProfileId = "msfs2024";
+
+    TreeNode AddonNode(const std::filesystem::path& path)
+    {
+        TreeNode node;
+        node.kind = TreeNodeKind::Addon;
+        node.path = path;
+        node.addon = Addon{path, Manifest{}};
+
+        return node;
+    }
+
+    TreeNode LibraryTree()
+    {
+        TreeNode aircrafts;
+        aircrafts.kind = TreeNodeKind::Category;
+        aircrafts.path = kAircrafts;
+        aircrafts.children = {AddonNode(kAddon)};
+
+        TreeNode library;
+        library.kind = TreeNodeKind::Library;
+        library.path = kLibrary;
+        library.children = {std::move(aircrafts)};
+
+        return library;
+    }
+
+    SimulatorProfile Profile()
+    {
+        SimulatorProfile profile;
+        profile.id = kProfileId;
+        profile.variant = SimulatorVariant::MSFS2024;
+        profile.destinations = {kCommunity};
+        profile.defaultDestination = kCommunity;
+        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+
+        return profile;
+    }
+
+    struct Fixture
+    {
+        Fixture()
+        {
+            fileSystem.AddDirectory(kCommunity);
+            fileSystem.AddDirectory(kLibrary);
+            fileSystem.AddDirectory(kAircrafts);
+            fileSystem.AddDirectory(kAddon);
+            fileSystem.AddLink(std::filesystem::path(kCommunity) / "aerosoft-crj", kAddon);
+            catalog.SetTree(kLibrary, LibraryTree());
+
+            settings.stored.profiles = {Profile()};
+            settings.stored.activeProfileId = kProfileId;
+
+            session.ShowActiveProfile();
+
+            viewModel.Create(QStringLiteral("Voo de linha"));
+        }
+
+        InMemoryFileSystem fileSystem;
+        FakeLinkService linkService{fileSystem};
+        FakeFilesystemProbe filesystemProbe{fileSystem};
+        FakeFileOperations files{fileSystem};
+        FakeProcessProbe processProbe;
+        FakeCatalogScanner catalog;
+        FakeOperationJournal journal;
+        FakeClock clock;
+        OperationLog log{journal, clock};
+        FakeLibraryIdGenerator identities;
+        LinkingEngine linking{linkService, filesystemProbe};
+        EntryClassifier classifier{linkService, filesystemProbe};
+        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
+        LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
+                                   classifier, processProbe,    log,   LinkType::Junction};
+        FakeSettingsRepository settings;
+        InlineBackgroundRunner runner;
+        SessionNotifier notifier;
+        Session session{service, organizer, settings, runner, notifier};
+        FakePresetRepository presets;
+        PresetService presetService{presets, service};
+        PresetViewModel viewModel{session, presetService, processProbe};
+    };
+}
+
+void PresetsPageTest::BuildingAndTearingDownAloneDoesNotCrash()
+{
+    Fixture f;
+    {
+        PresetsPage page(f.viewModel, f.notifier);
+    }
+}
+
+void PresetsPageTest::SelectingAPresetFillsThePanelPreview()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QListWidget*>();
+    QVERIFY(names != nullptr);
+    QCOMPARE(names->count(), 1);
+    QCOMPARE(names->currentRow(), 0);
+
+    auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
+    QVERIFY(apply != nullptr);
+    QVERIFY(apply->isEnabled());
+    QVERIFY(apply->text().contains(QStringLiteral("liga")));
+}
+
+void PresetsPageTest::ApplyingFromThePanelGoesThroughTheViewModel()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* cumulative = page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"));
+    QVERIFY(cumulative != nullptr);
+    cumulative->click();
+
+    const QSignalSpy applied(&f.viewModel, &PresetViewModel::Applied);
+
+    auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
+    apply->click();
+
+    QCOMPARE(applied.count(), 1);
+}
+
+void PresetsPageTest::TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt()
+{
+    ApplyModernistTheme(*qApp);
+
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(1200, 600);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    auto* heading = page.findChild<QHeaderView*>(QStringLiteral("ListHeading"));
+    auto* names = page.findChild<QListWidget*>();
+    auto* entries = page.findChild<QTableWidget*>();
+
+    QVERIFY(heading != nullptr);
+    QVERIFY(names != nullptr);
+    QVERIFY(entries != nullptr);
+
+    QCOMPARE(heading->mapTo(&page, QPoint()).y(), entries->mapTo(&page, QPoint()).y());
+    QCOMPARE(heading->height(), entries->horizontalHeader()->height());
+    QCOMPARE(heading->font(), entries->horizontalHeader()->font());
+    QTRY_COMPARE(names->mapTo(&page, QPoint()).y(), entries->viewport()->mapTo(&page, QPoint()).y());
+}
+
+QTEST_MAIN(PresetsPageTest)
+
+#include "tst_presets_page.moc"

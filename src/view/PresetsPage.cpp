@@ -1,11 +1,13 @@
 #include "view/PresetsPage.h"
 
+#include <QtCore/QEvent>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 #include <QtWidgets/QApplication>
-#include <QtWidgets/QComboBox>
+#include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QRadioButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLabel>
@@ -17,13 +19,60 @@
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QVBoxLayout>
 
+#include <QtGui/QStandardItemModel>
+#include <QtWidgets/QStackedWidget>
+
+#include "view/RowDelegate.h"
 #include "view/TableColumns.h"
-#include "view/WheelGuard.h"
+#include "view/panels/ContextPanel.h"
+#include "view/panels/EmptyState.h"
+#include "view/theme/ModernistMetrics.h"
+#include "view/theme/ModernistPaint.h"
 
 namespace
 {
     constexpr int kAddonColumn = 0;
     constexpr int kActionColumn = 2;
+    constexpr int kNameColumnWidth = 260;
+
+    class HeaderTwin final : public QObject
+    {
+    public:
+        HeaderTwin(QHeaderView* follower, QHeaderView* leader) : QObject(follower), follower_(follower), leader_(leader)
+        {
+            leader_->installEventFilter(this);
+            Match();
+        }
+
+        bool eventFilter(QObject* watched, QEvent* event) override
+        {
+            if (event->type() == QEvent::Resize || event->type() == QEvent::FontChange)
+            {
+                Match();
+            }
+
+            return QObject::eventFilter(watched, event);
+        }
+
+    private:
+        void Match() const
+        {
+            if (follower_->font() != leader_->font())
+            {
+                follower_->setFont(leader_->font());
+
+                if (QWidget* viewport = follower_->viewport(); viewport != nullptr)
+                {
+                    viewport->setFont(leader_->font());
+                }
+            }
+
+            follower_->setFixedHeight(leader_->height());
+        }
+
+        QHeaderView* follower_;
+        QHeaderView* leader_;
+    };
 
     class CenteredCheckDelegate final : public QStyledItemDelegate
     {
@@ -49,6 +98,7 @@ namespace
             style->drawPrimitive(QStyle::PE_IndicatorItemViewItemCheck, &check, painter, cell.widget);
         }
 
+    protected:
         bool editorEvent(QEvent* event,
                          QAbstractItemModel* model,
                          const QStyleOptionViewItem& option,
@@ -103,54 +153,115 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     : QWidget(parent), viewModel_(viewModel)
 {
     names_ = new QListWidget(this);
+    names_->setFixedWidth(kNameColumnWidth);
+    names_->setItemDelegate(new RowDelegate(names_));
 
     auto* create = new QPushButton(tr("Novo a partir dos habilitados"), this);
+    create->setProperty("role", "primary");
     update_ = new QPushButton(tr("Atualizar com os habilitados"), this);
     rename_ = new QPushButton(tr("Renomear"), this);
     remove_ = new QPushButton(tr("Excluir"), this);
 
-    auto* side = new QVBoxLayout;
-    side->addWidget(names_, 1);
-    side->addWidget(create);
-    side->addWidget(update_);
-    side->addWidget(rename_);
-    side->addWidget(remove_);
+    auto* toolbar = new QWidget(this);
+    toolbar->setObjectName(QStringLiteral("PageToolbar"));
 
-    mode_ = new QComboBox(this);
-    mode_->addItem(tr("Deixar só o que o preset liga"), static_cast<int>(ApplyMode::Replace));
-    mode_->addItem(tr("Ligar o do preset, sem mexer no resto"), static_cast<int>(ApplyMode::Cumulative));
-    mode_->addItem(tr("Desligar o que o preset liga"), static_cast<int>(ApplyMode::Disable));
-    LetTheWheelScrollPastUnlessTheWidgetHasFocus(mode_);
+    auto* bar = new QHBoxLayout(toolbar);
+    bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+    bar->setSpacing(8);
+    bar->addWidget(create);
+    bar->addWidget(update_);
+    bar->addWidget(rename_);
+    bar->addWidget(remove_);
+    bar->addStretch();
 
     entries_ = new QTableWidget(this);
     entries_->setColumnCount(3);
     entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Biblioteca"), tr("Liga")});
     entries_->setSelectionBehavior(QAbstractItemView::SelectRows);
     entries_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    entries_->setItemDelegate(new RowDelegate(entries_));
     entries_->setItemDelegateForColumn(kActionColumn, new CenteredCheckDelegate(entries_));
+    entries_->setShowGrid(false);
     LetTheColumnsBeDraggedAndStillFillTheTable(entries_, kAddonColumn);
     entries_->verticalHeader()->setVisible(false);
+    DressTheHeaderOf(entries_->horizontalHeader());
 
-    preview_ = new QLabel(this);
+    auto* panel = new ContextPanel(tr("Aplicar como"), 440, this);
+    panel->setObjectName(QStringLiteral("PresetApplyPanel"));
+    panel_ = panel;
+
+    auto* heading = new QLabel(tr("Aplicar como"), panel);
+    heading->setObjectName(QStringLiteral("PanelSubHeading"));
+
+    modes_ = new QButtonGroup(panel);
+    auto* replace = new QRadioButton(tr("Substituir"), panel);
+    replace->setObjectName(QStringLiteral("ModeReplace"));
+    auto* cumulative = new QRadioButton(tr("Acumular"), panel);
+    cumulative->setObjectName(QStringLiteral("ModeCumulative"));
+    auto* disable = new QRadioButton(tr("Desabilitar"), panel);
+    disable->setObjectName(QStringLiteral("ModeDisable"));
+    modes_->addButton(replace, static_cast<int>(ApplyMode::Replace));
+    modes_->addButton(cumulative, static_cast<int>(ApplyMode::Cumulative));
+    modes_->addButton(disable, static_cast<int>(ApplyMode::Disable));
+    replace->setChecked(true);
+
+    modeExplained_ = new QLabel(panel);
+    modeExplained_->setObjectName(QStringLiteral("ModeExplained"));
+    modeExplained_->setWordWrap(true);
+
+    preview_ = new QLabel(panel);
     preview_->setWordWrap(true);
 
-    apply_ = new QPushButton(tr("Aplicar"), this);
+    auto* promise = new QLabel(tr("Aplicar é um lote só: \"Desfazer último lote\" volta tudo de uma vez."), panel);
+    promise->setObjectName(QStringLiteral("PanelPromise"));
+    promise->setWordWrap(true);
 
-    auto* bar = new QHBoxLayout;
-    bar->addWidget(new QLabel(tr("Modo:"), this));
-    bar->addWidget(mode_);
-    bar->addStretch(1);
-    bar->addWidget(apply_);
+    apply_ = new QPushButton(tr("Aplicar"), panel);
+    apply_->setObjectName(QStringLiteral("PresetApply"));
+    apply_->setProperty("role", "primary");
+    apply_->setDefault(true);
 
-    auto* detail = new QVBoxLayout;
-    detail->addLayout(bar);
-    detail->addWidget(entries_, 1);
-    detail->addWidget(preview_);
+    QVBoxLayout* content = panel->Content();
+    content->insertWidget(0, heading);
+    content->insertWidget(1, replace);
+    content->insertWidget(2, cumulative);
+    content->insertWidget(3, disable);
+    content->insertWidget(4, modeExplained_);
+    content->insertWidget(5, preview_);
+    content->insertWidget(6, apply_);
+    content->insertWidget(7, promise);
 
-    auto* layout = new QHBoxLayout(this);
+    panel->RestoreCollapsedState();
+
+    auto* tables = new QHBoxLayout;
+    tables->setContentsMargins(0, 0, 0, 0);
+    tables->setSpacing(0);
+    tables->addWidget(CreateNameColumn());
+    tables->addWidget(entries_, 1);
+    tables->addWidget(panel);
+
+    auto* kept = new QWidget(this);
+    auto* keptLayout = new QVBoxLayout(kept);
+    keptLayout->setContentsMargins(0, 0, 0, 0);
+    keptLayout->setSpacing(0);
+    keptLayout->addWidget(toolbar);
+    keptLayout->addLayout(tables, 1);
+
+    pages_ = new QStackedWidget(this);
+    pages_->addWidget(kept);
+
+    auto* nothing = new EmptyState(tr("Nenhum preset neste perfil ainda."),
+                                   tr("Um preset guarda quais addons ficam ligados. Habilite o que você quer "
+                                      "voar e guarde essa combinação com um nome — aplicar depois é um lote só, "
+                                      "com desfazer inteiro."),
+                                   this);
+    connect(nothing->OfferTheOnlyAction(tr("Novo a partir dos habilitados")), &QPushButton::clicked, this,
+            &PresetsPage::CreateFromWhatIsEnabled);
+    pages_->addWidget(nothing);
+
+    auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addLayout(side);
-    layout->addLayout(detail, 1);
+    layout->addWidget(pages_);
 
     connect(create, &QPushButton::clicked, this, &PresetsPage::CreateFromWhatIsEnabled);
     connect(update_, &QPushButton::clicked, this, &PresetsPage::UpdateFromWhatIsEnabled);
@@ -162,7 +273,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
             {
                 ShowSelected();
             });
-    connect(mode_, &QComboBox::currentIndexChanged, this,
+    connect(modes_, &QButtonGroup::idClicked, this,
             [this]
             {
                 RefreshPreview();
@@ -206,6 +317,31 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     ReloadNames();
 }
 
+QWidget* PresetsPage::CreateNameColumn()
+{
+    auto* onlyTheName = new QStandardItemModel(0, 1, this);
+    onlyTheName->setHorizontalHeaderLabels({tr("Preset")});
+
+    auto* heading = new QHeaderView(Qt::Horizontal, this);
+    heading->setObjectName(QStringLiteral("ListHeading"));
+    heading->setModel(onlyTheName);
+    heading->setSectionResizeMode(QHeaderView::Stretch);
+    heading->setSectionsClickable(false);
+    heading->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    heading->setHighlightSections(false);
+
+    new HeaderTwin(heading, entries_->horizontalHeader());
+
+    auto* column = new QWidget(this);
+    auto* stacked = new QVBoxLayout(column);
+    stacked->setContentsMargins(0, 0, 0, 0);
+    stacked->setSpacing(0);
+    stacked->addWidget(heading);
+    stacked->addWidget(names_, 1);
+
+    return column;
+}
+
 QString PresetsPage::SelectedName() const
 {
     const QListWidgetItem* item = names_->currentItem();
@@ -215,7 +351,7 @@ QString PresetsPage::SelectedName() const
 
 ApplyMode PresetsPage::Mode() const
 {
-    return static_cast<ApplyMode>(mode_->currentData().toInt());
+    return static_cast<ApplyMode>(modes_->checkedId());
 }
 
 void PresetsPage::ReloadNames()
@@ -229,6 +365,11 @@ void PresetsPage::ReloadNames()
     const QList<QListWidgetItem*> found = names_->findItems(wanted, Qt::MatchExactly);
     names_->setCurrentRow(found.isEmpty() ? (names_->count() > 0 ? 0 : -1) : names_->row(found.front()));
     populating_ = false;
+
+    pages_->setCurrentIndex(names_->count() == 0 ? 1 : 0);
+
+    emit SummaryChanged(names_->count() == 0 ? tr("Nenhum preset neste perfil ainda.")
+                                             : tr("%n preset(s) neste perfil.", nullptr, names_->count()));
 
     ShowSelected();
 }
@@ -248,6 +389,8 @@ void PresetsPage::ShowSelected()
     rename_->setEnabled(holdsOne);
     remove_->setEnabled(holdsOne);
     apply_->setEnabled(holdsOne);
+    panel_->Summon(holdsOne);
+    panel_->ShowTitle(name);
 
     populating_ = true;
     entries_->setRowCount(holdsOne ? static_cast<int>(selected_->entries.size()) : 0);
@@ -303,6 +446,13 @@ void PresetsPage::ActionToggled(QTableWidgetItem* item)
 
 void PresetsPage::RefreshPreview()
 {
+    switch (Mode())
+    {
+    case ApplyMode::Replace: modeExplained_->setText(tr("Deixa só o que o preset liga.")); break;
+    case ApplyMode::Cumulative: modeExplained_->setText(tr("Liga o do preset, sem mexer no resto.")); break;
+    case ApplyMode::Disable: modeExplained_->setText(tr("Desliga o que o preset liga.")); break;
+    }
+
     if (!selected_.has_value())
     {
         preview_->clear();
