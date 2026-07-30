@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "domain/ports/ProcessProbe.h"
+#include "application/ports/ProcessProbe.h"
 
 class WindowsProcessProbe final : public ProcessProbe
 {

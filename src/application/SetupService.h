@@ -11,7 +11,7 @@
 #include "application/model/RegisteredLibrary.h"
 #include "application/ports/LibraryIdGenerator.h"
 #include "application/ports/SettingsRepository.h"
-#include "domain/ports/SimulatorLocator.h"
+#include "application/ports/SimulatorLocator.h"
 #include "domain/ports/CatalogScanner.h"
 #include "domain/ports/FilesystemProbe.h"
 

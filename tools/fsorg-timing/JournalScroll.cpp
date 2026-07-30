@@ -17,7 +17,7 @@
 #include <QtWidgets/QTreeView>
 
 #include "view/JournalPage.h"
-#include "view/PlainTextDelegate.h"
+#include "view/delegates/PlainTextDelegate.h"
 #include "viewmodel/JournalModel.h"
 #include "viewmodel/JournalViewModel.h"
 

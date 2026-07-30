@@ -22,7 +22,7 @@
 #include <QtGui/QStandardItemModel>
 #include <QtWidgets/QStackedWidget>
 
-#include "view/RowDelegate.h"
+#include "view/delegates/RowDelegate.h"
 #include "view/TableColumns.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/EmptyState.h"

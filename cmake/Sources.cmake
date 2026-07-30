@@ -23,7 +23,7 @@ set(APPLICATION_SOURCES
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
-src/application/SetupService.cpp
+        src/application/SetupService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
@@ -35,8 +35,8 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
+        src/view/platform/WindowsTitleBar.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
-        src/infrastructure/platform/WindowsTitleBar.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
@@ -63,28 +63,28 @@ set(VIEWMODEL_SOURCES
 )
 
 set(VIEW_SOURCES
-        src/view/AddonTreePage.cpp
-        src/view/CommunityPage.cpp
-        src/view/ConflictDialog.cpp
-        src/view/ImportDialog.cpp
+        src/view/library/AddonTreePage.cpp
+        src/view/community/CommunityPage.cpp
+        src/view/community/ConflictDialog.cpp
+        src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
-        src/view/MainWindow.cpp
-        src/view/PlainTextDelegate.cpp
+        src/view/shell/MainWindow.cpp
+        src/view/delegates/PlainTextDelegate.cpp
         src/view/PresetsPage.cpp
-        src/view/QuarantinePage.cpp
-        src/view/RepairDialog.cpp
-        src/view/RestoreDialog.cpp
-        src/view/RowDelegate.cpp
-        src/view/SetupWizard.cpp
-        src/view/StagingLeftoverDialog.cpp
-        src/view/SuggestionDialog.cpp
+        src/view/quarantine/QuarantinePage.cpp
+        src/view/community/RepairDialog.cpp
+        src/view/quarantine/RestoreDialog.cpp
+        src/view/delegates/RowDelegate.cpp
+        src/view/setup/SetupWizard.cpp
+        src/view/setup/StagingLeftoverDialog.cpp
+        src/view/library/SuggestionDialog.cpp
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp
         src/view/panels/EmptyState.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp
-        src/view/panels/TriageStrip.cpp
+        src/view/shell/TriageStrip.cpp
         src/view/theme/ModernistPaint.cpp
         src/view/theme/ModernistStyle.cpp
         src/view/theme/ModernistTheme.cpp

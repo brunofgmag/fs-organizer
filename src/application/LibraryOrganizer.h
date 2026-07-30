@@ -6,7 +6,7 @@
 
 #include "application/model/AddonMove.h"
 #include "application/model/FileOperationResult.h"
-#include "domain/ports/ProcessProbe.h"
+#include "application/ports/ProcessProbe.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"

@@ -1,7 +1,7 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_PROCESS_PROBE_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_PROCESS_PROBE_H
 
-#include "domain/ports/ProcessProbe.h"
+#include "application/ports/ProcessProbe.h"
 
 class FakeProcessProbe final : public ProcessProbe
 {

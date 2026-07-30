@@ -3,8 +3,8 @@
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QWidget>
 
-#include "view/RepairDialog.h"
-#include "view/StagingLeftoverDialog.h"
+#include "view/community/RepairDialog.h"
+#include "view/setup/StagingLeftoverDialog.h"
 #include "view/WheelGuard.h"
 
 class WheelGuardTest : public QObject

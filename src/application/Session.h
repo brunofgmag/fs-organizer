@@ -12,7 +12,7 @@
 #include "application/model/ProfileSnapshot.h"
 #include "application/model/LinkOperationResult.h"
 #include "application/ports/BackgroundRunner.h"
-#include "domain/ports/ProcessProbe.h"
+#include "application/ports/ProcessProbe.h"
 #include "application/ports/SessionObserver.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/SimulatorProfile.h"

@@ -9,7 +9,7 @@
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QVBoxLayout>
 
-#include "view/PlainTextDelegate.h"
+#include "view/delegates/PlainTextDelegate.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/ModelRowDetail.h"
 #include "view/theme/ModernistMetrics.h"

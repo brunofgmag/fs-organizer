@@ -9,8 +9,8 @@
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStatusBar>
 
-#include "view/MainWindow.h"
-#include "view/panels/TriageStrip.h"
+#include "view/shell/MainWindow.h"
+#include "view/shell/TriageStrip.h"
 #include "view/theme/PageTab.h"
 
 class MainWindowTest : public QObject

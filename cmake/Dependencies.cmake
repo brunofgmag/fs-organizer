@@ -9,7 +9,7 @@ if (NOT CMAKE_PREFIX_PATH AND EXISTS "C:/Qt")
 endif ()
 
 if (FSORG_TESTS_ONLY)
-    find_package(Qt6 6.8 REQUIRED COMPONENTS Core Test)
+    find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Test Widgets)
 else ()
     find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets Network LinguistTools)
 endif ()

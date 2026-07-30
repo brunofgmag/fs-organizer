@@ -17,22 +17,24 @@ function(configure_fsorg_test TARGET_NAME TEST_NAME)
 endfunction()
 
 function(configure_fsorg_gui_test TARGET_NAME TEST_NAME)
-    target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Widgets dwmapi)
+    target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Widgets "$<$<BOOL:${WIN32}>:dwmapi>")
 
     set_tests_properties(${TEST_NAME} PROPERTIES
             ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1;QT_QPA_PLATFORM=offscreen")
 
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Qt6::Gui>"
-            "$<TARGET_FILE:Qt6::Widgets>"
-            "$<TARGET_FILE_DIR:${TARGET_NAME}>"
-            COMMAND "${CMAKE_COMMAND}" -E make_directory
-            "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
-            "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
-            VERBATIM)
+    if (WIN32)
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "$<TARGET_FILE:Qt6::Gui>"
+                "$<TARGET_FILE:Qt6::Widgets>"
+                "$<TARGET_FILE_DIR:${TARGET_NAME}>"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory
+                "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+                "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
+                VERBATIM)
+    endif ()
 endfunction()
 
 function(fsorg_add_qt_test TARGET_NAME TEST_NAME)
@@ -587,7 +589,7 @@ if (WIN32)
             src/domain/tree/AddonTree.cpp
             src/domain/tree/EffectiveDestination.cpp
             src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
+            src/domain/tree/LibraryTrees.cpp
             src/infrastructure/catalog/FilesystemScanner.cpp
             src/infrastructure/catalog/JsonManifestParser.cpp
             src/infrastructure/fileops/WindowsFileOperations.cpp
@@ -630,26 +632,18 @@ if (WIN32)
         fsorg_add_qt_test(fsorg-main-window-tests main-window
                 tests/view/tst_main_window.cpp
                 assets/resources.qrc
-                src/view/MainWindow.cpp
+                src/view/shell/MainWindow.cpp
                 src/view/WheelGuard.cpp
-                src/view/panels/TriageStrip.cpp
+                src/view/shell/TriageStrip.cpp
                 src/view/theme/ModernistPaint.cpp
                 src/view/theme/ModernistStyle.cpp
                 src/view/theme/ModernistTheme.cpp
                 src/view/theme/ModernistTones.cpp
                 src/view/theme/PageTab.cpp
-                src/infrastructure/platform/WindowsTitleBar.cpp)
+                src/view/platform/WindowsTitleBar.cpp)
         configure_fsorg_gui_test(fsorg-main-window-tests main-window)
 
-        fsorg_add_qt_test(fsorg-table-columns-tests table-columns
-                tests/view/tst_table_columns.cpp
-                src/view/TableColumns.cpp)
-        configure_fsorg_gui_test(fsorg-table-columns-tests table-columns)
 
-        fsorg_add_qt_test(fsorg-wheel-guard-tests wheel-guard
-                tests/view/tst_wheel_guard.cpp
-                src/view/WheelGuard.cpp)
-        configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
 
         fsorg_add_qt_test(fsorg-presets-page-tests presets-page
                 tests/view/tst_presets_page.cpp
@@ -685,7 +679,7 @@ if (WIN32)
                 src/application/ProfileService.cpp
                 src/application/Session.cpp
                 src/view/PresetsPage.cpp
-                src/view/RowDelegate.cpp
+                src/view/delegates/RowDelegate.cpp
                 src/view/TableColumns.cpp
                 src/view/panels/ContextPanel.cpp
                 src/view/panels/EmptyState.cpp
@@ -698,15 +692,6 @@ if (WIN32)
                 src/viewmodel/SessionNotifier.cpp)
         configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
 
-        fsorg_add_qt_test(fsorg-context-panel-tests context-panel
-                tests/view/tst_context_panel.cpp
-                src/view/panels/ContextPanel.cpp
-                src/view/panels/ModelRowDetail.cpp
-                src/view/panels/PanelRail.cpp
-                src/view/panels/TriageStrip.cpp
-                src/view/theme/ModernistPaint.cpp
-                src/view/theme/ModernistTones.cpp)
-        configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
 
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp
@@ -740,11 +725,11 @@ if (WIN32)
                 src/application/LibraryOrganizer.cpp
                 src/application/ProfileService.cpp
                 src/application/Session.cpp
-                src/view/CommunityPage.cpp
-                src/view/ConflictDialog.cpp
-                src/view/ImportDialog.cpp
-                src/view/RepairDialog.cpp
-                src/view/RowDelegate.cpp
+                src/view/community/CommunityPage.cpp
+                src/view/community/ConflictDialog.cpp
+                src/view/community/ImportDialog.cpp
+                src/view/community/RepairDialog.cpp
+                src/view/delegates/RowDelegate.cpp
                 src/view/TableColumns.cpp
                 src/view/WheelGuard.cpp
                 src/view/panels/ContextPanel.cpp
@@ -759,18 +744,38 @@ if (WIN32)
                 src/viewmodel/SessionNotifier.cpp)
         configure_fsorg_gui_test(fsorg-community-page-tests community-page)
 
-        fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
-                tests/view/tst_modernist_theme.cpp
-                assets/resources.qrc
-                src/view/RowDelegate.cpp
-                src/view/theme/ModernistPaint.cpp
-                src/view/theme/ModernistStyle.cpp
-                src/view/theme/ModernistTheme.cpp
-                src/view/theme/ModernistTones.cpp)
-        configure_fsorg_gui_test(fsorg-modernist-theme-tests modernist-theme)
     endif ()
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
             tests/infrastructure/sim/tst_windows_process_probe.cpp
             src/infrastructure/sim/WindowsProcessProbe.cpp)
 endif ()
+
+fsorg_add_qt_test(fsorg-table-columns-tests table-columns
+        tests/view/tst_table_columns.cpp
+        src/view/TableColumns.cpp)
+configure_fsorg_gui_test(fsorg-table-columns-tests table-columns)
+fsorg_add_qt_test(fsorg-wheel-guard-tests wheel-guard
+        tests/view/tst_wheel_guard.cpp
+        src/view/community/RepairDialog.cpp
+        src/view/setup/StagingLeftoverDialog.cpp
+        src/view/WheelGuard.cpp)
+configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
+fsorg_add_qt_test(fsorg-context-panel-tests context-panel
+        tests/view/panels/tst_context_panel.cpp
+        src/view/panels/ContextPanel.cpp
+        src/view/panels/ModelRowDetail.cpp
+        src/view/panels/PanelRail.cpp
+        src/view/shell/TriageStrip.cpp
+        src/view/theme/ModernistPaint.cpp
+        src/view/theme/ModernistTones.cpp)
+configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
+fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
+        tests/view/theme/tst_modernist_theme.cpp
+        assets/resources.qrc
+        src/view/delegates/RowDelegate.cpp
+        src/view/theme/ModernistPaint.cpp
+        src/view/theme/ModernistStyle.cpp
+        src/view/theme/ModernistTheme.cpp
+        src/view/theme/ModernistTones.cpp)
+configure_fsorg_gui_test(fsorg-modernist-theme-tests modernist-theme)

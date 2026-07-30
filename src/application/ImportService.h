@@ -10,7 +10,7 @@
 #include "application/model/ImportOperationResult.h"
 #include "application/model/QuarantinedItem.h"
 #include "application/model/StagingLeftover.h"
-#include "domain/ports/ProcessProbe.h"
+#include "application/ports/ProcessProbe.h"
 #include "domain/importing/ImportEngine.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"

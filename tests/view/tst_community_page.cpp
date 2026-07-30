@@ -16,7 +16,7 @@
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
-#include "view/CommunityPage.h"
+#include "view/community/CommunityPage.h"
 #include "view/panels/ContextPanel.h"
 #include "viewmodel/SessionNotifier.h"
 
