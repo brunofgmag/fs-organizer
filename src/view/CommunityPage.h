@@ -4,16 +4,20 @@
 #include <optional>
 #include <vector>
 
+#include <QtCore/QList>
+#include <QtCore/QPair>
 #include <QtWidgets/QWidget>
 
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 
-class QComboBox;
+class ContextPanel;
+class ModelRowDetail;
 class QLabel;
 class QProgressDialog;
 class QPushButton;
 class QTableView;
+class QToolButton;
 
 struct ImportableSelection
 {
@@ -34,19 +38,45 @@ public:
 
     void ResolveConflict(const CopyConflict& conflict);
 
-signals:
-    void StatusChanged(const QString& message);
-
-private:
-    [[nodiscard]] QWidget* CreateActions();
-
-    void OnFilterChanged(int index) const;
-
     void StartRepair();
 
     void StartImport();
 
     void ResolveTheSelectedConflict();
+
+    void FilterBy(EntryClassification classification) const;
+
+    void FilterByConflicted() const;
+
+    void SelectEverythingShown() const;
+
+signals:
+    void StatusChanged(const QString& message);
+
+    void SummaryChanged(const QString& summary);
+
+    void AsideChanged(const QString& aside);
+
+private:
+    [[nodiscard]] QWidget* CreateFilters();
+
+    [[nodiscard]] QWidget* CreateActions();
+
+    [[nodiscard]] QWidget* CreatePanel();
+
+    void ApplyFilter(int filter) const;
+
+    void ShowFilter(int filter) const;
+
+    void ShowTheSelectedEntry();
+
+    void ShowTheSelectedBatch(const QModelIndexList& rows);
+
+    void ShowTheBatchFields(const QString& size) const;
+
+    void ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const;
+
+    void OpenTheSelectedFolder() const;
 
     void OnRepairFinished(const std::vector<LinkOperationResult>& results);
 
@@ -65,18 +95,23 @@ private:
 
     [[nodiscard]] ImportableSelection ChosenForImport() const;
 
-    void UpdateSummary() const;
+    void FitTheChips();
+
+    void UpdateSummary();
 
     CommunityViewModel& viewModel_;
     ImportViewModel& importViewModel_;
     CommunityModel& model_;
     CommunityFilterModel* filter_ = nullptr;
     QTableView* table_ = nullptr;
-    QComboBox* classes_ = nullptr;
-    QLabel* summary_ = nullptr;
-    QPushButton* repair_ = nullptr;
-    QPushButton* import_ = nullptr;
-    QPushButton* resolve_ = nullptr;
+    QList<QToolButton*> chips_;
+    ContextPanel* panel_ = nullptr;
+    QPushButton* importOne_ = nullptr;
+    QPushButton* resolveChosen_ = nullptr;
+    QPushButton* openFolder_ = nullptr;
+    QList<QPair<QString, QString>> counted_;
+    bool batch_ = false;
+    ModelRowDetail* detail_ = nullptr;
     QProgressDialog* progress_ = nullptr;
     int folders_ = 0;
     int folder_ = 0;
