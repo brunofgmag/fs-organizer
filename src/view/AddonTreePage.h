@@ -11,6 +11,8 @@
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
+class ContextPanel;
+class ModelRowDetail;
 class QMenu;
 class QPushButton;
 class QStackedWidget;
@@ -31,6 +33,10 @@ public:
 signals:
     void StatusChanged(const QString& message);
 
+    void SummaryChanged(const QString& summary);
+
+    void MeterChanged(int filled, int outOf);
+
     void ConflictChosen(const CopyConflict& conflict);
 
 private:
@@ -38,7 +44,21 @@ private:
 
     [[nodiscard]] QWidget* CreateInvite();
 
+    [[nodiscard]] QWidget* CreatePanel();
+
     [[nodiscard]] std::vector<const TreeNode*> Chosen(const TreeNode* clicked) const;
+
+    [[nodiscard]] const TreeNode* Current() const;
+
+    void ShowTheSelectedAddon();
+
+    void ShowTheSelectedBatch(const QModelIndexList& rows);
+
+    void ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const;
+
+    void MoveTheSelectedAddon();
+
+    void OpenTheSelectedFolder() const;
 
     void ToggleSelection(bool enable);
 
@@ -56,7 +76,7 @@ private:
 
     void RestoreExpansion(const QModelIndex& parent);
 
-    void CountAddons(const QModelIndex& parent, std::size_t& addons, std::size_t& enabled) const;
+    void PublishSummary();
 
     void ShowContextMenu(const QPoint& where);
 
@@ -82,6 +102,11 @@ private:
     AddonTreeModel& model_;
     QStackedWidget* pages_ = nullptr;
     QTreeView* tree_ = nullptr;
+    ContextPanel* panel_ = nullptr;
+    ModelRowDetail* detail_ = nullptr;
+    QPushButton* relink_ = nullptr;
+    QPushButton* moveTo_ = nullptr;
+    QPushButton* openFolder_ = nullptr;
     AddonTreeFilterModel* filter_ = nullptr;
     QPushButton* undo_ = nullptr;
     std::set<std::string> expanded_;
