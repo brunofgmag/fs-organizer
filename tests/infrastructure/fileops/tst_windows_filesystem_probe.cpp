@@ -6,6 +6,7 @@
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/StdFilesystemProbe.h"
 
 class WindowsFilesystemProbeTest : public QObject
 {
@@ -18,6 +19,7 @@ private slots:
     static void AJunctionIsAReparsePointAndARealFolderIsNot();
     static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
     static void AFolderReportsWhenItWasLastWrittenTo();
+    static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
 };
 
 namespace
@@ -141,6 +143,37 @@ void WindowsFilesystemProbeTest::AFolderReportsWhenItWasLastWrittenTo()
     QVERIFY(written.has_value());
     QVERIFY(std::chrono::abs(std::chrono::system_clock::now() - *written) < std::chrono::minutes{5});
     QVERIFY(!filesystemProbe.LastWriteTime(folder / "never-existed").has_value());
+}
+
+void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes()
+{
+    const Disk disk;
+    const std::filesystem::path destination = disk.AddFolder("Community");
+    const std::filesystem::path physical = disk.AddFolder("Community/asfs");
+    const std::filesystem::path live = disk.AddFolder("live-target");
+    const std::filesystem::path liveLink = destination / "ag-airport-live";
+
+    WindowsLinkService linkService;
+    QVERIFY(linkService.CreateLink(liveLink, live, LinkType::Junction));
+
+    const std::filesystem::path dangling = disk.AddDanglingJunction("Community/ag-airport-bgqq");
+
+    const WindowsFilesystemProbe production;
+    const StdFilesystemProbe double_;
+
+    for (const std::filesystem::path& entry : {physical, liveLink, dangling})
+    {
+        QCOMPARE(double_.IsReparsePoint(entry), production.IsReparsePoint(entry));
+        QCOMPARE(double_.EntryExistsWithoutFollowingLinks(entry), production.EntryExistsWithoutFollowingLinks(entry));
+    }
+
+    std::vector<std::filesystem::path> byTheDouble = double_.ChildDirectories(destination);
+    std::vector<std::filesystem::path> byProduction = production.ChildDirectories(destination);
+    std::ranges::sort(byTheDouble);
+    std::ranges::sort(byProduction);
+
+    QCOMPARE(byProduction.size(), std::size_t{3});
+    QCOMPARE(byTheDouble, byProduction);
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

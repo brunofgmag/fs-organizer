@@ -17,6 +17,7 @@ private slots:
     static void RemovingATreeAtAJunctionNeverReachesTheTarget();
     static void RemovingATreeTakesTheWholeSubtree();
     static void CopyingATreeReproducesEveryFileAndItsSize();
+    static void CopyingASourceThatCannotBeWalkedFailsInsteadOfLandingNothing();
     static void CancellingTheProgressCallbackStopsTheCopy();
     static void MovingAcrossVolumesIsRefusedInsteadOfCopied();
     static void MovingIntoAFolderThatDoesNotExistYetOpensTheWayThere();
@@ -126,6 +127,17 @@ void WindowsFileOperationsTest::CopyingATreeReproducesEveryFileAndItsSize()
     QVERIFY(std::filesystem::exists(landing / "scenery/objects.bgl"));
     QCOMPARE(std::filesystem::file_size(landing / "scenery/objects.bgl"), std::uintmax_t{15});
     QVERIFY(std::filesystem::exists(source / "manifest.json"));
+}
+
+void WindowsFileOperationsTest::CopyingASourceThatCannotBeWalkedFailsInsteadOfLandingNothing()
+{
+    const Disk disk;
+    const std::filesystem::path neverCreated = disk.Root() / "Community/asfs";
+    const std::filesystem::path landing = disk.Root() / "Library/asfs.fsorg-partial";
+
+    WindowsFileOperations files;
+    QCOMPARE(files.CopyTree(neverCreated, landing, {}), CopyOutcome::Failed);
+    QVERIFY(!std::filesystem::exists(landing));
 }
 
 void WindowsFileOperationsTest::CancellingTheProgressCallbackStopsTheCopy()

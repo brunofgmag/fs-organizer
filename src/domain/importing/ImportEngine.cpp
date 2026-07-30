@@ -76,9 +76,13 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
         return ImportOutcome::Stopped(FileResult::SourceIsAReparsePoint);
     }
 
-    const std::vector<FileFingerprint> source = filesystemProbe_.FingerprintTree(request.source);
+    const std::optional<std::vector<FileFingerprint>> source = filesystemProbe_.FingerprintTree(request.source);
+    if (!source.has_value())
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotReadTheSource);
+    }
 
-    if (const ImportOutcome room = CheckFreeSpace(request.category, TotalSizeOf(source)); !room.Succeeded())
+    if (const ImportOutcome room = CheckFreeSpace(request.category, TotalSizeOf(*source)); !room.Succeeded())
     {
         return room;
     }
@@ -96,7 +100,8 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     }
 
     announce(OperationKind::ImportVerifyStaging);
-    const bool verified = FingerprintsMatch(source, filesystemProbe_.FingerprintTree(staging));
+    const std::optional<std::vector<FileFingerprint>> copied = filesystemProbe_.FingerprintTree(staging);
+    const bool verified = copied.has_value() && FingerprintsMatch(*source, *copied);
     RecordStep(addon, OperationKind::ImportVerifyStaging, staging, target,
                verified ? FileResult::Completed : FileResult::VerificationFailed);
     if (!verified)

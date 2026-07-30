@@ -47,18 +47,28 @@ bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& 
 
 std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildDirectories(const std::filesystem::path& path) const
 {
-    std::vector<std::filesystem::path> children;
-
     std::error_code error;
-    const std::filesystem::directory_iterator entries(path, std::filesystem::directory_options::skip_permission_denied,
-                                                      error);
-
-    for (const std::filesystem::directory_entry& entry : entries)
+    std::filesystem::directory_iterator entry(path, std::filesystem::directory_options::skip_permission_denied, error);
+    if (error)
     {
-        const DWORD attributes = AttributesWithoutFollowingLinks(entry.path());
+        return {};
+    }
+
+    std::vector<std::filesystem::path> children;
+    const std::filesystem::directory_iterator end;
+
+    while (entry != end)
+    {
+        const DWORD attributes = AttributesWithoutFollowingLinks(entry->path());
         if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
         {
-            children.push_back(entry.path());
+            children.push_back(entry->path());
+        }
+
+        entry.increment(error);
+        if (error)
+        {
+            return {};
         }
     }
 
@@ -121,22 +131,44 @@ WindowsFilesystemProbe::LastWriteTime(const std::filesystem::path& path) const
                written - std::filesystem::file_time_type::clock::now());
 }
 
-std::vector<FileFingerprint> WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
+std::optional<std::vector<FileFingerprint>>
+WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
 {
-    std::vector<FileFingerprint> files;
-
     std::error_code error;
-    const std::filesystem::recursive_directory_iterator entries(
+    std::filesystem::recursive_directory_iterator entry(
         root, std::filesystem::directory_options::skip_permission_denied, error);
-
-    for (const std::filesystem::directory_entry& entry : entries)
+    if (error)
     {
-        if (!entry.is_regular_file(error))
+        return std::nullopt;
+    }
+
+    std::vector<FileFingerprint> files;
+    const std::filesystem::recursive_directory_iterator end;
+
+    while (entry != end)
+    {
+        const bool isFile = entry->is_regular_file(error);
+        if (error)
         {
-            continue;
+            return std::nullopt;
         }
 
-        files.push_back(FileFingerprint{entry.path().lexically_relative(root), entry.file_size(error)});
+        if (isFile)
+        {
+            const std::uintmax_t size = entry->file_size(error);
+            if (error)
+            {
+                return std::nullopt;
+            }
+
+            files.push_back(FileFingerprint{entry->path().lexically_relative(root), size});
+        }
+
+        entry.increment(error);
+        if (error)
+        {
+            return std::nullopt;
+        }
     }
 
     return files;

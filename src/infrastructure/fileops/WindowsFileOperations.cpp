@@ -9,6 +9,7 @@
 
 #include <windows.h>
 
+#include <optional>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -37,29 +38,56 @@ namespace
         return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
     }
 
+    struct WalkedFile
+    {
+        std::filesystem::path path;
+        std::uintmax_t bytes = 0;
+    };
+
     struct Walk
     {
-        std::vector<std::filesystem::path> files;
+        std::vector<WalkedFile> files;
         std::uintmax_t totalBytes = 0;
     };
 
-    Walk FilesUnder(const std::filesystem::path& root)
+    std::optional<Walk> FilesUnder(const std::filesystem::path& root)
     {
-        Walk walk;
-
         std::error_code error;
-        const std::filesystem::recursive_directory_iterator entries(
+        std::filesystem::recursive_directory_iterator entry(
             root, std::filesystem::directory_options::skip_permission_denied, error);
-
-        for (const std::filesystem::directory_entry& entry : entries)
+        if (error)
         {
-            if (!entry.is_regular_file(error))
+            return std::nullopt;
+        }
+
+        Walk walk;
+        const std::filesystem::recursive_directory_iterator end;
+
+        while (entry != end)
+        {
+            const bool isFile = entry->is_regular_file(error);
+            if (error)
             {
-                continue;
+                return std::nullopt;
             }
 
-            walk.files.push_back(entry.path());
-            walk.totalBytes += entry.file_size(error);
+            if (isFile)
+            {
+                const std::uintmax_t bytes = entry->file_size(error);
+                if (error)
+                {
+                    return std::nullopt;
+                }
+
+                walk.files.push_back({entry->path(), bytes});
+                walk.totalBytes += bytes;
+            }
+
+            entry.increment(error);
+            if (error)
+            {
+                return std::nullopt;
+            }
         }
 
         return walk;
@@ -106,7 +134,11 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
                                             const std::filesystem::path& destination,
                                             const std::function<bool(const CopyProgress&)>& onProgress)
 {
-    const Walk walk = FilesUnder(source);
+    const std::optional<Walk> walk = FilesUnder(source);
+    if (!walk.has_value())
+    {
+        return CopyOutcome::Failed;
+    }
 
     std::error_code error;
     std::filesystem::create_directories(destination, error);
@@ -115,11 +147,11 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
         return CopyOutcome::Failed;
     }
 
-    CopyState state{&onProgress, 0, walk.totalBytes, false};
+    CopyState state{&onProgress, 0, walk->totalBytes, false};
 
-    for (const std::filesystem::path& file : walk.files)
+    for (const WalkedFile& file : walk->files)
     {
-        const std::filesystem::path landing = destination / file.lexically_relative(source);
+        const std::filesystem::path landing = destination / file.path.lexically_relative(source);
 
         std::filesystem::create_directories(landing.parent_path(), error);
         if (error)
@@ -128,14 +160,14 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
         }
 
         BOOL cancelFlag = FALSE;
-        if (CopyFileExW(NativePath(file).c_str(), NativePath(landing).c_str(), ReportProgress, &state, &cancelFlag,
+        if (CopyFileExW(NativePath(file.path).c_str(), NativePath(landing).c_str(), ReportProgress, &state, &cancelFlag,
                         COPY_FILE_FAIL_IF_EXISTS)
             == FALSE)
         {
             return state.cancelled ? CopyOutcome::Cancelled : CopyOutcome::Failed;
         }
 
-        state.copiedBefore += std::filesystem::file_size(file, error);
+        state.copiedBefore += file.bytes;
     }
 
     return CopyOutcome::Completed;
@@ -210,16 +242,23 @@ bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)
     }
 
     std::error_code error;
-    const std::filesystem::directory_iterator children(path, std::filesystem::directory_options::skip_permission_denied,
-                                                       error);
+    std::filesystem::directory_iterator child(path, std::filesystem::directory_options::skip_permission_denied, error);
     if (error)
     {
         return false;
     }
 
-    for (const std::filesystem::directory_entry& child : children)
+    const std::filesystem::directory_iterator end;
+
+    while (child != end)
     {
-        if (!RemoveTree(child.path()))
+        if (!RemoveTree(child->path()))
+        {
+            return false;
+        }
+
+        child.increment(error);
+        if (error)
         {
             return false;
         }

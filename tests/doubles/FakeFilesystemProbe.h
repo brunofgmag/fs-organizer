@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "domain/ports/FilesystemProbe.h"
+#include "domain/support/PathUtils.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
 class FakeFilesystemProbe final : public FilesystemProbe
@@ -63,8 +64,14 @@ public:
         return fileSystem_.LastWriteTime(path);
     }
 
-    [[nodiscard]] std::vector<FileFingerprint> FingerprintTree(const std::filesystem::path& root) const override
+    [[nodiscard]] std::optional<std::vector<FileFingerprint>>
+    FingerprintTree(const std::filesystem::path& root) const override
     {
+        if (std::ranges::find(unreadable_, ComparablePath(root)) != unreadable_.end())
+        {
+            return std::nullopt;
+        }
+
         std::vector<FileFingerprint> files;
         for (const std::filesystem::path& file : fileSystem_.FilesUnder(root))
         {
@@ -73,8 +80,14 @@ public:
         return files;
     }
 
+    void RefuseToWalk(const std::filesystem::path& root)
+    {
+        unreadable_.push_back(ComparablePath(root));
+    }
+
 private:
     InMemoryFileSystem& fileSystem_;
+    std::vector<std::string> unreadable_;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILESYSTEM_PROBE_H

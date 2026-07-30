@@ -205,7 +205,8 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
 
 ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
 {
-    const std::vector<FileFingerprint> files = filesystemProbe_.FingerprintTree(folder);
+    const std::vector<FileFingerprint> files =
+        filesystemProbe_.FingerprintTree(folder).value_or(std::vector<FileFingerprint>{});
     const auto sizes = files | std::views::transform(&FileFingerprint::size);
 
     const TreeNode scanned = catalog_.Scan(folder);
@@ -228,7 +229,8 @@ std::uintmax_t ImportService::TotalSizeOf(const std::vector<std::filesystem::pat
 
     for (const std::filesystem::path& folder : folders)
     {
-        const std::vector<FileFingerprint> files = filesystemProbe_.FingerprintTree(folder);
+        const std::vector<FileFingerprint> files =
+            filesystemProbe_.FingerprintTree(folder).value_or(std::vector<FileFingerprint>{});
         const auto sizes = files | std::views::transform(&FileFingerprint::size);
 
         total += std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});

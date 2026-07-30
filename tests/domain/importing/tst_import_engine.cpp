@@ -24,6 +24,8 @@ private slots:
     static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
     static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
     static void AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs();
+    static void ASourceThatCannotBeWalkedStopsTheImportBeforeAnythingIsCopied();
+    static void AnEmptySourceIsNotVerifiedAgainstAStagingThatCannotBeWalked();
     static void AFolderOutsideTheConfiguredDestinationsIsNeverImported();
     static void ADestinationRootIsNotAFolderInsideItself();
     static void AForeignLinkIsNeverImportedAsIfItWereAFolder();
@@ -173,6 +175,35 @@ void ImportEngineTest::AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs()
     f.VerifySimBridgeIsStillWhereItWas();
     QVERIFY(!f.fileSystem.Exists(kTarget));
     QVERIFY(f.fileSystem.Exists(kStaging));
+}
+
+void ImportEngineTest::ASourceThatCannotBeWalkedStopsTheImportBeforeAnythingIsCopied()
+{
+    Fixture f;
+    f.AddSimBridgeToTheDestination();
+    f.filesystemProbe.RefuseToWalk(kSource);
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::CouldNotReadTheSource);
+    f.VerifySimBridgeIsStillWhereItWas();
+    QVERIFY(!f.fileSystem.Exists(kStaging));
+    QVERIFY(!f.fileSystem.Exists(kTarget));
+}
+
+void ImportEngineTest::AnEmptySourceIsNotVerifiedAgainstAStagingThatCannotBeWalked()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory(kSource);
+    f.fileSystem.AddDirectory("D:/Library/Utils");
+    f.filesystemProbe.RefuseToWalk(kStaging);
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::VerificationFailed);
+    QVERIFY(f.fileSystem.Exists(kSource));
+    QVERIFY(!f.fileSystem.Exists(kTarget));
 }
 
 void ImportEngineTest::AFolderOutsideTheConfiguredDestinationsIsNeverImported()

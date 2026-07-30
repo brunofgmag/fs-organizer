@@ -8,6 +8,20 @@
 class StdFilesystemProbe final : public FilesystemProbe
 {
 public:
+    [[nodiscard]] static bool IsALinkWithoutFollowing(const std::filesystem::file_status& status)
+    {
+        if (std::filesystem::is_symlink(status))
+        {
+            return true;
+        }
+
+#ifdef _WIN32
+        return status.type() == std::filesystem::file_type::junction;
+#else
+        return false;
+#endif
+    }
+
     [[nodiscard]] bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const override
     {
         std::error_code error;
@@ -26,7 +40,7 @@ public:
     {
         std::error_code error;
 
-        return std::filesystem::is_symlink(std::filesystem::symlink_status(path, error));
+        return IsALinkWithoutFollowing(std::filesystem::symlink_status(path, error));
     }
 
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
@@ -37,7 +51,9 @@ public:
         for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(
                  path, std::filesystem::directory_options::skip_permission_denied, error))
         {
-            if (entry.is_directory(error) || entry.is_symlink(error))
+            const std::filesystem::file_status status = std::filesystem::symlink_status(entry.path(), error);
+
+            if (status.type() == std::filesystem::file_type::directory || IsALinkWithoutFollowing(status))
             {
                 children.push_back(entry.path());
             }
@@ -76,17 +92,43 @@ public:
                                          written - std::filesystem::file_time_type::clock::now()));
     }
 
-    [[nodiscard]] std::vector<FileFingerprint> FingerprintTree(const std::filesystem::path& root) const override
+    [[nodiscard]] std::optional<std::vector<FileFingerprint>>
+    FingerprintTree(const std::filesystem::path& root) const override
     {
-        std::vector<FileFingerprint> files;
-
         std::error_code error;
-        for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(
-                 root, std::filesystem::directory_options::skip_permission_denied, error))
+        std::filesystem::recursive_directory_iterator entry(
+            root, std::filesystem::directory_options::skip_permission_denied, error);
+        if (error)
         {
-            if (entry.is_regular_file(error))
+            return std::nullopt;
+        }
+
+        std::vector<FileFingerprint> files;
+        const std::filesystem::recursive_directory_iterator end;
+
+        while (entry != end)
+        {
+            const bool isFile = entry->is_regular_file(error);
+            if (error)
             {
-                files.push_back(FileFingerprint{entry.path().lexically_relative(root), entry.file_size(error)});
+                return std::nullopt;
+            }
+
+            if (isFile)
+            {
+                const std::uintmax_t size = entry->file_size(error);
+                if (error)
+                {
+                    return std::nullopt;
+                }
+
+                files.push_back(FileFingerprint{entry->path().lexically_relative(root), size});
+            }
+
+            entry.increment(error);
+            if (error)
+            {
+                return std::nullopt;
             }
         }
 
