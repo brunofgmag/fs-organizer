@@ -31,7 +31,7 @@ public:
 
     void CarryTriageOn(const QWidget* page);
 
-    void ShowTriage(std::size_t broken, std::size_t conflicts, std::size_t unmanaged) const;
+    void ShowTriage(std::size_t broken, std::size_t conflicts, std::size_t duplicated, std::size_t unmanaged) const;
 
     void ShowStatus(const QString& message) const;
 
@@ -53,6 +53,8 @@ signals:
     void RepairRequested();
 
     void ResolveRequested();
+
+    void DuplicatesRequested();
 
     void ImportRequested();
 

@@ -294,7 +294,8 @@ int main(int argc, char* argv[])
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
                      [&window](const AttentionBreakdown& breakdown)
                      {
-                         window.ShowTriage(breakdown.broken, breakdown.conflicts, breakdown.unmanaged);
+                         window.ShowTriage(breakdown.broken, breakdown.conflicts, breakdown.duplicated,
+                                           breakdown.unmanaged);
                      });
     QObject::connect(&window, &MainWindow::RepairRequested, communityPage,
                      [communityButton, communityPage]
@@ -309,6 +310,12 @@ int main(int argc, char* argv[])
                          communityPage->FilterByConflicted();
                          communityPage->SelectEverythingShown();
                          communityPage->ResolveTheSelectedConflict();
+                     });
+    QObject::connect(&window, &MainWindow::DuplicatesRequested, communityPage,
+                     [communityButton, communityPage]
+                     {
+                         communityButton->click();
+                         communityPage->FilterBy(EntryClassification::Duplicated);
                      });
     QObject::connect(&window, &MainWindow::ImportRequested, communityPage,
                      [communityButton, communityPage]

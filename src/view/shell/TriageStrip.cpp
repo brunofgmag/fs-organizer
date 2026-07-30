@@ -18,12 +18,13 @@ TriageStrip::TriageStrip(QWidget* parent) : QWidget(parent)
     broken_ = AddItem("filled", tr("Reparar quebrados..."), row);
     broken_.action->setProperty("role", "primary");
 
-    separator_ = new QFrame(this);
-    separator_->setObjectName(QStringLiteral("TriageSeparator"));
-    separator_->setFixedSize(1, 18);
-    row->addWidget(separator_);
+    beforeConflicts_ = AddSeparator(row);
 
     conflicts_ = AddItem("outlined", tr("Resolver conflito(s)..."), row);
+
+    beforeDuplicated_ = AddSeparator(row);
+
+    duplicated_ = AddItem("outlined", tr("Ver duplicadas..."), row);
 
     row->addStretch();
 
@@ -32,9 +33,20 @@ TriageStrip::TriageStrip(QWidget* parent) : QWidget(parent)
 
     connect(broken_.action, &QPushButton::clicked, this, &TriageStrip::RepairRequested);
     connect(conflicts_.action, &QPushButton::clicked, this, &TriageStrip::ResolveRequested);
+    connect(duplicated_.action, &QPushButton::clicked, this, &TriageStrip::DuplicatesRequested);
     connect(unmanaged_.action, &QPushButton::clicked, this, &TriageStrip::ImportRequested);
 
-    ShowBreakdown(0, 0, 0);
+    ShowBreakdown(0, 0, 0, 0);
+}
+
+QFrame* TriageStrip::AddSeparator(QHBoxLayout* into)
+{
+    auto* separator = new QFrame(this);
+    separator->setObjectName(QStringLiteral("TriageSeparator"));
+    separator->setFixedSize(1, 18);
+    into->addWidget(separator);
+
+    return separator;
 }
 
 TriageStrip::Item TriageStrip::AddItem(const char* tag, const QString& action, QHBoxLayout* into)
@@ -62,18 +74,24 @@ void TriageStrip::ShowItem(const Item& item, const bool shown)
     item.action->setVisible(shown);
 }
 
-void TriageStrip::ShowBreakdown(const std::size_t broken, const std::size_t conflicts, const std::size_t unmanaged)
+void TriageStrip::ShowBreakdown(const std::size_t broken,
+                                const std::size_t conflicts,
+                                const std::size_t duplicated,
+                                const std::size_t unmanaged)
 {
     broken_.label->setText(tr("%n sem alvo", nullptr, static_cast<int>(broken)));
     conflicts_.label->setText(tr("%n conflito(s)", nullptr, static_cast<int>(conflicts)));
+    duplicated_.label->setText(tr("%n duplicada(s)", nullptr, static_cast<int>(duplicated)));
     unmanaged_.label->setText(tr("%n pasta(s) fora da biblioteca", nullptr, static_cast<int>(unmanaged)));
 
     ShowItem(broken_, broken > 0);
     ShowItem(conflicts_, conflicts > 0);
+    ShowItem(duplicated_, duplicated > 0);
     ShowItem(unmanaged_, unmanaged > 0);
-    separator_->setVisible(broken > 0 && conflicts > 0);
+    beforeConflicts_->setVisible(broken > 0 && conflicts > 0);
+    beforeDuplicated_->setVisible(duplicated > 0 && (broken > 0 || conflicts > 0));
 
-    anythingToSay_ = broken + conflicts + unmanaged > 0;
+    anythingToSay_ = broken + conflicts + duplicated + unmanaged > 0;
 }
 
 bool TriageStrip::HasAnythingToSay() const

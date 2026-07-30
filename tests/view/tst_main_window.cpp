@@ -127,10 +127,10 @@ void MainWindowTest::ACleanInstallShowsNoTriageStrip()
     auto* strip = window.findChild<TriageStrip*>();
     QVERIFY(strip != nullptr);
 
-    window.ShowTriage(0, 0, 0);
+    window.ShowTriage(0, 0, 0, 0);
     QVERIFY(!strip->isVisibleTo(&window));
 
-    window.ShowTriage(28, 2, 178);
+    window.ShowTriage(28, 2, 0, 178);
     QVERIFY(strip->isVisibleTo(&window));
 }
 
@@ -144,7 +144,7 @@ void MainWindowTest::TheStripOnlyRidesOnThePagesThatCarryIt()
     PageTab* journalTab = window.AddPage(QStringLiteral("Diário"), journal);
     window.CarryTriageOn(library);
 
-    window.ShowTriage(28, 0, 0);
+    window.ShowTriage(28, 0, 0, 0);
 
     auto* strip = window.findChild<TriageStrip*>();
     QVERIFY(strip->isVisibleTo(&window));

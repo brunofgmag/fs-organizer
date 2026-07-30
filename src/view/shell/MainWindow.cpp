@@ -46,6 +46,7 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
 
     connect(triage_, &TriageStrip::RepairRequested, this, &MainWindow::RepairRequested);
     connect(triage_, &TriageStrip::ResolveRequested, this, &MainWindow::ResolveRequested);
+    connect(triage_, &TriageStrip::DuplicatesRequested, this, &MainWindow::DuplicatesRequested);
     connect(triage_, &TriageStrip::ImportRequested, this, &MainWindow::ImportRequested);
 
     auto* central = new QWidget(this);
@@ -179,9 +180,12 @@ void MainWindow::CarryTriageOn(const QWidget* page)
     triaged_.insert(page, true);
 }
 
-void MainWindow::ShowTriage(const std::size_t broken, const std::size_t conflicts, const std::size_t unmanaged) const
+void MainWindow::ShowTriage(const std::size_t broken,
+                            const std::size_t conflicts,
+                            const std::size_t duplicated,
+                            const std::size_t unmanaged) const
 {
-    triage_->ShowBreakdown(broken, conflicts, unmanaged);
+    triage_->ShowBreakdown(broken, conflicts, duplicated, unmanaged);
     DressTheFooterFor(pages_->currentWidget());
 }
 

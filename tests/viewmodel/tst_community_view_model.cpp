@@ -24,6 +24,7 @@ private slots:
     static void ShowingFillsTheTableFromTheSharedSnapshot();
     static void RepairingRemovesTheDeadRowsAndDropsTheAttentionCount();
     static void TheBreakdownSeparatesBrokenConflictedAndUnmanaged();
+    static void TheBreakdownCountsAnAddonLinkedIntoTwoDestinations();
 };
 
 namespace
@@ -116,7 +117,7 @@ void CommunityViewModelTest::ShowingFillsTheTableFromTheSharedSnapshot()
     f.viewModel.Show();
 
     QCOMPARE(f.model.rowCount({}), 2);
-    QCOMPARE(f.viewModel.NeedsAttention(), std::size_t{1});
+    QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{1});
 }
 
 void CommunityViewModelTest::TheBreakdownSeparatesBrokenConflictedAndUnmanaged()
@@ -132,7 +133,31 @@ void CommunityViewModelTest::TheBreakdownSeparatesBrokenConflictedAndUnmanaged()
 
     QCOMPARE(breakdown.broken, std::size_t{1});
     QCOMPARE(breakdown.conflicts, std::size_t{0});
+    QCOMPARE(breakdown.duplicated, std::size_t{0});
     QCOMPARE(breakdown.unmanaged, std::size_t{1});
+}
+
+void CommunityViewModelTest::TheBreakdownCountsAnAddonLinkedIntoTwoDestinations()
+{
+    constexpr auto kSecondDestination = "E:/Flight Simulator 2024/Community2024";
+    constexpr auto kAddon = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+
+    Fixture f;
+    f.fileSystem.AddDirectory(kSecondDestination);
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kAddon);
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w", kAddon);
+
+    SimulatorProfile profile = Profile();
+    profile.destinations = {kCommunity, kSecondDestination};
+
+    f.Seed(profile);
+    f.viewModel.Show();
+
+    const AttentionBreakdown breakdown = f.viewModel.Breakdown();
+
+    QCOMPARE(breakdown.duplicated, std::size_t{2});
+    QCOMPARE(breakdown.broken, std::size_t{0});
+    QCOMPARE(breakdown.unmanaged, std::size_t{0});
 }
 
 void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCount()
@@ -145,7 +170,7 @@ void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCoun
     f.viewModel.Show();
 
     const QSignalSpy finished(&f.viewModel, &CommunityViewModel::RepairFinished);
-    const QSignalSpy attention(&f.viewModel, &CommunityViewModel::AttentionChanged);
+    const QSignalSpy attention(&f.viewModel, &CommunityViewModel::BreakdownChanged);
 
     std::vector<RepairRequest> requests;
     for (const RepairCandidate& candidate : f.viewModel.PlanRepairs())
@@ -157,7 +182,7 @@ void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCoun
 
     QCOMPARE(finished.size(), 1);
     QCOMPARE(f.model.rowCount({}), 0);
-    QCOMPARE(f.viewModel.NeedsAttention(), std::size_t{0});
+    QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{0});
     QCOMPARE(attention.size(), 1);
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/gone"));
 }

@@ -34,11 +34,6 @@ void CommunityViewModel::Repair(const std::vector<RepairRequest>& requests)
     emit RepairFinished(results);
 }
 
-std::size_t CommunityViewModel::NeedsAttention() const
-{
-    return attention_;
-}
-
 AttentionBreakdown CommunityViewModel::Breakdown() const
 {
     return breakdown_;
@@ -68,22 +63,14 @@ void CommunityViewModel::Refresh()
     const AttentionBreakdown breakdown{
         .broken = classified(EntryClassification::Broken),
         .conflicts = snapshot.conflicts.Count(),
+        .duplicated = classified(EntryClassification::Duplicated),
         .unmanaged = classified(EntryClassification::Unmanaged),
     };
 
     if (breakdown.broken != breakdown_.broken || breakdown.conflicts != breakdown_.conflicts
-        || breakdown.unmanaged != breakdown_.unmanaged)
+        || breakdown.duplicated != breakdown_.duplicated || breakdown.unmanaged != breakdown_.unmanaged)
     {
         breakdown_ = breakdown;
         emit BreakdownChanged(breakdown_);
-    }
-
-    const std::size_t attention =
-        breakdown_.broken + breakdown_.conflicts + classified(EntryClassification::Duplicated);
-
-    if (attention != attention_)
-    {
-        attention_ = attention;
-        emit AttentionChanged(attention_);
     }
 }

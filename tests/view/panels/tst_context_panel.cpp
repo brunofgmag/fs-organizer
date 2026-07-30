@@ -24,6 +24,7 @@ private slots:
     static void TheDetailShowsEveryColumnOfTheSelectedRow();
     static void AnInvalidIndexClearsTheDetailToItsPlaceholder();
     static void TheStripKeepsQuietUntilSomethingBreaks();
+    static void ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen();
     static void ClosingThePanelAsksForIt();
 };
 
@@ -161,10 +162,10 @@ void ContextPanelTest::TheStripKeepsQuietUntilSomethingBreaks()
 {
     TriageStrip strip;
 
-    strip.ShowBreakdown(0, 0, 0);
+    strip.ShowBreakdown(0, 0, 0, 0);
     QVERIFY(!strip.HasAnythingToSay());
 
-    strip.ShowBreakdown(0, 0, 178);
+    strip.ShowBreakdown(0, 0, 0, 178);
     QVERIFY(strip.HasAnythingToSay());
 
     strip.show();
@@ -177,6 +178,33 @@ void ContextPanelTest::TheStripKeepsQuietUntilSomethingBreaks()
     }
 
     QCOMPARE(shown, 1);
+}
+
+void ContextPanelTest::ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen()
+{
+    TriageStrip strip;
+
+    strip.ShowBreakdown(0, 0, 2, 0);
+    QVERIFY(strip.HasAnythingToSay());
+
+    strip.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&strip));
+
+    const QSignalSpy asked(&strip, &TriageStrip::DuplicatesRequested);
+
+    QPushButton* shown = nullptr;
+    for (QPushButton* action : strip.findChildren<QPushButton*>())
+    {
+        if (action->isVisibleTo(&strip))
+        {
+            QVERIFY(shown == nullptr);
+            shown = action;
+        }
+    }
+
+    QVERIFY(shown != nullptr);
+    shown->click();
+    QCOMPARE(asked.size(), 1);
 }
 
 void ContextPanelTest::ClosingThePanelAsksForIt()

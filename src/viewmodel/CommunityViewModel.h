@@ -14,6 +14,7 @@ struct AttentionBreakdown
 {
     std::size_t broken = 0;
     std::size_t conflicts = 0;
+    std::size_t duplicated = 0;
     std::size_t unmanaged = 0;
 };
 
@@ -34,16 +35,12 @@ public:
 
     void Repair(const std::vector<RepairRequest>& requests);
 
-    [[nodiscard]] std::size_t NeedsAttention() const;
-
     [[nodiscard]] AttentionBreakdown Breakdown() const;
 
     [[nodiscard]] const ProfileSnapshot& Snapshot() const;
 
 signals:
     void RepairFinished(const std::vector<LinkOperationResult>& results);
-
-    void AttentionChanged(std::size_t count);
 
     void BreakdownChanged(const AttentionBreakdown& breakdown);
 
@@ -53,7 +50,6 @@ private:
     ProfileService& service_;
     Session& session_;
     CommunityModel& model_;
-    std::size_t attention_ = 0;
     AttentionBreakdown breakdown_;
 };
 
