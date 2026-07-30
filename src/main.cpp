@@ -1,7 +1,8 @@
+#include <optional>
+
 #include <QtCore/QLibraryInfo>
 #include <QtCore/QTranslator>
 #include <QtWidgets/QApplication>
-#include <QtWidgets/QToolButton>
 
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
@@ -31,6 +32,8 @@
 #include "view/QuarantinePage.h"
 #include "view/SetupWizard.h"
 #include "view/StagingLeftoverDialog.h"
+#include "view/theme/ModernistTheme.h"
+#include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -41,7 +44,6 @@
 
 namespace
 {
-    constexpr auto kNativeStyle = "windows11";
     constexpr auto kInterfaceLanguage = "pt_BR";
 
     void TranslateTheNativeWidgets(QTranslator& translator)
@@ -97,7 +99,14 @@ int main(int argc, char* argv[])
     QApplication::setApplicationName(QStringLiteral("FS Organizer"));
     QApplication::setApplicationVersion(QStringLiteral(FSORG_VERSION));
     QApplication::setOrganizationName(QStringLiteral("fs-organizer"));
-    QApplication::setStyle(QString::fromLatin1(kNativeStyle));
+    QApplication::setWindowIcon(BrandIcon());
+    ApplyModernistTheme(app);
+
+    QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, &app,
+                     [&app]
+                     {
+                         RefreshModernistTheme(app);
+                     });
 
     QTranslator nativeWidgets;
     TranslateTheNativeWidgets(nativeWidgets);
@@ -140,7 +149,7 @@ int main(int argc, char* argv[])
     AddonTreeViewModel treeViewModel(session, profileService, processProbe, model, notifier);
     auto* page = new AddonTreePage(treeViewModel, model, notifier);
 
-    ImportViewModel importViewModel(importService, profileService, processProbe, session);
+    ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
@@ -159,16 +168,74 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService, processProbe);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
-    window.AddPage(QObject::tr("Árvore"), page);
-    QToolButton* communityButton = window.AddPage(QStringLiteral("Community"), communityPage);
-    window.AddPage(QObject::tr("Presets"), presetsPage);
-    window.AddPage(QObject::tr("Quarentena"), quarantinePage);
+    PageTab* libraryButton = window.AddPage(QObject::tr("Biblioteca"), page);
+    PageTab* communityButton = window.AddPage(QStringLiteral("Community"), communityPage);
+    PageTab* presetsButton = window.AddPage(QObject::tr("Presets"), presetsPage);
     window.AddPage(QObject::tr("Diário"), journalPage);
+    PageTab* quarantineButton = window.AddPage(QObject::tr("Quarentena"), quarantinePage);
+
+    window.CarryTriageOn(page);
+    window.CarryTriageOn(communityPage);
+
+    const auto counted = [](const std::size_t count)
+    {
+        return count > 0 ? std::optional(static_cast<qsizetype>(count)) : std::nullopt;
+    };
+    QObject::connect(&model, &QAbstractItemModel::modelReset, libraryButton,
+                     [libraryButton, &model, counted]
+                     {
+                         libraryButton->ShowCount(counted(model.AddonCount()));
+                     });
+    QObject::connect(&communityModel, &QAbstractItemModel::modelReset, communityButton,
+                     [communityButton, &communityModel, counted]
+                     {
+                         communityButton->ShowCount(counted(static_cast<std::size_t>(communityModel.rowCount({}))));
+                     });
+    const auto showThePresetCount = [presetsButton, &presetViewModel, counted]
+    {
+        presetsButton->ShowCount(counted(static_cast<std::size_t>(presetViewModel.Names().size())));
+    };
+    QObject::connect(&presetViewModel, &PresetViewModel::Changed, presetsButton, showThePresetCount);
+    showThePresetCount();
+    QObject::connect(&quarantineModel, &QAbstractItemModel::modelReset, quarantineButton,
+                     [quarantineButton, &quarantineModel, counted]
+                     {
+                         quarantineButton->ShowCount(counted(static_cast<std::size_t>(quarantineModel.rowCount({}))));
+                     });
+
+    const auto carryTheSummaryOf = [&window](QWidget* page)
+    {
+        return [&window, page](const QString& summary)
+        {
+            window.ShowSummary(page, summary);
+        };
+    };
+    const auto carryTheAsideOf = [&window](QWidget* page)
+    {
+        return [&window, page](const QString& aside)
+        {
+            window.ShowAside(page, aside);
+        };
+    };
+    QObject::connect(page, &AddonTreePage::SummaryChanged, &window, carryTheSummaryOf(page));
+    QObject::connect(communityPage, &CommunityPage::SummaryChanged, &window, carryTheSummaryOf(communityPage));
+    QObject::connect(quarantinePage, &QuarantinePage::SummaryChanged, &window, carryTheSummaryOf(quarantinePage));
+    QObject::connect(journalPage, &JournalPage::SummaryChanged, &window, carryTheSummaryOf(journalPage));
+    QObject::connect(presetsPage, &PresetsPage::SummaryChanged, &window, carryTheSummaryOf(presetsPage));
+
+    QObject::connect(communityPage, &CommunityPage::AsideChanged, &window, carryTheAsideOf(communityPage));
+    QObject::connect(quarantinePage, &QuarantinePage::AsideChanged, &window, carryTheAsideOf(quarantinePage));
+    QObject::connect(journalPage, &JournalPage::AsideChanged, &window, carryTheAsideOf(journalPage));
+
+    QObject::connect(page, &AddonTreePage::MeterChanged, &window,
+                     [&window, page](const int filled, const int outOf)
+                     {
+                         window.ShowMeter(page, filled, outOf);
+                     });
 
     QObject::connect(page, &AddonTreePage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(communityPage, &CommunityPage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(quarantinePage, &QuarantinePage::StatusChanged, &window, &MainWindow::ShowStatus);
-    QObject::connect(journalPage, &JournalPage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(presetsPage, &PresetsPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::RepairFinished, page, &AddonTreePage::RefreshUndoState);
@@ -210,12 +277,34 @@ int main(int argc, char* argv[])
                          }
                      });
 
-    QObject::connect(&communityViewModel, &CommunityViewModel::AttentionChanged, communityButton,
-                     [communityButton](const std::size_t count)
+    QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
+                     [&window](const AttentionBreakdown& breakdown)
                      {
-                         communityButton->setText(count > 0 ? QStringLiteral("Community (%1)").arg(count)
-                                                            : QStringLiteral("Community"));
+                         window.ShowTriage(breakdown.broken, breakdown.conflicts, breakdown.unmanaged);
                      });
+    QObject::connect(&window, &MainWindow::RepairRequested, communityPage,
+                     [communityButton, communityPage]
+                     {
+                         communityButton->click();
+                         communityPage->StartRepair();
+                     });
+    QObject::connect(&window, &MainWindow::ResolveRequested, communityPage,
+                     [communityButton, communityPage]
+                     {
+                         communityButton->click();
+                         communityPage->FilterByConflicted();
+                         communityPage->SelectEverythingShown();
+                         communityPage->ResolveTheSelectedConflict();
+                     });
+    QObject::connect(&window, &MainWindow::ImportRequested, communityPage,
+                     [communityButton, communityPage]
+                     {
+                         communityButton->click();
+                         communityPage->FilterBy(EntryClassification::Unmanaged);
+                         communityPage->SelectEverythingShown();
+                         communityPage->StartImport();
+                     });
+
     QObject::connect(&treeViewModel, &AddonTreeViewModel::RestartPendingChanged, &window,
                      &MainWindow::ShowRestartPending);
     QObject::connect(&presetViewModel, &PresetViewModel::RestartPendingChanged, &window,
