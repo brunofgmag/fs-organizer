@@ -58,8 +58,8 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
 
-    panel_->Content()->insertWidget(0, detail_);
-    panel_->Content()->insertWidget(1, promise);
+    panel_->Add(detail_);
+    panel_->Add(promise);
     panel_->RestoreCollapsedState();
     panel_->Summon(false);
 
@@ -76,16 +76,7 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     layout->addWidget(panel_);
 
     connect(operations_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
-            [this]
-            {
-                const QModelIndexList rows = operations_->selectionModel()->selectedRows();
-                panel_->Summon(!rows.isEmpty());
-
-                if (!rows.isEmpty())
-                {
-                    detail_->Show(filter_->mapToSource(rows.front()));
-                }
-            });
+            &JournalPage::ShowTheSelectedOperation);
     connect(panel_, &ContextPanel::CloseRequested, operations_->selectionModel(), &QItemSelectionModel::clearSelection);
     connect(search, &QLineEdit::textChanged, filter_, &JournalFilterModel::Search);
     connect(failuresOnly, &QCheckBox::toggled, filter_, &JournalFilterModel::ShowOnlyWhatFailed);
@@ -93,6 +84,22 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     connect(&model_, &QAbstractItemModel::modelReset, this, &JournalPage::UpdateSummary);
 
     UpdateSummary();
+}
+
+void JournalPage::ShowTheSelectedOperation() const
+{
+    const QModelIndexList rows = operations_->selectionModel()->selectedRows();
+    panel_->Summon(!rows.isEmpty());
+
+    if (rows.isEmpty())
+    {
+        return;
+    }
+
+    const QModelIndex operation = filter_->mapToSource(rows.front());
+
+    detail_->Show(operation);
+    panel_->ShowTitle(model_.data(operation, Qt::DisplayRole).toString());
 }
 
 void JournalPage::UpdateSummary()

@@ -91,9 +91,9 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     connect(close_, &QToolButton::clicked, this, &ContextPanel::CloseRequested);
 }
 
-QVBoxLayout* ContextPanel::Content() const
+void ContextPanel::Add(QWidget* widget) const
 {
-    return content_;
+    content_->insertWidget(content_->count() - 1, widget);
 }
 
 void ContextPanel::RestoreCollapsedState()

@@ -7,7 +7,7 @@
 #include <QtCore/QString>
 #include <QtGui/QColor>
 
-#include "viewmodel/RowTags.h"
+#include "viewmodel/TagTone.h"
 
 class QFont;
 class QHeaderView;

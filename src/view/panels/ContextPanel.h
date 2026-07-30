@@ -15,7 +15,7 @@ class ContextPanel final : public QWidget
 public:
     explicit ContextPanel(const QString& title, int expandedWidth = 380, QWidget* parent = nullptr);
 
-    [[nodiscard]] QVBoxLayout* Content() const;
+    void Add(QWidget* widget) const;
 
     void RestoreCollapsedState();
 

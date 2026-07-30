@@ -23,6 +23,8 @@ signals:
     void AsideChanged(const QString& aside);
 
 private:
+    void ShowTheSelectedOperation() const;
+
     void UpdateSummary();
 
     JournalViewModel& viewModel_;

@@ -7,7 +7,8 @@
 #include <QtWidgets/QApplication>
 
 #include "view/theme/ModernistPaint.h"
-#include "viewmodel/RowTags.h"
+#include "viewmodel/RowTagRoles.h"
+#include "viewmodel/TagTone.h"
 
 namespace
 {

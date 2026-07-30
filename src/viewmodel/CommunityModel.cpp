@@ -3,7 +3,8 @@
 #include <utility>
 
 #include "support/PathText.h"
-#include "viewmodel/RowTags.h"
+#include "viewmodel/RowTagRoles.h"
+#include "viewmodel/TagTone.h"
 
 namespace
 {

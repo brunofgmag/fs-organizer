@@ -221,15 +221,14 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     apply_->setProperty("role", "primary");
     apply_->setDefault(true);
 
-    QVBoxLayout* content = panel->Content();
-    content->insertWidget(0, heading);
-    content->insertWidget(1, replace);
-    content->insertWidget(2, cumulative);
-    content->insertWidget(3, disable);
-    content->insertWidget(4, modeExplained_);
-    content->insertWidget(5, preview_);
-    content->insertWidget(6, apply_);
-    content->insertWidget(7, promise);
+    panel->Add(heading);
+    panel->Add(replace);
+    panel->Add(cumulative);
+    panel->Add(disable);
+    panel->Add(modeExplained_);
+    panel->Add(preview_);
+    panel->Add(apply_);
+    panel->Add(promise);
 
     panel->RestoreCollapsedState();
 
@@ -289,13 +288,13 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
             {
                 QMessageBox::information(this, tr("Nada foi alterado"), explanation);
             });
-    connect(&viewModel_, &PresetViewModel::SimulatorIsRunning, this,
+    connect(&notifier, &SessionNotifier::SimulatorIsRunning, this,
             [this]
             {
                 QMessageBox::information(this, tr("O simulador está aberto"),
                                          tr("As mudanças só valem depois de reiniciar o simulador."));
             });
-    connect(&viewModel_, &PresetViewModel::RestartPendingChanged, this,
+    connect(&notifier, &SessionNotifier::RestartPendingChanged, this,
             [this](const bool pending)
             {
                 if (pending)
@@ -417,7 +416,7 @@ void PresetsPage::ShowSelected()
     RefreshPreview();
 }
 
-void PresetsPage::ActionToggled(QTableWidgetItem* item)
+void PresetsPage::ActionToggled(const QTableWidgetItem* item)
 {
     if (populating_ || item->column() != kActionColumn || !selected_.has_value())
     {
@@ -444,7 +443,7 @@ void PresetsPage::ActionToggled(QTableWidgetItem* item)
     RefreshPreview();
 }
 
-void PresetsPage::RefreshPreview()
+void PresetsPage::RefreshPreview() const
 {
     switch (Mode())
     {
@@ -477,7 +476,7 @@ void PresetsPage::CreateFromWhatIsEnabled()
     }
 }
 
-void PresetsPage::UpdateFromWhatIsEnabled()
+void PresetsPage::UpdateFromWhatIsEnabled() const
 {
     const QString name = SelectedName();
 

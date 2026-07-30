@@ -8,7 +8,8 @@
 #include "domain/tree/EffectiveDestination.h"
 #include "domain/tree/LibraryLookup.h"
 #include "support/PathText.h"
-#include "viewmodel/RowTags.h"
+#include "viewmodel/RowTagRoles.h"
+#include "viewmodel/TagTone.h"
 
 namespace
 {
@@ -142,7 +143,7 @@ QString AddonTreeModel::NameOf(const TreeNode& node) const
     return AsText(node.path.filename());
 }
 
-QString AddonTreeModel::CountedSuffixOf(const TreeNode& node) const
+QString AddonTreeModel::CountedSuffixOf(const TreeNode& node)
 {
     if (node.kind == TreeNodeKind::Addon)
     {

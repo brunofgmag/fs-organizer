@@ -110,7 +110,7 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, runner, notifier};
+        Session session{service, organizer, settings, processProbe, runner, notifier};
         CommunityModel model;
         CommunityViewModel viewModel{service, session, notifier, model};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};

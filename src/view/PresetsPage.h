@@ -40,13 +40,13 @@ private:
 
     void ShowSelected();
 
-    void ActionToggled(QTableWidgetItem* item);
+    void ActionToggled(const QTableWidgetItem* item);
 
-    void RefreshPreview();
+    void RefreshPreview() const;
 
     void CreateFromWhatIsEnabled();
 
-    void UpdateFromWhatIsEnabled();
+    void UpdateFromWhatIsEnabled() const;
 
     void RenameSelected();
 

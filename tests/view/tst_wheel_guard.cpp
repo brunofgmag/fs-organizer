@@ -3,6 +3,8 @@
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QWidget>
 
+#include "view/RepairDialog.h"
+#include "view/StagingLeftoverDialog.h"
 #include "view/WheelGuard.h"
 
 class WheelGuardTest : public QObject
@@ -12,6 +14,8 @@ class WheelGuardTest : public QObject
 private slots:
     static void ScrollingOverAnUnfocusedComboLeavesItAlone();
     static void ScrollingOverAFocusedComboStillChangesIt();
+    static void ARollOverTheRepairDialogDoesNotRewriteADestructivePlan();
+    static void ARollOverTheLeftoverDialogDoesNotTurnAResumeIntoADiscard();
 };
 
 namespace
@@ -75,6 +79,72 @@ void WheelGuardTest::ScrollingOverAFocusedComboStillChangesIt()
     QCoreApplication::sendEvent(combo, &roll);
 
     QCOMPARE(combo->currentIndex(), 1);
+}
+
+namespace
+{
+    RepairCandidate ADeadLinkRepointableTo(const char* name, const char* library)
+    {
+        RepairCandidate candidate;
+        candidate.entry.path = std::filesystem::path(R"(E:\Flight Simulator 2024\Community)") / name;
+        candidate.entry.target = std::filesystem::path(R"(D:\gone)") / name;
+        candidate.entry.classification = EntryClassification::Broken;
+        candidate.targetsLibrary = true;
+        candidate.repointTo = std::filesystem::path(library) / name;
+
+        return candidate;
+    }
+
+    void RollDownOver(QComboBox* combo)
+    {
+        combo->clearFocus();
+        QVERIFY(!combo->hasFocus());
+
+        QWheelEvent roll = ARollDown(combo);
+        QCoreApplication::sendEvent(combo, &roll);
+    }
+}
+
+void WheelGuardTest::ARollOverTheRepairDialogDoesNotRewriteADestructivePlan()
+{
+    RepairDialog dialog({ADeadLinkRepointableTo("pmdg-aircraft-77w", R"(D:\MSFS 2024\Aircrafts)"),
+                         ADeadLinkRepointableTo("aerosoft-crj", R"(D:\MSFS 2024\Aircrafts)")});
+    dialog.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+
+    const QList<QComboBox*> actions = dialog.findChildren<QComboBox*>();
+    QCOMPARE(actions.size(), 2);
+    QCOMPARE(actions.first()->count(), 2);
+    QCOMPARE(actions.first()->currentIndex(), 0);
+
+    RollDownOver(actions.first());
+
+    QCOMPARE(actions.first()->currentIndex(), 0);
+
+    const std::vector<RepairRequest> requests = dialog.ChosenRequests();
+    QCOMPARE(requests.size(), std::size_t{2});
+    QCOMPARE(requests.front().action, RepairAction::RemoveDeadNode);
+}
+
+void WheelGuardTest::ARollOverTheLeftoverDialogDoesNotTurnAResumeIntoADiscard()
+{
+    StagingLeftover interrupted;
+    interrupted.staging = R"(D:\MSFS 2024\.fsorg-staging\pmdg-aircraft-77w)";
+    interrupted.target = R"(D:\MSFS 2024\Aircrafts\pmdg-aircraft-77w)";
+    interrupted.source = R"(E:\Flight Simulator 2024\Community\pmdg-aircraft-77w)";
+
+    StagingLeftoverDialog dialog({interrupted});
+    dialog.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+
+    const QList<QComboBox*> actions = dialog.findChildren<QComboBox*>();
+    QCOMPARE(actions.size(), 1);
+    QCOMPARE(dialog.ToResume().size(), std::size_t{1});
+
+    RollDownOver(actions.first());
+
+    QCOMPARE(dialog.ToResume().size(), std::size_t{1});
+    QVERIFY(dialog.ToDiscard().empty());
 }
 
 QTEST_MAIN(WheelGuardTest)

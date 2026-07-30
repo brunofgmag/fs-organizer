@@ -81,7 +81,7 @@ private:
 
     [[nodiscard]] QString NameOf(const TreeNode& node) const;
 
-    [[nodiscard]] QString CountedSuffixOf(const TreeNode& node) const;
+    [[nodiscard]] static QString CountedSuffixOf(const TreeNode& node);
 
     [[nodiscard]] QString DisplayTextOf(const TreeNode& node, int column) const;
 
