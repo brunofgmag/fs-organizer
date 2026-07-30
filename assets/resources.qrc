@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/icons">
-        <file alias="app-icon.png">branding/icon_256.png</file>
         <file alias="app-icon_16.png">branding/icon_16.png</file>
         <file alias="app-icon_24.png">branding/icon_24.png</file>
         <file alias="app-icon_32.png">branding/icon_32.png</file>
@@ -13,5 +12,6 @@
         <file alias="Archivo-Regular.ttf">fonts/Archivo-Regular.ttf</file>
         <file alias="Archivo-SemiBold.ttf">fonts/Archivo-SemiBold.ttf</file>
         <file alias="Archivo-ExtraBold.ttf">fonts/Archivo-ExtraBold.ttf</file>
+        <file alias="OFL.txt">fonts/OFL.txt</file>
     </qresource>
 </RCC>
