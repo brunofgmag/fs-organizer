@@ -8,8 +8,6 @@
 
 namespace
 {
-    constexpr int kMostTextsWorthRemembering = 4096;
-
     QPalette::ColorGroup GroupFor(const QStyle::State state)
     {
         if ((state & QStyle::State_Enabled) == 0)
@@ -62,34 +60,7 @@ void PlainTextDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     painter->save();
     painter->setFont(item.font);
     painter->setPen(item.palette.color(group, role));
-    painter->drawText(box, static_cast<int>(item.displayAlignment), Fitted(text, item, box.width()));
+    painter->drawText(box, static_cast<int>(item.displayAlignment),
+                      fitted_.In(text, item.font, item.textElideMode, box.width()));
     painter->restore();
-}
-
-QString PlainTextDelegate::Fitted(const QString& text, const QStyleOptionViewItem& item, const int width) const
-{
-    if (item.textElideMode == Qt::ElideNone || width <= 0)
-    {
-        return text;
-    }
-
-    if (measuredWith_ != item.font)
-    {
-        fitted_.clear();
-        measuredWith_ = item.font;
-    }
-
-    QHash<QString, QString>& atThisWidth = fitted_[width];
-
-    if (const auto remembered = atThisWidth.constFind(text); remembered != atThisWidth.constEnd())
-    {
-        return *remembered;
-    }
-
-    if (atThisWidth.size() >= kMostTextsWorthRemembering)
-    {
-        atThisWidth.clear();
-    }
-
-    return *atThisWidth.insert(text, QFontMetrics(item.font).elidedText(text, item.textElideMode, width));
 }

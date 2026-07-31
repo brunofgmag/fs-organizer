@@ -679,6 +679,7 @@ if (WIN32)
                 src/application/ProfileService.cpp
                 src/application/Session.cpp
                 src/view/PresetsPage.cpp
+                src/view/delegates/FittedText.cpp
                 src/view/delegates/RowDelegate.cpp
                 src/view/TableColumns.cpp
                 src/view/panels/ContextPanel.cpp
@@ -729,6 +730,7 @@ if (WIN32)
                 src/view/community/ConflictDialog.cpp
                 src/view/community/ImportDialog.cpp
                 src/view/community/RepairDialog.cpp
+                src/view/delegates/FittedText.cpp
                 src/view/delegates/RowDelegate.cpp
                 src/view/TableColumns.cpp
                 src/view/WheelGuard.cpp
@@ -776,6 +778,7 @@ configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
 fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         tests/view/delegates/tst_row_delegate.cpp
         assets/resources.qrc
+        src/view/delegates/FittedText.cpp
         src/view/delegates/RowDelegate.cpp
         src/view/theme/ModernistPaint.cpp
         src/view/theme/ModernistStyle.cpp
@@ -786,6 +789,7 @@ configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
 fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
         tests/view/theme/tst_modernist_theme.cpp
         assets/resources.qrc
+        src/view/delegates/FittedText.cpp
         src/view/delegates/RowDelegate.cpp
         src/view/theme/ModernistPaint.cpp
         src/view/theme/ModernistStyle.cpp

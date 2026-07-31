@@ -55,16 +55,13 @@ namespace
         int wide = 0;
     };
 
-    [[nodiscard]] RoomForTheText RoomIn(const QStyleOptionViewItem& item, const QModelIndex& index)
+    [[nodiscard]] RoomForTheText RoomIn(const QStyleOptionViewItem& item, const QString& suffix, const QString& tag)
     {
         const QWidget* widget = item.widget;
         const QStyle* style = widget != nullptr ? widget->style() : QApplication::style();
 
         const QRect written = style->subElementRect(QStyle::SE_ItemViewItemText, &item, widget);
         const QRect box = written.adjusted(kBreathingRoom, 0, -kBreathingRoom, 0);
-
-        const QString suffix = index.data(QuietSuffixRole).toString();
-        const QString tag = index.data(TagTextRole).toString();
 
         const int tagRoom = tag.isEmpty() ? 0 : TagSizeOf(tag, item.font).width() + kBeforeTheTag;
         const int suffixRoom =
@@ -73,9 +70,29 @@ namespace
         return {box, std::max(0, box.width() - tagRoom - suffixRoom)};
     }
 
-    [[nodiscard]] QString TextThatIsDrawn(const QStyleOptionViewItem& item, const QModelIndex& index)
+    [[nodiscard]] QString TextThatIsDrawn(const QStyleOptionViewItem& item, const QString& tag)
     {
-        return index.data(TagTextRole).toString() == item.text ? QString() : item.text;
+        return tag == item.text ? QString() : item.text;
+    }
+
+    void RepaintTheRowOf(QAbstractItemView& view, const QModelIndex& index)
+    {
+        if (!index.isValid())
+        {
+            return;
+        }
+
+        QRect band = view.visualRect(index);
+
+        if (band.isEmpty())
+        {
+            return;
+        }
+
+        band.setLeft(0);
+        band.setRight(view.viewport()->width() - 1);
+
+        view.viewport()->update(band);
     }
 
     [[nodiscard]] QStyleOptionViewItem::ViewItemPosition WhereInTheRow(const QModelIndex& index)
@@ -96,13 +113,18 @@ namespace
     }
 }
 
-RowDelegate::RowDelegate(QObject* parent) : QStyledItemDelegate(parent)
+RowDelegate::RowDelegate(QObject* parent) : QStyledItemDelegate(parent), shortestRow_(kRowHeight)
 {
     if (auto* view = qobject_cast<QAbstractItemView*>(parent); view != nullptr)
     {
         view->viewport()->setMouseTracking(true);
         view->viewport()->installEventFilter(this);
     }
+}
+
+void RowDelegate::KeepRowsAtLeast(const int tall)
+{
+    shortestRow_ = tall;
 }
 
 bool RowDelegate::eventFilter(QObject* watched, QEvent* event)
@@ -131,11 +153,13 @@ void RowDelegate::PointAt(const QModelIndex& index)
         return;
     }
 
+    const QModelIndex left = pointedAt_;
     pointedAt_ = index;
 
     if (auto* view = qobject_cast<QAbstractItemView*>(parent()); view != nullptr)
     {
-        view->viewport()->update();
+        RepaintTheRowOf(*view, left);
+        RepaintTheRowOf(*view, index);
     }
 }
 
@@ -178,8 +202,8 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
     const QString suffix = index.data(QuietSuffixRole).toString();
     const QString tag = index.data(TagTextRole).toString();
-    const QString text = TextThatIsDrawn(item, index);
-    const RoomForTheText room = RoomIn(item, index);
+    const QString text = TextThatIsDrawn(item, tag);
+    const RoomForTheText room = RoomIn(item, suffix, tag);
 
     item.text.clear();
     style->drawControl(QStyle::CE_ItemViewItem, &item, painter, widget);
@@ -199,7 +223,7 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
     if (!text.isEmpty())
     {
-        const QString fitted = measured.elidedText(text, item.textElideMode, room.wide);
+        const QString fitted = fitted_.In(text, item.font, item.textElideMode, room.wide);
 
         painter->setPen(InkFor(item, index));
         painter->drawText(box, static_cast<int>(item.displayAlignment), fitted);
@@ -246,9 +270,11 @@ bool RowDelegate::helpEvent(QHelpEvent* event,
         item.font.setWeight(QFont::DemiBold);
     }
 
-    const QString text = TextThatIsDrawn(item, index);
+    const QString suffix = index.data(QuietSuffixRole).toString();
+    const QString tag = index.data(TagTextRole).toString();
+    const QString text = TextThatIsDrawn(item, tag);
 
-    if (text.isEmpty() || QFontMetrics(item.font).horizontalAdvance(text) <= RoomIn(item, index).wide)
+    if (text.isEmpty() || QFontMetrics(item.font).horizontalAdvance(text) <= RoomIn(item, suffix, tag).wide)
     {
         QToolTip::hideText();
         return false;
@@ -274,7 +300,7 @@ QSize RowDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelInde
         wanted.setWidth(wanted.width() + TagSizeOf(tag, option.font).width() + kBeforeTheTag);
     }
 
-    wanted.setHeight(std::max(wanted.height(), kRowHeight));
+    wanted.setHeight(std::max(wanted.height(), shortestRow_));
 
     return wanted;
 }
