@@ -19,6 +19,8 @@ namespace
 {
     constexpr auto kActiveProfileId = "activeProfileId";
     constexpr auto kProfiles = "profiles";
+    constexpr auto kLinkType = "linkType";
+    constexpr auto kVerifyWithHash = "verifyWithHash";
     constexpr auto kId = "id";
     constexpr auto kVariant = "variant";
     constexpr auto kDestinations = "destinations";
@@ -44,6 +46,16 @@ namespace
     SimulatorVariant VariantFromName(const QJsonValue& value)
     {
         return value.toString() == "MSFS2020" ? SimulatorVariant::MSFS2020 : SimulatorVariant::MSFS2024;
+    }
+
+    QString LinkTypeName(const LinkType linkType)
+    {
+        return linkType == LinkType::Symbolic ? "symbolic" : "junction";
+    }
+
+    LinkType LinkTypeFromName(const QJsonValue& value)
+    {
+        return value.toString() == "symbolic" ? LinkType::Symbolic : LinkType::Junction;
     }
 
     QJsonObject ToJson(const Library& library)
@@ -169,6 +181,8 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
 
     AppSettings settings;
     settings.activeProfileId = root.value(kActiveProfileId).toString().toStdString();
+    settings.linkType = LinkTypeFromName(root.value(kLinkType));
+    settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
 
     for (const QJsonValue& profile : root.value(kProfiles).toArray())
     {
@@ -189,6 +203,8 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
     QJsonObject root;
     root[kActiveProfileId] = QString::fromStdString(settings.activeProfileId);
     root[kProfiles] = profiles;
+    root[kLinkType] = LinkTypeName(settings.linkType);
+    root[kVerifyWithHash] = settings.verifyWithHash;
 
     std::error_code error;
     std::filesystem::create_directories(file_.parent_path(), error);

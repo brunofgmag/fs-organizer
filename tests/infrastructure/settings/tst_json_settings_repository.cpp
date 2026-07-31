@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "infrastructure/settings/JsonSettingsRepository.h"
+#include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
 class JsonSettingsRepositoryTest : public QObject
@@ -21,6 +22,8 @@ private slots:
     static void AWriteTheDiskRefusesSaysSoInsteadOfClaimingItLanded();
     static void SettingsThatCannotBeReadAreNotTheSameAsNoSettingsAtAll();
     static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
+    static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
+    static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
 };
 
 namespace
@@ -173,6 +176,36 @@ void JsonSettingsRepositoryTest::TwoProfilesWithDestinationsAndOverridesSurviveT
     QCOMPARE(overrides[0].relativePath, std::filesystem::path("Aircraft Mods/pmdg-aircraft-77w"));
     QCOMPARE(overrides[0].destination, std::filesystem::path("E:/Flight Simulator 2024/Community"));
     QCOMPARE(overrides[1].relativePath, std::filesystem::path("Sceneries"));
+}
+
+void JsonSettingsRepositoryTest::TheLinkTypeAndTheHashCheckSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.linkType = LinkType::Symbolic;
+    written.verifyWithHash = true;
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.linkType, LinkType::Symbolic);
+    QCOMPARE(read.verifyWithHash, true);
+}
+
+void JsonSettingsRepositoryTest::AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck()
+{
+    const Storage storage;
+
+    std::filesystem::create_directories(storage.File().parent_path());
+    std::ofstream(storage.File(), std::ios::binary) << R"({"activeProfileId":"msfs2024","profiles":[]})";
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QCOMPARE(read->activeProfileId, std::string("msfs2024"));
+    QCOMPARE(read->linkType, LinkType::Junction);
+    QCOMPARE(read->verifyWithHash, false);
 }
 
 QTEST_APPLESS_MAIN(JsonSettingsRepositoryTest)
