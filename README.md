@@ -23,8 +23,10 @@ The core works end to end: the addon tree turns addons on and off through real
 junctions, the Community screen classifies and repairs entries, importing moves
 physical folders into the library, and presets capture and apply named sets. The
 interface has its own visual identity, following the Windows light or dark theme.
-What remains before a first release is the legacy importer, the updater and the
-distributable package.
+An options screen behind the header gear covers profiles, destinations and
+libraries without reopening the first-run wizard, and chooses between junction
+and directory symlink. What remains before a first release is the legacy
+importer, the updater and the distributable package.
 
 The specification, the architecture decisions and the development plan are kept
 outside this repository.
