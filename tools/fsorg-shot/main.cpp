@@ -390,7 +390,22 @@ int main(int argc, char* argv[])
         Out() << "nenhuma biblioteca cadastrada, então não há diálogo de descadastrar para gravar\n";
     }
 
-    shell.LeaveOptions();
+    PageTab* back = nullptr;
+    for (PageTab* tab : shell.findChildren<PageTab*>())
+    {
+        if (tab->Label().startsWith(QChar(0x2190)))
+        {
+            back = tab;
+        }
+    }
+
+    if (back == nullptr)
+    {
+        Out() << "não achei a aba de voltar, então a volta gravada não seria a do usuário\n";
+        return 1;
+    }
+
+    back->click();
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("12-voltou")) && landed;
 

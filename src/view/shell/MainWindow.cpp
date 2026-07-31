@@ -124,6 +124,7 @@ QWidget* MainWindow::CreateTabStrip()
     tabs_->setSpacing(2);
 
     back_ = new PageTab(tr("Voltar"), strip);
+    back_->setCheckable(false);
     back_->setVisible(false);
     connect(back_, &PageTab::clicked, this, &MainWindow::LeaveOptions);
 

@@ -36,6 +36,7 @@ private slots:
     static void TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom();
     static void LeavingTheOptionsGivesBackThePageThatWasOpen();
     static void TheTriageStripStandsDownWhileTheOptionsAreOpen();
+    static void ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked();
 };
 
 namespace
@@ -374,6 +375,40 @@ void MainWindowTest::TheTriageStripStandsDownWhileTheOptionsAreOpen()
 
     window.LeaveOptions();
     QVERIFY(strip->isVisibleTo(&window));
+}
+
+void MainWindowTest::ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    auto* community = new QWidget(&window);
+    auto* options = new QWidget(&window);
+    window.AddPage(QStringLiteral("Biblioteca"), library);
+    PageTab* communityTab = window.AddPage(QStringLiteral("Community"), community);
+    window.CarryOptionsOn(options);
+
+    communityTab->click();
+    QVERIFY2(communityTab->isChecked(),
+             "a aba de origem não ficou marcada ao ser clicada, então exigi-la marcada depois não prova nada");
+
+    window.ShowOptions();
+
+    PageTab* back = nullptr;
+    for (PageTab* tab : window.findChildren<PageTab*>())
+    {
+        if (tab->Label().startsWith(QChar(0x2190)))
+        {
+            back = tab;
+        }
+    }
+
+    QVERIFY2(back != nullptr, "não achei a aba de voltar, então o clique testado não é o do usuário");
+
+    back->click();
+
+    QVERIFY(!window.ShowingOptions());
+    QVERIFY2(communityTab->isChecked(), "voltar das opções deixou a faixa de abas sem nenhuma marcada");
 }
 
 QTEST_MAIN(MainWindowTest)
