@@ -4,6 +4,7 @@
 #include <system_error>
 
 #include "domain/ports/FilesystemProbe.h"
+#include "support/FileClock.h"
 
 class StdFilesystemProbe final : public FilesystemProbe
 {
@@ -86,10 +87,7 @@ public:
         std::error_code error;
         const std::filesystem::file_time_type written = std::filesystem::last_write_time(path, error);
 
-        return error ? std::nullopt
-                     : std::optional(std::chrono::system_clock::now()
-                                     + std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                                         written - std::filesystem::file_time_type::clock::now()));
+        return error ? std::nullopt : std::optional(SystemTimeOf(written));
     }
 
     [[nodiscard]] std::optional<std::vector<FileFingerprint>>

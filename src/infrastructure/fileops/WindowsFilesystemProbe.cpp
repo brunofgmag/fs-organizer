@@ -12,6 +12,8 @@
 #include <string>
 #include <system_error>
 
+#include "support/FileClock.h"
+
 namespace
 {
     std::wstring NativePath(const std::filesystem::path& path)
@@ -126,9 +128,7 @@ WindowsFilesystemProbe::LastWriteTime(const std::filesystem::path& path) const
         return std::nullopt;
     }
 
-    return std::chrono::system_clock::now()
-        + std::chrono::duration_cast<std::chrono::system_clock::duration>(
-               written - std::filesystem::file_time_type::clock::now());
+    return SystemTimeOf(written);
 }
 
 std::optional<std::vector<FileFingerprint>>
