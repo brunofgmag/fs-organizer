@@ -755,12 +755,14 @@ fsorg_add_qt_test(fsorg-table-columns-tests table-columns
         tests/view/tst_table_columns.cpp
         src/view/TableColumns.cpp)
 configure_fsorg_gui_test(fsorg-table-columns-tests table-columns)
+
 fsorg_add_qt_test(fsorg-wheel-guard-tests wheel-guard
         tests/view/tst_wheel_guard.cpp
         src/view/community/RepairDialog.cpp
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/WheelGuard.cpp)
 configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
+
 fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         tests/view/panels/tst_context_panel.cpp
         src/view/panels/ContextPanel.cpp
@@ -770,6 +772,15 @@ fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         src/view/theme/ModernistPaint.cpp
         src/view/theme/ModernistTones.cpp)
 configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
+
+fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
+        tests/view/delegates/tst_row_delegate.cpp
+        assets/resources.qrc
+        src/view/delegates/RowDelegate.cpp
+        src/view/theme/ModernistPaint.cpp
+        src/view/theme/ModernistTones.cpp)
+configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
+
 fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
         tests/view/theme/tst_modernist_theme.cpp
         assets/resources.qrc
@@ -778,4 +789,5 @@ fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
         src/view/theme/ModernistStyle.cpp
         src/view/theme/ModernistTheme.cpp
         src/view/theme/ModernistTones.cpp)
+
 configure_fsorg_gui_test(fsorg-modernist-theme-tests modernist-theme)
