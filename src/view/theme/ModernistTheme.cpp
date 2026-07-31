@@ -100,7 +100,6 @@ QToolButton#PanelExpand {
 }
 QToolButton#PanelExpand:hover { color: %text%; background: %raised%; }
 QLabel#PanelTitle { color: %text%; }
-QLabel#PanelBadge { background: %accent%; color: %onAccent%; font-weight: 600; padding: 1px 7px; }
 QLabel#PanelSubHeading { color: %secondary%; font-weight: 700; }
 QLabel#PanelPromise { color: %secondary%; }
 QLabel#DetailFieldName { color: %secondary%; }

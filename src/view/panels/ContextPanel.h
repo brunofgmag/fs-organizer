@@ -19,8 +19,6 @@ public:
 
     void RestoreCollapsedState();
 
-    void ShowBadge(const QString& text) const;
-
     void ShowTitle(const QString& title, bool alarming = false) const;
 
     void Summon(bool summoned);
@@ -35,7 +33,6 @@ private:
     QWidget* body_ = nullptr;
     PanelRail* rail_ = nullptr;
     QLabel* title_ = nullptr;
-    QLabel* badge_ = nullptr;
     QToolButton* toggle_ = nullptr;
     QToolButton* close_ = nullptr;
     QVBoxLayout* content_ = nullptr;

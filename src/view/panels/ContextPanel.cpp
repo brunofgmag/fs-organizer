@@ -33,10 +33,6 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     titleFont.setLetterSpacing(QFont::PercentageSpacing, 108);
     title_->setFont(titleFont);
 
-    badge_ = new QLabel(header);
-    badge_->setObjectName(QStringLiteral("PanelBadge"));
-    badge_->setVisible(false);
-
     toggle_ = new QToolButton(header);
     toggle_->setObjectName(QStringLiteral("PanelToggle"));
     toggle_->setAutoRaise(true);
@@ -54,7 +50,6 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     headerRow->setContentsMargins(14, 8, 6, 8);
     headerRow->setSpacing(6);
     headerRow->addWidget(title_);
-    headerRow->addWidget(badge_);
     headerRow->addStretch();
     headerRow->addWidget(toggle_);
     headerRow->addWidget(close_);
@@ -104,12 +99,6 @@ void ContextPanel::RestoreCollapsedState()
     }
 }
 
-void ContextPanel::ShowBadge(const QString& text) const
-{
-    badge_->setText(text);
-    badge_->setVisible(!text.isEmpty());
-}
-
 void ContextPanel::ShowTitle(const QString& title, const bool alarming) const
 {
     const QString shown = title.isEmpty() ? fallbackTitle_ : title;
@@ -129,7 +118,6 @@ void ContextPanel::SetCollapsed(const bool collapsed)
 
     header_->setVisible(!collapsed);
     body_->setVisible(!collapsed);
-    badge_->setVisible(!collapsed && !badge_->text().isEmpty());
     rail_->setVisible(collapsed);
 
     setFixedWidth(collapsed ? PanelRail::Width() : expandedWidth_);
