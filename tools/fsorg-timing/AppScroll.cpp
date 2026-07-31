@@ -14,6 +14,8 @@
 #include <QtWidgets/QScrollBar>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QStyledItemDelegate>
+
+#include "view/delegates/PlainTextDelegate.h"
 #include <QtWidgets/QTreeView>
 
 #include "view/JournalPage.h"
@@ -205,6 +207,10 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     view->setItemDelegate(new QStyledItemDelegate(view));
     LetTheWindowSettle();
     ReportScroll("  com o delegate do Qt", *view);
+    view->setItemDelegate(new PlainTextDelegate(view));
+    LetTheWindowSettle();
+    ReportScroll("  com o PlainTextDelegate", *view);
+    ReportHover("  passando o mouse nele", *view);
     view->setItemDelegate(ours);
     LetTheWindowSettle();
 

@@ -24,4 +24,4 @@ private:
     const FilesystemProbe& filesystemProbe_;
 };
 
-#endif
+#endif // FS_ORGANIZER_DOMAIN_LINKING_LINKING_ENGINE_H

@@ -227,7 +227,11 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
         painter->setPen(InkFor(item, index));
         painter->drawText(box, static_cast<int>(item.displayAlignment), fitted);
-        pen += measured.horizontalAdvance(fitted) + kBeforeTheSuffix;
+
+        if (!suffix.isEmpty() || !tag.isEmpty())
+        {
+            pen += measured.horizontalAdvance(fitted) + kBeforeTheSuffix;
+        }
     }
 
     if (!suffix.isEmpty() && pen + measured.horizontalAdvance(suffix) + kBeforeTheSuffix <= box.right())
