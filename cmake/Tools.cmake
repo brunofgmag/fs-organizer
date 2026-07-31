@@ -32,6 +32,40 @@ add_custom_command(TARGET fsorg-probe POST_BUILD
         "$<TARGET_FILE_DIR:fsorg-probe>"
         VERBATIM)
 
+add_executable(fsorg-shot
+        tools/fsorg-shot/main.cpp
+        ${VIEW_SOURCES}
+        ${DOMAIN_SOURCES}
+        ${APPLICATION_SOURCES}
+        ${INFRASTRUCTURE_SOURCES}
+        ${VIEWMODEL_SOURCES}
+        assets/resources.qrc
+)
+
+target_include_directories(fsorg-shot PRIVATE "${CMAKE_SOURCE_DIR}/src")
+
+target_compile_definitions(fsorg-shot PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX FSORG_VERSION="${FSORG_VERSION}")
+
+target_link_libraries(fsorg-shot PRIVATE Qt6::Widgets dwmapi)
+
+add_custom_command(TARGET fsorg-shot POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::Core>"
+        "$<TARGET_FILE:Qt6::Gui>"
+        "$<TARGET_FILE:Qt6::Widgets>"
+        "$<TARGET_FILE_DIR:fsorg-shot>"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "$<TARGET_FILE_DIR:fsorg-shot>/platforms"
+        "$<TARGET_FILE_DIR:fsorg-shot>/styles"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::QWindowsIntegrationPlugin>"
+        "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+        "$<TARGET_FILE_DIR:fsorg-shot>/platforms/"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::QModernWindowsStylePlugin>"
+        "$<TARGET_FILE_DIR:fsorg-shot>/styles/"
+        VERBATIM)
+
 add_executable(fsorg-timing
         tools/fsorg-timing/main.cpp
         tools/fsorg-timing/JournalScroll.cpp
