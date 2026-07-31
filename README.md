@@ -56,6 +56,20 @@ cmake --build build/tests-only
 ctest --test-dir build/tests-only --output-on-failure
 ```
 
+The source list lives in `cmake/`, not in globs. Adding or removing a file means
+editing a `.cmake` there, and a build directory configured before that edit will
+not know the file exists. `build.ps1` reconfigures the directory it builds, but
+`cmake --build <dir>` on its own does not, so the other directories keep linking
+against a stale project and fail with `LNK2019` on a symbol whose source is
+sitting right there. Reconfigure each one you still use:
+
+```powershell
+cmake -S . -B build/debug
+cmake -S . -B build/tests-only -DFSORG_TESTS_ONLY=ON -DCMAKE_BUILD_TYPE=Debug
+```
+
+`build.ps1` warns when it finds a build directory older than `cmake/`.
+
 ## Contributing
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org), and

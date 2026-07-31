@@ -96,4 +96,26 @@ if ($RunTests) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
+$registry = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'cmake') -Filter '*.cmake' -File)
+$registry += Get-Item -LiteralPath (Join-Path $PSScriptRoot 'CMakeLists.txt')
+$newestRegistry = ($registry | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).LastWriteTimeUtc
+
+$justConfigured = [System.IO.Path]::GetFullPath($buildDir)
+
+$stale = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'build') -Directory |
+    Where-Object { $_.FullName -ne $justConfigured } |
+    Where-Object {
+        $generated = Join-Path $_.FullName 'CMakeFiles'
+        (Test-Path -LiteralPath (Join-Path $_.FullName 'CMakeCache.txt')) -and
+        (Test-Path -LiteralPath $generated) -and
+        ((Get-Item -LiteralPath $generated).LastWriteTimeUtc -lt $newestRegistry)
+    }
+
+if ($stale) {
+    Write-Warning 'These build directories were configured before the current cmake/ registry:'
+    $stale | ForEach-Object { Write-Warning "  $($_.Name)" }
+    Write-Warning 'They cannot see files added since, and "cmake --build" alone will not reconfigure them.'
+    Write-Warning 'Run "cmake -S . -B build/<name>" on each before building it, or the link fails with LNK2019.'
+}
+
 Write-Host "Executable build ready: $exe"
