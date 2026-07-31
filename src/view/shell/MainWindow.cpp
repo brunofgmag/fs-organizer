@@ -26,6 +26,8 @@ namespace
     constexpr int kStatusLingersFor = 6000;
     constexpr int kMeterWidth = 132;
     constexpr int kMeterHeight = 4;
+    constexpr int kStatusBarAlreadyInsetsTheFirstWidgetBy = 2;
+    constexpr QSize kWindowStartsAt(1140, 760);
 
     QString ProfileLabel(const SimulatorProfile& profile)
     {
@@ -37,7 +39,7 @@ namespace
 MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWindow(parent)
 {
     setWindowTitle(QCoreApplication::applicationName());
-    resize(1140, 760);
+    resize(kWindowStartsAt);
 
     pages_ = new QStackedWidget(this);
 
@@ -137,6 +139,7 @@ void MainWindow::CreateFooter()
     statusBar()->addPermanentWidget(aside_);
     statusBar()->addPermanentWidget(restart_);
     statusBar()->setSizeGripEnabled(false);
+    LineTheFooterUpWithThePage();
 
     statusFades_ = new QTimer(this);
     statusFades_->setSingleShot(true);
@@ -147,6 +150,11 @@ void MainWindow::CreateFooter()
             {
                 DressTheFooterFor(pages_->currentWidget());
             });
+}
+
+void MainWindow::LineTheFooterUpWithThePage() const
+{
+    statusBar()->setContentsMargins(kPageGutter - kStatusBarAlreadyInsetsTheFirstWidgetBy, 0, kPageGutter, 0);
 }
 
 PageTab* MainWindow::AddPage(const QString& label, QWidget* page)

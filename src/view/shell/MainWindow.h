@@ -74,6 +74,8 @@ private:
 
     void CreateFooter();
 
+    void LineTheFooterUpWithThePage() const;
+
     void DressTheFooterFor(const QWidget* page) const;
 
     void OnProfileActivated(int index);

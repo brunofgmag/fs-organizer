@@ -10,6 +10,7 @@
 #include <QtWidgets/QStatusBar>
 
 #include "view/shell/MainWindow.h"
+#include "view/theme/ModernistMetrics.h"
 #include "view/shell/TriageStrip.h"
 #include "view/theme/PageTab.h"
 
@@ -27,6 +28,7 @@ private slots:
     static void ThePageTabWritesItsCountApartFromItsName();
     static void LeavingAPageTakesItsStatusMessageAway();
     static void TheMeterFillsWithWhatThePageEnabled();
+    static void TheFooterKeepsThePageGutterOnBothEdges();
 };
 
 namespace
@@ -259,6 +261,31 @@ void MainWindowTest::TheMeterFillsWithWhatThePageEnabled()
     QVERIFY(meter->isVisibleTo(&window));
     QCOMPARE(meter->value(), 27);
     QCOMPARE(meter->maximum(), 346);
+}
+
+void MainWindowTest::TheFooterKeepsThePageGutterOnBothEdges()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    window.AddPage(QStringLiteral("Biblioteca"), library);
+    window.ShowSummary(library, QStringLiteral("346 addons · 27 habilitados"));
+
+    window.resize(1200, 800);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+
+    QStatusBar* bar = window.statusBar();
+    auto* summary = window.findChild<QLabel*>(QStringLiteral("FooterSummary"));
+    auto* aside = window.findChild<QLabel*>(QStringLiteral("FooterAside"));
+    QVERIFY(summary != nullptr);
+    QVERIFY(aside != nullptr);
+
+    aside->setText(QStringLiteral("Perfil Flight Simulator 2024"));
+    QCoreApplication::processEvents();
+
+    QCOMPARE(summary->mapTo(bar, QPoint()).x(), kPageGutter);
+    QCOMPARE(bar->width() - aside->mapTo(bar, QPoint()).x() - aside->width(), kPageGutter);
 }
 
 QTEST_MAIN(MainWindowTest)
