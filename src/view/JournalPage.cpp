@@ -9,7 +9,7 @@
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QVBoxLayout>
 
-#include "view/delegates/PlainTextDelegate.h"
+#include "view/delegates/RowDelegate.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/ModelRowDetail.h"
 #include "view/theme/ModernistMetrics.h"
@@ -27,7 +27,9 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     operations_->setUniformRowHeights(true);
     operations_->setSelectionBehavior(QAbstractItemView::SelectRows);
     operations_->header()->setStretchLastSection(true);
-    operations_->setItemDelegate(new PlainTextDelegate(operations_));
+    auto* rows = new RowDelegate(operations_);
+    rows->KeepRowsAtLeast(0);
+    operations_->setItemDelegate(rows);
     DressTheHeaderOf(operations_->header());
 
     auto* search = new QLineEdit(this);

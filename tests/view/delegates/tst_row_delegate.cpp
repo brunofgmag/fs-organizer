@@ -3,6 +3,7 @@
 #include <QtGui/QHelpEvent>
 #include <QtGui/QPainter>
 #include <QtGui/QStandardItemModel>
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QTableView>
 
@@ -20,6 +21,7 @@ private slots:
     static void ASelectedRowInATableIsOutlinedOnceAndNotCellByCell();
     static void PointingAtOneCellLightsUpTheWholeRowAndNoOther();
     static void TheGroundGoesBackWhenThePointerLeaves();
+    static void AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest();
 };
 
 namespace
@@ -65,6 +67,26 @@ namespace
             return delegate.helpEvent(&event, &view, option, cell);
         }
     };
+}
+
+void RowDelegateTest::AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest()
+{
+    QStandardItemModel model(1, 1);
+    model.setItem(0, 0, new QStandardItem(QStringLiteral("aerosoft-crj")));
+
+    QStyleOptionViewItem item;
+    item.font = QApplication::font();
+    item.fontMetrics = QFontMetrics(item.font);
+
+    RowDelegate asShipped;
+    const int tall = asShipped.sizeHint(item, model.index(0, 0)).height();
+
+    RowDelegate shortened;
+    shortened.KeepRowsAtLeast(0);
+    const int shortest = shortened.sizeHint(item, model.index(0, 0)).height();
+
+    QVERIFY(shortest < tall);
+    QCOMPARE(asShipped.sizeHint(item, model.index(0, 0)).width(), shortened.sizeHint(item, model.index(0, 0)).width());
 }
 
 void RowDelegateTest::ATextTooWideForItsColumnAnswersWithATooltip()
