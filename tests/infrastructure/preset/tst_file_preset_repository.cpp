@@ -1,6 +1,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -22,6 +23,7 @@ private slots:
     static void RemovingDropsThePresetFromTheList();
     static void ANameThatClimbsOutOfThePresetRootIsRefusedInsteadOfWritten();
     static void AProfileIdThatClimbsOutOfThePresetRootNeverReachesAnotherFolder();
+    static void TheListingCarriesWhenThePresetFileWasLastWritten();
 };
 
 namespace
@@ -76,10 +78,10 @@ void FilePresetRepositoryTest::APresetOfOneProfileDoesNotShowUpInAnother()
     other.name = "Treino";
     QVERIFY(repository.Save("msfs2020", other));
 
-    const std::vector<std::string> ofTheNewer = repository.List("msfs2024");
+    const std::vector<PresetListing> ofTheNewer = repository.List("msfs2024");
 
     QCOMPARE(ofTheNewer.size(), std::size_t{1});
-    QCOMPARE(QString::fromStdString(ofTheNewer.front()), QString{"Voo curto"});
+    QCOMPARE(QString::fromStdString(ofTheNewer.front().name), QString{"Voo curto"});
     QVERIFY(!repository.Load("msfs2020", "Voo curto").has_value());
 }
 
@@ -192,6 +194,31 @@ void FilePresetRepositoryTest::AProfileIdThatClimbsOutOfThePresetRootNeverReache
     repository.Remove("..", "victim");
 
     QVERIFY(std::filesystem::exists(victim));
+}
+
+void FilePresetRepositoryTest::TheListingCarriesWhenThePresetFileWasLastWritten()
+{
+    const Storage storage;
+
+    FilePresetRepository repository(storage.Root());
+    QVERIFY(repository.Save("msfs2024", ShortFlight()));
+
+    const std::filesystem::path file = storage.Root() / "msfs2024" / "Voo curto.json";
+    QVERIFY(std::filesystem::exists(file));
+
+    constexpr auto twoDays = std::chrono::hours{48};
+    std::filesystem::last_write_time(file, std::filesystem::file_time_type::clock::now() - twoDays);
+
+    const std::vector<PresetListing> listings = repository.List("msfs2024");
+
+    QCOMPARE(listings.size(), std::size_t{1});
+    QVERIFY(listings.front().writtenAt.has_value());
+
+    const auto ago = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now()
+                                                                      - *listings.front().writtenAt);
+
+    QVERIFY2(std::chrono::abs(ago - twoDays) < std::chrono::seconds{5},
+             qPrintable(QStringLiteral("reported %1 s ago").arg(ago.count())));
 }
 
 QTEST_MAIN(FilePresetRepositoryTest)

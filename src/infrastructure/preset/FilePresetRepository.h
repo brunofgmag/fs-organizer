@@ -10,7 +10,7 @@ class FilePresetRepository final : public PresetRepository
 public:
     explicit FilePresetRepository(std::filesystem::path root);
 
-    [[nodiscard]] std::vector<std::string> List(const std::string& profileId) const override;
+    [[nodiscard]] std::vector<PresetListing> List(const std::string& profileId) const override;
 
     [[nodiscard]] std::optional<Preset> Load(const std::string& profileId, const std::string& name) const override;
 

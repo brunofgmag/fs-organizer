@@ -7,7 +7,7 @@ PresetService::PresetService(PresetRepository& presets, ProfileService& profiles
 {
 }
 
-std::vector<std::string> PresetService::List(const std::string& profileId) const
+std::vector<PresetListing> PresetService::List(const std::string& profileId) const
 {
     return presets_.List(profileId);
 }

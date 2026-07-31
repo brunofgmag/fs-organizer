@@ -4,6 +4,7 @@
 
 #include "domain/support/PathSegment.h"
 #include "domain/support/StringUtils.h"
+#include "support/MomentText.h"
 
 PresetViewModel::PresetViewModel(Session& session, PresetService& service, QObject* parent)
     : QObject(parent), session_(session), service_(service)
@@ -14,12 +15,32 @@ QStringList PresetViewModel::Names() const
 {
     QStringList names;
 
-    for (const std::string& name : service_.List(session_.Profile().id))
+    for (const PresetListing& listing : service_.List(session_.Profile().id))
     {
-        names.append(QString::fromStdString(name));
+        names.append(QString::fromStdString(listing.name));
     }
 
     return names;
+}
+
+QList<PresetRow> PresetViewModel::Rows() const
+{
+    const SimulatorProfile& profile = session_.Profile();
+    QList<PresetRow> rows;
+
+    for (const PresetListing& listing : service_.List(profile.id))
+    {
+        const std::optional<Preset> preset = service_.Load(profile.id, listing.name);
+        const PresetContent content =
+            preset.has_value() ? ContentOf(*preset, profile, session_.Snapshot().libraries) : PresetContent{};
+
+        rows.append(PresetRow{QString::fromStdString(listing.name),
+                              tr("%n addon(s)", nullptr, static_cast<int>(content.addons))
+                                  + tr(" · %n categoria(s)", nullptr, static_cast<int>(content.categories)),
+                              listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{}});
+    }
+
+    return rows;
 }
 
 std::optional<Preset> PresetViewModel::Load(const QString& name) const

@@ -33,6 +33,8 @@ private slots:
     static void ApplyingRefreshesTheSessionAndReportsTheUnresolved();
     static void ALibraryIsNamedByItsLabelAndNotByItsIdentifier();
     static void AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSilence();
+    static void ARowCarriesTheContentAndTheDayThePresetWasWritten();
+    static void ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInventingOne();
 };
 
 namespace
@@ -265,6 +267,42 @@ void PresetViewModelTest::AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSile
 
     QCOMPARE(refused.count(), 2);
     QCOMPARE(f.viewModel.Names(), QStringList{"Voo curto"});
+}
+
+void PresetViewModelTest::ARowCarriesTheContentAndTheDayThePresetWasWritten()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    f.viewModel.Create("Voo curto");
+
+    const QDateTime carnival(QDate(2026, 2, 17), QTime(9, 30));
+    f.repository.SayItWasWrittenAt(
+        "Voo curto", std::chrono::system_clock::time_point(std::chrono::milliseconds(carnival.toMSecsSinceEpoch())));
+
+    const QList<PresetRow> rows = f.viewModel.Rows();
+
+    QCOMPARE(rows.size(), 1);
+    QCOMPARE(rows.front().name, QStringLiteral("Voo curto"));
+    QCOMPARE(rows.front().content, QStringLiteral("2 addon(s) · 1 categoria(s)"));
+    QCOMPARE(rows.front().updated, QStringLiteral("17/02/2026"));
+}
+
+void PresetViewModelTest::ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInventingOne()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.session.RefreshEntries();
+
+    f.viewModel.Create("Voo curto");
+
+    const QList<PresetRow> rows = f.viewModel.Rows();
+
+    QCOMPARE(rows.size(), 1);
+    QCOMPARE(rows.front().content, QStringLiteral("1 addon(s) · 1 categoria(s)"));
+    QVERIFY(rows.front().updated.isEmpty());
 }
 
 QTEST_MAIN(PresetViewModelTest)

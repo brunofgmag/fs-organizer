@@ -23,7 +23,7 @@ class PresetService
 public:
     PresetService(PresetRepository& presets, ProfileService& profiles);
 
-    [[nodiscard]] std::vector<std::string> List(const std::string& profileId) const;
+    [[nodiscard]] std::vector<PresetListing> List(const std::string& profileId) const;
 
     [[nodiscard]] std::optional<Preset> Load(const std::string& profileId, const std::string& name) const;
 

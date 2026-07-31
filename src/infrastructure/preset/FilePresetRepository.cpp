@@ -14,6 +14,7 @@
 
 #include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
+#include "support/FileClock.h"
 #include "support/FileWriting.h"
 
 namespace
@@ -59,7 +60,7 @@ FilePresetRepository::FilePresetRepository(std::filesystem::path root) : root_(s
 {
 }
 
-std::vector<std::string> FilePresetRepository::List(const std::string& profileId) const
+std::vector<PresetListing> FilePresetRepository::List(const std::string& profileId) const
 {
     const std::optional<std::filesystem::path> folder = FolderOf(profileId);
     if (!folder.has_value())
@@ -74,14 +75,18 @@ std::vector<std::string> FilePresetRepository::List(const std::string& profileId
         return {};
     }
 
-    std::vector<std::string> names;
+    std::vector<PresetListing> listings;
     const std::filesystem::directory_iterator end;
 
     while (entry != end)
     {
         if (entry->is_regular_file(error) && entry->path().extension() == ".json")
         {
-            names.push_back(entry->path().stem().string());
+            std::error_code unread;
+            const std::filesystem::file_time_type written = entry->last_write_time(unread);
+
+            listings.push_back(
+                {entry->path().stem().string(), unread ? std::nullopt : std::optional(SystemTimeOf(written))});
         }
 
         entry.increment(error);
@@ -91,9 +96,9 @@ std::vector<std::string> FilePresetRepository::List(const std::string& profileId
         }
     }
 
-    std::ranges::sort(names);
+    std::ranges::sort(listings, {}, &PresetListing::name);
 
-    return names;
+    return listings;
 }
 
 std::optional<Preset> FilePresetRepository::Load(const std::string& profileId, const std::string& name) const

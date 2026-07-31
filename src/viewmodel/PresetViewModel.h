@@ -4,12 +4,20 @@
 #include <cstddef>
 #include <optional>
 
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
 #include "application/PresetService.h"
 #include "application/Session.h"
+
+struct PresetRow
+{
+    QString name;
+    QString content;
+    QString updated;
+};
 
 struct PresetPreview
 {
@@ -28,6 +36,8 @@ public:
     PresetViewModel(Session& session, PresetService& service, QObject* parent = nullptr);
 
     [[nodiscard]] QStringList Names() const;
+
+    [[nodiscard]] QList<PresetRow> Rows() const;
 
     [[nodiscard]] std::optional<Preset> Load(const QString& name) const;
 

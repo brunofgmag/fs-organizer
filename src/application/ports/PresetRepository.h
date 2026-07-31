@@ -1,18 +1,25 @@
 #ifndef FS_ORGANIZER_APPLICATION_PORTS_PRESET_REPOSITORY_H
 #define FS_ORGANIZER_APPLICATION_PORTS_PRESET_REPOSITORY_H
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "domain/model/Preset.h"
 
+struct PresetListing
+{
+    std::string name;
+    std::optional<std::chrono::system_clock::time_point> writtenAt;
+};
+
 class PresetRepository
 {
 public:
     virtual ~PresetRepository() = default;
 
-    [[nodiscard]] virtual std::vector<std::string> List(const std::string& profileId) const = 0;
+    [[nodiscard]] virtual std::vector<PresetListing> List(const std::string& profileId) const = 0;
 
     [[nodiscard]] virtual std::optional<Preset> Load(const std::string& profileId, const std::string& name) const = 0;
 

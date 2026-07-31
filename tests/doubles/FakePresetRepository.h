@@ -1,7 +1,9 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_PRESET_REPOSITORY_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_PRESET_REPOSITORY_H
 
+#include <chrono>
 #include <map>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -11,22 +13,29 @@
 class FakePresetRepository final : public PresetRepository
 {
 public:
-    [[nodiscard]] std::vector<std::string> List(const std::string& profileId) const override
+    [[nodiscard]] std::vector<PresetListing> List(const std::string& profileId) const override
     {
-        std::vector<std::string> names;
+        std::vector<PresetListing> listings;
 
         const auto profile = byProfile_.find(profileId);
         if (profile == byProfile_.end())
         {
-            return names;
+            return listings;
         }
 
         for (const auto& name : profile->second | std::views::keys)
         {
-            names.push_back(name);
+            const auto written = writtenAt_.find(name);
+
+            listings.push_back({name, written == writtenAt_.end() ? std::nullopt : std::optional(written->second)});
         }
 
-        return names;
+        return listings;
+    }
+
+    void SayItWasWrittenAt(const std::string& name, const std::chrono::system_clock::time_point when)
+    {
+        writtenAt_[name] = when;
     }
 
     [[nodiscard]] std::optional<Preset> Load(const std::string& profileId, const std::string& name) const override
@@ -94,6 +103,7 @@ public:
 
 private:
     std::map<std::string, std::map<std::string, Preset>> byProfile_;
+    std::map<std::string, std::chrono::system_clock::time_point> writtenAt_;
     bool refusing_ = false;
 };
 
