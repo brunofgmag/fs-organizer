@@ -208,6 +208,12 @@ fsorg_add_qt_test(fsorg-preset-plan-tests preset-plan
         src/domain/tree/LibraryLookup.cpp
         src/domain/preset/PresetPlan.cpp)
 
+fsorg_add_qt_test(fsorg-profile-edits-tests profile-edits
+        tests/domain/profile/tst_profile_edits.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/domain/profile/ProfileEdits.cpp)
+
 fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/application/tst_profile_service.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -283,6 +289,7 @@ fsorg_add_qt_test(fsorg-session-tests session
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
+        src/domain/profile/ProfileEdits.cpp
         src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp)
@@ -412,6 +419,7 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
+        src/domain/profile/ProfileEdits.cpp
         src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
@@ -448,6 +456,7 @@ fsorg_add_qt_test(fsorg-preset-view-model-tests preset-view-model
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
+        src/domain/profile/ProfileEdits.cpp
         src/application/LibraryOrganizer.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
@@ -480,6 +489,7 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
+        src/domain/profile/ProfileEdits.cpp
         src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
@@ -515,6 +525,7 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
         src/application/ImportService.cpp
+        src/domain/profile/ProfileEdits.cpp
         src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
@@ -550,6 +561,7 @@ fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
         src/domain/tree/LibraryTrees.cpp
         src/domain/tree/ToggleDirection.cpp
         src/application/ImportService.cpp
+        src/domain/profile/ProfileEdits.cpp
         src/application/LibraryOrganizer.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
@@ -676,6 +688,7 @@ if (WIN32)
                 src/domain/tree/LibraryLookup.cpp
                 src/domain/tree/LibraryTrees.cpp
                 src/domain/tree/ToggleDirection.cpp
+                src/domain/profile/ProfileEdits.cpp
                 src/application/LibraryOrganizer.cpp
                 src/application/PresetService.cpp
                 src/application/ProfileService.cpp
@@ -725,6 +738,7 @@ if (WIN32)
                 src/domain/tree/LibraryTrees.cpp
                 src/domain/tree/ToggleDirection.cpp
                 src/application/ImportService.cpp
+                src/domain/profile/ProfileEdits.cpp
                 src/application/LibraryOrganizer.cpp
                 src/application/ProfileService.cpp
                 src/application/Session.cpp

@@ -8,6 +8,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
         src/domain/preset/PresetPlan.cpp
+        src/domain/profile/ProfileEdits.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/CategorySuggester.cpp
         src/domain/tree/DestinationDivergence.cpp
