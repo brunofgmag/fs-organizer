@@ -30,6 +30,7 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/FailureText.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -316,7 +317,7 @@ void CommunityPage::ShowTheSelectedEntry()
         fields.append({tr("Na biblioteca"), AsText(conflict->libraryPath)});
     }
 
-    panel_->ShowTitle(AsText(entry->path.filename()));
+    panel_->ShowTitle(AsText(entry->path.filename()), model_.data(source, AlarmingRole).toBool());
     detail_->ShowFields(fields);
 }
 
@@ -326,6 +327,7 @@ void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
 
     QHash<int, int> counted;
     QSet<QString> destinations;
+    bool alarming = false;
 
     for (const QModelIndex& position : rows)
     {
@@ -333,6 +335,7 @@ void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
 
         ++counted[model_.data(source, CommunityModel::ClassificationRole).toInt()];
         counted[kConflictFilter] += model_.data(source, CommunityModel::ConflictRole).toBool() ? 1 : 0;
+        alarming = alarming || model_.data(source, AlarmingRole).toBool();
 
         if (const DestinationEntry* entry = model_.EntryAt(source); entry != nullptr)
         {
@@ -357,7 +360,7 @@ void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
 
     counted_.append({tr("Destinos"), QString::number(destinations.size())});
 
-    panel_->ShowTitle(tr("%n entrada(s) selecionada(s)", nullptr, static_cast<int>(rows.size())));
+    panel_->ShowTitle(tr("%n entrada(s) selecionada(s)", nullptr, static_cast<int>(rows.size())), alarming);
 
     const std::vector<std::filesystem::path> importable = ChosenForImport(*table_, *filter_, model_).folders;
 

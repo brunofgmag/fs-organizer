@@ -31,6 +31,7 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/FailureText.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -318,7 +319,7 @@ void AddonTreePage::ShowTheSelectedAddon() const
         fields.append({tr("Destino"), AsText(destination.filename())});
     }
 
-    panel_->ShowTitle(AsText(node->path.filename()));
+    panel_->ShowTitle(AsText(node->path.filename()), model_.data(source, AlarmingRole).toBool());
     detail_->ShowFields(fields);
 }
 
@@ -329,6 +330,7 @@ void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
     int enabled = 0;
     int broken = 0;
     int strayed = 0;
+    bool alarming = false;
     QSet<QString> categoriesCrossed;
 
     for (const QModelIndex& position : rows)
@@ -340,6 +342,8 @@ void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
         {
             continue;
         }
+
+        alarming = alarming || model_.data(source, AlarmingRole).toBool();
 
         if (node->kind != TreeNodeKind::Addon)
         {
@@ -379,7 +383,7 @@ void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
 
     fields.append({tr("Espalhados por"), tr("%n categoria(s)", nullptr, categoriesCrossed.size())});
 
-    panel_->ShowTitle(tr("%n item(ns) selecionado(s)", nullptr, static_cast<int>(rows.size())));
+    panel_->ShowTitle(tr("%n item(ns) selecionado(s)", nullptr, static_cast<int>(rows.size())), alarming);
     detail_->ShowFields(fields);
 }
 
