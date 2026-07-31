@@ -3,6 +3,8 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/CommunityModel.h"
+#include "viewmodel/RowTagRoles.h"
+#include "viewmodel/TagTone.h"
 
 class CommunityModelTest : public QObject
 {
@@ -14,6 +16,7 @@ private slots:
     static void ClearingTheFilterShowsEverythingAgain();
     static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
     static void ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate();
+    static void ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone();
 };
 
 namespace
@@ -52,6 +55,44 @@ namespace
                 Entry("E:/Flight Simulator 2024/Community2024/duplicated", "D:/MSFS 2024/Sceneries/duplicated",
                       EntryClassification::Duplicated)};
     }
+}
+
+void CommunityModelTest::ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone()
+{
+    CommunityModel model;
+    model.ShowEntries(OneOfEachClass(), Profile(), {});
+
+    const auto rowNamed = [&model](const QString& name)
+    {
+        for (int row = 0; row < model.rowCount({}); ++row)
+        {
+            if (model.data(model.index(row, CommunityModel::NameColumn), Qt::DisplayRole).toString() == name)
+            {
+                return row;
+            }
+        }
+
+        return -1;
+    };
+
+    const int duplicated = rowNamed(QStringLiteral("duplicated"));
+    const int broken = rowNamed(QStringLiteral("broken"));
+    const int external = rowNamed(QStringLiteral("external"));
+
+    QVERIFY(duplicated >= 0);
+
+    QVERIFY(model.data(model.index(duplicated, CommunityModel::NameColumn), AlarmingRole).toBool());
+    QVERIFY(model.data(model.index(broken, CommunityModel::NameColumn), AlarmingRole).toBool());
+    QVERIFY(!model.data(model.index(external, CommunityModel::NameColumn), AlarmingRole).toBool());
+
+    const auto toneOf = [&model](const int row)
+    {
+        return static_cast<TagTone>(
+            model.data(model.index(row, CommunityModel::ClassificationColumn), TagToneRole).toInt());
+    };
+
+    QVERIFY(toneOf(duplicated) != TagTone::Muted);
+    QCOMPARE(toneOf(external), TagTone::Muted);
 }
 
 void CommunityModelTest::TheTableShowsOneRowPerEntry()

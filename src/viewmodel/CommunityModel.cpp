@@ -17,9 +17,9 @@ namespace
 
         switch (classification)
         {
+        case EntryClassification::Duplicated:
         case EntryClassification::Unmanaged: return TagTone::Outlined;
         case EntryClassification::External:
-        case EntryClassification::Duplicated:
         case EntryClassification::Unavailable: return TagTone::Muted;
         case EntryClassification::Managed:
         case EntryClassification::Broken: break;
@@ -108,7 +108,8 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
 
     if (role == AlarmingRole)
     {
-        return conflict != nullptr || entry->classification == EntryClassification::Broken;
+        return conflict != nullptr || entry->classification == EntryClassification::Broken
+            || entry->classification == EntryClassification::Duplicated;
     }
 
     if (role == TagTextRole)
