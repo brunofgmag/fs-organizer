@@ -1,6 +1,7 @@
 #include <QtCore/QDateTime>
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QRadioButton>
@@ -36,6 +37,8 @@ private slots:
     static void ApplyingFromThePanelGoesThroughTheViewModel();
     static void TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt();
     static void TheNameTableWritesTheContentAndTheDayBesideEachPreset();
+    static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
+    static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
 };
 
 namespace
@@ -213,6 +216,84 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
     QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
     QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon(s) · 1 categoria(s)"));
     QCOMPARE(names->item(0, 2)->text(), QStringLiteral("17/02/2026"));
+}
+
+void PresetsPageTest::FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives()
+{
+    Fixture f;
+    f.viewModel.Create(QStringLiteral("Bush flying"));
+
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* filter = page.findChild<QLineEdit*>();
+    QVERIFY(names != nullptr);
+    QVERIFY(filter != nullptr);
+    QCOMPARE(names->rowCount(), 2);
+
+    const auto rowNamed = [names](const QString& name)
+    {
+        for (int row = 0; row < names->rowCount(); ++row)
+        {
+            if (names->item(row, 0)->text() == name)
+            {
+                return row;
+            }
+        }
+
+        return -1;
+    };
+
+    const int bush = rowNamed(QStringLiteral("Bush flying"));
+    const int line = rowNamed(QStringLiteral("Voo de linha"));
+
+    names->setCurrentCell(bush, 0);
+
+    filter->setText(QStringLiteral("bush"));
+
+    QVERIFY(!names->isRowHidden(bush));
+    QVERIFY(names->isRowHidden(line));
+    QCOMPARE(names->currentRow(), bush);
+
+    filter->clear();
+
+    QVERIFY(!names->isRowHidden(bush));
+    QVERIFY(!names->isRowHidden(line));
+}
+
+void PresetsPageTest::FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding()
+{
+    Fixture f;
+    f.viewModel.Create(QStringLiteral("Bush flying"));
+
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* filter = page.findChild<QLineEdit*>();
+
+    const auto rowNamed = [names](const QString& name)
+    {
+        for (int row = 0; row < names->rowCount(); ++row)
+        {
+            if (names->item(row, 0)->text() == name)
+            {
+                return row;
+            }
+        }
+
+        return -1;
+    };
+
+    names->setCurrentCell(rowNamed(QStringLiteral("Bush flying")), 0);
+
+    filter->setText(QStringLiteral("linha"));
+
+    QCOMPARE(names->currentRow(), rowNamed(QStringLiteral("Voo de linha")));
+    QVERIFY(!names->isRowHidden(names->currentRow()));
+
+    filter->setText(QStringLiteral("nada casa com isto"));
+
+    QCOMPARE(names->currentRow(), -1);
 }
 
 QTEST_MAIN(PresetsPageTest)

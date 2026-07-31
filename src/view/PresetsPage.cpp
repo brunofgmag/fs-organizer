@@ -11,6 +11,7 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyle>
@@ -125,6 +126,12 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     auto* toolbar = new QWidget(this);
     toolbar->setObjectName(QStringLiteral("PageToolbar"));
 
+    filter_ = new QLineEdit(this);
+    filter_->setPlaceholderText(tr("Filtrar presets"));
+    filter_->setClearButtonEnabled(true);
+    filter_->setMinimumWidth(220);
+    filter_->setMaximumWidth(280);
+
     auto* bar = new QHBoxLayout(toolbar);
     bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     bar->setSpacing(8);
@@ -133,6 +140,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     bar->addWidget(rename_);
     bar->addWidget(remove_);
     bar->addStretch();
+    bar->addWidget(filter_);
 
     entries_ = new QTableWidget(this);
     entries_->setObjectName(QStringLiteral("PresetEntries"));
@@ -242,6 +250,8 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
                 RefreshPreview();
             });
 
+    connect(filter_, &QLineEdit::textChanged, this, &PresetsPage::ShowOnlyTheNamesThatMatch);
+
     connect(entries_, &QTableWidget::itemChanged, this, &PresetsPage::ActionToggled);
 
     connect(&viewModel_, &PresetViewModel::Changed, this, &PresetsPage::ReloadNames);
@@ -299,6 +309,38 @@ QTableWidget* PresetsPage::CreateNameTable()
     return table;
 }
 
+void PresetsPage::ShowOnlyTheNamesThatMatch()
+{
+    const QString wanted = filter_->text().trimmed();
+    int firstStanding = -1;
+
+    for (int row = 0; row < names_->rowCount(); ++row)
+    {
+        const QTableWidgetItem* item = names_->item(row, kNameColumn);
+        const bool matches = item != nullptr && item->text().contains(wanted, Qt::CaseInsensitive);
+
+        names_->setRowHidden(row, !matches);
+
+        if (matches && firstStanding < 0)
+        {
+            firstStanding = row;
+        }
+    }
+
+    if (names_->currentRow() >= 0 && !names_->isRowHidden(names_->currentRow()))
+    {
+        return;
+    }
+
+    if (firstStanding < 0)
+    {
+        names_->setCurrentItem(nullptr);
+        return;
+    }
+
+    names_->setCurrentCell(firstStanding, kNameColumn);
+}
+
 QString PresetsPage::SelectedName() const
 {
     const QTableWidgetItem* item = names_->item(names_->currentRow(), kNameColumn);
@@ -336,6 +378,8 @@ void PresetsPage::ReloadNames()
 
     names_->setCurrentCell(landOn, kNameColumn);
     populating_ = false;
+
+    ShowOnlyTheNamesThatMatch();
 
     pages_->setCurrentIndex(rows.isEmpty() ? 1 : 0);
 

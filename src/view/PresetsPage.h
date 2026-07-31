@@ -11,6 +11,7 @@
 class ContextPanel;
 class QButtonGroup;
 class QLabel;
+class QLineEdit;
 class QPushButton;
 class QStackedWidget;
 class QTableWidget;
@@ -37,6 +38,8 @@ private:
 
     void ReloadNames();
 
+    void ShowOnlyTheNamesThatMatch();
+
     void ShowSelected();
 
     void ActionToggled(const QTableWidgetItem* item);
@@ -57,6 +60,7 @@ private:
     QStackedWidget* pages_ = nullptr;
     ContextPanel* panel_ = nullptr;
     QTableWidget* names_ = nullptr;
+    QLineEdit* filter_ = nullptr;
     QButtonGroup* modes_ = nullptr;
     QLabel* modeExplained_ = nullptr;
     QTableWidget* entries_ = nullptr;
