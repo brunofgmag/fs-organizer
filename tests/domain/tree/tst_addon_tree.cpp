@@ -24,6 +24,7 @@ private slots:
     static void AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked();
     static void ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddon();
     static void EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibraryRoot();
+    static void CountingCategoriesLeavesOutTheLibraryRootAndEveryAddon();
     static void AnEmptyFolderOnlyCountsAsACategoryOnceTheUserHasDeclaredIt();
     static void TheLibrariesAnswerWhichOfThemHoldsAnAddonOfAGivenName();
     static void AnIdentityNoAddonAnswersToIsFree();
@@ -208,6 +209,23 @@ void AddonTreeTest::EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibrary
     QCOMPARE(categories[1]->path, std::filesystem::path("D:/MSFS 2024/Aircrafts"));
     QCOMPARE(categories[2]->path, std::filesystem::path("D:/MSFS 2024/Aircrafts/Fenix"));
     QCOMPARE(categories[3]->path, std::filesystem::path("D:/MSFS 2024/Sceneries"));
+}
+
+void AddonTreeTest::CountingCategoriesLeavesOutTheLibraryRootAndEveryAddon()
+{
+    const TreeNode library = ReferenceLibrary();
+
+    QCOMPARE(CategoriesUnder(library).size(), std::size_t{4});
+    QCOMPARE(CountCategoriesInside(library), std::size_t{3});
+
+    TreeNode flat;
+    flat.kind = TreeNodeKind::Library;
+    flat.path = "D:/MSFS 2024/Aircrafts";
+    flat.children = {AddonNode("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"),
+                     AddonNode("D:/MSFS 2024/Aircrafts/fenix-a320")};
+
+    QCOMPARE(CountAddons(flat), std::size_t{2});
+    QCOMPARE(CountCategoriesInside(flat), std::size_t{0});
 }
 
 void AddonTreeTest::TheLibrariesAnswerWhichOfThemHoldsAnAddonOfAGivenName()

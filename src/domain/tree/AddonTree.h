@@ -36,6 +36,8 @@ const TreeNode* LibraryTreeAt(std::vector<TreeNode>&& libraries, const std::file
 
 std::vector<const TreeNode*> CategoriesUnder(TreeNode&& node) = delete;
 
+[[nodiscard]] std::size_t CountCategoriesInside(const TreeNode& node);
+
 [[nodiscard]] bool HoldsAddonsOrWasDeclared(const TreeNode& node);
 
 [[nodiscard]] std::vector<const TreeNode*> CategoriesOfferedIn(const TreeNode& tree, bool offerTheRoot);

@@ -157,7 +157,7 @@ QString AddonTreeModel::CountedSuffixOf(const TreeNode& node)
         return QString::number(addons);
     }
 
-    return tr("%1 · %2").arg(tr("%n categoria(s)", nullptr, static_cast<int>(CategoriesUnder(node).size())),
+    return tr("%1 · %2").arg(tr("%n categoria(s)", nullptr, static_cast<int>(CountCategoriesInside(node))),
                              tr("%n addon(s)", nullptr, static_cast<int>(addons)));
 }
 

@@ -68,6 +68,13 @@ std::vector<const TreeNode*> CategoriesUnder(const TreeNode& node)
     return categories;
 }
 
+std::size_t CountCategoriesInside(const TreeNode& node)
+{
+    const std::vector<const TreeNode*> withTheNodeItself = CategoriesUnder(node);
+
+    return withTheNodeItself.empty() ? 0 : withTheNodeItself.size() - 1;
+}
+
 bool HoldsAddonsOrWasDeclared(const TreeNode& node)
 {
     return node.declaredAsCategory || CountAddons(node) > 0;
