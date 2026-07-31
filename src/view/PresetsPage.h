@@ -11,7 +11,6 @@
 class ContextPanel;
 class QButtonGroup;
 class QLabel;
-class QListWidget;
 class QPushButton;
 class QStackedWidget;
 class QTableWidget;
@@ -30,7 +29,7 @@ signals:
     void SummaryChanged(const QString& summary);
 
 private:
-    [[nodiscard]] QWidget* CreateNameColumn();
+    [[nodiscard]] QTableWidget* CreateNameTable();
 
     [[nodiscard]] QString SelectedName() const;
 
@@ -57,7 +56,7 @@ private:
     PresetViewModel& viewModel_;
     QStackedWidget* pages_ = nullptr;
     ContextPanel* panel_ = nullptr;
-    QListWidget* names_ = nullptr;
+    QTableWidget* names_ = nullptr;
     QButtonGroup* modes_ = nullptr;
     QLabel* modeExplained_ = nullptr;
     QTableWidget* entries_ = nullptr;

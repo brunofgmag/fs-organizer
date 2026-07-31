@@ -1,6 +1,6 @@
+#include <QtCore/QDateTime>
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QRadioButton>
@@ -35,6 +35,7 @@ private slots:
     static void SelectingAPresetFillsThePanelPreview();
     static void ApplyingFromThePanelGoesThroughTheViewModel();
     static void TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt();
+    static void TheNameTableWritesTheContentAndTheDayBesideEachPreset();
 };
 
 namespace
@@ -139,9 +140,9 @@ void PresetsPageTest::SelectingAPresetFillsThePanelPreview()
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
 
-    auto* names = page.findChild<QListWidget*>();
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
-    QCOMPARE(names->count(), 1);
+    QCOMPARE(names->rowCount(), 1);
     QCOMPARE(names->currentRow(), 0);
 
     auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
@@ -177,18 +178,41 @@ void PresetsPageTest::TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt()
     page.show();
     QVERIFY(QTest::qWaitForWindowExposed(&page));
 
-    auto* heading = page.findChild<QHeaderView*>(QStringLiteral("ListHeading"));
-    auto* names = page.findChild<QListWidget*>();
-    auto* entries = page.findChild<QTableWidget*>();
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* entries = page.findChild<QTableWidget*>(QStringLiteral("PresetEntries"));
 
-    QVERIFY(heading != nullptr);
     QVERIFY(names != nullptr);
     QVERIFY(entries != nullptr);
 
-    QCOMPARE(heading->mapTo(&page, QPoint()).y(), entries->mapTo(&page, QPoint()).y());
+    QHeaderView* heading = names->horizontalHeader();
+
+    QCOMPARE(heading->mapTo(&page, QPoint()).y(), entries->horizontalHeader()->mapTo(&page, QPoint()).y());
     QCOMPARE(heading->height(), entries->horizontalHeader()->height());
     QCOMPARE(heading->font(), entries->horizontalHeader()->font());
-    QTRY_COMPARE(names->mapTo(&page, QPoint()).y(), entries->viewport()->mapTo(&page, QPoint()).y());
+    QTRY_COMPARE(names->viewport()->mapTo(&page, QPoint()).y(), entries->viewport()->mapTo(&page, QPoint()).y());
+}
+
+void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
+{
+    Fixture f;
+    f.presets.SayItWasWrittenAt("Voo de linha",
+                                std::chrono::system_clock::time_point(std::chrono::milliseconds(
+                                    QDateTime(QDate(2026, 2, 17), QTime(9, 30)).toMSecsSinceEpoch())));
+
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QVERIFY(names != nullptr);
+    QCOMPARE(names->columnCount(), 3);
+    QCOMPARE(names->rowCount(), 1);
+
+    QCOMPARE(names->horizontalHeaderItem(0)->text(), QStringLiteral("Preset"));
+    QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Conteúdo"));
+    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Atualizado"));
+
+    QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
+    QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon(s) · 1 categoria(s)"));
+    QCOMPARE(names->item(0, 2)->text(), QStringLiteral("17/02/2026"));
 }
 
 QTEST_MAIN(PresetsPageTest)

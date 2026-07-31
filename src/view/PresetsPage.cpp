@@ -11,7 +11,6 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QListWidget>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyle>
@@ -19,7 +18,6 @@
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QVBoxLayout>
 
-#include <QtGui/QStandardItemModel>
 #include <QtWidgets/QStackedWidget>
 
 #include "view/delegates/RowDelegate.h"
@@ -33,46 +31,10 @@ namespace
 {
     constexpr int kAddonColumn = 0;
     constexpr int kActionColumn = 2;
-    constexpr int kNameColumnWidth = 260;
-
-    class HeaderTwin final : public QObject
-    {
-    public:
-        HeaderTwin(QHeaderView* follower, QHeaderView* leader) : QObject(follower), follower_(follower), leader_(leader)
-        {
-            leader_->installEventFilter(this);
-            Match();
-        }
-
-        bool eventFilter(QObject* watched, QEvent* event) override
-        {
-            if (event->type() == QEvent::Resize || event->type() == QEvent::FontChange)
-            {
-                Match();
-            }
-
-            return QObject::eventFilter(watched, event);
-        }
-
-    private:
-        void Match() const
-        {
-            if (follower_->font() != leader_->font())
-            {
-                follower_->setFont(leader_->font());
-
-                if (QWidget* viewport = follower_->viewport(); viewport != nullptr)
-                {
-                    viewport->setFont(leader_->font());
-                }
-            }
-
-            follower_->setFixedHeight(leader_->height());
-        }
-
-        QHeaderView* follower_;
-        QHeaderView* leader_;
-    };
+    constexpr int kNameColumn = 0;
+    constexpr int kContentColumn = 1;
+    constexpr int kUpdatedColumn = 2;
+    constexpr int kNameTableWidth = 380;
 
     class CenteredCheckDelegate final : public QStyledItemDelegate
     {
@@ -152,9 +114,7 @@ namespace
 PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& notifier, QWidget* parent)
     : QWidget(parent), viewModel_(viewModel)
 {
-    names_ = new QListWidget(this);
-    names_->setFixedWidth(kNameColumnWidth);
-    names_->setItemDelegate(new RowDelegate(names_));
+    names_ = CreateNameTable();
 
     auto* create = new QPushButton(tr("Novo a partir dos habilitados"), this);
     create->setProperty("role", "primary");
@@ -175,6 +135,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     bar->addStretch();
 
     entries_ = new QTableWidget(this);
+    entries_->setObjectName(QStringLiteral("PresetEntries"));
     entries_->setColumnCount(3);
     entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Biblioteca"), tr("Liga")});
     entries_->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -235,7 +196,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     auto* tables = new QHBoxLayout;
     tables->setContentsMargins(0, 0, 0, 0);
     tables->setSpacing(0);
-    tables->addWidget(CreateNameColumn());
+    tables->addWidget(names_);
     tables->addWidget(entries_, 1);
     tables->addWidget(panel);
 
@@ -267,10 +228,13 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(rename_, &QPushButton::clicked, this, &PresetsPage::RenameSelected);
     connect(remove_, &QPushButton::clicked, this, &PresetsPage::RemoveSelected);
     connect(apply_, &QPushButton::clicked, this, &PresetsPage::ApplySelected);
-    connect(names_, &QListWidget::currentRowChanged, this,
-            [this]
+    connect(names_, &QTableWidget::currentCellChanged, this,
+            [this](const int row, int, const int previous, int)
             {
-                ShowSelected();
+                if (row != previous)
+                {
+                    ShowSelected();
+                }
             });
     connect(modes_, &QButtonGroup::idClicked, this,
             [this]
@@ -316,34 +280,28 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     ReloadNames();
 }
 
-QWidget* PresetsPage::CreateNameColumn()
+QTableWidget* PresetsPage::CreateNameTable()
 {
-    auto* onlyTheName = new QStandardItemModel(0, 1, this);
-    onlyTheName->setHorizontalHeaderLabels({tr("Preset")});
+    auto* table = new QTableWidget(this);
+    table->setObjectName(QStringLiteral("PresetNames"));
+    table->setFixedWidth(kNameTableWidth);
+    table->setColumnCount(3);
+    table->setHorizontalHeaderLabels({tr("Preset"), tr("Conteúdo"), tr("Atualizado")});
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setItemDelegate(new RowDelegate(table));
+    table->setShowGrid(false);
+    table->verticalHeader()->setVisible(false);
+    DressTheHeaderOf(table->horizontalHeader());
+    LetTheColumnsBeDraggedAndStillFillTheTable(table, kNameColumn);
 
-    auto* heading = new QHeaderView(Qt::Horizontal, this);
-    heading->setObjectName(QStringLiteral("ListHeading"));
-    heading->setModel(onlyTheName);
-    heading->setSectionResizeMode(QHeaderView::Stretch);
-    heading->setSectionsClickable(false);
-    heading->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    heading->setHighlightSections(false);
-
-    new HeaderTwin(heading, entries_->horizontalHeader());
-
-    auto* column = new QWidget(this);
-    auto* stacked = new QVBoxLayout(column);
-    stacked->setContentsMargins(0, 0, 0, 0);
-    stacked->setSpacing(0);
-    stacked->addWidget(heading);
-    stacked->addWidget(names_, 1);
-
-    return column;
+    return table;
 }
 
 QString PresetsPage::SelectedName() const
 {
-    const QListWidgetItem* item = names_->currentItem();
+    const QTableWidgetItem* item = names_->item(names_->currentRow(), kNameColumn);
 
     return item == nullptr ? QString{} : item->text();
 }
@@ -356,19 +314,33 @@ ApplyMode PresetsPage::Mode() const
 void PresetsPage::ReloadNames()
 {
     const QString wanted = SelectedName();
+    const QList<PresetRow> rows = viewModel_.Rows();
 
     populating_ = true;
-    names_->clear();
-    names_->addItems(viewModel_.Names());
+    names_->clearContents();
+    names_->setRowCount(static_cast<int>(rows.size()));
 
-    const QList<QListWidgetItem*> found = names_->findItems(wanted, Qt::MatchExactly);
-    names_->setCurrentRow(found.isEmpty() ? (names_->count() > 0 ? 0 : -1) : names_->row(found.front()));
+    int landOn = rows.isEmpty() ? -1 : 0;
+
+    for (int row = 0; row < rows.size(); ++row)
+    {
+        names_->setItem(row, kNameColumn, new QTableWidgetItem(rows[row].name));
+        names_->setItem(row, kContentColumn, new QTableWidgetItem(rows[row].content));
+        names_->setItem(row, kUpdatedColumn, new QTableWidgetItem(rows[row].updated));
+
+        if (rows[row].name == wanted)
+        {
+            landOn = row;
+        }
+    }
+
+    names_->setCurrentCell(landOn, kNameColumn);
     populating_ = false;
 
-    pages_->setCurrentIndex(names_->count() == 0 ? 1 : 0);
+    pages_->setCurrentIndex(rows.isEmpty() ? 1 : 0);
 
-    emit SummaryChanged(names_->count() == 0 ? tr("Nenhum preset neste perfil ainda.")
-                                             : tr("%n preset(s) neste perfil.", nullptr, names_->count()));
+    emit SummaryChanged(rows.isEmpty() ? tr("Nenhum preset neste perfil ainda.")
+                                       : tr("%n preset(s) neste perfil.", nullptr, static_cast<int>(rows.size())));
 
     ShowSelected();
 }
