@@ -17,6 +17,9 @@ private slots:
     static void AnEntryFromALibraryTheProfileNoLongerHoldsIsReported();
     static void ReplaceSweepsEveryLibraryOfTheProfile();
     static void TheEntriesOfWhatIsEnabledNameEveryEnabledAddonAndNothingElse();
+    static void TheContentCountsEveryEntryAndTheCategoriesTheyLandIn();
+    static void AnEntryThatNoLongerResolvesStillCountsAsAnAddonAndAddsNoCategory();
+    static void ADisableEntryWeighsTheSameAsAnEnableOneInTheContent();
 };
 
 namespace
@@ -221,6 +224,45 @@ void PresetPlanTest::TheEntriesOfWhatIsEnabledNameEveryEnabledAddonAndNothingEls
     {
         QVERIFY(entry.action == PresetAction::Enable);
     }
+}
+
+void PresetPlanTest::TheContentCountsEveryEntryAndTheCategoriesTheyLandIn()
+{
+    const std::vector<TreeNode> libraries{LibraryTree(), SecondLibraryTree()};
+
+    SimulatorProfile profile = Profile();
+    profile.libraries.push_back(Library{"library-2", kSecondLibrary, "Cenários"});
+
+    const Preset preset{"Voo de linha",
+                        {Enabling("aircraft-a"), Enabling("aircraft-b"),
+                         PresetEntry{AddonId{"library-2", "scenery-z"}, PresetAction::Enable}}};
+
+    const PresetContent content = ContentOf(preset, profile, libraries);
+
+    QCOMPARE(content.addons, std::size_t{3});
+    QCOMPARE(content.categories, std::size_t{2});
+}
+
+void PresetPlanTest::AnEntryThatNoLongerResolvesStillCountsAsAnAddonAndAddsNoCategory()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const Preset preset{"Voo de linha", {Enabling("aircraft-a"), Enabling("aircraft-que-sumiu")}};
+
+    const PresetContent content = ContentOf(preset, Profile(), libraries);
+
+    QCOMPARE(content.addons, std::size_t{2});
+    QCOMPARE(content.categories, std::size_t{1});
+}
+
+void PresetPlanTest::ADisableEntryWeighsTheSameAsAnEnableOneInTheContent()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const Preset preset{"Voo de linha", {Enabling("aircraft-a"), Disabling("aircraft-b")}};
+
+    const PresetContent content = ContentOf(preset, Profile(), libraries);
+
+    QCOMPARE(content.addons, std::size_t{2});
+    QCOMPARE(content.categories, std::size_t{1});
 }
 
 QTEST_MAIN(PresetPlanTest)

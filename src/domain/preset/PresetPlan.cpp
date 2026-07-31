@@ -130,6 +130,22 @@ PresetPlan PlanPresetApplication(const Preset& preset,
     return plan;
 }
 
+PresetContent ContentOf(const Preset& preset, const SimulatorProfile& profile, const std::vector<TreeNode>& libraries)
+{
+    const AddonsByLibrary index = AddonsOfEveryLibrary(libraries, profile);
+    std::set<std::string> categories;
+
+    for (const PresetEntry& entry : preset.entries)
+    {
+        if (const TreeNode* addon = AddonAt(index, entry.addonId); addon != nullptr)
+        {
+            categories.insert(ComparablePath(addon->path.parent_path()));
+        }
+    }
+
+    return {preset.entries.size(), categories.size()};
+}
+
 std::vector<PresetEntry> EntriesForWhatIsEnabled(const SimulatorProfile& profile,
                                                  const std::vector<TreeNode>& libraries,
                                                  const EnabledAddons& enabled)

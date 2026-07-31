@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_DOMAIN_PRESET_PRESET_PLAN_H
 #define FS_ORGANIZER_DOMAIN_PRESET_PRESET_PLAN_H
 
+#include <cstddef>
 #include <vector>
 
 #include "domain/model/AddonId.h"
@@ -35,6 +36,18 @@ PresetPlan PlanPresetApplication(const Preset& preset,
                                  const SimulatorProfile& profile,
                                  std::vector<TreeNode>&& libraries,
                                  const EnabledAddons& enabled) = delete;
+
+struct PresetContent
+{
+    std::size_t addons = 0;
+    std::size_t categories = 0;
+};
+
+[[nodiscard]] PresetContent
+ContentOf(const Preset& preset, const SimulatorProfile& profile, const std::vector<TreeNode>& libraries);
+
+PresetContent
+ContentOf(const Preset& preset, const SimulatorProfile& profile, std::vector<TreeNode>&& libraries) = delete;
 
 [[nodiscard]] std::vector<PresetEntry> EntriesForWhatIsEnabled(const SimulatorProfile& profile,
                                                                const std::vector<TreeNode>& libraries,
