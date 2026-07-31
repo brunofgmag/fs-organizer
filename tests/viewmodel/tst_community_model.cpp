@@ -13,7 +13,7 @@ private slots:
     static void FilteringByEachClassificationReturnsExactlyItsSubset();
     static void ClearingTheFilterShowsEverythingAgain();
     static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
-    static void EveryCellOffersItsWholeTextToWhoeverHoversIt();
+    static void ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate();
 };
 
 namespace
@@ -134,20 +134,15 @@ void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
              QStringLiteral("physical"));
 }
 
-void CommunityModelTest::EveryCellOffersItsWholeTextToWhoeverHoversIt()
+void CommunityModelTest::ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate()
 {
     CommunityModel model;
     model.ShowEntries(OneOfEachClass(), Profile(), {});
 
     for (int column = 0; column <= CommunityModel::TargetColumn; ++column)
     {
-        const QModelIndex cell = model.index(0, column);
-
-        QCOMPARE(model.data(cell, Qt::ToolTipRole).toString(), model.data(cell, Qt::DisplayRole).toString());
+        QVERIFY(model.data(model.index(0, column), Qt::ToolTipRole).toString().isEmpty());
     }
-
-    QCOMPARE(model.data(model.index(0, CommunityModel::TargetColumn), Qt::ToolTipRole).toString(),
-             QStringLiteral(R"(D:\MSFS 2024\Sceneries\managed)"));
 }
 
 QTEST_APPLESS_MAIN(CommunityModelTest)

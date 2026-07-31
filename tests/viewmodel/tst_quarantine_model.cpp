@@ -9,7 +9,7 @@ class QuarantineModelTest : public QObject
 private slots:
     static void EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackTo();
     static void AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell();
-    static void EveryCellOffersItsWholeTextToWhoeverHoversIt();
+    static void NoCellRepeatsItsOwnTextAsATooltip();
 };
 
 namespace
@@ -53,20 +53,15 @@ void QuarantineModelTest::AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfSh
              QStringLiteral("(o diário não sabe)"));
 }
 
-void QuarantineModelTest::EveryCellOffersItsWholeTextToWhoeverHoversIt()
+void QuarantineModelTest::NoCellRepeatsItsOwnTextAsATooltip()
 {
     QuarantineModel model;
     model.ShowItems(TwoItems());
 
     for (int column = 0; column <= QuarantineModel::WhereColumn; ++column)
     {
-        const QModelIndex cell = model.index(0, column);
-
-        QCOMPARE(model.data(cell, Qt::ToolTipRole).toString(), model.data(cell, Qt::DisplayRole).toString());
+        QVERIFY(model.data(model.index(0, column), Qt::ToolTipRole).toString().isEmpty());
     }
-
-    QCOMPARE(model.data(model.index(0, QuarantineModel::OriginColumn), Qt::ToolTipRole).toString(),
-             QStringLiteral(R"(E:\Sim\Community\simbridge)"));
 }
 
 QTEST_APPLESS_MAIN(QuarantineModelTest)

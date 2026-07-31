@@ -128,10 +128,13 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
 
     if (role == Qt::ToolTipRole)
     {
-        const QString text = data(position, Qt::DisplayRole).toString();
+        if (conflict == nullptr)
+        {
+            return {};
+        }
 
-        return conflict == nullptr ? QVariant(text)
-                                   : tr("%1\nTambém existe na biblioteca: %2").arg(text, AsText(conflict->libraryPath));
+        return tr("%1\nTambém existe na biblioteca: %2")
+            .arg(data(position, Qt::DisplayRole).toString(), AsText(conflict->libraryPath));
     }
 
     if (role != Qt::DisplayRole)

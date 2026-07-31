@@ -64,11 +64,6 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
         return {};
     }
 
-    if (role == Qt::ToolTipRole)
-    {
-        return data(position, Qt::DisplayRole);
-    }
-
     if (role != Qt::DisplayRole)
     {
         return {};
