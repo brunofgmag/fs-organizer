@@ -55,6 +55,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
         src/viewmodel/JournalViewModel.cpp
+        src/viewmodel/SimulatorText.cpp
         src/viewmodel/PresetViewModel.cpp
         src/viewmodel/QtBackgroundRunner.cpp
         src/viewmodel/QuarantineModel.cpp

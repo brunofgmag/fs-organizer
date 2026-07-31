@@ -647,6 +647,7 @@ if (WIN32)
                 tests/view/tst_main_window.cpp
                 assets/resources.qrc
                 src/view/shell/MainWindow.cpp
+                src/viewmodel/SimulatorText.cpp
                 src/view/WheelGuard.cpp
                 src/view/shell/TriageStrip.cpp
                 src/view/theme/ModernistPaint.cpp

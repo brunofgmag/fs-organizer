@@ -13,15 +13,10 @@
 #include "support/PathText.h"
 #include "view/WheelGuard.h"
 #include "view/theme/ModernistMetrics.h"
+#include "viewmodel/SimulatorText.h"
 
 namespace
 {
-    QString VariantLabel(const SimulatorVariant variant)
-    {
-        return variant == SimulatorVariant::MSFS2020 ? QObject::tr("Flight Simulator 2020")
-                                                     : QObject::tr("Flight Simulator 2024");
-    }
-
     QString CandidateLabel(const SimulatorCandidate& candidate)
     {
         QStringList names;
@@ -31,7 +26,7 @@ namespace
         }
 
         return QStringLiteral("%1 — %2 (%3)")
-            .arg(VariantLabel(candidate.variant), AsText(candidate.packagesPath), names.join(", "));
+            .arg(NameOf(candidate.variant), AsText(candidate.packagesPath), names.join(", "));
     }
 }
 
@@ -72,8 +67,8 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
     RefreshCandidates();
 
     variant_ = new QComboBox(page);
-    variant_->addItem(VariantLabel(SimulatorVariant::MSFS2024), static_cast<int>(SimulatorVariant::MSFS2024));
-    variant_->addItem(VariantLabel(SimulatorVariant::MSFS2020), static_cast<int>(SimulatorVariant::MSFS2020));
+    variant_->addItem(NameOf(SimulatorVariant::MSFS2024), static_cast<int>(SimulatorVariant::MSFS2024));
+    variant_->addItem(NameOf(SimulatorVariant::MSFS2020), static_cast<int>(SimulatorVariant::MSFS2020));
     LetTheWheelScrollPastUnlessTheWidgetHasFocus(variant_);
 
     auto* browse = new QPushButton(tr("Apontar uma pasta manualmente..."), page);
