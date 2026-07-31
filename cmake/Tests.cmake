@@ -744,6 +744,45 @@ if (WIN32)
         configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
 
 
+        fsorg_add_qt_test(fsorg-options-page-tests options-page
+                tests/view/tst_options_page.cpp
+                assets/resources.qrc
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeClock.h
+                tests/doubles/FakeFileOperations.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeLinkService.h
+                tests/doubles/FakeOperationJournal.h
+                tests/doubles/FakeProcessProbe.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/doubles/InlineBackgroundRunner.h
+                src/domain/journal/OperationLog.cpp
+                src/domain/importing/CopyConflicts.cpp
+                src/domain/linking/DisableLinks.cpp
+                src/domain/linking/EntryClassifier.cpp
+                src/domain/linking/LinkingEngine.cpp
+                src/domain/linking/RepairPlan.cpp
+                src/domain/profile/ProfileEdits.cpp
+                src/domain/tree/AddonTree.cpp
+                src/domain/tree/EffectiveDestination.cpp
+                src/domain/tree/LibraryLookup.cpp
+                src/domain/tree/LibraryTrees.cpp
+                src/domain/tree/ToggleDirection.cpp
+                src/application/LibraryOrganizer.cpp
+                src/application/ProfileService.cpp
+                src/application/Session.cpp
+                src/view/options/OptionsPage.cpp
+                src/view/theme/ModernistPaint.cpp
+                src/view/theme/ModernistStyle.cpp
+                src/view/theme/ModernistTheme.cpp
+                src/view/theme/ModernistTones.cpp
+                src/viewmodel/OptionsViewModel.cpp
+                src/viewmodel/SessionNotifier.cpp
+                src/viewmodel/SimulatorText.cpp)
+        configure_fsorg_gui_test(fsorg-options-page-tests options-page)
+
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp
                 tests/doubles/FakeCatalogScanner.h

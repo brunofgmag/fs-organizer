@@ -6,6 +6,7 @@
 #include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtGui/QColor>
+#include <QtGui/QIcon>
 
 #include "viewmodel/TagTone.h"
 
@@ -32,6 +33,8 @@ void PaintTag(QPainter& painter, const QRect& box, const QString& text, TagTone 
 [[nodiscard]] QColor QuietInk();
 
 [[nodiscard]] QColor AlertInk();
+
+[[nodiscard]] QIcon GearIcon(int side);
 
 void DressTheHeaderOf(QHeaderView* header);
 

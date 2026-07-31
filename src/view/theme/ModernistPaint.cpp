@@ -6,6 +6,8 @@
 #include <QtGui/QFont>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QPainter>
+#include <QtGui/QPainterPath>
+#include <QtGui/QPixmap>
 #include <QtWidgets/QHeaderView>
 
 #include "view/theme/ModernistTones.h"
@@ -202,6 +204,42 @@ QColor QuietInk()
 QColor AlertInk()
 {
     return TonesOf(CurrentColorScheme()).accentBright;
+}
+
+QIcon GearIcon(const int side)
+{
+    QPixmap pixmap(side, side);
+    pixmap.fill(Qt::transparent);
+
+    const QPointF centre(side / 2.0, side / 2.0);
+    const qreal outer = side * 0.42;
+    const qreal inner = side * 0.30;
+
+    QPainterPath teeth;
+    for (int tooth = 0; tooth < 8; ++tooth)
+    {
+        const qreal from = tooth * 45.0 - 9.0;
+        QPainterPath wedge;
+        wedge.moveTo(centre);
+        wedge.arcTo(QRectF(centre.x() - outer, centre.y() - outer, outer * 2, outer * 2), from, 18.0);
+        wedge.closeSubpath();
+        teeth = teeth.united(wedge);
+    }
+
+    QPainterPath body;
+    body.addEllipse(centre, inner, inner);
+
+    QPainterPath hole;
+    hole.addEllipse(centre, side * 0.12, side * 0.12);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(TonesOf(CurrentColorScheme()).secondary);
+    painter.drawPath(teeth.united(body).subtracted(hole));
+    painter.end();
+
+    return QIcon(pixmap);
 }
 
 void DressTheHeaderOf(QHeaderView* header)

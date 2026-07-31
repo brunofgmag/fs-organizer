@@ -14,6 +14,7 @@ class QComboBox;
 class QHBoxLayout;
 class QLabel;
 class QProgressBar;
+class QToolButton;
 class QStackedWidget;
 class QTimer;
 class TriageStrip;
@@ -28,6 +29,14 @@ public:
     void ShowProfiles(const AppSettings& settings);
 
     PageTab* AddPage(const QString& label, QWidget* page);
+
+    void CarryOptionsOn(QWidget* page);
+
+    void ShowOptions();
+
+    void LeaveOptions();
+
+    [[nodiscard]] bool ShowingOptions() const;
 
     void CarryTriageOn(const QWidget* page);
 
@@ -44,6 +53,10 @@ public:
     void ShowMeter(const QWidget* page, int filled, int outOf);
 
 signals:
+    void OptionsRequested();
+
+    void OptionsLeft();
+
     void AddProfileRequested();
 
     void ProfileChosen(const std::string& profileId);
@@ -84,6 +97,10 @@ private:
     QComboBox* profiles_ = nullptr;
     QStackedWidget* pages_ = nullptr;
     QHBoxLayout* tabs_ = nullptr;
+    QToolButton* gear_ = nullptr;
+    PageTab* back_ = nullptr;
+    QWidget* options_ = nullptr;
+    QWidget* behindTheOptions_ = nullptr;
     TriageStrip* triage_ = nullptr;
     QLabel* summary_ = nullptr;
     QLabel* aside_ = nullptr;
@@ -94,6 +111,7 @@ private:
     QHash<const QWidget*, QString> asides_;
     QHash<const QWidget*, Meter> meters_;
     QHash<const QWidget*, bool> triaged_;
+    QHash<const QWidget*, PageTab*> tabsByPage_;
 };
 
 #endif // FS_ORGANIZER_VIEW_SHELL_MAIN_WINDOW_H

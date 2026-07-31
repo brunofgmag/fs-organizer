@@ -12,14 +12,17 @@
 #include <QtWidgets/QProgressBar>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStatusBar>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 
 #include "view/platform/WindowsTitleBar.h"
 #include "view/WheelGuard.h"
 #include "view/shell/TriageStrip.h"
 #include "view/theme/ModernistMetrics.h"
+#include "view/theme/ModernistPaint.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
+#include "viewmodel/SimulatorText.h"
 
 namespace
 {
@@ -27,13 +30,9 @@ namespace
     constexpr int kMeterWidth = 132;
     constexpr int kMeterHeight = 4;
     constexpr int kStatusBarAlreadyInsetsTheFirstWidgetBy = 2;
+    constexpr int kGearGlyph = 14;
     constexpr QSize kWindowStartsAt(1140, 760);
 
-    QString ProfileLabel(const SimulatorProfile& profile)
-    {
-        return profile.variant == SimulatorVariant::MSFS2020 ? QObject::tr("Flight Simulator 2020")
-                                                             : QObject::tr("Flight Simulator 2024");
-    }
 }
 
 MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWindow(parent)
@@ -69,6 +68,7 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
             [this]
             {
                 ApplySystemTitleBarTheme(*this);
+                gear_->setIcon(GearIcon(kGearGlyph));
             });
 }
 
@@ -92,6 +92,16 @@ QWidget* MainWindow::CreateHeader()
 
     connect(profiles_, &QComboBox::activated, this, &MainWindow::OnProfileActivated);
 
+    gear_ = new QToolButton(header);
+    gear_->setObjectName(QStringLiteral("Gear"));
+    gear_->setIcon(GearIcon(kGearGlyph));
+    gear_->setIconSize(QSize(kGearGlyph, kGearGlyph));
+    gear_->setToolTip(tr("Opções"));
+    gear_->setCursor(Qt::PointingHandCursor);
+    gear_->setFixedHeight(profiles_->sizeHint().height());
+
+    connect(gear_, &QToolButton::clicked, this, &MainWindow::ShowOptions);
+
     auto* layout = new QHBoxLayout(header);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(10);
@@ -99,6 +109,7 @@ QWidget* MainWindow::CreateHeader()
     layout->addWidget(brand);
     layout->addStretch();
     layout->addWidget(profiles_);
+    layout->addWidget(gear_);
 
     return header;
 }
@@ -111,6 +122,12 @@ QWidget* MainWindow::CreateTabStrip()
     tabs_ = new QHBoxLayout(strip);
     tabs_->setContentsMargins(kPageGutter, 0, kPageGutter, 0);
     tabs_->setSpacing(2);
+
+    back_ = new PageTab(tr("Voltar"), strip);
+    back_->setVisible(false);
+    connect(back_, &PageTab::clicked, this, &MainWindow::LeaveOptions);
+
+    tabs_->addWidget(back_);
     tabs_->addStretch();
 
     return strip;
@@ -173,6 +190,8 @@ PageTab* MainWindow::AddPage(const QString& label, QWidget* page)
                 emit PageSelected(page);
             });
 
+    tabsByPage_.insert(page, tab);
+
     if (pages_->count() == 1)
     {
         tab->setChecked(true);
@@ -181,6 +200,65 @@ PageTab* MainWindow::AddPage(const QString& label, QWidget* page)
     }
 
     return tab;
+}
+
+void MainWindow::CarryOptionsOn(QWidget* page)
+{
+    options_ = page;
+    pages_->addWidget(page);
+}
+
+bool MainWindow::ShowingOptions() const
+{
+    return options_ != nullptr && pages_->currentWidget() == options_;
+}
+
+void MainWindow::ShowOptions()
+{
+    if (options_ == nullptr || ShowingOptions())
+    {
+        return;
+    }
+
+    behindTheOptions_ = pages_->currentWidget();
+
+    const PageTab* origin = tabsByPage_.value(behindTheOptions_);
+    back_->Relabel(origin != nullptr ? tr("← Voltar para %1").arg(origin->Label()) : tr("← Voltar"));
+
+    for (PageTab* tab : tabsByPage_)
+    {
+        tab->setVisible(false);
+    }
+
+    back_->setVisible(true);
+    pages_->setCurrentWidget(options_);
+    statusFades_->stop();
+    DressTheFooterFor(options_);
+
+    emit OptionsRequested();
+}
+
+void MainWindow::LeaveOptions()
+{
+    if (!ShowingOptions())
+    {
+        return;
+    }
+
+    back_->setVisible(false);
+
+    for (PageTab* tab : tabsByPage_)
+    {
+        tab->setVisible(true);
+    }
+
+    QWidget* landing = behindTheOptions_ != nullptr ? behindTheOptions_ : pages_->widget(0);
+    pages_->setCurrentWidget(landing);
+    statusFades_->stop();
+    DressTheFooterFor(landing);
+
+    emit OptionsLeft();
+    emit PageSelected(landing);
 }
 
 void MainWindow::CarryTriageOn(const QWidget* page)
@@ -267,7 +345,7 @@ void MainWindow::ShowProfiles(const AppSettings& settings)
 
     for (const SimulatorProfile& profile : settings_.profiles)
     {
-        profiles_->addItem(ProfileLabel(profile), QString::fromStdString(profile.id));
+        profiles_->addItem(NameOf(profile.variant), QString::fromStdString(profile.id));
     }
 
     profiles_->insertSeparator(profiles_->count());

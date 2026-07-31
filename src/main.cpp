@@ -29,6 +29,7 @@
 #include "view/library/AddonTreePage.h"
 #include "view/community/CommunityPage.h"
 #include "view/JournalPage.h"
+#include "view/options/OptionsPage.h"
 #include "view/shell/MainWindow.h"
 #include "view/PresetsPage.h"
 #include "view/quarantine/QuarantinePage.h"
@@ -39,6 +40,7 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
+#include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/QtBackgroundRunner.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
@@ -145,16 +147,19 @@ int main(int argc, char* argv[])
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
-    ProfileService profileService(catalog, classifier, linking, log, identities, LinkType::Junction);
 
-    const ImportEngine importEngine(filesystemProbe, files, linking, log, LinkType::Junction);
-    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
-                                      LinkType::Junction);
+    const AppSettings onDisk = settings.Load().value_or(AppSettings{});
+    const LinkType storedLinkType = onDisk.linkType;
 
-    const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
-                                     LinkType::Junction);
+    ProfileService profileService(catalog, classifier, linking, log, identities, storedLinkType);
 
-    MainWindow window(settings.Load().value_or(AppSettings{}));
+    ImportEngine importEngine(filesystemProbe, files, linking, log, storedLinkType);
+    ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
+                                storedLinkType);
+
+    LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, storedLinkType);
+
+    MainWindow window(onDisk);
     QtBackgroundRunner runner;
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, processProbe, runner, notifier);
@@ -182,14 +187,54 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
+    OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
+    auto* optionsPage = new OptionsPage(optionsViewModel, SettingsFilePath());
+
     PageTab* libraryButton = window.AddPage(QObject::tr("Biblioteca"), page);
     PageTab* communityButton = window.AddPage(QStringLiteral("Community"), communityPage);
     PageTab* presetsButton = window.AddPage(QObject::tr("Presets"), presetsPage);
     window.AddPage(QObject::tr("Diário"), journalPage);
     PageTab* quarantineButton = window.AddPage(QObject::tr("Quarentena"), quarantinePage);
 
+    window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);
     window.CarryTriageOn(communityPage);
+
+    QObject::connect(&optionsViewModel, &OptionsViewModel::LinkTypeChosen, &window,
+                     [&importEngine, &importService, &organizer](const LinkType linkType)
+                     {
+                         importEngine.UseLinkType(linkType);
+                         importService.UseLinkType(linkType);
+                         organizer.UseLinkType(linkType);
+                     });
+
+    QObject::connect(&optionsViewModel, &OptionsViewModel::SettingsCouldNotBeSaved, &window,
+                     [&window]
+                     {
+                         QMessageBox::warning(&window, QObject::tr("Não foi possível salvar"),
+                                              QObject::tr("A opção não pôde ser gravada em %1, então ela continua "
+                                                          "como estava.")
+                                                  .arg(AsText(SettingsFilePath())));
+                     });
+
+    QObject::connect(&window, &MainWindow::OptionsRequested, optionsPage, &OptionsPage::Reload);
+    QObject::connect(optionsPage, &OptionsPage::StatusChanged, &window, &MainWindow::ShowStatus);
+    QObject::connect(optionsPage, &OptionsPage::SummaryChanged, &window,
+                     [&window, optionsPage](const QString& summary)
+                     {
+                         window.ShowSummary(optionsPage, summary);
+                     });
+    QObject::connect(optionsPage, &OptionsPage::AddProfileRequested, &window, &MainWindow::AddProfileRequested);
+    QObject::connect(optionsPage, &OptionsPage::ProfileChosen, &window,
+                     [&window](const std::string& profileId)
+                     {
+                         emit window.ProfileChosen(profileId);
+                     });
+    QObject::connect(&optionsViewModel, &OptionsViewModel::LinksDisabled, page,
+                     [page](const std::vector<LinkOperationResult>&)
+                     {
+                         page->RefreshUndoState();
+                     });
 
     const auto counted = [](const std::size_t count)
     {
@@ -344,9 +389,18 @@ int main(int argc, char* argv[])
                          }
                      });
 
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
+                     [&window, &settings]
+                     {
+                         window.ShowProfiles(settings.Load().value_or(AppSettings{}));
+                     });
+
     QObject::connect(&notifier, &SessionNotifier::SettingsCouldNotBeSaved, &window,
                      [&]
                      {
+                         window.ShowProfiles(settings.Load().value_or(AppSettings{}));
+                         optionsPage->Reload();
+
                          QMessageBox::warning(
                              &window, QObject::tr("Não foi possível salvar"),
                              QObject::tr("A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. "

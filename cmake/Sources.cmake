@@ -71,6 +71,7 @@ set(VIEW_SOURCES
         src/view/community/ConflictDialog.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
+        src/view/options/OptionsPage.cpp
         src/view/shell/MainWindow.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp

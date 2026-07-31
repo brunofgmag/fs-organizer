@@ -14,6 +14,8 @@ public:
 
     void ShowCount(std::optional<qsizetype> count);
 
+    void Relabel(const QString& label);
+
     [[nodiscard]] QString Label() const;
 
     [[nodiscard]] QSize sizeHint() const override;

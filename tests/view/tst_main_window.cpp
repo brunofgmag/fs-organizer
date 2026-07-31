@@ -1,6 +1,10 @@
 #include <crtdbg.h>
 
+#include <algorithm>
+
 #include <QtCore/QPointer>
+#include <QtTest/QSignalSpy>
+#include <QtWidgets/QToolButton>
 #include <QtTest/QtTest>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QLabel>
@@ -29,6 +33,9 @@ private slots:
     static void LeavingAPageTakesItsStatusMessageAway();
     static void TheMeterFillsWithWhatThePageEnabled();
     static void TheFooterKeepsThePageGutterOnBothEdges();
+    static void TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom();
+    static void LeavingTheOptionsGivesBackThePageThatWasOpen();
+    static void TheTriageStripStandsDownWhileTheOptionsAreOpen();
 };
 
 namespace
@@ -286,6 +293,87 @@ void MainWindowTest::TheFooterKeepsThePageGutterOnBothEdges()
 
     QCOMPARE(summary->mapTo(bar, QPoint()).x(), kPageGutter);
     QCOMPARE(bar->width() - aside->mapTo(bar, QPoint()).x() - aside->width(), kPageGutter);
+}
+
+void MainWindowTest::TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    auto* community = new QWidget(&window);
+    auto* options = new QWidget(&window);
+    window.AddPage(QStringLiteral("Biblioteca"), library);
+    PageTab* communityTab = window.AddPage(QStringLiteral("Community"), community);
+    window.CarryOptionsOn(options);
+
+    communityTab->click();
+
+    auto* gear = window.findChild<QToolButton*>(QStringLiteral("Gear"));
+    QVERIFY(gear != nullptr);
+
+    QSignalSpy asked(&window, &MainWindow::OptionsRequested);
+    gear->click();
+
+    QVERIFY(window.ShowingOptions());
+    QCOMPARE(asked.count(), 1);
+    QCOMPARE(window.findChild<QStackedWidget*>()->currentWidget(), options);
+
+    QVERIFY(!communityTab->isVisibleTo(&window));
+
+    const auto tabs = window.findChildren<PageTab*>();
+    const auto back = std::ranges::find_if(tabs,
+                                           [&window](const PageTab* tab)
+                                           {
+                                               return tab->isVisibleTo(&window);
+                                           });
+    QVERIFY(back != tabs.end());
+    QCOMPARE((*back)->Label(), QStringLiteral("← Voltar para Community"));
+}
+
+void MainWindowTest::LeavingTheOptionsGivesBackThePageThatWasOpen()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    auto* community = new QWidget(&window);
+    auto* options = new QWidget(&window);
+    window.AddPage(QStringLiteral("Biblioteca"), library);
+    PageTab* communityTab = window.AddPage(QStringLiteral("Community"), community);
+    window.CarryOptionsOn(options);
+
+    communityTab->click();
+    window.ShowOptions();
+
+    QSignalSpy landed(&window, &MainWindow::PageSelected);
+    window.LeaveOptions();
+
+    QVERIFY(!window.ShowingOptions());
+    QCOMPARE(window.findChild<QStackedWidget*>()->currentWidget(), community);
+    QCOMPARE(landed.count(), 1);
+    QCOMPARE(landed.front().front().value<QWidget*>(), community);
+    QVERIFY(communityTab->isVisibleTo(&window));
+}
+
+void MainWindowTest::TheTriageStripStandsDownWhileTheOptionsAreOpen()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    auto* options = new QWidget(&window);
+    window.AddPage(QStringLiteral("Biblioteca"), library);
+    window.CarryOptionsOn(options);
+    window.CarryTriageOn(library);
+
+    window.ShowTriage(28, 0, 0, 0);
+
+    auto* strip = window.findChild<TriageStrip*>();
+    QVERIFY(strip->isVisibleTo(&window));
+
+    window.ShowOptions();
+    QVERIFY(!strip->isVisibleTo(&window));
+
+    window.LeaveOptions();
+    QVERIFY(strip->isVisibleTo(&window));
 }
 
 QTEST_MAIN(MainWindowTest)

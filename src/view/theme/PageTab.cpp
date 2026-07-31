@@ -34,6 +34,12 @@ PageTab::PageTab(const QString& label, QWidget* parent) : QToolButton(parent), l
     setFocusPolicy(Qt::TabFocus);
 }
 
+void PageTab::Relabel(const QString& label)
+{
+    label_ = label;
+    ShowCount(count_);
+}
+
 void PageTab::ShowCount(const std::optional<qsizetype> count)
 {
     count_ = count;
