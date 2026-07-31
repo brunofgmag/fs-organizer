@@ -14,6 +14,7 @@ namespace
     constexpr int kRailWidth = 34;
     constexpr int kAboveTheArrow = 7;
     constexpr int kBeforeTheSpine = 12;
+    constexpr int kDotSide = 5;
 }
 
 PanelRail::PanelRail(QWidget* parent) : QWidget(parent)
@@ -42,9 +43,10 @@ int PanelRail::Width()
     return kRailWidth;
 }
 
-void PanelRail::ShowTitle(const QString& title)
+void PanelRail::ShowTitle(const QString& title, const bool alarming)
 {
     title_ = title;
+    alarming_ = alarming;
     setToolTip(title);
     update();
 }
@@ -62,7 +64,14 @@ void PanelRail::paintEvent(QPaintEvent*)
         return;
     }
 
-    const int top = expand_->geometry().bottom() + kBeforeTheSpine;
+    int top = expand_->geometry().bottom() + kBeforeTheSpine;
+
+    if (alarming_)
+    {
+        painter.fillRect(QRect((width() - kDotSide) / 2, top, kDotSide, kDotSide), AlertInk());
+        top += kDotSide + kBeforeTheSpine;
+    }
+
     const int room = height() - top;
     if (room <= 0)
     {

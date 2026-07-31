@@ -21,7 +21,7 @@ public:
 
     void ShowBadge(const QString& text) const;
 
-    void ShowTitle(const QString& title) const;
+    void ShowTitle(const QString& title, bool alarming = false) const;
 
     void Summon(bool summoned);
 

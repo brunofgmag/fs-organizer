@@ -67,7 +67,7 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     content_->addStretch();
 
     rail_ = new PanelRail(this);
-    rail_->ShowTitle(fallbackTitle_);
+    rail_->ShowTitle(fallbackTitle_, false);
     rail_->setVisible(false);
 
     auto* layout = new QVBoxLayout(this);
@@ -110,9 +110,12 @@ void ContextPanel::ShowBadge(const QString& text) const
     badge_->setVisible(!text.isEmpty());
 }
 
-void ContextPanel::ShowTitle(const QString& title) const
+void ContextPanel::ShowTitle(const QString& title, const bool alarming) const
 {
-    title_->setText(title.isEmpty() ? fallbackTitle_ : title);
+    const QString shown = title.isEmpty() ? fallbackTitle_ : title;
+
+    title_->setText(shown);
+    rail_->ShowTitle(shown, alarming);
 }
 
 void ContextPanel::Summon(const bool summoned)

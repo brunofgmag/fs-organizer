@@ -10,6 +10,7 @@
 #include "view/panels/ModelRowDetail.h"
 #include "view/panels/PanelRail.h"
 #include "view/shell/TriageStrip.h"
+#include "view/theme/ModernistPaint.h"
 
 class ContextPanelTest : public QObject
 {
@@ -20,6 +21,8 @@ private slots:
     static void CollapsingHidesTheContentAndExpandingBringsItBack();
     static void ACollapsedPanelBecomesARailThatReachesTheBottom();
     static void TheRailBringsThePanelBack();
+    static void TheSpineCarriesTheNameOfWhatIsSelected();
+    static void ARowThatNeedsAttentionPutsADotOnTheSpine();
     static void TheCollapsedStateSurvivesANewPanelWithTheSameName();
     static void TheDetailShowsEveryColumnOfTheSelectedRow();
     static void AnInvalidIndexClearsTheDetailToItsPlaceholder();
@@ -101,6 +104,85 @@ void ContextPanelTest::TheRailBringsThePanelBack()
 
     QVERIFY(body->isVisibleTo(&panel));
     QCOMPARE(panel.width(), 380);
+}
+
+namespace
+{
+    QImage RailPainted(const QString& title, const bool alarming)
+    {
+        ContextPanel panel(QStringLiteral("Addon selecionado"));
+        panel.setObjectName(QStringLiteral("spine-test"));
+        panel.Add(new QLabel(QStringLiteral("conteúdo")));
+        panel.resize(380, 400);
+        panel.show();
+
+        if (!QTest::qWaitForWindowExposed(&panel))
+        {
+            return {};
+        }
+
+        panel.ShowTitle(title, alarming);
+        panel.findChild<QToolButton*>(QStringLiteral("PanelToggle"))->click();
+
+        if (!QTest::qWaitFor(
+                [&panel]
+                {
+                    return panel.width() == PanelRail::Width();
+                }))
+        {
+            return {};
+        }
+
+        auto* rail = panel.findChild<PanelRail*>();
+
+        QImage painted(rail->size(), QImage::Format_ARGB32);
+        painted.fill(Qt::transparent);
+        rail->render(&painted);
+
+        return painted;
+    }
+
+    int PixelsOf(const QImage& painted, const QColor& ink)
+    {
+        int found = 0;
+
+        for (int y = 0; y < painted.height(); ++y)
+        {
+            for (int x = 0; x < painted.width(); ++x)
+            {
+                found += painted.pixelColor(x, y) == ink ? 1 : 0;
+            }
+        }
+
+        return found;
+    }
+}
+
+void ContextPanelTest::TheSpineCarriesTheNameOfWhatIsSelected()
+{
+    ContextPanel panel(QStringLiteral("Addon selecionado"));
+    panel.setObjectName(QStringLiteral("spine-name-test"));
+    panel.Add(new QLabel(QStringLiteral("conteúdo")));
+
+    const auto* rail = panel.findChild<PanelRail*>();
+
+    panel.ShowTitle(QStringLiteral("aerosoft-crj"));
+    QCOMPARE(rail->toolTip(), QStringLiteral("aerosoft-crj"));
+
+    panel.ShowTitle(QStringLiteral("pmdg-aircraft-738"));
+    QCOMPARE(rail->toolTip(), QStringLiteral("pmdg-aircraft-738"));
+
+    panel.ShowTitle(QString());
+    QCOMPARE(rail->toolTip(), QStringLiteral("ADDON SELECIONADO"));
+}
+
+void ContextPanelTest::ARowThatNeedsAttentionPutsADotOnTheSpine()
+{
+    const QImage quiet = RailPainted(QStringLiteral("aerosoft-crj"), false);
+    const QImage alarmed = RailPainted(QStringLiteral("aerosoft-crj"), true);
+
+    QCOMPARE(PixelsOf(quiet, AlertInk()), 0);
+    QCOMPARE(PixelsOf(alarmed, AlertInk()), 25);
 }
 
 void ContextPanelTest::TheCollapsedStateSurvivesANewPanelWithTheSameName()

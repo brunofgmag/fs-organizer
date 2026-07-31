@@ -16,7 +16,7 @@ namespace
     constexpr int kTagPaddingY = 5;
     constexpr qreal kTagTextScale = 0.78;
     constexpr qreal kHeaderTextScale = 0.82;
-    constexpr qreal kSpineTextScale = 0.80;
+    constexpr qreal kSpineTextScale = 0.85;
 
     class HeaderDresser final : public QObject
     {
@@ -141,8 +141,7 @@ QFont SpineFont(const QFont& base)
 {
     QFont font = ScaledFont(base, kSpineTextScale);
     font.setWeight(QFont::DemiBold);
-    font.setCapitalization(QFont::AllUppercase);
-    font.setLetterSpacing(QFont::PercentageSpacing, 110);
+    font.setLetterSpacing(QFont::PercentageSpacing, 104);
 
     return font;
 }

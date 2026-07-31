@@ -14,7 +14,7 @@ public:
 
     [[nodiscard]] static int Width();
 
-    void ShowTitle(const QString& title);
+    void ShowTitle(const QString& title, bool alarming);
 
 signals:
     void ExpandRequested();
@@ -25,6 +25,7 @@ protected:
 private:
     QToolButton* expand_ = nullptr;
     QString title_;
+    bool alarming_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_PANELS_PANEL_RAIL_H
