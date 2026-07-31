@@ -27,6 +27,8 @@ void PaintTag(QPainter& painter, const QRect& box, const QString& text, TagTone 
 
 [[nodiscard]] QColor AlarmingRowGround();
 
+[[nodiscard]] QColor PointedAtRowGround();
+
 [[nodiscard]] QColor QuietInk();
 
 [[nodiscard]] QColor AlertInk();

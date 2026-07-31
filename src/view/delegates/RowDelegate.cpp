@@ -4,6 +4,7 @@
 
 #include <QtGui/QFontMetrics>
 #include <QtGui/QHelpEvent>
+#include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QApplication>
@@ -76,10 +77,72 @@ namespace
     {
         return index.data(TagTextRole).toString() == item.text ? QString() : item.text;
     }
+
+    [[nodiscard]] QStyleOptionViewItem::ViewItemPosition WhereInTheRow(const QModelIndex& index)
+    {
+        const int columns = index.model() == nullptr ? 1 : index.model()->columnCount(index.parent());
+
+        if (columns <= 1)
+        {
+            return QStyleOptionViewItem::OnlyOne;
+        }
+
+        if (index.column() == 0)
+        {
+            return QStyleOptionViewItem::Beginning;
+        }
+
+        return index.column() == columns - 1 ? QStyleOptionViewItem::End : QStyleOptionViewItem::Middle;
+    }
 }
 
 RowDelegate::RowDelegate(QObject* parent) : QStyledItemDelegate(parent)
 {
+    if (auto* view = qobject_cast<QAbstractItemView*>(parent); view != nullptr)
+    {
+        view->viewport()->setMouseTracking(true);
+        view->viewport()->installEventFilter(this);
+    }
+}
+
+bool RowDelegate::eventFilter(QObject* watched, QEvent* event)
+{
+    auto* view = qobject_cast<QAbstractItemView*>(parent());
+
+    if (view != nullptr && watched == view->viewport())
+    {
+        if (event->type() == QEvent::MouseMove)
+        {
+            PointAt(view->indexAt(static_cast<QMouseEvent*>(event)->position().toPoint()));
+        }
+        else if (event->type() == QEvent::Leave)
+        {
+            PointAt({});
+        }
+    }
+
+    return QStyledItemDelegate::eventFilter(watched, event);
+}
+
+void RowDelegate::PointAt(const QModelIndex& index)
+{
+    if (IsPointedAt(index) && index.isValid() == pointedAt_.isValid())
+    {
+        return;
+    }
+
+    pointedAt_ = index;
+
+    if (auto* view = qobject_cast<QAbstractItemView*>(parent()); view != nullptr)
+    {
+        view->viewport()->update();
+    }
+}
+
+bool RowDelegate::IsPointedAt(const QModelIndex& index) const
+{
+    return pointedAt_.isValid() && index.isValid() && pointedAt_.row() == index.row()
+        && pointedAt_.parent() == index.parent();
 }
 
 void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -88,14 +151,26 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
     initStyleOption(&item, index);
     item.state &= ~QStyle::State_HasFocus;
 
+    if (item.viewItemPosition == QStyleOptionViewItem::Invalid)
+    {
+        item.viewItemPosition = WhereInTheRow(index);
+    }
+
     if (index.data(EmphasisRole).toBool())
     {
         item.font.setWeight(QFont::DemiBold);
     }
 
-    if (index.data(AlarmingRole).toBool() && (item.state & QStyle::State_Selected) == 0)
+    if ((item.state & QStyle::State_Selected) == 0)
     {
-        item.backgroundBrush = AlarmingRowGround();
+        if (index.data(AlarmingRole).toBool())
+        {
+            item.backgroundBrush = AlarmingRowGround();
+        }
+        else if (IsPointedAt(index))
+        {
+            item.backgroundBrush = PointedAtRowGround();
+        }
     }
 
     const QWidget* widget = item.widget;

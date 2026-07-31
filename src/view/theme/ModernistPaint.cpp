@@ -190,6 +190,11 @@ QColor AlarmingRowGround()
     return ground;
 }
 
+QColor PointedAtRowGround()
+{
+    return TonesOf(CurrentColorScheme()).raised;
+}
+
 QColor QuietInk()
 {
     return TonesOf(CurrentColorScheme()).secondary;

@@ -778,6 +778,8 @@ fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         assets/resources.qrc
         src/view/delegates/RowDelegate.cpp
         src/view/theme/ModernistPaint.cpp
+        src/view/theme/ModernistStyle.cpp
+        src/view/theme/ModernistTheme.cpp
         src/view/theme/ModernistTones.cpp)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
 
