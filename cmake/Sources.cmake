@@ -99,8 +99,6 @@ set(VIEW_SOURCES
 
 set(APP_SOURCES
         src/main.cpp
-        ${DOMAIN_SOURCES}
-        ${APPLICATION_SOURCES}
         ${INFRASTRUCTURE_SOURCES}
         ${VIEWMODEL_SOURCES}
         ${VIEW_SOURCES}

@@ -7,6 +7,7 @@ include(cmake/ProjectOptions.cmake)
 include(cmake/ToolchainGuards.cmake)
 include(cmake/Dependencies.cmake)
 include(cmake/Sources.cmake)
+include(cmake/Libraries.cmake)
 
 if (NOT FSORG_TESTS_ONLY)
     include(cmake/AppTarget.cmake)

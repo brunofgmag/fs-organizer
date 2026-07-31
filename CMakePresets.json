@@ -1,101 +1,104 @@
 {
-    "version": 3,
-    "cmakeMinimumRequired": {
-        "major": 3,
-        "minor": 21,
-        "patch": 0
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "msvc-qt-base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}"
+      }
     },
-    "configurePresets": [
-        {
-            "name": "msvc-qt-base",
-            "hidden": true,
-            "generator": "Visual Studio 17 2022",
-            "architecture": {
-                "value": "x64",
-                "strategy": "set"
-            },
-            "toolset": {
-                "value": "host=x64",
-                "strategy": "set"
-            },
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "cacheVariables": {
-                "BUILD_TESTING": "ON",
-                "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}"
-            }
-        },
-        {
-            "name": "debug",
-            "displayName": "Qt MSVC 2022 x64 - Debug",
-            "description": "Build Debug do executável com o runtime Qt implantado.",
-            "inherits": "msvc-qt-base"
-        },
-        {
-            "name": "release",
-            "displayName": "Qt MSVC 2022 x64 - Release",
-            "description": "Build Release do executável com o runtime Qt implantado.",
-            "inherits": "msvc-qt-base"
-        },
-        {
-            "name": "relwithdebinfo",
-            "displayName": "Qt MSVC 2022 x64 - RelWithDebInfo",
-            "description": "Build otimizado com símbolos e runtime Qt completo.",
-            "inherits": "msvc-qt-base"
-        },
-        {
-            "name": "clangd-db",
-            "displayName": "Compile DB (Ninja) p/ clangd",
-            "description": "Gera compile_commands.json com cl.exe. Configure num x64 Native Tools Command Prompt.",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/clangd-db",
-            "cacheVariables": {
-                "BUILD_TESTING": "ON",
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_C_COMPILER": "cl",
-                "CMAKE_CXX_COMPILER": "cl"
-            }
-        }
-    ],
-    "buildPresets": [
-        {
-            "name": "debug",
-            "displayName": "Build Qt MSVC Debug",
-            "configurePreset": "debug",
-            "configuration": "Debug"
-        },
-        {
-            "name": "release",
-            "displayName": "Build Qt MSVC Release",
-            "configurePreset": "release",
-            "configuration": "Release"
-        },
-        {
-            "name": "relwithdebinfo",
-            "displayName": "Build Qt MSVC RelWithDebInfo",
-            "configurePreset": "relwithdebinfo",
-            "configuration": "RelWithDebInfo"
-        }
-    ],
-    "testPresets": [
-        {
-            "name": "debug",
-            "displayName": "Test Qt MSVC Debug",
-            "configurePreset": "debug",
-            "configuration": "Debug",
-            "output": {
-                "outputOnFailure": true
-            }
-        },
-        {
-            "name": "release",
-            "displayName": "Test Qt MSVC Release",
-            "configurePreset": "release",
-            "configuration": "Release",
-            "output": {
-                "outputOnFailure": true
-            }
-        }
-    ]
+    {
+      "name": "debug",
+      "displayName": "Qt MSVC 2022 x64 - Debug",
+      "description": "Build Debug do executável com o runtime Qt implantado.",
+      "inherits": "msvc-qt-base"
+    },
+    {
+      "name": "release",
+      "displayName": "Qt MSVC 2022 x64 - Release",
+      "description": "Build Release do executável com o runtime Qt implantado.",
+      "inherits": "msvc-qt-base"
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "Qt MSVC 2022 x64 - RelWithDebInfo",
+      "description": "Build otimizado com símbolos e runtime Qt completo.",
+      "inherits": "msvc-qt-base"
+    },
+    {
+      "name": "clangd-db",
+      "displayName": "Compile DB (Ninja) p/ clangd",
+      "description": "Gera compile_commands.json com cl.exe. Configure num x64 Native Tools Command Prompt.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/clangd-db",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "displayName": "Build Qt MSVC Debug",
+      "configurePreset": "debug",
+      "configuration": "Debug",
+      "jobs": 0
+    },
+    {
+      "name": "release",
+      "displayName": "Build Qt MSVC Release",
+      "configurePreset": "release",
+      "configuration": "Release",
+      "jobs": 0
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "Build Qt MSVC RelWithDebInfo",
+      "configurePreset": "relwithdebinfo",
+      "configuration": "RelWithDebInfo",
+      "jobs": 0
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "displayName": "Test Qt MSVC Debug",
+      "configurePreset": "debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Test Qt MSVC Release",
+      "configurePreset": "release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
 }

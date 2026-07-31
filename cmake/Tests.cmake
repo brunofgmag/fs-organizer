@@ -67,15 +67,14 @@ fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
 fsorg_add_qt_test(fsorg-journal-entries-tests journal-entries
         tests/domain/journal/tst_journal_entries.cpp
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/domain/journal/JournalEntries.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-journal-entries-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-copy-conflicts-tests copy-conflicts
         tests/domain/importing/tst_copy_conflicts.cpp
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/importing/CopyConflicts.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-copy-conflicts-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
@@ -87,11 +86,8 @@ fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/importing/ImportPaths.h
-        src/domain/importing/ImportEngine.cpp)
+        src/domain/importing/ImportPaths.h)
+target_link_libraries(fsorg-import-engine-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-import-service-tests import-service
         tests/application/tst_import_service.cpp
@@ -105,16 +101,8 @@ fsorg_add_qt_test(fsorg-import-service-tests import-service
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/importing/ImportPaths.h
-        src/domain/importing/ImportEngine.cpp
-        src/application/ImportService.cpp)
+        src/domain/importing/ImportPaths.h)
+target_link_libraries(fsorg-import-service-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-library-organizer-tests library-organizer
         tests/application/tst_library_organizer.cpp
@@ -128,23 +116,15 @@ fsorg_add_qt_test(fsorg-library-organizer-tests library-organizer
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/application/LibraryOrganizer.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-library-organizer-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-linking-engine-tests linking-engine
         tests/domain/linking/tst_linking_engine.cpp
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
-        tests/doubles/InMemoryFileSystem.h
-        src/domain/linking/LinkingEngine.cpp)
+        tests/doubles/InMemoryFileSystem.h)
+target_link_libraries(fsorg-linking-engine-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         tests/domain/linking/tst_entry_classifier.cpp
@@ -152,17 +132,15 @@ fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/linking/EntryClassifier.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-entry-classifier-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-repair-plan-tests repair-plan
         tests/domain/linking/tst_repair_plan.cpp
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/linking/RepairPlan.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-repair-plan-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         tests/domain/tree/tst_addon_tree.cpp
@@ -172,47 +150,39 @@ fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/domain/model/EnabledAddons.h
-        src/domain/support/PathUtils.h
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/tree/AddonTree.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-addon-tree-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-category-suggester-tests category-suggester
         tests/domain/tree/tst_category_suggester.cpp
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/CategorySuggester.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-category-suggester-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-effective-destination-tests effective-destination
         tests/domain/tree/tst_effective_destination.cpp
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-effective-destination-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-toggle-direction-tests toggle-direction
         tests/domain/tree/tst_toggle_direction.cpp
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/ToggleDirection.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-toggle-direction-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-preset-plan-tests preset-plan
         tests/domain/preset/tst_preset_plan.cpp
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/preset/PresetPlan.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-preset-plan-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-profile-edits-tests profile-edits
         tests/domain/profile/tst_profile_edits.cpp
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/domain/profile/ProfileEdits.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-profile-edits-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/application/tst_profile_service.cpp
@@ -223,18 +193,8 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/doubles/FakeOperationJournal.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/application/ProfileService.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-profile-service-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-preset-service-tests preset-service
         tests/application/tst_preset_service.cpp
@@ -247,20 +207,8 @@ fsorg_add_qt_test(fsorg-preset-service-tests preset-service
         tests/doubles/FakePresetRepository.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/preset/PresetPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/application/ProfileService.cpp
-        src/application/PresetService.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-preset-service-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-session-tests session
         tests/application/tst_session.cpp
@@ -277,22 +225,8 @@ fsorg_add_qt_test(fsorg-session-tests session
         tests/doubles/InlineBackgroundRunner.h
         tests/doubles/RecordingSessionObserver.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/domain/profile/ProfileEdits.cpp
-        src/application/LibraryOrganizer.cpp
-        src/application/ProfileService.cpp
-        src/application/Session.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-session-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
         tests/infrastructure/catalog/tst_json_manifest_parser.cpp
@@ -331,56 +265,42 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/doubles/FakeSimulatorLocator.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/application/SetupService.cpp
         src/viewmodel/SetupViewModel.cpp)
+target_link_libraries(fsorg-setup-view-model-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         tests/viewmodel/tst_addon_tree_model.cpp
         tests/support/PathPrinting.h
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/DestinationDivergence.cpp
-        src/domain/tree/LibraryLookup.cpp
         src/viewmodel/AddonTreeModel.cpp)
+target_link_libraries(fsorg-addon-tree-model-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-addon-tree-filter-model-tests addon-tree-filter-model
         tests/viewmodel/tst_addon_tree_filter_model.cpp
         tests/support/PathPrinting.h
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/DestinationDivergence.cpp
-        src/domain/tree/LibraryLookup.cpp
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp)
+target_link_libraries(fsorg-addon-tree-filter-model-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-category-suggestion-model-tests category-suggestion-model
         tests/viewmodel/tst_category_suggestion_model.cpp
         tests/support/PathPrinting.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/CategorySuggester.cpp
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/FailureText.cpp)
+target_link_libraries(fsorg-category-suggestion-model-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-community-model-tests community-model
         tests/viewmodel/tst_community_model.cpp
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/tree/AddonTree.cpp
-        src/domain/importing/CopyConflicts.cpp
         src/viewmodel/CommunityModel.cpp)
+target_link_libraries(fsorg-community-model-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-journal-model-tests journal-model
         tests/viewmodel/tst_journal_model.cpp
         tests/support/PathPrinting.h
-        src/domain/journal/JournalEntries.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/JournalModel.cpp)
+target_link_libraries(fsorg-journal-model-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-failure-text-tests failure-text
         tests/viewmodel/tst_failure_text.cpp
@@ -406,27 +326,11 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/CategorySuggester.cpp
-        src/domain/tree/DestinationDivergence.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/domain/profile/ProfileEdits.cpp
-        src/application/LibraryOrganizer.cpp
-        src/application/ProfileService.cpp
-        src/application/Session.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/SessionNotifier.cpp)
+target_link_libraries(fsorg-addon-tree-view-model-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
         tests/viewmodel/tst_options_view_model.cpp
@@ -443,24 +347,10 @@ fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/profile/ProfileEdits.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/application/LibraryOrganizer.cpp
-        src/application/ProfileService.cpp
-        src/application/Session.cpp
         src/viewmodel/OptionsViewModel.cpp
         src/viewmodel/SessionNotifier.cpp
         src/viewmodel/SimulatorText.cpp)
+target_link_libraries(fsorg-options-view-model-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-preset-view-model-tests preset-view-model
         tests/viewmodel/tst_preset_view_model.cpp
@@ -478,25 +368,9 @@ fsorg_add_qt_test(fsorg-preset-view-model-tests preset-view-model
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/preset/PresetPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/domain/profile/ProfileEdits.cpp
-        src/application/LibraryOrganizer.cpp
-        src/application/PresetService.cpp
-        src/application/ProfileService.cpp
-        src/application/Session.cpp
         src/viewmodel/PresetViewModel.cpp
         src/viewmodel/SessionNotifier.cpp)
+target_link_libraries(fsorg-preset-view-model-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/viewmodel/tst_community_view_model.cpp
@@ -512,24 +386,10 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/domain/profile/ProfileEdits.cpp
-        src/application/LibraryOrganizer.cpp
-        src/application/ProfileService.cpp
-        src/application/Session.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
         src/viewmodel/SessionNotifier.cpp)
+target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/viewmodel/tst_quarantine_view_model.cpp
@@ -546,26 +406,10 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/importing/ImportEngine.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/application/ImportService.cpp
-        src/domain/profile/ProfileEdits.cpp
-        src/application/LibraryOrganizer.cpp
-        src/application/ProfileService.cpp
-        src/application/Session.cpp
         src/viewmodel/QuarantineModel.cpp
         src/viewmodel/QuarantineViewModel.cpp
         src/viewmodel/SessionNotifier.cpp)
+target_link_libraries(fsorg-quarantine-view-model-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
         tests/viewmodel/tst_import_view_model.cpp
@@ -582,26 +426,10 @@ fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
-        src/domain/journal/OperationLog.cpp
-        src/domain/importing/CopyConflicts.cpp
-        src/domain/importing/ImportEngine.cpp
-        src/domain/linking/DisableLinks.cpp
-        src/domain/linking/EntryClassifier.cpp
-        src/domain/linking/LinkingEngine.cpp
-        src/domain/linking/RepairPlan.cpp
-        src/domain/tree/AddonTree.cpp
-        src/domain/tree/EffectiveDestination.cpp
-        src/domain/tree/LibraryLookup.cpp
-        src/domain/tree/LibraryTrees.cpp
-        src/domain/tree/ToggleDirection.cpp
-        src/application/ImportService.cpp
-        src/domain/profile/ProfileEdits.cpp
-        src/application/LibraryOrganizer.cpp
-        src/application/ProfileService.cpp
-        src/application/Session.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/SessionNotifier.cpp)
+target_link_libraries(fsorg-import-view-model-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp
@@ -626,18 +454,7 @@ if (WIN32)
             tests/infrastructure/importing/tst_import_on_real_disk.cpp
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
-            src/domain/journal/OperationLog.cpp
-            src/application/ImportService.cpp
-            src/application/LibraryOrganizer.cpp
-            src/domain/importing/ImportEngine.cpp
             src/domain/importing/ImportPaths.h
-            src/domain/linking/DisableLinks.cpp
-            src/domain/linking/EntryClassifier.cpp
-            src/domain/linking/LinkingEngine.cpp
-            src/domain/tree/AddonTree.cpp
-            src/domain/tree/EffectiveDestination.cpp
-            src/domain/tree/LibraryLookup.cpp
-            src/domain/tree/LibraryTrees.cpp
             src/infrastructure/catalog/FilesystemScanner.cpp
             src/infrastructure/catalog/JsonManifestParser.cpp
             src/infrastructure/fileops/WindowsFileOperations.cpp
@@ -645,6 +462,7 @@ if (WIN32)
             src/infrastructure/journal/JsonlOperationJournal.cpp
             src/infrastructure/link/WindowsLinkService.cpp
             src/infrastructure/sim/WindowsProcessProbe.cpp)
+    target_link_libraries(fsorg-import-on-real-disk-tests PRIVATE fsorg-application)
 
     fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
             tests/infrastructure/options/tst_options_on_real_disk.cpp
@@ -652,21 +470,6 @@ if (WIN32)
             tests/doubles/RecordingSessionObserver.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
-            src/domain/journal/OperationLog.cpp
-            src/domain/importing/CopyConflicts.cpp
-            src/domain/linking/DisableLinks.cpp
-            src/domain/linking/EntryClassifier.cpp
-            src/domain/linking/LinkingEngine.cpp
-            src/domain/linking/RepairPlan.cpp
-            src/domain/profile/ProfileEdits.cpp
-            src/domain/tree/AddonTree.cpp
-            src/domain/tree/EffectiveDestination.cpp
-            src/domain/tree/LibraryLookup.cpp
-            src/domain/tree/LibraryTrees.cpp
-            src/domain/tree/ToggleDirection.cpp
-            src/application/LibraryOrganizer.cpp
-            src/application/ProfileService.cpp
-            src/application/Session.cpp
             src/infrastructure/catalog/FilesystemScanner.cpp
             src/infrastructure/catalog/JsonManifestParser.cpp
             src/infrastructure/fileops/WindowsFileOperations.cpp
@@ -676,30 +479,20 @@ if (WIN32)
             src/infrastructure/link/WindowsLinkService.cpp
             src/infrastructure/settings/JsonSettingsRepository.cpp
             src/infrastructure/sim/WindowsProcessProbe.cpp)
+    target_link_libraries(fsorg-options-on-real-disk-tests PRIVATE fsorg-application)
 
     fsorg_add_qt_test(fsorg-preset-on-real-disk-tests preset-on-real-disk
             tests/infrastructure/preset/tst_preset_on_real_disk.cpp
             tests/doubles/FakeLibraryIdGenerator.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
-            src/domain/journal/OperationLog.cpp
-            src/domain/importing/CopyConflicts.cpp
-            src/domain/linking/EntryClassifier.cpp
-            src/domain/linking/LinkingEngine.cpp
-            src/domain/linking/RepairPlan.cpp
-            src/domain/preset/PresetPlan.cpp
-            src/domain/tree/AddonTree.cpp
-            src/domain/tree/EffectiveDestination.cpp
-            src/domain/tree/LibraryLookup.cpp
-            src/domain/tree/LibraryTrees.cpp
-            src/application/PresetService.cpp
-            src/application/ProfileService.cpp
             src/infrastructure/catalog/FilesystemScanner.cpp
             src/infrastructure/catalog/JsonManifestParser.cpp
             src/infrastructure/fileops/WindowsFilesystemProbe.cpp
             src/infrastructure/journal/JsonlOperationJournal.cpp
             src/infrastructure/link/WindowsLinkService.cpp
             src/infrastructure/preset/FilePresetRepository.cpp)
+    target_link_libraries(fsorg-preset-on-real-disk-tests PRIVATE fsorg-application)
 
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
@@ -742,23 +535,6 @@ if (WIN32)
                 tests/doubles/InlineBackgroundRunner.h
                 tests/support/EnumPrinting.h
                 tests/support/PathPrinting.h
-                src/domain/journal/OperationLog.cpp
-                src/domain/importing/CopyConflicts.cpp
-                src/domain/linking/DisableLinks.cpp
-                src/domain/linking/EntryClassifier.cpp
-                src/domain/linking/LinkingEngine.cpp
-                src/domain/linking/RepairPlan.cpp
-                src/domain/preset/PresetPlan.cpp
-                src/domain/tree/AddonTree.cpp
-                src/domain/tree/EffectiveDestination.cpp
-                src/domain/tree/LibraryLookup.cpp
-                src/domain/tree/LibraryTrees.cpp
-                src/domain/tree/ToggleDirection.cpp
-                src/domain/profile/ProfileEdits.cpp
-                src/application/LibraryOrganizer.cpp
-                src/application/PresetService.cpp
-                src/application/ProfileService.cpp
-                src/application/Session.cpp
                 src/view/PresetsPage.cpp
                 src/view/delegates/FittedText.cpp
                 src/view/delegates/RowDelegate.cpp
@@ -772,6 +548,7 @@ if (WIN32)
                 src/view/theme/ModernistTones.cpp
                 src/viewmodel/PresetViewModel.cpp
                 src/viewmodel/SessionNotifier.cpp)
+        target_link_libraries(fsorg-presets-page-tests PRIVATE fsorg-application)
         configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
 
 
@@ -789,21 +566,6 @@ if (WIN32)
                 tests/doubles/FakeSettingsRepository.h
                 tests/doubles/InMemoryFileSystem.h
                 tests/doubles/InlineBackgroundRunner.h
-                src/domain/journal/OperationLog.cpp
-                src/domain/importing/CopyConflicts.cpp
-                src/domain/linking/DisableLinks.cpp
-                src/domain/linking/EntryClassifier.cpp
-                src/domain/linking/LinkingEngine.cpp
-                src/domain/linking/RepairPlan.cpp
-                src/domain/profile/ProfileEdits.cpp
-                src/domain/tree/AddonTree.cpp
-                src/domain/tree/EffectiveDestination.cpp
-                src/domain/tree/LibraryLookup.cpp
-                src/domain/tree/LibraryTrees.cpp
-                src/domain/tree/ToggleDirection.cpp
-                src/application/LibraryOrganizer.cpp
-                src/application/ProfileService.cpp
-                src/application/Session.cpp
                 src/view/options/OptionsPage.cpp
                 src/view/theme/ModernistPaint.cpp
                 src/view/theme/ModernistStyle.cpp
@@ -812,6 +574,7 @@ if (WIN32)
                 src/viewmodel/OptionsViewModel.cpp
                 src/viewmodel/SessionNotifier.cpp
                 src/viewmodel/SimulatorText.cpp)
+        target_link_libraries(fsorg-options-page-tests PRIVATE fsorg-application)
         configure_fsorg_gui_test(fsorg-options-page-tests options-page)
 
         fsorg_add_qt_test(fsorg-community-page-tests community-page
@@ -830,23 +593,6 @@ if (WIN32)
                 tests/support/EnumPrinting.h
                 tests/support/PathPrinting.h
                 assets/resources.qrc
-                src/domain/journal/OperationLog.cpp
-                src/domain/importing/CopyConflicts.cpp
-                src/domain/importing/ImportEngine.cpp
-                src/domain/linking/DisableLinks.cpp
-                src/domain/linking/EntryClassifier.cpp
-                src/domain/linking/LinkingEngine.cpp
-                src/domain/linking/RepairPlan.cpp
-                src/domain/tree/AddonTree.cpp
-                src/domain/tree/EffectiveDestination.cpp
-                src/domain/tree/LibraryLookup.cpp
-                src/domain/tree/LibraryTrees.cpp
-                src/domain/tree/ToggleDirection.cpp
-                src/application/ImportService.cpp
-                src/domain/profile/ProfileEdits.cpp
-                src/application/LibraryOrganizer.cpp
-                src/application/ProfileService.cpp
-                src/application/Session.cpp
                 src/view/community/CommunityPage.cpp
                 src/view/community/ConflictDialog.cpp
                 src/view/community/ImportDialog.cpp
@@ -865,6 +611,7 @@ if (WIN32)
                 src/viewmodel/FailureText.cpp
                 src/viewmodel/ImportViewModel.cpp
                 src/viewmodel/SessionNotifier.cpp)
+        target_link_libraries(fsorg-community-page-tests PRIVATE fsorg-application)
         configure_fsorg_gui_test(fsorg-community-page-tests community-page)
 
     endif ()
