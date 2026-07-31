@@ -4,26 +4,14 @@
 #include <limits>
 #include <utility>
 
-#include <QtCore/QDateTime>
-#include <QtCore/QTimeZone>
-
 #include "domain/support/StringUtils.h"
+#include "support/MomentText.h"
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
 
 namespace
 {
     constexpr quintptr kNoParent = std::numeric_limits<quintptr>::max();
-
-    QString Moment(const std::chrono::system_clock::time_point& timestamp)
-    {
-        const auto milliseconds =
-            std::chrono::duration_cast<std::chrono::milliseconds>(timestamp.time_since_epoch()).count();
-
-        return QDateTime::fromMSecsSinceEpoch(milliseconds, QTimeZone::UTC)
-            .toLocalTime()
-            .toString(QStringLiteral("dd/MM/yyyy HH:mm:ss"));
-    }
 
     QString OutcomeOf(const OperationRecord& record)
     {
@@ -170,7 +158,7 @@ QVariant JournalModel::EntryColumn(const JournalEntry& entry, const int column) 
 
     switch (column)
     {
-    case WhenColumn: return Moment(entry.First().timestamp);
+    case WhenColumn: return AsMoment(entry.First().timestamp);
     case OperationColumn: return tr("Importação (%n passo(s))", nullptr, static_cast<int>(entry.steps.size()));
     case AddonColumn: return QString::fromStdString(entry.First().addonId.folderName);
     case LibraryColumn: return LibraryLabel(entry.First().addonId.libraryId);
@@ -185,7 +173,7 @@ QVariant JournalModel::StepColumn(const OperationRecord& record, const int colum
 {
     switch (column)
     {
-    case WhenColumn: return Moment(record.timestamp);
+    case WhenColumn: return AsMoment(record.timestamp);
     case OperationColumn: return KindLabel(record.kind);
     case AddonColumn: return QString::fromStdString(record.addonId.folderName);
     case LibraryColumn: return LibraryLabel(record.addonId.libraryId);
