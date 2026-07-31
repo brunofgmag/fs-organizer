@@ -767,11 +767,14 @@ configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
 
 fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         tests/view/panels/tst_context_panel.cpp
+        assets/resources.qrc
         src/view/panels/ContextPanel.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp
         src/view/shell/TriageStrip.cpp
         src/view/theme/ModernistPaint.cpp
+        src/view/theme/ModernistStyle.cpp
+        src/view/theme/ModernistTheme.cpp
         src/view/theme/ModernistTones.cpp)
 configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
 

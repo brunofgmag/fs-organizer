@@ -84,7 +84,7 @@ void PanelRail::paintEvent(QPaintEvent*)
 
     painter.setFont(spine);
     painter.setPen(QuietInk());
-    painter.translate(width() / 2.0 + measured.height() / 2.0 - measured.descent(), top);
+    painter.translate(width() / 2.0 + measured.height() / 2.0, top);
     painter.rotate(90.0);
     painter.drawText(0, 0, room, measured.height(), Qt::AlignLeft | Qt::AlignVCenter, fitted);
 }

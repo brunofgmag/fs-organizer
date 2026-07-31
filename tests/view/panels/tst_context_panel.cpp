@@ -1,3 +1,5 @@
+#include <functional>
+
 #include <QtCore/QSettings>
 #include <QtGui/QStandardItemModel>
 #include <QtTest/QtTest>
@@ -11,6 +13,7 @@
 #include "view/panels/PanelRail.h"
 #include "view/shell/TriageStrip.h"
 #include "view/theme/ModernistPaint.h"
+#include "view/theme/ModernistTheme.h"
 
 class ContextPanelTest : public QObject
 {
@@ -23,6 +26,7 @@ private slots:
     static void TheRailBringsThePanelBack();
     static void TheSpineCarriesTheNameOfWhatIsSelected();
     static void ARowThatNeedsAttentionPutsADotOnTheSpine();
+    static void TheSpineAndTheDotShareTheSameAxis();
     static void TheCollapsedStateSurvivesANewPanelWithTheSameName();
     static void TheDetailShowsEveryColumnOfTheSelectedRow();
     static void AnInvalidIndexClearsTheDetailToItsPlaceholder();
@@ -36,6 +40,8 @@ void ContextPanelTest::initTestCase()
     QCoreApplication::setOrganizationName(QStringLiteral("fs-organizer-tests"));
     QCoreApplication::setApplicationName(QStringLiteral("context-panel"));
     QSettings().clear();
+
+    ApplyModernistTheme(*qobject_cast<QApplication*>(QCoreApplication::instance()));
 }
 
 void ContextPanelTest::CollapsingHidesTheContentAndExpandingBringsItBack()
@@ -108,7 +114,13 @@ void ContextPanelTest::TheRailBringsThePanelBack()
 
 namespace
 {
-    QImage RailPainted(const QString& title, const bool alarming)
+    struct RailShot
+    {
+        QImage painted;
+        QRect arrow;
+    };
+
+    RailShot RailShotOf(const QString& title, const bool alarming)
     {
         ContextPanel panel(QStringLiteral("Addon selecionado"));
         panel.setObjectName(QStringLiteral("spine-test"));
@@ -139,7 +151,12 @@ namespace
         painted.fill(Qt::transparent);
         rail->render(&painted);
 
-        return painted;
+        return {painted, rail->findChild<QToolButton*>(QStringLiteral("PanelExpand"))->geometry()};
+    }
+
+    QImage RailPainted(const QString& title, const bool alarming)
+    {
+        return RailShotOf(title, alarming).painted;
     }
 
     int PixelsOf(const QImage& painted, const QColor& ink)
@@ -183,6 +200,80 @@ void ContextPanelTest::ARowThatNeedsAttentionPutsADotOnTheSpine()
 
     QCOMPARE(PixelsOf(quiet, AlertInk()), 0);
     QCOMPARE(PixelsOf(alarmed, AlertInk()), 25);
+}
+
+namespace
+{
+    struct Span
+    {
+        int left = 0;
+        int right = -1;
+        int top = -1;
+        int bottom = -1;
+    };
+
+    Span SpanOf(const QImage& painted,
+                const int from,
+                const int until,
+                const std::function<bool(const QColor&, int)>& belongs)
+    {
+        Span found{painted.width(), -1, -1, -1};
+
+        for (int y = from; y < until; ++y)
+        {
+            for (int x = 0; x < painted.width(); ++x)
+            {
+                if (!belongs(painted.pixelColor(x, y), x))
+                {
+                    continue;
+                }
+
+                found.left = qMin(found.left, x);
+                found.right = qMax(found.right, x);
+                found.top = found.top < 0 ? y : found.top;
+                found.bottom = y;
+            }
+        }
+
+        return found;
+    }
+}
+
+void ContextPanelTest::TheSpineAndTheDotShareTheSameAxis()
+{
+    const auto [painted, arrow] = RailShotOf(QStringLiteral("Aircrafts"), true);
+
+    QList<QColor> ground;
+    for (int x = 0; x < painted.width(); ++x)
+    {
+        ground.append(painted.pixelColor(x, painted.height() - 2));
+    }
+
+    const Span dot = SpanOf(painted, 0, painted.height(),
+                            [](const QColor& here, int)
+                            {
+                                return here == AlertInk();
+                            });
+    QCOMPARE(dot.right - dot.left + 1, 5);
+
+    const auto paintedOver = [&ground](const QColor& here, const int column)
+    {
+        return here != ground.at(column);
+    };
+
+    const Span chevron = SpanOf(painted, 0, dot.top, paintedOver);
+    const Span spine = SpanOf(painted, dot.bottom + 1, painted.height(), paintedOver);
+
+    const int axis = painted.width() - 1;
+
+    QVERIFY(chevron.right > chevron.left);
+    QVERIFY(qAbs(chevron.left + chevron.right - axis) <= 1);
+    QVERIFY(qAbs(dot.left + dot.right - axis) <= 1);
+    QVERIFY(spine.right > spine.left);
+    QCOMPARE(spine.left + spine.right, axis);
+
+    QCOMPARE(arrow.left() + arrow.right(), chevron.left + chevron.right);
+    QVERIFY(arrow.top() > 0);
 }
 
 void ContextPanelTest::TheCollapsedStateSurvivesANewPanelWithTheSameName()
@@ -294,7 +385,7 @@ void ContextPanelTest::ClosingThePanelAsksForIt()
     ContextPanel panel(QStringLiteral("Entrada selecionada"));
     panel.setObjectName(QStringLiteral("close-test"));
 
-    QSignalSpy asked(&panel, &ContextPanel::CloseRequested);
+    const QSignalSpy asked(&panel, &ContextPanel::CloseRequested);
 
     panel.findChild<QToolButton*>(QStringLiteral("PanelClose"))->click();
 
