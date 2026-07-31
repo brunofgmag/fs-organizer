@@ -646,6 +646,37 @@ if (WIN32)
             src/infrastructure/link/WindowsLinkService.cpp
             src/infrastructure/sim/WindowsProcessProbe.cpp)
 
+    fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
+            tests/infrastructure/options/tst_options_on_real_disk.cpp
+            tests/doubles/InlineBackgroundRunner.h
+            tests/doubles/RecordingSessionObserver.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/journal/OperationLog.cpp
+            src/domain/importing/CopyConflicts.cpp
+            src/domain/linking/DisableLinks.cpp
+            src/domain/linking/EntryClassifier.cpp
+            src/domain/linking/LinkingEngine.cpp
+            src/domain/linking/RepairPlan.cpp
+            src/domain/profile/ProfileEdits.cpp
+            src/domain/tree/AddonTree.cpp
+            src/domain/tree/EffectiveDestination.cpp
+            src/domain/tree/LibraryLookup.cpp
+            src/domain/tree/LibraryTrees.cpp
+            src/domain/tree/ToggleDirection.cpp
+            src/application/LibraryOrganizer.cpp
+            src/application/ProfileService.cpp
+            src/application/Session.cpp
+            src/infrastructure/catalog/FilesystemScanner.cpp
+            src/infrastructure/catalog/JsonManifestParser.cpp
+            src/infrastructure/fileops/WindowsFileOperations.cpp
+            src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+            src/infrastructure/id/UuidLibraryIdGenerator.cpp
+            src/infrastructure/journal/JsonlOperationJournal.cpp
+            src/infrastructure/link/WindowsLinkService.cpp
+            src/infrastructure/settings/JsonSettingsRepository.cpp
+            src/infrastructure/sim/WindowsProcessProbe.cpp)
+
     fsorg_add_qt_test(fsorg-preset-on-real-disk-tests preset-on-real-disk
             tests/infrastructure/preset/tst_preset_on_real_disk.cpp
             tests/doubles/FakeLibraryIdGenerator.h
