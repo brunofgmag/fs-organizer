@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_CATALOG_SCANNER_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_CATALOG_SCANNER_H
 
+#include <cstddef>
 #include <map>
 #include <string>
 #include <utility>
@@ -17,10 +18,14 @@ public:
 
     [[nodiscard]] TreeNode Scan(const std::filesystem::path& root) const override
     {
+        ++scanned;
+
         const auto found = trees_.find(root.generic_string());
 
         return found == trees_.end() ? TreeNode{} : found->second;
     }
+
+    mutable std::size_t scanned = 0;
 
 private:
     std::map<std::string, TreeNode> trees_;

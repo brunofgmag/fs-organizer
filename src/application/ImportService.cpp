@@ -121,6 +121,11 @@ ImportService::ImportService(const ImportEngine& engine,
 {
 }
 
+void ImportService::UseLinkType(const LinkType linkType)
+{
+    linkType_ = linkType;
+}
+
 std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile& profile,
                                                          const std::vector<ImportRequest>& requests,
                                                          const std::function<bool(const CopyProgress&)>& onProgress,

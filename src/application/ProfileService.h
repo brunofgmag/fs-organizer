@@ -35,6 +35,8 @@ public:
                    const LibraryIdGenerator& identities,
                    LinkType linkType);
 
+    void UseLinkType(LinkType linkType);
+
     [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
 
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;

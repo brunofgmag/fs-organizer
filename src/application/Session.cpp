@@ -6,6 +6,7 @@
 
 #include "domain/importing/CopyConflicts.h"
 #include "domain/linking/EntryClassifier.h"
+#include "domain/profile/ProfileEdits.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -124,6 +125,26 @@ LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
     }
 
     return report;
+}
+
+void Session::UnregisterLibrary(const LibraryId& libraryId)
+{
+    SimulatorProfile next = profile_;
+    ::UnregisterLibrary(next, libraryId);
+
+    service_.ForgetUndo();
+    Save(next);
+    Scan(std::move(next));
+}
+
+void Session::RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to)
+{
+    SimulatorProfile next = profile_;
+    ::RepointDestination(next, from, to);
+
+    service_.ForgetUndo();
+    Save(next);
+    Scan(std::move(next));
 }
 
 bool Session::RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination)

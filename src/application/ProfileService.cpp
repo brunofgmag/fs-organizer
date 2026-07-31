@@ -39,6 +39,11 @@ ProfileService::ProfileService(const CatalogScanner& catalog,
 {
 }
 
+void ProfileService::UseLinkType(const LinkType linkType)
+{
+    linkType_ = linkType;
+}
+
 LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const
 {
     const TreeNode tree = catalog_.Scan(path);
@@ -46,7 +51,7 @@ LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const s
     LibraryReport report;
     report.check = LibraryContaining(profile, path) == nullptr ? LibraryCheck::Accepted
                                                                : LibraryCheck::RejectedInsideAnotherLibrary;
-    report.categories = tree.children.size();
+    report.categories = CountCategoriesInside(tree);
     report.addons = CountAddons(tree);
 
     if (report.Accepted())

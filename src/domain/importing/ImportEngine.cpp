@@ -53,6 +53,11 @@ ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
 {
 }
 
+void ImportEngine::UseLinkType(const LinkType linkType)
+{
+    linkType_ = linkType;
+}
+
 ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
                                    const ImportRequest& request,
                                    const std::function<bool(const CopyProgress&)>& onProgress,

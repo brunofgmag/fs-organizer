@@ -27,6 +27,8 @@ public:
                  const OperationLog& log,
                  LinkType linkType);
 
+    void UseLinkType(LinkType linkType);
+
     [[nodiscard]] ImportOutcome Import(const SimulatorProfile& profile,
                                        const ImportRequest& request,
                                        const std::function<bool(const CopyProgress&)>& onProgress,

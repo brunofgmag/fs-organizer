@@ -44,6 +44,10 @@ public:
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
 
+    void UnregisterLibrary(const LibraryId& libraryId);
+
+    void RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to);
+
     void OverrideDestination(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& destination);
 
     [[nodiscard]] FileOperationResult CreateCategory(const std::filesystem::path& parent, const std::string& name);

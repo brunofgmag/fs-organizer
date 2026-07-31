@@ -102,6 +102,11 @@ LibraryOrganizer::LibraryOrganizer(const CatalogScanner& catalog,
 {
 }
 
+void LibraryOrganizer::UseLinkType(const LinkType linkType)
+{
+    linkType_ = linkType;
+}
+
 void LibraryOrganizer::Record(const OperationKind kind,
                               const AddonId& addon,
                               const std::filesystem::path& source,

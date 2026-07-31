@@ -32,6 +32,8 @@ public:
                   const OperationLog& log,
                   LinkType linkType);
 
+    void UseLinkType(LinkType linkType);
+
     [[nodiscard]] std::vector<ImportOperationResult>
     Import(const SimulatorProfile& profile,
            const std::vector<ImportRequest>& requests,

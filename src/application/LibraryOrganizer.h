@@ -29,6 +29,8 @@ public:
                      const OperationLog& log,
                      LinkType linkType);
 
+    void UseLinkType(LinkType linkType);
+
     [[nodiscard]] FileOperationResult
     CreateCategory(const SimulatorProfile& profile, const std::filesystem::path& parent, const std::string& name) const;
 

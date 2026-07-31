@@ -4,6 +4,7 @@
 #include "application/Session.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -38,6 +39,10 @@ private slots:
     static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
     static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
     static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
+    static void UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty();
+    static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
+    static void UnregisteringALibraryDropsAnUndoThatWouldPointAtIt();
+    static void RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath();
 };
 
 namespace
@@ -88,6 +93,49 @@ namespace
         profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
 
         return profile;
+    }
+
+    void DescribeDirectory(const InMemoryFileSystem& fileSystem,
+                           const std::filesystem::path& root,
+                           std::vector<std::string>& into)
+    {
+        for (const std::filesystem::path& child : fileSystem.ChildDirectoriesOf(root))
+        {
+            if (fileSystem.IsLink(child))
+            {
+                into.push_back(ComparablePath(child) + " -> "
+                               + ComparablePath(fileSystem.LinkTarget(child).value_or(std::filesystem::path{})));
+                continue;
+            }
+
+            into.push_back(ComparablePath(child) + "/");
+            DescribeDirectory(fileSystem, child, into);
+        }
+    }
+
+    [[nodiscard]] std::vector<std::string> DescribeTheDisk(const InMemoryFileSystem& fileSystem)
+    {
+        std::vector<std::string> description;
+
+        for (const auto& root : {kLibrary, kExtraLibrary, kCommunity, kOtherDestination})
+        {
+            if (!fileSystem.Exists(root))
+            {
+                continue;
+            }
+
+            description.push_back(ComparablePath(root) + "/");
+            DescribeDirectory(fileSystem, root, description);
+
+            for (const std::filesystem::path& file : fileSystem.FilesUnder(root))
+            {
+                description.push_back(ComparablePath(file));
+            }
+        }
+
+        std::ranges::sort(description);
+
+        return description;
     }
 
     struct Fixture
@@ -353,6 +401,90 @@ void SessionTest::TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALin
     QCOMPARE(f.observer.simulatorWarnings, 1);
     QCOMPARE(f.observer.restartReports, 1);
     QVERIFY(f.observer.restartPending);
+}
+
+void SessionTest::UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/manifest.json");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kAddon);
+    f.settings.stored.profiles.front().destinationOverrides = {
+        DestinationOverride{"library-1", "Aircrafts", kOtherDestination}};
+
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().entries.front().classification, EntryClassification::Managed);
+
+    const std::vector<std::string> before = DescribeTheDisk(f.fileSystem);
+    QVERIFY2(std::ranges::find(before,
+                               std::string("e:/flight simulator 2024/community/pmdg-aircraft-77w -> "
+                                           "d:/msfs 2024/aircrafts/pmdg-aircraft-77w"))
+                 != before.end(),
+             "a descrição do disco não enxergou o link, então comparar antes com depois não prova nada");
+
+    f.session.UnregisterLibrary("library-1");
+
+    QCOMPARE(DescribeTheDisk(f.fileSystem), before);
+    QVERIFY(f.session.Profile().libraries.empty());
+    QVERIFY(f.session.Profile().destinationOverrides.empty());
+    QVERIFY(f.settings.stored.profiles.front().libraries.empty());
+
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().entries.front().classification, EntryClassification::External);
+}
+
+void SessionTest::RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community2025");
+    f.settings.stored.profiles.front().destinationOverrides = {
+        DestinationOverride{"library-1", "Aircrafts", kOtherDestination}};
+
+    f.session.ShowActiveProfile();
+    const int scansBefore = f.observer.started;
+
+    f.session.RepointDestination(kOtherDestination, "E:/Flight Simulator 2024/Community2025");
+
+    QCOMPARE(f.session.Profile().destinations[1], std::filesystem::path("E:/Flight Simulator 2024/Community2025"));
+    QCOMPARE(f.session.Profile().destinationOverrides.front().destination,
+             std::filesystem::path("E:/Flight Simulator 2024/Community2025"));
+    QCOMPARE(f.settings.stored.profiles.front().destinationOverrides.front().destination,
+             std::filesystem::path("E:/Flight Simulator 2024/Community2025"));
+    QCOMPARE(f.observer.started, scansBefore + 1);
+}
+
+void SessionTest::UnregisteringALibraryDropsAnUndoThatWouldPointAtIt()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/manifest.json");
+    f.session.ShowActiveProfile();
+
+    const TreeNode* addon = AddonNamed(f.session.Snapshot().libraries, "pmdg-aircraft-77w");
+    QVERIFY(addon != nullptr);
+    static_cast<void>(f.service.SetEnabled(f.session.Profile(), f.session.Snapshot(), {addon}, true));
+    QVERIFY2(f.service.CanUndo(), "nada entrou na pilha de desfazer, então exigi-la vazia depois não prova nada");
+
+    f.session.UnregisterLibrary("library-1");
+
+    QVERIFY2(!f.service.CanUndo(), "descadastrar guardou um desfazer que aponta para uma biblioteca que saiu");
+}
+
+void SessionTest::RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/manifest.json");
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community2025");
+    f.session.ShowActiveProfile();
+
+    const TreeNode* addon = AddonNamed(f.session.Snapshot().libraries, "pmdg-aircraft-77w");
+    QVERIFY(addon != nullptr);
+    static_cast<void>(f.service.SetEnabled(f.session.Profile(), f.session.Snapshot(), {addon}, true));
+    QVERIFY2(f.service.CanUndo(), "nada entrou na pilha de desfazer, então exigi-la vazia depois não prova nada");
+
+    f.session.RepointDestination(kCommunity, "E:/Flight Simulator 2024/Community2025");
+
+    QVERIFY2(!f.service.CanUndo(), "re-apontar guardou um desfazer que aponta para o caminho antigo");
 }
 
 QTEST_MAIN(SessionTest)
