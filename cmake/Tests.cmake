@@ -428,6 +428,40 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         src/viewmodel/FailureText.cpp
         src/viewmodel/SessionNotifier.cpp)
 
+fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
+        tests/viewmodel/tst_options_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/journal/OperationLog.cpp
+        src/domain/importing/CopyConflicts.cpp
+        src/domain/linking/DisableLinks.cpp
+        src/domain/linking/EntryClassifier.cpp
+        src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/RepairPlan.cpp
+        src/domain/profile/ProfileEdits.cpp
+        src/domain/tree/AddonTree.cpp
+        src/domain/tree/EffectiveDestination.cpp
+        src/domain/tree/LibraryLookup.cpp
+        src/domain/tree/LibraryTrees.cpp
+        src/domain/tree/ToggleDirection.cpp
+        src/application/LibraryOrganizer.cpp
+        src/application/ProfileService.cpp
+        src/application/Session.cpp
+        src/viewmodel/OptionsViewModel.cpp
+        src/viewmodel/SessionNotifier.cpp
+        src/viewmodel/SimulatorText.cpp)
+
 fsorg_add_qt_test(fsorg-preset-view-model-tests preset-view-model
         tests/viewmodel/tst_preset_view_model.cpp
         tests/doubles/FakeCatalogScanner.h

@@ -1,0 +1,183 @@
+#include "viewmodel/OptionsViewModel.h"
+
+#include <algorithm>
+#include <optional>
+
+#include <QtCore/QCoreApplication>
+
+#include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
+#include "viewmodel/SimulatorText.h"
+
+OptionsViewModel::OptionsViewModel(Session& session,
+                                   ProfileService& service,
+                                   SettingsRepository& settings,
+                                   const SessionNotifier& notifier,
+                                   QObject* parent)
+    : QObject(parent), session_(session), service_(service), settings_(settings)
+{
+    connect(&notifier, &SessionNotifier::ScanFinished, this, &OptionsViewModel::Changed);
+}
+
+std::vector<ProfileLine> OptionsViewModel::Profiles() const
+{
+    const AppSettings settings = settings_.Load().value_or(AppSettings{});
+    const std::string& loaded = session_.Profile().id;
+
+    std::vector<ProfileLine> lines;
+    lines.reserve(settings.profiles.size());
+
+    for (const SimulatorProfile& profile : settings.profiles)
+    {
+        lines.push_back(ProfileLine{profile.id, NameOf(profile.variant), profile.destinations.size(),
+                                    profile.libraries.size(), profile.id == loaded});
+    }
+
+    return lines;
+}
+
+std::size_t OptionsViewModel::AddonsInTheActiveProfile() const
+{
+    std::size_t addons = 0;
+
+    for (const TreeNode& library : session_.Snapshot().libraries)
+    {
+        addons += CountAddons(library);
+    }
+
+    return addons;
+}
+
+std::vector<DestinationLine> OptionsViewModel::Destinations() const
+{
+    const SimulatorProfile& profile = session_.Profile();
+
+    std::vector<DestinationLine> lines;
+    lines.reserve(profile.destinations.size());
+
+    for (const std::filesystem::path& destination : profile.destinations)
+    {
+        lines.push_back(
+            DestinationLine{destination, ComparablePath(destination) == ComparablePath(profile.defaultDestination)});
+    }
+
+    return lines;
+}
+
+const TreeNode* OptionsViewModel::TreeOf(const LibraryId& libraryId) const
+{
+    const SimulatorProfile& profile = session_.Profile();
+
+    const auto known = std::ranges::find_if(profile.libraries,
+                                            [&libraryId](const Library& library)
+                                            {
+                                                return library.id == libraryId;
+                                            });
+
+    return known == profile.libraries.end() ? nullptr : LibraryTreeAt(session_.Snapshot().libraries, known->path);
+}
+
+std::vector<LibraryLine> OptionsViewModel::Libraries() const
+{
+    const SimulatorProfile& profile = session_.Profile();
+    const ProfileSnapshot& snapshot = session_.Snapshot();
+
+    std::vector<LibraryLine> lines;
+    lines.reserve(profile.libraries.size());
+
+    for (const Library& library : profile.libraries)
+    {
+        LibraryLine line;
+        line.id = library.id;
+        line.label = QString::fromStdString(library.label);
+        line.path = library.path;
+
+        if (const TreeNode* tree = LibraryTreeAt(snapshot.libraries, library.path); tree != nullptr)
+        {
+            line.categories = CountCategoriesInside(*tree);
+            line.addons = CountAddons(*tree);
+        }
+
+        line.enabled =
+            static_cast<std::size_t>(std::ranges::count_if(snapshot.entries,
+                                                           [&library](const DestinationEntry& entry)
+                                                           {
+                                                               return CountsAsEnabled(entry.classification)
+                                                                   && PathIsInside(entry.target, library.path);
+                                                           }));
+
+        lines.push_back(std::move(line));
+    }
+
+    return lines;
+}
+
+LinkType OptionsViewModel::TypeOfLink() const
+{
+    return settings_.Load().value_or(AppSettings{}).linkType;
+}
+
+bool OptionsViewModel::VerifiesWithHash() const
+{
+    return settings_.Load().value_or(AppSettings{}).verifyWithHash;
+}
+
+void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
+{
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        emit SettingsCouldNotBeSaved();
+        emit Changed();
+        return;
+    }
+
+    if (loaded->linkType == linkType)
+    {
+        return;
+    }
+
+    AppSettings settings = *loaded;
+    settings.linkType = linkType;
+
+    if (!settings_.Save(settings))
+    {
+        emit SettingsCouldNotBeSaved();
+        emit Changed();
+        return;
+    }
+
+    service_.UseLinkType(linkType);
+
+    emit LinkTypeChosen(linkType);
+    emit Changed();
+}
+
+void OptionsViewModel::RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const
+{
+    session_.RepointDestination(from, to);
+}
+
+LibraryReport OptionsViewModel::RegisterLibrary(const std::filesystem::path& path) const
+{
+    return session_.RegisterLibrary(path);
+}
+
+void OptionsViewModel::UnregisterLibrary(const LibraryId& libraryId, const bool disablingWhatItLeftBehind)
+{
+    if (disablingWhatItLeftBehind)
+    {
+        if (const TreeNode* tree = TreeOf(libraryId); tree != nullptr)
+        {
+            const std::vector<LinkOperationResult> results =
+                service_.SetEnabled(session_.Profile(), session_.Snapshot(), {tree}, false);
+
+            session_.NoteLinkResults(results);
+            emit LinksDisabled(results);
+        }
+    }
+
+    session_.UnregisterLibrary(libraryId);
+
+    emit Changed();
+}
