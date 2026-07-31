@@ -9,8 +9,6 @@
 
 namespace
 {
-    constexpr int kNarrowest = 80;
-
     class WidthKeeper final : public QObject
     {
     public:
@@ -19,6 +17,7 @@ namespace
         {
             table_->horizontalHeader()->setStretchLastSection(false);
             table_->viewport()->installEventFilter(this);
+            LetEveryColumnButTheLastBeDragged();
 
             connect(table_, &QObject::destroyed, this,
                     [this]
@@ -39,7 +38,7 @@ namespace
                     });
 
             connect(table_->horizontalHeader(), &QHeaderView::sectionResized, this,
-                    [this](int, int, int)
+                    [this](const int column, const int was, const int now)
                     {
                         if (applying_)
                         {
@@ -47,7 +46,7 @@ namespace
                         }
 
                         theirs_ = true;
-                        FillTheSlack();
+                        TakeTheDragOutOfWhatFollows(column, now - was);
                     });
 
             MeasureTheContentOnce();
@@ -64,6 +63,72 @@ namespace
         }
 
     private:
+        [[nodiscard]] int NarrowestFor(const int column) const
+        {
+            return table_->horizontalHeader()->sectionSizeHint(column);
+        }
+
+        [[nodiscard]] int LastColumn() const
+        {
+            const QHeaderView* header = table_->horizontalHeader();
+
+            for (int column = header->count() - 1; column >= 0; --column)
+            {
+                if (!header->isSectionHidden(column))
+                {
+                    return column;
+                }
+            }
+
+            return -1;
+        }
+
+        void LetEveryColumnButTheLastBeDragged() const
+        {
+            QHeaderView* header = table_->horizontalHeader();
+            const int last = LastColumn();
+
+            for (int column = 0; column < header->count(); ++column)
+            {
+                header->setSectionResizeMode(column, column == last ? QHeaderView::Fixed : QHeaderView::Interactive);
+            }
+        }
+
+        void TakeTheDragOutOfWhatFollows(const int dragged, const int delta)
+        {
+            QHeaderView* header = table_->horizontalHeader();
+            int owed = delta;
+
+            applying_ = true;
+
+            if (const int floor = NarrowestFor(dragged); header->sectionSize(dragged) < floor)
+            {
+                owed += floor - header->sectionSize(dragged);
+                header->resizeSection(dragged, floor);
+            }
+
+            for (int column = dragged + 1; column < header->count() && owed != 0; ++column)
+            {
+                if (header->isSectionHidden(column))
+                {
+                    continue;
+                }
+
+                const int was = header->sectionSize(column);
+                const int now = std::max(NarrowestFor(column), was - owed);
+
+                header->resizeSection(column, now);
+                owed -= was - now;
+            }
+
+            if (owed != 0)
+            {
+                header->resizeSection(dragged, std::max(NarrowestFor(dragged), header->sectionSize(dragged) - owed));
+            }
+
+            applying_ = false;
+        }
+
         [[nodiscard]] int SlackColumn() const
         {
             const QHeaderView* header = table_->horizontalHeader();
@@ -129,6 +194,7 @@ namespace
             }
             applying_ = false;
 
+            LetEveryColumnButTheLastBeDragged();
             FillTheSlack();
         }
 
@@ -153,7 +219,7 @@ namespace
             }
 
             applying_ = true;
-            header->resizeSection(slack, std::max(kNarrowest, table_->viewport()->width() - taken));
+            header->resizeSection(slack, std::max(NarrowestFor(slack), table_->viewport()->width() - taken));
             applying_ = false;
         }
 

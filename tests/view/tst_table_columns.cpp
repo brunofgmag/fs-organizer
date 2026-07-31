@@ -14,7 +14,11 @@ private slots:
     static void TheColumnsFillTheTableWithoutLeavingAStripOnTheRight();
     static void WideningOneColumnWidensThatColumnAndNoOther();
     static void NarrowingOneColumnIsAbsorbedInsteadOfLeavingAGap();
-    static void EveryColumnButTheOneThatTakesTheSlackCanBeDragged();
+    static void EveryColumnButTheLastCanBeDragged();
+    static void TheColumnThatTakesTheSlackIsDraggedLikeAnyOther();
+    static void ADraggedColumnKeepsItsLeftEdgeAndMovesTheOneAfterIt();
+    static void TheLastColumnRefusesTheUserBecauseItHasNothingToTradeWith();
+    static void NoColumnIsSqueezedNarrowerThanItsOwnTitle();
     static void AWiderWindowGoesToTheColumnThatTakesTheSlack();
     static void ContentThatArrivesAfterTheHelperIsMeasuredJustTheSame();
     static void ContentThatChangesWithoutNewRowsIsMeasuredAgain();
@@ -97,19 +101,19 @@ void TableColumnsTest::WideningOneColumnWidensThatColumnAndNoOther()
 void TableColumnsTest::NarrowingOneColumnIsAbsorbedInsteadOfLeavingAGap()
 {
     const Table table;
-    const int slackBefore = table.Width(kSlack);
+    const int neighbourBefore = table.Width(2);
 
     table.DragTo(1, table.Width(1) - 60);
 
-    QCOMPARE(table.Width(kSlack), slackBefore + 60);
+    QCOMPARE(table.Width(2), neighbourBefore + 60);
     QCOMPARE(table.TotalWidth(), table.view.viewport()->width());
 }
 
-void TableColumnsTest::EveryColumnButTheOneThatTakesTheSlackCanBeDragged()
+void TableColumnsTest::EveryColumnButTheLastCanBeDragged()
 {
     const Table table;
 
-    for (int column = 0; column < kSlack; ++column)
+    for (int column = 0; column < kColumns - 1; ++column)
     {
         const int wanted = table.Width(column) + 40;
         table.DragTo(column, wanted);
@@ -118,6 +122,72 @@ void TableColumnsTest::EveryColumnButTheOneThatTakesTheSlackCanBeDragged()
     }
 
     QCOMPARE(table.TotalWidth(), table.view.viewport()->width());
+}
+
+void TableColumnsTest::TheColumnThatTakesTheSlackIsDraggedLikeAnyOther()
+{
+    QStandardItemModel model(6, kColumns);
+    QTableView view;
+
+    for (int row = 0; row < model.rowCount(); ++row)
+    {
+        for (int column = 0; column < kColumns; ++column)
+        {
+            model.setItem(row, column, new QStandardItem(QStringLiteral("cell %1").arg(column)));
+        }
+    }
+
+    view.setModel(&model);
+    view.resize(800, 300);
+    LetTheColumnsBeDraggedAndStillFillTheTable(&view, 0);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    QHeaderView* header = view.horizontalHeader();
+    const int wanted = header->sectionSize(0) - 100;
+
+    header->resizeSection(0, wanted);
+
+    QCOMPARE(header->sectionSize(0), wanted);
+
+    int total = 0;
+    for (int column = 0; column < kColumns; ++column)
+    {
+        total += header->sectionSize(column);
+    }
+
+    QCOMPARE(total, view.viewport()->width());
+}
+
+void TableColumnsTest::ADraggedColumnKeepsItsLeftEdgeAndMovesTheOneAfterIt()
+{
+    const Table table;
+    const int first = table.Width(0);
+    const int second = table.Width(1);
+    const int dragged = table.Width(2);
+    const int after = table.Width(3);
+
+    QVERIFY(after - 70 > 80);
+
+    table.DragTo(2, dragged + 70);
+
+    QCOMPARE(table.Width(0), first);
+    QCOMPARE(table.Width(1), second);
+    QCOMPARE(table.Width(2), dragged + 70);
+    QCOMPARE(table.Width(3), after - 70);
+    QCOMPARE(table.TotalWidth(), table.view.viewport()->width());
+}
+
+void TableColumnsTest::TheLastColumnRefusesTheUserBecauseItHasNothingToTradeWith()
+{
+    const Table table;
+
+    QCOMPARE(table.Header()->sectionResizeMode(kColumns - 1), QHeaderView::Fixed);
+
+    for (int column = 0; column < kColumns - 1; ++column)
+    {
+        QCOMPARE(table.Header()->sectionResizeMode(column), QHeaderView::Interactive);
+    }
 }
 
 void TableColumnsTest::AWiderWindowGoesToTheColumnThatTakesTheSlack()
@@ -224,6 +294,45 @@ void TableColumnsTest::TheSlackCanBeGivenToAChosenColumnInsteadOfTheLast()
 
     QCOMPARE(total, view.viewport()->width());
     QVERIFY(header->sectionSize(0) > header->sectionSize(kColumns - 1));
+}
+
+void TableColumnsTest::NoColumnIsSqueezedNarrowerThanItsOwnTitle()
+{
+    QStandardItemModel model(6, kColumns);
+    QTableView view;
+
+    model.setHorizontalHeaderLabels({QStringLiteral("Preset"), QStringLiteral("Conteúdo muito comprido"),
+                                     QStringLiteral("Atualizado"), QStringLiteral("Sobra")});
+
+    for (int row = 0; row < model.rowCount(); ++row)
+    {
+        for (int column = 0; column < kColumns; ++column)
+        {
+            model.setItem(row, column, new QStandardItem(QStringLiteral("x")));
+        }
+    }
+
+    view.setModel(&model);
+    view.resize(900, 300);
+    LetTheColumnsBeDraggedAndStillFillTheTable(&view);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    QHeaderView* header = view.horizontalHeader();
+
+    for (int column = 0; column < kColumns - 1; ++column)
+    {
+        const int title = header->sectionSizeHint(column);
+        QVERIFY(title > 0);
+
+        header->resizeSection(column, 20);
+
+        QVERIFY2(header->sectionSize(column) >= title,
+                 qPrintable(QStringLiteral("coluna %1 ficou com %2, o título pede %3")
+                                .arg(column)
+                                .arg(header->sectionSize(column))
+                                .arg(title)));
+    }
 }
 
 QTEST_MAIN(TableColumnsTest)
