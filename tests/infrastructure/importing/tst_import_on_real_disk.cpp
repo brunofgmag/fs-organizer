@@ -201,7 +201,7 @@ void ImportOnRealDiskTest::ALiveJunctionOfAnotherProgramIsNeverReplaced()
     Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
 
     const std::filesystem::path linkPath = disk.Destination() / "fsdreamteam-gsx-pro";
-    QVERIFY(engine.linkService.CreateLink(linkPath, foreign, LinkType::Junction));
+    QCOMPARE(engine.linkService.CreateLink(linkPath, foreign, LinkType::Junction), LinkFailure::None);
 
     const LinkOutcome outcome = engine.linking.Enable(Addon{library}, disk.Destination(), LinkType::Junction);
 

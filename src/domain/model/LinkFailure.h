@@ -14,7 +14,8 @@ enum class LinkFailure : int
     CouldNotCreateLink = 5,
     PathIsNotAReparsePoint = 6,
     CouldNotRemoveLink = 7,
-    TheOutcomeIsUnknown = 8,
+    PrivilegeNotHeld = 8,
+    TheOutcomeIsUnknown = 9,
 };
 
 inline constexpr std::array kAllLinkFailures{
@@ -26,6 +27,7 @@ inline constexpr std::array kAllLinkFailures{
     LinkFailure::CouldNotCreateLink,
     LinkFailure::PathIsNotAReparsePoint,
     LinkFailure::CouldNotRemoveLink,
+    LinkFailure::PrivilegeNotHeld,
     LinkFailure::TheOutcomeIsUnknown,
 };
 

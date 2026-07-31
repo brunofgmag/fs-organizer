@@ -305,6 +305,7 @@ fsorg_add_qt_test(fsorg-jsonl-operation-journal-tests jsonl-operation-journal
 
 fsorg_add_qt_test(fsorg-json-settings-repository-tests json-settings-repository
         tests/infrastructure/settings/tst_json_settings_repository.cpp
+        tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/infrastructure/settings/JsonSettingsRepository.cpp)
 
@@ -564,6 +565,7 @@ fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locato
 if (WIN32)
     fsorg_add_qt_test(fsorg-windows-link-service-tests windows-link-service
             tests/infrastructure/link/tst_windows_link_service.cpp
+            tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
             src/domain/support/PathUtils.h
             src/infrastructure/link/WindowsLinkService.cpp)

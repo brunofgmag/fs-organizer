@@ -19,6 +19,7 @@ private slots:
     static void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
     static void ADanglingLinkStillCountsAsAnExistingEntry();
     static void ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix();
+    static void EnablingCarriesTheReasonThePlatformRefusedInsteadOfFlatteningIt();
 };
 
 namespace
@@ -180,6 +181,19 @@ void LinkingEngineTest::ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix()
     QVERIFY(f.fileSystem.Exists(foreignTarget));
     QCOMPARE(f.fileSystem.LinkTarget("E:/Sim/Community/fsdreamteam-gsx-pro").value(),
              std::filesystem::path(R"(\??\C:\Program Files (x86)\Addon Manager\MSFS\fsdreamteam-gsx-pro)"));
+}
+
+void LinkingEngineTest::EnablingCarriesTheReasonThePlatformRefusedInsteadOfFlatteningIt()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("D:/Library/Aircrafts/aerosoft-crj");
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.linkService.MakeLinkCreationFailWith(LinkFailure::PrivilegeNotHeld);
+
+    const Addon addon{"D:/Library/Aircrafts/aerosoft-crj"};
+    const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Symbolic);
+
+    QCOMPARE(outcome.Failure(), LinkFailure::PrivilegeNotHeld);
 }
 
 QTEST_APPLESS_MAIN(LinkingEngineTest)

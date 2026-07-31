@@ -112,23 +112,33 @@ namespace
         return written;
     }
 
-    bool CreateSymbolicDirectoryLink(const std::wstring& linkPath, const std::wstring& target)
+    LinkFailure CreateSymbolicDirectoryLink(const std::wstring& linkPath, const std::wstring& target)
     {
         constexpr DWORD flags = SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
 
-        return CreateSymbolicLinkW(linkPath.c_str(), target.c_str(), flags) != FALSE;
+        if (CreateSymbolicLinkW(linkPath.c_str(), target.c_str(), flags) != FALSE)
+        {
+            return LinkFailure::None;
+        }
+
+        return GetLastError() == ERROR_PRIVILEGE_NOT_HELD ? LinkFailure::PrivilegeNotHeld
+                                                          : LinkFailure::CouldNotCreateLink;
     }
 }
 
-bool WindowsLinkService::CreateLink(const std::filesystem::path& linkPath,
-                                    const std::filesystem::path& target,
-                                    LinkType linkType)
+LinkFailure WindowsLinkService::CreateLink(const std::filesystem::path& linkPath,
+                                           const std::filesystem::path& target,
+                                           LinkType linkType)
 {
     const std::wstring nativeLink = NativePath(linkPath);
     const std::wstring nativeTarget = NativePath(target);
 
-    return linkType == LinkType::Junction ? CreateJunction(nativeLink, nativeTarget)
-                                          : CreateSymbolicDirectoryLink(nativeLink, nativeTarget);
+    if (linkType == LinkType::Symbolic)
+    {
+        return CreateSymbolicDirectoryLink(nativeLink, nativeTarget);
+    }
+
+    return CreateJunction(nativeLink, nativeTarget) ? LinkFailure::None : LinkFailure::CouldNotCreateLink;
 }
 
 bool WindowsLinkService::RemoveReparseNode(const std::filesystem::path& linkPath)

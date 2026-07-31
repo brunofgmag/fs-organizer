@@ -16,6 +16,9 @@ QString Explain(const LinkFailure failure)
     case LinkFailure::CouldNotReplaceStaleLink:
         return QObject::tr("não foi possível remover o link morto que ocupava o destino");
     case LinkFailure::CouldNotCreateLink: return QObject::tr("não foi possível criar o link");
+    case LinkFailure::PrivilegeNotHeld:
+        return QObject::tr("o Windows exige privilégio para criar link simbólico: ligue o Modo de Desenvolvedor, ou "
+                           "volte o tipo de link para Junction nas Opções");
     case LinkFailure::PathIsNotAReparsePoint: return QObject::tr("o caminho não é um link, então nada foi removido");
     case LinkFailure::CouldNotRemoveLink: return QObject::tr("não foi possível remover o link");
     case LinkFailure::TheOutcomeIsUnknown:

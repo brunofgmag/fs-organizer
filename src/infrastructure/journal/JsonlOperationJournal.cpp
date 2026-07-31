@@ -65,6 +65,7 @@ namespace
         case LinkFailure::CouldNotCreateLink: return "couldNotCreateLink";
         case LinkFailure::PathIsNotAReparsePoint: return "pathIsNotAReparsePoint";
         case LinkFailure::CouldNotRemoveLink: return "couldNotRemoveLink";
+        case LinkFailure::PrivilegeNotHeld: return "privilegeNotHeld";
         case LinkFailure::TheOutcomeIsUnknown: return "theOutcomeIsUnknown";
         }
 

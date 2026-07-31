@@ -6,7 +6,7 @@
 class WindowsLinkService final : public LinkService
 {
 public:
-    [[nodiscard]] bool
+    [[nodiscard]] LinkFailure
     CreateLink(const std::filesystem::path& linkPath, const std::filesystem::path& target, LinkType linkType) override;
 
     [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override;

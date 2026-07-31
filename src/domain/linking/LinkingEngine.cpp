@@ -38,9 +38,10 @@ LinkingEngine::Enable(const Addon& addon, const std::filesystem::path& destinati
         }
     }
 
-    if (!linkService_.CreateLink(linkPath, addon.folderPath, linkType))
+    if (const LinkFailure refusal = linkService_.CreateLink(linkPath, addon.folderPath, linkType);
+        refusal != LinkFailure::None)
     {
-        return LinkOutcome::Failed(LinkFailure::CouldNotCreateLink);
+        return LinkOutcome::Failed(refusal);
     }
 
     return LinkOutcome::Success();

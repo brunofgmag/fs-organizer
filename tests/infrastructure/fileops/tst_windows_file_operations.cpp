@@ -86,7 +86,7 @@ void WindowsFileOperationsTest::RemovingATreeAtAJunctionNeverReachesTheTarget()
     std::filesystem::create_directories(linkPath.parent_path());
 
     WindowsLinkService linkService;
-    QVERIFY(linkService.CreateLink(linkPath, target, LinkType::Junction));
+    QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
 
     WindowsFileOperations files;
     QVERIFY(files.RemoveTree(linkPath));

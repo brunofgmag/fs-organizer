@@ -7,6 +7,7 @@
 #include "domain/model/DestinationEntry.h"
 #include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
+#include "domain/model/LinkType.h"
 #include "domain/model/OperationKind.h"
 #include "domain/model/OperationRecord.h"
 #include "domain/model/Preset.h"
@@ -67,10 +68,23 @@ namespace QTest
         case LinkFailure::CouldNotCreateLink: return qstrdup("CouldNotCreateLink");
         case LinkFailure::PathIsNotAReparsePoint: return qstrdup("PathIsNotAReparsePoint");
         case LinkFailure::CouldNotRemoveLink: return qstrdup("CouldNotRemoveLink");
+        case LinkFailure::PrivilegeNotHeld: return qstrdup("PrivilegeNotHeld");
         case LinkFailure::TheOutcomeIsUnknown: return qstrdup("TheOutcomeIsUnknown");
         }
 
         return qstrdup("LinkFailure(?)");
+    }
+
+    template<>
+    inline char* toString(const LinkType& t)
+    {
+        switch (t)
+        {
+        case LinkType::Junction: return qstrdup("Junction");
+        case LinkType::Symbolic: return qstrdup("Symbolic");
+        }
+
+        return qstrdup("LinkType(?)");
     }
 
     template<>

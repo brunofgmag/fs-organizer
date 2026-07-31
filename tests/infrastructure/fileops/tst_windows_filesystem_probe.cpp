@@ -49,7 +49,7 @@ namespace
             WindowsLinkService linkService;
             [&]
             {
-                QVERIFY(linkService.CreateLink(linkPath, target, LinkType::Junction));
+                QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
             }();
             std::filesystem::remove_all(target);
 
@@ -154,7 +154,7 @@ void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersAJunctionTheSame
     const std::filesystem::path liveLink = destination / "ag-airport-live";
 
     WindowsLinkService linkService;
-    QVERIFY(linkService.CreateLink(liveLink, live, LinkType::Junction));
+    QCOMPARE(linkService.CreateLink(liveLink, live, LinkType::Junction), LinkFailure::None);
 
     const std::filesystem::path dangling = disk.AddDanglingJunction("Community/ag-airport-bgqq");
 

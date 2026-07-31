@@ -13,7 +13,12 @@ public:
 
     void MakeLinkCreationFail()
     {
-        linkCreationFails_ = true;
+        MakeLinkCreationFailWith(LinkFailure::CouldNotCreateLink);
+    }
+
+    void MakeLinkCreationFailWith(const LinkFailure refusal)
+    {
+        linkCreationRefusal_ = refusal;
     }
 
     void MakeLinkRemovalFail()
@@ -21,15 +26,22 @@ public:
         linkRemovalFails_ = true;
     }
 
-    [[nodiscard]] bool
-    CreateLink(const std::filesystem::path& linkPath, const std::filesystem::path& target, LinkType) override
+    [[nodiscard]] LinkFailure CreateLink(const std::filesystem::path& linkPath,
+                                         const std::filesystem::path& target,
+                                         const LinkType linkType) override
     {
-        if (linkCreationFails_ || fileSystem_.Exists(linkPath))
+        lastLinkType = linkType;
+
+        if (linkCreationRefusal_ != LinkFailure::None)
         {
-            return false;
+            return linkCreationRefusal_;
+        }
+        if (fileSystem_.Exists(linkPath))
+        {
+            return LinkFailure::CouldNotCreateLink;
         }
         fileSystem_.AddLink(linkPath, target);
-        return true;
+        return LinkFailure::None;
     }
 
     [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override
@@ -42,9 +54,11 @@ public:
         return fileSystem_.LinkTarget(path);
     }
 
+    LinkType lastLinkType = LinkType::Junction;
+
 private:
     InMemoryFileSystem& fileSystem_;
-    bool linkCreationFails_ = false;
+    LinkFailure linkCreationRefusal_ = LinkFailure::None;
     bool linkRemovalFails_ = false;
 };
 

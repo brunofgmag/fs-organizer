@@ -5,6 +5,7 @@
 
 #include "domain/support/PathUtils.h"
 #include "infrastructure/link/WindowsLinkService.h"
+#include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
 class WindowsLinkServiceTest : public QObject
@@ -14,6 +15,7 @@ class WindowsLinkServiceTest : public QObject
 private slots:
     static void AJunctionReadsBackTheTargetItWasCreatedWith();
     static void RemovingTheNodeSparesTheTargetAndEverythingInside();
+    static void ASymlinkEitherLandsOrSaysThePrivilegeIsMissing();
 };
 
 namespace
@@ -55,7 +57,7 @@ void WindowsLinkServiceTest::AJunctionReadsBackTheTargetItWasCreatedWith()
 
     WindowsLinkService linkService;
 
-    QVERIFY(linkService.CreateLink(linkPath, target, LinkType::Junction));
+    QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
 
     const std::optional<std::filesystem::path> readBack = linkService.ReadLinkTarget(linkPath);
     QVERIFY(readBack.has_value());
@@ -70,7 +72,7 @@ void WindowsLinkServiceTest::RemovingTheNodeSparesTheTargetAndEverythingInside()
     const std::filesystem::path linkPath = disk.Destination("fsdreamteam-gsx-pro");
 
     WindowsLinkService linkService;
-    QVERIFY(linkService.CreateLink(linkPath, target, LinkType::Junction));
+    QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
     QVERIFY(std::filesystem::exists(linkPath / "manifest.json"));
 
     QVERIFY(linkService.RemoveReparseNode(linkPath));
@@ -78,6 +80,30 @@ void WindowsLinkServiceTest::RemovingTheNodeSparesTheTargetAndEverythingInside()
     QVERIFY(!std::filesystem::exists(linkPath));
     QVERIFY(std::filesystem::is_directory(target));
     QVERIFY(std::filesystem::exists(target / "manifest.json"));
+}
+
+void WindowsLinkServiceTest::ASymlinkEitherLandsOrSaysThePrivilegeIsMissing()
+{
+    const Disk disk;
+    const std::filesystem::path target = disk.AddAddonFolder("aerosoft-crj");
+    const std::filesystem::path linkPath = disk.Destination("aerosoft-crj");
+
+    WindowsLinkService linkService;
+    const LinkFailure outcome = linkService.CreateLink(linkPath, target, LinkType::Symbolic);
+
+    QVERIFY2(outcome == LinkFailure::None || outcome == LinkFailure::PrivilegeNotHeld,
+             qPrintable(QStringLiteral("a criação de symlink devolveu %1, que não diz ao usuário o que fazer")
+                            .arg(QTest::toString(outcome))));
+
+    if (outcome != LinkFailure::None)
+    {
+        QVERIFY(!std::filesystem::exists(linkPath));
+        return;
+    }
+
+    const std::optional<std::filesystem::path> readBack = linkService.ReadLinkTarget(linkPath);
+    QVERIFY(readBack.has_value());
+    QCOMPARE(ComparablePath(*readBack), ComparablePath(target));
 }
 
 QTEST_APPLESS_MAIN(WindowsLinkServiceTest)
