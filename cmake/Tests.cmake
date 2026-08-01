@@ -11,6 +11,23 @@ target_link_libraries(fsorg-gui-test-precompiled PRIVATE Qt6::Core Qt6::Test Qt6
 target_include_directories(fsorg-gui-test-precompiled PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 target_precompile_headers(fsorg-gui-test-precompiled PRIVATE <QtTest/QtTest>)
 
+# Every test executable lands in the same directory, so the Qt runtime beside them is
+# the same copy seventy-seven times over. One target does it once and they all wait on it.
+if (WIN32)
+    add_custom_target(fsorg-test-runtime
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/platforms"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "$<TARGET_FILE:Qt6::Core>"
+            "$<TARGET_FILE:Qt6::Test>"
+            "$<TARGET_FILE:Qt6::Gui>"
+            "$<TARGET_FILE:Qt6::Widgets>"
+            "${CMAKE_BINARY_DIR}/$<CONFIG>"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+            "${CMAKE_BINARY_DIR}/$<CONFIG>/platforms"
+            VERBATIM)
+endif ()
+
 function(configure_fsorg_test TARGET_NAME TEST_NAME)
     target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Core Qt6::Test)
     target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
@@ -21,12 +38,7 @@ function(configure_fsorg_test TARGET_NAME TEST_NAME)
             ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1")
 
     if (WIN32)
-        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "$<TARGET_FILE:Qt6::Core>"
-                "$<TARGET_FILE:Qt6::Test>"
-                "$<TARGET_FILE_DIR:${TARGET_NAME}>"
-                VERBATIM)
+        add_dependencies(${TARGET_NAME} fsorg-test-runtime)
     endif ()
 endfunction()
 
@@ -37,19 +49,6 @@ function(configure_fsorg_gui_test TARGET_NAME TEST_NAME)
     set_tests_properties(${TEST_NAME} PROPERTIES
             ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1;QT_QPA_PLATFORM=offscreen")
 
-    if (WIN32)
-        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "$<TARGET_FILE:Qt6::Gui>"
-                "$<TARGET_FILE:Qt6::Widgets>"
-                "$<TARGET_FILE_DIR:${TARGET_NAME}>"
-                COMMAND "${CMAKE_COMMAND}" -E make_directory
-                "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
-                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
-                "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
-                VERBATIM)
-    endif ()
 endfunction()
 
 function(fsorg_add_qt_test TARGET_NAME TEST_NAME)
