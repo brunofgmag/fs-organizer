@@ -70,6 +70,11 @@ add_test(NAME no-em-dash
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-em-dash.cmake")
 
+add_test(NAME portable-layer
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-portable-layer.cmake")
+
 fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
         tests/support/EnumPrinting.h)
@@ -546,9 +551,8 @@ if (WIN32)
         fsorg_add_qt_test(fsorg-main-window-tests main-window
                 tests/view/tst_main_window.cpp
                 assets/resources.qrc
-                ${WINDOWS_SHELL_SOURCES}
-                src/view/platform/WindowsTitleBar.cpp)
-        target_link_libraries(fsorg-main-window-tests PRIVATE fsorg-view)
+                ${WINDOWS_SHELL_SOURCES})
+        target_link_libraries(fsorg-main-window-tests PRIVATE fsorg-view fsorg-infrastructure)
         configure_fsorg_gui_test(fsorg-main-window-tests main-window)
 
 

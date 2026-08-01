@@ -4,8 +4,6 @@ endif ()
 
 add_executable(fsorg-probe
         tools/fsorg-probe/main.cpp
-        src/infrastructure/platform/WindowsKnownFolders.cpp
-        src/infrastructure/sim/WindowsUserCfgLocations.cpp
 )
 
 target_include_directories(fsorg-probe PRIVATE "${CMAKE_SOURCE_DIR}/src")
@@ -26,7 +24,6 @@ add_custom_command(TARGET fsorg-probe POST_BUILD
 
 add_executable(fsorg-shot
         tools/fsorg-shot/main.cpp
-        ${WINDOWS_INFRASTRUCTURE_SOURCES}
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
         assets/resources.qrc
@@ -61,7 +58,6 @@ add_executable(fsorg-timing
         tools/fsorg-timing/main.cpp
         tools/fsorg-timing/JournalScroll.cpp
         tools/fsorg-timing/AppScroll.cpp
-        ${WINDOWS_INFRASTRUCTURE_SOURCES}
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
 )

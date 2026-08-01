@@ -31,31 +31,31 @@ set(APPLICATION_SOURCES
         src/application/SetupService.cpp
 )
 
-# Everything the portable configuration already compiles today, Windows names included:
-# these adapters reach the platform through std::filesystem and Qt, never through win32.
+# Adapters that reach the platform through std::filesystem and Qt, never through win32.
+# A Windows name is not the test: check-portable-layer.cmake is, and it reads the includes.
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
-        src/infrastructure/fileops/WindowsFileOperations.cpp
-        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/legacy/IniLegacyConfigReader.cpp
         src/infrastructure/legacy/LegacyPresetReader.cpp
         src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
-        src/infrastructure/link/WindowsLinkService.cpp
-        src/infrastructure/platform/SingleInstance.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
-        src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
+        src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
 )
 
-# The three that do include windows.h, so no test target outside Windows ever sees them.
+# The ones that do include windows.h. Nothing outside Windows compiles these.
 set(WINDOWS_INFRASTRUCTURE_SOURCES
+        src/infrastructure/fileops/WindowsFileOperations.cpp
+        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+        src/infrastructure/link/WindowsLinkService.cpp
+        src/infrastructure/platform/SingleInstance.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
-        src/infrastructure/sim/WindowsUserCfgLocations.cpp
+        src/infrastructure/sim/WindowsProcessProbe.cpp
         src/view/platform/WindowsTitleBar.cpp
 )
 
@@ -127,7 +127,6 @@ set(WINDOWS_SHELL_SOURCES
 
 set(APP_SOURCES
         src/main.cpp
-        ${WINDOWS_INFRASTRUCTURE_SOURCES}
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
 )

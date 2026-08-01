@@ -16,6 +16,11 @@ fsorg_add_layer(fsorg-infrastructure ${INFRASTRUCTURE_SOURCES})
 target_link_libraries(fsorg-infrastructure PUBLIC fsorg-application Qt6::Core)
 target_precompile_headers(fsorg-infrastructure PRIVATE <QtCore/QtCore>)
 
+if (WIN32)
+    target_sources(fsorg-infrastructure PRIVATE ${WINDOWS_INFRASTRUCTURE_SOURCES})
+    target_link_libraries(fsorg-infrastructure PUBLIC Qt6::Widgets dwmapi)
+endif ()
+
 fsorg_add_layer(fsorg-viewmodel ${VIEWMODEL_SOURCES})
 target_link_libraries(fsorg-viewmodel PUBLIC fsorg-application Qt6::Core)
 target_precompile_headers(fsorg-viewmodel PRIVATE <QtCore/QtCore>)
