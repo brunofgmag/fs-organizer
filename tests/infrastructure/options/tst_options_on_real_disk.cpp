@@ -173,6 +173,17 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
     {
         qInfo("esta máquina cria symlink de diretório: o Modo de Desenvolvedor está ligado ou a sessão é elevada");
         QVERIFY(symbolic.filesystemProbe.IsReparsePoint(linkPath));
+
+        symbolic.session.ShowActiveProfile();
+
+        const TreeNode* linked = AddonUnder(symbolic, kAddon);
+        QVERIFY(linked != nullptr);
+
+        const std::vector<LinkOperationResult> undone =
+            symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {linked}, false);
+
+        QCOMPARE(undone.size(), std::size_t{1});
+        QVERIFY2(!std::filesystem::exists(linkPath), "desabilitar deixou o link no destino");
     }
     else
     {
