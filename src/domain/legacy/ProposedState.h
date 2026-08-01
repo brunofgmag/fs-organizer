@@ -1,0 +1,10 @@
+#ifndef FS_ORGANIZER_DOMAIN_LEGACY_PROPOSED_STATE_H
+#define FS_ORGANIZER_DOMAIN_LEGACY_PROPOSED_STATE_H
+
+enum class ProposedState : int
+{
+    New = 0,
+    AlreadyPresent = 1,
+};
+
+#endif // FS_ORGANIZER_DOMAIN_LEGACY_PROPOSED_STATE_H
