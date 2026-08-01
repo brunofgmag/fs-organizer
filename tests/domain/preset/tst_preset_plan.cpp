@@ -9,6 +9,8 @@ class PresetPlanTest : public QObject
 
 private slots:
     static void ReplaceEnablesThePresetAndDisablesWhatItDoesNotName();
+    static void ReplaceSeparatesTheEnabledAddonsThePresetDoesNotName();
+    static void AnAddonThePresetItselfTurnsOffIsNotCountedAsOneItDoesNotName();
     static void CumulativeLeavesAloneWhatThePresetDoesNotName();
     static void ADisableEntryTurnsTheAddonOffInCumulative();
     static void TheDisableModeTurnsOffTheEnableEntriesAndIgnoresTheDisableOnes();
@@ -105,6 +107,31 @@ void PresetPlanTest::ReplaceEnablesThePresetAndDisablesWhatItDoesNotName()
     QCOMPARE(plan.alreadyInPlace.size(), std::size_t{1});
     QCOMPARE(plan.alreadyInPlace.front()->path, std::filesystem::path{kAircraftB});
     QVERIFY(plan.unresolved.empty());
+}
+
+void PresetPlanTest::ReplaceSeparatesTheEnabledAddonsThePresetDoesNotName()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftB, kAircraftC}};
+    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Enabling("aircraft-b")}};
+
+    const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Replace, Profile(), libraries, enabled);
+
+    QCOMPARE(plan.toDisable.size(), std::size_t{1});
+    QCOMPARE(plan.notNamedByThePreset.size(), std::size_t{1});
+    QCOMPARE(plan.notNamedByThePreset.front()->path, std::filesystem::path{kAircraftC});
+}
+
+void PresetPlanTest::AnAddonThePresetItselfTurnsOffIsNotCountedAsOneItDoesNotName()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftC}};
+    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Disabling("aircraft-c")}};
+
+    const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Replace, Profile(), libraries, enabled);
+
+    QCOMPARE(plan.toDisable.size(), std::size_t{1});
+    QVERIFY(plan.notNamedByThePreset.empty());
 }
 
 void PresetPlanTest::CumulativeLeavesAloneWhatThePresetDoesNotName()

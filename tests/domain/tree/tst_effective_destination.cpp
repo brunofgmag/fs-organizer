@@ -20,7 +20,7 @@ private slots:
     static void TheRelativePathIsMatchedWithoutCaseOrSeparatorDifferences();
     static void AnAbsoluteAddonFolderFindsItsOwnLibraryAndOverride();
     static void AnAddonFolderOutsideEveryLibraryFallsBackToTheDefault();
-    static void AnOverrideNamingAPathThatIsNoLongerADestinationIsFollowedAnyway();
+    static void AnOverrideNamingAPathThatIsNoLongerADestinationDoesNotDecide();
 };
 
 namespace
@@ -122,14 +122,14 @@ void EffectiveDestinationTest::AnAddonFolderOutsideEveryLibraryFallsBackToTheDef
     QCOMPARE(EffectiveDestination(profile, "C:/Elsewhere/some-addon"), std::filesystem::path(kCommunity));
 }
 
-void EffectiveDestinationTest::AnOverrideNamingAPathThatIsNoLongerADestinationIsFollowedAnyway()
+void EffectiveDestinationTest::AnOverrideNamingAPathThatIsNoLongerADestinationDoesNotDecide()
 {
     const SimulatorProfile profile = ProfileWith({{"library-1", "Aircrafts", "E:/Flight Simulator 2024/Retired"}});
 
     QVERIFY(std::ranges::find(profile.destinations, std::filesystem::path("E:/Flight Simulator 2024/Retired"))
             == profile.destinations.end());
     QCOMPARE(EffectiveDestination(profile, "library-1", "Aircrafts/pmdg-aircraft-77w"),
-             std::filesystem::path("E:/Flight Simulator 2024/Retired"));
+             std::filesystem::path(kCommunity));
 }
 
 QTEST_APPLESS_MAIN(EffectiveDestinationTest)

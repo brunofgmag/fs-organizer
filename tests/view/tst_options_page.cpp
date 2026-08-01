@@ -22,6 +22,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeUpdateService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "view/options/OptionsPage.h"
@@ -32,7 +33,8 @@ class OptionsPageTest : public QObject
     Q_OBJECT
 
 private slots:
-    static void TheTwoTabsWaitingForTheNextSliceOpenWhatExplainsTheWait();
+    static void TheTabThatIsStillWaitingOpensWhatExplainsTheWait();
+    static void TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands();
     static void TheLinksTabOpensOnTheTypeThatIsStored();
     static void ChoosingSymlinkWritesItAndSaysWhatChanges();
     static void EachLibraryGetsARowNamingWhatIsInsideIt();
@@ -40,6 +42,10 @@ private slots:
     static void OnlyOneProfileCanBeMarkedAtATime();
     static void NothingEnabledMeansTheQuestionCarriesNoCheckboxAtAll();
     static void WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion();
+    static void EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUse();
+    static void TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt();
+    static void TheOnlyProfileCannotBeRemoved();
+    static void RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown();
 };
 
 namespace
@@ -88,7 +94,22 @@ namespace
         return found == buttons.end() ? nullptr : *found;
     }
 
-    Question WhatUnregisteringAsks(const OptionsPage& page)
+    QPushButton* LastButtonLabelled(const QWidget& page, const QString& text)
+    {
+        QPushButton* last = nullptr;
+
+        for (QPushButton* button : page.findChildren<QPushButton*>())
+        {
+            if (button->text() == text)
+            {
+                last = button;
+            }
+        }
+
+        return last;
+    }
+
+    Question WhatClickingAsks(QPushButton* button)
     {
         Question asked;
 
@@ -103,7 +124,7 @@ namespace
 
                                asked.opened = true;
 
-                               if (auto* box = dialog->findChild<QCheckBox*>(); box != nullptr)
+                               if (const auto* box = dialog->findChild<QCheckBox*>(); box != nullptr)
                                {
                                    asked.offeredToDisable = true;
                                    asked.checkboxIsLaidOut =
@@ -113,12 +134,29 @@ namespace
                                dialog->close();
                            });
 
-        if (QPushButton* unregister = ButtonLabelled(page, QStringLiteral("Descadastrar")); unregister != nullptr)
+        if (button != nullptr)
         {
-            unregister->click();
+            button->click();
         }
 
         return asked;
+    }
+
+    Question WhatUnregisteringAsks(const OptionsPage& page)
+    {
+        return WhatClickingAsks(ButtonLabelled(page, QStringLiteral("Descadastrar")));
+    }
+
+    SimulatorProfile SecondProfile()
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2020";
+        profile.variant = SimulatorVariant::MSFS2020;
+        profile.destinations = {"E:/Flight Simulator 2020/Community"};
+        profile.defaultDestination = "E:/Flight Simulator 2020/Community";
+        profile.libraries = {Library{"library-2", "D:/MSFS 2020", "MSFS 2020"}};
+
+        return profile;
     }
 
     struct Fixture
@@ -164,40 +202,61 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, processProbe, runner, notifier};
         OptionsViewModel viewModel{session, service, settings, notifier};
-        OptionsPage page{viewModel, kSettingsFile};
+        FakeUpdateService updateService;
+        UpdateViewModel updates{updateService, QStringLiteral("0.1.0"), UpdateMode::Notify, true};
+        OptionsPage page{viewModel, updates, kSettingsFile};
     };
 }
 
-void OptionsPageTest::TheTwoTabsWaitingForTheNextSliceOpenWhatExplainsTheWait()
+void OptionsPageTest::TheTabThatIsStillWaitingOpensWhatExplainsTheWait()
 {
     const Fixture f;
 
     auto* navigation = f.page.findChild<QListWidget*>(QStringLiteral("OptionsNav"));
-    auto* panes = f.page.findChild<QStackedWidget*>();
+    const auto* panes = f.page.findChild<QStackedWidget*>();
     QVERIFY(navigation != nullptr);
     QVERIFY(panes != nullptr);
     QCOMPARE(navigation->count(), 5);
 
     navigation->show();
 
-    for (const int waiting : {2, 3})
-    {
-        const QRect row = navigation->visualItemRect(navigation->item(waiting));
-        QTest::mouseClick(navigation->viewport(), Qt::LeftButton, Qt::NoModifier, row.center());
+    constexpr int waiting = 3;
+    const QRect row = navigation->visualItemRect(navigation->item(waiting));
+    QTest::mouseClick(navigation->viewport(), Qt::LeftButton, Qt::NoModifier, row.center());
 
-        QCOMPARE(navigation->currentRow(), waiting);
-        QCOMPARE(panes->currentIndex(), waiting);
+    QCOMPARE(navigation->currentRow(), waiting);
+    QCOMPARE(panes->currentIndex(), waiting);
 
-        const auto labels = panes->currentWidget()->findChildren<QLabel*>();
-        const bool explained = std::ranges::any_of(labels,
-                                                   [](const QLabel* label)
-                                                   {
-                                                       return label->text().contains(QStringLiteral("slice 12"));
-                                                   });
+    const auto labels = panes->currentWidget()->findChildren<QLabel*>();
+    const bool explained = std::ranges::any_of(labels,
+                                               [](const QLabel* label)
+                                               {
+                                                   return label->text().contains(QStringLiteral("idioma"));
+                                               });
 
-        QVERIFY2(explained, "a aba abriu mas nada nela diz por que ela ainda não faz nada");
-        QVERIFY(!navigation->item(waiting)->toolTip().isEmpty());
-    }
+    QVERIFY2(explained, "a aba abriu mas nada nela diz por que ela ainda não faz nada");
+    QVERIFY(!navigation->item(waiting)->toolTip().isEmpty());
+}
+
+void OptionsPageTest::TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands()
+{
+    Fixture f;
+
+    auto* notify = f.page.findChild<QRadioButton*>(QStringLiteral("NotifyUpdateChoice"));
+    auto* automatic = f.page.findChild<QRadioButton*>(QStringLiteral("AutomaticUpdateChoice"));
+    auto* manual = f.page.findChild<QRadioButton*>(QStringLiteral("ManualUpdateChoice"));
+    auto* status = f.page.findChild<QLabel*>(QStringLiteral("UpdateStatus"));
+
+    QVERIFY(notify != nullptr);
+    QVERIFY(automatic != nullptr);
+    QVERIFY(manual != nullptr);
+    QVERIFY(notify->isChecked());
+    QVERIFY(!status->text().isEmpty());
+
+    automatic->click();
+
+    QCOMPARE(f.updates.Mode(), UpdateMode::Automatic);
+    QCOMPARE(f.settings.stored.updateMode, UpdateMode::Automatic);
 }
 
 void OptionsPageTest::TheLinksTabOpensOnTheTypeThatIsStored()
@@ -206,9 +265,9 @@ void OptionsPageTest::TheLinksTabOpensOnTheTypeThatIsStored()
     f.settings.stored.linkType = LinkType::Symbolic;
     f.page.Reload();
 
-    auto* symbolic = f.page.findChild<QRadioButton*>(QStringLiteral("SymbolicChoice"));
-    auto* junction = f.page.findChild<QRadioButton*>(QStringLiteral("JunctionChoice"));
-    auto* hashed = f.page.findChild<QRadioButton*>(QStringLiteral("HashChoice"));
+    const auto* symbolic = f.page.findChild<QRadioButton*>(QStringLiteral("SymbolicChoice"));
+    const auto* junction = f.page.findChild<QRadioButton*>(QStringLiteral("JunctionChoice"));
+    const auto* hashed = f.page.findChild<QRadioButton*>(QStringLiteral("HashChoice"));
 
     QVERIFY(symbolic != nullptr);
     QVERIFY(symbolic->isChecked());
@@ -218,7 +277,7 @@ void OptionsPageTest::TheLinksTabOpensOnTheTypeThatIsStored()
 
 void OptionsPageTest::ChoosingSymlinkWritesItAndSaysWhatChanges()
 {
-    Fixture f;
+    const Fixture f;
 
     QSignalSpy said(&f.page, &OptionsPage::StatusChanged);
 
@@ -227,7 +286,7 @@ void OptionsPageTest::ChoosingSymlinkWritesItAndSaysWhatChanges()
 
     QCOMPARE(f.settings.stored.linkType, LinkType::Symbolic);
     QCOMPARE(said.count(), 1);
-    QVERIFY(said.front().front().toString().contains(QStringLiteral("continuam junction")));
+    QVERIFY(said.front().front().toString().contains(QStringLiteral("continuam junção de diretório")));
 }
 
 void OptionsPageTest::EachLibraryGetsARowNamingWhatIsInsideIt()
@@ -284,7 +343,7 @@ void OptionsPageTest::OnlyOneProfileCanBeMarkedAtATime()
                                    }),
              1);
 
-    QSignalSpy chosen(&f.page, &OptionsPage::ProfileChosen);
+    const QSignalSpy chosen(&f.page, &OptionsPage::ProfileChosen);
     profiles[1]->click();
 
     QCOMPARE(chosen.count(), 1);
@@ -320,6 +379,63 @@ void OptionsPageTest::WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion()
     QVERIFY2(asked.offeredToDisable, "com um addon habilitado, a caixa de desabilitar não foi oferecida");
     QVERIFY2(asked.checkboxIsLaidOut,
              "a caixa foi criada mas ficou fora do layout, que é como ela se sobrepõe ao texto");
+}
+
+void OptionsPageTest::EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUse()
+{
+    Fixture f;
+    f.settings.stored.profiles.push_back(SecondProfile());
+    f.page.Reload();
+
+    QVERIFY(LastButtonLabelled(f.page, QStringLiteral("Ver…")) != nullptr);
+    LastButtonLabelled(f.page, QStringLiteral("Ver…"))->click();
+
+    const auto labels = f.page.findChildren<QLabel*>();
+    const bool showsTheOtherLibrary =
+        std::ranges::any_of(labels,
+                            [](const QLabel* label)
+                            {
+                                return label->text().contains(QStringLiteral("MSFS 2020"));
+                            });
+
+    QVERIFY2(showsTheOtherLibrary, "clicar em Ver deixou os grupos de baixo no perfil ativo");
+}
+
+void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
+{
+    Fixture f;
+    f.settings.stored.profiles.push_back(SecondProfile());
+    f.page.Reload();
+
+    LastButtonLabelled(f.page, QStringLiteral("Ver…"))->click();
+
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Adicionar biblioteca…"))->isEnabled());
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Importar do MSFS Addons Linker…"))->isEnabled());
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Descadastrar"))->isEnabled());
+}
+
+void OptionsPageTest::TheOnlyProfileCannotBeRemoved()
+{
+    const Fixture f;
+
+    QVERIFY(ButtonLabelled(f.page, QStringLiteral("Remover")) != nullptr);
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Remover"))->isEnabled());
+}
+
+void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown()
+{
+    Fixture f;
+    f.settings.stored.profiles.push_back(SecondProfile());
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kAddon);
+    f.session.ShowActiveProfile();
+    f.page.Reload();
+
+    LastButtonLabelled(f.page, QStringLiteral("Ver…"))->click();
+
+    const Question asked = WhatClickingAsks(ButtonLabelled(f.page, QStringLiteral("Remover")));
+
+    QVERIFY2(asked.opened, "a pergunta de remover não abriu, então nada foi olhado");
+    QVERIFY2(asked.offeredToDisable, "remover o perfil em uso com outro perfil na tela contou zero addons habilitados");
 }
 
 QTEST_MAIN(OptionsPageTest)

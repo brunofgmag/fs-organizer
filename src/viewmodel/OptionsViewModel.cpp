@@ -36,6 +36,64 @@ std::vector<ProfileLine> OptionsViewModel::Profiles() const
     return lines;
 }
 
+void OptionsViewModel::ShowProfile(const std::string& profileId)
+{
+    shown_ = profileId;
+
+    emit Changed();
+}
+
+SimulatorProfile OptionsViewModel::ProfileShown() const
+{
+    if (shown_.empty() || shown_ == session_.Profile().id)
+    {
+        return session_.Profile();
+    }
+
+    const AppSettings settings = settings_.Load().value_or(AppSettings{});
+    const auto found = std::ranges::find_if(settings.profiles,
+                                            [this](const SimulatorProfile& profile)
+                                            {
+                                                return profile.id == shown_;
+                                            });
+
+    return found == settings.profiles.end() ? session_.Profile() : *found;
+}
+
+bool OptionsViewModel::ShowsTheProfileInUse() const
+{
+    return ProfileShown().id == session_.Profile().id;
+}
+
+bool OptionsViewModel::RemoveProfile(const std::string& profileId, const bool disablingWhatItLeftBehind)
+{
+    if (disablingWhatItLeftBehind && profileId == session_.Profile().id)
+    {
+        std::vector<const TreeNode*> everything;
+        for (const TreeNode& library : session_.Snapshot().libraries)
+        {
+            everything.push_back(&library);
+        }
+
+        const std::vector<LinkOperationResult> results =
+            service_.SetEnabled(session_.Profile(), session_.Snapshot(), everything, false);
+
+        session_.NoteLinkResults(results);
+        emit LinksDisabled(results);
+    }
+
+    if (!session_.RemoveProfile(profileId))
+    {
+        return false;
+    }
+
+    shown_.clear();
+
+    emit Changed();
+
+    return true;
+}
+
 std::size_t OptionsViewModel::AddonsInTheActiveProfile() const
 {
     std::size_t addons = 0;
@@ -48,9 +106,31 @@ std::size_t OptionsViewModel::AddonsInTheActiveProfile() const
     return addons;
 }
 
+std::size_t OptionsViewModel::EnabledInTheProfileInUse() const
+{
+    const ProfileSnapshot& snapshot = session_.Snapshot();
+    const SimulatorProfile& profile = session_.Profile();
+
+    const auto insideOneOfTheLibraries = [&profile](const DestinationEntry& entry)
+    {
+        return std::ranges::any_of(profile.libraries,
+                                   [&entry](const Library& library)
+                                   {
+                                       return PathIsInside(entry.target, library.path);
+                                   });
+    };
+
+    return static_cast<std::size_t>(std::ranges::count_if(snapshot.entries,
+                                                          [&insideOneOfTheLibraries](const DestinationEntry& entry)
+                                                          {
+                                                              return CountsAsEnabled(entry.classification)
+                                                                  && insideOneOfTheLibraries(entry);
+                                                          }));
+}
+
 std::vector<DestinationLine> OptionsViewModel::Destinations() const
 {
-    const SimulatorProfile& profile = session_.Profile();
+    const SimulatorProfile profile = ProfileShown();
 
     std::vector<DestinationLine> lines;
     lines.reserve(profile.destinations.size());
@@ -79,8 +159,9 @@ const TreeNode* OptionsViewModel::TreeOf(const LibraryId& libraryId) const
 
 std::vector<LibraryLine> OptionsViewModel::Libraries() const
 {
-    const SimulatorProfile& profile = session_.Profile();
+    const SimulatorProfile profile = ProfileShown();
     const ProfileSnapshot& snapshot = session_.Snapshot();
+    const bool counted = ShowsTheProfileInUse();
 
     std::vector<LibraryLine> lines;
     lines.reserve(profile.libraries.size());
@@ -91,6 +172,13 @@ std::vector<LibraryLine> OptionsViewModel::Libraries() const
         line.id = library.id;
         line.label = QString::fromStdString(library.label);
         line.path = library.path;
+        line.counted = counted;
+
+        if (!counted)
+        {
+            lines.push_back(std::move(line));
+            continue;
+        }
 
         if (const TreeNode* tree = LibraryTreeAt(snapshot.libraries, library.path); tree != nullptr)
         {
@@ -151,6 +239,29 @@ void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
 
     emit LinkTypeChosen(linkType);
     emit Changed();
+}
+
+void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
+{
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        emit SettingsCouldNotBeSaved();
+        return;
+    }
+
+    if (loaded->updateMode == mode)
+    {
+        return;
+    }
+
+    AppSettings settings = *loaded;
+    settings.updateMode = mode;
+
+    if (!settings_.Save(settings))
+    {
+        emit SettingsCouldNotBeSaved();
+    }
 }
 
 void OptionsViewModel::RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const

@@ -23,6 +23,7 @@ struct PresetPlan
     std::vector<const TreeNode*> toEnable;
     std::vector<AddonId> unresolved;
     std::vector<const TreeNode*> alreadyInPlace;
+    std::vector<const TreeNode*> notNamedByThePreset;
 };
 
 [[nodiscard]] PresetPlan PlanPresetApplication(const Preset& preset,

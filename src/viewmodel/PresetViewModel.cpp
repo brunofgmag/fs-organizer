@@ -146,8 +146,12 @@ PresetPreview PresetViewModel::Preview(const Preset& preset, const ApplyMode mod
                                                      return !CountsAsEnabled(entry.classification);
                                                  });
 
-    return {plan.toEnable.size(), plan.toDisable.size(), plan.alreadyInPlace.size(), plan.unresolved.size(),
-            static_cast<std::size_t>(leftAlone)};
+    return {plan.toEnable.size(),
+            plan.toDisable.size(),
+            plan.alreadyInPlace.size(),
+            plan.unresolved.size(),
+            static_cast<std::size_t>(leftAlone),
+            plan.notNamedByThePreset.size()};
 }
 
 void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)

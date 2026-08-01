@@ -4,6 +4,7 @@
 #include <ranges>
 #include <string>
 
+#include "domain/profile/OrphanOverrides.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -31,10 +32,11 @@ std::filesystem::path EffectiveDestination(const SimulatorProfile& profile,
     for (std::string key = RelativeKey(relativePath);; key = ParentOf(key))
     {
         const auto match = std::ranges::find_if(profile.destinationOverrides,
-                                                [&libraryId, &key](const DestinationOverride& candidate)
+                                                [&profile, &libraryId, &key](const DestinationOverride& candidate)
                                                 {
                                                     return candidate.libraryId == libraryId
-                                                        && RelativeKey(candidate.relativePath) == key;
+                                                        && RelativeKey(candidate.relativePath) == key
+                                                        && NamesOneOfTheDestinations(profile, candidate.destination);
                                                 });
 
         if (match != profile.destinationOverrides.end())

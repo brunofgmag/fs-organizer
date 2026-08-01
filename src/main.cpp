@@ -1,11 +1,15 @@
 #include <optional>
 
+#include <QtCore/QDir>
 #include <QtCore/QLibraryInfo>
+#include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QPushButton>
 
 #include "application/ImportService.h"
+#include "application/LegacyConfigImporter.h"
 #include "application/LibraryOrganizer.h"
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
@@ -17,7 +21,9 @@
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
+#include "infrastructure/legacy/WindowsLegacyConfigSource.h"
 #include "infrastructure/link/WindowsLinkService.h"
+#include "infrastructure/platform/SingleInstance.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
@@ -25,9 +31,11 @@
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "infrastructure/update/GithubUpdateService.h"
 #include "support/PathText.h"
 #include "view/library/AddonTreePage.h"
 #include "view/community/CommunityPage.h"
+#include "view/legacy/LegacyImportDialog.h"
 #include "view/JournalPage.h"
 #include "view/options/OptionsPage.h"
 #include "view/shell/MainWindow.h"
@@ -40,20 +48,51 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
+#include "viewmodel/LegacyImportViewModel.h"
 #include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/QtBackgroundRunner.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 #include "viewmodel/SetupViewModel.h"
+#include "viewmodel/UpdateViewModel.h"
 
 namespace
 {
     constexpr auto kInterfaceLanguage = "pt_BR";
+    constexpr auto kSingleInstanceName = L"Local\\fs-organizer-single-instance";
+    constexpr auto kDefaultUpdateFeed = "https://api.github.com/repos/brunofgmag/fs-organizer/releases/latest";
+    constexpr int kFirstUpdateCheckDelayMs = 3000;
+
+    bool UpdatesAreOn()
+    {
+        if (qEnvironmentVariableIsSet("FSORG_NO_UPDATES"))
+        {
+            return false;
+        }
+
+        QDir folder(QCoreApplication::applicationDirPath());
+        for (int level = 0; level < 4; ++level)
+        {
+            if (folder.exists(QStringLiteral("CMakeCache.txt")))
+            {
+                return false;
+            }
+
+            if (!folder.cdUp())
+            {
+                break;
+            }
+        }
+
+        return true;
+    }
 
     void TranslateTheNativeWidgets(QTranslator& translator)
     {
-        if (translator.load(QStringLiteral("qtbase_%1").arg(kInterfaceLanguage),
-                            QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
+        const QString beside = QCoreApplication::applicationDirPath() + QStringLiteral("/translations");
+        const QString name = QStringLiteral("qt_%1").arg(kInterfaceLanguage);
+
+        if (translator.load(name, beside) || translator.load(name, QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
         {
             QCoreApplication::installTranslator(&translator);
         }
@@ -72,6 +111,90 @@ namespace
         SetupWizard wizard(viewModel);
 
         return wizard.exec() == QDialog::Accepted;
+    }
+
+    void OfferToDropTheOverridesThatPointNowhere(Session& session, QWidget* parent)
+    {
+        const std::vector<DestinationOverride> orphans = session.OverridesPointingNowhere();
+        if (orphans.empty())
+        {
+            return;
+        }
+
+        QStringList detailed;
+        for (const DestinationOverride& orphan : orphans)
+        {
+            detailed.append(QStringLiteral("%1 -> %2").arg(AsText(orphan.relativePath), AsText(orphan.destination)));
+        }
+
+        detailed.append(QString{});
+        detailed.append(QObject::tr("Destinos deste perfil:"));
+        for (const std::filesystem::path& destination : session.Profile().destinations)
+        {
+            detailed.append(AsText(destination));
+        }
+
+        QMessageBox question(QMessageBox::Warning, QObject::tr("Fixações de destino apontando para fora"),
+                             QObject::tr("%1 fixação(ões) de destino deste perfil citam uma pasta que não é destino "
+                                         "dele. Enquanto for assim, os addons fixados usam o destino padrão. Nada foi "
+                                         "apagado da configuração.")
+                                 .arg(orphans.size()),
+                             QMessageBox::NoButton, parent);
+        question.setDetailedText(detailed.join(QChar::LineFeed));
+
+        const QPushButton* drop = question.addButton(QObject::tr("Descartar as fixações"), QMessageBox::AcceptRole);
+        question.addButton(QObject::tr("Manter e decidir depois"), QMessageBox::RejectRole);
+        question.exec();
+
+        if (question.clickedButton() == drop)
+        {
+            session.DropOverridesPointingNowhere();
+        }
+    }
+
+    bool SomethingIsWaitingInTheOldProgram(const std::vector<LegacyMigration>& migrations)
+    {
+        const auto holdsSomethingNew = [](const MigratableLibrary& library)
+        {
+            return library.rootExists
+                && (library.proposal.state == ProposedState::New
+                    || std::ranges::any_of(library.proposal.categories,
+                                           [](const ProposedCategory& category)
+                                           {
+                                               return category.state == ProposedState::New;
+                                           }));
+        };
+
+        return std::ranges::any_of(migrations,
+                                   [&holdsSomethingNew](const LegacyMigration& migration)
+                                   {
+                                       return std::ranges::any_of(migration.libraries, holdsSomethingNew);
+                                   });
+    }
+
+    void OfferWhatTheOldProgramKept(LegacyImportViewModel& legacyViewModel, QWidget* parent)
+    {
+        if (!SomethingIsWaitingInTheOldProgram(legacyViewModel.Migrations()))
+        {
+            return;
+        }
+
+        QMessageBox question(QMessageBox::Question, QObject::tr("O MSFS Addons Linker está nesta máquina"),
+                             QObject::tr("Ele tem bibliotecas que o FS Organizer ainda não conhece. Nada é movido nem "
+                                         "apagado: você escolhe o que trazer antes de qualquer coisa acontecer."),
+                             QMessageBox::NoButton, parent);
+
+        const QPushButton* look = question.addButton(QObject::tr("Ver o que dá para trazer"), QMessageBox::AcceptRole);
+        question.addButton(QObject::tr("Agora não"), QMessageBox::RejectRole);
+        question.exec();
+
+        if (question.clickedButton() != look)
+        {
+            return;
+        }
+
+        LegacyImportDialog dialog(legacyViewModel, parent);
+        dialog.exec();
     }
 
     void OfferWhatALostImportLeftBehind(ImportViewModel& importViewModel, QWidget* parent)
@@ -104,6 +227,15 @@ int main(int argc, char* argv[])
     QApplication::setApplicationVersion(QStringLiteral(FSORG_VERSION));
     QApplication::setOrganizationName(QStringLiteral("fs-organizer"));
     QApplication::setWindowIcon(BrandIcon());
+
+    const SingleInstance onlyOne(kSingleInstanceName);
+    if (onlyOne.AnotherIsRunning())
+    {
+        BringTheRunningInstanceForward(QApplication::applicationName().toStdWString());
+
+        return 0;
+    }
+
     ApplyModernistTheme(app);
 
     QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, &app,
@@ -139,7 +271,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (stored->profiles.empty() && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
+    const bool setupJustRan = stored->profiles.empty();
+    if (setupJustRan && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
     {
         return 0;
     }
@@ -187,11 +320,23 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
+    GithubUpdateService updateService(
+        qEnvironmentVariable("FSORG_UPDATE_FEED", QString::fromLatin1(kDefaultUpdateFeed)),
+        QCoreApplication::applicationVersion(), GithubUpdateService::DefaultUpdatesFolder());
+    updateService.DiscardStaged();
+
+    UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), onDisk.updateMode,
+                                    UpdatesAreOn());
+
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
-    auto* optionsPage = new OptionsPage(optionsViewModel, SettingsFilePath());
+    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
+
+    const WindowsLegacyConfigSource legacyConfig(ProgramDataFolder());
+    const LegacyConfigImporter legacyImporter(legacyConfig, filesystemProbe);
+    LegacyImportViewModel legacyViewModel(session, legacyImporter, presetService);
 
     PageTab* libraryButton = window.AddPage(QObject::tr("Biblioteca"), page);
-    PageTab* communityButton = window.AddPage(QStringLiteral("Community"), communityPage);
+    PageTab* communityButton = window.AddPage(QObject::tr("Destinos"), communityPage);
     PageTab* presetsButton = window.AddPage(QObject::tr("Presets"), presetsPage);
     window.AddPage(QObject::tr("Diário"), journalPage);
     PageTab* quarantineButton = window.AddPage(QObject::tr("Quarentena"), quarantinePage);
@@ -217,6 +362,17 @@ int main(int argc, char* argv[])
                                                   .arg(AsText(SettingsFilePath())));
                      });
 
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &updateViewModel,
+                     [&updateViewModel, &updateService]
+                     {
+                         if (updateViewModel.ShouldApplyOnExit())
+                         {
+                             static_cast<void>(updateService.LaunchApplyHelper(false));
+                         }
+                     });
+
+    QTimer::singleShot(kFirstUpdateCheckDelayMs, &updateViewModel, &UpdateViewModel::CheckQuietly);
+
     QObject::connect(&window, &MainWindow::OptionsRequested, optionsPage, &OptionsPage::Reload);
     QObject::connect(optionsPage, &OptionsPage::StatusChanged, &window, &MainWindow::ShowStatus);
     QObject::connect(optionsPage, &OptionsPage::SummaryChanged, &window,
@@ -225,6 +381,19 @@ int main(int argc, char* argv[])
                          window.ShowSummary(optionsPage, summary);
                      });
     QObject::connect(optionsPage, &OptionsPage::AddProfileRequested, &window, &MainWindow::AddProfileRequested);
+    QObject::connect(optionsPage, &OptionsPage::LegacyImportRequested, &window,
+                     [&window, &legacyViewModel, optionsPage, &presetViewModel]
+                     {
+                         LegacyImportDialog dialog(legacyViewModel, &window);
+                         QObject::connect(&dialog, &LegacyImportDialog::StatusChanged, &window,
+                                          &MainWindow::ShowStatus);
+
+                         if (dialog.exec() == QDialog::Accepted)
+                         {
+                             optionsPage->Reload();
+                             emit presetViewModel.Changed();
+                         }
+                     });
     QObject::connect(optionsPage, &OptionsPage::ProfileChosen, &window,
                      [&window](const std::string& profileId)
                      {
@@ -262,18 +431,19 @@ int main(int argc, char* argv[])
                          quarantineButton->ShowCount(counted(static_cast<std::size_t>(quarantineModel.rowCount({}))));
                      });
 
-    const auto carryTheSummaryOf = [&window](QWidget* page)
+    const auto carryTheSummaryOf = [&window](QWidget* pg)
     {
-        return [&window, page](const QString& summary)
+        return [&window, pg](const QString& summary)
         {
-            window.ShowSummary(page, summary);
+            window.ShowSummary(pg, summary);
         };
     };
-    const auto carryTheAsideOf = [&window](QWidget* page)
+
+    const auto carryTheAsideOf = [&window](QWidget* pg)
     {
-        return [&window, page](const QString& aside)
+        return [&window, pg](const QString& aside)
         {
-            window.ShowAside(page, aside);
+            window.ShowAside(pg, aside);
         };
     };
     QObject::connect(page, &AddonTreePage::SummaryChanged, &window, carryTheSummaryOf(page));
@@ -417,7 +587,13 @@ int main(int argc, char* argv[])
                          }
 
                          once = true;
+                         OfferToDropTheOverridesThatPointNowhere(session, &window);
                          OfferWhatALostImportLeftBehind(importViewModel, &window);
+
+                         if (setupJustRan)
+                         {
+                             OfferWhatTheOldProgramKept(legacyViewModel, &window);
+                         }
                      });
 
     treeViewModel.ShowActiveProfile();

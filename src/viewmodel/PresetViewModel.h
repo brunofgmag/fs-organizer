@@ -26,6 +26,7 @@ struct PresetPreview
     std::size_t alreadyInPlace = 0;
     std::size_t unresolved = 0;
     std::size_t leftAlone = 0;
+    std::size_t notNamedByThePreset = 0;
 };
 
 class PresetViewModel final : public QObject

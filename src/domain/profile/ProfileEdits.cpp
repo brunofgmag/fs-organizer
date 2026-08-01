@@ -20,6 +20,21 @@ void UnregisterLibrary(SimulatorProfile& profile, const LibraryId& libraryId)
                   });
 }
 
+bool RemoveProfile(std::vector<SimulatorProfile>& profiles, const std::string& profileId)
+{
+    if (profiles.size() <= 1)
+    {
+        return false;
+    }
+
+    return std::erase_if(profiles,
+                         [&profileId](const SimulatorProfile& profile)
+                         {
+                             return profile.id == profileId;
+                         })
+        > 0;
+}
+
 void RepointDestination(SimulatorProfile& profile, const std::filesystem::path& from, const std::filesystem::path& to)
 {
     const std::string moved = ComparablePath(from);

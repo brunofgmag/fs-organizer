@@ -205,6 +205,7 @@ void PresetViewModelTest::ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked(
     QCOMPARE(preview.alreadyInPlace, std::size_t{0});
     QCOMPARE(preview.unresolved, std::size_t{1});
     QCOMPARE(preview.leftAlone, std::size_t{1});
+    QCOMPARE(preview.notNamedByThePreset, std::size_t{1});
 }
 
 void PresetViewModelTest::SettingARowToDisableIsStoredOnThePreset()
@@ -243,7 +244,7 @@ void PresetViewModelTest::ApplyingRefreshesTheSessionAndReportsTheUnresolved()
 
 void PresetViewModelTest::ALibraryIsNamedByItsLabelAndNotByItsIdentifier()
 {
-    Fixture f;
+    const Fixture f;
 
     QCOMPARE(f.viewModel.LibraryLabel(kLibraryId), QString{"MSFS 2024"});
     QCOMPARE(f.viewModel.LibraryLabel("library-que-o-perfil-perdeu"), QString{"library-que-o-perfil-perdeu"});

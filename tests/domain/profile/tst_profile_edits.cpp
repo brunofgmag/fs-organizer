@@ -8,6 +8,9 @@ class ProfileEditsTest : public QObject
     Q_OBJECT
 
 private slots:
+    static void AProfileIsRemovedFromTheListByItsIdentifier();
+    static void TheLastProfileIsNeverRemoved();
+    static void AProfileThatIsNotThereRemovesNothing();
     static void UnregisteringALibraryDropsItAndTheOverridesThatNamedIt();
     static void UnregisteringALibraryLeavesTheOverridesOfTheOthersAlone();
     static void UnregisteringALibraryThatIsNotThereChangesNothing();
@@ -111,6 +114,36 @@ void ProfileEditsTest::RepointingMatchesTheOldPathWithoutCaseOrSeparatorDifferen
 
     QCOMPARE(profile.destinations[1], std::filesystem::path(kMoved));
     QCOMPARE(profile.destinationOverrides[0].destination, std::filesystem::path(kMoved));
+}
+
+void ProfileEditsTest::AProfileIsRemovedFromTheListByItsIdentifier()
+{
+    std::vector<SimulatorProfile> profiles(2);
+    profiles[0].id = "msfs2024";
+    profiles[1].id = "msfs2020";
+
+    QVERIFY(RemoveProfile(profiles, "msfs2024"));
+    QCOMPARE(profiles.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(profiles.front().id), QStringLiteral("msfs2020"));
+}
+
+void ProfileEditsTest::TheLastProfileIsNeverRemoved()
+{
+    std::vector<SimulatorProfile> profiles(1);
+    profiles[0].id = "msfs2024";
+
+    QVERIFY(!RemoveProfile(profiles, "msfs2024"));
+    QCOMPARE(profiles.size(), std::size_t{1});
+}
+
+void ProfileEditsTest::AProfileThatIsNotThereRemovesNothing()
+{
+    std::vector<SimulatorProfile> profiles(2);
+    profiles[0].id = "msfs2024";
+    profiles[1].id = "msfs2020";
+
+    QVERIFY(!RemoveProfile(profiles, "msfs2019"));
+    QCOMPARE(profiles.size(), std::size_t{2});
 }
 
 QTEST_APPLESS_MAIN(ProfileEditsTest)

@@ -102,13 +102,21 @@ namespace
 
     QString CountsOf(const PresetPreview& preview)
     {
-        return QObject::tr("Liga %1, desliga %2. %3 já estão como o preset pede, %4 não foram encontrados, "
-                           "e %5 entradas do destino este preset não toca.")
-            .arg(preview.toEnable)
-            .arg(preview.toDisable)
-            .arg(preview.alreadyInPlace)
-            .arg(preview.unresolved)
-            .arg(preview.leftAlone);
+        QString counted = QObject::tr("Liga %1, desliga %2. %3 já estão como o preset pede, %4 não foram encontrados, "
+                                      "e %5 entradas do destino este preset não toca.")
+                              .arg(preview.toEnable)
+                              .arg(preview.toDisable)
+                              .arg(preview.alreadyInPlace)
+                              .arg(preview.unresolved)
+                              .arg(preview.leftAlone);
+
+        if (preview.notNamedByThePreset > 0)
+        {
+            counted += QObject::tr(" Dos que ele desliga, %1 entraram na biblioteca depois de o preset ser salvo.")
+                           .arg(preview.notNamedByThePreset);
+        }
+
+        return counted;
     }
 }
 
@@ -309,7 +317,7 @@ QTableWidget* PresetsPage::CreateNameTable()
     return table;
 }
 
-void PresetsPage::ShowOnlyTheNamesThatMatch()
+void PresetsPage::ShowOnlyTheNamesThatMatch() const
 {
     const QString wanted = filter_->text().trimmed();
     int firstStanding = -1;

@@ -28,6 +28,11 @@ bool PresetService::Create(const SimulatorProfile& profile,
     return presets_.Save(profile.id, preset);
 }
 
+bool PresetService::Store(const std::string& profileId, const Preset& preset) const
+{
+    return presets_.Save(profileId, preset);
+}
+
 bool PresetService::Update(const SimulatorProfile& profile,
                            const ProfileSnapshot& snapshot,
                            const std::string& name) const

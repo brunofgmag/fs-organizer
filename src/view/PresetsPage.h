@@ -38,7 +38,7 @@ private:
 
     void ReloadNames();
 
-    void ShowOnlyTheNamesThatMatch();
+    void ShowOnlyTheNamesThatMatch() const;
 
     void ShowSelected();
 

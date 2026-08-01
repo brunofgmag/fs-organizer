@@ -3,6 +3,7 @@
 
 #include <QtTest/QtTest>
 
+#include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
 #include "domain/model/DestinationEntry.h"
 #include "domain/model/FileResult.h"
@@ -14,6 +15,18 @@
 
 namespace QTest
 {
+    template<>
+    inline char* toString(const ProposedState& t)
+    {
+        switch (t)
+        {
+        case ProposedState::New: return qstrdup("New");
+        case ProposedState::AlreadyPresent: return qstrdup("AlreadyPresent");
+        }
+
+        return qstrdup("ProposedState(?)");
+    }
+
     template<>
     inline char* toString(const PresetAction& t)
     {

@@ -11,6 +11,7 @@
 
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/model/UpdateMode.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/LibraryId.h"
 #include "domain/model/LinkType.h"
@@ -39,6 +40,7 @@ struct LibraryLine
     std::size_t categories = 0;
     std::size_t addons = 0;
     std::size_t enabled = 0;
+    bool counted = false;
 };
 
 class OptionsViewModel final : public QObject
@@ -54,7 +56,17 @@ public:
 
     [[nodiscard]] std::vector<ProfileLine> Profiles() const;
 
+    void ShowProfile(const std::string& profileId);
+
+    [[nodiscard]] SimulatorProfile ProfileShown() const;
+
+    [[nodiscard]] bool ShowsTheProfileInUse() const;
+
+    [[nodiscard]] bool RemoveProfile(const std::string& profileId, bool disablingWhatItLeftBehind);
+
     [[nodiscard]] std::size_t AddonsInTheActiveProfile() const;
+
+    [[nodiscard]] std::size_t EnabledInTheProfileInUse() const;
 
     [[nodiscard]] std::vector<DestinationLine> Destinations() const;
 
@@ -65,6 +77,8 @@ public:
     [[nodiscard]] bool VerifiesWithHash() const;
 
     void ChooseTypeOfLink(LinkType linkType);
+
+    void ChooseUpdateMode(UpdateMode mode);
 
     void RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const;
 
@@ -87,6 +101,7 @@ private:
     Session& session_;
     ProfileService& service_;
     SettingsRepository& settings_;
+    std::string shown_;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_OPTIONS_VIEW_MODEL_H

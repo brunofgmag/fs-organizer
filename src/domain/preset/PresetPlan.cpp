@@ -124,6 +124,7 @@ PresetPlan PlanPresetApplication(const Preset& preset,
             }
 
             plan.toDisable.push_back(addon);
+            plan.notNamedByThePreset.push_back(addon);
         }
     }
 

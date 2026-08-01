@@ -30,6 +30,8 @@ public:
     [[nodiscard]] bool
     Create(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const std::string& name) const;
 
+    [[nodiscard]] bool Store(const std::string& profileId, const Preset& preset) const;
+
     [[nodiscard]] bool
     Update(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const std::string& name) const;
 
