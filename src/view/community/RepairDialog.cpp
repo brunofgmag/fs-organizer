@@ -84,7 +84,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
         action->addItem(tr("Remover o nó morto"));
         if (candidate.repointTo.has_value())
         {
-            action->addItem(tr("Re-apontar para a biblioteca"));
+            action->addItem(tr("Reapontar para a biblioteca"));
         }
         action->setEnabled(action->count() > 1);
         LetTheWheelScrollPastUnlessTheWidgetHasFocus(action);

@@ -33,7 +33,7 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     DressTheHeaderOf(operations_->header());
 
     auto* search = new QLineEdit(this);
-    search->setPlaceholderText(tr("Buscar addon, caminho ou operação..."));
+    search->setPlaceholderText(tr("Buscar addon, caminho ou operação…"));
     search->setClearButtonEnabled(true);
     search->setMinimumWidth(220);
     search->setMaximumWidth(280);

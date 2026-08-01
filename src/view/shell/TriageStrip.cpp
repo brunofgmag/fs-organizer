@@ -15,20 +15,20 @@ TriageStrip::TriageStrip(QWidget* parent) : QWidget(parent)
     row->setContentsMargins(kPageGutter, 8, kPageGutter, 8);
     row->setSpacing(10);
 
-    broken_ = AddItem("filled", tr("Reparar quebrados..."), row);
+    broken_ = AddItem("filled", tr("Reparar quebrados…"), row);
     broken_.action->setProperty("role", "primary");
 
     beforeConflicts_ = AddSeparator(row);
 
-    conflicts_ = AddItem("outlined", tr("Resolver conflito(s)..."), row);
+    conflicts_ = AddItem("outlined", tr("Resolver conflito(s)…"), row);
 
     beforeDuplicated_ = AddSeparator(row);
 
-    duplicated_ = AddItem("outlined", tr("Ver duplicadas..."), row);
+    duplicated_ = AddItem("outlined", tr("Ver duplicadas…"), row);
 
     row->addStretch();
 
-    unmanaged_ = AddItem(nullptr, tr("Importar selecionados..."), row);
+    unmanaged_ = AddItem(nullptr, tr("Importar selecionados…"), row);
     unmanaged_.label->setObjectName(QStringLiteral("TriageQuiet"));
 
     connect(broken_.action, &QPushButton::clicked, this, &TriageStrip::RepairRequested);

@@ -350,7 +350,7 @@ void MainWindow::ShowProfiles(const AppSettings& settings)
     }
 
     profiles_->insertSeparator(profiles_->count());
-    profiles_->addItem(tr("Adicionar perfil..."), QVariant());
+    profiles_->addItem(tr("Adicionar perfil…"), QVariant());
 
     const int active = profiles_->findData(QString::fromStdString(settings_.activeProfileId));
     profiles_->setCurrentIndex(active >= 0 ? active : 0);

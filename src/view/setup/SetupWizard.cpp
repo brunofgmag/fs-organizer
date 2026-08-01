@@ -25,14 +25,14 @@ namespace
             names.append(AsText(destination.filename()));
         }
 
-        return QStringLiteral("%1 — %2 (%3)")
+        return QStringLiteral("%1 · %2 (%3)")
             .arg(NameOf(candidate.variant), AsText(candidate.packagesPath), names.join(", "));
     }
 }
 
 SetupWizard::SetupWizard(SetupViewModel& viewModel, QWidget* parent) : QWizard(parent), viewModel_(viewModel)
 {
-    setWindowTitle(tr("FS Organizer — primeira configuração"));
+    setWindowTitle(tr("FS Organizer · primeira configuração"));
     setWizardStyle(ModernStyle);
     setOption(NoBackButtonOnStartPage, true);
     resize(720, 460);
@@ -71,7 +71,7 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
     variant_->addItem(NameOf(SimulatorVariant::MSFS2020), static_cast<int>(SimulatorVariant::MSFS2020));
     LetTheWheelScrollPastUnlessTheWidgetHasFocus(variant_);
 
-    auto* browse = new QPushButton(tr("Apontar uma pasta manualmente..."), page);
+    auto* browse = new QPushButton(tr("Apontar uma pasta manualmente…"), page);
     connect(browse, &QPushButton::clicked, this, &SetupWizard::BrowseForDestination);
 
     auto* manual = new QHBoxLayout;
@@ -97,7 +97,7 @@ QWizardPage* SetupWizard::CreateLibraryPage()
 
     libraries_ = new QListWidget(page);
 
-    auto* add = new QPushButton(tr("Adicionar biblioteca..."), page);
+    auto* add = new QPushButton(tr("Adicionar biblioteca…"), page);
     connect(add, &QPushButton::clicked, this, &SetupWizard::BrowseForLibrary);
 
     auto* layout = new QVBoxLayout(page);
@@ -194,7 +194,7 @@ void SetupWizard::RefreshLibraries() const
         const QString categories = tr("%n categoria(s)", nullptr, static_cast<int>(registered.categories));
         const QString addons = tr("%n addon(s)", nullptr, static_cast<int>(registered.addons));
 
-        libraries_->addItem(QStringLiteral("%1 — %2 · %3, %4")
+        libraries_->addItem(QStringLiteral("%1 · %2 · %3, %4")
                                 .arg(QString::fromStdString(registered.library.label), AsText(registered.library.path),
                                      categories, addons));
     }

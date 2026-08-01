@@ -36,7 +36,7 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     for (const Library& library : profile.libraries)
     {
         library_->addItem(library.label.empty() ? AsText(library.path)
-                                                : QStringLiteral("%1 — %2").arg(QString::fromStdString(library.label),
+                                                : QStringLiteral("%1 · %2").arg(QString::fromStdString(library.label),
                                                                                 AsText(library.path)),
                           AsText(library.path));
     }

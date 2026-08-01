@@ -51,7 +51,7 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::EnableAddon: return tr("Habilitar addon");
     case OperationKind::DisableAddon: return tr("Desabilitar addon");
     case OperationKind::RemoveBrokenLink: return tr("Remover link quebrado");
-    case OperationKind::RepointLink: return tr("Re-apontar link");
+    case OperationKind::RepointLink: return tr("Reapontar link");
     case OperationKind::ImportCopyToStaging: return tr("Copiar para a área de staging");
     case OperationKind::ImportVerifyStaging: return tr("Verificar a cópia");
     case OperationKind::ImportMoveIntoPlace: return tr("Pôr a cópia no lugar");

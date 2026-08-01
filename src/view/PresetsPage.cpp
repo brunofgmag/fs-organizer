@@ -117,10 +117,10 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
 {
     names_ = CreateNameTable();
 
-    auto* create = new QPushButton(tr("Novo a partir dos habilitados"), this);
+    auto* create = new QPushButton(tr("Novo a partir dos habilitados…"), this);
     create->setProperty("role", "primary");
     update_ = new QPushButton(tr("Atualizar com os habilitados"), this);
-    rename_ = new QPushButton(tr("Renomear"), this);
+    rename_ = new QPushButton(tr("Renomear…"), this);
     remove_ = new QPushButton(tr("Excluir"), this);
 
     auto* toolbar = new QWidget(this);
@@ -220,10 +220,10 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
 
     auto* nothing = new EmptyState(tr("Nenhum preset neste perfil ainda."),
                                    tr("Um preset guarda quais addons ficam ligados. Habilite o que você quer "
-                                      "voar e guarde essa combinação com um nome — aplicar depois é um lote só, "
+                                      "voar e guarde essa combinação com um nome. Aplicar depois é um lote só, "
                                       "com desfazer inteiro."),
                                    this);
-    connect(nothing->OfferTheOnlyAction(tr("Novo a partir dos habilitados")), &QPushButton::clicked, this,
+    connect(nothing->OfferTheOnlyAction(tr("Novo a partir dos habilitados…")), &QPushButton::clicked, this,
             &PresetsPage::CreateFromWhatIsEnabled);
     pages_->addWidget(nothing);
 
@@ -478,7 +478,7 @@ void PresetsPage::RefreshPreview() const
     const PresetPreview preview = viewModel_.Preview(*selected_, Mode());
 
     preview_->setText(CountsOf(preview));
-    apply_->setText(tr("Aplicar — liga %1, desliga %2").arg(preview.toEnable).arg(preview.toDisable));
+    apply_->setText(tr("Aplicar: liga %1, desliga %2").arg(preview.toEnable).arg(preview.toDisable));
 }
 
 void PresetsPage::CreateFromWhatIsEnabled()

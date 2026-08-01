@@ -217,7 +217,7 @@ void CommunityPageTest::AMixedSelectionOffersBothActionsEachWithItsOwnCount()
     QVERIFY(importChosen->isEnabled());
 
     QVERIFY(importChosen->text().contains(QStringLiteral("2")));
-    QCOMPARE(resolveChosen->text(), QStringLiteral("Resolver o conflito..."));
+    QCOMPARE(resolveChosen->text(), QStringLiteral("Resolver o conflito…"));
 }
 
 void CommunityPageTest::OnlyTheActionThatUnblocksCarriesTheAccent()

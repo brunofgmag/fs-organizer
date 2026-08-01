@@ -211,7 +211,7 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     QVBoxLayout* underTheProfiles = nullptr;
     QWidget* profileGroup = GroupWith(tr("Perfis"), profiles_, underTheProfiles, pane);
 
-    auto* addProfile = new QPushButton(tr("Adicionar perfil..."), pane);
+    auto* addProfile = new QPushButton(tr("Adicionar perfil…"), pane);
     connect(addProfile, &QPushButton::clicked, this, &OptionsPage::AddProfileRequested);
     underTheProfiles->addWidget(ButtonRow(addProfile, profileGroup));
     layout->addWidget(profileGroup);
@@ -222,7 +222,7 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     QVBoxLayout* underTheLibraries = nullptr;
     QWidget* libraryGroup = GroupWith(tr("Bibliotecas do perfil ativo"), libraries_, underTheLibraries, pane);
 
-    auto* addLibrary = new QPushButton(tr("Adicionar biblioteca..."), pane);
+    auto* addLibrary = new QPushButton(tr("Adicionar biblioteca…"), pane);
     connect(addLibrary, &QPushButton::clicked, this, &OptionsPage::AddLibrary);
     underTheLibraries->addWidget(ButtonRow(addLibrary, libraryGroup));
     underTheLibraries->addWidget(
@@ -448,7 +448,7 @@ void OptionsPage::ReloadDestinations()
         layout->addWidget(new QLabel(AsText(destination.path.filename()), row));
         layout->addWidget(Detail(AsText(destination.path), row), 1);
 
-        auto* repoint = new QPushButton(tr("Trocar..."), row);
+        auto* repoint = new QPushButton(tr("Trocar…"), row);
         layout->addWidget(repoint);
 
         const std::filesystem::path path = destination.path;

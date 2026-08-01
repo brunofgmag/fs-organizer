@@ -132,7 +132,7 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
             {
                 if (batch_)
                 {
-                    ShowTheBatchFields(tr("medindo..."));
+                    ShowTheBatchFields(tr("medindo…"));
                 }
             });
     connect(&importViewModel_, &ImportViewModel::SizeMeasured, this,
@@ -245,11 +245,11 @@ QWidget* CommunityPage::CreatePanel()
 
     detail_ = new ModelRowDetail(panel_);
 
-    importOne_ = new QPushButton(tr("Importar esta pasta..."), panel_);
+    importOne_ = new QPushButton(tr("Importar esta pasta…"), panel_);
     importOne_->setObjectName(QStringLiteral("ImportChosen"));
     importOne_->setProperty("role", "primary");
 
-    resolveChosen_ = new QPushButton(tr("Resolver o conflito..."), panel_);
+    resolveChosen_ = new QPushButton(tr("Resolver o conflito…"), panel_);
     resolveChosen_->setObjectName(QStringLiteral("ResolveChosen"));
 
     openFolder_ = new QPushButton(tr("Abrir a pasta"), panel_);
@@ -310,7 +310,7 @@ void CommunityPage::ShowTheSelectedEntry()
     fields.append({tr("Classificação"), CommunityModel::ClassificationName(entry->classification)});
     fields.append({tr("Destino"), AsText(entry->path.parent_path().filename())});
     fields.append({tr("Caminho"), AsText(entry->path)});
-    fields.append({tr("É link?"), entry->target.empty() ? tr("não — pasta física") : AsText(entry->target)});
+    fields.append({tr("É link?"), entry->target.empty() ? tr("não, pasta física") : AsText(entry->target)});
 
     if (const CopyConflict* conflict = model_.ConflictAt(source); conflict != nullptr)
     {
@@ -364,7 +364,7 @@ void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
 
     const std::vector<std::filesystem::path> importable = ChosenForImport(*table_, *filter_, model_).folders;
 
-    ShowTheBatchFields(importable.empty() ? QString() : tr("medindo..."));
+    ShowTheBatchFields(importable.empty() ? QString() : tr("medindo…"));
 
     if (!importable.empty())
     {
@@ -391,12 +391,12 @@ void CommunityPage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
     const int blocked = chosen.conflicted;
 
     importOne_->setEnabled(importable > 0);
-    importOne_->setText(importable > 1 ? tr("Importar as %n pastas...", nullptr, importable)
-                                       : tr("Importar esta pasta..."));
+    importOne_->setText(importable > 1 ? tr("Importar as %n pastas…", nullptr, importable)
+                                       : tr("Importar esta pasta…"));
 
     resolveChosen_->setVisible(blocked > 0);
-    resolveChosen_->setText(blocked > 1 ? tr("Resolver os %n conflitos...", nullptr, blocked)
-                                        : tr("Resolver o conflito..."));
+    resolveChosen_->setText(blocked > 1 ? tr("Resolver os %n conflitos…", nullptr, blocked)
+                                        : tr("Resolver o conflito…"));
 
     Emphasise(*resolveChosen_, blocked > 0);
     Emphasise(*importOne_, blocked == 0);

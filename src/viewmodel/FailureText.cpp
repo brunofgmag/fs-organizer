@@ -99,7 +99,7 @@ namespace
 QString Describe(const LinkOperationResult& result)
 {
     QString line =
-        QStringLiteral("%1 — %2").arg(AsText(result.addonFolder.filename()), Explain(result.outcome.Failure()));
+        QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(result.outcome.Failure()));
 
     if (result.outcome.Conflict().has_value())
     {
@@ -119,13 +119,13 @@ QString Describe(const LinkOperationResult& result)
 
 QString Describe(const ImportOperationResult& result)
 {
-    return QStringLiteral("%1 — %2%3")
+    return QStringLiteral("%1: %2%3")
         .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
 }
 
 QString Describe(const FileOperationResult& result)
 {
-    return QStringLiteral("%1 — %2%3")
+    return QStringLiteral("%1: %2%3")
         .arg(AsText(result.path.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
 }
 
@@ -133,11 +133,11 @@ QString NameOfImportStep(const OperationKind kind)
 {
     switch (kind)
     {
-    case OperationKind::ImportCopyToStaging: return QObject::tr("Copiando para a biblioteca...");
-    case OperationKind::ImportVerifyStaging: return QObject::tr("Conferindo se a cópia bate com a origem...");
-    case OperationKind::ImportMoveIntoPlace: return QObject::tr("Pondo a cópia no lugar definitivo...");
-    case OperationKind::ImportRemoveSource: return QObject::tr("Removendo a pasta de origem...");
-    case OperationKind::EnableAddon: return QObject::tr("Criando o link no destino...");
+    case OperationKind::ImportCopyToStaging: return QObject::tr("Copiando para a biblioteca…");
+    case OperationKind::ImportVerifyStaging: return QObject::tr("Conferindo se a cópia bate com a origem…");
+    case OperationKind::ImportMoveIntoPlace: return QObject::tr("Pondo a cópia no lugar definitivo…");
+    case OperationKind::ImportRemoveSource: return QObject::tr("Removendo a pasta de origem…");
+    case OperationKind::EnableAddon: return QObject::tr("Criando o link no destino…");
     default: return {};
     }
 }

@@ -45,7 +45,7 @@ RestoreDialog::RestoreDialog(const std::vector<QuarantinedItem>& items, QWidget*
         name->setTextInteractionFlags(Qt::TextSelectableByMouse);
         grid->addWidget(name, row, 0);
 
-        auto* target = new QLabel(tr("volta para  %1").arg(AsText(item.origin.parent_path())), listed);
+        auto* target = new QLabel(tr("volta para %1").arg(AsText(item.origin.parent_path())), listed);
         target->setObjectName(QStringLiteral("PanelPromise"));
         target->setWordWrap(true);
         target->setTextInteractionFlags(Qt::TextSelectableByMouse);
