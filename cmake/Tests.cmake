@@ -334,8 +334,8 @@ endif ()
 
 fsorg_add_qt_test(fsorg-update-view-model-tests update-view-model
         tests/viewmodel/tst_update_view_model.cpp
-        tests/doubles/FakeUpdateService.h
-        src/viewmodel/UpdateViewModel.cpp)
+        tests/doubles/FakeUpdateService.h)
+target_link_libraries(fsorg-update-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/viewmodel/tst_setup_view_model.cpp
@@ -345,52 +345,43 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/doubles/FakeSettingsRepository.h
         tests/doubles/FakeSimulatorLocator.h
         tests/doubles/InMemoryFileSystem.h
-        tests/support/PathPrinting.h
-        src/viewmodel/SetupViewModel.cpp)
-target_link_libraries(fsorg-setup-view-model-tests PRIVATE fsorg-application)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-setup-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         tests/viewmodel/tst_addon_tree_model.cpp
-        tests/support/PathPrinting.h
-        src/viewmodel/AddonTreeModel.cpp)
-target_link_libraries(fsorg-addon-tree-model-tests PRIVATE fsorg-domain)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-addon-tree-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-addon-tree-filter-model-tests addon-tree-filter-model
         tests/viewmodel/tst_addon_tree_filter_model.cpp
-        tests/support/PathPrinting.h
-        src/viewmodel/AddonTreeFilterModel.cpp
-        src/viewmodel/AddonTreeModel.cpp)
-target_link_libraries(fsorg-addon-tree-filter-model-tests PRIVATE fsorg-domain)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-addon-tree-filter-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-category-suggestion-model-tests category-suggestion-model
         tests/viewmodel/tst_category_suggestion_model.cpp
-        tests/support/PathPrinting.h
-        src/viewmodel/CategorySuggestionModel.cpp
-        src/viewmodel/FailureText.cpp)
-target_link_libraries(fsorg-category-suggestion-model-tests PRIVATE fsorg-domain)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-category-suggestion-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-community-model-tests community-model
         tests/viewmodel/tst_community_model.cpp
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/viewmodel/CommunityModel.cpp)
-target_link_libraries(fsorg-community-model-tests PRIVATE fsorg-domain)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-community-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-journal-model-tests journal-model
         tests/viewmodel/tst_journal_model.cpp
-        tests/support/PathPrinting.h
-        src/viewmodel/FailureText.cpp
-        src/viewmodel/JournalModel.cpp)
-target_link_libraries(fsorg-journal-model-tests PRIVATE fsorg-domain)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-journal-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-failure-text-tests failure-text
-        tests/viewmodel/tst_failure_text.cpp
-        src/viewmodel/FailureText.cpp)
+        tests/viewmodel/tst_failure_text.cpp)
+target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-quarantine-model-tests quarantine-model
         tests/viewmodel/tst_quarantine_model.cpp
-        tests/support/PathPrinting.h
-        src/viewmodel/QuarantineModel.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-quarantine-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/viewmodel/tst_addon_tree_view_model.cpp
@@ -406,12 +397,8 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/viewmodel/AddonTreeModel.cpp
-        src/viewmodel/AddonTreeViewModel.cpp
-        src/viewmodel/FailureText.cpp
-        src/viewmodel/SessionNotifier.cpp)
-target_link_libraries(fsorg-addon-tree-view-model-tests PRIVATE fsorg-application)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-addon-tree-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
         tests/viewmodel/tst_options_view_model.cpp
@@ -427,11 +414,8 @@ fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/viewmodel/OptionsViewModel.cpp
-        src/viewmodel/SessionNotifier.cpp
-        src/viewmodel/SimulatorText.cpp)
-target_link_libraries(fsorg-options-view-model-tests PRIVATE fsorg-application)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-options-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-preset-view-model-tests preset-view-model
         tests/viewmodel/tst_preset_view_model.cpp
@@ -448,10 +432,8 @@ fsorg_add_qt_test(fsorg-preset-view-model-tests preset-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/viewmodel/PresetViewModel.cpp
-        src/viewmodel/SessionNotifier.cpp)
-target_link_libraries(fsorg-preset-view-model-tests PRIVATE fsorg-application)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-preset-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/viewmodel/tst_community_view_model.cpp
@@ -466,11 +448,8 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/viewmodel/CommunityModel.cpp
-        src/viewmodel/CommunityViewModel.cpp
-        src/viewmodel/SessionNotifier.cpp)
-target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-application)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/viewmodel/tst_quarantine_view_model.cpp
@@ -486,11 +465,8 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/viewmodel/QuarantineModel.cpp
-        src/viewmodel/QuarantineViewModel.cpp
-        src/viewmodel/SessionNotifier.cpp)
-target_link_libraries(fsorg-quarantine-view-model-tests PRIVATE fsorg-application)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-quarantine-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
         tests/viewmodel/tst_import_view_model.cpp
@@ -506,11 +482,8 @@ fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/viewmodel/FailureText.cpp
-        src/viewmodel/ImportViewModel.cpp
-        src/viewmodel/SessionNotifier.cpp)
-target_link_libraries(fsorg-import-view-model-tests PRIVATE fsorg-application)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-import-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp
@@ -585,16 +558,8 @@ if (WIN32)
         fsorg_add_qt_test(fsorg-main-window-tests main-window
                 tests/view/tst_main_window.cpp
                 assets/resources.qrc
-                src/view/shell/MainWindow.cpp
-                src/viewmodel/SimulatorText.cpp
-                src/view/WheelGuard.cpp
-                src/view/shell/TriageStrip.cpp
-                src/view/theme/ModernistPaint.cpp
-                src/view/theme/ModernistStyle.cpp
-                src/view/theme/ModernistTheme.cpp
-                src/view/theme/ModernistTones.cpp
-                src/view/theme/PageTab.cpp
                 src/view/platform/WindowsTitleBar.cpp)
+        target_link_libraries(fsorg-main-window-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-main-window-tests main-window)
 
 
@@ -615,21 +580,8 @@ if (WIN32)
                 tests/doubles/InMemoryFileSystem.h
                 tests/doubles/InlineBackgroundRunner.h
                 tests/support/EnumPrinting.h
-                tests/support/PathPrinting.h
-                src/view/PresetsPage.cpp
-                src/view/delegates/FittedText.cpp
-                src/view/delegates/RowDelegate.cpp
-                src/view/TableColumns.cpp
-                src/view/panels/ContextPanel.cpp
-                src/view/panels/EmptyState.cpp
-                src/view/panels/PanelRail.cpp
-                src/view/theme/ModernistPaint.cpp
-                src/view/theme/ModernistStyle.cpp
-                src/view/theme/ModernistTheme.cpp
-                src/view/theme/ModernistTones.cpp
-                src/viewmodel/PresetViewModel.cpp
-                src/viewmodel/SessionNotifier.cpp)
-        target_link_libraries(fsorg-presets-page-tests PRIVATE fsorg-application)
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-presets-page-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
 
 
@@ -647,17 +599,8 @@ if (WIN32)
                 tests/doubles/FakeSettingsRepository.h
                 tests/doubles/InMemoryFileSystem.h
                 tests/doubles/InlineBackgroundRunner.h
-                src/view/options/OptionsPage.cpp
-                src/view/theme/ModernistPaint.cpp
-                src/view/theme/ModernistStyle.cpp
-                src/view/theme/ModernistTheme.cpp
-                src/view/theme/ModernistTones.cpp
-                tests/doubles/FakeUpdateService.h
-                src/viewmodel/OptionsViewModel.cpp
-                src/viewmodel/SessionNotifier.cpp
-                src/viewmodel/SimulatorText.cpp
-                src/viewmodel/UpdateViewModel.cpp)
-        target_link_libraries(fsorg-options-page-tests PRIVATE fsorg-application)
+                tests/doubles/FakeUpdateService.h)
+        target_link_libraries(fsorg-options-page-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-options-page-tests options-page)
 
         fsorg_add_qt_test(fsorg-legacy-import-dialog-tests legacy-import-dialog
@@ -675,10 +618,8 @@ if (WIN32)
                 tests/doubles/FakeSettingsRepository.h
                 tests/doubles/InMemoryFileSystem.h
                 tests/doubles/InlineBackgroundRunner.h
-                tests/doubles/RecordingSessionObserver.h
-                src/view/legacy/LegacyImportDialog.cpp
-                src/viewmodel/LegacyImportViewModel.cpp)
-        target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-application)
+                tests/doubles/RecordingSessionObserver.h)
+        target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
 
         fsorg_add_qt_test(fsorg-community-page-tests community-page
@@ -696,26 +637,8 @@ if (WIN32)
                 tests/doubles/InlineBackgroundRunner.h
                 tests/support/EnumPrinting.h
                 tests/support/PathPrinting.h
-                assets/resources.qrc
-                src/view/community/CommunityPage.cpp
-                src/view/community/ConflictDialog.cpp
-                src/view/community/ImportDialog.cpp
-                src/view/community/RepairDialog.cpp
-                src/view/delegates/FittedText.cpp
-                src/view/delegates/RowDelegate.cpp
-                src/view/TableColumns.cpp
-                src/view/WheelGuard.cpp
-                src/view/panels/ContextPanel.cpp
-                src/view/panels/ModelRowDetail.cpp
-                src/view/panels/PanelRail.cpp
-                src/view/theme/ModernistPaint.cpp
-                src/view/theme/ModernistTones.cpp
-                src/viewmodel/CommunityModel.cpp
-                src/viewmodel/CommunityViewModel.cpp
-                src/viewmodel/FailureText.cpp
-                src/viewmodel/ImportViewModel.cpp
-                src/viewmodel/SessionNotifier.cpp)
-        target_link_libraries(fsorg-community-page-tests PRIVATE fsorg-application)
+                assets/resources.qrc)
+        target_link_libraries(fsorg-community-page-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-community-page-tests community-page)
 
     endif ()
@@ -730,49 +653,30 @@ if (WIN32)
 endif ()
 
 fsorg_add_qt_test(fsorg-table-columns-tests table-columns
-        tests/view/tst_table_columns.cpp
-        src/view/TableColumns.cpp)
+        tests/view/tst_table_columns.cpp)
+target_link_libraries(fsorg-table-columns-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-table-columns-tests table-columns)
 
 fsorg_add_qt_test(fsorg-wheel-guard-tests wheel-guard
-        tests/view/tst_wheel_guard.cpp
-        src/view/community/RepairDialog.cpp
-        src/view/setup/StagingLeftoverDialog.cpp
-        src/view/WheelGuard.cpp)
+        tests/view/tst_wheel_guard.cpp)
+target_link_libraries(fsorg-wheel-guard-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
 
 fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         tests/view/panels/tst_context_panel.cpp
-        assets/resources.qrc
-        src/view/panels/ContextPanel.cpp
-        src/view/panels/ModelRowDetail.cpp
-        src/view/panels/PanelRail.cpp
-        src/view/shell/TriageStrip.cpp
-        src/view/theme/ModernistPaint.cpp
-        src/view/theme/ModernistStyle.cpp
-        src/view/theme/ModernistTheme.cpp
-        src/view/theme/ModernistTones.cpp)
+        assets/resources.qrc)
+target_link_libraries(fsorg-context-panel-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
 
 fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         tests/view/delegates/tst_row_delegate.cpp
-        assets/resources.qrc
-        src/view/delegates/FittedText.cpp
-        src/view/delegates/RowDelegate.cpp
-        src/view/theme/ModernistPaint.cpp
-        src/view/theme/ModernistStyle.cpp
-        src/view/theme/ModernistTheme.cpp
-        src/view/theme/ModernistTones.cpp)
+        assets/resources.qrc)
+target_link_libraries(fsorg-row-delegate-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
 
 fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
         tests/view/theme/tst_modernist_theme.cpp
-        assets/resources.qrc
-        src/view/delegates/FittedText.cpp
-        src/view/delegates/RowDelegate.cpp
-        src/view/theme/ModernistPaint.cpp
-        src/view/theme/ModernistStyle.cpp
-        src/view/theme/ModernistTheme.cpp
-        src/view/theme/ModernistTones.cpp)
+        assets/resources.qrc)
+target_link_libraries(fsorg-modernist-theme-tests PRIVATE fsorg-view)
 
 configure_fsorg_gui_test(fsorg-modernist-theme-tests modernist-theme)

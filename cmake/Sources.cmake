@@ -113,8 +113,6 @@ set(VIEW_SOURCES
 set(APP_SOURCES
         src/main.cpp
         ${INFRASTRUCTURE_SOURCES}
-        ${VIEWMODEL_SOURCES}
-        ${VIEW_SOURCES}
 )
 
 list(APPEND APP_SOURCES
