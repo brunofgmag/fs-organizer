@@ -7,6 +7,8 @@
 
 [[nodiscard]] std::filesystem::path LocalAppDataFolder();
 
+[[nodiscard]] std::filesystem::path ProgramDataFolder();
+
 [[nodiscard]] std::filesystem::path SettingsFilePath();
 
 [[nodiscard]] std::filesystem::path JournalFilePath();

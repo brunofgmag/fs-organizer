@@ -44,6 +44,11 @@ std::filesystem::path LocalAppDataFolder()
     return KnownFolder(FOLDERID_LocalAppData);
 }
 
+std::filesystem::path ProgramDataFolder()
+{
+    return KnownFolder(FOLDERID_ProgramData);
+}
+
 std::filesystem::path SettingsFilePath()
 {
     return LocalAppDataFolder() / kApplicationFolderName / kSettingsFileName;
