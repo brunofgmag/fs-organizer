@@ -1,3 +1,10 @@
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/branding/logo-dark.svg">
+    <img alt="FS Organizer" src="assets/branding/logo-light.svg" width="420">
+  </picture>
+</div>
+
 # FS Organizer
 
 An addon manager for Microsoft Flight Simulator on Windows. Your addons live in a
@@ -24,9 +31,17 @@ junctions, the Community screen classifies and repairs entries, importing moves
 physical folders into the library, and presets capture and apply named sets. The
 interface has its own visual identity, following the Windows light or dark theme.
 An options screen behind the header gear covers profiles, destinations and
-libraries without reopening the first-run wizard, and chooses between junction
-and directory symlink. What remains before a first release is the legacy
-importer, the updater and the distributable package.
+libraries without reopening the first-run wizard, and chooses between directory
+junction and symbolic link. A configuration saved by MSFS Addons Linker can be
+read and proposed as libraries and categories for you to confirm, and its
+`.preset` files come across with it. The app checks GitHub Releases in three
+modes and applies an update on the way out, only a single copy of it runs at a
+time, and `build.ps1` produces a verified package that runs without Qt
+installed.
+
+The interface speaks Brazilian Portuguese only. Turning its 609 phrases into
+English with a Portuguese catalogue is what stands between the current state and
+a first release.
 
 The specification, the architecture decisions and the development plan are kept
 outside this repository.
@@ -79,8 +94,55 @@ the hook in `.githooks/commit-msg` rejects anything else. The pre-commit hook
 builds and runs the tests before letting a code change through. Both install
 themselves the first time CMake configures the project.
 
-Code, commits and documentation are written in English. Only the user interface
-is translated, currently into English and Brazilian Portuguese.
+Code, commits and documentation are written in English. The user interface is
+the exception, and it currently exists in Brazilian Portuguese only.
+
+### Development tools
+
+Three programs under `tools/` build alongside the app and answer questions the
+test suite cannot. None of them ship, and none of them write to your install.
+
+`fsorg-probe` reads a real simulator setup and prints what the app would see
+from it: how many entries each destination holds, how each one is classified,
+and whether the simulator is running.
+
+```powershell
+cmake --build build/release --config Release --target fsorg-probe
+./build/release/Release/fsorg-probe.exe --library "D:\MSFS 2024"
+```
+
+`fsorg-shot` builds the real widgets against your real configuration and writes
+a PNG of every screen, so you can look at a change without driving the app by
+hand. It takes `--out` for the folder, `--theme` for `dark`, `light` or
+`system`, and `--size` as `WIDTHxHEIGHT`. Run it with `QT_SCALE_FACTOR=1.25` to
+match Windows scaling.
+
+```powershell
+cmake --build build/debug --target fsorg-shot
+./build/debug/Debug/fsorg-shot.exe --out shots --theme dark
+```
+
+`fsorg-timing` measures paint cost, with `--journal-scroll` and `--app-journal`
+for the two cases that got slow before. Nothing in the test suite guards paint
+cost, so this is the only guard there is, and it is run by hand.
+
+Their console output is still in Brazilian Portuguese.
+
+### Packaging
+
+`build.ps1` deploys the Qt runtime, prunes what the app does not load, copies the
+MSVC runtime beside the executable and then refuses the result if anything is
+missing or if anything pruned came back. The three scripts behind that are
+`tools/prune-deployment.ps1`, `tools/deploy-msvc-runtime.ps1` and
+`tools/verify-deployment.ps1`, and the last one runs on its own too:
+
+```powershell
+./tools/verify-deployment.ps1 -DeploymentDir build/release/bin -Configuration Release
+```
+
+A Release package is 21 files and about 27 MiB. `.github/workflows/deploy.yml`
+builds it on `main`, hashes it and publishes the zip with its `.sha256` to a
+GitHub Release.
 
 ## Licence
 
