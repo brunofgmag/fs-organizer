@@ -14,9 +14,12 @@ target_link_libraries(fsorg-application PUBLIC fsorg-domain)
 
 fsorg_add_layer(fsorg-infrastructure ${INFRASTRUCTURE_SOURCES})
 target_link_libraries(fsorg-infrastructure PUBLIC fsorg-application Qt6::Core)
+target_precompile_headers(fsorg-infrastructure PRIVATE <QtCore/QtCore>)
 
 fsorg_add_layer(fsorg-viewmodel ${VIEWMODEL_SOURCES})
 target_link_libraries(fsorg-viewmodel PUBLIC fsorg-application Qt6::Core)
+target_precompile_headers(fsorg-viewmodel PRIVATE <QtCore/QtCore>)
 
 fsorg_add_layer(fsorg-view ${VIEW_SOURCES})
 target_link_libraries(fsorg-view PUBLIC fsorg-viewmodel Qt6::Widgets)
+target_precompile_headers(fsorg-view PRIVATE <QtWidgets/QtWidgets>)

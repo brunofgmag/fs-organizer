@@ -1,6 +1,20 @@
+# One QtTest header parsed once, reused by every test target. The two flavours exist
+# because MSVC refuses a precompiled header whose defines differ from the compilation
+# using it, and a GUI test carries QT_WIDGETS_LIB where a plain one does not.
+add_library(fsorg-test-precompiled STATIC tests/support/Precompiled.cpp)
+target_link_libraries(fsorg-test-precompiled PRIVATE Qt6::Core Qt6::Test)
+target_include_directories(fsorg-test-precompiled PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
+target_precompile_headers(fsorg-test-precompiled PRIVATE <QtTest/QtTest>)
+
+add_library(fsorg-gui-test-precompiled STATIC tests/support/Precompiled.cpp)
+target_link_libraries(fsorg-gui-test-precompiled PRIVATE Qt6::Core Qt6::Test Qt6::Widgets)
+target_include_directories(fsorg-gui-test-precompiled PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
+target_precompile_headers(fsorg-gui-test-precompiled PRIVATE <QtTest/QtTest>)
+
 function(configure_fsorg_test TARGET_NAME TEST_NAME)
     target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Core Qt6::Test)
     target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
+    target_precompile_headers(${TARGET_NAME} REUSE_FROM fsorg-test-precompiled)
     add_test(NAME ${TEST_NAME} COMMAND ${TARGET_NAME})
 
     set_tests_properties(${TEST_NAME} PROPERTIES
@@ -18,6 +32,7 @@ endfunction()
 
 function(configure_fsorg_gui_test TARGET_NAME TEST_NAME)
     target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Widgets "$<$<BOOL:${WIN32}>:dwmapi>")
+    target_precompile_headers(${TARGET_NAME} REUSE_FROM fsorg-gui-test-precompiled)
 
     set_tests_properties(${TEST_NAME} PROPERTIES
             ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1;QT_QPA_PLATFORM=offscreen")
