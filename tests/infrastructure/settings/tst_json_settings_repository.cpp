@@ -24,6 +24,7 @@ private slots:
     static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
     static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
     static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
+    static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
 };
 
 namespace
@@ -206,6 +207,23 @@ void JsonSettingsRepositoryTest::AFileWrittenBeforeTheseKeysExistedReadsAsJuncti
     QCOMPARE(read->activeProfileId, std::string("msfs2024"));
     QCOMPARE(read->linkType, LinkType::Junction);
     QCOMPARE(read->verifyWithHash, false);
+    QCOMPARE(read->updateMode, UpdateMode::Notify);
+    QVERIFY(read->language.empty());
+}
+
+void JsonSettingsRepositoryTest::TheUpdateModeAndTheLanguageSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.updateMode = UpdateMode::Automatic;
+    written.language = "pt_BR";
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.updateMode, UpdateMode::Automatic);
+    QCOMPARE(read.language, std::string("pt_BR"));
 }
 
 QTEST_APPLESS_MAIN(JsonSettingsRepositoryTest)

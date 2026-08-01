@@ -21,6 +21,8 @@ namespace
     constexpr auto kProfiles = "profiles";
     constexpr auto kLinkType = "linkType";
     constexpr auto kVerifyWithHash = "verifyWithHash";
+    constexpr auto kUpdateMode = "updateMode";
+    constexpr auto kLanguage = "language";
     constexpr auto kId = "id";
     constexpr auto kVariant = "variant";
     constexpr auto kDestinations = "destinations";
@@ -56,6 +58,28 @@ namespace
     LinkType LinkTypeFromName(const QJsonValue& value)
     {
         return value.toString() == "symbolic" ? LinkType::Symbolic : LinkType::Junction;
+    }
+
+    QString UpdateModeName(const UpdateMode updateMode)
+    {
+        switch (updateMode)
+        {
+        case UpdateMode::Automatic: return "automatic";
+        case UpdateMode::Manual: return "manual";
+        case UpdateMode::Notify: break;
+        }
+
+        return "notify";
+    }
+
+    UpdateMode UpdateModeFromName(const QJsonValue& value)
+    {
+        if (value.toString() == "automatic")
+        {
+            return UpdateMode::Automatic;
+        }
+
+        return value.toString() == "manual" ? UpdateMode::Manual : UpdateMode::Notify;
     }
 
     QJsonObject ToJson(const Library& library)
@@ -136,17 +160,17 @@ namespace
         profile.variant = VariantFromName(object.value(kVariant));
         profile.defaultDestination = ToPath(object.value(kDefaultDestination));
 
-        for (const QJsonValue& destination : object.value(kDestinations).toArray())
+        for (const QJsonValue destination : object.value(kDestinations).toArray())
         {
             profile.destinations.push_back(ToPath(destination));
         }
 
-        for (const QJsonValue& library : object.value(kLibraries).toArray())
+        for (const QJsonValue library : object.value(kLibraries).toArray())
         {
             profile.libraries.push_back(LibraryFromJson(library.toObject()));
         }
 
-        for (const QJsonValue& destinationOverride : object.value(kDestinationOverrides).toArray())
+        for (const QJsonValue destinationOverride : object.value(kDestinationOverrides).toArray())
         {
             profile.destinationOverrides.push_back(OverrideFromJson(destinationOverride.toObject()));
         }
@@ -183,8 +207,10 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     settings.activeProfileId = root.value(kActiveProfileId).toString().toStdString();
     settings.linkType = LinkTypeFromName(root.value(kLinkType));
     settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
+    settings.updateMode = UpdateModeFromName(root.value(kUpdateMode));
+    settings.language = root.value(kLanguage).toString().toStdString();
 
-    for (const QJsonValue& profile : root.value(kProfiles).toArray())
+    for (const QJsonValue profile : root.value(kProfiles).toArray())
     {
         settings.profiles.push_back(ProfileFromJson(profile.toObject()));
     }
@@ -205,6 +231,8 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
     root[kProfiles] = profiles;
     root[kLinkType] = LinkTypeName(settings.linkType);
     root[kVerifyWithHash] = settings.verifyWithHash;
+    root[kUpdateMode] = UpdateModeName(settings.updateMode);
+    root[kLanguage] = QString::fromStdString(settings.language);
 
     std::error_code error;
     std::filesystem::create_directories(file_.parent_path(), error);
