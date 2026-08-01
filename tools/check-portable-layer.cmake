@@ -2,9 +2,6 @@ if (NOT DEFINED FSORG_SOURCE_DIR)
     message(FATAL_ERROR "FSORG_SOURCE_DIR must be defined.")
 endif ()
 
-# The layers below are compiled by the portable configuration, which is the only thing
-# that checks the boundary the ADR-0005 draws. A win32 include inside one of them does
-# not fail here on Windows, so without this test it only surfaces on the Linux job.
 include("${FSORG_SOURCE_DIR}/cmake/Sources.cmake")
 
 set(PORTABLE_SOURCES

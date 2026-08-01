@@ -8,9 +8,11 @@ function(fsorg_add_layer LIBRARY_NAME)
 endfunction()
 
 fsorg_add_layer(fsorg-domain ${DOMAIN_SOURCES})
+target_precompile_headers(fsorg-domain PRIVATE <filesystem> <map> <memory> <optional> <set> <string> <vector>)
 
 fsorg_add_layer(fsorg-application ${APPLICATION_SOURCES})
 target_link_libraries(fsorg-application PUBLIC fsorg-domain)
+target_precompile_headers(fsorg-application REUSE_FROM fsorg-domain)
 
 fsorg_add_layer(fsorg-infrastructure ${INFRASTRUCTURE_SOURCES})
 target_link_libraries(fsorg-infrastructure PUBLIC fsorg-application Qt6::Core)

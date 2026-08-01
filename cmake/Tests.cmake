@@ -1,6 +1,3 @@
-# One QtTest header parsed once, reused by every test target. The two flavours exist
-# because MSVC refuses a precompiled header whose defines differ from the compilation
-# using it, and a GUI test carries QT_WIDGETS_LIB where a plain one does not.
 add_library(fsorg-test-precompiled STATIC tests/support/Precompiled.cpp)
 target_link_libraries(fsorg-test-precompiled PRIVATE Qt6::Core Qt6::Test)
 target_include_directories(fsorg-test-precompiled PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
@@ -11,8 +8,6 @@ target_link_libraries(fsorg-gui-test-precompiled PRIVATE Qt6::Core Qt6::Test Qt6
 target_include_directories(fsorg-gui-test-precompiled PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 target_precompile_headers(fsorg-gui-test-precompiled PRIVATE <QtTest/QtTest>)
 
-# Every test executable lands in the same directory, so the Qt runtime beside them is
-# the same copy seventy-seven times over. One target does it once and they all wait on it.
 if (WIN32)
     add_custom_target(fsorg-test-runtime
             COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/platforms"

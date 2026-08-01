@@ -31,8 +31,6 @@ set(APPLICATION_SOURCES
         src/application/SetupService.cpp
 )
 
-# Adapters that reach the platform through std::filesystem and Qt, never through win32.
-# A Windows name is not the test: check-portable-layer.cmake is, and it reads the includes.
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
@@ -48,7 +46,6 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/update/GithubReleaseParser.cpp
 )
 
-# The ones that do include windows.h. Nothing outside Windows compiles these.
 set(WINDOWS_INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
@@ -59,7 +56,6 @@ set(WINDOWS_INFRASTRUCTURE_SOURCES
         src/view/platform/WindowsTitleBar.cpp
 )
 
-# Qt6::Network is not among the components the portable configuration asks for.
 set(NETWORK_INFRASTRUCTURE_SOURCES
         src/infrastructure/update/GithubUpdateService.cpp
 )
@@ -119,8 +115,6 @@ set(VIEW_SOURCES
         src/view/theme/PageTab.cpp
 )
 
-# The shell reaches Win32 for the title bar theme, so it stays out of fsorg-view
-# and out of the portable configuration, which never compiles src/view/platform/.
 set(WINDOWS_SHELL_SOURCES
         src/view/shell/MainWindow.cpp
 )
