@@ -1,5 +1,7 @@
 #include <QtTest/QtTest>
 
+#include <QtCore/QDir>
+
 #include "viewmodel/QuarantineModel.h"
 
 class QuarantineModelTest : public QObject
@@ -33,9 +35,9 @@ void QuarantineModelTest::EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackT
     QCOMPARE(model.data(model.index(0, QuarantineModel::NameColumn), Qt::DisplayRole).toString(),
              QStringLiteral("simbridge"));
     QCOMPARE(model.data(model.index(0, QuarantineModel::OriginColumn), Qt::DisplayRole).toString(),
-             QStringLiteral(R"(E:\Sim\Community\simbridge)"));
+             QDir::toNativeSeparators(QStringLiteral("E:/Sim/Community/simbridge")));
     QCOMPARE(model.data(model.index(0, QuarantineModel::WhereColumn), Qt::DisplayRole).toString(),
-             QStringLiteral(R"(E:\Sim\_fsorganizer-quarantine)"));
+             QDir::toNativeSeparators(QStringLiteral("E:/Sim/_fsorganizer-quarantine")));
     QVERIFY(!model.data(model.index(0, QuarantineModel::WhenColumn), Qt::DisplayRole).toString().isEmpty());
 
     QVERIFY(model.ItemAt(model.index(1, 0)) != nullptr);
