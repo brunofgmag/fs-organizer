@@ -109,6 +109,16 @@ fsorg_add_qt_test(fsorg-import-service-tests import-service
         src/domain/importing/ImportPaths.h)
 target_link_libraries(fsorg-import-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
+        tests/application/tst_legacy_config_importer.cpp
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLegacyConfigSource.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-legacy-config-importer-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-library-organizer-tests library-organizer
         tests/application/tst_library_organizer.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -182,6 +192,26 @@ fsorg_add_qt_test(fsorg-preset-plan-tests preset-plan
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-preset-plan-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-legacy-preset-tests legacy-preset
+        tests/domain/legacy/tst_legacy_preset.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-legacy-preset-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-legacy-proposal-tests legacy-proposal
+        tests/domain/legacy/tst_legacy_proposal.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-legacy-proposal-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-orphan-overrides-tests orphan-overrides
+        tests/domain/profile/tst_orphan_overrides.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-orphan-overrides-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-profile-edits-tests profile-edits
         tests/domain/profile/tst_profile_edits.cpp
@@ -260,6 +290,52 @@ fsorg_add_qt_test(fsorg-file-preset-repository-tests file-preset-repository
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
         src/infrastructure/preset/FilePresetRepository.cpp)
+
+fsorg_add_qt_test(fsorg-ini-legacy-config-reader-tests ini-legacy-config-reader
+        tests/infrastructure/legacy/tst_ini_legacy_config_reader.cpp
+        src/domain/support/PathUtils.h
+        src/infrastructure/legacy/IniLegacyConfigReader.cpp)
+
+fsorg_add_qt_test(fsorg-legacy-preset-reader-tests legacy-preset-reader
+        tests/infrastructure/legacy/tst_legacy_preset_reader.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h
+        src/infrastructure/legacy/IniLegacyConfigReader.cpp
+        src/infrastructure/legacy/LegacyPresetReader.cpp)
+
+fsorg_add_qt_test(fsorg-windows-legacy-config-source-tests windows-legacy-config-source
+        tests/infrastructure/legacy/tst_windows_legacy_config_source.cpp
+        src/domain/support/PathUtils.h
+        src/infrastructure/legacy/IniLegacyConfigReader.cpp
+        src/infrastructure/legacy/LegacyPresetReader.cpp
+        src/infrastructure/legacy/WindowsLegacyConfigSource.cpp)
+
+fsorg_add_qt_test(fsorg-github-release-parser-tests github-release-parser
+        tests/infrastructure/update/tst_github_release_parser.cpp
+        src/infrastructure/update/GithubReleaseParser.cpp)
+target_compile_definitions(fsorg-github-release-parser-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+if (NOT FSORG_TESTS_ONLY)
+    fsorg_add_qt_test(fsorg-github-update-service-tests github-update-service
+            tests/infrastructure/update/tst_github_update_service.cpp
+            src/infrastructure/update/GithubReleaseParser.cpp
+            src/infrastructure/update/GithubUpdateService.cpp)
+    target_link_libraries(fsorg-github-update-service-tests PRIVATE Qt6::Network)
+
+    if (WIN32)
+        add_custom_command(TARGET fsorg-github-update-service-tests POST_BUILD
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "$<TARGET_FILE:Qt6::Network>"
+                "$<TARGET_FILE_DIR:fsorg-github-update-service-tests>"
+                VERBATIM)
+    endif ()
+endif ()
+
+fsorg_add_qt_test(fsorg-update-view-model-tests update-view-model
+        tests/viewmodel/tst_update_view_model.cpp
+        tests/doubles/FakeUpdateService.h
+        src/viewmodel/UpdateViewModel.cpp)
 
 fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/viewmodel/tst_setup_view_model.cpp
@@ -576,11 +652,34 @@ if (WIN32)
                 src/view/theme/ModernistStyle.cpp
                 src/view/theme/ModernistTheme.cpp
                 src/view/theme/ModernistTones.cpp
+                tests/doubles/FakeUpdateService.h
                 src/viewmodel/OptionsViewModel.cpp
                 src/viewmodel/SessionNotifier.cpp
-                src/viewmodel/SimulatorText.cpp)
+                src/viewmodel/SimulatorText.cpp
+                src/viewmodel/UpdateViewModel.cpp)
         target_link_libraries(fsorg-options-page-tests PRIVATE fsorg-application)
         configure_fsorg_gui_test(fsorg-options-page-tests options-page)
+
+        fsorg_add_qt_test(fsorg-legacy-import-dialog-tests legacy-import-dialog
+                tests/view/tst_legacy_import_dialog.cpp
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeClock.h
+                tests/doubles/FakeFileOperations.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLegacyConfigSource.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeLinkService.h
+                tests/doubles/FakeOperationJournal.h
+                tests/doubles/FakePresetRepository.h
+                tests/doubles/FakeProcessProbe.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/doubles/InlineBackgroundRunner.h
+                tests/doubles/RecordingSessionObserver.h
+                src/view/legacy/LegacyImportDialog.cpp
+                src/viewmodel/LegacyImportViewModel.cpp)
+        target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-application)
+        configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
 
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp
@@ -624,6 +723,10 @@ if (WIN32)
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
             tests/infrastructure/sim/tst_windows_process_probe.cpp
             src/infrastructure/sim/WindowsProcessProbe.cpp)
+
+    fsorg_add_qt_test(fsorg-single-instance-tests single-instance
+            tests/infrastructure/platform/tst_single_instance.cpp
+            src/infrastructure/platform/SingleInstance.cpp)
 endif ()
 
 fsorg_add_qt_test(fsorg-table-columns-tests table-columns

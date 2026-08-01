@@ -44,12 +44,13 @@ target_include_directories(fsorg-shot PRIVATE "${CMAKE_SOURCE_DIR}/src")
 
 target_compile_definitions(fsorg-shot PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX FSORG_VERSION="${FSORG_VERSION}")
 
-target_link_libraries(fsorg-shot PRIVATE fsorg-application Qt6::Widgets dwmapi)
+target_link_libraries(fsorg-shot PRIVATE fsorg-application Qt6::Widgets Qt6::Network dwmapi)
 
 add_custom_command(TARGET fsorg-shot POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "$<TARGET_FILE:Qt6::Core>"
         "$<TARGET_FILE:Qt6::Gui>"
+        "$<TARGET_FILE:Qt6::Network>"
         "$<TARGET_FILE:Qt6::Widgets>"
         "$<TARGET_FILE_DIR:fsorg-shot>"
         COMMAND "${CMAKE_COMMAND}" -E make_directory
@@ -77,12 +78,13 @@ target_include_directories(fsorg-timing PRIVATE "${CMAKE_SOURCE_DIR}/src")
 
 target_compile_definitions(fsorg-timing PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 
-target_link_libraries(fsorg-timing PRIVATE fsorg-application Qt6::Widgets dwmapi)
+target_link_libraries(fsorg-timing PRIVATE fsorg-application Qt6::Widgets Qt6::Network dwmapi)
 
 add_custom_command(TARGET fsorg-timing POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "$<TARGET_FILE:Qt6::Core>"
         "$<TARGET_FILE:Qt6::Gui>"
+        "$<TARGET_FILE:Qt6::Network>"
         "$<TARGET_FILE:Qt6::Widgets>"
         "$<TARGET_FILE_DIR:fsorg-timing>"
         COMMAND "${CMAKE_COMMAND}" -E make_directory

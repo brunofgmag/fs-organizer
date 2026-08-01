@@ -1,0 +1,205 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version expected in VERSION.txt (MAJOR.MINOR.PATCH)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      tag: ${{ steps.read.outputs.tag }}
+      release_exists: ${{ steps.duplicate-check.outputs.exists }}
+      build_ref: ${{ steps.buildref.outputs.ref }}
+    steps:
+      - name: Verify branch
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::deploy must run on main. Got: $REF"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Validate VERSION.txt
+        id: read
+        env:
+          REQ_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < VERSION.txt)"
+          echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::VERSION.txt must be MAJOR.MINOR.PATCH (got '$version')"; exit 1; }
+          if [ -n "$REQ_VERSION" ] && [ "$REQ_VERSION" != "$version" ]; then
+            echo "::error::Requested $REQ_VERSION does not match VERSION.txt ($version)"; exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check duplicate
+        id: duplicate-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.read.outputs.tag }}
+          VER: ${{ steps.read.outputs.version }}
+        run: |
+          set -euo pipefail
+          zip="fs-organizer-$VER.zip"
+          sha="$zip.sha256"
+          if names="$(gh release view "$TAG" --json assets --jq '.assets[].name' 2>/dev/null)"; then
+            if grep -qxF "$zip" <<<"$names" && grep -qxF "$sha" <<<"$names"; then
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::Release $TAG already published with both assets; nothing to do."
+            else
+              echo "exists=false" >> "$GITHUB_OUTPUT"
+              echo "::warning::Release $TAG exists but is missing assets; rebuilding and re-uploading."
+            fi
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve commit
+        id: buildref
+        env:
+          TAG: ${{ steps.read.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::Tag $TAG already exists; building from the tagged commit."
+            echo "ref=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build + Package
+    needs: version
+    if: needs.version.outputs.release_exists == 'false'
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.version.outputs.build_ref }}
+          fetch-depth: 0
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4.3.1
+        with:
+          version: 6.8.3
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          cache: true
+
+      - name: Build
+        shell: pwsh
+        run: ./build.ps1 -Config Release -SkipTests
+
+      - name: Stage bundle
+        shell: pwsh
+        run: |
+          $stage = 'staging/fs-organizer'
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item -Path 'build/release/bin/*' -Destination $stage -Recurse -Force
+
+      - name: Package + Hash
+        shell: pwsh
+        env:
+          VER: ${{ needs.version.outputs.version }}
+        run: |
+          $zip = "fs-organizer-$env:VER.zip"
+          Compress-Archive -Path 'staging/fs-organizer' -DestinationPath $zip -Force
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLower()
+          "$hash  $zip" | Out-File -FilePath "$zip.sha256" -Encoding ascii -NoNewline
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-bundle
+          path: |
+            fs-organizer-*.zip
+            fs-organizer-*.zip.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: [ version, build ]
+    if: needs.version.outputs.release_exists == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-bundle
+
+      - name: Extract release notes
+        id: notes
+        env:
+          VER: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          out=release-notes.md
+          if [ -f CHANGELOG.md ]; then
+            awk -v v="$VER" '
+              $0 ~ "^## \\["v"\\]" {f=1; next}
+              f && /^## / {exit}
+              f {print}
+            ' CHANGELOG.md > "$out"
+          fi
+          [ -s "$out" ] || echo "Release v$VER" > "$out"
+          echo "path=$out" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag
+        env:
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::Tag $TAG already exists; reusing it."
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Publish
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: fs-organizer ${{ needs.version.outputs.tag }}
+          body_path: ${{ steps.notes.outputs.path }}
+          files: |
+            fs-organizer-${{ needs.version.outputs.version }}.zip
+            fs-organizer-${{ needs.version.outputs.version }}.zip.sha256

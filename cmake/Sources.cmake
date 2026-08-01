@@ -3,11 +3,14 @@ set(DOMAIN_SOURCES
         src/domain/importing/ImportEngine.cpp
         src/domain/journal/JournalEntries.cpp
         src/domain/journal/OperationLog.cpp
+        src/domain/legacy/LegacyPreset.cpp
+        src/domain/legacy/LegacyProposal.cpp
         src/domain/linking/DisableLinks.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
         src/domain/preset/PresetPlan.cpp
+        src/domain/profile/OrphanOverrides.cpp
         src/domain/profile/ProfileEdits.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/CategorySuggester.cpp
@@ -20,6 +23,7 @@ set(DOMAIN_SOURCES
 
 set(APPLICATION_SOURCES
         src/application/ImportService.cpp
+        src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
@@ -34,7 +38,11 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
+        src/infrastructure/legacy/IniLegacyConfigReader.cpp
+        src/infrastructure/legacy/LegacyPresetReader.cpp
+        src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
         src/infrastructure/link/WindowsLinkService.cpp
+        src/infrastructure/platform/SingleInstance.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
         src/view/platform/WindowsTitleBar.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
@@ -42,6 +50,8 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
+        src/infrastructure/update/GithubReleaseParser.cpp
+        src/infrastructure/update/GithubUpdateService.cpp
 )
 
 set(VIEWMODEL_SOURCES
@@ -55,6 +65,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
         src/viewmodel/JournalViewModel.cpp
+        src/viewmodel/LegacyImportViewModel.cpp
         src/viewmodel/OptionsViewModel.cpp
         src/viewmodel/SimulatorText.cpp
         src/viewmodel/PresetViewModel.cpp
@@ -63,6 +74,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/QuarantineViewModel.cpp
         src/viewmodel/SessionNotifier.cpp
         src/viewmodel/SetupViewModel.cpp
+        src/viewmodel/UpdateViewModel.cpp
 )
 
 set(VIEW_SOURCES
@@ -71,6 +83,7 @@ set(VIEW_SOURCES
         src/view/community/ConflictDialog.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
+        src/view/legacy/LegacyImportDialog.cpp
         src/view/options/OptionsPage.cpp
         src/view/shell/MainWindow.cpp
         src/view/delegates/FittedText.cpp

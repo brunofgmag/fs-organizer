@@ -96,6 +96,11 @@ if ($RunTests) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
+& (Join-Path $PSScriptRoot 'tools/verify-deployment.ps1') `
+    -DeploymentDir (Join-Path $buildDir 'bin') `
+    -Configuration $Config
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 $registry = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'cmake') -Filter '*.cmake' -File)
 $registry += Get-Item -LiteralPath (Join-Path $PSScriptRoot 'CMakeLists.txt')
 $newestRegistry = ($registry | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).LastWriteTimeUtc

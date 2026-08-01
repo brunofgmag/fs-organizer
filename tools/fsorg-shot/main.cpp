@@ -33,6 +33,7 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
+#include "infrastructure/update/GithubUpdateService.h"
 #include "support/PathText.h"
 #include "view/JournalPage.h"
 #include "view/PresetsPage.h"
@@ -51,6 +52,7 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
+#include "viewmodel/UpdateViewModel.h"
 
 namespace
 {
@@ -132,7 +134,7 @@ namespace
         return true;
     }
 
-    bool ClickingReaches(QListWidget& navigation, const int row)
+    bool ClickingReaches(const QListWidget& navigation, const int row)
     {
         QWidget* viewport = navigation.viewport();
         const QPoint at = navigation.visualItemRect(navigation.item(row)).center();
@@ -285,11 +287,15 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
+    GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
+                                      QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
+    UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
+
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
-    auto* optionsPage = new OptionsPage(optionsViewModel, SettingsFilePath());
+    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
 
     PageTab* libraryTab = shell.AddPage(QObject::tr("Biblioteca"), libraryPage);
-    PageTab* communityTab = shell.AddPage(QStringLiteral("Community"), communityPage);
+    PageTab* communityTab = shell.AddPage(QObject::tr("Destinos"), communityPage);
     PageTab* presetsTab = shell.AddPage(QObject::tr("Presets"), presetsPage);
     PageTab* journalTab = shell.AddPage(QObject::tr("Diário"), journalPage);
     PageTab* quarantineTab = shell.AddPage(QObject::tr("Quarentena"), quarantinePage);
