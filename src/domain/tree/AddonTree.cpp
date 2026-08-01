@@ -2,7 +2,6 @@
 
 #include "domain/model/AddonId.h"
 #include "domain/support/PathUtils.h"
-#include "domain/support/StringUtils.h"
 
 namespace
 {
@@ -107,11 +106,13 @@ std::vector<const TreeNode*> CategoriesOfferedIn(const TreeNode& tree, const boo
 
 const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& baseName)
 {
+    const std::string wanted = ComparableFileName(baseName);
+
     for (const TreeNode& library : libraries)
     {
         for (const TreeNode* addon : AddonsUnder(library))
         {
-            if (EqualsIgnoringCase(addon->path.filename().string(), baseName))
+            if (ComparableFileName(addon->path) == wanted)
             {
                 return addon;
             }
@@ -125,7 +126,7 @@ const TreeNode* AddonHoldingTheIdentity(const std::vector<TreeNode>& libraries,
                                         const std::filesystem::path& wanted,
                                         const std::filesystem::path& ignoring)
 {
-    const std::string baseName = wanted.filename().string();
+    const std::string baseName = ComparableFileName(wanted);
     const std::string excluded = ComparablePath(ignoring);
 
     for (const TreeNode& library : libraries)
@@ -137,8 +138,7 @@ const TreeNode* AddonHoldingTheIdentity(const std::vector<TreeNode>& libraries,
 
         for (const TreeNode* addon : AddonsUnder(library))
         {
-            if (EqualsIgnoringCase(addon->path.filename().string(), baseName)
-                && ComparablePath(addon->path) != excluded)
+            if (ComparableFileName(addon->path) == baseName && ComparablePath(addon->path) != excluded)
             {
                 return addon;
             }

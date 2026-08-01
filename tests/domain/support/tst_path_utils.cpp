@@ -12,6 +12,7 @@ private slots:
     static void ARootKeepsItsSeparator();
     static void AnEmptyPathHasAnEmptyKey();
     static void ReparsePrefixesAreStripped();
+    static void TheLastComponentIsReadWhicheverSeparatorWroteIt();
     static void AFolderIsInsideTheRootOfItsOwnVolume();
     static void ASiblingWhoseNameStartsWithTheRootIsNotInsideIt();
     static void NothingIsInsideARootThatWasNeverNamed();
@@ -43,11 +44,21 @@ void PathUtilsTest::AnEmptyPathHasAnEmptyKey()
 
 void PathUtilsTest::ReparsePrefixesAreStripped()
 {
-    const std::filesystem::path expected = R"(E:\Library\Add-ons\aerosoft-aircraft-a346-pro)";
+    const std::filesystem::path expected = "E:/Library/Add-ons/aerosoft-aircraft-a346-pro";
 
     QCOMPARE(NormalizeReparseTarget(R"(\??\E:\Library\Add-ons\aerosoft-aircraft-a346-pro)"), expected);
     QCOMPARE(NormalizeReparseTarget(R"(\\?\E:\Library\Add-ons\aerosoft-aircraft-a346-pro)"), expected);
-    QCOMPARE(NormalizeReparseTarget(R"(\??\UNC\server\share)"), std::filesystem::path(R"(\\server\share)"));
+    QCOMPARE(NormalizeReparseTarget(R"(\??\UNC\server\share)"),
+             std::filesystem::path("//server/share").lexically_normal());
+}
+
+void PathUtilsTest::TheLastComponentIsReadWhicheverSeparatorWroteIt()
+{
+    QCOMPARE(ComparableFileName("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), std::string("pmdg-aircraft-77w"));
+    QCOMPARE(ComparableFileName(R"(D:\MSFS 2024\Aircrafts\PMDG-Aircraft-77W)"), std::string("pmdg-aircraft-77w"));
+    QCOMPARE(ComparableFileName("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/"), std::string("pmdg-aircraft-77w"));
+    QCOMPARE(ComparableFileName("pmdg-aircraft-77w"), std::string("pmdg-aircraft-77w"));
+    QCOMPARE(ComparableFileName({}), std::string());
 }
 
 void PathUtilsTest::AFolderIsInsideTheRootOfItsOwnVolume()
