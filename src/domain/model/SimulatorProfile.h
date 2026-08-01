@@ -30,12 +30,12 @@ struct SimulatorCandidate
 
 struct SimulatorProfile
 {
-    std::string id;
+    std::string id{};
     SimulatorVariant variant = SimulatorVariant::MSFS2024;
-    std::vector<std::filesystem::path> destinations;
-    std::filesystem::path defaultDestination;
-    std::vector<Library> libraries;
-    std::vector<DestinationOverride> destinationOverrides;
+    std::vector<std::filesystem::path> destinations{};
+    std::filesystem::path defaultDestination{};
+    std::vector<Library> libraries{};
+    std::vector<DestinationOverride> destinationOverrides{};
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_SIMULATOR_PROFILE_H
