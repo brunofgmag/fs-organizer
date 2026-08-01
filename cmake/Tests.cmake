@@ -50,6 +50,11 @@ add_test(NAME no-literal-colors
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-literal-colors.cmake")
 
+add_test(NAME no-em-dash
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-em-dash.cmake")
+
 fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
         tests/support/EnumPrinting.h)
