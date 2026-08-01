@@ -35,6 +35,7 @@ add_custom_command(TARGET fsorg-probe POST_BUILD
 add_executable(fsorg-shot
         tools/fsorg-shot/main.cpp
         ${INFRASTRUCTURE_SOURCES}
+        ${WINDOWS_SHELL_SOURCES}
         assets/resources.qrc
 )
 
@@ -68,6 +69,7 @@ add_executable(fsorg-timing
         tools/fsorg-timing/JournalScroll.cpp
         tools/fsorg-timing/AppScroll.cpp
         ${INFRASTRUCTURE_SOURCES}
+        ${WINDOWS_SHELL_SOURCES}
 )
 
 target_include_directories(fsorg-timing PRIVATE "${CMAKE_SOURCE_DIR}/src")

@@ -85,7 +85,6 @@ set(VIEW_SOURCES
         src/view/JournalPage.cpp
         src/view/legacy/LegacyImportDialog.cpp
         src/view/options/OptionsPage.cpp
-        src/view/shell/MainWindow.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/PresetsPage.cpp
@@ -110,9 +109,16 @@ set(VIEW_SOURCES
         src/view/theme/PageTab.cpp
 )
 
+# The shell reaches Win32 for the title bar theme, so it stays out of fsorg-view
+# and out of the portable configuration, which never compiles src/view/platform/.
+set(WINDOWS_SHELL_SOURCES
+        src/view/shell/MainWindow.cpp
+)
+
 set(APP_SOURCES
         src/main.cpp
         ${INFRASTRUCTURE_SOURCES}
+        ${WINDOWS_SHELL_SOURCES}
 )
 
 list(APPEND APP_SOURCES

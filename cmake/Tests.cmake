@@ -558,6 +558,7 @@ if (WIN32)
         fsorg_add_qt_test(fsorg-main-window-tests main-window
                 tests/view/tst_main_window.cpp
                 assets/resources.qrc
+                ${WINDOWS_SHELL_SOURCES}
                 src/view/platform/WindowsTitleBar.cpp)
         target_link_libraries(fsorg-main-window-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-main-window-tests main-window)
