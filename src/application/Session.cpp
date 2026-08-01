@@ -6,6 +6,7 @@
 
 #include "domain/importing/CopyConflicts.h"
 #include "domain/linking/EntryClassifier.h"
+#include "domain/profile/OrphanOverrides.h"
 #include "domain/profile/ProfileEdits.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
@@ -89,6 +90,43 @@ void Session::ChooseProfile(const std::string& profileId)
     ShowActiveProfile();
 }
 
+bool Session::RemoveProfile(const std::string& profileId)
+{
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        observer_.OnSettingsCouldNotBeSaved();
+        return false;
+    }
+
+    AppSettings settings = *loaded;
+    if (!::RemoveProfile(settings.profiles, profileId))
+    {
+        return false;
+    }
+
+    const bool itWasInUse = settings.activeProfileId == profileId;
+    if (itWasInUse)
+    {
+        settings.activeProfileId = settings.profiles.front().id;
+    }
+
+    if (!settings_.Save(settings))
+    {
+        observer_.OnSettingsCouldNotBeSaved();
+        return false;
+    }
+
+    service_.ForgetUndo();
+
+    if (itWasInUse)
+    {
+        ShowActiveProfile();
+    }
+
+    return true;
+}
+
 const SimulatorProfile& Session::Profile() const
 {
     return profile_;
@@ -127,6 +165,45 @@ LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
     return report;
 }
 
+LegacyImportReport Session::ImportLegacy(const LegacyImportRequest& request)
+{
+    SimulatorProfile next = profile_;
+    LegacyImportReport report;
+
+    for (const std::filesystem::path& root : request.libraryRoots)
+    {
+        if (service_.RegisterLibrary(next, root).Accepted())
+        {
+            ++report.librariesRegistered;
+            continue;
+        }
+
+        report.refused.push_back(root);
+    }
+
+    for (const std::filesystem::path& category : request.categories)
+    {
+        if (Succeeded(organizer_.DeclareCategory(next, category).result))
+        {
+            ++report.categoriesDeclared;
+            continue;
+        }
+
+        report.refused.push_back(category);
+    }
+
+    if (report.librariesRegistered == 0 && report.categoriesDeclared == 0)
+    {
+        return report;
+    }
+
+    service_.ForgetUndo();
+    Save(next);
+    ScanBeforeReturning(std::move(next));
+
+    return report;
+}
+
 void Session::UnregisterLibrary(const LibraryId& libraryId)
 {
     SimulatorProfile next = profile_;
@@ -145,6 +222,28 @@ void Session::RepointDestination(const std::filesystem::path& from, const std::f
     service_.ForgetUndo();
     Save(next);
     Scan(std::move(next));
+}
+
+std::vector<DestinationOverride> Session::OverridesPointingNowhere() const
+{
+    return ::OverridesPointingNowhere(profile_);
+}
+
+void Session::DropOverridesPointingNowhere()
+{
+    SimulatorProfile next = profile_;
+    ::DropOverridesPointingNowhere(next);
+
+    if (next.destinationOverrides.size() == profile_.destinationOverrides.size())
+    {
+        return;
+    }
+
+    profile_ = std::move(next);
+
+    service_.ForgetUndo();
+    Save(profile_);
+    RefreshEntries();
 }
 
 bool Session::RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination)
@@ -274,6 +373,24 @@ void Session::Scan(SimulatorProfile profile)
         {
             Adopt();
         });
+}
+
+void Session::ScanBeforeReturning(SimulatorProfile profile)
+{
+    if (running_)
+    {
+        Scan(std::move(profile));
+        return;
+    }
+
+    running_ = true;
+    scanning_ = std::move(profile);
+
+    observer_.OnScanStarted();
+
+    scanned_ = service_.Scan(scanning_);
+
+    Adopt();
 }
 
 void Session::Adopt()

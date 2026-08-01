@@ -33,6 +33,7 @@ private slots:
     static void AnAddonLeavingTheLibraryRootDoesNotDeclareTheRootACategory();
     static void ACreatedCategoryIsAFolderInTheLibrary();
     static void ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently();
+    static void DeclaringAFolderThatIsNotOnDiskRefusesInsteadOfCreatingIt();
     static void ACategoryIsNotCreatedOutsideALibrary();
     static void AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride();
     static void AStaleOverrideBelowTheRemovedCategoryIsForgottenToo();
@@ -263,7 +264,7 @@ void LibraryOrganizerTest::EveryStepOfAMoveIsJournalled()
 
 void LibraryOrganizerTest::ACreatedCategoryIsAFolderInTheLibrary()
 {
-    Fixture f;
+    const Fixture f;
 
     const FileOperationResult result = f.organizer.CreateCategory(f.profile, kLibrary, "Sceneries");
 
@@ -285,6 +286,18 @@ void LibraryOrganizerTest::ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPas
 
     QCOMPARE(result.result, FileResult::CouldNotCreateTheCategory);
     QCOMPARE(std::get<FileResult>(f.journal.appended.front().outcome), FileResult::CouldNotCreateTheCategory);
+}
+
+void LibraryOrganizerTest::DeclaringAFolderThatIsNotOnDiskRefusesInsteadOfCreatingIt()
+{
+    Fixture f;
+    const std::filesystem::path gone = std::filesystem::path(kLibrary) / "Sounds";
+
+    const FileOperationResult result = f.organizer.DeclareCategory(f.profile, gone);
+
+    QCOMPARE(result.result, FileResult::CouldNotCreateTheCategory);
+    QVERIFY2(!f.fileSystem.IsDirectory(gone),
+             "declaring a category the old program named built a folder the disk lost");
 }
 
 void LibraryOrganizerTest::EmptyingACategoryLeavesItDeclaredSoItStaysAMoveTarget()
@@ -312,7 +325,7 @@ void LibraryOrganizerTest::AnAddonLeavingTheLibraryRootDoesNotDeclareTheRootACat
 
 void LibraryOrganizerTest::ACategoryIsNotCreatedOutsideALibrary()
 {
-    Fixture f;
+    const Fixture f;
 
     QCOMPARE(f.organizer.CreateCategory(f.profile, kDestination, "Sceneries").result,
              FileResult::TheTargetIsNotInALibrary);

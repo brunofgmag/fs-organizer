@@ -43,6 +43,17 @@ private slots:
     static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
     static void UnregisteringALibraryDropsAnUndoThatWouldPointAtIt();
     static void RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath();
+    static void ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain();
+    static void ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere();
+    static void ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported();
+    static void ImportingNothingSavesNothingAndScansNothing();
+    static void RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk();
+    static void RemovingAProfileThatIsNotInUseLeavesTheDiskAlone();
+    static void TheLastProfileIsNeverRemovedAndNothingIsWritten();
+    static void ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped();
+    static void ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain();
+    static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
+    static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
 };
 
 namespace
@@ -485,6 +496,157 @@ void SessionTest::RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath()
     f.session.RepointDestination(kCommunity, "E:/Flight Simulator 2024/Community2025");
 
     QVERIFY2(!f.service.CanUndo(), "re-apontar guardou um desfazer que aponta para o caminho antigo");
+}
+
+void SessionTest::ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(kExtraLibrary);
+    f.catalog.SetTree(kExtraLibrary, TreeNode{});
+
+    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{kExtraLibrary}, {}});
+
+    QCOMPARE(report.librariesRegistered, std::size_t{1});
+    QVERIFY(report.refused.empty());
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
+    QCOMPARE(f.settings.stored.profiles.front().libraries.size(), std::size_t{2});
+    QCOMPARE(f.observer.finished, 2);
+}
+
+void SessionTest::ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(kSceneries);
+    const std::vector<std::string> before = DescribeTheDisk(f.fileSystem);
+
+    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{}, {kSceneries}});
+
+    QCOMPARE(report.categoriesDeclared, std::size_t{1});
+    QVERIFY(f.fileSystem.IsFile(std::filesystem::path(kSceneries) / ".fsorg-category"));
+    QVERIFY(f.fileSystem.IsDirectory(kAddon));
+    QVERIFY(before.size() < DescribeTheDisk(f.fileSystem).size());
+}
+
+void SessionTest::ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{kAircrafts}, {}});
+
+    QCOMPARE(report.librariesRegistered, std::size_t{0});
+    QCOMPARE(report.refused.size(), std::size_t{1});
+    QCOMPARE(ComparablePath(report.refused.front()), ComparablePath(kAircrafts));
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{1});
+}
+
+void SessionTest::ImportingNothingSavesNothingAndScansNothing()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    const LegacyImportReport report = f.session.ImportLegacy({});
+
+    QCOMPARE(report.librariesRegistered, std::size_t{0});
+    QCOMPARE(report.categoriesDeclared, std::size_t{0});
+    QCOMPARE(f.observer.finished, 1);
+}
+
+void SessionTest::RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk()
+{
+    Fixture f;
+    f.settings.stored.profiles.push_back(Profile("msfs2020"));
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.session.RemoveProfile("msfs2024"));
+
+    QCOMPARE(f.settings.stored.profiles.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.settings.stored.activeProfileId), QStringLiteral("msfs2020"));
+    QCOMPARE(QString::fromStdString(f.session.Profile().id), QStringLiteral("msfs2020"));
+    QCOMPARE(f.observer.finished, 2);
+}
+
+void SessionTest::RemovingAProfileThatIsNotInUseLeavesTheDiskAlone()
+{
+    Fixture f;
+    f.settings.stored.profiles.push_back(Profile("msfs2020"));
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.session.RemoveProfile("msfs2020"));
+
+    QCOMPARE(QString::fromStdString(f.session.Profile().id), QStringLiteral("msfs2024"));
+    QCOMPARE(f.observer.finished, 1);
+}
+
+void SessionTest::ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{}, {kCommunity}});
+
+    QCOMPARE(report.categoriesDeclared, std::size_t{0});
+    QCOMPARE(report.refused.size(), std::size_t{1});
+    QCOMPARE(ComparablePath(report.refused.front()), ComparablePath(kCommunity));
+}
+
+void SessionTest::ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(kExtraLibrary);
+    f.catalog.SetTree(kExtraLibrary, TreeNode{});
+    f.runner.defer = true;
+
+    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{kExtraLibrary}, {}});
+
+    QCOMPARE(report.librariesRegistered, std::size_t{1});
+    QVERIFY2(!f.runner.Pending(), "a importação deixou a varredura pendurada no runner");
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{2});
+}
+
+void SessionTest::TheLastProfileIsNeverRemovedAndNothingIsWritten()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QVERIFY(!f.session.RemoveProfile("msfs2024"));
+
+    QCOMPARE(f.settings.stored.profiles.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.session.Profile().id), QStringLiteral("msfs2024"));
+    QCOMPARE(f.observer.finished, 1);
+}
+
+void SessionTest::AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn()
+{
+    Fixture f;
+    f.settings.stored.profiles.front().destinationOverrides = {
+        DestinationOverride{"library-1", "Aircrafts", "E:/Flight Simulator 2024/Retired"},
+        DestinationOverride{"library-1", "Sceneries", kOtherDestination}};
+
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.OverridesPointingNowhere().size(), std::size_t{1});
+    QCOMPARE(f.session.Profile().destinationOverrides.size(), std::size_t{2});
+    QCOMPARE(f.settings.stored.profiles.front().destinationOverrides.size(), std::size_t{2});
+}
+
+void SessionTest::DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan()
+{
+    Fixture f;
+    f.settings.stored.profiles.front().destinationOverrides = {
+        DestinationOverride{"library-1", "Aircrafts", "E:/Flight Simulator 2024/Retired"},
+        DestinationOverride{"library-1", "Sceneries", kOtherDestination}};
+
+    f.session.ShowActiveProfile();
+    f.session.DropOverridesPointingNowhere();
+
+    QVERIFY(f.session.OverridesPointingNowhere().empty());
+    QCOMPARE(f.settings.stored.profiles.front().destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(f.observer.finished, 1);
+    QCOMPARE(f.observer.refreshed, 1);
 }
 
 QTEST_MAIN(SessionTest)

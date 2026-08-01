@@ -8,6 +8,7 @@
 #include "application/LibraryOrganizer.h"
 #include "application/ProfileService.h"
 #include "application/model/FileOperationResult.h"
+#include "application/model/LegacyImport.h"
 #include "application/model/LibraryReport.h"
 #include "application/model/ProfileSnapshot.h"
 #include "application/model/LinkOperationResult.h"
@@ -34,6 +35,8 @@ public:
 
     void ChooseProfile(const std::string& profileId);
 
+    [[nodiscard]] bool RemoveProfile(const std::string& profileId);
+
     [[nodiscard]] const SimulatorProfile& Profile() const;
 
     [[nodiscard]] const ProfileSnapshot& Snapshot() const;
@@ -44,9 +47,15 @@ public:
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
 
+    [[nodiscard]] LegacyImportReport ImportLegacy(const LegacyImportRequest& request);
+
     void UnregisterLibrary(const LibraryId& libraryId);
 
     void RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to);
+
+    [[nodiscard]] std::vector<DestinationOverride> OverridesPointingNowhere() const;
+
+    void DropOverridesPointingNowhere();
 
     void OverrideDestination(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& destination);
 
@@ -62,6 +71,8 @@ private:
     [[nodiscard]] bool RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination);
 
     void Scan(SimulatorProfile profile);
+
+    void ScanBeforeReturning(SimulatorProfile profile);
 
     void Adopt();
 

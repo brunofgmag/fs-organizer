@@ -150,6 +150,29 @@ FileOperationResult LibraryOrganizer::CreateCategory(const SimulatorProfile& pro
     return FileOperationResult{folder, result};
 }
 
+FileOperationResult LibraryOrganizer::DeclareCategory(const SimulatorProfile& profile,
+                                                      const std::filesystem::path& folder) const
+{
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return FileOperationResult{folder, FileResult::TheSimulatorIsRunning};
+    }
+
+    const Library* library = LibraryContaining(profile, folder);
+    if (library == nullptr || ComparablePath(folder) == ComparablePath(library->path))
+    {
+        return FileOperationResult{folder, FileResult::TheTargetIsNotInALibrary};
+    }
+
+    const bool there = filesystemProbe_.TargetDirectoryExists(folder);
+    const bool declared = there && files_.WriteHiddenFile(CategoryMarkerPathIn(folder));
+    const FileResult result = declared ? FileResult::Completed : FileResult::CouldNotCreateTheCategory;
+
+    Record(OperationKind::CreateCategory, IdentityOf(profile, folder), {}, folder, result);
+
+    return FileOperationResult{folder, result};
+}
+
 FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
                                                      const std::filesystem::path& category) const
 {

@@ -34,6 +34,9 @@ public:
     [[nodiscard]] FileOperationResult
     CreateCategory(const SimulatorProfile& profile, const std::filesystem::path& parent, const std::string& name) const;
 
+    [[nodiscard]] FileOperationResult DeclareCategory(const SimulatorProfile& profile,
+                                                      const std::filesystem::path& folder) const;
+
     [[nodiscard]] FileOperationResult
     RenameCategory(SimulatorProfile& profile, const std::filesystem::path& category, const std::string& name) const;
 
