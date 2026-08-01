@@ -31,6 +31,8 @@ set(APPLICATION_SOURCES
         src/application/SetupService.cpp
 )
 
+# Everything the portable configuration already compiles today, Windows names included:
+# these adapters reach the platform through std::filesystem and Qt, never through win32.
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
@@ -43,14 +45,22 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/SingleInstance.cpp
-        src/infrastructure/platform/WindowsKnownFolders.cpp
-        src/view/platform/WindowsTitleBar.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
-        src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
+)
+
+# The three that do include windows.h, so no test target outside Windows ever sees them.
+set(WINDOWS_INFRASTRUCTURE_SOURCES
+        src/infrastructure/platform/WindowsKnownFolders.cpp
+        src/infrastructure/sim/WindowsUserCfgLocations.cpp
+        src/view/platform/WindowsTitleBar.cpp
+)
+
+# Qt6::Network is not among the components the portable configuration asks for.
+set(NETWORK_INFRASTRUCTURE_SOURCES
         src/infrastructure/update/GithubUpdateService.cpp
 )
 
@@ -117,7 +127,8 @@ set(WINDOWS_SHELL_SOURCES
 
 set(APP_SOURCES
         src/main.cpp
-        ${INFRASTRUCTURE_SOURCES}
+        ${WINDOWS_INFRASTRUCTURE_SOURCES}
+        ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
 )
 

@@ -36,7 +36,7 @@ target_precompile_headers(${APP_NAME} PRIVATE
 
 target_link_libraries(${APP_NAME} PRIVATE
         fsorg-view
-        fsorg-application
+        fsorg-infrastructure
         Qt6::Widgets
         Qt6::Network
         dwmapi

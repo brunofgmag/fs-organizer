@@ -264,64 +264,59 @@ fsorg_add_qt_test(fsorg-session-tests session
 target_link_libraries(fsorg-session-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
-        tests/infrastructure/catalog/tst_json_manifest_parser.cpp
-        src/infrastructure/catalog/JsonManifestParser.cpp)
+        tests/infrastructure/catalog/tst_json_manifest_parser.cpp)
+target_link_libraries(fsorg-json-manifest-parser-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-filesystem-scanner-tests filesystem-scanner
         tests/infrastructure/catalog/tst_filesystem_scanner.cpp
         tests/support/PathPrinting.h
         tests/support/StdFilesystemProbe.h
-        src/domain/importing/ImportPaths.h
-        src/infrastructure/catalog/JsonManifestParser.cpp
-        src/infrastructure/catalog/FilesystemScanner.cpp)
+        src/domain/importing/ImportPaths.h)
+target_link_libraries(fsorg-filesystem-scanner-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-jsonl-operation-journal-tests jsonl-operation-journal
-        tests/infrastructure/journal/tst_jsonl_operation_journal.cpp
-        src/infrastructure/journal/JsonlOperationJournal.cpp)
+        tests/infrastructure/journal/tst_jsonl_operation_journal.cpp)
+target_link_libraries(fsorg-jsonl-operation-journal-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-json-settings-repository-tests json-settings-repository
         tests/infrastructure/settings/tst_json_settings_repository.cpp
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/infrastructure/settings/JsonSettingsRepository.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-json-settings-repository-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-file-preset-repository-tests file-preset-repository
         tests/infrastructure/preset/tst_file_preset_repository.cpp
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h
-        src/infrastructure/preset/FilePresetRepository.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-file-preset-repository-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-ini-legacy-config-reader-tests ini-legacy-config-reader
         tests/infrastructure/legacy/tst_ini_legacy_config_reader.cpp
-        src/domain/support/PathUtils.h
-        src/infrastructure/legacy/IniLegacyConfigReader.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-ini-legacy-config-reader-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-legacy-preset-reader-tests legacy-preset-reader
         tests/infrastructure/legacy/tst_legacy_preset_reader.cpp
         tests/support/PathPrinting.h
-        src/domain/support/PathUtils.h
-        src/infrastructure/legacy/IniLegacyConfigReader.cpp
-        src/infrastructure/legacy/LegacyPresetReader.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-legacy-preset-reader-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-windows-legacy-config-source-tests windows-legacy-config-source
         tests/infrastructure/legacy/tst_windows_legacy_config_source.cpp
-        src/domain/support/PathUtils.h
-        src/infrastructure/legacy/IniLegacyConfigReader.cpp
-        src/infrastructure/legacy/LegacyPresetReader.cpp
-        src/infrastructure/legacy/WindowsLegacyConfigSource.cpp)
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-windows-legacy-config-source-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-github-release-parser-tests github-release-parser
-        tests/infrastructure/update/tst_github_release_parser.cpp
-        src/infrastructure/update/GithubReleaseParser.cpp)
+        tests/infrastructure/update/tst_github_release_parser.cpp)
+target_link_libraries(fsorg-github-release-parser-tests PRIVATE fsorg-infrastructure)
 target_compile_definitions(fsorg-github-release-parser-tests PRIVATE
         FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
 
 if (NOT FSORG_TESTS_ONLY)
     fsorg_add_qt_test(fsorg-github-update-service-tests github-update-service
             tests/infrastructure/update/tst_github_update_service.cpp
-            src/infrastructure/update/GithubReleaseParser.cpp
             src/infrastructure/update/GithubUpdateService.cpp)
-    target_link_libraries(fsorg-github-update-service-tests PRIVATE Qt6::Network)
+    target_link_libraries(fsorg-github-update-service-tests PRIVATE fsorg-infrastructure Qt6::Network)
 
     if (WIN32)
         add_custom_command(TARGET fsorg-github-update-service-tests POST_BUILD
@@ -487,72 +482,50 @@ target_link_libraries(fsorg-import-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locator
         tests/infrastructure/sim/tst_windows_simulator_locator.cpp
-        tests/support/PathPrinting.h
-        src/infrastructure/sim/WindowsSimulatorLocator.cpp)
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-windows-simulator-locator-tests PRIVATE fsorg-infrastructure)
 
 if (WIN32)
     fsorg_add_qt_test(fsorg-windows-link-service-tests windows-link-service
             tests/infrastructure/link/tst_windows_link_service.cpp
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
-            src/domain/support/PathUtils.h
-            src/infrastructure/link/WindowsLinkService.cpp)
+            src/domain/support/PathUtils.h)
+    target_link_libraries(fsorg-windows-link-service-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-windows-file-operations-tests windows-file-operations
             tests/infrastructure/fileops/tst_windows_file_operations.cpp
-            tests/support/PathPrinting.h
-            src/infrastructure/link/WindowsLinkService.cpp
-            src/infrastructure/fileops/WindowsFileOperations.cpp)
+            tests/support/PathPrinting.h)
+
+    target_link_libraries(fsorg-windows-file-operations-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-import-on-real-disk-tests import-on-real-disk
             tests/infrastructure/importing/tst_import_on_real_disk.cpp
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
-            src/domain/importing/ImportPaths.h
-            src/infrastructure/catalog/FilesystemScanner.cpp
-            src/infrastructure/catalog/JsonManifestParser.cpp
-            src/infrastructure/fileops/WindowsFileOperations.cpp
-            src/infrastructure/fileops/WindowsFilesystemProbe.cpp
-            src/infrastructure/journal/JsonlOperationJournal.cpp
-            src/infrastructure/link/WindowsLinkService.cpp
-            src/infrastructure/sim/WindowsProcessProbe.cpp)
-    target_link_libraries(fsorg-import-on-real-disk-tests PRIVATE fsorg-application)
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-import-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
             tests/infrastructure/options/tst_options_on_real_disk.cpp
             tests/doubles/InlineBackgroundRunner.h
             tests/doubles/RecordingSessionObserver.h
             tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h
-            src/infrastructure/catalog/FilesystemScanner.cpp
-            src/infrastructure/catalog/JsonManifestParser.cpp
-            src/infrastructure/fileops/WindowsFileOperations.cpp
-            src/infrastructure/fileops/WindowsFilesystemProbe.cpp
-            src/infrastructure/id/UuidLibraryIdGenerator.cpp
-            src/infrastructure/journal/JsonlOperationJournal.cpp
-            src/infrastructure/link/WindowsLinkService.cpp
-            src/infrastructure/settings/JsonSettingsRepository.cpp
-            src/infrastructure/sim/WindowsProcessProbe.cpp)
-    target_link_libraries(fsorg-options-on-real-disk-tests PRIVATE fsorg-application)
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-options-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-preset-on-real-disk-tests preset-on-real-disk
             tests/infrastructure/preset/tst_preset_on_real_disk.cpp
             tests/doubles/FakeLibraryIdGenerator.h
             tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h
-            src/infrastructure/catalog/FilesystemScanner.cpp
-            src/infrastructure/catalog/JsonManifestParser.cpp
-            src/infrastructure/fileops/WindowsFilesystemProbe.cpp
-            src/infrastructure/journal/JsonlOperationJournal.cpp
-            src/infrastructure/link/WindowsLinkService.cpp
-            src/infrastructure/preset/FilePresetRepository.cpp)
-    target_link_libraries(fsorg-preset-on-real-disk-tests PRIVATE fsorg-application)
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-preset-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
-            tests/support/PathPrinting.h
-            src/infrastructure/link/WindowsLinkService.cpp
-            src/infrastructure/fileops/WindowsFilesystemProbe.cpp)
+            tests/support/PathPrinting.h)
+
+    target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)
 
     if (NOT FSORG_TESTS_ONLY)
         fsorg_add_qt_test(fsorg-main-window-tests main-window
@@ -645,12 +618,14 @@ if (WIN32)
     endif ()
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
-            tests/infrastructure/sim/tst_windows_process_probe.cpp
-            src/infrastructure/sim/WindowsProcessProbe.cpp)
+            tests/infrastructure/sim/tst_windows_process_probe.cpp)
+
+    target_link_libraries(fsorg-windows-process-probe-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-single-instance-tests single-instance
-            tests/infrastructure/platform/tst_single_instance.cpp
-            src/infrastructure/platform/SingleInstance.cpp)
+            tests/infrastructure/platform/tst_single_instance.cpp)
+
+    target_link_libraries(fsorg-single-instance-tests PRIVATE fsorg-infrastructure)
 endif ()
 
 fsorg_add_qt_test(fsorg-table-columns-tests table-columns
