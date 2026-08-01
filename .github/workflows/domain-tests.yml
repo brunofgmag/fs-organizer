@@ -42,7 +42,7 @@ jobs:
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
 
       - name: Build
-        run: cmake --build build/tests-only --parallel
+        run: cmake --build build/tests-only --parallel 2
 
       - name: Test
         run: ctest --test-dir build/tests-only --output-on-failure
