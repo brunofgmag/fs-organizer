@@ -338,10 +338,10 @@ void ContextPanelTest::TheStripKeepsQuietUntilSomethingBreaks()
 {
     TriageStrip strip;
 
-    strip.ShowBreakdown(0, 0, 0, 0);
+    strip.ShowBreakdown({});
     QVERIFY(!strip.HasAnythingToSay());
 
-    strip.ShowBreakdown(0, 0, 0, 178);
+    strip.ShowBreakdown({.unmanaged = 178});
     QVERIFY(strip.HasAnythingToSay());
 
     strip.show();
@@ -360,7 +360,7 @@ void ContextPanelTest::ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen()
 {
     TriageStrip strip;
 
-    strip.ShowBreakdown(0, 0, 2, 0);
+    strip.ShowBreakdown({.duplicated = 2});
     QVERIFY(strip.HasAnythingToSay());
 
     strip.show();

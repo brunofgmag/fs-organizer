@@ -137,9 +137,9 @@ namespace
         const double cost = PaintCostOf(view);
         const double repainted = WhatANotchRepaints(view);
 
-        Out() << what.leftJustified(32) << QString::number(cost, 'f', 2).rightJustified(6) << " ms por pintura"
-              << "   repinta " << QString::number(repainted, 'f', 0) << " de " << view.viewport()->height()
-              << " px por entalhe\n";
+        Out() << what.leftJustified(32) << QString::number(cost, 'f', 2).rightJustified(6) << " ms per paint"
+              << "   repaints " << QString::number(repainted, 'f', 0) << " of " << view.viewport()->height()
+              << " px per notch\n";
         Out().flush();
     }
 
@@ -234,10 +234,10 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         bare.hide();
     }
 
-    Out() << "\ndelegate do Qt " << QString::number(withTheStockDelegate, 'f', 2) << " ms -> nosso "
+    Out() << "\nQt delegate " << QString::number(withTheStockDelegate, 'f', 2) << " ms -> ours "
           << QString::number(asShipped, 'f', 2) << " ms\n";
     Out() << "budget per frame: " << kBudgetPerFrame << " ms\n";
-    Out() << (asShipped > kBudgetPerFrame ? "VERMELHO: o scroll engasga\n" : "VERDE\n");
+    Out() << (asShipped > kBudgetPerFrame ? "RED: the scroll stutters\n" : "GREEN\n");
     Out().flush();
 
     return asShipped > kBudgetPerFrame ? 1 : 0;

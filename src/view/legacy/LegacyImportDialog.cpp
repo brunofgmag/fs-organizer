@@ -106,7 +106,7 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
     Fill();
 }
 
-void LegacyImportDialog::Fill() const
+void LegacyImportDialog::Fill()
 {
     tree_->clear();
 
@@ -223,19 +223,21 @@ void LegacyImportDialog::Import()
         presets.entriesNotFound += one.entriesNotFound;
     }
 
-    QString said =
-        tr("%1 libraries and %2 categories imported.").arg(report.librariesRegistered).arg(report.categoriesDeclared);
+    QString said = tr("%1 and %2 imported.")
+                       .arg(tr("%n library", nullptr, static_cast<int>(report.librariesRegistered)),
+                            tr("%n category", nullptr, static_cast<int>(report.categoriesDeclared)));
 
     if (presets.imported > 0 || presets.nameAlreadyTaken > 0)
     {
-        said += tr(" %1 presets imported, %2 with a name already used here.")
-                    .arg(presets.imported)
+        said += tr(" %1 imported, %2 with a name already used here.")
+                    .arg(tr("%n preset", nullptr, static_cast<int>(presets.imported)))
                     .arg(presets.nameAlreadyTaken);
     }
 
     if (!report.refused.empty())
     {
-        said += tr(" %1 refused for being inside an already registered library.").arg(report.refused.size());
+        said += tr(" %n refused for being inside an already registered library.", nullptr,
+                   static_cast<int>(report.refused.size()));
     }
 
     emit StatusChanged(said);

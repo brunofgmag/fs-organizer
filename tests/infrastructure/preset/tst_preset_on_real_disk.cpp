@@ -77,7 +77,7 @@ namespace
             profile.id = "msfs2024";
             profile.destinations = {Community(), Streamed()};
             profile.defaultDestination = Community();
-            profile.libraries = {::Library{.id = "lib-1", .path = Library(), .label = "Library"}};
+            profile.libraries = {::Library{.id = "lib-1", .path = Library(), .label = "Biblioteca"}};
 
             return profile;
         }
@@ -174,9 +174,9 @@ void PresetOnRealDiskTest::ACapturedPresetNamesExactlyTheAddonsThatAreLinked()
 
     QCOMPARE(EnabledAddonFolders(snapshot.entries).size(), std::size_t{3});
 
-    QVERIFY(composed.service.Create(profile, snapshot, "Short hop"));
+    QVERIFY(composed.service.Create(profile, snapshot, "Voo curto"));
 
-    const std::optional<Preset> stored = composed.service.Load(profile.id, "Short hop");
+    const std::optional<Preset> stored = composed.service.Load(profile.id, "Voo curto");
 
     QVERIFY(stored.has_value());
     QCOMPARE(stored->entries.size(), std::size_t{3});
@@ -195,7 +195,7 @@ void PresetOnRealDiskTest::UpdatingACapturedPresetKeepsNamingOnlyWhatIsLinked()
     ReallyEnable(composed, disk, "Aircrafts", 0);
     ReallyEnable(composed, disk, "Sceneries", 2);
 
-    QVERIFY(composed.service.Create(profile, composed.profiles.Scan(profile), "Short hop"));
+    QVERIFY(composed.service.Create(profile, composed.profiles.Scan(profile), "Voo curto"));
 
     ReallyEnable(composed, disk, "Utils", 1);
     ReallyEnable(composed, disk, "Utils", 3);
@@ -204,9 +204,9 @@ void PresetOnRealDiskTest::UpdatingACapturedPresetKeepsNamingOnlyWhatIsLinked()
 
     QCOMPARE(EnabledAddonFolders(snapshot.entries).size(), std::size_t{4});
 
-    QVERIFY(composed.service.Update(profile, snapshot, "Short hop"));
+    QVERIFY(composed.service.Update(profile, snapshot, "Voo curto"));
 
-    const std::optional<Preset> stored = composed.service.Load(profile.id, "Short hop");
+    const std::optional<Preset> stored = composed.service.Load(profile.id, "Voo curto");
 
     QVERIFY(stored.has_value());
     QCOMPARE(stored->entries.size(), std::size_t{4});
@@ -227,9 +227,9 @@ void PresetOnRealDiskTest::ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsI
     ReallyEnable(composed, disk, "Utils", 1);
 
     const ProfileSnapshot snapshot = composed.profiles.Scan(profile);
-    QVERIFY(composed.service.Create(profile, snapshot, "Short hop"));
+    QVERIFY(composed.service.Create(profile, snapshot, "Voo curto"));
 
-    const std::optional<Preset> stored = composed.service.Load(profile.id, "Short hop");
+    const std::optional<Preset> stored = composed.service.Load(profile.id, "Voo curto");
     QVERIFY(stored.has_value());
 
     const PresetPlan plan =

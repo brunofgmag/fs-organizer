@@ -74,18 +74,16 @@ namespace
 
             if (event->type() == QEvent::MouseButtonRelease)
             {
-                const auto* mouse = dynamic_cast<QMouseEvent*>(event);
-
-                if (mouse == nullptr || !option.rect.contains(mouse->position().toPoint()))
+                if (!option.rect.contains(static_cast<QMouseEvent*>(event)->position().toPoint()))
                 {
                     return false;
                 }
             }
             else if (event->type() == QEvent::KeyPress)
             {
-                const auto* keys = dynamic_cast<QKeyEvent*>(event);
+                const int key = static_cast<QKeyEvent*>(event)->key();
 
-                if (keys == nullptr || (keys->key() != Qt::Key_Space && keys->key() != Qt::Key_Select))
+                if (key != Qt::Key_Space && key != Qt::Key_Select)
                 {
                     return false;
                 }
@@ -164,13 +162,12 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     entries_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(entries_->horizontalHeader());
 
-    auto* panel = new ContextPanel(tr("Apply as"), 440, this);
+    auto* panel = new ContextPanel({}, 440, this);
     panel->setObjectName(QStringLiteral("PresetApplyPanel"));
     panel_ = panel;
 
     applyAs_ = new QLabel(panel);
-    QLabel* heading = applyAs_;
-    heading->setObjectName(QStringLiteral("PanelSubHeading"));
+    applyAs_->setObjectName(QStringLiteral("PanelSubHeading"));
 
     modes_ = new QButtonGroup(panel);
     auto* replace = new QRadioButton(panel);
@@ -192,23 +189,22 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     preview_->setWordWrap(true);
 
     promise_ = new QLabel(panel);
-    QLabel* promise = promise_;
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
+    promise_->setObjectName(QStringLiteral("PanelPromise"));
+    promise_->setWordWrap(true);
 
     apply_ = new QPushButton(panel);
     apply_->setObjectName(QStringLiteral("PresetApply"));
     apply_->setProperty("role", "primary");
     apply_->setDefault(true);
 
-    panel->Add(heading);
+    panel->Add(applyAs_);
     panel->Add(replace);
     panel->Add(cumulative);
     panel->Add(disable);
     panel->Add(modeExplained_);
     panel->Add(preview_);
     panel->Add(apply_);
-    panel->Add(promise);
+    panel->Add(promise_);
 
     panel->RestoreCollapsedState();
 
@@ -229,11 +225,10 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     pages_ = new QStackedWidget(this);
     pages_->addWidget(kept);
 
-    nothing_ = new EmptyState(QString{}, QString{}, this);
-    EmptyState* nothing = nothing_;
-    nothingAction_ = nothing->OfferTheOnlyAction(QString{});
+    nothing_ = new EmptyState(this);
+    nothingAction_ = nothing_->OfferTheOnlyAction();
     connect(nothingAction_, &QPushButton::clicked, this, &PresetsPage::CreateFromWhatIsEnabled);
-    pages_->addWidget(nothing);
+    pages_->addWidget(nothing_);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);

@@ -3,6 +3,7 @@
 
 #include <filesystem>
 
+#include <QtCore/QStringList>
 #include <QtWidgets/QWidget>
 
 #include "viewmodel/OptionsViewModel.h"
@@ -44,6 +45,10 @@ protected:
 private:
     void RetranslateUi();
 
+    [[nodiscard]] QStringList PaneNames() const;
+
+    void FillPanes();
+
     [[nodiscard]] QWidget* CreateNavigation();
 
     [[nodiscard]] QWidget* CreateProfilesAndLibraries();
@@ -51,6 +56,8 @@ private:
     [[nodiscard]] QWidget* CreateLinks();
 
     [[nodiscard]] QWidget* Choice(const QString& name, const QString& explanation, QWidget* control, bool follows);
+
+    [[nodiscard]] QWidget* Choice(const QString& name, QWidget* control, bool follows);
 
     [[nodiscard]] QWidget* CreateUpdates();
 

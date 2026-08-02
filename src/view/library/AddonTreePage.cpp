@@ -1,10 +1,9 @@
 #include "view/library/AddonTreePage.h"
 
-#include <QtCore/QEvent>
-
 #include <algorithm>
 #include <ranges>
 
+#include <QtCore/QEvent>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
 #include <QtWidgets/QCheckBox>
@@ -33,6 +32,7 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/FailureText.h"
+#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
 
 namespace
@@ -173,7 +173,7 @@ void AddonTreePage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        model_.Retranslated();
+        SayTheModelWasRetranslated(model_);
         ShowTheSelectedAddon();
         PublishSummary();
     }
@@ -251,9 +251,9 @@ QWidget* AddonTreePage::CreateActions()
 
 QWidget* AddonTreePage::CreateInvite()
 {
-    invite_ = new EmptyState(QString{}, QString{}, this);
+    invite_ = new EmptyState(this);
 
-    inviteAction_ = invite_->OfferTheOnlyAction(QString{});
+    inviteAction_ = invite_->OfferTheOnlyAction();
     connect(inviteAction_, &QPushButton::clicked, this, &AddonTreePage::BrowseForLibrary);
 
     return invite_;
@@ -598,7 +598,7 @@ void AddonTreePage::PublishSummary()
     const auto addons = static_cast<int>(model_.AddonCount());
     const auto enabled = static_cast<int>(model_.EnabledCount());
 
-    emit SummaryChanged(tr("%1 addons · %2 enabled").arg(addons).arg(enabled));
+    emit SummaryChanged(tr("%1 · %2").arg(tr("%n addon", nullptr, addons), tr("%n enabled", nullptr, enabled)));
     emit MeterChanged(enabled, addons);
 }
 

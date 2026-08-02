@@ -223,7 +223,7 @@ void LegacyImportDialogTest::APresetOfTheOldProgramIsOfferedAndLandsInTheProfile
     f.legacy.Add(installation);
 
     LegacyPresetSelection selection;
-    selection.name = "Short hop";
+    selection.name = "Voo curto";
     selection.enabledAddonNames = {"pmdg-aircraft-77w"};
     f.legacy.PlacePreset("C:/ProgramData/MSFS Addons Linker 2024/Presets", selection);
 
@@ -232,7 +232,7 @@ void LegacyImportDialogTest::APresetOfTheOldProgramIsOfferedAndLandsInTheProfile
     ButtonLabelled(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(f.presets.List("msfs2024").size(), std::size_t{1});
-    QCOMPARE(f.presets.Load("msfs2024", "Short hop")->entries.size(), std::size_t{1});
+    QCOMPARE(f.presets.Load("msfs2024", "Voo curto")->entries.size(), std::size_t{1});
 }
 
 QTEST_MAIN(LegacyImportDialogTest)

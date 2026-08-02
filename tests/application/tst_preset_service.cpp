@@ -124,9 +124,9 @@ void PresetServiceTest::CreatingAPresetCapturesWhatIsEnabledRightNow()
 
     const SimulatorProfile profile = Profile();
 
-    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Short hop"));
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
 
-    const std::optional<Preset> saved = f.service.Load(kProfileId, "Short hop");
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
 
     QVERIFY(saved.has_value());
     QCOMPARE(saved->entries.size(), std::size_t{1});
@@ -140,7 +140,7 @@ void PresetServiceTest::UpdatingRewritesTheEnabledEntriesAndKeepsTheDisableOnes(
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
 
     Preset stored;
-    stored.name = "Short hop";
+    stored.name = "Voo curto";
     stored.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "fenix-a320"},
                                   .action = PresetAction::Enable},
                       PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "pmdg-aircraft-77w"},
@@ -149,9 +149,9 @@ void PresetServiceTest::UpdatingRewritesTheEnabledEntriesAndKeepsTheDisableOnes(
 
     const SimulatorProfile profile = Profile();
 
-    QVERIFY(f.service.Update(profile, f.Snapshot(profile), "Short hop"));
+    QVERIFY(f.service.Update(profile, f.Snapshot(profile), "Voo curto"));
 
-    const std::optional<Preset> saved = f.service.Load(kProfileId, "Short hop");
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
 
     QVERIFY(saved.has_value());
     QCOMPARE(saved->entries.size(), std::size_t{2});
@@ -168,16 +168,16 @@ void PresetServiceTest::UpdatingDropsADisableEntryForAnAddonThatIsOnAgain()
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
 
     Preset stored;
-    stored.name = "Short hop";
+    stored.name = "Voo curto";
     stored.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "pmdg-aircraft-77w"},
                                   .action = PresetAction::Disable}};
     QVERIFY(f.repository.Save(kProfileId, stored));
 
     const SimulatorProfile profile = Profile();
 
-    QVERIFY(f.service.Update(profile, f.Snapshot(profile), "Short hop"));
+    QVERIFY(f.service.Update(profile, f.Snapshot(profile), "Voo curto"));
 
-    const std::optional<Preset> saved = f.service.Load(kProfileId, "Short hop");
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
 
     QVERIFY(saved.has_value());
     QCOMPARE(saved->entries.size(), std::size_t{1});
@@ -189,18 +189,18 @@ void PresetServiceTest::SettingAnActionRefusesWhenTheRowNoLongerHoldsThatAddon()
     Fixture f;
 
     Preset stored;
-    stored.name = "Short hop";
+    stored.name = "Voo curto";
     stored.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
                                   .action = PresetAction::Enable},
                       PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "fenix-a320"},
                                   .action = PresetAction::Enable}};
     QVERIFY(f.repository.Save(kProfileId, stored));
 
-    QVERIFY(f.service.SetAction(kProfileId, "Short hop", 1, AddonId{kLibraryId, "fenix-a320"}, PresetAction::Disable));
+    QVERIFY(f.service.SetAction(kProfileId, "Voo curto", 1, AddonId{kLibraryId, "fenix-a320"}, PresetAction::Disable));
     QVERIFY(
-        !f.service.SetAction(kProfileId, "Short hop", 1, AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Disable));
+        !f.service.SetAction(kProfileId, "Voo curto", 1, AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Disable));
 
-    const std::optional<Preset> saved = f.service.Load(kProfileId, "Short hop");
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
 
     QVERIFY(saved.has_value());
     QVERIFY(saved->entries.front().action == PresetAction::Enable);
@@ -214,7 +214,7 @@ void PresetServiceTest::ApplyingInReplaceRestoresExactlyTheSavedSet()
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/fenix-a320", "D:/MSFS 2024/Aircrafts/fenix-a320");
 
     const SimulatorProfile profile = Profile();
-    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Short hop"));
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
 
     const ProfileSnapshot before = f.Snapshot(profile);
     QCOMPARE(
@@ -222,7 +222,7 @@ void PresetServiceTest::ApplyingInReplaceRestoresExactlyTheSavedSet()
             .size(),
         std::size_t{2});
 
-    const std::optional<Preset> preset = f.service.Load(kProfileId, "Short hop");
+    const std::optional<Preset> preset = f.service.Load(kProfileId, "Voo curto");
     QVERIFY(preset.has_value());
 
     const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), *preset, ApplyMode::Replace);
@@ -241,7 +241,7 @@ void PresetServiceTest::ReplaceLeavesAFolderTheAppDidNotLinkAlone()
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/fenix-a320", "D:/MSFS 2024/Aircrafts/fenix-a320");
 
     Preset preset;
-    preset.name = "Short hop";
+    preset.name = "Voo curto";
     preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
                                   .action = PresetAction::Enable}};
 
@@ -260,10 +260,10 @@ void PresetServiceTest::ApplyingReportsTheEntriesThatNoLongerResolve()
     Fixture f;
 
     Preset preset;
-    preset.name = "Short hop";
+    preset.name = "Voo curto";
     preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
                                   .action = PresetAction::Enable},
-                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-that-vanished"},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
                                   .action = PresetAction::Enable}};
 
     const SimulatorProfile profile = Profile();
@@ -271,7 +271,7 @@ void PresetServiceTest::ApplyingReportsTheEntriesThatNoLongerResolve()
     const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Cumulative);
 
     QCOMPARE(report.unresolved.size(), std::size_t{1});
-    QCOMPARE(QString::fromStdString(report.unresolved.front().folderName), QString{"aircraft-that-vanished"});
+    QCOMPARE(QString::fromStdString(report.unresolved.front().folderName), QString{"aircraft-que-sumiu"});
     QCOMPARE(report.results.size(), std::size_t{1});
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
 }

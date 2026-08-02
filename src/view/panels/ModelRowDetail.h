@@ -24,7 +24,7 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
-    void Clear() const;
+    void Clear();
 
     QGridLayout* rows_ = nullptr;
     QPersistentModelIndex shown_;

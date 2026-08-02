@@ -15,6 +15,7 @@
 #include "view/panels/ModelRowDetail.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
+#include "viewmodel/ModelRetranslation.h"
 
 JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidget* parent)
     : QWidget(parent), viewModel_(viewModel), model_(model)
@@ -94,7 +95,7 @@ void JournalPage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        model_.Retranslated();
+        SayTheModelWasRetranslated(model_);
         UpdateSummary();
         ShowTheSelectedOperation();
     }

@@ -245,58 +245,76 @@ void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
     emit Changed();
 }
 
-void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
+bool OptionsViewModel::Rewrite(const std::function<bool(AppSettings&)>& change)
 {
     const std::optional<AppSettings> loaded = settings_.Load();
     if (!loaded.has_value())
     {
         emit SettingsCouldNotBeSaved();
-        return;
-    }
-
-    if (loaded->updateMode == mode)
-    {
-        return;
+        return false;
     }
 
     AppSettings settings = *loaded;
-    settings.updateMode = mode;
+    if (!change(settings))
+    {
+        return false;
+    }
 
     if (!settings_.Save(settings))
     {
         emit SettingsCouldNotBeSaved();
+        return false;
     }
+
+    return true;
 }
 
-std::string OptionsViewModel::Language() const
+void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
 {
-    return settings_.Load().value_or(AppSettings{}).language;
+    static_cast<void>(Rewrite(
+        [mode](AppSettings& settings)
+        {
+            if (settings.updateMode == mode)
+            {
+                return false;
+            }
+
+            settings.updateMode = mode;
+
+            return true;
+        }));
+}
+
+std::optional<std::string> OptionsViewModel::Language() const
+{
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        return std::nullopt;
+    }
+
+    return loaded->language;
 }
 
 void OptionsViewModel::ChooseLanguage(const std::string& language)
 {
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
+    const bool written = Rewrite(
+        [&language](AppSettings& settings)
+        {
+            if (settings.language == language)
+            {
+                return false;
+            }
+
+            settings.language = language;
+
+            return true;
+        });
+
+    if (written)
     {
-        emit SettingsCouldNotBeSaved();
-        return;
+        emit LanguageChosen(QString::fromStdString(language));
     }
-
-    if (loaded->language == language)
-    {
-        return;
-    }
-
-    AppSettings settings = *loaded;
-    settings.language = language;
-
-    if (!settings_.Save(settings))
-    {
-        emit SettingsCouldNotBeSaved();
-        return;
-    }
-
-    emit LanguageChosen(QString::fromStdString(language));
 }
 
 void OptionsViewModel::RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const

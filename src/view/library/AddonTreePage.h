@@ -12,11 +12,11 @@
 #include "viewmodel/SessionNotifier.h"
 
 class ContextPanel;
-class QLabel;
-class QLineEdit;
-class QCheckBox;
 class EmptyState;
 class ModelRowDetail;
+class QCheckBox;
+class QLabel;
+class QLineEdit;
 class QMenu;
 class QPushButton;
 class QStackedWidget;

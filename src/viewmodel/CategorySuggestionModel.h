@@ -12,12 +12,6 @@ class CategorySuggestionModel final : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    void Retranslated()
-    {
-        emit layoutAboutToBeChanged();
-        emit layoutChanged();
-    }
-
     enum Column
     {
         AddonColumn = 0,

@@ -1,4 +1,6 @@
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
+#include <QtCore/QTranslator>
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
@@ -41,6 +43,7 @@ namespace
         static void TheNameTableWritesTheContentAndTheDayBesideEachPreset();
         static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
         static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
+        static void ALanguageChangeReachesTheApplyButtonAndTheModeExplanation();
     };
 }
 
@@ -89,6 +92,20 @@ namespace
         return profile;
     }
 
+    class MarkingTranslator final : public QTranslator
+    {
+    public:
+        [[nodiscard]] bool isEmpty() const override
+        {
+            return false;
+        }
+
+        [[nodiscard]] QString translate(const char*, const char* source, const char*, int) const override
+        {
+            return QStringLiteral("<%1>").arg(QString::fromUtf8(source));
+        }
+    };
+
     struct Fixture
     {
         Fixture()
@@ -105,7 +122,7 @@ namespace
 
             session.ShowActiveProfile();
 
-            viewModel.Create(QStringLiteral("Airline flight"));
+            viewModel.Create(QStringLiteral("Voo de linha"));
         }
 
         InMemoryFileSystem fileSystem;
@@ -201,7 +218,7 @@ void PresetsPageTest::TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt()
 void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
 {
     Fixture f;
-    f.presets.SayItWasWrittenAt("Airline flight",
+    f.presets.SayItWasWrittenAt("Voo de linha",
                                 std::chrono::system_clock::time_point(std::chrono::milliseconds(
                                     QDateTime(QDate(2026, 2, 17), QTime(9, 30)).toMSecsSinceEpoch())));
 
@@ -216,7 +233,7 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
     QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Content"));
     QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Changed"));
 
-    QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Airline flight"));
+    QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
     QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon · 1 category"));
     QCOMPARE(names->item(0, 2)->text(), QStringLiteral("17/02/2026"));
 }
@@ -248,7 +265,7 @@ void PresetsPageTest::FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThat
     };
 
     const int bush = rowNamed(QStringLiteral("Bush flying"));
-    const int line = rowNamed(QStringLiteral("Airline flight"));
+    const int line = rowNamed(QStringLiteral("Voo de linha"));
 
     names->setCurrentCell(bush, 0);
 
@@ -289,14 +306,46 @@ void PresetsPageTest::FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfSt
 
     names->setCurrentCell(rowNamed(QStringLiteral("Bush flying")), 0);
 
-    filter->setText(QStringLiteral("line"));
+    filter->setText(QStringLiteral("linha"));
 
-    QCOMPARE(names->currentRow(), rowNamed(QStringLiteral("Airline flight")));
+    QCOMPARE(names->currentRow(), rowNamed(QStringLiteral("Voo de linha")));
     QVERIFY(!names->isRowHidden(names->currentRow()));
 
     filter->setText(QStringLiteral("nothing matches this"));
 
     QCOMPARE(names->currentRow(), -1);
+}
+
+void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QVERIFY(names != nullptr);
+    names->setCurrentCell(0, 0);
+
+    auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
+    auto* explained = page.findChild<QLabel*>(QStringLiteral("ModeExplained"));
+    QVERIFY(apply != nullptr && explained != nullptr);
+
+    const QString applyBefore = apply->text();
+    const QString explainedBefore = explained->text();
+    QVERIFY(!applyBefore.isEmpty());
+    QVERIFY(!explainedBefore.isEmpty());
+
+    MarkingTranslator marking;
+    QCoreApplication::installTranslator(&marking);
+    QCoreApplication::processEvents();
+
+    QVERIFY2(apply->text() != applyBefore, "the apply button kept its old text after the language change");
+    QVERIFY2(explained->text() != explainedBefore, "the mode explanation kept its old text after the language change");
+
+    QCoreApplication::removeTranslator(&marking);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(apply->text(), applyBefore);
+    QCOMPARE(explained->text(), explainedBefore);
 }
 
 QTEST_MAIN(PresetsPageTest)

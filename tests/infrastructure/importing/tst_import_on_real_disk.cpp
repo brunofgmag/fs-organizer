@@ -82,7 +82,7 @@ namespace
             SimulatorProfile profile;
             profile.destinations = {Destination()};
             profile.defaultDestination = Destination();
-            profile.libraries = {Library{.id = "lib-1", .path = Root() / "Library", .label = "Library"}};
+            profile.libraries = {Library{.id = "lib-1", .path = Root() / "Library", .label = "Biblioteca"}};
 
             return profile;
         }

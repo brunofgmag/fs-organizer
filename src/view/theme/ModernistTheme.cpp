@@ -114,7 +114,6 @@ QListWidget#OptionsNav::item:selected, QListWidget#OptionsNav::item:selected:act
 }
 QListWidget#OptionsNav::item:disabled { color: %tertiary%; }
 QFrame#OptionsBox { background: %window%; border: 1px solid %divider%; }
-QFrame#OptionsNote { background: %chrome%; border: 1px solid %divider%; }
 #OptionsRow[follows="true"] { border-top: 1px solid %raised%; }
 #OptionsChoice[follows="true"] { border-top: 1px solid %divider%; }
 QLabel#OptionsGroupName {

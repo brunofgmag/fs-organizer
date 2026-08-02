@@ -26,6 +26,7 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "view/options/OptionsPage.h"
+#include "view/shell/LanguageSwitch.h"
 #include "viewmodel/SessionNotifier.h"
 
 namespace
@@ -213,7 +214,7 @@ namespace
 
 void OptionsPageTest::TheLanguageTabOffersBothAndOpensOnTheStoredOne()
 {
-    const Fixture f;
+    Fixture f;
 
     auto* navigation = f.page.findChild<QListWidget*>(QStringLiteral("OptionsNav"));
     const auto* panes = f.page.findChild<QStackedWidget*>();
@@ -234,11 +235,17 @@ void OptionsPageTest::TheLanguageTabOffersBothAndOpensOnTheStoredOne()
     auto* brazilian = f.page.findChild<QRadioButton*>(QStringLiteral("BrazilianChoice"));
     QVERIFY2(english != nullptr && brazilian != nullptr, "the Language tab does not offer both languages");
 
-    QVERIFY2(english->isChecked(), "with no key written, the tab should open with the English source checked");
+    const QString resolved = LanguageSwitch::Resolve({});
+    QCOMPARE(brazilian->isChecked(), resolved == QStringLiteral("pt_BR"));
+    QCOMPARE(english->isChecked(), resolved == QStringLiteral("en"));
 
     brazilian->click();
 
     QCOMPARE(f.settings.stored.language, std::string{"pt_BR"});
+
+    f.page.Reload();
+
+    QVERIFY2(brazilian->isChecked(), "with pt_BR written, the tab must open on Brazilian Portuguese");
 }
 
 void OptionsPageTest::TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands()
@@ -299,11 +306,20 @@ void OptionsPageTest::EachLibraryGetsARowNamingWhatIsInsideIt()
     const bool named = std::ranges::any_of(labels,
                                            [](const QLabel* label)
                                            {
-                                               return label->text().contains(QStringLiteral("1 categories"))
-                                                   && label->text().contains(QStringLiteral("1 addons"));
+                                               return label->text().contains(QStringLiteral("1 category"))
+                                                   && label->text().contains(QStringLiteral("1 addon"));
                                            });
 
     QVERIFY2(named, "no library row said what is inside it");
+
+    const bool pluralOfOne = std::ranges::any_of(labels,
+                                                 [](const QLabel* label)
+                                                 {
+                                                     return label->text().contains(QStringLiteral("1 categories"))
+                                                         || label->text().contains(QStringLiteral("1 addons"));
+                                                 });
+
+    QVERIFY2(!pluralOfOne, "a row counted one thing in the plural");
 }
 
 void OptionsPageTest::TheFooterNamesTheFileEveryChangeLands()

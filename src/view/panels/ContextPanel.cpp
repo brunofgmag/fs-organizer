@@ -44,7 +44,7 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     close_->setObjectName(QStringLiteral("PanelClose"));
     close_->setAutoRaise(true);
     close_->setText(QStringLiteral("✕"));
-    close_->setToolTip(tr("Close the panel"));
+    RetranslateUi();
     close_->setCursor(Qt::PointingHandCursor);
 
     auto* headerRow = new QHBoxLayout(header);
@@ -100,9 +100,11 @@ void ContextPanel::RestoreCollapsedState()
     }
 }
 
-void ContextPanel::ShowTitle(const QString& title, const bool alarming) const
+void ContextPanel::ShowTitle(const QString& title, const bool alarming)
 {
-    const QString shown = title.isEmpty() ? fallbackTitle_ : title;
+    showingFallback_ = title.isEmpty();
+
+    const QString shown = showingFallback_ ? fallbackTitle_ : title;
 
     title_->setText(shown);
     rail_->ShowTitle(shown, alarming);
@@ -110,12 +112,11 @@ void ContextPanel::ShowTitle(const QString& title, const bool alarming) const
 
 void ContextPanel::RenameTheFallback(const QString& title)
 {
-    const bool wasShowingIt = title_->text() == fallbackTitle_;
     fallbackTitle_ = title.toUpper();
 
-    if (wasShowingIt)
+    if (showingFallback_)
     {
-        ShowTitle(QString{});
+        ShowTitle({});
     }
 }
 
@@ -128,10 +129,15 @@ void ContextPanel::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange)
     {
-        close_->setToolTip(tr("Close the panel"));
+        RetranslateUi();
     }
 
     QWidget::changeEvent(event);
+}
+
+void ContextPanel::RetranslateUi() const
+{
+    close_->setToolTip(tr("Close the panel"));
 }
 
 void ContextPanel::SetCollapsed(const bool collapsed)

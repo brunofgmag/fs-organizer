@@ -37,7 +37,7 @@ TriageStrip::TriageStrip(QWidget* parent) : QWidget(parent)
     connect(duplicated_.action, &QPushButton::clicked, this, &TriageStrip::DuplicatesRequested);
     connect(unmanaged_.action, &QPushButton::clicked, this, &TriageStrip::ImportRequested);
 
-    ShowBreakdown(0, 0, 0, 0);
+    ShowBreakdown({});
 }
 
 QFrame* TriageStrip::AddSeparator(QHBoxLayout* into)
@@ -75,12 +75,9 @@ void TriageStrip::ShowItem(const Item& item, const bool shown)
     item.action->setVisible(shown);
 }
 
-void TriageStrip::ShowBreakdown(const std::size_t broken,
-                                const std::size_t conflicts,
-                                const std::size_t duplicated,
-                                const std::size_t unmanaged)
+void TriageStrip::ShowBreakdown(const AttentionBreakdown& breakdown)
 {
-    shown_ = {broken, conflicts, duplicated, unmanaged};
+    shown_ = breakdown;
     RetranslateUi();
 }
 

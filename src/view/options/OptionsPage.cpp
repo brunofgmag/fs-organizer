@@ -21,6 +21,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/shell/LanguageSwitch.h"
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/SimulatorText.h"
 
@@ -34,9 +35,6 @@ namespace
     constexpr int kRowPaddingX = 12;
     constexpr int kRowPaddingY = 7;
     constexpr int kRowSpacing = 9;
-
-    constexpr int kEnglishRow = 0;
-    constexpr int kBrazilianRow = 1;
 
     constexpr auto kRepository = "https://github.com/brunofgmag/fs-organizer";
 
@@ -159,11 +157,7 @@ OptionsPage::OptionsPage(OptionsViewModel& viewModel,
     : QWidget(parent), viewModel_(viewModel), updates_(updates), settingsFile_(std::move(settingsFile))
 {
     panes_ = new QStackedWidget(this);
-    panes_->addWidget(CreateProfilesAndLibraries());
-    panes_->addWidget(CreateLinks());
-    panes_->addWidget(CreateUpdates());
-    panes_->addWidget(CreateLanguage());
-    panes_->addWidget(CreateAbout());
+    FillPanes();
 
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -190,11 +184,11 @@ void OptionsPage::changeEvent(QEvent* event)
 
 void OptionsPage::RetranslateUi()
 {
-    navigation_->item(0)->setText(tr("Profiles and libraries"));
-    navigation_->item(1)->setText(tr("Links"));
-    navigation_->item(2)->setText(tr("Updates"));
-    navigation_->item(3)->setText(tr("Language"));
-    navigation_->item(4)->setText(tr("About"));
+    const QStringList names = PaneNames();
+    for (int row = 0; row < names.size(); ++row)
+    {
+        navigation_->item(row)->setText(names.at(row));
+    }
 
     const int shown = panes_->currentIndex();
 
@@ -208,14 +202,24 @@ void OptionsPage::RetranslateUi()
     delete updateModes_;
     delete languages_;
 
+    FillPanes();
+    panes_->setCurrentIndex(shown);
+
+    Reload();
+}
+
+QStringList OptionsPage::PaneNames() const
+{
+    return {tr("Profiles and libraries"), tr("Links"), tr("Updates"), tr("Language"), tr("About")};
+}
+
+void OptionsPage::FillPanes()
+{
     panes_->addWidget(CreateProfilesAndLibraries());
     panes_->addWidget(CreateLinks());
     panes_->addWidget(CreateUpdates());
     panes_->addWidget(CreateLanguage());
     panes_->addWidget(CreateAbout());
-    panes_->setCurrentIndex(shown);
-
-    Reload();
 }
 
 QWidget* OptionsPage::CreateNavigation()
@@ -226,12 +230,7 @@ QWidget* OptionsPage::CreateNavigation()
     navigation_->setFrameShape(QFrame::NoFrame);
     navigation_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    navigation_->addItem(tr("Profiles and libraries"));
-    navigation_->addItem(tr("Links"));
-    navigation_->addItem(tr("Updates"));
-    navigation_->addItem(tr("Language"));
-    navigation_->addItem(tr("About"));
-
+    navigation_->addItems(PaneNames());
     navigation_->setCurrentRow(0);
 
     return navigation_;
@@ -291,6 +290,11 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     scroll->setWidget(pane);
 
     return scroll;
+}
+
+QWidget* OptionsPage::Choice(const QString& name, QWidget* control, const bool follows)
+{
+    return Choice(name, {}, control, follows);
 }
 
 QWidget* OptionsPage::Choice(const QString& name, const QString& explanation, QWidget* control, const bool follows)
@@ -515,34 +519,28 @@ QWidget* OptionsPage::CreateLanguage()
 
     languages_ = new QButtonGroup(this);
 
-    const struct
-    {
-        QString name;
-        const char* objectName;
-    } offered[] = {
-        {QStringLiteral("English"), "EnglishChoice"},
-        {QStringLiteral("Português (Brasil)"), "BrazilianChoice"},
-    };
-
     bool follows = false;
-    int index = 0;
-    for (const auto& choice : offered)
+    int row = 0;
+    for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())
     {
         auto* button = new QRadioButton(pane);
-        button->setObjectName(QLatin1String(choice.objectName));
-        languages_->addButton(button, index++);
+        button->setObjectName(QLatin1String(offer.objectName));
+        languages_->addButton(button, row++);
 
-        choices->addWidget(Choice(choice.name, QString{}, button, follows));
+        choices->addWidget(Choice(QString::fromUtf8(offer.name), button, follows));
         follows = true;
     }
 
     layout->addLayout(choices);
+    layout->addWidget(Quiet(tr("The interface ships in English and in Brazilian Portuguese. Choosing a language "
+                               "writes the language key in settings.json and changes the interface right away."),
+                            pane));
     layout->addStretch();
 
     connect(languages_, &QButtonGroup::idClicked, this,
             [this](const int chosen)
             {
-                viewModel_.ChooseLanguage(chosen == kBrazilianRow ? "pt_BR" : "en");
+                viewModel_.ChooseLanguage(LanguageSwitch::Offered().at(static_cast<std::size_t>(chosen)).code);
             });
 
     return pane;
@@ -550,12 +548,22 @@ QWidget* OptionsPage::CreateLanguage()
 
 void OptionsPage::ReloadLanguage() const
 {
-    const std::string stored = viewModel_.Language();
-    const int row = stored == "pt_BR" ? kBrazilianRow : kEnglishRow;
+    const QString inUse = LanguageSwitch::Resolve(QString::fromStdString(viewModel_.Language().value_or({})));
 
-    if (QAbstractButton* chosen = languages_->button(row); chosen != nullptr)
+    int row = 0;
+    for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())
     {
-        chosen->setChecked(true);
+        if (inUse == QLatin1String(offer.code))
+        {
+            if (QAbstractButton* chosen = languages_->button(row); chosen != nullptr)
+            {
+                chosen->setChecked(true);
+            }
+
+            return;
+        }
+
+        ++row;
     }
 }
 
@@ -576,7 +584,6 @@ QWidget* OptionsPage::CreateAbout()
     layout->addWidget(Quiet(tr("Created by %1.").arg(QStringLiteral("Bruno Magalhães")), pane));
 
     auto* repository = new QLabel(pane);
-    repository->setObjectName(QStringLiteral("AboutRepository"));
     repository->setText(QStringLiteral("<a href=\"%1\">%1</a>").arg(kRepository));
     repository->setTextInteractionFlags(Qt::TextBrowserInteraction);
     repository->setOpenExternalLinks(true);
@@ -633,12 +640,14 @@ void OptionsPage::ReloadProfiles()
         profileChoices_->addButton(chosen);
         layout->addWidget(chosen);
 
+        const QString destinations = tr("%n destination", nullptr, static_cast<int>(profile.destinations));
+        const QString libraries = tr("%n library", nullptr, static_cast<int>(profile.libraries));
+
         const QString counted = profile.active
-            ? tr("%1 destinations · %2 libraries · %3 addons")
-                  .arg(profile.destinations)
-                  .arg(profile.libraries)
-                  .arg(viewModel_.AddonsInTheActiveProfile())
-            : tr("%1 destinations · %2 libraries").arg(profile.destinations).arg(profile.libraries);
+            ? tr("%1 · %2 · %3")
+                  .arg(destinations, libraries,
+                       tr("%n addon", nullptr, static_cast<int>(viewModel_.AddonsInTheActiveProfile())))
+            : tr("%1 · %2").arg(destinations, libraries);
 
         layout->addWidget(Detail(counted, row));
         layout->addStretch();
@@ -723,7 +732,9 @@ void OptionsPage::ReloadLibraries()
         layout->addWidget(name);
 
         const QString counted = library.counted
-            ? tr("%1 · %2 categories, %3 addons").arg(AsText(library.path)).arg(library.categories).arg(library.addons)
+            ? tr("%1 · %2, %3")
+                  .arg(AsText(library.path), tr("%n category", nullptr, static_cast<int>(library.categories)),
+                       tr("%n addon", nullptr, static_cast<int>(library.addons)))
             : AsText(library.path);
 
         layout->addWidget(Detail(counted, row), 1);
@@ -808,7 +819,9 @@ void OptionsPage::AddLibrary()
 
     Reload();
 
-    emit StatusChanged(tr("Library registered: %1 categories, %2 addons").arg(report.categories).arg(report.addons));
+    emit StatusChanged(tr("Library registered: %1, %2")
+                           .arg(tr("%n category", nullptr, static_cast<int>(report.categories)),
+                                tr("%n addon", nullptr, static_cast<int>(report.addons))));
 }
 
 void OptionsPage::Remove(const ProfileLine& profile)

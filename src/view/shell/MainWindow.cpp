@@ -96,7 +96,6 @@ QWidget* MainWindow::CreateHeader()
     gear_->setObjectName(QStringLiteral("Gear"));
     gear_->setIcon(GearIcon(kGearGlyph));
     gear_->setIconSize(QSize(kGearGlyph, kGearGlyph));
-    gear_->setToolTip(tr("Options"));
     gear_->setCursor(Qt::PointingHandCursor);
     gear_->setFixedHeight(profiles_->sizeHint().height());
 
@@ -180,7 +179,7 @@ PageTab* MainWindow::AddPage(const char* label, QWidget* page)
     pages_->addWidget(page);
 
     auto* tab = new PageTab(tr(label), this);
-    tabSources_.insert(tab, label);
+    tab->RememberSource(label);
     tabs_->insertWidget(tabs_->count() - 1, tab);
 
     connect(tab, &PageTab::clicked, this,
@@ -224,8 +223,7 @@ void MainWindow::ShowOptions()
 
     behindTheOptions_ = pages_->currentWidget();
 
-    const PageTab* origin = tabsByPage_.value(behindTheOptions_);
-    back_->Relabel(origin != nullptr ? tr("← Back to %1").arg(origin->Label()) : tr("← Back"));
+    DressTheBackTab();
 
     for (PageTab* tab : tabsByPage_)
     {
@@ -268,12 +266,9 @@ void MainWindow::CarryTriageOn(const QWidget* page)
     triaged_.insert(page, true);
 }
 
-void MainWindow::ShowTriage(const std::size_t broken,
-                            const std::size_t conflicts,
-                            const std::size_t duplicated,
-                            const std::size_t unmanaged) const
+void MainWindow::ShowTriage(const AttentionBreakdown& breakdown) const
 {
-    triage_->ShowBreakdown(broken, conflicts, duplicated, unmanaged);
+    triage_->ShowBreakdown(breakdown);
     DressTheFooterFor(pages_->currentWidget());
 }
 
@@ -306,19 +301,24 @@ void MainWindow::changeEvent(QEvent* event)
     QMainWindow::changeEvent(event);
 }
 
+void MainWindow::DressTheBackTab() const
+{
+    const PageTab* origin = tabsByPage_.value(behindTheOptions_);
+    back_->Relabel(origin != nullptr ? tr("← Back to %1").arg(origin->Label()) : tr("← Back"));
+}
+
 void MainWindow::RetranslateUi()
 {
     gear_->setToolTip(tr("Options"));
 
-    for (auto source = tabSources_.constBegin(); source != tabSources_.constEnd(); ++source)
+    for (PageTab* tab : tabsByPage_)
     {
-        source.key()->Relabel(tr(source.value().constData()));
+        tab->Relabel(tr(tab->Source()));
     }
 
     if (ShowingOptions())
     {
-        const PageTab* origin = tabsByPage_.value(behindTheOptions_);
-        back_->Relabel(origin != nullptr ? tr("← Back to %1").arg(origin->Label()) : tr("← Back"));
+        DressTheBackTab();
     }
 
     ShowRestartPending(restartPending_);

@@ -227,8 +227,8 @@ void LegacyConfigImporterTest::ThePresetsOfTheInstallationAreResolvedAgainstWhat
     const FakeFilesystemProbe probe(fileSystem);
     FakeLegacyConfigSource source;
     LegacyPresetSelection selection;
-    selection.name = "Short hop";
-    selection.enabledAddonNames = {"aircraft-a", "aircraft-that-vanished"};
+    selection.name = "Voo curto";
+    selection.enabledAddonNames = {"aircraft-a", "aircraft-que-sumiu"};
     source.PlacePreset("C:/ProgramData/MSFS Addons Linker 2024/Presets", selection);
 
     const std::vector<TreeNode> scanned = LibraryHolding("D:/MSFS 2024", {"D:/MSFS 2024/Aircrafts/aircraft-a"});
@@ -237,7 +237,7 @@ void LegacyConfigImporterTest::ThePresetsOfTheInstallationAreResolvedAgainstWhat
             .ImportPresets("C:/ProgramData/MSFS Addons Linker 2024/Presets", ProfileHolding({"D:/MSFS 2024"}), scanned);
 
     QCOMPARE(imported.size(), std::size_t{1});
-    QCOMPARE(imported.front().preset.name, std::string{"Short hop"});
+    QCOMPARE(imported.front().preset.name, std::string{"Voo curto"});
     QCOMPARE(imported.front().preset.entries.size(), std::size_t{1});
     QCOMPARE(imported.front().preset.entries.front().addonId.folderName, std::string{"aircraft-a"});
     QCOMPARE(imported.front().unresolvedAddonNames.size(), std::size_t{1});

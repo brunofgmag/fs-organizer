@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -80,7 +81,7 @@ public:
 
     void ChooseUpdateMode(UpdateMode mode);
 
-    [[nodiscard]] std::string Language() const;
+    [[nodiscard]] std::optional<std::string> Language() const;
 
     void ChooseLanguage(const std::string& language);
 
@@ -102,6 +103,7 @@ signals:
     void SettingsCouldNotBeSaved();
 
 private:
+    bool Rewrite(const std::function<bool(AppSettings&)>& change);
     [[nodiscard]] const TreeNode* TreeOf(const LibraryId& libraryId) const;
 
     Session& session_;

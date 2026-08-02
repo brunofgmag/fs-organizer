@@ -117,13 +117,13 @@ void LegacyPresetTest::AnAddonThatIsNotInAnyLibraryIsReportedInsteadOfDropped()
 {
     const std::vector<TreeNode> libraries = Libraries();
     LegacyPresetSelection selection;
-    selection.enabledAddonNames = {"aircraft-a", "aircraft-that-vanished"};
+    selection.enabledAddonNames = {"aircraft-a", "aircraft-que-sumiu"};
 
     const ImportedPreset imported = ImportLegacyPreset(selection, Profile(), libraries);
 
     QCOMPARE(imported.preset.entries.size(), std::size_t{1});
     QCOMPARE(imported.unresolvedAddonNames.size(), std::size_t{1});
-    QCOMPARE(imported.unresolvedAddonNames.front(), std::string{"aircraft-that-vanished"});
+    QCOMPARE(imported.unresolvedAddonNames.front(), std::string{"aircraft-que-sumiu"});
 }
 
 void LegacyPresetTest::AFolderThatIsNotInAnyLibraryIsReportedInsteadOfDropped()
@@ -168,9 +168,9 @@ void LegacyPresetTest::TheNameOfThePresetSurvivesTheImport()
 {
     const std::vector<TreeNode> libraries = Libraries();
     LegacyPresetSelection selection;
-    selection.name = "Short hop";
+    selection.name = "Voo curto";
 
-    QCOMPARE(ImportLegacyPreset(selection, Profile(), libraries).preset.name, std::string{"Short hop"});
+    QCOMPARE(ImportLegacyPreset(selection, Profile(), libraries).preset.name, std::string{"Voo curto"});
 }
 
 void LegacyPresetTest::ASelectionWithoutAnyLineImportsAnEmptyPreset()

@@ -118,7 +118,7 @@ void JsonSettingsRepositoryTest::LibrariesKeepTheirIdentityAcrossTheRoundTrip()
     Library portable;
     portable.id = "{c9bf9e57-1685-4c89-bafb-ff5af830be8a}";
     portable.path = "Z:/Portable Library";
-    portable.label = "Portable";
+    portable.label = "Portátil";
 
     SimulatorProfile profile;
     profile.id = "msfs2024";
@@ -138,7 +138,7 @@ void JsonSettingsRepositoryTest::LibrariesKeepTheirIdentityAcrossTheRoundTrip()
     QCOMPARE(libraries[0].path, main.path);
     QCOMPARE(libraries[0].label, main.label);
     QCOMPARE(libraries[1].id, portable.id);
-    QCOMPARE(libraries[1].label, std::string("Portable"));
+    QCOMPARE(libraries[1].label, std::string("Portátil"));
 }
 
 void JsonSettingsRepositoryTest::TwoProfilesWithDestinationsAndOverridesSurviveTheRoundTrip()

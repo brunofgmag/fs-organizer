@@ -1,14 +1,15 @@
 #include <QtCore/QCoreApplication>
+#include <QtCore/QLocale>
 #include <QtCore/QTranslator>
 #include <QtTest/QtTest>
 #include <QtWidgets/QPushButton>
-
 #include <QtWidgets/QTreeView>
 
-#include "view/LanguageSwitch.h"
+#include "view/shell/LanguageSwitch.h"
+#include "view/shell/TriageStrip.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeModel.h"
-#include "view/shell/TriageStrip.h"
+#include "viewmodel/ModelRetranslation.h"
 
 namespace
 {
@@ -26,17 +27,30 @@ namespace
         }
     };
 
-    QString ActionLabelled(const QWidget& strip, const QString& text)
+    bool HasActionLabelled(const QWidget& strip, const QString& text)
     {
         for (const QPushButton* button : strip.findChildren<QPushButton*>())
         {
             if (button->text() == text)
             {
-                return button->text();
+                return true;
             }
         }
 
-        return {};
+        return false;
+    }
+
+    bool Ships(const QString& language)
+    {
+        for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())
+        {
+            if (language == QLatin1String(offer.code))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -48,7 +62,8 @@ namespace
 
     private slots:
         static void InstallingATranslatorRewritesWhatIsAlreadyOnTheScreen();
-        static void TheStoredLanguageIsHonouredAndAnUnknownOneFallsBack();
+        static void AStoredLanguageIsHonouredAndAnythingElseFallsBackTheSameWay();
+        static void ALanguageThatCouldNotBeInstalledIsNotReportedAsInUse();
         static void ATreeViewOverAProxySurvivesTheModelBeingRetranslated();
     };
 }
@@ -56,32 +71,49 @@ namespace
 void LanguageChangeTest::InstallingATranslatorRewritesWhatIsAlreadyOnTheScreen()
 {
     TriageStrip strip;
-    strip.ShowBreakdown(1, 0, 0, 0);
+    strip.ShowBreakdown({.broken = 1});
 
-    QCOMPARE(ActionLabelled(strip, QStringLiteral("Repair the broken ones…")),
-             QStringLiteral("Repair the broken ones…"));
+    QVERIFY(HasActionLabelled(strip, QStringLiteral("Repair the broken ones…")));
 
     MarkingTranslator marking;
     QCoreApplication::installTranslator(&marking);
     QCoreApplication::processEvents();
 
-    QVERIFY2(!ActionLabelled(strip, QStringLiteral("<Repair the broken ones…>")).isEmpty(),
+    QVERIFY2(HasActionLabelled(strip, QStringLiteral("<Repair the broken ones…>")),
              "the strip was built before the switch and kept the old text");
 
     QCoreApplication::removeTranslator(&marking);
     QCoreApplication::processEvents();
 
-    QCOMPARE(ActionLabelled(strip, QStringLiteral("Repair the broken ones…")),
-             QStringLiteral("Repair the broken ones…"));
+    QVERIFY(HasActionLabelled(strip, QStringLiteral("Repair the broken ones…")));
 }
 
-void LanguageChangeTest::TheStoredLanguageIsHonouredAndAnUnknownOneFallsBack()
+void LanguageChangeTest::AStoredLanguageIsHonouredAndAnythingElseFallsBackTheSameWay()
 {
-    QCOMPARE(LanguageSwitch::Stored("pt_BR"), QStringLiteral("pt_BR"));
-    QCOMPARE(LanguageSwitch::Stored("en"), QStringLiteral("en"));
-    QVERIFY2(LanguageSwitch::Stored("kl_GL") == QStringLiteral("en")
-                 || LanguageSwitch::Stored("kl_GL") == QStringLiteral("pt_BR"),
-             "an unknown language should fall back to one of the two that ship");
+    QCOMPARE(LanguageSwitch::Resolve(QStringLiteral("pt_BR")), QStringLiteral("pt_BR"));
+    QCOMPARE(LanguageSwitch::Resolve(QStringLiteral("en")), QStringLiteral("en"));
+
+    const QString unknown = LanguageSwitch::Resolve(QStringLiteral("kl_GL"));
+    const QString absent = LanguageSwitch::Resolve({});
+
+    QVERIFY2(unknown != QStringLiteral("kl_GL"), "a language the app does not ship was echoed back");
+    QVERIFY2(Ships(unknown), "the fallback landed on a language the app does not ship");
+    QCOMPARE(unknown, absent);
+
+    const bool systemSpeaksPortuguese = QLocale::system().name().startsWith(QLatin1String("pt"));
+    QCOMPARE(absent, systemSpeaksPortuguese ? QStringLiteral("pt_BR") : QStringLiteral("en"));
+}
+
+void LanguageChangeTest::ALanguageThatCouldNotBeInstalledIsNotReportedAsInUse()
+{
+    LanguageSwitch language;
+
+    QVERIFY(language.Use(QStringLiteral("en")));
+    QCOMPARE(language.InUse(), QStringLiteral("en"));
+
+    QVERIFY2(!language.Use(QStringLiteral("pt_BR")),
+             "applying a language whose catalogue is missing must report failure");
+    QCOMPARE(language.InUse(), QStringLiteral("en"));
 }
 
 void LanguageChangeTest::ATreeViewOverAProxySurvivesTheModelBeingRetranslated()
@@ -126,7 +158,7 @@ void LanguageChangeTest::ATreeViewOverAProxySurvivesTheModelBeingRetranslated()
     view.hide();
     QCoreApplication::processEvents();
 
-    model.Retranslated();
+    SayTheModelWasRetranslated(model);
     QCoreApplication::processEvents();
 
     view.show();

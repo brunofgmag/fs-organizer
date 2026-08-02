@@ -160,7 +160,7 @@ void SetupViewModelTest::EachRegisteredLibraryGetsItsOwnGeneratedIdentity()
 {
     Fixture f;
     (void)f.viewModel.RegisterLibrary("D:/MSFS 2024", "MSFS 2024");
-    (void)f.viewModel.RegisterLibrary("Z:/Portable Library", "Portable");
+    (void)f.viewModel.RegisterLibrary("Z:/Portable Library", "Portátil");
 
     const std::vector<RegisteredLibrary> libraries = f.viewModel.Libraries();
 

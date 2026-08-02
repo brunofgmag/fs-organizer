@@ -44,7 +44,7 @@ namespace
     SimulatorProfile Profile()
     {
         SimulatorProfile profile;
-        profile.libraries = {Library{.id = "lib-1", .path = "D:/Library", .label = "Bruno's library"}};
+        profile.libraries = {Library{.id = "lib-1", .path = "D:/Library", .label = "Biblioteca do Bruno"}};
 
         return profile;
     }
@@ -90,7 +90,7 @@ void JournalModelTest::TheLibraryAppearsByItsLabelAndNeverAsAUuid()
     model.ShowRecords({Link(OperationKind::EnableAddon, 0)}, Profile());
 
     QCOMPARE(model.index(0, JournalModel::LibraryColumn, {}).data(Qt::DisplayRole).toString(),
-             QStringLiteral("Bruno's library"));
+             QStringLiteral("Biblioteca do Bruno"));
 
     JournalModel orphan;
     orphan.ShowRecords({Link(OperationKind::EnableAddon, 0)}, SimulatorProfile{});

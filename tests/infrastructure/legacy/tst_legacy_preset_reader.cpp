@@ -62,7 +62,7 @@ void LegacyPresetReaderTest::ABareNameIsAnAddonToEnable()
 {
     const Storage storage;
     const std::optional<LegacyPresetSelection> read =
-        ReadLegacyPreset(storage.WriteText("short hop.preset", "pmdg-777\r\nfenix-a320\r\n"));
+        ReadLegacyPreset(storage.WriteText("voo curto.preset", "pmdg-777\r\nfenix-a320\r\n"));
 
     QVERIFY(read.has_value());
     QCOMPARE(read->enabledAddonNames.size(), std::size_t{2});
@@ -114,7 +114,7 @@ void LegacyPresetReaderTest::TheNameOfThePresetComesFromTheFileName()
 {
     const Storage storage;
 
-    QCOMPARE(ReadLegacyPreset(storage.WriteText("Short hop.preset", "pmdg-777\r\n"))->name, std::string{"Short hop"});
+    QCOMPARE(ReadLegacyPreset(storage.WriteText("Voo curto.preset", "pmdg-777\r\n"))->name, std::string{"Voo curto"});
 }
 
 void LegacyPresetReaderTest::AFileThatCannotBeOpenedIsNotTheSameAsAnEmptyPreset()

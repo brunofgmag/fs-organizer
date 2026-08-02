@@ -89,7 +89,7 @@ set(VIEW_SOURCES
         src/view/community/ConflictDialog.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
-        src/view/LanguageSwitch.cpp
+        src/view/shell/LanguageSwitch.cpp
         src/view/legacy/LegacyImportDialog.cpp
         src/view/options/OptionsPage.cpp
         src/view/delegates/FittedText.cpp
@@ -113,6 +113,7 @@ set(VIEW_SOURCES
         src/view/theme/ModernistStyle.cpp
         src/view/theme/ModernistTheme.cpp
         src/view/theme/ModernistTones.cpp
+        src/view/shell/PageNames.cpp
         src/view/theme/PageTab.cpp
 )
 

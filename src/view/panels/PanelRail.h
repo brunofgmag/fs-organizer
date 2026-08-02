@@ -25,6 +25,9 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
+    void RetranslateUi() const;
+
+private:
     QToolButton* expand_ = nullptr;
     QString title_;
     bool alarming_ = false;

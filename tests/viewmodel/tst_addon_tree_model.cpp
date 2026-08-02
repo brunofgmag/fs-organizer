@@ -6,6 +6,7 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeModel.h"
+#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
 
@@ -72,7 +73,7 @@ namespace
         profile.id = "msfs2024";
         profile.destinations = {kCommunity, kCommunity2024};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{.id = "library-1", .path = "D:/MSFS 2024", .label = "Bruno's library"}};
+        profile.libraries = {Library{.id = "library-1", .path = "D:/MSFS 2024", .label = "Biblioteca do Bruno"}};
         profile.destinationOverrides = std::move(overrides);
 
         return profile;
@@ -122,7 +123,7 @@ void AddonTreeModelTest::TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester()
     QCOMPARE(model.rowCount(Category(model)), 2);
     QCOMPARE(model.parent(Category(model)), model.index(0, 0, {}));
     QCOMPARE(model.columnCount({}), int{AddonTreeModel::Columns});
-    QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::AddonColumn), QStringLiteral("Bruno's library"));
+    QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::AddonColumn), QStringLiteral("Biblioteca do Bruno"));
 }
 
 void AddonTreeModelTest::CheckStatesComeFromTheEnabledIndex()
@@ -346,7 +347,7 @@ void AddonTreeModelTest::RetranslatingKeepsThePersistentIndexesOfAProxyUsable()
     QVERIFY(category.isValid());
     QVERIFY(proxy.rowCount(category) > 0);
 
-    model.Retranslated();
+    SayTheModelWasRetranslated(model);
 
     const QModelIndex again = proxy.index(0, 0, {});
     QVERIFY2(again.isValid(), "the proxy lost the root on the language change");

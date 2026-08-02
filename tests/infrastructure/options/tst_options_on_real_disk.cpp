@@ -138,7 +138,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {disk.Community(), disk.Extra()};
         profile.defaultDestination = disk.Community();
-        profile.libraries = {Library{.id = "library-1", .path = disk.Library(), .label = "Library"}};
+        profile.libraries = {Library{.id = "library-1", .path = disk.Library(), .label = "Biblioteca"}};
 
         AppSettings settings;
         settings.profiles = {profile};

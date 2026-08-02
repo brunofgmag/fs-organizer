@@ -42,6 +42,7 @@
 #include "view/options/OptionsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/shell/MainWindow.h"
+#include "view/shell/PageNames.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
@@ -294,11 +295,11 @@ int main(int argc, char* argv[])
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
 
-    PageTab* libraryTab = shell.AddPage("Library", libraryPage);
-    PageTab* communityTab = shell.AddPage("Destinations", communityPage);
-    PageTab* presetsTab = shell.AddPage("Presets", presetsPage);
-    PageTab* journalTab = shell.AddPage("Journal", journalPage);
-    PageTab* quarantineTab = shell.AddPage("Quarantine", quarantinePage);
+    PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);
+    PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
+    PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
+    PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
+    PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -307,8 +308,7 @@ int main(int argc, char* argv[])
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &shell,
                      [&shell](const AttentionBreakdown& breakdown)
                      {
-                         shell.ShowTriage(breakdown.broken, breakdown.conflicts, breakdown.duplicated,
-                                          breakdown.unmanaged);
+                         shell.ShowTriage(breakdown);
                      });
 
     treeViewModel.ShowActiveProfile();

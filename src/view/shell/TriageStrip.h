@@ -1,9 +1,9 @@
 #ifndef FS_ORGANIZER_VIEW_SHELL_TRIAGE_STRIP_H
 #define FS_ORGANIZER_VIEW_SHELL_TRIAGE_STRIP_H
 
-#include <cstddef>
-
 #include <QtWidgets/QWidget>
+
+#include "viewmodel/AttentionBreakdown.h"
 
 class QFrame;
 class QHBoxLayout;
@@ -17,7 +17,7 @@ class TriageStrip final : public QWidget
 public:
     explicit TriageStrip(QWidget* parent = nullptr);
 
-    void ShowBreakdown(std::size_t broken, std::size_t conflicts, std::size_t duplicated, std::size_t unmanaged);
+    void ShowBreakdown(const AttentionBreakdown& breakdown);
 
     [[nodiscard]] bool HasAnythingToSay() const;
 
@@ -40,14 +40,6 @@ private:
         QPushButton* action = nullptr;
     };
 
-    struct Breakdown
-    {
-        std::size_t broken = 0;
-        std::size_t conflicts = 0;
-        std::size_t duplicated = 0;
-        std::size_t unmanaged = 0;
-    };
-
     void RetranslateUi();
 
     [[nodiscard]] Item AddItem(const char* tag, QHBoxLayout* into);
@@ -62,7 +54,7 @@ private:
     Item unmanaged_;
     QFrame* beforeConflicts_ = nullptr;
     QFrame* beforeDuplicated_ = nullptr;
-    Breakdown shown_;
+    AttentionBreakdown shown_;
     bool anythingToSay_ = false;
 };
 

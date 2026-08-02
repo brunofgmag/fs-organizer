@@ -37,9 +37,10 @@
 #include "view/community/CommunityPage.h"
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/JournalPage.h"
-#include "view/LanguageSwitch.h"
+#include "view/shell/LanguageSwitch.h"
 #include "view/options/OptionsPage.h"
 #include "view/shell/MainWindow.h"
+#include "view/shell/PageNames.h"
 #include "view/PresetsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/setup/SetupWizard.h"
@@ -236,7 +237,7 @@ int main(int argc, char* argv[])
                      });
 
     LanguageSwitch language;
-    language.Use(LanguageSwitch::Stored({}));
+    static_cast<void>(language.Use({}));
 
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
@@ -261,7 +262,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    language.Use(LanguageSwitch::Stored(stored->language));
+    static_cast<void>(language.Use(QString::fromStdString(stored->language)));
 
     const bool setupJustRan = stored->profiles.empty();
     if (setupJustRan && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
@@ -327,11 +328,11 @@ int main(int argc, char* argv[])
     const LegacyConfigImporter legacyImporter(legacyConfig, filesystemProbe);
     LegacyImportViewModel legacyViewModel(session, legacyImporter, presetService);
 
-    PageTab* libraryButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Library"), page);
-    PageTab* communityButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Destinations"), communityPage);
-    PageTab* presetsButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Presets"), presetsPage);
-    window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Journal"), journalPage);
-    PageTab* quarantineButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Quarantine"), quarantinePage);
+    PageTab* libraryButton = window.AddPage(PageNames::kLibrary, page);
+    PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);
+    PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
+    window.AddPage(PageNames::kJournal, journalPage);
+    PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
 
     window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);
@@ -346,9 +347,15 @@ int main(int argc, char* argv[])
                      });
 
     QObject::connect(&optionsViewModel, &OptionsViewModel::LanguageChosen, &window,
-                     [&language](const QString& chosen)
+                     [&language, &window](const QString& chosen)
                      {
-                         language.Use(chosen);
+                         if (!language.Use(chosen))
+                         {
+                             QMessageBox::warning(&window, QObject::tr("Language not applied"),
+                                                  QObject::tr("The translation for %1 did not load, so the interface "
+                                                              "stays in English. The choice was still written down.")
+                                                      .arg(chosen));
+                         }
                      });
 
     QObject::connect(&optionsViewModel, &OptionsViewModel::SettingsCouldNotBeSaved, &window,
@@ -507,8 +514,7 @@ int main(int argc, char* argv[])
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
                      [&window](const AttentionBreakdown& breakdown)
                      {
-                         window.ShowTriage(breakdown.broken, breakdown.conflicts, breakdown.duplicated,
-                                           breakdown.unmanaged);
+                         window.ShowTriage(breakdown);
                      });
     QObject::connect(&window, &MainWindow::RepairRequested, communityPage,
                      [communityButton, communityPage]

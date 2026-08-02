@@ -1,9 +1,8 @@
 #include "view/community/CommunityPage.h"
 
-#include <QtCore/QEvent>
-
 #include <algorithm>
 
+#include <QtCore/QEvent>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
 #include <QtWidgets/QButtonGroup>
@@ -31,6 +30,7 @@
 #include "view/panels/ModelRowDetail.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
+#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/RowTagRoles.h"
 
@@ -158,7 +158,7 @@ QWidget* CommunityPage::CreateFilters()
 {
     auto* bar = new QWidget(this);
 
-    const QList<QPair<QString, int>> wanted = FiltersOffered();
+    const QList<FilterChip> wanted = FiltersOffered();
 
     auto* group = new QButtonGroup(bar);
     auto* grid = new QGridLayout(bar);
@@ -202,7 +202,7 @@ QWidget* CommunityPage::CreateFilters()
     return bar;
 }
 
-QList<QPair<QString, int>> CommunityPage::FiltersOffered() const
+QList<CommunityPage::FilterChip> CommunityPage::FiltersOffered() const
 {
     return {
         {tr("All"), kEveryFilter},
@@ -221,7 +221,7 @@ void CommunityPage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        model_.Retranslated();
+        SayTheModelWasRetranslated(model_);
         ShowTheSelectedEntry();
     }
 
@@ -230,11 +230,16 @@ void CommunityPage::changeEvent(QEvent* event)
 
 void CommunityPage::RetranslateUi()
 {
-    const QList<QPair<QString, int>> offered = FiltersOffered();
-    for (int index = 0; index < chips_.size() && index < offered.size(); ++index)
+    for (const FilterChip& offer : FiltersOffered())
     {
-        chips_[index]->setText(offered[index].first);
-        chips_[index]->setProperty("label", offered[index].first);
+        for (QToolButton* chip : chips_)
+        {
+            if (chip->property("filter").toInt() == offer.filter)
+            {
+                chip->setText(offer.label);
+                chip->setProperty("label", offer.label);
+            }
+        }
     }
 
     selectAll_->setText(tr("Select everything the filter shows"));

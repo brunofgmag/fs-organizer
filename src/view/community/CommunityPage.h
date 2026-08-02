@@ -56,7 +56,13 @@ protected:
 private:
     void RetranslateUi();
 
-    [[nodiscard]] QList<QPair<QString, int>> FiltersOffered() const;
+    struct FilterChip
+    {
+        QString label;
+        int filter;
+    };
+
+    [[nodiscard]] QList<FilterChip> FiltersOffered() const;
 
     [[nodiscard]] QWidget* CreateFilters();
 

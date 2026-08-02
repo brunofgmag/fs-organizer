@@ -19,7 +19,7 @@ public:
 
     void RestoreCollapsedState();
 
-    void ShowTitle(const QString& title, bool alarming = false) const;
+    void ShowTitle(const QString& title, bool alarming = false);
 
     void RenameTheFallback(const QString& title);
 
@@ -32,6 +32,8 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
+    void RetranslateUi() const;
+
     void SetCollapsed(bool collapsed);
 
     QWidget* header_ = nullptr;
@@ -42,6 +44,7 @@ private:
     QToolButton* close_ = nullptr;
     QVBoxLayout* content_ = nullptr;
     QString fallbackTitle_;
+    bool showingFallback_ = true;
     int expandedWidth_ = 380;
     bool collapsed_ = false;
 };

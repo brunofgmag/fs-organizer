@@ -18,6 +18,10 @@ public:
 
     [[nodiscard]] QString Label() const;
 
+    void RememberSource(const char* source);
+
+    [[nodiscard]] const char* Source() const;
+
     [[nodiscard]] QSize sizeHint() const override;
 
     [[nodiscard]] QSize minimumSizeHint() const override;
@@ -29,6 +33,7 @@ private:
     [[nodiscard]] QString CountText() const;
 
     QString label_;
+    const char* source_ = nullptr;
     std::optional<qsizetype> count_;
 };
 

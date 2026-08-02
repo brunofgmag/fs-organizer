@@ -27,7 +27,7 @@ PanelRail::PanelRail(QWidget* parent) : QWidget(parent)
     expand_->setObjectName(QStringLiteral("PanelExpand"));
     expand_->setAutoRaise(true);
     expand_->setArrowType(Qt::LeftArrow);
-    expand_->setToolTip(tr("Open the panel"));
+    RetranslateUi();
     expand_->setCursor(Qt::PointingHandCursor);
 
     auto* column = new QVBoxLayout(this);
@@ -43,10 +43,15 @@ void PanelRail::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange)
     {
-        expand_->setToolTip(tr("Open the panel"));
+        RetranslateUi();
     }
 
     QWidget::changeEvent(event);
+}
+
+void PanelRail::RetranslateUi() const
+{
+    expand_->setToolTip(tr("Open the panel"));
 }
 
 int PanelRail::Width()

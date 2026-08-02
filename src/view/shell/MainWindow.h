@@ -8,6 +8,7 @@
 #include <QtWidgets/QMainWindow>
 
 #include "application/model/AppSettings.h"
+#include "viewmodel/AttentionBreakdown.h"
 
 class PageTab;
 class QComboBox;
@@ -40,7 +41,7 @@ public:
 
     void CarryTriageOn(const QWidget* page);
 
-    void ShowTriage(std::size_t broken, std::size_t conflicts, std::size_t duplicated, std::size_t unmanaged) const;
+    void ShowTriage(const AttentionBreakdown& breakdown) const;
 
     void ShowStatus(const QString& message) const;
 
@@ -77,6 +78,8 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
+    void DressTheBackTab() const;
+
     void RetranslateUi();
 
     struct Meter
@@ -116,7 +119,6 @@ private:
     QHash<const QWidget*, Meter> meters_;
     QHash<const QWidget*, bool> triaged_;
     QHash<const QWidget*, PageTab*> tabsByPage_;
-    QHash<PageTab*, QByteArray> tabSources_;
     bool restartPending_ = false;
 };
 

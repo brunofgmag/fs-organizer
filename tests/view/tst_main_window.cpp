@@ -141,10 +141,10 @@ void MainWindowTest::ACleanInstallShowsNoTriageStrip()
     auto* strip = window.findChild<TriageStrip*>();
     QVERIFY(strip != nullptr);
 
-    window.ShowTriage(0, 0, 0, 0);
+    window.ShowTriage({});
     QVERIFY(!strip->isVisibleTo(&window));
 
-    window.ShowTriage(28, 2, 0, 178);
+    window.ShowTriage({.broken = 28, .conflicts = 2, .unmanaged = 178});
     QVERIFY(strip->isVisibleTo(&window));
 }
 
@@ -158,7 +158,7 @@ void MainWindowTest::TheStripOnlyRidesOnThePagesThatCarryIt()
     PageTab* journalTab = window.AddPage("Journal", journal);
     window.CarryTriageOn(library);
 
-    window.ShowTriage(28, 0, 0, 0);
+    window.ShowTriage({.broken = 28});
 
     auto* strip = window.findChild<TriageStrip*>();
     QVERIFY(strip->isVisibleTo(&window));
@@ -369,7 +369,7 @@ void MainWindowTest::TheTriageStripStandsDownWhileTheOptionsAreOpen()
     window.CarryOptionsOn(options);
     window.CarryTriageOn(library);
 
-    window.ShowTriage(28, 0, 0, 0);
+    window.ShowTriage({.broken = 28});
 
     auto* strip = window.findChild<TriageStrip*>();
     QVERIFY(strip->isVisibleTo(&window));

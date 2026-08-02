@@ -33,6 +33,7 @@
 #include "view/community/CommunityPage.h"
 #include "view/JournalPage.h"
 #include "view/shell/MainWindow.h"
+#include "view/shell/PageNames.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
@@ -102,18 +103,18 @@ namespace
     void Report()
     {
         Out() << "\n"
-              << QStringLiteral("etapa").leftJustified(34) << QStringLiteral("thread").leftJustified(10) << "ms\n";
+              << QStringLiteral("stage").leftJustified(34) << QStringLiteral("thread").leftJustified(10) << "ms\n";
 
         for (const Measurement& measurement : measurements)
         {
             Out() << measurement.stage.leftJustified(34)
-                  << QString(measurement.onTheMainThread ? "principal" : "worker").leftJustified(10)
-                  << measurement.elapsed << "\n";
+                  << QString(measurement.onTheMainThread ? "main" : "worker").leftJustified(10) << measurement.elapsed
+                  << "\n";
         }
 
         Out() << "\ntotal on the main thread: " << MainThreadTotal() << " ms (budget " << kBudgetForTheMainThread
               << " ms)\n";
-        Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "VERMELHO: a interface congela\n" : "VERDE\n");
+        Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "RED: the interface freezes\n" : "GREEN\n");
         Out().flush();
     }
 }
@@ -199,10 +200,10 @@ int main(int argc, char* argv[])
         JournalViewModel journalViewModel(journal, session, journalModel);
         auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-        window.AddPage("Library", treePage);
-        window.AddPage("Destinations", communityPage);
-        window.AddPage("Quarantine", quarantinePage);
-        window.AddPage("Journal", journalPage);
+        window.AddPage(PageNames::kLibrary, treePage);
+        window.AddPage(PageNames::kDestinations, communityPage);
+        window.AddPage(PageNames::kQuarantine, quarantinePage);
+        window.AddPage(PageNames::kJournal, journalPage);
 
         treeViewModel.ShowActiveProfile();
         for (int pass = 0; pass < 400 && session.Snapshot().entries.empty(); ++pass)

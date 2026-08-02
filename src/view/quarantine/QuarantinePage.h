@@ -35,7 +35,7 @@ protected:
 private:
     void RetranslateUi();
 
-    void ShowTheSelectedItem() const;
+    void ShowTheSelectedItem();
 
     void ShowTheSelectedBatch(const QModelIndexList& rows) const;
 

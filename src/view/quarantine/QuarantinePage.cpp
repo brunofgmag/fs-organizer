@@ -1,7 +1,6 @@
 #include "view/quarantine/QuarantinePage.h"
 
 #include <QtCore/QEvent>
-
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
 #include <QtWidgets/QHBoxLayout>
@@ -23,6 +22,7 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/FailureText.h"
+#include "viewmodel/ModelRetranslation.h"
 
 QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& model, QWidget* parent)
     : QWidget(parent), viewModel_(viewModel), model_(model)
@@ -84,7 +84,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
 
     pages_ = new QStackedWidget(this);
     pages_->addWidget(held);
-    nothingHeld_ = new EmptyState(QString{}, QString{}, this);
+    nothingHeld_ = new EmptyState(this);
     pages_->addWidget(nothingHeld_);
 
     auto* layout = new QVBoxLayout(this);
@@ -127,7 +127,7 @@ void QuarantinePage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        model_.Retranslated();
+        SayTheModelWasRetranslated(model_);
         UpdateSummary();
         ShowTheSelectedItem();
     }
@@ -148,7 +148,7 @@ void QuarantinePage::RetranslateUi()
                             "instead of being deleted. Nothing has been held so far."));
 }
 
-void QuarantinePage::ShowTheSelectedItem() const
+void QuarantinePage::ShowTheSelectedItem()
 {
     const QModelIndexList rows = table_->selectionModel()->selectedRows();
 

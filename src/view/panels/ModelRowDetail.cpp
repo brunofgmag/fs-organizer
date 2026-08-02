@@ -85,7 +85,7 @@ void ModelRowDetail::ShowFields(const QList<Field>& fields)
     }
 }
 
-void ModelRowDetail::Clear() const
+void ModelRowDetail::Clear()
 {
     while (const QLayoutItem* item = rows_->takeAt(0))
     {

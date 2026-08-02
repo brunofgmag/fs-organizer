@@ -165,16 +165,16 @@ namespace
 
     void ReportLibrary(const LibraryFacts& facts)
     {
-        Out() << "\nBiblioteca\n";
-        Out() << "  categorias   " << facts.categories << "\n";
-        Out() << "  pastas       " << facts.folders << "\n";
+        Out() << "\nLibrary\n";
+        Out() << "  categories   " << facts.categories << "\n";
+        Out() << "  folders      " << facts.folders << "\n";
         Out() << "  addons       " << facts.addons << "\n";
-        Out() << "  vazias       " << facts.empty << "\n";
+        Out() << "  empty        " << facts.empty << "\n";
         Out() << "  content_type ";
 
         for (const auto& [contentType, count] : facts.contentTypes)
         {
-            Out() << (contentType.empty() ? "<vazio>" : QString::fromStdString(contentType)) << "=" << count << " ";
+            Out() << (contentType.empty() ? "<empty>" : QString::fromStdString(contentType)) << "=" << count << " ";
         }
 
         Out() << "\n";
