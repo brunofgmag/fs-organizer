@@ -5,16 +5,19 @@
 
 class FailureTextTest : public QObject
 {
-    Q_OBJECT
+    class FailureTextTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryFileResultExceptSuccessCarriesAnExplanation();
-    static void EveryLinkFailureExceptSuccessCarriesAnExplanation();
-    static void EveryCategoryRuleThatMatchedSaysWhyItMatched();
-    static void ARefusedImportNamesTheFolderAndWhyItWasRefused();
-    static void AnIdentityAlreadyTakenSaysWhereTheOccupantIs();
-    static void ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs();
-};
+    private slots:
+        static void EveryFileResultExceptSuccessCarriesAnExplanation();
+        static void EveryLinkFailureExceptSuccessCarriesAnExplanation();
+        static void EveryCategoryRuleThatMatchedSaysWhyItMatched();
+        static void ARefusedImportNamesTheFolderAndWhyItWasRefused();
+        static void AnIdentityAlreadyTakenSaysWhereTheOccupantIs();
+        static void ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs();
+    };
+}
 
 void FailureTextTest::EveryFileResultExceptSuccessCarriesAnExplanation()
 {

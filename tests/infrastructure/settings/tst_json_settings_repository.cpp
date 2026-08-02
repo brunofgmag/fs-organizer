@@ -13,19 +13,22 @@
 
 class JsonSettingsRepositoryTest : public QObject
 {
-    Q_OBJECT
+    class JsonSettingsRepositoryTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AProfileSurvivesTheRoundTrip();
-    static void LibrariesKeepTheirIdentityAcrossTheRoundTrip();
-    static void TwoProfilesWithDestinationsAndOverridesSurviveTheRoundTrip();
-    static void AWriteTheDiskRefusesSaysSoInsteadOfClaimingItLanded();
-    static void SettingsThatCannotBeReadAreNotTheSameAsNoSettingsAtAll();
-    static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
-    static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
-    static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
-    static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
-};
+    private slots:
+        static void AProfileSurvivesTheRoundTrip();
+        static void LibrariesKeepTheirIdentityAcrossTheRoundTrip();
+        static void TwoProfilesWithDestinationsAndOverridesSurviveTheRoundTrip();
+        static void AWriteTheDiskRefusesSaysSoInsteadOfClaimingItLanded();
+        static void SettingsThatCannotBeReadAreNotTheSameAsNoSettingsAtAll();
+        static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
+        static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
+        static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
+        static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
+    };
+}
 
 namespace
 {

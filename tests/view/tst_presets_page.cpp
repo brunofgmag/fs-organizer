@@ -29,17 +29,20 @@
 
 class PresetsPageTest : public QObject
 {
-    Q_OBJECT
+    class PresetsPageTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void BuildingAndTearingDownAloneDoesNotCrash();
-    static void SelectingAPresetFillsThePanelPreview();
-    static void ApplyingFromThePanelGoesThroughTheViewModel();
-    static void TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt();
-    static void TheNameTableWritesTheContentAndTheDayBesideEachPreset();
-    static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
-    static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
-};
+    private slots:
+        static void BuildingAndTearingDownAloneDoesNotCrash();
+        static void SelectingAPresetFillsThePanelPreview();
+        static void ApplyingFromThePanelGoesThroughTheViewModel();
+        static void TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt();
+        static void TheNameTableWritesTheContentAndTheDayBesideEachPreset();
+        static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
+        static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
+    };
+}
 
 namespace
 {
@@ -151,7 +154,7 @@ void PresetsPageTest::SelectingAPresetFillsThePanelPreview()
     auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
     QVERIFY(apply != nullptr);
     QVERIFY(apply->isEnabled());
-    QVERIFY(apply->text().contains(QStringLiteral("liga")));
+    QVERIFY(apply->text().contains(QStringLiteral("enables")));
 }
 
 void PresetsPageTest::ApplyingFromThePanelGoesThroughTheViewModel()
@@ -210,11 +213,11 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
     QCOMPARE(names->rowCount(), 1);
 
     QCOMPARE(names->horizontalHeaderItem(0)->text(), QStringLiteral("Preset"));
-    QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Conteúdo"));
-    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Atualizado"));
+    QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Content"));
+    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Changed"));
 
     QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
-    QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon(s) · 1 categoria(s)"));
+    QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon · 1 category"));
     QCOMPARE(names->item(0, 2)->text(), QStringLiteral("17/02/2026"));
 }
 

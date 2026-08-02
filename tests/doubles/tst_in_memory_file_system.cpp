@@ -5,17 +5,20 @@
 
 class InMemoryFileSystemTest : public QObject
 {
-    Q_OBJECT
+    class InMemoryFileSystemTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void RemovingANodeLeavesTheRestOfTheTreeStanding();
-    static void ADirectoryThatStillHasContentCannotBeRemovedAsASingleNode();
-    static void RemovingATreeTakesEveryDescendantWithIt();
-    static void RemovingATreeAtALinkNeverReachesTheTarget();
-    static void ASiblingWholeNameStartsWithTheRootIsNotADescendant();
-    static void FilesUnderReachesEveryDepthAndReportsSizes();
-    static void ChildDirectoriesReportsLinksButNeverFiles();
-};
+    private slots:
+        static void RemovingANodeLeavesTheRestOfTheTreeStanding();
+        static void ADirectoryThatStillHasContentCannotBeRemovedAsASingleNode();
+        static void RemovingATreeTakesEveryDescendantWithIt();
+        static void RemovingATreeAtALinkNeverReachesTheTarget();
+        static void ASiblingWholeNameStartsWithTheRootIsNotADescendant();
+        static void FilesUnderReachesEveryDepthAndReportsSizes();
+        static void ChildDirectoriesReportsLinksButNeverFiles();
+    };
+}
 
 namespace
 {

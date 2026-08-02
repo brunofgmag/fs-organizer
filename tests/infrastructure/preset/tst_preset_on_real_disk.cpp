@@ -23,13 +23,16 @@
 
 class PresetOnRealDiskTest : public QObject
 {
-    Q_OBJECT
+    class PresetOnRealDiskTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ACapturedPresetNamesExactlyTheAddonsThatAreLinked();
-    static void UpdatingACapturedPresetKeepsNamingOnlyWhatIsLinked();
-    static void ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsItWas();
-};
+    private slots:
+        static void ACapturedPresetNamesExactlyTheAddonsThatAreLinked();
+        static void UpdatingACapturedPresetKeepsNamingOnlyWhatIsLinked();
+        static void ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsItWas();
+    };
+}
 
 namespace
 {

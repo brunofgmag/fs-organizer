@@ -23,18 +23,21 @@
 
 class ImportOnRealDiskTest : public QObject
 {
-    Q_OBJECT
+    class ImportOnRealDiskTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void APhysicalAddonReallyMovesIntoTheLibraryAndLeavesAJunctionBehind();
-    static void AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFreeSpace();
-    static void TheSourceSurvivesWhenTheCopyFails();
-    static void ALiveJunctionOfAnotherProgramIsNeverReplaced();
-    static void TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds();
-    static void RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder();
-    static void MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewFolder();
-    static void ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused();
-};
+    private slots:
+        static void APhysicalAddonReallyMovesIntoTheLibraryAndLeavesAJunctionBehind();
+        static void AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFreeSpace();
+        static void TheSourceSurvivesWhenTheCopyFails();
+        static void ALiveJunctionOfAnotherProgramIsNeverReplaced();
+        static void TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds();
+        static void RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder();
+        static void MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewFolder();
+        static void ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused();
+    };
+}
 
 namespace
 {

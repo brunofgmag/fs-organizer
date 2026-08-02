@@ -8,20 +8,23 @@
 
 class EffectiveDestinationTest : public QObject
 {
-    Q_OBJECT
+    class EffectiveDestinationTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void WithoutAnyOverrideTheProfileDefaultWins();
-    static void AnOverrideOnTheAddonItselfWins();
-    static void AnAddonInheritsTheOverrideOfItsCategory();
-    static void TheNearestOverrideGoingUpWins();
-    static void AnOverrideOfAnotherLibraryIsIgnored();
-    static void AnOverrideOnTheLibraryRootReachesEverythingInside();
-    static void TheRelativePathIsMatchedWithoutCaseOrSeparatorDifferences();
-    static void AnAbsoluteAddonFolderFindsItsOwnLibraryAndOverride();
-    static void AnAddonFolderOutsideEveryLibraryFallsBackToTheDefault();
-    static void AnOverrideNamingAPathThatIsNoLongerADestinationDoesNotDecide();
-};
+    private slots:
+        static void WithoutAnyOverrideTheProfileDefaultWins();
+        static void AnOverrideOnTheAddonItselfWins();
+        static void AnAddonInheritsTheOverrideOfItsCategory();
+        static void TheNearestOverrideGoingUpWins();
+        static void AnOverrideOfAnotherLibraryIsIgnored();
+        static void AnOverrideOnTheLibraryRootReachesEverythingInside();
+        static void TheRelativePathIsMatchedWithoutCaseOrSeparatorDifferences();
+        static void AnAbsoluteAddonFolderFindsItsOwnLibraryAndOverride();
+        static void AnAddonFolderOutsideEveryLibraryFallsBackToTheDefault();
+        static void AnOverrideNamingAPathThatIsNoLongerADestinationDoesNotDecide();
+    };
+}
 
 namespace
 {

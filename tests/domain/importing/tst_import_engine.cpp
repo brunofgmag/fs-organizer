@@ -15,28 +15,31 @@
 
 class ImportEngineTest : public QObject
 {
-    Q_OBJECT
+    class ImportEngineTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AnImportThatDoesNotFitOnTheTargetVolumeTouchesNothing();
-    static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
-    static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
-    static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
-    static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
-    static void AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs();
-    static void ASourceThatCannotBeWalkedStopsTheImportBeforeAnythingIsCopied();
-    static void AnEmptySourceIsNotVerifiedAgainstAStagingThatCannotBeWalked();
-    static void AFolderOutsideTheConfiguredDestinationsIsNeverImported();
-    static void ADestinationRootIsNotAFolderInsideItself();
-    static void AForeignLinkIsNeverImportedAsIfItWereAFolder();
-    static void AFinishedImportLeavesALinkWhereTheFolderUsedToBe();
-    static void EveryStepOfAFinishedImportReachesTheJournalInOrder();
-    static void AVerificationThatFailsSaysSoInsteadOfLeavingTheJournalSilent();
-    static void ACopyThatFailsIsTheLastThingTheJournalHears();
-    static void AMoveThatFailsIsRecordedAndTheSourceSurvives();
-    static void ARemovalThatFailsIsRecordedAndTheSourceSurvives();
-    static void ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled();
-};
+    private slots:
+        static void AnImportThatDoesNotFitOnTheTargetVolumeTouchesNothing();
+        static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
+        static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
+        static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
+        static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
+        static void AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs();
+        static void ASourceThatCannotBeWalkedStopsTheImportBeforeAnythingIsCopied();
+        static void AnEmptySourceIsNotVerifiedAgainstAStagingThatCannotBeWalked();
+        static void AFolderOutsideTheConfiguredDestinationsIsNeverImported();
+        static void ADestinationRootIsNotAFolderInsideItself();
+        static void AForeignLinkIsNeverImportedAsIfItWereAFolder();
+        static void AFinishedImportLeavesALinkWhereTheFolderUsedToBe();
+        static void EveryStepOfAFinishedImportReachesTheJournalInOrder();
+        static void AVerificationThatFailsSaysSoInsteadOfLeavingTheJournalSilent();
+        static void ACopyThatFailsIsTheLastThingTheJournalHears();
+        static void AMoveThatFailsIsRecordedAndTheSourceSurvives();
+        static void ARemovalThatFailsIsRecordedAndTheSourceSurvives();
+        static void ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled();
+    };
+}
 
 namespace
 {

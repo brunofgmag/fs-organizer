@@ -11,21 +11,24 @@
 
 class IniLegacyConfigReaderTest : public QObject
 {
-    Q_OBJECT
+    class IniLegacyConfigReaderTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheRepeatedKeyBecomesEveryAddonPathInOrder();
-    static void TheSingleValuedKeysAreRead();
-    static void ATrailingSeparatorIsTrimmedButARootKeepsIts();
-    static void LinesThatAreNotKeyValueAreIgnored();
-    static void TheShapeOfTheRealFileReadsWhole();
-    static void AFileThatCannotBeOpenedIsNotTheSameAsAFileWithoutKeys();
-    static void AByteOrderMarkWinsOverTheFallbackEncoding();
-    static void AccentsSurviveTheFallbackEncodingWhenThereIsNoBom();
-    static void AUtf16ByteOrderMarkIsHonouredInsteadOfDecodedAsBytes();
-    static void BytesThatTheEncodingCannotDecodeAreRefusedInsteadOfReplaced();
-    static void TextWithoutAnyBomKeepsEveryCharacter();
-};
+    private slots:
+        static void TheRepeatedKeyBecomesEveryAddonPathInOrder();
+        static void TheSingleValuedKeysAreRead();
+        static void ATrailingSeparatorIsTrimmedButARootKeepsIts();
+        static void LinesThatAreNotKeyValueAreIgnored();
+        static void TheShapeOfTheRealFileReadsWhole();
+        static void AFileThatCannotBeOpenedIsNotTheSameAsAFileWithoutKeys();
+        static void AByteOrderMarkWinsOverTheFallbackEncoding();
+        static void AccentsSurviveTheFallbackEncodingWhenThereIsNoBom();
+        static void AUtf16ByteOrderMarkIsHonouredInsteadOfDecodedAsBytes();
+        static void BytesThatTheEncodingCannotDecodeAreRefusedInsteadOfReplaced();
+        static void TextWithoutAnyBomKeepsEveryCharacter();
+    };
+}
 
 namespace
 {

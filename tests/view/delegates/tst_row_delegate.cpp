@@ -14,19 +14,22 @@
 
 class RowDelegateTest : public QObject
 {
-    Q_OBJECT
+    class RowDelegateTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ATextTooWideForItsColumnAnswersWithATooltip();
-    static void ATextThatFitsItsColumnIsLeftWithoutATooltip();
-    static void ATooltipTheModelSuppliesWinsOverTheOneMeasuredFromTheColumn();
-    static void ASelectedRowInATableIsOutlinedOnceAndNotCellByCell();
-    static void PointingAtOneCellLightsUpTheWholeRowAndNoOther();
-    static void TheGroundGoesBackWhenThePointerLeaves();
-    static void AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest();
-    static void TheQuietSuffixIsLaidAfterTheTextAndNotOverIt();
-    static void ARowTheModelCallsAlarmingIsGroundedInTheAlertColour();
-};
+    private slots:
+        static void ATextTooWideForItsColumnAnswersWithATooltip();
+        static void ATextThatFitsItsColumnIsLeftWithoutATooltip();
+        static void ATooltipTheModelSuppliesWinsOverTheOneMeasuredFromTheColumn();
+        static void ASelectedRowInATableIsOutlinedOnceAndNotCellByCell();
+        static void PointingAtOneCellLightsUpTheWholeRowAndNoOther();
+        static void TheGroundGoesBackWhenThePointerLeaves();
+        static void AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest();
+        static void TheQuietSuffixIsLaidAfterTheTextAndNotOverIt();
+        static void ARowTheModelCallsAlarmingIsGroundedInTheAlertColour();
+    };
+}
 
 namespace
 {

@@ -23,18 +23,21 @@
 
 class OptionsViewModelTest : public QObject
 {
-    Q_OBJECT
+    class OptionsViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ALibraryLineCarriesItsCategoriesAddonsAndWhatIsEnabledFromIt();
-    static void UnregisteringWithoutDisablingLeavesEveryLinkWhereItIs();
-    static void UnregisteringWhileDisablingRemovesTheLinksAndSparesTheRealFolders();
-    static void OnlyTheActiveProfileIsAskedForItsAddonCount();
-    static void TheProfileMarkedActiveIsTheOneTheOtherPanelsDescribe();
-    static void TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLands();
-    static void TheChosenTypeOfLinkIsWrittenWhereTheNextStartupReadsIt();
-    static void TheChosenTypeOfLinkReachesTheNextLinkWithoutReopeningTheApp();
-};
+    private slots:
+        static void ALibraryLineCarriesItsCategoriesAddonsAndWhatIsEnabledFromIt();
+        static void UnregisteringWithoutDisablingLeavesEveryLinkWhereItIs();
+        static void UnregisteringWhileDisablingRemovesTheLinksAndSparesTheRealFolders();
+        static void OnlyTheActiveProfileIsAskedForItsAddonCount();
+        static void TheProfileMarkedActiveIsTheOneTheOtherPanelsDescribe();
+        static void TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLands();
+        static void TheChosenTypeOfLinkIsWrittenWhereTheNextStartupReadsIt();
+        static void TheChosenTypeOfLinkReachesTheNextLinkWithoutReopeningTheApp();
+    };
+}
 
 namespace
 {

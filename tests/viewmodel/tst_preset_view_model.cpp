@@ -21,21 +21,24 @@
 
 class PresetViewModelTest : public QObject
 {
-    Q_OBJECT
+    class PresetViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ABlankNameIsRefusedBeforeAnythingIsWritten();
-    static void ANameThatCannotBecomeAFileNameIsRefused();
-    static void ANameAlreadyTakenIsRefused();
-    static void CreatingCapturesTheEnabledSetAndListsThePreset();
-    static void ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked();
-    static void SettingARowToDisableIsStoredOnThePreset();
-    static void ApplyingRefreshesTheSessionAndReportsTheUnresolved();
-    static void ALibraryIsNamedByItsLabelAndNotByItsIdentifier();
-    static void AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSilence();
-    static void ARowCarriesTheContentAndTheDayThePresetWasWritten();
-    static void ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInventingOne();
-};
+    private slots:
+        static void ABlankNameIsRefusedBeforeAnythingIsWritten();
+        static void ANameThatCannotBecomeAFileNameIsRefused();
+        static void ANameAlreadyTakenIsRefused();
+        static void CreatingCapturesTheEnabledSetAndListsThePreset();
+        static void ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked();
+        static void SettingARowToDisableIsStoredOnThePreset();
+        static void ApplyingRefreshesTheSessionAndReportsTheUnresolved();
+        static void ALibraryIsNamedByItsLabelAndNotByItsIdentifier();
+        static void AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSilence();
+        static void ARowCarriesTheContentAndTheDayThePresetWasWritten();
+        static void ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInventingOne();
+    };
+}
 
 namespace
 {
@@ -287,7 +290,7 @@ void PresetViewModelTest::ARowCarriesTheContentAndTheDayThePresetWasWritten()
 
     QCOMPARE(rows.size(), 1);
     QCOMPARE(rows.front().name, QStringLiteral("Voo curto"));
-    QCOMPARE(rows.front().content, QStringLiteral("2 addon(s) · 1 categoria(s)"));
+    QCOMPARE(rows.front().content, QStringLiteral("2 addon · 1 category"));
     QCOMPARE(rows.front().updated, QStringLiteral("17/02/2026"));
 }
 
@@ -302,7 +305,7 @@ void PresetViewModelTest::ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInve
     const QList<PresetRow> rows = f.viewModel.Rows();
 
     QCOMPARE(rows.size(), 1);
-    QCOMPARE(rows.front().content, QStringLiteral("1 addon(s) · 1 categoria(s)"));
+    QCOMPARE(rows.front().content, QStringLiteral("1 addon · 1 category"));
     QVERIFY(rows.front().updated.isEmpty());
 }
 

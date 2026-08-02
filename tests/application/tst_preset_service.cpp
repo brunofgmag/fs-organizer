@@ -19,17 +19,20 @@
 
 class PresetServiceTest : public QObject
 {
-    Q_OBJECT
+    class PresetServiceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void CreatingAPresetCapturesWhatIsEnabledRightNow();
-    static void UpdatingRewritesTheEnabledEntriesAndKeepsTheDisableOnes();
-    static void UpdatingDropsADisableEntryForAnAddonThatIsOnAgain();
-    static void SettingAnActionRefusesWhenTheRowNoLongerHoldsThatAddon();
-    static void ApplyingInReplaceRestoresExactlyTheSavedSet();
-    static void ReplaceLeavesAFolderTheAppDidNotLinkAlone();
-    static void ApplyingReportsTheEntriesThatNoLongerResolve();
-};
+    private slots:
+        static void CreatingAPresetCapturesWhatIsEnabledRightNow();
+        static void UpdatingRewritesTheEnabledEntriesAndKeepsTheDisableOnes();
+        static void UpdatingDropsADisableEntryForAnAddonThatIsOnAgain();
+        static void SettingAnActionRefusesWhenTheRowNoLongerHoldsThatAddon();
+        static void ApplyingInReplaceRestoresExactlyTheSavedSet();
+        static void ReplaceLeavesAFolderTheAppDidNotLinkAlone();
+        static void ApplyingReportsTheEntriesThatNoLongerResolve();
+    };
+}
 
 namespace
 {

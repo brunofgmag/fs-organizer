@@ -10,16 +10,19 @@
 
 class CommunityModelTest : public QObject
 {
-    Q_OBJECT
+    class CommunityModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheTableShowsOneRowPerEntry();
-    static void FilteringByEachClassificationReturnsExactlyItsSubset();
-    static void ClearingTheFilterShowsEverythingAgain();
-    static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
-    static void ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate();
-    static void ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone();
-};
+    private slots:
+        static void TheTableShowsOneRowPerEntry();
+        static void FilteringByEachClassificationReturnsExactlyItsSubset();
+        static void ClearingTheFilterShowsEverythingAgain();
+        static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
+        static void ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate();
+        static void ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone();
+    };
+}
 
 namespace
 {
@@ -162,7 +165,7 @@ void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
 
     const QModelIndex conflicted = model.index(4, CommunityModel::ClassificationColumn);
     QVERIFY(model.data(conflicted, CommunityModel::ConflictRole).toBool());
-    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("Não gerenciada · em conflito"));
+    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("Unmanaged · in conflict"));
     QVERIFY(model.data(conflicted, Qt::ToolTipRole)
                 .toString()
                 .contains(QDir::toNativeSeparators(QStringLiteral("D:/MSFS 2024/Utils/physical"))));

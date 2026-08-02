@@ -6,19 +6,22 @@
 
 class LegacyPresetTest : public QObject
 {
-    Q_OBJECT
+    class LegacyPresetTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ANamedAddonBecomesAnEnableEntry();
-    static void AnAddonMarkedWithAnAsteriskBecomesADisableEntry();
-    static void AFolderIsExpandedIntoTheAddonsUnderItRightNow();
-    static void AnAddonThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
-    static void AFolderThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
-    static void TheSameAddonNamedTwiceIsEnteredOnce();
-    static void AnAddonBothNamedAndMarkedForDisablingIsDisabledOnce();
-    static void TheNameOfThePresetSurvivesTheImport();
-    static void ASelectionWithoutAnyLineImportsAnEmptyPreset();
-};
+    private slots:
+        static void ANamedAddonBecomesAnEnableEntry();
+        static void AnAddonMarkedWithAnAsteriskBecomesADisableEntry();
+        static void AFolderIsExpandedIntoTheAddonsUnderItRightNow();
+        static void AnAddonThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
+        static void AFolderThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
+        static void TheSameAddonNamedTwiceIsEnteredOnce();
+        static void AnAddonBothNamedAndMarkedForDisablingIsDisabledOnce();
+        static void TheNameOfThePresetSurvivesTheImport();
+        static void ASelectionWithoutAnyLineImportsAnEmptyPreset();
+    };
+}
 
 namespace
 {

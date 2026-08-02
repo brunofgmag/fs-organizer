@@ -10,19 +10,22 @@
 
 class LegacyConfigImporterTest : public QObject
 {
-    Q_OBJECT
+    class LegacyConfigImporterTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryInstallationTheSourceFoundIsProposed();
-    static void ALibraryWhoseRootIsOnDiskIsAvailable();
-    static void ALibraryWhoseRootIsGoneStaysListedAndIsMarkedUnavailable();
-    static void AnInstallationWithoutEntriesIsStillListed();
-    static void AConfigurationThatCouldNotBeReadIsNotTheSameAsOneWithoutEntries();
-    static void TheProposalIsReconciledAgainstTheProfileInUse();
-    static void TheCategoriesAreReconciledAgainstTheTreeThatWasScanned();
-    static void ThePresetsFolderTravelsWithTheProposal();
-    static void ThePresetsOfTheInstallationAreResolvedAgainstWhatWasScanned();
-};
+    private slots:
+        static void EveryInstallationTheSourceFoundIsProposed();
+        static void ALibraryWhoseRootIsOnDiskIsAvailable();
+        static void ALibraryWhoseRootIsGoneStaysListedAndIsMarkedUnavailable();
+        static void AnInstallationWithoutEntriesIsStillListed();
+        static void AConfigurationThatCouldNotBeReadIsNotTheSameAsOneWithoutEntries();
+        static void TheProposalIsReconciledAgainstTheProfileInUse();
+        static void TheCategoriesAreReconciledAgainstTheTreeThatWasScanned();
+        static void ThePresetsFolderTravelsWithTheProposal();
+        static void ThePresetsOfTheInstallationAreResolvedAgainstWhatWasScanned();
+    };
+}
 
 namespace
 {

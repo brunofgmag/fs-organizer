@@ -11,17 +11,20 @@
 
 class WindowsFileOperationsTest : public QObject
 {
-    Q_OBJECT
+    class WindowsFileOperationsTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void RemovingATreeAtAJunctionNeverReachesTheTarget();
-    static void RemovingATreeTakesTheWholeSubtree();
-    static void CopyingATreeReproducesEveryFileAndItsSize();
-    static void CopyingASourceThatCannotBeWalkedFailsInsteadOfLandingNothing();
-    static void CancellingTheProgressCallbackStopsTheCopy();
-    static void MovingAcrossVolumesIsRefusedInsteadOfCopied();
-    static void MovingIntoAFolderThatDoesNotExistYetOpensTheWayThere();
-};
+    private slots:
+        static void RemovingATreeAtAJunctionNeverReachesTheTarget();
+        static void RemovingATreeTakesTheWholeSubtree();
+        static void CopyingATreeReproducesEveryFileAndItsSize();
+        static void CopyingASourceThatCannotBeWalkedFailsInsteadOfLandingNothing();
+        static void CancellingTheProgressCallbackStopsTheCopy();
+        static void MovingAcrossVolumesIsRefusedInsteadOfCopied();
+        static void MovingIntoAFolderThatDoesNotExistYetOpensTheWayThere();
+    };
+}
 
 namespace
 {

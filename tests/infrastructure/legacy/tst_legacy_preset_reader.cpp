@@ -12,20 +12,23 @@
 
 class LegacyPresetReaderTest : public QObject
 {
-    Q_OBJECT
+    class LegacyPresetReaderTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ABareNameIsAnAddonToEnable();
-    static void ALineWithAPathIsAFolderToEnable();
-    static void ALineStartingWithAnAsteriskIsAnAddonToDisable();
-    static void TheAsteriskIsStrippedTheWayTheOriginalStripsIt();
-    static void EmptyAndRepeatedLinesAreDiscarded();
-    static void TheNameOfThePresetComesFromTheFileName();
-    static void AFileThatCannotBeOpenedIsNotTheSameAsAnEmptyPreset();
-    static void AccentsSurviveTheFallbackEncoding();
-    static void EveryPresetInTheFolderIsReadAndNothingElseIs();
-    static void AFolderThatIsNotThereReadsNoPresets();
-};
+    private slots:
+        static void ABareNameIsAnAddonToEnable();
+        static void ALineWithAPathIsAFolderToEnable();
+        static void ALineStartingWithAnAsteriskIsAnAddonToDisable();
+        static void TheAsteriskIsStrippedTheWayTheOriginalStripsIt();
+        static void EmptyAndRepeatedLinesAreDiscarded();
+        static void TheNameOfThePresetComesFromTheFileName();
+        static void AFileThatCannotBeOpenedIsNotTheSameAsAnEmptyPreset();
+        static void AccentsSurviveTheFallbackEncoding();
+        static void EveryPresetInTheFolderIsReadAndNothingElseIs();
+        static void AFolderThatIsNotThereReadsNoPresets();
+    };
+}
 
 namespace
 {

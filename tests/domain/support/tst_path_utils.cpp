@@ -5,18 +5,21 @@
 
 class PathUtilsTest : public QObject
 {
-    Q_OBJECT
+    class PathUtilsTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TwoPathsThatNameTheSameFolderShareAKey();
-    static void ARootKeepsItsSeparator();
-    static void AnEmptyPathHasAnEmptyKey();
-    static void ReparsePrefixesAreStripped();
-    static void TheLastComponentIsReadWhicheverSeparatorWroteIt();
-    static void AFolderIsInsideTheRootOfItsOwnVolume();
-    static void ASiblingWhoseNameStartsWithTheRootIsNotInsideIt();
-    static void NothingIsInsideARootThatWasNeverNamed();
-};
+    private slots:
+        static void TwoPathsThatNameTheSameFolderShareAKey();
+        static void ARootKeepsItsSeparator();
+        static void AnEmptyPathHasAnEmptyKey();
+        static void ReparsePrefixesAreStripped();
+        static void TheLastComponentIsReadWhicheverSeparatorWroteIt();
+        static void AFolderIsInsideTheRootOfItsOwnVolume();
+        static void ASiblingWhoseNameStartsWithTheRootIsNotInsideIt();
+        static void NothingIsInsideARootThatWasNeverNamed();
+    };
+}
 
 void PathUtilsTest::TwoPathsThatNameTheSameFolderShareAKey()
 {

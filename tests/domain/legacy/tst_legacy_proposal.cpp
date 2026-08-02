@@ -6,25 +6,28 @@
 
 class LegacyProposalTest : public QObject
 {
-    Q_OBJECT
+    class LegacyProposalTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void SiblingEntriesBecomeOneLibraryWithACategoryEach();
-    static void TheCategoryIsTheEntryRelativeToTheRoot();
-    static void EntriesAtDifferentDepthsShareTheirCommonAncestor();
-    static void EntriesOnDifferentVolumesEachBecomeTheirOwnLibrary();
-    static void ACommonAncestorThatIsOnlyTheDriveRootIsRefused();
-    static void AnEntryThatIsItselfTheAncestorBecomesTheRootAndNotACategory();
-    static void RepeatedEntriesProposeTheCategoryOnce();
-    static void CaseAndSeparatorDifferencesDoNotSplitTheAncestor();
-    static void TheCategoryKeepsTheCaseTheEntryHad();
-    static void ALibraryAlreadyRegisteredIsMarkedAsSuch();
-    static void ACategoryAlreadyOnDiskIsMarkedAsSuch();
-    static void AnEmptyFolderTheIniNamesIsOfferedInsteadOfTakenAsPresent();
-    static void EveryCategoryOfANewLibraryIsNew();
-    static void AnEntryWithAnInvalidSegmentIsRefusedInsteadOfProposed();
-    static void NoEntriesProposeNoLibrary();
-};
+    private slots:
+        static void SiblingEntriesBecomeOneLibraryWithACategoryEach();
+        static void TheCategoryIsTheEntryRelativeToTheRoot();
+        static void EntriesAtDifferentDepthsShareTheirCommonAncestor();
+        static void EntriesOnDifferentVolumesEachBecomeTheirOwnLibrary();
+        static void ACommonAncestorThatIsOnlyTheDriveRootIsRefused();
+        static void AnEntryThatIsItselfTheAncestorBecomesTheRootAndNotACategory();
+        static void RepeatedEntriesProposeTheCategoryOnce();
+        static void CaseAndSeparatorDifferencesDoNotSplitTheAncestor();
+        static void TheCategoryKeepsTheCaseTheEntryHad();
+        static void ALibraryAlreadyRegisteredIsMarkedAsSuch();
+        static void ACategoryAlreadyOnDiskIsMarkedAsSuch();
+        static void AnEmptyFolderTheIniNamesIsOfferedInsteadOfTakenAsPresent();
+        static void EveryCategoryOfANewLibraryIsNew();
+        static void AnEntryWithAnInvalidSegmentIsRefusedInsteadOfProposed();
+        static void NoEntriesProposeNoLibrary();
+    };
+}
 
 namespace
 {

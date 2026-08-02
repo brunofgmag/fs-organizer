@@ -23,33 +23,36 @@
 
 class AddonTreeViewModelTest : public QObject
 {
-    Q_OBJECT
+    class AddonTreeViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ABlankCategoryNameIsRefusedBeforeItReachesTheJournal();
-    static void ACategoryAskedForOnAnAddonLandsBesideItInsteadOfInsideIt();
-    static void RenamingACategoryToTheNameItAlreadyHasIsNotAFailure();
-    static void ARefusedRenameIsExplainedInsteadOfPassingSilently();
-    static void MovingASelectionThatHoldsACategoryMovesOnlyTheAddonsInIt();
-    static void MovingASelectionWithNoAddonInItIsRefusedBeforeItReachesTheJournal();
-    static void TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveTarget();
-    static void TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonLoose();
-    static void AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets();
-    static void ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart();
-    static void AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo();
-    static void AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees();
-    static void AdoptingIsRefusedWhenTheEnabledAddonsPointAtDifferentDestinations();
-    static void AdoptingIsRefusedWhenNoAddonInTheCategoryIsEnabled();
-    static void OnlyACategoryHoldingAStrayAddonIsWorthOfferingTheAdoption();
-    static void TurningAStrayAddonOffAndOnAgainLandsItInTheDestinationTheProfileMandates();
-    static void RelinkingTouchesOnlyTheAddonsThatStrayedFromTheProfileDestination();
-    static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
-    static void OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff();
-    static void RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink();
-    static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
-    static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
-    static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
-};
+    private slots:
+        static void ABlankCategoryNameIsRefusedBeforeItReachesTheJournal();
+        static void ACategoryAskedForOnAnAddonLandsBesideItInsteadOfInsideIt();
+        static void RenamingACategoryToTheNameItAlreadyHasIsNotAFailure();
+        static void ARefusedRenameIsExplainedInsteadOfPassingSilently();
+        static void MovingASelectionThatHoldsACategoryMovesOnlyTheAddonsInIt();
+        static void MovingASelectionWithNoAddonInItIsRefusedBeforeItReachesTheJournal();
+        static void TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveTarget();
+        static void TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonLoose();
+        static void AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets();
+        static void ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart();
+        static void AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo();
+        static void AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees();
+        static void AdoptingIsRefusedWhenTheEnabledAddonsPointAtDifferentDestinations();
+        static void AdoptingIsRefusedWhenNoAddonInTheCategoryIsEnabled();
+        static void OnlyACategoryHoldingAStrayAddonIsWorthOfferingTheAdoption();
+        static void TurningAStrayAddonOffAndOnAgainLandsItInTheDestinationTheProfileMandates();
+        static void RelinkingTouchesOnlyTheAddonsThatStrayedFromTheProfileDestination();
+        static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
+        static void OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff();
+        static void RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink();
+        static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
+        static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
+        static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
+    };
+}
 
 namespace
 {

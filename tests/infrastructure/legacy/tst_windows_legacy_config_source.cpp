@@ -11,17 +11,20 @@
 
 class WindowsLegacyConfigSourceTest : public QObject
 {
-    Q_OBJECT
+    class WindowsLegacyConfigSourceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryInstallationFolderUnderProgramDataIsFound();
-    static void AFolderOfAnotherProgramIsIgnored();
-    static void AFolderWithoutTheConfigurationFileIsIgnored();
-    static void AConfigurationThatCannotBeOpenedIsFoundWithoutItsContents();
-    static void TheEntriesOfTheConfigurationArriveWhole();
-    static void AProgramDataFolderThatIsNotThereFindsNothing();
-    static void ThePresetsOfAnInstallationAreReadFromItsPresetsFolder();
-};
+    private slots:
+        static void EveryInstallationFolderUnderProgramDataIsFound();
+        static void AFolderOfAnotherProgramIsIgnored();
+        static void AFolderWithoutTheConfigurationFileIsIgnored();
+        static void AConfigurationThatCannotBeOpenedIsFoundWithoutItsContents();
+        static void TheEntriesOfTheConfigurationArriveWhole();
+        static void AProgramDataFolderThatIsNotThereFindsNothing();
+        static void ThePresetsOfAnInstallationAreReadFromItsPresetsFolder();
+    };
+}
 
 namespace
 {

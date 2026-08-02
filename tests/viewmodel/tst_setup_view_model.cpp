@@ -14,21 +14,24 @@
 
 class SetupViewModelTest : public QObject
 {
-    Q_OBJECT
+    class SetupViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryDetectedCandidateIsProposedNotJustTheFirst();
-    static void ADestinationThatDoesNotExistIsRejected();
-    static void ADestinationThatIsNotWritableIsRejected();
-    static void AFolderNotNamedCommunityIsAcceptedWithAWarning();
-    static void ACommunityFolderIsAcceptedWithoutWarning();
-    static void EachRegisteredLibraryGetsItsOwnGeneratedIdentity();
-    static void CompletingSetupPersistsTheChosenCandidateWithItsLibraries();
-    static void AManuallyPointedFolderBecomesACandidateThatCanBeChosen();
-    static void RegisteringALibraryReportsTheCategoriesAndAddonsFoundInside();
-    static void AFolderInsideAnAlreadyRegisteredLibraryIsRefused();
-    static void ASecondProfileIsAppendedAndKeepsADistinctIdentity();
-};
+    private slots:
+        static void EveryDetectedCandidateIsProposedNotJustTheFirst();
+        static void ADestinationThatDoesNotExistIsRejected();
+        static void ADestinationThatIsNotWritableIsRejected();
+        static void AFolderNotNamedCommunityIsAcceptedWithAWarning();
+        static void ACommunityFolderIsAcceptedWithoutWarning();
+        static void EachRegisteredLibraryGetsItsOwnGeneratedIdentity();
+        static void CompletingSetupPersistsTheChosenCandidateWithItsLibraries();
+        static void AManuallyPointedFolderBecomesACandidateThatCanBeChosen();
+        static void RegisteringALibraryReportsTheCategoriesAndAddonsFoundInside();
+        static void AFolderInsideAnAlreadyRegisteredLibraryIsRefused();
+        static void ASecondProfileIsAppendedAndKeepsADistinctIdentity();
+    };
+}
 
 namespace
 {

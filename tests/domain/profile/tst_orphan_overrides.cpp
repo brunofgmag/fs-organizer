@@ -6,15 +6,18 @@
 
 class OrphanOverridesTest : public QObject
 {
-    Q_OBJECT
+    class OrphanOverridesTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AnOverridePointingAtADestinationOfTheProfileIsNotAnOrphan();
-    static void AnOverridePointingOutsideTheProfileIsReported();
-    static void ADestinationIsRecognisedWhateverTheCaseAndTheSeparator();
-    static void AnOrphanOverrideDoesNotDecideWhereTheAddonGoes();
-    static void DroppingTheOrphansKeepsTheOnesThatStillPoint();
-};
+    private slots:
+        static void AnOverridePointingAtADestinationOfTheProfileIsNotAnOrphan();
+        static void AnOverridePointingOutsideTheProfileIsReported();
+        static void ADestinationIsRecognisedWhateverTheCaseAndTheSeparator();
+        static void AnOrphanOverrideDoesNotDecideWhereTheAddonGoes();
+        static void DroppingTheOrphansKeepsTheOnesThatStillPoint();
+    };
+}
 
 namespace
 {

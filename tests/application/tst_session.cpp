@@ -22,39 +22,42 @@
 
 class SessionTest : public QObject
 {
-    Q_OBJECT
+    class SessionTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheProfileAndItsSnapshotOnlyLandTogetherWhenTheScanFinishes();
-    static void AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost();
-    static void ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk();
-    static void RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain();
-    static void OverridingADestinationSavesTheProfileWithoutAnotherScan();
-    static void OverridingADestinationForAWholeSelectionSavesOnceInsteadOfOncePerNode();
-    static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
-    static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
-    static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
-    static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
-    static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
-    static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
-    static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
-    static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
-    static void UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty();
-    static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
-    static void UnregisteringALibraryDropsAnUndoThatWouldPointAtIt();
-    static void RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath();
-    static void ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain();
-    static void ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere();
-    static void ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported();
-    static void ImportingNothingSavesNothingAndScansNothing();
-    static void RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk();
-    static void RemovingAProfileThatIsNotInUseLeavesTheDiskAlone();
-    static void TheLastProfileIsNeverRemovedAndNothingIsWritten();
-    static void ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped();
-    static void ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain();
-    static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
-    static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
-};
+    private slots:
+        static void TheProfileAndItsSnapshotOnlyLandTogetherWhenTheScanFinishes();
+        static void AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost();
+        static void ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk();
+        static void RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain();
+        static void OverridingADestinationSavesTheProfileWithoutAnotherScan();
+        static void OverridingADestinationForAWholeSelectionSavesOnceInsteadOfOncePerNode();
+        static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
+        static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
+        static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
+        static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
+        static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
+        static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
+        static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
+        static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
+        static void UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty();
+        static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
+        static void UnregisteringALibraryDropsAnUndoThatWouldPointAtIt();
+        static void RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath();
+        static void ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain();
+        static void ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere();
+        static void ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported();
+        static void ImportingNothingSavesNothingAndScansNothing();
+        static void RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk();
+        static void RemovingAProfileThatIsNotInUseLeavesTheDiskAlone();
+        static void TheLastProfileIsNeverRemovedAndNothingIsWritten();
+        static void ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped();
+        static void ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain();
+        static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
+        static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
+    };
+}
 
 namespace
 {
@@ -432,7 +435,7 @@ void SessionTest::UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeTh
                                std::string("e:/flight simulator 2024/community/pmdg-aircraft-77w -> "
                                            "d:/msfs 2024/aircrafts/pmdg-aircraft-77w"))
                  != before.end(),
-             "a descrição do disco não enxergou o link, então comparar antes com depois não prova nada");
+             "the disk description did not see the link, so comparing before with after proves nothing");
 
     f.session.UnregisterLibrary("library-1");
 
@@ -474,7 +477,7 @@ void SessionTest::UnregisteringALibraryDropsAnUndoThatWouldPointAtIt()
     const TreeNode* addon = AddonNamed(f.session.Snapshot().libraries, "pmdg-aircraft-77w");
     QVERIFY(addon != nullptr);
     static_cast<void>(f.service.SetEnabled(f.session.Profile(), f.session.Snapshot(), {addon}, true));
-    QVERIFY2(f.service.CanUndo(), "nada entrou na pilha de desfazer, então exigi-la vazia depois não prova nada");
+    QVERIFY2(f.service.CanUndo(), "nothing entered the undo stack, so demanding it empty afterwards proves nothing");
 
     f.session.UnregisterLibrary("library-1");
 
@@ -491,7 +494,7 @@ void SessionTest::RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath()
     const TreeNode* addon = AddonNamed(f.session.Snapshot().libraries, "pmdg-aircraft-77w");
     QVERIFY(addon != nullptr);
     static_cast<void>(f.service.SetEnabled(f.session.Profile(), f.session.Snapshot(), {addon}, true));
-    QVERIFY2(f.service.CanUndo(), "nada entrou na pilha de desfazer, então exigi-la vazia depois não prova nada");
+    QVERIFY2(f.service.CanUndo(), "nothing entered the undo stack, so demanding it empty afterwards proves nothing");
 
     f.session.RepointDestination(kCommunity, "E:/Flight Simulator 2024/Community2025");
 
@@ -603,7 +606,7 @@ void SessionTest::ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsk
     const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{kExtraLibrary}, {}});
 
     QCOMPARE(report.librariesRegistered, std::size_t{1});
-    QVERIFY2(!f.runner.Pending(), "a importação deixou a varredura pendurada no runner");
+    QVERIFY2(!f.runner.Pending(), "the import left the scan hanging on the runner");
     QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{2});
 }
 

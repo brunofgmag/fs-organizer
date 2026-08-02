@@ -5,15 +5,18 @@
 
 class ToggleDirectionTest : public QObject
 {
-    Q_OBJECT
+    class ToggleDirectionTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EnablesWhenSomeAddonIsFreeToEnable();
-    static void DisablesWhenEverythingEnableableIsAlreadyEnabled();
-    static void TriesToEnableWhenEverythingIsBlockedAndOff();
-    static void ARealFolderAtTheEffectiveDestinationBlocks();
-    static void AnEntryLinkingToTheAddonDoesNotBlockIt();
-};
+    private slots:
+        static void EnablesWhenSomeAddonIsFreeToEnable();
+        static void DisablesWhenEverythingEnableableIsAlreadyEnabled();
+        static void TriesToEnableWhenEverythingIsBlockedAndOff();
+        static void ARealFolderAtTheEffectiveDestinationBlocks();
+        static void AnEntryLinkingToTheAddonDoesNotBlockIt();
+    };
+}
 
 namespace
 {

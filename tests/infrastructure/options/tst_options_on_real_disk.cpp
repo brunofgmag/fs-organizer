@@ -26,14 +26,17 @@
 
 class OptionsOnRealDiskTest : public QObject
 {
-    Q_OBJECT
+    class OptionsOnRealDiskTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AskingForASymlinkEitherLandsOnDiskOrNamesThePrivilegeItLacks();
-    static void UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThirdParty();
-    static void RegisteringTheLibraryBackRebuildsTheTreeUnderANewIdentity();
-    static void RepointingADestinationCarriesThePinnedCategoryIntoTheFileOnDisk();
-};
+    private slots:
+        static void AskingForASymlinkEitherLandsOnDiskOrNamesThePrivilegeItLacks();
+        static void UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThirdParty();
+        static void RegisteringTheLibraryBackRebuildsTheTreeUnderANewIdentity();
+        static void RepointingADestinationCarriesThePinnedCategoryIntoTheFileOnDisk();
+    };
+}
 
 namespace
 {
@@ -160,7 +163,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
     symbolic.session.ShowActiveProfile();
 
     const TreeNode* addon = AddonUnder(symbolic, kAddon);
-    QVERIFY2(addon != nullptr, "a varredura não achou o addon, então pedir o link não prova nada");
+    QVERIFY2(addon != nullptr, "the scan did not find the addon, so asking for the link proves nothing");
 
     const std::vector<LinkOperationResult> asked =
         symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {addon}, true);
@@ -171,7 +174,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
 
     if (asked.front().outcome.Succeeded())
     {
-        qInfo("esta máquina cria symlink de diretório: o Modo de Desenvolvedor está ligado ou a sessão é elevada");
+        qInfo("this machine creates directory symlinks: Developer Mode is on, or the session is elevated");
         QVERIFY(symbolic.filesystemProbe.IsReparsePoint(linkPath));
 
         symbolic.session.ShowActiveProfile();
@@ -187,7 +190,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
     }
     else
     {
-        qInfo("esta máquina recusa symlink de diretório, que é o caso que a US-12.2 descreve");
+        qInfo("this machine refuses directory symlinks, which is the case US-12.2 describes");
         QCOMPARE(asked.front().outcome.Failure(), LinkFailure::PrivilegeNotHeld);
         QVERIFY2(!std::filesystem::exists(linkPath), "a recusa deixou lixo no destino");
     }
@@ -221,7 +224,7 @@ void OptionsOnRealDiskTest::UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThi
 
     const std::filesystem::path linkPath = disk.Community() / kAddon;
     QVERIFY2(stack.filesystemProbe.IsReparsePoint(linkPath),
-             "o junction não nasceu, então exigi-lo vivo depois não prova nada");
+             "the junction was not created, so demanding it alive afterwards proves nothing");
 
     stack.session.UnregisterLibrary("library-1");
 
@@ -236,7 +239,7 @@ void OptionsOnRealDiskTest::UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThi
                                                 return ComparablePath(entry.path) == ComparablePath(linkPath);
                                             });
 
-    QVERIFY2(found != entries.end(), "a varredura seguinte não enxergou o link que sobrou no destino");
+    QVERIFY2(found != entries.end(), "the next scan did not see the link left behind in the destination");
     QCOMPARE(found->classification, EntryClassification::External);
 }
 
@@ -262,7 +265,7 @@ void OptionsOnRealDiskTest::RegisteringTheLibraryBackRebuildsTheTreeUnderANewIde
     QCOMPARE(CountAddons(stack.session.Snapshot().libraries.front()), addonsBefore);
 
     QVERIFY2(stack.session.Profile().libraries.front().id != LibraryId("library-1"),
-             "a biblioteca voltou com o identificador antigo, e a nota promete que ele é novo");
+             "the library came back with the old identifier, and the note promises it is new");
 }
 
 void OptionsOnRealDiskTest::RepointingADestinationCarriesThePinnedCategoryIntoTheFileOnDisk()
@@ -279,7 +282,7 @@ void OptionsOnRealDiskTest::RepointingADestinationCarriesThePinnedCategoryIntoTh
                                                    return child.path.filename() == "Aircrafts";
                                                });
 
-    QVERIFY2(category != library->children.end(), "a varredura não achou a categoria que seria fixada");
+    QVERIFY2(category != library->children.end(), "the scan did not find the category that would be pinned");
 
     stack.session.OverrideDestination({&*category}, disk.Extra());
 

@@ -4,14 +4,17 @@
 
 class JsonManifestParserTest : public QObject
 {
-    Q_OBJECT
+    class JsonManifestParserTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AManifestExposesTheFieldsTheTreeNeeds();
-    static void AByteOrderMarkDoesNotHideTheManifest();
-    static void FreeTextFieldsSurviveWhateverTheAuthorWrote();
-    static void ContentThatIsNotAJsonObjectIsNotAManifest();
-};
+    private slots:
+        static void AManifestExposesTheFieldsTheTreeNeeds();
+        static void AByteOrderMarkDoesNotHideTheManifest();
+        static void FreeTextFieldsSurviveWhateverTheAuthorWrote();
+        static void ContentThatIsNotAJsonObjectIsNotAManifest();
+    };
+}
 
 void JsonManifestParserTest::AManifestExposesTheFieldsTheTreeNeeds()
 {

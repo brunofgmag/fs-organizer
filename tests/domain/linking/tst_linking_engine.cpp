@@ -7,20 +7,23 @@
 
 class LinkingEngineTest : public QObject
 {
-    Q_OBJECT
+    class LinkingEngineTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EnablingIntoAFreeDestinationLinksToTheAddonFolder();
-    static void DisablingRemovesTheReparseNodeAndLeavesTheTargetIntact();
-    static void DisablingRefusesWhenThePathIsNotAReparsePoint();
-    static void EnablingRefusesWhenTheDestinationHoldsARealFolder();
-    static void EnablingReplacesAStaleLinkAtTheDestination();
-    static void EnablingRefusesWhenTheDestinationHoldsALiveForeignLink();
-    static void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
-    static void ADanglingLinkStillCountsAsAnExistingEntry();
-    static void ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix();
-    static void EnablingCarriesTheReasonThePlatformRefusedInsteadOfFlatteningIt();
-};
+    private slots:
+        static void EnablingIntoAFreeDestinationLinksToTheAddonFolder();
+        static void DisablingRemovesTheReparseNodeAndLeavesTheTargetIntact();
+        static void DisablingRefusesWhenThePathIsNotAReparsePoint();
+        static void EnablingRefusesWhenTheDestinationHoldsARealFolder();
+        static void EnablingReplacesAStaleLinkAtTheDestination();
+        static void EnablingRefusesWhenTheDestinationHoldsALiveForeignLink();
+        static void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
+        static void ADanglingLinkStillCountsAsAnExistingEntry();
+        static void ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix();
+        static void EnablingCarriesTheReasonThePlatformRefusedInsteadOfFlatteningIt();
+    };
+}
 
 namespace
 {

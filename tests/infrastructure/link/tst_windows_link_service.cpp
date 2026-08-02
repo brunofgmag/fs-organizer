@@ -10,13 +10,16 @@
 
 class WindowsLinkServiceTest : public QObject
 {
-    Q_OBJECT
+    class WindowsLinkServiceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AJunctionReadsBackTheTargetItWasCreatedWith();
-    static void RemovingTheNodeSparesTheTargetAndEverythingInside();
-    static void ASymlinkEitherLandsOrSaysThePrivilegeIsMissing();
-};
+    private slots:
+        static void AJunctionReadsBackTheTargetItWasCreatedWith();
+        static void RemovingTheNodeSparesTheTargetAndEverythingInside();
+        static void ASymlinkEitherLandsOrSaysThePrivilegeIsMissing();
+    };
+}
 
 namespace
 {
@@ -92,7 +95,7 @@ void WindowsLinkServiceTest::ASymlinkEitherLandsOrSaysThePrivilegeIsMissing()
     const LinkFailure outcome = linkService.CreateLink(linkPath, target, LinkType::Symbolic);
 
     QVERIFY2(outcome == LinkFailure::None || outcome == LinkFailure::PrivilegeNotHeld,
-             qPrintable(QStringLiteral("a criação de symlink devolveu %1, que não diz ao usuário o que fazer")
+             qPrintable(QStringLiteral("creating the symlink returned %1, which does not tell the user what to do")
                             .arg(QTest::toString(outcome))));
 
     if (outcome != LinkFailure::None)

@@ -20,12 +20,15 @@
 
 class QuarantineViewModelTest : public QObject
 {
-    Q_OBJECT
+    class QuarantineViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing();
-    static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
-};
+    private slots:
+        static void TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing();
+        static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
+    };
+}
 
 namespace
 {

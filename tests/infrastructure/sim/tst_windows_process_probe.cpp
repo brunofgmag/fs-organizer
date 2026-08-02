@@ -6,12 +6,15 @@
 
 class WindowsProcessProbeTest : public QObject
 {
-    Q_OBJECT
+    class WindowsProcessProbeTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AProcessThatIsRunningIsSeen();
-    static void AProcessThatIsNotRunningIsNotSeen();
-};
+    private slots:
+        static void AProcessThatIsRunningIsSeen();
+        static void AProcessThatIsNotRunningIsNotSeen();
+    };
+}
 
 namespace
 {

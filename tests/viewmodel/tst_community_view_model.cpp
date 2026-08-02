@@ -18,14 +18,17 @@
 
 class CommunityViewModelTest : public QObject
 {
-    Q_OBJECT
+    class CommunityViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ShowingFillsTheTableFromTheSharedSnapshot();
-    static void RepairingRemovesTheDeadRowsAndDropsTheAttentionCount();
-    static void TheBreakdownSeparatesBrokenConflictedAndUnmanaged();
-    static void TheBreakdownCountsAnAddonLinkedIntoTwoDestinations();
-};
+    private slots:
+        static void ShowingFillsTheTableFromTheSharedSnapshot();
+        static void RepairingRemovesTheDeadRowsAndDropsTheAttentionCount();
+        static void TheBreakdownSeparatesBrokenConflictedAndUnmanaged();
+        static void TheBreakdownCountsAnAddonLinkedIntoTwoDestinations();
+    };
+}
 
 namespace
 {

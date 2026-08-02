@@ -11,20 +11,23 @@
 
 class FilePresetRepositoryTest : public QObject
 {
-    Q_OBJECT
+    class FilePresetRepositoryTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void APresetSurvivesTheRoundTripWithBothActions();
-    static void APresetOfOneProfileDoesNotShowUpInAnother();
-    static void RenamingKeepsTheEntriesAndDropsTheOldName();
-    static void RenamingAPresetOntoItsOwnNameKeepsIt();
-    static void ARenameTheDiskRefusesLeavesThePresetWhereItWas();
-    static void SavingSaysWhetherThePresetLanded();
-    static void RemovingDropsThePresetFromTheList();
-    static void ANameThatClimbsOutOfThePresetRootIsRefusedInsteadOfWritten();
-    static void AProfileIdThatClimbsOutOfThePresetRootNeverReachesAnotherFolder();
-    static void TheListingCarriesWhenThePresetFileWasLastWritten();
-};
+    private slots:
+        static void APresetSurvivesTheRoundTripWithBothActions();
+        static void APresetOfOneProfileDoesNotShowUpInAnother();
+        static void RenamingKeepsTheEntriesAndDropsTheOldName();
+        static void RenamingAPresetOntoItsOwnNameKeepsIt();
+        static void ARenameTheDiskRefusesLeavesThePresetWhereItWas();
+        static void SavingSaysWhetherThePresetLanded();
+        static void RemovingDropsThePresetFromTheList();
+        static void ANameThatClimbsOutOfThePresetRootIsRefusedInsteadOfWritten();
+        static void AProfileIdThatClimbsOutOfThePresetRootNeverReachesAnotherFolder();
+        static void TheListingCarriesWhenThePresetFileWasLastWritten();
+    };
+}
 
 namespace
 {

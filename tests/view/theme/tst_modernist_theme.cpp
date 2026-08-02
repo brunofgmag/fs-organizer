@@ -13,19 +13,22 @@
 
 class ModernistThemeTest : public QObject
 {
-    Q_OBJECT
+    class ModernistThemeTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheArchivoFamilyResolvesFromTheBinary();
-    static void TheBrandIconsResolveFromTheBinary();
-    static void EachSchemeGetsItsOwnGroundAndTheSameAccent();
-    static void ApplyingTheThemeSetsTheApplicationFont();
-    static void ADisabledDefaultButtonTakesOffTheAccent();
-    static void AnOutlineStaysInsideItsBoxAtEveryScale();
-    static void ATagPaintsItsWordInsideItsOwnPadding();
-    static void ATagKeepsRoomAroundItsWord();
-    static void TheFocusRingTakesTheBorderOfAButtonAndTheBoxOfAnItem();
-};
+    private slots:
+        static void TheArchivoFamilyResolvesFromTheBinary();
+        static void TheBrandIconsResolveFromTheBinary();
+        static void EachSchemeGetsItsOwnGroundAndTheSameAccent();
+        static void ApplyingTheThemeSetsTheApplicationFont();
+        static void ADisabledDefaultButtonTakesOffTheAccent();
+        static void AnOutlineStaysInsideItsBoxAtEveryScale();
+        static void ATagPaintsItsWordInsideItsOwnPadding();
+        static void ATagKeepsRoomAroundItsWord();
+        static void TheFocusRingTakesTheBorderOfAButtonAndTheBoxOfAnItem();
+    };
+}
 
 void ModernistThemeTest::TheArchivoFamilyResolvesFromTheBinary()
 {
@@ -70,7 +73,7 @@ void ModernistThemeTest::ApplyingTheThemeSetsTheApplicationFont()
 
 void ModernistThemeTest::ADisabledDefaultButtonTakesOffTheAccent()
 {
-    QPushButton button(QStringLiteral("Aplicar"));
+    QPushButton button(QStringLiteral("Apply"));
     button.setStyleSheet(ModernistStyleSheet(Qt::ColorScheme::Dark));
     button.setDefault(true);
     button.resize(160, 30);

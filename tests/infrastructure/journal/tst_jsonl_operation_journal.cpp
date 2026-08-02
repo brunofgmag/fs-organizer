@@ -8,18 +8,21 @@
 
 class JsonlOperationJournalTest : public QObject
 {
-    Q_OBJECT
+    class JsonlOperationJournalTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EachRecordBecomesOneLineWithEveryFieldOfTheOperation();
-    static void AppendingNeverRewritesWhatWasAlreadyThere();
-    static void TheRepairKindsHaveTheirOwnStableNames();
-    static void AnImportRecordCarriesItsResultAndNoLinkFailure();
-    static void EveryKindAndEveryReasonSurvivesTheRoundTrip();
-    static void ReadingSkipsALineWrittenByANewerVersion();
-    static void AnOutcomeThisVersionCannotReadIsNotASuccess();
-    static void AnAbsentJournalReadsAsNoHistoryAtAll();
-};
+    private slots:
+        static void EachRecordBecomesOneLineWithEveryFieldOfTheOperation();
+        static void AppendingNeverRewritesWhatWasAlreadyThere();
+        static void TheRepairKindsHaveTheirOwnStableNames();
+        static void AnImportRecordCarriesItsResultAndNoLinkFailure();
+        static void EveryKindAndEveryReasonSurvivesTheRoundTrip();
+        static void ReadingSkipsALineWrittenByANewerVersion();
+        static void AnOutcomeThisVersionCannotReadIsNotASuccess();
+        static void AnAbsentJournalReadsAsNoHistoryAtAll();
+    };
+}
 
 namespace
 {

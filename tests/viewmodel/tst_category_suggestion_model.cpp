@@ -6,16 +6,19 @@
 
 class CategorySuggestionModelTest : public QObject
 {
-    Q_OBJECT
+    class CategorySuggestionModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheRulesThatAreTrustedOnTheirOwnStartCheckedAndTheLiveryRuleDoesNot();
-    static void OnlyTheSuggestionsThatWouldActuallyMoveTheAddonAreListed();
-    static void TheChosenMovesAreTheRowsLeftCheckedAndNothingElse();
-    static void TheOverallStateTellsAllFromNoneFromAMixture();
-    static void ChoosingAllReachesEveryRowAndAnnouncesTheWholeColumn();
-    static void ChoosingAllOnAnEmptyListSaysNothingInsteadOfAnnouncingARangeThatDoesNotExist();
-};
+    private slots:
+        static void TheRulesThatAreTrustedOnTheirOwnStartCheckedAndTheLiveryRuleDoesNot();
+        static void OnlyTheSuggestionsThatWouldActuallyMoveTheAddonAreListed();
+        static void TheChosenMovesAreTheRowsLeftCheckedAndNothingElse();
+        static void TheOverallStateTellsAllFromNoneFromAMixture();
+        static void ChoosingAllReachesEveryRowAndAnnouncesTheWholeColumn();
+        static void ChoosingAllOnAnEmptyListSaysNothingInsteadOfAnnouncingARangeThatDoesNotExist();
+    };
+}
 
 namespace
 {

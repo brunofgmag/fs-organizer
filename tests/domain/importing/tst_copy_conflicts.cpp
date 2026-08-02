@@ -5,15 +5,18 @@
 
 class CopyConflictsTest : public QObject
 {
-    Q_OBJECT
+    class CopyConflictsTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void APhysicalFolderThatAlsoExistsInTheLibraryIsAConflict();
-    static void AnEmptyFolderInTheLibraryIsNotAnAddonAndSoIsNotAConflict();
-    static void AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict();
-    static void TheBaseNameIsComparedWithoutCaringAboutCase();
-    static void TheSameNameInTwoDestinationsIsTwoConflicts();
-};
+    private slots:
+        static void APhysicalFolderThatAlsoExistsInTheLibraryIsAConflict();
+        static void AnEmptyFolderInTheLibraryIsNotAnAddonAndSoIsNotAConflict();
+        static void AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict();
+        static void TheBaseNameIsComparedWithoutCaringAboutCase();
+        static void TheSameNameInTwoDestinationsIsTwoConflicts();
+    };
+}
 
 namespace
 {

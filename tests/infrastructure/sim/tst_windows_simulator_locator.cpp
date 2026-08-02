@@ -11,12 +11,15 @@
 
 class WindowsSimulatorLocatorTest : public QObject
 {
-    Q_OBJECT
+    class WindowsSimulatorLocatorTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryCandidateIsReportedNotJustTheFirst();
-    static void OnlyTheDestinationFoldersThatExistAreEnumerated();
-};
+    private slots:
+        static void EveryCandidateIsReportedNotJustTheFirst();
+        static void OnlyTheDestinationFoldersThatExistAreEnumerated();
+    };
+}
 
 namespace
 {

@@ -17,32 +17,35 @@
 
 class ProfileServiceTest : public QObject
 {
-    Q_OBJECT
+    class ProfileServiceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void MarkingACategoryEnablesEveryAddonUnderIt();
-    static void ABatchKeepsGoingAfterAFailureAndReportsOneResultPerItem();
-    static void AFailedItemInABatchDoesNotUndoTheItemsThatWorked();
-    static void AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccupied();
-    static void DisablingAnAddonRemovesItsLinkInEveryDestination();
-    static void EnablingHonoursTheDestinationOverrideOfTheCategory();
-    static void TurningAnAddonOffAndOnAgainLeavesItInTheDestinationItLivedIn();
-    static void EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot();
-    static void UndoRevertsTheLastBatchAndNothingElse();
-    static void UndoOnlyRevertsWhatTheBatchActuallyDid();
-    static void ThereIsNothingToUndoBeforeTheFirstBatch();
-    static void RegisteringALibraryReportsWhatIsInsideAndRefusesANestedFolder();
-    static void ABatchWithNothingToDoDoesNotThrowAwayThePreviousUndo();
-    static void ABatchWhereEveryStepFailedKeepsThePreviousUndo();
-    static void RepairingRemovesTheDeadNodeAndJournalsIt();
-    static void RepointingReplacesTheDeadLinkWithTheLibraryAddon();
-    static void UndoingARepairRecreatesTheDeadLink();
-    static void UndoingARepointRestoresTheDeadLink();
-    static void ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBatch();
-    static void ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece();
-    static void TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree();
-    static void UndoingASwapPutsTheOldAddonBackInTheDestination();
-};
+    private slots:
+        static void MarkingACategoryEnablesEveryAddonUnderIt();
+        static void ABatchKeepsGoingAfterAFailureAndReportsOneResultPerItem();
+        static void AFailedItemInABatchDoesNotUndoTheItemsThatWorked();
+        static void AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccupied();
+        static void DisablingAnAddonRemovesItsLinkInEveryDestination();
+        static void EnablingHonoursTheDestinationOverrideOfTheCategory();
+        static void TurningAnAddonOffAndOnAgainLeavesItInTheDestinationItLivedIn();
+        static void EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot();
+        static void UndoRevertsTheLastBatchAndNothingElse();
+        static void UndoOnlyRevertsWhatTheBatchActuallyDid();
+        static void ThereIsNothingToUndoBeforeTheFirstBatch();
+        static void RegisteringALibraryReportsWhatIsInsideAndRefusesANestedFolder();
+        static void ABatchWithNothingToDoDoesNotThrowAwayThePreviousUndo();
+        static void ABatchWhereEveryStepFailedKeepsThePreviousUndo();
+        static void RepairingRemovesTheDeadNodeAndJournalsIt();
+        static void RepointingReplacesTheDeadLinkWithTheLibraryAddon();
+        static void UndoingARepairRecreatesTheDeadLink();
+        static void UndoingARepointRestoresTheDeadLink();
+        static void ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBatch();
+        static void ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece();
+        static void TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree();
+        static void UndoingASwapPutsTheOldAddonBackInTheDestination();
+    };
+}
 
 namespace
 {

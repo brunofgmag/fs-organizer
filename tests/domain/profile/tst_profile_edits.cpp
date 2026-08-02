@@ -5,20 +5,23 @@
 
 class ProfileEditsTest : public QObject
 {
-    Q_OBJECT
+    class ProfileEditsTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AProfileIsRemovedFromTheListByItsIdentifier();
-    static void TheLastProfileIsNeverRemoved();
-    static void AProfileThatIsNotThereRemovesNothing();
-    static void UnregisteringALibraryDropsItAndTheOverridesThatNamedIt();
-    static void UnregisteringALibraryLeavesTheOverridesOfTheOthersAlone();
-    static void UnregisteringALibraryThatIsNotThereChangesNothing();
-    static void RepointingADestinationCarriesTheOverridesThatNamedTheOldPath();
-    static void RepointingADestinationCarriesTheDefaultWhenItWasTheOneMoved();
-    static void RepointingADestinationLeavesTheOtherDestinationAlone();
-    static void RepointingMatchesTheOldPathWithoutCaseOrSeparatorDifferences();
-};
+    private slots:
+        static void AProfileIsRemovedFromTheListByItsIdentifier();
+        static void TheLastProfileIsNeverRemoved();
+        static void AProfileThatIsNotThereRemovesNothing();
+        static void UnregisteringALibraryDropsItAndTheOverridesThatNamedIt();
+        static void UnregisteringALibraryLeavesTheOverridesOfTheOthersAlone();
+        static void UnregisteringALibraryThatIsNotThereChangesNothing();
+        static void RepointingADestinationCarriesTheOverridesThatNamedTheOldPath();
+        static void RepointingADestinationCarriesTheDefaultWhenItWasTheOneMoved();
+        static void RepointingADestinationLeavesTheOtherDestinationAlone();
+        static void RepointingMatchesTheOldPathWithoutCaseOrSeparatorDifferences();
+    };
+}
 
 namespace
 {

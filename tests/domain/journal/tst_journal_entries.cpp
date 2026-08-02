@@ -6,16 +6,19 @@
 
 class JournalEntriesTest : public QObject
 {
-    Q_OBJECT
+    class JournalEntriesTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheFiveStepsOfOneImportBecomeASingleEntry();
-    static void AnImportThatStoppedHalfwayIsAnEntryWithTheStepsItGotThrough();
-    static void TwoImportsInARowNeverMergeIntoOne();
-    static void LinkOperationsStayOnePerEntry();
-    static void AnEnableThatFollowsNoCopyIsNotPartOfARun();
-    static void AnEntryFailsWhenAnyOfItsStepsFailed();
-};
+    private slots:
+        static void TheFiveStepsOfOneImportBecomeASingleEntry();
+        static void AnImportThatStoppedHalfwayIsAnEntryWithTheStepsItGotThrough();
+        static void TwoImportsInARowNeverMergeIntoOne();
+        static void LinkOperationsStayOnePerEntry();
+        static void AnEnableThatFollowsNoCopyIsNotPartOfARun();
+        static void AnEntryFailsWhenAnyOfItsStepsFailed();
+    };
+}
 
 namespace
 {

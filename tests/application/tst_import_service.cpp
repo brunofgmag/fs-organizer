@@ -18,32 +18,35 @@
 
 class ImportServiceTest : public QObject
 {
-    Q_OBJECT
+    class ImportServiceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void NoFileIsTouchedWhileTheSimulatorIsRunning();
-    static void ResolvingAConflictSendsTheLoserToQuarantineAndDeletesNothing();
-    static void KeepingTheDestinationCopySendsTheLibraryCopyToItsOwnQuarantine();
-    static void QuarantiningTheDestinationCopyIsJournalledAlongWithTheLinkThatReplacesIt();
-    static void QuarantiningTheLibraryCopyIsJournalledOnItsOwn();
-    static void ARefusedBatchLeavesNothingInTheJournal();
-    static void TheQuarantineIsListedFromTheDiskAndItsOriginComesFromTheJournal();
-    static void RestoringPutsTheFolderBackWhereItCameFromAndSaysSoInTheJournal();
-    static void RestoringIsRefusedWhenSomethingElseAlreadyOccupiesTheOrigin();
-    static void AnItemWhoseOriginTheJournalNeverSawIsNotRestored();
-    static void EmptyingTheQuarantineNeverReachesAnythingOutsideIt();
-    static void NoQuarantineIsTouchedWhileTheSimulatorIsRunning();
-    static void LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFrom();
-    static void TheSearchForLeftoversNeverWalksIntoAnAddon();
-    static void ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSource();
-    static void DiscardingALeftoverRemovesOnlyTheStaging();
-    static void KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuarantiningIt();
-    static void NothingIsMovedWhenALinkToTheLibraryCopyCannotBeRemoved();
-    static void ImportingIsRefusedWhenTheBaseNameAlreadyExistsInTheLibrary();
-    static void ResumingIsRefusedWhenTheBaseNameAppearedWhileTheImportWasLost();
-    static void RestoringIsRefusedWhenTheBaseNameTookTheIdentityElsewhere();
-    static void TheIdentityIsOnlyTakenInsideTheLibraryThatHoldsIt();
-};
+    private slots:
+        static void NoFileIsTouchedWhileTheSimulatorIsRunning();
+        static void ResolvingAConflictSendsTheLoserToQuarantineAndDeletesNothing();
+        static void KeepingTheDestinationCopySendsTheLibraryCopyToItsOwnQuarantine();
+        static void QuarantiningTheDestinationCopyIsJournalledAlongWithTheLinkThatReplacesIt();
+        static void QuarantiningTheLibraryCopyIsJournalledOnItsOwn();
+        static void ARefusedBatchLeavesNothingInTheJournal();
+        static void TheQuarantineIsListedFromTheDiskAndItsOriginComesFromTheJournal();
+        static void RestoringPutsTheFolderBackWhereItCameFromAndSaysSoInTheJournal();
+        static void RestoringIsRefusedWhenSomethingElseAlreadyOccupiesTheOrigin();
+        static void AnItemWhoseOriginTheJournalNeverSawIsNotRestored();
+        static void EmptyingTheQuarantineNeverReachesAnythingOutsideIt();
+        static void NoQuarantineIsTouchedWhileTheSimulatorIsRunning();
+        static void LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFrom();
+        static void TheSearchForLeftoversNeverWalksIntoAnAddon();
+        static void ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSource();
+        static void DiscardingALeftoverRemovesOnlyTheStaging();
+        static void KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuarantiningIt();
+        static void NothingIsMovedWhenALinkToTheLibraryCopyCannotBeRemoved();
+        static void ImportingIsRefusedWhenTheBaseNameAlreadyExistsInTheLibrary();
+        static void ResumingIsRefusedWhenTheBaseNameAppearedWhileTheImportWasLost();
+        static void RestoringIsRefusedWhenTheBaseNameTookTheIdentityElsewhere();
+        static void TheIdentityIsOnlyTakenInsideTheLibraryThatHoldsIt();
+    };
+}
 
 namespace
 {

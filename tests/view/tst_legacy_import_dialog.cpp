@@ -25,16 +25,19 @@
 
 class LegacyImportDialogTest : public QObject
 {
-    Q_OBJECT
+    class LegacyImportDialogTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EachInstallationBecomesALineWithItsLibrariesUnderIt();
-    static void ALibraryAlreadyRegisteredIsShownWithoutAnythingToCheck();
-    static void ALibraryWhoseRootIsGoneIsListedAndOffersNothing();
-    static void AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing();
-    static void ImportingWhatIsCheckedRegistersTheLibraryAndSaysWhatHappened();
-    static void APresetOfTheOldProgramIsOfferedAndLandsInTheProfile();
-};
+    private slots:
+        static void EachInstallationBecomesALineWithItsLibrariesUnderIt();
+        static void ALibraryAlreadyRegisteredIsShownWithoutAnythingToCheck();
+        static void ALibraryWhoseRootIsGoneIsListedAndOffersNothing();
+        static void AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing();
+        static void ImportingWhatIsCheckedRegistersTheLibraryAndSaysWhatHappened();
+        static void APresetOfTheOldProgramIsOfferedAndLandsInTheProfile();
+    };
+}
 
 namespace
 {
@@ -180,7 +183,7 @@ void LegacyImportDialogTest::ALibraryWhoseRootIsGoneIsListedAndOffersNothing()
     QVERIFY(!library->flags().testFlag(Qt::ItemIsUserCheckable));
     QCOMPARE(library->childCount(), 2);
     QVERIFY(!library->child(0)->flags().testFlag(Qt::ItemIsUserCheckable));
-    QVERIFY(!ButtonLabelled(dialog, QStringLiteral("Importar"))->isEnabled());
+    QVERIFY(!ButtonLabelled(dialog, QStringLiteral("Import"))->isEnabled());
 }
 
 void LegacyImportDialogTest::AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing()
@@ -203,8 +206,8 @@ void LegacyImportDialogTest::ImportingWhatIsCheckedRegistersTheLibraryAndSaysWha
     LegacyImportDialog dialog(f.viewModel);
     const QSignalSpy said(&dialog, &LegacyImportDialog::StatusChanged);
 
-    QVERIFY(ButtonLabelled(dialog, QStringLiteral("Importar"))->isEnabled());
-    ButtonLabelled(dialog, QStringLiteral("Importar"))->click();
+    QVERIFY(ButtonLabelled(dialog, QStringLiteral("Import"))->isEnabled());
+    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(dialog.result(), static_cast<int>(QDialog::Accepted));
     QCOMPARE(said.count(), 1);
@@ -226,7 +229,7 @@ void LegacyImportDialogTest::APresetOfTheOldProgramIsOfferedAndLandsInTheProfile
 
     LegacyImportDialog dialog(f.viewModel);
 
-    ButtonLabelled(dialog, QStringLiteral("Importar"))->click();
+    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(f.presets.List("msfs2024").size(), std::size_t{1});
     QCOMPARE(f.presets.Load("msfs2024", "Voo curto")->entries.size(), std::size_t{1});

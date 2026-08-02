@@ -20,24 +20,27 @@
 
 class MainWindowTest : public QObject
 {
-    Q_OBJECT
+    class MainWindowTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryWidgetItBuildsDiesWithTheWindow();
-    static void BuildingAndDestroyingTheWindowLeavesTheHeapWhereItWas();
-    static void ACleanInstallShowsNoTriageStrip();
-    static void TheStripOnlyRidesOnThePagesThatCarryIt();
-    static void TheFooterCarriesTheSummaryOfThePageYouAreOn();
-    static void ThePageTabsSitInARowAndStillSwitchPages();
-    static void ThePageTabWritesItsCountApartFromItsName();
-    static void LeavingAPageTakesItsStatusMessageAway();
-    static void TheMeterFillsWithWhatThePageEnabled();
-    static void TheFooterKeepsThePageGutterOnBothEdges();
-    static void TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom();
-    static void LeavingTheOptionsGivesBackThePageThatWasOpen();
-    static void TheTriageStripStandsDownWhileTheOptionsAreOpen();
-    static void ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked();
-};
+    private slots:
+        static void EveryWidgetItBuildsDiesWithTheWindow();
+        static void BuildingAndDestroyingTheWindowLeavesTheHeapWhereItWas();
+        static void ACleanInstallShowsNoTriageStrip();
+        static void TheStripOnlyRidesOnThePagesThatCarryIt();
+        static void TheFooterCarriesTheSummaryOfThePageYouAreOn();
+        static void ThePageTabsSitInARowAndStillSwitchPages();
+        static void ThePageTabWritesItsCountApartFromItsName();
+        static void LeavingAPageTakesItsStatusMessageAway();
+        static void TheMeterFillsWithWhatThePageEnabled();
+        static void TheFooterKeepsThePageGutterOnBothEdges();
+        static void TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom();
+        static void LeavingTheOptionsGivesBackThePageThatWasOpen();
+        static void TheTriageStripStandsDownWhileTheOptionsAreOpen();
+        static void ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked();
+    };
+}
 
 namespace
 {
@@ -172,16 +175,16 @@ void MainWindowTest::TheFooterCarriesTheSummaryOfThePageYouAreOn()
     window.AddPage("Library", library);
     PageTab* journalTab = window.AddPage("Journal", journal);
 
-    window.ShowSummary(library, QStringLiteral("346 addons · 27 habilitados"));
-    window.ShowSummary(journal, QStringLiteral("1204 operações registradas"));
+    window.ShowSummary(library, QStringLiteral("346 addons · 27 enabled"));
+    window.ShowSummary(journal, QStringLiteral("1204 operations recorded"));
 
     auto* footer = window.findChild<QLabel*>(QStringLiteral("FooterSummary"));
     QVERIFY(footer != nullptr);
-    QCOMPARE(footer->text(), QStringLiteral("346 addons · 27 habilitados"));
+    QCOMPARE(footer->text(), QStringLiteral("346 addons · 27 enabled"));
 
     journalTab->click();
 
-    QCOMPARE(footer->text(), QStringLiteral("1204 operações registradas"));
+    QCOMPARE(footer->text(), QStringLiteral("1204 operations recorded"));
 }
 
 void MainWindowTest::ThePageTabsSitInARowAndStillSwitchPages()
@@ -221,13 +224,13 @@ void MainWindowTest::ThePageTabWritesItsCountApartFromItsName()
 
     tab->ShowCount(346);
 
-    QCOMPARE(tab->Label(), QStringLiteral("Biblioteca"));
+    QCOMPARE(tab->Label(), QStringLiteral("Library"));
     QVERIFY(tab->text().contains(QStringLiteral("346")));
     QVERIFY(tab->sizeHint().width() > bare);
 
     tab->ShowCount(std::nullopt);
 
-    QCOMPARE(tab->text(), QStringLiteral("Biblioteca"));
+    QCOMPARE(tab->text(), QStringLiteral("Library"));
     QCOMPARE(tab->sizeHint().width(), bare);
 }
 
@@ -240,17 +243,17 @@ void MainWindowTest::LeavingAPageTakesItsStatusMessageAway()
     window.AddPage("Library", first);
     PageTab* secondTab = window.AddPage("Destinations", second);
 
-    window.ShowSummary(first, QStringLiteral("346 addons · 27 habilitados"));
-    window.ShowSummary(second, QStringLiteral("244 entradas"));
+    window.ShowSummary(first, QStringLiteral("346 addons · 27 enabled"));
+    window.ShowSummary(second, QStringLiteral("244 entries"));
 
     auto* footer = window.findChild<QLabel*>(QStringLiteral("FooterSummary"));
 
-    window.ShowStatus(QStringLiteral("12 operação(ões) concluída(s)."));
-    QCOMPARE(footer->text(), QStringLiteral("12 operação(ões) concluída(s)."));
+    window.ShowStatus(QStringLiteral("12 operations finished."));
+    QCOMPARE(footer->text(), QStringLiteral("12 operations finished."));
 
     secondTab->click();
 
-    QCOMPARE(footer->text(), QStringLiteral("244 entradas"));
+    QCOMPARE(footer->text(), QStringLiteral("244 entries"));
 }
 
 void MainWindowTest::TheMeterFillsWithWhatThePageEnabled()
@@ -328,7 +331,7 @@ void MainWindowTest::TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom(
                                                return tab->isVisibleTo(&window);
                                            });
     QVERIFY(back != tabs.end());
-    QCOMPARE((*back)->Label(), QStringLiteral("← Voltar para Community"));
+    QCOMPARE((*back)->Label(), QStringLiteral("← Back to Destinations"));
 }
 
 void MainWindowTest::LeavingTheOptionsGivesBackThePageThatWasOpen()
@@ -390,7 +393,7 @@ void MainWindowTest::ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked()
 
     communityTab->click();
     QVERIFY2(communityTab->isChecked(),
-             "a aba de origem não ficou marcada ao ser clicada, então exigi-la marcada depois não prova nada");
+             "the origin tab did not end up checked when clicked, so demanding it checked afterwards proves nothing");
 
     window.ShowOptions();
 
@@ -403,12 +406,12 @@ void MainWindowTest::ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked()
         }
     }
 
-    QVERIFY2(back != nullptr, "não achei a aba de voltar, então o clique testado não é o do usuário");
+    QVERIFY2(back != nullptr, "the back tab was not found, so the click under test is not the user's");
 
     back->click();
 
     QVERIFY(!window.ShowingOptions());
-    QVERIFY2(communityTab->isChecked(), "voltar das opções deixou a faixa de abas sem nenhuma marcada");
+    QVERIFY2(communityTab->isChecked(), "coming back from the options left the tab strip with none checked");
 }
 
 QTEST_MAIN(MainWindowTest)

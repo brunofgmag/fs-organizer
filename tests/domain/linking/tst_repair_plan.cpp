@@ -6,15 +6,18 @@
 
 class RepairPlanTest : public QObject
 {
-    Q_OBJECT
+    class RepairPlanTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void OnlyBrokenEntriesEnterThePlan();
-    static void UnavailableEntriesNeverEnterThePlan();
-    static void ALinkIntoALibraryIsGroupedApartFromAThirdPartyOne();
-    static void RepointIsOfferedOnlyWhenAValidAddonSharesTheBaseName();
-    static void TheBaseNameMatchIgnoresCase();
-};
+    private slots:
+        static void OnlyBrokenEntriesEnterThePlan();
+        static void UnavailableEntriesNeverEnterThePlan();
+        static void ALinkIntoALibraryIsGroupedApartFromAThirdPartyOne();
+        static void RepointIsOfferedOnlyWhenAValidAddonSharesTheBaseName();
+        static void TheBaseNameMatchIgnoresCase();
+    };
+}
 
 namespace
 {

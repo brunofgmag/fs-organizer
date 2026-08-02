@@ -5,20 +5,23 @@
 
 class UpdateViewModelTest : public QObject
 {
-    Q_OBJECT
+    class UpdateViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void WithUpdatesOffNothingIsCheckedAndTheScreenSaysWhy();
-    static void TheManualModeDoesNotLookOnItsOwn();
-    static void TheNotifyModeSaysAVersionIsThereWithoutDownloadingIt();
-    static void TheAutomaticModeDownloadsAsSoonAsItKnows();
-    static void AStagedUpdateIsAppliedOnExitUnlessTheModeIsManual();
-    static void ACheckNobodyAskedForFailsQuietly();
-    static void ACheckTheUserAskedForShowsTheFailure();
-    static void ChoosingAutomaticWhileAVersionWaitsStartsTheDownload();
-    static void AQuietCheckHoldsTheDoorSoAHandCheckDoesNotStackOnTopOfIt();
-    static void AVersionThatBroughtNoFileIsNotOfferedForDownload();
-};
+    private slots:
+        static void WithUpdatesOffNothingIsCheckedAndTheScreenSaysWhy();
+        static void TheManualModeDoesNotLookOnItsOwn();
+        static void TheNotifyModeSaysAVersionIsThereWithoutDownloadingIt();
+        static void TheAutomaticModeDownloadsAsSoonAsItKnows();
+        static void AStagedUpdateIsAppliedOnExitUnlessTheModeIsManual();
+        static void ACheckNobodyAskedForFailsQuietly();
+        static void ACheckTheUserAskedForShowsTheFailure();
+        static void ChoosingAutomaticWhileAVersionWaitsStartsTheDownload();
+        static void AQuietCheckHoldsTheDoorSoAHandCheckDoesNotStackOnTopOfIt();
+        static void AVersionThatBroughtNoFileIsNotOfferedForDownload();
+    };
+}
 
 namespace
 {
@@ -154,7 +157,7 @@ void UpdateViewModelTest::AQuietCheckHoldsTheDoorSoAHandCheckDoesNotStackOnTopOf
     viewModel.CheckQuietly();
 
     QCOMPARE(service.checks, 1);
-    QVERIFY2(!viewModel.CanCheck(), "a verificação silenciosa deixou a porta aberta para empilhar outra por cima");
+    QVERIFY2(!viewModel.CanCheck(), "the silent check left the door open to stack another on top");
 
     viewModel.Check();
 
@@ -173,7 +176,7 @@ void UpdateViewModelTest::AVersionThatBroughtNoFileIsNotOfferedForDownload()
     service.SayTheCheckFound(withoutFiles, true);
 
     QCOMPARE(viewModel.State(), UpdateState::Available);
-    QVERIFY2(!viewModel.CanDownload(), "a tela ofereceu baixar uma versão que não trouxe arquivo nenhum");
+    QVERIFY2(!viewModel.CanDownload(), "the screen offered to download a version that brought no file at all");
 }
 
 QTEST_APPLESS_MAIN(UpdateViewModelTest)

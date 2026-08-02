@@ -6,13 +6,16 @@
 
 class QuarantineModelTest : public QObject
 {
-    Q_OBJECT
+    class QuarantineModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackTo();
-    static void AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell();
-    static void NoCellRepeatsItsOwnTextAsATooltip();
-};
+    private slots:
+        static void EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackTo();
+        static void AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell();
+        static void NoCellRepeatsItsOwnTextAsATooltip();
+    };
+}
 
 namespace
 {
@@ -50,9 +53,9 @@ void QuarantineModelTest::AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfSh
     model.ShowItems(TwoItems());
 
     QCOMPARE(model.data(model.index(1, QuarantineModel::OriginColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("(o diário não sabe)"));
+             QStringLiteral("(the journal does not know)"));
     QCOMPARE(model.data(model.index(1, QuarantineModel::WhenColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("(o diário não sabe)"));
+             QStringLiteral("(the journal does not know)"));
 }
 
 void QuarantineModelTest::NoCellRepeatsItsOwnTextAsATooltip()

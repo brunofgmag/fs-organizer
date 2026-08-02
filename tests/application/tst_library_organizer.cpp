@@ -19,30 +19,33 @@
 
 class LibraryOrganizerTest : public QObject
 {
-    Q_OBJECT
+    class LibraryOrganizerTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void MovingAnEnabledAddonRecreatesTheLinkPointingAtTheNewPath();
-    static void MovingAnAddonDoesNotChangeItsIdentity();
-    static void MovingAnAddonToACategoryWithItsOwnDestinationRelinksThere();
-    static void MovingADisabledAddonLeavesTheDestinationAlone();
-    static void MovingIsRefusedWhenTheNameIsAlreadyTakenInTheLibrary();
-    static void NoFolderIsMovedWhileTheSimulatorIsRunning();
-    static void EveryStepOfAMoveIsJournalled();
-    static void EmptyingACategoryLeavesItDeclaredSoItStaysAMoveTarget();
-    static void AnAddonLeavingTheLibraryRootDoesNotDeclareTheRootACategory();
-    static void ACreatedCategoryIsAFolderInTheLibrary();
-    static void ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently();
-    static void DeclaringAFolderThatIsNotOnDiskRefusesInsteadOfCreatingIt();
-    static void ACategoryIsNotCreatedOutsideALibrary();
-    static void AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride();
-    static void AStaleOverrideBelowTheRemovedCategoryIsForgottenToo();
-    static void ACategoryThatStillHoldsAnAddonIsNotRemovedEvenWhenTheTreeSaysItIsEmpty();
-    static void AFolderTheScanNeverSawIsRefusedInsteadOfRemovedOnFaith();
-    static void TheLibraryRootIsNeverRemovedAsIfItWereACategory();
-    static void NoCategoryIsRemovedWhileTheSimulatorIsRunning();
-    static void RenamingACategoryCarriesItsEnabledAddonsAlong();
-};
+    private slots:
+        static void MovingAnEnabledAddonRecreatesTheLinkPointingAtTheNewPath();
+        static void MovingAnAddonDoesNotChangeItsIdentity();
+        static void MovingAnAddonToACategoryWithItsOwnDestinationRelinksThere();
+        static void MovingADisabledAddonLeavesTheDestinationAlone();
+        static void MovingIsRefusedWhenTheNameIsAlreadyTakenInTheLibrary();
+        static void NoFolderIsMovedWhileTheSimulatorIsRunning();
+        static void EveryStepOfAMoveIsJournalled();
+        static void EmptyingACategoryLeavesItDeclaredSoItStaysAMoveTarget();
+        static void AnAddonLeavingTheLibraryRootDoesNotDeclareTheRootACategory();
+        static void ACreatedCategoryIsAFolderInTheLibrary();
+        static void ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently();
+        static void DeclaringAFolderThatIsNotOnDiskRefusesInsteadOfCreatingIt();
+        static void ACategoryIsNotCreatedOutsideALibrary();
+        static void AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride();
+        static void AStaleOverrideBelowTheRemovedCategoryIsForgottenToo();
+        static void ACategoryThatStillHoldsAnAddonIsNotRemovedEvenWhenTheTreeSaysItIsEmpty();
+        static void AFolderTheScanNeverSawIsRefusedInsteadOfRemovedOnFaith();
+        static void TheLibraryRootIsNeverRemovedAsIfItWereACategory();
+        static void NoCategoryIsRemovedWhileTheSimulatorIsRunning();
+        static void RenamingACategoryCarriesItsEnabledAddonsAlong();
+    };
+}
 
 namespace
 {

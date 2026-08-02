@@ -4,30 +4,35 @@
 #include <QtCore/QDir>
 
 #include "tests/support/PathPrinting.h"
+#include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
 
 class AddonTreeModelTest : public QObject
 {
-    Q_OBJECT
+    class AddonTreeModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester();
-    static void CheckStatesComeFromTheEnabledIndex();
-    static void ClickingACheckboxAsksInsteadOfChangingTheModel();
-    static void RefreshingTheIndexUpdatesCheckStatesWithoutResettingTheTree();
-    static void OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt();
-    static void AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip();
-    static void AConflictThatArrivesLaterShowsUpWithoutResettingTheTree();
-    static void OnlyAnAddonFolderAnswersThatItIsEnabled();
-    static void TheConflictItselfIsHandedOverForWhoeverHasToResolveIt();
-    static void OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent();
-    static void AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits();
-    static void ABrokenLinkWearsTheTagAndAlarmsTheRow();
-    static void OnlyTheNameColumnCarriesTheCheckbox();
-    static void TheModelCountsAddonsAndHowManyAreEnabled();
-};
+    private slots:
+        static void TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester();
+        static void CheckStatesComeFromTheEnabledIndex();
+        static void ClickingACheckboxAsksInsteadOfChangingTheModel();
+        static void RefreshingTheIndexUpdatesCheckStatesWithoutResettingTheTree();
+        static void OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt();
+        static void AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip();
+        static void AConflictThatArrivesLaterShowsUpWithoutResettingTheTree();
+        static void OnlyAnAddonFolderAnswersThatItIsEnabled();
+        static void TheConflictItselfIsHandedOverForWhoeverHasToResolveIt();
+        static void OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent();
+        static void AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits();
+        static void ABrokenLinkWearsTheTagAndAlarmsTheRow();
+        static void OnlyTheNameColumnCarriesTheCheckbox();
+        static void TheModelCountsAddonsAndHowManyAreEnabled();
+        static void RetranslatingKeepsThePersistentIndexesOfAProxyUsable();
+    };
+}
 
 namespace
 {
@@ -151,7 +156,7 @@ void AddonTreeModelTest::RefreshingTheIndexUpdatesCheckStatesWithoutResettingThe
     model.Refresh(SnapshotWith({kPmdg}), Profile());
 
     QCOMPARE(reset.size(), 0);
-    QVERIFY(changed.size() > 0);
+    QVERIFY(!changed.empty());
     QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::CheckStateRole).toInt(), Qt::Checked);
     QCOMPARE(model.data(Category(model), Qt::CheckStateRole).toInt(), Qt::PartiallyChecked);
 }
@@ -163,9 +168,9 @@ void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
 
     QCOMPARE(TextOf(model, Category(model), AddonTreeModel::AddonColumn), QStringLiteral("Aircrafts"));
     QCOMPARE(TextOf(model, Category(model), AddonTreeModel::DestinationColumn),
-             QStringLiteral("Community2024 · fixado"));
+             QStringLiteral("Community2024 · pinned"));
     QCOMPARE(TextOf(model, AddonAt(model, 0), AddonTreeModel::DestinationColumn),
-             QStringLiteral("Community2024 · fixado"));
+             QStringLiteral("Community2024 · pinned"));
     QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::DestinationColumn), QStringLiteral("Community"));
 }
 
@@ -181,7 +186,7 @@ void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
     QVERIFY(model.data(conflicted, AddonTreeModel::ConflictRole).toBool());
     QCOMPARE(TextOf(model, conflicted, AddonTreeModel::AddonColumn), QStringLiteral("pmdg-aircraft-77w"));
     QCOMPARE(model.data(conflicted.siblingAtColumn(AddonTreeModel::AddonColumn), TagTextRole).toString(),
-             QStringLiteral("Em conflito"));
+             QStringLiteral("In conflict"));
     QVERIFY(model.data(conflicted, AlarmingRole).toBool());
     QVERIFY(model.data(conflicted, Qt::ToolTipRole)
                 .toString()
@@ -278,7 +283,7 @@ void AddonTreeModelTest::ABrokenLinkWearsTheTagAndAlarmsTheRow()
     const QModelIndex broken = AddonAt(model, 0).siblingAtColumn(AddonTreeModel::AddonColumn);
 
     QVERIFY(model.data(broken, AddonTreeModel::BrokenRole).toBool());
-    QCOMPARE(model.data(broken, TagTextRole).toString(), QStringLiteral("Sem alvo"));
+    QCOMPARE(model.data(broken, TagTextRole).toString(), QStringLiteral("No target"));
     QCOMPARE(model.data(broken, TagToneRole).toInt(), static_cast<int>(TagTone::Filled));
     QVERIFY(model.data(broken, AlarmingRole).toBool());
 

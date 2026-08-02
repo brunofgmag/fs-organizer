@@ -22,17 +22,20 @@
 
 class CommunityPageTest : public QObject
 {
-    Q_OBJECT
+    class CommunityPageTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheTriageConflictActionLeavesEveryConflictedRowSelected();
-    static void TheTriageImportActionLeavesEveryUnmanagedFolderSelected();
-    static void TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow();
-    static void AMixedSelectionOffersBothActionsEachWithItsOwnCount();
-    static void OnlyTheActionThatUnblocksCarriesTheAccent();
-    static void NothingConflictedMeansNoResolveButtonAtAll();
-    static void ARescanThatEmptiesTheTableAlsoEmptiesThePanel();
-};
+    private slots:
+        static void TheTriageConflictActionLeavesEveryConflictedRowSelected();
+        static void TheTriageImportActionLeavesEveryUnmanagedFolderSelected();
+        static void TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow();
+        static void AMixedSelectionOffersBothActionsEachWithItsOwnCount();
+        static void OnlyTheActionThatUnblocksCarriesTheAccent();
+        static void NothingConflictedMeansNoResolveButtonAtAll();
+        static void ARescanThatEmptiesTheTableAlsoEmptiesThePanel();
+    };
+}
 
 namespace
 {
@@ -217,7 +220,7 @@ void CommunityPageTest::AMixedSelectionOffersBothActionsEachWithItsOwnCount()
     QVERIFY(importChosen->isEnabled());
 
     QVERIFY(importChosen->text().contains(QStringLiteral("2")));
-    QCOMPARE(resolveChosen->text(), QStringLiteral("Resolver o conflito…"));
+    QCOMPARE(resolveChosen->text(), QStringLiteral("Resolve the conflict…"));
 }
 
 void CommunityPageTest::OnlyTheActionThatUnblocksCarriesTheAccent()

@@ -6,20 +6,23 @@
 
 class CategorySuggesterTest : public QObject
 {
-    Q_OBJECT
+    class CategorySuggesterTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AnAirportInTheNameGoesToTheSceneriesCategory();
-    static void TheSceneryContentTypeGoesToTheSceneriesCategory();
-    static void BothShapesOfTheSoundContentTypeGoToTheSoundsCategory();
-    static void TrafficInTheNameGoesToTheTrafficCategory();
-    static void TheLiveryContentTypeGoesToTheLiveriesCategory();
-    static void AnAddonNoRuleRecognisesIsLeftWhereItIs();
-    static void ARuleThatNamesACategoryTheLibraryDoesNotHaveSuggestsNothing();
-    static void EverySuggestionSaysWhichRuleProducedIt();
-    static void AnAddonAlreadyInTheSuggestedCategoryIsNotProposedForAMove();
-    static void TheContentTypeIsReadWithoutDistinguishingCase();
-};
+    private slots:
+        static void AnAirportInTheNameGoesToTheSceneriesCategory();
+        static void TheSceneryContentTypeGoesToTheSceneriesCategory();
+        static void BothShapesOfTheSoundContentTypeGoToTheSoundsCategory();
+        static void TrafficInTheNameGoesToTheTrafficCategory();
+        static void TheLiveryContentTypeGoesToTheLiveriesCategory();
+        static void AnAddonNoRuleRecognisesIsLeftWhereItIs();
+        static void ARuleThatNamesACategoryTheLibraryDoesNotHaveSuggestsNothing();
+        static void EverySuggestionSaysWhichRuleProducedIt();
+        static void AnAddonAlreadyInTheSuggestedCategoryIsNotProposedForAMove();
+        static void TheContentTypeIsReadWithoutDistinguishingCase();
+    };
+}
 
 namespace
 {

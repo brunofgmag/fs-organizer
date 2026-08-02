@@ -5,24 +5,27 @@
 
 class PresetPlanTest : public QObject
 {
-    Q_OBJECT
+    class PresetPlanTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ReplaceEnablesThePresetAndDisablesWhatItDoesNotName();
-    static void ReplaceSeparatesTheEnabledAddonsThePresetDoesNotName();
-    static void AnAddonThePresetItselfTurnsOffIsNotCountedAsOneItDoesNotName();
-    static void CumulativeLeavesAloneWhatThePresetDoesNotName();
-    static void ADisableEntryTurnsTheAddonOffInCumulative();
-    static void TheDisableModeTurnsOffTheEnableEntriesAndIgnoresTheDisableOnes();
-    static void AnEntryIsMatchedWhateverTheCaseOfItsFolderNameAndLibrary();
-    static void AnEntryWhoseAddonIsGoneIsReported();
-    static void AnEntryFromALibraryTheProfileNoLongerHoldsIsReported();
-    static void ReplaceSweepsEveryLibraryOfTheProfile();
-    static void TheEntriesOfWhatIsEnabledNameEveryEnabledAddonAndNothingElse();
-    static void TheContentCountsEveryEntryAndTheCategoriesTheyLandIn();
-    static void AnEntryThatNoLongerResolvesStillCountsAsAnAddonAndAddsNoCategory();
-    static void ADisableEntryWeighsTheSameAsAnEnableOneInTheContent();
-};
+    private slots:
+        static void ReplaceEnablesThePresetAndDisablesWhatItDoesNotName();
+        static void ReplaceSeparatesTheEnabledAddonsThePresetDoesNotName();
+        static void AnAddonThePresetItselfTurnsOffIsNotCountedAsOneItDoesNotName();
+        static void CumulativeLeavesAloneWhatThePresetDoesNotName();
+        static void ADisableEntryTurnsTheAddonOffInCumulative();
+        static void TheDisableModeTurnsOffTheEnableEntriesAndIgnoresTheDisableOnes();
+        static void AnEntryIsMatchedWhateverTheCaseOfItsFolderNameAndLibrary();
+        static void AnEntryWhoseAddonIsGoneIsReported();
+        static void AnEntryFromALibraryTheProfileNoLongerHoldsIsReported();
+        static void ReplaceSweepsEveryLibraryOfTheProfile();
+        static void TheEntriesOfWhatIsEnabledNameEveryEnabledAddonAndNothingElse();
+        static void TheContentCountsEveryEntryAndTheCategoriesTheyLandIn();
+        static void AnEntryThatNoLongerResolvesStillCountsAsAnAddonAndAddsNoCategory();
+        static void ADisableEntryWeighsTheSameAsAnEnableOneInTheContent();
+    };
+}
 
 namespace
 {

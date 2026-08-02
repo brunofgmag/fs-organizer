@@ -21,16 +21,19 @@
 
 class ImportViewModelTest : public QObject
 {
-    Q_OBJECT
+    class ImportViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void MeasuringAddsUpEveryFolderItWasGiven();
-    static void AFolderAlreadyMeasuredAnswersWithoutTouchingTheDiskAgain();
-    static void OnlyTheLastMeasurementAskedForIsReported();
-    static void ForgettingSendsTheNextMeasurementBackToTheDisk();
-    static void CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo();
-    static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
-};
+    private slots:
+        static void MeasuringAddsUpEveryFolderItWasGiven();
+        static void AFolderAlreadyMeasuredAnswersWithoutTouchingTheDiskAgain();
+        static void OnlyTheLastMeasurementAskedForIsReported();
+        static void ForgettingSendsTheNextMeasurementBackToTheDisk();
+        static void CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo();
+        static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
+    };
+}
 
 namespace
 {
