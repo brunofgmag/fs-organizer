@@ -187,8 +187,8 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
         return 2;
     }
 
-    Out() << "entradas no diario: " << model.rowCount({})
-          << "  primeira abertura: " << QString::number(firstShow, 'f', 0) << " ms"
+    Out() << "journal entries: " << model.rowCount({}) << "  primeira abertura: " << QString::number(firstShow, 'f', 0)
+          << " ms"
           << "  segunda: " << QString::number(secondShow, 'f', 0) << " ms"
           << "  viewport " << view->viewport()->width() << "x" << view->viewport()->height() << "\n";
 
@@ -200,16 +200,16 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     Out() << "resizeColumnToContents nas 7 colunas: "
           << QString::number(static_cast<double>(timer.nsecsElapsed()) / 1e6, 'f', 0) << " ms\n\n";
 
-    ReportScroll("diario inteiro", *view);
+    ReportScroll("the whole journal", *view);
     ReportHover("passando o mouse", *view);
 
     QAbstractItemDelegate* ours = view->itemDelegate();
     view->setItemDelegate(new QStyledItemDelegate(view));
     LetTheWindowSettle();
-    ReportScroll("  com o delegate do Qt", *view);
+    ReportScroll("  with the Qt delegate", *view);
     view->setItemDelegate(new PlainTextDelegate(view));
     LetTheWindowSettle();
-    ReportScroll("  com o PlainTextDelegate", *view);
+    ReportScroll("  with the PlainTextDelegate", *view);
     ReportHover("  passando o mouse nele", *view);
     view->setItemDelegate(ours);
     LetTheWindowSettle();
@@ -218,7 +218,7 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     {
         failuresOnly->setChecked(true);
         LetTheWindowSettle();
-        ReportScroll("so o que falhou", *view);
+        ReportScroll("only what failed", *view);
         ReportHover("  passando o mouse", *view);
         failuresOnly->setChecked(false);
         LetTheWindowSettle();

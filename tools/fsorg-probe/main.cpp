@@ -160,7 +160,7 @@ namespace
 
     void ReportUsage()
     {
-        Out() << "uso: fsorg-probe --library <caminho> [--library <caminho>]\n";
+        Out() << "usage: fsorg-probe --library <path> [--library <path>]\n";
     }
 
     void ReportLibrary(const LibraryFacts& facts)
@@ -202,14 +202,14 @@ namespace
             Out() << "  " << ClassName(classification).leftJustified(12) << count << "\n";
         }
 
-        Out() << "    dos Unmanaged, " << unmanagedWithManifest << " com manifest e "
-              << counts[EntryClassification::Unmanaged] - unmanagedWithManifest << " sem\n";
+        Out() << "    of the Unmanaged, " << unmanagedWithManifest << " with a manifest and "
+              << counts[EntryClassification::Unmanaged] - unmanagedWithManifest << " without\n";
     }
 
     void ReportConflicts(const ConflictCounts& conflicts)
     {
         Out() << "    copy conflicts: " << conflicts.againstAddons << " against addons, "
-              << conflicts.againstEveryFolder << " contra qualquer pasta da biblioteca\n";
+              << conflicts.againstEveryFolder << " against any folder of the library\n";
     }
 
     void ReportCandidate(const EntryClassifier& classifier,

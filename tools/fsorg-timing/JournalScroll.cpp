@@ -189,17 +189,17 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         return 2;
     }
 
-    Out() << "linhas: " << model.rowCount({}) << "  abrir a aba: " << opening << " ms"
+    Out() << "rows: " << model.rowCount({}) << "  opening the tab: " << opening << " ms"
           << "  dpr " << view->devicePixelRatio() << "  viewport " << view->viewport()->width() << "x"
           << view->viewport()->height() << "\n\n";
 
     const double asShipped = PaintCostOf(*view);
-    ReportView("pagina do diario", *view);
+    ReportView("the journal page", *view);
 
     view->setItemDelegate(new QStyledItemDelegate(view));
     LetTheWindowSettle();
     const double withTheStockDelegate = PaintCostOf(*view);
-    ReportView("  com o delegate do Qt", *view);
+    ReportView("  with the Qt delegate", *view);
 
     view->setItemDelegate(new PlainTextDelegate(view));
     LetTheWindowSettle();
@@ -212,7 +212,7 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         bare.setModel(ConstantModel(rows, 7, QStringLiteral("D:/Library/Utils/simbridge"), &bare));
         bare.setUniformRowHeights(true);
         ShowAtAFixedSize(bare);
-        ReportView("QTreeView cru, 7 col, caminho", bare);
+        ReportView("raw QTreeView, 7 cols, path", bare);
         bare.hide();
     }
 
@@ -221,7 +221,7 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         bare.setModel(ConstantModel(rows, 7, QStringLiteral("ok"), &bare));
         bare.setUniformRowHeights(true);
         ShowAtAFixedSize(bare);
-        ReportView("QTreeView cru, 7 col, curto", bare);
+        ReportView("raw QTreeView, 7 cols, short", bare);
         bare.hide();
     }
 
@@ -230,7 +230,7 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         bare.setModel(ConstantModel(rows, 1, QStringLiteral("D:/Library/Utils/simbridge"), &bare));
         bare.setUniformRowHeights(true);
         ShowAtAFixedSize(bare);
-        ReportView("QTreeView cru, 1 col, caminho", bare);
+        ReportView("raw QTreeView, 1 col, path", bare);
         bare.hide();
     }
 

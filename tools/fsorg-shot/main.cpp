@@ -183,12 +183,12 @@ int main(int argc, char* argv[])
     QCommandLineParser parser;
     parser.setApplicationDescription(
         "Writes a PNG of every FS Organizer screen, building the real widgets against the real installation.\n"
-        "Para a escala do Windows, rode com QT_SCALE_FACTOR=1.25.");
+        "For the Windows scale, run it with QT_SCALE_FACTOR=1.25.");
     parser.addHelpOption();
 
-    const QCommandLineOption out({"o", "out"}, "Pasta onde gravar os PNG.", "pasta", QDir::currentPath());
-    const QCommandLineOption theme({"t", "theme"}, "dark, light ou system.", "paleta", "system");
-    const QCommandLineOption size({"s", "size"}, "Tamanho da janela, LARGURAxALTURA.", "tamanho", "1140x760");
+    const QCommandLineOption out({"o", "out"}, "Folder to write the PNGs into.", "folder", QDir::currentPath());
+    const QCommandLineOption theme({"t", "theme"}, "dark, light or system.", "palette", "system");
+    const QCommandLineOption size({"s", "size"}, "Window size, WIDTHxHEIGHT.", "size", "1140x760");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
     if (QGuiApplication::platformName() == QLatin1String("offscreen"))
     {
         Out() << "the offscreen plugin applies neither the colour scheme nor the fill of list items, so the PNG "
-                 "sairia parecido e errado. Rode sem QT_QPA_PLATFORM.\n";
+                 "would come out similar and wrong. Run it without QT_QPA_PLATFORM.\n";
         return 1;
     }
 
@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
     const QDir folder(parser.value(out));
     if (!folder.exists())
     {
-        Out() << "pasta inexistente: " << folder.path() << "\n";
+        Out() << "no such folder: " << folder.path() << "\n";
         return 1;
     }
 
@@ -317,7 +317,7 @@ int main(int argc, char* argv[])
     shell.show();
     LetTheLayoutSettle();
 
-    Out() << "janela " << shell.size().width() << "x" << shell.size().height() << " em escala "
+    Out() << "window " << shell.size().width() << "x" << shell.size().height() << " at scale "
           << shell.devicePixelRatioF() << ", so every PNG comes out at that ratio.\n";
 
     if (shell.size() != window)
@@ -339,19 +339,19 @@ int main(int argc, char* argv[])
         landed = Save(shell, folder, name) && landed;
     };
 
-    shoot(libraryTab, QStringLiteral("01-biblioteca"), {});
+    shoot(libraryTab, QStringLiteral("01-library"), {});
     shoot(communityTab, QStringLiteral("02-community"),
           [&communityViewModel]
           {
               communityViewModel.Show();
           });
     shoot(presetsTab, QStringLiteral("03-presets"), {});
-    shoot(journalTab, QStringLiteral("04-diario"),
+    shoot(journalTab, QStringLiteral("04-journal"),
           [&journalViewModel]
           {
               journalViewModel.Show();
           });
-    shoot(quarantineTab, QStringLiteral("05-quarentena"),
+    shoot(quarantineTab, QStringLiteral("05-quarantine"),
           [&quarantineViewModel]
           {
               quarantineViewModel.Show();
@@ -362,9 +362,9 @@ int main(int argc, char* argv[])
     optionsPage->Reload();
 
     auto* navigation = optionsPage->findChild<QListWidget*>(QStringLiteral("OptionsNav"));
-    const QStringList panes{QStringLiteral("06-opcoes-perfis"), QStringLiteral("07-opcoes-links"),
-                            QStringLiteral("08-opcoes-atualizacoes"), QStringLiteral("09-opcoes-idioma"),
-                            QStringLiteral("10-opcoes-sobre")};
+    const QStringList panes{QStringLiteral("06-options-profiles"), QStringLiteral("07-options-links"),
+                            QStringLiteral("08-options-updates"), QStringLiteral("09-options-language"),
+                            QStringLiteral("10-options-about")};
 
     for (int pane = 0; pane < panes.size(); ++pane)
     {
@@ -388,7 +388,7 @@ int main(int argc, char* argv[])
                      {
                          unregister->click();
                      },
-                     folder, QStringLiteral("11-opcoes-descadastrar"))
+                     folder, QStringLiteral("11-options-unregister"))
             && landed;
     }
     else
@@ -413,7 +413,7 @@ int main(int argc, char* argv[])
 
     back->click();
     LetTheLayoutSettle();
-    landed = Save(shell, folder, QStringLiteral("12-voltou")) && landed;
+    landed = Save(shell, folder, QStringLiteral("12-came-back")) && landed;
 
     return landed ? 0 : 1;
 }

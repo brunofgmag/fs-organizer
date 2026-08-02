@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
 
     if (active == nullptr)
     {
-        Out() << "nenhum perfil configurado em " << AsText(SettingsFilePath()) << "\n";
+        Out() << "no profile configured in " << AsText(SettingsFilePath()) << "\n";
         Out().flush();
         return 2;
     }
@@ -248,8 +248,8 @@ int main(int argc, char* argv[])
                 static_cast<void>(importService.Quarantined(profile));
             });
 
-    Out() << "perfil: " << QString::fromStdString(profile.id) << "  bibliotecas: " << profile.libraries.size()
-          << "  entradas: " << session.Snapshot().entries.size() << "\n";
+    Out() << "profile: " << QString::fromStdString(profile.id) << "  libraries: " << profile.libraries.size()
+          << "  entries: " << session.Snapshot().entries.size() << "\n";
 
     Report();
 
