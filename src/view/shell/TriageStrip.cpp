@@ -89,7 +89,7 @@ void TriageStrip::RetranslateUi()
     broken_.action->setText(tr("Repair the broken ones…"));
     conflicts_.action->setText(tr("Resolve conflicts…"));
     duplicated_.action->setText(tr("See the duplicated ones…"));
-    unmanaged_.action->setText(tr("Import the selected ones…"));
+    unmanaged_.action->setText(tr("Import the ones outside the library…"));
 
     broken_.label->setText(tr("%n with no target", nullptr, static_cast<int>(shown_.broken)));
     conflicts_.label->setText(tr("%n conflict", nullptr, static_cast<int>(shown_.conflicts)));

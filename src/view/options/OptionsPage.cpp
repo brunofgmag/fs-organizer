@@ -38,6 +38,8 @@ namespace
     constexpr int kEnglishRow = 0;
     constexpr int kBrazilianRow = 1;
 
+    constexpr auto kRepository = "https://github.com/brunofgmag/fs-organizer";
+
     void SeparateFromWhatCameBefore(QWidget* row, const bool follows)
     {
         row->setProperty("follows", follows);
@@ -74,18 +76,6 @@ namespace
         tag->setProperty("tag", tone);
 
         return tag;
-    }
-
-    QFrame* Note(const QString& text, QWidget* parent)
-    {
-        auto* note = new QFrame(parent);
-        note->setObjectName(QStringLiteral("OptionsNote"));
-
-        auto* layout = new QVBoxLayout(note);
-        layout->setContentsMargins(14, 12, 14, 12);
-        layout->addWidget(Quiet(text, note));
-
-        return note;
     }
 
     QFrame* Box(QWidget* parent)
@@ -403,11 +393,6 @@ QWidget* OptionsPage::CreateLinks()
                                       "import ends up reading 800 MB."),
                                    waiting, true));
     layout->addLayout(verification);
-
-    layout->addWidget(Note(tr("Aparência não tem opção aqui, de propósito. O app segue o tema claro ou escuro do "
-                              "Windows ao vivo e não guarda chave de tema. Trocar o tema do sistema com o app aberto "
-                              "troca a paleta e a barra de título na hora."),
-                           pane));
     layout->addStretch();
 
     return pane;
@@ -587,6 +572,15 @@ QWidget* OptionsPage::CreateAbout()
     auto* version = new QLabel(QCoreApplication::applicationVersion(), pane);
     version->setObjectName(QStringLiteral("AboutVersion"));
     layout->addWidget(version);
+
+    layout->addWidget(Quiet(tr("Created by %1.").arg(QStringLiteral("Bruno Magalhães")), pane));
+
+    auto* repository = new QLabel(pane);
+    repository->setObjectName(QStringLiteral("AboutRepository"));
+    repository->setText(QStringLiteral("<a href=\"%1\">%1</a>").arg(kRepository));
+    repository->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    repository->setOpenExternalLinks(true);
+    layout->addWidget(repository);
 
     layout->addWidget(Quiet(tr("Distributed under the GNU General Public License version 2."), pane));
     layout->addWidget(
