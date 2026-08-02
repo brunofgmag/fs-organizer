@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/brunofgmag/fs-organizer/compare/v0.2.0...v0.3.0) (2026-08-02)
+
+
+### Features
+
+* **i18n:** turn the source strings English ([23aa459](https://github.com/brunofgmag/fs-organizer/commit/23aa459efb27c133c9a79cd1c6bb838c49553767))
+* **tools:** let fsorg-shot render either language ([22cc113](https://github.com/brunofgmag/fs-organizer/commit/22cc1131e61a814f9ce909e0f5cbd04c78d9d6e9))
+* **view:** drop the appearance note, credit the author, and unify the triage label ([a8123b8](https://github.com/brunofgmag/fs-organizer/commit/a8123b8313d1c12bd6b1126c845651c86f81bb42))
+* **view:** switch the language without a restart ([3b02962](https://github.com/brunofgmag/fs-organizer/commit/3b02962f26d785da766f0ef45f31a1bc5533c1c1))
+
+
+### Bug Fixes
+
+* **view:** close the two-axis review of the English inversion ([f11d32a](https://github.com/brunofgmag/fs-organizer/commit/f11d32aa5941cc305431314007bef482a2903641))
+* **viewmodel:** pair layoutChanged with layoutAboutToBeChanged ([432512f](https://github.com/brunofgmag/fs-organizer/commit/432512fa3ceab8a36883d4f461ce1b22c5d79fb3))
+
 ## [0.2.0](https://github.com/brunofgmag/fs-organizer/compare/v0.1.0...v0.2.0) (2026-08-02)
 
 
