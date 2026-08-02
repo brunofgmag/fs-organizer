@@ -27,25 +27,25 @@
     {
       "name": "debug",
       "displayName": "Qt MSVC 2022 x64 - Debug",
-      "description": "Build Debug do executável com o runtime Qt implantado.",
+      "description": "Debug build of the executable with the Qt runtime deployed beside it.",
       "inherits": "msvc-qt-base"
     },
     {
       "name": "release",
       "displayName": "Qt MSVC 2022 x64 - Release",
-      "description": "Build Release do executável com o runtime Qt implantado.",
+      "description": "Release build of the executable with the Qt runtime deployed beside it.",
       "inherits": "msvc-qt-base"
     },
     {
       "name": "relwithdebinfo",
       "displayName": "Qt MSVC 2022 x64 - RelWithDebInfo",
-      "description": "Build otimizado com símbolos e runtime Qt completo.",
+      "description": "Optimised build with symbols and the full Qt runtime.",
       "inherits": "msvc-qt-base"
     },
     {
       "name": "clangd-db",
-      "displayName": "Compile DB (Ninja) p/ clangd",
-      "description": "Gera compile_commands.json com cl.exe. Configure num x64 Native Tools Command Prompt.",
+      "displayName": "Compile DB (Ninja) for clangd",
+      "description": "Writes compile_commands.json with cl.exe. Configure it from an x64 Native Tools Command Prompt.",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/clangd-db",
       "cacheVariables": {
