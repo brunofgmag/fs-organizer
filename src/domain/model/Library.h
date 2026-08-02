@@ -8,9 +8,9 @@
 
 struct Library
 {
-    LibraryId id;
-    std::filesystem::path path;
-    std::string label;
+    LibraryId id{};
+    std::filesystem::path path{};
+    std::string label{};
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_LIBRARY_H

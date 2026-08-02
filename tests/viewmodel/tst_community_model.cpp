@@ -1,5 +1,7 @@
 #include <QtTest/QtTest>
 
+#include <QtCore/QDir>
+
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/CommunityModel.h"
@@ -108,7 +110,7 @@ void CommunityModelTest::TheTableShowsOneRowPerEntry()
     QCOMPARE(model.data(model.index(5, CommunityModel::DestinationColumn), Qt::DisplayRole).toString(),
              QStringLiteral("Community2024"));
     QCOMPARE(model.data(model.index(0, CommunityModel::TargetColumn), Qt::DisplayRole).toString(),
-             QStringLiteral(R"(D:\MSFS 2024\Sceneries\managed)"));
+             QDir::toNativeSeparators(QStringLiteral("D:/MSFS 2024/Sceneries/managed")));
     QCOMPARE(model.data(model.index(4, CommunityModel::TargetColumn), Qt::DisplayRole).toString(), QString());
 }
 
@@ -161,8 +163,9 @@ void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
     const QModelIndex conflicted = model.index(4, CommunityModel::ClassificationColumn);
     QVERIFY(model.data(conflicted, CommunityModel::ConflictRole).toBool());
     QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("Não gerenciada · em conflito"));
-    QVERIFY(
-        model.data(conflicted, Qt::ToolTipRole).toString().contains(QStringLiteral(R"(D:\MSFS 2024\Utils\physical)")));
+    QVERIFY(model.data(conflicted, Qt::ToolTipRole)
+                .toString()
+                .contains(QDir::toNativeSeparators(QStringLiteral("D:/MSFS 2024/Utils/physical"))));
 
     QVERIFY(!model.data(model.index(0, CommunityModel::ClassificationColumn), CommunityModel::ConflictRole).toBool());
 

@@ -1,0 +1,3 @@
+namespace fsorg_precompiled
+{
+}

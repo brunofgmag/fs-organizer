@@ -18,8 +18,10 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
 endif ()
 
+set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+
 if (MSVC)
-    add_compile_options(/MP /FS /W4 /WX /w14062 /external:W0)
+    add_compile_options(/MP /W4 /WX /w14062 /external:W0)
 else ()
     add_compile_options(-Wall -Wextra -Werror)
 endif ()

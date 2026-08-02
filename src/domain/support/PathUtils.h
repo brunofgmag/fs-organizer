@@ -6,12 +6,17 @@
 #include <filesystem>
 #include <string>
 
-[[nodiscard]] inline std::string ComparablePath(const std::filesystem::path& path)
+[[nodiscard]] inline std::string WithGenericSeparators(std::string text)
 {
-    std::string text = path.generic_string();
     std::ranges::replace(text, '\\', '/');
 
-    std::string key = std::filesystem::path(text).lexically_normal().generic_string();
+    return text;
+}
+
+[[nodiscard]] inline std::string ComparablePath(const std::filesystem::path& path)
+{
+    std::string key =
+        std::filesystem::path(WithGenericSeparators(path.generic_string())).lexically_normal().generic_string();
     std::ranges::transform(key, key.begin(),
                            [](const unsigned char character)
                            {
@@ -24,6 +29,14 @@
     }
 
     return key;
+}
+
+[[nodiscard]] inline std::string ComparableFileName(const std::filesystem::path& path)
+{
+    const std::string key = ComparablePath(path);
+    const std::size_t separator = key.find_last_of('/');
+
+    return separator == std::string::npos ? key : key.substr(separator + 1);
 }
 
 [[nodiscard]] inline bool PathIsInside(const std::filesystem::path& path, const std::filesystem::path& root)
@@ -71,7 +84,7 @@
         }
     }
 
-    return std::filesystem::path(text).lexically_normal();
+    return std::filesystem::path(WithGenericSeparators(text)).lexically_normal();
 }
 
 #endif // FS_ORGANIZER_DOMAIN_SUPPORT_PATH_UTILS_H
