@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/brunofgmag/fs-organizer/compare/v0.3.0...v0.3.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **view:** give value_or a typed fallback for GCC ([48a0bf0](https://github.com/brunofgmag/fs-organizer/commit/48a0bf01c84888f5a5eabfa966351134b51b98fc))
+* **view:** give value_or a typed fallback for GCC ([77505b3](https://github.com/brunofgmag/fs-organizer/commit/77505b399b89dbc5e5f172f16f6ebe96ba8a7def))
+
 ## [0.3.0](https://github.com/brunofgmag/fs-organizer/compare/v0.2.0...v0.3.0) (2026-08-02)
 
 
