@@ -72,7 +72,7 @@ namespace
         profile.id = "msfs2024";
         profile.destinations = {kCommunity, kCommunity2024};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{.id = "library-1", .path = "D:/MSFS 2024", .label = "Biblioteca do Bruno"}};
+        profile.libraries = {Library{.id = "library-1", .path = "D:/MSFS 2024", .label = "Bruno's library"}};
         profile.destinationOverrides = std::move(overrides);
 
         return profile;
@@ -122,7 +122,7 @@ void AddonTreeModelTest::TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester()
     QCOMPARE(model.rowCount(Category(model)), 2);
     QCOMPARE(model.parent(Category(model)), model.index(0, 0, {}));
     QCOMPARE(model.columnCount({}), int{AddonTreeModel::Columns});
-    QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::AddonColumn), QStringLiteral("Biblioteca do Bruno"));
+    QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::AddonColumn), QStringLiteral("Bruno's library"));
 }
 
 void AddonTreeModelTest::CheckStatesComeFromTheEnabledIndex()
@@ -349,10 +349,10 @@ void AddonTreeModelTest::RetranslatingKeepsThePersistentIndexesOfAProxyUsable()
     model.Retranslated();
 
     const QModelIndex again = proxy.index(0, 0, {});
-    QVERIFY2(again.isValid(), "a proxy perdeu a raiz na troca de idioma");
+    QVERIFY2(again.isValid(), "the proxy lost the root on the language change");
 
     const QModelIndex child = proxy.index(0, 0, again);
-    QVERIFY2(child.isValid(), "a proxy perdeu o mapeamento dos filhos na troca de idioma");
+    QVERIFY2(child.isValid(), "the proxy lost the mapping of the children on the language change");
     QVERIFY(child.data(Qt::DisplayRole).isValid());
     QCOMPARE(proxy.rowCount(child), model.rowCount(proxy.mapToSource(child)));
 }

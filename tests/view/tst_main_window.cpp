@@ -293,7 +293,7 @@ void MainWindowTest::TheFooterKeepsThePageGutterOnBothEdges()
     QVERIFY(summary != nullptr);
     QVERIFY(aside != nullptr);
 
-    aside->setText(QStringLiteral("Perfil Flight Simulator 2024"));
+    aside->setText(QStringLiteral("Flight Simulator 2024 profile"));
     QCoreApplication::processEvents();
 
     QCOMPARE(summary->mapTo(bar, QPoint()).x(), kPageGutter);

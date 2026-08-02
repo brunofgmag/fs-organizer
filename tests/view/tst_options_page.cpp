@@ -366,7 +366,7 @@ void OptionsPageTest::NothingEnabledMeansTheQuestionCarriesNoCheckboxAtAll()
     const Question asked = WhatUnregisteringAsks(f.page);
 
     QVERIFY2(asked.opened, "the unregister dialog did not open, so nothing was looked at");
-    QVERIFY2(!asked.offeredToDisable, "a caixa de desabilitar apareceu sem nada habilitado para desabilitar");
+    QVERIFY2(!asked.offeredToDisable, "the disable box appeared with nothing enabled to disable");
 }
 
 void OptionsPageTest::WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion()
@@ -401,7 +401,7 @@ void OptionsPageTest::EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUs
                                 return label->text().contains(QStringLiteral("MSFS 2020"));
                             });
 
-    QVERIFY2(showsTheOtherLibrary, "clicar em Ver deixou os grupos de baixo no perfil ativo");
+    QVERIFY2(showsTheOtherLibrary, "clicking View left the groups below on the active profile");
 }
 
 void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
@@ -438,7 +438,8 @@ void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsS
     const Question asked = WhatClickingAsks(ButtonLabelled(f.page, QStringLiteral("Remove")));
 
     QVERIFY2(asked.opened, "the remove question did not open, so nothing was looked at");
-    QVERIFY2(asked.offeredToDisable, "remover o perfil em uso com outro perfil na tela contou zero addons habilitados");
+    QVERIFY2(asked.offeredToDisable,
+             "removing the profile in use with another profile on screen counted zero enabled addons");
 }
 
 QTEST_MAIN(OptionsPageTest)

@@ -44,7 +44,7 @@ namespace
     Preset ShortFlight()
     {
         Preset preset;
-        preset.name = "Voo curto";
+        preset.name = "Short hop";
         preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = "library-1", .folderName = "aerosoft-crj"},
                                       .action = PresetAction::Enable},
                           PresetEntry{.addonId = AddonId{.libraryId = "library-2", .folderName = "scenery-z"},
@@ -61,10 +61,10 @@ void FilePresetRepositoryTest::APresetSurvivesTheRoundTripWithBothActions()
     FilePresetRepository repository(storage.Root());
     QVERIFY(repository.Save("msfs2024", ShortFlight()));
 
-    const std::optional<Preset> read = FilePresetRepository(storage.Root()).Load("msfs2024", "Voo curto");
+    const std::optional<Preset> read = FilePresetRepository(storage.Root()).Load("msfs2024", "Short hop");
 
     QVERIFY(read.has_value());
-    QCOMPARE(QString::fromStdString(read->name), QString{"Voo curto"});
+    QCOMPARE(QString::fromStdString(read->name), QString{"Short hop"});
     QCOMPARE(read->entries.size(), std::size_t{2});
     QCOMPARE(QString::fromStdString(read->entries.front().addonId.libraryId), QString{"library-1"});
     QCOMPARE(QString::fromStdString(read->entries.front().addonId.folderName), QString{"aerosoft-crj"});
@@ -86,8 +86,8 @@ void FilePresetRepositoryTest::APresetOfOneProfileDoesNotShowUpInAnother()
     const std::vector<PresetListing> ofTheNewer = repository.List("msfs2024");
 
     QCOMPARE(ofTheNewer.size(), std::size_t{1});
-    QCOMPARE(QString::fromStdString(ofTheNewer.front().name), QString{"Voo curto"});
-    QVERIFY(!repository.Load("msfs2020", "Voo curto").has_value());
+    QCOMPARE(QString::fromStdString(ofTheNewer.front().name), QString{"Short hop"});
+    QVERIFY(!repository.Load("msfs2020", "Short hop").has_value());
 }
 
 void FilePresetRepositoryTest::RenamingKeepsTheEntriesAndDropsTheOldName()
@@ -97,14 +97,14 @@ void FilePresetRepositoryTest::RenamingKeepsTheEntriesAndDropsTheOldName()
     FilePresetRepository repository(storage.Root());
     QVERIFY(repository.Save("msfs2024", ShortFlight()));
 
-    QVERIFY(repository.Rename("msfs2024", "Voo curto", "Voo longo"));
+    QVERIFY(repository.Rename("msfs2024", "Short hop", "Long haul"));
 
-    const std::optional<Preset> read = repository.Load("msfs2024", "Voo longo");
+    const std::optional<Preset> read = repository.Load("msfs2024", "Long haul");
 
     QVERIFY(read.has_value());
-    QCOMPARE(QString::fromStdString(read->name), QString{"Voo longo"});
+    QCOMPARE(QString::fromStdString(read->name), QString{"Long haul"});
     QCOMPARE(read->entries.size(), std::size_t{2});
-    QVERIFY(!repository.Load("msfs2024", "Voo curto").has_value());
+    QVERIFY(!repository.Load("msfs2024", "Short hop").has_value());
     QCOMPARE(repository.List("msfs2024").size(), std::size_t{1});
 }
 
@@ -115,12 +115,12 @@ void FilePresetRepositoryTest::RenamingAPresetOntoItsOwnNameKeepsIt()
     FilePresetRepository repository(storage.Root());
     QVERIFY(repository.Save("msfs2024", ShortFlight()));
 
-    QVERIFY(repository.Rename("msfs2024", "Voo curto", "Voo curto"));
+    QVERIFY(repository.Rename("msfs2024", "Short hop", "Short hop"));
 
-    const std::optional<Preset> read = repository.Load("msfs2024", "Voo curto");
+    const std::optional<Preset> read = repository.Load("msfs2024", "Short hop");
 
     QVERIFY(read.has_value());
-    QCOMPARE(QString::fromStdString(read->name), QString{"Voo curto"});
+    QCOMPARE(QString::fromStdString(read->name), QString{"Short hop"});
     QCOMPARE(read->entries.size(), std::size_t{2});
     QCOMPARE(repository.List("msfs2024").size(), std::size_t{1});
 }
@@ -134,9 +134,9 @@ void FilePresetRepositoryTest::ARenameTheDiskRefusesLeavesThePresetWhereItWas()
 
     const std::string longerThanTheFilesystemAllows(300, 'p');
 
-    QVERIFY(!repository.Rename("msfs2024", "Voo curto", longerThanTheFilesystemAllows));
+    QVERIFY(!repository.Rename("msfs2024", "Short hop", longerThanTheFilesystemAllows));
 
-    const std::optional<Preset> read = repository.Load("msfs2024", "Voo curto");
+    const std::optional<Preset> read = repository.Load("msfs2024", "Short hop");
 
     QVERIFY(read.has_value());
     QCOMPARE(read->entries.size(), std::size_t{2});
@@ -165,10 +165,10 @@ void FilePresetRepositoryTest::RemovingDropsThePresetFromTheList()
     FilePresetRepository repository(storage.Root());
     QVERIFY(repository.Save("msfs2024", ShortFlight()));
 
-    repository.Remove("msfs2024", "Voo curto");
+    repository.Remove("msfs2024", "Short hop");
 
     QVERIFY(repository.List("msfs2024").empty());
-    QVERIFY(!repository.Load("msfs2024", "Voo curto").has_value());
+    QVERIFY(!repository.Load("msfs2024", "Short hop").has_value());
 }
 
 void FilePresetRepositoryTest::ANameThatClimbsOutOfThePresetRootIsRefusedInsteadOfWritten()
@@ -208,7 +208,7 @@ void FilePresetRepositoryTest::TheListingCarriesWhenThePresetFileWasLastWritten(
     FilePresetRepository repository(storage.Root());
     QVERIFY(repository.Save("msfs2024", ShortFlight()));
 
-    const std::filesystem::path file = storage.Root() / "msfs2024" / "Voo curto.json";
+    const std::filesystem::path file = storage.Root() / "msfs2024" / "Short hop.json";
     QVERIFY(std::filesystem::exists(file));
 
     constexpr auto twoDays = std::chrono::hours{48};

@@ -105,7 +105,7 @@ namespace
 
             session.ShowActiveProfile();
 
-            viewModel.Create(QStringLiteral("Voo de linha"));
+            viewModel.Create(QStringLiteral("Airline flight"));
         }
 
         InMemoryFileSystem fileSystem;
@@ -201,7 +201,7 @@ void PresetsPageTest::TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt()
 void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
 {
     Fixture f;
-    f.presets.SayItWasWrittenAt("Voo de linha",
+    f.presets.SayItWasWrittenAt("Airline flight",
                                 std::chrono::system_clock::time_point(std::chrono::milliseconds(
                                     QDateTime(QDate(2026, 2, 17), QTime(9, 30)).toMSecsSinceEpoch())));
 
@@ -216,7 +216,7 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
     QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Content"));
     QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Changed"));
 
-    QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
+    QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Airline flight"));
     QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon · 1 category"));
     QCOMPARE(names->item(0, 2)->text(), QStringLiteral("17/02/2026"));
 }
@@ -248,7 +248,7 @@ void PresetsPageTest::FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThat
     };
 
     const int bush = rowNamed(QStringLiteral("Bush flying"));
-    const int line = rowNamed(QStringLiteral("Voo de linha"));
+    const int line = rowNamed(QStringLiteral("Airline flight"));
 
     names->setCurrentCell(bush, 0);
 
@@ -289,12 +289,12 @@ void PresetsPageTest::FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfSt
 
     names->setCurrentCell(rowNamed(QStringLiteral("Bush flying")), 0);
 
-    filter->setText(QStringLiteral("linha"));
+    filter->setText(QStringLiteral("line"));
 
-    QCOMPARE(names->currentRow(), rowNamed(QStringLiteral("Voo de linha")));
+    QCOMPARE(names->currentRow(), rowNamed(QStringLiteral("Airline flight")));
     QVERIFY(!names->isRowHidden(names->currentRow()));
 
-    filter->setText(QStringLiteral("nada casa com isto"));
+    filter->setText(QStringLiteral("nothing matches this"));
 
     QCOMPARE(names->currentRow(), -1);
 }

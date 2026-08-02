@@ -49,10 +49,10 @@ void ContextPanelTest::initTestCase()
 
 void ContextPanelTest::CollapsingHidesTheContentAndExpandingBringsItBack()
 {
-    ContextPanel panel(QStringLiteral("Atenção"));
+    ContextPanel panel(QStringLiteral("Attention"));
     panel.setObjectName(QStringLiteral("collapse-test"));
 
-    auto* body = new QLabel(QStringLiteral("conteúdo"));
+    auto* body = new QLabel(QStringLiteral("content"));
     panel.Add(body);
 
     QVERIFY(body->isVisibleTo(&panel));
@@ -71,7 +71,7 @@ void ContextPanelTest::ACollapsedPanelBecomesARailThatReachesTheBottom()
 {
     ContextPanel panel(QStringLiteral("Addon selected"));
     panel.setObjectName(QStringLiteral("rail-height-test"));
-    panel.Add(new QLabel(QStringLiteral("conteúdo")));
+    panel.Add(new QLabel(QStringLiteral("content")));
     panel.resize(380, 400);
     panel.show();
     QVERIFY(QTest::qWaitForWindowExposed(&panel));
@@ -103,7 +103,7 @@ void ContextPanelTest::TheRailBringsThePanelBack()
     ContextPanel panel(QStringLiteral("Addon selected"));
     panel.setObjectName(QStringLiteral("rail-expand-test"));
 
-    auto* body = new QLabel(QStringLiteral("conteúdo"));
+    auto* body = new QLabel(QStringLiteral("content"));
     panel.Add(body);
 
     panel.findChild<QToolButton*>(QStringLiteral("PanelToggle"))->click();
@@ -127,7 +127,7 @@ namespace
     {
         ContextPanel panel(QStringLiteral("Addon selected"));
         panel.setObjectName(QStringLiteral("spine-test"));
-        panel.Add(new QLabel(QStringLiteral("conteúdo")));
+        panel.Add(new QLabel(QStringLiteral("content")));
         panel.resize(380, 400);
         panel.show();
 
@@ -182,7 +182,7 @@ void ContextPanelTest::TheSpineCarriesTheNameOfWhatIsSelected()
 {
     ContextPanel panel(QStringLiteral("Addon selected"));
     panel.setObjectName(QStringLiteral("spine-name-test"));
-    panel.Add(new QLabel(QStringLiteral("conteúdo")));
+    panel.Add(new QLabel(QStringLiteral("content")));
 
     const auto* rail = panel.findChild<PanelRail*>();
 
@@ -282,16 +282,16 @@ void ContextPanelTest::TheSpineAndTheDotShareTheSameAxis()
 void ContextPanelTest::TheCollapsedStateSurvivesANewPanelWithTheSameName()
 {
     {
-        ContextPanel panel(QStringLiteral("Atenção"));
+        ContextPanel panel(QStringLiteral("Attention"));
         panel.setObjectName(QStringLiteral("persist-test"));
         panel.findChild<QToolButton*>(QStringLiteral("PanelToggle"))->click();
     }
 
-    ContextPanel reborn(QStringLiteral("Atenção"));
+    ContextPanel reborn(QStringLiteral("Attention"));
     reborn.setObjectName(QStringLiteral("persist-test"));
     reborn.RestoreCollapsedState();
 
-    auto* body = new QLabel(QStringLiteral("conteúdo"));
+    auto* body = new QLabel(QStringLiteral("content"));
     reborn.Add(body);
 
     QVERIFY(!body->isVisibleTo(&reborn));
@@ -323,7 +323,7 @@ void ContextPanelTest::TheDetailShowsEveryColumnOfTheSelectedRow()
 void ContextPanelTest::AnInvalidIndexClearsTheDetailToItsPlaceholder()
 {
     QStandardItemModel model(1, 1);
-    model.setItem(0, 0, new QStandardItem(QStringLiteral("linha")));
+    model.setItem(0, 0, new QStandardItem(QStringLiteral("row")));
 
     ModelRowDetail detail;
     detail.Show(model.index(0, 0));

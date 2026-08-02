@@ -142,12 +142,12 @@ void WindowsLegacyConfigSourceTest::ThePresetsOfAnInstallationAreReadFromItsPres
     const ProgramData programData;
     const std::filesystem::path presets = programData.Folder("MSFS Addons Linker 2024") / "Presets";
     std::filesystem::create_directories(presets);
-    std::ofstream(presets / "Voo curto.preset", std::ios::binary) << "pmdg-777\r\n";
+    std::ofstream(presets / "Short hop.preset", std::ios::binary) << "pmdg-777\r\n";
 
     const std::vector<LegacyPresetSelection> read = WindowsLegacyConfigSource(programData.Root()).PresetsIn(presets);
 
     QCOMPARE(read.size(), std::size_t{1});
-    QCOMPARE(read.front().name, std::string{"Voo curto"});
+    QCOMPARE(read.front().name, std::string{"Short hop"});
     QCOMPARE(read.front().enabledAddonNames.front(), std::string{"pmdg-777"});
 }
 

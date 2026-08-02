@@ -179,7 +179,7 @@ void JsonlOperationJournalTest::ReadingSkipsALineWrittenByANewerVersion()
 
     std::ofstream stream(storage.File(), std::ios::binary | std::ios::app);
     stream << R"({"kind":"teleportAddon","addon":"pmdg-aircraft-77w"})" << '\n';
-    stream << "isto nao e json" << '\n';
+    stream << "this is not json" << '\n';
     stream.close();
 
     const std::vector<OperationRecord> read = journal.Read();

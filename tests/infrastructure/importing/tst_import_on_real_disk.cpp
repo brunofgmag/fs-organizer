@@ -82,7 +82,7 @@ namespace
             SimulatorProfile profile;
             profile.destinations = {Destination()};
             profile.defaultDestination = Destination();
-            profile.libraries = {Library{.id = "lib-1", .path = Root() / "Library", .label = "Biblioteca"}};
+            profile.libraries = {Library{.id = "lib-1", .path = Root() / "Library", .label = "Library"}};
 
             return profile;
         }
@@ -122,9 +122,9 @@ namespace
     void PutTwoCopiesOfTheSameAddonOnDisk(const Disk& disk, const std::string& name)
     {
         disk.AddFile("Library/Utils/" + name + "/manifest.json", R"({"title": "MD-11", "package_version": "0.6.3"})");
-        disk.AddFile("Library/Utils/" + name + "/aircraft.cfg", "a cópia da biblioteca");
+        disk.AddFile("Library/Utils/" + name + "/aircraft.cfg", "the library copy");
         disk.AddFile("Sim/Community/" + name + "/manifest.json", R"({"title": "MD-11", "package_version": "0.7.0"})");
-        disk.AddFile("Sim/Community/" + name + "/aircraft.cfg", "a cópia do destino");
+        disk.AddFile("Sim/Community/" + name + "/aircraft.cfg", "the destination copy");
     }
 }
 

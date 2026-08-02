@@ -485,7 +485,7 @@ void SessionTest::UnregisteringALibraryDropsAnUndoThatWouldPointAtIt()
 
     f.session.UnregisterLibrary("library-1");
 
-    QVERIFY2(!f.service.CanUndo(), "descadastrar guardou um desfazer que aponta para uma biblioteca que saiu");
+    QVERIFY2(!f.service.CanUndo(), "unregistering kept an undo that points at a library that left");
 }
 
 void SessionTest::RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath()
@@ -502,7 +502,7 @@ void SessionTest::RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath()
 
     f.session.RepointDestination(kCommunity, "E:/Flight Simulator 2024/Community2025");
 
-    QVERIFY2(!f.service.CanUndo(), "re-apontar guardou um desfazer que aponta para o caminho antigo");
+    QVERIFY2(!f.service.CanUndo(), "repointing kept an undo that points at the old path");
 }
 
 void SessionTest::ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain()

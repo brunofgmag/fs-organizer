@@ -138,7 +138,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {disk.Community(), disk.Extra()};
         profile.defaultDestination = disk.Community();
-        profile.libraries = {Library{.id = "library-1", .path = disk.Library(), .label = "Biblioteca"}};
+        profile.libraries = {Library{.id = "library-1", .path = disk.Library(), .label = "Library"}};
 
         AppSettings settings;
         settings.profiles = {profile};
@@ -186,13 +186,13 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
             symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {linked}, false);
 
         QCOMPARE(undone.size(), std::size_t{1});
-        QVERIFY2(!std::filesystem::exists(linkPath), "desabilitar deixou o link no destino");
+        QVERIFY2(!std::filesystem::exists(linkPath), "disabling left the link in the destination");
     }
     else
     {
         qInfo("this machine refuses directory symlinks, which is the case US-12.2 describes");
         QCOMPARE(asked.front().outcome.Failure(), LinkFailure::PrivilegeNotHeld);
-        QVERIFY2(!std::filesystem::exists(linkPath), "a recusa deixou lixo no destino");
+        QVERIFY2(!std::filesystem::exists(linkPath), "the refusal left rubbish behind in the destination");
     }
 
     Stack junction(disk, LinkType::Junction);
@@ -228,8 +228,8 @@ void OptionsOnRealDiskTest::UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThi
 
     stack.session.UnregisterLibrary("library-1");
 
-    QVERIFY2(stack.filesystemProbe.IsReparsePoint(linkPath), "descadastrar apagou o link do destino");
-    QVERIFY2(std::filesystem::exists(disk.Library() / "Aircrafts" / kAddon), "descadastrar apagou a pasta real");
+    QVERIFY2(stack.filesystemProbe.IsReparsePoint(linkPath), "unregistering deleted the link from the destination");
+    QVERIFY2(std::filesystem::exists(disk.Library() / "Aircrafts" / kAddon), "unregistering deleted the real folder");
     QVERIFY(stack.session.Profile().libraries.empty());
 
     const auto& entries = stack.session.Snapshot().entries;
@@ -259,7 +259,7 @@ void OptionsOnRealDiskTest::RegisteringTheLibraryBackRebuildsTheTreeUnderANewIde
 
     const LibraryReport report = stack.session.RegisterLibrary(disk.Library());
 
-    QVERIFY2(report.Accepted(), "cadastrar a mesma pasta de volta foi recusado");
+    QVERIFY2(report.Accepted(), "registering the same folder back was refused");
     QCOMPARE(stack.session.Profile().libraries.size(), std::size_t{1});
     QCOMPARE(stack.session.Snapshot().libraries.size(), std::size_t{1});
     QCOMPARE(CountAddons(stack.session.Snapshot().libraries.front()), addonsBefore);
@@ -297,7 +297,7 @@ void OptionsOnRealDiskTest::RepointingADestinationCarriesThePinnedCategoryIntoTh
     QVERIFY(moved.has_value());
     QCOMPARE(moved->profiles.front().destinations[1], disk.Landing());
     QCOMPARE(moved->profiles.front().destinationOverrides.front().destination, disk.Landing());
-    QVERIFY2(std::filesystem::exists(disk.Extra()), "trocar o caminho do destino apagou a pasta antiga");
+    QVERIFY2(std::filesystem::exists(disk.Extra()), "switching the destination path deleted the old folder");
 }
 
 QTEST_MAIN(OptionsOnRealDiskTest)

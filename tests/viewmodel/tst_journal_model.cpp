@@ -44,7 +44,7 @@ namespace
     SimulatorProfile Profile()
     {
         SimulatorProfile profile;
-        profile.libraries = {Library{.id = "lib-1", .path = "D:/Library", .label = "Biblioteca do Bruno"}};
+        profile.libraries = {Library{.id = "lib-1", .path = "D:/Library", .label = "Bruno's library"}};
 
         return profile;
     }
@@ -90,7 +90,7 @@ void JournalModelTest::TheLibraryAppearsByItsLabelAndNeverAsAUuid()
     model.ShowRecords({Link(OperationKind::EnableAddon, 0)}, Profile());
 
     QCOMPARE(model.index(0, JournalModel::LibraryColumn, {}).data(Qt::DisplayRole).toString(),
-             QStringLiteral("Biblioteca do Bruno"));
+             QStringLiteral("Bruno's library"));
 
     JournalModel orphan;
     orphan.ShowRecords({Link(OperationKind::EnableAddon, 0)}, SimulatorProfile{});
@@ -142,7 +142,7 @@ void JournalModelTest::SearchingReachesTheStepsOfAnImport()
     QCOMPARE(filter.rowCount({}), 1);
     QCOMPARE(filter.rowCount(filter.index(0, 0, {})), 1);
 
-    filter.Search(QStringLiteral("nada disso existe"));
+    filter.Search(QStringLiteral("none of that exists"));
     QCOMPARE(filter.rowCount({}), 0);
 }
 

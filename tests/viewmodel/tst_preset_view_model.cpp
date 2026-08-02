@@ -150,7 +150,7 @@ void PresetViewModelTest::ANameThatCannotBecomeAFileNameIsRefused()
     Fixture f;
     const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
 
-    f.viewModel.Create("Voo curto 1/2");
+    f.viewModel.Create("Short hop 1/2");
 
     QCOMPARE(refused.count(), 1);
     QVERIFY(f.viewModel.Names().isEmpty());
@@ -159,11 +159,11 @@ void PresetViewModelTest::ANameThatCannotBecomeAFileNameIsRefused()
 void PresetViewModelTest::ANameAlreadyTakenIsRefused()
 {
     Fixture f;
-    f.viewModel.Create("Voo curto");
+    f.viewModel.Create("Short hop");
 
     const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
 
-    f.viewModel.Create("VOO CURTO");
+    f.viewModel.Create("SHORT HOP");
 
     QCOMPARE(refused.count(), 1);
     QCOMPARE(f.viewModel.Names().size(), 1);
@@ -177,12 +177,12 @@ void PresetViewModelTest::CreatingCapturesTheEnabledSetAndListsThePreset()
 
     const QSignalSpy changed(&f.viewModel, &PresetViewModel::Changed);
 
-    f.viewModel.Create("  Voo curto  ");
+    f.viewModel.Create("  Short hop  ");
 
     QCOMPARE(changed.count(), 1);
-    QCOMPARE(f.viewModel.Names(), QStringList{"Voo curto"});
+    QCOMPARE(f.viewModel.Names(), QStringList{"Short hop"});
 
-    const std::optional<Preset> saved = f.viewModel.Load("Voo curto");
+    const std::optional<Preset> saved = f.viewModel.Load("Short hop");
 
     QVERIFY(saved.has_value());
     QCOMPARE(saved->entries.size(), std::size_t{1});
@@ -197,10 +197,10 @@ void PresetViewModelTest::ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked(
     f.session.RefreshEntries();
 
     Preset preset;
-    preset.name = "Voo curto";
+    preset.name = "Short hop";
     preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
                                   .action = PresetAction::Enable},
-                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-that-vanished"},
                                   .action = PresetAction::Enable}};
 
     const PresetPreview preview = f.viewModel.Preview(preset, ApplyMode::Replace);
@@ -218,11 +218,11 @@ void PresetViewModelTest::SettingARowToDisableIsStoredOnThePreset()
     Fixture f;
     f.LinkIn(kAddon);
     f.session.RefreshEntries();
-    f.viewModel.Create("Voo curto");
+    f.viewModel.Create("Short hop");
 
-    QVERIFY(f.viewModel.SetAction("Voo curto", 0, AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Disable));
+    QVERIFY(f.viewModel.SetAction("Short hop", 0, AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Disable));
 
-    const std::optional<Preset> saved = f.viewModel.Load("Voo curto");
+    const std::optional<Preset> saved = f.viewModel.Load("Short hop");
 
     QVERIFY(saved.has_value());
     QCOMPARE(saved->entries.size(), std::size_t{1});
@@ -234,10 +234,10 @@ void PresetViewModelTest::ApplyingRefreshesTheSessionAndReportsTheUnresolved()
     Fixture f;
 
     Preset preset;
-    preset.name = "Voo curto";
+    preset.name = "Short hop";
     preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
                                   .action = PresetAction::Enable},
-                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-that-vanished"},
                                   .action = PresetAction::Enable}};
 
     const QSignalSpy applied(&f.viewModel, &PresetViewModel::Applied);
@@ -245,7 +245,7 @@ void PresetViewModelTest::ApplyingRefreshesTheSessionAndReportsTheUnresolved()
     f.viewModel.Apply(preset, ApplyMode::Cumulative);
 
     QCOMPARE(applied.count(), 1);
-    QCOMPARE(applied.front().front().toStringList(), QStringList{"aircraft-que-sumiu"});
+    QCOMPARE(applied.front().front().toStringList(), QStringList{"aircraft-that-vanished"});
     QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
 }
 
@@ -254,27 +254,27 @@ void PresetViewModelTest::ALibraryIsNamedByItsLabelAndNotByItsIdentifier()
     const Fixture f;
 
     QCOMPARE(f.viewModel.LibraryLabel(kLibraryId), QString{"MSFS 2024"});
-    QCOMPARE(f.viewModel.LibraryLabel("library-que-o-perfil-perdeu"), QString{"library-que-o-perfil-perdeu"});
+    QCOMPARE(f.viewModel.LibraryLabel("library-the-profile-lost"), QString{"library-the-profile-lost"});
 }
 
 void PresetViewModelTest::AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSilence()
 {
     Fixture f;
-    f.viewModel.Create("Voo curto");
+    f.viewModel.Create("Short hop");
 
     f.repository.RefuseEveryWrite();
 
     const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
 
-    f.viewModel.Rename("Voo curto", "Voo longo");
+    f.viewModel.Rename("Short hop", "Long haul");
 
     QCOMPARE(refused.count(), 1);
-    QCOMPARE(f.viewModel.Names(), QStringList{"Voo curto"});
+    QCOMPARE(f.viewModel.Names(), QStringList{"Short hop"});
 
     f.viewModel.Create("Treino");
 
     QCOMPARE(refused.count(), 2);
-    QCOMPARE(f.viewModel.Names(), QStringList{"Voo curto"});
+    QCOMPARE(f.viewModel.Names(), QStringList{"Short hop"});
 }
 
 void PresetViewModelTest::ARowCarriesTheContentAndTheDayThePresetWasWritten()
@@ -284,16 +284,16 @@ void PresetViewModelTest::ARowCarriesTheContentAndTheDayThePresetWasWritten()
     f.LinkIn(kOtherAddon);
     f.session.RefreshEntries();
 
-    f.viewModel.Create("Voo curto");
+    f.viewModel.Create("Short hop");
 
     const QDateTime carnival(QDate(2026, 2, 17), QTime(9, 30));
     f.repository.SayItWasWrittenAt(
-        "Voo curto", std::chrono::system_clock::time_point(std::chrono::milliseconds(carnival.toMSecsSinceEpoch())));
+        "Short hop", std::chrono::system_clock::time_point(std::chrono::milliseconds(carnival.toMSecsSinceEpoch())));
 
     const QList<PresetRow> rows = f.viewModel.Rows();
 
     QCOMPARE(rows.size(), 1);
-    QCOMPARE(rows.front().name, QStringLiteral("Voo curto"));
+    QCOMPARE(rows.front().name, QStringLiteral("Short hop"));
     QCOMPARE(rows.front().content, QStringLiteral("2 addon · 1 category"));
     QCOMPARE(rows.front().updated, QStringLiteral("17/02/2026"));
 }
@@ -304,7 +304,7 @@ void PresetViewModelTest::ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInve
     f.LinkIn(kAddon);
     f.session.RefreshEntries();
 
-    f.viewModel.Create("Voo curto");
+    f.viewModel.Create("Short hop");
 
     const QList<PresetRow> rows = f.viewModel.Rows();
 

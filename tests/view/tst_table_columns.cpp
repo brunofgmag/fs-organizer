@@ -309,7 +309,7 @@ void TableColumnsTest::NoColumnIsSqueezedNarrowerThanItsOwnTitle()
     QStandardItemModel model(6, kColumns);
     QTableView view;
 
-    model.setHorizontalHeaderLabels({QStringLiteral("Preset"), QStringLiteral("Conteúdo muito comprido"),
+    model.setHorizontalHeaderLabels({QStringLiteral("Preset"), QStringLiteral("Very long content"),
                                      QStringLiteral("Changed"), QStringLiteral("Sobra")});
 
     for (int row = 0; row < model.rowCount(); ++row)
