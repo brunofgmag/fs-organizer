@@ -195,7 +195,7 @@ namespace
             }
         }
 
-        Out() << "\nDestino " << AsText(destination) << " — " << entries.size() << " entradas\n";
+        Out() << "\nDestination " << AsText(destination) << ": " << entries.size() << " entries\n";
 
         for (const auto& [classification, count] : counts)
         {
@@ -208,7 +208,7 @@ namespace
 
     void ReportConflicts(const ConflictCounts& conflicts)
     {
-        Out() << "    conflitos de cópia: " << conflicts.againstAddons << " contra addons, "
+        Out() << "    copy conflicts: " << conflicts.againstAddons << " against addons, "
               << conflicts.againstEveryFolder << " contra qualquer pasta da biblioteca\n";
     }
 
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const EntryClassifier classifier(linkService, filesystemProbe);
 
-    Out() << "Simulador em execução: " << (processProbe.SimulatorIsRunning() ? "sim" : "não") << "\n";
+    Out() << "Simulator running: " << (processProbe.SimulatorIsRunning() ? "yes" : "no") << "\n";
 
     const LibraryFacts facts = CollectLibraries(scanner, libraries);
     ReportLibrary(facts);

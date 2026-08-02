@@ -32,23 +32,23 @@ QString UpdateViewModel::WhatIsGoingOn() const
 {
     if (!updatesAreOn_)
     {
-        return tr("As atualizações estão desligadas nesta cópia: ela roda de uma árvore de build ou o "
-                  "FSORG_NO_UPDATES está no ambiente.");
+        return tr(
+            "Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.");
     }
 
     switch (state_)
     {
-    case UpdateState::Checking: return tr("Procurando uma versão nova…");
-    case UpdateState::UpToDate: return tr("A versão instalada é a mais nova.");
-    case UpdateState::Available: return tr("A versão %1 está disponível.").arg(OfferedVersion());
-    case UpdateState::Downloading: return tr("Baixando a versão %1: %2%").arg(OfferedVersion()).arg(progress_);
+    case UpdateState::Checking: return tr("Looking for a new version…");
+    case UpdateState::UpToDate: return tr("The installed version is the newest one.");
+    case UpdateState::Available: return tr("Version %1 is available.").arg(OfferedVersion());
+    case UpdateState::Downloading: return tr("Downloading version %1: %2%").arg(OfferedVersion()).arg(progress_);
     case UpdateState::ReadyToApply:
-        return tr("A versão %1 está pronta e entra ao fechar o programa.").arg(OfferedVersion());
+        return tr("Version %1 is ready and goes in when the program closes.").arg(OfferedVersion());
     case UpdateState::Failed: return failure_;
     case UpdateState::Idle: break;
     }
 
-    return tr("Nada foi verificado ainda.");
+    return tr("Nothing has been checked yet.");
 }
 
 QString UpdateViewModel::CurrentVersion() const
@@ -156,7 +156,7 @@ void UpdateViewModel::ApplyAndRestart()
         return;
     }
 
-    failure_ = tr("Não deu para iniciar o atualizador.");
+    failure_ = tr("The updater could not be started.");
 
     SetState(UpdateState::Failed);
 }

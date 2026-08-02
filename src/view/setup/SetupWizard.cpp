@@ -32,7 +32,7 @@ namespace
 
 SetupWizard::SetupWizard(SetupViewModel& viewModel, QWidget* parent) : QWizard(parent), viewModel_(viewModel)
 {
-    setWindowTitle(tr("FS Organizer · primeira configuração"));
+    setWindowTitle(tr("FS Organizer · first setup"));
     setWizardStyle(ModernStyle);
     setOption(NoBackButtonOnStartPage, true);
     resize(720, 460);
@@ -47,10 +47,9 @@ void SetupWizard::accept()
 
     if (!viewModel_.Complete())
     {
-        QMessageBox::critical(
-            this, tr("Não foi possível salvar a configuração"),
-            tr("O perfil não pôde ser gravado no disco, então a configuração não foi concluída. "
-               "Confira se você tem permissão de escrita na pasta de configurações e tente de novo."));
+        QMessageBox::critical(this, tr("The configuration could not be saved"),
+                              tr("The profile could not be written to the disk, so the setup did not finish. Check "
+                                 "that you have write permission on the settings folder and try again."));
         return;
     }
 
@@ -60,8 +59,8 @@ void SetupWizard::accept()
 QWizardPage* SetupWizard::CreateSimulatorPage()
 {
     auto* page = new QWizardPage;
-    page->setTitle(tr("Simulador"));
-    page->setSubTitle(tr("Escolha a instalação que este perfil vai gerenciar."));
+    page->setTitle(tr("Simulator"));
+    page->setSubTitle(tr("Choose the installation this profile will manage."));
 
     simulators_ = new QListWidget(page);
     RefreshCandidates();
@@ -71,7 +70,7 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
     variant_->addItem(NameOf(SimulatorVariant::MSFS2020), static_cast<int>(SimulatorVariant::MSFS2020));
     LetTheWheelScrollPastUnlessTheWidgetHasFocus(variant_);
 
-    auto* browse = new QPushButton(tr("Apontar uma pasta manualmente…"), page);
+    auto* browse = new QPushButton(tr("Point at a folder by hand…"), page);
     connect(browse, &QPushButton::clicked, this, &SetupWizard::BrowseForDestination);
 
     auto* manual = new QHBoxLayout;
@@ -81,7 +80,7 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
 
     auto* layout = new QVBoxLayout(page);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->addWidget(new QLabel(tr("Instalações encontradas:"), page));
+    layout->addWidget(new QLabel(tr("Installations found:"), page));
     layout->addWidget(simulators_);
     layout->addLayout(manual);
 
@@ -91,13 +90,13 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
 QWizardPage* SetupWizard::CreateLibraryPage()
 {
     auto* page = new QWizardPage;
-    page->setTitle(tr("Bibliotecas"));
-    page->setSubTitle(tr("Escolha a pasta raiz onde os seus addons ficam guardados, fora do "
-                         "simulador. As subpastas dela viram categorias."));
+    page->setTitle(tr("Libraries"));
+    page->setSubTitle(tr(
+        "Choose the root folder where your addons are kept, outside the simulator. Its subfolders become categories."));
 
     libraries_ = new QListWidget(page);
 
-    auto* add = new QPushButton(tr("Adicionar biblioteca…"), page);
+    auto* add = new QPushButton(tr("Add library…"), page);
     connect(add, &QPushButton::clicked, this, &SetupWizard::BrowseForLibrary);
 
     auto* layout = new QVBoxLayout(page);
@@ -110,7 +109,7 @@ QWizardPage* SetupWizard::CreateLibraryPage()
 
 void SetupWizard::BrowseForDestination()
 {
-    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Escolha a pasta de destino do simulador"));
+    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Choose the simulator destination folder"));
     if (chosen.isEmpty())
     {
         return;
@@ -133,17 +132,17 @@ bool SetupWizard::ConfirmDestination(const std::filesystem::path& path)
     switch (viewModel_.CheckDestination(path))
     {
     case DestinationCheck::RejectedMissing:
-        QMessageBox::warning(this, tr("Pasta inválida"), tr("Essa pasta não existe."));
+        QMessageBox::warning(this, tr("Invalid folder"), tr("That folder does not exist."));
         return false;
 
     case DestinationCheck::RejectedNotWritable:
-        QMessageBox::warning(this, tr("Pasta inválida"), tr("Não é possível gravar nessa pasta."));
+        QMessageBox::warning(this, tr("Invalid folder"), tr("That folder cannot be written to."));
         return false;
 
     case DestinationCheck::AcceptedButUnfamiliar:
-        QMessageBox::information(this, tr("Confirme a pasta"),
-                                 tr("Essa pasta não se parece com um destino do simulador, que costuma se chamar "
-                                    "Community. Ela será usada assim mesmo."));
+        QMessageBox::information(this, tr("Confirm the folder"),
+                                 tr("That folder does not look like a simulator destination, which is usually called "
+                                    "Community. It will be used anyway."));
         return true;
 
     case DestinationCheck::Accepted: return true;
@@ -168,7 +167,7 @@ void SetupWizard::RefreshCandidates() const
 
 void SetupWizard::BrowseForLibrary()
 {
-    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Escolha a pasta da biblioteca"));
+    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Choose the library folder"));
     if (chosen.isEmpty())
     {
         return;
@@ -177,9 +176,9 @@ void SetupWizard::BrowseForLibrary()
     const std::filesystem::path path = AsPath(chosen);
     if (!viewModel_.RegisterLibrary(path, path.filename().string()).Accepted())
     {
-        QMessageBox::warning(this, tr("Biblioteca repetida"),
-                             tr("Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz "
-                                "onde os addons ficam guardados; as subpastas dela viram categorias."));
+        QMessageBox::warning(this, tr("Repeated library"),
+                             tr("That folder is already inside a registered library. Choose the root folder where the "
+                                "addons are kept; its subfolders become categories."));
         return;
     }
 
@@ -191,8 +190,8 @@ void SetupWizard::RefreshLibraries() const
     libraries_->clear();
     for (const RegisteredLibrary& registered : viewModel_.Libraries())
     {
-        const QString categories = tr("%n categoria(s)", nullptr, static_cast<int>(registered.categories));
-        const QString addons = tr("%n addon(s)", nullptr, static_cast<int>(registered.addons));
+        const QString categories = tr("%n category", nullptr, static_cast<int>(registered.categories));
+        const QString addons = tr("%n addon", nullptr, static_cast<int>(registered.addons));
 
         libraries_->addItem(QStringLiteral("%1 · %2 · %3, %4")
                                 .arg(QString::fromStdString(registered.library.label), AsText(registered.library.path),

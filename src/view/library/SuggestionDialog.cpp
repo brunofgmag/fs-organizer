@@ -15,12 +15,12 @@
 SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& suggestions, QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(tr("Sugestões de categoria"));
+    setWindowTitle(tr("Category suggestions"));
 
     model_.Show(suggestions);
 
-    auto* explanation = new QLabel(tr("As regras que acertam sozinhas já vêm marcadas. A regra de livery vem "
-                                      "desmarcada porque erra com frequência: confira antes de aplicar."),
+    auto* explanation = new QLabel(tr("The rules that get it right on their own come checked. The livery rule comes "
+                                      "unchecked because it is often wrong: check it before applying."),
                                    this);
     explanation->setWordWrap(true);
 
@@ -31,7 +31,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
     table->verticalHeader()->setVisible(false);
     LetTheColumnsBeDraggedAndStillFillTheTable(table);
 
-    auto* all = new QCheckBox(tr("Marcar todos"), this);
+    auto* all = new QCheckBox(tr("Check all"), this);
     all->setTristate(true);
     all->setCheckState(model_.ChosenState());
 
@@ -48,7 +48,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
             });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    QPushButton* apply = buttons->addButton(tr("Mover os marcados"), QDialogButtonBox::AcceptRole);
+    QPushButton* apply = buttons->addButton(tr("Move the checked ones"), QDialogButtonBox::AcceptRole);
     apply->setDefault(true);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);

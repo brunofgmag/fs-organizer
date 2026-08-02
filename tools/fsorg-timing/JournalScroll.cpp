@@ -184,7 +184,7 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
     auto* view = page.findChild<QTreeView*>();
     if (view == nullptr)
     {
-        Out() << "não achei a lista na página\n";
+        Out() << "could not find the list on the page\n";
         Out().flush();
         return 2;
     }
@@ -236,7 +236,7 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
 
     Out() << "\ndelegate do Qt " << QString::number(withTheStockDelegate, 'f', 2) << " ms -> nosso "
           << QString::number(asShipped, 'f', 2) << " ms\n";
-    Out() << "orçamento por quadro: " << kBudgetPerFrame << " ms\n";
+    Out() << "budget per frame: " << kBudgetPerFrame << " ms\n";
     Out() << (asShipped > kBudgetPerFrame ? "VERMELHO: o scroll engasga\n" : "VERDE\n");
     Out().flush();
 

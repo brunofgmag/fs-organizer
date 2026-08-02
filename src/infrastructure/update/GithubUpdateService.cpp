@@ -114,7 +114,7 @@ void GithubUpdateService::DownloadAndStage(const UpdateInfo& info)
 
     if (info.zipUrl.empty() || info.shaUrl.empty())
     {
-        SayTheStageFinished(false, tr("Esta versão não trouxe os arquivos para baixar."));
+        SayTheStageFinished(false, tr("This version did not bring the files to download."));
         return;
     }
 
@@ -223,7 +223,7 @@ void GithubUpdateService::OnCheckFinished()
     const std::optional<UpdateInfo> info = ParseLatestRelease(reply->readAll());
     if (!info.has_value())
     {
-        SayTheCheckFinished(false, false, {}, tr("O GitHub respondeu num formato que o app não entende."));
+        SayTheCheckFinished(false, false, {}, tr("GitHub answered in a format the app does not understand."));
         return;
     }
 
@@ -248,7 +248,7 @@ void GithubUpdateService::OnChecksumFinished()
     expectedChecksum_ = ParseSha256File(reply->readAll());
     if (expectedChecksum_.isEmpty())
     {
-        SayTheStageFinished(false, tr("O arquivo de verificação veio inválido."));
+        SayTheStageFinished(false, tr("The checksum file came in invalid."));
         return;
     }
 
@@ -281,13 +281,13 @@ void GithubUpdateService::OnDownloadFinished()
 
     if (!WriteTheDownload(reply, zipPath))
     {
-        SayTheStageFinished(false, tr("Não deu para gravar o arquivo baixado."));
+        SayTheStageFinished(false, tr("The downloaded file could not be written."));
         return;
     }
 
     if (!ChecksumMatches(zipPath))
     {
-        SayTheStageFinished(false, tr("O arquivo baixado não confere com a verificação, e foi descartado."));
+        SayTheStageFinished(false, tr("The downloaded file does not match the checksum, and was discarded."));
         return;
     }
 
@@ -341,7 +341,7 @@ void GithubUpdateService::OnExtractionFinished(const int exitCode)
 
     if (exitCode != 0 || !QFile::exists(StagedFolder() + QStringLiteral("/") + exeName))
     {
-        SayTheStageFinished(false, tr("Não deu para abrir o pacote da atualização."));
+        SayTheStageFinished(false, tr("The update package could not be opened."));
         return;
     }
 

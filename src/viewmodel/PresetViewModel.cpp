@@ -35,8 +35,8 @@ QList<PresetRow> PresetViewModel::Rows() const
             preset.has_value() ? ContentOf(*preset, profile, session_.Snapshot().libraries) : PresetContent{};
 
         rows.append(PresetRow{QString::fromStdString(listing.name),
-                              tr("%n addon(s)", nullptr, static_cast<int>(content.addons))
-                                  + tr(" · %n categoria(s)", nullptr, static_cast<int>(content.categories)),
+                              tr("%n addon", nullptr, static_cast<int>(content.addons))
+                                  + tr(" · %n category", nullptr, static_cast<int>(content.categories)),
                               listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{}});
     }
 
@@ -127,8 +127,8 @@ bool PresetViewModel::SetAction(const QString& name,
         return true;
     }
 
-    emit Refused(tr("Não deu para gravar a mudança no preset \"%1\". Ele pode ter mudado desde que a tabela "
-                    "foi montada, ou a pasta dos presets pode estar cheia ou protegida.")
+    emit Refused(tr("The change could not be written to the preset \"%1\". It may have changed since the table was "
+                    "built, or the presets folder may be full or protected.")
                      .arg(name));
 
     return false;
@@ -173,8 +173,8 @@ void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)
 
 void PresetViewModel::RefuseTheWriteOf(const QString& name)
 {
-    emit Refused(tr("Não deu para gravar o preset \"%1\". O nome pode ser longo demais para o disco, "
-                    "ou a pasta dos presets pode estar cheia ou protegida.")
+    emit Refused(tr("The preset \"%1\" could not be written. The name may be too long for the disk, or the presets "
+                    "folder may be full or protected.")
                      .arg(name));
 }
 
@@ -184,20 +184,20 @@ bool PresetViewModel::Accepts(const QString& name)
 
     if (wanted.isEmpty())
     {
-        emit Refused(tr("Dê um nome ao preset."));
+        emit Refused(tr("Give the preset a name."));
         return false;
     }
 
     if (!PathSegment::From(wanted.toStdString()).has_value())
     {
-        emit Refused(tr("O nome do preset não pode conter %1, nem terminar com espaço ou ponto.")
+        emit Refused(tr("The preset name cannot contain %1, and cannot end with a space or a full stop.")
                          .arg(QStringLiteral(R"(<>:"/\|?*)")));
         return false;
     }
 
     if (Names().contains(wanted, Qt::CaseInsensitive))
     {
-        emit Refused(tr("Já existe um preset com esse nome."));
+        emit Refused(tr("There is already a preset with that name."));
         return false;
     }
 

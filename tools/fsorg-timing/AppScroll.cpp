@@ -163,7 +163,7 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
 
     if (open == nullptr)
     {
-        Out() << "não achei o botão do diário\n";
+        Out() << "could not find the journal button\n";
         Out().flush();
         return 2;
     }
@@ -182,7 +182,7 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     auto* view = page.findChild<QTreeView*>();
     if (view == nullptr)
     {
-        Out() << "não achei a lista do diário\n";
+        Out() << "could not find the journal list\n";
         Out().flush();
         return 2;
     }

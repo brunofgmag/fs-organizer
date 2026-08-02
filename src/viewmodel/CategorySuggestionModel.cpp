@@ -137,9 +137,9 @@ QVariant CategorySuggestionModel::headerData(const int section, const Qt::Orient
     switch (section)
     {
     case AddonColumn: return tr("Addon");
-    case CurrentCategoryColumn: return tr("Categoria atual");
-    case SuggestedCategoryColumn: return tr("Sugestão");
-    case RuleColumn: return tr("Regra");
+    case CurrentCategoryColumn: return tr("Current category");
+    case SuggestedCategoryColumn: return tr("Suggestion");
+    case RuleColumn: return tr("Rule");
     default: break;
     }
 
