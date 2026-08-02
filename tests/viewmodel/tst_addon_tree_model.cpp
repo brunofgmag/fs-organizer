@@ -1,6 +1,8 @@
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QtTest>
 
+#include <QtCore/QDir>
+
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/RowTagRoles.h"
@@ -183,7 +185,8 @@ void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
     QVERIFY(model.data(conflicted, AlarmingRole).toBool());
     QVERIFY(model.data(conflicted, Qt::ToolTipRole)
                 .toString()
-                .contains(QStringLiteral(R"(E:\Flight Simulator 2024\Community\pmdg-aircraft-77w)")));
+                .contains(
+                    QDir::toNativeSeparators(QStringLiteral("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"))));
 
     const QModelIndex quiet = model.index(1, 0, Category(model));
     QVERIFY(!model.data(quiet, AddonTreeModel::ConflictRole).toBool());

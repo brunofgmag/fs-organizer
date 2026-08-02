@@ -101,11 +101,16 @@ void TableColumnsTest::WideningOneColumnWidensThatColumnAndNoOther()
 void TableColumnsTest::NarrowingOneColumnIsAbsorbedInsteadOfLeavingAGap()
 {
     const Table table;
-    const int neighbourBefore = table.Width(2);
 
-    table.DragTo(1, table.Width(1) - 60);
+    table.DragTo(2, table.Width(2) + 120);
 
-    QCOMPARE(table.Width(2), neighbourBefore + 60);
+    const int widened = table.Width(2);
+    const int neighbourBefore = table.Width(kSlack);
+
+    table.DragTo(2, widened - 60);
+
+    QCOMPARE(table.Width(2), widened - 60);
+    QCOMPARE(table.Width(kSlack), neighbourBefore + 60);
     QCOMPARE(table.TotalWidth(), table.view.viewport()->width());
 }
 
