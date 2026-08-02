@@ -17,22 +17,22 @@ class InMemoryFileSystem
 public:
     void AddDirectory(const std::filesystem::path& path)
     {
-        nodes_[Key(path)] = Node{NodeKind::Directory};
+        nodes_[Key(path)] = Node{.kind = NodeKind::Directory};
     }
 
     void AddFile(const std::filesystem::path& path, const std::uintmax_t size = 0)
     {
-        nodes_[Key(path)] = Node{NodeKind::File, {}, true, size};
+        nodes_[Key(path)] = Node{.kind = NodeKind::File, .target = {}, .readable = true, .size = size};
     }
 
     void AddLink(const std::filesystem::path& path, const std::filesystem::path& target)
     {
-        nodes_[Key(path)] = Node{NodeKind::Link, target, true};
+        nodes_[Key(path)] = Node{.kind = NodeKind::Link, .target = target, .readable = true};
     }
 
     void AddLinkWithUnreadableTarget(const std::filesystem::path& path)
     {
-        nodes_[Key(path)] = Node{NodeKind::Link, {}, false};
+        nodes_[Key(path)] = Node{.kind = NodeKind::Link, .target = {}, .readable = false};
     }
 
     void MarkVolumeUnavailable(const std::filesystem::path& path)

@@ -18,7 +18,7 @@ void CategorySuggestionModel::Show(const std::vector<CategorySuggestion>& sugges
     {
         if (suggestion.WouldMove())
         {
-            rows_.push_back(Row{suggestion, TrustedOnItsOwn(suggestion.rule)});
+            rows_.push_back(Row{.suggestion = suggestion, .chosen = TrustedOnItsOwn(suggestion.rule)});
         }
     }
 

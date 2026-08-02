@@ -6,7 +6,7 @@
 
 #include "infrastructure/update/GithubUpdateService.h"
 
-class GithubUpdateServiceTest : public QObject
+namespace
 {
     class GithubUpdateServiceTest : public QObject
     {

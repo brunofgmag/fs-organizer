@@ -6,7 +6,7 @@
 
 #include "view/TableColumns.h"
 
-class TableColumnsTest : public QObject
+namespace
 {
     class TableColumnsTest : public QObject
     {

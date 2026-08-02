@@ -66,7 +66,7 @@ TriageStrip::Item TriageStrip::AddItem(const char* tag, QHBoxLayout* into)
     into->addWidget(label);
     into->addWidget(button);
 
-    return {label, button};
+    return {.label = label, .action = button};
 }
 
 void TriageStrip::ShowItem(const Item& item, const bool shown)

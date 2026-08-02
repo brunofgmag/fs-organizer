@@ -420,18 +420,18 @@ QWidget* OptionsPage::CreateUpdates()
         QString explanation;
         const char* objectName;
     } offered[] = {
-        {UpdateMode::Automatic,
-         tr("Automatic"),
-         tr("Downloads the new version on its own and applies it when you close the program."),
-         "AutomaticUpdateChoice"},
-        {UpdateMode::Notify,
-         tr("Notify"),
-         tr("Looks for a new version and says it exists. Nothing is downloaded before you say so."),
-         "NotifyUpdateChoice"},
-        {UpdateMode::Manual,
-         tr("Manual"),
-         tr("Only looks when you click Check now."),
-         "ManualUpdateChoice"},
+        {.mode = UpdateMode::Automatic,
+         .name = tr("Automatic"),
+         .explanation = tr("Downloads the new version on its own and applies it when you close the program."),
+         .objectName = "AutomaticUpdateChoice"},
+        {.mode = UpdateMode::Notify,
+         .name = tr("Notify"),
+         .explanation = tr("Looks for a new version and says it exists. Nothing is downloaded before you say so."),
+         .objectName = "NotifyUpdateChoice"},
+        {.mode = UpdateMode::Manual,
+         .name = tr("Manual"),
+         .explanation = tr("Only looks when you click Check now."),
+         .objectName = "ManualUpdateChoice"},
     };
 
     bool follows = false;

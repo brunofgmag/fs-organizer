@@ -19,7 +19,7 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class PresetViewModelTest : public QObject
+namespace
 {
     class PresetViewModelTest : public QObject
     {
@@ -55,7 +55,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -82,7 +82,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{kLibraryId, kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = kLibraryId, .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -198,8 +198,10 @@ void PresetViewModelTest::ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked(
 
     Preset preset;
     preset.name = "Voo curto";
-    preset.entries = {PresetEntry{AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Enable},
-                      PresetEntry{AddonId{kLibraryId, "aircraft-que-sumiu"}, PresetAction::Enable}};
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
+                                  .action = PresetAction::Enable}};
 
     const PresetPreview preview = f.viewModel.Preview(preset, ApplyMode::Replace);
 
@@ -233,8 +235,10 @@ void PresetViewModelTest::ApplyingRefreshesTheSessionAndReportsTheUnresolved()
 
     Preset preset;
     preset.name = "Voo curto";
-    preset.entries = {PresetEntry{AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Enable},
-                      PresetEntry{AddonId{kLibraryId, "aircraft-que-sumiu"}, PresetAction::Enable}};
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
+                                  .action = PresetAction::Enable}};
 
     const QSignalSpy applied(&f.viewModel, &PresetViewModel::Applied);
 

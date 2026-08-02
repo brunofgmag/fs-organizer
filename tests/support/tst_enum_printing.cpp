@@ -2,7 +2,7 @@
 
 #include "tests/support/EnumPrinting.h"
 
-class EnumPrintingTest : public QObject
+namespace
 {
     class EnumPrintingTest : public QObject
     {

@@ -102,7 +102,7 @@ AddonTreeModel::Item* AddonTreeModel::AddItem(const TreeNode& node, Item* parent
 {
     const int row = parent == nullptr ? static_cast<int>(roots_.size()) : static_cast<int>(parent->children.size());
 
-    items_.push_back(std::make_unique<Item>(Item{&node, parent, row, {}}));
+    items_.push_back(std::make_unique<Item>(Item{.node = &node, .parent = parent, .row = row, .children = {}}));
     Item* item = items_.back().get();
 
     for (const TreeNode& child : node.children)

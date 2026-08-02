@@ -4,7 +4,7 @@
 
 #include "infrastructure/platform/SingleInstance.h"
 
-class SingleInstanceTest : public QObject
+namespace
 {
     class SingleInstanceTest : public QObject
     {

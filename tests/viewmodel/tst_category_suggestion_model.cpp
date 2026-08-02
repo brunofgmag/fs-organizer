@@ -4,7 +4,7 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/CategorySuggestionModel.h"
 
-class CategorySuggestionModelTest : public QObject
+namespace
 {
     class CategorySuggestionModelTest : public QObject
     {
@@ -31,7 +31,8 @@ namespace
                                   const std::filesystem::path& suggested,
                                   const CategoryRule rule)
     {
-        return CategorySuggestion{current / folder, current, suggested, rule};
+        return CategorySuggestion{
+            .addonFolder = current / folder, .currentCategory = current, .suggestedCategory = suggested, .rule = rule};
     }
 
     std::vector<CategorySuggestion> BothRules()

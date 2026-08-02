@@ -4,7 +4,7 @@
 #include "domain/tree/EffectiveDestination.h"
 #include "tests/support/PathPrinting.h"
 
-class OrphanOverridesTest : public QObject
+namespace
 {
     class OrphanOverridesTest : public QObject
     {
@@ -32,7 +32,7 @@ namespace
         profile.id = "msfs2024";
         profile.destinations = {kCommunity, kOtherDestination};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -41,7 +41,8 @@ namespace
 void OrphanOverridesTest::AnOverridePointingAtADestinationOfTheProfileIsNotAnOrphan()
 {
     SimulatorProfile profile = Profile();
-    profile.destinationOverrides = {DestinationOverride{"library-1", "Aircrafts", kOtherDestination}};
+    profile.destinationOverrides = {
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
 
     QVERIFY(OverridesPointingNowhere(profile).empty());
 }
@@ -49,8 +50,9 @@ void OrphanOverridesTest::AnOverridePointingAtADestinationOfTheProfileIsNotAnOrp
 void OrphanOverridesTest::AnOverridePointingOutsideTheProfileIsReported()
 {
     SimulatorProfile profile = Profile();
-    profile.destinationOverrides = {DestinationOverride{"library-1", "Aircrafts", kGoneDestination},
-                                    DestinationOverride{"library-1", "Sceneries", kOtherDestination}};
+    profile.destinationOverrides = {
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kGoneDestination},
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Sceneries", .destination = kOtherDestination}};
 
     const std::vector<DestinationOverride> orphans = OverridesPointingNowhere(profile);
 
@@ -62,8 +64,9 @@ void OrphanOverridesTest::AnOverridePointingOutsideTheProfileIsReported()
 void OrphanOverridesTest::ADestinationIsRecognisedWhateverTheCaseAndTheSeparator()
 {
     SimulatorProfile profile = Profile();
-    profile.destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts", R"(e:\flight simulator 2024\community2024\)"}};
+    profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                        .relativePath = "Aircrafts",
+                                                        .destination = R"(e:\flight simulator 2024\community2024\)"}};
 
     QVERIFY(OverridesPointingNowhere(profile).empty());
 }
@@ -71,7 +74,8 @@ void OrphanOverridesTest::ADestinationIsRecognisedWhateverTheCaseAndTheSeparator
 void OrphanOverridesTest::AnOrphanOverrideDoesNotDecideWhereTheAddonGoes()
 {
     SimulatorProfile profile = Profile();
-    profile.destinationOverrides = {DestinationOverride{"library-1", "Aircrafts", kGoneDestination}};
+    profile.destinationOverrides = {
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kGoneDestination}};
 
     QCOMPARE(EffectiveDestination(profile, "D:/MSFS 2024/Aircrafts/pmdg-777"), std::filesystem::path{kCommunity});
 }
@@ -79,8 +83,9 @@ void OrphanOverridesTest::AnOrphanOverrideDoesNotDecideWhereTheAddonGoes()
 void OrphanOverridesTest::DroppingTheOrphansKeepsTheOnesThatStillPoint()
 {
     SimulatorProfile profile = Profile();
-    profile.destinationOverrides = {DestinationOverride{"library-1", "Aircrafts", kGoneDestination},
-                                    DestinationOverride{"library-1", "Sceneries", kOtherDestination}};
+    profile.destinationOverrides = {
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kGoneDestination},
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Sceneries", .destination = kOtherDestination}};
 
     DropOverridesPointingNowhere(profile);
 

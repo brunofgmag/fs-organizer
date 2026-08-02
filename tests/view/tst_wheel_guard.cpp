@@ -7,7 +7,7 @@
 #include "view/setup/StagingLeftoverDialog.h"
 #include "view/WheelGuard.h"
 
-class WheelGuardTest : public QObject
+namespace
 {
     class WheelGuardTest : public QObject
     {

@@ -8,7 +8,7 @@
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 
-class WindowsFilesystemProbeTest : public QObject
+namespace
 {
     class WindowsFilesystemProbeTest : public QObject
     {

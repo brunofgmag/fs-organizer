@@ -9,7 +9,7 @@
 #include "infrastructure/link/WindowsLinkService.h"
 #include "tests/support/PathPrinting.h"
 
-class WindowsFileOperationsTest : public QObject
+namespace
 {
     class WindowsFileOperationsTest : public QObject
     {

@@ -1,6 +1,6 @@
 #include <QtTest/QtTest>
 
-class SmokeTest : public QObject
+namespace
 {
     class SmokeTest : public QObject
     {

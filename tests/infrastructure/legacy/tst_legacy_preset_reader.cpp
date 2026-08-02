@@ -10,7 +10,7 @@
 #include "infrastructure/legacy/LegacyPresetReader.h"
 #include "tests/support/PathPrinting.h"
 
-class LegacyPresetReaderTest : public QObject
+namespace
 {
     class LegacyPresetReaderTest : public QObject
     {

@@ -9,7 +9,7 @@
 #include "domain/support/PathUtils.h"
 #include "infrastructure/legacy/IniLegacyConfigReader.h"
 
-class IniLegacyConfigReaderTest : public QObject
+namespace
 {
     class IniLegacyConfigReaderTest : public QObject
     {

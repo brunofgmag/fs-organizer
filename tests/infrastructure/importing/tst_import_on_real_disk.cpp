@@ -21,7 +21,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class ImportOnRealDiskTest : public QObject
+namespace
 {
     class ImportOnRealDiskTest : public QObject
     {
@@ -82,7 +82,7 @@ namespace
             SimulatorProfile profile;
             profile.destinations = {Destination()};
             profile.defaultDestination = Destination();
-            profile.libraries = {Library{"lib-1", Root() / "Library", "Biblioteca"}};
+            profile.libraries = {Library{.id = "lib-1", .path = Root() / "Library", .label = "Biblioteca"}};
 
             return profile;
         }
@@ -137,7 +137,7 @@ void ImportOnRealDiskTest::APhysicalAddonReallyMovesIntoTheLibraryAndLeavesAJunc
 
     Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
 
-    const ImportRequest request{disk.Destination() / "simbridge", disk.Category()};
+    const ImportRequest request{.source = disk.Destination() / "simbridge", .category = disk.Category()};
     const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
 
     QCOMPARE(outcome.Result(), FileResult::Completed);
@@ -183,7 +183,7 @@ void ImportOnRealDiskTest::TheSourceSurvivesWhenTheCopyFails()
 
     Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
 
-    const ImportRequest request{disk.Destination() / "fenix-a320", disk.Category()};
+    const ImportRequest request{.source = disk.Destination() / "fenix-a320", .category = disk.Category()};
     const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
 
     QCOMPARE(outcome.Result(), FileResult::CouldNotCopy);
@@ -206,7 +206,8 @@ void ImportOnRealDiskTest::ALiveJunctionOfAnotherProgramIsNeverReplaced()
     const std::filesystem::path linkPath = disk.Destination() / "fsdreamteam-gsx-pro";
     QCOMPARE(engine.linkService.CreateLink(linkPath, foreign, LinkType::Junction), LinkFailure::None);
 
-    const LinkOutcome outcome = engine.linking.Enable(Addon{library}, disk.Destination(), LinkType::Junction);
+    const LinkOutcome outcome =
+        engine.linking.Enable(Addon{.folderPath = library}, disk.Destination(), LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
     QVERIFY(outcome.Occupation().has_value());
@@ -225,8 +226,8 @@ void ImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
     const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
     QVERIFY(!std::filesystem::exists(quarantine));
 
-    const CopyConflict conflict{disk.Destination() / "tfdidesign-aircraft-md11",
-                                disk.Category() / "tfdidesign-aircraft-md11"};
+    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
     const FileResult result = composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
                                                                ConflictChoice::KeepTheDestinationCopy);
 
@@ -248,8 +249,8 @@ void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder
 
     Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
 
-    const CopyConflict conflict{disk.Destination() / "tfdidesign-aircraft-md11",
-                                disk.Category() / "tfdidesign-aircraft-md11"};
+    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
     QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
                                               ConflictChoice::KeepTheDestinationCopy),
              FileResult::Completed);
@@ -287,7 +288,8 @@ void ImportOnRealDiskTest::MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewF
     QVERIFY(service.engine.filesystemProbe.IsReparsePoint(link));
 
     const std::filesystem::path category = disk.Root() / "Library" / "Aircrafts (2024)";
-    const std::vector<FileOperationResult> results = service.organizer.Move(profile, {AddonMove{addon, category}});
+    const std::vector<FileOperationResult> results =
+        service.organizer.Move(profile, {AddonMove{.addonFolder = addon, .category = category}});
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);

@@ -3,7 +3,7 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/PathPrinting.h"
 
-class InMemoryFileSystemTest : public QObject
+namespace
 {
     class InMemoryFileSystemTest : public QObject
     {

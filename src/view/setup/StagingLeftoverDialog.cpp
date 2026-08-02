@@ -55,7 +55,7 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
         grid->addWidget(origin, row, 0, 1, 2);
         ++row;
 
-        rows_.push_back({leftover, action});
+        rows_.push_back({.leftover = leftover, .action = action});
     }
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);

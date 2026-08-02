@@ -27,7 +27,9 @@ public:
         {
             const auto written = writtenAt_.find(name);
 
-            listings.push_back({name, written == writtenAt_.end() ? std::nullopt : std::optional(written->second)});
+            listings.push_back(
+                {.name = name,
+                 .writtenAt = written == writtenAt_.end() ? std::nullopt : std::optional(written->second)});
         }
 
         return listings;

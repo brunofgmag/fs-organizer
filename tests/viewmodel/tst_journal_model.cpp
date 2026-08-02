@@ -3,7 +3,7 @@
 
 #include "viewmodel/JournalModel.h"
 
-class JournalModelTest : public QObject
+namespace
 {
     class JournalModelTest : public QObject
     {
@@ -30,21 +30,21 @@ namespace
 
     OperationRecord Step(const OperationKind kind, const int seconds, const FileResult result = FileResult::Completed)
     {
-        return OperationRecord::OfImport(Moment(seconds), kind, AddonId{"lib-1", "simbridge"}, kSource, kTarget,
-                                         result);
+        return OperationRecord::OfImport(
+            Moment(seconds), kind, AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, kSource, kTarget, result);
     }
 
     OperationRecord Link(const OperationKind kind, const int seconds, const LinkFailure failure = LinkFailure::None)
     {
-        return OperationRecord::OfLink(Moment(seconds), kind, AddonId{"lib-1", "pmdg-aircraft-77w"},
-                                       "D:/Library/Aircrafts/pmdg-aircraft-77w", "E:/Sim/Community/pmdg-aircraft-77w",
-                                       failure);
+        return OperationRecord::OfLink(
+            Moment(seconds), kind, AddonId{.libraryId = "lib-1", .folderName = "pmdg-aircraft-77w"},
+            "D:/Library/Aircrafts/pmdg-aircraft-77w", "E:/Sim/Community/pmdg-aircraft-77w", failure);
     }
 
     SimulatorProfile Profile()
     {
         SimulatorProfile profile;
-        profile.libraries = {Library{"lib-1", "D:/Library", "Biblioteca do Bruno"}};
+        profile.libraries = {Library{.id = "lib-1", .path = "D:/Library", .label = "Biblioteca do Bruno"}};
 
         return profile;
     }
@@ -56,8 +56,9 @@ namespace
             Step(OperationKind::ImportVerifyStaging, 1),
             Step(OperationKind::ImportMoveIntoPlace, 2),
             Step(OperationKind::ImportRemoveSource, 3),
-            OperationRecord::OfLink(Moment(4), OperationKind::EnableAddon, AddonId{"lib-1", "simbridge"}, kTarget,
-                                    kSource, LinkFailure::None),
+            OperationRecord::OfLink(Moment(4), OperationKind::EnableAddon,
+                                    AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, kTarget, kSource,
+                                    LinkFailure::None),
             Link(OperationKind::DisableAddon, 5),
         };
     }

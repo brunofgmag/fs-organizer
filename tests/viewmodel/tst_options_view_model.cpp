@@ -21,7 +21,7 @@
 #include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class OptionsViewModelTest : public QObject
+namespace
 {
     class OptionsViewModelTest : public QObject
     {
@@ -52,7 +52,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -79,7 +79,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity, kOtherDestination};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -91,7 +91,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2020;
         profile.destinations = {"C:/Packages/Community"};
         profile.defaultDestination = "C:/Packages/Community";
-        profile.libraries = {Library{"library-9", "Z:/Legado", "Legado"}};
+        profile.libraries = {Library{.id = "library-9", .path = "Z:/Legado", .label = "Legado"}};
 
         return profile;
     }
@@ -194,7 +194,7 @@ void OptionsViewModelTest::OnlyTheActiveProfileIsAskedForItsAddonCount()
     legacy.id = "msfs2020";
     legacy.variant = SimulatorVariant::MSFS2020;
     legacy.destinations = {"C:/Packages/Community"};
-    legacy.libraries = {Library{"library-9", "Z:/Never Scanned", "Legado"}};
+    legacy.libraries = {Library{.id = "library-9", .path = "Z:/Never Scanned", .label = "Legado"}};
     f.settings.stored.profiles.push_back(legacy);
 
     f.session.ShowActiveProfile();

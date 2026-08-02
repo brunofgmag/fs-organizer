@@ -8,7 +8,7 @@
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
 
-class CommunityModelTest : public QObject
+namespace
 {
     class CommunityModelTest : public QObject
     {
@@ -33,7 +33,7 @@ namespace
                            const std::filesystem::path& target,
                            const EntryClassification classification)
     {
-        return {path, target, classification};
+        return {.path = path, .target = target, .classification = classification};
     }
 
     SimulatorProfile Profile()
@@ -157,8 +157,8 @@ void CommunityModelTest::ClearingTheFilterShowsEverythingAgain()
 
 void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
 {
-    const CopyConflicts conflicts{
-        {CopyConflict{"E:/Flight Simulator 2024/Community/physical", "D:/MSFS 2024/Utils/physical"}}};
+    const CopyConflicts conflicts{{CopyConflict{.destinationPath = "E:/Flight Simulator 2024/Community/physical",
+                                                .libraryPath = "D:/MSFS 2024/Utils/physical"}}};
 
     CommunityModel model;
     model.ShowEntries(OneOfEachClass(), Profile(), conflicts);

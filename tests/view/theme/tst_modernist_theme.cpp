@@ -11,7 +11,7 @@
 #include "view/theme/ModernistStyle.h"
 #include "view/theme/ModernistTheme.h"
 
-class ModernistThemeTest : public QObject
+namespace
 {
     class ModernistThemeTest : public QObject
     {

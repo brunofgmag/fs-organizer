@@ -4,7 +4,7 @@
 #include "domain/support/PathUtils.h"
 #include "tests/support/PathPrinting.h"
 
-class LegacyProposalTest : public QObject
+namespace
 {
     class LegacyProposalTest : public QObject
     {
@@ -53,7 +53,7 @@ namespace
 
         for (const std::filesystem::path& path : libraryPaths)
         {
-            profile.libraries.push_back(Library{"library-1", path, "MSFS 2024"});
+            profile.libraries.push_back(Library{.id = "library-1", .path = path, .label = "MSFS 2024"});
         }
 
         return profile;

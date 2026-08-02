@@ -179,7 +179,7 @@ void AddonTreeViewModel::MoveTo(const std::vector<const TreeNode*>& nodes, const
     {
         if (node->kind == TreeNodeKind::Addon)
         {
-            moves.push_back(AddonMove{node->path, category});
+            moves.push_back(AddonMove{.addonFolder = node->path, .category = category});
         }
     }
 
@@ -199,7 +199,7 @@ void AddonTreeViewModel::ApplySuggestions(const std::vector<CategorySuggestion>&
 
     for (const CategorySuggestion& suggestion : chosen)
     {
-        moves.push_back(AddonMove{suggestion.addonFolder, suggestion.suggestedCategory});
+        moves.push_back(AddonMove{.addonFolder = suggestion.addonFolder, .category = suggestion.suggestedCategory});
     }
 
     if (!moves.empty())
@@ -314,7 +314,8 @@ std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) 
     {
         if (ComparablePath(candidate->path) != holding)
         {
-            offered.push_back(MoveTarget{candidate->path, candidate->path.lexically_relative(tree->path)});
+            offered.push_back(MoveTarget{.category = candidate->path,
+                                         .relativePath = candidate->path.lexically_relative(tree->path)});
         }
     }
 

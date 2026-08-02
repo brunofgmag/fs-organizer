@@ -16,7 +16,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class ImportServiceTest : public QObject
+namespace
 {
     class ImportServiceTest : public QObject
     {
@@ -78,7 +78,7 @@ namespace
 
         SimulatorProfile profile{.destinations = {kDestination},
                                  .defaultDestination = kDestination,
-                                 .libraries = {Library{"lib-1", kLibrary}}};
+                                 .libraries = {Library{.id = "lib-1", .path = kLibrary}}};
 
         [[nodiscard]] std::vector<DestinationEntry> Entries() const
         {
@@ -103,7 +103,7 @@ namespace
                 TreeNode node;
                 node.kind = TreeNodeKind::Addon;
                 node.path = addon;
-                node.addon = Addon{addon, Manifest{}};
+                node.addon = Addon{.folderPath = addon, .manifest = Manifest{}};
 
                 library.children.push_back(std::move(node));
             }
@@ -131,7 +131,7 @@ void ImportServiceTest::NoFileIsTouchedWhileTheSimulatorIsRunning()
     f.processProbe.ReportTheSimulatorAsRunning();
 
     const std::vector<ImportOperationResult> results =
-        f.service.Import(f.profile, {ImportRequest{kInDestination, "D:/Library/Utils"}}, {});
+        f.service.Import(f.profile, {ImportRequest{.source = kInDestination, .category = "D:/Library/Utils"}}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
@@ -145,7 +145,7 @@ void ImportServiceTest::ResolvingAConflictSendsTheLoserToQuarantineAndDeletesNot
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{kInDestination, kInLibrary};
+    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy);
 
@@ -162,7 +162,7 @@ void ImportServiceTest::KeepingTheDestinationCopySendsTheLibraryCopyToItsOwnQuar
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{kInDestination, kInLibrary};
+    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
 
@@ -179,7 +179,7 @@ void ImportServiceTest::QuarantiningTheDestinationCopyIsJournalledAlongWithTheLi
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{kInDestination, kInLibrary};
+    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy),
              FileResult::Completed);
 
@@ -205,7 +205,7 @@ void ImportServiceTest::QuarantiningTheLibraryCopyIsJournalledOnItsOwn()
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{kInDestination, kInLibrary};
+    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy),
              FileResult::Completed);
 
@@ -222,9 +222,11 @@ void ImportServiceTest::ARefusedBatchLeavesNothingInTheJournal()
     f.AddBothCopies();
     f.processProbe.ReportTheSimulatorAsRunning();
 
-    static_cast<void>(f.service.Import(f.profile, {ImportRequest{kInDestination, "D:/Library/Utils"}}, {}));
-    static_cast<void>(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
-                                                ConflictChoice::KeepTheLibraryCopy));
+    static_cast<void>(
+        f.service.Import(f.profile, {ImportRequest{.source = kInDestination, .category = "D:/Library/Utils"}}, {}));
+    static_cast<void>(f.service.ResolveConflict(
+        f.profile, f.Entries(), CopyConflict{.destinationPath = kInDestination, .libraryPath = kInLibrary},
+        ConflictChoice::KeepTheLibraryCopy));
 
     QVERIFY(f.journal.appended.empty());
 }
@@ -329,8 +331,8 @@ void ImportServiceTest::EmptyingTheQuarantineNeverReachesAnythingOutsideIt()
 
     QCOMPARE(f.journal.appended.back().kind, OperationKind::DiscardFromQuarantine);
 
-    const std::vector<FileOperationResult> refused =
-        f.service.Discard(f.profile, {QuarantinedItem{kInLibrary, {}, std::nullopt}});
+    const std::vector<FileOperationResult> refused = f.service.Discard(
+        f.profile, {QuarantinedItem{.path = kInLibrary, .origin = {}, .quarantinedAt = std::nullopt}});
 
     QCOMPARE(refused.front().result, FileResult::CouldNotDiscard);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
@@ -360,9 +362,9 @@ void ImportServiceTest::LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFro
     f.fileSystem.AddDirectory("D:/Library/Utils/imported.fsorg-partial");
     f.fileSystem.AddFile("D:/Library/Utils/imported.fsorg-partial/manifest.json", kMegabyte);
 
-    f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportCopyToStaging,
-                                               AddonId{"lib-1", "imported"}, "E:/Sim/Community/imported",
-                                               "D:/Library/Utils/imported.fsorg-partial", FileResult::Completed));
+    f.journal.Append(OperationRecord::OfImport(
+        f.clock.now, OperationKind::ImportCopyToStaging, AddonId{.libraryId = "lib-1", .folderName = "imported"},
+        "E:/Sim/Community/imported", "D:/Library/Utils/imported.fsorg-partial", FileResult::Completed));
 
     const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
 
@@ -401,8 +403,9 @@ void ImportServiceTest::ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSourc
     f.fileSystem.AddDirectory("D:/Library/Sceneries/orbx-yssy.fsorg-partial");
     f.fileSystem.AddFile("D:/Library/Sceneries/orbx-yssy.fsorg-partial/half.bin", kMegabyte);
 
-    const StagingLeftover leftover{"D:/Library/Sceneries/orbx-yssy.fsorg-partial", "D:/Library/Sceneries/orbx-yssy",
-                                   "E:/Sim/Community/orbx-yssy"};
+    const StagingLeftover leftover{.staging = "D:/Library/Sceneries/orbx-yssy.fsorg-partial",
+                                   .target = "D:/Library/Sceneries/orbx-yssy",
+                                   .source = "E:/Sim/Community/orbx-yssy"};
 
     const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, {leftover}, {});
 
@@ -433,8 +436,8 @@ void ImportServiceTest::DiscardingALeftoverRemovesOnlyTheStaging()
     QVERIFY(f.fileSystem.Exists(kInDestination / "manifest.json"));
     QCOMPARE(f.journal.appended.back().kind, OperationKind::DiscardStaging);
 
-    const std::vector<FileOperationResult> refused =
-        f.service.DiscardLeftovers(f.profile, {StagingLeftover{kInLibrary, kInLibrary, kInDestination}});
+    const std::vector<FileOperationResult> refused = f.service.DiscardLeftovers(
+        f.profile, {StagingLeftover{.staging = kInLibrary, .target = kInLibrary, .source = kInDestination}});
 
     QCOMPARE(refused.front().result, FileResult::CouldNotDiscard);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
@@ -446,7 +449,7 @@ void ImportServiceTest::KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuar
     f.AddBothCopies();
     f.AddALinkToTheLibraryCopyInAnotherDestination();
 
-    const CopyConflict conflict{kInDestination, kInLibrary};
+    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
 
@@ -470,7 +473,7 @@ void ImportServiceTest::NothingIsMovedWhenALinkToTheLibraryCopyCannotBeRemoved()
     f.AddALinkToTheLibraryCopyInAnotherDestination();
     f.linkService.MakeLinkRemovalFail();
 
-    const CopyConflict conflict{kInDestination, kInLibrary};
+    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
 
@@ -488,7 +491,7 @@ void ImportServiceTest::ImportingIsRefusedWhenTheBaseNameAlreadyExistsInTheLibra
     f.TheLibraryHolds({kInLibrary});
 
     const std::vector<ImportOperationResult> results =
-        f.service.Import(f.profile, {ImportRequest{kInDestination, "D:/Library/Sceneries"}}, {});
+        f.service.Import(f.profile, {ImportRequest{.source = kInDestination, .category = "D:/Library/Sceneries"}}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::TheIdentityIsTaken);
@@ -508,8 +511,9 @@ void ImportServiceTest::ResumingIsRefusedWhenTheBaseNameAppearedWhileTheImportWa
     f.fileSystem.AddFile("D:/Library/Sceneries/simbridge.fsorg-partial/half.bin", kMegabyte);
     f.TheLibraryHolds({kInLibrary});
 
-    const StagingLeftover leftover{"D:/Library/Sceneries/simbridge.fsorg-partial", "D:/Library/Sceneries/simbridge",
-                                   kInDestination};
+    const StagingLeftover leftover{.staging = "D:/Library/Sceneries/simbridge.fsorg-partial",
+                                   .target = "D:/Library/Sceneries/simbridge",
+                                   .source = kInDestination};
 
     const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, {leftover}, {});
 
@@ -549,12 +553,12 @@ void ImportServiceTest::TheIdentityIsOnlyTakenInsideTheLibraryThatHoldsIt()
     f.AddBothCopies();
     f.TheLibraryHolds({kInLibrary});
 
-    f.profile.libraries.push_back(Library{"lib-2", "F:/Spare"});
+    f.profile.libraries.push_back(Library{.id = "lib-2", .path = "F:/Spare"});
     f.fileSystem.AddDirectory("F:/Spare");
     f.fileSystem.AddDirectory("F:/Spare/Utils");
 
     const std::vector<ImportOperationResult> results =
-        f.service.Import(f.profile, {ImportRequest{kInDestination, "F:/Spare/Utils"}}, {});
+        f.service.Import(f.profile, {ImportRequest{.source = kInDestination, .category = "F:/Spare/Utils"}}, {});
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);

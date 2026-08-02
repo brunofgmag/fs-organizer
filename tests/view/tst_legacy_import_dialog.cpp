@@ -23,7 +23,7 @@
 #include "tests/doubles/RecordingSessionObserver.h"
 #include "view/legacy/LegacyImportDialog.h"
 
-class LegacyImportDialogTest : public QObject
+namespace
 {
     class LegacyImportDialogTest : public QObject
     {
@@ -53,7 +53,7 @@ namespace
         TreeNode addon;
         addon.kind = TreeNodeKind::Addon;
         addon.path = kAddon;
-        addon.addon = Addon{kAddon, Manifest{}};
+        addon.addon = Addon{.folderPath = kAddon, .manifest = Manifest{}};
 
         TreeNode aircrafts;
         aircrafts.kind = TreeNodeKind::Category;
@@ -94,7 +94,7 @@ namespace
             profile.variant = SimulatorVariant::MSFS2024;
             profile.destinations = {kCommunity};
             profile.defaultDestination = kCommunity;
-            profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+            profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
             settings.stored.profiles = {profile};
             settings.stored.activeProfileId = "msfs2024";

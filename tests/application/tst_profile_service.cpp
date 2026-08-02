@@ -15,7 +15,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class ProfileServiceTest : public QObject
+namespace
 {
     class ProfileServiceTest : public QObject
     {
@@ -59,7 +59,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -93,7 +93,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity, kCommunity2024};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{kLibraryId, kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = kLibraryId, .path = kLibrary, .label = "MSFS 2024"}};
         profile.destinationOverrides = std::move(overrides);
 
         return profile;
@@ -231,7 +231,8 @@ void ProfileServiceTest::DisablingAnAddonRemovesItsLinkInEveryDestination()
 void ProfileServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()
 {
     Fixture f;
-    const SimulatorProfile profile = Profile({{kLibraryId, "Aircrafts", kCommunity2024}});
+    const SimulatorProfile profile =
+        Profile({{.libraryId = kLibraryId, .relativePath = "Aircrafts", .destination = kCommunity2024}});
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
@@ -246,7 +247,8 @@ void ProfileServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()
 void ProfileServiceTest::TurningAnAddonOffAndOnAgainLeavesItInTheDestinationItLivedIn()
 {
     Fixture f;
-    const SimulatorProfile profile = Profile({{kLibraryId, "Aircrafts", kCommunity2024}});
+    const SimulatorProfile profile =
+        Profile({{.libraryId = kLibraryId, .relativePath = "Aircrafts", .destination = kCommunity2024}});
 
     const ProfileSnapshot enabled = f.Snapshot(profile);
     QCOMPARE(f.service.SetEnabled(profile, enabled, {Fixture::AddonAt(enabled, 1)}, true).size(), std::size_t{1});
@@ -418,7 +420,7 @@ namespace
         std::vector<RepairRequest> requests;
         for (const RepairCandidate& candidate : PlanRepairs(profile, snapshot.entries, snapshot.libraries))
         {
-            requests.push_back({candidate, action});
+            requests.push_back({.candidate = candidate, .action = action});
         }
 
         return requests;
@@ -524,7 +526,8 @@ void ProfileServiceTest::ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results = f.service.SetEnabled(
-        profile, snapshot, LinkBatch{{Fixture::AddonAt(snapshot, 0)}, {Fixture::AddonAt(snapshot, 1)}});
+        profile, snapshot,
+        LinkBatch{.toDisable = {Fixture::AddonAt(snapshot, 0)}, .toEnable = {Fixture::AddonAt(snapshot, 1)}});
 
     QCOMPARE(results.size(), std::size_t{2});
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
@@ -550,13 +553,13 @@ void ProfileServiceTest::TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree()
     f.catalog.SetTree("F:/Extra", extra);
 
     SimulatorProfile profile = Profile();
-    profile.libraries.push_back(Library{"library-2", "F:/Extra", "Extra"});
+    profile.libraries.push_back(Library{.id = "library-2", .path = "F:/Extra", .label = "Extra"});
 
     const ProfileSnapshot snapshot = f.Snapshot(profile);
     const TreeNode* replacement = &snapshot.libraries[1].children.front();
 
-    const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, LinkBatch{{Fixture::AddonAt(snapshot, 0)}, {replacement}});
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(
+        profile, snapshot, LinkBatch{.toDisable = {Fixture::AddonAt(snapshot, 0)}, .toEnable = {replacement}});
 
     QCOMPARE(results.size(), std::size_t{2});
     for (const LinkOperationResult& result : results)
@@ -581,7 +584,7 @@ void ProfileServiceTest::UndoingASwapPutsTheOldAddonBackInTheDestination()
     f.catalog.SetTree("F:/Extra", extra);
 
     SimulatorProfile profile = Profile();
-    profile.libraries.push_back(Library{"library-2", "F:/Extra", "Extra"});
+    profile.libraries.push_back(Library{.id = "library-2", .path = "F:/Extra", .label = "Extra"});
 
     const ProfileSnapshot snapshot = f.Snapshot(profile);
     const TreeNode* replacement = &snapshot.libraries[1].children.front();

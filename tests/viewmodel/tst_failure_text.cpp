@@ -3,7 +3,7 @@
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
 
-class FailureTextTest : public QObject
+namespace
 {
     class FailureTextTest : public QObject
     {
@@ -63,8 +63,9 @@ void FailureTextTest::EveryCategoryRuleThatMatchedSaysWhyItMatched()
 
 void FailureTextTest::ARefusedImportNamesTheFolderAndWhyItWasRefused()
 {
-    const ImportOperationResult result{ImportRequest{"E:/Sim/Community/simbridge", "D:/Library/Sceneries"},
-                                       FileResult::NotEnoughFreeSpace};
+    const ImportOperationResult result{
+        .request = ImportRequest{.source = "E:/Sim/Community/simbridge", .category = "D:/Library/Sceneries"},
+        .result = FileResult::NotEnoughFreeSpace};
 
     const QString line = Describe(result);
 
@@ -74,8 +75,10 @@ void FailureTextTest::ARefusedImportNamesTheFolderAndWhyItWasRefused()
 
 void FailureTextTest::AnIdentityAlreadyTakenSaysWhereTheOccupantIs()
 {
-    const ImportOperationResult result{ImportRequest{"E:/Sim/Community/simbridge", "D:/Library/Sceneries"},
-                                       FileResult::TheIdentityIsTaken, "D:/Library/Utils/simbridge"};
+    const ImportOperationResult result{
+        .request = ImportRequest{.source = "E:/Sim/Community/simbridge", .category = "D:/Library/Sceneries"},
+        .result = FileResult::TheIdentityIsTaken,
+        .occupant = "D:/Library/Utils/simbridge"};
 
     const QString line = Describe(result);
 
@@ -85,8 +88,9 @@ void FailureTextTest::AnIdentityAlreadyTakenSaysWhereTheOccupantIs()
 
 void FailureTextTest::ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs()
 {
-    const FileOperationResult result{"D:/Library/_fsorganizer-quarantine/simbridge", FileResult::TheIdentityIsTaken,
-                                     "D:/Library/Sceneries/simbridge"};
+    const FileOperationResult result{.path = "D:/Library/_fsorganizer-quarantine/simbridge",
+                                     .result = FileResult::TheIdentityIsTaken,
+                                     .occupant = "D:/Library/Sceneries/simbridge"};
 
     const QString line = Describe(result);
 

@@ -12,7 +12,7 @@
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 
-class FilesystemScannerTest : public QObject
+namespace
 {
     class FilesystemScannerTest : public QObject
     {

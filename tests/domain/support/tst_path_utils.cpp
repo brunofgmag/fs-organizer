@@ -3,7 +3,7 @@
 #include "domain/support/PathUtils.h"
 #include "tests/support/PathPrinting.h"
 
-class PathUtilsTest : public QObject
+namespace
 {
     class PathUtilsTest : public QObject
     {

@@ -117,7 +117,7 @@ std::vector<ImportRequest> ImportDialog::ChosenRequests() const
 
     for (const std::filesystem::path& folder : folders_)
     {
-        requests.push_back(ImportRequest{folder, category});
+        requests.push_back(ImportRequest{.source = folder, .category = category});
     }
 
     return requests;

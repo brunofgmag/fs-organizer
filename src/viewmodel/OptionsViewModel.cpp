@@ -29,8 +29,11 @@ std::vector<ProfileLine> OptionsViewModel::Profiles() const
 
     for (const SimulatorProfile& profile : settings.profiles)
     {
-        lines.push_back(ProfileLine{profile.id, NameOf(profile.variant), profile.destinations.size(),
-                                    profile.libraries.size(), profile.id == loaded});
+        lines.push_back(ProfileLine{.id = profile.id,
+                                    .label = NameOf(profile.variant),
+                                    .destinations = profile.destinations.size(),
+                                    .libraries = profile.libraries.size(),
+                                    .active = profile.id == loaded});
     }
 
     return lines;
@@ -138,7 +141,8 @@ std::vector<DestinationLine> OptionsViewModel::Destinations() const
     for (const std::filesystem::path& destination : profile.destinations)
     {
         lines.push_back(
-            DestinationLine{destination, ComparablePath(destination) == ComparablePath(profile.defaultDestination)});
+            DestinationLine{.path = destination,
+                            .isDefault = ComparablePath(destination) == ComparablePath(profile.defaultDestination)});
     }
 
     return lines;

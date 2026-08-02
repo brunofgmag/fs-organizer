@@ -21,7 +21,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class PresetOnRealDiskTest : public QObject
+namespace
 {
     class PresetOnRealDiskTest : public QObject
     {
@@ -77,7 +77,7 @@ namespace
             profile.id = "msfs2024";
             profile.destinations = {Community(), Streamed()};
             profile.defaultDestination = Community();
-            profile.libraries = {::Library{"lib-1", Library(), "Biblioteca"}};
+            profile.libraries = {::Library{.id = "lib-1", .path = Library(), .label = "Biblioteca"}};
 
             return profile;
         }

@@ -3,7 +3,7 @@
 #include "tests/doubles/FakeUpdateService.h"
 #include "viewmodel/UpdateViewModel.h"
 
-class UpdateViewModelTest : public QObject
+namespace
 {
     class UpdateViewModelTest : public QObject
     {

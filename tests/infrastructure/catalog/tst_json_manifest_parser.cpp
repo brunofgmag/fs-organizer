@@ -2,7 +2,7 @@
 
 #include "infrastructure/catalog/JsonManifestParser.h"
 
-class JsonManifestParserTest : public QObject
+namespace
 {
     class JsonManifestParserTest : public QObject
     {

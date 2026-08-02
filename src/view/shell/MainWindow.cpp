@@ -347,7 +347,7 @@ void MainWindow::ShowAside(const QWidget* page, const QString& aside)
 
 void MainWindow::ShowMeter(const QWidget* page, const int filled, const int outOf)
 {
-    meters_.insert(page, Meter{filled, outOf});
+    meters_.insert(page, Meter{.filled = filled, .outOf = outOf});
 
     if (pages_->currentWidget() == page && !statusFades_->isActive())
     {

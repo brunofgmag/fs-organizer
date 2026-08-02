@@ -3,7 +3,7 @@
 #include "domain/preset/PresetPlan.h"
 #include "tests/support/PathPrinting.h"
 
-class PresetPlanTest : public QObject
+namespace
 {
     class PresetPlanTest : public QObject
     {
@@ -42,7 +42,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -79,19 +79,20 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
 
     PresetEntry Enabling(const std::string& folderName)
     {
-        return {AddonId{"library-1", folderName}, PresetAction::Enable};
+        return {.addonId = AddonId{.libraryId = "library-1", .folderName = folderName}, .action = PresetAction::Enable};
     }
 
     PresetEntry Disabling(const std::string& folderName)
     {
-        return {AddonId{"library-1", folderName}, PresetAction::Disable};
+        return {.addonId = AddonId{.libraryId = "library-1", .folderName = folderName},
+                .action = PresetAction::Disable};
     }
 }
 
@@ -99,7 +100,7 @@ void PresetPlanTest::ReplaceEnablesThePresetAndDisablesWhatItDoesNotName()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB, kAircraftC}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Enabling("aircraft-b")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-a"), Enabling("aircraft-b")}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Replace, Profile(), libraries, enabled);
 
@@ -116,7 +117,7 @@ void PresetPlanTest::ReplaceSeparatesTheEnabledAddonsThePresetDoesNotName()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB, kAircraftC}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Enabling("aircraft-b")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-a"), Enabling("aircraft-b")}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Replace, Profile(), libraries, enabled);
 
@@ -129,7 +130,7 @@ void PresetPlanTest::AnAddonThePresetItselfTurnsOffIsNotCountedAsOneItDoesNotNam
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftC}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Disabling("aircraft-c")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-a"), Disabling("aircraft-c")}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Replace, Profile(), libraries, enabled);
 
@@ -141,7 +142,7 @@ void PresetPlanTest::CumulativeLeavesAloneWhatThePresetDoesNotName()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB, kAircraftC}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Enabling("aircraft-b")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-a"), Enabling("aircraft-b")}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Cumulative, Profile(), libraries, enabled);
 
@@ -155,7 +156,7 @@ void PresetPlanTest::ADisableEntryTurnsTheAddonOffInCumulative()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB, kAircraftC}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Disabling("aircraft-c")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-a"), Disabling("aircraft-c")}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Cumulative, Profile(), libraries, enabled);
 
@@ -169,7 +170,7 @@ void PresetPlanTest::TheDisableModeTurnsOffTheEnableEntriesAndIgnoresTheDisableO
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB, kAircraftC}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-b"), Disabling("aircraft-c")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-b"), Disabling("aircraft-c")}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Disable, Profile(), libraries, enabled);
 
@@ -183,7 +184,9 @@ void PresetPlanTest::AnEntryIsMatchedWhateverTheCaseOfItsFolderNameAndLibrary()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB}};
-    const Preset preset{"Voo curto", {{AddonId{"LIBRARY-1", "Aircraft-A"}, PresetAction::Enable}}};
+    const Preset preset{.name = "Voo curto",
+                        .entries = {{.addonId = AddonId{.libraryId = "LIBRARY-1", .folderName = "Aircraft-A"},
+                                     .action = PresetAction::Enable}}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Cumulative, Profile(), libraries, enabled);
 
@@ -196,7 +199,7 @@ void PresetPlanTest::AnEntryWhoseAddonIsGoneIsReported()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-a"), Enabling("aircraft-gone")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-a"), Enabling("aircraft-gone")}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Cumulative, Profile(), libraries, enabled);
 
@@ -210,7 +213,9 @@ void PresetPlanTest::AnEntryFromALibraryTheProfileNoLongerHoldsIsReported()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
     const EnabledAddons enabled{{kAircraftB}};
-    const Preset preset{"Voo curto", {{AddonId{"library-2", "aircraft-a"}, PresetAction::Enable}}};
+    const Preset preset{.name = "Voo curto",
+                        .entries = {{.addonId = AddonId{.libraryId = "library-2", .folderName = "aircraft-a"},
+                                     .action = PresetAction::Enable}}};
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Cumulative, Profile(), libraries, enabled);
 
@@ -223,10 +228,10 @@ void PresetPlanTest::ReplaceSweepsEveryLibraryOfTheProfile()
 {
     const std::vector<TreeNode> libraries{LibraryTree(), SecondLibraryTree()};
     const EnabledAddons enabled{{kAircraftB, kSceneryZ}};
-    const Preset preset{"Voo curto", {Enabling("aircraft-b")}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-b")}};
 
     SimulatorProfile profile = Profile();
-    profile.libraries.push_back(Library{"library-2", kSecondLibrary, "Cenários"});
+    profile.libraries.push_back(Library{.id = "library-2", .path = kSecondLibrary, .label = "Cenários"});
 
     const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Replace, profile, libraries, enabled);
 
@@ -240,7 +245,7 @@ void PresetPlanTest::TheEntriesOfWhatIsEnabledNameEveryEnabledAddonAndNothingEls
     const EnabledAddons enabled{{kAircraftB, kSceneryZ}};
 
     SimulatorProfile profile = Profile();
-    profile.libraries.push_back(Library{"library-2", kSecondLibrary, "Cenários"});
+    profile.libraries.push_back(Library{.id = "library-2", .path = kSecondLibrary, .label = "Cenários"});
 
     const std::vector<PresetEntry> entries = EntriesForWhatIsEnabled(profile, libraries, enabled);
 
@@ -261,11 +266,12 @@ void PresetPlanTest::TheContentCountsEveryEntryAndTheCategoriesTheyLandIn()
     const std::vector<TreeNode> libraries{LibraryTree(), SecondLibraryTree()};
 
     SimulatorProfile profile = Profile();
-    profile.libraries.push_back(Library{"library-2", kSecondLibrary, "Cenários"});
+    profile.libraries.push_back(Library{.id = "library-2", .path = kSecondLibrary, .label = "Cenários"});
 
-    const Preset preset{"Voo de linha",
-                        {Enabling("aircraft-a"), Enabling("aircraft-b"),
-                         PresetEntry{AddonId{"library-2", "scenery-z"}, PresetAction::Enable}}};
+    const Preset preset{.name = "Voo de linha",
+                        .entries = {Enabling("aircraft-a"), Enabling("aircraft-b"),
+                                    PresetEntry{.addonId = AddonId{.libraryId = "library-2", .folderName = "scenery-z"},
+                                                .action = PresetAction::Enable}}};
 
     const PresetContent content = ContentOf(preset, profile, libraries);
 
@@ -276,7 +282,7 @@ void PresetPlanTest::TheContentCountsEveryEntryAndTheCategoriesTheyLandIn()
 void PresetPlanTest::AnEntryThatNoLongerResolvesStillCountsAsAnAddonAndAddsNoCategory()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
-    const Preset preset{"Voo de linha", {Enabling("aircraft-a"), Enabling("aircraft-que-sumiu")}};
+    const Preset preset{.name = "Voo de linha", .entries = {Enabling("aircraft-a"), Enabling("aircraft-que-sumiu")}};
 
     const PresetContent content = ContentOf(preset, Profile(), libraries);
 
@@ -287,7 +293,7 @@ void PresetPlanTest::AnEntryThatNoLongerResolvesStillCountsAsAnAddonAndAddsNoCat
 void PresetPlanTest::ADisableEntryWeighsTheSameAsAnEnableOneInTheContent()
 {
     const std::vector<TreeNode> libraries{LibraryTree()};
-    const Preset preset{"Voo de linha", {Enabling("aircraft-a"), Disabling("aircraft-b")}};
+    const Preset preset{.name = "Voo de linha", .entries = {Enabling("aircraft-a"), Disabling("aircraft-b")}};
 
     const PresetContent content = ContentOf(preset, Profile(), libraries);
 

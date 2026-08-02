@@ -8,7 +8,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class LegacyConfigImporterTest : public QObject
+namespace
 {
     class LegacyConfigImporterTest : public QObject
     {
@@ -46,7 +46,7 @@ namespace
 
         for (const std::filesystem::path& path : libraryPaths)
         {
-            profile.libraries.push_back(Library{"library-1", path, "MSFS 2024"});
+            profile.libraries.push_back(Library{.id = "library-1", .path = path, .label = "MSFS 2024"});
         }
 
         return profile;
@@ -88,7 +88,7 @@ namespace
             TreeNode node;
             node.kind = TreeNodeKind::Addon;
             node.path = addon;
-            node.addon = Addon{addon, Manifest{}};
+            node.addon = Addon{.folderPath = addon, .manifest = Manifest{}};
             library.children.push_back(node);
         }
 

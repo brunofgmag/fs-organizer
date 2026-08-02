@@ -17,7 +17,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class PresetServiceTest : public QObject
+namespace
 {
     class PresetServiceTest : public QObject
     {
@@ -46,7 +46,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -75,7 +75,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{kLibraryId, kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = kLibraryId, .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -141,8 +141,10 @@ void PresetServiceTest::UpdatingRewritesTheEnabledEntriesAndKeepsTheDisableOnes(
 
     Preset stored;
     stored.name = "Voo curto";
-    stored.entries = {PresetEntry{AddonId{kLibraryId, "fenix-a320"}, PresetAction::Enable},
-                      PresetEntry{AddonId{kLibraryId, "pmdg-aircraft-77w"}, PresetAction::Disable}};
+    stored.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "fenix-a320"},
+                                  .action = PresetAction::Enable},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "pmdg-aircraft-77w"},
+                                  .action = PresetAction::Disable}};
     QVERIFY(f.repository.Save(kProfileId, stored));
 
     const SimulatorProfile profile = Profile();
@@ -167,7 +169,8 @@ void PresetServiceTest::UpdatingDropsADisableEntryForAnAddonThatIsOnAgain()
 
     Preset stored;
     stored.name = "Voo curto";
-    stored.entries = {PresetEntry{AddonId{kLibraryId, "pmdg-aircraft-77w"}, PresetAction::Disable}};
+    stored.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "pmdg-aircraft-77w"},
+                                  .action = PresetAction::Disable}};
     QVERIFY(f.repository.Save(kProfileId, stored));
 
     const SimulatorProfile profile = Profile();
@@ -187,8 +190,10 @@ void PresetServiceTest::SettingAnActionRefusesWhenTheRowNoLongerHoldsThatAddon()
 
     Preset stored;
     stored.name = "Voo curto";
-    stored.entries = {PresetEntry{AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Enable},
-                      PresetEntry{AddonId{kLibraryId, "fenix-a320"}, PresetAction::Enable}};
+    stored.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "fenix-a320"},
+                                  .action = PresetAction::Enable}};
     QVERIFY(f.repository.Save(kProfileId, stored));
 
     QVERIFY(f.service.SetAction(kProfileId, "Voo curto", 1, AddonId{kLibraryId, "fenix-a320"}, PresetAction::Disable));
@@ -237,7 +242,8 @@ void PresetServiceTest::ReplaceLeavesAFolderTheAppDidNotLinkAlone()
 
     Preset preset;
     preset.name = "Voo curto";
-    preset.entries = {PresetEntry{AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Enable}};
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
 
     const SimulatorProfile profile = Profile();
 
@@ -255,8 +261,10 @@ void PresetServiceTest::ApplyingReportsTheEntriesThatNoLongerResolve()
 
     Preset preset;
     preset.name = "Voo curto";
-    preset.entries = {PresetEntry{AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Enable},
-                      PresetEntry{AddonId{kLibraryId, "aircraft-que-sumiu"}, PresetAction::Enable}};
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
+                                  .action = PresetAction::Enable}};
 
     const SimulatorProfile profile = Profile();
 

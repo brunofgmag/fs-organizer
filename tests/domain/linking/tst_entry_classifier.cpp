@@ -6,7 +6,7 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
-class EntryClassifierTest : public QObject
+namespace
 {
     class EntryClassifierTest : public QObject
     {

@@ -28,7 +28,7 @@
 #include "view/options/OptionsPage.h"
 #include "viewmodel/SessionNotifier.h"
 
-class OptionsPageTest : public QObject
+namespace
 {
     class OptionsPageTest : public QObject
     {
@@ -63,7 +63,7 @@ namespace
         TreeNode addon;
         addon.kind = TreeNodeKind::Addon;
         addon.path = kAddon;
-        addon.addon = Addon{kAddon, Manifest{}};
+        addon.addon = Addon{.folderPath = kAddon, .manifest = Manifest{}};
 
         TreeNode aircrafts;
         aircrafts.kind = TreeNodeKind::Category;
@@ -157,7 +157,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2020;
         profile.destinations = {"E:/Flight Simulator 2020/Community"};
         profile.defaultDestination = "E:/Flight Simulator 2020/Community";
-        profile.libraries = {Library{"library-2", "D:/MSFS 2020", "MSFS 2020"}};
+        profile.libraries = {Library{.id = "library-2", .path = "D:/MSFS 2020", .label = "MSFS 2020"}};
 
         return profile;
     }
@@ -176,7 +176,7 @@ namespace
             profile.variant = SimulatorVariant::MSFS2024;
             profile.destinations = {kCommunity};
             profile.defaultDestination = kCommunity;
-            profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+            profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
             settings.stored.profiles = {profile};
             settings.stored.activeProfileId = "msfs2024";

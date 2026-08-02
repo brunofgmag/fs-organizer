@@ -15,7 +15,7 @@
 #include "view/theme/ModernistPaint.h"
 #include "view/theme/ModernistTheme.h"
 
-class ContextPanelTest : public QObject
+namespace
 {
     class ContextPanelTest : public QObject
     {
@@ -154,7 +154,7 @@ namespace
         painted.fill(Qt::transparent);
         rail->render(&painted);
 
-        return {painted, rail->findChild<QToolButton*>(QStringLiteral("PanelExpand"))->geometry()};
+        return {.painted = painted, .arrow = rail->findChild<QToolButton*>(QStringLiteral("PanelExpand"))->geometry()};
     }
 
     QImage RailPainted(const QString& title, const bool alarming)
@@ -220,7 +220,7 @@ namespace
                 const int until,
                 const std::function<bool(const QColor&, int)>& belongs)
     {
-        Span found{painted.width(), -1, -1, -1};
+        Span found{.left = painted.width(), .right = -1, .top = -1, .bottom = -1};
 
         for (int y = from; y < until; ++y)
         {

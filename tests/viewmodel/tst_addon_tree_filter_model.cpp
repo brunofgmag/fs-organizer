@@ -4,7 +4,7 @@
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeModel.h"
 
-class AddonTreeFilterModelTest : public QObject
+namespace
 {
     class AddonTreeFilterModelTest : public QObject
     {

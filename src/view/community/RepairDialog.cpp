@@ -101,7 +101,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
             ++row;
         }
 
-        rows_.push_back({candidate, selected, action});
+        rows_.push_back({.candidate = candidate, .selected = selected, .action = action});
     }
 
     return group;
@@ -119,7 +119,8 @@ std::vector<RepairRequest> RepairDialog::ChosenRequests() const
         }
 
         requests.push_back(
-            {row.candidate, row.action->currentIndex() == 1 ? RepairAction::Repoint : RepairAction::RemoveDeadNode});
+            {.candidate = row.candidate,
+             .action = row.action->currentIndex() == 1 ? RepairAction::Repoint : RepairAction::RemoveDeadNode});
     }
 
     return requests;

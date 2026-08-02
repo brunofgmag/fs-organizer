@@ -3,7 +3,7 @@
 
 #include "infrastructure/update/GithubReleaseParser.h"
 
-class GithubReleaseParserTest : public QObject
+namespace
 {
     class GithubReleaseParserTest : public QObject
     {

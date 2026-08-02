@@ -8,7 +8,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class WindowsLinkServiceTest : public QObject
+namespace
 {
     class WindowsLinkServiceTest : public QObject
     {

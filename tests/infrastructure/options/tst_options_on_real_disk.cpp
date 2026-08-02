@@ -24,7 +24,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class OptionsOnRealDiskTest : public QObject
+namespace
 {
     class OptionsOnRealDiskTest : public QObject
     {
@@ -138,7 +138,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {disk.Community(), disk.Extra()};
         profile.defaultDestination = disk.Community();
-        profile.libraries = {Library{"library-1", disk.Library(), "Biblioteca"}};
+        profile.libraries = {Library{.id = "library-1", .path = disk.Library(), .label = "Biblioteca"}};
 
         AppSettings settings;
         settings.profiles = {profile};

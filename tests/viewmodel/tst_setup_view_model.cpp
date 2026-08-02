@@ -12,7 +12,7 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/SetupViewModel.h"
 
-class SetupViewModelTest : public QObject
+namespace
 {
     class SetupViewModelTest : public QObject
     {
@@ -62,7 +62,7 @@ namespace
             TreeNode addon;
             addon.kind = TreeNodeKind::Addon;
             addon.path = path / ("addon-" + std::to_string(index));
-            addon.addon = Addon{addon.path, {}};
+            addon.addon = Addon{.folderPath = addon.path, .manifest = {}};
             category.children.push_back(addon);
         }
 

@@ -17,12 +17,12 @@ public:
     {
         const std::filesystem::path folder = installation.folder;
 
-        installations_.push_back(FoundLegacyInstallation{folder, std::move(installation)});
+        installations_.push_back(FoundLegacyInstallation{.folder = folder, .configuration = std::move(installation)});
     }
 
     void AddWithUnreadableConfiguration(const std::filesystem::path& folder)
     {
-        installations_.push_back(FoundLegacyInstallation{folder, std::nullopt});
+        installations_.push_back(FoundLegacyInstallation{.folder = folder, .configuration = std::nullopt});
     }
 
     void PlacePreset(const std::filesystem::path& folder, LegacyPresetSelection preset)

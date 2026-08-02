@@ -4,7 +4,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class CategorySuggesterTest : public QObject
+namespace
 {
     class CategorySuggesterTest : public QObject
     {
@@ -31,7 +31,13 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{"", "", "", contentType, "", ""}};
+        node.addon = Addon{.folderPath = path,
+                           .manifest = Manifest{.title = "",
+                                                .creator = "",
+                                                .manufacturer = "",
+                                                .contentType = contentType,
+                                                .packageVersion = "",
+                                                .minimumGameVersion = ""}};
 
         return node;
     }

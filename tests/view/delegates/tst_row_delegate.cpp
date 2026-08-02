@@ -12,7 +12,7 @@
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/RowTagRoles.h"
 
-class RowDelegateTest : public QObject
+namespace
 {
     class RowDelegateTest : public QObject
     {
@@ -153,7 +153,7 @@ namespace
         QPixmap shot(view.viewport()->size());
         view.viewport()->render(&shot);
 
-        SuffixShot taken{shot.toImage(), view.visualRect(model.index(0, 0)), -1};
+        SuffixShot taken{.painted = shot.toImage(), .cell = view.visualRect(model.index(0, 0)), .inkEndsAt = -1};
         const QColor ground = taken.painted.pixelColor(taken.cell.right() - 1, taken.cell.center().y());
 
         for (int x = taken.cell.left(); x <= taken.cell.right(); ++x)

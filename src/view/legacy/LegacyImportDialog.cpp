@@ -193,7 +193,8 @@ void LegacyImportDialog::Fill() const
 
 LegacyImportRequest LegacyImportDialog::WhatWasChecked() const
 {
-    return LegacyImportRequest{CheckedPathsOfKind(*tree_, kLibraryKind), CheckedPathsOfKind(*tree_, kCategoryKind)};
+    return LegacyImportRequest{.libraryRoots = CheckedPathsOfKind(*tree_, kLibraryKind),
+                               .categories = CheckedPathsOfKind(*tree_, kCategoryKind)};
 }
 
 std::vector<std::filesystem::path> LegacyImportDialog::PresetFoldersChecked() const

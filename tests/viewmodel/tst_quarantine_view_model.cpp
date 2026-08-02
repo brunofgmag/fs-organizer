@@ -18,7 +18,7 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/QuarantineViewModel.h"
 
-class QuarantineViewModelTest : public QObject
+namespace
 {
     class QuarantineViewModelTest : public QObject
     {
@@ -52,7 +52,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kDestination};
         profile.defaultDestination = kDestination;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }

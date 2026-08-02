@@ -19,7 +19,7 @@
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class ImportViewModelTest : public QObject
+namespace
 {
     class ImportViewModelTest : public QObject
     {
@@ -49,7 +49,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kDestination};
         profile.defaultDestination = kDestination;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -108,7 +108,8 @@ void ImportViewModelTest::CancellingDuringTheCopyStopsTheRemainingFoldersAndSays
 
     const QSignalSpy finished(&f.viewModel, &ImportViewModel::Finished);
 
-    f.viewModel.Import({ImportRequest{kSmall, kLibrary}, ImportRequest{kBig, kLibrary}});
+    f.viewModel.Import(
+        {ImportRequest{.source = kSmall, .category = kLibrary}, ImportRequest{.source = kBig, .category = kLibrary}});
 
     QCOMPARE(finished.size(), 1);
 
@@ -127,7 +128,7 @@ void ImportViewModelTest::AnImportGoesThroughTheRunnerTheViewModelWasGiven()
 
     const int beforeTheImport = f.runner.runs;
 
-    f.viewModel.Import({ImportRequest{kSmall, kLibrary}});
+    f.viewModel.Import({ImportRequest{.source = kSmall, .category = kLibrary}});
 
     QCOMPARE(f.runner.runs, beforeTheImport + 1);
     QCOMPARE(finished.size(), 1);

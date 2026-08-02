@@ -4,7 +4,7 @@
 
 #include "infrastructure/sim/WindowsProcessProbe.h"
 
-class WindowsProcessProbeTest : public QObject
+namespace
 {
     class WindowsProcessProbeTest : public QObject
     {

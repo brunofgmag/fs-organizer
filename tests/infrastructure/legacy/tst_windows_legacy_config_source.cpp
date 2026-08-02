@@ -9,7 +9,7 @@
 #include "domain/support/PathUtils.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
 
-class WindowsLegacyConfigSourceTest : public QObject
+namespace
 {
     class WindowsLegacyConfigSourceTest : public QObject
     {

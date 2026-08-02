@@ -6,7 +6,7 @@
 
 #include "infrastructure/journal/JsonlOperationJournal.h"
 
-class JsonlOperationJournalTest : public QObject
+namespace
 {
     class JsonlOperationJournalTest : public QObject
     {
@@ -51,13 +51,15 @@ namespace
     OperationRecord Record(const OperationKind kind, const LinkFailure failure)
     {
         return OperationRecord::OfLink(std::chrono::system_clock::time_point{kMoment}, kind,
-                                       AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, failure);
+                                       AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"}, kSource,
+                                       kTarget, failure);
     }
 
     OperationRecord Record(const OperationKind kind, const FileResult result)
     {
         return OperationRecord::OfImport(std::chrono::system_clock::time_point{kMoment}, kind,
-                                         AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, result);
+                                         AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"}, kSource,
+                                         kTarget, result);
     }
 }
 

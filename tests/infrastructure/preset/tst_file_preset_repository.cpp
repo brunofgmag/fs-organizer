@@ -9,7 +9,7 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "tests/support/PathPrinting.h"
 
-class FilePresetRepositoryTest : public QObject
+namespace
 {
     class FilePresetRepositoryTest : public QObject
     {
@@ -45,8 +45,10 @@ namespace
     {
         Preset preset;
         preset.name = "Voo curto";
-        preset.entries = {PresetEntry{AddonId{"library-1", "aerosoft-crj"}, PresetAction::Enable},
-                          PresetEntry{AddonId{"library-2", "scenery-z"}, PresetAction::Disable}};
+        preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = "library-1", .folderName = "aerosoft-crj"},
+                                      .action = PresetAction::Enable},
+                          PresetEntry{.addonId = AddonId{.libraryId = "library-2", .folderName = "scenery-z"},
+                                      .action = PresetAction::Disable}};
 
         return preset;
     }

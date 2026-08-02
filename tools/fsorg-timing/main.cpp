@@ -69,7 +69,7 @@ namespace
 
         std::forward<Work>(work)();
 
-        measurements.push_back({stage, onTheMainThread, timer.elapsed()});
+        measurements.push_back({.stage = stage, .onTheMainThread = onTheMainThread, .elapsed = timer.elapsed()});
     }
 
     const SimulatorProfile* ActiveProfile(const AppSettings& settings)
