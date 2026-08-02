@@ -18,6 +18,7 @@ class AddonTreeModel final : public QAbstractItemModel
 public:
     void Retranslated()
     {
+        emit layoutAboutToBeChanged();
         emit layoutChanged();
     }
 

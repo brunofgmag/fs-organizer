@@ -14,6 +14,7 @@ class CategorySuggestionModel final : public QAbstractTableModel
 public:
     void Retranslated()
     {
+        emit layoutAboutToBeChanged();
         emit layoutChanged();
     }
 

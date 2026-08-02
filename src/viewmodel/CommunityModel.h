@@ -18,6 +18,7 @@ class CommunityModel final : public QAbstractTableModel
 public:
     void Retranslated()
     {
+        emit layoutAboutToBeChanged();
         emit layoutChanged();
     }
 

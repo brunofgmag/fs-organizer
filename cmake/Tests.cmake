@@ -651,6 +651,11 @@ fsorg_add_qt_test(fsorg-wheel-guard-tests wheel-guard
 target_link_libraries(fsorg-wheel-guard-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
 
+fsorg_add_qt_test(fsorg-language-change-tests language-change
+        tests/view/tst_language_change.cpp)
+target_link_libraries(fsorg-language-change-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-language-change-tests language-change)
+
 fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         tests/view/panels/tst_context_panel.cpp
         assets/resources.qrc)
