@@ -38,7 +38,12 @@ signals:
 
     void ProfileChosen(const std::string& profileId);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
+    void RetranslateUi();
+
     [[nodiscard]] QWidget* CreateNavigation();
 
     [[nodiscard]] QWidget* CreateProfilesAndLibraries();
@@ -51,9 +56,11 @@ private:
 
     void ReloadUpdates() const;
 
-    [[nodiscard]] QWidget* CreateAbout();
+    [[nodiscard]] QWidget* CreateLanguage();
 
-    [[nodiscard]] QWidget* CreateWaitingOn(const QString& heading, const QString& explanation);
+    void ReloadLanguage() const;
+
+    [[nodiscard]] QWidget* CreateAbout();
 
     void ReloadProfiles();
 
@@ -85,6 +92,7 @@ private:
     QButtonGroup* linkTypes_ = nullptr;
     QButtonGroup* profileChoices_ = nullptr;
     QButtonGroup* updateModes_ = nullptr;
+    QButtonGroup* languages_ = nullptr;
     QLabel* updateStatus_ = nullptr;
     QPushButton* checkForUpdates_ = nullptr;
     QPushButton* downloadUpdate_ = nullptr;

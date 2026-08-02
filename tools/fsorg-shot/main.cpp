@@ -87,7 +87,7 @@ namespace
 
         if (!shot.save(file))
         {
-            Out() << "não foi possível gravar " << file << "\n";
+            Out() << "could not write " << file << "\n";
             return false;
         }
 
@@ -119,14 +119,14 @@ namespace
 
         if (!opened)
         {
-            Out() << "nenhum diálogo modal abriu para " << name << "\n";
+            Out() << "no modal dialog opened for " << name << "\n";
             return false;
         }
 
         const QString file = folder.filePath(name + ".png");
         if (!shot.save(file))
         {
-            Out() << "não foi possível gravar " << file << "\n";
+            Out() << "could not write " << file << "\n";
             return false;
         }
 
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
-        "Grava PNG de cada tela do FS Organizer, montando os widgets de verdade contra a instalação real.\n"
+        "Writes a PNG of every FS Organizer screen, building the real widgets against the real installation.\n"
         "Para a escala do Windows, rode com QT_SCALE_FACTOR=1.25.");
     parser.addHelpOption();
 
@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
 
     if (QGuiApplication::platformName() == QLatin1String("offscreen"))
     {
-        Out() << "o plugin offscreen não aplica o esquema de cor nem o preenchimento dos itens de lista, então o PNG "
+        Out() << "the offscreen plugin applies neither the colour scheme nor the fill of list items, so the PNG "
                  "sairia parecido e errado. Rode sem QT_QPA_PLATFORM.\n";
         return 1;
     }
@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
     const QSize window = SizeFrom(parser.value(size));
     if (window.isEmpty())
     {
-        Out() << "tamanho inválido: " << parser.value(size) << "\n";
+        Out() << "invalid size: " << parser.value(size) << "\n";
         return 1;
     }
 
@@ -228,13 +228,13 @@ int main(int argc, char* argv[])
     const std::optional<AppSettings> stored = settings.Load();
     if (!stored.has_value())
     {
-        Out() << "o settings.json existe e não pôde ser lido: " << AsText(SettingsFilePath()) << "\n";
+        Out() << "settings.json exists and could not be read: " << AsText(SettingsFilePath()) << "\n";
         return 1;
     }
 
     if (stored->profiles.empty())
     {
-        Out() << "nenhum perfil configurado, então não há tela com conteúdo para gravar\n";
+        Out() << "no profile configured, so there is no screen with content to write\n";
         return 1;
     }
 
@@ -294,11 +294,11 @@ int main(int argc, char* argv[])
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
 
-    PageTab* libraryTab = shell.AddPage(QObject::tr("Biblioteca"), libraryPage);
-    PageTab* communityTab = shell.AddPage(QObject::tr("Destinos"), communityPage);
-    PageTab* presetsTab = shell.AddPage(QObject::tr("Presets"), presetsPage);
-    PageTab* journalTab = shell.AddPage(QObject::tr("Diário"), journalPage);
-    PageTab* quarantineTab = shell.AddPage(QObject::tr("Quarentena"), quarantinePage);
+    PageTab* libraryTab = shell.AddPage("Library", libraryPage);
+    PageTab* communityTab = shell.AddPage("Destinations", communityPage);
+    PageTab* presetsTab = shell.AddPage("Presets", presetsPage);
+    PageTab* journalTab = shell.AddPage("Journal", journalPage);
+    PageTab* quarantineTab = shell.AddPage("Quarantine", quarantinePage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -318,12 +318,12 @@ int main(int argc, char* argv[])
     LetTheLayoutSettle();
 
     Out() << "janela " << shell.size().width() << "x" << shell.size().height() << " em escala "
-          << shell.devicePixelRatioF() << ", então cada PNG sai nessa proporção.\n";
+          << shell.devicePixelRatioF() << ", so every PNG comes out at that ratio.\n";
 
     if (shell.size() != window)
     {
-        Out() << "o shell não encolhe até " << window.width() << "x" << window.height()
-              << ": o conteúdo pede mais. Cada linha abaixo diz o tamanho que foi gravado.\n";
+        Out() << "the shell does not shrink to " << window.width() << "x" << window.height()
+              << ": the content asks for more. Each line below says the size that was written.\n";
     }
 
     bool landed = true;
@@ -370,7 +370,7 @@ int main(int argc, char* argv[])
     {
         if (!ClickingReaches(*navigation, pane))
         {
-            Out() << "a aba " << panes[pane] << " não seleciona no clique, então nenhum usuário chega nela\n";
+            Out() << "the tab " << panes[pane] << " does not select on click, so no user reaches it\n";
             continue;
         }
 
@@ -381,7 +381,7 @@ int main(int argc, char* argv[])
     static_cast<void>(ClickingReaches(*navigation, 0));
     LetTheLayoutSettle();
 
-    if (QPushButton* unregister = ButtonLabelled(*optionsPage, QObject::tr("Descadastrar")); unregister != nullptr)
+    if (QPushButton* unregister = ButtonLabelled(*optionsPage, QObject::tr("Unregister")); unregister != nullptr)
     {
         landed = SaveTheDialogOpenedBy(
                      [unregister]
@@ -393,7 +393,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        Out() << "nenhuma biblioteca cadastrada, então não há diálogo de descadastrar para gravar\n";
+        Out() << "no library registered, so there is no unregister dialog to write\n";
     }
 
     PageTab* back = nullptr;
@@ -407,7 +407,7 @@ int main(int argc, char* argv[])
 
     if (back == nullptr)
     {
-        Out() << "não achei a aba de voltar, então a volta gravada não seria a do usuário\n";
+        Out() << "could not find the back tab, so the recorded return would not be the user's\n";
         return 1;
     }
 

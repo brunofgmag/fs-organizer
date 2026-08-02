@@ -3,6 +3,7 @@
 
 #include <QtWidgets/QWidget>
 
+class QLabel;
 class QPushButton;
 class QVBoxLayout;
 
@@ -15,8 +16,12 @@ public:
 
     QPushButton* OfferTheOnlyAction(const QString& label);
 
+    void Retell(const QString& headline, const QString& explanation) const;
+
 private:
     QVBoxLayout* column_ = nullptr;
+    QLabel* title_ = nullptr;
+    QLabel* body_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_PANELS_EMPTY_STATE_H

@@ -1,5 +1,6 @@
 #include "view/panels/PanelRail.h"
 
+#include <QtCore/QEvent>
 #include <QtGui/QFont>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QPainter>
@@ -26,7 +27,7 @@ PanelRail::PanelRail(QWidget* parent) : QWidget(parent)
     expand_->setObjectName(QStringLiteral("PanelExpand"));
     expand_->setAutoRaise(true);
     expand_->setArrowType(Qt::LeftArrow);
-    expand_->setToolTip(tr("Abrir o painel"));
+    expand_->setToolTip(tr("Open the panel"));
     expand_->setCursor(Qt::PointingHandCursor);
 
     auto* column = new QVBoxLayout(this);
@@ -36,6 +37,16 @@ PanelRail::PanelRail(QWidget* parent) : QWidget(parent)
     column->addStretch();
 
     connect(expand_, &QToolButton::clicked, this, &PanelRail::ExpandRequested);
+}
+
+void PanelRail::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        expand_->setToolTip(tr("Open the panel"));
+    }
+
+    QWidget::changeEvent(event);
 }
 
 int PanelRail::Width()

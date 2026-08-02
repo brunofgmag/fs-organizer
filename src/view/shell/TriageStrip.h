@@ -30,6 +30,9 @@ signals:
 
     void ImportRequested();
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
     struct Item
     {
@@ -37,7 +40,17 @@ private:
         QPushButton* action = nullptr;
     };
 
-    [[nodiscard]] Item AddItem(const char* tag, const QString& action, QHBoxLayout* into);
+    struct Breakdown
+    {
+        std::size_t broken = 0;
+        std::size_t conflicts = 0;
+        std::size_t duplicated = 0;
+        std::size_t unmanaged = 0;
+    };
+
+    void RetranslateUi();
+
+    [[nodiscard]] Item AddItem(const char* tag, QHBoxLayout* into);
 
     [[nodiscard]] QFrame* AddSeparator(QHBoxLayout* into);
 
@@ -49,6 +62,7 @@ private:
     Item unmanaged_;
     QFrame* beforeConflicts_ = nullptr;
     QFrame* beforeDuplicated_ = nullptr;
+    Breakdown shown_;
     bool anythingToSay_ = false;
 };
 

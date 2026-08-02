@@ -1,5 +1,7 @@
 #include "view/quarantine/QuarantinePage.h"
 
+#include <QtCore/QEvent>
+
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
 #include <QtWidgets/QHBoxLayout>
@@ -35,9 +37,9 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     table_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(table_->horizontalHeader());
 
-    restore_ = new QPushButton(tr("Restaurar selecionados"), this);
-    discard_ = new QPushButton(tr("Descartar selecionados"), this);
-    empty_ = new QPushButton(tr("Esvaziar a quarentena"), this);
+    restore_ = new QPushButton(this);
+    discard_ = new QPushButton(this);
+    empty_ = new QPushButton(this);
     empty_->setProperty("role", "destructive");
 
     auto* toolbar = new QWidget(this);
@@ -51,19 +53,19 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     bar->addStretch();
     bar->addWidget(empty_);
 
-    panel_ = new ContextPanel(tr("Item retido"), 400, this);
+    panel_ = new ContextPanel(tr("Item held"), 400, this);
     panel_->setObjectName(QStringLiteral("QuarantineItemPanel"));
     detail_ = new ModelRowDetail(panel_);
-    restoreFromPanel_ = new QPushButton(tr("Restaurar para a biblioteca"), panel_);
+    restoreFromPanel_ = new QPushButton(panel_);
     restoreFromPanel_->setProperty("role", "primary");
-    openFolder_ = new QPushButton(tr("Abrir a pasta"), panel_);
-    auto* promise = new QLabel(tr("Nada sai da quarentena sem você mandar."), panel_);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
+    openFolder_ = new QPushButton(panel_);
+    promise_ = new QLabel(panel_);
+    promise_->setObjectName(QStringLiteral("PanelPromise"));
+    promise_->setWordWrap(true);
     panel_->Add(detail_);
     panel_->Add(restoreFromPanel_);
     panel_->Add(openFolder_);
-    panel_->Add(promise);
+    panel_->Add(promise_);
     panel_->RestoreCollapsedState();
     panel_->Summon(false);
 
@@ -82,10 +84,8 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
 
     pages_ = new QStackedWidget(this);
     pages_->addWidget(held);
-    pages_->addWidget(new EmptyState(tr("A quarentena está vazia."),
-                                     tr("Quando duas cópias do mesmo addon disputam o mesmo nome, a perdedora "
-                                        "vem para cá em vez de ser apagada. Nada foi retido até agora."),
-                                     this));
+    nothingHeld_ = new EmptyState(QString{}, QString{}, this);
+    pages_->addWidget(nothingHeld_);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -110,18 +110,45 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     connect(&viewModel_, &QuarantineViewModel::Restored, this,
             [this](const std::vector<FileOperationResult>& results)
             {
-                Report(tr("Restauração"), results);
+                Report(tr("Restore"), results);
             });
     connect(&viewModel_, &QuarantineViewModel::Discarded, this,
             [this](const std::vector<FileOperationResult>& results)
             {
-                Report(tr("Descarte"), results);
+                Report(tr("Discard"), results);
             });
 
+    RetranslateUi();
     UpdateSummary();
 }
 
-void QuarantinePage::ShowTheSelectedItem()
+void QuarantinePage::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+        model_.Retranslated();
+        UpdateSummary();
+        ShowTheSelectedItem();
+    }
+
+    QWidget::changeEvent(event);
+}
+
+void QuarantinePage::RetranslateUi()
+{
+    restore_->setText(tr("Restore the selected ones"));
+    discard_->setText(tr("Discard the selected ones"));
+    empty_->setText(tr("Empty the quarantine"));
+    openFolder_->setText(tr("Open the folder"));
+    promise_->setText(tr("Nothing leaves the quarantine without you saying so."));
+    panel_->RenameTheFallback(tr("Item held"));
+    nothingHeld_->Retell(tr("The quarantine is empty."),
+                         tr("When two copies of the same addon fight over the same name, the losing one comes here "
+                            "instead of being deleted. Nothing has been held so far."));
+}
+
+void QuarantinePage::ShowTheSelectedItem() const
 {
     const QModelIndexList rows = table_->selectionModel()->selectedRows();
 
@@ -162,11 +189,11 @@ void QuarantinePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
     const auto held = static_cast<int>(rows.size());
 
     QList<ModelRowDetail::Field> fields;
-    fields.append({tr("Itens"), QString::number(held)});
-    fields.append({tr("Sabem de onde vieram"), tr("%1 de %2").arg(known).arg(held)});
-    fields.append({tr("Voltam para"), tr("%n lugar(es)", nullptr, origins.size())});
+    fields.append({tr("Items"), QString::number(held)});
+    fields.append({tr("Know where they came from"), tr("%1 of %2").arg(known).arg(held)});
+    fields.append({tr("Go back to"), tr("%n place", nullptr, static_cast<int>(origins.size()))});
 
-    panel_->ShowTitle(tr("%n item(ns) selecionado(s)", nullptr, held));
+    panel_->ShowTitle(tr("%n item selected", nullptr, held));
     detail_->ShowFields(fields);
 }
 
@@ -175,8 +202,8 @@ void QuarantinePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) co
     const auto held = static_cast<int>(rows.size());
 
     restoreFromPanel_->setEnabled(held > 0);
-    restoreFromPanel_->setText(held > 1 ? tr("Restaurar %n itens para a biblioteca", nullptr, held)
-                                        : tr("Restaurar para a biblioteca"));
+    restoreFromPanel_->setText(held > 1 ? tr("Restore %n item to the library", nullptr, held)
+                                        : tr("Restore to the library"));
     openFolder_->setEnabled(held == 1);
 }
 
@@ -200,7 +227,7 @@ void QuarantinePage::RestoreSelected()
     const std::vector<QuarantinedItem> items = Selected();
     if (items.empty())
     {
-        emit StatusChanged(tr("Selecione ao menos um item da quarentena."));
+        emit StatusChanged(tr("Select at least one item from the quarantine."));
         return;
     }
 
@@ -219,13 +246,13 @@ void QuarantinePage::DiscardSelected()
     const std::vector<QuarantinedItem> items = Selected();
     if (items.empty())
     {
-        emit StatusChanged(tr("Selecione ao menos um item da quarentena."));
+        emit StatusChanged(tr("Select at least one item from the quarantine."));
         return;
     }
 
     const QMessageBox::StandardButton answer = QMessageBox::question(
-        this, tr("Descartar da quarentena"),
-        tr("%n item(ns) será(ão) apagado(s) do disco para sempre. Continuar?", nullptr, static_cast<int>(items.size())),
+        this, tr("Discard from the quarantine"),
+        tr("%n item will be deleted from the disk for good. Continue?", nullptr, static_cast<int>(items.size())),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
     if (answer == QMessageBox::Yes)
@@ -239,13 +266,13 @@ void QuarantinePage::EmptyTheQuarantine()
     const std::vector<QuarantinedItem> items = model_.Items();
     if (items.empty())
     {
-        emit StatusChanged(tr("A quarentena já está vazia."));
+        emit StatusChanged(tr("The quarantine is already empty."));
         return;
     }
 
     const QMessageBox::StandardButton answer = QMessageBox::question(
-        this, tr("Esvaziar a quarentena"),
-        tr("Tudo que está na quarentena, %n item(ns), será apagado do disco para sempre. Continuar?", nullptr,
+        this, tr("Empty the quarantine"),
+        tr("Everything in the quarantine, %n item, will be deleted from the disk for good. Continue?", nullptr,
            static_cast<int>(items.size())),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
@@ -270,14 +297,14 @@ void QuarantinePage::Report(const QString& title, const std::vector<FileOperatio
 
     if (failed.isEmpty())
     {
-        emit StatusChanged(tr("%n item(ns) da quarentena.", nullptr, done));
+        emit StatusChanged(tr("%n item from the quarantine.", nullptr, done));
         return;
     }
 
     QMessageBox report(QMessageBox::Warning, title,
-                       tr("%n item(ns) não pôde(puderam) ser tratado(s).", nullptr, static_cast<int>(failed.size())),
-                       QMessageBox::Ok, this);
-    report.setInformativeText(tr("%n item(ns) concluído(s).", nullptr, done));
+                       tr("%n item could not be handled.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
+                       this);
+    report.setInformativeText(tr("%n item finished.", nullptr, done));
     report.setDetailedText(failed.join('\n'));
     report.exec();
 }
@@ -303,8 +330,8 @@ void QuarantinePage::UpdateSummary()
 
     pages_->setCurrentIndex(rows == 0 ? 1 : 0);
 
-    emit SummaryChanged(rows == 0 ? tr("0 itens na quarentena") : tr("%n item(ns) na quarentena.", nullptr, rows));
-    emit AsideChanged(rows == 0 ? tr("0 bytes retidos") : tr("nada sai daqui sem você mandar"));
+    emit SummaryChanged(rows == 0 ? tr("0 items in the quarantine") : tr("%n item in the quarantine.", nullptr, rows));
+    emit AsideChanged(rows == 0 ? tr("0 bytes held") : tr("nothing leaves here without you saying so"));
 
     restore_->setEnabled(selected > 0);
     discard_->setEnabled(selected > 0);

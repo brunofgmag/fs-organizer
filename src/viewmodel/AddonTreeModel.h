@@ -16,6 +16,11 @@ class AddonTreeModel final : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    void Retranslated()
+    {
+        emit layoutChanged();
+    }
+
     enum Column
     {
         AddonColumn = 0,

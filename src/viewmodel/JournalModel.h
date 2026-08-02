@@ -14,6 +14,11 @@ class JournalModel final : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    void Retranslated()
+    {
+        emit layoutChanged();
+    }
+
     enum Column
     {
         WhenColumn = 0,

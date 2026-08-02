@@ -111,7 +111,7 @@ namespace
                   << measurement.elapsed << "\n";
         }
 
-        Out() << "\ntotal na thread principal: " << MainThreadTotal() << " ms (orçamento " << kBudgetForTheMainThread
+        Out() << "\ntotal on the main thread: " << MainThreadTotal() << " ms (budget " << kBudgetForTheMainThread
               << " ms)\n";
         Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "VERMELHO: a interface congela\n" : "VERDE\n");
         Out().flush();
@@ -199,10 +199,10 @@ int main(int argc, char* argv[])
         JournalViewModel journalViewModel(journal, session, journalModel);
         auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-        window.AddPage(QStringLiteral("Árvore"), treePage);
-        window.AddPage(QStringLiteral("Community"), communityPage);
-        window.AddPage(QStringLiteral("Quarentena"), quarantinePage);
-        window.AddPage(QStringLiteral("Diário"), journalPage);
+        window.AddPage("Library", treePage);
+        window.AddPage("Destinations", communityPage);
+        window.AddPage("Quarantine", quarantinePage);
+        window.AddPage("Journal", journalPage);
 
         treeViewModel.ShowActiveProfile();
         for (int pass = 0; pass < 400 && session.Snapshot().entries.empty(); ++pass)

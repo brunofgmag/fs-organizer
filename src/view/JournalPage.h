@@ -7,7 +7,10 @@
 
 class ContextPanel;
 class ModelRowDetail;
+class QCheckBox;
 class QLabel;
+class QLineEdit;
+class QPushButton;
 class QTreeView;
 
 class JournalPage final : public QWidget
@@ -22,10 +25,15 @@ signals:
 
     void AsideChanged(const QString& aside);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
     void ShowTheSelectedOperation() const;
 
     void UpdateSummary();
+
+    void RetranslateUi();
 
     JournalViewModel& viewModel_;
     JournalModel& model_;
@@ -33,6 +41,10 @@ private:
     QTreeView* operations_ = nullptr;
     ContextPanel* panel_ = nullptr;
     ModelRowDetail* detail_ = nullptr;
+    QLineEdit* search_ = nullptr;
+    QCheckBox* failuresOnly_ = nullptr;
+    QPushButton* reload_ = nullptr;
+    QLabel* promise_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_JOURNAL_PAGE_H

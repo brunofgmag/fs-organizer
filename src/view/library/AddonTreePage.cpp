@@ -1,5 +1,7 @@
 #include "view/library/AddonTreePage.h"
 
+#include <QtCore/QEvent>
+
 #include <algorithm>
 #include <ranges>
 
@@ -49,7 +51,7 @@ namespace
 
     QString AskForACategoryName(QWidget* parent, const QString& title, const QString& current)
     {
-        return QInputDialog::getText(parent, title, QObject::tr("Nome da categoria:"), QLineEdit::Normal, current);
+        return QInputDialog::getText(parent, title, QObject::tr("Category name:"), QLineEdit::Normal, current);
     }
 }
 
@@ -146,23 +148,56 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&notifier, &SessionNotifier::ScanStarted, this,
             [this]
             {
-                emit StatusChanged(tr("Lendo a biblioteca…"));
+                emit StatusChanged(tr("Reading the library…"));
             });
 
     connect(&viewModel_, &AddonTreeViewModel::Refused, this,
             [this](const QString& explanation)
             {
-                QMessageBox::warning(this, tr("Nada foi alterado"), explanation);
+                QMessageBox::warning(this, tr("Nothing changed"), explanation);
             });
 
     connect(&notifier, &SessionNotifier::SimulatorIsRunning, this,
             [this]
             {
-                QMessageBox::information(
-                    this, tr("Simulador aberto"),
-                    tr("O simulador está em execução. Os links foram criados, mas ele só vai enxergar a "
-                       "mudança depois de ser reiniciado."));
+                QMessageBox::information(this, tr("Simulator open"),
+                                         tr("The simulator is running. The links were created, but it will only see "
+                                            "the change after it is restarted."));
             });
+
+    RetranslateUi();
+}
+
+void AddonTreePage::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+        model_.Retranslated();
+        ShowTheSelectedAddon();
+        PublishSummary();
+    }
+
+    QWidget::changeEvent(event);
+}
+
+void AddonTreePage::RetranslateUi()
+{
+    enable_->setText(tr("Check the selected ones"));
+    disable_->setText(tr("Uncheck the selected ones"));
+    undo_->setText(tr("Undo the last batch"));
+    rescan_->setText(tr("Read again from the disk"));
+    search_->setPlaceholderText(tr("Search addon…"));
+    hideEmpty_->setText(tr("Hide empty categories"));
+    relink_->setText(tr("Repoint to the library"));
+    moveTo_->setText(tr("Move to…"));
+    openFolder_->setText(tr("Open the folder"));
+    promise_->setText(tr("Repairing never touches the real files: only the reparse node is rewritten."));
+    panel_->RenameTheFallback(tr("Addon selected"));
+    invite_->Retell(tr("This profile has no library yet."),
+                    tr("A library is the folder where your addons live, outside the simulator. Enabling an addon "
+                       "creates a link from the simulator to there. Nothing is copied or moved."));
+    inviteAction_->setText(tr("Register library…"));
 }
 
 QWidget* AddonTreePage::CreateActions()
@@ -170,86 +205,81 @@ QWidget* AddonTreePage::CreateActions()
     auto* bar = new QWidget(this);
     bar->setObjectName(QStringLiteral("PageToolbar"));
 
-    auto* enable = new QPushButton(tr("Marcar selecionados"), bar);
-    auto* disable = new QPushButton(tr("Desmarcar selecionados"), bar);
-    undo_ = new QPushButton(tr("Desfazer último lote"), bar);
-    auto* rescan = new QPushButton(tr("Reler do disco"), bar);
-    rescan->setProperty("role", "primary");
+    enable_ = new QPushButton(bar);
+    disable_ = new QPushButton(bar);
+    undo_ = new QPushButton(bar);
+    rescan_ = new QPushButton(bar);
+    rescan_->setProperty("role", "primary");
 
-    auto* search = new QLineEdit(bar);
-    search->setPlaceholderText(tr("Buscar addon…"));
-    search->setClearButtonEnabled(true);
-    search->setMinimumWidth(180);
-    search->setMaximumWidth(220);
+    search_ = new QLineEdit(bar);
+    search_->setClearButtonEnabled(true);
+    search_->setMinimumWidth(180);
+    search_->setMaximumWidth(220);
 
-    auto* hideEmpty = new QCheckBox(tr("Ocultar categorias vazias"), bar);
+    hideEmpty_ = new QCheckBox(bar);
 
     undo_->setEnabled(false);
 
-    connect(enable, &QPushButton::clicked, this,
+    connect(enable_, &QPushButton::clicked, this,
             [this]
             {
                 ToggleSelection(true);
             });
-    connect(disable, &QPushButton::clicked, this,
+    connect(disable_, &QPushButton::clicked, this,
             [this]
             {
                 ToggleSelection(false);
             });
     connect(undo_, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::UndoLastBatch);
-    connect(rescan, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::ShowActiveProfile);
-    connect(search, &QLineEdit::textChanged, filter_, &AddonTreeFilterModel::Search);
-    connect(hideEmpty, &QCheckBox::toggled, filter_, &AddonTreeFilterModel::HideEmptyCategories);
+    connect(rescan_, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::ShowActiveProfile);
+    connect(search_, &QLineEdit::textChanged, filter_, &AddonTreeFilterModel::Search);
+    connect(hideEmpty_, &QCheckBox::toggled, filter_, &AddonTreeFilterModel::HideEmptyCategories);
 
     auto* layout = new QHBoxLayout(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
-    layout->addWidget(rescan);
-    layout->addWidget(enable);
-    layout->addWidget(disable);
+    layout->addWidget(rescan_);
+    layout->addWidget(enable_);
+    layout->addWidget(disable_);
     layout->addWidget(undo_);
     layout->addStretch();
-    layout->addWidget(hideEmpty);
-    layout->addWidget(search);
+    layout->addWidget(hideEmpty_);
+    layout->addWidget(search_);
 
     return bar;
 }
 
 QWidget* AddonTreePage::CreateInvite()
 {
-    auto* invite = new EmptyState(tr("Este perfil ainda não tem biblioteca."),
-                                  tr("Uma biblioteca é a pasta onde os seus addons moram, fora do simulador. "
-                                     "Habilitar um addon cria um link do simulador para lá. Nada é copiado "
-                                     "nem movido."),
-                                  this);
+    invite_ = new EmptyState(QString{}, QString{}, this);
 
-    connect(invite->OfferTheOnlyAction(tr("Cadastrar biblioteca…")), &QPushButton::clicked, this,
-            &AddonTreePage::BrowseForLibrary);
+    inviteAction_ = invite_->OfferTheOnlyAction(QString{});
+    connect(inviteAction_, &QPushButton::clicked, this, &AddonTreePage::BrowseForLibrary);
 
-    return invite;
+    return invite_;
 }
 
 QWidget* AddonTreePage::CreatePanel()
 {
-    panel_ = new ContextPanel(tr("Addon selecionado"), 380, this);
+    panel_ = new ContextPanel(tr("Addon selected"), 380, this);
     panel_->setObjectName(QStringLiteral("LibraryAddonPanel"));
 
     detail_ = new ModelRowDetail(panel_);
 
-    relink_ = new QPushButton(tr("Reapontar para a biblioteca"), panel_);
+    relink_ = new QPushButton(panel_);
     relink_->setProperty("role", "primary");
-    moveTo_ = new QPushButton(tr("Mover para…"), panel_);
-    openFolder_ = new QPushButton(tr("Abrir a pasta"), panel_);
+    moveTo_ = new QPushButton(panel_);
+    openFolder_ = new QPushButton(panel_);
 
-    auto* promise = new QLabel(tr("Reparar nunca toca os arquivos reais: só o nó de reparse é reescrito."), panel_);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
+    promise_ = new QLabel(panel_);
+    promise_->setObjectName(QStringLiteral("PanelPromise"));
+    promise_->setWordWrap(true);
 
     panel_->Add(detail_);
     panel_->Add(relink_);
     panel_->Add(moveTo_);
     panel_->Add(openFolder_);
-    panel_->Add(promise);
+    panel_->Add(promise_);
 
     panel_->RestoreCollapsedState();
     panel_->Summon(false);
@@ -296,27 +326,27 @@ void AddonTreePage::ShowTheSelectedAddon() const
     const bool broken = model_.data(source, AddonTreeModel::BrokenRole).toBool();
 
     QList<ModelRowDetail::Field> fields;
-    fields.append({tr("Categoria"), AsText(node->path.parent_path().filename())});
-    fields.append({tr("Na biblioteca"), AsText(node->path)});
+    fields.append({tr("Category"), AsText(node->path.parent_path().filename())});
+    fields.append({tr("In the library"), AsText(node->path)});
 
     if (addon)
     {
-        fields.append({tr("Link em"), AsText(destination / node->path.filename())});
-        fields.append({tr("Alvo existe"), broken ? tr("não, o link não acha a pasta") : tr("sim")});
+        fields.append({tr("Linked in"), AsText(destination / node->path.filename())});
+        fields.append({tr("Target exists"), broken ? tr("no, the link cannot find the folder") : tr("yes")});
         fields.append(
-            {tr("Habilitado"), model_.data(source, AddonTreeModel::EnabledRole).toBool() ? tr("sim") : tr("não")});
+            {tr("Enabled"), model_.data(source, AddonTreeModel::EnabledRole).toBool() ? tr("yes") : tr("no")});
 
         if (const QString version =
                 model_.data(source.siblingAtColumn(AddonTreeModel::VersionColumn), Qt::DisplayRole).toString();
             !version.isEmpty())
         {
-            fields.append({tr("Versão"), version});
+            fields.append({tr("Version"), version});
         }
     }
     else
     {
-        fields.append({tr("Conteúdo"), tr("%n addon(s)", nullptr, static_cast<int>(CountAddons(*node)))});
-        fields.append({tr("Destino"), AsText(destination.filename())});
+        fields.append({tr("Content"), tr("%n addon", nullptr, static_cast<int>(CountAddons(*node)))});
+        fields.append({tr("Destination"), AsText(destination.filename())});
     }
 
     panel_->ShowTitle(AsText(node->path.filename()), model_.data(source, AlarmingRole).toBool());
@@ -363,27 +393,27 @@ void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
     if (addons > 0)
     {
         fields.append({tr("Addons"), QString::number(addons)});
-        fields.append({tr("Habilitados"), tr("%1 de %2").arg(enabled).arg(addons)});
+        fields.append({tr("Enabled", "several addons"), tr("%1 of %2").arg(enabled).arg(addons)});
     }
 
     if (categories > 0)
     {
-        fields.append({tr("Categorias"), QString::number(categories)});
+        fields.append({tr("Categories"), QString::number(categories)});
     }
 
     if (broken > 0)
     {
-        fields.append({tr("Quebrados"), QString::number(broken)});
+        fields.append({tr("Broken"), QString::number(broken)});
     }
 
     if (strayed > 0)
     {
-        fields.append({tr("Fora do destino"), QString::number(strayed)});
+        fields.append({tr("Away from the destination"), QString::number(strayed)});
     }
 
-    fields.append({tr("Espalhados por"), tr("%n categoria(s)", nullptr, categoriesCrossed.size())});
+    fields.append({tr("Spread across"), tr("%n category", nullptr, static_cast<int>(categoriesCrossed.size()))});
 
-    panel_->ShowTitle(tr("%n item(ns) selecionado(s)", nullptr, static_cast<int>(rows.size())), alarming);
+    panel_->ShowTitle(tr("%n item selected", nullptr, static_cast<int>(rows.size())), alarming);
     detail_->ShowFields(fields);
 }
 
@@ -410,11 +440,10 @@ void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
     }
 
     relink_->setEnabled(relinkable > 0);
-    relink_->setText(relinkable > 1 ? tr("Reapontar %n addons", nullptr, relinkable)
-                                    : tr("Reapontar para a biblioteca"));
+    relink_->setText(relinkable > 1 ? tr("Repoint %n addon", nullptr, relinkable) : tr("Repoint to the library"));
 
     moveTo_->setEnabled(movable > 0);
-    moveTo_->setText(movable > 1 ? tr("Mover %n addons para…", nullptr, movable) : tr("Mover para…"));
+    moveTo_->setText(movable > 1 ? tr("Move %n addon to…", nullptr, movable) : tr("Move to…"));
 
     openFolder_->setEnabled(rows.size() == 1);
 }
@@ -477,7 +506,7 @@ void AddonTreePage::ToggleSelection(const bool enable)
     const std::vector<const TreeNode*> nodes = Chosen(nullptr);
     if (nodes.empty())
     {
-        emit StatusChanged(tr("Selecione ao menos um addon ou categoria."));
+        emit StatusChanged(tr("Select at least one addon or category."));
         return;
     }
 
@@ -508,9 +537,9 @@ bool AddonTreePage::TheUserMeantIt(const std::vector<const TreeNode*>& nodes, co
     }
 
     const QMessageBox::StandardButton answer =
-        QMessageBox::question(this, enable ? tr("Ligar em massa") : tr("Desligar em massa"),
-                              enable ? tr("Isto vai ligar %1 addons de uma vez.\n\nContinuar?").arg(many)
-                                     : tr("Isto vai desligar %1 addons de uma vez.\n\nContinuar?").arg(many));
+        QMessageBox::question(this, enable ? tr("Enable in bulk") : tr("Disable in bulk"),
+                              enable ? tr("This will enable %1 addons at once.\n\nContinue?").arg(many)
+                                     : tr("This will disable %1 addons at once.\n\nContinue?").arg(many));
 
     return answer == QMessageBox::Yes;
 }
@@ -535,8 +564,8 @@ void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& resu
 
     if (failed.empty())
     {
-        emit StatusChanged(results.empty() ? tr("Nada a fazer: a seleção já estava como você pediu.")
-                                           : tr("%n operação(ões) concluída(s).", nullptr, done));
+        emit StatusChanged(results.empty() ? tr("Nothing to do: the selection was already the way you asked.")
+                                           : tr("%n operation finished.", nullptr, done));
         return;
     }
 
@@ -546,22 +575,22 @@ void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& resu
         lines.append(Describe(result));
     }
 
-    QMessageBox report(QMessageBox::Warning, tr("Nem tudo foi aplicado"),
-                       tr("%n operação(ões) falhou(aram). Nada foi apagado.", nullptr, static_cast<int>(failed.size())),
+    QMessageBox report(QMessageBox::Warning, tr("Not everything was applied"),
+                       tr("%n operation failed. Nothing was deleted.", nullptr, static_cast<int>(failed.size())),
                        QMessageBox::Ok, this);
-    report.setInformativeText(tr("%n operação(ões) concluída(s).", nullptr, done));
+    report.setInformativeText(tr("%n operation finished.", nullptr, done));
     report.setDetailedText(lines.join('\n'));
     report.exec();
 
-    emit StatusChanged(tr("%1 · %2").arg(tr("%n operação(ões) concluída(s)", nullptr, done),
-                                         tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
+    emit StatusChanged(tr("%1 · %2").arg(tr("%n operation finished", nullptr, done),
+                                         tr("%n failed", nullptr, static_cast<int>(failed.size()))));
 }
 
 void AddonTreePage::PublishSummary()
 {
     if (viewModel_.Profile().libraries.empty())
     {
-        emit SummaryChanged(tr("Cadastre uma biblioteca para começar."));
+        emit SummaryChanged(tr("Register a library to get started."));
         emit MeterChanged(0, 0);
         return;
     }
@@ -569,7 +598,7 @@ void AddonTreePage::PublishSummary()
     const auto addons = static_cast<int>(model_.AddonCount());
     const auto enabled = static_cast<int>(model_.EnabledCount());
 
-    emit SummaryChanged(tr("%1 addons · %2 habilitados").arg(addons).arg(enabled));
+    emit SummaryChanged(tr("%1 addons · %2 enabled").arg(addons).arg(enabled));
     emit MeterChanged(enabled, addons);
 }
 
@@ -703,7 +732,7 @@ void AddonTreePage::AddConflictAction(QMenu& menu, const QModelIndex& position)
     }
 
     const auto chosen = conflict.value<CopyConflict>();
-    menu.addAction(tr("Resolver o conflito de cópia…"), this,
+    menu.addAction(tr("Resolve the copy conflict…"), this,
                    [this, chosen]
                    {
                        emit ConflictChosen(chosen);
@@ -725,7 +754,7 @@ void AddonTreePage::AddMoveAction(QMenu& menu, const TreeNode* node)
 
     StartASection(menu);
 
-    QMenu* where = menu.addMenu(tr("Mover para…"));
+    QMenu* where = menu.addMenu(tr("Move to…"));
     for (const MoveTarget& target : offered)
     {
         where->addAction(AsText(target.relativePath), this,
@@ -740,15 +769,15 @@ void AddonTreePage::AddCategoryActions(QMenu& menu, const TreeNode* node)
 {
     StartASection(menu);
 
-    menu.addAction(tr("Nova categoria aqui…"), this,
+    menu.addAction(tr("New category here…"), this,
                    [this, node]
                    {
-                       viewModel_.CreateCategory(node, AskForACategoryName(this, tr("Nova categoria"), {}));
+                       viewModel_.CreateCategory(node, AskForACategoryName(this, tr("New category"), {}));
                    });
 
     if (node->kind != TreeNodeKind::Addon)
     {
-        menu.addAction(tr("Sugerir categorias…"), this,
+        menu.addAction(tr("Suggest categories…"), this,
                        [this, node]
                        {
                            ShowSuggestions(node);
@@ -760,14 +789,14 @@ void AddonTreePage::AddCategoryActions(QMenu& menu, const TreeNode* node)
         return;
     }
 
-    menu.addAction(tr("Renomear categoria…"), this,
+    menu.addAction(tr("Rename category…"), this,
                    [this, node]
                    {
                        const QString current = AsText(node->path.filename());
                        const std::filesystem::path from = node->path;
 
-                       const std::filesystem::path landing = viewModel_.RenameCategory(
-                           node, AskForACategoryName(this, tr("Renomear categoria"), current));
+                       const std::filesystem::path landing =
+                           viewModel_.RenameCategory(node, AskForACategoryName(this, tr("Rename category"), current));
 
                        if (!landing.empty())
                        {
@@ -775,9 +804,9 @@ void AddonTreePage::AddCategoryActions(QMenu& menu, const TreeNode* node)
                        }
                    });
 
-    if (viewModel_.CanRemoveCategory(node))
+    if (AddonTreeViewModel::CanRemoveCategory(node))
     {
-        menu.addAction(tr("Apagar categoria"), this,
+        menu.addAction(tr("Delete category"), this,
                        [this, node]
                        {
                            viewModel_.RemoveCategory(node);
@@ -791,8 +820,8 @@ void AddonTreePage::ShowSuggestions(const TreeNode* node)
 
     if (!dialog.HasAnythingToShow())
     {
-        QMessageBox::information(this, tr("Sugestões de categoria"),
-                                 tr("Nenhum addon daqui está numa categoria diferente da que as regras sugerem."));
+        QMessageBox::information(this, tr("Category suggestions"),
+                                 tr("No addon from here is in a category other than the one the rules suggest."));
         return;
     }
 
@@ -809,7 +838,7 @@ void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
         return;
     }
 
-    menu.addAction(tr("Religar no destino do perfil"), this,
+    menu.addAction(tr("Link again in the profile destination"), this,
                    [this, node]
                    {
                        viewModel_.RelinkToTheProfileDestination(Chosen(node));
@@ -817,7 +846,7 @@ void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
 
     if (node->kind == TreeNodeKind::Category)
     {
-        menu.addAction(tr("Adotar o destino em que os addons já estão"), this,
+        menu.addAction(tr("Adopt the destination the addons are already in"), this,
                        [this, node]
                        {
                            viewModel_.AdoptDestination(node);
@@ -839,7 +868,7 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
 
     AddStrayActions(menu, node);
 
-    menu.addAction(tr("Herdar o destino de cima"), this,
+    menu.addAction(tr("Inherit the destination from above"), this,
                    [this, node]
                    {
                        ChooseDestination(Chosen(node), {});
@@ -848,7 +877,7 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
 
     for (const std::filesystem::path& destination : profile.destinations)
     {
-        menu.addAction(tr("Fixar o destino em %1").arg(AsText(destination.filename())), this,
+        menu.addAction(tr("Pin the destination to %1").arg(AsText(destination.filename())), this,
                        [this, node, destination]
                        {
                            ChooseDestination(Chosen(node), destination);
@@ -858,13 +887,13 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
 
 bool AddonTreePage::AskWhetherToRelink(const std::size_t strayed)
 {
-    QMessageBox question(QMessageBox::Question, tr("Destino alterado"),
-                         tr("%n addon(s) daqui continuam ligados fora do destino que o perfil agora manda usar.",
+    QMessageBox question(QMessageBox::Question, tr("Destination changed"),
+                         tr("%n addon from here is still linked away from the destination the profile now says to use.",
                             nullptr, static_cast<int>(strayed)),
                          QMessageBox::NoButton, this);
 
-    const QPushButton* relink = question.addButton(tr("Religar agora"), QMessageBox::AcceptRole);
-    question.addButton(tr("Deixar como está"), QMessageBox::RejectRole);
+    const QPushButton* relink = question.addButton(tr("Link again now"), QMessageBox::AcceptRole);
+    question.addButton(tr("Leave it as it is"), QMessageBox::RejectRole);
     question.exec();
 
     return question.clickedButton() == relink;
@@ -885,7 +914,7 @@ void AddonTreePage::ChooseDestination(const std::vector<const TreeNode*>& nodes,
 
 void AddonTreePage::BrowseForLibrary()
 {
-    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Escolha a pasta da biblioteca"));
+    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Choose the library folder"));
     if (chosen.isEmpty())
     {
         return;
@@ -895,14 +924,14 @@ void AddonTreePage::BrowseForLibrary()
 
     if (!report.Accepted())
     {
-        QMessageBox::warning(this, tr("Biblioteca repetida"),
-                             tr("Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz onde os "
-                                "addons ficam guardados; as subpastas dela viram categorias."));
+        QMessageBox::warning(this, tr("Repeated library"),
+                             tr("That folder is already inside a registered library. Choose the root folder where the "
+                                "addons are kept; its subfolders become categories."));
         return;
     }
 
-    QMessageBox::information(this, tr("Biblioteca cadastrada"),
+    QMessageBox::information(this, tr("Library registered"),
                              tr("%1 · %2, %3")
-                                 .arg(chosen, tr("%n categoria(s)", nullptr, static_cast<int>(report.categories)),
-                                      tr("%n addon(s)", nullptr, static_cast<int>(report.addons))));
+                                 .arg(chosen, tr("%n category", nullptr, static_cast<int>(report.categories)),
+                                      tr("%n addon", nullptr, static_cast<int>(report.addons))));
 }

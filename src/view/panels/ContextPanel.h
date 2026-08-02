@@ -21,10 +21,15 @@ public:
 
     void ShowTitle(const QString& title, bool alarming = false) const;
 
+    void RenameTheFallback(const QString& title);
+
     void Summon(bool summoned);
 
 signals:
     void CloseRequested();
+
+protected:
+    void changeEvent(QEvent* event) override;
 
 private:
     void SetCollapsed(bool collapsed);

@@ -3,6 +3,7 @@
 #include <utility>
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
 #include <QtWidgets/QButtonGroup>
@@ -33,6 +34,9 @@ namespace
     constexpr int kRowPaddingX = 12;
     constexpr int kRowPaddingY = 7;
     constexpr int kRowSpacing = 9;
+
+    constexpr int kEnglishRow = 0;
+    constexpr int kBrazilianRow = 1;
 
     void SeparateFromWhatCameBefore(QWidget* row, const bool follows)
     {
@@ -168,11 +172,7 @@ OptionsPage::OptionsPage(OptionsViewModel& viewModel,
     panes_->addWidget(CreateProfilesAndLibraries());
     panes_->addWidget(CreateLinks());
     panes_->addWidget(CreateUpdates());
-    panes_->addWidget(
-        CreateWaitingOn(tr("Idioma"),
-                        tr("A chave language já existe no settings.json, e o seletor aparece quando a interface tiver "
-                           "os dois idiomas. Hoje ela nasce em português do Brasil: as 609 frases ainda não foram "
-                           "invertidas para inglês, então não há o que escolher.")));
+    panes_->addWidget(CreateLanguage());
     panes_->addWidget(CreateAbout());
 
     auto* layout = new QHBoxLayout(this);
@@ -188,6 +188,46 @@ OptionsPage::OptionsPage(OptionsViewModel& viewModel,
     Reload();
 }
 
+void OptionsPage::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+    }
+
+    QWidget::changeEvent(event);
+}
+
+void OptionsPage::RetranslateUi()
+{
+    navigation_->item(0)->setText(tr("Profiles and libraries"));
+    navigation_->item(1)->setText(tr("Links"));
+    navigation_->item(2)->setText(tr("Updates"));
+    navigation_->item(3)->setText(tr("Language"));
+    navigation_->item(4)->setText(tr("About"));
+
+    const int shown = panes_->currentIndex();
+
+    while (QWidget* pane = panes_->widget(0))
+    {
+        panes_->removeWidget(pane);
+        delete pane;
+    }
+
+    delete linkTypes_;
+    delete updateModes_;
+    delete languages_;
+
+    panes_->addWidget(CreateProfilesAndLibraries());
+    panes_->addWidget(CreateLinks());
+    panes_->addWidget(CreateUpdates());
+    panes_->addWidget(CreateLanguage());
+    panes_->addWidget(CreateAbout());
+    panes_->setCurrentIndex(shown);
+
+    Reload();
+}
+
 QWidget* OptionsPage::CreateNavigation()
 {
     navigation_ = new QListWidget(this);
@@ -196,13 +236,11 @@ QWidget* OptionsPage::CreateNavigation()
     navigation_->setFrameShape(QFrame::NoFrame);
     navigation_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    navigation_->addItem(tr("Perfis e bibliotecas"));
+    navigation_->addItem(tr("Profiles and libraries"));
     navigation_->addItem(tr("Links"));
-    navigation_->addItem(tr("Atualizações"));
-    navigation_->addItem(tr("Idioma"));
-    navigation_->addItem(tr("Sobre"));
-
-    navigation_->item(3)->setToolTip(tr("Espera a interface ganhar os dois idiomas."));
+    navigation_->addItem(tr("Updates"));
+    navigation_->addItem(tr("Language"));
+    navigation_->addItem(tr("About"));
 
     navigation_->setCurrentRow(0);
 
@@ -218,23 +256,23 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     layout->setSpacing(kBetweenGroups);
 
     QVBoxLayout* underTheProfiles = nullptr;
-    QWidget* profileGroup = GroupWith(tr("Perfis"), profiles_, underTheProfiles, pane);
+    QWidget* profileGroup = GroupWith(tr("Profiles"), profiles_, underTheProfiles, pane);
 
-    auto* addProfile = new QPushButton(tr("Adicionar perfil…"), pane);
+    auto* addProfile = new QPushButton(tr("Add profile…"), pane);
     connect(addProfile, &QPushButton::clicked, this, &OptionsPage::AddProfileRequested);
     underTheProfiles->addWidget(ButtonRow(addProfile, profileGroup));
     layout->addWidget(profileGroup);
 
     QVBoxLayout* underTheDestinations = nullptr;
-    layout->addWidget(GroupWith(tr("Destinos"), destinations_, underTheDestinations, pane, &destinationsHeading_));
+    layout->addWidget(GroupWith(tr("Destinations"), destinations_, underTheDestinations, pane, &destinationsHeading_));
 
     QVBoxLayout* underTheLibraries = nullptr;
-    QWidget* libraryGroup = GroupWith(tr("Bibliotecas"), libraries_, underTheLibraries, pane, &librariesHeading_);
+    QWidget* libraryGroup = GroupWith(tr("Libraries"), libraries_, underTheLibraries, pane, &librariesHeading_);
 
-    addLibrary_ = new QPushButton(tr("Adicionar biblioteca…"), pane);
+    addLibrary_ = new QPushButton(tr("Add library…"), pane);
     connect(addLibrary_, &QPushButton::clicked, this, &OptionsPage::AddLibrary);
 
-    importLegacy_ = new QPushButton(tr("Importar do MSFS Addons Linker…"), pane);
+    importLegacy_ = new QPushButton(tr("Import from MSFS Addons Linker…"), pane);
     connect(importLegacy_, &QPushButton::clicked, this, &OptionsPage::LegacyImportRequested);
 
     auto* underneath = new QWidget(libraryGroup);
@@ -245,14 +283,14 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     buttons->addStretch();
     underTheLibraries->addWidget(underneath);
 
-    onlyForTheProfileInUse_ = Quiet(tr("Este é outro perfil, e o FS Organizer só mexe no que está em uso. Marque-o "
-                                       "como ativo para trocar destino ou biblioteca."),
+    onlyForTheProfileInUse_ = Quiet(tr("This is another profile, and FS Organizer only touches what is in use. Mark it "
+                                       "as active to switch a destination or a library."),
                                     libraryGroup);
     underTheLibraries->addWidget(onlyForTheProfileInUse_);
     underTheLibraries->addWidget(
-        Quiet(tr("Descadastrar remove a biblioteca da configuração e não apaga arquivo nenhum. Os links que apontavam "
-                 "para ela continuam funcionando no simulador, mas passam a aparecer como links de terceiros, que o FS "
-                 "Organizer não toca."),
+        Quiet(tr("Unregistering takes the library out of the configuration and deletes no file at all. The links that "
+                 "pointed at it keep working in the simulator, but start showing up as third party links, which FS "
+                 "Organizer does not touch."),
               libraryGroup));
     layout->addWidget(libraryGroup);
     layout->addStretch();
@@ -279,7 +317,11 @@ QWidget* OptionsPage::Choice(const QString& name, const QString& explanation, QW
     auto* title = new QLabel(name, choice);
     title->setObjectName(QStringLiteral("OptionsChoiceName"));
     said->addWidget(title);
-    said->addWidget(Quiet(explanation, choice));
+
+    if (!explanation.isEmpty())
+    {
+        said->addWidget(Quiet(explanation, choice));
+    }
 
     auto* layout = new QHBoxLayout(choice);
     layout->setContentsMargins(0, 11, 0, 11);
@@ -301,7 +343,7 @@ QWidget* OptionsPage::CreateLinks()
     auto* links = new QVBoxLayout;
     links->setContentsMargins(0, 0, 0, 0);
     links->setSpacing(kInsideGroup);
-    links->addWidget(Heading(tr("Tipo de link"), pane));
+    links->addWidget(Heading(tr("Link type"), pane));
 
     linkTypes_ = new QButtonGroup(this);
 
@@ -313,12 +355,13 @@ QWidget* OptionsPage::CreateLinks()
     symbolic->setObjectName(QStringLiteral("SymbolicChoice"));
     linkTypes_->addButton(symbolic, static_cast<int>(LinkType::Symbolic));
 
-    links->addWidget(Choice(tr("Junção de diretório"),
-                            tr("Não exige administrador e cruza volumes locais. É o único caminho testado do MVP."),
-                            junction, false));
-    links->addWidget(Choice(tr("Link simbólico"),
-                            tr("Só para biblioteca em caminho de rede, onde a junção não chega. Exige privilégio; sem "
-                               "ele o app explica a recusa em vez de falhar calado."),
+    links->addWidget(
+        Choice(tr("Directory junction"),
+               tr("Needs no administrator and crosses local volumes. It is the only path the MVP has tested."),
+               junction, false));
+    links->addWidget(Choice(tr("Symbolic link"),
+                            tr("Only for a library on a network path, where the junction does not reach. Needs "
+                               "privilege; without it the app explains the refusal instead of failing quietly."),
                             symbolic, true));
     layout->addLayout(links);
 
@@ -328,21 +371,21 @@ QWidget* OptionsPage::CreateLinks()
                 viewModel_.ChooseTypeOfLink(static_cast<LinkType>(chosen));
                 emit StatusChanged(
                     chosen == static_cast<int>(LinkType::Symbolic)
-                        ? tr("Os links novos passam a ser link simbólico. Os que já existem continuam junção de "
-                             "diretório.")
-                        : tr("Os links novos passam a ser junção de diretório."));
+                        ? tr("New links become symbolic links. The ones that already exist stay directory junctions.")
+                        : tr("New links become directory junctions."));
             });
 
     auto* verification = new QVBoxLayout;
     verification->setContentsMargins(0, 0, 0, 0);
     verification->setSpacing(kInsideGroup);
-    verification->addWidget(Heading(tr("Verificação depois de copiar"), pane));
+    verification->addWidget(Heading(tr("Check after copying"), pane));
 
     auto* structure = new QRadioButton(pane);
     structure->setChecked(true);
     structure->setEnabled(false);
-    verification->addWidget(Choice(
-        tr("Por estrutura"), tr("Confere contagem e tamanho de cada arquivo. É o que roda hoje."), structure, false));
+    verification->addWidget(Choice(tr("By structure"),
+                                   tr("Checks the count and the size of every file. It is what runs today."), structure,
+                                   false));
 
     auto* hashed = new QRadioButton(pane);
     hashed->setObjectName(QStringLiteral("HashChoice"));
@@ -352,12 +395,12 @@ QWidget* OptionsPage::CreateLinks()
     auto* waitingLayout = new QHBoxLayout(waiting);
     waitingLayout->setContentsMargins(0, 0, 0, 0);
     waitingLayout->setSpacing(8);
-    waitingLayout->addWidget(Tag(tr("Fase 2"), "muted", waiting));
+    waitingLayout->addWidget(Tag(tr("Phase 2"), "muted", waiting));
     waitingLayout->addWidget(hashed);
 
-    verification->addWidget(Choice(tr("Por hash"),
-                                   tr("Lê os dois lados inteiros e compara. Correto e caro: uma importação de 400 MB "
-                                      "passa a ler 800 MB."),
+    verification->addWidget(Choice(tr("By hash"),
+                                   tr("Reads both sides in full and compares them. Correct and expensive: a 400 MB "
+                                      "import ends up reading 800 MB."),
                                    waiting, true));
     layout->addLayout(verification);
 
@@ -381,7 +424,7 @@ QWidget* OptionsPage::CreateUpdates()
     auto* modes = new QVBoxLayout;
     modes->setContentsMargins(0, 0, 0, 0);
     modes->setSpacing(kInsideGroup);
-    modes->addWidget(Heading(tr("Atualizações"), pane));
+    modes->addWidget(Heading(tr("Updates"), pane));
 
     updateModes_ = new QButtonGroup(this);
 
@@ -392,11 +435,18 @@ QWidget* OptionsPage::CreateUpdates()
         QString explanation;
         const char* objectName;
     } offered[] = {
-        {UpdateMode::Automatic, tr("Automática"),
-         tr("Baixa a versão nova sozinha e a aplica quando você fecha o programa."), "AutomaticUpdateChoice"},
-        {UpdateMode::Notify, tr("Avisar"),
-         tr("Procura versão nova e diz que ela existe. Nada é baixado antes de você mandar."), "NotifyUpdateChoice"},
-        {UpdateMode::Manual, tr("Manual"), tr("Só procura quando você clica em Procurar agora."), "ManualUpdateChoice"},
+        {UpdateMode::Automatic,
+         tr("Automatic"),
+         tr("Downloads the new version on its own and applies it when you close the program."),
+         "AutomaticUpdateChoice"},
+        {UpdateMode::Notify,
+         tr("Notify"),
+         tr("Looks for a new version and says it exists. Nothing is downloaded before you say so."),
+         "NotifyUpdateChoice"},
+        {UpdateMode::Manual,
+         tr("Manual"),
+         tr("Only looks when you click Check now."),
+         "ManualUpdateChoice"},
     };
 
     bool follows = false;
@@ -429,9 +479,9 @@ QWidget* OptionsPage::CreateUpdates()
     updateStatus_->setObjectName(QStringLiteral("UpdateStatus"));
     layout->addWidget(updateStatus_);
 
-    checkForUpdates_ = new QPushButton(tr("Procurar agora"), pane);
-    downloadUpdate_ = new QPushButton(tr("Baixar"), pane);
-    applyUpdate_ = new QPushButton(tr("Aplicar e reiniciar"), pane);
+    checkForUpdates_ = new QPushButton(tr("Check now"), pane);
+    downloadUpdate_ = new QPushButton(tr("Download"), pane);
+    applyUpdate_ = new QPushButton(tr("Apply and restart"), pane);
 
     auto* buttons = new QWidget(pane);
     auto* row = new QHBoxLayout(buttons);
@@ -465,18 +515,63 @@ void OptionsPage::ReloadUpdates() const
     applyUpdate_->setEnabled(updates_.State() == UpdateState::ReadyToApply);
 }
 
-QWidget* OptionsPage::CreateWaitingOn(const QString& heading, const QString& explanation)
+QWidget* OptionsPage::CreateLanguage()
 {
     auto* pane = new QWidget(this);
 
     auto* layout = new QVBoxLayout(pane);
     layout->setContentsMargins(kBodyMarginX, kBodyMarginY, kBodyMarginX, kBodyMarginY);
     layout->setSpacing(kBetweenGroups);
-    layout->addWidget(Heading(heading, pane));
-    layout->addWidget(Note(explanation, pane));
+
+    auto* choices = new QVBoxLayout;
+    choices->setContentsMargins(0, 0, 0, 0);
+    choices->setSpacing(kInsideGroup);
+    choices->addWidget(Heading(tr("Language"), pane));
+
+    languages_ = new QButtonGroup(this);
+
+    const struct
+    {
+        QString name;
+        const char* objectName;
+    } offered[] = {
+        {QStringLiteral("English"), "EnglishChoice"},
+        {QStringLiteral("Português (Brasil)"), "BrazilianChoice"},
+    };
+
+    bool follows = false;
+    int index = 0;
+    for (const auto& choice : offered)
+    {
+        auto* button = new QRadioButton(pane);
+        button->setObjectName(QLatin1String(choice.objectName));
+        languages_->addButton(button, index++);
+
+        choices->addWidget(Choice(choice.name, QString{}, button, follows));
+        follows = true;
+    }
+
+    layout->addLayout(choices);
     layout->addStretch();
 
+    connect(languages_, &QButtonGroup::idClicked, this,
+            [this](const int chosen)
+            {
+                viewModel_.ChooseLanguage(chosen == kBrazilianRow ? "pt_BR" : "en");
+            });
+
     return pane;
+}
+
+void OptionsPage::ReloadLanguage() const
+{
+    const std::string stored = viewModel_.Language();
+    const int row = stored == "pt_BR" ? kBrazilianRow : kEnglishRow;
+
+    if (QAbstractButton* chosen = languages_->button(row); chosen != nullptr)
+    {
+        chosen->setChecked(true);
+    }
 }
 
 QWidget* OptionsPage::CreateAbout()
@@ -493,8 +588,9 @@ QWidget* OptionsPage::CreateAbout()
     version->setObjectName(QStringLiteral("AboutVersion"));
     layout->addWidget(version);
 
-    layout->addWidget(Quiet(tr("Distribuído sob a GNU General Public License versão 2."), pane));
-    layout->addWidget(Quiet(tr("A tipografia é a Archivo, de Omnibus-Type, sob a SIL Open Font License 1.1."), pane));
+    layout->addWidget(Quiet(tr("Distributed under the GNU General Public License version 2."), pane));
+    layout->addWidget(
+        Quiet(tr("The typeface is Archivo, by Omnibus-Type, under the SIL Open Font License 1.1."), pane));
     layout->addStretch();
 
     return pane;
@@ -505,8 +601,8 @@ void OptionsPage::Reload()
     const bool inUse = viewModel_.ShowsTheProfileInUse();
     const QString whose = NameOf(viewModel_.ProfileShown().variant);
 
-    destinationsHeading_->setText(tr("Destinos de %1").arg(whose).toUpper());
-    librariesHeading_->setText(tr("Bibliotecas de %1").arg(whose).toUpper());
+    destinationsHeading_->setText(tr("Destinations of %1").arg(whose).toUpper());
+    librariesHeading_->setText(tr("Libraries of %1").arg(whose).toUpper());
     addLibrary_->setEnabled(inUse);
     importLegacy_->setEnabled(inUse);
     onlyForTheProfileInUse_->setVisible(!inUse);
@@ -515,13 +611,14 @@ void OptionsPage::Reload()
     ReloadDestinations();
     ReloadLibraries();
     ReloadUpdates();
+    ReloadLanguage();
 
     if (QAbstractButton* chosen = linkTypes_->button(static_cast<int>(viewModel_.TypeOfLink())); chosen != nullptr)
     {
         chosen->setChecked(true);
     }
 
-    emit SummaryChanged(tr("%1 · gravado a cada mudança").arg(AsText(settingsFile_)));
+    emit SummaryChanged(tr("%1 · written on every change").arg(AsText(settingsFile_)));
 }
 
 void OptionsPage::ReloadProfiles()
@@ -543,22 +640,22 @@ void OptionsPage::ReloadProfiles()
         layout->addWidget(chosen);
 
         const QString counted = profile.active
-            ? tr("%1 destino(s) · %2 biblioteca(s) · %3 addons")
+            ? tr("%1 destinations · %2 libraries · %3 addons")
                   .arg(profile.destinations)
                   .arg(profile.libraries)
                   .arg(viewModel_.AddonsInTheActiveProfile())
-            : tr("%1 destino(s) · %2 biblioteca(s)").arg(profile.destinations).arg(profile.libraries);
+            : tr("%1 destinations · %2 libraries").arg(profile.destinations).arg(profile.libraries);
 
         layout->addWidget(Detail(counted, row));
         layout->addStretch();
 
         const std::string id = profile.id;
 
-        auto* edit = new QPushButton(tr("Ver…"), row);
+        auto* edit = new QPushButton(tr("View…"), row);
         edit->setEnabled(id != viewModel_.ProfileShown().id);
         layout->addWidget(edit);
 
-        auto* remove = new QPushButton(tr("Remover"), row);
+        auto* remove = new QPushButton(tr("Remove"), row);
         remove->setEnabled(viewModel_.Profiles().size() > 1);
         layout->addWidget(remove);
 
@@ -595,12 +692,12 @@ void OptionsPage::ReloadDestinations()
         SeparateFromWhatCameBefore(row, destinations_->count() > 0);
         auto* layout = qobject_cast<QHBoxLayout*>(row->layout());
 
-        layout->addWidget(Tag(destination.isDefault ? tr("Padrão") : tr("Extra"),
+        layout->addWidget(Tag(destination.isDefault ? tr("Default") : tr("Extra"),
                               destination.isDefault ? "filled" : "outlined", row));
         layout->addWidget(new QLabel(AsText(destination.path.filename()), row));
         layout->addWidget(Detail(AsText(destination.path), row), 1);
 
-        auto* repoint = new QPushButton(tr("Trocar…"), row);
+        auto* repoint = new QPushButton(tr("Switch…"), row);
         repoint->setEnabled(viewModel_.ShowsTheProfileInUse());
         layout->addWidget(repoint);
 
@@ -631,18 +728,16 @@ void OptionsPage::ReloadLibraries()
         name->setFont(bold);
         layout->addWidget(name);
 
-        const QString counted = library.counted ? tr("%1 · %2 categoria(s), %3 addons")
-                                                      .arg(AsText(library.path))
-                                                      .arg(library.categories)
-                                                      .arg(library.addons)
-                                                : AsText(library.path);
+        const QString counted = library.counted
+            ? tr("%1 · %2 categories, %3 addons").arg(AsText(library.path)).arg(library.categories).arg(library.addons)
+            : AsText(library.path);
 
         layout->addWidget(Detail(counted, row), 1);
 
-        auto* open = new QPushButton(tr("Abrir"), row);
+        auto* open = new QPushButton(tr("Open"), row);
         layout->addWidget(open);
 
-        auto* unregister = new QPushButton(tr("Descadastrar"), row);
+        auto* unregister = new QPushButton(tr("Unregister"), row);
         unregister->setEnabled(library.counted);
         layout->addWidget(unregister);
 
@@ -666,7 +761,7 @@ void OptionsPage::ReloadLibraries()
 
 void OptionsPage::Repoint(const std::filesystem::path& destination)
 {
-    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Escolha a pasta nova deste destino"),
+    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Choose the new folder for this destination"),
                                                              AsText(destination.parent_path()));
     if (chosen.isEmpty())
     {
@@ -679,15 +774,15 @@ void OptionsPage::Repoint(const std::filesystem::path& destination)
         return;
     }
 
-    QMessageBox question(QMessageBox::Question, tr("Trocar o destino"),
-                         tr("O perfil passa a usar %1.\n\nOs links que já existem em %2 continuam lá, funcionando, e o "
-                            "FS Organizer deixa de mexer neles. As fixações de destino que apontavam para a pasta "
-                            "antiga passam a apontar para a nova.")
+    QMessageBox question(QMessageBox::Question, tr("Switch the destination"),
+                         tr("The profile starts using %1.\n\nThe links that already exist in %2 stay there, working, "
+                            "and FS Organizer stops touching them. The destination pinnings that pointed at the old "
+                            "folder start pointing at the new one.")
                              .arg(chosen, AsText(destination)),
                          QMessageBox::NoButton, this);
 
-    const QPushButton* proceed = question.addButton(tr("Trocar"), QMessageBox::AcceptRole);
-    question.addButton(tr("Cancelar"), QMessageBox::RejectRole);
+    const QPushButton* proceed = question.addButton(tr("Switch"), QMessageBox::AcceptRole);
+    question.addButton(tr("Cancel"), QMessageBox::RejectRole);
     question.exec();
 
     if (question.clickedButton() != proceed)
@@ -698,12 +793,12 @@ void OptionsPage::Repoint(const std::filesystem::path& destination)
     viewModel_.RepointDestination(destination, landing);
     Reload();
 
-    emit StatusChanged(tr("Destino trocado para %1.").arg(chosen));
+    emit StatusChanged(tr("Destination switched to %1.").arg(chosen));
 }
 
 void OptionsPage::AddLibrary()
 {
-    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Escolha a pasta da biblioteca"));
+    const QString chosen = QFileDialog::getExistingDirectory(this, tr("Choose the library folder"));
     if (chosen.isEmpty())
     {
         return;
@@ -712,42 +807,41 @@ void OptionsPage::AddLibrary()
     const LibraryReport report = viewModel_.RegisterLibrary(AsPath(chosen));
     if (!report.Accepted())
     {
-        QMessageBox::warning(this, tr("Biblioteca recusada"),
-                             tr("%1 está dentro de uma biblioteca que já é cadastrada.").arg(chosen));
+        QMessageBox::warning(this, tr("Library refused"),
+                             tr("%1 is inside a library that is already registered.").arg(chosen));
         return;
     }
 
     Reload();
 
-    emit StatusChanged(
-        tr("Biblioteca cadastrada: %1 categoria(s), %2 addons").arg(report.categories).arg(report.addons));
+    emit StatusChanged(tr("Library registered: %1 categories, %2 addons").arg(report.categories).arg(report.addons));
 }
 
 void OptionsPage::Remove(const ProfileLine& profile)
 {
-    QMessageBox question(QMessageBox::Question, tr("Remover %1?").arg(profile.label), QString{}, QMessageBox::NoButton,
+    QMessageBox question(QMessageBox::Question, tr("Remove %1?").arg(profile.label), QString{}, QMessageBox::NoButton,
                          this);
 
-    question.setText(tr("O perfil sai da configuração com as bibliotecas e os destinos dele. Nenhum arquivo é apagado "
-                        "ou movido."));
+    question.setText(tr("The profile leaves the configuration along with its libraries and its destinations. No file "
+                        "is deleted or moved."));
 
     QCheckBox* disabling = nullptr;
     const std::size_t enabled = profile.active ? viewModel_.EnabledInTheProfileInUse() : 0;
 
     if (enabled > 0)
     {
-        question.setInformativeText(tr("%1 addon(s) deste perfil estão habilitados agora. Os links continuam no "
-                                       "destino e continuam funcionando no simulador, mas o FS Organizer passa a "
-                                       "tratá-los como links de terceiros e não mexe mais neles.")
-                                        .arg(enabled));
+        question.setInformativeText(
+            tr("%n addon of this profile is enabled right now. The links stay in the destination and keep working in "
+               "the simulator, but FS Organizer starts treating them as third party links and no longer touches them.",
+               nullptr, static_cast<int>(enabled)));
 
-        disabling = new QCheckBox(tr("Desabilitar os %1 antes de remover").arg(enabled), &question);
+        disabling = new QCheckBox(tr("Disable the %1 before removing").arg(enabled), &question);
         disabling->setChecked(false);
         question.setCheckBox(disabling);
     }
 
-    const QPushButton* proceed = question.addButton(tr("Remover"), QMessageBox::AcceptRole);
-    question.addButton(tr("Cancelar"), QMessageBox::RejectRole);
+    const QPushButton* proceed = question.addButton(tr("Remove"), QMessageBox::AcceptRole);
+    question.addButton(tr("Cancel"), QMessageBox::RejectRole);
     question.exec();
 
     if (question.clickedButton() != proceed)
@@ -757,36 +851,36 @@ void OptionsPage::Remove(const ProfileLine& profile)
 
     if (!viewModel_.RemoveProfile(profile.id, disabling != nullptr && disabling->isChecked()))
     {
-        emit StatusChanged(tr("%1 não foi removido: o programa precisa de pelo menos um perfil.").arg(profile.label));
+        emit StatusChanged(tr("%1 was not removed: the program needs at least one profile.").arg(profile.label));
         return;
     }
 
-    emit StatusChanged(tr("%1 saiu da configuração.").arg(profile.label));
+    emit StatusChanged(tr("%1 left the configuration.").arg(profile.label));
 }
 
 void OptionsPage::Unregister(const LibraryLine& library)
 {
-    QMessageBox question(QMessageBox::Question, tr("Descadastrar %1?").arg(library.label), QString{},
+    QMessageBox question(QMessageBox::Question, tr("Unregister %1?").arg(library.label), QString{},
                          QMessageBox::NoButton, this);
 
-    question.setText(tr("A biblioteca sai da configuração. Nenhum arquivo é apagado ou movido."));
+    question.setText(tr("The library leaves the configuration. No file is deleted or moved."));
 
     QCheckBox* disabling = nullptr;
 
     if (library.enabled > 0)
     {
-        question.setInformativeText(tr("%1 addon(s) dela estão habilitados agora. Os links continuam no destino e "
-                                       "continuam funcionando no simulador, mas o FS Organizer passa a tratá-los como "
-                                       "links de terceiros e não mexe mais neles.")
-                                        .arg(library.enabled));
+        question.setInformativeText(
+            tr("%n addon of it is enabled right now. The links stay in the destination and keep working in the "
+               "simulator, but FS Organizer starts treating them as third party links and no longer touches them.",
+               nullptr, static_cast<int>(library.enabled)));
 
-        disabling = new QCheckBox(tr("Desabilitar os %1 antes de descadastrar").arg(library.enabled), &question);
+        disabling = new QCheckBox(tr("Disable the %1 before unregistering").arg(library.enabled), &question);
         disabling->setChecked(false);
         question.setCheckBox(disabling);
     }
 
-    const QPushButton* proceed = question.addButton(tr("Descadastrar"), QMessageBox::AcceptRole);
-    question.addButton(tr("Cancelar"), QMessageBox::RejectRole);
+    const QPushButton* proceed = question.addButton(tr("Unregister"), QMessageBox::AcceptRole);
+    question.addButton(tr("Cancel"), QMessageBox::RejectRole);
     question.exec();
 
     if (question.clickedButton() != proceed)
@@ -796,5 +890,5 @@ void OptionsPage::Unregister(const LibraryLine& library)
 
     viewModel_.UnregisterLibrary(library.id, disabling != nullptr && disabling->isChecked());
 
-    emit StatusChanged(tr("%1 saiu da configuração.").arg(library.label));
+    emit StatusChanged(tr("%1 left the configuration.").arg(library.label));
 }

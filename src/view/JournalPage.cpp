@@ -1,5 +1,6 @@
 #include "view/JournalPage.h"
 
+#include <QtCore/QEvent>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
@@ -32,14 +33,13 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     operations_->setItemDelegate(rows);
     DressTheHeaderOf(operations_->header());
 
-    auto* search = new QLineEdit(this);
-    search->setPlaceholderText(tr("Buscar addon, caminho ou operação…"));
-    search->setClearButtonEnabled(true);
-    search->setMinimumWidth(220);
-    search->setMaximumWidth(280);
+    search_ = new QLineEdit(this);
+    search_->setClearButtonEnabled(true);
+    search_->setMinimumWidth(220);
+    search_->setMaximumWidth(280);
 
-    auto* failuresOnly = new QCheckBox(tr("Só o que falhou"), this);
-    auto* reload = new QPushButton(tr("Reler o diário"), this);
+    failuresOnly_ = new QCheckBox(this);
+    reload_ = new QPushButton(this);
 
     auto* toolbar = new QWidget(this);
     toolbar->setObjectName(QStringLiteral("PageToolbar"));
@@ -47,21 +47,21 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     auto* bar = new QHBoxLayout(toolbar);
     bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     bar->setSpacing(8);
-    bar->addWidget(search);
-    bar->addWidget(failuresOnly);
+    bar->addWidget(search_);
+    bar->addWidget(failuresOnly_);
     bar->addStretch();
-    bar->addWidget(reload);
+    bar->addWidget(reload_);
 
-    panel_ = new ContextPanel(tr("Operação"), 400, this);
+    panel_ = new ContextPanel(tr("Operation"), 400, this);
     panel_->setObjectName(QStringLiteral("JournalOperationPanel"));
     detail_ = new ModelRowDetail(panel_);
 
-    auto* promise = new QLabel(tr("O diário é append-only. Nada nesta tela escreve no disco."), panel_);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
+    promise_ = new QLabel(panel_);
+    promise_->setObjectName(QStringLiteral("PanelPromise"));
+    promise_->setWordWrap(true);
 
     panel_->Add(detail_);
-    panel_->Add(promise);
+    panel_->Add(promise_);
     panel_->RestoreCollapsedState();
     panel_->Summon(false);
 
@@ -80,12 +80,35 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     connect(operations_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
             &JournalPage::ShowTheSelectedOperation);
     connect(panel_, &ContextPanel::CloseRequested, operations_->selectionModel(), &QItemSelectionModel::clearSelection);
-    connect(search, &QLineEdit::textChanged, filter_, &JournalFilterModel::Search);
-    connect(failuresOnly, &QCheckBox::toggled, filter_, &JournalFilterModel::ShowOnlyWhatFailed);
-    connect(reload, &QPushButton::clicked, &viewModel_, &JournalViewModel::Show);
+    connect(search_, &QLineEdit::textChanged, filter_, &JournalFilterModel::Search);
+    connect(failuresOnly_, &QCheckBox::toggled, filter_, &JournalFilterModel::ShowOnlyWhatFailed);
+    connect(reload_, &QPushButton::clicked, &viewModel_, &JournalViewModel::Show);
     connect(&model_, &QAbstractItemModel::modelReset, this, &JournalPage::UpdateSummary);
 
+    RetranslateUi();
     UpdateSummary();
+}
+
+void JournalPage::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+        model_.Retranslated();
+        UpdateSummary();
+        ShowTheSelectedOperation();
+    }
+
+    QWidget::changeEvent(event);
+}
+
+void JournalPage::RetranslateUi()
+{
+    search_->setPlaceholderText(tr("Search addon, path or operation…"));
+    failuresOnly_->setText(tr("Only what failed"));
+    reload_->setText(tr("Read the journal again"));
+    promise_->setText(tr("The journal is append-only. Nothing on this screen writes to the disk."));
+    panel_->RenameTheFallback(tr("Operation"));
 }
 
 void JournalPage::ShowTheSelectedOperation() const
@@ -108,11 +131,10 @@ void JournalPage::UpdateSummary()
 {
     const int entries = model_.rowCount({});
 
-    emit SummaryChanged(
-        entries == 0 ? tr("O diário ainda não registrou nenhuma mudança no disco.")
-                     : tr("%n operação(ões) registrada(s), da mais recente para a mais antiga.", nullptr, entries));
+    emit SummaryChanged(entries == 0 ? tr("The journal has not recorded any change on the disk yet.")
+                                     : tr("%n operation recorded, from the newest to the oldest.", nullptr, entries));
 
-    emit AsideChanged(tr("o diário nunca é apagado pelo app"));
+    emit AsideChanged(tr("the journal is never deleted by the app"));
 
     for (int column = 0; column < model_.columnCount({}); ++column)
     {

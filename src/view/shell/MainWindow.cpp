@@ -96,7 +96,7 @@ QWidget* MainWindow::CreateHeader()
     gear_->setObjectName(QStringLiteral("Gear"));
     gear_->setIcon(GearIcon(kGearGlyph));
     gear_->setIconSize(QSize(kGearGlyph, kGearGlyph));
-    gear_->setToolTip(tr("Opções"));
+    gear_->setToolTip(tr("Options"));
     gear_->setCursor(Qt::PointingHandCursor);
     gear_->setFixedHeight(profiles_->sizeHint().height());
 
@@ -123,7 +123,7 @@ QWidget* MainWindow::CreateTabStrip()
     tabs_->setContentsMargins(kPageGutter, 0, kPageGutter, 0);
     tabs_->setSpacing(2);
 
-    back_ = new PageTab(tr("Voltar"), strip);
+    back_ = new PageTab(tr("Back"), strip);
     back_->setCheckable(false);
     back_->setVisible(false);
     connect(back_, &PageTab::clicked, this, &MainWindow::LeaveOptions);
@@ -175,11 +175,12 @@ void MainWindow::LineTheFooterUpWithThePage() const
     statusBar()->setContentsMargins(kPageGutter - kStatusBarAlreadyInsetsTheFirstWidgetBy, 0, kPageGutter, 0);
 }
 
-PageTab* MainWindow::AddPage(const QString& label, QWidget* page)
+PageTab* MainWindow::AddPage(const char* label, QWidget* page)
 {
     pages_->addWidget(page);
 
-    auto* tab = new PageTab(label, this);
+    auto* tab = new PageTab(tr(label), this);
+    tabSources_.insert(tab, label);
     tabs_->insertWidget(tabs_->count() - 1, tab);
 
     connect(tab, &PageTab::clicked, this,
@@ -224,7 +225,7 @@ void MainWindow::ShowOptions()
     behindTheOptions_ = pages_->currentWidget();
 
     const PageTab* origin = tabsByPage_.value(behindTheOptions_);
-    back_->Relabel(origin != nullptr ? tr("← Voltar para %1").arg(origin->Label()) : tr("← Voltar"));
+    back_->Relabel(origin != nullptr ? tr("← Back to %1").arg(origin->Label()) : tr("← Back"));
 
     for (PageTab* tab : tabsByPage_)
     {
@@ -288,10 +289,40 @@ void MainWindow::ShowStatus(const QString& message) const
     statusFades_->start();
 }
 
-void MainWindow::ShowRestartPending(const bool pending) const
+void MainWindow::ShowRestartPending(const bool pending)
 {
-    restart_->setText(pending ? tr("Reinicie o simulador para aplicar.") : QString());
+    restartPending_ = pending;
+    restart_->setText(pending ? tr("Restart the simulator to apply.") : QString());
     restart_->setVisible(pending);
+}
+
+void MainWindow::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+    }
+
+    QMainWindow::changeEvent(event);
+}
+
+void MainWindow::RetranslateUi()
+{
+    gear_->setToolTip(tr("Options"));
+
+    for (auto source = tabSources_.constBegin(); source != tabSources_.constEnd(); ++source)
+    {
+        source.key()->Relabel(tr(source.value().constData()));
+    }
+
+    if (ShowingOptions())
+    {
+        const PageTab* origin = tabsByPage_.value(behindTheOptions_);
+        back_->Relabel(origin != nullptr ? tr("← Back to %1").arg(origin->Label()) : tr("← Back"));
+    }
+
+    ShowRestartPending(restartPending_);
+    ShowProfiles(settings_);
 }
 
 void MainWindow::ShowSummary(const QWidget* page, const QString& summary)
@@ -350,7 +381,7 @@ void MainWindow::ShowProfiles(const AppSettings& settings)
     }
 
     profiles_->insertSeparator(profiles_->count());
-    profiles_->addItem(tr("Adicionar perfil…"), QVariant());
+    profiles_->addItem(tr("Add profile…"), QVariant());
 
     const int active = profiles_->findData(QString::fromStdString(settings_.activeProfileId));
     profiles_->setCurrentIndex(active >= 0 ? active : 0);

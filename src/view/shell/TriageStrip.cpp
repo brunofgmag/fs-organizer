@@ -1,5 +1,6 @@
 #include "view/shell/TriageStrip.h"
 
+#include <QtCore/QEvent>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -15,20 +16,20 @@ TriageStrip::TriageStrip(QWidget* parent) : QWidget(parent)
     row->setContentsMargins(kPageGutter, 8, kPageGutter, 8);
     row->setSpacing(10);
 
-    broken_ = AddItem("filled", tr("Reparar quebrados…"), row);
+    broken_ = AddItem("filled", row);
     broken_.action->setProperty("role", "primary");
 
     beforeConflicts_ = AddSeparator(row);
 
-    conflicts_ = AddItem("outlined", tr("Resolver conflito(s)…"), row);
+    conflicts_ = AddItem("outlined", row);
 
     beforeDuplicated_ = AddSeparator(row);
 
-    duplicated_ = AddItem("outlined", tr("Ver duplicadas…"), row);
+    duplicated_ = AddItem("outlined", row);
 
     row->addStretch();
 
-    unmanaged_ = AddItem(nullptr, tr("Importar selecionados…"), row);
+    unmanaged_ = AddItem(nullptr, row);
     unmanaged_.label->setObjectName(QStringLiteral("TriageQuiet"));
 
     connect(broken_.action, &QPushButton::clicked, this, &TriageStrip::RepairRequested);
@@ -49,7 +50,7 @@ QFrame* TriageStrip::AddSeparator(QHBoxLayout* into)
     return separator;
 }
 
-TriageStrip::Item TriageStrip::AddItem(const char* tag, const QString& action, QHBoxLayout* into)
+TriageStrip::Item TriageStrip::AddItem(const char* tag, QHBoxLayout* into)
 {
     auto* label = new QLabel(this);
 
@@ -58,7 +59,7 @@ TriageStrip::Item TriageStrip::AddItem(const char* tag, const QString& action, Q
         label->setProperty("tag", tag);
     }
 
-    auto* button = new QPushButton(action, this);
+    auto* button = new QPushButton(this);
     button->setProperty("scale", "small");
     button->setCursor(Qt::PointingHandCursor);
 
@@ -79,19 +80,40 @@ void TriageStrip::ShowBreakdown(const std::size_t broken,
                                 const std::size_t duplicated,
                                 const std::size_t unmanaged)
 {
-    broken_.label->setText(tr("%n sem alvo", nullptr, static_cast<int>(broken)));
-    conflicts_.label->setText(tr("%n conflito(s)", nullptr, static_cast<int>(conflicts)));
-    duplicated_.label->setText(tr("%n duplicada(s)", nullptr, static_cast<int>(duplicated)));
-    unmanaged_.label->setText(tr("%n pasta(s) fora da biblioteca", nullptr, static_cast<int>(unmanaged)));
+    shown_ = {broken, conflicts, duplicated, unmanaged};
+    RetranslateUi();
+}
 
-    ShowItem(broken_, broken > 0);
-    ShowItem(conflicts_, conflicts > 0);
-    ShowItem(duplicated_, duplicated > 0);
-    ShowItem(unmanaged_, unmanaged > 0);
-    beforeConflicts_->setVisible(broken > 0 && conflicts > 0);
-    beforeDuplicated_->setVisible(duplicated > 0 && (broken > 0 || conflicts > 0));
+void TriageStrip::RetranslateUi()
+{
+    broken_.action->setText(tr("Repair the broken ones…"));
+    conflicts_.action->setText(tr("Resolve conflicts…"));
+    duplicated_.action->setText(tr("See the duplicated ones…"));
+    unmanaged_.action->setText(tr("Import the selected ones…"));
 
-    anythingToSay_ = broken + conflicts + duplicated + unmanaged > 0;
+    broken_.label->setText(tr("%n with no target", nullptr, static_cast<int>(shown_.broken)));
+    conflicts_.label->setText(tr("%n conflict", nullptr, static_cast<int>(shown_.conflicts)));
+    duplicated_.label->setText(tr("%n duplicated", nullptr, static_cast<int>(shown_.duplicated)));
+    unmanaged_.label->setText(tr("%n folder outside the library", nullptr, static_cast<int>(shown_.unmanaged)));
+
+    ShowItem(broken_, shown_.broken > 0);
+    ShowItem(conflicts_, shown_.conflicts > 0);
+    ShowItem(duplicated_, shown_.duplicated > 0);
+    ShowItem(unmanaged_, shown_.unmanaged > 0);
+    beforeConflicts_->setVisible(shown_.broken > 0 && shown_.conflicts > 0);
+    beforeDuplicated_->setVisible(shown_.duplicated > 0 && (shown_.broken > 0 || shown_.conflicts > 0));
+
+    anythingToSay_ = shown_.broken + shown_.conflicts + shown_.duplicated + shown_.unmanaged > 0;
+}
+
+void TriageStrip::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+    }
+
+    QWidget::changeEvent(event);
 }
 
 bool TriageStrip::HasAnythingToSay() const

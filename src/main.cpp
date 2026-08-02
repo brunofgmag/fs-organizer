@@ -37,6 +37,7 @@
 #include "view/community/CommunityPage.h"
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/JournalPage.h"
+#include "view/LanguageSwitch.h"
 #include "view/options/OptionsPage.h"
 #include "view/shell/MainWindow.h"
 #include "view/PresetsPage.h"
@@ -58,7 +59,6 @@
 
 namespace
 {
-    constexpr auto kInterfaceLanguage = "pt_BR";
     constexpr auto kSingleInstanceName = L"Local\\fs-organizer-single-instance";
     constexpr auto kDefaultUpdateFeed = "https://api.github.com/repos/brunofgmag/fs-organizer/releases/latest";
     constexpr int kFirstUpdateCheckDelayMs = 3000;
@@ -85,17 +85,6 @@ namespace
         }
 
         return true;
-    }
-
-    void TranslateTheNativeWidgets(QTranslator& translator)
-    {
-        const QString beside = QCoreApplication::applicationDirPath() + QStringLiteral("/translations");
-        const QString name = QStringLiteral("qt_%1").arg(kInterfaceLanguage);
-
-        if (translator.load(name, beside) || translator.load(name, QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
-        {
-            QCoreApplication::installTranslator(&translator);
-        }
     }
 
     bool RunSetup(SettingsRepository& settings,
@@ -128,22 +117,23 @@ namespace
         }
 
         detailed.append(QString{});
-        detailed.append(QObject::tr("Destinos deste perfil:"));
+        detailed.append(QObject::tr("Destinations of this profile:"));
         for (const std::filesystem::path& destination : session.Profile().destinations)
         {
             detailed.append(AsText(destination));
         }
 
-        QMessageBox question(QMessageBox::Warning, QObject::tr("Fixações de destino apontando para fora"),
-                             QObject::tr("%1 fixação(ões) de destino deste perfil citam uma pasta que não é destino "
-                                         "dele. Enquanto for assim, os addons fixados usam o destino padrão. Nada foi "
-                                         "apagado da configuração.")
-                                 .arg(orphans.size()),
-                             QMessageBox::NoButton, parent);
+        QMessageBox question(
+            QMessageBox::Warning, QObject::tr("Destination pinnings pointing outside"),
+            QObject::tr(
+                "%n destination pinning of this profile names a folder that is not a destination of it. While that is "
+                "so, the pinned addons use the default destination. Nothing was deleted from the configuration.",
+                nullptr, static_cast<int>(orphans.size())),
+            QMessageBox::NoButton, parent);
         question.setDetailedText(detailed.join(QChar::LineFeed));
 
-        const QPushButton* drop = question.addButton(QObject::tr("Descartar as fixações"), QMessageBox::AcceptRole);
-        question.addButton(QObject::tr("Manter e decidir depois"), QMessageBox::RejectRole);
+        const QPushButton* drop = question.addButton(QObject::tr("Discard the pinnings"), QMessageBox::AcceptRole);
+        question.addButton(QObject::tr("Keep them and decide later"), QMessageBox::RejectRole);
         question.exec();
 
         if (question.clickedButton() == drop)
@@ -179,13 +169,14 @@ namespace
             return;
         }
 
-        QMessageBox question(QMessageBox::Question, QObject::tr("O MSFS Addons Linker está nesta máquina"),
-                             QObject::tr("Ele tem bibliotecas que o FS Organizer ainda não conhece. Nada é movido nem "
-                                         "apagado: você escolhe o que trazer antes de qualquer coisa acontecer."),
+        QMessageBox question(QMessageBox::Question, QObject::tr("MSFS Addons Linker is on this machine"),
+                             QObject::tr("It has libraries FS Organizer does not know yet. Nothing is moved or "
+                                         "deleted: you choose what to bring over before anything happens."),
                              QMessageBox::NoButton, parent);
 
-        const QPushButton* look = question.addButton(QObject::tr("Ver o que dá para trazer"), QMessageBox::AcceptRole);
-        question.addButton(QObject::tr("Agora não"), QMessageBox::RejectRole);
+        const QPushButton* look =
+            question.addButton(QObject::tr("See what can be brought over"), QMessageBox::AcceptRole);
+        question.addButton(QObject::tr("Not now"), QMessageBox::RejectRole);
         question.exec();
 
         if (question.clickedButton() != look)
@@ -244,8 +235,8 @@ int main(int argc, char* argv[])
                          RefreshModernistTheme(app);
                      });
 
-    QTranslator nativeWidgets;
-    TranslateTheNativeWidgets(nativeWidgets);
+    LanguageSwitch language;
+    language.Use(LanguageSwitch::Stored({}));
 
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
@@ -262,14 +253,15 @@ int main(int argc, char* argv[])
     const std::optional<AppSettings> stored = settings.Load();
     if (!stored.has_value())
     {
-        QMessageBox::critical(
-            nullptr, QObject::tr("Configuração ilegível"),
-            QObject::tr("O arquivo de configuração existe mas não pôde ser lido, então o FS Organizer não vai "
-                        "sobrescrevê-lo. Mova ou conserte %1 e abra o programa de novo.")
-                .arg(AsText(SettingsFilePath())));
+        QMessageBox::critical(nullptr, QObject::tr("Unreadable configuration"),
+                              QObject::tr("The configuration file exists but could not be read, so FS Organizer will "
+                                          "not overwrite it. Move or fix %1 and open the program again.")
+                                  .arg(AsText(SettingsFilePath())));
 
         return 1;
     }
+
+    language.Use(LanguageSwitch::Stored(stored->language));
 
     const bool setupJustRan = stored->profiles.empty();
     if (setupJustRan && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
@@ -335,11 +327,11 @@ int main(int argc, char* argv[])
     const LegacyConfigImporter legacyImporter(legacyConfig, filesystemProbe);
     LegacyImportViewModel legacyViewModel(session, legacyImporter, presetService);
 
-    PageTab* libraryButton = window.AddPage(QObject::tr("Biblioteca"), page);
-    PageTab* communityButton = window.AddPage(QObject::tr("Destinos"), communityPage);
-    PageTab* presetsButton = window.AddPage(QObject::tr("Presets"), presetsPage);
-    window.AddPage(QObject::tr("Diário"), journalPage);
-    PageTab* quarantineButton = window.AddPage(QObject::tr("Quarentena"), quarantinePage);
+    PageTab* libraryButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Library"), page);
+    PageTab* communityButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Destinations"), communityPage);
+    PageTab* presetsButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Presets"), presetsPage);
+    window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Journal"), journalPage);
+    PageTab* quarantineButton = window.AddPage(QT_TRANSLATE_NOOP("MainWindow", "Quarantine"), quarantinePage);
 
     window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);
@@ -353,13 +345,19 @@ int main(int argc, char* argv[])
                          organizer.UseLinkType(linkType);
                      });
 
+    QObject::connect(&optionsViewModel, &OptionsViewModel::LanguageChosen, &window,
+                     [&language](const QString& chosen)
+                     {
+                         language.Use(chosen);
+                     });
+
     QObject::connect(&optionsViewModel, &OptionsViewModel::SettingsCouldNotBeSaved, &window,
                      [&window]
                      {
-                         QMessageBox::warning(&window, QObject::tr("Não foi possível salvar"),
-                                              QObject::tr("A opção não pôde ser gravada em %1, então ela continua "
-                                                          "como estava.")
-                                                  .arg(AsText(SettingsFilePath())));
+                         QMessageBox::warning(
+                             &window, QObject::tr("Could not save"),
+                             QObject::tr("The option could not be written to %1, so it stays as it was.")
+                                 .arg(AsText(SettingsFilePath())));
                      });
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &updateViewModel,
@@ -572,9 +570,9 @@ int main(int argc, char* argv[])
                          optionsPage->Reload();
 
                          QMessageBox::warning(
-                             &window, QObject::tr("Não foi possível salvar"),
-                             QObject::tr("A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. "
-                                         "Na próxima abertura ela não vai estar registrada.")
+                             &window, QObject::tr("Could not save"),
+                             QObject::tr("The change was applied on the disk, but the profile could not be written to "
+                                         "%1. Next time the program opens it will not be recorded.")
                                  .arg(AsText(SettingsFilePath())));
                      });
 

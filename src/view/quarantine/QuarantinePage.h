@@ -8,6 +8,7 @@
 #include "viewmodel/QuarantineViewModel.h"
 
 class ContextPanel;
+class EmptyState;
 class ModelRowDetail;
 class QLabel;
 class QPushButton;
@@ -28,8 +29,13 @@ signals:
 
     void AsideChanged(const QString& aside);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
-    void ShowTheSelectedItem();
+    void RetranslateUi();
+
+    void ShowTheSelectedItem() const;
 
     void ShowTheSelectedBatch(const QModelIndexList& rows) const;
 
@@ -60,6 +66,8 @@ private:
     QPushButton* empty_ = nullptr;
     QPushButton* restoreFromPanel_ = nullptr;
     QPushButton* openFolder_ = nullptr;
+    QLabel* promise_ = nullptr;
+    EmptyState* nothingHeld_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_QUARANTINE_QUARANTINE_PAGE_H

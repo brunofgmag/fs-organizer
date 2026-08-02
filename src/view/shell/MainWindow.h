@@ -28,7 +28,7 @@ public:
 
     void ShowProfiles(const AppSettings& settings);
 
-    PageTab* AddPage(const QString& label, QWidget* page);
+    PageTab* AddPage(const char* label, QWidget* page);
 
     void CarryOptionsOn(QWidget* page);
 
@@ -44,7 +44,7 @@ public:
 
     void ShowStatus(const QString& message) const;
 
-    void ShowRestartPending(bool pending) const;
+    void ShowRestartPending(bool pending);
 
     void ShowSummary(const QWidget* page, const QString& summary);
 
@@ -74,7 +74,11 @@ signals:
 protected:
     void showEvent(QShowEvent* event) override;
 
+    void changeEvent(QEvent* event) override;
+
 private:
+    void RetranslateUi();
+
     struct Meter
     {
         int filled = 0;
@@ -112,6 +116,8 @@ private:
     QHash<const QWidget*, Meter> meters_;
     QHash<const QWidget*, bool> triaged_;
     QHash<const QWidget*, PageTab*> tabsByPage_;
+    QHash<PageTab*, QByteArray> tabSources_;
+    bool restartPending_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_SHELL_MAIN_WINDOW_H

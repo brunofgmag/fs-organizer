@@ -131,7 +131,7 @@ void MainWindowTest::ACleanInstallShowsNoTriageStrip()
     MainWindow window(SettingsWithOneProfile());
 
     auto* library = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
+    window.AddPage("Library", library);
     window.CarryTriageOn(library);
 
     auto* strip = window.findChild<TriageStrip*>();
@@ -150,8 +150,8 @@ void MainWindowTest::TheStripOnlyRidesOnThePagesThatCarryIt()
 
     auto* library = new QWidget(&window);
     auto* journal = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
-    PageTab* journalTab = window.AddPage(QStringLiteral("Diário"), journal);
+    window.AddPage("Library", library);
+    PageTab* journalTab = window.AddPage("Journal", journal);
     window.CarryTriageOn(library);
 
     window.ShowTriage(28, 0, 0, 0);
@@ -169,8 +169,8 @@ void MainWindowTest::TheFooterCarriesTheSummaryOfThePageYouAreOn()
 
     auto* library = new QWidget(&window);
     auto* journal = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
-    PageTab* journalTab = window.AddPage(QStringLiteral("Diário"), journal);
+    window.AddPage("Library", library);
+    PageTab* journalTab = window.AddPage("Journal", journal);
 
     window.ShowSummary(library, QStringLiteral("346 addons · 27 habilitados"));
     window.ShowSummary(journal, QStringLiteral("1204 operações registradas"));
@@ -190,8 +190,8 @@ void MainWindowTest::ThePageTabsSitInARowAndStillSwitchPages()
 
     auto* first = new QWidget(&window);
     auto* second = new QWidget(&window);
-    PageTab* firstTab = window.AddPage(QStringLiteral("Biblioteca"), first);
-    PageTab* secondTab = window.AddPage(QStringLiteral("Community"), second);
+    PageTab* firstTab = window.AddPage("Library", first);
+    PageTab* secondTab = window.AddPage("Destinations", second);
 
     window.show();
     QVERIFY(QTest::qWaitForWindowExposed(&window));
@@ -216,7 +216,7 @@ void MainWindowTest::ThePageTabWritesItsCountApartFromItsName()
 {
     MainWindow window(SettingsWithOneProfile());
 
-    PageTab* tab = window.AddPage(QStringLiteral("Biblioteca"), new QWidget(&window));
+    PageTab* tab = window.AddPage("Library", new QWidget(&window));
     const int bare = tab->sizeHint().width();
 
     tab->ShowCount(346);
@@ -237,8 +237,8 @@ void MainWindowTest::LeavingAPageTakesItsStatusMessageAway()
 
     auto* first = new QWidget(&window);
     auto* second = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), first);
-    PageTab* secondTab = window.AddPage(QStringLiteral("Community"), second);
+    window.AddPage("Library", first);
+    PageTab* secondTab = window.AddPage("Destinations", second);
 
     window.ShowSummary(first, QStringLiteral("346 addons · 27 habilitados"));
     window.ShowSummary(second, QStringLiteral("244 entradas"));
@@ -258,7 +258,7 @@ void MainWindowTest::TheMeterFillsWithWhatThePageEnabled()
     MainWindow window(SettingsWithOneProfile());
 
     auto* library = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
+    window.AddPage("Library", library);
 
     auto* meter = window.findChild<QProgressBar*>(QStringLiteral("FooterMeter"));
     QVERIFY(meter != nullptr);
@@ -276,8 +276,8 @@ void MainWindowTest::TheFooterKeepsThePageGutterOnBothEdges()
     MainWindow window(SettingsWithOneProfile());
 
     auto* library = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
-    window.ShowSummary(library, QStringLiteral("346 addons · 27 habilitados"));
+    window.AddPage("Library", library);
+    window.ShowSummary(library, QStringLiteral("346 addons · 27 enabled"));
 
     window.resize(1200, 800);
     window.show();
@@ -303,8 +303,8 @@ void MainWindowTest::TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom(
     auto* library = new QWidget(&window);
     auto* community = new QWidget(&window);
     auto* options = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
-    PageTab* communityTab = window.AddPage(QStringLiteral("Community"), community);
+    window.AddPage("Library", library);
+    PageTab* communityTab = window.AddPage("Destinations", community);
     window.CarryOptionsOn(options);
 
     communityTab->click();
@@ -338,8 +338,8 @@ void MainWindowTest::LeavingTheOptionsGivesBackThePageThatWasOpen()
     auto* library = new QWidget(&window);
     auto* community = new QWidget(&window);
     auto* options = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
-    PageTab* communityTab = window.AddPage(QStringLiteral("Community"), community);
+    window.AddPage("Library", library);
+    PageTab* communityTab = window.AddPage("Destinations", community);
     window.CarryOptionsOn(options);
 
     communityTab->click();
@@ -361,7 +361,7 @@ void MainWindowTest::TheTriageStripStandsDownWhileTheOptionsAreOpen()
 
     auto* library = new QWidget(&window);
     auto* options = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
+    window.AddPage("Library", library);
     window.CarryOptionsOn(options);
     window.CarryTriageOn(library);
 
@@ -384,8 +384,8 @@ void MainWindowTest::ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked()
     auto* library = new QWidget(&window);
     auto* community = new QWidget(&window);
     auto* options = new QWidget(&window);
-    window.AddPage(QStringLiteral("Biblioteca"), library);
-    PageTab* communityTab = window.AddPage(QStringLiteral("Community"), community);
+    window.AddPage("Library", library);
+    PageTab* communityTab = window.AddPage("Destinations", community);
     window.CarryOptionsOn(options);
 
     communityTab->click();

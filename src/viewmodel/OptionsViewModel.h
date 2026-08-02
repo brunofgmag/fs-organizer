@@ -80,6 +80,10 @@ public:
 
     void ChooseUpdateMode(UpdateMode mode);
 
+    [[nodiscard]] std::string Language() const;
+
+    void ChooseLanguage(const std::string& language);
+
     void RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const;
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path) const;
@@ -90,6 +94,8 @@ signals:
     void Changed();
 
     void LinkTypeChosen(LinkType linkType);
+
+    void LanguageChosen(const QString& language);
 
     void LinksDisabled(const std::vector<LinkOperationResult>& results);
 

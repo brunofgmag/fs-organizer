@@ -1,5 +1,6 @@
 #include "view/panels/ContextPanel.h"
 
+#include <QtCore/QEvent>
 #include <QtCore/QSettings>
 #include <QtGui/QFont>
 #include <QtWidgets/QHBoxLayout>
@@ -43,7 +44,7 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     close_->setObjectName(QStringLiteral("PanelClose"));
     close_->setAutoRaise(true);
     close_->setText(QStringLiteral("✕"));
-    close_->setToolTip(tr("Fechar o painel"));
+    close_->setToolTip(tr("Close the panel"));
     close_->setCursor(Qt::PointingHandCursor);
 
     auto* headerRow = new QHBoxLayout(header);
@@ -107,9 +108,30 @@ void ContextPanel::ShowTitle(const QString& title, const bool alarming) const
     rail_->ShowTitle(shown, alarming);
 }
 
+void ContextPanel::RenameTheFallback(const QString& title)
+{
+    const bool wasShowingIt = title_->text() == fallbackTitle_;
+    fallbackTitle_ = title.toUpper();
+
+    if (wasShowingIt)
+    {
+        ShowTitle(QString{});
+    }
+}
+
 void ContextPanel::Summon(const bool summoned)
 {
     setVisible(summoned);
+}
+
+void ContextPanel::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        close_->setToolTip(tr("Close the panel"));
+    }
+
+    QWidget::changeEvent(event);
 }
 
 void ContextPanel::SetCollapsed(const bool collapsed)

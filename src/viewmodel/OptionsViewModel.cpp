@@ -264,6 +264,37 @@ void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
     }
 }
 
+std::string OptionsViewModel::Language() const
+{
+    return settings_.Load().value_or(AppSettings{}).language;
+}
+
+void OptionsViewModel::ChooseLanguage(const std::string& language)
+{
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        emit SettingsCouldNotBeSaved();
+        return;
+    }
+
+    if (loaded->language == language)
+    {
+        return;
+    }
+
+    AppSettings settings = *loaded;
+    settings.language = language;
+
+    if (!settings_.Save(settings))
+    {
+        emit SettingsCouldNotBeSaved();
+        return;
+    }
+
+    emit LanguageChosen(QString::fromStdString(language));
+}
+
 void OptionsViewModel::RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const
 {
     session_.RepointDestination(from, to);

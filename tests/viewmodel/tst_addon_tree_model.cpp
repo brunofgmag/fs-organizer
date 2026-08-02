@@ -318,6 +318,33 @@ void AddonTreeModelTest::TheModelCountsAddonsAndHowManyAreEnabled()
     QCOMPARE(model.EnabledCount(), std::size_t{2});
 }
 
+void AddonTreeModelTest::RetranslatingKeepsThePersistentIndexesOfAProxyUsable()
+{
+    AddonTreeModel model;
+    model.Show(SnapshotWith({kPmdg}), Profile());
+
+    AddonTreeFilterModel proxy;
+    proxy.setSourceModel(&model);
+
+    const QModelIndex library = proxy.index(0, 0, {});
+    QVERIFY(library.isValid());
+    QVERIFY(proxy.rowCount(library) > 0);
+
+    const QPersistentModelIndex category(proxy.index(0, 0, library));
+    QVERIFY(category.isValid());
+    QVERIFY(proxy.rowCount(category) > 0);
+
+    model.Retranslated();
+
+    const QModelIndex again = proxy.index(0, 0, {});
+    QVERIFY2(again.isValid(), "a proxy perdeu a raiz na troca de idioma");
+
+    const QModelIndex child = proxy.index(0, 0, again);
+    QVERIFY2(child.isValid(), "a proxy perdeu o mapeamento dos filhos na troca de idioma");
+    QVERIFY(child.data(Qt::DisplayRole).isValid());
+    QCOMPARE(proxy.rowCount(child), model.rowCount(proxy.mapToSource(child)));
+}
+
 QTEST_MAIN(AddonTreeModelTest)
 
 #include "tst_addon_tree_model.moc"

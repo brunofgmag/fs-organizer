@@ -9,6 +9,7 @@
 #include "viewmodel/SessionNotifier.h"
 
 class ContextPanel;
+class EmptyState;
 class QButtonGroup;
 class QLabel;
 class QLineEdit;
@@ -29,7 +30,12 @@ signals:
 
     void SummaryChanged(const QString& summary);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
+    void RetranslateUi();
+
     [[nodiscard]] QTableWidget* CreateNameTable();
 
     [[nodiscard]] QString SelectedName() const;
@@ -69,6 +75,11 @@ private:
     QPushButton* update_ = nullptr;
     QPushButton* rename_ = nullptr;
     QPushButton* remove_ = nullptr;
+    QPushButton* create_ = nullptr;
+    QLabel* applyAs_ = nullptr;
+    QLabel* promise_ = nullptr;
+    EmptyState* nothing_ = nullptr;
+    QPushButton* nothingAction_ = nullptr;
     std::optional<Preset> selected_;
     bool populating_ = false;
 };

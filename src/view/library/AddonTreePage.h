@@ -12,6 +12,10 @@
 #include "viewmodel/SessionNotifier.h"
 
 class ContextPanel;
+class QLabel;
+class QLineEdit;
+class QCheckBox;
+class EmptyState;
 class ModelRowDetail;
 class QMenu;
 class QPushButton;
@@ -39,7 +43,12 @@ signals:
 
     void ConflictChosen(const CopyConflict& conflict);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
+    void RetranslateUi();
+
     [[nodiscard]] QWidget* CreateActions();
 
     [[nodiscard]] QWidget* CreateInvite();
@@ -109,6 +118,14 @@ private:
     QPushButton* openFolder_ = nullptr;
     AddonTreeFilterModel* filter_ = nullptr;
     QPushButton* undo_ = nullptr;
+    QPushButton* enable_ = nullptr;
+    QPushButton* disable_ = nullptr;
+    QPushButton* rescan_ = nullptr;
+    QLineEdit* search_ = nullptr;
+    QCheckBox* hideEmpty_ = nullptr;
+    QLabel* promise_ = nullptr;
+    EmptyState* invite_ = nullptr;
+    QPushButton* inviteAction_ = nullptr;
     std::set<std::string> expanded_;
     bool rebuilding_ = false;
     bool shownOnce_ = false;

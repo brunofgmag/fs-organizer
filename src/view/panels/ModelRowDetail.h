@@ -20,10 +20,14 @@ public:
 
     void ShowFields(const QList<Field>& fields);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
-    void Clear();
+    void Clear() const;
 
     QGridLayout* rows_ = nullptr;
+    QPersistentModelIndex shown_;
 };
 
 #endif // FS_ORGANIZER_VIEW_PANELS_MODEL_ROW_DETAIL_H

@@ -89,6 +89,7 @@ set(VIEW_SOURCES
         src/view/community/ConflictDialog.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
+        src/view/LanguageSwitch.cpp
         src/view/legacy/LegacyImportDialog.cpp
         src/view/options/OptionsPage.cpp
         src/view/delegates/FittedText.cpp

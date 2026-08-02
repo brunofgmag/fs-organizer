@@ -16,6 +16,11 @@ class CommunityModel final : public QAbstractTableModel
     Q_OBJECT
 
 public:
+    void Retranslated()
+    {
+        emit layoutChanged();
+    }
+
     enum Column
     {
         NameColumn = 0,

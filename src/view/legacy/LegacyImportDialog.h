@@ -21,7 +21,7 @@ signals:
     void StatusChanged(const QString& message);
 
 private:
-    void Fill();
+    void Fill() const;
 
     void Import();
 
