@@ -52,7 +52,15 @@ add_custom_command(TARGET fsorg-shot POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "$<TARGET_FILE:Qt6::QModernWindowsStylePlugin>"
         "$<TARGET_FILE_DIR:fsorg-shot>/styles/"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "$<TARGET_FILE_DIR:fsorg-shot>/i18n"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${CMAKE_BINARY_DIR}/app_en.qm"
+        "${CMAKE_BINARY_DIR}/app_pt_BR.qm"
+        "$<TARGET_FILE_DIR:fsorg-shot>/i18n/"
         VERBATIM)
+
+add_dependencies(fsorg-shot release_translations)
 
 add_executable(fsorg-timing
         tools/fsorg-timing/main.cpp

@@ -23,6 +23,8 @@ public:
 
     [[nodiscard]] static const std::array<Offer, 2>& Offered();
 
+    [[nodiscard]] static bool IsOffered(const QString& language);
+
     [[nodiscard]] static QString Resolve(const QString& stored);
 
     [[nodiscard]] bool Use(const QString& language);

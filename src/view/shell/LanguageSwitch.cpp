@@ -28,14 +28,24 @@ const std::array<LanguageSwitch::Offer, 2>& LanguageSwitch::Offered()
     return offered;
 }
 
-QString LanguageSwitch::Resolve(const QString& stored)
+bool LanguageSwitch::IsOffered(const QString& language)
 {
     for (const Offer& offer : Offered())
     {
-        if (stored == QLatin1String(offer.code))
+        if (language == QLatin1String(offer.code))
         {
-            return stored;
+            return true;
         }
+    }
+
+    return false;
+}
+
+QString LanguageSwitch::Resolve(const QString& stored)
+{
+    if (IsOffered(stored))
+    {
+        return stored;
     }
 
     const QString system = QLocale::system().name();

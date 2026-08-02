@@ -8,6 +8,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QTextStream>
 #include <QtCore/QTimer>
+#include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPixmap>
@@ -41,6 +42,7 @@
 #include "view/library/AddonTreePage.h"
 #include "view/options/OptionsPage.h"
 #include "view/quarantine/QuarantinePage.h"
+#include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
 #include "view/theme/ModernistTheme.h"
@@ -190,9 +192,11 @@ int main(int argc, char* argv[])
     const QCommandLineOption out({"o", "out"}, "Folder to write the PNGs into.", "folder", QDir::currentPath());
     const QCommandLineOption theme({"t", "theme"}, "dark, light or system.", "palette", "system");
     const QCommandLineOption size({"s", "size"}, "Window size, WIDTHxHEIGHT.", "size", "1140x760");
+    const QCommandLineOption language({"l", "lang"}, "en or pt_BR.", "language", "en");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
+    parser.addOption(language);
     parser.process(app);
 
     if (const QString wanted = parser.value(theme); wanted != QLatin1String("system"))
@@ -207,6 +211,30 @@ int main(int argc, char* argv[])
                  "would come out similar and wrong. Run it without QT_QPA_PLATFORM.\n";
         return 1;
     }
+
+    const QString wantedLanguage = parser.value(language);
+    if (!LanguageSwitch::IsOffered(wantedLanguage))
+    {
+        Out() << "unknown language: " << wantedLanguage << ". Offered: ";
+        for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())
+        {
+            Out() << offer.code << " ";
+        }
+        Out() << "\n";
+        return 1;
+    }
+
+    QTranslator interface;
+    const QString beside = QCoreApplication::applicationDirPath() + QStringLiteral("/i18n/app_%1").arg(wantedLanguage);
+    if (!interface.load(beside))
+    {
+        Out() << "no catalogue at " << beside
+              << ".qm, so every screen would come out in the source language and "
+                 "the plurals in the singular. Build fsorg-shot again.\n";
+        return 1;
+    }
+
+    QCoreApplication::installTranslator(&interface);
 
     ApplyModernistTheme(app);
 

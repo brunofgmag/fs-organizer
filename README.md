@@ -115,12 +115,12 @@ cmake --build build/release --config Release --target fsorg-probe
 `fsorg-shot` builds the real widgets against your real configuration and writes
 a PNG of every screen, so you can look at a change without driving the app by
 hand. It takes `--out` for the folder, `--theme` for `dark`, `light` or
-`system`, and `--size` as `WIDTHxHEIGHT`. Run it with `QT_SCALE_FACTOR=1.25` to
-match Windows scaling.
+`system`, `--size` as `WIDTHxHEIGHT`, and `--lang` for `en` or `pt_BR`. Run it
+with `QT_SCALE_FACTOR=1.25` to match Windows scaling.
 
 ```powershell
 cmake --build build/debug --target fsorg-shot
-./build/debug/Debug/fsorg-shot.exe --out shots --theme dark
+./build/debug/Debug/fsorg-shot.exe --out shots --theme dark --lang pt_BR
 ```
 
 `fsorg-timing` measures paint cost, with `--journal-scroll` and `--app-journal`
