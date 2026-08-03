@@ -75,7 +75,7 @@ namespace
         return tag == item.text ? QString() : item.text;
     }
 
-    void RepaintTheRowOf(const QAbstractItemView& view, const QModelIndex& index)
+    void RepaintTheRowOf(QAbstractItemView& view, const QModelIndex& index)
     {
         if (!index.isValid())
         {
@@ -115,7 +115,7 @@ namespace
 
 RowDelegate::RowDelegate(QObject* parent) : QStyledItemDelegate(parent), shortestRow_(kRowHeight)
 {
-    if (const auto* view = qobject_cast<QAbstractItemView*>(parent); view != nullptr)
+    if (auto* view = qobject_cast<QAbstractItemView*>(parent); view != nullptr)
     {
         view->viewport()->setMouseTracking(true);
         view->viewport()->installEventFilter(this);
@@ -159,7 +159,7 @@ void RowDelegate::PointAt(const QModelIndex& index)
     const QModelIndex left = pointedAt_;
     pointedAt_ = index;
 
-    if (const auto* view = qobject_cast<QAbstractItemView*>(parent()); view != nullptr)
+    if (auto* view = qobject_cast<QAbstractItemView*>(parent()); view != nullptr)
     {
         RepaintTheRowOf(*view, left);
         RepaintTheRowOf(*view, index);
