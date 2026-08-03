@@ -36,6 +36,7 @@ namespace
         static void AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing();
         static void ImportingWhatIsCheckedRegistersTheLibraryAndSaysWhatHappened();
         static void APresetOfTheOldProgramIsOfferedAndLandsInTheProfile();
+        static void ANameThePresetCitesAndNoLibraryHasIsReportedInsteadOfVanishing();
     };
 }
 
@@ -233,6 +234,27 @@ void LegacyImportDialogTest::APresetOfTheOldProgramIsOfferedAndLandsInTheProfile
 
     QCOMPARE(f.presets.List("msfs2024").size(), std::size_t{1});
     QCOMPARE(f.presets.Load("msfs2024", "Voo curto")->entries.size(), std::size_t{1});
+}
+
+void LegacyImportDialogTest::ANameThePresetCitesAndNoLibraryHasIsReportedInsteadOfVanishing()
+{
+    Fixture f;
+    LegacyInstallation installation = InstallationAt(kLegacy2024, {"D:/MSFS 2024/Aircrafts"});
+    installation.presetsPath = "C:/ProgramData/MSFS Addons Linker 2024/Presets";
+    f.legacy.Add(installation);
+
+    LegacyPresetSelection selection;
+    selection.name = "Voo curto";
+    selection.enabledAddonNames = {"pmdg-aircraft-77w", "an-addon-that-is-nowhere"};
+    f.legacy.PlacePreset("C:/ProgramData/MSFS Addons Linker 2024/Presets", selection);
+
+    LegacyImportDialog dialog(f.viewModel);
+    const QSignalSpy said(&dialog, &LegacyImportDialog::StatusChanged);
+
+    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
+
+    QCOMPARE(said.count(), 1);
+    QVERIFY(said.front().front().toString().contains(QStringLiteral("was not found in any library")));
 }
 
 QTEST_MAIN(LegacyImportDialogTest)

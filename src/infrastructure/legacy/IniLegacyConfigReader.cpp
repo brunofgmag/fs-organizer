@@ -8,9 +8,7 @@
 namespace
 {
     constexpr auto kAddonPath = "MyAddons_Path";
-    constexpr auto kCommunityPath = "MSFSCommunity_Path";
     constexpr auto kPresetsPath = "Presets_Path";
-    constexpr auto kLinkType = "Link_Type";
 
     constexpr auto kUtf8Bom = "\xEF\xBB\xBF";
     constexpr auto kUtf16LittleEndianBom = "\xFF\xFE";
@@ -56,17 +54,9 @@ namespace
         {
             installation.addonPaths.push_back(AsPath(value));
         }
-        else if (key == QLatin1String(kCommunityPath))
-        {
-            installation.communityPath = AsPath(value);
-        }
         else if (key == QLatin1String(kPresetsPath))
         {
             installation.presetsPath = AsPath(value);
-        }
-        else if (key == QLatin1String(kLinkType))
-        {
-            installation.linkType = value.toStdString();
         }
     }
 }
