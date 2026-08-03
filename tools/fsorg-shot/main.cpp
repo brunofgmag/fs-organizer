@@ -35,6 +35,7 @@
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/update/GithubUpdateService.h"
+#include "shared/DisposableState.h"
 #include "support/PathText.h"
 #include "view/JournalPage.h"
 #include "view/PresetsPage.h"
@@ -63,58 +64,6 @@ namespace
     {
         static QTextStream stream(stdout);
         return stream;
-    }
-
-    struct DisposableState final
-    {
-        std::filesystem::path settingsFile;
-        std::filesystem::path journalFile;
-        std::filesystem::path presetsFolder;
-    };
-
-    std::optional<DisposableState> StageStateWhereWritingIsHarmless()
-    {
-        const std::filesystem::path folder = AsPath(QDir::tempPath()) / "fsorg-shot-state";
-
-        std::error_code failure;
-        std::filesystem::remove_all(folder, failure);
-
-        const DisposableState staged{.settingsFile = folder / SettingsFilePath().filename(),
-                                     .journalFile = folder / JournalFilePath().parent_path().filename()
-                                         / JournalFilePath().filename(),
-                                     .presetsFolder = folder / PresetsFolderPath().filename()};
-
-        std::filesystem::create_directories(staged.journalFile.parent_path(), failure);
-        if (failure)
-        {
-            return std::nullopt;
-        }
-
-        if (std::filesystem::exists(SettingsFilePath()))
-        {
-            std::filesystem::copy_file(SettingsFilePath(), staged.settingsFile,
-                                       std::filesystem::copy_options::overwrite_existing, failure);
-        }
-
-        if (std::filesystem::exists(JournalFilePath()))
-        {
-            std::filesystem::copy_file(JournalFilePath(), staged.journalFile,
-                                       std::filesystem::copy_options::overwrite_existing, failure);
-        }
-
-        if (std::filesystem::exists(PresetsFolderPath()))
-        {
-            std::filesystem::copy(
-                PresetsFolderPath(), staged.presetsFolder,
-                std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, failure);
-        }
-
-        if (failure)
-        {
-            return std::nullopt;
-        }
-
-        return staged;
     }
 
     class RunsRightHere final : public BackgroundRunner
@@ -305,7 +254,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless();
+    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-shot");
     if (!staged.has_value())
     {
         Out() << "could not stage a disposable copy of the state, so nothing ran\n";
