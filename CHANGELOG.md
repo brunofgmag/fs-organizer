@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/brunofgmag/fs-organizer/compare/v0.3.2...v0.3.3) (2026-08-03)
+
+
+### Bug Fixes
+
+* **legacy:** report the names no library has, and drop the fields nobody reads ([#11](https://github.com/brunofgmag/fs-organizer/issues/11)) ([7bf7992](https://github.com/brunofgmag/fs-organizer/commit/7bf7992d6b11ee7a1f7be42d2cc9137217b52555))
+
 ## [0.3.2](https://github.com/brunofgmag/fs-organizer/compare/v0.3.1...v0.3.2) (2026-08-03)
 
 
