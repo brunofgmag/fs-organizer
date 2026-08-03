@@ -202,7 +202,7 @@ QWidget* CommunityPage::CreateFilters()
     return bar;
 }
 
-QList<CommunityPage::FilterChip> CommunityPage::FiltersOffered() const
+QList<CommunityPage::FilterChip> CommunityPage::FiltersOffered()
 {
     return {
         {.label = tr("All"), .filter = kEveryFilter},

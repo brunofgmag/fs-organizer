@@ -75,7 +75,7 @@ namespace
         return tag == item.text ? QString() : item.text;
     }
 
-    void RepaintTheRowOf(QAbstractItemView& view, const QModelIndex& index)
+    void RepaintTheRowOf(const QAbstractItemView& view, const QModelIndex& index)
     {
         if (!index.isValid())
         {
@@ -115,7 +115,7 @@ namespace
 
 RowDelegate::RowDelegate(QObject* parent) : QStyledItemDelegate(parent), shortestRow_(kRowHeight)
 {
-    if (auto* view = qobject_cast<QAbstractItemView*>(parent); view != nullptr)
+    if (const auto* view = qobject_cast<QAbstractItemView*>(parent); view != nullptr)
     {
         view->viewport()->setMouseTracking(true);
         view->viewport()->installEventFilter(this);
@@ -129,13 +129,16 @@ void RowDelegate::KeepRowsAtLeast(const int tall)
 
 bool RowDelegate::eventFilter(QObject* watched, QEvent* event)
 {
-    auto* view = qobject_cast<QAbstractItemView*>(parent());
+    const auto* view = qobject_cast<QAbstractItemView*>(parent());
 
     if (view != nullptr && watched == view->viewport())
     {
         if (event->type() == QEvent::MouseMove)
         {
-            PointAt(view->indexAt(static_cast<QMouseEvent*>(event)->position().toPoint()));
+            if (const auto* mouse = dynamic_cast<QMouseEvent*>(event); mouse != nullptr)
+            {
+                PointAt(view->indexAt(mouse->position().toPoint()));
+            }
         }
         else if (event->type() == QEvent::Leave)
         {
@@ -156,7 +159,7 @@ void RowDelegate::PointAt(const QModelIndex& index)
     const QModelIndex left = pointedAt_;
     pointedAt_ = index;
 
-    if (auto* view = qobject_cast<QAbstractItemView*>(parent()); view != nullptr)
+    if (const auto* view = qobject_cast<QAbstractItemView*>(parent()); view != nullptr)
     {
         RepaintTheRowOf(*view, left);
         RepaintTheRowOf(*view, index);

@@ -239,7 +239,7 @@ QIcon GearIcon(const int side)
     painter.drawPath(teeth.united(body).subtracted(hole));
     painter.end();
 
-    return QIcon(pixmap);
+    return {pixmap};
 }
 
 void DressTheHeaderOf(QHeaderView* header)

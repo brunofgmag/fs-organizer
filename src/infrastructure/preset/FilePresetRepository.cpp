@@ -125,7 +125,7 @@ std::optional<Preset> FilePresetRepository::Load(const std::string& profileId, c
     Preset preset;
     preset.name = root.value(kName).toString().toStdString();
 
-    for (const QJsonValue& entry : root.value(kEntries).toArray())
+    for (const QJsonValue entry : root.value(kEntries).toArray())
     {
         preset.entries.push_back(EntryFromJson(entry.toObject()));
     }
