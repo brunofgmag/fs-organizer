@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.2](https://github.com/brunofgmag/fs-organizer/compare/v0.3.1...v0.3.2) (2026-08-03)
+
+
+### Bug Fixes
+
+* **tools:** give fsorg-shot a disposable copy of your state ([9af48e5](https://github.com/brunofgmag/fs-organizer/commit/9af48e595a5839c1a89d49060926ee6d1f6f618e))
+* **tools:** keep the tools off your real install ([f61ad43](https://github.com/brunofgmag/fs-organizer/commit/f61ad435393c04329a3cf0907d86c68e57d0d46a))
+* **tools:** stage fsorg-timing on the same disposable copy ([3f661f6](https://github.com/brunofgmag/fs-organizer/commit/3f661f61a798af144bb47df9b82e4ce12133d2e5))
+
 ## [0.3.1](https://github.com/brunofgmag/fs-organizer/compare/v0.3.0...v0.3.1) (2026-08-02)
 
 
