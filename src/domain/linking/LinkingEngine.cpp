@@ -16,7 +16,7 @@ LinkingEngine::Enable(const Addon& addon, const std::filesystem::path& destinati
     {
         if (!filesystemProbe_.IsReparsePoint(linkPath))
         {
-            return LinkOutcome::Conflicted(CopyConflict{linkPath, addon.folderPath});
+            return LinkOutcome::Conflicted(CopyConflict{.destinationPath = linkPath, .libraryPath = addon.folderPath});
         }
 
         const std::optional<std::filesystem::path> target = linkService_.ReadLinkTarget(linkPath);
@@ -29,7 +29,7 @@ LinkingEngine::Enable(const Addon& addon, const std::filesystem::path& destinati
 
         if (filesystemProbe_.TargetDirectoryExists(pointsAt))
         {
-            return LinkOutcome::Occupied(OccupiedDestination{linkPath, pointsAt});
+            return LinkOutcome::Occupied(OccupiedDestination{.destinationPath = linkPath, .existingTarget = pointsAt});
         }
 
         if (!linkService_.RemoveReparseNode(linkPath))

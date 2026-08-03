@@ -34,10 +34,10 @@ QList<PresetRow> PresetViewModel::Rows() const
         const PresetContent content =
             preset.has_value() ? ContentOf(*preset, profile, session_.Snapshot().libraries) : PresetContent{};
 
-        rows.append(PresetRow{QString::fromStdString(listing.name),
-                              tr("%n addon", nullptr, static_cast<int>(content.addons))
+        rows.append(PresetRow{.name = QString::fromStdString(listing.name),
+                              .content = tr("%n addon", nullptr, static_cast<int>(content.addons))
                                   + tr(" · %n category", nullptr, static_cast<int>(content.categories)),
-                              listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{}});
+                              .updated = listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{}});
     }
 
     return rows;

@@ -144,7 +144,7 @@ PresetContent ContentOf(const Preset& preset, const SimulatorProfile& profile, c
         }
     }
 
-    return {preset.entries.size(), categories.size()};
+    return {.addons = preset.entries.size(), .categories = categories.size()};
 }
 
 std::vector<PresetEntry> EntriesForWhatIsEnabled(const SimulatorProfile& profile,
@@ -159,7 +159,8 @@ std::vector<PresetEntry> EntriesForWhatIsEnabled(const SimulatorProfile& profile
         {
             if (enabled.Contains(addon->path))
             {
-                entries.push_back(PresetEntry{IdentityOf(profile, addon->path), PresetAction::Enable});
+                entries.push_back(
+                    PresetEntry{.addonId = IdentityOf(profile, addon->path), .action = PresetAction::Enable});
             }
         }
     }

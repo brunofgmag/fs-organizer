@@ -67,7 +67,7 @@ namespace
         const int suffixRoom =
             suffix.isEmpty() ? 0 : QFontMetrics(item.font).horizontalAdvance(suffix) + kBeforeTheSuffix;
 
-        return {box, std::max(0, box.width() - tagRoom - suffixRoom)};
+        return {.box = box, .wide = std::max(0, box.width() - tagRoom - suffixRoom)};
     }
 
     [[nodiscard]] QString TextThatIsDrawn(const QStyleOptionViewItem& item, const QString& tag)

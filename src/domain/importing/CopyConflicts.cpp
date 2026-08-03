@@ -59,7 +59,7 @@ CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, co
 
         if (const TreeNode* addon = AddonNamed(libraries, entry.path.filename().string()))
         {
-            found.push_back(CopyConflict{entry.path, addon->path});
+            found.push_back(CopyConflict{.destinationPath = entry.path, .libraryPath = addon->path});
         }
     }
 

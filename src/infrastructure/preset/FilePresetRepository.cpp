@@ -85,8 +85,8 @@ std::vector<PresetListing> FilePresetRepository::List(const std::string& profile
             std::error_code unread;
             const std::filesystem::file_time_type written = entry->last_write_time(unread);
 
-            listings.push_back(
-                {entry->path().stem().string(), unread ? std::nullopt : std::optional(SystemTimeOf(written))});
+            listings.push_back({.name = entry->path().stem().string(),
+                                .writtenAt = unread ? std::nullopt : std::optional(SystemTimeOf(written))});
         }
 
         entry.increment(error);

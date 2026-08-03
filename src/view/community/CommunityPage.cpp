@@ -205,14 +205,14 @@ QWidget* CommunityPage::CreateFilters()
 QList<CommunityPage::FilterChip> CommunityPage::FiltersOffered() const
 {
     return {
-        {tr("All"), kEveryFilter},
-        {tr("Managed"), static_cast<int>(EntryClassification::Managed)},
-        {tr("External"), static_cast<int>(EntryClassification::External)},
-        {tr("Broken"), static_cast<int>(EntryClassification::Broken)},
-        {tr("Unmanaged"), static_cast<int>(EntryClassification::Unmanaged)},
-        {tr("Unavailable"), static_cast<int>(EntryClassification::Unavailable)},
-        {tr("Duplicated"), static_cast<int>(EntryClassification::Duplicated)},
-        {tr("In conflict"), kConflictFilter},
+        {.label = tr("All"), .filter = kEveryFilter},
+        {.label = tr("Managed"), .filter = static_cast<int>(EntryClassification::Managed)},
+        {.label = tr("External"), .filter = static_cast<int>(EntryClassification::External)},
+        {.label = tr("Broken"), .filter = static_cast<int>(EntryClassification::Broken)},
+        {.label = tr("Unmanaged"), .filter = static_cast<int>(EntryClassification::Unmanaged)},
+        {.label = tr("Unavailable"), .filter = static_cast<int>(EntryClassification::Unavailable)},
+        {.label = tr("Duplicated"), .filter = static_cast<int>(EntryClassification::Duplicated)},
+        {.label = tr("In conflict"), .filter = kConflictFilter},
     };
 }
 

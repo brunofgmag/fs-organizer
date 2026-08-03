@@ -119,19 +119,19 @@ LibraryReport SetupService::RegisterLibrary(const std::filesystem::path& path, c
 {
     if (IsInsideARegisteredLibrary(libraries_, path))
     {
-        return {LibraryCheck::RejectedInsideAnotherLibrary};
+        return {.check = LibraryCheck::RejectedInsideAnotherLibrary};
     }
 
     const TreeNode tree = catalog_.Scan(path);
 
     RegisteredLibrary registered;
-    registered.library = Library{identities_.Generate(), path, label};
+    registered.library = Library{.id = identities_.Generate(), .path = path, .label = label};
     registered.categories = tree.children.size();
     registered.addons = CountAddons(tree);
 
     libraries_.push_back(registered);
 
-    return {LibraryCheck::Accepted, registered.categories, registered.addons};
+    return {.check = LibraryCheck::Accepted, .categories = registered.categories, .addons = registered.addons};
 }
 
 const std::vector<RegisteredLibrary>& SetupService::Libraries() const

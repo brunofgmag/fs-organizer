@@ -27,7 +27,7 @@ std::filesystem::path DestinationItStrayedTo(const SimulatorProfile& profile,
 
 DestinationAgreement WhereTheEnabledAddonsPoint(const TreeNode& category, const std::vector<DestinationEntry>& entries)
 {
-    DestinationAgreement agreement{{}, true};
+    DestinationAgreement agreement{.destination = {}, .unanimous = true};
 
     for (const TreeNode* addon : AddonsUnder(category))
     {
