@@ -21,35 +21,38 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/AddonTreeViewModel.h"
 
-class AddonTreeViewModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class AddonTreeViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ABlankCategoryNameIsRefusedBeforeItReachesTheJournal();
-    static void ACategoryAskedForOnAnAddonLandsBesideItInsteadOfInsideIt();
-    static void RenamingACategoryToTheNameItAlreadyHasIsNotAFailure();
-    static void ARefusedRenameIsExplainedInsteadOfPassingSilently();
-    static void MovingASelectionThatHoldsACategoryMovesOnlyTheAddonsInIt();
-    static void MovingASelectionWithNoAddonInItIsRefusedBeforeItReachesTheJournal();
-    static void TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveTarget();
-    static void TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonLoose();
-    static void AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets();
-    static void ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart();
-    static void AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo();
-    static void AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees();
-    static void AdoptingIsRefusedWhenTheEnabledAddonsPointAtDifferentDestinations();
-    static void AdoptingIsRefusedWhenNoAddonInTheCategoryIsEnabled();
-    static void OnlyACategoryHoldingAStrayAddonIsWorthOfferingTheAdoption();
-    static void TurningAStrayAddonOffAndOnAgainLandsItInTheDestinationTheProfileMandates();
-    static void RelinkingTouchesOnlyTheAddonsThatStrayedFromTheProfileDestination();
-    static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
-    static void OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff();
-    static void RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink();
-    static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
-    static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
-    static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
-};
+    private slots:
+        static void ABlankCategoryNameIsRefusedBeforeItReachesTheJournal();
+        static void ACategoryAskedForOnAnAddonLandsBesideItInsteadOfInsideIt();
+        static void RenamingACategoryToTheNameItAlreadyHasIsNotAFailure();
+        static void ARefusedRenameIsExplainedInsteadOfPassingSilently();
+        static void MovingASelectionThatHoldsACategoryMovesOnlyTheAddonsInIt();
+        static void MovingASelectionWithNoAddonInItIsRefusedBeforeItReachesTheJournal();
+        static void TheCategoryAnAddonAlreadySitsInIsNotOfferedAsAMoveTarget();
+        static void TheLibraryRootIsNotOfferedSoAMoveNeverLandsAnAddonLoose();
+        static void AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets();
+        static void ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart();
+        static void AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo();
+        static void AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees();
+        static void AdoptingIsRefusedWhenTheEnabledAddonsPointAtDifferentDestinations();
+        static void AdoptingIsRefusedWhenNoAddonInTheCategoryIsEnabled();
+        static void OnlyACategoryHoldingAStrayAddonIsWorthOfferingTheAdoption();
+        static void TurningAStrayAddonOffAndOnAgainLandsItInTheDestinationTheProfileMandates();
+        static void RelinkingTouchesOnlyTheAddonsThatStrayedFromTheProfileDestination();
+        static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
+        static void OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff();
+        static void RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink();
+        static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
+        static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
+        static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
+    };
+}
 
 namespace
 {
@@ -68,7 +71,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -108,7 +111,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity, kCommunity2024};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -535,9 +538,14 @@ void AddonTreeViewModelTest::ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedC
     f.fileSystem.AddDirectory(kSceneries);
     f.fileSystem.AddDirectory(kTraffic);
 
-    f.viewModel.ApplySuggestions(
-        {CategorySuggestion{kAddon, kAircrafts, kSceneries, CategoryRule::TheNameSaysAirport},
-         CategorySuggestion{kOtherAddon, kAircrafts, kTraffic, CategoryRule::TheNameSaysTraffic}});
+    f.viewModel.ApplySuggestions({CategorySuggestion{.addonFolder = kAddon,
+                                                     .currentCategory = kAircrafts,
+                                                     .suggestedCategory = kSceneries,
+                                                     .rule = CategoryRule::TheNameSaysAirport},
+                                  CategorySuggestion{.addonFolder = kOtherAddon,
+                                                     .currentCategory = kAircrafts,
+                                                     .suggestedCategory = kTraffic,
+                                                     .rule = CategoryRule::TheNameSaysTraffic}});
 
     QVERIFY(f.fileSystem.Exists("D:/MSFS 2024/Sceneries/pmdg-aircraft-77w"));
     QVERIFY(f.fileSystem.Exists("D:/MSFS 2024/Traffic/aerosoft-crj"));

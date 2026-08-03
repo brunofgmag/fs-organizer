@@ -7,16 +7,19 @@
 #include "view/setup/StagingLeftoverDialog.h"
 #include "view/WheelGuard.h"
 
-class WheelGuardTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class WheelGuardTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ScrollingOverAnUnfocusedComboLeavesItAlone();
-    static void ScrollingOverAFocusedComboStillChangesIt();
-    static void ARollOverTheRepairDialogDoesNotRewriteADestructivePlan();
-    static void ARollOverTheLeftoverDialogDoesNotTurnAResumeIntoADiscard();
-};
+    private slots:
+        static void ScrollingOverAnUnfocusedComboLeavesItAlone();
+        static void ScrollingOverAFocusedComboStillChangesIt();
+        static void ARollOverTheRepairDialogDoesNotRewriteADestructivePlan();
+        static void ARollOverTheLeftoverDialogDoesNotTurnAResumeIntoADiscard();
+    };
+}
 
 namespace
 {

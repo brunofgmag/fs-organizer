@@ -3,22 +3,25 @@
 #include "domain/profile/ProfileEdits.h"
 #include "tests/support/PathPrinting.h"
 
-class ProfileEditsTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class ProfileEditsTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AProfileIsRemovedFromTheListByItsIdentifier();
-    static void TheLastProfileIsNeverRemoved();
-    static void AProfileThatIsNotThereRemovesNothing();
-    static void UnregisteringALibraryDropsItAndTheOverridesThatNamedIt();
-    static void UnregisteringALibraryLeavesTheOverridesOfTheOthersAlone();
-    static void UnregisteringALibraryThatIsNotThereChangesNothing();
-    static void RepointingADestinationCarriesTheOverridesThatNamedTheOldPath();
-    static void RepointingADestinationCarriesTheDefaultWhenItWasTheOneMoved();
-    static void RepointingADestinationLeavesTheOtherDestinationAlone();
-    static void RepointingMatchesTheOldPathWithoutCaseOrSeparatorDifferences();
-};
+    private slots:
+        static void AProfileIsRemovedFromTheListByItsIdentifier();
+        static void TheLastProfileIsNeverRemoved();
+        static void AProfileThatIsNotThereRemovesNothing();
+        static void UnregisteringALibraryDropsItAndTheOverridesThatNamedIt();
+        static void UnregisteringALibraryLeavesTheOverridesOfTheOthersAlone();
+        static void UnregisteringALibraryThatIsNotThereChangesNothing();
+        static void RepointingADestinationCarriesTheOverridesThatNamedTheOldPath();
+        static void RepointingADestinationCarriesTheDefaultWhenItWasTheOneMoved();
+        static void RepointingADestinationLeavesTheOtherDestinationAlone();
+        static void RepointingMatchesTheOldPathWithoutCaseOrSeparatorDifferences();
+    };
+}
 
 namespace
 {
@@ -32,10 +35,11 @@ namespace
         profile.id = "msfs2024";
         profile.destinations = {kCommunity, kCommunity2024};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", "D:/MSFS 2024", "MSFS 2024"},
-                             Library{"library-2", "F:/Extra Addons", "Extra Addons"}};
-        profile.destinationOverrides = {DestinationOverride{"library-1", "Aircrafts", kCommunity2024},
-                                        DestinationOverride{"library-2", "Sceneries", kCommunity2024}};
+        profile.libraries = {Library{.id = "library-1", .path = "D:/MSFS 2024", .label = "MSFS 2024"},
+                             Library{.id = "library-2", .path = "F:/Extra Addons", .label = "Extra Addons"}};
+        profile.destinationOverrides = {
+            DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kCommunity2024},
+            DestinationOverride{.libraryId = "library-2", .relativePath = "Sceneries", .destination = kCommunity2024}};
 
         return profile;
     }

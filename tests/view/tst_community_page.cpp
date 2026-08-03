@@ -20,19 +20,22 @@
 #include "view/panels/ContextPanel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class CommunityPageTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class CommunityPageTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheTriageConflictActionLeavesEveryConflictedRowSelected();
-    static void TheTriageImportActionLeavesEveryUnmanagedFolderSelected();
-    static void TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow();
-    static void AMixedSelectionOffersBothActionsEachWithItsOwnCount();
-    static void OnlyTheActionThatUnblocksCarriesTheAccent();
-    static void NothingConflictedMeansNoResolveButtonAtAll();
-    static void ARescanThatEmptiesTheTableAlsoEmptiesThePanel();
-};
+    private slots:
+        static void TheTriageConflictActionLeavesEveryConflictedRowSelected();
+        static void TheTriageImportActionLeavesEveryUnmanagedFolderSelected();
+        static void TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow();
+        static void AMixedSelectionOffersBothActionsEachWithItsOwnCount();
+        static void OnlyTheActionThatUnblocksCarriesTheAccent();
+        static void NothingConflictedMeansNoResolveButtonAtAll();
+        static void ARescanThatEmptiesTheTableAlsoEmptiesThePanel();
+    };
+}
 
 namespace
 {
@@ -45,7 +48,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -67,7 +70,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -123,7 +126,7 @@ namespace
 
         for (const QModelIndex& position : table->selectionModel()->selectedRows())
         {
-            const QAbstractProxyModel* filter = qobject_cast<const QAbstractProxyModel*>(table->model());
+            const auto filter = qobject_cast<const QAbstractProxyModel*>(table->model());
             conflicted += model.data(filter->mapToSource(position), CommunityModel::ConflictRole).toBool() ? 1 : 0;
         }
 
@@ -150,7 +153,7 @@ namespace
 void CommunityPageTest::TheTriageConflictActionLeavesEveryConflictedRowSelected()
 {
     Fixture f;
-    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
     f.viewModel.Show();
 
     page.FilterByConflicted();
@@ -166,7 +169,7 @@ void CommunityPageTest::TheTriageConflictActionLeavesEveryConflictedRowSelected(
 void CommunityPageTest::TheTriageImportActionLeavesEveryUnmanagedFolderSelected()
 {
     Fixture f;
-    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
     f.viewModel.Show();
 
     page.FilterBy(EntryClassification::Unmanaged);
@@ -180,7 +183,7 @@ void CommunityPageTest::TheTriageImportActionLeavesEveryUnmanagedFolderSelected(
 void CommunityPageTest::TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow()
 {
     Fixture f;
-    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
     f.viewModel.Show();
 
     page.FilterBy(EntryClassification::Unmanaged);
@@ -203,7 +206,7 @@ void CommunityPageTest::TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow(
 void CommunityPageTest::AMixedSelectionOffersBothActionsEachWithItsOwnCount()
 {
     Fixture f;
-    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
     f.viewModel.Show();
 
     page.FilterBy(EntryClassification::Unmanaged);
@@ -217,13 +220,13 @@ void CommunityPageTest::AMixedSelectionOffersBothActionsEachWithItsOwnCount()
     QVERIFY(importChosen->isEnabled());
 
     QVERIFY(importChosen->text().contains(QStringLiteral("2")));
-    QCOMPARE(resolveChosen->text(), QStringLiteral("Resolver o conflito…"));
+    QCOMPARE(resolveChosen->text(), QStringLiteral("Resolve the conflict…"));
 }
 
 void CommunityPageTest::OnlyTheActionThatUnblocksCarriesTheAccent()
 {
     Fixture f;
-    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
     f.viewModel.Show();
 
     page.FilterBy(EntryClassification::Unmanaged);
@@ -239,7 +242,7 @@ void CommunityPageTest::OnlyTheActionThatUnblocksCarriesTheAccent()
 void CommunityPageTest::NothingConflictedMeansNoResolveButtonAtAll()
 {
     Fixture f;
-    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
     f.viewModel.Show();
 
     auto* table = page.findChild<QTableView*>();
@@ -260,7 +263,7 @@ void CommunityPageTest::NothingConflictedMeansNoResolveButtonAtAll()
 void CommunityPageTest::ARescanThatEmptiesTheTableAlsoEmptiesThePanel()
 {
     Fixture f;
-    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
     f.viewModel.Show();
 
     page.SelectEverythingShown();

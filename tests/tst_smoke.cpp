@@ -1,12 +1,15 @@
 #include <QtTest/QtTest>
 
-class SmokeTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class SmokeTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    void QtRuntimeMatchesBuild();
-};
+    private slots:
+        void QtRuntimeMatchesBuild();
+    };
+}
 
 void SmokeTest::QtRuntimeMatchesBuild()
 {

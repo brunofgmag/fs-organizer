@@ -121,7 +121,7 @@ void AddonTreeViewModel::CreateCategory(const TreeNode* node, const QString& nam
     const QString wanted = name.trimmed();
     if (wanted.isEmpty())
     {
-        emit Refused(tr("Dê um nome à categoria."));
+        emit Refused(tr("Give the category a name."));
         return;
     }
 
@@ -138,7 +138,7 @@ std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, c
     const QString wanted = name.trimmed();
     if (wanted.isEmpty())
     {
-        emit Refused(tr("Dê um nome à categoria."));
+        emit Refused(tr("Give the category a name."));
         return {};
     }
 
@@ -179,13 +179,13 @@ void AddonTreeViewModel::MoveTo(const std::vector<const TreeNode*>& nodes, const
     {
         if (node->kind == TreeNodeKind::Addon)
         {
-            moves.push_back(AddonMove{node->path, category});
+            moves.push_back(AddonMove{.addonFolder = node->path, .category = category});
         }
     }
 
     if (moves.empty())
     {
-        emit Refused(tr("Selecione ao menos um addon para mover."));
+        emit Refused(tr("Select at least one addon to move."));
         return;
     }
 
@@ -199,7 +199,7 @@ void AddonTreeViewModel::ApplySuggestions(const std::vector<CategorySuggestion>&
 
     for (const CategorySuggestion& suggestion : chosen)
     {
-        moves.push_back(AddonMove{suggestion.addonFolder, suggestion.suggestedCategory});
+        moves.push_back(AddonMove{.addonFolder = suggestion.addonFolder, .category = suggestion.suggestedCategory});
     }
 
     if (!moves.empty())
@@ -232,14 +232,14 @@ void AddonTreeViewModel::AdoptDestination(const TreeNode* category)
 
     if (!agreement.unanimous)
     {
-        emit Refused(tr("Os addons habilitados desta categoria estão ligados em destinos diferentes. Escolha um "
-                        "destino para a categoria em vez de adotar o que está no disco."));
+        emit Refused(tr("The enabled addons of this category are linked in different destinations. Choose a "
+                        "destination for the category instead of adopting what is on the disk."));
         return;
     }
 
     if (agreement.destination.empty())
     {
-        emit Refused(tr("Nenhum addon desta categoria está habilitado, então não há destino para adotar."));
+        emit Refused(tr("No addon of this category is enabled, so there is no destination to adopt."));
         return;
     }
 
@@ -278,7 +278,7 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
 
     if (strayed.empty())
     {
-        emit Refused(tr("Nenhum addon daqui está ligado fora do destino que o perfil manda usar."));
+        emit Refused(tr("No addon from here is linked away from the destination the profile says to use."));
         return;
     }
 
@@ -314,7 +314,8 @@ std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) 
     {
         if (ComparablePath(candidate->path) != holding)
         {
-            offered.push_back(MoveTarget{candidate->path, candidate->path.lexically_relative(tree->path)});
+            offered.push_back(MoveTarget{.category = candidate->path,
+                                         .relativePath = candidate->path.lexically_relative(tree->path)});
         }
     }
 

@@ -43,7 +43,7 @@ std::vector<FoundLegacyInstallation> WindowsLegacyConfigSource::Installations() 
             continue;
         }
 
-        found.push_back(FoundLegacyInstallation{entry.path(), ReadLegacyIni(configuration)});
+        found.push_back(FoundLegacyInstallation{.folder = entry.path(), .configuration = ReadLegacyIni(configuration)});
     }
 
     std::ranges::sort(found,

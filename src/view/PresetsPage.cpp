@@ -74,16 +74,18 @@ namespace
 
             if (event->type() == QEvent::MouseButtonRelease)
             {
-                if (!option.rect.contains(static_cast<QMouseEvent*>(event)->position().toPoint()))
+                const auto* mouse = static_cast<QMouseEvent*>(event);
+
+                if (!option.rect.contains(mouse->position().toPoint()))
                 {
                     return false;
                 }
             }
             else if (event->type() == QEvent::KeyPress)
             {
-                const int key = static_cast<QKeyEvent*>(event)->key();
+                const auto* keys = static_cast<QKeyEvent*>(event);
 
-                if (key != Qt::Key_Space && key != Qt::Key_Select)
+                if (keys->key() != Qt::Key_Space && keys->key() != Qt::Key_Select)
                 {
                     return false;
                 }
@@ -102,8 +104,8 @@ namespace
 
     QString CountsOf(const PresetPreview& preview)
     {
-        QString counted = QObject::tr("Liga %1, desliga %2. %3 já estão como o preset pede, %4 não foram encontrados, "
-                                      "e %5 entradas do destino este preset não toca.")
+        QString counted = QObject::tr("Enables %1, disables %2. %3 already match what the preset asks, %4 were not "
+                                      "found, and %5 destination entries stay as they are.")
                               .arg(preview.toEnable)
                               .arg(preview.toDisable)
                               .arg(preview.alreadyInPlace)
@@ -112,7 +114,7 @@ namespace
 
         if (preview.notNamedByThePreset > 0)
         {
-            counted += QObject::tr(" Dos que ele desliga, %1 entraram na biblioteca depois de o preset ser salvo.")
+            counted += QObject::tr(" Of the ones it disables, %1 entered the library after the preset was saved.")
                            .arg(preview.notNamedByThePreset);
         }
 
@@ -125,17 +127,16 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
 {
     names_ = CreateNameTable();
 
-    auto* create = new QPushButton(tr("Novo a partir dos habilitados…"), this);
-    create->setProperty("role", "primary");
-    update_ = new QPushButton(tr("Atualizar com os habilitados"), this);
-    rename_ = new QPushButton(tr("Renomear…"), this);
-    remove_ = new QPushButton(tr("Excluir"), this);
+    create_ = new QPushButton(this);
+    create_->setProperty("role", "primary");
+    update_ = new QPushButton(this);
+    rename_ = new QPushButton(this);
+    remove_ = new QPushButton(this);
 
     auto* toolbar = new QWidget(this);
     toolbar->setObjectName(QStringLiteral("PageToolbar"));
 
     filter_ = new QLineEdit(this);
-    filter_->setPlaceholderText(tr("Filtrar presets"));
     filter_->setClearButtonEnabled(true);
     filter_->setMinimumWidth(220);
     filter_->setMaximumWidth(280);
@@ -143,7 +144,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     auto* bar = new QHBoxLayout(toolbar);
     bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     bar->setSpacing(8);
-    bar->addWidget(create);
+    bar->addWidget(create_);
     bar->addWidget(update_);
     bar->addWidget(rename_);
     bar->addWidget(remove_);
@@ -153,7 +154,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     entries_ = new QTableWidget(this);
     entries_->setObjectName(QStringLiteral("PresetEntries"));
     entries_->setColumnCount(3);
-    entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Biblioteca"), tr("Liga")});
+    entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Library"), tr("Enables")});
     entries_->setSelectionBehavior(QAbstractItemView::SelectRows);
     entries_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     entries_->setItemDelegate(new RowDelegate(entries_));
@@ -163,19 +164,19 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     entries_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(entries_->horizontalHeader());
 
-    auto* panel = new ContextPanel(tr("Aplicar como"), 440, this);
+    auto* panel = new ContextPanel({}, 440, this);
     panel->setObjectName(QStringLiteral("PresetApplyPanel"));
     panel_ = panel;
 
-    auto* heading = new QLabel(tr("Aplicar como"), panel);
-    heading->setObjectName(QStringLiteral("PanelSubHeading"));
+    applyAs_ = new QLabel(panel);
+    applyAs_->setObjectName(QStringLiteral("PanelSubHeading"));
 
     modes_ = new QButtonGroup(panel);
-    auto* replace = new QRadioButton(tr("Substituir"), panel);
+    auto* replace = new QRadioButton(panel);
     replace->setObjectName(QStringLiteral("ModeReplace"));
-    auto* cumulative = new QRadioButton(tr("Acumular"), panel);
+    auto* cumulative = new QRadioButton(panel);
     cumulative->setObjectName(QStringLiteral("ModeCumulative"));
-    auto* disable = new QRadioButton(tr("Desabilitar"), panel);
+    auto* disable = new QRadioButton(panel);
     disable->setObjectName(QStringLiteral("ModeDisable"));
     modes_->addButton(replace, static_cast<int>(ApplyMode::Replace));
     modes_->addButton(cumulative, static_cast<int>(ApplyMode::Cumulative));
@@ -189,23 +190,23 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     preview_ = new QLabel(panel);
     preview_->setWordWrap(true);
 
-    auto* promise = new QLabel(tr("Aplicar é um lote só: \"Desfazer último lote\" volta tudo de uma vez."), panel);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
+    promise_ = new QLabel(panel);
+    promise_->setObjectName(QStringLiteral("PanelPromise"));
+    promise_->setWordWrap(true);
 
-    apply_ = new QPushButton(tr("Aplicar"), panel);
+    apply_ = new QPushButton(panel);
     apply_->setObjectName(QStringLiteral("PresetApply"));
     apply_->setProperty("role", "primary");
     apply_->setDefault(true);
 
-    panel->Add(heading);
+    panel->Add(applyAs_);
     panel->Add(replace);
     panel->Add(cumulative);
     panel->Add(disable);
     panel->Add(modeExplained_);
     panel->Add(preview_);
     panel->Add(apply_);
-    panel->Add(promise);
+    panel->Add(promise_);
 
     panel->RestoreCollapsedState();
 
@@ -226,20 +227,16 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     pages_ = new QStackedWidget(this);
     pages_->addWidget(kept);
 
-    auto* nothing = new EmptyState(tr("Nenhum preset neste perfil ainda."),
-                                   tr("Um preset guarda quais addons ficam ligados. Habilite o que você quer "
-                                      "voar e guarde essa combinação com um nome. Aplicar depois é um lote só, "
-                                      "com desfazer inteiro."),
-                                   this);
-    connect(nothing->OfferTheOnlyAction(tr("Novo a partir dos habilitados…")), &QPushButton::clicked, this,
-            &PresetsPage::CreateFromWhatIsEnabled);
-    pages_->addWidget(nothing);
+    nothing_ = new EmptyState(this);
+    nothingAction_ = nothing_->OfferTheOnlyAction();
+    connect(nothingAction_, &QPushButton::clicked, this, &PresetsPage::CreateFromWhatIsEnabled);
+    pages_->addWidget(nothing_);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(pages_);
 
-    connect(create, &QPushButton::clicked, this, &PresetsPage::CreateFromWhatIsEnabled);
+    connect(create_, &QPushButton::clicked, this, &PresetsPage::CreateFromWhatIsEnabled);
     connect(update_, &QPushButton::clicked, this, &PresetsPage::UpdateFromWhatIsEnabled);
     connect(rename_, &QPushButton::clicked, this, &PresetsPage::RenameSelected);
     connect(remove_, &QPushButton::clicked, this, &PresetsPage::RemoveSelected);
@@ -268,20 +265,20 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(&viewModel_, &PresetViewModel::Refused, this,
             [this](const QString& explanation)
             {
-                QMessageBox::information(this, tr("Nada foi alterado"), explanation);
+                QMessageBox::information(this, tr("Nothing changed"), explanation);
             });
     connect(&notifier, &SessionNotifier::SimulatorIsRunning, this,
             [this]
             {
-                QMessageBox::information(this, tr("O simulador está aberto"),
-                                         tr("As mudanças só valem depois de reiniciar o simulador."));
+                QMessageBox::information(this, tr("The simulator is open"),
+                                         tr("The changes only count after the simulator is restarted."));
             });
     connect(&notifier, &SessionNotifier::RestartPendingChanged, this,
             [this](const bool pending)
             {
                 if (pending)
                 {
-                    emit StatusChanged(tr("Reinicie o simulador para aplicar as mudanças."));
+                    emit StatusChanged(tr("Restart the simulator to apply the changes."));
                 }
             });
     connect(&viewModel_, &PresetViewModel::Applied, this,
@@ -289,13 +286,46 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
             {
                 if (!unresolved.isEmpty())
                 {
-                    QMessageBox::warning(this, tr("Entradas não encontradas"),
-                                         tr("Estes addons do preset não existem mais na biblioteca:\n\n%1")
+                    QMessageBox::warning(this, tr("Entries not found"),
+                                         tr("These addons of the preset are no longer in the library:\n\n%1")
                                              .arg(unresolved.join(QStringLiteral("\n"))));
                 }
             });
 
+    RetranslateUi();
     ReloadNames();
+}
+
+void PresetsPage::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+        ReloadNames();
+    }
+
+    QWidget::changeEvent(event);
+}
+
+void PresetsPage::RetranslateUi()
+{
+    create_->setText(tr("New from the enabled ones…"));
+    update_->setText(tr("Update with the enabled ones"));
+    rename_->setText(tr("Rename…"));
+    remove_->setText(tr("Delete"));
+    filter_->setPlaceholderText(tr("Filter presets"));
+    entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Library"), tr("Enables")});
+    names_->setHorizontalHeaderLabels({tr("Preset"), tr("Content"), tr("Changed")});
+    applyAs_->setText(tr("Apply as"));
+    panel_->RenameTheFallback(tr("Apply as"));
+    modes_->button(static_cast<int>(ApplyMode::Replace))->setText(tr("Replace"));
+    modes_->button(static_cast<int>(ApplyMode::Cumulative))->setText(tr("Accumulate"));
+    modes_->button(static_cast<int>(ApplyMode::Disable))->setText(tr("Disable"));
+    promise_->setText(tr("Applying is a single batch: \"Undo the last batch\" takes it all back at once."));
+    nothing_->Retell(tr("No preset in this profile yet."),
+                     tr("A preset keeps which addons stay enabled. Enable what you want to fly and keep that "
+                        "combination under a name. Applying it later is a single batch, with a whole undo."));
+    nothingAction_->setText(tr("New from the enabled ones…"));
 }
 
 QTableWidget* PresetsPage::CreateNameTable()
@@ -304,7 +334,6 @@ QTableWidget* PresetsPage::CreateNameTable()
     table->setObjectName(QStringLiteral("PresetNames"));
     table->setFixedWidth(kNameTableWidth);
     table->setColumnCount(3);
-    table->setHorizontalHeaderLabels({tr("Preset"), tr("Conteúdo"), tr("Atualizado")});
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -391,8 +420,8 @@ void PresetsPage::ReloadNames()
 
     pages_->setCurrentIndex(rows.isEmpty() ? 1 : 0);
 
-    emit SummaryChanged(rows.isEmpty() ? tr("Nenhum preset neste perfil ainda.")
-                                       : tr("%n preset(s) neste perfil.", nullptr, static_cast<int>(rows.size())));
+    emit SummaryChanged(rows.isEmpty() ? tr("No preset in this profile yet.")
+                                       : tr("%n preset in this profile.", nullptr, static_cast<int>(rows.size())));
 
     ShowSelected();
 }
@@ -471,28 +500,30 @@ void PresetsPage::RefreshPreview() const
 {
     switch (Mode())
     {
-    case ApplyMode::Replace: modeExplained_->setText(tr("Deixa só o que o preset liga.")); break;
-    case ApplyMode::Cumulative: modeExplained_->setText(tr("Liga o do preset, sem mexer no resto.")); break;
-    case ApplyMode::Disable: modeExplained_->setText(tr("Desliga o que o preset liga.")); break;
+    case ApplyMode::Replace: modeExplained_->setText(tr("Leaves only what the preset enables.")); break;
+    case ApplyMode::Cumulative:
+        modeExplained_->setText(tr("Enables what the preset names, without touching the rest."));
+        break;
+    case ApplyMode::Disable: modeExplained_->setText(tr("Disables what the preset enables.")); break;
     }
 
     if (!selected_.has_value())
     {
         preview_->clear();
-        apply_->setText(tr("Aplicar"));
+        apply_->setText(tr("Apply"));
         return;
     }
 
     const PresetPreview preview = viewModel_.Preview(*selected_, Mode());
 
     preview_->setText(CountsOf(preview));
-    apply_->setText(tr("Aplicar: liga %1, desliga %2").arg(preview.toEnable).arg(preview.toDisable));
+    apply_->setText(tr("Apply: enables %1, disables %2").arg(preview.toEnable).arg(preview.toDisable));
 }
 
 void PresetsPage::CreateFromWhatIsEnabled()
 {
     bool accepted = false;
-    const QString name = QInputDialog::getText(this, tr("Novo preset"), tr("Nome:"), QLineEdit::Normal, {}, &accepted);
+    const QString name = QInputDialog::getText(this, tr("New preset"), tr("Name:"), QLineEdit::Normal, {}, &accepted);
 
     if (accepted)
     {
@@ -521,7 +552,7 @@ void PresetsPage::RenameSelected()
 
     bool accepted = false;
     const QString wanted =
-        QInputDialog::getText(this, tr("Renomear preset"), tr("Nome:"), QLineEdit::Normal, name, &accepted);
+        QInputDialog::getText(this, tr("Rename preset"), tr("Name:"), QLineEdit::Normal, name, &accepted);
 
     if (accepted)
     {
@@ -539,7 +570,7 @@ void PresetsPage::RemoveSelected()
     }
 
     const QMessageBox::StandardButton answer =
-        QMessageBox::question(this, tr("Excluir preset"), tr("Excluir o preset \"%1\"?").arg(name));
+        QMessageBox::question(this, tr("Delete preset"), tr("Delete the preset \"%1\"?").arg(name));
 
     if (answer == QMessageBox::Yes)
     {
@@ -560,8 +591,8 @@ void PresetsPage::ApplySelected()
     {
         const PresetPreview preview = viewModel_.Preview(*selected_, mode);
         const QMessageBox::StandardButton answer =
-            QMessageBox::question(this, tr("Substituir o que está habilitado"),
-                                  tr("%1\n\nAplicar o preset \"%2\"?").arg(CountsOf(preview), selected_->name.c_str()));
+            QMessageBox::question(this, tr("Replace what is enabled"),
+                                  tr("%1\n\nApply the preset \"%2\"?").arg(CountsOf(preview), selected_->name.c_str()));
 
         if (answer != QMessageBox::Yes)
         {

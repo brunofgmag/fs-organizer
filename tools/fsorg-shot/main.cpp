@@ -8,6 +8,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QTextStream>
 #include <QtCore/QTimer>
+#include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPixmap>
@@ -34,6 +35,7 @@
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/update/GithubUpdateService.h"
+#include "shared/DisposableState.h"
 #include "support/PathText.h"
 #include "view/JournalPage.h"
 #include "view/PresetsPage.h"
@@ -41,7 +43,9 @@
 #include "view/library/AddonTreePage.h"
 #include "view/options/OptionsPage.h"
 #include "view/quarantine/QuarantinePage.h"
+#include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
+#include "view/shell/PageNames.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
@@ -87,7 +91,7 @@ namespace
 
         if (!shot.save(file))
         {
-            Out() << "não foi possível gravar " << file << "\n";
+            Out() << "could not write " << file << "\n";
             return false;
         }
 
@@ -119,14 +123,14 @@ namespace
 
         if (!opened)
         {
-            Out() << "nenhum diálogo modal abriu para " << name << "\n";
+            Out() << "no modal dialog opened for " << name << "\n";
             return false;
         }
 
         const QString file = folder.filePath(name + ".png");
         if (!shot.save(file))
         {
-            Out() << "não foi possível gravar " << file << "\n";
+            Out() << "could not write " << file << "\n";
             return false;
         }
 
@@ -182,16 +186,19 @@ int main(int argc, char* argv[])
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
-        "Grava PNG de cada tela do FS Organizer, montando os widgets de verdade contra a instalação real.\n"
-        "Para a escala do Windows, rode com QT_SCALE_FACTOR=1.25.");
+        "Writes a PNG of every FS Organizer screen, building the real widgets against a disposable copy of your "
+        "settings, journal and presets, so a click that saves never reaches your install.\n"
+        "For the Windows scale, run it with QT_SCALE_FACTOR=1.25.");
     parser.addHelpOption();
 
-    const QCommandLineOption out({"o", "out"}, "Pasta onde gravar os PNG.", "pasta", QDir::currentPath());
-    const QCommandLineOption theme({"t", "theme"}, "dark, light ou system.", "paleta", "system");
-    const QCommandLineOption size({"s", "size"}, "Tamanho da janela, LARGURAxALTURA.", "tamanho", "1140x760");
+    const QCommandLineOption out({"o", "out"}, "Folder to write the PNGs into.", "folder", QDir::currentPath());
+    const QCommandLineOption theme({"t", "theme"}, "dark, light or system.", "palette", "system");
+    const QCommandLineOption size({"s", "size"}, "Window size, WIDTHxHEIGHT.", "size", "1140x760");
+    const QCommandLineOption language({"l", "lang"}, "en or pt_BR.", "language", "en");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
+    parser.addOption(language);
     parser.process(app);
 
     if (const QString wanted = parser.value(theme); wanted != QLatin1String("system"))
@@ -202,39 +209,72 @@ int main(int argc, char* argv[])
 
     if (QGuiApplication::platformName() == QLatin1String("offscreen"))
     {
-        Out() << "o plugin offscreen não aplica o esquema de cor nem o preenchimento dos itens de lista, então o PNG "
-                 "sairia parecido e errado. Rode sem QT_QPA_PLATFORM.\n";
+        Out() << "the offscreen plugin applies neither the colour scheme nor the fill of list items, so the PNG "
+                 "would come out similar and wrong. Run it without QT_QPA_PLATFORM.\n";
         return 1;
     }
+
+    const QString wantedLanguage = parser.value(language);
+    if (!LanguageSwitch::IsOffered(wantedLanguage))
+    {
+        Out() << "unknown language: " << wantedLanguage << ". Offered: ";
+        for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())
+        {
+            Out() << offer.code << " ";
+        }
+        Out() << "\n";
+        return 1;
+    }
+
+    QTranslator interface;
+    const QString beside = QCoreApplication::applicationDirPath() + QStringLiteral("/i18n/app_%1").arg(wantedLanguage);
+    if (!interface.load(beside))
+    {
+        Out() << "no catalogue at " << beside
+              << ".qm, so every screen would come out in the source language and "
+                 "the plurals in the singular. Build fsorg-shot again.\n";
+        return 1;
+    }
+
+    QCoreApplication::installTranslator(&interface);
 
     ApplyModernistTheme(app);
 
     const QDir folder(parser.value(out));
     if (!folder.exists())
     {
-        Out() << "pasta inexistente: " << folder.path() << "\n";
+        Out() << "no such folder: " << folder.path() << "\n";
         return 1;
     }
 
     const QSize window = SizeFrom(parser.value(size));
     if (window.isEmpty())
     {
-        Out() << "tamanho inválido: " << parser.value(size) << "\n";
+        Out() << "invalid size: " << parser.value(size) << "\n";
         return 1;
     }
 
-    JsonSettingsRepository settings(SettingsFilePath());
+    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-shot");
+    if (!staged.has_value())
+    {
+        Out() << "could not stage a disposable copy of the state, so nothing ran\n";
+        return 1;
+    }
+
+    Out() << "reading a copy, so your install is never written: " << AsText(staged->settingsFile.parent_path()) << "\n";
+
+    JsonSettingsRepository settings(staged->settingsFile);
 
     const std::optional<AppSettings> stored = settings.Load();
     if (!stored.has_value())
     {
-        Out() << "o settings.json existe e não pôde ser lido: " << AsText(SettingsFilePath()) << "\n";
+        Out() << "settings.json exists and could not be read: " << AsText(staged->settingsFile) << "\n";
         return 1;
     }
 
     if (stored->profiles.empty())
     {
-        Out() << "nenhum perfil configurado, então não há tela com conteúdo para gravar\n";
+        Out() << "no profile configured, so there is no screen with content to write\n";
         return 1;
     }
 
@@ -246,7 +286,7 @@ int main(int argc, char* argv[])
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
-    JsonlOperationJournal journal(JournalFilePath());
+    JsonlOperationJournal journal(staged->journalFile);
 
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
@@ -282,7 +322,7 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    FilePresetRepository presetRepository(PresetsFolderPath());
+    FilePresetRepository presetRepository(staged->presetsFolder);
     PresetService presetService(presetRepository, profileService);
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
@@ -292,13 +332,13 @@ int main(int argc, char* argv[])
     UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
 
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
-    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
+    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
 
-    PageTab* libraryTab = shell.AddPage(QObject::tr("Biblioteca"), libraryPage);
-    PageTab* communityTab = shell.AddPage(QObject::tr("Destinos"), communityPage);
-    PageTab* presetsTab = shell.AddPage(QObject::tr("Presets"), presetsPage);
-    PageTab* journalTab = shell.AddPage(QObject::tr("Diário"), journalPage);
-    PageTab* quarantineTab = shell.AddPage(QObject::tr("Quarentena"), quarantinePage);
+    PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);
+    PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
+    PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
+    PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
+    PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -307,8 +347,7 @@ int main(int argc, char* argv[])
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &shell,
                      [&shell](const AttentionBreakdown& breakdown)
                      {
-                         shell.ShowTriage(breakdown.broken, breakdown.conflicts, breakdown.duplicated,
-                                          breakdown.unmanaged);
+                         shell.ShowTriage(breakdown);
                      });
 
     treeViewModel.ShowActiveProfile();
@@ -317,13 +356,13 @@ int main(int argc, char* argv[])
     shell.show();
     LetTheLayoutSettle();
 
-    Out() << "janela " << shell.size().width() << "x" << shell.size().height() << " em escala "
-          << shell.devicePixelRatioF() << ", então cada PNG sai nessa proporção.\n";
+    Out() << "window " << shell.size().width() << "x" << shell.size().height() << " at scale "
+          << shell.devicePixelRatioF() << ", so every PNG comes out at that ratio.\n";
 
     if (shell.size() != window)
     {
-        Out() << "o shell não encolhe até " << window.width() << "x" << window.height()
-              << ": o conteúdo pede mais. Cada linha abaixo diz o tamanho que foi gravado.\n";
+        Out() << "the shell does not shrink to " << window.width() << "x" << window.height()
+              << ": the content asks for more. Each line below says the size that was written.\n";
     }
 
     bool landed = true;
@@ -339,19 +378,19 @@ int main(int argc, char* argv[])
         landed = Save(shell, folder, name) && landed;
     };
 
-    shoot(libraryTab, QStringLiteral("01-biblioteca"), {});
+    shoot(libraryTab, QStringLiteral("01-library"), {});
     shoot(communityTab, QStringLiteral("02-community"),
           [&communityViewModel]
           {
               communityViewModel.Show();
           });
     shoot(presetsTab, QStringLiteral("03-presets"), {});
-    shoot(journalTab, QStringLiteral("04-diario"),
+    shoot(journalTab, QStringLiteral("04-journal"),
           [&journalViewModel]
           {
               journalViewModel.Show();
           });
-    shoot(quarantineTab, QStringLiteral("05-quarentena"),
+    shoot(quarantineTab, QStringLiteral("05-quarantine"),
           [&quarantineViewModel]
           {
               quarantineViewModel.Show();
@@ -362,15 +401,15 @@ int main(int argc, char* argv[])
     optionsPage->Reload();
 
     auto* navigation = optionsPage->findChild<QListWidget*>(QStringLiteral("OptionsNav"));
-    const QStringList panes{QStringLiteral("06-opcoes-perfis"), QStringLiteral("07-opcoes-links"),
-                            QStringLiteral("08-opcoes-atualizacoes"), QStringLiteral("09-opcoes-idioma"),
-                            QStringLiteral("10-opcoes-sobre")};
+    const QStringList panes{QStringLiteral("06-options-profiles"), QStringLiteral("07-options-links"),
+                            QStringLiteral("08-options-updates"), QStringLiteral("09-options-language"),
+                            QStringLiteral("10-options-about")};
 
     for (int pane = 0; pane < panes.size(); ++pane)
     {
         if (!ClickingReaches(*navigation, pane))
         {
-            Out() << "a aba " << panes[pane] << " não seleciona no clique, então nenhum usuário chega nela\n";
+            Out() << "the tab " << panes[pane] << " does not select on click, so no user reaches it\n";
             continue;
         }
 
@@ -381,19 +420,19 @@ int main(int argc, char* argv[])
     static_cast<void>(ClickingReaches(*navigation, 0));
     LetTheLayoutSettle();
 
-    if (QPushButton* unregister = ButtonLabelled(*optionsPage, QObject::tr("Descadastrar")); unregister != nullptr)
+    if (QPushButton* unregister = ButtonLabelled(*optionsPage, QObject::tr("Unregister")); unregister != nullptr)
     {
         landed = SaveTheDialogOpenedBy(
                      [unregister]
                      {
                          unregister->click();
                      },
-                     folder, QStringLiteral("11-opcoes-descadastrar"))
+                     folder, QStringLiteral("11-options-unregister"))
             && landed;
     }
     else
     {
-        Out() << "nenhuma biblioteca cadastrada, então não há diálogo de descadastrar para gravar\n";
+        Out() << "no library registered, so there is no unregister dialog to write\n";
     }
 
     PageTab* back = nullptr;
@@ -407,13 +446,13 @@ int main(int argc, char* argv[])
 
     if (back == nullptr)
     {
-        Out() << "não achei a aba de voltar, então a volta gravada não seria a do usuário\n";
+        Out() << "could not find the back tab, so the recorded return would not be the user's\n";
         return 1;
     }
 
     back->click();
     LetTheLayoutSettle();
-    landed = Save(shell, folder, QStringLiteral("12-voltou")) && landed;
+    landed = Save(shell, folder, QStringLiteral("12-came-back")) && landed;
 
     return landed ? 0 : 1;
 }

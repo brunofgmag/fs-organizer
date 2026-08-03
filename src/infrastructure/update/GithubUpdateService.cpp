@@ -114,7 +114,7 @@ void GithubUpdateService::DownloadAndStage(const UpdateInfo& info)
 
     if (info.zipUrl.empty() || info.shaUrl.empty())
     {
-        SayTheStageFinished(false, tr("Esta versão não trouxe os arquivos para baixar."));
+        SayTheStageFinished(false, tr("This version did not bring the files to download."));
         return;
     }
 
@@ -223,7 +223,7 @@ void GithubUpdateService::OnCheckFinished()
     const std::optional<UpdateInfo> info = ParseLatestRelease(reply->readAll());
     if (!info.has_value())
     {
-        SayTheCheckFinished(false, false, {}, tr("O GitHub respondeu num formato que o app não entende."));
+        SayTheCheckFinished(false, false, {}, tr("GitHub answered in a format the app does not understand."));
         return;
     }
 
@@ -248,7 +248,7 @@ void GithubUpdateService::OnChecksumFinished()
     expectedChecksum_ = ParseSha256File(reply->readAll());
     if (expectedChecksum_.isEmpty())
     {
-        SayTheStageFinished(false, tr("O arquivo de verificação veio inválido."));
+        SayTheStageFinished(false, tr("The checksum file came in invalid."));
         return;
     }
 
@@ -281,23 +281,31 @@ void GithubUpdateService::OnDownloadFinished()
 
     if (!WriteTheDownload(reply, zipPath))
     {
-        SayTheStageFinished(false, tr("Não deu para gravar o arquivo baixado."));
+        SayTheStageFinished(false, tr("The downloaded file could not be written."));
         return;
     }
 
-    if (!ChecksumMatches(zipPath))
+    switch (VerifyChecksum(zipPath))
     {
-        SayTheStageFinished(false, tr("O arquivo baixado não confere com a verificação, e foi descartado."));
+    case ChecksumVerdict::CouldNotBeRead:
+        SayTheStageFinished(false, tr("The downloaded file could not be read, and was kept for you to inspect."));
         return;
+    case ChecksumVerdict::DoesNotMatch:
+        SayTheStageFinished(false, tr("The downloaded file does not match the checksum, and was discarded."));
+        return;
+    case ChecksumVerdict::Matches: break;
     }
 
     StartExtraction(zipPath, UpdatesFolder() + QStringLiteral("/staged"));
 }
 
-bool GithubUpdateService::ChecksumMatches(const QString& zipPath) const
+GithubUpdateService::ChecksumVerdict GithubUpdateService::VerifyChecksum(const QString& zipPath) const
 {
     QFile zip(zipPath);
-    zip.open(QIODevice::ReadOnly);
+    if (!zip.open(QIODevice::ReadOnly))
+    {
+        return ChecksumVerdict::CouldNotBeRead;
+    }
 
     QCryptographicHash hash(QCryptographicHash::Sha256);
     hash.addData(&zip);
@@ -307,10 +315,10 @@ bool GithubUpdateService::ChecksumMatches(const QString& zipPath) const
     {
         QFile::remove(zipPath);
 
-        return false;
+        return ChecksumVerdict::DoesNotMatch;
     }
 
-    return true;
+    return ChecksumVerdict::Matches;
 }
 
 void GithubUpdateService::StartExtraction(const QString& zipPath, const QString& stagedRoot)
@@ -341,7 +349,7 @@ void GithubUpdateService::OnExtractionFinished(const int exitCode)
 
     if (exitCode != 0 || !QFile::exists(StagedFolder() + QStringLiteral("/") + exeName))
     {
-        SayTheStageFinished(false, tr("Não deu para abrir o pacote da atualização."));
+        SayTheStageFinished(false, tr("The update package could not be opened."));
         return;
     }
 

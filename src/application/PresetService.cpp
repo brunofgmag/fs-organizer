@@ -99,5 +99,7 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
 {
     const PresetPlan plan = PlanPresetApplication(preset, mode, profile, snapshot.libraries, snapshot.enabled);
 
-    return {profiles_.SetEnabled(profile, snapshot, LinkBatch{plan.toDisable, plan.toEnable}), plan.unresolved};
+    return {.results = profiles_.SetEnabled(profile, snapshot,
+                                            LinkBatch{.toDisable = plan.toDisable, .toEnable = plan.toEnable}),
+            .unresolved = plan.unresolved};
 }

@@ -4,18 +4,21 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class JournalEntriesTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class JournalEntriesTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheFiveStepsOfOneImportBecomeASingleEntry();
-    static void AnImportThatStoppedHalfwayIsAnEntryWithTheStepsItGotThrough();
-    static void TwoImportsInARowNeverMergeIntoOne();
-    static void LinkOperationsStayOnePerEntry();
-    static void AnEnableThatFollowsNoCopyIsNotPartOfARun();
-    static void AnEntryFailsWhenAnyOfItsStepsFailed();
-};
+    private slots:
+        static void TheFiveStepsOfOneImportBecomeASingleEntry();
+        static void AnImportThatStoppedHalfwayIsAnEntryWithTheStepsItGotThrough();
+        static void TwoImportsInARowNeverMergeIntoOne();
+        static void LinkOperationsStayOnePerEntry();
+        static void AnEnableThatFollowsNoCopyIsNotPartOfARun();
+        static void AnEntryFailsWhenAnyOfItsStepsFailed();
+    };
+}
 
 namespace
 {
@@ -30,13 +33,15 @@ namespace
     OperationRecord
     Step(const OperationKind kind, const std::string& folder, const FileResult result = FileResult::Completed)
     {
-        return OperationRecord::OfImport(Moment(), kind, AddonId{"lib-1", folder}, kSource, kTarget, result);
+        return OperationRecord::OfImport(Moment(), kind, AddonId{.libraryId = "lib-1", .folderName = folder}, kSource,
+                                         kTarget, result);
     }
 
     OperationRecord
     Link(const OperationKind kind, const std::string& folder, const LinkFailure failure = LinkFailure::None)
     {
-        return OperationRecord::OfLink(Moment(), kind, AddonId{"lib-1", folder}, kTarget, kSource, failure);
+        return OperationRecord::OfLink(Moment(), kind, AddonId{.libraryId = "lib-1", .folderName = folder}, kTarget,
+                                       kSource, failure);
     }
 
     std::vector<OperationRecord> AFinishedImportOf(const std::string& folder)

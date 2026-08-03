@@ -3,17 +3,20 @@
 #include "domain/tree/ToggleDirection.h"
 #include "tests/support/PathPrinting.h"
 
-class ToggleDirectionTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class ToggleDirectionTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EnablesWhenSomeAddonIsFreeToEnable();
-    static void DisablesWhenEverythingEnableableIsAlreadyEnabled();
-    static void TriesToEnableWhenEverythingIsBlockedAndOff();
-    static void ARealFolderAtTheEffectiveDestinationBlocks();
-    static void AnEntryLinkingToTheAddonDoesNotBlockIt();
-};
+    private slots:
+        static void EnablesWhenSomeAddonIsFreeToEnable();
+        static void DisablesWhenEverythingEnableableIsAlreadyEnabled();
+        static void TriesToEnableWhenEverythingIsBlockedAndOff();
+        static void ARealFolderAtTheEffectiveDestinationBlocks();
+        static void AnEntryLinkingToTheAddonDoesNotBlockIt();
+    };
+}
 
 namespace
 {
@@ -49,19 +52,19 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
 
     DestinationEntry RealFolder(const std::filesystem::path& path)
     {
-        return {path, {}, EntryClassification::Unmanaged};
+        return {.path = path, .target = {}, .classification = EntryClassification::Unmanaged};
     }
 
     DestinationEntry OurLink(const std::filesystem::path& path, const std::filesystem::path& target)
     {
-        return {path, target, EntryClassification::Managed};
+        return {.path = path, .target = target, .classification = EntryClassification::Managed};
     }
 }
 

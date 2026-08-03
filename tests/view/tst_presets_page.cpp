@@ -1,4 +1,6 @@
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
+#include <QtCore/QTranslator>
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
@@ -27,19 +29,23 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class PresetsPageTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class PresetsPageTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void BuildingAndTearingDownAloneDoesNotCrash();
-    static void SelectingAPresetFillsThePanelPreview();
-    static void ApplyingFromThePanelGoesThroughTheViewModel();
-    static void TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt();
-    static void TheNameTableWritesTheContentAndTheDayBesideEachPreset();
-    static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
-    static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
-};
+    private slots:
+        static void BuildingAndTearingDownAloneDoesNotCrash();
+        static void SelectingAPresetFillsThePanelPreview();
+        static void ApplyingFromThePanelGoesThroughTheViewModel();
+        static void TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt();
+        static void TheNameTableWritesTheContentAndTheDayBesideEachPreset();
+        static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
+        static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
+        static void ALanguageChangeReachesTheApplyButtonAndTheModeExplanation();
+    };
+}
 
 namespace
 {
@@ -54,7 +60,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -81,10 +87,24 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
+
+    class MarkingTranslator final : public QTranslator
+    {
+    public:
+        [[nodiscard]] bool isEmpty() const override
+        {
+            return false;
+        }
+
+        [[nodiscard]] QString translate(const char*, const char* source, const char*, int) const override
+        {
+            return QStringLiteral("<%1>").arg(QString::fromUtf8(source));
+        }
+    };
 
     struct Fixture
     {
@@ -151,7 +171,7 @@ void PresetsPageTest::SelectingAPresetFillsThePanelPreview()
     auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
     QVERIFY(apply != nullptr);
     QVERIFY(apply->isEnabled());
-    QVERIFY(apply->text().contains(QStringLiteral("liga")));
+    QVERIFY(apply->text().contains(QStringLiteral("enables")));
 }
 
 void PresetsPageTest::ApplyingFromThePanelGoesThroughTheViewModel()
@@ -210,11 +230,11 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
     QCOMPARE(names->rowCount(), 1);
 
     QCOMPARE(names->horizontalHeaderItem(0)->text(), QStringLiteral("Preset"));
-    QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Conteúdo"));
-    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Atualizado"));
+    QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Content"));
+    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Changed"));
 
     QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
-    QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon(s) · 1 categoria(s)"));
+    QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon · 1 category"));
     QCOMPARE(names->item(0, 2)->text(), QStringLiteral("17/02/2026"));
 }
 
@@ -291,9 +311,41 @@ void PresetsPageTest::FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfSt
     QCOMPARE(names->currentRow(), rowNamed(QStringLiteral("Voo de linha")));
     QVERIFY(!names->isRowHidden(names->currentRow()));
 
-    filter->setText(QStringLiteral("nada casa com isto"));
+    filter->setText(QStringLiteral("nothing matches this"));
 
     QCOMPARE(names->currentRow(), -1);
+}
+
+void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QVERIFY(names != nullptr);
+    names->setCurrentCell(0, 0);
+
+    auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
+    auto* explained = page.findChild<QLabel*>(QStringLiteral("ModeExplained"));
+    QVERIFY(apply != nullptr && explained != nullptr);
+
+    const QString applyBefore = apply->text();
+    const QString explainedBefore = explained->text();
+    QVERIFY(!applyBefore.isEmpty());
+    QVERIFY(!explainedBefore.isEmpty());
+
+    MarkingTranslator marking;
+    QCoreApplication::installTranslator(&marking);
+    QCoreApplication::processEvents();
+
+    QVERIFY2(apply->text() != applyBefore, "the apply button kept its old text after the language change");
+    QVERIFY2(explained->text() != explainedBefore, "the mode explanation kept its old text after the language change");
+
+    QCoreApplication::removeTranslator(&marking);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(apply->text(), applyBefore);
+    QCOMPARE(explained->text(), explainedBefore);
 }
 
 QTEST_MAIN(PresetsPageTest)

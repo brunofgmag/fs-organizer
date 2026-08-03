@@ -24,16 +24,19 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class OptionsOnRealDiskTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class OptionsOnRealDiskTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AskingForASymlinkEitherLandsOnDiskOrNamesThePrivilegeItLacks();
-    static void UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThirdParty();
-    static void RegisteringTheLibraryBackRebuildsTheTreeUnderANewIdentity();
-    static void RepointingADestinationCarriesThePinnedCategoryIntoTheFileOnDisk();
-};
+    private slots:
+        static void AskingForASymlinkEitherLandsOnDiskOrNamesThePrivilegeItLacks();
+        static void UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThirdParty();
+        static void RegisteringTheLibraryBackRebuildsTheTreeUnderANewIdentity();
+        static void RepointingADestinationCarriesThePinnedCategoryIntoTheFileOnDisk();
+    };
+}
 
 namespace
 {
@@ -135,7 +138,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {disk.Community(), disk.Extra()};
         profile.defaultDestination = disk.Community();
-        profile.libraries = {Library{"library-1", disk.Library(), "Biblioteca"}};
+        profile.libraries = {Library{.id = "library-1", .path = disk.Library(), .label = "Biblioteca"}};
 
         AppSettings settings;
         settings.profiles = {profile};
@@ -160,7 +163,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
     symbolic.session.ShowActiveProfile();
 
     const TreeNode* addon = AddonUnder(symbolic, kAddon);
-    QVERIFY2(addon != nullptr, "a varredura não achou o addon, então pedir o link não prova nada");
+    QVERIFY2(addon != nullptr, "the scan did not find the addon, so asking for the link proves nothing");
 
     const std::vector<LinkOperationResult> asked =
         symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {addon}, true);
@@ -171,7 +174,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
 
     if (asked.front().outcome.Succeeded())
     {
-        qInfo("esta máquina cria symlink de diretório: o Modo de Desenvolvedor está ligado ou a sessão é elevada");
+        qInfo("this machine creates directory symlinks: Developer Mode is on, or the session is elevated");
         QVERIFY(symbolic.filesystemProbe.IsReparsePoint(linkPath));
 
         symbolic.session.ShowActiveProfile();
@@ -183,13 +186,13 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
             symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {linked}, false);
 
         QCOMPARE(undone.size(), std::size_t{1});
-        QVERIFY2(!std::filesystem::exists(linkPath), "desabilitar deixou o link no destino");
+        QVERIFY2(!std::filesystem::exists(linkPath), "disabling left the link in the destination");
     }
     else
     {
-        qInfo("esta máquina recusa symlink de diretório, que é o caso que a US-12.2 descreve");
+        qInfo("this machine refuses directory symlinks, which is the case US-12.2 describes");
         QCOMPARE(asked.front().outcome.Failure(), LinkFailure::PrivilegeNotHeld);
-        QVERIFY2(!std::filesystem::exists(linkPath), "a recusa deixou lixo no destino");
+        QVERIFY2(!std::filesystem::exists(linkPath), "the refusal left rubbish behind in the destination");
     }
 
     Stack junction(disk, LinkType::Junction);
@@ -221,12 +224,12 @@ void OptionsOnRealDiskTest::UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThi
 
     const std::filesystem::path linkPath = disk.Community() / kAddon;
     QVERIFY2(stack.filesystemProbe.IsReparsePoint(linkPath),
-             "o junction não nasceu, então exigi-lo vivo depois não prova nada");
+             "the junction was not created, so demanding it alive afterwards proves nothing");
 
     stack.session.UnregisterLibrary("library-1");
 
-    QVERIFY2(stack.filesystemProbe.IsReparsePoint(linkPath), "descadastrar apagou o link do destino");
-    QVERIFY2(std::filesystem::exists(disk.Library() / "Aircrafts" / kAddon), "descadastrar apagou a pasta real");
+    QVERIFY2(stack.filesystemProbe.IsReparsePoint(linkPath), "unregistering deleted the link from the destination");
+    QVERIFY2(std::filesystem::exists(disk.Library() / "Aircrafts" / kAddon), "unregistering deleted the real folder");
     QVERIFY(stack.session.Profile().libraries.empty());
 
     const auto& entries = stack.session.Snapshot().entries;
@@ -236,7 +239,7 @@ void OptionsOnRealDiskTest::UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThi
                                                 return ComparablePath(entry.path) == ComparablePath(linkPath);
                                             });
 
-    QVERIFY2(found != entries.end(), "a varredura seguinte não enxergou o link que sobrou no destino");
+    QVERIFY2(found != entries.end(), "the next scan did not see the link left behind in the destination");
     QCOMPARE(found->classification, EntryClassification::External);
 }
 
@@ -256,13 +259,13 @@ void OptionsOnRealDiskTest::RegisteringTheLibraryBackRebuildsTheTreeUnderANewIde
 
     const LibraryReport report = stack.session.RegisterLibrary(disk.Library());
 
-    QVERIFY2(report.Accepted(), "cadastrar a mesma pasta de volta foi recusado");
+    QVERIFY2(report.Accepted(), "registering the same folder back was refused");
     QCOMPARE(stack.session.Profile().libraries.size(), std::size_t{1});
     QCOMPARE(stack.session.Snapshot().libraries.size(), std::size_t{1});
     QCOMPARE(CountAddons(stack.session.Snapshot().libraries.front()), addonsBefore);
 
     QVERIFY2(stack.session.Profile().libraries.front().id != LibraryId("library-1"),
-             "a biblioteca voltou com o identificador antigo, e a nota promete que ele é novo");
+             "the library came back with the old identifier, and the note promises it is new");
 }
 
 void OptionsOnRealDiskTest::RepointingADestinationCarriesThePinnedCategoryIntoTheFileOnDisk()
@@ -279,7 +282,7 @@ void OptionsOnRealDiskTest::RepointingADestinationCarriesThePinnedCategoryIntoTh
                                                    return child.path.filename() == "Aircrafts";
                                                });
 
-    QVERIFY2(category != library->children.end(), "a varredura não achou a categoria que seria fixada");
+    QVERIFY2(category != library->children.end(), "the scan did not find the category that would be pinned");
 
     stack.session.OverrideDestination({&*category}, disk.Extra());
 
@@ -294,7 +297,7 @@ void OptionsOnRealDiskTest::RepointingADestinationCarriesThePinnedCategoryIntoTh
     QVERIFY(moved.has_value());
     QCOMPARE(moved->profiles.front().destinations[1], disk.Landing());
     QCOMPARE(moved->profiles.front().destinationOverrides.front().destination, disk.Landing());
-    QVERIFY2(std::filesystem::exists(disk.Extra()), "trocar o caminho do destino apagou a pasta antiga");
+    QVERIFY2(std::filesystem::exists(disk.Extra()), "switching the destination path deleted the old folder");
 }
 
 QTEST_MAIN(OptionsOnRealDiskTest)

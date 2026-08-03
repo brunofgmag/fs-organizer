@@ -79,7 +79,7 @@ namespace
                     return std::nullopt;
                 }
 
-                walk.files.push_back({entry->path(), bytes});
+                walk.files.push_back({.path = entry->path(), .bytes = bytes});
                 walk.totalBytes += bytes;
             }
 
@@ -117,8 +117,9 @@ namespace
             return PROGRESS_CONTINUE;
         }
 
-        const CopyProgress progress{state->copiedBefore + static_cast<std::uintmax_t>(transferred.QuadPart),
-                                    state->totalBytes};
+        const CopyProgress progress{.copiedBytes =
+                                        state->copiedBefore + static_cast<std::uintmax_t>(transferred.QuadPart),
+                                    .totalBytes = state->totalBytes};
 
         if (!(*state->onProgress)(progress))
         {
@@ -147,7 +148,7 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
         return CopyOutcome::Failed;
     }
 
-    CopyState state{&onProgress, 0, walk->totalBytes, false};
+    CopyState state{.onProgress = &onProgress, .copiedBefore = 0, .totalBytes = walk->totalBytes, .cancelled = false};
 
     for (const WalkedFile& file : walk->files)
     {

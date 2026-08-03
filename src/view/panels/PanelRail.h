@@ -22,6 +22,11 @@ signals:
 protected:
     void paintEvent(QPaintEvent* event) override;
 
+    void changeEvent(QEvent* event) override;
+
+private:
+    void RetranslateUi() const;
+
 private:
     QToolButton* expand_ = nullptr;
     QString title_;

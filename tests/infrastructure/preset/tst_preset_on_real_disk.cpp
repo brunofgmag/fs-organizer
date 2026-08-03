@@ -21,15 +21,18 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class PresetOnRealDiskTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class PresetOnRealDiskTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ACapturedPresetNamesExactlyTheAddonsThatAreLinked();
-    static void UpdatingACapturedPresetKeepsNamingOnlyWhatIsLinked();
-    static void ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsItWas();
-};
+    private slots:
+        static void ACapturedPresetNamesExactlyTheAddonsThatAreLinked();
+        static void UpdatingACapturedPresetKeepsNamingOnlyWhatIsLinked();
+        static void ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsItWas();
+    };
+}
 
 namespace
 {
@@ -74,7 +77,7 @@ namespace
             profile.id = "msfs2024";
             profile.destinations = {Community(), Streamed()};
             profile.defaultDestination = Community();
-            profile.libraries = {::Library{"lib-1", Library(), "Biblioteca"}};
+            profile.libraries = {::Library{.id = "lib-1", .path = Library(), .label = "Biblioteca"}};
 
             return profile;
         }

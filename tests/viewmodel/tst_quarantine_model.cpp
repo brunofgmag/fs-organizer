@@ -4,24 +4,30 @@
 
 #include "viewmodel/QuarantineModel.h"
 
-class QuarantineModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class QuarantineModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackTo();
-    static void AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell();
-    static void NoCellRepeatsItsOwnTextAsATooltip();
-};
+    private slots:
+        static void EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackTo();
+        static void AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell();
+        static void NoCellRepeatsItsOwnTextAsATooltip();
+    };
+}
 
 namespace
 {
     std::vector<QuarantinedItem> TwoItems()
     {
         return {
-            QuarantinedItem{"E:/Sim/_fsorganizer-quarantine/simbridge", "E:/Sim/Community/simbridge",
-                            std::chrono::system_clock::time_point{std::chrono::seconds{1'769'000'000}}},
-            QuarantinedItem{"D:/Library/_fsorganizer-quarantine/orphan", {}, std::nullopt},
+            QuarantinedItem{.path = "E:/Sim/_fsorganizer-quarantine/simbridge",
+                            .origin = "E:/Sim/Community/simbridge",
+                            .quarantinedAt =
+                                std::chrono::system_clock::time_point{std::chrono::seconds{1'769'000'000}}},
+            QuarantinedItem{
+                .path = "D:/Library/_fsorganizer-quarantine/orphan", .origin = {}, .quarantinedAt = std::nullopt},
         };
     }
 }
@@ -50,9 +56,9 @@ void QuarantineModelTest::AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfSh
     model.ShowItems(TwoItems());
 
     QCOMPARE(model.data(model.index(1, QuarantineModel::OriginColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("(o diário não sabe)"));
+             QStringLiteral("(the journal does not know)"));
     QCOMPARE(model.data(model.index(1, QuarantineModel::WhenColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("(o diário não sabe)"));
+             QStringLiteral("(the journal does not know)"));
 }
 
 void QuarantineModelTest::NoCellRepeatsItsOwnTextAsATooltip()

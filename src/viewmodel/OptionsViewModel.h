@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -80,6 +81,10 @@ public:
 
     void ChooseUpdateMode(UpdateMode mode);
 
+    [[nodiscard]] std::optional<std::string> Language() const;
+
+    void ChooseLanguage(const std::string& language);
+
     void RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const;
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path) const;
@@ -91,11 +96,14 @@ signals:
 
     void LinkTypeChosen(LinkType linkType);
 
+    void LanguageChosen(const QString& language);
+
     void LinksDisabled(const std::vector<LinkOperationResult>& results);
 
     void SettingsCouldNotBeSaved();
 
 private:
+    bool Rewrite(const std::function<bool(AppSettings&)>& change);
     [[nodiscard]] const TreeNode* TreeOf(const LibraryId& libraryId) const;
 
     Session& session_;

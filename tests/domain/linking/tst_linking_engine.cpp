@@ -5,22 +5,25 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
-class LinkingEngineTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class LinkingEngineTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EnablingIntoAFreeDestinationLinksToTheAddonFolder();
-    static void DisablingRemovesTheReparseNodeAndLeavesTheTargetIntact();
-    static void DisablingRefusesWhenThePathIsNotAReparsePoint();
-    static void EnablingRefusesWhenTheDestinationHoldsARealFolder();
-    static void EnablingReplacesAStaleLinkAtTheDestination();
-    static void EnablingRefusesWhenTheDestinationHoldsALiveForeignLink();
-    static void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
-    static void ADanglingLinkStillCountsAsAnExistingEntry();
-    static void ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix();
-    static void EnablingCarriesTheReasonThePlatformRefusedInsteadOfFlatteningIt();
-};
+    private slots:
+        static void EnablingIntoAFreeDestinationLinksToTheAddonFolder();
+        static void DisablingRemovesTheReparseNodeAndLeavesTheTargetIntact();
+        static void DisablingRefusesWhenThePathIsNotAReparsePoint();
+        static void EnablingRefusesWhenTheDestinationHoldsARealFolder();
+        static void EnablingReplacesAStaleLinkAtTheDestination();
+        static void EnablingRefusesWhenTheDestinationHoldsALiveForeignLink();
+        static void EnablingRefusesWhenTheExistingLinkTargetCannotBeRead();
+        static void ADanglingLinkStillCountsAsAnExistingEntry();
+        static void ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix();
+        static void EnablingCarriesTheReasonThePlatformRefusedInsteadOfFlatteningIt();
+    };
+}
 
 namespace
 {
@@ -39,7 +42,7 @@ void LinkingEngineTest::EnablingIntoAFreeDestinationLinksToTheAddonFolder()
     f.fileSystem.AddDirectory("D:/Library/Aircrafts/aerosoft-crj");
     f.fileSystem.AddDirectory("E:/Sim/Community");
 
-    const Addon addon{"D:/Library/Aircrafts/aerosoft-crj"};
+    const Addon addon{.folderPath = "D:/Library/Aircrafts/aerosoft-crj"};
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QVERIFY(outcome.Succeeded());
@@ -91,7 +94,7 @@ void LinkingEngineTest::EnablingRefusesWhenTheDestinationHoldsARealFolder()
     f.fileSystem.AddDirectory("E:/Sim/Community/flybywire-externaltools-simbridge");
     f.fileSystem.AddFile("E:/Sim/Community/flybywire-externaltools-simbridge/manifest.json");
 
-    const Addon addon{"D:/Library/Utils/flybywire-externaltools-simbridge"};
+    const Addon addon{.folderPath = "D:/Library/Utils/flybywire-externaltools-simbridge"};
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsRealFolder);
@@ -111,7 +114,7 @@ void LinkingEngineTest::EnablingReplacesAStaleLinkAtTheDestination()
     f.fileSystem.AddDirectory("E:/Sim/Community");
     f.fileSystem.AddLink("E:/Sim/Community/tlc-bgjn", "D:/Library/Sceneries/tlc-bgjn-removed");
 
-    const Addon addon{"D:/Library/Sceneries/tlc-bgjn"};
+    const Addon addon{.folderPath = "D:/Library/Sceneries/tlc-bgjn"};
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QVERIFY(outcome.Succeeded());
@@ -129,7 +132,7 @@ void LinkingEngineTest::EnablingRefusesWhenTheDestinationHoldsALiveForeignLink()
     f.fileSystem.AddDirectory("E:/Sim/Community");
     f.fileSystem.AddLink("E:/Sim/Community/fsdreamteam-gsx-pro", foreignTarget);
 
-    const Addon addon{"D:/Library/Sceneries/fsdreamteam-gsx-pro"};
+    const Addon addon{.folderPath = "D:/Library/Sceneries/fsdreamteam-gsx-pro"};
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
@@ -145,7 +148,7 @@ void LinkingEngineTest::EnablingRefusesWhenTheExistingLinkTargetCannotBeRead()
     f.fileSystem.AddDirectory("E:/Sim/Community");
     f.fileSystem.AddLinkWithUnreadableTarget("E:/Sim/Community/tlc-bgkk");
 
-    const Addon addon{"D:/Library/Sceneries/tlc-bgkk"};
+    const Addon addon{.folderPath = "D:/Library/Sceneries/tlc-bgkk"};
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::UnreadableLinkTarget);
@@ -173,7 +176,7 @@ void LinkingEngineTest::ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix()
     f.fileSystem.AddLink("E:/Sim/Community/fsdreamteam-gsx-pro",
                          R"(\??\C:\Program Files (x86)\Addon Manager\MSFS\fsdreamteam-gsx-pro)");
 
-    const Addon addon{"D:/Library/Sceneries/fsdreamteam-gsx-pro"};
+    const Addon addon{.folderPath = "D:/Library/Sceneries/fsdreamteam-gsx-pro"};
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
@@ -190,7 +193,7 @@ void LinkingEngineTest::EnablingCarriesTheReasonThePlatformRefusedInsteadOfFlatt
     f.fileSystem.AddDirectory("E:/Sim/Community");
     f.linkService.MakeLinkCreationFailWith(LinkFailure::PrivilegeNotHeld);
 
-    const Addon addon{"D:/Library/Aircrafts/aerosoft-crj"};
+    const Addon addon{.folderPath = "D:/Library/Aircrafts/aerosoft-crj"};
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Symbolic);
 
     QCOMPARE(outcome.Failure(), LinkFailure::PrivilegeNotHeld);

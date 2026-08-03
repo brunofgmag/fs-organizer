@@ -50,7 +50,20 @@ signals:
 
     void AsideChanged(const QString& aside);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
+    void RetranslateUi();
+
+    struct FilterChip
+    {
+        QString label;
+        int filter;
+    };
+
+    [[nodiscard]] static QList<FilterChip> FiltersOffered();
+
     [[nodiscard]] QWidget* CreateFilters();
 
     [[nodiscard]] QWidget* CreateActions();
@@ -97,6 +110,9 @@ private:
     QTableView* table_ = nullptr;
     QList<QToolButton*> chips_;
     ContextPanel* panel_ = nullptr;
+    QPushButton* selectAll_ = nullptr;
+    QLineEdit* search_ = nullptr;
+    QLabel* promise_ = nullptr;
     QPushButton* importOne_ = nullptr;
     QPushButton* resolveChosen_ = nullptr;
     QPushButton* openFolder_ = nullptr;

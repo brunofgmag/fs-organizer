@@ -20,41 +20,44 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class SessionTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class SessionTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheProfileAndItsSnapshotOnlyLandTogetherWhenTheScanFinishes();
-    static void AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost();
-    static void ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk();
-    static void RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain();
-    static void OverridingADestinationSavesTheProfileWithoutAnotherScan();
-    static void OverridingADestinationForAWholeSelectionSavesOnceInsteadOfOncePerNode();
-    static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
-    static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
-    static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
-    static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
-    static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
-    static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
-    static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
-    static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
-    static void UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty();
-    static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
-    static void UnregisteringALibraryDropsAnUndoThatWouldPointAtIt();
-    static void RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath();
-    static void ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain();
-    static void ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere();
-    static void ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported();
-    static void ImportingNothingSavesNothingAndScansNothing();
-    static void RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk();
-    static void RemovingAProfileThatIsNotInUseLeavesTheDiskAlone();
-    static void TheLastProfileIsNeverRemovedAndNothingIsWritten();
-    static void ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped();
-    static void ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain();
-    static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
-    static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
-};
+    private slots:
+        static void TheProfileAndItsSnapshotOnlyLandTogetherWhenTheScanFinishes();
+        static void AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost();
+        static void ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk();
+        static void RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain();
+        static void OverridingADestinationSavesTheProfileWithoutAnotherScan();
+        static void OverridingADestinationForAWholeSelectionSavesOnceInsteadOfOncePerNode();
+        static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
+        static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
+        static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
+        static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
+        static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
+        static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
+        static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
+        static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
+        static void UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty();
+        static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
+        static void UnregisteringALibraryDropsAnUndoThatWouldPointAtIt();
+        static void RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath();
+        static void ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain();
+        static void ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere();
+        static void ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported();
+        static void ImportingNothingSavesNothingAndScansNothing();
+        static void RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk();
+        static void RemovingAProfileThatIsNotInUseLeavesTheDiskAlone();
+        static void TheLastProfileIsNeverRemovedAndNothingIsWritten();
+        static void ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped();
+        static void ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain();
+        static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
+        static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
+    };
+}
 
 namespace
 {
@@ -71,7 +74,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -101,7 +104,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity, kOtherDestination};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -347,7 +350,7 @@ void SessionTest::RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain(
     Fixture f;
     f.fileSystem.AddDirectory(kAircrafts);
     f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts", kOtherDestination}};
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
     f.session.ShowActiveProfile();
 
     const FileOperationResult result = f.session.RenameCategory(kAircrafts, "Airplanes");
@@ -364,7 +367,7 @@ void SessionTest::ARefusedCategoryLeavesTheProfileAndTheDiskAlone()
     Fixture f;
     f.fileSystem.AddDirectory(kAircrafts);
     f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts", kOtherDestination}};
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
     f.session.ShowActiveProfile();
     f.processProbe.ReportTheSimulatorAsRunning();
 
@@ -383,11 +386,12 @@ void SessionTest::MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain()
     Fixture f;
     f.fileSystem.AddDirectory(kAircrafts);
     f.fileSystem.AddDirectory(kSceneries);
-    f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts/pmdg-aircraft-77w", kOtherDestination}};
+    f.settings.stored.profiles.front().destinationOverrides = {DestinationOverride{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .destination = kOtherDestination}};
     f.session.ShowActiveProfile();
 
-    const std::vector<FileOperationResult> results = f.session.MoveAddons({AddonMove{kAddon, kSceneries}});
+    const std::vector<FileOperationResult> results =
+        f.session.MoveAddons({AddonMove{.addonFolder = kAddon, .category = kSceneries}});
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);
@@ -402,9 +406,12 @@ void SessionTest::TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALin
     Fixture f;
     f.processProbe.ReportTheSimulatorAsRunning();
 
-    const std::vector<LinkOperationResult> changed = {LinkOperationResult{
-        AddonId{"library-1", "pmdg-aircraft-77w"}, "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
-        "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", OperationKind::EnableAddon, LinkOutcome::Success()}};
+    const std::vector<LinkOperationResult> changed = {
+        LinkOperationResult{.addonId = AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"},
+                            .addonFolder = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
+                            .linkPath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                            .kind = OperationKind::EnableAddon,
+                            .outcome = LinkOutcome::Success()}};
 
     f.session.NoteLinkResults(changed);
     f.session.NoteLinkResults(changed);
@@ -420,7 +427,7 @@ void SessionTest::UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeTh
     f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/manifest.json");
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kAddon);
     f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts", kOtherDestination}};
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
 
     f.session.ShowActiveProfile();
 
@@ -432,7 +439,7 @@ void SessionTest::UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeTh
                                std::string("e:/flight simulator 2024/community/pmdg-aircraft-77w -> "
                                            "d:/msfs 2024/aircrafts/pmdg-aircraft-77w"))
                  != before.end(),
-             "a descrição do disco não enxergou o link, então comparar antes com depois não prova nada");
+             "the disk description did not see the link, so comparing before with after proves nothing");
 
     f.session.UnregisterLibrary("library-1");
 
@@ -450,7 +457,7 @@ void SessionTest::RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain()
     Fixture f;
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community2025");
     f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts", kOtherDestination}};
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
 
     f.session.ShowActiveProfile();
     const int scansBefore = f.observer.started;
@@ -474,11 +481,11 @@ void SessionTest::UnregisteringALibraryDropsAnUndoThatWouldPointAtIt()
     const TreeNode* addon = AddonNamed(f.session.Snapshot().libraries, "pmdg-aircraft-77w");
     QVERIFY(addon != nullptr);
     static_cast<void>(f.service.SetEnabled(f.session.Profile(), f.session.Snapshot(), {addon}, true));
-    QVERIFY2(f.service.CanUndo(), "nada entrou na pilha de desfazer, então exigi-la vazia depois não prova nada");
+    QVERIFY2(f.service.CanUndo(), "nothing entered the undo stack, so demanding it empty afterwards proves nothing");
 
     f.session.UnregisterLibrary("library-1");
 
-    QVERIFY2(!f.service.CanUndo(), "descadastrar guardou um desfazer que aponta para uma biblioteca que saiu");
+    QVERIFY2(!f.service.CanUndo(), "unregistering kept an undo that points at a library that left");
 }
 
 void SessionTest::RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath()
@@ -491,11 +498,11 @@ void SessionTest::RepointingADestinationDropsAnUndoThatWouldPointAtTheOldPath()
     const TreeNode* addon = AddonNamed(f.session.Snapshot().libraries, "pmdg-aircraft-77w");
     QVERIFY(addon != nullptr);
     static_cast<void>(f.service.SetEnabled(f.session.Profile(), f.session.Snapshot(), {addon}, true));
-    QVERIFY2(f.service.CanUndo(), "nada entrou na pilha de desfazer, então exigi-la vazia depois não prova nada");
+    QVERIFY2(f.service.CanUndo(), "nothing entered the undo stack, so demanding it empty afterwards proves nothing");
 
     f.session.RepointDestination(kCommunity, "E:/Flight Simulator 2024/Community2025");
 
-    QVERIFY2(!f.service.CanUndo(), "re-apontar guardou um desfazer que aponta para o caminho antigo");
+    QVERIFY2(!f.service.CanUndo(), "repointing kept an undo that points at the old path");
 }
 
 void SessionTest::ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDiskAgain()
@@ -505,7 +512,8 @@ void SessionTest::ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDi
     f.fileSystem.AddDirectory(kExtraLibrary);
     f.catalog.SetTree(kExtraLibrary, TreeNode{});
 
-    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{kExtraLibrary}, {}});
+    const LegacyImportReport report =
+        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
 
     QCOMPARE(report.librariesRegistered, std::size_t{1});
     QVERIFY(report.refused.empty());
@@ -521,7 +529,8 @@ void SessionTest::ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere()
     f.fileSystem.AddDirectory(kSceneries);
     const std::vector<std::string> before = DescribeTheDisk(f.fileSystem);
 
-    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{}, {kSceneries}});
+    const LegacyImportReport report =
+        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {}, .categories = {kSceneries}});
 
     QCOMPARE(report.categoriesDeclared, std::size_t{1});
     QVERIFY(f.fileSystem.IsFile(std::filesystem::path(kSceneries) / ".fsorg-category"));
@@ -534,7 +543,8 @@ void SessionTest::ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported()
     Fixture f;
     f.session.ShowActiveProfile();
 
-    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{kAircrafts}, {}});
+    const LegacyImportReport report =
+        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {kAircrafts}, .categories = {}});
 
     QCOMPARE(report.librariesRegistered, std::size_t{0});
     QCOMPARE(report.refused.size(), std::size_t{1});
@@ -585,7 +595,8 @@ void SessionTest::ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped
     Fixture f;
     f.session.ShowActiveProfile();
 
-    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{}, {kCommunity}});
+    const LegacyImportReport report =
+        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {}, .categories = {kCommunity}});
 
     QCOMPARE(report.categoriesDeclared, std::size_t{0});
     QCOMPARE(report.refused.size(), std::size_t{1});
@@ -600,10 +611,11 @@ void SessionTest::ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsk
     f.catalog.SetTree(kExtraLibrary, TreeNode{});
     f.runner.defer = true;
 
-    const LegacyImportReport report = f.session.ImportLegacy(LegacyImportRequest{{kExtraLibrary}, {}});
+    const LegacyImportReport report =
+        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
 
     QCOMPARE(report.librariesRegistered, std::size_t{1});
-    QVERIFY2(!f.runner.Pending(), "a importação deixou a varredura pendurada no runner");
+    QVERIFY2(!f.runner.Pending(), "the import left the scan hanging on the runner");
     QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{2});
 }
 
@@ -623,8 +635,9 @@ void SessionTest::AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsO
 {
     Fixture f;
     f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts", "E:/Flight Simulator 2024/Retired"},
-        DestinationOverride{"library-1", "Sceneries", kOtherDestination}};
+        DestinationOverride{
+            .libraryId = "library-1", .relativePath = "Aircrafts", .destination = "E:/Flight Simulator 2024/Retired"},
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Sceneries", .destination = kOtherDestination}};
 
     f.session.ShowActiveProfile();
 
@@ -637,8 +650,9 @@ void SessionTest::DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAno
 {
     Fixture f;
     f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{"library-1", "Aircrafts", "E:/Flight Simulator 2024/Retired"},
-        DestinationOverride{"library-1", "Sceneries", kOtherDestination}};
+        DestinationOverride{
+            .libraryId = "library-1", .relativePath = "Aircrafts", .destination = "E:/Flight Simulator 2024/Retired"},
+        DestinationOverride{.libraryId = "library-1", .relativePath = "Sceneries", .destination = kOtherDestination}};
 
     f.session.ShowActiveProfile();
     f.session.DropOverridesPointingNowhere();

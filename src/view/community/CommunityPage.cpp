@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QtCore/QEvent>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
 #include <QtWidgets/QButtonGroup>
@@ -29,6 +30,7 @@
 #include "view/panels/ModelRowDetail.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
+#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/RowTagRoles.h"
 
@@ -132,7 +134,7 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
             {
                 if (batch_)
                 {
-                    ShowTheBatchFields(tr("medindo…"));
+                    ShowTheBatchFields(tr("measuring…"));
                 }
             });
     connect(&importViewModel_, &ImportViewModel::SizeMeasured, this,
@@ -148,6 +150,7 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
     connect(&importViewModel_, &ImportViewModel::StepChanged, this, &CommunityPage::OnImportStep);
     connect(&importViewModel_, &ImportViewModel::Finished, this, &CommunityPage::OnImportFinished);
 
+    RetranslateUi();
     UpdateSummary();
 }
 
@@ -155,20 +158,7 @@ QWidget* CommunityPage::CreateFilters()
 {
     auto* bar = new QWidget(this);
 
-    const struct
-    {
-        QString label;
-        int filter;
-    } wanted[] = {
-        {tr("Todas"), kEveryFilter},
-        {tr("Gerenciada"), static_cast<int>(EntryClassification::Managed)},
-        {tr("Externa"), static_cast<int>(EntryClassification::External)},
-        {tr("Quebrada"), static_cast<int>(EntryClassification::Broken)},
-        {tr("Não gerenciada"), static_cast<int>(EntryClassification::Unmanaged)},
-        {tr("Indisponível"), static_cast<int>(EntryClassification::Unavailable)},
-        {tr("Duplicada"), static_cast<int>(EntryClassification::Duplicated)},
-        {tr("Em conflito"), kConflictFilter},
-    };
+    const QList<FilterChip> wanted = FiltersOffered();
 
     auto* group = new QButtonGroup(bar);
     auto* grid = new QGridLayout(bar);
@@ -212,59 +202,104 @@ QWidget* CommunityPage::CreateFilters()
     return bar;
 }
 
+QList<CommunityPage::FilterChip> CommunityPage::FiltersOffered()
+{
+    return {
+        {.label = tr("All"), .filter = kEveryFilter},
+        {.label = tr("Managed"), .filter = static_cast<int>(EntryClassification::Managed)},
+        {.label = tr("External"), .filter = static_cast<int>(EntryClassification::External)},
+        {.label = tr("Broken"), .filter = static_cast<int>(EntryClassification::Broken)},
+        {.label = tr("Unmanaged"), .filter = static_cast<int>(EntryClassification::Unmanaged)},
+        {.label = tr("Unavailable"), .filter = static_cast<int>(EntryClassification::Unavailable)},
+        {.label = tr("Duplicated"), .filter = static_cast<int>(EntryClassification::Duplicated)},
+        {.label = tr("In conflict"), .filter = kConflictFilter},
+    };
+}
+
+void CommunityPage::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        RetranslateUi();
+        SayTheModelWasRetranslated(model_);
+        ShowTheSelectedEntry();
+    }
+
+    QWidget::changeEvent(event);
+}
+
+void CommunityPage::RetranslateUi()
+{
+    for (const FilterChip& offer : FiltersOffered())
+    {
+        for (QToolButton* chip : chips_)
+        {
+            if (chip->property("filter").toInt() == offer.filter)
+            {
+                chip->setText(offer.label);
+                chip->setProperty("label", offer.label);
+            }
+        }
+    }
+
+    selectAll_->setText(tr("Select everything the filter shows"));
+    search_->setPlaceholderText(tr("Filter entries"));
+    openFolder_->setText(tr("Open the folder"));
+    promise_->setText(tr("Importing copies into the library and leaves a link in its place. The original folder is "
+                         "only removed after the check."));
+    panel_->RenameTheFallback(tr("Entry selected"));
+}
+
 QWidget* CommunityPage::CreateActions()
 {
     auto* bar = new QWidget(this);
     bar->setObjectName(QStringLiteral("PageToolbar"));
 
-    auto* selectAll = new QPushButton(tr("Selecionar tudo que o filtro mostra"), bar);
+    selectAll_ = new QPushButton(bar);
 
-    auto* search = new QLineEdit(bar);
-    search->setPlaceholderText(tr("Filtrar entradas"));
-    search->setClearButtonEnabled(true);
-    search->setMinimumWidth(180);
-    search->setMaximumWidth(240);
+    search_ = new QLineEdit(bar);
+    search_->setClearButtonEnabled(true);
+    search_->setMinimumWidth(180);
+    search_->setMaximumWidth(240);
 
-    connect(selectAll, &QPushButton::clicked, table_, &QTableView::selectAll);
-    connect(search, &QLineEdit::textChanged, filter_, &QSortFilterProxyModel::setFilterFixedString);
+    connect(selectAll_, &QPushButton::clicked, table_, &QTableView::selectAll);
+    connect(search_, &QLineEdit::textChanged, filter_, &QSortFilterProxyModel::setFilterFixedString);
 
     auto* layout = new QHBoxLayout(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
-    layout->addWidget(selectAll);
+    layout->addWidget(selectAll_);
     layout->addStretch();
-    layout->addWidget(search);
+    layout->addWidget(search_);
 
     return bar;
 }
 
 QWidget* CommunityPage::CreatePanel()
 {
-    panel_ = new ContextPanel(tr("Entrada selecionada"), 380, this);
+    panel_ = new ContextPanel(tr("Entry selected"), 380, this);
     panel_->setObjectName(QStringLiteral("CommunityEntryPanel"));
 
     detail_ = new ModelRowDetail(panel_);
 
-    importOne_ = new QPushButton(tr("Importar esta pasta…"), panel_);
+    importOne_ = new QPushButton(tr("Import this folder…"), panel_);
     importOne_->setObjectName(QStringLiteral("ImportChosen"));
     importOne_->setProperty("role", "primary");
 
-    resolveChosen_ = new QPushButton(tr("Resolver o conflito…"), panel_);
+    resolveChosen_ = new QPushButton(tr("Resolve the conflict…"), panel_);
     resolveChosen_->setObjectName(QStringLiteral("ResolveChosen"));
 
-    openFolder_ = new QPushButton(tr("Abrir a pasta"), panel_);
+    openFolder_ = new QPushButton(panel_);
 
-    auto* promise = new QLabel(tr("Importar copia para a biblioteca e deixa um link no lugar. A pasta "
-                                  "original só é removida depois da verificação."),
-                               panel_);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
+    promise_ = new QLabel(panel_);
+    promise_->setObjectName(QStringLiteral("PanelPromise"));
+    promise_->setWordWrap(true);
 
     panel_->Add(detail_);
     panel_->Add(resolveChosen_);
     panel_->Add(importOne_);
     panel_->Add(openFolder_);
-    panel_->Add(promise);
+    panel_->Add(promise_);
 
     panel_->RestoreCollapsedState();
     panel_->Summon(false);
@@ -307,14 +342,14 @@ void CommunityPage::ShowTheSelectedEntry()
     }
 
     QList<ModelRowDetail::Field> fields;
-    fields.append({tr("Classificação"), CommunityModel::ClassificationName(entry->classification)});
-    fields.append({tr("Destino"), AsText(entry->path.parent_path().filename())});
-    fields.append({tr("Caminho"), AsText(entry->path)});
-    fields.append({tr("É link?"), entry->target.empty() ? tr("não, pasta física") : AsText(entry->target)});
+    fields.append({tr("Classification"), CommunityModel::ClassificationName(entry->classification)});
+    fields.append({tr("Destination"), AsText(entry->path.parent_path().filename())});
+    fields.append({tr("Path"), AsText(entry->path)});
+    fields.append({tr("Link?"), entry->target.empty() ? tr("no, a physical folder") : AsText(entry->target)});
 
     if (const CopyConflict* conflict = model_.ConflictAt(source); conflict != nullptr)
     {
-        fields.append({tr("Na biblioteca"), AsText(conflict->libraryPath)});
+        fields.append({tr("In the library"), AsText(conflict->libraryPath)});
     }
 
     panel_->ShowTitle(AsText(entry->path.filename()), model_.data(source, AlarmingRole).toBool());
@@ -358,13 +393,13 @@ void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
         counted_.append({chip->property("label").toString(), QString::number(population)});
     }
 
-    counted_.append({tr("Destinos"), QString::number(destinations.size())});
+    counted_.append({tr("Destinations"), QString::number(destinations.size())});
 
-    panel_->ShowTitle(tr("%n entrada(s) selecionada(s)", nullptr, static_cast<int>(rows.size())), alarming);
+    panel_->ShowTitle(tr("%n entry selected", nullptr, static_cast<int>(rows.size())), alarming);
 
     const std::vector<std::filesystem::path> importable = ChosenForImport(*table_, *filter_, model_).folders;
 
-    ShowTheBatchFields(importable.empty() ? QString() : tr("medindo…"));
+    ShowTheBatchFields(importable.empty() ? QString() : tr("measuring…"));
 
     if (!importable.empty())
     {
@@ -378,7 +413,7 @@ void CommunityPage::ShowTheBatchFields(const QString& size) const
 
     if (!size.isEmpty())
     {
-        fields.append({tr("Tamanho em disco"), size});
+        fields.append({tr("Size on disk"), size});
     }
 
     detail_->ShowFields(fields);
@@ -391,12 +426,11 @@ void CommunityPage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
     const int blocked = chosen.conflicted;
 
     importOne_->setEnabled(importable > 0);
-    importOne_->setText(importable > 1 ? tr("Importar as %n pastas…", nullptr, importable)
-                                       : tr("Importar esta pasta…"));
+    importOne_->setText(importable > 1 ? tr("Import the %n folder…", nullptr, importable) : tr("Import this folder…"));
 
     resolveChosen_->setVisible(blocked > 0);
-    resolveChosen_->setText(blocked > 1 ? tr("Resolver os %n conflitos…", nullptr, blocked)
-                                        : tr("Resolver o conflito…"));
+    resolveChosen_->setText(blocked > 1 ? tr("Resolve the %n conflict…", nullptr, blocked)
+                                        : tr("Resolve the conflict…"));
 
     Emphasise(*resolveChosen_, blocked > 0);
     Emphasise(*importOne_, blocked == 0);
@@ -461,12 +495,11 @@ bool CommunityPage::TheSimulatorIsInTheWay()
 {
     while (const std::optional<std::string> running = importViewModel_.RunningSimulator())
     {
-        QMessageBox blocked(QMessageBox::Warning, tr("Simulador aberto"),
-                            tr("Operações de arquivo ficam bloqueadas enquanto o simulador roda."), QMessageBox::Cancel,
-                            this);
-        blocked.setInformativeText(tr("Feche %1 e verifique de novo.").arg(QString::fromStdString(*running)));
+        QMessageBox blocked(QMessageBox::Warning, tr("Simulator open"),
+                            tr("File operations stay blocked while the simulator runs."), QMessageBox::Cancel, this);
+        blocked.setInformativeText(tr("Close %1 and check again.").arg(QString::fromStdString(*running)));
 
-        const QPushButton* again = blocked.addButton(tr("Verificar de novo"), QMessageBox::AcceptRole);
+        const QPushButton* again = blocked.addButton(tr("Check again"), QMessageBox::AcceptRole);
         blocked.exec();
 
         if (blocked.clickedButton() != again)
@@ -484,10 +517,10 @@ void CommunityPage::StartImport()
 
     if (chosen.folders.empty())
     {
-        emit StatusChanged(chosen.conflicted > 0
-                               ? tr("Resolva o conflito antes de importar: a biblioteca já tem um addon "
-                                    "com esse nome.")
-                               : tr("Selecione ao menos uma pasta não gerenciada."));
+        emit StatusChanged(
+            chosen.conflicted > 0
+                ? tr("Resolve the conflict before importing: the library already has an addon with that name.")
+                : tr("Select at least one unmanaged folder."));
         return;
     }
 
@@ -521,7 +554,7 @@ void CommunityPage::ResolveTheSelectedConflict()
 
     if (conflicts.empty())
     {
-        emit StatusChanged(tr("Selecione uma entrada marcada como em conflito."));
+        emit StatusChanged(tr("Select an entry marked as in conflict."));
         return;
     }
 
@@ -548,8 +581,8 @@ void CommunityPage::ResolveTheSelectedConflict()
     viewModel_.Show();
 
     emit StatusChanged(asked == conflicts.size()
-                           ? tr("%n conflito(s) resolvido(s).", nullptr, resolved)
-                           : tr("%n conflito(s) resolvido(s), e os outros continuam abertos.", nullptr, resolved));
+                           ? tr("%n conflict resolved.", nullptr, resolved)
+                           : tr("%n conflict resolved, and the others are still open.", nullptr, resolved));
 }
 
 void CommunityPage::ResolveConflict(const CopyConflict& conflict)
@@ -571,7 +604,7 @@ CommunityPage::ResolveOneConflict(const CopyConflict& conflict, const std::size_
     ConflictDialog dialog(importViewModel_.DetailsOf(conflict), this);
     if (total > 1)
     {
-        dialog.setWindowTitle(tr("Duas cópias do mesmo addon (%1 de %2)").arg(position).arg(total));
+        dialog.setWindowTitle(tr("Two copies of the same addon (%1 of %2)").arg(position).arg(total));
     }
 
     if (dialog.exec() != QDialog::Accepted)
@@ -583,10 +616,10 @@ CommunityPage::ResolveOneConflict(const CopyConflict& conflict, const std::size_
 
     if (!Succeeded(result))
     {
-        QMessageBox::warning(this, tr("O conflito continua"),
+        QMessageBox::warning(this, tr("The conflict is still there"),
                              result == FileResult::CouldNotRemoveTheLink
-                                 ? tr("Nenhuma pasta foi movida: %1.").arg(Explain(result))
-                                 : tr("Nada foi apagado: %1.").arg(Explain(result)));
+                                 ? tr("No folder was moved: %1.").arg(Explain(result))
+                                 : tr("Nothing was deleted: %1.").arg(Explain(result)));
     }
 
     return result;
@@ -598,7 +631,7 @@ void CommunityPage::StartRepair()
 
     if (candidates.empty())
     {
-        emit StatusChanged(tr("Nenhum link quebrado para reparar."));
+        emit StatusChanged(tr("No broken link to repair."));
         return;
     }
 
@@ -617,7 +650,7 @@ void CommunityPage::OnImportStarted(const int folders)
     folder_ = 0;
     step_ = NameOfImportStep(OperationKind::ImportCopyToStaging);
 
-    progress_ = new QProgressDialog(step_, tr("Cancelar"), 0, 100, this);
+    progress_ = new QProgressDialog(step_, tr("Cancel"), 0, 100, this);
     progress_->setWindowModality(Qt::ApplicationModal);
     progress_->setMinimumDuration(0);
     progress_->setAutoClose(false);
@@ -636,8 +669,8 @@ void CommunityPage::OnImportProgressed(const qulonglong copiedBytes, const qulon
 
     progress_->setRange(0, 100);
     progress_->setLabelText(
-        tr("%1 · %2 · %3 de %4")
-            .arg(tr("Pasta %1 de %2").arg(folder).arg(folders_), step_, AsSize(copiedBytes), AsSize(totalBytes)));
+        tr("%1 · %2 · %3 of %4")
+            .arg(tr("Folder %1 of %2").arg(folder).arg(folders_), step_, AsSize(copiedBytes), AsSize(totalBytes)));
 
     progress_->setValue(totalBytes == 0 ? 0 : static_cast<int>(copiedBytes * 100 / totalBytes));
 }
@@ -654,7 +687,7 @@ void CommunityPage::OnImportStep(const QString& step)
         return;
     }
 
-    progress_->setLabelText(tr("Pasta %1 de %2 · %3").arg(folder_).arg(folders_).arg(step_));
+    progress_->setLabelText(tr("Folder %1 of %2 · %3").arg(folder_).arg(folders_).arg(step_));
 
     if (!copying)
     {
@@ -684,15 +717,15 @@ void CommunityPage::OnImportFinished(const std::vector<ImportOperationResult>& r
 
     if (!failed.isEmpty())
     {
-        QMessageBox report(QMessageBox::Warning, tr("Nem tudo foi importado"),
-                           tr("%n importação(ões) não terminou(aram).", nullptr, static_cast<int>(failed.size())),
-                           QMessageBox::Ok, this);
-        report.setInformativeText(tr("%n addon(s) agora mora(m) na biblioteca.", nullptr, done));
+        QMessageBox report(QMessageBox::Warning, tr("Not everything was imported"),
+                           tr("%n import did not finish.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
+                           this);
+        report.setInformativeText(tr("%n addon now lives in the library.", nullptr, done));
         report.setDetailedText(failed.join('\n'));
         report.exec();
     }
 
-    emit StatusChanged(tr("%n addon(s) importado(s) para a biblioteca.", nullptr, done));
+    emit StatusChanged(tr("%n addon imported into the library.", nullptr, done));
 }
 
 void CommunityPage::OnRepairFinished(const std::vector<LinkOperationResult>& results)
@@ -710,19 +743,18 @@ void CommunityPage::OnRepairFinished(const std::vector<LinkOperationResult>& res
 
     if (failed.isEmpty())
     {
-        emit StatusChanged(tr("%n reparo(s) concluído(s).", nullptr, done));
+        emit StatusChanged(tr("%n repair finished.", nullptr, done));
         return;
     }
 
-    QMessageBox report(QMessageBox::Warning, tr("Nem tudo foi reparado"),
-                       tr("%n reparo(s) falhou(aram).", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
-                       this);
-    report.setInformativeText(tr("%n reparo(s) concluído(s).", nullptr, done));
+    QMessageBox report(QMessageBox::Warning, tr("Not everything was repaired"),
+                       tr("%n repair failed.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok, this);
+    report.setInformativeText(tr("%n repair finished.", nullptr, done));
     report.setDetailedText(failed.join('\n'));
     report.exec();
 
-    emit StatusChanged(tr("%1 · %2").arg(tr("%n reparo(s) concluído(s)", nullptr, done),
-                                         tr("%n falhou(aram)", nullptr, static_cast<int>(failed.size()))));
+    emit StatusChanged(tr("%1 · %2").arg(tr("%n repair finished", nullptr, done),
+                                         tr("%n failed", nullptr, static_cast<int>(failed.size()))));
 }
 
 void CommunityPage::FitTheChips()
@@ -776,9 +808,9 @@ void CommunityPage::UpdateSummary()
     const int managed = counted.value(static_cast<int>(EntryClassification::Managed));
 
     emit SummaryChanged(tr("%1 · %2 · %3 · %4")
-                            .arg(tr("%n entrada(s)", nullptr, rows), tr("%n gerenciada(s)", nullptr, managed),
-                                 tr("%n quebrada(s)", nullptr, broken),
-                                 tr("%n em conflito", nullptr, counted.value(kConflictFilter))));
+                            .arg(tr("%n entry", nullptr, rows), tr("%n managed", nullptr, managed),
+                                 tr("%n broken", nullptr, broken),
+                                 tr("%n in conflict", nullptr, counted.value(kConflictFilter))));
 
-    emit AsideChanged(tr("%n destino(s)", nullptr, static_cast<int>(importViewModel_.Profile().destinations.size())));
+    emit AsideChanged(tr("%n destination", nullptr, static_cast<int>(importViewModel_.Profile().destinations.size())));
 }

@@ -3,17 +3,20 @@
 
 #include "viewmodel/JournalModel.h"
 
-class JournalModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class JournalModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AnImportIsOneRowWithItsStepsUnderneath();
-    static void TheLibraryAppearsByItsLabelAndNeverAsAUuid();
-    static void TheNewestOperationComesFirst();
-    static void FilteringKeepsOnlyWhatFailed();
-    static void SearchingReachesTheStepsOfAnImport();
-};
+    private slots:
+        static void AnImportIsOneRowWithItsStepsUnderneath();
+        static void TheLibraryAppearsByItsLabelAndNeverAsAUuid();
+        static void TheNewestOperationComesFirst();
+        static void FilteringKeepsOnlyWhatFailed();
+        static void SearchingReachesTheStepsOfAnImport();
+    };
+}
 
 namespace
 {
@@ -27,21 +30,21 @@ namespace
 
     OperationRecord Step(const OperationKind kind, const int seconds, const FileResult result = FileResult::Completed)
     {
-        return OperationRecord::OfImport(Moment(seconds), kind, AddonId{"lib-1", "simbridge"}, kSource, kTarget,
-                                         result);
+        return OperationRecord::OfImport(
+            Moment(seconds), kind, AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, kSource, kTarget, result);
     }
 
     OperationRecord Link(const OperationKind kind, const int seconds, const LinkFailure failure = LinkFailure::None)
     {
-        return OperationRecord::OfLink(Moment(seconds), kind, AddonId{"lib-1", "pmdg-aircraft-77w"},
-                                       "D:/Library/Aircrafts/pmdg-aircraft-77w", "E:/Sim/Community/pmdg-aircraft-77w",
-                                       failure);
+        return OperationRecord::OfLink(
+            Moment(seconds), kind, AddonId{.libraryId = "lib-1", .folderName = "pmdg-aircraft-77w"},
+            "D:/Library/Aircrafts/pmdg-aircraft-77w", "E:/Sim/Community/pmdg-aircraft-77w", failure);
     }
 
     SimulatorProfile Profile()
     {
         SimulatorProfile profile;
-        profile.libraries = {Library{"lib-1", "D:/Library", "Biblioteca do Bruno"}};
+        profile.libraries = {Library{.id = "lib-1", .path = "D:/Library", .label = "Biblioteca do Bruno"}};
 
         return profile;
     }
@@ -53,8 +56,9 @@ namespace
             Step(OperationKind::ImportVerifyStaging, 1),
             Step(OperationKind::ImportMoveIntoPlace, 2),
             Step(OperationKind::ImportRemoveSource, 3),
-            OperationRecord::OfLink(Moment(4), OperationKind::EnableAddon, AddonId{"lib-1", "simbridge"}, kTarget,
-                                    kSource, LinkFailure::None),
+            OperationRecord::OfLink(Moment(4), OperationKind::EnableAddon,
+                                    AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, kTarget, kSource,
+                                    LinkFailure::None),
             Link(OperationKind::DisableAddon, 5),
         };
     }
@@ -71,11 +75,11 @@ void JournalModelTest::AnImportIsOneRowWithItsStepsUnderneath()
 
     const QModelIndex run = model.index(1, JournalModel::OperationColumn, {});
     QCOMPARE(model.rowCount(model.index(1, 0, {})), 5);
-    QCOMPARE(run.data(Qt::DisplayRole).toString(), QStringLiteral("Importação (5 passo(s))"));
+    QCOMPARE(run.data(Qt::DisplayRole).toString(), QStringLiteral("Import (5 step)"));
     QVERIFY(run.data(JournalModel::SucceededRole).toBool());
 
     const QModelIndex firstStep = model.index(0, JournalModel::OperationColumn, model.index(1, 0, {}));
-    QCOMPARE(firstStep.data(Qt::DisplayRole).toString(), QStringLiteral("Copiar para a área de staging"));
+    QCOMPARE(firstStep.data(Qt::DisplayRole).toString(), QStringLiteral("Copy to the staging area"));
     QCOMPARE(model.rowCount(firstStep), 0);
     QCOMPARE(model.parent(firstStep), model.index(1, 0, {}));
 }
@@ -92,7 +96,7 @@ void JournalModelTest::TheLibraryAppearsByItsLabelAndNeverAsAUuid()
     orphan.ShowRecords({Link(OperationKind::EnableAddon, 0)}, SimulatorProfile{});
 
     QCOMPARE(orphan.index(0, JournalModel::LibraryColumn, {}).data(Qt::DisplayRole).toString(),
-             QStringLiteral("(biblioteca removida)"));
+             QStringLiteral("(library removed)"));
 }
 
 void JournalModelTest::TheNewestOperationComesFirst()
@@ -101,7 +105,7 @@ void JournalModelTest::TheNewestOperationComesFirst()
     model.ShowRecords(AnImportAndALink(), Profile());
 
     QCOMPARE(model.index(0, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
-             QStringLiteral("Desabilitar addon"));
+             QStringLiteral("Disable addon"));
     QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(),
              QStringLiteral("pmdg-aircraft-77w"));
 }
@@ -120,7 +124,7 @@ void JournalModelTest::FilteringKeepsOnlyWhatFailed()
 
     QCOMPARE(filter.rowCount({}), 1);
     QCOMPARE(filter.index(0, JournalModel::OutcomeColumn, {}).data(Qt::DisplayRole).toString(),
-             QStringLiteral("não foi possível remover o link"));
+             QStringLiteral("the link could not be removed"));
 }
 
 void JournalModelTest::SearchingReachesTheStepsOfAnImport()
@@ -134,11 +138,11 @@ void JournalModelTest::SearchingReachesTheStepsOfAnImport()
     filter.Search(QStringLiteral("simbridge"));
     QCOMPARE(filter.rowCount({}), 1);
 
-    filter.Search(QStringLiteral("verificar"));
+    filter.Search(QStringLiteral("check the copy"));
     QCOMPARE(filter.rowCount({}), 1);
     QCOMPARE(filter.rowCount(filter.index(0, 0, {})), 1);
 
-    filter.Search(QStringLiteral("nada disso existe"));
+    filter.Search(QStringLiteral("none of that exists"));
     QCOMPARE(filter.rowCount({}), 0);
 }
 

@@ -9,14 +9,17 @@
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "tests/support/PathPrinting.h"
 
-class WindowsSimulatorLocatorTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class WindowsSimulatorLocatorTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryCandidateIsReportedNotJustTheFirst();
-    static void OnlyTheDestinationFoldersThatExistAreEnumerated();
-};
+    private slots:
+        static void EveryCandidateIsReportedNotJustTheFirst();
+        static void OnlyTheDestinationFoldersThatExistAreEnumerated();
+    };
+}
 
 namespace
 {
@@ -56,9 +59,11 @@ void WindowsSimulatorLocatorTest::EveryCandidateIsReportedNotJustTheFirst()
     machine.AddFolder("packages-2024/Community");
 
     const std::vector<UserCfgLocation> locations{
-        {SimulatorVariant::MSFS2020, machine.AddUserCfg("store-2020", machine.Root() / "packages-2020")},
-        {SimulatorVariant::MSFS2024, machine.Root() / "never-installed" / "UserCfg.opt"},
-        {SimulatorVariant::MSFS2024, machine.AddUserCfg("steam-2024", machine.Root() / "packages-2024")},
+        {.variant = SimulatorVariant::MSFS2020,
+         .configPath = machine.AddUserCfg("store-2020", machine.Root() / "packages-2020")},
+        {.variant = SimulatorVariant::MSFS2024, .configPath = machine.Root() / "never-installed" / "UserCfg.opt"},
+        {.variant = SimulatorVariant::MSFS2024,
+         .configPath = machine.AddUserCfg("steam-2024", machine.Root() / "packages-2024")},
     };
 
     const WindowsSimulatorLocator locator(locations);
@@ -80,8 +85,10 @@ void WindowsSimulatorLocatorTest::OnlyTheDestinationFoldersThatExistAreEnumerate
     machine.AddFolder("packages-2020/Community");
 
     const std::vector<UserCfgLocation> locations{
-        {SimulatorVariant::MSFS2024, machine.AddUserCfg("steam-2024", machine.Root() / "packages-2024")},
-        {SimulatorVariant::MSFS2020, machine.AddUserCfg("store-2020", machine.Root() / "packages-2020")},
+        {.variant = SimulatorVariant::MSFS2024,
+         .configPath = machine.AddUserCfg("steam-2024", machine.Root() / "packages-2024")},
+        {.variant = SimulatorVariant::MSFS2020,
+         .configPath = machine.AddUserCfg("store-2020", machine.Root() / "packages-2020")},
     };
 
     const WindowsSimulatorLocator locator(locations);

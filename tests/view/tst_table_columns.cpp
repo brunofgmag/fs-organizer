@@ -6,24 +6,27 @@
 
 #include "view/TableColumns.h"
 
-class TableColumnsTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class TableColumnsTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheColumnsFillTheTableWithoutLeavingAStripOnTheRight();
-    static void WideningOneColumnWidensThatColumnAndNoOther();
-    static void NarrowingOneColumnIsAbsorbedInsteadOfLeavingAGap();
-    static void EveryColumnButTheLastCanBeDragged();
-    static void TheColumnThatTakesTheSlackIsDraggedLikeAnyOther();
-    static void ADraggedColumnKeepsItsLeftEdgeAndMovesTheOneAfterIt();
-    static void TheLastColumnRefusesTheUserBecauseItHasNothingToTradeWith();
-    static void NoColumnIsSqueezedNarrowerThanItsOwnTitle();
-    static void AWiderWindowGoesToTheColumnThatTakesTheSlack();
-    static void ContentThatArrivesAfterTheHelperIsMeasuredJustTheSame();
-    static void ContentThatChangesWithoutNewRowsIsMeasuredAgain();
-    static void TheSlackCanBeGivenToAChosenColumnInsteadOfTheLast();
-};
+    private slots:
+        static void TheColumnsFillTheTableWithoutLeavingAStripOnTheRight();
+        static void WideningOneColumnWidensThatColumnAndNoOther();
+        static void NarrowingOneColumnIsAbsorbedInsteadOfLeavingAGap();
+        static void EveryColumnButTheLastCanBeDragged();
+        static void TheColumnThatTakesTheSlackIsDraggedLikeAnyOther();
+        static void ADraggedColumnKeepsItsLeftEdgeAndMovesTheOneAfterIt();
+        static void TheLastColumnRefusesTheUserBecauseItHasNothingToTradeWith();
+        static void NoColumnIsSqueezedNarrowerThanItsOwnTitle();
+        static void AWiderWindowGoesToTheColumnThatTakesTheSlack();
+        static void ContentThatArrivesAfterTheHelperIsMeasuredJustTheSame();
+        static void ContentThatChangesWithoutNewRowsIsMeasuredAgain();
+        static void TheSlackCanBeGivenToAChosenColumnInsteadOfTheLast();
+    };
+}
 
 namespace
 {
@@ -306,8 +309,8 @@ void TableColumnsTest::NoColumnIsSqueezedNarrowerThanItsOwnTitle()
     QStandardItemModel model(6, kColumns);
     QTableView view;
 
-    model.setHorizontalHeaderLabels({QStringLiteral("Preset"), QStringLiteral("Conteúdo muito comprido"),
-                                     QStringLiteral("Atualizado"), QStringLiteral("Sobra")});
+    model.setHorizontalHeaderLabels({QStringLiteral("Preset"), QStringLiteral("Very long content"),
+                                     QStringLiteral("Changed"), QStringLiteral("Sobra")});
 
     for (int row = 0; row < model.rowCount(); ++row)
     {
@@ -333,7 +336,7 @@ void TableColumnsTest::NoColumnIsSqueezedNarrowerThanItsOwnTitle()
         header->resizeSection(column, 20);
 
         QVERIFY2(header->sectionSize(column) >= title,
-                 qPrintable(QStringLiteral("coluna %1 ficou com %2, o título pede %3")
+                 qPrintable(QStringLiteral("column %1 ended up with %2, the heading asks for %3")
                                 .arg(column)
                                 .arg(header->sectionSize(column))
                                 .arg(title)));

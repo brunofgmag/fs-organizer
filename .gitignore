@@ -37,6 +37,9 @@ graphify-out/
 .impeccable/
 docs/
 
+# Agent instructions
+CLAUDE.md
+
 # OS
 Thumbs.db
 Desktop.ini

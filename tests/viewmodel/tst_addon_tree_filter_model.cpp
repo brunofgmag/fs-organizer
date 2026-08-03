@@ -4,16 +4,19 @@
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeModel.h"
 
-class AddonTreeFilterModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class AddonTreeFilterModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EmptyCategoriesAppearByDefaultAndHideOnDemand();
-    static void HidingEmptyCategoriesReachesTheDeclaredOnesToo();
-    static void SearchingByNameKeepsTheAncestorsOfMatches();
-    static void ClearingTheSearchRestoresTheTree();
-};
+    private slots:
+        static void EmptyCategoriesAppearByDefaultAndHideOnDemand();
+        static void HidingEmptyCategoriesReachesTheDeclaredOnesToo();
+        static void SearchingByNameKeepsTheAncestorsOfMatches();
+        static void ClearingTheSearchRestoresTheTree();
+    };
+}
 
 namespace
 {

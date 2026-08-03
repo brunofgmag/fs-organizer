@@ -11,14 +11,14 @@ $ErrorActionPreference = 'Stop'
 
 if ($Filter -and ($Filter -like '*\*' -or $Filter -like '*/*' -or $Filter -like '*.cpp')) {
     $fileName = Split-Path -Leaf $Filter
-    Write-Host "==> Caminho de arquivo detectado no filtro: $fileName"
+    Write-Host "==> File path detected in the filter: $fileName"
 
     if ($fileName -like 'tst_*.cpp') {
         $Filter = $fileName -replace '^tst_', '' -replace '\.cpp$', '' -replace '_', '-'
-        Write-Host "==> Mapeado para o teste CTest: $Filter"
+        Write-Host "==> Mapped to the CTest test: $Filter"
     }
     else {
-        Write-Host '==> Arquivo não reconhecido como teste. Rodando todos.'
+        Write-Host '==> The file is not a test. Running all of them.'
         $Filter = ''
     }
 }
@@ -34,10 +34,10 @@ else {
     )
     $cmake = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 }
-if (-not $cmake) { throw 'cmake.exe não encontrado. Instale o CMake ou o CLion.' }
+if (-not $cmake) { throw 'cmake.exe was not found. Install CMake or CLion.' }
 
 $ctest = Join-Path (Split-Path -Parent $cmake) 'ctest.exe'
-if (-not (Test-Path -LiteralPath $ctest)) { throw 'ctest.exe não encontrado ao lado do cmake.' }
+if (-not (Test-Path -LiteralPath $ctest)) { throw 'ctest.exe was not found beside cmake.' }
 
 if (-not $env:QT_ROOT_DIR) {
     $kit = Get-ChildItem -LiteralPath 'C:\Qt' -Directory -ErrorAction SilentlyContinue |
@@ -55,23 +55,23 @@ $buildDir = Join-Path $PSScriptRoot "build/$preset"
 
 $cacheFile = Join-Path $buildDir 'CMakeCache.txt'
 if ($Reconfigure -or -not (Test-Path -LiteralPath $cacheFile)) {
-    Write-Host "==> Configurando preset '$preset'..."
+    Write-Host "==> Configuring preset '$preset'..."
     & $cmake --preset $preset
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
 if ($Filter) {
     $targetToBuild = "fsorg-$Filter-tests"
-    Write-Host "==> Compilando apenas o alvo de teste: $targetToBuild ($Config)..."
+    Write-Host "==> Building only the test target: $targetToBuild ($Config)..."
     & $cmake --build --preset $preset --target $targetToBuild --parallel
 }
 else {
-    Write-Host "==> Compilando todos os alvos ($Config)..."
+    Write-Host "==> Building every target ($Config)..."
     & $cmake --build --preset $preset --parallel
 }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-Write-Host "`n==> Rodando testes..."
+Write-Host "`n==> Running the tests..."
 $ctestArgs = @(
     '--test-dir', $buildDir
     '-C', $Config

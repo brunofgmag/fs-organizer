@@ -137,9 +137,9 @@ namespace
         const double cost = PaintCostOf(view);
         const double repainted = WhatANotchRepaints(view);
 
-        Out() << what.leftJustified(32) << QString::number(cost, 'f', 2).rightJustified(6) << " ms por pintura"
-              << "   repinta " << QString::number(repainted, 'f', 0) << " de " << view.viewport()->height()
-              << " px por entalhe\n";
+        Out() << what.leftJustified(32) << QString::number(cost, 'f', 2).rightJustified(6) << " ms per paint"
+              << "   repaints " << QString::number(repainted, 'f', 0) << " of " << view.viewport()->height()
+              << " px per notch\n";
         Out().flush();
     }
 
@@ -184,22 +184,22 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
     auto* view = page.findChild<QTreeView*>();
     if (view == nullptr)
     {
-        Out() << "não achei a lista na página\n";
+        Out() << "could not find the list on the page\n";
         Out().flush();
         return 2;
     }
 
-    Out() << "linhas: " << model.rowCount({}) << "  abrir a aba: " << opening << " ms"
+    Out() << "rows: " << model.rowCount({}) << "  opening the tab: " << opening << " ms"
           << "  dpr " << view->devicePixelRatio() << "  viewport " << view->viewport()->width() << "x"
           << view->viewport()->height() << "\n\n";
 
     const double asShipped = PaintCostOf(*view);
-    ReportView("pagina do diario", *view);
+    ReportView("the journal page", *view);
 
     view->setItemDelegate(new QStyledItemDelegate(view));
     LetTheWindowSettle();
     const double withTheStockDelegate = PaintCostOf(*view);
-    ReportView("  com o delegate do Qt", *view);
+    ReportView("  with the Qt delegate", *view);
 
     view->setItemDelegate(new PlainTextDelegate(view));
     LetTheWindowSettle();
@@ -212,7 +212,7 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         bare.setModel(ConstantModel(rows, 7, QStringLiteral("D:/Library/Utils/simbridge"), &bare));
         bare.setUniformRowHeights(true);
         ShowAtAFixedSize(bare);
-        ReportView("QTreeView cru, 7 col, caminho", bare);
+        ReportView("raw QTreeView, 7 cols, path", bare);
         bare.hide();
     }
 
@@ -221,7 +221,7 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         bare.setModel(ConstantModel(rows, 7, QStringLiteral("ok"), &bare));
         bare.setUniformRowHeights(true);
         ShowAtAFixedSize(bare);
-        ReportView("QTreeView cru, 7 col, curto", bare);
+        ReportView("raw QTreeView, 7 cols, short", bare);
         bare.hide();
     }
 
@@ -230,14 +230,14 @@ int MeasureTheJournalScroll(const OperationJournal& journal, const Session& sess
         bare.setModel(ConstantModel(rows, 1, QStringLiteral("D:/Library/Utils/simbridge"), &bare));
         bare.setUniformRowHeights(true);
         ShowAtAFixedSize(bare);
-        ReportView("QTreeView cru, 1 col, caminho", bare);
+        ReportView("raw QTreeView, 1 col, path", bare);
         bare.hide();
     }
 
-    Out() << "\ndelegate do Qt " << QString::number(withTheStockDelegate, 'f', 2) << " ms -> nosso "
+    Out() << "\nQt delegate " << QString::number(withTheStockDelegate, 'f', 2) << " ms -> ours "
           << QString::number(asShipped, 'f', 2) << " ms\n";
-    Out() << "orçamento por quadro: " << kBudgetPerFrame << " ms\n";
-    Out() << (asShipped > kBudgetPerFrame ? "VERMELHO: o scroll engasga\n" : "VERDE\n");
+    Out() << "budget per frame: " << kBudgetPerFrame << " ms\n";
+    Out() << (asShipped > kBudgetPerFrame ? "RED: the scroll stutters\n" : "GREEN\n");
     Out().flush();
 
     return asShipped > kBudgetPerFrame ? 1 : 0;

@@ -37,12 +37,12 @@ QString CommunityModel::ClassificationName(const EntryClassification classificat
 {
     switch (classification)
     {
-    case EntryClassification::Managed: return tr("Gerenciada");
-    case EntryClassification::External: return tr("Externa");
-    case EntryClassification::Broken: return tr("Quebrada");
-    case EntryClassification::Unavailable: return tr("Indisponível");
-    case EntryClassification::Unmanaged: return tr("Não gerenciada");
-    case EntryClassification::Duplicated: return tr("Duplicada");
+    case EntryClassification::Managed: return tr("Managed");
+    case EntryClassification::External: return tr("External");
+    case EntryClassification::Broken: return tr("Broken");
+    case EntryClassification::Unavailable: return tr("Unavailable");
+    case EntryClassification::Unmanaged: return tr("Unmanaged");
+    case EntryClassification::Duplicated: return tr("Duplicated");
     }
 
     return {};
@@ -134,7 +134,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
             return {};
         }
 
-        return tr("%1\nTambém existe na biblioteca: %2")
+        return tr("%1\nIt also exists in the library: %2")
             .arg(data(position, Qt::DisplayRole).toString(), AsText(conflict->libraryPath));
     }
 
@@ -149,7 +149,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     case DestinationColumn: return AsText(entry->path.parent_path().filename());
     case ClassificationColumn:
         return conflict == nullptr ? ClassificationName(entry->classification)
-                                   : tr("%1 · em conflito").arg(ClassificationName(entry->classification));
+                                   : tr("%1 · in conflict").arg(ClassificationName(entry->classification));
     case TargetColumn: return entry->target.empty() ? QString() : AsText(entry->target.generic_wstring());
     default: return {};
     }
@@ -164,10 +164,10 @@ QVariant CommunityModel::headerData(const int section, const Qt::Orientation ori
 
     switch (section)
     {
-    case NameColumn: return tr("Nome");
-    case DestinationColumn: return tr("Destino");
-    case ClassificationColumn: return tr("Classificação");
-    case TargetColumn: return tr("Alvo");
+    case NameColumn: return tr("Name");
+    case DestinationColumn: return tr("Destination");
+    case ClassificationColumn: return tr("Classification");
+    case TargetColumn: return tr("Target");
     default: return {};
     }
 }

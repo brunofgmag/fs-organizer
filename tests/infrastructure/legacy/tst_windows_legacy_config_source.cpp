@@ -9,19 +9,22 @@
 #include "domain/support/PathUtils.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
 
-class WindowsLegacyConfigSourceTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class WindowsLegacyConfigSourceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryInstallationFolderUnderProgramDataIsFound();
-    static void AFolderOfAnotherProgramIsIgnored();
-    static void AFolderWithoutTheConfigurationFileIsIgnored();
-    static void AConfigurationThatCannotBeOpenedIsFoundWithoutItsContents();
-    static void TheEntriesOfTheConfigurationArriveWhole();
-    static void AProgramDataFolderThatIsNotThereFindsNothing();
-    static void ThePresetsOfAnInstallationAreReadFromItsPresetsFolder();
-};
+    private slots:
+        static void EveryInstallationFolderUnderProgramDataIsFound();
+        static void AFolderOfAnotherProgramIsIgnored();
+        static void AFolderWithoutTheConfigurationFileIsIgnored();
+        static void AConfigurationThatCannotBeOpenedIsFoundWithoutItsContents();
+        static void TheEntriesOfTheConfigurationArriveWhole();
+        static void AProgramDataFolderThatIsNotThereFindsNothing();
+        static void ThePresetsOfAnInstallationAreReadFromItsPresetsFolder();
+    };
+}
 
 namespace
 {
@@ -124,7 +127,6 @@ void WindowsLegacyConfigSourceTest::TheEntriesOfTheConfigurationArriveWhole()
     QCOMPARE(found.front().configuration->addonPaths.size(), std::size_t{2});
     QCOMPARE(ComparablePath(found.front().configuration->addonPaths.front()),
              ComparablePath("D:/MSFS 2024/Aircraft Mods"));
-    QCOMPARE(found.front().configuration->linkType, std::string{"J"});
 }
 
 void WindowsLegacyConfigSourceTest::AProgramDataFolderThatIsNotThereFindsNothing()

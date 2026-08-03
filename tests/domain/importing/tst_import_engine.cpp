@@ -13,30 +13,33 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class ImportEngineTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class ImportEngineTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AnImportThatDoesNotFitOnTheTargetVolumeTouchesNothing();
-    static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
-    static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
-    static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
-    static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
-    static void AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs();
-    static void ASourceThatCannotBeWalkedStopsTheImportBeforeAnythingIsCopied();
-    static void AnEmptySourceIsNotVerifiedAgainstAStagingThatCannotBeWalked();
-    static void AFolderOutsideTheConfiguredDestinationsIsNeverImported();
-    static void ADestinationRootIsNotAFolderInsideItself();
-    static void AForeignLinkIsNeverImportedAsIfItWereAFolder();
-    static void AFinishedImportLeavesALinkWhereTheFolderUsedToBe();
-    static void EveryStepOfAFinishedImportReachesTheJournalInOrder();
-    static void AVerificationThatFailsSaysSoInsteadOfLeavingTheJournalSilent();
-    static void ACopyThatFailsIsTheLastThingTheJournalHears();
-    static void AMoveThatFailsIsRecordedAndTheSourceSurvives();
-    static void ARemovalThatFailsIsRecordedAndTheSourceSurvives();
-    static void ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled();
-};
+    private slots:
+        static void AnImportThatDoesNotFitOnTheTargetVolumeTouchesNothing();
+        static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
+        static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
+        static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
+        static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
+        static void AnImportWhoseVerificationFailsLeavesTheSourceWhereItIs();
+        static void ASourceThatCannotBeWalkedStopsTheImportBeforeAnythingIsCopied();
+        static void AnEmptySourceIsNotVerifiedAgainstAStagingThatCannotBeWalked();
+        static void AFolderOutsideTheConfiguredDestinationsIsNeverImported();
+        static void ADestinationRootIsNotAFolderInsideItself();
+        static void AForeignLinkIsNeverImportedAsIfItWereAFolder();
+        static void AFinishedImportLeavesALinkWhereTheFolderUsedToBe();
+        static void EveryStepOfAFinishedImportReachesTheJournalInOrder();
+        static void AVerificationThatFailsSaysSoInsteadOfLeavingTheJournalSilent();
+        static void ACopyThatFailsIsTheLastThingTheJournalHears();
+        static void AMoveThatFailsIsRecordedAndTheSourceSurvives();
+        static void ARemovalThatFailsIsRecordedAndTheSourceSurvives();
+        static void ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled();
+    };
+}
 
 namespace
 {
@@ -61,9 +64,9 @@ namespace
 
         SimulatorProfile profile{.destinations = {"E:/Sim/Community"},
                                  .defaultDestination = "E:/Sim/Community",
-                                 .libraries = {Library{"lib-1", "D:/Library"}}};
+                                 .libraries = {Library{.id = "lib-1", .path = "D:/Library"}}};
 
-        ImportRequest request{kSource, kCategory};
+        ImportRequest request{.source = kSource, .category = kCategory};
 
         void AddSimBridgeToTheDestination()
         {
@@ -214,7 +217,7 @@ void ImportEngineTest::AFolderOutsideTheConfiguredDestinationsIsNeverImported()
     f.fileSystem.AddFile("E:/Packages/orbx-central/manifest.json", 2 * kMegabyte);
     f.fileSystem.AddDirectory("D:/Library/Utils");
 
-    const ImportRequest request{"E:/Packages/orbx-central", kCategory};
+    const ImportRequest request{.source = "E:/Packages/orbx-central", .category = kCategory};
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 
@@ -229,7 +232,7 @@ void ImportEngineTest::ADestinationRootIsNotAFolderInsideItself()
     Fixture f;
     f.AddSimBridgeToTheDestination();
 
-    const ImportRequest request{"E:/Sim/Community", kCategory};
+    const ImportRequest request{.source = "E:/Sim/Community", .category = kCategory};
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 
@@ -249,7 +252,7 @@ void ImportEngineTest::AForeignLinkIsNeverImportedAsIfItWereAFolder()
     f.fileSystem.AddLink("E:/Sim/Community/fsdreamteam-gsx-pro", foreign);
     f.fileSystem.AddDirectory("D:/Library/Utils");
 
-    const ImportRequest request{"E:/Sim/Community/fsdreamteam-gsx-pro", kCategory};
+    const ImportRequest request{.source = "E:/Sim/Community/fsdreamteam-gsx-pro", .category = kCategory};
 
     const ImportOutcome outcome = f.engine.Import(f.profile, request, {});
 

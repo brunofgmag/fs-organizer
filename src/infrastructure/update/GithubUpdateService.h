@@ -52,7 +52,14 @@ private:
 
     [[nodiscard]] QString StagedFolder() const;
 
-    [[nodiscard]] bool ChecksumMatches(const QString& zipPath) const;
+    enum class ChecksumVerdict
+    {
+        Matches,
+        DoesNotMatch,
+        CouldNotBeRead
+    };
+
+    [[nodiscard]] ChecksumVerdict VerifyChecksum(const QString& zipPath) const;
 
     void StartExtraction(const QString& zipPath, const QString& stagedRoot);
 

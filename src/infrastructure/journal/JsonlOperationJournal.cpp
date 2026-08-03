@@ -143,7 +143,8 @@ namespace
             return std::nullopt;
         }
 
-        const AddonId addon{object[kLibraryId].toString().toStdString(), object[kAddon].toString().toStdString()};
+        const AddonId addon{.libraryId = object[kLibraryId].toString().toStdString(),
+                            .folderName = object[kAddon].toString().toStdString()};
         const auto timestamp = MomentFrom(object[kTimestamp].toString());
         const std::filesystem::path source = AsPath(object[kSource].toString());
         const std::filesystem::path target = AsPath(object[kTarget].toString());

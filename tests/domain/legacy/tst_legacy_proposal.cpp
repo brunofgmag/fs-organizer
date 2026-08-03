@@ -4,27 +4,30 @@
 #include "domain/support/PathUtils.h"
 #include "tests/support/PathPrinting.h"
 
-class LegacyProposalTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class LegacyProposalTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void SiblingEntriesBecomeOneLibraryWithACategoryEach();
-    static void TheCategoryIsTheEntryRelativeToTheRoot();
-    static void EntriesAtDifferentDepthsShareTheirCommonAncestor();
-    static void EntriesOnDifferentVolumesEachBecomeTheirOwnLibrary();
-    static void ACommonAncestorThatIsOnlyTheDriveRootIsRefused();
-    static void AnEntryThatIsItselfTheAncestorBecomesTheRootAndNotACategory();
-    static void RepeatedEntriesProposeTheCategoryOnce();
-    static void CaseAndSeparatorDifferencesDoNotSplitTheAncestor();
-    static void TheCategoryKeepsTheCaseTheEntryHad();
-    static void ALibraryAlreadyRegisteredIsMarkedAsSuch();
-    static void ACategoryAlreadyOnDiskIsMarkedAsSuch();
-    static void AnEmptyFolderTheIniNamesIsOfferedInsteadOfTakenAsPresent();
-    static void EveryCategoryOfANewLibraryIsNew();
-    static void AnEntryWithAnInvalidSegmentIsRefusedInsteadOfProposed();
-    static void NoEntriesProposeNoLibrary();
-};
+    private slots:
+        static void SiblingEntriesBecomeOneLibraryWithACategoryEach();
+        static void TheCategoryIsTheEntryRelativeToTheRoot();
+        static void EntriesAtDifferentDepthsShareTheirCommonAncestor();
+        static void EntriesOnDifferentVolumesEachBecomeTheirOwnLibrary();
+        static void ACommonAncestorThatIsOnlyTheDriveRootIsRefused();
+        static void AnEntryThatIsItselfTheAncestorBecomesTheRootAndNotACategory();
+        static void RepeatedEntriesProposeTheCategoryOnce();
+        static void CaseAndSeparatorDifferencesDoNotSplitTheAncestor();
+        static void TheCategoryKeepsTheCaseTheEntryHad();
+        static void ALibraryAlreadyRegisteredIsMarkedAsSuch();
+        static void ACategoryAlreadyOnDiskIsMarkedAsSuch();
+        static void AnEmptyFolderTheIniNamesIsOfferedInsteadOfTakenAsPresent();
+        static void EveryCategoryOfANewLibraryIsNew();
+        static void AnEntryWithAnInvalidSegmentIsRefusedInsteadOfProposed();
+        static void NoEntriesProposeNoLibrary();
+    };
+}
 
 namespace
 {
@@ -50,7 +53,7 @@ namespace
 
         for (const std::filesystem::path& path : libraryPaths)
         {
-            profile.libraries.push_back(Library{"library-1", path, "MSFS 2024"});
+            profile.libraries.push_back(Library{.id = "library-1", .path = path, .label = "MSFS 2024"});
         }
 
         return profile;

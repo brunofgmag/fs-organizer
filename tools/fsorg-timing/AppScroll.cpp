@@ -93,10 +93,10 @@ namespace
 
         view.viewport()->removeEventFilter(&spy);
 
-        Out() << what.leftJustified(34) << "linhas " << QString::number(view.model()->rowCount({})).rightJustified(5)
-              << "   " << QString::number(Median(moves), 'f', 2).rightJustified(6) << " ms por movimento"
-              << "   pinturas " << QString::number(spy.paints / double{kMoves}, 'f', 1) << "   repinta "
-              << QString::number(spy.repaintedHeight / double{kMoves}, 'f', 0) << " de " << view.viewport()->height()
+        Out() << what.leftJustified(34) << "rows " << QString::number(view.model()->rowCount({})).rightJustified(5)
+              << "   " << QString::number(Median(moves), 'f', 2).rightJustified(6) << " ms per move"
+              << "   paints " << QString::number(spy.paints / double{kMoves}, 'f', 1) << "   repaints "
+              << QString::number(spy.repaintedHeight / double{kMoves}, 'f', 0) << " of " << view.viewport()->height()
               << " px\n";
         Out().flush();
     }
@@ -129,10 +129,10 @@ namespace
 
         view.viewport()->removeEventFilter(&spy);
 
-        Out() << what.leftJustified(34) << "linhas " << QString::number(view.model()->rowCount({})).rightJustified(5)
-              << "   " << QString::number(Median(notches), 'f', 2).rightJustified(6) << " ms por entalhe"
-              << "   pinturas " << QString::number(spy.paints / double{kNotches}, 'f', 1) << "   repinta "
-              << QString::number(spy.repaintedHeight / double{kNotches}, 'f', 0) << " de " << view.viewport()->height()
+        Out() << what.leftJustified(34) << "rows " << QString::number(view.model()->rowCount({})).rightJustified(5)
+              << "   " << QString::number(Median(notches), 'f', 2).rightJustified(6) << " ms per notch"
+              << "   paints " << QString::number(spy.paints / double{kNotches}, 'f', 1) << "   repaints "
+              << QString::number(spy.repaintedHeight / double{kNotches}, 'f', 0) << " of " << view.viewport()->height()
               << " px\n";
         Out().flush();
     }
@@ -155,7 +155,7 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     QToolButton* open = nullptr;
     for (QToolButton* button : window.findChildren<QToolButton*>())
     {
-        if (button->text().startsWith(QStringLiteral("Di")))
+        if (button->text().startsWith(QStringLiteral("Journal")))
         {
             open = button;
         }
@@ -163,7 +163,7 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
 
     if (open == nullptr)
     {
-        Out() << "não achei o botão do diário\n";
+        Out() << "could not find the journal button\n";
         Out().flush();
         return 2;
     }
@@ -182,14 +182,14 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     auto* view = page.findChild<QTreeView*>();
     if (view == nullptr)
     {
-        Out() << "não achei a lista do diário\n";
+        Out() << "could not find the journal list\n";
         Out().flush();
         return 2;
     }
 
-    Out() << "entradas no diario: " << model.rowCount({})
-          << "  primeira abertura: " << QString::number(firstShow, 'f', 0) << " ms"
-          << "  segunda: " << QString::number(secondShow, 'f', 0) << " ms"
+    Out() << "journal entries: " << model.rowCount({}) << "  first open: " << QString::number(firstShow, 'f', 0)
+          << " ms"
+          << "  second: " << QString::number(secondShow, 'f', 0) << " ms"
           << "  viewport " << view->viewport()->width() << "x" << view->viewport()->height() << "\n";
 
     timer.restart();
@@ -197,20 +197,20 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     {
         view->resizeColumnToContents(column);
     }
-    Out() << "resizeColumnToContents nas 7 colunas: "
+    Out() << "resizeColumnToContents on the 7 columns: "
           << QString::number(static_cast<double>(timer.nsecsElapsed()) / 1e6, 'f', 0) << " ms\n\n";
 
-    ReportScroll("diario inteiro", *view);
-    ReportHover("passando o mouse", *view);
+    ReportScroll("the whole journal", *view);
+    ReportHover("hovering", *view);
 
     QAbstractItemDelegate* ours = view->itemDelegate();
     view->setItemDelegate(new QStyledItemDelegate(view));
     LetTheWindowSettle();
-    ReportScroll("  com o delegate do Qt", *view);
+    ReportScroll("  with the Qt delegate", *view);
     view->setItemDelegate(new PlainTextDelegate(view));
     LetTheWindowSettle();
-    ReportScroll("  com o PlainTextDelegate", *view);
-    ReportHover("  passando o mouse nele", *view);
+    ReportScroll("  with the PlainTextDelegate", *view);
+    ReportHover("  hovering over it", *view);
     view->setItemDelegate(ours);
     LetTheWindowSettle();
 
@@ -218,8 +218,8 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     {
         failuresOnly->setChecked(true);
         LetTheWindowSettle();
-        ReportScroll("so o que falhou", *view);
-        ReportHover("  passando o mouse", *view);
+        ReportScroll("only what failed", *view);
+        ReportHover("  hovering", *view);
         failuresOnly->setChecked(false);
         LetTheWindowSettle();
     }

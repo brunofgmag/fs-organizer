@@ -72,8 +72,9 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
     switch (position.column())
     {
     case NameColumn: return AsText(item->path.filename());
-    case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("(o diário não sabe)");
-    case WhenColumn: return item->quarantinedAt.has_value() ? Moment(*item->quarantinedAt) : tr("(o diário não sabe)");
+    case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("(the journal does not know)");
+    case WhenColumn:
+        return item->quarantinedAt.has_value() ? Moment(*item->quarantinedAt) : tr("(the journal does not know)");
     case WhereColumn: return AsText(item->path.parent_path());
     default: return {};
     }
@@ -88,10 +89,10 @@ QVariant QuarantineModel::headerData(const int section, const Qt::Orientation or
 
     switch (section)
     {
-    case NameColumn: return tr("Nome");
-    case OriginColumn: return tr("Voltaria para");
-    case WhenColumn: return tr("Quarentenado em");
-    case WhereColumn: return tr("Guardado em");
+    case NameColumn: return tr("Name");
+    case OriginColumn: return tr("Would go back to");
+    case WhenColumn: return tr("Quarantined on");
+    case WhereColumn: return tr("Kept in");
     default: return {};
     }
 }

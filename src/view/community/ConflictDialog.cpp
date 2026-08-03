@@ -22,7 +22,7 @@ namespace
     {
         if (!when.has_value())
         {
-            return QObject::tr("(desconhecida)");
+            return QObject::tr("(unknown)");
         }
 
         const auto milliseconds =
@@ -41,30 +41,31 @@ namespace
             destinations.append(AsText(link.parent_path().filename()));
         }
 
-        return QObject::tr("A cópia da biblioteca está habilitada em %1. "
-                           "Ficar com a do destino remove esse(s) link(s) antes de mandá-la para a quarentena.")
+        return QObject::tr("The library copy is enabled in %1. Keeping the destination one removes those links before "
+                           "sending it to the quarantine.")
             .arg(destinations.join(QStringLiteral(", ")));
     }
 
     QString Version(const Manifest& manifest)
     {
-        return manifest.packageVersion.empty() ? QObject::tr("(sem versão no manifest)")
+        return manifest.packageVersion.empty() ? QObject::tr("(no version in the manifest)")
                                                : QString::fromStdString(manifest.packageVersion);
     }
 }
 
 ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Duas cópias do mesmo addon"));
+    setWindowTitle(tr("Two copies of the same addon"));
 
-    auto* explanation = new QLabel(tr("Existe uma pasta de verdade no destino e um addon de mesmo nome na biblioteca. "
-                                      "Escolha qual fica: a outra vai para a quarentena, e nada é apagado."),
-                                   this);
+    auto* explanation =
+        new QLabel(tr("There is a real folder in the destination and an addon with the same name in the library. "
+                      "Choose which one stays: the other goes to the quarantine, and nothing is deleted."),
+                   this);
     explanation->setWordWrap(true);
 
     auto* sides = new QHBoxLayout;
-    sides->addWidget(CreateSide(tr("Cópia no destino"), details.destination));
-    sides->addWidget(CreateSide(tr("Cópia na biblioteca"), details.library));
+    sides->addWidget(CreateSide(tr("Copy in the destination"), details.destination));
+    sides->addWidget(CreateSide(tr("Copy in the library"), details.library));
 
     auto* warning = new QLabel(WarningAbout(details.linksToTheLibraryCopy), this);
     warning->setWordWrap(true);
@@ -72,8 +73,9 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
 
-    const QPushButton* keepDestination = buttons->addButton(tr("Ficar com a do destino"), QDialogButtonBox::AcceptRole);
-    QPushButton* keepLibrary = buttons->addButton(tr("Ficar com a da biblioteca"), QDialogButtonBox::AcceptRole);
+    const QPushButton* keepDestination =
+        buttons->addButton(tr("Keep the destination one"), QDialogButtonBox::AcceptRole);
+    QPushButton* keepLibrary = buttons->addButton(tr("Keep the library one"), QDialogButtonBox::AcceptRole);
     keepLibrary->setDefault(true);
 
     connect(keepLibrary, &QPushButton::clicked, this,
@@ -109,14 +111,14 @@ QGroupBox* ConflictDialog::CreateSide(const QString& title, const ConflictSide& 
     path->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto* form = new QFormLayout(group);
-    form->addRow(tr("Caminho:"), path);
-    form->addRow(tr("Versão:"), new QLabel(Version(side.manifest), group));
-    form->addRow(tr("Tamanho:"), new QLabel(AsSize(side.sizeBytes), group));
-    form->addRow(tr("Modificada em:"), new QLabel(Moment(side.modified), group));
+    form->addRow(tr("Path:"), path);
+    form->addRow(tr("Version:"), new QLabel(Version(side.manifest), group));
+    form->addRow(tr("Size:"), new QLabel(AsSize(side.sizeBytes), group));
+    form->addRow(tr("Changed on:"), new QLabel(Moment(side.modified), group));
 
     if (!side.manifest.title.empty())
     {
-        form->addRow(tr("Título:"), new QLabel(QString::fromStdString(side.manifest.title), group));
+        form->addRow(tr("Title:"), new QLabel(QString::fromStdString(side.manifest.title), group));
     }
 
     return group;

@@ -11,21 +11,24 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class JsonSettingsRepositoryTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class JsonSettingsRepositoryTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AProfileSurvivesTheRoundTrip();
-    static void LibrariesKeepTheirIdentityAcrossTheRoundTrip();
-    static void TwoProfilesWithDestinationsAndOverridesSurviveTheRoundTrip();
-    static void AWriteTheDiskRefusesSaysSoInsteadOfClaimingItLanded();
-    static void SettingsThatCannotBeReadAreNotTheSameAsNoSettingsAtAll();
-    static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
-    static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
-    static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
-    static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
-};
+    private slots:
+        static void AProfileSurvivesTheRoundTrip();
+        static void LibrariesKeepTheirIdentityAcrossTheRoundTrip();
+        static void TwoProfilesWithDestinationsAndOverridesSurviveTheRoundTrip();
+        static void AWriteTheDiskRefusesSaysSoInsteadOfClaimingItLanded();
+        static void SettingsThatCannotBeReadAreNotTheSameAsNoSettingsAtAll();
+        static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
+        static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
+        static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
+        static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
+    };
+}
 
 namespace
 {
@@ -60,7 +63,7 @@ void JsonSettingsRepositoryTest::SettingsThatCannotBeReadAreNotTheSameAsNoSettin
     const Storage storage;
 
     std::filesystem::create_directories(storage.File().parent_path());
-    std::ofstream(storage.File(), std::ios::binary) << "isto nao e json";
+    std::ofstream(storage.File(), std::ios::binary) << "this is not json";
 
     QVERIFY(!JsonSettingsRepository(storage.File()).Load().has_value());
 }
@@ -148,10 +151,14 @@ void JsonSettingsRepositoryTest::TwoProfilesWithDestinationsAndOverridesSurviveT
     modern.variant = SimulatorVariant::MSFS2024;
     modern.destinations = {"E:/Flight Simulator 2024/Community", "E:/Flight Simulator 2024/Community2024"};
     modern.defaultDestination = "E:/Flight Simulator 2024/Community2024";
-    modern.libraries = {Library{libraryId, "D:/MSFS 2024", "MSFS 2024"}};
+    modern.libraries = {Library{.id = libraryId, .path = "D:/MSFS 2024", .label = "MSFS 2024"}};
     modern.destinationOverrides = {
-        DestinationOverride{libraryId, "Aircraft Mods/pmdg-aircraft-77w", "E:/Flight Simulator 2024/Community"},
-        DestinationOverride{libraryId, "Sceneries", "E:/Flight Simulator 2024/Community2024"},
+        DestinationOverride{.libraryId = libraryId,
+                            .relativePath = "Aircraft Mods/pmdg-aircraft-77w",
+                            .destination = "E:/Flight Simulator 2024/Community"},
+        DestinationOverride{.libraryId = libraryId,
+                            .relativePath = "Sceneries",
+                            .destination = "E:/Flight Simulator 2024/Community2024"},
     };
 
     SimulatorProfile legacy;

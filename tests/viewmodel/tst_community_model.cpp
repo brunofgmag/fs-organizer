@@ -8,18 +8,21 @@
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
 
-class CommunityModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class CommunityModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheTableShowsOneRowPerEntry();
-    static void FilteringByEachClassificationReturnsExactlyItsSubset();
-    static void ClearingTheFilterShowsEverythingAgain();
-    static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
-    static void ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate();
-    static void ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone();
-};
+    private slots:
+        static void TheTableShowsOneRowPerEntry();
+        static void FilteringByEachClassificationReturnsExactlyItsSubset();
+        static void ClearingTheFilterShowsEverythingAgain();
+        static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
+        static void ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate();
+        static void ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone();
+    };
+}
 
 namespace
 {
@@ -30,7 +33,7 @@ namespace
                            const std::filesystem::path& target,
                            const EntryClassification classification)
     {
-        return {path, target, classification};
+        return {.path = path, .target = target, .classification = classification};
     }
 
     SimulatorProfile Profile()
@@ -154,15 +157,15 @@ void CommunityModelTest::ClearingTheFilterShowsEverythingAgain()
 
 void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
 {
-    const CopyConflicts conflicts{
-        {CopyConflict{"E:/Flight Simulator 2024/Community/physical", "D:/MSFS 2024/Utils/physical"}}};
+    const CopyConflicts conflicts{{CopyConflict{.destinationPath = "E:/Flight Simulator 2024/Community/physical",
+                                                .libraryPath = "D:/MSFS 2024/Utils/physical"}}};
 
     CommunityModel model;
     model.ShowEntries(OneOfEachClass(), Profile(), conflicts);
 
     const QModelIndex conflicted = model.index(4, CommunityModel::ClassificationColumn);
     QVERIFY(model.data(conflicted, CommunityModel::ConflictRole).toBool());
-    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("Não gerenciada · em conflito"));
+    QCOMPARE(model.data(conflicted, Qt::DisplayRole).toString(), QStringLiteral("Unmanaged · in conflict"));
     QVERIFY(model.data(conflicted, Qt::ToolTipRole)
                 .toString()
                 .contains(QDir::toNativeSeparators(QStringLiteral("D:/MSFS 2024/Utils/physical"))));

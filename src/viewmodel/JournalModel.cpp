@@ -17,7 +17,7 @@ namespace
     {
         if (StepSucceeded(record))
         {
-            return QObject::tr("concluída");
+            return QObject::tr("finished");
         }
 
         return std::visit(
@@ -48,23 +48,23 @@ QString JournalModel::KindLabel(const OperationKind kind)
 {
     switch (kind)
     {
-    case OperationKind::EnableAddon: return tr("Habilitar addon");
-    case OperationKind::DisableAddon: return tr("Desabilitar addon");
-    case OperationKind::RemoveBrokenLink: return tr("Remover link quebrado");
-    case OperationKind::RepointLink: return tr("Reapontar link");
-    case OperationKind::ImportCopyToStaging: return tr("Copiar para a área de staging");
-    case OperationKind::ImportVerifyStaging: return tr("Verificar a cópia");
-    case OperationKind::ImportMoveIntoPlace: return tr("Pôr a cópia no lugar");
-    case OperationKind::ImportRemoveSource: return tr("Remover a pasta de origem");
-    case OperationKind::QuarantineFromDestination: return tr("Quarentenar a cópia do destino");
-    case OperationKind::QuarantineFromLibrary: return tr("Quarentenar a cópia da biblioteca");
-    case OperationKind::RestoreFromQuarantine: return tr("Restaurar da quarentena");
-    case OperationKind::DiscardFromQuarantine: return tr("Descartar da quarentena");
-    case OperationKind::MoveAddon: return tr("Mover addon de categoria");
-    case OperationKind::CreateCategory: return tr("Criar categoria");
-    case OperationKind::RenameCategory: return tr("Renomear categoria");
-    case OperationKind::RemoveCategory: return tr("Apagar categoria");
-    case OperationKind::DiscardStaging: return tr("Descartar uma importação pela metade");
+    case OperationKind::EnableAddon: return tr("Enable addon");
+    case OperationKind::DisableAddon: return tr("Disable addon");
+    case OperationKind::RemoveBrokenLink: return tr("Remove broken link");
+    case OperationKind::RepointLink: return tr("Repoint link");
+    case OperationKind::ImportCopyToStaging: return tr("Copy to the staging area");
+    case OperationKind::ImportVerifyStaging: return tr("Check the copy");
+    case OperationKind::ImportMoveIntoPlace: return tr("Put the copy in place");
+    case OperationKind::ImportRemoveSource: return tr("Remove the source folder");
+    case OperationKind::QuarantineFromDestination: return tr("Quarantine the destination copy");
+    case OperationKind::QuarantineFromLibrary: return tr("Quarantine the library copy");
+    case OperationKind::RestoreFromQuarantine: return tr("Restore from the quarantine");
+    case OperationKind::DiscardFromQuarantine: return tr("Discard from the quarantine");
+    case OperationKind::MoveAddon: return tr("Move addon to another category");
+    case OperationKind::CreateCategory: return tr("Create category");
+    case OperationKind::RenameCategory: return tr("Rename category");
+    case OperationKind::RemoveCategory: return tr("Delete category");
+    case OperationKind::DiscardStaging: return tr("Discard a half finished import");
     }
 
     return {};
@@ -80,7 +80,7 @@ QString JournalModel::LibraryLabel(const LibraryId& libraryId) const
 
     if (library == profile_.libraries.end())
     {
-        return libraryId.empty() ? QString() : tr("(biblioteca removida)");
+        return libraryId.empty() ? QString() : tr("(library removed)");
     }
 
     return library->label.empty() ? AsText(library->path.filename()) : QString::fromStdString(library->label);
@@ -159,12 +159,12 @@ QVariant JournalModel::EntryColumn(const JournalEntry& entry, const int column) 
     switch (column)
     {
     case WhenColumn: return AsMoment(entry.First().timestamp);
-    case OperationColumn: return tr("Importação (%n passo(s))", nullptr, static_cast<int>(entry.steps.size()));
+    case OperationColumn: return tr("Import (%n step)", nullptr, static_cast<int>(entry.steps.size()));
     case AddonColumn: return QString::fromStdString(entry.First().addonId.folderName);
     case LibraryColumn: return LibraryLabel(entry.First().addonId.libraryId);
     case SourceColumn: return AsText(entry.First().source);
     case TargetColumn: return AsText(entry.Last().target);
-    case OutcomeColumn: return entry.Succeeded() ? tr("concluída") : OutcomeOf(entry.Last());
+    case OutcomeColumn: return entry.Succeeded() ? tr("finished") : OutcomeOf(entry.Last());
     default: return {};
     }
 }
@@ -225,13 +225,13 @@ QVariant JournalModel::headerData(const int section, const Qt::Orientation orien
 
     switch (section)
     {
-    case WhenColumn: return tr("Quando");
-    case OperationColumn: return tr("Operação");
+    case WhenColumn: return tr("When");
+    case OperationColumn: return tr("Operation");
     case AddonColumn: return tr("Addon");
-    case LibraryColumn: return tr("Biblioteca");
-    case SourceColumn: return tr("Origem");
-    case TargetColumn: return tr("Destino");
-    case OutcomeColumn: return tr("Resultado");
+    case LibraryColumn: return tr("Library");
+    case SourceColumn: return tr("Source");
+    case TargetColumn: return tr("Destination");
+    case OutcomeColumn: return tr("Result");
     default: return {};
     }
 }

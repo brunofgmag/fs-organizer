@@ -102,7 +102,7 @@ AddonTreeModel::Item* AddonTreeModel::AddItem(const TreeNode& node, Item* parent
 {
     const int row = parent == nullptr ? static_cast<int>(roots_.size()) : static_cast<int>(parent->children.size());
 
-    items_.push_back(std::make_unique<Item>(Item{&node, parent, row, {}}));
+    items_.push_back(std::make_unique<Item>(Item{.node = &node, .parent = parent, .row = row, .children = {}}));
     Item* item = items_.back().get();
 
     for (const TreeNode& child : node.children)
@@ -157,8 +157,8 @@ QString AddonTreeModel::CountedSuffixOf(const TreeNode& node)
         return QString::number(addons);
     }
 
-    return tr("%1 · %2").arg(tr("%n categoria(s)", nullptr, static_cast<int>(CountCategoriesInside(node))),
-                             tr("%n addon(s)", nullptr, static_cast<int>(addons)));
+    return tr("%1 · %2").arg(tr("%n category", nullptr, static_cast<int>(CountCategoriesInside(node))),
+                             tr("%n addon", nullptr, static_cast<int>(addons)));
 }
 
 const std::vector<AddonTreeModel::Item*>& AddonTreeModel::ChildrenOf(const QModelIndex& parent) const
@@ -253,10 +253,10 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
 
         if (broken)
         {
-            return tr("Sem alvo");
+            return tr("No target");
         }
 
-        return conflict == nullptr ? QVariant() : QVariant(tr("Em conflito"));
+        return conflict == nullptr ? QVariant() : QVariant(tr("In conflict"));
     }
 
     if (role == TagToneRole)
@@ -307,8 +307,8 @@ QVariant AddonTreeModel::headerData(const int section, const Qt::Orientation ori
     switch (section)
     {
     case AddonColumn: return tr("Addon");
-    case VersionColumn: return tr("Versão");
-    case DestinationColumn: return tr("Destino");
+    case VersionColumn: return tr("Version");
+    case DestinationColumn: return tr("Destination");
     default: return {};
     }
 }
@@ -338,7 +338,7 @@ QString AddonTreeModel::DisplayTextOf(const TreeNode& node, const int column) co
 
         return ComparablePath(destination) == ComparablePath(profile_.defaultDestination)
             ? AsText(destination.filename())
-            : tr("%1 · fixado").arg(AsText(destination.filename()));
+            : tr("%1 · pinned").arg(AsText(destination.filename()));
     }
 
     default: return {};
@@ -349,7 +349,8 @@ QString AddonTreeModel::ToolTipOf(const TreeNode& node, const CopyConflict* conf
 {
     if (conflict != nullptr)
     {
-        return tr("Já existe uma pasta de verdade com esse nome no destino: %1").arg(AsText(conflict->destinationPath));
+        return tr("There is already a real folder with that name in the destination: %1")
+            .arg(AsText(conflict->destinationPath));
     }
 
     const std::filesystem::path linked = WhereItIsLinked(node);
@@ -358,7 +359,7 @@ QString AddonTreeModel::ToolTipOf(const TreeNode& node, const CopyConflict* conf
         return {};
     }
 
-    return tr("Este addon está ligado em %1, não no destino que o perfil manda usar, que é %2.")
+    return tr("This addon is linked in %1, not in the destination the profile says to use, which is %2.")
         .arg(AsText(linked), AsText(EffectiveDestination(profile_, node.path)));
 }
 

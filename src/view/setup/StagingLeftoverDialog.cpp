@@ -14,12 +14,11 @@
 StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers, QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(tr("Importações que ficaram pela metade"));
+    setWindowTitle(tr("Imports that were left half finished"));
 
-    auto* explanation =
-        new QLabel(tr("Uma importação foi interrompida antes de terminar. Os arquivos originais continuam onde "
-                      "estavam: nada foi removido do destino."),
-                   this);
+    auto* explanation = new QLabel(tr("An import was interrupted before it finished. The original files are still "
+                                      "where they were: nothing was removed from the destination."),
+                                   this);
     explanation->setWordWrap(true);
 
     auto* grid = new QGridLayout;
@@ -35,31 +34,32 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
         grid->addWidget(name, row, 0);
 
         auto* action = new QComboBox(this);
-        action->addItem(tr("Deixar como está"), LeaveItThere);
+        action->addItem(tr("Leave it as it is"), LeaveItThere);
         if (leftover.CanBeResumed())
         {
-            action->addItem(tr("Retomar a importação"), Resume);
+            action->addItem(tr("Resume the import"), Resume);
         }
-        action->addItem(tr("Descartar a cópia pela metade"), Discard);
+        action->addItem(tr("Discard the half finished copy"), Discard);
         action->setCurrentIndex(action->findData(leftover.CanBeResumed() ? Resume : LeaveItThere));
         LetTheWheelScrollPastUnlessTheWidgetHasFocus(action);
         grid->addWidget(action, row, 1);
         ++row;
 
-        auto* origin = new QLabel(leftover.CanBeResumed()
-                                      ? tr("veio de: %1").arg(AsText(leftover.source))
-                                      : tr("o diário não sabe de onde isto veio, então só o descarte é oferecido"),
-                                  this);
+        auto* origin =
+            new QLabel(leftover.CanBeResumed()
+                           ? tr("came from: %1").arg(AsText(leftover.source))
+                           : tr("the journal does not know where this came from, so only discarding is offered"),
+                       this);
         origin->setWordWrap(true);
         origin->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         grid->addWidget(origin, row, 0, 1, 2);
         ++row;
 
-        rows_.push_back({leftover, action});
+        rows_.push_back({.leftover = leftover, .action = action});
     }
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    QPushButton* apply = buttons->addButton(tr("Aplicar"), QDialogButtonBox::AcceptRole);
+    QPushButton* apply = buttons->addButton(tr("Apply"), QDialogButtonBox::AcceptRole);
     apply->setDefault(true);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);

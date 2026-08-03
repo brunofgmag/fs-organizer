@@ -4,17 +4,20 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class RepairPlanTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class RepairPlanTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void OnlyBrokenEntriesEnterThePlan();
-    static void UnavailableEntriesNeverEnterThePlan();
-    static void ALinkIntoALibraryIsGroupedApartFromAThirdPartyOne();
-    static void RepointIsOfferedOnlyWhenAValidAddonSharesTheBaseName();
-    static void TheBaseNameMatchIgnoresCase();
-};
+    private slots:
+        static void OnlyBrokenEntriesEnterThePlan();
+        static void UnavailableEntriesNeverEnterThePlan();
+        static void ALinkIntoALibraryIsGroupedApartFromAThirdPartyOne();
+        static void RepointIsOfferedOnlyWhenAValidAddonSharesTheBaseName();
+        static void TheBaseNameMatchIgnoresCase();
+    };
+}
 
 namespace
 {
@@ -57,7 +60,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -66,7 +69,7 @@ namespace
                            const std::filesystem::path& target,
                            const EntryClassification classification)
     {
-        return {path, target, classification};
+        return {.path = path, .target = target, .classification = classification};
     }
 }
 

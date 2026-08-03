@@ -4,6 +4,7 @@
 #include <QtCore/QTextStream>
 
 #include <algorithm>
+#include <optional>
 #include <ranges>
 #include <vector>
 
@@ -21,6 +22,7 @@
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
+#include "shared/DisposableState.h"
 #include "support/PathText.h"
 
 #include "AppScroll.h"
@@ -33,6 +35,7 @@
 #include "view/community/CommunityPage.h"
 #include "view/JournalPage.h"
 #include "view/shell/MainWindow.h"
+#include "view/shell/PageNames.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
@@ -69,7 +72,7 @@ namespace
 
         std::forward<Work>(work)();
 
-        measurements.push_back({stage, onTheMainThread, timer.elapsed()});
+        measurements.push_back({.stage = stage, .onTheMainThread = onTheMainThread, .elapsed = timer.elapsed()});
     }
 
     const SimulatorProfile* ActiveProfile(const AppSettings& settings)
@@ -102,18 +105,18 @@ namespace
     void Report()
     {
         Out() << "\n"
-              << QStringLiteral("etapa").leftJustified(34) << QStringLiteral("thread").leftJustified(10) << "ms\n";
+              << QStringLiteral("stage").leftJustified(34) << QStringLiteral("thread").leftJustified(10) << "ms\n";
 
         for (const Measurement& measurement : measurements)
         {
             Out() << measurement.stage.leftJustified(34)
-                  << QString(measurement.onTheMainThread ? "principal" : "worker").leftJustified(10)
-                  << measurement.elapsed << "\n";
+                  << QString(measurement.onTheMainThread ? "main" : "worker").leftJustified(10) << measurement.elapsed
+                  << "\n";
         }
 
-        Out() << "\ntotal na thread principal: " << MainThreadTotal() << " ms (orçamento " << kBudgetForTheMainThread
+        Out() << "\ntotal on the main thread: " << MainThreadTotal() << " ms (budget " << kBudgetForTheMainThread
               << " ms)\n";
-        Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "VERMELHO: a interface congela\n" : "VERDE\n");
+        Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "RED: the interface freezes\n" : "GREEN\n");
         Out().flush();
     }
 }
@@ -126,15 +129,26 @@ int main(int argc, char* argv[])
         QApplication::setStyle(QStringLiteral("windows11"));
     }
 
-    JsonSettingsRepository settings(SettingsFilePath());
-    JsonlOperationJournal journal(JournalFilePath());
+    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-timing");
+    if (!staged.has_value())
+    {
+        Out() << "could not stage a disposable copy of the state, so nothing ran\n";
+        Out().flush();
+        return 2;
+    }
+
+    Out() << "measuring a copy, so your install is never written: " << AsText(staged->settingsFile.parent_path())
+          << "\n";
+
+    JsonSettingsRepository settings(staged->settingsFile);
+    JsonlOperationJournal journal(staged->journalFile);
 
     const AppSettings loaded = settings.Load().value_or(AppSettings{});
     const SimulatorProfile* active = ActiveProfile(loaded);
 
     if (active == nullptr)
     {
-        Out() << "nenhum perfil configurado em " << AsText(SettingsFilePath()) << "\n";
+        Out() << "no profile configured in " << AsText(staged->settingsFile) << "\n";
         Out().flush();
         return 2;
     }
@@ -199,10 +213,10 @@ int main(int argc, char* argv[])
         JournalViewModel journalViewModel(journal, session, journalModel);
         auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-        window.AddPage(QStringLiteral("Árvore"), treePage);
-        window.AddPage(QStringLiteral("Community"), communityPage);
-        window.AddPage(QStringLiteral("Quarentena"), quarantinePage);
-        window.AddPage(QStringLiteral("Diário"), journalPage);
+        window.AddPage(PageNames::kLibrary, treePage);
+        window.AddPage(PageNames::kDestinations, communityPage);
+        window.AddPage(PageNames::kQuarantine, quarantinePage);
+        window.AddPage(PageNames::kJournal, journalPage);
 
         treeViewModel.ShowActiveProfile();
         for (int pass = 0; pass < 400 && session.Snapshot().entries.empty(); ++pass)
@@ -248,8 +262,8 @@ int main(int argc, char* argv[])
                 static_cast<void>(importService.Quarantined(profile));
             });
 
-    Out() << "perfil: " << QString::fromStdString(profile.id) << "  bibliotecas: " << profile.libraries.size()
-          << "  entradas: " << session.Snapshot().entries.size() << "\n";
+    Out() << "profile: " << QString::fromStdString(profile.id) << "  libraries: " << profile.libraries.size()
+          << "  entries: " << session.Snapshot().entries.size() << "\n";
 
     Report();
 

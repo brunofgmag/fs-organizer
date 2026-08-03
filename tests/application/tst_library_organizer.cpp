@@ -17,32 +17,35 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class LibraryOrganizerTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class LibraryOrganizerTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void MovingAnEnabledAddonRecreatesTheLinkPointingAtTheNewPath();
-    static void MovingAnAddonDoesNotChangeItsIdentity();
-    static void MovingAnAddonToACategoryWithItsOwnDestinationRelinksThere();
-    static void MovingADisabledAddonLeavesTheDestinationAlone();
-    static void MovingIsRefusedWhenTheNameIsAlreadyTakenInTheLibrary();
-    static void NoFolderIsMovedWhileTheSimulatorIsRunning();
-    static void EveryStepOfAMoveIsJournalled();
-    static void EmptyingACategoryLeavesItDeclaredSoItStaysAMoveTarget();
-    static void AnAddonLeavingTheLibraryRootDoesNotDeclareTheRootACategory();
-    static void ACreatedCategoryIsAFolderInTheLibrary();
-    static void ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently();
-    static void DeclaringAFolderThatIsNotOnDiskRefusesInsteadOfCreatingIt();
-    static void ACategoryIsNotCreatedOutsideALibrary();
-    static void AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride();
-    static void AStaleOverrideBelowTheRemovedCategoryIsForgottenToo();
-    static void ACategoryThatStillHoldsAnAddonIsNotRemovedEvenWhenTheTreeSaysItIsEmpty();
-    static void AFolderTheScanNeverSawIsRefusedInsteadOfRemovedOnFaith();
-    static void TheLibraryRootIsNeverRemovedAsIfItWereACategory();
-    static void NoCategoryIsRemovedWhileTheSimulatorIsRunning();
-    static void RenamingACategoryCarriesItsEnabledAddonsAlong();
-};
+    private slots:
+        static void MovingAnEnabledAddonRecreatesTheLinkPointingAtTheNewPath();
+        static void MovingAnAddonDoesNotChangeItsIdentity();
+        static void MovingAnAddonToACategoryWithItsOwnDestinationRelinksThere();
+        static void MovingADisabledAddonLeavesTheDestinationAlone();
+        static void MovingIsRefusedWhenTheNameIsAlreadyTakenInTheLibrary();
+        static void NoFolderIsMovedWhileTheSimulatorIsRunning();
+        static void EveryStepOfAMoveIsJournalled();
+        static void EmptyingACategoryLeavesItDeclaredSoItStaysAMoveTarget();
+        static void AnAddonLeavingTheLibraryRootDoesNotDeclareTheRootACategory();
+        static void ACreatedCategoryIsAFolderInTheLibrary();
+        static void ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently();
+        static void DeclaringAFolderThatIsNotOnDiskRefusesInsteadOfCreatingIt();
+        static void ACategoryIsNotCreatedOutsideALibrary();
+        static void AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride();
+        static void AStaleOverrideBelowTheRemovedCategoryIsForgottenToo();
+        static void ACategoryThatStillHoldsAnAddonIsNotRemovedEvenWhenTheTreeSaysItIsEmpty();
+        static void AFolderTheScanNeverSawIsRefusedInsteadOfRemovedOnFaith();
+        static void TheLibraryRootIsNeverRemovedAsIfItWereACategory();
+        static void NoCategoryIsRemovedWhileTheSimulatorIsRunning();
+        static void RenamingACategoryCarriesItsEnabledAddonsAlong();
+    };
+}
 
 namespace
 {
@@ -62,7 +65,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -95,7 +98,7 @@ namespace
 
         SimulatorProfile profile{.destinations = {kDestination, kOtherDestination},
                                  .defaultDestination = kDestination,
-                                 .libraries = {Library{"lib-1", kLibrary}}};
+                                 .libraries = {Library{.id = "lib-1", .path = kLibrary}}};
 
         Fixture()
         {
@@ -143,7 +146,9 @@ namespace
                                               const std::filesystem::path& destination)
         {
             profile.destinationOverrides.push_back(
-                DestinationOverride{"lib-1", RelativeToLibrary(profile.libraries.front(), category), destination});
+                DestinationOverride{.libraryId = "lib-1",
+                                    .relativePath = RelativeToLibrary(profile.libraries.front(), category),
+                                    .destination = destination});
         }
     };
 }
@@ -153,7 +158,8 @@ void LibraryOrganizerTest::MovingAnEnabledAddonRecreatesTheLinkPointingAtTheNewP
     Fixture f;
     f.EnableTheAddonIn(kDestination);
 
-    const std::vector<FileOperationResult> results = f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}});
+    const std::vector<FileOperationResult> results =
+        f.organizer.Move(f.profile, {AddonMove{.addonFolder = kAddon, .category = kAircrafts2024}});
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);
@@ -210,7 +216,8 @@ void LibraryOrganizerTest::MovingIsRefusedWhenTheNameIsAlreadyTakenInTheLibrary(
     f.TheLibraryHolds({kAddon, kMoved});
     f.EnableTheAddonIn(kDestination);
 
-    const std::vector<FileOperationResult> results = f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}});
+    const std::vector<FileOperationResult> results =
+        f.organizer.Move(f.profile, {AddonMove{.addonFolder = kAddon, .category = kAircrafts2024}});
 
     QCOMPARE(results.front().result, FileResult::TheIdentityIsTaken);
     QCOMPARE(results.front().occupant, kMoved);
@@ -226,7 +233,8 @@ void LibraryOrganizerTest::NoFolderIsMovedWhileTheSimulatorIsRunning()
     f.EnableTheAddonIn(kDestination);
     f.processProbe.ReportTheSimulatorAsRunning();
 
-    const std::vector<FileOperationResult> results = f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}});
+    const std::vector<FileOperationResult> results =
+        f.organizer.Move(f.profile, {AddonMove{.addonFolder = kAddon, .category = kAircrafts2024}});
 
     QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
     QVERIFY(f.fileSystem.Exists(kAddon / "manifest.json"));
@@ -338,7 +346,8 @@ void LibraryOrganizerTest::AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverr
     Fixture f;
     f.TheLibraryIsMadeOf({CategoryNode(kAircrafts, {AddonNode(kAddon)}), CategoryNode(kAircrafts2024, {})});
     f.fileSystem.AddFile(CategoryMarkerPathIn(kAircrafts2024));
-    f.profile.destinationOverrides.push_back({"lib-1", "Aircrafts (2024)", kOtherDestination});
+    f.profile.destinationOverrides.push_back(
+        {.libraryId = "lib-1", .relativePath = "Aircrafts (2024)", .destination = kOtherDestination});
 
     const FileOperationResult result = f.organizer.RemoveCategory(f.profile, kAircrafts2024);
 
@@ -354,8 +363,10 @@ void LibraryOrganizerTest::AStaleOverrideBelowTheRemovedCategoryIsForgottenToo()
     Fixture f;
     f.TheLibraryIsMadeOf({CategoryNode(kAircrafts, {AddonNode(kAddon)}), CategoryNode(kAircrafts2024, {})});
     f.fileSystem.AddFile(CategoryMarkerPathIn(kAircrafts2024));
-    f.profile.destinationOverrides.push_back({"lib-1", "Aircrafts (2024)/gone-from-disk", kOtherDestination});
-    f.profile.destinationOverrides.push_back({"lib-1", "Aircrafts", kOtherDestination});
+    f.profile.destinationOverrides.push_back(
+        {.libraryId = "lib-1", .relativePath = "Aircrafts (2024)/gone-from-disk", .destination = kOtherDestination});
+    f.profile.destinationOverrides.push_back(
+        {.libraryId = "lib-1", .relativePath = "Aircrafts", .destination = kOtherDestination});
 
     const FileOperationResult result = f.organizer.RemoveCategory(f.profile, kAircrafts2024);
 

@@ -1,19 +1,20 @@
 #include <QtTest/QtTest>
 
-#include <memory>
-
 #include "infrastructure/platform/SingleInstance.h"
 
-class SingleInstanceTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class SingleInstanceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheFirstGuardDoesNotSeeAnyoneElse();
-    static void ASecondGuardWithTheSameNameSeesTheFirst();
-    static void AGuardWithAnotherNameIsAlone();
-    static void TheNameIsFreeAgainOnceTheGuardIsGone();
-};
+    private slots:
+        static void TheFirstGuardDoesNotSeeAnyoneElse();
+        static void ASecondGuardWithTheSameNameSeesTheFirst();
+        static void AGuardWithAnotherNameIsAlone();
+        static void TheNameIsFreeAgainOnceTheGuardIsGone();
+    };
+}
 
 namespace
 {

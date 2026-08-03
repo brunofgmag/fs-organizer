@@ -48,6 +48,16 @@ void PageTab::ShowCount(const std::optional<qsizetype> count)
     update();
 }
 
+void PageTab::RememberSource(const char* source)
+{
+    source_ = source;
+}
+
+const char* PageTab::Source() const
+{
+    return source_;
+}
+
 QString PageTab::Label() const
 {
     return label_;

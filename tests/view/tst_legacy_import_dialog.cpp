@@ -23,18 +23,22 @@
 #include "tests/doubles/RecordingSessionObserver.h"
 #include "view/legacy/LegacyImportDialog.h"
 
-class LegacyImportDialogTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class LegacyImportDialogTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EachInstallationBecomesALineWithItsLibrariesUnderIt();
-    static void ALibraryAlreadyRegisteredIsShownWithoutAnythingToCheck();
-    static void ALibraryWhoseRootIsGoneIsListedAndOffersNothing();
-    static void AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing();
-    static void ImportingWhatIsCheckedRegistersTheLibraryAndSaysWhatHappened();
-    static void APresetOfTheOldProgramIsOfferedAndLandsInTheProfile();
-};
+    private slots:
+        static void EachInstallationBecomesALineWithItsLibrariesUnderIt();
+        static void ALibraryAlreadyRegisteredIsShownWithoutAnythingToCheck();
+        static void ALibraryWhoseRootIsGoneIsListedAndOffersNothing();
+        static void AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing();
+        static void ImportingWhatIsCheckedRegistersTheLibraryAndSaysWhatHappened();
+        static void APresetOfTheOldProgramIsOfferedAndLandsInTheProfile();
+        static void ANameThePresetCitesAndNoLibraryHasIsReportedInsteadOfVanishing();
+    };
+}
 
 namespace
 {
@@ -50,7 +54,7 @@ namespace
         TreeNode addon;
         addon.kind = TreeNodeKind::Addon;
         addon.path = kAddon;
-        addon.addon = Addon{kAddon, Manifest{}};
+        addon.addon = Addon{.folderPath = kAddon, .manifest = Manifest{}};
 
         TreeNode aircrafts;
         aircrafts.kind = TreeNodeKind::Category;
@@ -91,7 +95,7 @@ namespace
             profile.variant = SimulatorVariant::MSFS2024;
             profile.destinations = {kCommunity};
             profile.defaultDestination = kCommunity;
-            profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+            profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
             settings.stored.profiles = {profile};
             settings.stored.activeProfileId = "msfs2024";
@@ -180,7 +184,7 @@ void LegacyImportDialogTest::ALibraryWhoseRootIsGoneIsListedAndOffersNothing()
     QVERIFY(!library->flags().testFlag(Qt::ItemIsUserCheckable));
     QCOMPARE(library->childCount(), 2);
     QVERIFY(!library->child(0)->flags().testFlag(Qt::ItemIsUserCheckable));
-    QVERIFY(!ButtonLabelled(dialog, QStringLiteral("Importar"))->isEnabled());
+    QVERIFY(!ButtonLabelled(dialog, QStringLiteral("Import"))->isEnabled());
 }
 
 void LegacyImportDialogTest::AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing()
@@ -203,8 +207,8 @@ void LegacyImportDialogTest::ImportingWhatIsCheckedRegistersTheLibraryAndSaysWha
     LegacyImportDialog dialog(f.viewModel);
     const QSignalSpy said(&dialog, &LegacyImportDialog::StatusChanged);
 
-    QVERIFY(ButtonLabelled(dialog, QStringLiteral("Importar"))->isEnabled());
-    ButtonLabelled(dialog, QStringLiteral("Importar"))->click();
+    QVERIFY(ButtonLabelled(dialog, QStringLiteral("Import"))->isEnabled());
+    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(dialog.result(), static_cast<int>(QDialog::Accepted));
     QCOMPARE(said.count(), 1);
@@ -226,10 +230,31 @@ void LegacyImportDialogTest::APresetOfTheOldProgramIsOfferedAndLandsInTheProfile
 
     LegacyImportDialog dialog(f.viewModel);
 
-    ButtonLabelled(dialog, QStringLiteral("Importar"))->click();
+    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(f.presets.List("msfs2024").size(), std::size_t{1});
     QCOMPARE(f.presets.Load("msfs2024", "Voo curto")->entries.size(), std::size_t{1});
+}
+
+void LegacyImportDialogTest::ANameThePresetCitesAndNoLibraryHasIsReportedInsteadOfVanishing()
+{
+    Fixture f;
+    LegacyInstallation installation = InstallationAt(kLegacy2024, {"D:/MSFS 2024/Aircrafts"});
+    installation.presetsPath = "C:/ProgramData/MSFS Addons Linker 2024/Presets";
+    f.legacy.Add(installation);
+
+    LegacyPresetSelection selection;
+    selection.name = "Voo curto";
+    selection.enabledAddonNames = {"pmdg-aircraft-77w", "an-addon-that-is-nowhere"};
+    f.legacy.PlacePreset("C:/ProgramData/MSFS Addons Linker 2024/Presets", selection);
+
+    LegacyImportDialog dialog(f.viewModel);
+    const QSignalSpy said(&dialog, &LegacyImportDialog::StatusChanged);
+
+    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
+
+    QCOMPARE(said.count(), 1);
+    QVERIFY(said.front().front().toString().contains(QStringLiteral("was not found in any library")));
 }
 
 QTEST_MAIN(LegacyImportDialogTest)

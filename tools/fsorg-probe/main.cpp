@@ -160,21 +160,21 @@ namespace
 
     void ReportUsage()
     {
-        Out() << "uso: fsorg-probe --library <caminho> [--library <caminho>]\n";
+        Out() << "usage: fsorg-probe --library <path> [--library <path>]\n";
     }
 
     void ReportLibrary(const LibraryFacts& facts)
     {
-        Out() << "\nBiblioteca\n";
-        Out() << "  categorias   " << facts.categories << "\n";
-        Out() << "  pastas       " << facts.folders << "\n";
+        Out() << "\nLibrary\n";
+        Out() << "  categories   " << facts.categories << "\n";
+        Out() << "  folders      " << facts.folders << "\n";
         Out() << "  addons       " << facts.addons << "\n";
-        Out() << "  vazias       " << facts.empty << "\n";
+        Out() << "  empty        " << facts.empty << "\n";
         Out() << "  content_type ";
 
         for (const auto& [contentType, count] : facts.contentTypes)
         {
-            Out() << (contentType.empty() ? "<vazio>" : QString::fromStdString(contentType)) << "=" << count << " ";
+            Out() << (contentType.empty() ? "<empty>" : QString::fromStdString(contentType)) << "=" << count << " ";
         }
 
         Out() << "\n";
@@ -195,21 +195,21 @@ namespace
             }
         }
 
-        Out() << "\nDestino " << AsText(destination) << " — " << entries.size() << " entradas\n";
+        Out() << "\nDestination " << AsText(destination) << ": " << entries.size() << " entries\n";
 
         for (const auto& [classification, count] : counts)
         {
             Out() << "  " << ClassName(classification).leftJustified(12) << count << "\n";
         }
 
-        Out() << "    dos Unmanaged, " << unmanagedWithManifest << " com manifest e "
-              << counts[EntryClassification::Unmanaged] - unmanagedWithManifest << " sem\n";
+        Out() << "    of the Unmanaged, " << unmanagedWithManifest << " with a manifest and "
+              << counts[EntryClassification::Unmanaged] - unmanagedWithManifest << " without\n";
     }
 
     void ReportConflicts(const ConflictCounts& conflicts)
     {
-        Out() << "    conflitos de cópia: " << conflicts.againstAddons << " contra addons, "
-              << conflicts.againstEveryFolder << " contra qualquer pasta da biblioteca\n";
+        Out() << "    copy conflicts: " << conflicts.againstAddons << " against addons, "
+              << conflicts.againstEveryFolder << " against any folder of the library\n";
     }
 
     void ReportCandidate(const EntryClassifier& classifier,
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const EntryClassifier classifier(linkService, filesystemProbe);
 
-    Out() << "Simulador em execução: " << (processProbe.SimulatorIsRunning() ? "sim" : "não") << "\n";
+    Out() << "Simulator running: " << (processProbe.SimulatorIsRunning() ? "yes" : "no") << "\n";
 
     const LibraryFacts facts = CollectLibraries(scanner, libraries);
     ReportLibrary(facts);

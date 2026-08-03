@@ -3,17 +3,20 @@
 #include "domain/importing/CopyConflicts.h"
 #include "tests/support/PathPrinting.h"
 
-class CopyConflictsTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class CopyConflictsTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void APhysicalFolderThatAlsoExistsInTheLibraryIsAConflict();
-    static void AnEmptyFolderInTheLibraryIsNotAnAddonAndSoIsNotAConflict();
-    static void AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict();
-    static void TheBaseNameIsComparedWithoutCaringAboutCase();
-    static void TheSameNameInTwoDestinationsIsTwoConflicts();
-};
+    private slots:
+        static void APhysicalFolderThatAlsoExistsInTheLibraryIsAConflict();
+        static void AnEmptyFolderInTheLibraryIsNotAnAddonAndSoIsNotAConflict();
+        static void AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict();
+        static void TheBaseNameIsComparedWithoutCaringAboutCase();
+        static void TheSameNameInTwoDestinationsIsTwoConflicts();
+    };
+}
 
 namespace
 {
@@ -26,7 +29,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -51,7 +54,7 @@ namespace
 
     DestinationEntry PhysicalFolder(const std::filesystem::path& path)
     {
-        return DestinationEntry{path, {}, EntryClassification::Unmanaged};
+        return DestinationEntry{.path = path, .target = {}, .classification = EntryClassification::Unmanaged};
     }
 }
 
@@ -89,8 +92,9 @@ void CopyConflictsTest::AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict()
     const std::vector<TreeNode> libraries{
         LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/simbridge")})})};
 
-    const std::vector<DestinationEntry> entries{
-        DestinationEntry{kCommunity / "simbridge", kLibrary / "Utils/simbridge", EntryClassification::Managed}};
+    const std::vector<DestinationEntry> entries{DestinationEntry{.path = kCommunity / "simbridge",
+                                                                 .target = kLibrary / "Utils/simbridge",
+                                                                 .classification = EntryClassification::Managed}};
 
     QCOMPARE(FindCopyConflicts(entries, libraries).Count(), std::size_t{0});
 }

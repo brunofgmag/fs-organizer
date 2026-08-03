@@ -4,22 +4,25 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class CategorySuggesterTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class CategorySuggesterTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void AnAirportInTheNameGoesToTheSceneriesCategory();
-    static void TheSceneryContentTypeGoesToTheSceneriesCategory();
-    static void BothShapesOfTheSoundContentTypeGoToTheSoundsCategory();
-    static void TrafficInTheNameGoesToTheTrafficCategory();
-    static void TheLiveryContentTypeGoesToTheLiveriesCategory();
-    static void AnAddonNoRuleRecognisesIsLeftWhereItIs();
-    static void ARuleThatNamesACategoryTheLibraryDoesNotHaveSuggestsNothing();
-    static void EverySuggestionSaysWhichRuleProducedIt();
-    static void AnAddonAlreadyInTheSuggestedCategoryIsNotProposedForAMove();
-    static void TheContentTypeIsReadWithoutDistinguishingCase();
-};
+    private slots:
+        static void AnAirportInTheNameGoesToTheSceneriesCategory();
+        static void TheSceneryContentTypeGoesToTheSceneriesCategory();
+        static void BothShapesOfTheSoundContentTypeGoToTheSoundsCategory();
+        static void TrafficInTheNameGoesToTheTrafficCategory();
+        static void TheLiveryContentTypeGoesToTheLiveriesCategory();
+        static void AnAddonNoRuleRecognisesIsLeftWhereItIs();
+        static void ARuleThatNamesACategoryTheLibraryDoesNotHaveSuggestsNothing();
+        static void EverySuggestionSaysWhichRuleProducedIt();
+        static void AnAddonAlreadyInTheSuggestedCategoryIsNotProposedForAMove();
+        static void TheContentTypeIsReadWithoutDistinguishingCase();
+    };
+}
 
 namespace
 {
@@ -28,7 +31,13 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{"", "", "", contentType, "", ""}};
+        node.addon = Addon{.folderPath = path,
+                           .manifest = Manifest{.title = "",
+                                                .creator = "",
+                                                .manufacturer = "",
+                                                .contentType = contentType,
+                                                .packageVersion = "",
+                                                .minimumGameVersion = ""}};
 
         return node;
     }

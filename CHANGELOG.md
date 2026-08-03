@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.3.3](https://github.com/brunofgmag/fs-organizer/compare/v0.3.2...v0.3.3) (2026-08-03)
+
+
+### Bug Fixes
+
+* **legacy:** report the names no library has, and drop the fields nobody reads ([#11](https://github.com/brunofgmag/fs-organizer/issues/11)) ([7bf7992](https://github.com/brunofgmag/fs-organizer/commit/7bf7992d6b11ee7a1f7be42d2cc9137217b52555))
+
+## [0.3.2](https://github.com/brunofgmag/fs-organizer/compare/v0.3.1...v0.3.2) (2026-08-03)
+
+
+### Bug Fixes
+
+* **tools:** give fsorg-shot a disposable copy of your state ([9af48e5](https://github.com/brunofgmag/fs-organizer/commit/9af48e595a5839c1a89d49060926ee6d1f6f618e))
+* **tools:** keep the tools off your real install ([f61ad43](https://github.com/brunofgmag/fs-organizer/commit/f61ad435393c04329a3cf0907d86c68e57d0d46a))
+* **tools:** stage fsorg-timing on the same disposable copy ([3f661f6](https://github.com/brunofgmag/fs-organizer/commit/3f661f61a798af144bb47df9b82e4ce12133d2e5))
+
+## [0.3.1](https://github.com/brunofgmag/fs-organizer/compare/v0.3.0...v0.3.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **view:** give value_or a typed fallback for GCC ([48a0bf0](https://github.com/brunofgmag/fs-organizer/commit/48a0bf01c84888f5a5eabfa966351134b51b98fc))
+* **view:** give value_or a typed fallback for GCC ([77505b3](https://github.com/brunofgmag/fs-organizer/commit/77505b399b89dbc5e5f172f16f6ebe96ba8a7def))
+
+## [0.3.0](https://github.com/brunofgmag/fs-organizer/compare/v0.2.0...v0.3.0) (2026-08-02)
+
+
+### Features
+
+* **i18n:** turn the source strings English ([23aa459](https://github.com/brunofgmag/fs-organizer/commit/23aa459efb27c133c9a79cd1c6bb838c49553767))
+* **tools:** let fsorg-shot render either language ([22cc113](https://github.com/brunofgmag/fs-organizer/commit/22cc1131e61a814f9ce909e0f5cbd04c78d9d6e9))
+* **view:** drop the appearance note, credit the author, and unify the triage label ([a8123b8](https://github.com/brunofgmag/fs-organizer/commit/a8123b8313d1c12bd6b1126c845651c86f81bb42))
+* **view:** switch the language without a restart ([3b02962](https://github.com/brunofgmag/fs-organizer/commit/3b02962f26d785da766f0ef45f31a1bc5533c1c1))
+
+
+### Bug Fixes
+
+* **view:** close the two-axis review of the English inversion ([f11d32a](https://github.com/brunofgmag/fs-organizer/commit/f11d32aa5941cc305431314007bef482a2903641))
+* **viewmodel:** pair layoutChanged with layoutAboutToBeChanged ([432512f](https://github.com/brunofgmag/fs-organizer/commit/432512fa3ceab8a36883d4f461ce1b22c5d79fb3))
+
 ## [0.2.0](https://github.com/brunofgmag/fs-organizer/compare/v0.1.0...v0.2.0) (2026-08-02)
 
 

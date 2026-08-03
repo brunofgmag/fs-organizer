@@ -12,7 +12,7 @@
 
 RestoreDialog::RestoreDialog(const std::vector<QuarantinedItem>& items, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Restaurar da quarentena"));
+    setWindowTitle(tr("Restore from the quarantine"));
 
     for (const QuarantinedItem& item : items)
     {
@@ -25,10 +25,10 @@ RestoreDialog::RestoreDialog(const std::vector<QuarantinedItem>& items, QWidget*
     const auto held = static_cast<int>(items.size());
     const auto stranded = held - static_cast<int>(restorable_.size());
 
-    auto* explanation = new QLabel(tr("Cada pasta volta para o lugar de onde veio. Nada é sobrescrito: se já "
-                                      "existe algo com o mesmo nome no destino, aquela restauração falha e diz "
-                                      "por quê."),
-                                   this);
+    auto* explanation =
+        new QLabel(tr("Each folder goes back to where it came from. Nothing is overwritten: if something with the same "
+                      "name is already in the destination, that restore fails and says why."),
+                   this);
     explanation->setWordWrap(true);
 
     auto* listed = new QWidget(this);
@@ -45,7 +45,7 @@ RestoreDialog::RestoreDialog(const std::vector<QuarantinedItem>& items, QWidget*
         name->setTextInteractionFlags(Qt::TextSelectableByMouse);
         grid->addWidget(name, row, 0);
 
-        auto* target = new QLabel(tr("volta para %1").arg(AsText(item.origin.parent_path())), listed);
+        auto* target = new QLabel(tr("goes back to %1").arg(AsText(item.origin.parent_path())), listed);
         target->setObjectName(QStringLiteral("PanelPromise"));
         target->setWordWrap(true);
         target->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -59,15 +59,15 @@ RestoreDialog::RestoreDialog(const std::vector<QuarantinedItem>& items, QWidget*
     scroll->setWidgetResizable(true);
 
     auto* counted = new QLabel(
-        stranded > 0 ? tr("%n pasta(s) será(ão) restaurada(s).", nullptr, static_cast<int>(restorable_.size()))
-                + QStringLiteral(" ")
-                + tr("%n ficou(aram) de fora porque o diário não sabe de onde veio(vieram).", nullptr, stranded)
-                     : tr("%n pasta(s) será(ão) restaurada(s).", nullptr, static_cast<int>(restorable_.size())),
+        stranded > 0
+            ? tr("%n folder will be restored.", nullptr, static_cast<int>(restorable_.size())) + QStringLiteral(" ")
+                + tr("%n was left out because the journal does not know where it came from.", nullptr, stranded)
+            : tr("%n folder will be restored.", nullptr, static_cast<int>(restorable_.size())),
         this);
     counted->setWordWrap(true);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    QPushButton* restore = buttons->addButton(tr("Restaurar"), QDialogButtonBox::AcceptRole);
+    QPushButton* restore = buttons->addButton(tr("Restore"), QDialogButtonBox::AcceptRole);
     restore->setDefault(true);
     restore->setEnabled(!restorable_.empty());
 

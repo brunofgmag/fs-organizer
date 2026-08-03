@@ -58,7 +58,7 @@ public:
         std::uintmax_t copied = 0;
         for (const std::filesystem::path& file : files)
         {
-            if (onProgress && !onProgress(CopyProgress{copied, total}))
+            if (onProgress && !onProgress(CopyProgress{.copiedBytes = copied, .totalBytes = total}))
             {
                 return CopyOutcome::Cancelled;
             }

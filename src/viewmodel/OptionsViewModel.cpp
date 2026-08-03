@@ -29,8 +29,11 @@ std::vector<ProfileLine> OptionsViewModel::Profiles() const
 
     for (const SimulatorProfile& profile : settings.profiles)
     {
-        lines.push_back(ProfileLine{profile.id, NameOf(profile.variant), profile.destinations.size(),
-                                    profile.libraries.size(), profile.id == loaded});
+        lines.push_back(ProfileLine{.id = profile.id,
+                                    .label = NameOf(profile.variant),
+                                    .destinations = profile.destinations.size(),
+                                    .libraries = profile.libraries.size(),
+                                    .active = profile.id == loaded});
     }
 
     return lines;
@@ -138,7 +141,8 @@ std::vector<DestinationLine> OptionsViewModel::Destinations() const
     for (const std::filesystem::path& destination : profile.destinations)
     {
         lines.push_back(
-            DestinationLine{destination, ComparablePath(destination) == ComparablePath(profile.defaultDestination)});
+            DestinationLine{.path = destination,
+                            .isDefault = ComparablePath(destination) == ComparablePath(profile.defaultDestination)});
     }
 
     return lines;
@@ -241,26 +245,75 @@ void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
     emit Changed();
 }
 
-void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
+bool OptionsViewModel::Rewrite(const std::function<bool(AppSettings&)>& change)
 {
     const std::optional<AppSettings> loaded = settings_.Load();
     if (!loaded.has_value())
     {
         emit SettingsCouldNotBeSaved();
-        return;
-    }
-
-    if (loaded->updateMode == mode)
-    {
-        return;
+        return false;
     }
 
     AppSettings settings = *loaded;
-    settings.updateMode = mode;
+    if (!change(settings))
+    {
+        return false;
+    }
 
     if (!settings_.Save(settings))
     {
         emit SettingsCouldNotBeSaved();
+        return false;
+    }
+
+    return true;
+}
+
+void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
+{
+    static_cast<void>(Rewrite(
+        [mode](AppSettings& settings)
+        {
+            if (settings.updateMode == mode)
+            {
+                return false;
+            }
+
+            settings.updateMode = mode;
+
+            return true;
+        }));
+}
+
+std::optional<std::string> OptionsViewModel::Language() const
+{
+    const std::optional<AppSettings> loaded = settings_.Load();
+    if (!loaded.has_value())
+    {
+        return std::nullopt;
+    }
+
+    return loaded->language;
+}
+
+void OptionsViewModel::ChooseLanguage(const std::string& language)
+{
+    const bool written = Rewrite(
+        [&language](AppSettings& settings)
+        {
+            if (settings.language == language)
+            {
+                return false;
+            }
+
+            settings.language = language;
+
+            return true;
+        });
+
+    if (written)
+    {
+        emit LanguageChosen(QString::fromStdString(language));
     }
 }
 

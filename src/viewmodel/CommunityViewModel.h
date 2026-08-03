@@ -7,18 +7,9 @@
 
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "viewmodel/AttentionBreakdown.h"
 #include "viewmodel/CommunityModel.h"
 #include "viewmodel/SessionNotifier.h"
-
-struct AttentionBreakdown
-{
-    std::size_t broken = 0;
-    std::size_t conflicts = 0;
-    std::size_t duplicated = 0;
-    std::size_t unmanaged = 0;
-
-    [[nodiscard]] bool operator==(const AttentionBreakdown&) const = default;
-};
 
 class CommunityViewModel final : public QObject
 {

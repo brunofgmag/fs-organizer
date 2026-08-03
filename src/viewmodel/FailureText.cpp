@@ -9,20 +9,21 @@ QString Explain(const LinkFailure failure)
     switch (failure)
     {
     case LinkFailure::DestinationHoldsRealFolder:
-        return QObject::tr("já existe uma pasta de verdade com esse nome no destino");
-    case LinkFailure::DestinationHoldsLiveLink: return QObject::tr("o destino já tem um link vivo de outro programa");
+        return QObject::tr("there is already a real folder with that name in the destination");
+    case LinkFailure::DestinationHoldsLiveLink:
+        return QObject::tr("the destination already holds a live link from another program");
     case LinkFailure::UnreadableLinkTarget:
-        return QObject::tr("não foi possível ler o alvo do link que ocupa o destino");
+        return QObject::tr("the target of the link holding the destination could not be read");
     case LinkFailure::CouldNotReplaceStaleLink:
-        return QObject::tr("não foi possível remover o link morto que ocupava o destino");
-    case LinkFailure::CouldNotCreateLink: return QObject::tr("não foi possível criar o link");
+        return QObject::tr("the dead link holding the destination could not be removed");
+    case LinkFailure::CouldNotCreateLink: return QObject::tr("the link could not be created");
     case LinkFailure::PrivilegeNotHeld:
-        return QObject::tr("o Windows exige privilégio para criar link simbólico: ligue o Modo de Desenvolvedor, ou "
-                           "volte o tipo de link para junção de diretório nas Opções");
-    case LinkFailure::PathIsNotAReparsePoint: return QObject::tr("o caminho não é um link, então nada foi removido");
-    case LinkFailure::CouldNotRemoveLink: return QObject::tr("não foi possível remover o link");
+        return QObject::tr("Windows needs privilege to create a symbolic link: turn on Developer Mode, or set the link "
+                           "type back to directory junction in Options");
+    case LinkFailure::PathIsNotAReparsePoint: return QObject::tr("the path is not a link, so nothing was removed");
+    case LinkFailure::CouldNotRemoveLink: return QObject::tr("the link could not be removed");
     case LinkFailure::TheOutcomeIsUnknown:
-        return QObject::tr("o diário registra esta operação, mas não diz como ela terminou");
+        return QObject::tr("the journal records this operation, but does not say how it ended");
     case LinkFailure::None: break;
     }
 
@@ -33,11 +34,11 @@ QString Explain(const CategoryRule rule)
 {
     switch (rule)
     {
-    case CategoryRule::TheNameSaysAirport: return QObject::tr("o nome da pasta diz \"airport\"");
-    case CategoryRule::TheNameSaysTraffic: return QObject::tr("o nome da pasta diz \"traffic\"");
-    case CategoryRule::TheContentTypeIsScenery: return QObject::tr("o manifesto declara content_type SCENERY");
-    case CategoryRule::TheContentTypeIsSound: return QObject::tr("o manifesto declara content_type SOUND");
-    case CategoryRule::TheContentTypeIsLivery: return QObject::tr("o manifesto declara content_type LIVERY");
+    case CategoryRule::TheNameSaysAirport: return QObject::tr("the folder name says \"airport\"");
+    case CategoryRule::TheNameSaysTraffic: return QObject::tr("the folder name says \"traffic\"");
+    case CategoryRule::TheContentTypeIsScenery: return QObject::tr("the manifest declares content_type SCENERY");
+    case CategoryRule::TheContentTypeIsSound: return QObject::tr("the manifest declares content_type SOUND");
+    case CategoryRule::TheContentTypeIsLivery: return QObject::tr("the manifest declares content_type LIVERY");
     case CategoryRule::None: break;
     }
 
@@ -49,40 +50,39 @@ QString Explain(const FileResult result)
     switch (result)
     {
     case FileResult::Completed: return {};
-    case FileResult::Cancelled: return QObject::tr("cancelada por você");
-    case FileResult::TheSimulatorIsRunning: return QObject::tr("o simulador está em execução");
-    case FileResult::CouldNotQuarantine:
-        return QObject::tr("não foi possível mover a cópia perdedora para a quarentena");
+    case FileResult::Cancelled: return QObject::tr("cancelled by you");
+    case FileResult::TheSimulatorIsRunning: return QObject::tr("the simulator is running");
+    case FileResult::CouldNotQuarantine: return QObject::tr("the losing copy could not be moved to the quarantine");
     case FileResult::SourceIsNotUnderADestination:
-        return QObject::tr("a pasta não está dentro de um destino do perfil");
-    case FileResult::SourceIsAReparsePoint: return QObject::tr("a entrada é um link, e não uma pasta de verdade");
+        return QObject::tr("the folder is not inside a destination of the profile");
+    case FileResult::SourceIsAReparsePoint: return QObject::tr("the entry is a link, not a real folder");
     case FileResult::CouldNotCheckFreeSpace:
-        return QObject::tr("não foi possível consultar o espaço livre do volume de destino");
-    case FileResult::NotEnoughFreeSpace: return QObject::tr("não há espaço livre suficiente na biblioteca");
+        return QObject::tr("the free space of the destination volume could not be read");
+    case FileResult::NotEnoughFreeSpace: return QObject::tr("there is not enough free space in the library");
     case FileResult::CouldNotCopy:
-        return QObject::tr("a cópia falhou, e o que já foi copiado continua onde está para a retomada");
+        return QObject::tr("the copy failed, and what was already copied stays where it is for the resume");
     case FileResult::VerificationFailed:
-        return QObject::tr("a cópia não confere com a origem, então nada foi removido");
-    case FileResult::CouldNotMoveIntoPlace: return QObject::tr("não foi possível pôr a cópia no lugar definitivo");
-    case FileResult::CouldNotRemoveSource: return QObject::tr("não foi possível remover a pasta de origem");
+        return QObject::tr("the copy does not match the source, so nothing was removed");
+    case FileResult::CouldNotMoveIntoPlace: return QObject::tr("the copy could not be put in its final place");
+    case FileResult::CouldNotRemoveSource: return QObject::tr("the source folder could not be removed");
     case FileResult::CouldNotCreateLink:
-        return QObject::tr("os arquivos já estão na biblioteca, mas o link não pôde ser criado");
-    case FileResult::TheOriginIsUnknown: return QObject::tr("o diário não sabe de onde isto veio");
-    case FileResult::CouldNotRestore: return QObject::tr("já existe alguma coisa no lugar de origem");
-    case FileResult::CouldNotDiscard: return QObject::tr("não foi possível descartar");
+        return QObject::tr("the files are already in the library, but the link could not be created");
+    case FileResult::TheOriginIsUnknown: return QObject::tr("the journal does not know where this came from");
+    case FileResult::CouldNotRestore: return QObject::tr("there is already something in the source place");
+    case FileResult::CouldNotDiscard: return QObject::tr("it could not be discarded");
     case FileResult::CouldNotRemoveTheLink:
-        return QObject::tr("não foi possível remover um dos links que apontam para a cópia da biblioteca");
-    case FileResult::TheIdentityIsTaken: return QObject::tr("esta biblioteca já tem um addon com esse nome de pasta");
+        return QObject::tr("one of the links pointing at the library copy could not be removed");
+    case FileResult::TheIdentityIsTaken: return QObject::tr("this library already has an addon with that folder name");
     case FileResult::TheTargetIsNotInALibrary:
-        return QObject::tr("o destino da operação não está dentro de uma biblioteca do perfil");
-    case FileResult::CouldNotCreateTheCategory: return QObject::tr("não foi possível criar a categoria");
+        return QObject::tr("the target of the operation is not inside a library of the profile");
+    case FileResult::CouldNotCreateTheCategory: return QObject::tr("the category could not be created");
     case FileResult::TheCategoryStillHoldsAddons:
-        return QObject::tr("esta categoria ainda guarda addons, e só categoria vazia pode ser apagada");
-    case FileResult::CouldNotRemoveTheCategory: return QObject::tr("não foi possível apagar a categoria");
+        return QObject::tr("this category still holds addons, and only an empty category can be deleted");
+    case FileResult::CouldNotRemoveTheCategory: return QObject::tr("the category could not be deleted");
     case FileResult::TheOutcomeIsUnknown:
-        return QObject::tr("o diário registra esta operação, mas não diz como ela terminou");
+        return QObject::tr("the journal records this operation, but does not say how it ended");
     case FileResult::CouldNotReadTheSource:
-        return QObject::tr("não foi possível percorrer a pasta de origem, então nada foi copiado");
+        return QObject::tr("the source folder could not be walked, so nothing was copied");
     }
 
     return {};
@@ -92,7 +92,7 @@ namespace
 {
     QString WhereTheOccupantIs(const std::filesystem::path& occupant)
     {
-        return occupant.empty() ? QString{} : QObject::tr("\n    o ocupante está em: %1").arg(AsText(occupant));
+        return occupant.empty() ? QString{} : QObject::tr("\n    the occupant is in: %1").arg(AsText(occupant));
     }
 }
 
@@ -103,15 +103,15 @@ QString Describe(const LinkOperationResult& result)
 
     if (result.outcome.Conflict().has_value())
     {
-        line += QObject::tr("\n    pasta no destino: %1\n    addon na biblioteca: %2")
+        line += QObject::tr("\n    folder in the destination: %1\n    addon in the library: %2")
                     .arg(AsText(result.outcome.Conflict()->destinationPath),
                          AsText(result.outcome.Conflict()->libraryPath));
     }
 
     if (result.outcome.Occupation().has_value())
     {
-        line +=
-            QObject::tr("\n    o link atual aponta para: %1").arg(AsText(result.outcome.Occupation()->existingTarget));
+        line += QObject::tr("\n    the current link points at: %1")
+                    .arg(AsText(result.outcome.Occupation()->existingTarget));
     }
 
     return line;
@@ -133,11 +133,11 @@ QString NameOfImportStep(const OperationKind kind)
 {
     switch (kind)
     {
-    case OperationKind::ImportCopyToStaging: return QObject::tr("Copiando para a biblioteca…");
-    case OperationKind::ImportVerifyStaging: return QObject::tr("Conferindo se a cópia bate com a origem…");
-    case OperationKind::ImportMoveIntoPlace: return QObject::tr("Pondo a cópia no lugar definitivo…");
-    case OperationKind::ImportRemoveSource: return QObject::tr("Removendo a pasta de origem…");
-    case OperationKind::EnableAddon: return QObject::tr("Criando o link no destino…");
+    case OperationKind::ImportCopyToStaging: return QObject::tr("Copying to the library…");
+    case OperationKind::ImportVerifyStaging: return QObject::tr("Checking whether the copy matches the source…");
+    case OperationKind::ImportMoveIntoPlace: return QObject::tr("Putting the copy in its final place…");
+    case OperationKind::ImportRemoveSource: return QObject::tr("Removing the source folder…");
+    case OperationKind::EnableAddon: return QObject::tr("Creating the link in the destination…");
     default: return {};
     }
 }

@@ -4,21 +4,24 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class LegacyPresetTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class LegacyPresetTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ANamedAddonBecomesAnEnableEntry();
-    static void AnAddonMarkedWithAnAsteriskBecomesADisableEntry();
-    static void AFolderIsExpandedIntoTheAddonsUnderItRightNow();
-    static void AnAddonThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
-    static void AFolderThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
-    static void TheSameAddonNamedTwiceIsEnteredOnce();
-    static void AnAddonBothNamedAndMarkedForDisablingIsDisabledOnce();
-    static void TheNameOfThePresetSurvivesTheImport();
-    static void ASelectionWithoutAnyLineImportsAnEmptyPreset();
-};
+    private slots:
+        static void ANamedAddonBecomesAnEnableEntry();
+        static void AnAddonMarkedWithAnAsteriskBecomesADisableEntry();
+        static void AFolderIsExpandedIntoTheAddonsUnderItRightNow();
+        static void AnAddonThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
+        static void AFolderThatIsNotInAnyLibraryIsReportedInsteadOfDropped();
+        static void TheSameAddonNamedTwiceIsEnteredOnce();
+        static void AnAddonBothNamedAndMarkedForDisablingIsDisabledOnce();
+        static void TheNameOfThePresetSurvivesTheImport();
+        static void ASelectionWithoutAnyLineImportsAnEmptyPreset();
+    };
+}
 
 namespace
 {
@@ -33,7 +36,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -63,7 +66,7 @@ namespace
     {
         SimulatorProfile profile;
         profile.id = "msfs2024";
-        profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }

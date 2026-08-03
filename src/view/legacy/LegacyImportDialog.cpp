@@ -14,9 +14,12 @@ namespace
     constexpr int kKindRole = Qt::UserRole;
     constexpr int kPathRole = Qt::UserRole + 1;
 
-    constexpr int kLibraryKind = 1;
-    constexpr int kCategoryKind = 2;
-    constexpr int kPresetsKind = 3;
+    enum class ImportKind
+    {
+        Library = 1,
+        Category = 2,
+        Presets = 3
+    };
 
     constexpr int kDialogWidth = 720;
     constexpr int kDialogHeight = 520;
@@ -36,15 +39,15 @@ namespace
         item->setCheckState(0, Qt::Checked);
     }
 
-    void Mark(QTreeWidgetItem* item, const int kind, const std::filesystem::path& path)
+    void Mark(QTreeWidgetItem* item, const ImportKind kind, const std::filesystem::path& path)
     {
-        item->setData(0, kKindRole, kind);
+        item->setData(0, kKindRole, static_cast<int>(kind));
         item->setData(0, kPathRole, AsText(path));
     }
 
-    void CollectChecked(const QTreeWidgetItem& item, const int kind, std::vector<std::filesystem::path>& into)
+    void CollectChecked(const QTreeWidgetItem& item, const ImportKind kind, std::vector<std::filesystem::path>& into)
     {
-        if (item.data(0, kKindRole).toInt() == kind && item.checkState(0) == Qt::Checked)
+        if (item.data(0, kKindRole).toInt() == static_cast<int>(kind) && item.checkState(0) == Qt::Checked)
         {
             into.push_back(AsPath(item.data(0, kPathRole).toString()));
         }
@@ -55,7 +58,7 @@ namespace
         }
     }
 
-    std::vector<std::filesystem::path> CheckedPathsOfKind(const QTreeWidget& tree, const int kind)
+    std::vector<std::filesystem::path> CheckedPathsOfKind(const QTreeWidget& tree, const ImportKind kind)
     {
         std::vector<std::filesystem::path> paths;
 
@@ -71,14 +74,14 @@ namespace
 LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget* parent)
     : QDialog(parent), viewModel_(viewModel)
 {
-    setWindowTitle(tr("Importar do MSFS Addons Linker"));
+    setWindowTitle(tr("Import from MSFS Addons Linker"));
     resize(kDialogWidth, kDialogHeight);
 
     auto* layout = new QVBoxLayout(this);
 
-    auto* promise = new QLabel(tr("O FS Organizer leu a configuração do programa antigo e propõe o que segue. Nada é "
-                                  "aplicado antes de você confirmar, e nenhum arquivo é movido ou apagado: importar "
-                                  "cadastra a biblioteca e as categorias que ainda não existem aqui."),
+    auto* promise = new QLabel(tr("FS Organizer has read the old program's configuration and proposes what follows. "
+                                  "Nothing is applied before you confirm, and no file is moved or deleted: importing "
+                                  "registers the library and the categories that are not here yet."),
                                this);
     promise->setWordWrap(true);
     layout->addWidget(promise);
@@ -86,13 +89,13 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
     tree_ = new QTreeWidget(this);
     tree_->setObjectName(QStringLiteral("LegacyProposal"));
     tree_->setColumnCount(2);
-    tree_->setHeaderLabels({tr("Proposta"), tr("Situação")});
+    tree_->setHeaderLabels({tr("Proposal"), tr("Status")});
     tree_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     layout->addWidget(tree_, 1);
 
     auto* buttons = new QDialogButtonBox(this);
-    import_ = buttons->addButton(tr("Importar"), QDialogButtonBox::AcceptRole);
-    buttons->addButton(tr("Cancelar"), QDialogButtonBox::RejectRole);
+    import_ = buttons->addButton(tr("Import"), QDialogButtonBox::AcceptRole);
+    buttons->addButton(tr("Cancel"), QDialogButtonBox::RejectRole);
     layout->addWidget(buttons);
 
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -118,7 +121,7 @@ void LegacyImportDialog::Fill()
 
         if (!migration.configurationWasRead)
         {
-            installation->setText(1, tr("configuração ilegível"));
+            installation->setText(1, tr("unreadable configuration"));
             continue;
         }
 
@@ -130,16 +133,16 @@ void LegacyImportDialog::Fill()
 
             if (!library.rootExists)
             {
-                row->setText(1, tr("a pasta não existe mais"));
+                row->setText(1, tr("the folder no longer exists"));
             }
             else if (library.proposal.state == ProposedState::AlreadyPresent)
             {
-                row->setText(1, tr("já cadastrada"));
+                row->setText(1, tr("already registered"));
             }
             else
             {
-                row->setText(1, tr("nova"));
-                Mark(row, kLibraryKind, library.proposal.root);
+                row->setText(1, tr("new"));
+                Mark(row, ImportKind::Library, library.proposal.root);
                 Offer(row);
             }
 
@@ -150,18 +153,18 @@ void LegacyImportDialog::Fill()
 
                 if (!library.rootExists)
                 {
-                    line->setText(1, tr("indisponível"));
+                    line->setText(1, tr("unavailable"));
                     continue;
                 }
 
                 if (category.state == ProposedState::AlreadyPresent)
                 {
-                    line->setText(1, tr("já presente"));
+                    line->setText(1, tr("already present"));
                     continue;
                 }
 
-                line->setText(1, tr("nova"));
-                Mark(line, kCategoryKind, library.proposal.root / category.relativePath);
+                line->setText(1, tr("new"));
+                Mark(line, ImportKind::Category, library.proposal.root / category.relativePath);
                 Offer(line);
             }
 
@@ -169,23 +172,23 @@ void LegacyImportDialog::Fill()
             {
                 QTreeWidgetItem* line = LineUnder(row);
                 line->setText(0, AsText(refused));
-                line->setText(1, tr("recusada: o nome não vira pasta"));
+                line->setText(1, tr("refused: the name does not become a folder"));
             }
         }
 
         if (const std::size_t presets = viewModel_.PresetsWaitingIn(migration.presetsPath); presets > 0)
         {
             QTreeWidgetItem* line = LineUnder(installation);
-            line->setText(0, tr("%1 preset(s)").arg(presets));
-            line->setText(1, tr("a importar"));
-            Mark(line, kPresetsKind, migration.presetsPath);
+            line->setText(0, tr("%n preset", nullptr, static_cast<int>(presets)));
+            line->setText(1, tr("to import"));
+            Mark(line, ImportKind::Presets, migration.presetsPath);
             Offer(line);
         }
     }
 
     if (tree_->topLevelItemCount() == 0)
     {
-        LineUnder(tree_)->setText(0, tr("Nenhuma instalação do MSFS Addons Linker foi encontrada."));
+        LineUnder(tree_)->setText(0, tr("No MSFS Addons Linker installation was found."));
     }
 
     RefreshTheImportButton();
@@ -193,12 +196,13 @@ void LegacyImportDialog::Fill()
 
 LegacyImportRequest LegacyImportDialog::WhatWasChecked() const
 {
-    return LegacyImportRequest{CheckedPathsOfKind(*tree_, kLibraryKind), CheckedPathsOfKind(*tree_, kCategoryKind)};
+    return LegacyImportRequest{.libraryRoots = CheckedPathsOfKind(*tree_, ImportKind::Library),
+                               .categories = CheckedPathsOfKind(*tree_, ImportKind::Category)};
 }
 
 std::vector<std::filesystem::path> LegacyImportDialog::PresetFoldersChecked() const
 {
-    return CheckedPathsOfKind(*tree_, kPresetsKind);
+    return CheckedPathsOfKind(*tree_, ImportKind::Presets);
 }
 
 void LegacyImportDialog::RefreshTheImportButton() const
@@ -222,20 +226,27 @@ void LegacyImportDialog::Import()
         presets.entriesNotFound += one.entriesNotFound;
     }
 
-    QString said = tr("%1 biblioteca(s) e %2 categoria(s) importadas.")
-                       .arg(report.librariesRegistered)
-                       .arg(report.categoriesDeclared);
+    QString said = tr("%1 and %2 imported.")
+                       .arg(tr("%n library", nullptr, static_cast<int>(report.librariesRegistered)),
+                            tr("%n category", nullptr, static_cast<int>(report.categoriesDeclared)));
 
     if (presets.imported > 0 || presets.nameAlreadyTaken > 0)
     {
-        said += tr(" %1 preset(s) importados, %2 com nome já usado aqui.")
-                    .arg(presets.imported)
+        said += tr(" %1 imported, %2 with a name already used here.")
+                    .arg(tr("%n preset", nullptr, static_cast<int>(presets.imported)))
                     .arg(presets.nameAlreadyTaken);
+    }
+
+    if (presets.entriesNotFound > 0)
+    {
+        said += tr(" %n name the presets cite was not found in any library.", nullptr,
+                   static_cast<int>(presets.entriesNotFound));
     }
 
     if (!report.refused.empty())
     {
-        said += tr(" %1 recusada(s) por estar dentro de biblioteca já cadastrada.").arg(report.refused.size());
+        said += tr(" %n refused for being inside an already registered library.", nullptr,
+                   static_cast<int>(report.refused.size()));
     }
 
     emit StatusChanged(said);

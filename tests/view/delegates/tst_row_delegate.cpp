@@ -12,21 +12,24 @@
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/RowTagRoles.h"
 
-class RowDelegateTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class RowDelegateTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ATextTooWideForItsColumnAnswersWithATooltip();
-    static void ATextThatFitsItsColumnIsLeftWithoutATooltip();
-    static void ATooltipTheModelSuppliesWinsOverTheOneMeasuredFromTheColumn();
-    static void ASelectedRowInATableIsOutlinedOnceAndNotCellByCell();
-    static void PointingAtOneCellLightsUpTheWholeRowAndNoOther();
-    static void TheGroundGoesBackWhenThePointerLeaves();
-    static void AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest();
-    static void TheQuietSuffixIsLaidAfterTheTextAndNotOverIt();
-    static void ARowTheModelCallsAlarmingIsGroundedInTheAlertColour();
-};
+    private slots:
+        static void ATextTooWideForItsColumnAnswersWithATooltip();
+        static void ATextThatFitsItsColumnIsLeftWithoutATooltip();
+        static void ATooltipTheModelSuppliesWinsOverTheOneMeasuredFromTheColumn();
+        static void ASelectedRowInATableIsOutlinedOnceAndNotCellByCell();
+        static void PointingAtOneCellLightsUpTheWholeRowAndNoOther();
+        static void TheGroundGoesBackWhenThePointerLeaves();
+        static void AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest();
+        static void TheQuietSuffixIsLaidAfterTheTextAndNotOverIt();
+        static void ARowTheModelCallsAlarmingIsGroundedInTheAlertColour();
+    };
+}
 
 namespace
 {
@@ -110,7 +113,7 @@ void RowDelegateTest::ATextThatFitsItsColumnIsLeftWithoutATooltip()
 void RowDelegateTest::ATooltipTheModelSuppliesWinsOverTheOneMeasuredFromTheColumn()
 {
     Table table{QStringLiteral("curto")};
-    table.model.item(0, 0)->setData(QStringLiteral("o que o modelo quis dizer"), Qt::ToolTipRole);
+    table.model.item(0, 0)->setData(QStringLiteral("what the model meant to say"), Qt::ToolTipRole);
 
     QVERIFY(table.AsksForATooltipOn(table.RoomEnoughFor(QStringLiteral("curto"))));
 }
@@ -150,7 +153,7 @@ namespace
         QPixmap shot(view.viewport()->size());
         view.viewport()->render(&shot);
 
-        SuffixShot taken{shot.toImage(), view.visualRect(model.index(0, 0)), -1};
+        SuffixShot taken{.painted = shot.toImage(), .cell = view.visualRect(model.index(0, 0)), .inkEndsAt = -1};
         const QColor ground = taken.painted.pixelColor(taken.cell.right() - 1, taken.cell.center().y());
 
         for (int x = taken.cell.left(); x <= taken.cell.right(); ++x)
@@ -234,7 +237,7 @@ void RowDelegateTest::ASelectedRowInATableIsOutlinedOnceAndNotCellByCell()
     {
         for (int column = 0; column < 3; ++column)
         {
-            model.setItem(row, column, new QStandardItem(QStringLiteral("celula")));
+            model.setItem(row, column, new QStandardItem(QStringLiteral("cell")));
         }
     }
 
@@ -267,7 +270,7 @@ void RowDelegateTest::ASelectedRowInATableIsOutlinedOnceAndNotCellByCell()
     const QColor atTheSeam = painted.pixelColor(first.right(), middle);
     const QColor afterTheSeam = painted.pixelColor(second.left(), middle);
 
-    QVERIFY2(atTheLeftEdge != inside, "a linha selecionada perdeu a borda esquerda");
+    QVERIFY2(atTheLeftEdge != inside, "the selected row lost its left edge");
     QCOMPARE(atTheSeam, inside);
     QCOMPARE(afterTheSeam, inside);
 }
@@ -284,7 +287,7 @@ namespace
         {
             for (int row = 0; row < 3; ++row)
             {
-                model.setItem(row, 0, new QStandardItem(QStringLiteral("celula")));
+                model.setItem(row, 0, new QStandardItem(QStringLiteral("cell")));
                 model.setItem(row, 1, new QStandardItem(QStringLiteral("outra")));
             }
 
@@ -333,8 +336,8 @@ void RowDelegateTest::PointingAtOneCellLightsUpTheWholeRowAndNoOther()
 
     rows.PointAt(rows.model.index(1, 0));
 
-    QVERIFY2(rows.GroundOf(rows.model.index(1, 0)) != before, "a celula apontada nao acendeu");
-    QVERIFY2(rows.GroundOf(rows.model.index(1, 1)) != before, "a outra celula da mesma linha nao acendeu");
+    QVERIFY2(rows.GroundOf(rows.model.index(1, 0)) != before, "the cell under the pointer did not light up");
+    QVERIFY2(rows.GroundOf(rows.model.index(1, 1)) != before, "the other cell in the same row did not light up");
     QCOMPARE(rows.GroundOf(rows.model.index(0, 0)), before);
     QCOMPARE(rows.GroundOf(rows.model.index(2, 0)), before);
 }

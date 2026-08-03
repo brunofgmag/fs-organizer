@@ -306,12 +306,14 @@ target_link_libraries(fsorg-file-preset-repository-tests PRIVATE fsorg-infrastru
 
 fsorg_add_qt_test(fsorg-ini-legacy-config-reader-tests ini-legacy-config-reader
         tests/infrastructure/legacy/tst_ini_legacy_config_reader.cpp
+        tests/support/TempFiles.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-ini-legacy-config-reader-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-legacy-preset-reader-tests legacy-preset-reader
         tests/infrastructure/legacy/tst_legacy_preset_reader.cpp
         tests/support/PathPrinting.h
+        tests/support/TempFiles.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-legacy-preset-reader-tests PRIVATE fsorg-infrastructure)
 
@@ -650,6 +652,11 @@ fsorg_add_qt_test(fsorg-wheel-guard-tests wheel-guard
         tests/view/tst_wheel_guard.cpp)
 target_link_libraries(fsorg-wheel-guard-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-wheel-guard-tests wheel-guard)
+
+fsorg_add_qt_test(fsorg-language-change-tests language-change
+        tests/view/tst_language_change.cpp)
+target_link_libraries(fsorg-language-change-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-language-change-tests language-change)
 
 fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         tests/view/panels/tst_context_panel.cpp

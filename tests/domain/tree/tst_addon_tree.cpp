@@ -8,35 +8,38 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
-class AddonTreeTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class AddonTreeTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void CountingAddonsSeesEveryDepthAndIgnoresCategories();
-    static void MarkingACategoryReachesEveryAddonUnderIt();
-    static void ACategoryWhoseAddonsAreAllEnabledIsChecked();
-    static void ACategoryWithOneAddonDisabledIsPartial();
-    static void ACategoryWithNoEnabledAddonIsUnchecked();
-    static void ACategoryWithoutAddonsIsUnchecked();
-    static void TheLibraryRootRollsUpFromEveryCategory();
-    static void AnEnabledAddonIsCheckedAndTheLookupIgnoresCase();
-    static void AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked();
-    static void ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddon();
-    static void EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibraryRoot();
-    static void CountingCategoriesLeavesOutTheLibraryRootAndEveryAddon();
-    static void AnEmptyFolderOnlyCountsAsACategoryOnceTheUserHasDeclaredIt();
-    static void TheLibrariesAnswerWhichOfThemHoldsAnAddonOfAGivenName();
-    static void AnIdentityNoAddonAnswersToIsFree();
-    static void AnIdentityHeldInAnotherCategorySaysWhereTheOccupantIs();
-    static void TheSameNameInAnotherLibraryLeavesTheIdentityFree();
-    static void TheIdentityIsAskedWithoutDistinguishingCase();
-    static void TheAddonBeingMovedDoesNotHoldTheIdentityAgainstItself();
-    static void AFolderOutsideEveryLibraryHasNoIdentityToTake();
-    static void TheLibrariesAnswerWhichTreeStandsAtAGivenRoot();
-    static void ARootIsMatchedWithoutCaseOrSeparatorDifferences();
-    static void ARootThatIsNoLibraryOfItsOwnHasNoTree();
-};
+    private slots:
+        static void CountingAddonsSeesEveryDepthAndIgnoresCategories();
+        static void MarkingACategoryReachesEveryAddonUnderIt();
+        static void ACategoryWhoseAddonsAreAllEnabledIsChecked();
+        static void ACategoryWithOneAddonDisabledIsPartial();
+        static void ACategoryWithNoEnabledAddonIsUnchecked();
+        static void ACategoryWithoutAddonsIsUnchecked();
+        static void TheLibraryRootRollsUpFromEveryCategory();
+        static void AnEnabledAddonIsCheckedAndTheLookupIgnoresCase();
+        static void AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked();
+        static void ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddon();
+        static void EveryFolderThatCanHoldAnImportIsACategoryIncludingTheLibraryRoot();
+        static void CountingCategoriesLeavesOutTheLibraryRootAndEveryAddon();
+        static void AnEmptyFolderOnlyCountsAsACategoryOnceTheUserHasDeclaredIt();
+        static void TheLibrariesAnswerWhichOfThemHoldsAnAddonOfAGivenName();
+        static void AnIdentityNoAddonAnswersToIsFree();
+        static void AnIdentityHeldInAnotherCategorySaysWhereTheOccupantIs();
+        static void TheSameNameInAnotherLibraryLeavesTheIdentityFree();
+        static void TheIdentityIsAskedWithoutDistinguishingCase();
+        static void TheAddonBeingMovedDoesNotHoldTheIdentityAgainstItself();
+        static void AFolderOutsideEveryLibraryHasNoIdentityToTake();
+        static void TheLibrariesAnswerWhichTreeStandsAtAGivenRoot();
+        static void ARootIsMatchedWithoutCaseOrSeparatorDifferences();
+        static void ARootThatIsNoLibraryOfItsOwnHasNoTree();
+    };
+}
 
 namespace
 {
@@ -45,7 +48,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }

@@ -18,7 +18,7 @@
 
 RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Reparar links quebrados"));
+    setWindowTitle(tr("Repair broken links"));
 
     std::vector<RepairCandidate> library;
     std::vector<RepairCandidate> thirdParty;
@@ -32,12 +32,12 @@ RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidg
 
     if (!library.empty())
     {
-        groups->addWidget(CreateGroup(tr("Links para as suas bibliotecas"), library, true, false));
+        groups->addWidget(CreateGroup(tr("Links to your libraries"), library, true, false));
     }
 
     if (!thirdParty.empty())
     {
-        groups->addWidget(CreateGroup(tr("Links de outros programas"), thirdParty, false, true));
+        groups->addWidget(CreateGroup(tr("Links from other programs"), thirdParty, false, true));
     }
 
     groups->addStretch();
@@ -48,7 +48,7 @@ RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidg
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    auto* repair = buttons->addButton(tr("Reparar selecionados"), QDialogButtonBox::AcceptRole);
+    auto* repair = buttons->addButton(tr("Repair the selected ones"), QDialogButtonBox::AcceptRole);
     repair->setDefault(true);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -81,10 +81,10 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
         grid->addWidget(selected, row, 0);
 
         auto* action = new QComboBox(group);
-        action->addItem(tr("Remover o nó morto"));
+        action->addItem(tr("Remove the dead node"));
         if (candidate.repointTo.has_value())
         {
-            action->addItem(tr("Reapontar para a biblioteca"));
+            action->addItem(tr("Repoint to the library"));
         }
         action->setEnabled(action->count() > 1);
         LetTheWheelScrollPastUnlessTheWidgetHasFocus(action);
@@ -93,7 +93,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
 
         if (showOrigin)
         {
-            auto* origin = new QLabel(tr("aponta para: %1").arg(AsText(candidate.entry.target)), group);
+            auto* origin = new QLabel(tr("points at: %1").arg(AsText(candidate.entry.target)), group);
             origin->setTextInteractionFlags(Qt::TextSelectableByMouse);
             origin->setWordWrap(true);
             origin->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
@@ -101,7 +101,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
             ++row;
         }
 
-        rows_.push_back({candidate, selected, action});
+        rows_.push_back({.candidate = candidate, .selected = selected, .action = action});
     }
 
     return group;
@@ -119,7 +119,8 @@ std::vector<RepairRequest> RepairDialog::ChosenRequests() const
         }
 
         requests.push_back(
-            {row.candidate, row.action->currentIndex() == 1 ? RepairAction::Repoint : RepairAction::RemoveDeadNode});
+            {.candidate = row.candidate,
+             .action = row.action->currentIndex() == 1 ? RepairAction::Repoint : RepairAction::RemoveDeadNode});
     }
 
     return requests;

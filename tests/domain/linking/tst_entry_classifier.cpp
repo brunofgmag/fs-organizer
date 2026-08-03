@@ -6,23 +6,26 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
-class EntryClassifierTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class EntryClassifierTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ALinkIntoALibraryIsManaged();
-    static void ALiveLinkOutsideEveryLibraryIsExternal();
-    static void ALinkWhoseTargetIsGoneIsBroken();
-    static void ALinkOnAnAbsentVolumeIsUnavailableRatherThanBroken();
-    static void APhysicalFolderIsUnmanaged();
-    static void AnAddonLinkedInTwoDestinationsIsDuplicated();
-    static void AnExtendedLengthPrefixOnTheTargetIsNormalized();
-    static void LibraryMatchingIgnoresPathCase();
-    static void OnlyManagedEntriesReportTheirTargetAsAnEnabledAddon();
-    static void ADuplicatedAddonIsStillEnabledAndReportedOnce();
-    static void EveryLinkThatPointsAtAnAddonFolderIsListedAcrossDestinations();
-};
+    private slots:
+        static void ALinkIntoALibraryIsManaged();
+        static void ALiveLinkOutsideEveryLibraryIsExternal();
+        static void ALinkWhoseTargetIsGoneIsBroken();
+        static void ALinkOnAnAbsentVolumeIsUnavailableRatherThanBroken();
+        static void APhysicalFolderIsUnmanaged();
+        static void AnAddonLinkedInTwoDestinationsIsDuplicated();
+        static void AnExtendedLengthPrefixOnTheTargetIsNormalized();
+        static void LibraryMatchingIgnoresPathCase();
+        static void OnlyManagedEntriesReportTheirTargetAsAnEnabledAddon();
+        static void ADuplicatedAddonIsStillEnabledAndReportedOnce();
+        static void EveryLinkThatPointsAtAnAddonFolderIsListedAcrossDestinations();
+    };
+}
 
 namespace
 {

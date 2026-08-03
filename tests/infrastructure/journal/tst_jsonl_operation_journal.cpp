@@ -6,20 +6,23 @@
 
 #include "infrastructure/journal/JsonlOperationJournal.h"
 
-class JsonlOperationJournalTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class JsonlOperationJournalTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EachRecordBecomesOneLineWithEveryFieldOfTheOperation();
-    static void AppendingNeverRewritesWhatWasAlreadyThere();
-    static void TheRepairKindsHaveTheirOwnStableNames();
-    static void AnImportRecordCarriesItsResultAndNoLinkFailure();
-    static void EveryKindAndEveryReasonSurvivesTheRoundTrip();
-    static void ReadingSkipsALineWrittenByANewerVersion();
-    static void AnOutcomeThisVersionCannotReadIsNotASuccess();
-    static void AnAbsentJournalReadsAsNoHistoryAtAll();
-};
+    private slots:
+        static void EachRecordBecomesOneLineWithEveryFieldOfTheOperation();
+        static void AppendingNeverRewritesWhatWasAlreadyThere();
+        static void TheRepairKindsHaveTheirOwnStableNames();
+        static void AnImportRecordCarriesItsResultAndNoLinkFailure();
+        static void EveryKindAndEveryReasonSurvivesTheRoundTrip();
+        static void ReadingSkipsALineWrittenByANewerVersion();
+        static void AnOutcomeThisVersionCannotReadIsNotASuccess();
+        static void AnAbsentJournalReadsAsNoHistoryAtAll();
+    };
+}
 
 namespace
 {
@@ -48,13 +51,15 @@ namespace
     OperationRecord Record(const OperationKind kind, const LinkFailure failure)
     {
         return OperationRecord::OfLink(std::chrono::system_clock::time_point{kMoment}, kind,
-                                       AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, failure);
+                                       AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"}, kSource,
+                                       kTarget, failure);
     }
 
     OperationRecord Record(const OperationKind kind, const FileResult result)
     {
         return OperationRecord::OfImport(std::chrono::system_clock::time_point{kMoment}, kind,
-                                         AddonId{"library-1", "pmdg-aircraft-77w"}, kSource, kTarget, result);
+                                         AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"}, kSource,
+                                         kTarget, result);
     }
 }
 
@@ -174,7 +179,7 @@ void JsonlOperationJournalTest::ReadingSkipsALineWrittenByANewerVersion()
 
     std::ofstream stream(storage.File(), std::ios::binary | std::ios::app);
     stream << R"({"kind":"teleportAddon","addon":"pmdg-aircraft-77w"})" << '\n';
-    stream << "isto nao e json" << '\n';
+    stream << "this is not json" << '\n';
     stream.close();
 
     const std::vector<OperationRecord> read = journal.Read();

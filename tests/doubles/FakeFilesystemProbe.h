@@ -75,7 +75,8 @@ public:
         std::vector<FileFingerprint> files;
         for (const std::filesystem::path& file : fileSystem_.FilesUnder(root))
         {
-            files.push_back(FileFingerprint{file.lexically_relative(root), fileSystem_.FileSize(file)});
+            files.push_back(
+                FileFingerprint{.relativePath = file.lexically_relative(root), .size = fileSystem_.FileSize(file)});
         }
         return files;
     }

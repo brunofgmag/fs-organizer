@@ -1,5 +1,7 @@
 #include "view/panels/EmptyState.h"
 
+#include <algorithm>
+
 #include <QtGui/QFont>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -13,13 +15,14 @@ namespace
     constexpr int kReadableWidth = 420;
 }
 
-EmptyState::EmptyState(const QString& headline, const QString& explanation, QWidget* parent) : QWidget(parent)
+EmptyState::EmptyState(QWidget* parent) : QWidget(parent)
 {
     auto* mark = new QLabel(this);
     mark->setPixmap(BrandIcon().pixmap(40));
     mark->setAlignment(Qt::AlignHCenter);
 
-    auto* title = new QLabel(headline, this);
+    auto* title = new QLabel(this);
+    title_ = title;
     title->setObjectName(QStringLiteral("EmptyHeadline"));
     title->setAlignment(Qt::AlignHCenter);
 
@@ -28,12 +31,12 @@ EmptyState::EmptyState(const QString& headline, const QString& explanation, QWid
     bold.setPointSizeF(bold.pointSizeF() * 1.2);
     title->setFont(bold);
 
-    auto* body = new QLabel(explanation, this);
+    auto* body = new QLabel(this);
+    body_ = body;
     body->setObjectName(QStringLiteral("EmptyBody"));
     body->setAlignment(Qt::AlignHCenter);
     body->setWordWrap(true);
     body->setFixedWidth(kReadableWidth);
-    body->setMinimumHeight(body->heightForWidth(kReadableWidth));
 
     column_ = new QVBoxLayout;
     column_->setSpacing(12);
@@ -48,9 +51,16 @@ EmptyState::EmptyState(const QString& headline, const QString& explanation, QWid
     centred->addStretch();
 }
 
-QPushButton* EmptyState::OfferTheOnlyAction(const QString& label)
+void EmptyState::Retell(const QString& headline, const QString& explanation)
 {
-    auto* action = new QPushButton(label, this);
+    title_->setText(headline);
+    body_->setText(explanation);
+    body_->setMinimumHeight(std::max(0, body_->heightForWidth(kReadableWidth)));
+}
+
+QPushButton* EmptyState::OfferTheOnlyAction()
+{
+    auto* action = new QPushButton(this);
     action->setProperty("role", "primary");
     action->setCursor(Qt::PointingHandCursor);
 

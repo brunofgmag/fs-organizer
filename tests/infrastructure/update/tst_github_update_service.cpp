@@ -6,15 +6,18 @@
 
 #include "infrastructure/update/GithubUpdateService.h"
 
-class GithubUpdateServiceTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class GithubUpdateServiceTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void BuildingTheServiceLeavesWhateverIsAlreadyThere();
-    static void DiscardingTakesTheDownloadAndTheStagedAndNothingElse();
-    static void TheDefaultFolderIsUnderTheApplicationData();
-};
+    private slots:
+        static void BuildingTheServiceLeavesWhateverIsAlreadyThere();
+        static void DiscardingTakesTheDownloadAndTheStagedAndNothingElse();
+        static void TheDefaultFolderIsUnderTheApplicationData();
+    };
+}
 
 namespace
 {

@@ -266,7 +266,8 @@ bool Session::RememberTheDestination(const TreeNode& node, const std::filesystem
 
     if (!destination.empty())
     {
-        profile_.destinationOverrides.push_back({libraryId, relative, destination});
+        profile_.destinationOverrides.push_back(
+            {.libraryId = libraryId, .relativePath = relative, .destination = destination});
     }
 
     return true;

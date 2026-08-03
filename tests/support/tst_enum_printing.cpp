@@ -2,14 +2,17 @@
 
 #include "tests/support/EnumPrinting.h"
 
-class EnumPrintingTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class EnumPrintingTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryFileResultPrintsItsOwnName();
-    static void EveryOperationKindPrintsItsOwnName();
-};
+    private slots:
+        static void EveryFileResultPrintsItsOwnName();
+        static void EveryOperationKindPrintsItsOwnName();
+    };
+}
 
 namespace
 {

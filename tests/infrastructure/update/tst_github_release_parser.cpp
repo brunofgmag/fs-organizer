@@ -3,19 +3,22 @@
 
 #include "infrastructure/update/GithubReleaseParser.h"
 
-class GithubReleaseParserTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class GithubReleaseParserTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ARealPayloadOfOurOwnReleaseGivesVersionZipAndChecksum();
-    static void ARealPayloadOfAnotherProjectParsesWithoutOfferingAnything();
-    static void JsonThatIsNotAReleaseIsRefused();
-    static void AReleaseWithoutATagIsRefused();
-    static void TheChecksumFileIsReadWhateverComesAfterTheHash();
-    static void ChecksumContentThatIsNotAHashIsRefused();
-    static void OnlyAHigherVersionCountsAsNewer();
-};
+    private slots:
+        static void ARealPayloadOfOurOwnReleaseGivesVersionZipAndChecksum();
+        static void ARealPayloadOfAnotherProjectParsesWithoutOfferingAnything();
+        static void JsonThatIsNotAReleaseIsRefused();
+        static void AReleaseWithoutATagIsRefused();
+        static void TheChecksumFileIsReadWhateverComesAfterTheHash();
+        static void ChecksumContentThatIsNotAHashIsRefused();
+        static void OnlyAHigherVersionCountsAsNewer();
+    };
+}
 
 namespace
 {

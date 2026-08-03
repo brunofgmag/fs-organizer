@@ -4,18 +4,21 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/CategorySuggestionModel.h"
 
-class CategorySuggestionModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class CategorySuggestionModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheRulesThatAreTrustedOnTheirOwnStartCheckedAndTheLiveryRuleDoesNot();
-    static void OnlyTheSuggestionsThatWouldActuallyMoveTheAddonAreListed();
-    static void TheChosenMovesAreTheRowsLeftCheckedAndNothingElse();
-    static void TheOverallStateTellsAllFromNoneFromAMixture();
-    static void ChoosingAllReachesEveryRowAndAnnouncesTheWholeColumn();
-    static void ChoosingAllOnAnEmptyListSaysNothingInsteadOfAnnouncingARangeThatDoesNotExist();
-};
+    private slots:
+        static void TheRulesThatAreTrustedOnTheirOwnStartCheckedAndTheLiveryRuleDoesNot();
+        static void OnlyTheSuggestionsThatWouldActuallyMoveTheAddonAreListed();
+        static void TheChosenMovesAreTheRowsLeftCheckedAndNothingElse();
+        static void TheOverallStateTellsAllFromNoneFromAMixture();
+        static void ChoosingAllReachesEveryRowAndAnnouncesTheWholeColumn();
+        static void ChoosingAllOnAnEmptyListSaysNothingInsteadOfAnnouncingARangeThatDoesNotExist();
+    };
+}
 
 namespace
 {
@@ -28,7 +31,8 @@ namespace
                                   const std::filesystem::path& suggested,
                                   const CategoryRule rule)
     {
-        return CategorySuggestion{current / folder, current, suggested, rule};
+        return CategorySuggestion{
+            .addonFolder = current / folder, .currentCategory = current, .suggestedCategory = suggested, .rule = rule};
     }
 
     std::vector<CategorySuggestion> BothRules()

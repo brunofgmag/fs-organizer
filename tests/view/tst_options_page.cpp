@@ -26,27 +26,31 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "view/options/OptionsPage.h"
+#include "view/shell/LanguageSwitch.h"
 #include "viewmodel/SessionNotifier.h"
 
-class OptionsPageTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class OptionsPageTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheTabThatIsStillWaitingOpensWhatExplainsTheWait();
-    static void TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands();
-    static void TheLinksTabOpensOnTheTypeThatIsStored();
-    static void ChoosingSymlinkWritesItAndSaysWhatChanges();
-    static void EachLibraryGetsARowNamingWhatIsInsideIt();
-    static void TheFooterNamesTheFileEveryChangeLands();
-    static void OnlyOneProfileCanBeMarkedAtATime();
-    static void NothingEnabledMeansTheQuestionCarriesNoCheckboxAtAll();
-    static void WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion();
-    static void EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUse();
-    static void TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt();
-    static void TheOnlyProfileCannotBeRemoved();
-    static void RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown();
-};
+    private slots:
+        static void TheLanguageTabOffersBothAndOpensOnTheStoredOne();
+        static void TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands();
+        static void TheLinksTabOpensOnTheTypeThatIsStored();
+        static void ChoosingSymlinkWritesItAndSaysWhatChanges();
+        static void EachLibraryGetsARowNamingWhatIsInsideIt();
+        static void TheFooterNamesTheFileEveryChangeLands();
+        static void OnlyOneProfileCanBeMarkedAtATime();
+        static void NothingEnabledMeansTheQuestionCarriesNoCheckboxAtAll();
+        static void WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion();
+        static void EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUse();
+        static void TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt();
+        static void TheOnlyProfileCannotBeRemoved();
+        static void RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown();
+    };
+}
 
 namespace
 {
@@ -60,7 +64,7 @@ namespace
         TreeNode addon;
         addon.kind = TreeNodeKind::Addon;
         addon.path = kAddon;
-        addon.addon = Addon{kAddon, Manifest{}};
+        addon.addon = Addon{.folderPath = kAddon, .manifest = Manifest{}};
 
         TreeNode aircrafts;
         aircrafts.kind = TreeNodeKind::Category;
@@ -144,7 +148,7 @@ namespace
 
     Question WhatUnregisteringAsks(const OptionsPage& page)
     {
-        return WhatClickingAsks(ButtonLabelled(page, QStringLiteral("Descadastrar")));
+        return WhatClickingAsks(ButtonLabelled(page, QStringLiteral("Unregister")));
     }
 
     SimulatorProfile SecondProfile()
@@ -154,7 +158,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2020;
         profile.destinations = {"E:/Flight Simulator 2020/Community"};
         profile.defaultDestination = "E:/Flight Simulator 2020/Community";
-        profile.libraries = {Library{"library-2", "D:/MSFS 2020", "MSFS 2020"}};
+        profile.libraries = {Library{.id = "library-2", .path = "D:/MSFS 2020", .label = "MSFS 2020"}};
 
         return profile;
     }
@@ -173,7 +177,7 @@ namespace
             profile.variant = SimulatorVariant::MSFS2024;
             profile.destinations = {kCommunity};
             profile.defaultDestination = kCommunity;
-            profile.libraries = {Library{"library-1", kLibrary, "MSFS 2024"}};
+            profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
             settings.stored.profiles = {profile};
             settings.stored.activeProfileId = "msfs2024";
@@ -208,9 +212,9 @@ namespace
     };
 }
 
-void OptionsPageTest::TheTabThatIsStillWaitingOpensWhatExplainsTheWait()
+void OptionsPageTest::TheLanguageTabOffersBothAndOpensOnTheStoredOne()
 {
-    const Fixture f;
+    Fixture f;
 
     auto* navigation = f.page.findChild<QListWidget*>(QStringLiteral("OptionsNav"));
     const auto* panes = f.page.findChild<QStackedWidget*>();
@@ -220,22 +224,28 @@ void OptionsPageTest::TheTabThatIsStillWaitingOpensWhatExplainsTheWait()
 
     navigation->show();
 
-    constexpr int waiting = 3;
-    const QRect row = navigation->visualItemRect(navigation->item(waiting));
+    constexpr int language = 3;
+    const QRect row = navigation->visualItemRect(navigation->item(language));
     QTest::mouseClick(navigation->viewport(), Qt::LeftButton, Qt::NoModifier, row.center());
 
-    QCOMPARE(navigation->currentRow(), waiting);
-    QCOMPARE(panes->currentIndex(), waiting);
+    QCOMPARE(navigation->currentRow(), language);
+    QCOMPARE(panes->currentIndex(), language);
 
-    const auto labels = panes->currentWidget()->findChildren<QLabel*>();
-    const bool explained = std::ranges::any_of(labels,
-                                               [](const QLabel* label)
-                                               {
-                                                   return label->text().contains(QStringLiteral("idioma"));
-                                               });
+    auto* english = f.page.findChild<QRadioButton*>(QStringLiteral("EnglishChoice"));
+    auto* brazilian = f.page.findChild<QRadioButton*>(QStringLiteral("BrazilianChoice"));
+    QVERIFY2(english != nullptr && brazilian != nullptr, "the Language tab does not offer both languages");
 
-    QVERIFY2(explained, "a aba abriu mas nada nela diz por que ela ainda não faz nada");
-    QVERIFY(!navigation->item(waiting)->toolTip().isEmpty());
+    const QString resolved = LanguageSwitch::Resolve({});
+    QCOMPARE(brazilian->isChecked(), resolved == QStringLiteral("pt_BR"));
+    QCOMPARE(english->isChecked(), resolved == QStringLiteral("en"));
+
+    brazilian->click();
+
+    QCOMPARE(f.settings.stored.language, std::string{"pt_BR"});
+
+    f.page.Reload();
+
+    QVERIFY2(brazilian->isChecked(), "with pt_BR written, the tab must open on Brazilian Portuguese");
 }
 
 void OptionsPageTest::TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands()
@@ -286,7 +296,7 @@ void OptionsPageTest::ChoosingSymlinkWritesItAndSaysWhatChanges()
 
     QCOMPARE(f.settings.stored.linkType, LinkType::Symbolic);
     QCOMPARE(said.count(), 1);
-    QVERIFY(said.front().front().toString().contains(QStringLiteral("continuam junção de diretório")));
+    QVERIFY(said.front().front().toString().contains(QStringLiteral("stay directory junctions")));
 }
 
 void OptionsPageTest::EachLibraryGetsARowNamingWhatIsInsideIt()
@@ -296,11 +306,20 @@ void OptionsPageTest::EachLibraryGetsARowNamingWhatIsInsideIt()
     const bool named = std::ranges::any_of(labels,
                                            [](const QLabel* label)
                                            {
-                                               return label->text().contains(QStringLiteral("1 categoria(s)"))
-                                                   && label->text().contains(QStringLiteral("1 addons"));
+                                               return label->text().contains(QStringLiteral("1 category"))
+                                                   && label->text().contains(QStringLiteral("1 addon"));
                                            });
 
-    QVERIFY2(named, "nenhuma linha de biblioteca disse o que tem dentro dela");
+    QVERIFY2(named, "no library row said what is inside it");
+
+    const bool pluralOfOne = std::ranges::any_of(labels,
+                                                 [](const QLabel* label)
+                                                 {
+                                                     return label->text().contains(QStringLiteral("1 categories"))
+                                                         || label->text().contains(QStringLiteral("1 addons"));
+                                                 });
+
+    QVERIFY2(!pluralOfOne, "a row counted one thing in the plural");
 }
 
 void OptionsPageTest::TheFooterNamesTheFileEveryChangeLands()
@@ -362,8 +381,8 @@ void OptionsPageTest::NothingEnabledMeansTheQuestionCarriesNoCheckboxAtAll()
     const Fixture f;
     const Question asked = WhatUnregisteringAsks(f.page);
 
-    QVERIFY2(asked.opened, "o diálogo de descadastrar não abriu, então nada foi olhado");
-    QVERIFY2(!asked.offeredToDisable, "a caixa de desabilitar apareceu sem nada habilitado para desabilitar");
+    QVERIFY2(asked.opened, "the unregister dialog did not open, so nothing was looked at");
+    QVERIFY2(!asked.offeredToDisable, "the disable box appeared with nothing enabled to disable");
 }
 
 void OptionsPageTest::WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion()
@@ -375,10 +394,10 @@ void OptionsPageTest::WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion()
 
     const Question asked = WhatUnregisteringAsks(f.page);
 
-    QVERIFY2(asked.opened, "o diálogo de descadastrar não abriu, então nada foi olhado");
-    QVERIFY2(asked.offeredToDisable, "com um addon habilitado, a caixa de desabilitar não foi oferecida");
+    QVERIFY2(asked.opened, "the unregister dialog did not open, so nothing was looked at");
+    QVERIFY2(asked.offeredToDisable, "with an addon enabled, the disable checkbox was not offered");
     QVERIFY2(asked.checkboxIsLaidOut,
-             "a caixa foi criada mas ficou fora do layout, que é como ela se sobrepõe ao texto");
+             "the checkbox was created but left out of the layout, which is how it ends up over the text");
 }
 
 void OptionsPageTest::EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUse()
@@ -387,8 +406,8 @@ void OptionsPageTest::EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUs
     f.settings.stored.profiles.push_back(SecondProfile());
     f.page.Reload();
 
-    QVERIFY(LastButtonLabelled(f.page, QStringLiteral("Ver…")) != nullptr);
-    LastButtonLabelled(f.page, QStringLiteral("Ver…"))->click();
+    QVERIFY(LastButtonLabelled(f.page, QStringLiteral("View…")) != nullptr);
+    LastButtonLabelled(f.page, QStringLiteral("View…"))->click();
 
     const auto labels = f.page.findChildren<QLabel*>();
     const bool showsTheOtherLibrary =
@@ -398,7 +417,7 @@ void OptionsPageTest::EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUs
                                 return label->text().contains(QStringLiteral("MSFS 2020"));
                             });
 
-    QVERIFY2(showsTheOtherLibrary, "clicar em Ver deixou os grupos de baixo no perfil ativo");
+    QVERIFY2(showsTheOtherLibrary, "clicking View left the groups below on the active profile");
 }
 
 void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
@@ -407,19 +426,19 @@ void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
     f.settings.stored.profiles.push_back(SecondProfile());
     f.page.Reload();
 
-    LastButtonLabelled(f.page, QStringLiteral("Ver…"))->click();
+    LastButtonLabelled(f.page, QStringLiteral("View…"))->click();
 
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Adicionar biblioteca…"))->isEnabled());
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Importar do MSFS Addons Linker…"))->isEnabled());
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Descadastrar"))->isEnabled());
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Add library…"))->isEnabled());
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Import from MSFS Addons Linker…"))->isEnabled());
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Unregister"))->isEnabled());
 }
 
 void OptionsPageTest::TheOnlyProfileCannotBeRemoved()
 {
     const Fixture f;
 
-    QVERIFY(ButtonLabelled(f.page, QStringLiteral("Remover")) != nullptr);
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Remover"))->isEnabled());
+    QVERIFY(ButtonLabelled(f.page, QStringLiteral("Remove")) != nullptr);
+    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Remove"))->isEnabled());
 }
 
 void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown()
@@ -430,12 +449,13 @@ void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsS
     f.session.ShowActiveProfile();
     f.page.Reload();
 
-    LastButtonLabelled(f.page, QStringLiteral("Ver…"))->click();
+    LastButtonLabelled(f.page, QStringLiteral("View…"))->click();
 
-    const Question asked = WhatClickingAsks(ButtonLabelled(f.page, QStringLiteral("Remover")));
+    const Question asked = WhatClickingAsks(ButtonLabelled(f.page, QStringLiteral("Remove")));
 
-    QVERIFY2(asked.opened, "a pergunta de remover não abriu, então nada foi olhado");
-    QVERIFY2(asked.offeredToDisable, "remover o perfil em uso com outro perfil na tela contou zero addons habilitados");
+    QVERIFY2(asked.opened, "the remove question did not open, so nothing was looked at");
+    QVERIFY2(asked.offeredToDisable,
+             "removing the profile in use with another profile on screen counted zero enabled addons");
 }
 
 QTEST_MAIN(OptionsPageTest)

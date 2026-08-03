@@ -8,19 +8,22 @@
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 
-class WindowsFilesystemProbeTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class WindowsFilesystemProbeTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ADanglingJunctionIsStillAnEntryThatOccupiesItsPath();
-    static void ChildDirectoriesReportsDanglingJunctionsToo();
-    static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
-    static void AJunctionIsAReparsePointAndARealFolderIsNot();
-    static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
-    static void AFolderReportsWhenItWasLastWrittenTo();
-    static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
-};
+    private slots:
+        static void ADanglingJunctionIsStillAnEntryThatOccupiesItsPath();
+        static void ChildDirectoriesReportsDanglingJunctionsToo();
+        static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
+        static void AJunctionIsAReparsePointAndARealFolderIsNot();
+        static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
+        static void AFolderReportsWhenItWasLastWrittenTo();
+        static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
+    };
+}
 
 namespace
 {

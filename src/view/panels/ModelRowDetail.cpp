@@ -1,5 +1,6 @@
 #include "view/panels/ModelRowDetail.h"
 
+#include <QtCore/QEvent>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 
@@ -20,13 +21,25 @@ ModelRowDetail::ModelRowDetail(QWidget* parent) : QWidget(parent)
     Show({});
 }
 
+void ModelRowDetail::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+    {
+        Show(shown_);
+    }
+
+    QWidget::changeEvent(event);
+}
+
 void ModelRowDetail::Show(const QModelIndex& index)
 {
+    shown_ = index;
+
     if (!index.isValid())
     {
         Clear();
 
-        auto* placeholder = new QLabel(tr("Nada selecionado."), this);
+        auto* placeholder = new QLabel(tr("Nothing selected."), this);
         placeholder->setObjectName(QStringLiteral("DetailPlaceholder"));
         placeholder->setWordWrap(true);
         rows_->addWidget(placeholder, 0, 0, 1, 2);
@@ -74,7 +87,7 @@ void ModelRowDetail::ShowFields(const QList<Field>& fields)
 
 void ModelRowDetail::Clear()
 {
-    while (QLayoutItem* item = rows_->takeAt(0))
+    while (const QLayoutItem* item = rows_->takeAt(0))
     {
         delete item->widget();
         delete item;

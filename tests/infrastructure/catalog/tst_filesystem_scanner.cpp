@@ -12,18 +12,21 @@
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 
-class FilesystemScannerTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class FilesystemScannerTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ScanningStopsAtTheFirstManifest();
-    static void AnAddonCarriesTheMetadataFromItsManifest();
-    static void AnEmptyFolderIsAnEmptyCategory();
-    static void TheMarkerTellsADeclaredCategoryApartFromALeftoverFolder();
-    static void AFolderWithAnUnreadableManifestIsStillAnAddon();
-    static void WhatTheImporterCreatedIsNotPartOfTheLibrary();
-};
+    private slots:
+        static void ScanningStopsAtTheFirstManifest();
+        static void AnAddonCarriesTheMetadataFromItsManifest();
+        static void AnEmptyFolderIsAnEmptyCategory();
+        static void TheMarkerTellsADeclaredCategoryApartFromALeftoverFolder();
+        static void AFolderWithAnUnreadableManifestIsStillAnAddon();
+        static void WhatTheImporterCreatedIsNotPartOfTheLibrary();
+    };
+}
 
 namespace
 {

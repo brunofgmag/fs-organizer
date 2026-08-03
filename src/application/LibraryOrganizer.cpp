@@ -134,12 +134,12 @@ FileOperationResult LibraryOrganizer::CreateCategory(const SimulatorProfile& pro
 
     if (processProbe_.SimulatorIsRunning())
     {
-        return FileOperationResult{folder, FileResult::TheSimulatorIsRunning};
+        return FileOperationResult{.path = folder, .result = FileResult::TheSimulatorIsRunning};
     }
 
     if (LibraryContaining(profile, parent) == nullptr)
     {
-        return FileOperationResult{folder, FileResult::TheTargetIsNotInALibrary};
+        return FileOperationResult{.path = folder, .result = FileResult::TheTargetIsNotInALibrary};
     }
 
     const bool created = files_.CreateFolder(folder) && files_.WriteHiddenFile(CategoryMarkerPathIn(folder));
@@ -147,7 +147,7 @@ FileOperationResult LibraryOrganizer::CreateCategory(const SimulatorProfile& pro
 
     Record(OperationKind::CreateCategory, IdentityOf(profile, folder), {}, folder, result);
 
-    return FileOperationResult{folder, result};
+    return FileOperationResult{.path = folder, .result = result};
 }
 
 FileOperationResult LibraryOrganizer::DeclareCategory(const SimulatorProfile& profile,
@@ -155,13 +155,13 @@ FileOperationResult LibraryOrganizer::DeclareCategory(const SimulatorProfile& pr
 {
     if (processProbe_.SimulatorIsRunning())
     {
-        return FileOperationResult{folder, FileResult::TheSimulatorIsRunning};
+        return FileOperationResult{.path = folder, .result = FileResult::TheSimulatorIsRunning};
     }
 
     const Library* library = LibraryContaining(profile, folder);
     if (library == nullptr || ComparablePath(folder) == ComparablePath(library->path))
     {
-        return FileOperationResult{folder, FileResult::TheTargetIsNotInALibrary};
+        return FileOperationResult{.path = folder, .result = FileResult::TheTargetIsNotInALibrary};
     }
 
     const bool there = filesystemProbe_.TargetDirectoryExists(folder);
@@ -170,7 +170,7 @@ FileOperationResult LibraryOrganizer::DeclareCategory(const SimulatorProfile& pr
 
     Record(OperationKind::CreateCategory, IdentityOf(profile, folder), {}, folder, result);
 
-    return FileOperationResult{folder, result};
+    return FileOperationResult{.path = folder, .result = result};
 }
 
 FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
@@ -178,13 +178,13 @@ FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
 {
     if (processProbe_.SimulatorIsRunning())
     {
-        return FileOperationResult{category, FileResult::TheSimulatorIsRunning};
+        return FileOperationResult{.path = category, .result = FileResult::TheSimulatorIsRunning};
     }
 
     const Library* library = LibraryContaining(profile, category);
     if (library == nullptr || ComparablePath(category) == ComparablePath(library->path))
     {
-        return FileOperationResult{category, FileResult::TheTargetIsNotInALibrary};
+        return FileOperationResult{.path = category, .result = FileResult::TheTargetIsNotInALibrary};
     }
 
     const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
@@ -193,12 +193,12 @@ FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
 
     if (scanned == nullptr)
     {
-        return FileOperationResult{category, FileResult::TheTargetIsNotInALibrary};
+        return FileOperationResult{.path = category, .result = FileResult::TheTargetIsNotInALibrary};
     }
 
     if (CountAddons(*scanned) > 0)
     {
-        return FileOperationResult{category, FileResult::TheCategoryStillHoldsAddons};
+        return FileOperationResult{.path = category, .result = FileResult::TheCategoryStillHoldsAddons};
     }
 
     static_cast<void>(files_.RemoveTree(CategoryMarkerPathIn(category)));
@@ -213,7 +213,7 @@ FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
 
     Record(OperationKind::RemoveCategory, IdentityOf(profile, category), category, {}, result);
 
-    return FileOperationResult{category, result};
+    return FileOperationResult{.path = category, .result = result};
 }
 
 FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
@@ -224,18 +224,18 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
 
     if (processProbe_.SimulatorIsRunning())
     {
-        return FileOperationResult{landing, FileResult::TheSimulatorIsRunning};
+        return FileOperationResult{.path = landing, .result = FileResult::TheSimulatorIsRunning};
     }
 
     const Library* library = LibraryContaining(profile, category);
     if (library == nullptr)
     {
-        return FileOperationResult{landing, FileResult::TheTargetIsNotInALibrary};
+        return FileOperationResult{.path = landing, .result = FileResult::TheTargetIsNotInALibrary};
     }
 
     if (filesystemProbe_.EntryExistsWithoutFollowingLinks(landing))
     {
-        return FileOperationResult{landing, FileResult::CouldNotMoveIntoPlace, landing};
+        return FileOperationResult{.path = landing, .result = FileResult::CouldNotMoveIntoPlace, .occupant = landing};
     }
 
     const std::vector<DestinationEntry> entries = classifier_.Resolve(profile.destinations, {library->path});
@@ -247,7 +247,7 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
     {
         if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, addon), IdentityOf(profile, addon), addon))
         {
-            return FileOperationResult{addon, FileResult::CouldNotRemoveTheLink};
+            return FileOperationResult{.path = addon, .result = FileResult::CouldNotRemoveTheLink};
         }
     }
 
@@ -257,7 +257,7 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
 
     if (!moved)
     {
-        return FileOperationResult{landing, FileResult::CouldNotMoveIntoPlace};
+        return FileOperationResult{.path = landing, .result = FileResult::CouldNotMoveIntoPlace};
     }
 
     CarryTheOverrides(profile, *library, category, landing);
@@ -273,7 +273,7 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
         }
     }
 
-    return FileOperationResult{landing, result};
+    return FileOperationResult{.path = landing, .result = result};
 }
 
 bool LibraryOrganizer::Relink(const SimulatorProfile& profile,
@@ -281,7 +281,8 @@ bool LibraryOrganizer::Relink(const SimulatorProfile& profile,
                               const std::filesystem::path& folder) const
 {
     const std::filesystem::path destination = EffectiveDestination(profile, folder);
-    const LinkOutcome outcome = linking_.Enable(Addon{folder, Manifest{}}, destination, linkType_);
+    const LinkOutcome outcome =
+        linking_.Enable(Addon{.folderPath = folder, .manifest = Manifest{}}, destination, linkType_);
 
     log_.RecordLink(OperationKind::EnableAddon, addon, folder, destination / folder.filename(), outcome.Failure());
 
@@ -297,12 +298,13 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
     const Library* library = LibraryContaining(profile, move.category);
     if (library == nullptr || LibraryContaining(profile, move.addonFolder) != library)
     {
-        return FileOperationResult{move.addonFolder, FileResult::TheTargetIsNotInALibrary};
+        return FileOperationResult{.path = move.addonFolder, .result = FileResult::TheTargetIsNotInALibrary};
     }
 
     if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, target, move.addonFolder))
     {
-        return FileOperationResult{move.addonFolder, FileResult::TheIdentityIsTaken, occupant->path};
+        return FileOperationResult{
+            .path = move.addonFolder, .result = FileResult::TheIdentityIsTaken, .occupant = occupant->path};
     }
 
     const AddonId addon = IdentityOf(profile, move.addonFolder);
@@ -311,7 +313,7 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
 
     if (!DisableEveryLink(linking_, log_, links, addon, move.addonFolder))
     {
-        return FileOperationResult{move.addonFolder, FileResult::CouldNotRemoveTheLink};
+        return FileOperationResult{.path = move.addonFolder, .result = FileResult::CouldNotRemoveTheLink};
     }
 
     const bool moved = files_.Move(move.addonFolder, target);
@@ -320,7 +322,7 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
 
     if (!moved)
     {
-        return FileOperationResult{move.addonFolder, FileResult::CouldNotMoveIntoPlace};
+        return FileOperationResult{.path = move.addonFolder, .result = FileResult::CouldNotMoveIntoPlace};
     }
 
     DeclareACategory(*library, move.addonFolder.parent_path());
@@ -328,11 +330,12 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
 
     if (links.empty())
     {
-        return FileOperationResult{target, FileResult::Completed};
+        return FileOperationResult{.path = target, .result = FileResult::Completed};
     }
 
-    return FileOperationResult{target,
-                               Relink(profile, addon, target) ? FileResult::Completed : FileResult::CouldNotCreateLink};
+    return FileOperationResult{.path = target,
+                               .result = Relink(profile, addon, target) ? FileResult::Completed
+                                                                        : FileResult::CouldNotCreateLink};
 }
 
 std::vector<FileOperationResult> LibraryOrganizer::Move(SimulatorProfile& profile,
@@ -345,7 +348,8 @@ std::vector<FileOperationResult> LibraryOrganizer::Move(SimulatorProfile& profil
     {
         for (const AddonMove& move : moves)
         {
-            results.push_back(FileOperationResult{move.addonFolder, FileResult::TheSimulatorIsRunning});
+            results.push_back(
+                FileOperationResult{.path = move.addonFolder, .result = FileResult::TheSimulatorIsRunning});
         }
 
         return results;

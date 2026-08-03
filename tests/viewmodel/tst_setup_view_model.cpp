@@ -12,23 +12,26 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/SetupViewModel.h"
 
-class SetupViewModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class SetupViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void EveryDetectedCandidateIsProposedNotJustTheFirst();
-    static void ADestinationThatDoesNotExistIsRejected();
-    static void ADestinationThatIsNotWritableIsRejected();
-    static void AFolderNotNamedCommunityIsAcceptedWithAWarning();
-    static void ACommunityFolderIsAcceptedWithoutWarning();
-    static void EachRegisteredLibraryGetsItsOwnGeneratedIdentity();
-    static void CompletingSetupPersistsTheChosenCandidateWithItsLibraries();
-    static void AManuallyPointedFolderBecomesACandidateThatCanBeChosen();
-    static void RegisteringALibraryReportsTheCategoriesAndAddonsFoundInside();
-    static void AFolderInsideAnAlreadyRegisteredLibraryIsRefused();
-    static void ASecondProfileIsAppendedAndKeepsADistinctIdentity();
-};
+    private slots:
+        static void EveryDetectedCandidateIsProposedNotJustTheFirst();
+        static void ADestinationThatDoesNotExistIsRejected();
+        static void ADestinationThatIsNotWritableIsRejected();
+        static void AFolderNotNamedCommunityIsAcceptedWithAWarning();
+        static void ACommunityFolderIsAcceptedWithoutWarning();
+        static void EachRegisteredLibraryGetsItsOwnGeneratedIdentity();
+        static void CompletingSetupPersistsTheChosenCandidateWithItsLibraries();
+        static void AManuallyPointedFolderBecomesACandidateThatCanBeChosen();
+        static void RegisteringALibraryReportsTheCategoriesAndAddonsFoundInside();
+        static void AFolderInsideAnAlreadyRegisteredLibraryIsRefused();
+        static void ASecondProfileIsAppendedAndKeepsADistinctIdentity();
+    };
+}
 
 namespace
 {
@@ -59,7 +62,7 @@ namespace
             TreeNode addon;
             addon.kind = TreeNodeKind::Addon;
             addon.path = path / ("addon-" + std::to_string(index));
-            addon.addon = Addon{addon.path, {}};
+            addon.addon = Addon{.folderPath = addon.path, .manifest = {}};
             category.children.push_back(addon);
         }
 

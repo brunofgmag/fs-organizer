@@ -19,23 +19,26 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class PresetViewModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class PresetViewModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void ABlankNameIsRefusedBeforeAnythingIsWritten();
-    static void ANameThatCannotBecomeAFileNameIsRefused();
-    static void ANameAlreadyTakenIsRefused();
-    static void CreatingCapturesTheEnabledSetAndListsThePreset();
-    static void ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked();
-    static void SettingARowToDisableIsStoredOnThePreset();
-    static void ApplyingRefreshesTheSessionAndReportsTheUnresolved();
-    static void ALibraryIsNamedByItsLabelAndNotByItsIdentifier();
-    static void AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSilence();
-    static void ARowCarriesTheContentAndTheDayThePresetWasWritten();
-    static void ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInventingOne();
-};
+    private slots:
+        static void ABlankNameIsRefusedBeforeAnythingIsWritten();
+        static void ANameThatCannotBecomeAFileNameIsRefused();
+        static void ANameAlreadyTakenIsRefused();
+        static void CreatingCapturesTheEnabledSetAndListsThePreset();
+        static void ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked();
+        static void SettingARowToDisableIsStoredOnThePreset();
+        static void ApplyingRefreshesTheSessionAndReportsTheUnresolved();
+        static void ALibraryIsNamedByItsLabelAndNotByItsIdentifier();
+        static void AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSilence();
+        static void ARowCarriesTheContentAndTheDayThePresetWasWritten();
+        static void ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInventingOne();
+    };
+}
 
 namespace
 {
@@ -52,7 +55,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -79,7 +82,7 @@ namespace
         profile.variant = SimulatorVariant::MSFS2024;
         profile.destinations = {kCommunity};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{kLibraryId, kLibrary, "MSFS 2024"}};
+        profile.libraries = {Library{.id = kLibraryId, .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
     }
@@ -195,8 +198,10 @@ void PresetViewModelTest::ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked(
 
     Preset preset;
     preset.name = "Voo curto";
-    preset.entries = {PresetEntry{AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Enable},
-                      PresetEntry{AddonId{kLibraryId, "aircraft-que-sumiu"}, PresetAction::Enable}};
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
+                                  .action = PresetAction::Enable}};
 
     const PresetPreview preview = f.viewModel.Preview(preset, ApplyMode::Replace);
 
@@ -230,8 +235,10 @@ void PresetViewModelTest::ApplyingRefreshesTheSessionAndReportsTheUnresolved()
 
     Preset preset;
     preset.name = "Voo curto";
-    preset.entries = {PresetEntry{AddonId{kLibraryId, "aerosoft-crj"}, PresetAction::Enable},
-                      PresetEntry{AddonId{kLibraryId, "aircraft-que-sumiu"}, PresetAction::Enable}};
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable},
+                      PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aircraft-que-sumiu"},
+                                  .action = PresetAction::Enable}};
 
     const QSignalSpy applied(&f.viewModel, &PresetViewModel::Applied);
 
@@ -287,7 +294,7 @@ void PresetViewModelTest::ARowCarriesTheContentAndTheDayThePresetWasWritten()
 
     QCOMPARE(rows.size(), 1);
     QCOMPARE(rows.front().name, QStringLiteral("Voo curto"));
-    QCOMPARE(rows.front().content, QStringLiteral("2 addon(s) · 1 categoria(s)"));
+    QCOMPARE(rows.front().content, QStringLiteral("2 addon · 1 category"));
     QCOMPARE(rows.front().updated, QStringLiteral("17/02/2026"));
 }
 
@@ -302,7 +309,7 @@ void PresetViewModelTest::ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInve
     const QList<PresetRow> rows = f.viewModel.Rows();
 
     QCOMPARE(rows.size(), 1);
-    QCOMPARE(rows.front().content, QStringLiteral("1 addon(s) · 1 categoria(s)"));
+    QCOMPARE(rows.front().content, QStringLiteral("1 addon · 1 category"));
     QVERIFY(rows.front().updated.isEmpty());
 }
 

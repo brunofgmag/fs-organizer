@@ -15,25 +15,28 @@
 #include "view/theme/ModernistPaint.h"
 #include "view/theme/ModernistTheme.h"
 
-class ContextPanelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class ContextPanelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    void initTestCase();
-    static void CollapsingHidesTheContentAndExpandingBringsItBack();
-    static void ACollapsedPanelBecomesARailThatReachesTheBottom();
-    static void TheRailBringsThePanelBack();
-    static void TheSpineCarriesTheNameOfWhatIsSelected();
-    static void ARowThatNeedsAttentionPutsADotOnTheSpine();
-    static void TheSpineAndTheDotShareTheSameAxis();
-    static void TheCollapsedStateSurvivesANewPanelWithTheSameName();
-    static void TheDetailShowsEveryColumnOfTheSelectedRow();
-    static void AnInvalidIndexClearsTheDetailToItsPlaceholder();
-    static void TheStripKeepsQuietUntilSomethingBreaks();
-    static void ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen();
-    static void ClosingThePanelAsksForIt();
-};
+    private slots:
+        void initTestCase();
+        static void CollapsingHidesTheContentAndExpandingBringsItBack();
+        static void ACollapsedPanelBecomesARailThatReachesTheBottom();
+        static void TheRailBringsThePanelBack();
+        static void TheSpineCarriesTheNameOfWhatIsSelected();
+        static void ARowThatNeedsAttentionPutsADotOnTheSpine();
+        static void TheSpineAndTheDotShareTheSameAxis();
+        static void TheCollapsedStateSurvivesANewPanelWithTheSameName();
+        static void TheDetailShowsEveryColumnOfTheSelectedRow();
+        static void AnInvalidIndexClearsTheDetailToItsPlaceholder();
+        static void TheStripKeepsQuietUntilSomethingBreaks();
+        static void ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen();
+        static void ClosingThePanelAsksForIt();
+    };
+}
 
 void ContextPanelTest::initTestCase()
 {
@@ -46,10 +49,10 @@ void ContextPanelTest::initTestCase()
 
 void ContextPanelTest::CollapsingHidesTheContentAndExpandingBringsItBack()
 {
-    ContextPanel panel(QStringLiteral("Atenção"));
+    ContextPanel panel(QStringLiteral("Attention"));
     panel.setObjectName(QStringLiteral("collapse-test"));
 
-    auto* body = new QLabel(QStringLiteral("conteúdo"));
+    auto* body = new QLabel(QStringLiteral("content"));
     panel.Add(body);
 
     QVERIFY(body->isVisibleTo(&panel));
@@ -66,9 +69,9 @@ void ContextPanelTest::CollapsingHidesTheContentAndExpandingBringsItBack()
 
 void ContextPanelTest::ACollapsedPanelBecomesARailThatReachesTheBottom()
 {
-    ContextPanel panel(QStringLiteral("Addon selecionado"));
+    ContextPanel panel(QStringLiteral("Addon selected"));
     panel.setObjectName(QStringLiteral("rail-height-test"));
-    panel.Add(new QLabel(QStringLiteral("conteúdo")));
+    panel.Add(new QLabel(QStringLiteral("content")));
     panel.resize(380, 400);
     panel.show();
     QVERIFY(QTest::qWaitForWindowExposed(&panel));
@@ -97,10 +100,10 @@ void ContextPanelTest::ACollapsedPanelBecomesARailThatReachesTheBottom()
 
 void ContextPanelTest::TheRailBringsThePanelBack()
 {
-    ContextPanel panel(QStringLiteral("Addon selecionado"));
+    ContextPanel panel(QStringLiteral("Addon selected"));
     panel.setObjectName(QStringLiteral("rail-expand-test"));
 
-    auto* body = new QLabel(QStringLiteral("conteúdo"));
+    auto* body = new QLabel(QStringLiteral("content"));
     panel.Add(body);
 
     panel.findChild<QToolButton*>(QStringLiteral("PanelToggle"))->click();
@@ -122,9 +125,9 @@ namespace
 
     RailShot RailShotOf(const QString& title, const bool alarming)
     {
-        ContextPanel panel(QStringLiteral("Addon selecionado"));
+        ContextPanel panel(QStringLiteral("Addon selected"));
         panel.setObjectName(QStringLiteral("spine-test"));
-        panel.Add(new QLabel(QStringLiteral("conteúdo")));
+        panel.Add(new QLabel(QStringLiteral("content")));
         panel.resize(380, 400);
         panel.show();
 
@@ -151,7 +154,7 @@ namespace
         painted.fill(Qt::transparent);
         rail->render(&painted);
 
-        return {painted, rail->findChild<QToolButton*>(QStringLiteral("PanelExpand"))->geometry()};
+        return {.painted = painted, .arrow = rail->findChild<QToolButton*>(QStringLiteral("PanelExpand"))->geometry()};
     }
 
     QImage RailPainted(const QString& title, const bool alarming)
@@ -177,9 +180,9 @@ namespace
 
 void ContextPanelTest::TheSpineCarriesTheNameOfWhatIsSelected()
 {
-    ContextPanel panel(QStringLiteral("Addon selecionado"));
+    ContextPanel panel(QStringLiteral("Addon selected"));
     panel.setObjectName(QStringLiteral("spine-name-test"));
-    panel.Add(new QLabel(QStringLiteral("conteúdo")));
+    panel.Add(new QLabel(QStringLiteral("content")));
 
     const auto* rail = panel.findChild<PanelRail*>();
 
@@ -190,7 +193,7 @@ void ContextPanelTest::TheSpineCarriesTheNameOfWhatIsSelected()
     QCOMPARE(rail->toolTip(), QStringLiteral("pmdg-aircraft-738"));
 
     panel.ShowTitle(QString());
-    QCOMPARE(rail->toolTip(), QStringLiteral("ADDON SELECIONADO"));
+    QCOMPARE(rail->toolTip(), QStringLiteral("ADDON SELECTED"));
 }
 
 void ContextPanelTest::ARowThatNeedsAttentionPutsADotOnTheSpine()
@@ -217,7 +220,7 @@ namespace
                 const int until,
                 const std::function<bool(const QColor&, int)>& belongs)
     {
-        Span found{painted.width(), -1, -1, -1};
+        Span found{.left = painted.width(), .right = -1, .top = -1, .bottom = -1};
 
         for (int y = from; y < until; ++y)
         {
@@ -279,16 +282,16 @@ void ContextPanelTest::TheSpineAndTheDotShareTheSameAxis()
 void ContextPanelTest::TheCollapsedStateSurvivesANewPanelWithTheSameName()
 {
     {
-        ContextPanel panel(QStringLiteral("Atenção"));
+        ContextPanel panel(QStringLiteral("Attention"));
         panel.setObjectName(QStringLiteral("persist-test"));
         panel.findChild<QToolButton*>(QStringLiteral("PanelToggle"))->click();
     }
 
-    ContextPanel reborn(QStringLiteral("Atenção"));
+    ContextPanel reborn(QStringLiteral("Attention"));
     reborn.setObjectName(QStringLiteral("persist-test"));
     reborn.RestoreCollapsedState();
 
-    auto* body = new QLabel(QStringLiteral("conteúdo"));
+    auto* body = new QLabel(QStringLiteral("content"));
     reborn.Add(body);
 
     QVERIFY(!body->isVisibleTo(&reborn));
@@ -297,7 +300,7 @@ void ContextPanelTest::TheCollapsedStateSurvivesANewPanelWithTheSameName()
 void ContextPanelTest::TheDetailShowsEveryColumnOfTheSelectedRow()
 {
     QStandardItemModel model(2, 2);
-    model.setHorizontalHeaderLabels({QStringLiteral("Nome"), QStringLiteral("Destino")});
+    model.setHorizontalHeaderLabels({QStringLiteral("Name"), QStringLiteral("Destination")});
     model.setItem(1, 0, new QStandardItem(QStringLiteral("airport-bgqq-qaanaaq")));
     model.setItem(1, 1, new QStandardItem(QStringLiteral("Community")));
 
@@ -311,16 +314,16 @@ void ContextPanelTest::TheDetailShowsEveryColumnOfTheSelectedRow()
         texts.append(label->text());
     }
 
-    QVERIFY(texts.contains(QStringLiteral("Nome")));
+    QVERIFY(texts.contains(QStringLiteral("Name")));
     QVERIFY(texts.contains(QStringLiteral("airport-bgqq-qaanaaq")));
-    QVERIFY(texts.contains(QStringLiteral("Destino")));
+    QVERIFY(texts.contains(QStringLiteral("Destination")));
     QVERIFY(texts.contains(QStringLiteral("Community")));
 }
 
 void ContextPanelTest::AnInvalidIndexClearsTheDetailToItsPlaceholder()
 {
     QStandardItemModel model(1, 1);
-    model.setItem(0, 0, new QStandardItem(QStringLiteral("linha")));
+    model.setItem(0, 0, new QStandardItem(QStringLiteral("row")));
 
     ModelRowDetail detail;
     detail.Show(model.index(0, 0));
@@ -335,10 +338,10 @@ void ContextPanelTest::TheStripKeepsQuietUntilSomethingBreaks()
 {
     TriageStrip strip;
 
-    strip.ShowBreakdown(0, 0, 0, 0);
+    strip.ShowBreakdown({});
     QVERIFY(!strip.HasAnythingToSay());
 
-    strip.ShowBreakdown(0, 0, 0, 178);
+    strip.ShowBreakdown({.unmanaged = 178});
     QVERIFY(strip.HasAnythingToSay());
 
     strip.show();
@@ -357,7 +360,7 @@ void ContextPanelTest::ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen()
 {
     TriageStrip strip;
 
-    strip.ShowBreakdown(0, 0, 2, 0);
+    strip.ShowBreakdown({.duplicated = 2});
     QVERIFY(strip.HasAnythingToSay());
 
     strip.show();
@@ -382,7 +385,7 @@ void ContextPanelTest::ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen()
 
 void ContextPanelTest::ClosingThePanelAsksForIt()
 {
-    ContextPanel panel(QStringLiteral("Entrada selecionada"));
+    ContextPanel panel(QStringLiteral("Entry selected"));
     panel.setObjectName(QStringLiteral("close-test"));
 
     const QSignalSpy asked(&panel, &ContextPanel::CloseRequested);

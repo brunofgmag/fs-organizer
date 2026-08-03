@@ -4,30 +4,36 @@
 #include <QtCore/QDir>
 
 #include "tests/support/PathPrinting.h"
+#include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeModel.h"
+#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
 
-class AddonTreeModelTest : public QObject
+namespace
 {
-    Q_OBJECT
+    class AddonTreeModelTest : public QObject
+    {
+        Q_OBJECT
 
-private slots:
-    static void TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester();
-    static void CheckStatesComeFromTheEnabledIndex();
-    static void ClickingACheckboxAsksInsteadOfChangingTheModel();
-    static void RefreshingTheIndexUpdatesCheckStatesWithoutResettingTheTree();
-    static void OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt();
-    static void AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip();
-    static void AConflictThatArrivesLaterShowsUpWithoutResettingTheTree();
-    static void OnlyAnAddonFolderAnswersThatItIsEnabled();
-    static void TheConflictItselfIsHandedOverForWhoeverHasToResolveIt();
-    static void OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent();
-    static void AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits();
-    static void ABrokenLinkWearsTheTagAndAlarmsTheRow();
-    static void OnlyTheNameColumnCarriesTheCheckbox();
-    static void TheModelCountsAddonsAndHowManyAreEnabled();
-};
+    private slots:
+        static void TheTreeMirrorsTheSnapshotAndSurvivesTheModelTester();
+        static void CheckStatesComeFromTheEnabledIndex();
+        static void ClickingACheckboxAsksInsteadOfChangingTheModel();
+        static void RefreshingTheIndexUpdatesCheckStatesWithoutResettingTheTree();
+        static void OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt();
+        static void AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip();
+        static void AConflictThatArrivesLaterShowsUpWithoutResettingTheTree();
+        static void OnlyAnAddonFolderAnswersThatItIsEnabled();
+        static void TheConflictItselfIsHandedOverForWhoeverHasToResolveIt();
+        static void OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent();
+        static void AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits();
+        static void ABrokenLinkWearsTheTagAndAlarmsTheRow();
+        static void OnlyTheNameColumnCarriesTheCheckbox();
+        static void TheModelCountsAddonsAndHowManyAreEnabled();
+        static void RetranslatingKeepsThePersistentIndexesOfAProxyUsable();
+    };
+}
 
 namespace
 {
@@ -41,7 +47,7 @@ namespace
         TreeNode node;
         node.kind = TreeNodeKind::Addon;
         node.path = path;
-        node.addon = Addon{path, Manifest{}};
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
 
         return node;
     }
@@ -67,7 +73,7 @@ namespace
         profile.id = "msfs2024";
         profile.destinations = {kCommunity, kCommunity2024};
         profile.defaultDestination = kCommunity;
-        profile.libraries = {Library{"library-1", "D:/MSFS 2024", "Biblioteca do Bruno"}};
+        profile.libraries = {Library{.id = "library-1", .path = "D:/MSFS 2024", .label = "Biblioteca do Bruno"}};
         profile.destinationOverrides = std::move(overrides);
 
         return profile;
@@ -94,7 +100,9 @@ namespace
 
     DestinationEntry LinkIn(const std::filesystem::path& destination, const std::filesystem::path& addonFolder)
     {
-        return DestinationEntry{destination / addonFolder.filename(), addonFolder, EntryClassification::Managed};
+        return DestinationEntry{.path = destination / addonFolder.filename(),
+                                .target = addonFolder,
+                                .classification = EntryClassification::Managed};
     }
 
     QString TextOf(const AddonTreeModel& model, const QModelIndex& row, const int column)
@@ -151,7 +159,7 @@ void AddonTreeModelTest::RefreshingTheIndexUpdatesCheckStatesWithoutResettingThe
     model.Refresh(SnapshotWith({kPmdg}), Profile());
 
     QCOMPARE(reset.size(), 0);
-    QVERIFY(changed.size() > 0);
+    QVERIFY(!changed.empty());
     QCOMPARE(model.data(model.index(0, 0, Category(model)), Qt::CheckStateRole).toInt(), Qt::Checked);
     QCOMPARE(model.data(Category(model), Qt::CheckStateRole).toInt(), Qt::PartiallyChecked);
 }
@@ -159,20 +167,22 @@ void AddonTreeModelTest::RefreshingTheIndexUpdatesCheckStatesWithoutResettingThe
 void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
 {
     AddonTreeModel model;
-    model.Show(SnapshotWith({}), Profile({{"library-1", "Aircrafts", kCommunity2024}}));
+    model.Show(SnapshotWith({}),
+               Profile({{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kCommunity2024}}));
 
     QCOMPARE(TextOf(model, Category(model), AddonTreeModel::AddonColumn), QStringLiteral("Aircrafts"));
     QCOMPARE(TextOf(model, Category(model), AddonTreeModel::DestinationColumn),
-             QStringLiteral("Community2024 · fixado"));
+             QStringLiteral("Community2024 · pinned"));
     QCOMPARE(TextOf(model, AddonAt(model, 0), AddonTreeModel::DestinationColumn),
-             QStringLiteral("Community2024 · fixado"));
+             QStringLiteral("Community2024 · pinned"));
     QCOMPARE(TextOf(model, model.index(0, 0, {}), AddonTreeModel::DestinationColumn), QStringLiteral("Community"));
 }
 
 void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
 {
     ProfileSnapshot snapshot = SnapshotWith({});
-    snapshot.conflicts = CopyConflicts{{CopyConflict{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kPmdg}}};
+    snapshot.conflicts = CopyConflicts{{CopyConflict{
+        .destinationPath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", .libraryPath = kPmdg}}};
 
     AddonTreeModel model;
     model.Show(snapshot, Profile());
@@ -181,7 +191,7 @@ void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
     QVERIFY(model.data(conflicted, AddonTreeModel::ConflictRole).toBool());
     QCOMPARE(TextOf(model, conflicted, AddonTreeModel::AddonColumn), QStringLiteral("pmdg-aircraft-77w"));
     QCOMPARE(model.data(conflicted.siblingAtColumn(AddonTreeModel::AddonColumn), TagTextRole).toString(),
-             QStringLiteral("Em conflito"));
+             QStringLiteral("In conflict"));
     QVERIFY(model.data(conflicted, AlarmingRole).toBool());
     QVERIFY(model.data(conflicted, Qt::ToolTipRole)
                 .toString()
@@ -202,7 +212,8 @@ void AddonTreeModelTest::AConflictThatArrivesLaterShowsUpWithoutResettingTheTree
     const QSignalSpy reset(&model, &AddonTreeModel::modelReset);
 
     ProfileSnapshot refreshed = SnapshotWith({});
-    refreshed.conflicts = CopyConflicts{{CopyConflict{"E:/Flight Simulator 2024/Community/aerosoft-crj", kCrj}}};
+    refreshed.conflicts = CopyConflicts{
+        {CopyConflict{.destinationPath = "E:/Flight Simulator 2024/Community/aerosoft-crj", .libraryPath = kCrj}}};
 
     model.Refresh(refreshed, Profile());
 
@@ -224,7 +235,8 @@ void AddonTreeModelTest::OnlyAnAddonFolderAnswersThatItIsEnabled()
 void AddonTreeModelTest::TheConflictItselfIsHandedOverForWhoeverHasToResolveIt()
 {
     ProfileSnapshot snapshot = SnapshotWith({});
-    snapshot.conflicts = CopyConflicts{{CopyConflict{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kPmdg}}};
+    snapshot.conflicts = CopyConflicts{{CopyConflict{
+        .destinationPath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", .libraryPath = kPmdg}}};
 
     AddonTreeModel model;
     model.Show(snapshot, Profile());
@@ -269,16 +281,17 @@ void AddonTreeModelTest::ABrokenLinkWearsTheTagAndAlarmsTheRow()
 {
     AddonTreeModel model;
     ProfileSnapshot snapshot = SnapshotWith({kPmdg, kCrj});
-    snapshot.entries = {
-        DestinationEntry{std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kPmdg, EntryClassification::Broken},
-        LinkIn(kCommunity, kCrj)};
+    snapshot.entries = {DestinationEntry{.path = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w",
+                                         .target = kPmdg,
+                                         .classification = EntryClassification::Broken},
+                        LinkIn(kCommunity, kCrj)};
 
     model.Show(snapshot, Profile());
 
     const QModelIndex broken = AddonAt(model, 0).siblingAtColumn(AddonTreeModel::AddonColumn);
 
     QVERIFY(model.data(broken, AddonTreeModel::BrokenRole).toBool());
-    QCOMPARE(model.data(broken, TagTextRole).toString(), QStringLiteral("Sem alvo"));
+    QCOMPARE(model.data(broken, TagTextRole).toString(), QStringLiteral("No target"));
     QCOMPARE(model.data(broken, TagToneRole).toInt(), static_cast<int>(TagTone::Filled));
     QVERIFY(model.data(broken, AlarmingRole).toBool());
 
@@ -316,6 +329,33 @@ void AddonTreeModelTest::TheModelCountsAddonsAndHowManyAreEnabled()
     model.Refresh(SnapshotWith({kPmdg, kCrj}), Profile());
 
     QCOMPARE(model.EnabledCount(), std::size_t{2});
+}
+
+void AddonTreeModelTest::RetranslatingKeepsThePersistentIndexesOfAProxyUsable()
+{
+    AddonTreeModel model;
+    model.Show(SnapshotWith({kPmdg}), Profile());
+
+    AddonTreeFilterModel proxy;
+    proxy.setSourceModel(&model);
+
+    const QModelIndex library = proxy.index(0, 0, {});
+    QVERIFY(library.isValid());
+    QVERIFY(proxy.rowCount(library) > 0);
+
+    const QPersistentModelIndex category(proxy.index(0, 0, library));
+    QVERIFY(category.isValid());
+    QVERIFY(proxy.rowCount(category) > 0);
+
+    SayTheModelWasRetranslated(model);
+
+    const QModelIndex again = proxy.index(0, 0, {});
+    QVERIFY2(again.isValid(), "the proxy lost the root on the language change");
+
+    const QModelIndex child = proxy.index(0, 0, again);
+    QVERIFY2(child.isValid(), "the proxy lost the mapping of the children on the language change");
+    QVERIFY(child.data(Qt::DisplayRole).isValid());
+    QCOMPARE(proxy.rowCount(child), model.rowCount(proxy.mapToSource(child)));
 }
 
 QTEST_MAIN(AddonTreeModelTest)

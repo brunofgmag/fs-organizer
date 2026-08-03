@@ -18,7 +18,7 @@ void CategorySuggestionModel::Show(const std::vector<CategorySuggestion>& sugges
     {
         if (suggestion.WouldMove())
         {
-            rows_.push_back(Row{suggestion, TrustedOnItsOwn(suggestion.rule)});
+            rows_.push_back(Row{.suggestion = suggestion, .chosen = TrustedOnItsOwn(suggestion.rule)});
         }
     }
 
@@ -137,9 +137,9 @@ QVariant CategorySuggestionModel::headerData(const int section, const Qt::Orient
     switch (section)
     {
     case AddonColumn: return tr("Addon");
-    case CurrentCategoryColumn: return tr("Categoria atual");
-    case SuggestedCategoryColumn: return tr("Sugestão");
-    case RuleColumn: return tr("Regra");
+    case CurrentCategoryColumn: return tr("Current category");
+    case SuggestedCategoryColumn: return tr("Suggestion");
+    case RuleColumn: return tr("Rule");
     default: break;
     }
 

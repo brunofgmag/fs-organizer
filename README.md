@@ -39,9 +39,9 @@ modes and applies an update on the way out, only a single copy of it runs at a
 time, and `build.ps1` produces a verified package that runs without Qt
 installed.
 
-The interface speaks Brazilian Portuguese only. Turning its 609 phrases into
-English with a Portuguese catalogue is what stands between the current state and
-a first release.
+The interface speaks English and Brazilian Portuguese, and the Language tab
+switches between them without a restart. Both catalogues ship inside the
+executable.
 
 The specification, the architecture decisions and the development plan are kept
 outside this repository.
@@ -95,7 +95,8 @@ builds and runs the tests before letting a code change through. Both install
 themselves the first time CMake configures the project.
 
 Code, commits and documentation are written in English. The user interface is
-the exception, and it currently exists in Brazilian Portuguese only.
+the exception: its phrases are written in English and translated through
+`i18n/app_en.ts` and `i18n/app_pt_BR.ts`.
 
 ### Development tools
 
@@ -114,19 +115,17 @@ cmake --build build/release --config Release --target fsorg-probe
 `fsorg-shot` builds the real widgets against your real configuration and writes
 a PNG of every screen, so you can look at a change without driving the app by
 hand. It takes `--out` for the folder, `--theme` for `dark`, `light` or
-`system`, and `--size` as `WIDTHxHEIGHT`. Run it with `QT_SCALE_FACTOR=1.25` to
-match Windows scaling.
+`system`, `--size` as `WIDTHxHEIGHT`, and `--lang` for `en` or `pt_BR`. Run it
+with `QT_SCALE_FACTOR=1.25` to match Windows scaling.
 
 ```powershell
 cmake --build build/debug --target fsorg-shot
-./build/debug/Debug/fsorg-shot.exe --out shots --theme dark
+./build/debug/Debug/fsorg-shot.exe --out shots --theme dark --lang pt_BR
 ```
 
 `fsorg-timing` measures paint cost, with `--journal-scroll` and `--app-journal`
 for the two cases that got slow before. Nothing in the test suite guards paint
 cost, so this is the only guard there is, and it is run by hand.
-
-Their console output is still in Brazilian Portuguese.
 
 ### Packaging
 
