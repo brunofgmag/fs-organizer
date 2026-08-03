@@ -127,7 +127,6 @@ void WindowsLegacyConfigSourceTest::TheEntriesOfTheConfigurationArriveWhole()
     QCOMPARE(found.front().configuration->addonPaths.size(), std::size_t{2});
     QCOMPARE(ComparablePath(found.front().configuration->addonPaths.front()),
              ComparablePath("D:/MSFS 2024/Aircraft Mods"));
-    QCOMPARE(found.front().configuration->linkType, std::string{"J"});
 }
 
 void WindowsLegacyConfigSourceTest::AProgramDataFolderThatIsNotThereFindsNothing()

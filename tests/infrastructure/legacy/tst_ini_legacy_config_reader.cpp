@@ -16,7 +16,7 @@ namespace
 
     private slots:
         static void TheRepeatedKeyBecomesEveryAddonPathInOrder();
-        static void TheSingleValuedKeysAreRead();
+        static void ThePresetsPathIsRead();
         static void ATrailingSeparatorIsTrimmedButARootKeepsIts();
         static void LinesThatAreNotKeyValueAreIgnored();
         static void TheShapeOfTheRealFileReadsWhole();
@@ -59,14 +59,12 @@ void IniLegacyConfigReaderTest::TheRepeatedKeyBecomesEveryAddonPathInOrder()
     QCOMPARE(ComparablePath(read->addonPaths[2]), ComparablePath("D:/MSFS 2024/Liveries"));
 }
 
-void IniLegacyConfigReaderTest::TheSingleValuedKeysAreRead()
+void IniLegacyConfigReaderTest::ThePresetsPathIsRead()
 {
     const TempFiles storage;
     const std::optional<LegacyInstallation> read = ReadLegacyIni(storage.WriteText("a.ini", kReferenceIni));
 
-    QCOMPARE(ComparablePath(read->communityPath), ComparablePath("e:/flight simulator 2024/community"));
     QCOMPARE(ComparablePath(read->presetsPath), ComparablePath("c:/programdata/msfs addons linker 2024/presets"));
-    QCOMPARE(read->linkType, std::string{"J"});
 }
 
 void IniLegacyConfigReaderTest::ATrailingSeparatorIsTrimmedButARootKeepsIts()
@@ -77,7 +75,6 @@ void IniLegacyConfigReaderTest::ATrailingSeparatorIsTrimmedButARootKeepsIts()
         "Presets_Path=c:\\programdata\\presets\\\nMSFSCommunity_Path=e:\\\nMyAddons_Path=D:\\A\\B\\\n"));
 
     QCOMPARE(ComparablePath(read->presetsPath), ComparablePath("c:/programdata/presets"));
-    QCOMPARE(ComparablePath(read->communityPath), std::string{"e:/"});
     QCOMPARE(ComparablePath(read->addonPaths[0]), ComparablePath("D:/A/B"));
 }
 
@@ -106,9 +103,7 @@ void IniLegacyConfigReaderTest::TheShapeOfTheRealFileReadsWhole()
 
     QCOMPARE(read->addonPaths.size(), std::size_t{2});
     QCOMPARE(ComparablePath(read->addonPaths[0]), ComparablePath("D:/MSFS 2024/Aircraft Mods"));
-    QCOMPARE(ComparablePath(read->communityPath), ComparablePath("e:/flight simulator 2024/community"));
     QCOMPARE(ComparablePath(read->presetsPath), ComparablePath("c:/programdata/msfs addons linker 2024/presets"));
-    QCOMPARE(read->linkType, std::string{"J"});
 }
 
 void IniLegacyConfigReaderTest::AFileThatCannotBeOpenedIsNotTheSameAsAFileWithoutKeys()

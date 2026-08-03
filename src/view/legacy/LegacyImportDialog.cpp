@@ -237,6 +237,12 @@ void LegacyImportDialog::Import()
                     .arg(presets.nameAlreadyTaken);
     }
 
+    if (presets.entriesNotFound > 0)
+    {
+        said += tr(" %n name the presets cite was not found in any library.", nullptr,
+                   static_cast<int>(presets.entriesNotFound));
+    }
+
     if (!report.refused.empty())
     {
         said += tr(" %n refused for being inside an already registered library.", nullptr,
