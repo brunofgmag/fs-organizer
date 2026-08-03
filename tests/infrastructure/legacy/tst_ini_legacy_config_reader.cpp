@@ -1,13 +1,12 @@
-#include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
 #include <filesystem>
-#include <fstream>
 #include <string>
 #include <vector>
 
 #include "domain/support/PathUtils.h"
 #include "infrastructure/legacy/IniLegacyConfigReader.h"
+#include "tests/support/TempFiles.h"
 
 namespace
 {
@@ -32,27 +31,6 @@ namespace
 
 namespace
 {
-    struct Storage
-    {
-        QTemporaryDir directory;
-
-        [[nodiscard]] std::filesystem::path Write(const std::string& name,
-                                                  const std::vector<unsigned char>& bytes) const
-        {
-            const std::filesystem::path file = std::filesystem::path(directory.path().toStdString()) / name;
-            std::ofstream stream(file, std::ios::binary);
-            stream.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-            stream.close();
-
-            return file;
-        }
-
-        [[nodiscard]] std::filesystem::path WriteText(const std::string& name, const std::string& text) const
-        {
-            return Write(name, std::vector<unsigned char>(text.begin(), text.end()));
-        }
-    };
-
     std::vector<unsigned char> WithUtf8Bom(const std::string& text)
     {
         std::vector<unsigned char> bytes{0xEF, 0xBB, 0xBF};
@@ -72,7 +50,7 @@ namespace
 
 void IniLegacyConfigReaderTest::TheRepeatedKeyBecomesEveryAddonPathInOrder()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyInstallation> read = ReadLegacyIni(storage.WriteText("a.ini", kReferenceIni));
 
     QVERIFY(read.has_value());
@@ -83,7 +61,7 @@ void IniLegacyConfigReaderTest::TheRepeatedKeyBecomesEveryAddonPathInOrder()
 
 void IniLegacyConfigReaderTest::TheSingleValuedKeysAreRead()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyInstallation> read = ReadLegacyIni(storage.WriteText("a.ini", kReferenceIni));
 
     QCOMPARE(ComparablePath(read->communityPath), ComparablePath("e:/flight simulator 2024/community"));
@@ -93,7 +71,7 @@ void IniLegacyConfigReaderTest::TheSingleValuedKeysAreRead()
 
 void IniLegacyConfigReaderTest::ATrailingSeparatorIsTrimmedButARootKeepsIts()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyInstallation> read = ReadLegacyIni(storage.WriteText(
         "trailing.ini",
         "Presets_Path=c:\\programdata\\presets\\\nMSFSCommunity_Path=e:\\\nMyAddons_Path=D:\\A\\B\\\n"));
@@ -105,7 +83,7 @@ void IniLegacyConfigReaderTest::ATrailingSeparatorIsTrimmedButARootKeepsIts()
 
 void IniLegacyConfigReaderTest::LinesThatAreNotKeyValueAreIgnored()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyInstallation> read = ReadLegacyIni(
         storage.WriteText("noise.ini", "\n[Section]\njunk without an equals\nMyAddons_Path=D:\\A\\B\n\n"));
 
@@ -115,7 +93,7 @@ void IniLegacyConfigReaderTest::LinesThatAreNotKeyValueAreIgnored()
 
 void IniLegacyConfigReaderTest::TheShapeOfTheRealFileReadsWhole()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::vector<unsigned char> bytes =
         WithUtf8Bom("MyAddons_Path=D:\\MSFS 2024\\Aircraft Mods\r\n"
                     "MyAddons_Path=D:\\MSFS 2024\\Aircrafts\r\n"
@@ -135,8 +113,8 @@ void IniLegacyConfigReaderTest::TheShapeOfTheRealFileReadsWhole()
 
 void IniLegacyConfigReaderTest::AFileThatCannotBeOpenedIsNotTheSameAsAFileWithoutKeys()
 {
-    const Storage storage;
-    const std::filesystem::path missing = std::filesystem::path(storage.directory.path().toStdString()) / "missing.ini";
+    const TempFiles storage;
+    const std::filesystem::path missing = storage.Root() / "missing.ini";
 
     QVERIFY(!ReadLegacyIni(missing).has_value());
     QVERIFY(ReadLegacyIni(storage.WriteText("keyless.ini", "Disable_AdminCheck=True\n")).has_value());

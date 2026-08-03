@@ -306,12 +306,14 @@ target_link_libraries(fsorg-file-preset-repository-tests PRIVATE fsorg-infrastru
 
 fsorg_add_qt_test(fsorg-ini-legacy-config-reader-tests ini-legacy-config-reader
         tests/infrastructure/legacy/tst_ini_legacy_config_reader.cpp
+        tests/support/TempFiles.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-ini-legacy-config-reader-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-legacy-preset-reader-tests legacy-preset-reader
         tests/infrastructure/legacy/tst_legacy_preset_reader.cpp
         tests/support/PathPrinting.h
+        tests/support/TempFiles.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-legacy-preset-reader-tests PRIVATE fsorg-infrastructure)
 

@@ -1,14 +1,13 @@
-#include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
 #include <filesystem>
-#include <fstream>
 #include <string>
 #include <vector>
 
 #include "domain/support/PathUtils.h"
 #include "infrastructure/legacy/LegacyPresetReader.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/TempFiles.h"
 
 namespace
 {
@@ -30,37 +29,9 @@ namespace
     };
 }
 
-namespace
-{
-    struct Storage
-    {
-        QTemporaryDir directory;
-
-        [[nodiscard]] std::filesystem::path Root() const
-        {
-            return std::filesystem::path(directory.path().toStdString());
-        }
-
-        [[nodiscard]] std::filesystem::path Write(const std::string& name,
-                                                  const std::vector<unsigned char>& bytes) const
-        {
-            const std::filesystem::path file = Root() / name;
-            std::ofstream stream(file, std::ios::binary);
-            stream.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-
-            return file;
-        }
-
-        [[nodiscard]] std::filesystem::path WriteText(const std::string& name, const std::string& text) const
-        {
-            return Write(name, std::vector<unsigned char>(text.begin(), text.end()));
-        }
-    };
-}
-
 void LegacyPresetReaderTest::ABareNameIsAnAddonToEnable()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyPresetSelection> read =
         ReadLegacyPreset(storage.WriteText("voo curto.preset", "pmdg-777\r\nfenix-a320\r\n"));
 
@@ -73,7 +44,7 @@ void LegacyPresetReaderTest::ABareNameIsAnAddonToEnable()
 
 void LegacyPresetReaderTest::ALineWithAPathIsAFolderToEnable()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyPresetSelection> read =
         ReadLegacyPreset(storage.WriteText("a.preset", "d:\\msfs 2024\\aircrafts\r\npmdg-777\r\n"));
 
@@ -84,7 +55,7 @@ void LegacyPresetReaderTest::ALineWithAPathIsAFolderToEnable()
 
 void LegacyPresetReaderTest::ALineStartingWithAnAsteriskIsAnAddonToDisable()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyPresetSelection> read =
         ReadLegacyPreset(storage.WriteText("a.preset", "pmdg-777\r\n*fenix-a320\r\n"));
 
@@ -95,7 +66,7 @@ void LegacyPresetReaderTest::ALineStartingWithAnAsteriskIsAnAddonToDisable()
 
 void LegacyPresetReaderTest::TheAsteriskIsStrippedTheWayTheOriginalStripsIt()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyPresetSelection> read = ReadLegacyPreset(storage.WriteText("a.preset", "*a*b\r\n"));
 
     QCOMPARE(read->disabledAddonNames.front(), std::string{"ab"});
@@ -103,7 +74,7 @@ void LegacyPresetReaderTest::TheAsteriskIsStrippedTheWayTheOriginalStripsIt()
 
 void LegacyPresetReaderTest::EmptyAndRepeatedLinesAreDiscarded()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::optional<LegacyPresetSelection> read =
         ReadLegacyPreset(storage.WriteText("a.preset", "pmdg-777\r\n\r\n   \r\nPMDG-777\r\npmdg-777\r\n"));
 
@@ -112,14 +83,14 @@ void LegacyPresetReaderTest::EmptyAndRepeatedLinesAreDiscarded()
 
 void LegacyPresetReaderTest::TheNameOfThePresetComesFromTheFileName()
 {
-    const Storage storage;
+    const TempFiles storage;
 
     QCOMPARE(ReadLegacyPreset(storage.WriteText("Voo curto.preset", "pmdg-777\r\n"))->name, std::string{"Voo curto"});
 }
 
 void LegacyPresetReaderTest::AFileThatCannotBeOpenedIsNotTheSameAsAnEmptyPreset()
 {
-    const Storage storage;
+    const TempFiles storage;
 
     QVERIFY(!ReadLegacyPreset(storage.Root() / "not there.preset").has_value());
     QVERIFY(ReadLegacyPreset(storage.WriteText("empty.preset", "")).has_value());
@@ -127,7 +98,7 @@ void LegacyPresetReaderTest::AFileThatCannotBeOpenedIsNotTheSameAsAnEmptyPreset(
 
 void LegacyPresetReaderTest::AccentsSurviveTheFallbackEncoding()
 {
-    const Storage storage;
+    const TempFiles storage;
     const std::vector<unsigned char> withBom{0xEF, 0xBB, 0xBF, 'a', 'v', 'i', 0xC3, 0xB5, 'e', 's'};
 
     QCOMPARE(ReadLegacyPreset(storage.Write("a.preset", withBom))->enabledAddonNames.front(),
@@ -136,7 +107,7 @@ void LegacyPresetReaderTest::AccentsSurviveTheFallbackEncoding()
 
 void LegacyPresetReaderTest::EveryPresetInTheFolderIsReadAndNothingElseIs()
 {
-    const Storage storage;
+    const TempFiles storage;
     (void)storage.WriteText("b.preset", "pmdg-777\r\n");
     (void)storage.WriteText("a.PRESET", "fenix-a320\r\n");
     (void)storage.WriteText("AppliedPresets_History.bin", "");
@@ -150,7 +121,7 @@ void LegacyPresetReaderTest::EveryPresetInTheFolderIsReadAndNothingElseIs()
 
 void LegacyPresetReaderTest::AFolderThatIsNotThereReadsNoPresets()
 {
-    const Storage storage;
+    const TempFiles storage;
 
     QVERIFY(ReadLegacyPresetsIn(storage.Root() / "presets").empty());
 }
