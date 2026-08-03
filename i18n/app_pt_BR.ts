@@ -1055,37 +1055,37 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>GithubUpdateService</name>
     <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="117"/>
+        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="111"/>
         <source>This version did not bring the files to download.</source>
         <translation>Esta versão não trouxe os arquivos para baixar.</translation>
     </message>
     <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="226"/>
+        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="220"/>
         <source>GitHub answered in a format the app does not understand.</source>
         <translation>O GitHub respondeu num formato que o app não entende.</translation>
     </message>
     <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="251"/>
+        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="245"/>
         <source>The checksum file came in invalid.</source>
         <translation>O arquivo de verificação veio inválido.</translation>
     </message>
     <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="284"/>
+        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="278"/>
         <source>The downloaded file could not be written.</source>
         <translation>Não deu para gravar o arquivo baixado.</translation>
     </message>
     <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="291"/>
+        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="285"/>
         <source>The downloaded file could not be read, and was kept for you to inspect.</source>
         <translation>O arquivo baixado não pôde ser lido, e foi mantido para você conferir.</translation>
     </message>
     <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="294"/>
+        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="288"/>
         <source>The downloaded file does not match the checksum, and was discarded.</source>
         <translation>O arquivo baixado não confere com a verificação, e foi descartado.</translation>
     </message>
     <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="352"/>
+        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="346"/>
         <source>The update package could not be opened.</source>
         <translation>Não deu para abrir o pacote da atualização.</translation>
     </message>
@@ -2470,17 +2470,17 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation> Dos que ele desliga, %1 entraram na biblioteca depois de o preset ser salvo.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="121"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="28"/>
         <source>Destinations of this profile:</source>
         <translation>Destinos deste perfil:</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="128"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="35"/>
         <source>Destination pinnings pointing outside</source>
         <translation>Fixações de destino apontando para fora</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/main.cpp" line="129"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="36"/>
         <source>%n destination pinning of this profile names a folder that is not a destination of it. While that is so, the pinned addons use the default destination. Nothing was deleted from the configuration.</source>
         <translation>
             <numerusform>%n fixação de destino deste perfil cita uma pasta que não é destino dele. Enquanto for assim, os addons fixados usam o destino padrão. Nada foi apagado da configuração.</numerusform>
@@ -2488,68 +2488,68 @@ Aplicar o preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="136"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="42"/>
         <source>Discard the pinnings</source>
         <translation>Descartar as fixações</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="137"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="43"/>
         <source>Keep them and decide later</source>
         <translation>Manter e decidir depois</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="173"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="59"/>
         <source>MSFS Addons Linker is on this machine</source>
         <translation>O MSFS Addons Linker está nesta máquina</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="174"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="60"/>
         <source>It has libraries FS Organizer does not know yet. Nothing is moved or deleted: you choose what to bring over before anything happens.</source>
         <translation>Ele tem bibliotecas que o FS Organizer ainda não conhece. Nada é movido nem apagado: você escolhe o que trazer antes de qualquer coisa acontecer.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="179"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="64"/>
         <source>See what can be brought over</source>
         <translation>Ver o que dá para trazer</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="180"/>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="65"/>
         <source>Not now</source>
         <translation>Agora não</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="257"/>
+        <location filename="../src/main.cpp" line="149"/>
         <source>Unreadable configuration</source>
         <translation>Configuração ilegível</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="258"/>
+        <location filename="../src/main.cpp" line="150"/>
         <source>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</source>
         <translation>O arquivo de configuração existe mas não pôde ser lido, então o FS Organizer não vai sobrescrevê-lo. Mova ou conserte %1 e abra o programa de novo.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="354"/>
+        <location filename="../src/main.cpp" line="246"/>
         <source>Language not applied</source>
         <translation>Idioma não aplicado</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="355"/>
+        <location filename="../src/main.cpp" line="247"/>
         <source>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</source>
         <translation>A tradução de %1 não carregou, então a interface continua em inglês. A escolha foi gravada mesmo assim.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="365"/>
-        <location filename="../src/main.cpp" line="579"/>
+        <location filename="../src/main.cpp" line="257"/>
+        <location filename="../src/main.cpp" line="471"/>
         <source>Could not save</source>
         <translation>Não foi possível salvar</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="366"/>
+        <location filename="../src/main.cpp" line="258"/>
         <source>The option could not be written to %1, so it stays as it was.</source>
         <translation>A opção não pôde ser gravada em %1, então ela continua como estava.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="580"/>
+        <location filename="../src/main.cpp" line="472"/>
         <source>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</source>
         <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
     </message>

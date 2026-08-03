@@ -129,6 +129,7 @@ fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         tests/doubles/FakeLegacyConfigSource.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
+        tests/support/LegacyFixtures.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-legacy-config-importer-tests PRIVATE fsorg-application)
@@ -217,6 +218,7 @@ target_link_libraries(fsorg-legacy-preset-tests PRIVATE fsorg-domain)
 fsorg_add_qt_test(fsorg-legacy-proposal-tests legacy-proposal
         tests/domain/legacy/tst_legacy_proposal.cpp
         tests/support/EnumPrinting.h
+        tests/support/LegacyFixtures.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-legacy-proposal-tests PRIVATE fsorg-domain)
@@ -410,6 +412,24 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-addon-tree-view-model-tests PRIVATE fsorg-viewmodel)
+
+fsorg_add_qt_test(fsorg-legacy-import-view-model-tests legacy-import-view-model
+        tests/viewmodel/tst_legacy_import_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLegacyConfigSource.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/RecordingSessionObserver.h)
+target_link_libraries(fsorg-legacy-import-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
         tests/viewmodel/tst_options_view_model.cpp

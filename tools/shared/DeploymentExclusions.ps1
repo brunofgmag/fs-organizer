@@ -1,0 +1,19 @@
+@(
+    'D3Dcompiler_47.dll',
+    'dxcompiler.dll',
+    'dxil.dll',
+    'opengl32sw.dll',
+    'vc_redist.x64.exe',
+    'Qt6Pdf.dll',
+    'Qt6Pdfd.dll',
+    'Qt6Svg.dll',
+    'Qt6Svgd.dll',
+    'Qt6VirtualKeyboard.dll',
+    'Qt6VirtualKeyboardd.dll',
+    'generic',
+    'iconengines',
+    'imageformats',
+    'networkinformation',
+    'platforminputcontexts',
+    'qmltooling'
+)
