@@ -23,7 +23,8 @@ namespace
         static void EmptyAndRepeatedLinesAreDiscarded();
         static void TheNameOfThePresetComesFromTheFileName();
         static void AFileThatCannotBeOpenedIsNotTheSameAsAnEmptyPreset();
-        static void AccentsSurviveTheFallbackEncoding();
+        static void AByteOrderMarkWinsOverTheFallbackEncoding();
+        static void AccentsSurviveTheFallbackEncodingWhenThereIsNoBom();
         static void EveryPresetInTheFolderIsReadAndNothingElseIs();
         static void AFolderThatIsNotThereReadsNoPresets();
     };
@@ -96,13 +97,25 @@ void LegacyPresetReaderTest::AFileThatCannotBeOpenedIsNotTheSameAsAnEmptyPreset(
     QVERIFY(ReadLegacyPreset(storage.WriteText("empty.preset", "")).has_value());
 }
 
-void LegacyPresetReaderTest::AccentsSurviveTheFallbackEncoding()
+void LegacyPresetReaderTest::AByteOrderMarkWinsOverTheFallbackEncoding()
 {
     const TempFiles storage;
     const std::vector<unsigned char> withBom{0xEF, 0xBB, 0xBF, 'a', 'v', 'i', 0xC3, 0xB5, 'e', 's'};
 
-    QCOMPARE(ReadLegacyPreset(storage.Write("a.preset", withBom))->enabledAddonNames.front(),
+    QCOMPARE(ReadLegacyPreset(storage.Write("a.preset", withBom), QStringDecoder::Latin1)->enabledAddonNames.front(),
              QStringLiteral("avi\u00F5es").toStdString());
+}
+
+void LegacyPresetReaderTest::AccentsSurviveTheFallbackEncodingWhenThereIsNoBom()
+{
+    const TempFiles storage;
+    const std::vector<unsigned char> withoutBom{'a', 'v', 'i', 0xF5, 'e', 's'};
+
+    const std::optional<LegacyPresetSelection> read =
+        ReadLegacyPreset(storage.Write("a.preset", withoutBom), QStringDecoder::Latin1);
+
+    QVERIFY(read.has_value());
+    QCOMPARE(read->enabledAddonNames.front(), QStringLiteral("avi\u00F5es").toStdString());
 }
 
 void LegacyPresetReaderTest::EveryPresetInTheFolderIsReadAndNothingElseIs()

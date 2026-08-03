@@ -6,6 +6,7 @@
 #include "tests/doubles/FakeLegacyConfigSource.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
+#include "tests/support/LegacyFixtures.h"
 #include "tests/support/PathPrinting.h"
 
 namespace
@@ -37,43 +38,6 @@ namespace
         installation.addonPaths = addonPaths;
 
         return installation;
-    }
-
-    SimulatorProfile ProfileHolding(const std::vector<std::filesystem::path>& libraryPaths)
-    {
-        SimulatorProfile profile;
-        profile.id = "msfs2024";
-
-        for (const std::filesystem::path& path : libraryPaths)
-        {
-            profile.libraries.push_back(Library{.id = "library-1", .path = path, .label = "MSFS 2024"});
-        }
-
-        return profile;
-    }
-
-    std::vector<TreeNode> LibraryScannedAt(const std::filesystem::path& root,
-                                           const std::vector<std::filesystem::path>& categories)
-    {
-        TreeNode library;
-        library.kind = TreeNodeKind::Library;
-        library.path = root;
-
-        for (const std::filesystem::path& category : categories)
-        {
-            TreeNode addon;
-            addon.kind = TreeNodeKind::Addon;
-            addon.path = category / "an-addon";
-
-            TreeNode node;
-            node.kind = TreeNodeKind::Category;
-            node.path = category;
-            node.children.push_back(std::move(addon));
-
-            library.children.push_back(std::move(node));
-        }
-
-        return {library};
     }
 
     std::vector<TreeNode> LibraryHolding(const std::filesystem::path& root,

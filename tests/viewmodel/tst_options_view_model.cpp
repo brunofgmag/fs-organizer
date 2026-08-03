@@ -31,6 +31,7 @@ namespace
         static void ALibraryLineCarriesItsCategoriesAddonsAndWhatIsEnabledFromIt();
         static void UnregisteringWithoutDisablingLeavesEveryLinkWhereItIs();
         static void UnregisteringWhileDisablingRemovesTheLinksAndSparesTheRealFolders();
+        static void RemovingTheActiveProfileWithoutDisablingLeavesEveryLinkWhereItIs();
         static void OnlyTheActiveProfileIsAskedForItsAddonCount();
         static void TheProfileMarkedActiveIsTheOneTheOtherPanelsDescribe();
         static void TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLands();
@@ -185,6 +186,21 @@ void OptionsViewModelTest::UnregisteringWhileDisablingRemovesTheLinksAndSparesTh
     QVERIFY(f.fileSystem.Exists(kOtherAddon));
     QVERIFY(f.session.Profile().libraries.empty());
     QVERIFY(f.session.Snapshot().entries.empty());
+}
+
+void OptionsViewModelTest::RemovingTheActiveProfileWithoutDisablingLeavesEveryLinkWhereItIs()
+{
+    Fixture f;
+    f.settings.stored.profiles.push_back(LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.viewModel.RemoveProfile("msfs2024", false));
+
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.Exists(kAddon));
+    QCOMPARE(f.settings.stored.profiles.size(), std::size_t{1});
+    QCOMPARE(f.session.Profile().id, std::string{"msfs2020"});
 }
 
 void OptionsViewModelTest::OnlyTheActiveProfileIsAskedForItsAddonCount()

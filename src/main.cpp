@@ -6,7 +6,6 @@
 #include <QtCore/QTranslator>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
-#include <QtWidgets/QPushButton>
 
 #include "application/ImportService.h"
 #include "application/LegacyConfigImporter.h"
@@ -41,10 +40,10 @@
 #include "view/options/OptionsPage.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
+#include "view/shell/StartupOffers.h"
 #include "view/PresetsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/setup/SetupWizard.h"
-#include "view/setup/StagingLeftoverDialog.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
@@ -103,113 +102,6 @@ namespace
         return wizard.exec() == QDialog::Accepted;
     }
 
-    void OfferToDropTheOverridesThatPointNowhere(Session& session, QWidget* parent)
-    {
-        const std::vector<DestinationOverride> orphans = session.OverridesPointingNowhere();
-        if (orphans.empty())
-        {
-            return;
-        }
-
-        QStringList detailed;
-        for (const DestinationOverride& orphan : orphans)
-        {
-            detailed.append(QStringLiteral("%1 -> %2").arg(AsText(orphan.relativePath), AsText(orphan.destination)));
-        }
-
-        detailed.append(QString{});
-        detailed.append(QObject::tr("Destinations of this profile:"));
-        for (const std::filesystem::path& destination : session.Profile().destinations)
-        {
-            detailed.append(AsText(destination));
-        }
-
-        QMessageBox question(
-            QMessageBox::Warning, QObject::tr("Destination pinnings pointing outside"),
-            QObject::tr(
-                "%n destination pinning of this profile names a folder that is not a destination of it. While that is "
-                "so, the pinned addons use the default destination. Nothing was deleted from the configuration.",
-                nullptr, static_cast<int>(orphans.size())),
-            QMessageBox::NoButton, parent);
-        question.setDetailedText(detailed.join(QChar::LineFeed));
-
-        const QPushButton* drop = question.addButton(QObject::tr("Discard the pinnings"), QMessageBox::AcceptRole);
-        question.addButton(QObject::tr("Keep them and decide later"), QMessageBox::RejectRole);
-        question.exec();
-
-        if (question.clickedButton() == drop)
-        {
-            session.DropOverridesPointingNowhere();
-        }
-    }
-
-    bool SomethingIsWaitingInTheOldProgram(const std::vector<LegacyMigration>& migrations)
-    {
-        const auto holdsSomethingNew = [](const MigratableLibrary& library)
-        {
-            return library.rootExists
-                && (library.proposal.state == ProposedState::New
-                    || std::ranges::any_of(library.proposal.categories,
-                                           [](const ProposedCategory& category)
-                                           {
-                                               return category.state == ProposedState::New;
-                                           }));
-        };
-
-        return std::ranges::any_of(migrations,
-                                   [&holdsSomethingNew](const LegacyMigration& migration)
-                                   {
-                                       return std::ranges::any_of(migration.libraries, holdsSomethingNew);
-                                   });
-    }
-
-    void OfferWhatTheOldProgramKept(LegacyImportViewModel& legacyViewModel, QWidget* parent)
-    {
-        if (!SomethingIsWaitingInTheOldProgram(legacyViewModel.Migrations()))
-        {
-            return;
-        }
-
-        QMessageBox question(QMessageBox::Question, QObject::tr("MSFS Addons Linker is on this machine"),
-                             QObject::tr("It has libraries FS Organizer does not know yet. Nothing is moved or "
-                                         "deleted: you choose what to bring over before anything happens."),
-                             QMessageBox::NoButton, parent);
-
-        const QPushButton* look =
-            question.addButton(QObject::tr("See what can be brought over"), QMessageBox::AcceptRole);
-        question.addButton(QObject::tr("Not now"), QMessageBox::RejectRole);
-        question.exec();
-
-        if (question.clickedButton() != look)
-        {
-            return;
-        }
-
-        LegacyImportDialog dialog(legacyViewModel, parent);
-        dialog.exec();
-    }
-
-    void OfferWhatALostImportLeftBehind(ImportViewModel& importViewModel, QWidget* parent)
-    {
-        const std::vector<StagingLeftover> leftovers = importViewModel.Leftovers();
-        if (leftovers.empty())
-        {
-            return;
-        }
-
-        StagingLeftoverDialog dialog(leftovers, parent);
-        if (dialog.exec() != QDialog::Accepted)
-        {
-            return;
-        }
-
-        static_cast<void>(importViewModel.DiscardLeftovers(dialog.ToDiscard()));
-
-        if (const std::vector<StagingLeftover> resumed = dialog.ToResume(); !resumed.empty())
-        {
-            importViewModel.Resume(resumed);
-        }
-    }
 }
 
 int main(int argc, char* argv[])

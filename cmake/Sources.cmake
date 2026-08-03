@@ -101,6 +101,7 @@ set(VIEW_SOURCES
         src/view/delegates/RowDelegate.cpp
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp
+        src/view/shell/StartupOffers.cpp
         src/view/library/SuggestionDialog.cpp
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
