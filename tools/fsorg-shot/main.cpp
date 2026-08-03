@@ -35,6 +35,7 @@
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/update/GithubUpdateService.h"
+#include "shared/DisposableState.h"
 #include "support/PathText.h"
 #include "view/JournalPage.h"
 #include "view/PresetsPage.h"
@@ -185,7 +186,8 @@ int main(int argc, char* argv[])
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
-        "Writes a PNG of every FS Organizer screen, building the real widgets against the real installation.\n"
+        "Writes a PNG of every FS Organizer screen, building the real widgets against a disposable copy of your "
+        "settings, journal and presets, so a click that saves never reaches your install.\n"
         "For the Windows scale, run it with QT_SCALE_FACTOR=1.25.");
     parser.addHelpOption();
 
@@ -252,12 +254,21 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    JsonSettingsRepository settings(SettingsFilePath());
+    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-shot");
+    if (!staged.has_value())
+    {
+        Out() << "could not stage a disposable copy of the state, so nothing ran\n";
+        return 1;
+    }
+
+    Out() << "reading a copy, so your install is never written: " << AsText(staged->settingsFile.parent_path()) << "\n";
+
+    JsonSettingsRepository settings(staged->settingsFile);
 
     const std::optional<AppSettings> stored = settings.Load();
     if (!stored.has_value())
     {
-        Out() << "settings.json exists and could not be read: " << AsText(SettingsFilePath()) << "\n";
+        Out() << "settings.json exists and could not be read: " << AsText(staged->settingsFile) << "\n";
         return 1;
     }
 
@@ -275,7 +286,7 @@ int main(int argc, char* argv[])
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
-    JsonlOperationJournal journal(JournalFilePath());
+    JsonlOperationJournal journal(staged->journalFile);
 
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
@@ -311,7 +322,7 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    FilePresetRepository presetRepository(PresetsFolderPath());
+    FilePresetRepository presetRepository(staged->presetsFolder);
     PresetService presetService(presetRepository, profileService);
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
@@ -321,7 +332,7 @@ int main(int argc, char* argv[])
     UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
 
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
-    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
+    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);
     PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);

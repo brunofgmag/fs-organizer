@@ -4,6 +4,7 @@
 #include <QtCore/QTextStream>
 
 #include <algorithm>
+#include <optional>
 #include <ranges>
 #include <vector>
 
@@ -21,6 +22,7 @@
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
+#include "shared/DisposableState.h"
 #include "support/PathText.h"
 
 #include "AppScroll.h"
@@ -127,15 +129,26 @@ int main(int argc, char* argv[])
         QApplication::setStyle(QStringLiteral("windows11"));
     }
 
-    JsonSettingsRepository settings(SettingsFilePath());
-    JsonlOperationJournal journal(JournalFilePath());
+    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-timing");
+    if (!staged.has_value())
+    {
+        Out() << "could not stage a disposable copy of the state, so nothing ran\n";
+        Out().flush();
+        return 2;
+    }
+
+    Out() << "measuring a copy, so your install is never written: " << AsText(staged->settingsFile.parent_path())
+          << "\n";
+
+    JsonSettingsRepository settings(staged->settingsFile);
+    JsonlOperationJournal journal(staged->journalFile);
 
     const AppSettings loaded = settings.Load().value_or(AppSettings{});
     const SimulatorProfile* active = ActiveProfile(loaded);
 
     if (active == nullptr)
     {
-        Out() << "no profile configured in " << AsText(SettingsFilePath()) << "\n";
+        Out() << "no profile configured in " << AsText(staged->settingsFile) << "\n";
         Out().flush();
         return 2;
     }

@@ -24,12 +24,13 @@ add_custom_command(TARGET fsorg-probe POST_BUILD
 
 add_executable(fsorg-shot
         tools/fsorg-shot/main.cpp
+        tools/shared/DisposableState.h
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
         assets/resources.qrc
 )
 
-target_include_directories(fsorg-shot PRIVATE "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(fsorg-shot PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/tools")
 
 target_compile_definitions(fsorg-shot PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX FSORG_VERSION="${FSORG_VERSION}")
 
@@ -66,11 +67,12 @@ add_executable(fsorg-timing
         tools/fsorg-timing/main.cpp
         tools/fsorg-timing/JournalScroll.cpp
         tools/fsorg-timing/AppScroll.cpp
+        tools/shared/DisposableState.h
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
 )
 
-target_include_directories(fsorg-timing PRIVATE "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(fsorg-timing PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/tools")
 
 target_compile_definitions(fsorg-timing PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 
