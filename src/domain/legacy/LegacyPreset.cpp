@@ -18,7 +18,7 @@ namespace
 
         if (known == entries.end())
         {
-            entries.push_back(PresetEntry{addonId, action});
+            entries.push_back(PresetEntry{.addonId = addonId, .action = action});
             return;
         }
 

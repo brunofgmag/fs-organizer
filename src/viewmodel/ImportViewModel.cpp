@@ -148,7 +148,7 @@ void ImportViewModel::Import(const std::vector<ImportRequest>& requests)
             {
                 if (cancelled_)
                 {
-                    results.push_back(ImportOperationResult{request, FileResult::Cancelled});
+                    results.push_back(ImportOperationResult{.request = request, .result = FileResult::Cancelled});
                     continue;
                 }
 

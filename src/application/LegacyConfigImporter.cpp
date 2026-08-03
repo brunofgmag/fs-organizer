@@ -26,7 +26,8 @@ std::vector<LegacyMigration> LegacyConfigImporter::Propose(const SimulatorProfil
             {
                 const bool rootExists = filesystemProbe_.TargetDirectoryExists(proposal.root);
 
-                migration.libraries.push_back(MigratableLibrary{std::move(proposal), rootExists});
+                migration.libraries.push_back(
+                    MigratableLibrary{.proposal = std::move(proposal), .rootExists = rootExists});
             }
         }
 

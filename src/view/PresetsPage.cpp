@@ -74,16 +74,18 @@ namespace
 
             if (event->type() == QEvent::MouseButtonRelease)
             {
-                if (!option.rect.contains(static_cast<QMouseEvent*>(event)->position().toPoint()))
+                const auto* mouse = static_cast<QMouseEvent*>(event);
+
+                if (!option.rect.contains(mouse->position().toPoint()))
                 {
                     return false;
                 }
             }
             else if (event->type() == QEvent::KeyPress)
             {
-                const int key = static_cast<QKeyEvent*>(event)->key();
+                const auto* keys = static_cast<QKeyEvent*>(event);
 
-                if (key != Qt::Key_Space && key != Qt::Key_Select)
+                if (keys->key() != Qt::Key_Space && keys->key() != Qt::Key_Select)
                 {
                     return false;
                 }

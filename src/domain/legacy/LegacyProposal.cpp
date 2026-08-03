@@ -166,7 +166,7 @@ namespace
             const ProposedState state =
                 onDisk.contains(ComparablePath(entry)) ? ProposedState::AlreadyPresent : ProposedState::New;
 
-            library.categories.push_back(ProposedCategory{relative, state});
+            library.categories.push_back(ProposedCategory{.relativePath = relative, .state = state});
         }
 
         return library;

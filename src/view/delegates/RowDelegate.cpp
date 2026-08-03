@@ -67,7 +67,7 @@ namespace
         const int suffixRoom =
             suffix.isEmpty() ? 0 : QFontMetrics(item.font).horizontalAdvance(suffix) + kBeforeTheSuffix;
 
-        return {box, std::max(0, box.width() - tagRoom - suffixRoom)};
+        return {.box = box, .wide = std::max(0, box.width() - tagRoom - suffixRoom)};
     }
 
     [[nodiscard]] QString TextThatIsDrawn(const QStyleOptionViewItem& item, const QString& tag)
@@ -129,13 +129,16 @@ void RowDelegate::KeepRowsAtLeast(const int tall)
 
 bool RowDelegate::eventFilter(QObject* watched, QEvent* event)
 {
-    auto* view = qobject_cast<QAbstractItemView*>(parent());
+    const auto* view = qobject_cast<QAbstractItemView*>(parent());
 
     if (view != nullptr && watched == view->viewport())
     {
         if (event->type() == QEvent::MouseMove)
         {
-            PointAt(view->indexAt(static_cast<QMouseEvent*>(event)->position().toPoint()));
+            if (const auto* mouse = dynamic_cast<QMouseEvent*>(event); mouse != nullptr)
+            {
+                PointAt(view->indexAt(mouse->position().toPoint()));
+            }
         }
         else if (event->type() == QEvent::Leave)
         {

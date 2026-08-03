@@ -20,11 +20,26 @@ namespace
     };
 
     inline constexpr std::array kBuiltInRules{
-        BuiltInRule{CategoryRule::TheNameSaysTraffic, "traffic", {}, "traffic"},
-        BuiltInRule{CategoryRule::TheNameSaysAirport, "airport", {}, "sceneries"},
-        BuiltInRule{CategoryRule::TheContentTypeIsScenery, {}, "scenery", "sceneries"},
-        BuiltInRule{CategoryRule::TheContentTypeIsSound, {}, "sound", "sounds"},
-        BuiltInRule{CategoryRule::TheContentTypeIsLivery, {}, "livery", "liveries"},
+        BuiltInRule{.rule = CategoryRule::TheNameSaysTraffic,
+                    .inTheName = "traffic",
+                    .contentType = {},
+                    .categoryName = "traffic"},
+        BuiltInRule{.rule = CategoryRule::TheNameSaysAirport,
+                    .inTheName = "airport",
+                    .contentType = {},
+                    .categoryName = "sceneries"},
+        BuiltInRule{.rule = CategoryRule::TheContentTypeIsScenery,
+                    .inTheName = {},
+                    .contentType = "scenery",
+                    .categoryName = "sceneries"},
+        BuiltInRule{.rule = CategoryRule::TheContentTypeIsSound,
+                    .inTheName = {},
+                    .contentType = "sound",
+                    .categoryName = "sounds"},
+        BuiltInRule{.rule = CategoryRule::TheContentTypeIsLivery,
+                    .inTheName = {},
+                    .contentType = "livery",
+                    .categoryName = "liveries"},
     };
 
     std::string Folded(const std::string& text)
@@ -64,7 +79,10 @@ namespace
 
     CategorySuggestion SuggestOne(const TreeNode& library, const TreeNode& addon)
     {
-        CategorySuggestion suggestion{addon.path, addon.path.parent_path(), {}, CategoryRule::None};
+        CategorySuggestion suggestion{.addonFolder = addon.path,
+                                      .currentCategory = addon.path.parent_path(),
+                                      .suggestedCategory = {},
+                                      .rule = CategoryRule::None};
 
         const std::string baseName = Folded(addon.path.filename().string());
         const std::string contentType =

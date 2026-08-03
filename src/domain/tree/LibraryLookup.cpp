@@ -34,5 +34,6 @@ AddonId IdentityOf(const SimulatorProfile& profile, const std::filesystem::path&
 {
     const Library* library = LibraryContaining(profile, addonFolder);
 
-    return AddonId{library == nullptr ? LibraryId{} : library->id, addonFolder.filename().string()};
+    return AddonId{.libraryId = library == nullptr ? LibraryId{} : library->id,
+                   .folderName = addonFolder.filename().string()};
 }

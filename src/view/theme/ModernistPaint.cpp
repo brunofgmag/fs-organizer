@@ -104,13 +104,13 @@ namespace
 
         switch (tone)
         {
-        case TagTone::Filled: return {tones.accent, tones.onAccent, tones.accent};
-        case TagTone::Outlined: return {Qt::transparent, tones.accentBright, tones.accent};
-        case TagTone::Muted: return {tones.raised, tones.secondary, tones.raised};
+        case TagTone::Filled: return {.ground = tones.accent, .ink = tones.onAccent, .rule = tones.accent};
+        case TagTone::Outlined: return {.ground = Qt::transparent, .ink = tones.accentBright, .rule = tones.accent};
+        case TagTone::Muted: return {.ground = tones.raised, .ink = tones.secondary, .rule = tones.raised};
         case TagTone::Line: break;
         }
 
-        return {Qt::transparent, tones.secondary, tones.edge};
+        return {.ground = Qt::transparent, .ink = tones.secondary, .rule = tones.edge};
     }
 }
 
@@ -239,7 +239,7 @@ QIcon GearIcon(const int side)
     painter.drawPath(teeth.united(body).subtracted(hole));
     painter.end();
 
-    return QIcon(pixmap);
+    return {pixmap};
 }
 
 void DressTheHeaderOf(QHeaderView* header)

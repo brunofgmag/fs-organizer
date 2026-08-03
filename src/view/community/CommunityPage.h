@@ -62,7 +62,7 @@ private:
         int filter;
     };
 
-    [[nodiscard]] QList<FilterChip> FiltersOffered() const;
+    [[nodiscard]] static QList<FilterChip> FiltersOffered();
 
     [[nodiscard]] QWidget* CreateFilters();
 

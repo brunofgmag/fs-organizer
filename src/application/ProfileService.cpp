@@ -56,7 +56,8 @@ LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const s
 
     if (report.Accepted())
     {
-        profile.libraries.push_back(Library{identities_.Generate(), path, path.filename().string()});
+        profile.libraries.push_back(
+            Library{.id = identities_.Generate(), .path = path, .label = path.filename().string()});
     }
 
     return report;
@@ -128,14 +129,20 @@ ProfileService::StepsFor(const SimulatorProfile& profile,
 
     if (enable)
     {
-        return {{OperationKind::EnableAddon, identity, addon.path, PlannedLinkPath(profile, addon.path)}};
+        return {{.kind = OperationKind::EnableAddon,
+                 .addonId = identity,
+                 .addonFolder = addon.path,
+                 .linkPath = PlannedLinkPath(profile, addon.path)}};
     }
 
     std::vector<Step> steps;
     const auto [first, last] = linksByTarget.equal_range(ComparablePath(addon.path));
     for (auto entry = first; entry != last; ++entry)
     {
-        steps.push_back({OperationKind::DisableAddon, identity, addon.path, entry->second->path});
+        steps.push_back({.kind = OperationKind::DisableAddon,
+                         .addonId = identity,
+                         .addonFolder = addon.path,
+                         .linkPath = entry->second->path});
     }
 
     return steps;
@@ -143,19 +150,26 @@ ProfileService::StepsFor(const SimulatorProfile& profile,
 
 ProfileService::Step ProfileService::Inverse(const Step& step)
 {
-    return {step.kind == OperationKind::EnableAddon ? OperationKind::DisableAddon : OperationKind::EnableAddon,
-            step.addonId, step.addonFolder, step.linkPath};
+    return {.kind = step.kind == OperationKind::EnableAddon ? OperationKind::DisableAddon : OperationKind::EnableAddon,
+            .addonId = step.addonId,
+            .addonFolder = step.addonFolder,
+            .linkPath = step.linkPath};
 }
 
 LinkOperationResult ProfileService::Run(const Step& step) const
 {
     const LinkOutcome outcome = CreatesALink(step.kind)
-        ? linking_.Enable(Addon{step.addonFolder, Manifest{}}, step.linkPath.parent_path(), linkType_)
+        ? linking_.Enable(Addon{.folderPath = step.addonFolder, .manifest = Manifest{}}, step.linkPath.parent_path(),
+                          linkType_)
         : linking_.Disable(step.linkPath);
 
     log_.RecordLink(step.kind, step.addonId, step.addonFolder, step.linkPath, outcome.Failure());
 
-    return LinkOperationResult{step.addonId, step.addonFolder, step.linkPath, step.kind, outcome};
+    return LinkOperationResult{.addonId = step.addonId,
+                               .addonFolder = step.addonFolder,
+                               .linkPath = step.linkPath,
+                               .kind = step.kind,
+                               .outcome = outcome};
 }
 
 std::vector<LinkOperationResult>
@@ -207,8 +221,10 @@ std::vector<LinkOperationResult> ProfileService::Relink(const SimulatorProfile& 
     {
         if (relinked.insert(ComparablePath(step.addonFolder)).second)
         {
-            steps.push_back({OperationKind::EnableAddon, step.addonId, step.addonFolder,
-                             PlannedLinkPath(profile, step.addonFolder)});
+            steps.push_back({.kind = OperationKind::EnableAddon,
+                             .addonId = step.addonId,
+                             .addonFolder = step.addonFolder,
+                             .linkPath = PlannedLinkPath(profile, step.addonFolder)});
         }
     }
 
@@ -220,8 +236,8 @@ std::vector<LinkOperationResult> ProfileService::SetEnabled(const SimulatorProfi
                                                             const std::vector<const TreeNode*>& nodes,
                                                             const bool enable)
 {
-    return enable ? SetEnabled(profile, snapshot, LinkBatch{{}, nodes})
-                  : SetEnabled(profile, snapshot, LinkBatch{nodes, {}});
+    return enable ? SetEnabled(profile, snapshot, LinkBatch{.toDisable = {}, .toEnable = nodes})
+                  : SetEnabled(profile, snapshot, LinkBatch{.toDisable = nodes, .toEnable = {}});
 }
 
 std::optional<ProfileService::Step> ProfileService::PlanRepair(const SimulatorProfile& profile,
@@ -236,11 +252,16 @@ std::optional<ProfileService::Step> ProfileService::PlanRepair(const SimulatorPr
             return std::nullopt;
         }
 
-        return Step{OperationKind::RepointLink, IdentityOf(profile, *request.candidate.repointTo),
-                    *request.candidate.repointTo, entry.path};
+        return Step{.kind = OperationKind::RepointLink,
+                    .addonId = IdentityOf(profile, *request.candidate.repointTo),
+                    .addonFolder = *request.candidate.repointTo,
+                    .linkPath = entry.path};
     }
 
-    return Step{OperationKind::RemoveBrokenLink, IdentityOf(profile, entry.target), entry.target, entry.path};
+    return Step{.kind = OperationKind::RemoveBrokenLink,
+                .addonId = IdentityOf(profile, entry.target),
+                .addonFolder = entry.target,
+                .linkPath = entry.path};
 }
 
 std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile& profile, const RepairRequest& request)
@@ -251,11 +272,16 @@ std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile
 
     if (request.action == RepairAction::Repoint)
     {
-        undo.push_back({OperationKind::DisableAddon, IdentityOf(profile, *request.candidate.repointTo),
-                        *request.candidate.repointTo, entry.path});
+        undo.push_back({.kind = OperationKind::DisableAddon,
+                        .addonId = IdentityOf(profile, *request.candidate.repointTo),
+                        .addonFolder = *request.candidate.repointTo,
+                        .linkPath = entry.path});
     }
 
-    undo.push_back({OperationKind::EnableAddon, IdentityOf(profile, entry.target), entry.target, entry.path});
+    undo.push_back({.kind = OperationKind::EnableAddon,
+                    .addonId = IdentityOf(profile, entry.target),
+                    .addonFolder = entry.target,
+                    .linkPath = entry.path});
 
     return undo;
 }

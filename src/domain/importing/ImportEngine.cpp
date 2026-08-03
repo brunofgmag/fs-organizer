@@ -133,7 +133,7 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     }
 
     announce(OperationKind::EnableAddon);
-    const LinkOutcome link = linking_.Enable(Addon{target}, request.source.parent_path(), linkType_);
+    const LinkOutcome link = linking_.Enable(Addon{.folderPath = target}, request.source.parent_path(), linkType_);
     log_.RecordLink(OperationKind::EnableAddon, addon, target, request.source, link.Failure());
     if (!link.Succeeded())
     {

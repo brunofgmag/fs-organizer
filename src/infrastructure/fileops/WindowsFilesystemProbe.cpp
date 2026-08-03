@@ -161,7 +161,7 @@ WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
                 return std::nullopt;
             }
 
-            files.push_back(FileFingerprint{entry->path().lexically_relative(root), size});
+            files.push_back(FileFingerprint{.relativePath = entry->path().lexically_relative(root), .size = size});
         }
 
         entry.increment(error);
