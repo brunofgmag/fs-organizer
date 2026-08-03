@@ -285,19 +285,27 @@ void GithubUpdateService::OnDownloadFinished()
         return;
     }
 
-    if (!ChecksumMatches(zipPath))
+    switch (VerifyChecksum(zipPath))
     {
+    case ChecksumVerdict::CouldNotBeRead:
+        SayTheStageFinished(false, tr("The downloaded file could not be read, and was kept for you to inspect."));
+        return;
+    case ChecksumVerdict::DoesNotMatch:
         SayTheStageFinished(false, tr("The downloaded file does not match the checksum, and was discarded."));
         return;
+    case ChecksumVerdict::Matches: break;
     }
 
     StartExtraction(zipPath, UpdatesFolder() + QStringLiteral("/staged"));
 }
 
-bool GithubUpdateService::ChecksumMatches(const QString& zipPath) const
+GithubUpdateService::ChecksumVerdict GithubUpdateService::VerifyChecksum(const QString& zipPath) const
 {
     QFile zip(zipPath);
-    zip.open(QIODevice::ReadOnly);
+    if (!zip.open(QIODevice::ReadOnly))
+    {
+        return ChecksumVerdict::CouldNotBeRead;
+    }
 
     QCryptographicHash hash(QCryptographicHash::Sha256);
     hash.addData(&zip);
@@ -307,10 +315,10 @@ bool GithubUpdateService::ChecksumMatches(const QString& zipPath) const
     {
         QFile::remove(zipPath);
 
-        return false;
+        return ChecksumVerdict::DoesNotMatch;
     }
 
-    return true;
+    return ChecksumVerdict::Matches;
 }
 
 void GithubUpdateService::StartExtraction(const QString& zipPath, const QString& stagedRoot)

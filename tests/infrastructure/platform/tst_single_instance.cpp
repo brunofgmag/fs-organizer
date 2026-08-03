@@ -1,7 +1,5 @@
 #include <QtTest/QtTest>
 
-#include <memory>
-
 #include "infrastructure/platform/SingleInstance.h"
 
 namespace

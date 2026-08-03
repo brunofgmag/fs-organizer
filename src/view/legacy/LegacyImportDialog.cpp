@@ -14,9 +14,12 @@ namespace
     constexpr int kKindRole = Qt::UserRole;
     constexpr int kPathRole = Qt::UserRole + 1;
 
-    constexpr int kLibraryKind = 1;
-    constexpr int kCategoryKind = 2;
-    constexpr int kPresetsKind = 3;
+    enum class ImportKind
+    {
+        Library = 1,
+        Category = 2,
+        Presets = 3
+    };
 
     constexpr int kDialogWidth = 720;
     constexpr int kDialogHeight = 520;
@@ -36,15 +39,15 @@ namespace
         item->setCheckState(0, Qt::Checked);
     }
 
-    void Mark(QTreeWidgetItem* item, const int kind, const std::filesystem::path& path)
+    void Mark(QTreeWidgetItem* item, const ImportKind kind, const std::filesystem::path& path)
     {
-        item->setData(0, kKindRole, kind);
+        item->setData(0, kKindRole, static_cast<int>(kind));
         item->setData(0, kPathRole, AsText(path));
     }
 
-    void CollectChecked(const QTreeWidgetItem& item, const int kind, std::vector<std::filesystem::path>& into)
+    void CollectChecked(const QTreeWidgetItem& item, const ImportKind kind, std::vector<std::filesystem::path>& into)
     {
-        if (item.data(0, kKindRole).toInt() == kind && item.checkState(0) == Qt::Checked)
+        if (item.data(0, kKindRole).toInt() == static_cast<int>(kind) && item.checkState(0) == Qt::Checked)
         {
             into.push_back(AsPath(item.data(0, kPathRole).toString()));
         }
@@ -55,7 +58,7 @@ namespace
         }
     }
 
-    std::vector<std::filesystem::path> CheckedPathsOfKind(const QTreeWidget& tree, const int kind)
+    std::vector<std::filesystem::path> CheckedPathsOfKind(const QTreeWidget& tree, const ImportKind kind)
     {
         std::vector<std::filesystem::path> paths;
 
@@ -139,7 +142,7 @@ void LegacyImportDialog::Fill()
             else
             {
                 row->setText(1, tr("new"));
-                Mark(row, kLibraryKind, library.proposal.root);
+                Mark(row, ImportKind::Library, library.proposal.root);
                 Offer(row);
             }
 
@@ -161,7 +164,7 @@ void LegacyImportDialog::Fill()
                 }
 
                 line->setText(1, tr("new"));
-                Mark(line, kCategoryKind, library.proposal.root / category.relativePath);
+                Mark(line, ImportKind::Category, library.proposal.root / category.relativePath);
                 Offer(line);
             }
 
@@ -178,7 +181,7 @@ void LegacyImportDialog::Fill()
             QTreeWidgetItem* line = LineUnder(installation);
             line->setText(0, tr("%n preset", nullptr, static_cast<int>(presets)));
             line->setText(1, tr("to import"));
-            Mark(line, kPresetsKind, migration.presetsPath);
+            Mark(line, ImportKind::Presets, migration.presetsPath);
             Offer(line);
         }
     }
@@ -193,13 +196,13 @@ void LegacyImportDialog::Fill()
 
 LegacyImportRequest LegacyImportDialog::WhatWasChecked() const
 {
-    return LegacyImportRequest{.libraryRoots = CheckedPathsOfKind(*tree_, kLibraryKind),
-                               .categories = CheckedPathsOfKind(*tree_, kCategoryKind)};
+    return LegacyImportRequest{.libraryRoots = CheckedPathsOfKind(*tree_, ImportKind::Library),
+                               .categories = CheckedPathsOfKind(*tree_, ImportKind::Category)};
 }
 
 std::vector<std::filesystem::path> LegacyImportDialog::PresetFoldersChecked() const
 {
-    return CheckedPathsOfKind(*tree_, kPresetsKind);
+    return CheckedPathsOfKind(*tree_, ImportKind::Presets);
 }
 
 void LegacyImportDialog::RefreshTheImportButton() const

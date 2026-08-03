@@ -42,7 +42,13 @@ namespace
 
     QString VariantName(const SimulatorVariant variant)
     {
-        return variant == SimulatorVariant::MSFS2020 ? "MSFS2020" : "MSFS2024";
+        switch (variant)
+        {
+        case SimulatorVariant::MSFS2020: return "MSFS2020";
+        case SimulatorVariant::MSFS2024: break;
+        }
+
+        return "MSFS2024";
     }
 
     SimulatorVariant VariantFromName(const QJsonValue& value)
@@ -52,7 +58,13 @@ namespace
 
     QString LinkTypeName(const LinkType linkType)
     {
-        return linkType == LinkType::Symbolic ? "symbolic" : "junction";
+        switch (linkType)
+        {
+        case LinkType::Symbolic: return "symbolic";
+        case LinkType::Junction: break;
+        }
+
+        return "junction";
     }
 
     LinkType LinkTypeFromName(const QJsonValue& value)
