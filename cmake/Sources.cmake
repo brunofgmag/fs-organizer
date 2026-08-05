@@ -41,6 +41,8 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
+        src/infrastructure/sim/ContentListLocations.cpp
+        src/infrastructure/sim/ContentXmlPackages.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
