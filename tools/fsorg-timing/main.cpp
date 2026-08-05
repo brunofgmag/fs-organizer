@@ -21,7 +21,10 @@
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
+#include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
+#include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "shared/DisposableState.h"
 #include "support/PathText.h"
 
@@ -196,7 +199,9 @@ int main(int argc, char* argv[])
         Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
         AddonTreeModel treeModel;
-        AddonTreeViewModel treeViewModel(session, profileService, treeModel, notifier);
+        ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+        packages.Reload(session.Profile().variant);
+        AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, notifier);
         auto* treePage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);

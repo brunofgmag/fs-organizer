@@ -15,6 +15,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSimulatorPackages.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -51,6 +52,8 @@ namespace
         static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
         static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
         static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
+        static void TheSimulatorListIsNotConsultedWhileTheTreeIsBeingScanned();
+        static void OnlyAnAddonHasDependenciesToReport();
     };
 }
 
@@ -72,6 +75,14 @@ namespace
         node.kind = TreeNodeKind::Addon;
         node.path = path;
         node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
+
+        return node;
+    }
+
+    TreeNode AddonNodeDeclaring(const std::filesystem::path& path, std::vector<DeclaredDependency> dependencies)
+    {
+        TreeNode node = AddonNode(path);
+        node.addon->manifest.dependencies = std::move(dependencies);
 
         return node;
     }
@@ -159,7 +170,8 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, processProbe, runner, notifier};
         AddonTreeModel model;
-        AddonTreeViewModel viewModel{session, service, model, notifier};
+        FakeSimulatorPackages packages;
+        AddonTreeViewModel viewModel{session, service, model, packages, notifier};
     };
 }
 
@@ -549,6 +561,32 @@ void AddonTreeViewModelTest::ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedC
 
     QVERIFY(f.fileSystem.Exists("D:/MSFS 2024/Sceneries/pmdg-aircraft-77w"));
     QVERIFY(f.fileSystem.Exists("D:/MSFS 2024/Traffic/aerosoft-crj"));
+}
+
+void AddonTreeViewModelTest::TheSimulatorListIsNotConsultedWhileTheTreeIsBeingScanned()
+{
+    Fixture f;
+    const TreeNode declaring = AddonNodeDeclaring(kAddon, {{"fs-base-ui", "0.1.10"}});
+    f.catalog.SetTree(kLibrary, CategoryNode(kLibrary, {CategoryNode(kAircrafts, {declaring})}));
+    f.session.RefreshEntries();
+    f.viewModel.ShowActiveProfile();
+
+    QCOMPARE(f.packages.asked, std::size_t{0});
+
+    const DependencyReport report = f.viewModel.DependenciesOf(&declaring);
+
+    QCOMPARE(report.answers.size(), std::size_t{1});
+    QCOMPARE(f.packages.asked, std::size_t{1});
+}
+
+void AddonTreeViewModelTest::OnlyAnAddonHasDependenciesToReport()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {});
+
+    QVERIFY(f.viewModel.DependenciesOf(nullptr).answers.empty());
+    QVERIFY(f.viewModel.DependenciesOf(&category).answers.empty());
+    QCOMPARE(f.packages.asked, std::size_t{0});
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

@@ -27,6 +27,7 @@
 #include "view/delegates/RowDelegate.h"
 #include "view/library/SuggestionDialog.h"
 #include "view/panels/ContextPanel.h"
+#include "view/panels/DependencySection.h"
 #include "view/panels/EmptyState.h"
 #include "view/panels/ModelRowDetail.h"
 #include "view/theme/ModernistMetrics.h"
@@ -181,7 +182,7 @@ void AddonTreePage::changeEvent(QEvent* event)
     QWidget::changeEvent(event);
 }
 
-void AddonTreePage::RetranslateUi()
+void AddonTreePage::RetranslateUi() const
 {
     enable_->setText(tr("Check the selected ones"));
     disable_->setText(tr("Uncheck the selected ones"));
@@ -265,6 +266,7 @@ QWidget* AddonTreePage::CreatePanel()
     panel_->setObjectName(QStringLiteral("LibraryAddonPanel"));
 
     detail_ = new ModelRowDetail(panel_);
+    dependencies_ = new DependencySection(panel_);
 
     relink_ = new QPushButton(panel_);
     relink_->setProperty("role", "primary");
@@ -276,6 +278,7 @@ QWidget* AddonTreePage::CreatePanel()
     promise_->setWordWrap(true);
 
     panel_->Add(detail_);
+    panel_->Add(dependencies_);
     panel_->Add(relink_);
     panel_->Add(moveTo_);
     panel_->Add(openFolder_);
@@ -351,6 +354,7 @@ void AddonTreePage::ShowTheSelectedAddon() const
 
     panel_->ShowTitle(AsText(node->path.filename()), model_.data(source, AlarmingRole).toBool());
     detail_->ShowFields(fields);
+    dependencies_->Show(viewModel_.DependenciesOf(node));
 }
 
 void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
@@ -415,6 +419,7 @@ void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
 
     panel_->ShowTitle(tr("%n item selected", nullptr, static_cast<int>(rows.size())), alarming);
     detail_->ShowFields(fields);
+    dependencies_->Show({});
 }
 
 void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const

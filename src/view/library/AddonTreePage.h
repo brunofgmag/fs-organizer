@@ -12,6 +12,7 @@
 #include "viewmodel/SessionNotifier.h"
 
 class ContextPanel;
+class DependencySection;
 class EmptyState;
 class ModelRowDetail;
 class QCheckBox;
@@ -47,7 +48,7 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
-    void RetranslateUi();
+    void RetranslateUi() const;
 
     [[nodiscard]] QWidget* CreateActions();
 
@@ -113,6 +114,7 @@ private:
     QTreeView* tree_ = nullptr;
     ContextPanel* panel_ = nullptr;
     ModelRowDetail* detail_ = nullptr;
+    DependencySection* dependencies_ = nullptr;
     QPushButton* relink_ = nullptr;
     QPushButton* moveTo_ = nullptr;
     QPushButton* openFolder_ = nullptr;

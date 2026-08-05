@@ -16,6 +16,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QTreeView>
 
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
@@ -33,7 +34,10 @@
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
+#include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
+#include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "infrastructure/update/GithubUpdateService.h"
 #include "shared/DisposableState.h"
 #include "support/PathText.h"
@@ -82,6 +86,30 @@ namespace
         {
             QCoreApplication::processEvents();
         }
+    }
+
+    bool SelectTheAddonNamed(const QWidget& page, const QString& folderName)
+    {
+        auto* tree = page.findChild<QTreeView*>();
+        if (tree == nullptr)
+        {
+            return false;
+        }
+
+        tree->expandAll();
+
+        const QModelIndexList found = tree->model()->match(tree->model()->index(0, 0, {}), Qt::DisplayRole, folderName,
+                                                           1, Qt::MatchExactly | Qt::MatchRecursive);
+        if (found.isEmpty())
+        {
+            return false;
+        }
+
+        tree->setCurrentIndex(found.front());
+        tree->selectionModel()->select(found.front(), QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        tree->scrollTo(found.front());
+
+        return true;
     }
 
     bool Save(QWidget& window, const QDir& folder, const QString& name)
@@ -195,10 +223,15 @@ int main(int argc, char* argv[])
     const QCommandLineOption theme({"t", "theme"}, "dark, light or system.", "palette", "system");
     const QCommandLineOption size({"s", "size"}, "Window size, WIDTHxHEIGHT.", "size", "1140x760");
     const QCommandLineOption language({"l", "lang"}, "en or pt_BR.", "language", "en");
+    const QCommandLineOption select({"S", "select"},
+                                    "Folder name of an addon to select before the Library shot, so "
+                                    "the context panel is in the picture.",
+                                    "addon folder", "");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
     parser.addOption(language);
+    parser.addOption(select);
     parser.process(app);
 
     if (const QString wanted = parser.value(theme); wanted != QLatin1String("system"))
@@ -305,7 +338,9 @@ int main(int argc, char* argv[])
     Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
     AddonTreeModel treeModel;
-    AddonTreeViewModel treeViewModel(session, profileService, treeModel, notifier);
+    ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+    packages.Reload(session.Profile().variant);
+    AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, notifier);
     auto* libraryPage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
@@ -378,7 +413,16 @@ int main(int argc, char* argv[])
         landed = Save(shell, folder, name) && landed;
     };
 
-    shoot(libraryTab, QStringLiteral("01-library"), {});
+    const QString wantedAddon = parser.value(select);
+
+    shoot(libraryTab, QStringLiteral("01-library"),
+          [libraryPage, &wantedAddon]
+          {
+              if (!wantedAddon.isEmpty() && !SelectTheAddonNamed(*libraryPage, wantedAddon))
+              {
+                  Out() << "no addon named " << wantedAddon << " in the tree, so the panel stays closed\n";
+              }
+          });
     shoot(communityTab, QStringLiteral("02-community"),
           [&communityViewModel]
           {

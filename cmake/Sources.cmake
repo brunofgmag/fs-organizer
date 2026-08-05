@@ -72,6 +72,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/DependencyText.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
@@ -111,6 +112,7 @@ set(VIEW_SOURCES
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp
+        src/view/panels/DependencySection.cpp
         src/view/panels/EmptyState.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp

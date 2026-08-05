@@ -406,6 +406,10 @@ fsorg_add_qt_test(fsorg-journal-model-tests journal-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-journal-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-dependency-text-tests dependency-text
+        tests/viewmodel/tst_dependency_text.cpp)
+target_link_libraries(fsorg-dependency-text-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-failure-text-tests failure-text
         tests/viewmodel/tst_failure_text.cpp)
 target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
@@ -426,6 +430,7 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/doubles/FakeOperationJournal.h
         tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSimulatorPackages.h
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
@@ -741,6 +746,12 @@ fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         assets/resources.qrc)
 target_link_libraries(fsorg-context-panel-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
+
+fsorg_add_qt_test(fsorg-dependency-section-tests dependency-section
+        tests/view/panels/tst_dependency_section.cpp
+        assets/resources.qrc)
+target_link_libraries(fsorg-dependency-section-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-dependency-section-tests dependency-section)
 
 fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         tests/view/delegates/tst_row_delegate.cpp
