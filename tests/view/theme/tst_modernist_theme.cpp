@@ -21,6 +21,7 @@ namespace
         static void TheArchivoFamilyResolvesFromTheBinary();
         static void TheBrandIconsResolveFromTheBinary();
         static void EachSchemeGetsItsOwnGroundAndTheSameAccent();
+        static void TheStyleSheetLeavesNoPlaceholderBehind();
         static void ApplyingTheThemeSetsTheApplicationFont();
         static void ADisabledDefaultButtonTakesOffTheAccent();
         static void AnOutlineStaysInsideItsBoxAtEveryScale();
@@ -61,6 +62,16 @@ void ModernistThemeTest::EachSchemeGetsItsOwnGroundAndTheSameAccent()
     QVERIFY(light.color(QPalette::Window).lightness() > light.color(QPalette::WindowText).lightness());
 
     QVERIFY(dark.color(QPalette::Disabled, QPalette::WindowText) != dark.color(QPalette::Active, QPalette::WindowText));
+}
+
+void ModernistThemeTest::TheStyleSheetLeavesNoPlaceholderBehind()
+{
+    for (const Qt::ColorScheme scheme : {Qt::ColorScheme::Dark, Qt::ColorScheme::Light})
+    {
+        const QString sheet = ModernistStyleSheet(scheme);
+
+        QVERIFY2(!sheet.contains(QLatin1Char('%')), qPrintable(sheet));
+    }
 }
 
 void ModernistThemeTest::ApplyingTheThemeSetsTheApplicationFont()

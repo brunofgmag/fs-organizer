@@ -34,12 +34,12 @@ QPalette ModernistPalette(const Qt::ColorScheme scheme)
     palette.setColor(QPalette::PlaceholderText, tones.secondary);
     palette.setColor(QPalette::Button, tones.raised);
     palette.setColor(QPalette::ButtonText, tones.text);
-    palette.setColor(QPalette::BrightText, tones.accentBright);
+    palette.setColor(QPalette::BrightText, tones.accentInk);
     palette.setColor(QPalette::Highlight, tones.raised);
     palette.setColor(QPalette::HighlightedText, tones.text);
     palette.setColor(QPalette::Accent, tones.accent);
-    palette.setColor(QPalette::Link, tones.accentBright);
-    palette.setColor(QPalette::LinkVisited, tones.accentBright);
+    palette.setColor(QPalette::Link, tones.accentInk);
+    palette.setColor(QPalette::LinkVisited, tones.accentInk);
     palette.setColor(QPalette::Light, tones.raised);
     palette.setColor(QPalette::Midlight, tones.edge);
     palette.setColor(QPalette::Mid, tones.divider);
@@ -50,7 +50,7 @@ QPalette ModernistPalette(const Qt::ColorScheme scheme)
 
     for (const QPalette::ColorRole role : {QPalette::WindowText, QPalette::Text, QPalette::ButtonText})
     {
-        palette.setColor(QPalette::Disabled, role, tones.tertiary);
+        palette.setColor(QPalette::Disabled, role, tones.disabled);
     }
     palette.setColor(QPalette::Disabled, QPalette::Base, tones.chrome);
     palette.setColor(QPalette::Disabled, QPalette::Button, tones.chrome);
@@ -81,13 +81,13 @@ QToolButton#FilterChip:hover { border-color: %secondary%; }
 QToolButton#FilterChip:checked {
     background: %accent%; border: 1px solid %accent%; color: %onAccent%; font-weight: 600;
 }
-QToolButton#FilterChip[population="none"] { border-color: %divider%; color: %tertiary%; }
+QToolButton#FilterChip[population="none"] { border-color: %divider%; color: %faint%; }
 QLabel[tag="filled"] { background: %accent%; color: %onAccent%; font-weight: 600; padding: 2px 7px; }
-QLabel[tag="outlined"] { border: 1px solid %accent%; color: %accentBright%; font-weight: 600; padding: 1px 6px; }
+QLabel[tag="outlined"] { border: 1px solid %accent%; color: %accentInk%; font-weight: 600; padding: 1px 6px; }
 QLabel[tag="muted"] { background: %raised%; color: %secondary%; padding: 2px 7px; }
 QLabel#TriageQuiet { color: %secondary%; }
 QFrame#TriageSeparator { background: %divider%; }
-QLabel#FooterRestart { color: %accentBright%; font-weight: 600; }
+QLabel#FooterRestart { color: %accentInk%; font-weight: 600; }
 QLabel#FooterSummary { color: %secondary%; }
 QLabel#FooterAside { color: %secondary%; }
 QProgressBar#FooterMeter { background: %raised%; border: none; }
@@ -112,7 +112,7 @@ QListWidget#OptionsNav::item { padding: 8px 16px; color: %secondary%; border-lef
 QListWidget#OptionsNav::item:selected, QListWidget#OptionsNav::item:selected:active {
     background: %raised%; color: %text%; font-weight: 600; border-left: 3px solid %accent%;
 }
-QListWidget#OptionsNav::item:disabled { color: %tertiary%; }
+QListWidget#OptionsNav::item:disabled { color: %disabled%; }
 QFrame#OptionsBox { background: %window%; border: 1px solid %divider%; }
 #OptionsRow[follows="true"] { border-top: 1px solid %raised%; }
 #OptionsChoice[follows="true"] { border-top: 1px solid %divider%; }
@@ -144,16 +144,16 @@ QPushButton {
 }
 QPushButton:hover { border-color: %secondary%; background: %raised%; }
 QPushButton:default { background: %accent%; color: %onAccent%; border: none; }
-QPushButton:disabled { color: %tertiary%; border-color: %divider%; background: transparent; }
-QPushButton:default:disabled { background: transparent; color: %tertiary%; border: 1px solid %divider%; }
+QPushButton:disabled { color: %disabled%; border-color: %divider%; background: transparent; }
+QPushButton:default:disabled { background: transparent; color: %disabled%; border: 1px solid %divider%; }
 QPushButton[role="primary"] { background: %accent%; color: %onAccent%; border: 1px solid %accent%; }
-QPushButton[role="primary"]:hover { background: %accentBright%; border-color: %accentBright%; }
-QPushButton[role="primary"]:disabled { background: transparent; color: %tertiary%; border: 1px solid %divider%; }
+QPushButton[role="primary"]:hover { background: %accentWarm%; border-color: %accentWarm%; }
+QPushButton[role="primary"]:disabled { background: transparent; color: %disabled%; border: 1px solid %divider%; }
 QPushButton[role="destructive"] {
-    background: transparent; border: 1px solid %accent%; color: %accentBright%;
+    background: transparent; border: 1px solid %accent%; color: %accentInk%;
 }
 QPushButton[role="destructive"]:hover { background: %raised%; }
-QPushButton[role="destructive"]:disabled { border: 1px solid %divider%; color: %tertiary%; }
+QPushButton[role="destructive"]:disabled { border: 1px solid %divider%; color: %disabled%; }
 QPushButton[scale="small"] { padding: 2px 9px; }
 )")
         .replace(QStringLiteral("%window%"), tones.window.name())
@@ -163,9 +163,11 @@ QPushButton[scale="small"] { padding: 2px 9px; }
         .replace(QStringLiteral("%edge%"), tones.edge.name())
         .replace(QStringLiteral("%text%"), tones.text.name())
         .replace(QStringLiteral("%secondary%"), tones.secondary.name())
-        .replace(QStringLiteral("%tertiary%"), tones.tertiary.name())
+        .replace(QStringLiteral("%faint%"), tones.faint.name())
+        .replace(QStringLiteral("%disabled%"), tones.disabled.name())
+        .replace(QStringLiteral("%accentWarm%"), tones.accentWarm.name())
+        .replace(QStringLiteral("%accentInk%"), tones.accentInk.name())
         .replace(QStringLiteral("%accent%"), tones.accent.name())
-        .replace(QStringLiteral("%accentBright%"), tones.accentBright.name())
         .replace(QStringLiteral("%onAccent%"), tones.onAccent.name());
 }
 

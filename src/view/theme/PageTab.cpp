@@ -115,6 +115,6 @@ void PageTab::paintEvent(QPaintEvent*)
     }
 
     painter.setFont(font());
-    painter.setPen(chosen ? tones.secondary : tones.tertiary);
+    painter.setPen(chosen ? tones.secondary : tones.faint);
     painter.drawText(kPaddingX + measured.horizontalAdvance(label_) + kBetweenNameAndCount, baseline, count);
 }

@@ -149,14 +149,14 @@ void ModernistStyle::DrawCheckBox(const QStyleOption& option, QPainter& painter)
 
     if (off)
     {
-        painter.setPen(QPen(live ? tones_.secondary : tones_.tertiary, kHairline));
+        painter.setPen(QPen(live ? tones_.secondary : tones_.disabled, kHairline));
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(box.adjusted(kHairline / 2, kHairline / 2, -kHairline / 2, -kHairline / 2));
         return;
     }
 
     painter.setPen(Qt::NoPen);
-    painter.setBrush(live ? tones_.accent : tones_.tertiary);
+    painter.setBrush(live ? tones_.accent : tones_.disabled);
     painter.drawRect(box);
 
     painter.setPen(QPen(tones_.onAccent, 2.0, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
@@ -182,14 +182,14 @@ void ModernistStyle::DrawRadioButton(const QStyleOption& option, QPainter& paint
 
     if (option.state.testFlag(State_Off))
     {
-        painter.setPen(QPen(live ? tones_.secondary : tones_.tertiary, kHairline));
+        painter.setPen(QPen(live ? tones_.secondary : tones_.disabled, kHairline));
         painter.setBrush(Qt::NoBrush);
         painter.drawEllipse(box.adjusted(kHairline / 2, kHairline / 2, -kHairline / 2, -kHairline / 2));
         return;
     }
 
     painter.setPen(Qt::NoPen);
-    painter.setBrush(live ? tones_.accent : tones_.tertiary);
+    painter.setBrush(live ? tones_.accent : tones_.disabled);
     painter.drawEllipse(box);
 
     painter.setPen(QPen(tones_.window, 3.0));

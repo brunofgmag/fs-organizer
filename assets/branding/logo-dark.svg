@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 320">
   <g transform="translate(24,32) scale(5.3333)">
-    <rect width="48" height="48" fill="#ec3013"/>
+    <rect width="48" height="48" fill="#cc2c11"/>
     <path d="M8 12 h12 l3 4 h17 v20 H8 z" fill="#fff"/>
-    <path d="M33 21.5 L14 28 L20.5 30 L21 35 L24 31.2 L29.5 32.8 Z" fill="#ec3013"/>
+    <path d="M33 21.5 L14 28 L20.5 30 L21 35 L24 31.2 L29.5 32.8 Z" fill="#cc2c11"/>
   </g>
-  <text x="328" y="202" font-family="Segoe UI, DejaVu Sans, sans-serif" font-size="120" font-weight="700" fill="#ffffff">FS<tspan font-weight="300" fill="#ec3013"> Organizer</tspan></text>
+  <text x="328" y="202" font-family="Segoe UI, DejaVu Sans, sans-serif" font-size="120" font-weight="700" fill="#ffffff">FS<tspan font-weight="300" fill="#cc2c11"> Organizer</tspan></text>
 </svg>
