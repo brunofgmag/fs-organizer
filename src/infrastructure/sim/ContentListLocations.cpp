@@ -1,7 +1,6 @@
 #include "infrastructure/sim/ContentListLocations.h"
 
 #include <algorithm>
-#include <cstddef>
 #include <string_view>
 
 namespace
@@ -47,26 +46,21 @@ std::vector<ContentListLocation> ContentListLocations(const std::vector<UserCfgL
 std::optional<ChosenContentList> ChooseContentList(const std::vector<ContentListLocation>& locations,
                                                    const SimulatorVariant variant)
 {
-    const ContentListLocation* first = nullptr;
-    std::size_t howMany = 0;
-
-    for (const ContentListLocation& location : locations)
+    const auto ofTheVariant = [variant](const ContentListLocation& location)
     {
-        if (location.variant != variant)
-        {
-            continue;
-        }
+        return location.variant == variant;
+    };
 
-        ++howMany;
-        first = first == nullptr ? &location : first;
-    }
-
-    if (first == nullptr)
+    const auto chosen = std::ranges::find_if(locations, ofTheVariant);
+    if (chosen == locations.end())
     {
         return std::nullopt;
     }
 
-    return ChosenContentList{.listPath = first->listPath,
-                             .accountFolder =
-                                 howMany > 1 ? first->listPath.parent_path().filename().string() : std::string()};
+    const bool thereWasSomethingToChooseBetween = std::ranges::count_if(locations, ofTheVariant) > 1;
+
+    return ChosenContentList{.listPath = chosen->listPath,
+                             .accountFolder = thereWasSomethingToChooseBetween
+                                 ? chosen->listPath.parent_path().filename().string()
+                                 : std::string()};
 }

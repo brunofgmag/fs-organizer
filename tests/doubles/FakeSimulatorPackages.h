@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point> ListTakenAt() const override
     {
-        return takenAt_;
+        return installed_.empty() ? std::nullopt : takenAt_;
     }
 
     [[nodiscard]] std::string ListAccountFolder() const override
