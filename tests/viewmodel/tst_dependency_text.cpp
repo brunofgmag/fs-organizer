@@ -65,8 +65,8 @@ void DependencyTextTest::TheThirdAnswerIsNotVerifiableAndNeverCallsTheEntryAProb
          {DependencyResolution::InThisLibrary, DependencyResolution::InTheSimulator,
           DependencyResolution::Unverifiable})
     {
-        for (const QString forbidden : {QStringLiteral("missing"), QStringLiteral("broken"), QStringLiteral("absent"),
-                                        QStringLiteral("Missing"), QStringLiteral("Broken"), QStringLiteral("Absent")})
+        for (const QString& forbidden : {QStringLiteral("missing"), QStringLiteral("broken"), QStringLiteral("absent"),
+                                         QStringLiteral("Missing"), QStringLiteral("Broken"), QStringLiteral("Absent")})
         {
             QVERIFY(!AnswerFor(AnswerOf(resolution, true)).contains(forbidden));
             QVERIFY(!AnswerFor(AnswerOf(resolution, false)).contains(forbidden));
