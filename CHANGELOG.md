@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/brunofgmag/fs-organizer/compare/v0.6.0...v0.7.0) (2026-08-05)
+
+
+### Features
+
+* **library:** show what each declared dependency resolves to ([#21](https://github.com/brunofgmag/fs-organizer/issues/21)) ([ad90612](https://github.com/brunofgmag/fs-organizer/commit/ad906124beb2c61c31cc84f44f16e677d145d41f))
+
 ## [0.6.0](https://github.com/brunofgmag/fs-organizer/compare/v0.5.0...v0.6.0) (2026-08-05)
 
 
