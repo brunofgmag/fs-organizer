@@ -21,6 +21,8 @@ public:
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point> ListTakenAt() const override;
 
+    [[nodiscard]] std::string ListAccountFolder() const override;
+
     [[nodiscard]] std::size_t HowManyEntries() const;
 
     [[nodiscard]] std::size_t HowManyPackages() const;
