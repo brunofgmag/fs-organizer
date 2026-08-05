@@ -136,7 +136,8 @@ namespace
         static void EveryDeclaredPairReachesTheMinimumInBothSchemes();
         static void TheWorstGroundIsTheOneThatDecides();
         static void TheHoverFillCarriesItsInkLikeTheRestingFill();
-        static void TheDisabledInkKeepsItsValueAndStaysOutOfTheJudgement();
+        static void TheDisabledInkKeepsTheValueItHadBeforeTheSplit();
+        static void TheDisabledInkIsExemptAndTheExemptionIsReal();
         static void TheComplaintNamesThePairTheMeasurementAndTheMinimum();
     };
 }
@@ -189,11 +190,14 @@ void ThemeContrastTest::TheHoverFillCarriesItsInkLikeTheRestingFill()
     }
 }
 
-void ThemeContrastTest::TheDisabledInkKeepsItsValueAndStaysOutOfTheJudgement()
+void ThemeContrastTest::TheDisabledInkKeepsTheValueItHadBeforeTheSplit()
 {
     QCOMPARE(TonesOf(Qt::ColorScheme::Dark).disabled, QColor("#6b6560"));
     QCOMPARE(TonesOf(Qt::ColorScheme::Light).disabled, QColor("#9b9797"));
+}
 
+void ThemeContrastTest::TheDisabledInkIsExemptAndTheExemptionIsReal()
+{
     for (const DeclaredPair& pair : DeclaredPairs())
     {
         QVERIFY(pair.ink.value != &ModernistTones::disabled);
