@@ -5,6 +5,7 @@
 
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
+#include "tests/support/DeepPaths.h"
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 
@@ -22,6 +23,8 @@ namespace
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
         static void AFolderReportsWhenItWasLastWrittenTo();
         static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
+        static void EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable();
+        static void ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem();
     };
 }
 
@@ -177,6 +180,43 @@ void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersAJunctionTheSame
 
     QCOMPARE(byProduction.size(), std::size_t{3});
     QCOMPARE(byTheDouble, byProduction);
+}
+
+void WindowsFilesystemProbeTest::EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "tfdidesign-aircraft-md11");
+    QVERIFY(deep.wstring().size() > kOldPathCeiling);
+    WriteFilePastTheCeiling(deep / "manifest.json", R"({"title": "MD-11"})");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.EntryExistsWithoutFollowingLinks(deep));
+    QVERIFY(filesystemProbe.TargetDirectoryExists(deep));
+    QVERIFY(!filesystemProbe.IsReparsePoint(deep));
+    QVERIFY(filesystemProbe.FreeSpaceOn(deep).has_value());
+    QVERIFY(filesystemProbe.LastWriteTime(deep).has_value());
+    QVERIFY(filesystemProbe.VolumeIsAvailable(deep));
+
+    const std::optional<std::vector<FileFingerprint>> fingerprint = filesystemProbe.FingerprintTree(deep);
+    QVERIFY(fingerprint.has_value());
+    QCOMPARE(fingerprint->size(), std::size_t{1});
+    QCOMPARE(fingerprint->front().relativePath, std::filesystem::path("manifest.json"));
+}
+
+void WindowsFilesystemProbeTest::ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "Utils");
+    const std::filesystem::path staging = FolderPastTheCeiling(deep, "tfdidesign-aircraft-md11.fsorg-partial");
+
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::vector<std::filesystem::path> children = filesystemProbe.ChildDirectories(deep);
+
+    QCOMPARE(children.size(), std::size_t{1});
+    QCOMPARE(children.front(), staging);
+    QVERIFY2(!children.front().wstring().starts_with(LR"(\\?\)"),
+             "a path that leaves the port carrying the prefix stops matching every path the domain built by hand");
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

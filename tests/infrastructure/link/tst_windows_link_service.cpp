@@ -1,10 +1,14 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
+#include <windows.h>
+#include <winioctl.h>
+
 #include <fstream>
 
 #include "domain/support/PathUtils.h"
 #include "infrastructure/link/WindowsLinkService.h"
+#include "tests/support/DeepPaths.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
@@ -18,6 +22,8 @@ namespace
         static void AJunctionReadsBackTheTargetItWasCreatedWith();
         static void RemovingTheNodeSparesTheTargetAndEverythingInside();
         static void ASymlinkEitherLandsOrSaysThePrivilegeIsMissing();
+        static void AJunctionWhoseLinkPathPassesTheOldCeilingStillLandsAndReadsBack();
+        static void TheTargetWrittenInsideTheJunctionNeverCarriesTheExtendedPrefix();
     };
 }
 
@@ -107,6 +113,73 @@ void WindowsLinkServiceTest::ASymlinkEitherLandsOrSaysThePrivilegeIsMissing()
     const std::optional<std::filesystem::path> readBack = linkService.ReadLinkTarget(linkPath);
     QVERIFY(readBack.has_value());
     QCOMPARE(ComparablePath(*readBack), ComparablePath(target));
+}
+
+namespace
+{
+    [[nodiscard]] std::wstring ReparseBufferOf(const std::filesystem::path& linkPath)
+    {
+        const HANDLE handle = CreateFileW(
+            linkPath.wstring().c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+        if (handle == INVALID_HANDLE_VALUE)
+        {
+            return {};
+        }
+
+        std::vector<char> raw(MAXIMUM_REPARSE_DATA_BUFFER_SIZE, 0);
+        DWORD returned = 0;
+        const BOOL queried = DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0, raw.data(),
+                                             static_cast<DWORD>(raw.size()), &returned, nullptr);
+        CloseHandle(handle);
+
+        if (queried == FALSE)
+        {
+            return {};
+        }
+
+        return {reinterpret_cast<const wchar_t*>(raw.data()), returned / sizeof(wchar_t)};
+    }
+}
+
+void WindowsLinkServiceTest::AJunctionWhoseLinkPathPassesTheOldCeilingStillLandsAndReadsBack()
+{
+    const Disk disk;
+    const std::filesystem::path target = disk.AddAddonFolder("tfdidesign-aircraft-md11");
+    const std::filesystem::path destination = FolderPastTheCeiling(disk.Root(), "Community");
+    const std::filesystem::path linkPath = destination / "tfdidesign-aircraft-md11";
+    QVERIFY(linkPath.wstring().size() > kOldPathCeiling);
+
+    WindowsLinkService linkService;
+    QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
+
+    const std::optional<std::filesystem::path> readBack = linkService.ReadLinkTarget(linkPath);
+    QVERIFY(readBack.has_value());
+    QCOMPARE(ComparablePath(*readBack), ComparablePath(target));
+
+    QVERIFY(linkService.RemoveReparseNode(linkPath));
+    QVERIFY(!ExistsPastTheCeiling(linkPath));
+    QVERIFY(std::filesystem::exists(target / "manifest.json"));
+}
+
+void WindowsLinkServiceTest::TheTargetWrittenInsideTheJunctionNeverCarriesTheExtendedPrefix()
+{
+    const Disk disk;
+    const std::filesystem::path target = disk.AddAddonFolder("pmdg-aircraft-77w");
+    const std::filesystem::path linkPath = disk.Destination("pmdg-aircraft-77w");
+
+    WindowsLinkService linkService;
+    QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
+
+    std::filesystem::path expected = target;
+    expected.make_preferred();
+
+    const std::wstring buffer = ReparseBufferOf(linkPath);
+    QVERIFY(!buffer.empty());
+    QVERIFY2(buffer.find(LR"(\??\)" + expected.wstring()) != std::wstring::npos,
+             "the substitute name is no longer the object namespace prefix followed by the raw target");
+    QVERIFY2(buffer.find(LR"(\\?\)") == std::wstring::npos,
+             "the extended prefix reached the reparse buffer, which is how a junction ends up corrupted");
 }
 
 QTEST_APPLESS_MAIN(WindowsLinkServiceTest)

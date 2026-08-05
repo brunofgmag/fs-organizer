@@ -1,6 +1,8 @@
 #ifndef FS_ORGANIZER_TESTS_SUPPORT_STD_FILESYSTEM_PROBE_H
 #define FS_ORGANIZER_TESTS_SUPPORT_STD_FILESYSTEM_PROBE_H
 
+#include <fstream>
+#include <iterator>
 #include <system_error>
 
 #include "domain/ports/FilesystemProbe.h"
@@ -88,6 +90,17 @@ public:
         const std::filesystem::file_time_type written = std::filesystem::last_write_time(path, error);
 
         return error ? std::nullopt : std::optional(SystemTimeOf(written));
+    }
+
+    [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override
+    {
+        std::ifstream file(path, std::ios::binary);
+        if (!file.is_open())
+        {
+            return std::nullopt;
+        }
+
+        return std::string(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
     }
 
     [[nodiscard]] std::optional<std::vector<FileFingerprint>>

@@ -47,6 +47,7 @@ set(INFRASTRUCTURE_SOURCES
 )
 
 set(WINDOWS_INFRASTRUCTURE_SOURCES
+        src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/link/WindowsLinkService.cpp
@@ -130,5 +131,6 @@ set(APP_SOURCES
 
 list(APPEND APP_SOURCES
         assets/app.rc
+        assets/app.manifest
         assets/resources.qrc
 )

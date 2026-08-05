@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "domain/model/FileFingerprint.h"
@@ -28,6 +29,8 @@ public:
     [[nodiscard]] virtual bool ProbeWritable(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const = 0;
+
+    [[nodiscard]] virtual std::optional<std::string> ContentsOf(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual std::optional<std::vector<FileFingerprint>>
     FingerprintTree(const std::filesystem::path& root) const = 0;

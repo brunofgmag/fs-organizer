@@ -69,6 +69,13 @@ add_test(NAME portable-layer
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-portable-layer.cmake")
 
+if (WIN32 AND NOT FSORG_TESTS_ONLY)
+    add_test(NAME long-path-aware
+            COMMAND "${CMAKE_COMMAND}"
+            "-DFSORG_EXECUTABLE=$<TARGET_FILE:${APP_NAME}>"
+            -P "${CMAKE_SOURCE_DIR}/tools/check-long-path-aware.cmake")
+endif ()
+
 fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
         tests/support/EnumPrinting.h)
@@ -522,8 +529,14 @@ fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locato
 target_link_libraries(fsorg-windows-simulator-locator-tests PRIVATE fsorg-infrastructure)
 
 if (WIN32)
+    fsorg_add_qt_test(fsorg-extended-paths-tests extended-paths
+            tests/infrastructure/fileops/tst_extended_paths.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-extended-paths-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-windows-link-service-tests windows-link-service
             tests/infrastructure/link/tst_windows_link_service.cpp
+            tests/support/DeepPaths.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
             src/domain/support/PathUtils.h)
@@ -531,12 +544,21 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-windows-file-operations-tests windows-file-operations
             tests/infrastructure/fileops/tst_windows_file_operations.cpp
+            tests/support/DeepPaths.h
             tests/support/PathPrinting.h)
 
     target_link_libraries(fsorg-windows-file-operations-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-catalog-on-real-disk-tests catalog-on-real-disk
+            tests/infrastructure/catalog/tst_catalog_on_real_disk.cpp
+            tests/support/DeepPaths.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-catalog-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-import-on-real-disk-tests import-on-real-disk
             tests/infrastructure/importing/tst_import_on_real_disk.cpp
+            tests/support/DeepPaths.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
             src/domain/importing/ImportPaths.h)
@@ -559,6 +581,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
+            tests/support/DeepPaths.h
             tests/support/PathPrinting.h)
 
     target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)
