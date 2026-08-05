@@ -12,22 +12,22 @@
 struct MeasuredNode
 {
     TreeNodeKind kind = TreeNodeKind::Category;
-    std::filesystem::path path;
+    std::filesystem::path path{};
     std::uintmax_t bytes = 0;
     bool measured = true;
-    std::vector<MeasuredNode> children;
+    std::vector<MeasuredNode> children{};
 };
 
 struct SizeReport
 {
-    std::vector<MeasuredNode> libraries;
+    std::vector<MeasuredNode> libraries{};
     bool complete = false;
     std::chrono::system_clock::time_point measuredAt{};
 };
 
 struct SizeProgress
 {
-    std::filesystem::path folder;
+    std::filesystem::path folder{};
     std::size_t measured = 0;
     std::size_t total = 0;
 };
