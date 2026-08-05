@@ -142,6 +142,17 @@ fsorg_add_qt_test(fsorg-dependency-report-tests dependency-report
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-dependency-report-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-size-service-tests size-service
+        tests/application/tst_size_service.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-size-service-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         tests/application/tst_legacy_config_importer.cpp
         tests/doubles/FakeFilesystemProbe.h
@@ -595,6 +606,14 @@ if (WIN32)
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-catalog-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-size-on-real-disk-tests size-on-real-disk
+            tests/infrastructure/fileops/tst_size_on_real_disk.cpp
+            tests/doubles/FakeClock.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-size-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-import-on-real-disk-tests import-on-real-disk
             tests/infrastructure/importing/tst_import_on_real_disk.cpp

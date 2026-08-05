@@ -72,6 +72,8 @@ public:
     [[nodiscard]] std::optional<std::vector<FileFingerprint>>
     FingerprintTree(const std::filesystem::path& root) const override
     {
+        walked.push_back(root);
+
         if (std::ranges::find(unreadable_, ComparablePath(root)) != unreadable_.end())
         {
             return std::nullopt;
@@ -90,6 +92,13 @@ public:
     {
         unreadable_.push_back(ComparablePath(root));
     }
+
+    [[nodiscard]] std::size_t TimesWalked(const std::filesystem::path& root) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(walked, root));
+    }
+
+    mutable std::vector<std::filesystem::path> walked;
 
 private:
     InMemoryFileSystem& fileSystem_;
