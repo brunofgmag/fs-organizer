@@ -69,6 +69,11 @@ add_test(NAME portable-layer
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-portable-layer.cmake")
 
+add_test(NAME disabled-ink
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-disabled-ink.cmake")
+
 if (WIN32 AND NOT FSORG_TESTS_ONLY)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"
@@ -719,3 +724,8 @@ fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
 target_link_libraries(fsorg-modernist-theme-tests PRIVATE fsorg-view)
 
 configure_fsorg_gui_test(fsorg-modernist-theme-tests modernist-theme)
+
+fsorg_add_qt_test(fsorg-theme-contrast-tests theme-contrast
+        tests/view/theme/tst_theme_contrast.cpp)
+target_link_libraries(fsorg-theme-contrast-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-theme-contrast-tests theme-contrast)
