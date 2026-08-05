@@ -13,6 +13,10 @@ public:
     [[nodiscard]] TreeNode Scan(const std::filesystem::path& libraryRoot) const override;
 
 private:
+    [[nodiscard]] bool HasManifest(const std::filesystem::path& folder) const;
+
+    [[nodiscard]] bool WasDeclaredACategory(const std::filesystem::path& folder) const;
+
     [[nodiscard]] TreeNode ScanFolder(const std::filesystem::path& folder) const;
 
     [[nodiscard]] TreeNode ScanAddon(const std::filesystem::path& folder) const;

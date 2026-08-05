@@ -7,6 +7,7 @@
 
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/link/WindowsLinkService.h"
+#include "tests/support/DeepPaths.h"
 #include "tests/support/PathPrinting.h"
 
 namespace
@@ -23,6 +24,10 @@ namespace
         static void CancellingTheProgressCallbackStopsTheCopy();
         static void MovingAcrossVolumesIsRefusedInsteadOfCopied();
         static void MovingIntoAFolderThatDoesNotExistYetOpensTheWayThere();
+        static void WritingMovingAndDeletingPastTheOldCeilingAllLand();
+        static void CopyingATreePastTheOldCeilingReproducesEveryFile();
+        static void AStagingLeftoverPastTheOldCeilingCanBeDiscarded();
+        static void TheAdapterReachesPastTheCeilingWhicheverWayTheMachineIsConfigured();
     };
 }
 
@@ -199,6 +204,82 @@ void WindowsFileOperationsTest::MovingIntoAFolderThatDoesNotExistYetOpensTheWayT
 
     QVERIFY(std::filesystem::exists(landing / "manifest.json"));
     QVERIFY(!std::filesystem::exists(source));
+}
+
+void WindowsFileOperationsTest::WritingMovingAndDeletingPastTheOldCeilingAllLand()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "tfdidesign-aircraft-md11");
+    QVERIFY(deep.wstring().size() > kOldPathCeiling);
+
+    WindowsFileOperations files;
+
+    const std::filesystem::path written = deep / "layout.json";
+    QVERIFY(files.WriteHiddenFile(written));
+    QVERIFY(ExistsPastTheCeiling(written));
+
+    const std::filesystem::path moved = deep / "SimObjects" / "layout.json";
+    QVERIFY(files.Move(written, moved));
+    QVERIFY(!ExistsPastTheCeiling(written));
+    QVERIFY(ExistsPastTheCeiling(moved));
+
+    QVERIFY(files.CreateFolder(deep / "Effects"));
+    QVERIFY(files.RemoveEmptyFolder(deep / "Effects"));
+    QVERIFY(!ExistsPastTheCeiling(deep / "Effects"));
+
+    QVERIFY(files.RemoveTree(moved));
+    QVERIFY(!ExistsPastTheCeiling(moved));
+}
+
+void WindowsFileOperationsTest::CopyingATreePastTheOldCeilingReproducesEveryFile()
+{
+    const Disk disk;
+    const std::filesystem::path source = FolderPastTheCeiling(disk.Root(), "aerosoft-crj");
+    WriteFilePastTheCeiling(source / "manifest.json", "{}");
+    WriteFilePastTheCeiling(source / "SimObjects" / "plane.cfg", "bytes-and-bytes");
+
+    const std::filesystem::path landing = source.parent_path() / "aerosoft-crj.fsorg-partial";
+
+    WindowsFileOperations files;
+    QCOMPARE(files.CopyTree(source, landing, {}), CopyOutcome::Completed);
+
+    QVERIFY(ExistsPastTheCeiling(landing / "manifest.json"));
+    QCOMPARE(std::filesystem::file_size(BeyondTheCeiling(landing / "SimObjects" / "plane.cfg")), std::uintmax_t{15});
+    QVERIFY(ExistsPastTheCeiling(source / "manifest.json"));
+}
+
+void WindowsFileOperationsTest::AStagingLeftoverPastTheOldCeilingCanBeDiscarded()
+{
+    const Disk disk;
+    const std::filesystem::path staging = FolderPastTheCeiling(disk.Root(), "tfdidesign-aircraft-md11.fsorg-partial");
+    WriteFilePastTheCeiling(staging / "manifest.json", "{}");
+    WriteFilePastTheCeiling(staging / "SimObjects" / "Airplanes" / "md11" / "model.gltf", "vertices");
+
+    WindowsFileOperations files;
+    QVERIFY(files.RemoveTree(staging));
+
+    QVERIFY(!ExistsPastTheCeiling(staging));
+    QVERIFY(ExistsPastTheCeiling(staging.parent_path()));
+}
+
+void WindowsFileOperationsTest::TheAdapterReachesPastTheCeilingWhicheverWayTheMachineIsConfigured()
+{
+    DWORD enabled = 0;
+    DWORD size = sizeof(enabled);
+    const LSTATUS read = RegGetValueW(HKEY_LOCAL_MACHINE, LR"(SYSTEM\CurrentControlSet\Control\FileSystem)",
+                                      L"LongPathsEnabled", RRF_RT_REG_DWORD, nullptr, &enabled, &size);
+
+    qInfo(read == ERROR_SUCCESS ? "LongPathsEnabled reads %lu on this machine"
+                                : "LongPathsEnabled could not be read, RegGetValueW returned %lu",
+          read == ERROR_SUCCESS ? enabled : static_cast<DWORD>(read));
+
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "asobo-airport-lfpg");
+
+    WindowsFileOperations files;
+    QVERIFY(files.WriteHiddenFile(deep / "manifest.json"));
+    QVERIFY(files.RemoveTree(deep));
+    QVERIFY(!ExistsPastTheCeiling(deep));
 }
 
 QTEST_APPLESS_MAIN(WindowsFileOperationsTest)

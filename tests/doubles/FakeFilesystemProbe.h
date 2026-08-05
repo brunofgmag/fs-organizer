@@ -64,6 +64,11 @@ public:
         return fileSystem_.LastWriteTime(path);
     }
 
+    [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override
+    {
+        return fileSystem_.ContentsOf(path);
+    }
+
     [[nodiscard]] std::optional<std::vector<FileFingerprint>>
     FingerprintTree(const std::filesystem::path& root) const override
     {

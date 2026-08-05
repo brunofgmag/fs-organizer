@@ -14,13 +14,13 @@
 #include <system_error>
 #include <vector>
 
+#include "infrastructure/fileops/ExtendedPaths.h"
+
 namespace
 {
     std::wstring NativePath(const std::filesystem::path& path)
     {
-        std::filesystem::path native = path.lexically_normal();
-        native.make_preferred();
-        return native.wstring();
+        return WithExtendedPrefix(path).wstring();
     }
 
     DWORD AttributesWithoutFollowingLinks(const std::filesystem::path& path)
@@ -135,14 +135,17 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
                                             const std::filesystem::path& destination,
                                             const std::function<bool(const CopyProgress&)>& onProgress)
 {
-    const std::optional<Walk> walk = FilesUnder(source);
+    const std::filesystem::path reachableSource = WithExtendedPrefix(source);
+    const std::filesystem::path reachableDestination = WithExtendedPrefix(destination);
+
+    const std::optional<Walk> walk = FilesUnder(reachableSource);
     if (!walk.has_value())
     {
         return CopyOutcome::Failed;
     }
 
     std::error_code error;
-    std::filesystem::create_directories(destination, error);
+    std::filesystem::create_directories(reachableDestination, error);
     if (error)
     {
         return CopyOutcome::Failed;
@@ -152,7 +155,7 @@ CopyOutcome WindowsFileOperations::CopyTree(const std::filesystem::path& source,
 
     for (const WalkedFile& file : walk->files)
     {
-        const std::filesystem::path landing = destination / file.path.lexically_relative(source);
+        const std::filesystem::path landing = reachableDestination / file.path.lexically_relative(reachableSource);
 
         std::filesystem::create_directories(landing.parent_path(), error);
         if (error)
@@ -182,7 +185,7 @@ bool WindowsFileOperations::CreateFolder(const std::filesystem::path& path)
     }
 
     std::error_code error;
-    std::filesystem::create_directories(path, error);
+    std::filesystem::create_directories(WithExtendedPrefix(path), error);
 
     return !error;
 }
@@ -203,7 +206,7 @@ bool WindowsFileOperations::WriteHiddenFile(const std::filesystem::path& path)
 bool WindowsFileOperations::Move(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
     std::error_code error;
-    std::filesystem::create_directories(destination.parent_path(), error);
+    std::filesystem::create_directories(WithExtendedPrefix(destination).parent_path(), error);
     if (error)
     {
         return false;
@@ -243,7 +246,8 @@ bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)
     }
 
     std::error_code error;
-    std::filesystem::directory_iterator child(path, std::filesystem::directory_options::skip_permission_denied, error);
+    std::filesystem::directory_iterator child(WithExtendedPrefix(path),
+                                              std::filesystem::directory_options::skip_permission_denied, error);
     if (error)
     {
         return false;

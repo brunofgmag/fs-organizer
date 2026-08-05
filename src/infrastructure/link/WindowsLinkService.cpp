@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "domain/support/PathUtils.h"
+#include "infrastructure/fileops/ExtendedPaths.h"
 
 namespace
 {
@@ -51,7 +52,12 @@ namespace
         };
     };
 
-    std::wstring NativePath(const std::filesystem::path& path)
+    std::wstring NativeLinkPath(const std::filesystem::path& path)
+    {
+        return WithExtendedPrefix(path).wstring();
+    }
+
+    std::wstring NativeTarget(const std::filesystem::path& path)
     {
         std::filesystem::path native = path.lexically_normal();
         native.make_preferred();
@@ -130,8 +136,8 @@ LinkFailure WindowsLinkService::CreateLink(const std::filesystem::path& linkPath
                                            const std::filesystem::path& target,
                                            LinkType linkType)
 {
-    const std::wstring nativeLink = NativePath(linkPath);
-    const std::wstring nativeTarget = NativePath(target);
+    const std::wstring nativeLink = NativeLinkPath(linkPath);
+    const std::wstring nativeTarget = NativeTarget(target);
 
     if (linkType == LinkType::Symbolic)
     {
@@ -143,12 +149,12 @@ LinkFailure WindowsLinkService::CreateLink(const std::filesystem::path& linkPath
 
 bool WindowsLinkService::RemoveReparseNode(const std::filesystem::path& linkPath)
 {
-    return RemoveDirectoryW(NativePath(linkPath).c_str()) != FALSE;
+    return RemoveDirectoryW(NativeLinkPath(linkPath).c_str()) != FALSE;
 }
 
 std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(const std::filesystem::path& path) const
 {
-    const HANDLE handle = CreateFileW(NativePath(path).c_str(), FILE_READ_ATTRIBUTES,
+    const HANDLE handle = CreateFileW(NativeLinkPath(path).c_str(), FILE_READ_ATTRIBUTES,
                                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
                                       FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
     if (handle == INVALID_HANDLE_VALUE)

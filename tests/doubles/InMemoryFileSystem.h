@@ -25,6 +25,23 @@ public:
         nodes_[Key(path)] = Node{.kind = NodeKind::File, .target = {}, .readable = true, .size = size};
     }
 
+    void AddFileWithContents(const std::filesystem::path& path, std::string contents)
+    {
+        nodes_[Key(path)] = Node{.kind = NodeKind::File,
+                                 .target = {},
+                                 .readable = true,
+                                 .size = contents.size(),
+                                 .contents = std::move(contents)};
+    }
+
+    [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const
+    {
+        const auto node = nodes_.find(Key(path));
+
+        return node == nodes_.end() || node->second.kind != NodeKind::File ? std::nullopt
+                                                                           : std::optional(node->second.contents);
+    }
+
     void AddLink(const std::filesystem::path& path, const std::filesystem::path& target)
     {
         nodes_[Key(path)] = Node{.kind = NodeKind::Link, .target = target, .readable = true};
@@ -260,6 +277,7 @@ private:
         std::filesystem::path target{};
         bool readable = true;
         std::uintmax_t size = 0;
+        std::string contents;
     };
 
     [[nodiscard]] static std::string Key(const std::filesystem::path& path)

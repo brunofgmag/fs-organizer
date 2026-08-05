@@ -9,18 +9,19 @@
 
 #include <windows.h>
 
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <system_error>
 
+#include "infrastructure/fileops/ExtendedPaths.h"
 #include "support/FileClock.h"
 
 namespace
 {
     std::wstring NativePath(const std::filesystem::path& path)
     {
-        std::filesystem::path native = path.lexically_normal();
-        native.make_preferred();
-        return native.wstring();
+        return WithExtendedPrefix(path).wstring();
     }
 
     DWORD AttributesWithoutFollowingLinks(const std::filesystem::path& path)
@@ -44,13 +45,14 @@ bool WindowsFilesystemProbe::IsReparsePoint(const std::filesystem::path& path) c
 bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& path) const
 {
     std::error_code error;
-    return std::filesystem::is_directory(path, error);
+    return std::filesystem::is_directory(WithExtendedPrefix(path), error);
 }
 
 std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildDirectories(const std::filesystem::path& path) const
 {
     std::error_code error;
-    std::filesystem::directory_iterator entry(path, std::filesystem::directory_options::skip_permission_denied, error);
+    std::filesystem::directory_iterator entry(WithExtendedPrefix(path),
+                                              std::filesystem::directory_options::skip_permission_denied, error);
     if (error)
     {
         return {};
@@ -64,7 +66,7 @@ std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildDirectories(cons
         const DWORD attributes = AttributesWithoutFollowingLinks(entry->path());
         if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
         {
-            children.push_back(entry->path());
+            children.push_back(path / entry->path().filename());
         }
 
         entry.increment(error);
@@ -122,7 +124,7 @@ std::optional<std::chrono::system_clock::time_point>
 WindowsFilesystemProbe::LastWriteTime(const std::filesystem::path& path) const
 {
     std::error_code error;
-    const std::filesystem::file_time_type written = std::filesystem::last_write_time(path, error);
+    const std::filesystem::file_time_type written = std::filesystem::last_write_time(WithExtendedPrefix(path), error);
     if (error)
     {
         return std::nullopt;
@@ -131,12 +133,25 @@ WindowsFilesystemProbe::LastWriteTime(const std::filesystem::path& path) const
     return SystemTimeOf(written);
 }
 
+std::optional<std::string> WindowsFilesystemProbe::ContentsOf(const std::filesystem::path& path) const
+{
+    std::ifstream file(WithExtendedPrefix(path), std::ios::binary);
+    if (!file.is_open())
+    {
+        return std::nullopt;
+    }
+
+    return std::string(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
+}
+
 std::optional<std::vector<FileFingerprint>>
 WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
 {
+    const std::filesystem::path reachableRoot = WithExtendedPrefix(root);
+
     std::error_code error;
     std::filesystem::recursive_directory_iterator entry(
-        root, std::filesystem::directory_options::skip_permission_denied, error);
+        reachableRoot, std::filesystem::directory_options::skip_permission_denied, error);
     if (error)
     {
         return std::nullopt;
@@ -161,7 +176,8 @@ WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
                 return std::nullopt;
             }
 
-            files.push_back(FileFingerprint{.relativePath = entry->path().lexically_relative(root), .size = size});
+            files.push_back(
+                FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
         }
 
         entry.increment(error);
