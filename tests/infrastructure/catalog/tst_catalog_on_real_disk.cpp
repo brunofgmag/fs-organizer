@@ -18,6 +18,7 @@ namespace
     private slots:
         static void AnAddonPastTheOldCeilingIsScannedWithTheTitleFromItsManifest();
         static void ACategoryMarkerPastTheOldCeilingIsRead();
+        static void TheDeclaredDependenciesComeOffTheSameFileTheScanAlreadyOpens();
     };
 }
 
@@ -94,6 +95,40 @@ void CatalogOnRealDiskTest::ACategoryMarkerPastTheOldCeilingIsRead()
         QCOMPARE(child.kind, TreeNodeKind::Category);
         QCOMPARE(child.declaredAsCategory, child.path == declared);
     }
+}
+
+void CatalogOnRealDiskTest::TheDeclaredDependenciesComeOffTheSameFileTheScanAlreadyOpens()
+{
+    const Disk disk;
+    const std::filesystem::path library = FolderPastTheCeiling(disk.Root(), "Library");
+    const std::filesystem::path addon = library / "Utils" / "sim-rate-selector";
+
+    WriteFilePastTheCeiling(ManifestPathIn(addon), R"({
+      "dependencies": [
+        {"name": "fs-base-propdefs", "package_version": "0.1.2"},
+        {"name": "as a346 light mod", "package_version": "1.0"}
+      ],
+      "title": "Sim Rate Selector",
+      "package_version": "1.2.3"
+    })");
+
+    const Catalog catalog;
+    const TreeNode root = catalog.scanner.Scan(library);
+
+    const TreeNode* category = Only(root);
+    QVERIFY(category != nullptr);
+
+    const TreeNode* scanned = Only(*category);
+    QVERIFY(scanned != nullptr);
+    QVERIFY(scanned->addon.has_value());
+
+    const std::vector<DeclaredDependency>& declared = scanned->addon->manifest.dependencies;
+
+    QCOMPARE(declared.size(), std::size_t{2});
+    QCOMPARE(declared[0].name, std::string{"fs-base-propdefs"});
+    QCOMPARE(declared[0].declaredVersion, std::string{"0.1.2"});
+    QCOMPARE(declared[1].name, std::string{"as a346 light mod"});
+    QCOMPARE(scanned->addon->manifest.packageVersion, std::string{"1.2.3"});
 }
 
 QTEST_APPLESS_MAIN(CatalogOnRealDiskTest)
