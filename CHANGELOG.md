@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/brunofgmag/fs-organizer/compare/v0.4.0...v0.5.0) (2026-08-05)
+
+
+### Features
+
+* **theme:** give every tone one job and measure the pairs it paints ([#17](https://github.com/brunofgmag/fs-organizer/issues/17)) ([57bfcad](https://github.com/brunofgmag/fs-organizer/commit/57bfcadbcf5c3e1ca99db56d247cc4aa8bdd127d))
+
 ## [0.4.0](https://github.com/brunofgmag/fs-organizer/compare/v0.3.3...v0.4.0) (2026-08-05)
 
 
