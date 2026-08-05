@@ -22,6 +22,7 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/DependencyReport.cpp
         src/application/ImportService.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp

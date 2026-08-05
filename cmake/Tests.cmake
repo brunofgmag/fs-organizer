@@ -135,6 +135,13 @@ fsorg_add_qt_test(fsorg-import-service-tests import-service
         src/domain/importing/ImportPaths.h)
 target_link_libraries(fsorg-import-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-dependency-report-tests dependency-report
+        tests/application/tst_dependency_report.cpp
+        tests/doubles/FakeSimulatorPackages.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-dependency-report-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         tests/application/tst_legacy_config_importer.cpp
         tests/doubles/FakeFilesystemProbe.h
