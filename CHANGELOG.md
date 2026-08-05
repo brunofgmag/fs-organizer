@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/brunofgmag/fs-organizer/compare/v0.5.0...v0.6.0) (2026-08-05)
+
+
+### Features
+
+* **sim:** answer whether the simulator already carries a package ([#19](https://github.com/brunofgmag/fs-organizer/issues/19)) ([4c002d3](https://github.com/brunofgmag/fs-organizer/commit/4c002d3863c0a8e472681f8f2e5c5b13024f4dbc))
+
 ## [0.5.0](https://github.com/brunofgmag/fs-organizer/compare/v0.4.0...v0.5.0) (2026-08-05)
 
 
