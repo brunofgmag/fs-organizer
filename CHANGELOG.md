@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/brunofgmag/fs-organizer/compare/v0.7.0...v0.8.0) (2026-08-05)
+
+
+### Features
+
+* **sizing:** measure the disk each category and addon occupies ([#23](https://github.com/brunofgmag/fs-organizer/issues/23)) ([e03d16c](https://github.com/brunofgmag/fs-organizer/commit/e03d16cd379c54a8cdd2a12d10b6c5915b26ea41))
+
 ## [0.7.0](https://github.com/brunofgmag/fs-organizer/compare/v0.6.0...v0.7.0) (2026-08-05)
 
 
