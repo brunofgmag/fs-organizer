@@ -277,7 +277,7 @@ private:
         std::filesystem::path target{};
         bool readable = true;
         std::uintmax_t size = 0;
-        std::string contents;
+        std::string contents{};
     };
 
     [[nodiscard]] static std::string Key(const std::filesystem::path& path)
