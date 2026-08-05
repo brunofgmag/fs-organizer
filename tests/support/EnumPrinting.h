@@ -11,6 +11,7 @@
 #include "domain/model/LinkType.h"
 #include "domain/model/OperationKind.h"
 #include "domain/model/OperationRecord.h"
+#include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
 
 namespace QTest
@@ -159,6 +160,19 @@ namespace QTest
         }
 
         return qstrdup("OperationKind(?)");
+    }
+
+    template<>
+    inline char* toString(const PackagePresence& t)
+    {
+        switch (t)
+        {
+        case PackagePresence::Present: return qstrdup("Present");
+        case PackagePresence::Absent: return qstrdup("Absent");
+        case PackagePresence::Unverifiable: return qstrdup("Unverifiable");
+        }
+
+        return qstrdup("PackagePresence(?)");
     }
 
     template<>
