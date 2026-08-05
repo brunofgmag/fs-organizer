@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/brunofgmag/fs-organizer/compare/v0.3.3...v0.4.0) (2026-08-05)
+
+
+### Features
+
+* **fileops:** reach paths past the old 260-character ceiling ([#15](https://github.com/brunofgmag/fs-organizer/issues/15)) ([0d08601](https://github.com/brunofgmag/fs-organizer/commit/0d086012dcd703224012cd4ee7a9717e3dcd2032))
+
 ## [0.3.3](https://github.com/brunofgmag/fs-organizer/compare/v0.3.2...v0.3.3) (2026-08-03)
 
 
