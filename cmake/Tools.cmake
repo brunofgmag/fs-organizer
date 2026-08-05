@@ -42,6 +42,26 @@ add_custom_command(TARGET fsorg-packages POST_BUILD
         "$<TARGET_FILE_DIR:fsorg-packages>"
         VERBATIM)
 
+add_executable(fsorg-size
+        tools/fsorg-size/main.cpp
+)
+
+target_include_directories(fsorg-size PRIVATE "${CMAKE_SOURCE_DIR}/src")
+
+target_compile_definitions(fsorg-size PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+
+if (MSVC)
+    target_compile_options(fsorg-size PRIVATE /permissive- /Zc:preprocessor)
+endif ()
+
+target_link_libraries(fsorg-size PRIVATE fsorg-application fsorg-infrastructure Qt6::Core)
+
+add_custom_command(TARGET fsorg-size POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::Core>"
+        "$<TARGET_FILE_DIR:fsorg-size>"
+        VERBATIM)
+
 add_executable(fsorg-shot
         tools/fsorg-shot/main.cpp
         tools/shared/DisposableState.h
