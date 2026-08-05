@@ -8,8 +8,10 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
+#include "application/DependencyReport.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "domain/ports/SimulatorPackages.h"
 #include "domain/tree/CategorySuggester.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/MoveTarget.h"
@@ -23,6 +25,7 @@ public:
     AddonTreeViewModel(Session& session,
                        ProfileService& service,
                        AddonTreeModel& model,
+                       const SimulatorPackages& packages,
                        const SessionNotifier& notifier,
                        QObject* parent = nullptr);
 
@@ -64,6 +67,8 @@ public:
 
     [[nodiscard]] std::vector<CategorySuggestion> SuggestionsFor(const TreeNode* node) const;
 
+    [[nodiscard]] DependencyReport DependenciesOf(const TreeNode* node) const;
+
     [[nodiscard]] LibraryReport AddLibrary(const std::filesystem::path& path) const;
 
     [[nodiscard]] bool CanUndo() const;
@@ -91,6 +96,7 @@ private:
     Session& session_;
     ProfileService& service_;
     AddonTreeModel& model_;
+    const SimulatorPackages& packages_;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H

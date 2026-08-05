@@ -135,6 +135,13 @@ fsorg_add_qt_test(fsorg-import-service-tests import-service
         src/domain/importing/ImportPaths.h)
 target_link_libraries(fsorg-import-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-dependency-report-tests dependency-report
+        tests/application/tst_dependency_report.cpp
+        tests/doubles/FakeSimulatorPackages.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-dependency-report-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         tests/application/tst_legacy_config_importer.cpp
         tests/doubles/FakeFilesystemProbe.h
@@ -399,6 +406,10 @@ fsorg_add_qt_test(fsorg-journal-model-tests journal-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-journal-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-dependency-text-tests dependency-text
+        tests/viewmodel/tst_dependency_text.cpp)
+target_link_libraries(fsorg-dependency-text-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-failure-text-tests failure-text
         tests/viewmodel/tst_failure_text.cpp)
 target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
@@ -419,6 +430,7 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/doubles/FakeOperationJournal.h
         tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSimulatorPackages.h
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
@@ -548,6 +560,13 @@ fsorg_add_qt_test(fsorg-content-xml-packages-tests content-xml-packages
 target_link_libraries(fsorg-content-xml-packages-tests PRIVATE fsorg-infrastructure)
 target_compile_definitions(fsorg-content-xml-packages-tests PRIVATE
         FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-profile-packages-tests profile-packages
+        tests/infrastructure/sim/tst_profile_packages.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h)
+target_link_libraries(fsorg-profile-packages-tests PRIVATE fsorg-infrastructure)
 
 if (WIN32)
     fsorg_add_qt_test(fsorg-extended-paths-tests extended-paths
@@ -727,6 +746,12 @@ fsorg_add_qt_test(fsorg-context-panel-tests context-panel
         assets/resources.qrc)
 target_link_libraries(fsorg-context-panel-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
+
+fsorg_add_qt_test(fsorg-dependency-section-tests dependency-section
+        tests/view/panels/tst_dependency_section.cpp
+        assets/resources.qrc)
+target_link_libraries(fsorg-dependency-section-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-dependency-section-tests dependency-section)
 
 fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         tests/view/delegates/tst_row_delegate.cpp

@@ -42,3 +42,25 @@ std::vector<ContentListLocation> ContentListLocations(const std::vector<UserCfgL
 
     return found;
 }
+
+std::optional<ChosenContentList> ChooseContentList(const std::vector<ContentListLocation>& locations,
+                                                   const SimulatorVariant variant)
+{
+    const auto ofTheVariant = [variant](const ContentListLocation& location)
+    {
+        return location.variant == variant;
+    };
+
+    const auto chosen = std::ranges::find_if(locations, ofTheVariant);
+    if (chosen == locations.end())
+    {
+        return std::nullopt;
+    }
+
+    const bool thereWasSomethingToChooseBetween = std::ranges::count_if(locations, ofTheVariant) > 1;
+
+    return ChosenContentList{.listPath = chosen->listPath,
+                             .accountFolder = thereWasSomethingToChooseBetween
+                                 ? chosen->listPath.parent_path().filename().string()
+                                 : std::string()};
+}

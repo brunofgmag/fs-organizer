@@ -68,154 +68,154 @@
 <context>
     <name>AddonTreePage</name>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="151"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="152"/>
         <source>Reading the library…</source>
         <translation>Lendo a biblioteca…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="157"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="158"/>
         <source>Nothing changed</source>
         <translation>Nada foi alterado</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="163"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="164"/>
         <source>Simulator open</source>
         <translation>Simulador aberto</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="164"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="165"/>
         <source>The simulator is running. The links were created, but it will only see the change after it is restarted.</source>
         <translation>O simulador está em execução. Os links foram criados, mas ele só vai enxergar a mudança depois de ser reiniciado.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="186"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="187"/>
         <source>Check the selected ones</source>
         <translation>Marcar selecionados</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="187"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="188"/>
         <source>Uncheck the selected ones</source>
         <translation>Desmarcar selecionados</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="188"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="189"/>
         <source>Undo the last batch</source>
         <translation>Desfazer último lote</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="189"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="190"/>
         <source>Read again from the disk</source>
         <translation>Reler do disco</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="190"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="191"/>
         <source>Search addon…</source>
         <translation>Buscar addon…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="191"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="192"/>
         <source>Hide empty categories</source>
         <translation>Ocultar categorias vazias</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="192"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="443"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="193"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="448"/>
         <source>Repoint to the library</source>
         <translation>Reapontar para a biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="193"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="446"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="757"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="194"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="451"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="762"/>
         <source>Move to…</source>
         <translation>Mover para…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="194"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="195"/>
         <source>Open the folder</source>
         <translation>Abrir a pasta</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="195"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="196"/>
         <source>Repairing never touches the real files: only the reparse node is rewritten.</source>
         <translation>Reparar nunca toca os arquivos reais: só o nó de reparse é reescrito.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="196"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="264"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="197"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="265"/>
         <source>Addon selected</source>
         <translation>Addon selecionado</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="197"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="198"/>
         <source>This profile has no library yet.</source>
         <translation>Este perfil ainda não tem biblioteca.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="198"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="199"/>
         <source>A library is the folder where your addons live, outside the simulator. Enabling an addon creates a link from the simulator to there. Nothing is copied or moved.</source>
         <translation>Uma biblioteca é a pasta onde os seus addons moram, fora do simulador. Habilitar um addon cria um link do simulador para lá. Nada é copiado nem movido.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="200"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="201"/>
         <source>Register library…</source>
         <translation>Cadastrar biblioteca…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="329"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="332"/>
         <source>Category</source>
         <translation>Categoria</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="330"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="333"/>
         <source>In the library</source>
         <translation>Na biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="334"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="337"/>
         <source>Linked in</source>
         <translation>Link em</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="335"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="338"/>
         <source>Target exists</source>
         <translation>Alvo existe</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="335"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="338"/>
         <source>no, the link cannot find the folder</source>
         <translation>não, o link não acha a pasta</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="335"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="337"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="338"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="340"/>
         <source>yes</source>
         <translation>sim</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="337"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="340"/>
         <source>Enabled</source>
         <translation>Habilitado</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="337"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="340"/>
         <source>no</source>
         <translation>não</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="343"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="346"/>
         <source>Version</source>
         <translation>Versão</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="348"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="351"/>
         <source>Content</source>
         <translation>Conteúdo</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="348"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="601"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="936"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="351"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="606"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="941"/>
         <source>%n addon</source>
         <translation>
             <numerusform>%n addon</numerusform>
@@ -223,49 +223,49 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="349"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="352"/>
         <source>Destination</source>
         <translation>Destino</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="395"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="399"/>
         <source>Addons</source>
         <translation>Addons</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="396"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="400"/>
         <source>Enabled</source>
         <comment>several addons</comment>
         <translation>Habilitados</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="396"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="400"/>
         <source>%1 of %2</source>
         <translation>%1 de %2</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="401"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="405"/>
         <source>Categories</source>
         <translation>Categorias</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="406"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="410"/>
         <source>Broken</source>
         <translation>Quebrados</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="411"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="415"/>
         <source>Away from the destination</source>
         <translation>Fora do destino</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="414"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="418"/>
         <source>Spread across</source>
         <translation>Espalhados por</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="414"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="935"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="418"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="940"/>
         <source>%n category</source>
         <translation>
             <numerusform>%n categoria</numerusform>
@@ -273,7 +273,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="416"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="420"/>
         <source>%n item selected</source>
         <translation>
             <numerusform>%n item selecionado</numerusform>
@@ -281,7 +281,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="443"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="448"/>
         <source>Repoint %n addon</source>
         <translation>
             <numerusform>Reapontar %n addon</numerusform>
@@ -289,7 +289,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="446"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="451"/>
         <source>Move %n addon to…</source>
         <translation>
             <numerusform>Mover %n addon para…</numerusform>
@@ -297,22 +297,22 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="509"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="514"/>
         <source>Select at least one addon or category.</source>
         <translation>Selecione ao menos um addon ou categoria.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="540"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="545"/>
         <source>Enable in bulk</source>
         <translation>Ligar em massa</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="540"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="545"/>
         <source>Disable in bulk</source>
         <translation>Desligar em massa</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="541"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="546"/>
         <source>This will enable %1 addons at once.
 
 Continue?</source>
@@ -321,7 +321,7 @@ Continue?</source>
 Continuar?</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="542"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="547"/>
         <source>This will disable %1 addons at once.
 
 Continue?</source>
@@ -330,13 +330,13 @@ Continue?</source>
 Continuar?</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="567"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="572"/>
         <source>Nothing to do: the selection was already the way you asked.</source>
         <translation>Nada a fazer: a seleção já estava como você pediu.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="568"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="581"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="573"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="586"/>
         <source>%n operation finished.</source>
         <translation>
             <numerusform>%n operação concluída.</numerusform>
@@ -344,12 +344,12 @@ Continuar?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="578"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="583"/>
         <source>Not everything was applied</source>
         <translation>Nem tudo foi aplicado</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="579"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="584"/>
         <source>%n operation failed. Nothing was deleted.</source>
         <translation>
             <numerusform>%n operação falhou. Nada foi apagado.</numerusform>
@@ -357,13 +357,13 @@ Continuar?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="585"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="601"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="590"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="606"/>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="585"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="590"/>
         <source>%n operation finished</source>
         <translation>
             <numerusform>%n operação concluída</numerusform>
@@ -371,7 +371,7 @@ Continuar?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="586"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="591"/>
         <source>%n failed</source>
         <translation>
             <numerusform>%n falhou</numerusform>
@@ -379,12 +379,12 @@ Continuar?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="593"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="598"/>
         <source>Register a library to get started.</source>
         <translation>Cadastre uma biblioteca para começar.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="601"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="606"/>
         <source>%n enabled</source>
         <translation>
             <numerusform>%n habilitado</numerusform>
@@ -392,77 +392,77 @@ Continuar?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="735"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="740"/>
         <source>Resolve the copy conflict…</source>
         <translation>Resolver o conflito de cópia…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="772"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="777"/>
         <source>New category here…</source>
         <translation>Nova categoria aqui…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="775"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="780"/>
         <source>New category</source>
         <translation>Nova categoria</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="780"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="785"/>
         <source>Suggest categories…</source>
         <translation>Sugerir categorias…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="792"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="797"/>
         <source>Rename category…</source>
         <translation>Renomear categoria…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="799"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="804"/>
         <source>Rename category</source>
         <translation>Renomear categoria</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="809"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="814"/>
         <source>Delete category</source>
         <translation>Apagar categoria</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="823"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="828"/>
         <source>Category suggestions</source>
         <translation>Sugestões de categoria</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="824"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="829"/>
         <source>No addon from here is in a category other than the one the rules suggest.</source>
         <translation>Nenhum addon daqui está numa categoria diferente da que as regras sugerem.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="841"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="846"/>
         <source>Link again in the profile destination</source>
         <translation>Religar no destino do perfil</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="849"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="854"/>
         <source>Adopt the destination the addons are already in</source>
         <translation>Adotar o destino em que os addons já estão</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="871"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="876"/>
         <source>Inherit the destination from above</source>
         <translation>Herdar o destino de cima</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="880"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="885"/>
         <source>Pin the destination to %1</source>
         <translation>Fixar o destino em %1</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="890"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="895"/>
         <source>Destination changed</source>
         <translation>Destino alterado</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="891"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="896"/>
         <source>%n addon from here is still linked away from the destination the profile now says to use.</source>
         <translation>
             <numerusform>%n addon daqui continua ligado fora do destino que o perfil agora manda usar.</numerusform>
@@ -470,37 +470,37 @@ Continuar?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="895"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="900"/>
         <source>Link again now</source>
         <translation>Religar agora</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="896"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="901"/>
         <source>Leave it as it is</source>
         <translation>Deixar como está</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="917"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="922"/>
         <source>Choose the library folder</source>
         <translation>Escolha a pasta da biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="927"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="932"/>
         <source>Repeated library</source>
         <translation>Biblioteca repetida</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="928"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="933"/>
         <source>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</source>
         <translation>Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz onde os addons ficam guardados; as subpastas dela viram categorias.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="933"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="938"/>
         <source>Library registered</source>
         <translation>Biblioteca cadastrada</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="934"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="939"/>
         <source>%1 · %2, %3</source>
         <translation>%1 · %2, %3</translation>
     </message>
@@ -508,28 +508,28 @@ Continuar?</translation>
 <context>
     <name>AddonTreeViewModel</name>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="124"/>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="141"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="125"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="142"/>
         <source>Give the category a name.</source>
         <translation>Dê um nome à categoria.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="188"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="189"/>
         <source>Select at least one addon to move.</source>
         <translation>Selecione ao menos um addon para mover.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="235"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="236"/>
         <source>The enabled addons of this category are linked in different destinations. Choose a destination for the category instead of adopting what is on the disk.</source>
         <translation>Os addons habilitados desta categoria estão ligados em destinos diferentes. Escolha um destino para a categoria em vez de adotar o que está no disco.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="242"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="243"/>
         <source>No addon of this category is enabled, so there is no destination to adopt.</source>
         <translation>Nenhum addon desta categoria está habilitado, então não há destino para adotar.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="281"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="282"/>
         <source>No addon from here is linked away from the destination the profile says to use.</source>
         <translation>Nenhum addon daqui está ligado fora do destino que o perfil manda usar.</translation>
     </message>
@@ -1047,9 +1047,32 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>ContextPanel</name>
     <message>
-        <location filename="../src/view/panels/ContextPanel.cpp" line="140"/>
+        <location filename="../src/view/panels/ContextPanel.cpp" line="156"/>
         <source>Close the panel</source>
         <translation>Fechar o painel</translation>
+    </message>
+</context>
+<context>
+    <name>DependencySection</name>
+    <message>
+        <location filename="../src/view/panels/DependencySection.cpp" line="72"/>
+        <source>Dependencies · %1</source>
+        <translation>Dependências · %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/panels/DependencySection.cpp" line="80"/>
+        <source>FS Organizer reports and does not conclude: nothing here blocks enabling this addon, and no version is compared against another.</source>
+        <translation>O FS Organizer relata e não conclui: nada aqui impede habilitar este addon, e nenhuma versão é comparada com outra.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/panels/DependencySection.cpp" line="110"/>
+        <source>needs %1</source>
+        <translation>pede %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/panels/DependencySection.cpp" line="116"/>
+        <source>has %1</source>
+        <translation>tem %1</translation>
     </message>
 </context>
 <context>
@@ -2440,7 +2463,7 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>concluída</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="54"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="55"/>
         <source>Category name:</source>
         <translation>Nome da categoria:</translation>
     </message>
@@ -2518,45 +2541,75 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>Agora não</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="149"/>
+        <location filename="../src/main.cpp" line="153"/>
         <source>Unreadable configuration</source>
         <translation>Configuração ilegível</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="150"/>
+        <location filename="../src/main.cpp" line="154"/>
         <source>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</source>
         <translation>O arquivo de configuração existe mas não pôde ser lido, então o FS Organizer não vai sobrescrevê-lo. Mova ou conserte %1 e abra o programa de novo.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="246"/>
+        <location filename="../src/main.cpp" line="256"/>
         <source>Language not applied</source>
         <translation>Idioma não aplicado</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="247"/>
+        <location filename="../src/main.cpp" line="257"/>
         <source>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</source>
         <translation>A tradução de %1 não carregou, então a interface continua em inglês. A escolha foi gravada mesmo assim.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="257"/>
-        <location filename="../src/main.cpp" line="471"/>
+        <location filename="../src/main.cpp" line="267"/>
+        <location filename="../src/main.cpp" line="481"/>
         <source>Could not save</source>
         <translation>Não foi possível salvar</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="258"/>
+        <location filename="../src/main.cpp" line="268"/>
         <source>The option could not be written to %1, so it stays as it was.</source>
         <translation>A opção não pôde ser gravada em %1, então ela continua como estava.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="472"/>
+        <location filename="../src/main.cpp" line="482"/>
         <source>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</source>
         <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="423"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="466"/>
         <source>Unregister</source>
         <translation>Descadastrar</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/DependencyText.cpp" line="12"/>
+        <source>In this library, on</source>
+        <translation>Nesta biblioteca, ligado</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/DependencyText.cpp" line="12"/>
+        <source>In this library, off</source>
+        <translation>Nesta biblioteca, desligado</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/DependencyText.cpp" line="13"/>
+        <source>In the simulator, outside the library</source>
+        <translation>No simulador, fora da biblioteca</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/DependencyText.cpp" line="14"/>
+        <source>Not verifiable</source>
+        <translation>Não dá para verificar</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/DependencyText.cpp" line="29"/>
+        <source>From the simulator package list of %1.</source>
+        <translation>Da lista de pacotes do simulador de %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/DependencyText.cpp" line="32"/>
+        <source>From the simulator package list of %1, account %2.</source>
+        <translation>Da lista de pacotes do simulador de %1, conta %2.</translation>
     </message>
 </context>
 <context>

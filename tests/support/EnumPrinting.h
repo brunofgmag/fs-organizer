@@ -3,6 +3,7 @@
 
 #include <QtTest/QtTest>
 
+#include "application/DependencyReport.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
 #include "domain/model/DestinationEntry.h"
@@ -160,6 +161,19 @@ namespace QTest
         }
 
         return qstrdup("OperationKind(?)");
+    }
+
+    template<>
+    inline char* toString(const DependencyResolution& t)
+    {
+        switch (t)
+        {
+        case DependencyResolution::InThisLibrary: return qstrdup("InThisLibrary");
+        case DependencyResolution::InTheSimulator: return qstrdup("InTheSimulator");
+        case DependencyResolution::Unverifiable: return qstrdup("Unverifiable");
+        }
+
+        return qstrdup("DependencyResolution(?)");
     }
 
     template<>

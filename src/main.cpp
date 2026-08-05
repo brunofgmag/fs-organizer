@@ -27,6 +27,8 @@
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
+#include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
@@ -137,7 +139,9 @@ int main(int argc, char* argv[])
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
-    const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
+    const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
+    const WindowsSimulatorLocator locator(userCfgLocations);
+    ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe));
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
     JsonSettingsRepository settings(SettingsFilePath());
@@ -183,7 +187,13 @@ int main(int argc, char* argv[])
     Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
     AddonTreeModel model;
-    AddonTreeViewModel treeViewModel(session, profileService, model, notifier);
+    AddonTreeViewModel treeViewModel(session, profileService, model, packages, notifier);
+
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
+                     [&packages, &session]
+                     {
+                         packages.Reload(session.Profile().variant);
+                     });
     auto* page = new AddonTreePage(treeViewModel, model, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);

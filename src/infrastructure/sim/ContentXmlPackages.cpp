@@ -83,6 +83,11 @@ std::optional<std::chrono::system_clock::time_point> ContentXmlPackages::ListTak
     return takenAt_;
 }
 
+std::string ContentXmlPackages::ListAccountFolder() const
+{
+    return {};
+}
+
 std::size_t ContentXmlPackages::HowManyEntries() const
 {
     return entries_;

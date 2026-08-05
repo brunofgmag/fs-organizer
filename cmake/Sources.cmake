@@ -22,6 +22,7 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/DependencyReport.cpp
         src/application/ImportService.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
@@ -43,6 +44,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/settings/JsonSettingsRepository.cpp
         src/infrastructure/sim/ContentListLocations.cpp
         src/infrastructure/sim/ContentXmlPackages.cpp
+        src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
@@ -70,6 +72,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/DependencyText.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
@@ -109,6 +112,7 @@ set(VIEW_SOURCES
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp
+        src/view/panels/DependencySection.cpp
         src/view/panels/EmptyState.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp

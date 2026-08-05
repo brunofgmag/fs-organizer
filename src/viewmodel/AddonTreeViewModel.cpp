@@ -24,9 +24,10 @@ namespace
 AddonTreeViewModel::AddonTreeViewModel(Session& session,
                                        ProfileService& service,
                                        AddonTreeModel& model,
+                                       const SimulatorPackages& packages,
                                        const SessionNotifier& notifier,
                                        QObject* parent)
-    : QObject(parent), session_(session), service_(service), model_(model)
+    : QObject(parent), session_(session), service_(service), model_(model), packages_(packages)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &AddonTreeViewModel::AdoptScan);
 
@@ -297,6 +298,16 @@ std::vector<CategorySuggestion> AddonTreeViewModel::SuggestionsFor(const TreeNod
     const TreeNode* tree = LibraryTreeHolding(*node);
 
     return tree == nullptr ? std::vector<CategorySuggestion>{} : SuggestCategories(*tree, AddonsUnder(*node));
+}
+
+DependencyReport AddonTreeViewModel::DependenciesOf(const TreeNode* node) const
+{
+    if (node == nullptr || node->kind != TreeNodeKind::Addon || !node->addon.has_value())
+    {
+        return {};
+    }
+
+    return ReportDependencies(*node->addon, session_.Snapshot(), packages_);
 }
 
 std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) const

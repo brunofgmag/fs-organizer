@@ -21,6 +21,10 @@ namespace
         static void TheOlderLayoutWithTheListBesideTheUserCfgIsFoundToo();
         static void EveryAccountFolderIsReportedAndTheOrderIsTheSameOnEveryMachine();
         static void TheBackupsTheSimulatorLeavesBesideItAreNeverTheList();
+        static void TheOnlyListOfTheVariantIsUsedAndThereIsNothingMoreToShow();
+        static void AListOfAnotherVariantIsNeverTheOneChosen();
+        static void WithTwoAccountsTheFirstIsUsedAndTheChosenAccountFolderIsNamed();
+        static void WithNoListForTheVariantNothingIsChosen();
     };
 
     struct Machine
@@ -120,6 +124,53 @@ void ContentListLocationsTest::TheBackupsTheSimulatorLeavesBesideItAreNeverTheLi
 
     QCOMPARE(found.size(), std::size_t{1});
     QCOMPARE(found[0].listPath, list);
+}
+
+void ContentListLocationsTest::TheOnlyListOfTheVariantIsUsedAndThereIsNothingMoreToShow()
+{
+    const std::vector<ContentListLocation> found = {
+        {.variant = SimulatorVariant::MSFS2024, .listPath = "D:/AppData/Flight Simulator 2024/Bruno/Content.xml"}};
+
+    const std::optional<ChosenContentList> chosen = ChooseContentList(found, SimulatorVariant::MSFS2024);
+
+    QVERIFY(chosen.has_value());
+    QCOMPARE(chosen->listPath, std::filesystem::path("D:/AppData/Flight Simulator 2024/Bruno/Content.xml"));
+    QCOMPARE(chosen->accountFolder, std::string());
+}
+
+void ContentListLocationsTest::AListOfAnotherVariantIsNeverTheOneChosen()
+{
+    const std::vector<ContentListLocation> found = {
+        {.variant = SimulatorVariant::MSFS2020, .listPath = "D:/AppData/Flight Simulator/Bruno/Content.xml"},
+        {.variant = SimulatorVariant::MSFS2024, .listPath = "D:/AppData/Flight Simulator 2024/Bruno/Content.xml"}};
+
+    const std::optional<ChosenContentList> chosen = ChooseContentList(found, SimulatorVariant::MSFS2020);
+
+    QVERIFY(chosen.has_value());
+    QCOMPARE(chosen->listPath, std::filesystem::path("D:/AppData/Flight Simulator/Bruno/Content.xml"));
+    QCOMPARE(chosen->accountFolder, std::string());
+}
+
+void ContentListLocationsTest::WithTwoAccountsTheFirstIsUsedAndTheChosenAccountFolderIsNamed()
+{
+    const std::vector<ContentListLocation> found = {
+        {.variant = SimulatorVariant::MSFS2024, .listPath = "D:/AppData/Flight Simulator 2024/Bruno/Content.xml"},
+        {.variant = SimulatorVariant::MSFS2024, .listPath = "D:/AppData/Flight Simulator 2024/NathosT/Content.xml"}};
+
+    const std::optional<ChosenContentList> chosen = ChooseContentList(found, SimulatorVariant::MSFS2024);
+
+    QVERIFY(chosen.has_value());
+    QCOMPARE(chosen->listPath, std::filesystem::path("D:/AppData/Flight Simulator 2024/Bruno/Content.xml"));
+    QCOMPARE(chosen->accountFolder, std::string("Bruno"));
+}
+
+void ContentListLocationsTest::WithNoListForTheVariantNothingIsChosen()
+{
+    const std::vector<ContentListLocation> found = {
+        {.variant = SimulatorVariant::MSFS2020, .listPath = "D:/AppData/Flight Simulator/Bruno/Content.xml"}};
+
+    QVERIFY(!ChooseContentList(found, SimulatorVariant::MSFS2024).has_value());
+    QVERIFY(!ChooseContentList({}, SimulatorVariant::MSFS2024).has_value());
 }
 
 QTEST_APPLESS_MAIN(ContentListLocationsTest)
