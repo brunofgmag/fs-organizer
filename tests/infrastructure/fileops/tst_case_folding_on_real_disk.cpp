@@ -75,28 +75,49 @@ void CaseFoldingOnRealDiskTest::TheDiskAndTheDomainAgreeOnEveryLetterOfTheDeclar
 
             const std::filesystem::path written = FolderNamed(root, upper);
             const std::filesystem::path spelledLower = FolderNamed(root, lower);
+            const QString named = QStringLiteral("U+%1").arg(static_cast<uint>(code), 4, 16, QLatin1Char('0'));
 
-            std::filesystem::remove_all(written);
-            QVERIFY(std::filesystem::create_directory(written));
+            std::error_code error;
+            std::filesystem::remove_all(written, error);
 
-            const bool theDiskSaysTheSameFolder = std::filesystem::exists(spelledLower);
-            const bool theDomainSaysTheSameFolder = ComparablePath(written) == ComparablePath(spelledLower);
-            ++measured;
-
-            if (theDiskSaysTheSameFolder != theDomainSaysTheSameFolder)
+            if (!std::filesystem::create_directory(written, error))
             {
-                disagreements.append(QStringLiteral("U+%1 (disk %2, domain %3)")
-                                         .arg(static_cast<uint>(code), 4, 16, QLatin1Char('0'))
-                                         .arg(theDiskSaysTheSameFolder)
-                                         .arg(theDomainSaysTheSameFolder));
+                disagreements.append(
+                    QStringLiteral("%1 could not be written: %2").arg(named, QString::fromStdString(error.message())));
+
+                continue;
             }
 
-            std::filesystem::remove_all(written);
+            const bool theDiskSaysTheSameFolder = std::filesystem::exists(spelledLower, error);
+
+            try
+            {
+                const bool theDomainSaysTheSameFolder = ComparablePath(written) == ComparablePath(spelledLower);
+                ++measured;
+
+                if (theDiskSaysTheSameFolder != theDomainSaysTheSameFolder)
+                {
+                    disagreements.append(QStringLiteral("%1 (disk %2, domain %3)")
+                                             .arg(named)
+                                             .arg(theDiskSaysTheSameFolder)
+                                             .arg(theDomainSaysTheSameFolder));
+                }
+            }
+            catch (const std::exception& thrown)
+            {
+                disagreements.append(
+                    QStringLiteral("%1 threw out of ComparablePath: %2").arg(named, QString::fromUtf8(thrown.what())));
+            }
+
+            std::filesystem::remove_all(written, error);
         }
     }
 
-    QVERIFY(measured > kLettersTheSweepMustReach);
-    QVERIFY2(disagreements.isEmpty(), qPrintable(disagreements.join(QStringLiteral(", "))));
+    const QString where = QStringLiteral("code page %1, %2 letters measured").arg(GetACP()).arg(measured);
+
+    QVERIFY2(disagreements.isEmpty(),
+             qPrintable(where + QStringLiteral(" -- ") + disagreements.join(QStringLiteral(", "))));
+    QVERIFY2(measured > kLettersTheSweepMustReach, qPrintable(where));
 }
 
 void CaseFoldingOnRealDiskTest::ALetterOutsideTheDeclaredRangesIsLeftAloneOnPurpose()
