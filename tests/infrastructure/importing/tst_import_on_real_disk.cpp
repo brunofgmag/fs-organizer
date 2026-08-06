@@ -39,6 +39,7 @@ namespace
         static void ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused();
         static void AStagingLeftoverPastTheOldCeilingIsFoundAndTheDiscardEmptiesTheQueue();
         static void AStagingLeftoverPastTheOldCeilingResumesIntoAFinishedImport();
+        static void TheQuarantineDetailReadsTheVersionOutOfARealManifestOnBothSides();
     };
 }
 
@@ -405,6 +406,28 @@ void ImportOnRealDiskTest::AStagingLeftoverPastTheOldCeilingResumesIntoAFinished
     QVERIFY(!ExistsPastTheCeiling(StagingPathFor(target)));
     QVERIFY(composed.service.Leftovers(profile).empty());
     QCOMPARE(NormalizeReparseTarget(composed.engine.linkService.ReadLinkTarget(request.source).value()), target);
+}
+
+void ImportOnRealDiskTest::TheQuarantineDetailReadsTheVersionOutOfARealManifestOnBothSides()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Sim/Community/nothing-declared/marker.txt", "no manifest here");
+
+    const std::vector<QuarantinedItem> held = composed.service.Quarantined(disk.Profile());
+    QCOMPARE(held.size(), std::size_t{1});
+
+    const std::vector<QuarantineDetail> details = composed.service.Describe(composed.Entries(disk), held);
+
+    QCOMPARE(details.size(), std::size_t{1});
+    QCOMPARE(details.front().version, std::string{"0.6.3"});
+    QVERIFY(details.front().WasReplaced());
+    QCOMPARE(details.front().replacedBy, disk.Destination() / "simbridge");
+    QCOMPARE(details.front().replacementVersion, std::string{"0.7.0"});
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)
