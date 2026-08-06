@@ -41,7 +41,7 @@ namespace
         }
     };
 
-    std::size_t AddonsUnder(const MeasuredNode& node)
+    std::size_t CountAddons(const MeasuredNode& node)
     {
         if (node.kind == TreeNodeKind::Addon)
         {
@@ -51,7 +51,7 @@ namespace
         std::size_t addons = 0;
         for (const MeasuredNode& child : node.children)
         {
-            addons += AddonsUnder(child);
+            addons += CountAddons(child);
         }
 
         return addons;
@@ -68,7 +68,7 @@ namespace
     {
         auto* row = new MeasuredRow;
         row->setText(0, NameOf(node));
-        row->setText(1, node.kind == TreeNodeKind::Addon ? QString() : QString::number(AddonsUnder(node)));
+        row->setText(1, node.kind == TreeNodeKind::Addon ? QString() : QString::number(CountAddons(node)));
         row->setText(2, node.measured ? AsSize(node.bytes) : QObject::tr("not measured"));
         row->setData(2, kBytesRole, static_cast<qulonglong>(node.measured ? node.bytes : 0));
         row->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
