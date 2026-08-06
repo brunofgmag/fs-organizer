@@ -26,10 +26,6 @@ namespace
         Q_OBJECT
 
     private slots:
-        static void MeasuringAddsUpEveryFolderItWasGiven();
-        static void AFolderAlreadyMeasuredAnswersWithoutTouchingTheDiskAgain();
-        static void OnlyTheLastMeasurementAskedForIsReported();
-        static void ForgettingSendsTheNextMeasurementBackToTheDisk();
         static void CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo();
         static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
     };
@@ -132,64 +128,6 @@ void ImportViewModelTest::AnImportGoesThroughTheRunnerTheViewModelWasGiven()
 
     QCOMPARE(f.runner.runs, beforeTheImport + 1);
     QCOMPARE(finished.size(), 1);
-}
-
-void ImportViewModelTest::MeasuringAddsUpEveryFolderItWasGiven()
-{
-    Fixture f;
-    const QSignalSpy measured(&f.viewModel, &ImportViewModel::SizeMeasured);
-    const QSignalSpy measuring(&f.viewModel, &ImportViewModel::SizeMeasuring);
-
-    f.viewModel.MeasureTotalSize({kSmall, kBig});
-
-    QCOMPARE(measuring.count(), 1);
-    QCOMPARE(measured.count(), 1);
-    QCOMPARE(measured.front().front().toULongLong(), 5000ULL);
-}
-
-void ImportViewModelTest::AFolderAlreadyMeasuredAnswersWithoutTouchingTheDiskAgain()
-{
-    Fixture f;
-    f.viewModel.MeasureTotalSize({kBig});
-
-    const QSignalSpy measured(&f.viewModel, &ImportViewModel::SizeMeasured);
-    const QSignalSpy measuring(&f.viewModel, &ImportViewModel::SizeMeasuring);
-
-    f.viewModel.MeasureTotalSize({kBig});
-
-    QCOMPARE(measured.count(), 1);
-    QCOMPARE(measured.front().front().toULongLong(), 4700ULL);
-    QCOMPARE(measuring.count(), 0);
-}
-
-void ImportViewModelTest::OnlyTheLastMeasurementAskedForIsReported()
-{
-    Fixture f;
-    const QSignalSpy measured(&f.viewModel, &ImportViewModel::SizeMeasured);
-
-    f.viewModel.MeasureTotalSize({kSmall});
-    f.viewModel.MeasureTotalSize({kBig});
-
-    QCOMPARE(measured.count(), 2);
-    QCOMPARE(measured.back().front().toULongLong(), 4700ULL);
-}
-
-void ImportViewModelTest::ForgettingSendsTheNextMeasurementBackToTheDisk()
-{
-    Fixture f;
-    f.viewModel.MeasureTotalSize({kSmall});
-
-    f.fileSystem.AddFile(kSmall / "scenery" / "added.bgl", 1000);
-    f.viewModel.ForgetMeasuredSizes();
-
-    const QSignalSpy measured(&f.viewModel, &ImportViewModel::SizeMeasured);
-    const QSignalSpy measuring(&f.viewModel, &ImportViewModel::SizeMeasuring);
-
-    f.viewModel.MeasureTotalSize({kSmall});
-
-    QCOMPARE(measuring.count(), 1);
-    QCOMPARE(measured.count(), 1);
-    QCOMPARE(measured.front().front().toULongLong(), 1300ULL);
 }
 
 QTEST_MAIN(ImportViewModelTest)

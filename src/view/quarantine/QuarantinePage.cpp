@@ -161,11 +161,31 @@ void QuarantinePage::ShowTheSelectedItem()
         return;
     }
 
-    if (!rows.isEmpty())
+    if (rows.isEmpty())
     {
-        detail_->Show(rows.front());
-        panel_->ShowTitle(model_.data(rows.front(), Qt::DisplayRole).toString());
+        return;
     }
+
+    detail_->Show(rows.front(), TheComparisonFor(rows.front()));
+    panel_->ShowTitle(model_.data(rows.front(), Qt::DisplayRole).toString(),
+                      model_.data(rows.front(), QuarantineModel::ReplacedRole).toBool());
+}
+
+QList<ModelRowDetail::Field> QuarantinePage::TheComparisonFor(const QModelIndex& position) const
+{
+    const QuarantineDetail* detail = model_.DetailAt(position);
+    if (detail == nullptr || !detail->WasReplaced())
+    {
+        return {};
+    }
+
+    QList<ModelRowDetail::Field> comparison;
+    comparison.append({tr("Already in place"), AsText(detail->replacedBy)});
+    comparison.append({tr("Version there"),
+                       detail->replacementVersion.empty() ? tr("the manifest does not say")
+                                                          : QString::fromStdString(detail->replacementVersion)});
+
+    return comparison;
 }
 
 void QuarantinePage::ShowTheSelectedBatch(const QModelIndexList& rows) const

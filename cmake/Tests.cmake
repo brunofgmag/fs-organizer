@@ -441,6 +441,29 @@ fsorg_add_qt_test(fsorg-failure-text-tests failure-text
         tests/viewmodel/tst_failure_text.cpp)
 target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-size-across-screens-tests size-across-screens
+        tests/viewmodel/tst_size_across_screens.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSimulatorPackages.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-size-across-screens-tests PRIVATE fsorg-viewmodel)
+
+fsorg_add_qt_test(fsorg-size-summary-tests size-summary
+        tests/viewmodel/tst_size_summary.cpp
+        src/support/SizeText.h)
+target_link_libraries(fsorg-size-summary-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-quarantine-model-tests quarantine-model
         tests/viewmodel/tst_quarantine_model.cpp
         tests/support/PathPrinting.h)

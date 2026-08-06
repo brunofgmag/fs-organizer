@@ -7,6 +7,7 @@
 
 #include <QtWidgets/QWidget>
 
+#include "view/panels/ModelRowDetail.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/SessionNotifier.h"
@@ -14,7 +15,6 @@
 class ContextPanel;
 class DependencySection;
 class EmptyState;
-class ModelRowDetail;
 class QCheckBox;
 class QLabel;
 class QLineEdit;
@@ -60,9 +60,11 @@ private:
 
     [[nodiscard]] const TreeNode* Current() const;
 
-    void ShowTheSelectedAddon() const;
+    void ShowTheSelectedAddon();
 
-    void ShowTheSelectedBatch(const QModelIndexList& rows) const;
+    void ShowTheSelectedBatch(const QModelIndexList& rows);
+
+    void ShowTheFields(const QString& size) const;
 
     void ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const;
 
@@ -138,6 +140,7 @@ private:
     QLabel* promise_ = nullptr;
     EmptyState* invite_ = nullptr;
     QPushButton* inviteAction_ = nullptr;
+    QList<ModelRowDetail::Field> fields_;
     std::set<std::string> expanded_;
     std::set<std::string> selected_;
     std::string current_;

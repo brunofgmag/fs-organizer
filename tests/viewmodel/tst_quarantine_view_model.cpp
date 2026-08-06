@@ -27,6 +27,9 @@ namespace
     private slots:
         static void TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing();
         static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
+        static void TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards();
+        static void AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain();
+        static void NothingIsReadFromTheQuarantineUntilTheScreenIsShown();
     };
 }
 
@@ -97,8 +100,14 @@ namespace
         SessionNotifier notifier;
         Session session{profiles, organizer, settings, processProbe, runner, notifier};
         QuarantineModel model;
-        QuarantineViewModel viewModel{service, profiles, session, notifier, model};
+        SizeService sizes{catalog, filesystemProbe, clock, runner};
+        QuarantineViewModel viewModel{service, profiles, session, notifier, model, sizes, runner};
     };
+
+    QString CellAt(const QuarantineModel& model, const int row, const int column)
+    {
+        return model.data(model.index(row, column, {}), Qt::DisplayRole).toString();
+    }
 }
 
 void QuarantineViewModelTest::TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing()
@@ -122,6 +131,62 @@ void QuarantineViewModelTest::TheQuarantineCatchesUpWhenTheActiveProfileFinallyL
     f.ScanLands();
 
     QCOMPARE(f.model.rowCount({}), 1);
+}
+
+void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kQuarantined) / "content.bin", 4096);
+    f.fileSystem.AddDirectory(std::filesystem::path(kDestination) / "simbridge");
+
+    TreeNode held;
+    held.kind = TreeNodeKind::Addon;
+    held.path = kQuarantined;
+    held.addon = Addon{.folderPath = kQuarantined, .manifest = Manifest{.packageVersion = "2.4.1"}};
+    f.catalog.SetTree(kQuarantined, held);
+
+    f.ScanLands();
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+
+    QCOMPARE(f.model.rowCount({}), 1);
+    QVERIFY(CellAt(f.model, 0, QuarantineModel::VersionColumn).isEmpty());
+    QVERIFY(CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(CellAt(f.model, 0, QuarantineModel::VersionColumn), QStringLiteral("2.4.1"));
+    QVERIFY(!CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QVERIFY(f.model.data(f.model.index(0, QuarantineModel::NameColumn, {}), QuarantineModel::ReplacedRole).toBool());
+}
+
+void QuarantineViewModelTest::AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kQuarantined) / "content.bin", 4096);
+    f.ScanLands();
+
+    const MeasurementCaller elsewhere = f.sizes.NewCaller();
+    f.sizes.MeasureFolders({kQuarantined}, elsewhere, Freshness::ReuseWhatIsKnown, {}, {});
+    QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
+
+    f.viewModel.Show();
+
+    QVERIFY(!CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
+}
+
+void QuarantineViewModelTest::NothingIsReadFromTheQuarantineUntilTheScreenIsShown()
+{
+    Fixture f;
+    f.ScanLands();
+
+    QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{0});
+    QVERIFY(!f.filesystemProbe.WasEnumerated("E:/Sim/_fsorganizer-quarantine"));
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

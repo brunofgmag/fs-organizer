@@ -27,6 +27,10 @@ namespace
         static void RepairingRemovesTheDeadRowsAndDropsTheAttentionCount();
         static void TheBreakdownSeparatesBrokenConflictedAndUnmanaged();
         static void TheBreakdownCountsAnAddonLinkedIntoTwoDestinations();
+        static void AManagedEntryIsMeasuredAsTheAddonItPointsAtAndNeverAsTheLink();
+        static void AnUnmanagedFolderIsMeasuredWhereItSitsBecauseThereIsNoLinkToFollow();
+        static void AnUnavailableEntryIsNotMeasuredAndTheAnswerSaysWhatIsMissing();
+        static void TwoEntriesPointingAtTheSameAddonCountItsBytesOnce();
     };
 }
 
@@ -104,8 +108,23 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, processProbe, runner, notifier};
         CommunityModel model;
-        CommunityViewModel viewModel{service, session, notifier, model};
+        SizeService sizes{catalog, filesystemProbe, clock, runner};
+        CommunityViewModel viewModel{service, session, notifier, model, sizes};
     };
+
+    constexpr auto kAddonFolder = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+
+    DestinationEntry Entry(const std::filesystem::path& path,
+                           const std::filesystem::path& target,
+                           const EntryClassification classification)
+    {
+        return DestinationEntry{.path = path, .target = target, .classification = classification};
+    }
+
+    SelectionSize LastSize(const QSignalSpy& measured)
+    {
+        return measured.isEmpty() ? SelectionSize{} : measured.back().front().value<SelectionSize>();
+    }
 }
 
 void CommunityViewModelTest::ShowingFillsTheTableFromTheSharedSnapshot()
@@ -188,6 +207,86 @@ void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCoun
     QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{0});
     QCOMPARE(attention.size(), 1);
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/gone"));
+}
+
+void CommunityViewModelTest::AManagedEntryIsMeasuredAsTheAddonItPointsAtAndNeverAsTheLink()
+{
+    Fixture f;
+    const std::filesystem::path link = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w";
+
+    f.fileSystem.AddFile(std::filesystem::path(kAddonFolder) / "content.bin", 4096);
+
+    const QSignalSpy measured(&f.viewModel, &CommunityViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({Entry(link, kAddonFolder, EntryClassification::Managed)});
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{4096});
+    QCOMPARE(LastSize(measured).measured, std::size_t{1});
+    QCOMPARE(LastSize(measured).selected, std::size_t{1});
+    QCOMPARE(f.filesystemProbe.TimesWalked(kAddonFolder), std::size_t{1});
+    QCOMPARE(f.filesystemProbe.TimesWalked(link), std::size_t{0});
+}
+
+void CommunityViewModelTest::AnUnmanagedFolderIsMeasuredWhereItSitsBecauseThereIsNoLinkToFollow()
+{
+    Fixture f;
+    const std::filesystem::path physical = std::filesystem::path(kCommunity) / "physical";
+
+    f.fileSystem.AddFile(physical / "content.bin", 700);
+
+    const QSignalSpy measured(&f.viewModel, &CommunityViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({Entry(physical, {}, EntryClassification::Unmanaged)});
+
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{700});
+    QCOMPARE(f.filesystemProbe.TimesWalked(physical), std::size_t{1});
+}
+
+void CommunityViewModelTest::AnUnavailableEntryIsNotMeasuredAndTheAnswerSaysWhatIsMissing()
+{
+    Fixture f;
+    const std::filesystem::path link = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w";
+    const std::filesystem::path adrift = std::filesystem::path(kCommunity) / "orbx-ybbn";
+
+    f.fileSystem.AddFile(std::filesystem::path(kAddonFolder) / "content.bin", 4096);
+
+    const QSignalSpy measured(&f.viewModel, &CommunityViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({Entry(link, kAddonFolder, EntryClassification::Managed),
+                                     Entry(adrift, "X:/Gone/orbx-ybbn", EntryClassification::Unavailable)});
+
+    const SelectionSize size = LastSize(measured);
+
+    QCOMPARE(size.bytes, std::uintmax_t{4096});
+    QCOMPARE(size.measured, std::size_t{1});
+    QCOMPARE(size.selected, std::size_t{2});
+    QCOMPARE(size.unmeasured.size(), std::size_t{1});
+    QCOMPARE(size.unmeasured.front().classification, EntryClassification::Unavailable);
+    QCOMPARE(size.unmeasured.front().count, std::size_t{1});
+    QCOMPARE(f.filesystemProbe.TimesWalked("X:/Gone/orbx-ybbn"), std::size_t{0});
+    QCOMPARE(f.filesystemProbe.TimesWalked(adrift), std::size_t{0});
+}
+
+void CommunityViewModelTest::TwoEntriesPointingAtTheSameAddonCountItsBytesOnce()
+{
+    Fixture f;
+    const std::filesystem::path here = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w";
+    const std::filesystem::path there = "E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w";
+
+    f.fileSystem.AddFile(std::filesystem::path(kAddonFolder) / "content.bin", 4096);
+
+    const QSignalSpy measured(&f.viewModel, &CommunityViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({Entry(here, kAddonFolder, EntryClassification::Duplicated),
+                                     Entry(there, kAddonFolder, EntryClassification::Duplicated)});
+
+    const SelectionSize size = LastSize(measured);
+
+    QCOMPARE(size.bytes, std::uintmax_t{4096});
+    QCOMPARE(size.measured, std::size_t{2});
+    QCOMPARE(size.selected, std::size_t{2});
+    QCOMPARE(f.filesystemProbe.TimesWalked(kAddonFolder), std::size_t{1});
 }
 
 QTEST_APPLESS_MAIN(CommunityViewModelTest)

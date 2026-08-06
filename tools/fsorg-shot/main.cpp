@@ -127,6 +127,40 @@ namespace
         return true;
     }
 
+    bool SelectTheFirstRows(const QWidget& page, const int many)
+    {
+        QAbstractItemView* view = TheViewThatCarriesTheRows(page);
+        if (view == nullptr || view->model() == nullptr)
+        {
+            return false;
+        }
+
+        QItemSelection chosen;
+        QModelIndex last;
+
+        for (int row = 0; row < many; ++row)
+        {
+            const QModelIndex position = view->model()->index(row, 0, {});
+            if (!position.isValid())
+            {
+                break;
+            }
+
+            chosen.select(position, position);
+            last = position;
+        }
+
+        if (!last.isValid())
+        {
+            return false;
+        }
+
+        view->setCurrentIndex(last);
+        view->selectionModel()->select(chosen, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+
+        return true;
+    }
+
     bool Save(QWidget& window, const QDir& folder, const QString& name)
     {
         const QString file = folder.filePath(name + ".png");
@@ -243,11 +277,16 @@ int main(int argc, char* argv[])
                                     "and Quarantine shots, so "
                                     "the context panel is in the picture.",
                                     "addon folder", "");
+    const QCommandLineOption batch({"b", "batch"},
+                                   "How many top rows to select before the Library, Destinations and Quarantine "
+                                   "shots, so the batch panel is in the picture. Wins over --select.",
+                                   "rows", "0");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
     parser.addOption(language);
     parser.addOption(select);
+    parser.addOption(batch);
     parser.process(app);
 
     if (const QString wanted = parser.value(theme); wanted != QLatin1String("system"))
@@ -353,20 +392,23 @@ int main(int argc, char* argv[])
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
+    SizeService sizes(catalog, filesystemProbe, clock, runner);
+
     AddonTreeModel treeModel;
     ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
     packages.Reload(session.Profile().variant);
-    AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, notifier);
+    AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
     auto* libraryPage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;
-    QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel);
+    QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel, sizes,
+                                            runner);
     auto* quarantinePage = new QuarantinePage(quarantineViewModel, quarantineModel);
 
     JournalModel journalModel;
@@ -378,7 +420,6 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
-    SizeService sizes(catalog, filesystemProbe, clock, runner);
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
@@ -435,9 +476,20 @@ int main(int argc, char* argv[])
     };
 
     const QString wantedAddon = parser.value(select);
+    const int wantedRows = parser.value(batch).toInt();
 
-    const auto selectIfAsked = [&wantedAddon](const QWidget& page, const QString& where)
+    const auto selectIfAsked = [&wantedAddon, wantedRows](const QWidget& page, const QString& where)
     {
+        if (wantedRows > 0)
+        {
+            if (!SelectTheFirstRows(page, wantedRows))
+            {
+                Out() << "no row at all in " << where << ", so the panel stays closed\n";
+            }
+
+            return;
+        }
+
         if (!wantedAddon.isEmpty() && !SelectTheAddonNamed(page, wantedAddon))
         {
             Out() << "no row named " << wantedAddon << " in " << where << ", so the panel stays closed\n";

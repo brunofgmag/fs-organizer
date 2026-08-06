@@ -33,6 +33,7 @@
 #include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/RowTagRoles.h"
+#include "viewmodel/SizeSummary.h"
 
 namespace
 {
@@ -128,8 +129,7 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
                 UpdateSummary();
             });
     connect(&viewModel_, &CommunityViewModel::RepairFinished, this, &CommunityPage::OnRepairFinished);
-    connect(&model_, &QAbstractItemModel::modelReset, &importViewModel_, &ImportViewModel::ForgetMeasuredSizes);
-    connect(&importViewModel_, &ImportViewModel::SizeMeasuring, this,
+    connect(&viewModel_, &CommunityViewModel::SizeMeasuring, this,
             [this]
             {
                 if (batch_)
@@ -137,12 +137,12 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
                     ShowTheBatchFields(tr("measuring…"));
                 }
             });
-    connect(&importViewModel_, &ImportViewModel::SizeMeasured, this,
-            [this](const qulonglong bytes)
+    connect(&viewModel_, &CommunityViewModel::SizeMeasured, this,
+            [this](const SelectionSize& size)
             {
                 if (batch_)
                 {
-                    ShowTheBatchFields(AsSize(bytes));
+                    ShowTheBatchFields(SizeOfTheSelection(size));
                 }
             });
     connect(&importViewModel_, &ImportViewModel::Started, this, &CommunityPage::OnImportStarted);
@@ -402,14 +402,25 @@ void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
 
     panel_->ShowTitle(tr("%n entry selected", nullptr, static_cast<int>(rows.size())), tally.alarming);
 
-    const std::vector<std::filesystem::path> importable = ChosenForImport(*table_, *filter_, model_).folders;
+    ShowTheBatchFields({});
 
-    ShowTheBatchFields(importable.empty() ? QString() : tr("measuring…"));
+    viewModel_.MeasureTheSelection(SelectedEntries(rows));
+}
 
-    if (!importable.empty())
+std::vector<DestinationEntry> CommunityPage::SelectedEntries(const QModelIndexList& rows) const
+{
+    std::vector<DestinationEntry> chosen;
+    chosen.reserve(static_cast<std::size_t>(rows.size()));
+
+    for (const QModelIndex& position : rows)
     {
-        importViewModel_.MeasureTotalSize(importable);
+        if (const DestinationEntry* entry = model_.EntryAt(filter_->mapToSource(position)); entry != nullptr)
+        {
+            chosen.push_back(*entry);
+        }
     }
+
+    return chosen;
 }
 
 void CommunityPage::ShowTheBatchFields(const QString& size) const

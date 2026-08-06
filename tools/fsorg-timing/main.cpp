@@ -11,6 +11,7 @@
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/ProfileService.h"
+#include "application/SizeService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -198,20 +199,23 @@ int main(int argc, char* argv[])
         SessionNotifier notifier;
         Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
+        SizeService sizes(catalog, filesystemProbe, clock, runner);
+
         AddonTreeModel treeModel;
         ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
         packages.Reload(session.Profile().variant);
-        AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, notifier);
+        AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
         auto* treePage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
         CommunityModel communityModel;
-        CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
+        CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
         auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
         QuarantineModel quarantineModel;
-        QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel);
+        QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel,
+                                                sizes, runner);
         auto* quarantinePage = new QuarantinePage(quarantineViewModel, quarantineModel);
 
         JournalModel journalModel;
@@ -238,7 +242,8 @@ int main(int argc, char* argv[])
     InlineRunner runInline;
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, processProbe, runInline, notifier);
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
+    SizeService inlineSizes(catalog, filesystemProbe, clock, runInline);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, inlineSizes);
 
     Measure("Session::ShowActiveProfile", false,
             [&]

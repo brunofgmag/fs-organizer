@@ -1,6 +1,8 @@
 #include "viewmodel/AddonTreeModel.h"
 
 #include <algorithm>
+#include <set>
+#include <string>
 
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
@@ -85,6 +87,51 @@ std::size_t AddonTreeModel::EnabledCount() const
     }
 
     return count;
+}
+
+SelectionTally AddonTreeModel::TallyOf(const std::vector<const TreeNode*>& nodes) const
+{
+    SelectionTally tally;
+    std::set<std::string> reached;
+    std::set<std::string> crossed;
+
+    const auto reach = [this, &tally, &reached, &crossed](const TreeNode& addon)
+    {
+        if (!reached.insert(ComparablePath(addon.path)).second)
+        {
+            return;
+        }
+
+        const bool broken = LinksNowhere(addon);
+
+        tally.addons.push_back(addon.path);
+        tally.enabled += enabled_.Contains(addon.path) ? 1 : 0;
+        tally.broken += broken ? 1 : 0;
+        tally.strayed += WhereItIsLinked(addon).empty() ? 0 : 1;
+        tally.alarming = tally.alarming || broken || conflicts_.OverTheLibraryAddon(addon.path) != nullptr;
+
+        crossed.insert(ComparablePath(addon.path.parent_path()));
+    };
+
+    for (const TreeNode* node : nodes)
+    {
+        if (node == nullptr)
+        {
+            continue;
+        }
+
+        tally.categories += node->kind == TreeNodeKind::Addon ? 0 : 1;
+        tally.alarming = tally.alarming || conflicts_.OverTheLibraryAddon(node->path) != nullptr;
+
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            reach(*addon);
+        }
+    }
+
+    tally.categoriesCrossed = crossed.size();
+
+    return tally;
 }
 
 void AddonTreeModel::Rebuild()

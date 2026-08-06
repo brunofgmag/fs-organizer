@@ -25,9 +25,16 @@ AddonTreeViewModel::AddonTreeViewModel(Session& session,
                                        ProfileService& service,
                                        AddonTreeModel& model,
                                        const SimulatorPackages& packages,
+                                       SizeService& sizes,
                                        const SessionNotifier& notifier,
                                        QObject* parent)
-    : QObject(parent), session_(session), service_(service), model_(model), packages_(packages)
+    : QObject(parent),
+      session_(session),
+      service_(service),
+      model_(model),
+      packages_(packages),
+      sizes_(sizes),
+      caller_(sizes.NewCaller())
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &AddonTreeViewModel::AdoptScan);
 
@@ -36,6 +43,25 @@ AddonTreeViewModel::AddonTreeViewModel(Session& session,
             {
                 model_.Refresh(session_.Snapshot(), session_.Profile());
             });
+}
+
+void AddonTreeViewModel::MeasureTheSelection(const std::vector<std::filesystem::path>& addonFolders)
+{
+    if (addonFolders.empty())
+    {
+        emit SizeMeasured(SelectionSize{});
+        return;
+    }
+
+    emit SizeMeasuring();
+
+    sizes_.MeasureFolders(addonFolders, caller_, Freshness::ReuseWhatIsKnown, {},
+                          [this](const FolderSizeReport& report)
+                          {
+                              emit SizeMeasured(SelectionSize{.bytes = report.bytes,
+                                                              .measured = report.measured,
+                                                              .selected = report.folders.size()});
+                          });
 }
 
 void AddonTreeViewModel::ShowActiveProfile() const

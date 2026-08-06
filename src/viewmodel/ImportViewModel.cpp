@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <ranges>
 #include <utility>
 
 #include "viewmodel/FailureText.h"
@@ -58,66 +57,6 @@ ConflictDetails ImportViewModel::DetailsOf(const CopyConflict& conflict) const
 std::uintmax_t ImportViewModel::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const
 {
     return service_.TotalSizeOf(folders);
-}
-
-void ImportViewModel::ForgetMeasuredSizes()
-{
-    sizeOf_.clear();
-}
-
-void ImportViewModel::MeasureTotalSize(const std::vector<std::filesystem::path>& folders)
-{
-    const int mine = ++asked_;
-
-    std::vector<std::filesystem::path> unmeasured;
-    std::uintmax_t known = 0;
-
-    for (const std::filesystem::path& folder : folders)
-    {
-        if (const auto measured = sizeOf_.find(folder); measured != sizeOf_.end())
-        {
-            known += measured->second;
-            continue;
-        }
-
-        unmeasured.push_back(folder);
-    }
-
-    if (unmeasured.empty())
-    {
-        emit SizeMeasured(known);
-        return;
-    }
-
-    emit SizeMeasuring();
-
-    const auto fresh = std::make_shared<std::map<std::filesystem::path, std::uintmax_t>>();
-
-    runner_.Run(
-        [this, unmeasured, fresh]
-        {
-            for (const std::filesystem::path& folder : unmeasured)
-            {
-                (*fresh)[folder] = service_.TotalSizeOf({folder});
-            }
-        },
-        [this, mine, known, fresh]
-        {
-            sizeOf_.insert(fresh->begin(), fresh->end());
-
-            if (mine != asked_)
-            {
-                return;
-            }
-
-            std::uintmax_t total = known;
-            for (const auto& size : *fresh | std::views::values)
-            {
-                total += size;
-            }
-
-            emit SizeMeasured(static_cast<qulonglong>(total));
-        });
 }
 
 std::vector<StagingLeftover> ImportViewModel::Leftovers() const

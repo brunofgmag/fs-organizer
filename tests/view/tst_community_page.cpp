@@ -114,8 +114,9 @@ namespace
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
         Session session{service, organizer, settings, processProbe, runner, notifier};
+        SizeService sizes{catalog, filesystemProbe, clock, runner};
         CommunityModel model;
-        CommunityViewModel viewModel{service, session, notifier, model};
+        CommunityViewModel viewModel{service, session, notifier, model, sizes};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};
     };
 
