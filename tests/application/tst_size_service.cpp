@@ -79,6 +79,23 @@ namespace
 
             return measured;
         }
+
+        [[nodiscard]] FolderSizeReport Weighed(const std::vector<std::filesystem::path>& folders)
+        {
+            FolderSizeReport weighed;
+            service.MeasureFolders(
+                folders, caller, Freshness::ReuseWhatIsKnown,
+                [](const SizeProgress&)
+                {
+                    return true;
+                },
+                [&weighed](const FolderSizeReport& report)
+                {
+                    weighed = report;
+                });
+
+            return weighed;
+        }
     };
 
     class SizeServiceTest : public QObject
@@ -98,6 +115,13 @@ namespace
         static void AFolderThatCannotBeReadIsNotTheSameAsAFolderOfZeroBytes();
         static void ALateResultFromAnOvertakenRequestNeverOverwritesFresherBytes();
         static void TwoCallersEachGetTheirOwnAnswerAndNeitherCancelsTheOther();
+        static void LooseFoldersComeBackWithTheirOwnBytesAndTheSumOfWhatWasMeasured();
+        static void ALooseFolderTheLibraryWalkAlreadyMeasuredIsReadBackInsteadOfWalkedAgain();
+        static void ALooseFolderThatCannotBeReadIsNotTheSameAsAFolderOfZeroBytes();
+        static void TheSameLooseFolderAskedTwiceIsWalkedOnceAndCountedOnce();
+        static void ALooseRequestOvertakenByAnotherEntersTheCacheAndIsNotEmitted();
+        static void CancellingTheLooseWalkRefusesToPassPartialsAsTotals();
+        static void MeasuringLooseFoldersAgainGoesBackToTheDiskEvenWhenTheNumberIsKnown();
     };
 
     TreeNode OneAddonLibrary(const std::filesystem::path& addon)
@@ -483,6 +507,165 @@ void SizeServiceTest::TwoCallersEachGetTheirOwnAnswerAndNeitherCancelsTheOther()
 
     QCOMPARE(answeredDiagnostics, 1);
     QCOMPARE(answeredQuarantine, 1);
+}
+
+void SizeServiceTest::LooseFoldersComeBackWithTheirOwnBytesAndTheSumOfWhatWasMeasured()
+{
+    Fixture fixture;
+    const std::filesystem::path chosen = "E:/Sim/Community/fbw-a32nx";
+    const std::filesystem::path other = "E:/Sim/Community/fenix-a320";
+
+    fixture.GiveTheAddon(chosen, 300);
+    fixture.GiveTheAddon(other, 700);
+
+    const FolderSizeReport report = fixture.Weighed({chosen, other});
+
+    QVERIFY(report.complete);
+    QCOMPARE(report.bytes, std::uintmax_t{1000});
+    QCOMPARE(report.measured, std::size_t{2});
+    QCOMPARE(report.folders.size(), std::size_t{2});
+    QCOMPARE(report.folders[0].folder, chosen);
+    QCOMPARE(report.folders[0].bytes, std::uintmax_t{300});
+    QVERIFY(report.folders[0].measured);
+    QCOMPARE(report.folders[1].folder, other);
+    QCOMPARE(report.folders[1].bytes, std::uintmax_t{700});
+}
+
+void SizeServiceTest::ALooseFolderTheLibraryWalkAlreadyMeasuredIsReadBackInsteadOfWalkedAgain()
+{
+    Fixture fixture;
+    const std::filesystem::path addon = kLibrary / "Utils" / "sim-rate-selector";
+
+    fixture.GiveTheAddon(addon, 4096);
+    fixture.catalog.SetTree(kLibrary, OneAddonLibrary(addon));
+
+    static_cast<void>(fixture.Measured({kLibrary}));
+    QCOMPARE(fixture.filesystemProbe.TimesWalked(addon), std::size_t{1});
+
+    const FolderSizeReport report = fixture.Weighed({addon});
+
+    QCOMPARE(report.bytes, std::uintmax_t{4096});
+    QCOMPARE(fixture.filesystemProbe.TimesWalked(addon), std::size_t{1});
+}
+
+void SizeServiceTest::ALooseFolderThatCannotBeReadIsNotTheSameAsAFolderOfZeroBytes()
+{
+    Fixture fixture;
+    const std::filesystem::path unreadable = "E:/Sim/Community/locked-addon";
+    const std::filesystem::path empty = "E:/Sim/Community/empty-addon";
+
+    fixture.GiveTheAddon(unreadable, 5000);
+    fixture.disk.AddDirectory(empty);
+    fixture.filesystemProbe.RefuseToWalk(unreadable);
+
+    const FolderSizeReport report = fixture.Weighed({unreadable, empty});
+
+    QCOMPARE(report.measured, std::size_t{1});
+    QCOMPARE(report.bytes, std::uintmax_t{0});
+    QVERIFY(!report.folders[0].measured);
+    QCOMPARE(report.folders[0].bytes, std::uintmax_t{0});
+    QVERIFY(report.folders[1].measured);
+    QCOMPARE(fixture.service.BytesOf(unreadable), std::optional<std::uintmax_t>{});
+    QCOMPARE(fixture.service.BytesOf(empty), std::optional<std::uintmax_t>{0});
+}
+
+void SizeServiceTest::TheSameLooseFolderAskedTwiceIsWalkedOnceAndCountedOnce()
+{
+    Fixture fixture;
+    const std::filesystem::path addon = "E:/Sim/Community/fbw-a32nx";
+
+    fixture.GiveTheAddon(addon, 300);
+
+    const FolderSizeReport report = fixture.Weighed({addon, addon});
+
+    QCOMPARE(report.folders.size(), std::size_t{1});
+    QCOMPARE(report.bytes, std::uintmax_t{300});
+    QCOMPARE(fixture.filesystemProbe.TimesWalked(addon), std::size_t{1});
+}
+
+void SizeServiceTest::ALooseRequestOvertakenByAnotherEntersTheCacheAndIsNotEmitted()
+{
+    Fixture fixture;
+    const std::filesystem::path addon = "E:/Sim/Community/fbw-a32nx";
+
+    fixture.GiveTheAddon(addon, 4096);
+    fixture.runner.defer = true;
+
+    int emitted = 0;
+    const auto count = [&emitted](const FolderSizeReport&)
+    {
+        ++emitted;
+    };
+    const auto keepGoing = [](const SizeProgress&)
+    {
+        return true;
+    };
+
+    fixture.service.MeasureFolders({addon}, fixture.caller, Freshness::ReuseWhatIsKnown, keepGoing, count);
+    fixture.service.MeasureFolders({addon}, fixture.caller, Freshness::ReuseWhatIsKnown, keepGoing, count);
+
+    fixture.runner.Finish();
+
+    QCOMPARE(emitted, 0);
+    QCOMPARE(fixture.service.BytesOf(addon), std::optional<std::uintmax_t>{4096});
+
+    fixture.runner.Finish();
+
+    QCOMPARE(emitted, 1);
+}
+
+void SizeServiceTest::CancellingTheLooseWalkRefusesToPassPartialsAsTotals()
+{
+    Fixture fixture;
+    const std::filesystem::path first = "E:/Sim/Community/one";
+    const std::filesystem::path second = "E:/Sim/Community/two";
+
+    fixture.GiveTheAddon(first, 10);
+    fixture.GiveTheAddon(second, 20);
+
+    FolderSizeReport cancelled;
+    fixture.service.MeasureFolders(
+        {first, second}, fixture.caller, Freshness::ReuseWhatIsKnown,
+        [](const SizeProgress& progress)
+        {
+            return progress.measured < 1;
+        },
+        [&cancelled](const FolderSizeReport& report)
+        {
+            cancelled = report;
+        });
+
+    QVERIFY(!cancelled.complete);
+    QCOMPARE(cancelled.measured, std::size_t{1});
+    QCOMPARE(cancelled.bytes, std::uintmax_t{10});
+    QCOMPARE(fixture.filesystemProbe.TimesWalked(second), std::size_t{0});
+}
+
+void SizeServiceTest::MeasuringLooseFoldersAgainGoesBackToTheDiskEvenWhenTheNumberIsKnown()
+{
+    Fixture fixture;
+    const std::filesystem::path addon = "E:/Sim/Community/fbw-a32nx";
+
+    fixture.GiveTheAddon(addon, 4096);
+    static_cast<void>(fixture.Weighed({addon}));
+
+    fixture.disk.AddFile(addon / "extra.bin", 904);
+
+    FolderSizeReport remeasured;
+    fixture.service.MeasureFolders(
+        {addon}, fixture.caller, Freshness::MeasureAgain,
+        [](const SizeProgress&)
+        {
+            return true;
+        },
+        [&remeasured](const FolderSizeReport& report)
+        {
+            remeasured = report;
+        });
+
+    QCOMPARE(fixture.filesystemProbe.TimesWalked(addon), std::size_t{2});
+    QCOMPARE(remeasured.bytes, std::uintmax_t{5000});
+    QCOMPARE(fixture.service.BytesOf(addon), std::optional<std::uintmax_t>{5000});
 }
 
 QTEST_APPLESS_MAIN(SizeServiceTest)

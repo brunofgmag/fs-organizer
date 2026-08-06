@@ -3,6 +3,7 @@
 #include <memory>
 #include <numeric>
 #include <ranges>
+#include <set>
 #include <utility>
 
 #include "domain/support/PathUtils.h"
@@ -46,30 +47,37 @@ namespace
         return bytes;
     }
 
-    [[nodiscard]] MeasuredNode MeasureAddon(Walk& walk, const TreeNode& node)
+    [[nodiscard]] MeasuredFolder WeighOne(Walk& walk, const std::filesystem::path& folder)
     {
-        MeasuredNode measured{.kind = node.kind, .path = node.path, .measured = false};
+        MeasuredFolder weighed{.folder = folder};
 
         if (walk.cancelled)
         {
-            return measured;
+            return weighed;
         }
 
         if (walk.onProgress
-            && !walk.onProgress(SizeProgress{.folder = node.path, .measured = walk.done, .total = walk.total}))
+            && !walk.onProgress(SizeProgress{.folder = folder, .measured = walk.done, .total = walk.total}))
         {
             walk.cancelled = true;
 
-            return measured;
+            return weighed;
         }
 
-        const std::optional<std::uintmax_t> bytes = BytesUnder(walk, node.path);
+        const std::optional<std::uintmax_t> bytes = BytesUnder(walk, folder);
         ++walk.done;
 
-        measured.measured = bytes.has_value();
-        measured.bytes = bytes.value_or(0);
+        weighed.measured = bytes.has_value();
+        weighed.bytes = bytes.value_or(0);
 
-        return measured;
+        return weighed;
+    }
+
+    [[nodiscard]] MeasuredNode MeasureAddon(Walk& walk, const TreeNode& node)
+    {
+        const MeasuredFolder weighed = WeighOne(walk, node.path);
+
+        return MeasuredNode{.kind = node.kind, .path = node.path, .bytes = weighed.bytes, .measured = weighed.measured};
     }
 
     [[nodiscard]] MeasuredNode MeasureTree(Walk& walk, const TreeNode& node)
@@ -105,6 +113,11 @@ MeasurementCaller SizeService::NewCaller()
     return MeasurementCaller{.id = ++callers_};
 }
 
+std::shared_ptr<MeasuredBytes> SizeService::WhatIsKnown(const Freshness freshness) const
+{
+    return std::make_shared<MeasuredBytes>(freshness == Freshness::ReuseWhatIsKnown ? bytes_ : MeasuredBytes{});
+}
+
 void SizeService::Measure(const std::vector<std::filesystem::path>& libraryRoots,
                           const MeasurementCaller caller,
                           const Freshness freshness,
@@ -113,8 +126,7 @@ void SizeService::Measure(const std::vector<std::filesystem::path>& libraryRoots
 {
     const int mine = ++asked_[caller.id];
 
-    const auto known =
-        std::make_shared<MeasuredBytes>(freshness == Freshness::ReuseWhatIsKnown ? bytes_ : MeasuredBytes{});
+    const auto known = WhatIsKnown(freshness);
     const auto fresh = std::make_shared<MeasuredBytes>();
     const auto report = std::make_shared<SizeReport>();
 
@@ -125,8 +137,88 @@ void SizeService::Measure(const std::vector<std::filesystem::path>& libraryRoots
         },
         [this, caller, mine, fresh, report, onMeasured = std::move(onMeasured)]
         {
-            Adopt(caller, mine, *fresh, *report, onMeasured);
+            if (!Adopt(caller, mine, *fresh))
+            {
+                return;
+            }
+
+            report->measuredAt = clock_.Now();
+
+            if (onMeasured)
+            {
+                onMeasured(*report);
+            }
         });
+}
+
+void SizeService::MeasureFolders(const std::vector<std::filesystem::path>& folders,
+                                 const MeasurementCaller caller,
+                                 const Freshness freshness,
+                                 std::function<bool(const SizeProgress&)> onProgress,
+                                 std::function<void(const FolderSizeReport&)> onMeasured)
+{
+    const int mine = ++asked_[caller.id];
+
+    const auto known = WhatIsKnown(freshness);
+    const auto fresh = std::make_shared<MeasuredBytes>();
+    const auto report = std::make_shared<FolderSizeReport>();
+
+    runner_.Run(
+        [this, folders, known, fresh, report, onProgress = std::move(onProgress)]
+        {
+            *report = WalkFolders(folders, *known, *fresh, onProgress);
+        },
+        [this, caller, mine, fresh, report, onMeasured = std::move(onMeasured)]
+        {
+            if (!Adopt(caller, mine, *fresh))
+            {
+                return;
+            }
+
+            report->measuredAt = clock_.Now();
+
+            if (onMeasured)
+            {
+                onMeasured(*report);
+            }
+        });
+}
+
+FolderSizeReport SizeService::WalkFolders(const std::vector<std::filesystem::path>& folders,
+                                          const std::map<std::string, std::uintmax_t>& known,
+                                          std::map<std::string, std::uintmax_t>& fresh,
+                                          const std::function<bool(const SizeProgress&)>& onProgress) const
+{
+    std::vector<std::filesystem::path> wanted;
+    std::set<std::string> seen;
+
+    for (const std::filesystem::path& folder : folders)
+    {
+        if (seen.insert(ComparablePath(folder)).second)
+        {
+            wanted.push_back(folder);
+        }
+    }
+
+    Walk walk{.filesystemProbe = filesystemProbe_,
+              .known = known,
+              .fresh = fresh,
+              .onProgress = onProgress,
+              .total = wanted.size()};
+
+    FolderSizeReport report;
+    report.folders.reserve(wanted.size());
+
+    for (const std::filesystem::path& folder : wanted)
+    {
+        report.folders.push_back(WeighOne(walk, folder));
+        report.bytes += report.folders.back().bytes;
+        report.measured += report.folders.back().measured ? 1 : 0;
+    }
+
+    report.complete = !walk.cancelled;
+
+    return report;
 }
 
 SizeReport SizeService::MeasureLibraries(const std::vector<std::filesystem::path>& libraryRoots,
@@ -158,11 +250,9 @@ SizeReport SizeService::MeasureLibraries(const std::vector<std::filesystem::path
     return report;
 }
 
-void SizeService::Adopt(const MeasurementCaller caller,
+bool SizeService::Adopt(const MeasurementCaller caller,
                         const int request,
-                        const std::map<std::string, std::uintmax_t>& fresh,
-                        SizeReport& report,
-                        const std::function<void(const SizeReport&)>& onMeasured)
+                        const std::map<std::string, std::uintmax_t>& fresh)
 {
     const bool overtaken = request != asked_[caller.id];
 
@@ -177,17 +267,7 @@ void SizeService::Adopt(const MeasurementCaller caller,
         bytes_[folder] = bytes;
     }
 
-    if (overtaken)
-    {
-        return;
-    }
-
-    report.measuredAt = clock_.Now();
-
-    if (onMeasured)
-    {
-        onMeasured(report);
-    }
+    return !overtaken;
 }
 
 std::optional<std::uintmax_t> SizeService::BytesOf(const std::filesystem::path& folder) const

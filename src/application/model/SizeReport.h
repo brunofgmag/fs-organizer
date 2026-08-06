@@ -25,6 +25,22 @@ struct SizeReport
     std::chrono::system_clock::time_point measuredAt{};
 };
 
+struct MeasuredFolder
+{
+    std::filesystem::path folder{};
+    std::uintmax_t bytes = 0;
+    bool measured = false;
+};
+
+struct FolderSizeReport
+{
+    std::vector<MeasuredFolder> folders{};
+    std::uintmax_t bytes = 0;
+    std::size_t measured = 0;
+    bool complete = false;
+    std::chrono::system_clock::time_point measuredAt{};
+};
+
 struct SizeProgress
 {
     std::filesystem::path folder{};
