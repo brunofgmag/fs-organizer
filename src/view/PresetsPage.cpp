@@ -444,29 +444,32 @@ void PresetsPage::ShowSelected()
     panel_->Summon(holdsOne);
     panel_->ShowTitle(name);
 
+    ShowEntries();
+
+    RefreshPreview();
+}
+
+void PresetsPage::ShowEntries()
+{
+    const int rows = selected_.has_value() ? static_cast<int>(selected_->entries.size()) : 0;
+
     populating_ = true;
-    entries_->setRowCount(holdsOne ? static_cast<int>(selected_->entries.size()) : 0);
+    entries_->setRowCount(rows);
 
-    if (holdsOne)
+    for (int row = 0; row < rows; ++row)
     {
-        for (int row = 0; row < static_cast<int>(selected_->entries.size()); ++row)
-        {
-            const PresetEntry& entry = selected_->entries[static_cast<std::size_t>(row)];
-            entries_->setItem(row, kAddonColumn,
-                              new QTableWidgetItem(QString::fromStdString(entry.addonId.folderName)));
-            entries_->setItem(row, 1, new QTableWidgetItem(viewModel_.LibraryLabel(entry.addonId.libraryId)));
+        const PresetEntry& entry = selected_->entries[static_cast<std::size_t>(row)];
+        entries_->setItem(row, kAddonColumn, new QTableWidgetItem(QString::fromStdString(entry.addonId.folderName)));
+        entries_->setItem(row, 1, new QTableWidgetItem(viewModel_.LibraryLabel(entry.addonId.libraryId)));
 
-            auto* action = new QTableWidgetItem;
-            action->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
-            action->setCheckState(entry.action == PresetAction::Disable ? Qt::Unchecked : Qt::Checked);
+        auto* action = new QTableWidgetItem;
+        action->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+        action->setCheckState(entry.action == PresetAction::Disable ? Qt::Unchecked : Qt::Checked);
 
-            entries_->setItem(row, kActionColumn, action);
-        }
+        entries_->setItem(row, kActionColumn, action);
     }
 
     populating_ = false;
-
-    RefreshPreview();
 }
 
 void PresetsPage::ActionToggled(const QTableWidgetItem* item)

@@ -4,6 +4,7 @@
 #include <QtWidgets/QDialog>
 
 #include "application/model/LegacyImport.h"
+#include "application/model/LegacyMigration.h"
 #include "viewmodel/LegacyImportViewModel.h"
 
 class QPushButton;
@@ -22,6 +23,10 @@ signals:
 
 private:
     void Fill();
+
+    void FillLibrary(QTreeWidgetItem* installation, const MigratableLibrary& library) const;
+
+    void FillCategories(QTreeWidgetItem* row, const MigratableLibrary& library) const;
 
     void Import();
 

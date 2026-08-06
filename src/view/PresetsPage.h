@@ -48,6 +48,8 @@ private:
 
     void ShowSelected();
 
+    void ShowEntries();
+
     void ActionToggled(const QTableWidgetItem* item);
 
     void RefreshPreview() const;

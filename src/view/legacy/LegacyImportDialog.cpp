@@ -127,53 +127,7 @@ void LegacyImportDialog::Fill()
 
         for (const MigratableLibrary& library : migration.libraries)
         {
-            QTreeWidgetItem* row = LineUnder(installation);
-            row->setText(0, AsText(library.proposal.root));
-            row->setExpanded(true);
-
-            if (!library.rootExists)
-            {
-                row->setText(1, tr("the folder no longer exists"));
-            }
-            else if (library.proposal.state == ProposedState::AlreadyPresent)
-            {
-                row->setText(1, tr("already registered"));
-            }
-            else
-            {
-                row->setText(1, tr("new"));
-                Mark(row, ImportKind::Library, library.proposal.root);
-                Offer(row);
-            }
-
-            for (const ProposedCategory& category : library.proposal.categories)
-            {
-                QTreeWidgetItem* line = LineUnder(row);
-                line->setText(0, AsText(category.relativePath));
-
-                if (!library.rootExists)
-                {
-                    line->setText(1, tr("unavailable"));
-                    continue;
-                }
-
-                if (category.state == ProposedState::AlreadyPresent)
-                {
-                    line->setText(1, tr("already present"));
-                    continue;
-                }
-
-                line->setText(1, tr("new"));
-                Mark(line, ImportKind::Category, library.proposal.root / category.relativePath);
-                Offer(line);
-            }
-
-            for (const std::filesystem::path& refused : library.proposal.refused)
-            {
-                QTreeWidgetItem* line = LineUnder(row);
-                line->setText(0, AsText(refused));
-                line->setText(1, tr("refused: the name does not become a folder"));
-            }
+            FillLibrary(installation, library);
         }
 
         if (const std::size_t presets = viewModel_.PresetsWaitingIn(migration.presetsPath); presets > 0)
@@ -192,6 +146,62 @@ void LegacyImportDialog::Fill()
     }
 
     RefreshTheImportButton();
+}
+
+void LegacyImportDialog::FillLibrary(QTreeWidgetItem* installation, const MigratableLibrary& library) const
+{
+    QTreeWidgetItem* row = LineUnder(installation);
+    row->setText(0, AsText(library.proposal.root));
+    row->setExpanded(true);
+
+    if (!library.rootExists)
+    {
+        row->setText(1, tr("the folder no longer exists"));
+    }
+    else if (library.proposal.state == ProposedState::AlreadyPresent)
+    {
+        row->setText(1, tr("already registered"));
+    }
+    else
+    {
+        row->setText(1, tr("new"));
+        Mark(row, ImportKind::Library, library.proposal.root);
+        Offer(row);
+    }
+
+    FillCategories(row, library);
+
+    for (const std::filesystem::path& refused : library.proposal.refused)
+    {
+        QTreeWidgetItem* line = LineUnder(row);
+        line->setText(0, AsText(refused));
+        line->setText(1, tr("refused: the name does not become a folder"));
+    }
+}
+
+void LegacyImportDialog::FillCategories(QTreeWidgetItem* row, const MigratableLibrary& library) const
+{
+    for (const ProposedCategory& category : library.proposal.categories)
+    {
+        QTreeWidgetItem* line = LineUnder(row);
+        line->setText(0, AsText(category.relativePath));
+
+        if (!library.rootExists)
+        {
+            line->setText(1, tr("unavailable"));
+            continue;
+        }
+
+        if (category.state == ProposedState::AlreadyPresent)
+        {
+            line->setText(1, tr("already present"));
+            continue;
+        }
+
+        line->setText(1, tr("new"));
+        Mark(line, ImportKind::Category, library.proposal.root / category.relativePath);
+        Offer(line);
+    }
 }
 
 LegacyImportRequest LegacyImportDialog::WhatWasChecked() const
