@@ -101,17 +101,15 @@ QString Describe(const LinkOperationResult& result)
     QString line =
         QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(result.outcome.Failure()));
 
-    if (result.outcome.Conflict().has_value())
+    if (const CopyConflict* conflict = result.outcome.Conflict(); conflict != nullptr)
     {
         line += QObject::tr("\n    folder in the destination: %1\n    addon in the library: %2")
-                    .arg(AsText(result.outcome.Conflict()->destinationPath),
-                         AsText(result.outcome.Conflict()->libraryPath));
+                    .arg(AsText(conflict->destinationPath), AsText(conflict->libraryPath));
     }
 
-    if (result.outcome.Occupation().has_value())
+    if (const OccupiedDestination* occupation = result.outcome.Occupation(); occupation != nullptr)
     {
-        line += QObject::tr("\n    the current link points at: %1")
-                    .arg(AsText(result.outcome.Occupation()->existingTarget));
+        line += QObject::tr("\n    the current link points at: %1").arg(AsText(occupation->existingTarget));
     }
 
     return line;
