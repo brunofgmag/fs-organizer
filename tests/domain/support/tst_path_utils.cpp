@@ -21,7 +21,16 @@ namespace
         static void NothingIsInsideARootThatWasNeverNamed();
         static void TwoSpellingsOfAnAccentedNameShareAKey();
         static void BytesThatAreNotUtf8AreCarriedThrough();
+        static void ANameOutsideTheHostCodePageStillBecomesUtf8();
     };
+}
+
+void PathUtilsTest::ANameOutsideTheHostCodePageStillBecomesUtf8()
+{
+    const std::string written = "D:/Library/Sceneries/\xC5\x81odz";
+
+    QCOMPARE(AsUtf8(PathFromUtf8(written)), written);
+    QCOMPARE(ComparablePath(PathFromUtf8(written)), std::string("d:/library/sceneries/\xC5\x82odz"));
 }
 
 void PathUtilsTest::TwoSpellingsOfAnAccentedNameShareAKey()
