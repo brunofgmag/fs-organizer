@@ -46,10 +46,10 @@ void PathUtilsTest::TwoSpellingsOfAnAccentedNameShareAKey()
                               "\xCF\x83"
                               "\xD0\xB4";
 
-    QCOMPARE(ComparablePath(upper), ComparablePath(lower));
-    QCOMPARE(ComparablePath(upper), lower);
-    QCOMPARE(ComparableFileName(upper), ComparableFileName(lower));
-    QVERIFY(PathIsInside(upper, "D:/Library"));
+    QCOMPARE(ComparablePath(PathFromUtf8(upper)), ComparablePath(PathFromUtf8(lower)));
+    QCOMPARE(ComparablePath(PathFromUtf8(upper)), lower);
+    QCOMPARE(ComparableFileName(PathFromUtf8(upper)), ComparableFileName(PathFromUtf8(lower)));
+    QVERIFY(PathIsInside(PathFromUtf8(upper), "D:/Library"));
 }
 
 void PathUtilsTest::BytesThatAreNotUtf8AreCarriedThrough()

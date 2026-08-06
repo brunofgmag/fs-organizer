@@ -27,7 +27,7 @@ inline constexpr auto kQuarantineFolderName = "_fsorganizer-quarantine";
     const std::string name = AsUtf8(staging.filename());
 
     return IsStagingPath(staging)
-        ? staging.parent_path() / name.substr(0, name.size() - std::string_view(kStagingSuffix).size())
+        ? staging.parent_path() / PathFromUtf8(name.substr(0, name.size() - std::string_view(kStagingSuffix).size()))
         : staging;
 }
 
