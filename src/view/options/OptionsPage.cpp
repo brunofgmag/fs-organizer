@@ -225,7 +225,7 @@ void OptionsPage::FillPanes()
 QWidget* OptionsPage::CreateNavigation()
 {
     navigation_ = new QListWidget(this);
-    navigation_->setObjectName(QStringLiteral("OptionsNav"));
+    navigation_->setObjectName(QStringLiteral("SectionRail"));
     navigation_->setFixedWidth(kNavigationWidth);
     navigation_->setFrameShape(QFrame::NoFrame);
     navigation_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

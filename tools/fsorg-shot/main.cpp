@@ -19,6 +19,7 @@
 #include <QtWidgets/QTreeView>
 
 #include "application/ImportService.h"
+#include "application/SizeService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
@@ -46,6 +47,7 @@
 #include "view/community/CommunityPage.h"
 #include "view/library/AddonTreePage.h"
 #include "view/options/OptionsPage.h"
+#include "view/diagnostics/DiagnosticsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
@@ -58,6 +60,7 @@
 #include "viewmodel/JournalViewModel.h"
 #include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/PresetViewModel.h"
+#include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 #include "viewmodel/UpdateViewModel.h"
@@ -362,6 +365,10 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
+    SizeService sizes(catalog, filesystemProbe, clock, runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
+    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
+
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
     UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
@@ -374,6 +381,7 @@ int main(int argc, char* argv[])
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
     PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
+    PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -440,14 +448,33 @@ int main(int argc, char* argv[])
               quarantineViewModel.Show();
           });
 
+    auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
+    const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),
+                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size")};
+
+    diagnosticsTab->click();
+    diagnosticsViewModel.Show();
+
+    for (int section = 0; section < diagnostics.size(); ++section)
+    {
+        if (!ClickingReaches(*sections, section))
+        {
+            Out() << "the section " << diagnostics[section] << " does not select on click, so no user reaches it\n";
+            continue;
+        }
+
+        LetTheLayoutSettle();
+        landed = Save(shell, folder, diagnostics[section]) && landed;
+    }
+
     libraryTab->click();
     shell.ShowOptions();
     optionsPage->Reload();
 
-    auto* navigation = optionsPage->findChild<QListWidget*>(QStringLiteral("OptionsNav"));
-    const QStringList panes{QStringLiteral("06-options-profiles"), QStringLiteral("07-options-links"),
-                            QStringLiteral("08-options-updates"), QStringLiteral("09-options-language"),
-                            QStringLiteral("10-options-about")};
+    auto* navigation = optionsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
+    const QStringList panes{QStringLiteral("10-options-profiles"), QStringLiteral("11-options-links"),
+                            QStringLiteral("12-options-updates"), QStringLiteral("13-options-language"),
+                            QStringLiteral("14-options-about")};
 
     for (int pane = 0; pane < panes.size(); ++pane)
     {
@@ -471,7 +498,7 @@ int main(int argc, char* argv[])
                      {
                          unregister->click();
                      },
-                     folder, QStringLiteral("11-options-unregister"))
+                     folder, QStringLiteral("15-options-unregister"))
             && landed;
     }
     else
