@@ -70,7 +70,7 @@ namespace
         row->setText(0, NameOf(node));
         row->setText(1, node.kind == TreeNodeKind::Addon ? QString() : QString::number(AddonsUnder(node)));
         row->setText(2, node.measured ? AsSize(node.bytes) : QObject::tr("not measured"));
-        row->setData(2, kBytesRole, node.measured ? node.bytes : 0);
+        row->setData(2, kBytesRole, static_cast<qulonglong>(node.measured ? node.bytes : 0));
         row->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         row->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
 

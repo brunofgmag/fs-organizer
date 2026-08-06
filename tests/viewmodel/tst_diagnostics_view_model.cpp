@@ -239,12 +239,12 @@ void DiagnosticsViewModelTest::NoTreeIsWalkedUntilTheSizeSectionIsOpened()
 
     f.viewModel.Show();
 
-    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), 0);
+    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), std::size_t{0});
     QVERIFY(!f.viewModel.MeasuredAt().has_value());
 
     f.viewModel.ShowSize();
 
-    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), 1);
+    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), std::size_t{1});
     QVERIFY(f.viewModel.MeasuredAt().has_value());
     QCOMPARE(f.viewModel.Size().libraries.front().bytes, std::uintmax_t{4096});
 }
@@ -264,7 +264,7 @@ void DiagnosticsViewModelTest::ComingBackToTheSizeSectionShowsWhatWasMeasuredWit
     f.viewModel.Show();
     f.viewModel.ShowSize();
 
-    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), 1);
+    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), std::size_t{1});
     QCOMPARE(f.viewModel.MeasuredAt(), std::optional(measured));
     QCOMPARE(f.viewModel.CountedAt(), std::optional(measured + std::chrono::minutes{7}));
 }
