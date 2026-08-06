@@ -64,6 +64,11 @@ add_test(NAME no-em-dash
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-em-dash.cmake")
 
+add_test(NAME code-page
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-code-page.cmake")
+
 add_test(NAME portable-layer
         COMMAND "${CMAKE_COMMAND}"
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
@@ -78,6 +83,11 @@ add_test(NAME no-nested-ternary
         COMMAND "${CMAKE_COMMAND}"
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-nested-ternary.cmake")
+
+add_test(NAME no-disk-in-view
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-disk-in-view.cmake")
 
 if (WIN32 AND NOT FSORG_TESTS_ONLY)
     add_test(NAME long-path-aware
@@ -806,6 +816,25 @@ fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         assets/resources.qrc)
 target_link_libraries(fsorg-row-delegate-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
+
+fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
+        tests/view/tst_addon_tree_page.cpp
+        assets/resources.qrc
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-addon-tree-page-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
 
 fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
         tests/view/theme/tst_modernist_theme.cpp
