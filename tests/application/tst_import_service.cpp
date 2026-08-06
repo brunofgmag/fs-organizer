@@ -45,6 +45,10 @@ namespace
         static void ResumingIsRefusedWhenTheBaseNameAppearedWhileTheImportWasLost();
         static void RestoringIsRefusedWhenTheBaseNameTookTheIdentityElsewhere();
         static void TheIdentityIsOnlyTakenInsideTheLibraryThatHoldsIt();
+        static void AQuarantinedItemCarriesTheVersionItsOwnManifestDeclares();
+        static void AnItemWhoseNameSitsAsAPhysicalFolderInADestinationIsMarkedAsReplaced();
+        static void TheReplacementMarkIsReadFromTheDestinationsAndNeverFromTheRecordedOrigin();
+        static void ALinkWearingTheSameNameIsNotAReplacement();
     };
 }
 
@@ -59,6 +63,16 @@ namespace
 
     const std::filesystem::path kOtherDestination = "E:/Sim/Community2024";
     const std::filesystem::path kLinkedElsewhere = "E:/Sim/Community2024/simbridge";
+
+    TreeNode AddonNodeDeclaring(const std::filesystem::path& path, const std::string& version)
+    {
+        TreeNode node;
+        node.kind = TreeNodeKind::Addon;
+        node.path = path;
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{.packageVersion = version}};
+
+        return node;
+    }
 
     struct Fixture
     {
@@ -563,6 +577,70 @@ void ImportServiceTest::TheIdentityIsOnlyTakenInsideTheLibraryThatHoldsIt()
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists("F:/Spare/Utils/simbridge/manifest.json"));
+}
+
+void ImportServiceTest::AQuarantinedItemCarriesTheVersionItsOwnManifestDeclares()
+{
+    Fixture f;
+    const std::filesystem::path held = "E:/Sim/_fsorganizer-quarantine/simbridge";
+
+    f.fileSystem.AddDirectory(held);
+    f.catalog.SetTree(held, AddonNodeDeclaring(held, "2.4.1"));
+
+    const std::vector<QuarantineDetail> details = f.service.Describe({}, {QuarantinedItem{.path = held}});
+
+    QCOMPARE(details.size(), std::size_t{1});
+    QCOMPARE(details.front().path, held);
+    QCOMPARE(details.front().version, std::string{"2.4.1"});
+    QVERIFY(!details.front().WasReplaced());
+}
+
+void ImportServiceTest::AnItemWhoseNameSitsAsAPhysicalFolderInADestinationIsMarkedAsReplaced()
+{
+    Fixture f;
+    const std::filesystem::path held = "E:/Sim/_fsorganizer-quarantine/simbridge";
+
+    f.fileSystem.AddDirectory(held);
+    f.catalog.SetTree(held, AddonNodeDeclaring(held, "2.4.1"));
+    f.catalog.SetTree(kInDestination, AddonNodeDeclaring(kInDestination, "2.5.0"));
+
+    const std::vector<QuarantineDetail> details = f.service.Describe(
+        {DestinationEntry{.path = kInDestination, .target = {}, .classification = EntryClassification::Unmanaged}},
+        {QuarantinedItem{.path = held}});
+
+    QVERIFY(details.front().WasReplaced());
+    QCOMPARE(details.front().replacedBy, kInDestination);
+    QCOMPARE(details.front().version, std::string{"2.4.1"});
+    QCOMPARE(details.front().replacementVersion, std::string{"2.5.0"});
+}
+
+void ImportServiceTest::TheReplacementMarkIsReadFromTheDestinationsAndNeverFromTheRecordedOrigin()
+{
+    Fixture f;
+    const std::filesystem::path held = "E:/Sim/_fsorganizer-quarantine/simbridge";
+
+    f.fileSystem.AddDirectory(held);
+
+    const std::vector<QuarantineDetail> withNoOrigin = f.service.Describe(
+        {DestinationEntry{.path = kInDestination, .target = {}, .classification = EntryClassification::Unmanaged}},
+        {QuarantinedItem{.path = held, .origin = {}, .quarantinedAt = std::nullopt}});
+
+    QVERIFY(withNoOrigin.front().WasReplaced());
+}
+
+void ImportServiceTest::ALinkWearingTheSameNameIsNotAReplacement()
+{
+    Fixture f;
+    const std::filesystem::path held = "E:/Sim/_fsorganizer-quarantine/simbridge";
+
+    f.fileSystem.AddDirectory(held);
+
+    const std::vector<QuarantineDetail> details = f.service.Describe(
+        {DestinationEntry{
+            .path = kInDestination, .target = kInLibrary, .classification = EntryClassification::Managed}},
+        {QuarantinedItem{.path = held}});
+
+    QVERIFY(!details.front().WasReplaced());
 }
 
 QTEST_APPLESS_MAIN(ImportServiceTest)

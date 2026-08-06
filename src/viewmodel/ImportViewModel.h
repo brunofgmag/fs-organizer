@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <functional>
-#include <map>
 #include <vector>
 
 #include <QtCore/QObject>
@@ -39,10 +38,6 @@ public:
 
     [[nodiscard]] std::uintmax_t TotalSizeOf(const std::vector<std::filesystem::path>& folders) const;
 
-    void MeasureTotalSize(const std::vector<std::filesystem::path>& folders);
-
-    void ForgetMeasuredSizes();
-
     [[nodiscard]] std::vector<StagingLeftover> Leftovers() const;
 
     [[nodiscard]] std::vector<FileOperationResult>
@@ -65,10 +60,6 @@ signals:
 
     void ConflictResolved();
 
-    void SizeMeasuring();
-
-    void SizeMeasured(qulonglong bytes);
-
 private:
     [[nodiscard]] std::function<void(OperationKind)> OnStep();
 
@@ -84,8 +75,6 @@ private:
     bool running_ = false;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};
-    std::map<std::filesystem::path, std::uintmax_t> sizeOf_;
-    int asked_ = 0;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_IMPORT_VIEW_MODEL_H

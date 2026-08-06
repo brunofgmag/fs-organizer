@@ -3,6 +3,7 @@
 #include <QtCore/QDir>
 
 #include "viewmodel/QuarantineModel.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -14,6 +15,10 @@ namespace
         static void EachQuarantinedFolderIsARowThatSaysWhereItWouldGoBackTo();
         static void AnItemTheJournalNeverSawSaysSoInBothColumnsInsteadOfShowingAnEmptyCell();
         static void NoCellRepeatsItsOwnTextAsATooltip();
+        static void TheVersionAndSizeCellsAreEmptyUntilTheyLandAndTheRowIsListedAnyway();
+        static void ADetailThatLandsFillsTheVersionAndMarksWhatWasAlreadyReplaced();
+        static void ASizeThatLandsFillsOnlyTheRowItBelongsTo();
+        static void ListingAgainForgetsTheVersionAndSizeOfTheOldRows();
     };
 }
 
@@ -70,6 +75,67 @@ void QuarantineModelTest::NoCellRepeatsItsOwnTextAsATooltip()
     {
         QVERIFY(model.data(model.index(0, column), Qt::ToolTipRole).toString().isEmpty());
     }
+}
+
+void QuarantineModelTest::TheVersionAndSizeCellsAreEmptyUntilTheyLandAndTheRowIsListedAnyway()
+{
+    QuarantineModel model;
+    model.ShowItems(TwoItems());
+
+    QCOMPARE(model.rowCount({}), 2);
+    QVERIFY(model.data(model.index(0, QuarantineModel::VersionColumn), Qt::DisplayRole).toString().isEmpty());
+    QVERIFY(model.data(model.index(0, QuarantineModel::SizeColumn), Qt::DisplayRole).toString().isEmpty());
+    QVERIFY(!model.data(model.index(0, QuarantineModel::NameColumn), TagTextRole)
+                 .toString()
+                 .contains(QStringLiteral("replaced")));
+}
+
+void QuarantineModelTest::ADetailThatLandsFillsTheVersionAndMarksWhatWasAlreadyReplaced()
+{
+    QuarantineModel model;
+    model.ShowItems(TwoItems());
+
+    model.ShowDetails({QuarantineDetail{.path = "E:/Sim/_fsorganizer-quarantine/simbridge",
+                                        .version = "2.4.1",
+                                        .replacedBy = "E:/Sim/Community/simbridge",
+                                        .replacementVersion = "2.5.0"},
+                       QuarantineDetail{.path = "D:/Library/_fsorganizer-quarantine/orphan"}});
+
+    QCOMPARE(model.data(model.index(0, QuarantineModel::VersionColumn), Qt::DisplayRole).toString(),
+             QStringLiteral("2.4.1"));
+    QVERIFY(model.data(model.index(0, QuarantineModel::NameColumn), QuarantineModel::ReplacedRole).toBool());
+    QVERIFY(!model.data(model.index(0, QuarantineModel::NameColumn), TagTextRole).toString().isEmpty());
+
+    QVERIFY(model.data(model.index(1, QuarantineModel::VersionColumn), Qt::DisplayRole).toString().isEmpty());
+    QVERIFY(!model.data(model.index(1, QuarantineModel::NameColumn), QuarantineModel::ReplacedRole).toBool());
+
+    QCOMPARE(model.DetailAt(model.index(0, 0))->replacementVersion, std::string{"2.5.0"});
+}
+
+void QuarantineModelTest::ASizeThatLandsFillsOnlyTheRowItBelongsTo()
+{
+    QuarantineModel model;
+    model.ShowItems(TwoItems());
+
+    model.ShowSizes({MeasuredFolder{
+        .folder = "E:/Sim/_fsorganizer-quarantine/simbridge", .bytes = 2ULL * 1024 * 1024 * 1024, .measured = true}});
+
+    QVERIFY(!model.data(model.index(0, QuarantineModel::SizeColumn), Qt::DisplayRole).toString().isEmpty());
+    QVERIFY(model.data(model.index(1, QuarantineModel::SizeColumn), Qt::DisplayRole).toString().isEmpty());
+}
+
+void QuarantineModelTest::ListingAgainForgetsTheVersionAndSizeOfTheOldRows()
+{
+    QuarantineModel model;
+    model.ShowItems(TwoItems());
+    model.ShowDetails({QuarantineDetail{.path = "E:/Sim/_fsorganizer-quarantine/simbridge", .version = "2.4.1"}});
+    model.ShowSizes({MeasuredFolder{
+        .folder = "E:/Sim/_fsorganizer-quarantine/simbridge", .bytes = 2ULL * 1024 * 1024, .measured = true}});
+
+    model.ShowItems(TwoItems());
+
+    QVERIFY(model.data(model.index(0, QuarantineModel::VersionColumn), Qt::DisplayRole).toString().isEmpty());
+    QVERIFY(model.data(model.index(0, QuarantineModel::SizeColumn), Qt::DisplayRole).toString().isEmpty());
 }
 
 QTEST_APPLESS_MAIN(QuarantineModelTest)

@@ -88,6 +88,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/QuarantineViewModel.cpp
         src/viewmodel/SessionNotifier.cpp
         src/viewmodel/SetupViewModel.cpp
+        src/viewmodel/SizeSummary.cpp
         src/viewmodel/UpdateViewModel.cpp
 )
 

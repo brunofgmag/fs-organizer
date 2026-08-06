@@ -89,6 +89,8 @@ private:
 
     void ShowTheSelectedBatch(const QModelIndexList& rows);
 
+    [[nodiscard]] std::vector<DestinationEntry> SelectedEntries(const QModelIndexList& rows) const;
+
     void ShowTheBatchFields(const QString& size) const;
 
     void ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const;

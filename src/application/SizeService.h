@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -42,6 +43,12 @@ public:
                  std::function<bool(const SizeProgress&)> onProgress,
                  std::function<void(const SizeReport&)> onMeasured);
 
+    void MeasureFolders(const std::vector<std::filesystem::path>& folders,
+                        MeasurementCaller caller,
+                        Freshness freshness,
+                        std::function<bool(const SizeProgress&)> onProgress,
+                        std::function<void(const FolderSizeReport&)> onMeasured);
+
     [[nodiscard]] std::optional<std::uintmax_t> BytesOf(const std::filesystem::path& folder) const;
 
 private:
@@ -50,11 +57,14 @@ private:
                                               std::map<std::string, std::uintmax_t>& fresh,
                                               const std::function<bool(const SizeProgress&)>& onProgress) const;
 
-    void Adopt(MeasurementCaller caller,
-               int request,
-               const std::map<std::string, std::uintmax_t>& fresh,
-               SizeReport& report,
-               const std::function<void(const SizeReport&)>& onMeasured);
+    [[nodiscard]] FolderSizeReport WalkFolders(const std::vector<std::filesystem::path>& folders,
+                                               const std::map<std::string, std::uintmax_t>& known,
+                                               std::map<std::string, std::uintmax_t>& fresh,
+                                               const std::function<bool(const SizeProgress&)>& onProgress) const;
+
+    [[nodiscard]] std::shared_ptr<std::map<std::string, std::uintmax_t>> WhatIsKnown(Freshness freshness) const;
+
+    [[nodiscard]] bool Adopt(MeasurementCaller caller, int request, const std::map<std::string, std::uintmax_t>& fresh);
 
     const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;

@@ -189,8 +189,10 @@ int main(int argc, char* argv[])
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
+    SizeService sizes(catalog, filesystemProbe, clock, runner);
+
     AddonTreeModel model;
-    AddonTreeViewModel treeViewModel(session, profileService, model, packages, notifier);
+    AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
                      [&packages, &session]
@@ -202,18 +204,18 @@ int main(int argc, char* argv[])
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;
-    QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel);
+    QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel, sizes,
+                                            runner);
     auto* quarantinePage = new QuarantinePage(quarantineViewModel, quarantineModel);
 
     JournalModel journalModel;
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    SizeService sizes(catalog, filesystemProbe, clock, runner);
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 

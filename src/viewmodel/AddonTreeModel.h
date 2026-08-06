@@ -1,6 +1,8 @@
 #ifndef FS_ORGANIZER_VIEWMODEL_ADDON_TREE_MODEL_H
 #define FS_ORGANIZER_VIEWMODEL_ADDON_TREE_MODEL_H
 
+#include <cstddef>
+#include <filesystem>
 #include <memory>
 #include <vector>
 
@@ -10,6 +12,17 @@
 #include "domain/model/SimulatorProfile.h"
 
 Q_DECLARE_METATYPE(CopyConflict)
+
+struct SelectionTally
+{
+    std::vector<std::filesystem::path> addons{};
+    std::size_t categories = 0;
+    std::size_t enabled = 0;
+    std::size_t broken = 0;
+    std::size_t strayed = 0;
+    std::size_t categoriesCrossed = 0;
+    bool alarming = false;
+};
 
 class AddonTreeModel final : public QAbstractItemModel
 {
@@ -44,6 +57,8 @@ public:
     [[nodiscard]] std::size_t AddonCount() const;
 
     [[nodiscard]] std::size_t EnabledCount() const;
+
+    [[nodiscard]] SelectionTally TallyOf(const std::vector<const TreeNode*>& nodes) const;
 
     [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex& parent) const override;
 

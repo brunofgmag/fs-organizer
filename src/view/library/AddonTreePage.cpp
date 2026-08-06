@@ -39,6 +39,7 @@
 #include "viewmodel/FailureText.h"
 #include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
+#include "viewmodel/SizeSummary.h"
 
 namespace
 {
@@ -174,6 +175,18 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
 
     connect(&viewModel_, &AddonTreeViewModel::BatchFinished, this, &AddonTreePage::OnBatchFinished);
     connect(&viewModel_, &AddonTreeViewModel::Shown, this, &AddonTreePage::OnShown);
+
+    connect(&viewModel_, &AddonTreeViewModel::SizeMeasuring, this,
+            [this]
+            {
+                ShowTheFields(tr("measuring…"));
+            });
+
+    connect(&viewModel_, &AddonTreeViewModel::SizeMeasured, this,
+            [this](const SelectionSize& size)
+            {
+                ShowTheFields(SizeOfTheSelection(size));
+            });
 
     connect(&model_, &QAbstractItemModel::dataChanged, this,
             [this](const QModelIndex&, const QModelIndex&)
@@ -331,7 +344,7 @@ const TreeNode* AddonTreePage::Current() const
     return AddonTreeModel::NodeAt(filter_->mapToSource(tree_->selectionModel()->currentIndex()));
 }
 
-void AddonTreePage::ShowTheSelectedAddon() const
+void AddonTreePage::ShowTheSelectedAddon()
 {
     const QModelIndexList chosen = tree_->selectionModel()->selectedRows();
     const TreeNode* node = chosen.isEmpty() ? nullptr : AddonTreeModel::NodeAt(filter_->mapToSource(chosen.front()));
@@ -355,98 +368,84 @@ void AddonTreePage::ShowTheSelectedAddon() const
     const bool addon = node->kind == TreeNodeKind::Addon;
     const bool broken = model_.data(source, AddonTreeModel::BrokenRole).toBool();
 
-    QList<ModelRowDetail::Field> fields;
-    fields.append({tr("Category"), AsText(node->path.parent_path().filename())});
-    fields.append({tr("In the library"), AsText(node->path)});
+    fields_.clear();
+    fields_.append({tr("Category"), AsText(node->path.parent_path().filename())});
+    fields_.append({tr("In the library"), AsText(node->path)});
 
     if (addon)
     {
-        fields.append({tr("Linked in"), AsText(destination / node->path.filename())});
-        fields.append({tr("Target exists"), broken ? tr("no, the link cannot find the folder") : tr("yes")});
-        fields.append(
+        fields_.append({tr("Linked in"), AsText(destination / node->path.filename())});
+        fields_.append({tr("Target exists"), broken ? tr("no, the link cannot find the folder") : tr("yes")});
+        fields_.append(
             {tr("Enabled"), model_.data(source, AddonTreeModel::EnabledRole).toBool() ? tr("yes") : tr("no")});
 
         if (const QString version =
                 model_.data(source.siblingAtColumn(AddonTreeModel::VersionColumn), Qt::DisplayRole).toString();
             !version.isEmpty())
         {
-            fields.append({tr("Version"), version});
+            fields_.append({tr("Version"), version});
         }
     }
     else
     {
-        fields.append({tr("Content"), tr("%n addon", nullptr, static_cast<int>(CountAddons(*node)))});
-        fields.append({tr("Destination"), AsText(destination.filename())});
+        fields_.append({tr("Content"), tr("%n addon", nullptr, static_cast<int>(CountAddons(*node)))});
+        fields_.append({tr("Destination"), AsText(destination.filename())});
     }
 
     panel_->ShowTitle(AsText(node->path.filename()), model_.data(source, AlarmingRole).toBool());
-    detail_->ShowFields(fields);
+    ShowTheFields({});
     dependencies_->Show(viewModel_.DependenciesOf(node));
+
+    viewModel_.MeasureTheSelection(model_.TallyOf({node}).addons);
 }
 
-void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
+void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows)
 {
-    int addons = 0;
-    int categories = 0;
-    int enabled = 0;
-    int broken = 0;
-    int strayed = 0;
-    bool alarming = false;
-    QSet<QString> categoriesCrossed;
+    const SelectionTally tally = model_.TallyOf(Chosen(nullptr));
+    const auto addons = static_cast<int>(tally.addons.size());
 
-    for (const QModelIndex& position : rows)
-    {
-        const QModelIndex source = filter_->mapToSource(position);
-        const TreeNode* node = AddonTreeModel::NodeAt(source);
-
-        if (node == nullptr)
-        {
-            continue;
-        }
-
-        alarming = alarming || model_.data(source, AlarmingRole).toBool();
-
-        if (node->kind != TreeNodeKind::Addon)
-        {
-            ++categories;
-            continue;
-        }
-
-        ++addons;
-        enabled += model_.data(source, AddonTreeModel::EnabledRole).toBool() ? 1 : 0;
-        broken += model_.data(source, AddonTreeModel::BrokenRole).toBool() ? 1 : 0;
-        strayed += model_.data(source, AddonTreeModel::DivergentRole).toBool() ? 1 : 0;
-        categoriesCrossed.insert(AsText(node->path.parent_path().filename()));
-    }
-
-    QList<ModelRowDetail::Field> fields;
+    fields_.clear();
 
     if (addons > 0)
     {
-        fields.append({tr("Addons"), QString::number(addons)});
-        fields.append({tr("Enabled", "several addons"), tr("%1 of %2").arg(enabled).arg(addons)});
+        fields_.append({tr("Addons"), QString::number(addons)});
+        fields_.append({tr("Enabled", "several addons"), tr("%1 of %2").arg(tally.enabled).arg(addons)});
     }
 
-    if (categories > 0)
+    if (tally.categories > 0)
     {
-        fields.append({tr("Categories"), QString::number(categories)});
+        fields_.append({tr("Categories"), QString::number(tally.categories)});
     }
 
-    if (broken > 0)
+    if (tally.broken > 0)
     {
-        fields.append({tr("Broken"), QString::number(broken)});
+        fields_.append({tr("Broken"), QString::number(tally.broken)});
     }
 
-    if (strayed > 0)
+    if (tally.strayed > 0)
     {
-        fields.append({tr("Away from the destination"), QString::number(strayed)});
+        fields_.append({tr("Away from the destination"), QString::number(tally.strayed)});
     }
 
-    fields.append({tr("Spread across"), tr("%n category", nullptr, static_cast<int>(categoriesCrossed.size()))});
+    fields_.append({tr("Spread across"), tr("%n category", nullptr, static_cast<int>(tally.categoriesCrossed))});
 
-    panel_->ShowTitle(tr("%n item selected", nullptr, static_cast<int>(rows.size())), alarming);
-    detail_->ShowFields(fields);
+    panel_->ShowTitle(tr("%n item selected", nullptr, static_cast<int>(rows.size())), tally.alarming);
+    ShowTheFields({});
     dependencies_->Show({});
+
+    viewModel_.MeasureTheSelection(tally.addons);
+}
+
+void AddonTreePage::ShowTheFields(const QString& size) const
+{
+    QList<ModelRowDetail::Field> fields = fields_;
+
+    if (!size.isEmpty())
+    {
+        fields.append({tr("Size on disk"), size});
+    }
+
+    detail_->ShowFields(fields);
 }
 
 void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const

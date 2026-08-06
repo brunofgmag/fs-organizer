@@ -1,6 +1,9 @@
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QtTest>
 
+#include <algorithm>
+#include <filesystem>
+
 #include <QtCore/QDir>
 
 #include "tests/support/PathPrinting.h"
@@ -32,6 +35,9 @@ namespace
         static void OnlyTheNameColumnCarriesTheCheckbox();
         static void TheModelCountsAddonsAndHowManyAreEnabled();
         static void RetranslatingKeepsThePersistentIndexesOfAProxyUsable();
+        static void ASelectedCategoryTalliesTheAddonsUnderItAtAnyDepth();
+        static void AnAddonSelectedInsideASelectedCategoryIsTalliedOnce();
+        static void TheTallyReadsEnabledBrokenAndStrayedFromTheAddonsItReached();
     };
 }
 
@@ -108,6 +114,32 @@ namespace
     QString TextOf(const AddonTreeModel& model, const QModelIndex& row, const int column)
     {
         return model.data(row.siblingAtColumn(column), Qt::DisplayRole).toString();
+    }
+
+    constexpr auto kEmbraer = "D:/MSFS 2024/Aircrafts/Jets/e195";
+
+    ProfileSnapshot NestedSnapshotWith(const std::vector<std::filesystem::path>& enabled)
+    {
+        TreeNode jets;
+        jets.kind = TreeNodeKind::Category;
+        jets.path = "D:/MSFS 2024/Aircrafts/Jets";
+        jets.children = {AddonNode(kEmbraer)};
+
+        TreeNode aircrafts;
+        aircrafts.kind = TreeNodeKind::Category;
+        aircrafts.path = "D:/MSFS 2024/Aircrafts";
+        aircrafts.children = {AddonNode(kPmdg), AddonNode(kCrj), jets};
+
+        TreeNode library;
+        library.kind = TreeNodeKind::Library;
+        library.path = "D:/MSFS 2024";
+        library.children = {aircrafts};
+
+        ProfileSnapshot snapshot;
+        snapshot.libraries = {library};
+        snapshot.enabled = EnabledAddons(enabled);
+
+        return snapshot;
     }
 }
 
@@ -356,6 +388,52 @@ void AddonTreeModelTest::RetranslatingKeepsThePersistentIndexesOfAProxyUsable()
     QVERIFY2(child.isValid(), "the proxy lost the mapping of the children on the language change");
     QVERIFY(child.data(Qt::DisplayRole).isValid());
     QCOMPARE(proxy.rowCount(child), model.rowCount(proxy.mapToSource(child)));
+}
+
+void AddonTreeModelTest::ASelectedCategoryTalliesTheAddonsUnderItAtAnyDepth()
+{
+    AddonTreeModel model;
+    model.Show(NestedSnapshotWith({}), Profile());
+
+    const QModelIndex aircrafts = Category(model);
+    const SelectionTally tally = model.TallyOf({AddonTreeModel::NodeAt(aircrafts)});
+
+    QCOMPARE(tally.addons.size(), std::size_t{3});
+    QCOMPARE(tally.categories, std::size_t{1});
+    QVERIFY(std::ranges::find(tally.addons, std::filesystem::path(kEmbraer)) != tally.addons.end());
+}
+
+void AddonTreeModelTest::AnAddonSelectedInsideASelectedCategoryIsTalliedOnce()
+{
+    AddonTreeModel model;
+    model.Show(NestedSnapshotWith({}), Profile());
+
+    const QModelIndex aircrafts = Category(model);
+    const SelectionTally tally =
+        model.TallyOf({AddonTreeModel::NodeAt(aircrafts), AddonTreeModel::NodeAt(AddonAt(model, 0))});
+
+    QCOMPARE(tally.addons.size(), std::size_t{3});
+    QCOMPARE(tally.categories, std::size_t{1});
+    QCOMPARE(tally.categoriesCrossed, std::size_t{2});
+}
+
+void AddonTreeModelTest::TheTallyReadsEnabledBrokenAndStrayedFromTheAddonsItReached()
+{
+    AddonTreeModel model;
+    ProfileSnapshot snapshot = NestedSnapshotWith({kPmdg, kEmbraer});
+    snapshot.entries = {LinkIn(kCommunity, kPmdg),
+                        DestinationEntry{.path = std::filesystem::path(kCommunity) / "e195",
+                                         .target = kEmbraer,
+                                         .classification = EntryClassification::Broken}};
+
+    model.Show(snapshot, Profile());
+
+    const SelectionTally tally = model.TallyOf({AddonTreeModel::NodeAt(Category(model))});
+
+    QCOMPARE(tally.addons.size(), std::size_t{3});
+    QCOMPARE(tally.enabled, std::size_t{2});
+    QCOMPARE(tally.broken, std::size_t{1});
+    QVERIFY(tally.alarming);
 }
 
 QTEST_MAIN(AddonTreeModelTest)

@@ -170,9 +170,10 @@ namespace
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
         Session session{service, organizer, settings, processProbe, runner, notifier};
+        SizeService sizes{catalog, filesystemProbe, clock, runner};
         AddonTreeModel model;
         FakeSimulatorPackages packages;
-        AddonTreeViewModel viewModel{session, service, model, packages, notifier};
+        AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)

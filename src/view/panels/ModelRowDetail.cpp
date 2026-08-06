@@ -25,15 +25,16 @@ void ModelRowDetail::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange)
     {
-        Show(shown_);
+        Show(shown_, alongside_);
     }
 
     QWidget::changeEvent(event);
 }
 
-void ModelRowDetail::Show(const QModelIndex& index)
+void ModelRowDetail::Show(const QModelIndex& index, const QList<Field>& alongside)
 {
     shown_ = index;
+    alongside_ = alongside;
 
     if (!index.isValid())
     {
@@ -58,6 +59,8 @@ void ModelRowDetail::Show(const QModelIndex& index)
             fields.append({model->headerData(column, Qt::Horizontal, Qt::DisplayRole).toString(), value});
         }
     }
+
+    fields.append(alongside);
 
     ShowFields(fields);
 }

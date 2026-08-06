@@ -54,6 +54,9 @@ namespace
         static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
         static void TheSimulatorListIsNotConsultedWhileTheTreeIsBeingScanned();
         static void OnlyAnAddonHasDependenciesToReport();
+        static void TheSizeOfTheSelectionIsMeasuredInTheBackgroundAndAnnouncedWhenItLands();
+        static void AMeasurementOvertakenByANewSelectionIsNeverShown();
+        static void AnAddonTheLibraryWalkAlreadyMeasuredIsNotWalkedAgain();
     };
 }
 
@@ -171,8 +174,14 @@ namespace
         Session session{service, organizer, settings, processProbe, runner, notifier};
         AddonTreeModel model;
         FakeSimulatorPackages packages;
-        AddonTreeViewModel viewModel{session, service, model, packages, notifier};
+        SizeService sizes{catalog, filesystemProbe, clock, runner};
+        AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
     };
+
+    SelectionSize LastSize(const QSignalSpy& measured)
+    {
+        return measured.isEmpty() ? SelectionSize{} : measured.back().front().value<SelectionSize>();
+    }
 }
 
 void AddonTreeViewModelTest::ABlankCategoryNameIsRefusedBeforeItReachesTheJournal()
@@ -587,6 +596,67 @@ void AddonTreeViewModelTest::OnlyAnAddonHasDependenciesToReport()
     QVERIFY(f.viewModel.DependenciesOf(nullptr).answers.empty());
     QVERIFY(f.viewModel.DependenciesOf(&category).answers.empty());
     QCOMPARE(f.packages.asked, std::size_t{0});
+}
+
+void AddonTreeViewModelTest::TheSizeOfTheSelectionIsMeasuredInTheBackgroundAndAnnouncedWhenItLands()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+    f.fileSystem.AddFile(std::filesystem::path(kOtherAddon) / "content.bin", 700);
+    f.runner.defer = true;
+
+    const QSignalSpy measuring(&f.viewModel, &AddonTreeViewModel::SizeMeasuring);
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({kAddon, kOtherAddon});
+
+    QCOMPARE(measuring.size(), 1);
+    QCOMPARE(measured.size(), 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{1000});
+    QCOMPARE(LastSize(measured).measured, std::size_t{2});
+    QCOMPARE(LastSize(measured).selected, std::size_t{2});
+}
+
+void AddonTreeViewModelTest::AMeasurementOvertakenByANewSelectionIsNeverShown()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+    f.fileSystem.AddFile(std::filesystem::path(kOtherAddon) / "content.bin", 700);
+    f.runner.defer = true;
+
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({kAddon, kOtherAddon});
+    f.viewModel.MeasureTheSelection({kOtherAddon});
+
+    f.runner.Finish();
+    QCOMPARE(measured.size(), 0);
+
+    f.runner.Finish();
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{700});
+}
+
+void AddonTreeViewModelTest::AnAddonTheLibraryWalkAlreadyMeasuredIsNotWalkedAgain()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+
+    const MeasurementCaller elsewhere = f.sizes.NewCaller();
+    f.sizes.Measure({kLibrary}, elsewhere, Freshness::ReuseWhatIsKnown, {}, {});
+    QCOMPARE(f.filesystemProbe.TimesWalked(kAddon), std::size_t{1});
+
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({kAddon});
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{300});
+    QCOMPARE(f.filesystemProbe.TimesWalked(kAddon), std::size_t{1});
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

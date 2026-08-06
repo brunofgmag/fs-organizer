@@ -26,6 +26,8 @@ namespace
         static void AnAddonReachedThroughAJunctionIsMeasuredAsTheFolderItPointsAt();
         static void AJunctionInsideAnAddonIsNotFollowedSoNothingIsCountedTwice();
         static void TheLinkThatEnablesAnAddonWouldMeasureTheSameBytesAndIsNeverTheOneMeasured();
+        static void TheDestinationsScreenWeighsTheTargetAndGetsWhatTheLibraryScreenGets();
+        static void TheLooseWalkAndTheLibraryWalkFillTheSameCache();
     };
 }
 
@@ -103,6 +105,23 @@ namespace
                 });
 
             return measured;
+        }
+
+        [[nodiscard]] FolderSizeReport Weigh(const std::vector<std::filesystem::path>& folders)
+        {
+            FolderSizeReport weighed;
+            service.MeasureFolders(
+                folders, caller, Freshness::ReuseWhatIsKnown,
+                [](const SizeProgress&)
+                {
+                    return true;
+                },
+                [&weighed](const FolderSizeReport& report)
+                {
+                    weighed = report;
+                });
+
+            return weighed;
         }
 
         [[nodiscard]] std::uintmax_t WalkedBytesOf(const std::filesystem::path& folder) const
@@ -187,6 +206,42 @@ void SizeOnRealDiskTest::TheLinkThatEnablesAnAddonWouldMeasureTheSameBytesAndIsN
 
     QCOMPARE(measuring.WalkedBytesOf(enabled), std::uintmax_t{2048} + kManifest.size());
     QCOMPARE(measuring.service.BytesOf(enabled), std::optional<std::uintmax_t>{});
+}
+
+void SizeOnRealDiskTest::TheDestinationsScreenWeighsTheTargetAndGetsWhatTheLibraryScreenGets()
+{
+    const Disk disk;
+    const std::filesystem::path library = disk.AddFolder("Library");
+    const std::filesystem::path addon = disk.AddAddon("Library/Utils/sim-rate-selector", 2048);
+    const std::filesystem::path enabled = disk.Root() / "Community" / "sim-rate-selector";
+    Disk::Junction(enabled, addon);
+
+    Measuring measuring;
+
+    const FolderSizeReport fromTheDestinations = measuring.Weigh({addon});
+    const FolderSizeReport fromTheLibrary = measuring.Weigh({addon});
+
+    QCOMPARE(fromTheDestinations.bytes, std::uintmax_t{2048} + kManifest.size());
+    QCOMPARE(fromTheDestinations.bytes, fromTheLibrary.bytes);
+    QCOMPARE(measuring.WalkedBytesOf(enabled), fromTheDestinations.bytes);
+    QCOMPARE(measuring.service.BytesOf(enabled), std::optional<std::uintmax_t>{});
+}
+
+void SizeOnRealDiskTest::TheLooseWalkAndTheLibraryWalkFillTheSameCache()
+{
+    const Disk disk;
+    const std::filesystem::path library = disk.AddFolder("Library");
+    const std::filesystem::path addon = disk.AddAddon("Library/Utils/sim-rate-selector", 2048);
+
+    Measuring measuring;
+    static_cast<void>(measuring.Measure(library));
+
+    Disk::WriteBytes(addon / "grown.bin", 5000);
+
+    const FolderSizeReport weighed = measuring.Weigh({addon});
+
+    QCOMPARE(weighed.bytes, std::uintmax_t{2048} + kManifest.size());
+    QCOMPARE(weighed.measured, std::size_t{1});
 }
 
 QTEST_APPLESS_MAIN(SizeOnRealDiskTest)

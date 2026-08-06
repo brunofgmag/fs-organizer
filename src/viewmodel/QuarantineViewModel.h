@@ -8,6 +8,8 @@
 #include "application/ImportService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/SizeService.h"
+#include "application/ports/BackgroundRunner.h"
 #include "viewmodel/QuarantineModel.h"
 #include "viewmodel/SessionNotifier.h"
 
@@ -21,6 +23,8 @@ public:
                         const Session& session,
                         const SessionNotifier& notifier,
                         QuarantineModel& model,
+                        SizeService& sizes,
+                        BackgroundRunner& runner,
                         QObject* parent = nullptr);
 
     void Show();
@@ -35,10 +39,18 @@ signals:
     void Discarded(const std::vector<FileOperationResult>& results);
 
 private:
+    void Describe(const std::vector<QuarantinedItem>& items);
+
+    void Weigh(const std::vector<QuarantinedItem>& items);
+
     const ImportService& service_;
     ProfileService& profileService_;
     const Session& session_;
     QuarantineModel& model_;
+    SizeService& sizes_;
+    BackgroundRunner& runner_;
+    MeasurementCaller caller_;
+    int listed_ = 0;
     bool shown_ = false;
 };
 
