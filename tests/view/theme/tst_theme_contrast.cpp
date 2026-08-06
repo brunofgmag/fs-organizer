@@ -9,6 +9,7 @@ namespace
 {
     constexpr double kBodyTextMinimum = 4.5;
     constexpr double kOutlineMinimum = 3.0;
+    constexpr double kDarkSurfacesStayApart = 1.05;
 
     struct Tone
     {
@@ -57,7 +58,7 @@ namespace
 
     QList<DeclaredPair> DeclaredOutlinePairs()
     {
-        return Wherever(kAccent, {kWindow, kChrome}) + Wherever(kAccentWarm, {kWindow, kChrome})
+        return Wherever(kAccent, {kWindow, kChrome, kRaised}) + Wherever(kAccentWarm, {kWindow, kChrome, kRaised})
             + Wherever(kEdge, {kWindow, kChrome, kRaised});
     }
 
@@ -165,7 +166,7 @@ namespace
     private slots:
         static void EveryDeclaredPairReachesTheMinimumInBothSchemes();
         static void EveryDeclaredOutlineReachesThreeToOneInBothSchemes();
-        static void TheOneOutlineThatDoesNotReachThreeToOneIsTheAccentOnTheRaisedSurface();
+        static void TheRaisedSurfaceStaysApartFromTheWindowItSitsOn();
         static void TheOutlineListCarriesTheFocusRingAndTheControlEdge();
         static void TheWorstGroundIsTheOneThatDecides();
         static void TheHoverFillCarriesItsInkLikeTheRestingFill();
@@ -189,15 +190,20 @@ void ThemeContrastTest::EveryDeclaredOutlineReachesThreeToOneInBothSchemes()
     QVERIFY2(complaints.isEmpty(), qPrintable(QStringLiteral("\n") + complaints.join(QLatin1Char('\n'))));
 }
 
-void ThemeContrastTest::TheOneOutlineThatDoesNotReachThreeToOneIsTheAccentOnTheRaisedSurface()
+void ThemeContrastTest::TheRaisedSurfaceStaysApartFromTheWindowItSitsOn()
 {
+    for (const auto& [name, scheme] : SchemesThatShip())
+    {
+        const ModernistTones tones = TonesOf(scheme);
+
+        QVERIFY(tones.raised != tones.window);
+        QVERIFY(ContrastRatio(tones.onAccent, tones.accent) >= kBodyTextMinimum);
+    }
+
     const ModernistTones dark = TonesOf(Qt::ColorScheme::Dark);
 
-    QVERIFY(ContrastRatio(dark.accent, dark.raised) < kOutlineMinimum);
-    QVERIFY(ContrastRatio(dark.accent, dark.raised) > 2.9);
-    QVERIFY(ContrastRatio(TonesOf(Qt::ColorScheme::Light).accent, TonesOf(Qt::ColorScheme::Light).raised)
-            >= kOutlineMinimum);
-    QVERIFY(ContrastRatio(dark.onAccent, dark.accent) >= kBodyTextMinimum);
+    QVERIFY(ContrastRatio(dark.accent, dark.raised) >= kOutlineMinimum);
+    QVERIFY(ContrastRatio(dark.raised, dark.window) > kDarkSurfacesStayApart);
 }
 
 void ThemeContrastTest::TheOutlineListCarriesTheFocusRingAndTheControlEdge()
@@ -216,12 +222,12 @@ void ThemeContrastTest::TheOutlineListCarriesTheFocusRingAndTheControlEdge()
                                     return pair.ink.value == &ModernistTones::edge
                                         && pair.ground.value == &ModernistTones::chrome;
                                 }));
-    QVERIFY(std::ranges::none_of(outlines,
-                                 [](const DeclaredPair& pair)
-                                 {
-                                     return pair.ink.value == &ModernistTones::accent
-                                         && pair.ground.value == &ModernistTones::raised;
-                                 }));
+    QVERIFY(std::ranges::any_of(outlines,
+                                [](const DeclaredPair& pair)
+                                {
+                                    return pair.ink.value == &ModernistTones::accent
+                                        && pair.ground.value == &ModernistTones::raised;
+                                }));
 }
 
 void ThemeContrastTest::TheWorstGroundIsTheOneThatDecides()

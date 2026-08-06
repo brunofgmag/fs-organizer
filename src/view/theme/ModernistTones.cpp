@@ -28,7 +28,7 @@ namespace
         return WithTheGroundsItDerives({
             .window = QColor("#1c1a19"),
             .chrome = QColor("#141312"),
-            .raised = QColor("#262322"),
+            .raised = QColor("#23201f"),
             .divider = QColor("#3a3634"),
             .edge = QColor("#726d6a"),
             .text = QColor("#f3f2f2"),
