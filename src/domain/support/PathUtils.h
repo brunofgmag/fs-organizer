@@ -2,9 +2,10 @@
 #define FS_ORGANIZER_DOMAIN_SUPPORT_PATH_UTILS_H
 
 #include <algorithm>
-#include <cctype>
 #include <filesystem>
 #include <string>
+
+#include "domain/support/CaseFolding.h"
 
 [[nodiscard]] inline std::string WithGenericSeparators(std::string text)
 {
@@ -15,13 +16,8 @@
 
 [[nodiscard]] inline std::string ComparablePath(const std::filesystem::path& path)
 {
-    std::string key =
-        std::filesystem::path(WithGenericSeparators(path.generic_string())).lexically_normal().generic_string();
-    std::ranges::transform(key, key.begin(),
-                           [](const unsigned char character)
-                           {
-                               return static_cast<char>(std::tolower(character));
-                           });
+    std::string key = LoweredForComparison(
+        std::filesystem::path(WithGenericSeparators(path.generic_string())).lexically_normal().generic_string());
 
     while (key.size() > 1 && key.back() == '/' && key[key.size() - 2] != ':')
     {

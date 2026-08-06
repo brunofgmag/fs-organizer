@@ -93,6 +93,7 @@ fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
 fsorg_add_qt_test(fsorg-path-utils-tests path-utils
         tests/domain/support/tst_path_utils.cpp
         tests/support/PathPrinting.h
+        src/domain/support/CaseFolding.h
         src/domain/support/PathUtils.h)
 
 fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
@@ -628,6 +629,12 @@ if (WIN32)
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-catalog-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-case-folding-on-real-disk-tests case-folding-on-real-disk
+            tests/infrastructure/fileops/tst_case_folding_on_real_disk.cpp
+            tests/support/PathPrinting.h
+            src/domain/support/CaseFolding.h
+            src/domain/support/PathUtils.h)
 
     fsorg_add_qt_test(fsorg-size-on-real-disk-tests size-on-real-disk
             tests/infrastructure/fileops/tst_size_on_real_disk.cpp
