@@ -8,6 +8,7 @@
 namespace
 {
     constexpr double kBodyTextMinimum = 4.5;
+    constexpr double kOutlineMinimum = 3.0;
 
     struct Tone
     {
@@ -26,6 +27,7 @@ namespace
     constexpr Tone kFaint{.name = "faint", .value = &ModernistTones::faint};
     constexpr Tone kAccentInk{.name = "accentInk", .value = &ModernistTones::accentInk};
     constexpr Tone kOnAccent{.name = "onAccent", .value = &ModernistTones::onAccent};
+    constexpr Tone kEdge{.name = "edge", .value = &ModernistTones::edge};
 
     struct DeclaredPair
     {
@@ -51,6 +53,12 @@ namespace
             + Wherever(kSecondary, {kWindow, kChrome, kRaised, kAlarming}) + Wherever(kFaint, {kWindow})
             + Wherever(kAccentInk, {kWindow, kChrome, kRaised, kAlarming})
             + Wherever(kOnAccent, {kAccent, kAccentWarm});
+    }
+
+    QList<DeclaredPair> DeclaredOutlinePairs()
+    {
+        return Wherever(kAccent, {kWindow, kChrome}) + Wherever(kAccentWarm, {kWindow, kChrome})
+            + Wherever(kEdge, {kWindow, kChrome, kRaised});
     }
 
     struct NamedScheme
@@ -96,14 +104,36 @@ namespace
         return ContrastRatio(ValueOf(pair.ink, tones), ValueOf(pair.ground, tones));
     }
 
-    QString Complaint(const char* scheme, const DeclaredPair& pair, const double ratio)
+    QString
+    Complaint(const char* scheme, const DeclaredPair& pair, const double ratio, const char* what, const double minimum)
     {
-        return QStringLiteral("%1: %2 on %3 measures %4:1, and body text needs %5:1")
+        return QStringLiteral("%1: %2 on %3 measures %4:1, and %5 needs %6:1")
             .arg(QString::fromLatin1(scheme))
             .arg(QString::fromLatin1(pair.ink.name))
             .arg(QString::fromLatin1(pair.ground.name))
             .arg(QString::number(ratio, 'f', 2))
-            .arg(QString::number(kBodyTextMinimum, 'f', 2));
+            .arg(QString::fromLatin1(what))
+            .arg(QString::number(minimum, 'f', 2));
+    }
+
+    QStringList WhatFallsShort(const QList<DeclaredPair>& pairs, const char* what, const double minimum)
+    {
+        QStringList complaints;
+
+        for (const auto& [name, scheme] : SchemesThatShip())
+        {
+            const ModernistTones tones = TonesOf(scheme);
+
+            for (const DeclaredPair& pair : pairs)
+            {
+                if (const double ratio = RatioOf(pair, tones); ratio < minimum)
+                {
+                    complaints.append(Complaint(name, pair, ratio, what, minimum));
+                }
+            }
+        }
+
+        return complaints;
     }
 
     const char* WorstGroundFor(const char* ink, const ModernistTones& tones)
@@ -134,6 +164,9 @@ namespace
 
     private slots:
         static void EveryDeclaredPairReachesTheMinimumInBothSchemes();
+        static void EveryDeclaredOutlineReachesThreeToOneInBothSchemes();
+        static void TheOneOutlineThatDoesNotReachThreeToOneIsTheAccentOnTheRaisedSurface();
+        static void TheOutlineListCarriesTheFocusRingAndTheControlEdge();
         static void TheWorstGroundIsTheOneThatDecides();
         static void TheHoverFillCarriesItsInkLikeTheRestingFill();
         static void TheDisabledInkKeepsTheValueItHadBeforeTheSplit();
@@ -144,22 +177,51 @@ namespace
 
 void ThemeContrastTest::EveryDeclaredPairReachesTheMinimumInBothSchemes()
 {
-    QStringList complaints;
-
-    for (const auto& [name, scheme] : SchemesThatShip())
-    {
-        const ModernistTones tones = TonesOf(scheme);
-
-        for (const DeclaredPair& pair : DeclaredPairs())
-        {
-            if (const double ratio = RatioOf(pair, tones); ratio < kBodyTextMinimum)
-            {
-                complaints.append(Complaint(name, pair, ratio));
-            }
-        }
-    }
+    const QStringList complaints = WhatFallsShort(DeclaredPairs(), "body text", kBodyTextMinimum);
 
     QVERIFY2(complaints.isEmpty(), qPrintable(QStringLiteral("\n") + complaints.join(QLatin1Char('\n'))));
+}
+
+void ThemeContrastTest::EveryDeclaredOutlineReachesThreeToOneInBothSchemes()
+{
+    const QStringList complaints = WhatFallsShort(DeclaredOutlinePairs(), "an outline", kOutlineMinimum);
+
+    QVERIFY2(complaints.isEmpty(), qPrintable(QStringLiteral("\n") + complaints.join(QLatin1Char('\n'))));
+}
+
+void ThemeContrastTest::TheOneOutlineThatDoesNotReachThreeToOneIsTheAccentOnTheRaisedSurface()
+{
+    const ModernistTones dark = TonesOf(Qt::ColorScheme::Dark);
+
+    QVERIFY(ContrastRatio(dark.accent, dark.raised) < kOutlineMinimum);
+    QVERIFY(ContrastRatio(dark.accent, dark.raised) > 2.9);
+    QVERIFY(ContrastRatio(TonesOf(Qt::ColorScheme::Light).accent, TonesOf(Qt::ColorScheme::Light).raised)
+            >= kOutlineMinimum);
+    QVERIFY(ContrastRatio(dark.onAccent, dark.accent) >= kBodyTextMinimum);
+}
+
+void ThemeContrastTest::TheOutlineListCarriesTheFocusRingAndTheControlEdge()
+{
+    const QList<DeclaredPair> outlines = DeclaredOutlinePairs();
+
+    QVERIFY(std::ranges::any_of(outlines,
+                                [](const DeclaredPair& pair)
+                                {
+                                    return pair.ink.value == &ModernistTones::accent
+                                        && pair.ground.value == &ModernistTones::window;
+                                }));
+    QVERIFY(std::ranges::any_of(outlines,
+                                [](const DeclaredPair& pair)
+                                {
+                                    return pair.ink.value == &ModernistTones::edge
+                                        && pair.ground.value == &ModernistTones::chrome;
+                                }));
+    QVERIFY(std::ranges::none_of(outlines,
+                                 [](const DeclaredPair& pair)
+                                 {
+                                     return pair.ink.value == &ModernistTones::accent
+                                         && pair.ground.value == &ModernistTones::raised;
+                                 }));
 }
 
 void ThemeContrastTest::TheWorstGroundIsTheOneThatDecides()
@@ -198,7 +260,7 @@ void ThemeContrastTest::TheDisabledInkKeepsTheValueItHadBeforeTheSplit()
 
 void ThemeContrastTest::TheDisabledInkIsExemptAndTheExemptionIsReal()
 {
-    for (const DeclaredPair& pair : DeclaredPairs())
+    for (const DeclaredPair& pair : DeclaredPairs() + DeclaredOutlinePairs())
     {
         QVERIFY(pair.ink.value != &ModernistTones::disabled);
         QVERIFY(pair.ground.value != &ModernistTones::disabled);
@@ -216,7 +278,7 @@ void ThemeContrastTest::TheDisabledInkIsExemptAndTheExemptionIsReal()
 void ThemeContrastTest::TheComplaintNamesThePairTheMeasurementAndTheMinimum()
 {
     const DeclaredPair broken{.ink = kAccentInk, .ground = kAlarming};
-    const QString said = Complaint("light", broken, 3.18);
+    const QString said = Complaint("light", broken, 3.18, "body text", kBodyTextMinimum);
 
     QVERIFY(said.contains(QStringLiteral("light")));
     QVERIFY(said.contains(QString::fromLatin1(kAccentInk.name)));
