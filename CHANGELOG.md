@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/brunofgmag/fs-organizer/compare/v0.8.0...v0.9.0) (2026-08-06)
+
+
+### Features
+
+* **diagnostics:** show what a profile has on disk, section by section ([#26](https://github.com/brunofgmag/fs-organizer/issues/26)) ([bc5fbce](https://github.com/brunofgmag/fs-organizer/commit/bc5fbcea145915830ee225d935d9f091f7929afc))
+
 ## [0.8.0](https://github.com/brunofgmag/fs-organizer/compare/v0.7.0...v0.8.0) (2026-08-05)
 
 
