@@ -8,6 +8,19 @@
 #include "domain/ports/FilesystemProbe.h"
 #include "support/FileClock.h"
 
+#ifdef _WIN32
+#include "infrastructure/fileops/ExtendedPaths.h"
+#endif
+
+[[nodiscard]] inline std::filesystem::path AsFarAsTheProductionProbeReaches(const std::filesystem::path& path)
+{
+#ifdef _WIN32
+    return WithExtendedPrefix(path);
+#else
+    return path;
+#endif
+}
+
 class StdFilesystemProbe final : public FilesystemProbe
 {
 public:
@@ -29,21 +42,22 @@ public:
     {
         std::error_code error;
 
-        return std::filesystem::symlink_status(path, error).type() != std::filesystem::file_type::not_found;
+        return std::filesystem::symlink_status(AsFarAsTheProductionProbeReaches(path), error).type()
+            != std::filesystem::file_type::not_found;
     }
 
     [[nodiscard]] bool TargetDirectoryExists(const std::filesystem::path& path) const override
     {
         std::error_code error;
 
-        return std::filesystem::is_directory(path, error);
+        return std::filesystem::is_directory(AsFarAsTheProductionProbeReaches(path), error);
     }
 
     [[nodiscard]] bool IsReparsePoint(const std::filesystem::path& path) const override
     {
         std::error_code error;
 
-        return IsALinkWithoutFollowing(std::filesystem::symlink_status(path, error));
+        return IsALinkWithoutFollowing(std::filesystem::symlink_status(AsFarAsTheProductionProbeReaches(path), error));
     }
 
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
@@ -51,14 +65,15 @@ public:
         std::vector<std::filesystem::path> children;
 
         std::error_code error;
-        for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(
-                 path, std::filesystem::directory_options::skip_permission_denied, error))
+        for (const std::filesystem::directory_entry& entry :
+             std::filesystem::directory_iterator(AsFarAsTheProductionProbeReaches(path),
+                                                 std::filesystem::directory_options::skip_permission_denied, error))
         {
             const std::filesystem::file_status status = std::filesystem::symlink_status(entry.path(), error);
 
             if (status.type() == std::filesystem::file_type::directory || IsALinkWithoutFollowing(status))
             {
-                children.push_back(entry.path());
+                children.push_back(path / entry.path().filename());
             }
         }
 
@@ -78,7 +93,7 @@ public:
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override
     {
         std::error_code error;
-        const std::filesystem::space_info space = std::filesystem::space(path, error);
+        const std::filesystem::space_info space = std::filesystem::space(AsFarAsTheProductionProbeReaches(path), error);
 
         return error ? std::nullopt : std::optional(space.available);
     }
@@ -87,14 +102,15 @@ public:
     LastWriteTime(const std::filesystem::path& path) const override
     {
         std::error_code error;
-        const std::filesystem::file_time_type written = std::filesystem::last_write_time(path, error);
+        const std::filesystem::file_time_type written =
+            std::filesystem::last_write_time(AsFarAsTheProductionProbeReaches(path), error);
 
         return error ? std::nullopt : std::optional(SystemTimeOf(written));
     }
 
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override
     {
-        std::ifstream file(path, std::ios::binary);
+        std::ifstream file(AsFarAsTheProductionProbeReaches(path), std::ios::binary);
         if (!file.is_open())
         {
             return std::nullopt;
@@ -106,9 +122,11 @@ public:
     [[nodiscard]] std::optional<std::vector<FileFingerprint>>
     FingerprintTree(const std::filesystem::path& root) const override
     {
+        const std::filesystem::path reachableRoot = AsFarAsTheProductionProbeReaches(root);
+
         std::error_code error;
         std::filesystem::recursive_directory_iterator entry(
-            root, std::filesystem::directory_options::skip_permission_denied, error);
+            reachableRoot, std::filesystem::directory_options::skip_permission_denied, error);
         if (error)
         {
             return std::nullopt;
@@ -133,7 +151,8 @@ public:
                     return std::nullopt;
                 }
 
-                files.push_back(FileFingerprint{.relativePath = entry->path().lexically_relative(root), .size = size});
+                files.push_back(
+                    FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
             }
 
             entry.increment(error);

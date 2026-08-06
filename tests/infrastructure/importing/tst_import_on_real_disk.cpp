@@ -225,7 +225,7 @@ void ImportOnRealDiskTest::ALiveJunctionOfAnotherProgramIsNeverReplaced()
         engine.linking.Enable(Addon{.folderPath = library}, disk.Destination(), LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
-    QVERIFY(outcome.Occupation().has_value());
+    QVERIFY(outcome.Occupation() != nullptr);
     QCOMPARE(outcome.Occupation()->existingTarget, foreign);
     QCOMPARE(NormalizeReparseTarget(engine.linkService.ReadLinkTarget(linkPath).value()), foreign);
     QVERIFY(std::filesystem::exists(foreign / "manifest.json"));

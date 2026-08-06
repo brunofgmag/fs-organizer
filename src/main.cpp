@@ -469,6 +469,7 @@ int main(int argc, char* argv[])
                      });
 
     QObject::connect(&notifier, &SessionNotifier::RestartPendingChanged, &window, &MainWindow::ShowRestartPending);
+    QObject::connect(&notifier, &SessionNotifier::SimulatorIsRunning, &window, &MainWindow::WarnTheSimulatorIsOpen);
     QObject::connect(&presetViewModel, &PresetViewModel::Applied, page,
                      [page](const QStringList&)
                      {

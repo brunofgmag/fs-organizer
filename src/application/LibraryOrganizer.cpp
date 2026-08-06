@@ -130,7 +130,7 @@ FileOperationResult LibraryOrganizer::CreateCategory(const SimulatorProfile& pro
                                                      const std::filesystem::path& parent,
                                                      const std::string& name) const
 {
-    const std::filesystem::path folder = parent / name;
+    const std::filesystem::path folder = parent / PathFromUtf8(name);
 
     if (processProbe_.SimulatorIsRunning())
     {
@@ -220,7 +220,7 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
                                                      const std::filesystem::path& category,
                                                      const std::string& name) const
 {
-    const std::filesystem::path landing = category.parent_path() / name;
+    const std::filesystem::path landing = category.parent_path() / PathFromUtf8(name);
 
     if (processProbe_.SimulatorIsRunning())
     {

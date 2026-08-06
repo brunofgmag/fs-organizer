@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 
+#include "domain/support/CaseFolding.h"
 #include "domain/support/PathUtils.h"
 #include "tests/support/PathPrinting.h"
 
@@ -18,7 +19,47 @@ namespace
         static void AFolderIsInsideTheRootOfItsOwnVolume();
         static void ASiblingWhoseNameStartsWithTheRootIsNotInsideIt();
         static void NothingIsInsideARootThatWasNeverNamed();
+        static void TwoSpellingsOfAnAccentedNameShareAKey();
+        static void BytesThatAreNotUtf8AreCarriedThrough();
+        static void ANameOutsideTheHostCodePageStillBecomesUtf8();
     };
+}
+
+void PathUtilsTest::ANameOutsideTheHostCodePageStillBecomesUtf8()
+{
+    const std::string written = "D:/Library/Sceneries/\xC5\x81odz";
+
+    QCOMPARE(AsUtf8(PathFromUtf8(written)), written);
+    QCOMPARE(ComparablePath(PathFromUtf8(written)), std::string("d:/library/sceneries/\xC5\x82odz"));
+}
+
+void PathUtilsTest::TwoSpellingsOfAnAccentedNameShareAKey()
+{
+    const std::string upper = "D:/Library/Sceneries/\xC3\x81"
+                              "UDIO-\xC5\x81"
+                              "\xC3\x87"
+                              "\xCE\xA3"
+                              "\xD0\x94";
+    const std::string lower = "d:/library/sceneries/\xC3\xA1"
+                              "udio-\xC5\x82"
+                              "\xC3\xA7"
+                              "\xCF\x83"
+                              "\xD0\xB4";
+
+    QCOMPARE(ComparablePath(PathFromUtf8(upper)), ComparablePath(PathFromUtf8(lower)));
+    QCOMPARE(ComparablePath(PathFromUtf8(upper)), lower);
+    QCOMPARE(ComparableFileName(PathFromUtf8(upper)), ComparableFileName(PathFromUtf8(lower)));
+    QVERIFY(PathIsInside(PathFromUtf8(upper), "D:/Library"));
+}
+
+void PathUtilsTest::BytesThatAreNotUtf8AreCarriedThrough()
+{
+    QCOMPARE(LoweredForComparison("\xC3"), std::string("\xE3"));
+    QCOMPARE(LoweredForComparison("\xFF"
+                                  "X"),
+             std::string("\xFF"
+                         "x"));
+    QCOMPARE(LoweredForComparison("\xC3\x28Z"), std::string("\xE3\x28z"));
 }
 
 void PathUtilsTest::TwoPathsThatNameTheSameFolderShareAKey()
