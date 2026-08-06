@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.0](https://github.com/brunofgmag/fs-organizer/compare/v0.9.0...v0.10.0) (2026-08-06)
+
+
+### Features
+
+* size where the decision happens, read from a single cache ([#30](https://github.com/brunofgmag/fs-organizer/issues/30)) ([5c2806e](https://github.com/brunofgmag/fs-organizer/commit/5c2806eac8b5c627937c65cc9ae11e92d7900bf2))
+
+
+### Bug Fixes
+
+* guard the portable layers and the screens against what only the runner sees ([#29](https://github.com/brunofgmag/fs-organizer/issues/29)) ([d1a5b11](https://github.com/brunofgmag/fs-organizer/commit/d1a5b114f5e431abb874ee28f6b61549881847bb))
+
 ## [0.9.0](https://github.com/brunofgmag/fs-organizer/compare/v0.8.0...v0.9.0) (2026-08-06)
 
 
