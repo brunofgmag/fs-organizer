@@ -17,6 +17,7 @@ namespace
         static void ASiblingWholeNameStartsWithTheRootIsNotADescendant();
         static void FilesUnderReachesEveryDepthAndReportsSizes();
         static void ChildDirectoriesReportsLinksButNeverFiles();
+        static void MarkingOneVolumeUnavailableLeavesTheOthersAlone();
     };
 }
 
@@ -117,6 +118,16 @@ void InMemoryFileSystemTest::ChildDirectoriesReportsLinksButNeverFiles()
     const std::vector<std::filesystem::path> children = fileSystem.ChildDirectoriesOf("E:/Sim/Community");
 
     QCOMPARE(children, (std::vector<std::filesystem::path>{"E:/Sim/Community/aerosoft-crj", "E:/Sim/Community/asfs"}));
+}
+
+void InMemoryFileSystemTest::MarkingOneVolumeUnavailableLeavesTheOthersAlone()
+{
+    InMemoryFileSystem fileSystem;
+    fileSystem.MarkVolumeUnavailable("Z:/");
+
+    QVERIFY(!fileSystem.VolumeIsAvailable("Z:/Portable Library/orbx-airport"));
+    QVERIFY(fileSystem.VolumeIsAvailable("E:/Flight Simulator 2024/Community/gone"));
+    QVERIFY(fileSystem.VolumeIsAvailable("D:/MSFS 2024"));
 }
 
 QTEST_APPLESS_MAIN(InMemoryFileSystemTest)

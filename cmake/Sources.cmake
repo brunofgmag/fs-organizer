@@ -74,6 +74,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
         src/viewmodel/DependencyText.cpp
+        src/viewmodel/DiagnosticsViewModel.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
@@ -94,6 +95,7 @@ set(VIEW_SOURCES
         src/view/library/AddonTreePage.cpp
         src/view/community/CommunityPage.cpp
         src/view/community/ConflictDialog.cpp
+        src/view/diagnostics/DiagnosticsPage.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
         src/view/shell/LanguageSwitch.cpp

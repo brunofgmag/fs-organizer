@@ -107,12 +107,12 @@ QToolButton#PanelToggle, QToolButton#PanelClose {
     background: transparent; border: none; color: %secondary%; padding: 2px 6px;
 }
 QToolButton#PanelToggle:hover, QToolButton#PanelClose:hover { color: %text%; background: %raised%; }
-QListWidget#OptionsNav { background: %chrome%; border-right: 1px solid %divider%; outline: none; }
-QListWidget#OptionsNav::item { padding: 8px 16px; color: %secondary%; border-left: 3px solid transparent; }
-QListWidget#OptionsNav::item:selected, QListWidget#OptionsNav::item:selected:active {
+QListWidget#SectionRail { background: %chrome%; border-right: 1px solid %divider%; outline: none; }
+QListWidget#SectionRail::item { padding: 8px 16px; color: %secondary%; border-left: 3px solid transparent; }
+QListWidget#SectionRail::item:selected, QListWidget#SectionRail::item:selected:active {
     background: %raised%; color: %text%; font-weight: 600; border-left: 3px solid %accent%;
 }
-QListWidget#OptionsNav::item:disabled { color: %disabled%; }
+QListWidget#SectionRail::item:disabled { color: %disabled%; }
 QFrame#OptionsBox { background: %window%; border: 1px solid %divider%; }
 #OptionsRow[follows="true"] { border-top: 1px solid %raised%; }
 #OptionsChoice[follows="true"] { border-top: 1px solid %divider%; }

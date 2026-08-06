@@ -14,6 +14,7 @@
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "application/SetupService.h"
+#include "application/SizeService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -36,6 +37,7 @@
 #include "support/PathText.h"
 #include "view/library/AddonTreePage.h"
 #include "view/community/CommunityPage.h"
+#include "view/diagnostics/DiagnosticsPage.h"
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/JournalPage.h"
 #include "view/shell/LanguageSwitch.h"
@@ -49,6 +51,7 @@
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
+#include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
 #include "viewmodel/LegacyImportViewModel.h"
@@ -210,6 +213,10 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
+    SizeService sizes(catalog, filesystemProbe, clock, runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
+    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
+
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService);
     PresetViewModel presetViewModel(session, presetService);
@@ -235,6 +242,7 @@ int main(int argc, char* argv[])
     PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
     window.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
+    window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
 
     window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);
@@ -411,7 +419,20 @@ int main(int argc, char* argv[])
                          {
                              journalViewModel.Show();
                          }
+                         else if (selected == diagnosticsPage)
+                         {
+                             diagnosticsViewModel.Show();
+                         }
                      });
+
+    QObject::connect(diagnosticsPage, &DiagnosticsPage::SummaryChanged, &window, carryTheSummaryOf(diagnosticsPage));
+    QObject::connect(diagnosticsPage, &DiagnosticsPage::StatusChanged, &window, &MainWindow::ShowStatus);
+    QObject::connect(diagnosticsPage, &DiagnosticsPage::QuarantineRequested, quarantinePage,
+                     [quarantineButton]
+                     {
+                         quarantineButton->click();
+                     });
+    QObject::connect(diagnosticsPage, &DiagnosticsPage::RepairRequested, &window, &MainWindow::RepairRequested);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
                      [&window](const AttentionBreakdown& breakdown)
