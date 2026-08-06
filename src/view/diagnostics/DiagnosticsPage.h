@@ -58,6 +58,12 @@ private:
 
     void ShowWhatWasCounted();
 
+    void ShowTheCounts() const;
+
+    void ShowWhatIsTroubled() const;
+
+    void ShowWhatTheQuarantineHolds() const;
+
     void ShowWhatWasMeasured() const;
 
     void ShowProgress(const QString& folder, int measured, int total) const;

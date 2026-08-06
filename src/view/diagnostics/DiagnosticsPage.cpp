@@ -358,6 +358,27 @@ void DiagnosticsPage::OpenSection(const int section) const
 
 void DiagnosticsPage::ShowWhatWasCounted()
 {
+    ShowTheCounts();
+    ShowWhatIsTroubled();
+    ShowWhatTheQuarantineHolds();
+
+    const std::optional<std::chrono::system_clock::time_point> counted = viewModel_.CountedAt();
+    refreshedAt_->setText(counted.has_value() ? tr("everything under a second · %1").arg(AsMoment(*counted))
+                                              : tr("not counted yet"));
+
+    DressTheRail();
+
+    std::size_t entries = 0;
+    for (const ClassificationCount& row : viewModel_.Counts())
+    {
+        entries += row.count;
+    }
+
+    emit SummaryChanged(tr("%n entry in the destinations of this profile.", nullptr, static_cast<int>(entries)));
+}
+
+void DiagnosticsPage::ShowTheCounts() const
+{
     counts_->clear();
     for (const ClassificationCount& row : viewModel_.Counts())
     {
@@ -366,7 +387,10 @@ void DiagnosticsPage::ShowWhatWasCounted()
         item->setText(1, QString::number(row.count));
         item->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
     }
+}
 
+void DiagnosticsPage::ShowWhatIsTroubled() const
+{
     troubled_->clear();
     const std::vector<DestinationEntry>& broken = viewModel_.Broken();
     const std::vector<DestinationEntry>& unavailable = viewModel_.Unavailable();
@@ -396,26 +420,16 @@ void DiagnosticsPage::ShowWhatWasCounted()
             ? tr("No entry in any destination is broken or parked on a volume that is not here.")
             : tr("An unavailable entry is not offered for cleanup: the volume can come back. Repairing points a broken "
                  "link at the addon again, and it is the same repair the Destinations screen runs."));
+}
 
+void DiagnosticsPage::ShowWhatTheQuarantineHolds() const
+{
     const QuarantineWeight weight = viewModel_.Quarantine();
+
     quarantineWeight_->setText(tr("%1 held in quarantine").arg(AsSize(weight.bytes)));
     quarantinePlaces_->setText(tr("%1 beside a destination, %2 inside a library")
                                    .arg(static_cast<qulonglong>(weight.besideDestinations))
                                    .arg(static_cast<qulonglong>(weight.insideLibraries)));
-
-    const std::optional<std::chrono::system_clock::time_point> counted = viewModel_.CountedAt();
-    refreshedAt_->setText(counted.has_value() ? tr("everything under a second · %1").arg(AsMoment(*counted))
-                                              : tr("not counted yet"));
-
-    DressTheRail();
-
-    std::size_t entries = 0;
-    for (const ClassificationCount& row : viewModel_.Counts())
-    {
-        entries += row.count;
-    }
-
-    emit SummaryChanged(tr("%n entry in the destinations of this profile.", nullptr, static_cast<int>(entries)));
 }
 
 void DiagnosticsPage::ShowWhatWasMeasured() const
