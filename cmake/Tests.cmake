@@ -74,6 +74,11 @@ add_test(NAME disabled-ink
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-disabled-ink.cmake")
 
+add_test(NAME no-nested-ternary
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-nested-ternary.cmake")
+
 if (WIN32 AND NOT FSORG_TESTS_ONLY)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"

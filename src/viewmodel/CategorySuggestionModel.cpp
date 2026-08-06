@@ -93,7 +93,12 @@ QVariant CategorySuggestionModel::data(const QModelIndex& position, const int ro
 
     if (role == Qt::CheckStateRole)
     {
-        return position.column() == AddonColumn ? QVariant(row.chosen ? Qt::Checked : Qt::Unchecked) : QVariant();
+        if (position.column() != AddonColumn)
+        {
+            return {};
+        }
+
+        return row.chosen ? Qt::Checked : Qt::Unchecked;
     }
 
     if (role != Qt::DisplayRole)
