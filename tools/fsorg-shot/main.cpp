@@ -16,6 +16,8 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QAbstractItemView>
+#include <QtWidgets/QTableView>
 #include <QtWidgets/QTreeView>
 
 #include "application/ImportService.h"
@@ -91,26 +93,36 @@ namespace
         }
     }
 
+    QAbstractItemView* TheViewThatCarriesTheRows(const QWidget& page)
+    {
+        if (auto* tree = page.findChild<QTreeView*>(); tree != nullptr)
+        {
+            tree->expandAll();
+
+            return tree;
+        }
+
+        return page.findChild<QTableView*>();
+    }
+
     bool SelectTheAddonNamed(const QWidget& page, const QString& folderName)
     {
-        auto* tree = page.findChild<QTreeView*>();
-        if (tree == nullptr)
+        QAbstractItemView* view = TheViewThatCarriesTheRows(page);
+        if (view == nullptr || view->model() == nullptr)
         {
             return false;
         }
 
-        tree->expandAll();
-
-        const QModelIndexList found = tree->model()->match(tree->model()->index(0, 0, {}), Qt::DisplayRole, folderName,
+        const QModelIndexList found = view->model()->match(view->model()->index(0, 0, {}), Qt::DisplayRole, folderName,
                                                            1, Qt::MatchExactly | Qt::MatchRecursive);
         if (found.isEmpty())
         {
             return false;
         }
 
-        tree->setCurrentIndex(found.front());
-        tree->selectionModel()->select(found.front(), QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-        tree->scrollTo(found.front());
+        view->setCurrentIndex(found.front());
+        view->selectionModel()->select(found.front(), QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        view->scrollTo(found.front());
 
         return true;
     }
@@ -227,7 +239,8 @@ int main(int argc, char* argv[])
     const QCommandLineOption size({"s", "size"}, "Window size, WIDTHxHEIGHT.", "size", "1140x760");
     const QCommandLineOption language({"l", "lang"}, "en or pt_BR.", "language", "en");
     const QCommandLineOption select({"S", "select"},
-                                    "Folder name of an addon to select before the Library shot, so "
+                                    "Folder name of an addon to select before the Library, Destinations, Journal "
+                                    "and Quarantine shots, so "
                                     "the context panel is in the picture.",
                                     "addon folder", "");
     parser.addOption(out);
@@ -423,29 +436,37 @@ int main(int argc, char* argv[])
 
     const QString wantedAddon = parser.value(select);
 
+    const auto selectIfAsked = [&wantedAddon](const QWidget& page, const QString& where)
+    {
+        if (!wantedAddon.isEmpty() && !SelectTheAddonNamed(page, wantedAddon))
+        {
+            Out() << "no row named " << wantedAddon << " in " << where << ", so the panel stays closed\n";
+        }
+    };
+
     shoot(libraryTab, QStringLiteral("01-library"),
-          [libraryPage, &wantedAddon]
+          [libraryPage, &selectIfAsked]
           {
-              if (!wantedAddon.isEmpty() && !SelectTheAddonNamed(*libraryPage, wantedAddon))
-              {
-                  Out() << "no addon named " << wantedAddon << " in the tree, so the panel stays closed\n";
-              }
+              selectIfAsked(*libraryPage, QStringLiteral("the library tree"));
           });
     shoot(communityTab, QStringLiteral("02-community"),
-          [&communityViewModel]
+          [&communityViewModel, communityPage, &selectIfAsked]
           {
               communityViewModel.Show();
+              selectIfAsked(*communityPage, QStringLiteral("Destinations"));
           });
     shoot(presetsTab, QStringLiteral("03-presets"), {});
     shoot(journalTab, QStringLiteral("04-journal"),
-          [&journalViewModel]
+          [&journalViewModel, journalPage, &selectIfAsked]
           {
               journalViewModel.Show();
+              selectIfAsked(*journalPage, QStringLiteral("the Journal"));
           });
     shoot(quarantineTab, QStringLiteral("05-quarantine"),
-          [&quarantineViewModel]
+          [&quarantineViewModel, quarantinePage, &selectIfAsked]
           {
               quarantineViewModel.Show();
+              selectIfAsked(*quarantinePage, QStringLiteral("the Quarantine"));
           });
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
