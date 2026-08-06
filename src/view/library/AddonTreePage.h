@@ -82,9 +82,19 @@ private:
 
     void NoteExpansion(const QModelIndex& position, bool expanded);
 
-    void CarryTheExpansion(const std::filesystem::path& from, const std::filesystem::path& to);
+    void NoteSelection();
+
+    void NoteScrolling(int value);
+
+    void CarryTheRememberedPaths(const std::filesystem::path& from, const std::filesystem::path& to);
 
     void RestoreExpansion(const QModelIndex& parent);
+
+    [[nodiscard]] bool RestoreSelection();
+
+    void RestoreScrolling(int value) const;
+
+    void GatherSelection(const QModelIndex& parent, QModelIndexList& found, QModelIndex& current) const;
 
     void PublishSummary();
 
@@ -129,6 +139,9 @@ private:
     EmptyState* invite_ = nullptr;
     QPushButton* inviteAction_ = nullptr;
     std::set<std::string> expanded_;
+    std::set<std::string> selected_;
+    std::string current_;
+    int scrolled_ = 0;
     bool rebuilding_ = false;
     bool shownOnce_ = false;
 };

@@ -2,8 +2,11 @@
 
 #include <algorithm>
 #include <ranges>
+#include <set>
+#include <string>
 
 #include <QtCore/QEvent>
+#include <QtCore/QItemSelection>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
 #include <QtWidgets/QCheckBox>
@@ -16,6 +19,7 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QVBoxLayout>
@@ -53,6 +57,34 @@ namespace
     QString AskForACategoryName(QWidget* parent, const QString& title, const QString& current)
     {
         return QInputDialog::getText(parent, title, QObject::tr("Category name:"), QLineEdit::Normal, current);
+    }
+
+    [[nodiscard]] std::string CarriedTo(const std::string& key, const std::string& moved, const std::string& landing)
+    {
+        if (key == moved)
+        {
+            return landing;
+        }
+
+        if (key.size() > moved.size() && key.compare(0, moved.size(), moved) == 0 && key[moved.size()] == '/')
+        {
+            return landing + key.substr(moved.size());
+        }
+
+        return key;
+    }
+
+    [[nodiscard]] std::set<std::string>
+    CarriedTo(const std::set<std::string>& keys, const std::string& moved, const std::string& landing)
+    {
+        std::set<std::string> carried;
+
+        for (const std::string& key : keys)
+        {
+            carried.insert(CarriedTo(key, moved, landing));
+        }
+
+        return carried;
     }
 }
 
@@ -107,8 +139,11 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(tree_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
             [this]
             {
+                NoteSelection();
                 ShowTheSelectedAddon();
             });
+
+    connect(tree_->verticalScrollBar(), &QAbstractSlider::valueChanged, this, &AddonTreePage::NoteScrolling);
 
     connect(tree_, &QTreeView::customContextMenuRequested, this, &AddonTreePage::ShowContextMenu);
     connect(&model_, &AddonTreeModel::ToggleRequested, this, &AddonTreePage::OnToggleRequested);
@@ -610,6 +645,8 @@ void AddonTreePage::OnShown()
         return;
     }
 
+    const int scrolled = scrolled_;
+
     rebuilding_ = false;
 
     if (shownOnce_)
@@ -620,6 +657,11 @@ void AddonTreePage::OnShown()
     {
         shownOnce_ = true;
         tree_->expandToDepth(0);
+    }
+
+    if (RestoreSelection())
+    {
+        RestoreScrolling(scrolled);
     }
 
     PublishSummary();
@@ -648,7 +690,41 @@ void AddonTreePage::NoteExpansion(const QModelIndex& position, const bool expand
     }
 }
 
-void AddonTreePage::CarryTheExpansion(const std::filesystem::path& from, const std::filesystem::path& to)
+void AddonTreePage::NoteSelection()
+{
+    if (rebuilding_)
+    {
+        return;
+    }
+
+    selected_.clear();
+    current_.clear();
+
+    for (const QModelIndex& position : tree_->selectionModel()->selectedRows())
+    {
+        if (const TreeNode* node = AddonTreeModel::NodeAt(filter_->mapToSource(position)))
+        {
+            selected_.insert(ComparablePath(node->path));
+        }
+    }
+
+    if (const TreeNode* node = Current(); node != nullptr)
+    {
+        current_ = ComparablePath(node->path);
+    }
+}
+
+void AddonTreePage::NoteScrolling(const int value)
+{
+    if (rebuilding_)
+    {
+        return;
+    }
+
+    scrolled_ = value;
+}
+
+void AddonTreePage::CarryTheRememberedPaths(const std::filesystem::path& from, const std::filesystem::path& to)
 {
     const std::string moved = ComparablePath(from);
     const std::string landing = ComparablePath(to);
@@ -658,25 +734,9 @@ void AddonTreePage::CarryTheExpansion(const std::filesystem::path& from, const s
         return;
     }
 
-    std::set<std::string> carried;
-
-    for (const std::string& open : expanded_)
-    {
-        if (open == moved)
-        {
-            carried.insert(landing);
-        }
-        else if (open.size() > moved.size() && open.compare(0, moved.size(), moved) == 0 && open[moved.size()] == '/')
-        {
-            carried.insert(landing + open.substr(moved.size()));
-        }
-        else
-        {
-            carried.insert(open);
-        }
-    }
-
-    expanded_ = std::move(carried);
+    expanded_ = CarriedTo(expanded_, moved, landing);
+    selected_ = CarriedTo(selected_, moved, landing);
+    current_ = CarriedTo(current_, moved, landing);
 }
 
 void AddonTreePage::RestoreExpansion(const QModelIndex& parent)
@@ -693,6 +753,68 @@ void AddonTreePage::RestoreExpansion(const QModelIndex& parent)
 
         RestoreExpansion(position);
     }
+}
+
+void AddonTreePage::GatherSelection(const QModelIndex& parent, QModelIndexList& found, QModelIndex& current) const
+{
+    for (int row = 0; row < filter_->rowCount(parent); ++row)
+    {
+        const QModelIndex position = filter_->index(row, 0, parent);
+
+        if (const TreeNode* node = AddonTreeModel::NodeAt(filter_->mapToSource(position)))
+        {
+            const std::string key = ComparablePath(node->path);
+
+            if (selected_.contains(key))
+            {
+                found.append(position);
+            }
+
+            if (key == current_)
+            {
+                current = position;
+            }
+        }
+
+        GatherSelection(position, found, current);
+    }
+}
+
+bool AddonTreePage::RestoreSelection()
+{
+    if (selected_.empty())
+    {
+        return true;
+    }
+
+    QModelIndexList found;
+    QModelIndex current;
+    GatherSelection({}, found, current);
+
+    if (found.isEmpty())
+    {
+        selected_.clear();
+        current_.clear();
+
+        return false;
+    }
+
+    QItemSelection chosen;
+    for (const QModelIndex& position : found)
+    {
+        chosen.select(position, position);
+    }
+
+    tree_->selectionModel()->setCurrentIndex(current.isValid() ? current : found.front(),
+                                             QItemSelectionModel::NoUpdate);
+    tree_->selectionModel()->select(chosen, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+
+    return true;
+}
+
+void AddonTreePage::RestoreScrolling(const int value) const
+{
+    tree_->verticalScrollBar()->setValue(value);
 }
 
 void AddonTreePage::ShowContextMenu(const QPoint& where)
@@ -797,7 +919,7 @@ void AddonTreePage::AddCategoryActions(QMenu& menu, const TreeNode* node)
 
                        if (!landing.empty())
                        {
-                           CarryTheExpansion(from, landing);
+                           CarryTheRememberedPaths(from, landing);
                        }
                    });
 
