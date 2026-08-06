@@ -267,12 +267,6 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
             {
                 QMessageBox::information(this, tr("Nothing changed"), explanation);
             });
-    connect(&notifier, &SessionNotifier::SimulatorIsRunning, this,
-            [this]
-            {
-                QMessageBox::information(this, tr("The simulator is open"),
-                                         tr("The changes only count after the simulator is restarted."));
-            });
     connect(&notifier, &SessionNotifier::RestartPendingChanged, this,
             [this](const bool pending)
             {

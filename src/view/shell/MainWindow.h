@@ -47,6 +47,8 @@ public:
 
     void ShowRestartPending(bool pending);
 
+    void WarnTheSimulatorIsOpen();
+
     void ShowSummary(const QWidget* page, const QString& summary);
 
     void ShowAside(const QWidget* page, const QString& aside);

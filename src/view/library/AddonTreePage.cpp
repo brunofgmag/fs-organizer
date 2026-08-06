@@ -158,14 +158,6 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                 QMessageBox::warning(this, tr("Nothing changed"), explanation);
             });
 
-    connect(&notifier, &SessionNotifier::SimulatorIsRunning, this,
-            [this]
-            {
-                QMessageBox::information(this, tr("Simulator open"),
-                                         tr("The simulator is running. The links were created, but it will only see "
-                                            "the change after it is restarted."));
-            });
-
     RetranslateUi();
 }
 
