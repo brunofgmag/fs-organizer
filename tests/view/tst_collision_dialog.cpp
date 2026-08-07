@@ -4,9 +4,11 @@
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QLabel>
 
+#include <cstdint>
 #include <filesystem>
 
 #include "application/model/RestorePlan.h"
+#include "support/SizeText.h"
 #include "tests/support/PathPrinting.h"
 #include "view/quarantine/CollisionDialog.h"
 
@@ -23,6 +25,9 @@ namespace
         static void NothingIsPreselectedAndTheReplaceButtonIsNotTheDefault();
         static void TheDialogOpensBeforeTheMeasurementAndFillsInWhenItLands();
     };
+
+    constexpr std::uintmax_t kHeldBytes = 2040109466;
+    constexpr std::uintmax_t kOccupantBytes = 2254857830;
 
     RestoreCheck ACollision()
     {
@@ -57,24 +62,24 @@ namespace
 void CollisionDialogTest::BothSidesAreNamedWithTheirVersionAndTheirSize()
 {
     CollisionDialog dialog(ACollision());
-    dialog.ShowTheSizes(TwoSides{.held = MeasuredFolder{.bytes = 2040109466, .measured = true},
-                                 .occupant = MeasuredFolder{.bytes = 2254857830, .measured = true}});
+    dialog.ShowTheSizes(TwoSides{.held = MeasuredFolder{.bytes = kHeldBytes, .measured = true},
+                                 .occupant = MeasuredFolder{.bytes = kOccupantBytes, .measured = true}});
 
     QVERIFY(Says(dialog, QStringLiteral("simbridge")));
     QVERIFY(Says(dialog, QStringLiteral("2.4.1")));
     QVERIFY(Says(dialog, QStringLiteral("2.5.0")));
-    QVERIFY(Says(dialog, QStringLiteral("1,90 GiB")));
-    QVERIFY(Says(dialog, QStringLiteral("2,10 GiB")));
+    QVERIFY(Says(dialog, AsSize(kHeldBytes)));
+    QVERIFY(Says(dialog, AsSize(kOccupantBytes)));
 }
 
 void CollisionDialogTest::ASideNobodyCouldMeasureSaysSoInsteadOfShowingZero()
 {
     CollisionDialog dialog(ACollision());
     dialog.ShowTheSizes(
-        TwoSides{.held = MeasuredFolder{.bytes = 2040109466, .measured = true}, .occupant = MeasuredFolder{}});
+        TwoSides{.held = MeasuredFolder{.bytes = kHeldBytes, .measured = true}, .occupant = MeasuredFolder{}});
 
-    QVERIFY(Says(dialog, QStringLiteral("1,90 GiB")));
-    QVERIFY(!Says(dialog, QStringLiteral("0 B")));
+    QVERIFY(Says(dialog, AsSize(kHeldBytes)));
+    QVERIFY(!Says(dialog, AsSize(0)));
     QVERIFY(Says(dialog, QStringLiteral("could not be measured")));
 }
 
@@ -84,10 +89,10 @@ void CollisionDialogTest::ASideWithoutAVersionInItsManifestStillShowsTheSize()
     quiet.occupantVersion.clear();
 
     CollisionDialog dialog(quiet);
-    dialog.ShowTheSizes(TwoSides{.held = MeasuredFolder{.bytes = 2040109466, .measured = true},
-                                 .occupant = MeasuredFolder{.bytes = 2254857830, .measured = true}});
+    dialog.ShowTheSizes(TwoSides{.held = MeasuredFolder{.bytes = kHeldBytes, .measured = true},
+                                 .occupant = MeasuredFolder{.bytes = kOccupantBytes, .measured = true}});
 
-    QVERIFY(Says(dialog, QStringLiteral("2,10 GiB")));
+    QVERIFY(Says(dialog, AsSize(kOccupantBytes)));
     QVERIFY(Says(dialog, QStringLiteral("the manifest does not say")));
 }
 
@@ -113,12 +118,12 @@ void CollisionDialogTest::TheDialogOpensBeforeTheMeasurementAndFillsInWhenItLand
 
     QVERIFY(Says(dialog, QStringLiteral("2.4.1")));
     QVERIFY(Says(dialog, QStringLiteral("could not be measured")));
-    QVERIFY(!Says(dialog, QStringLiteral("GiB")));
+    QVERIFY(!Says(dialog, AsSize(kHeldBytes)));
 
-    dialog.ShowTheSizes(TwoSides{.held = MeasuredFolder{.bytes = 2040109466, .measured = true},
-                                 .occupant = MeasuredFolder{.bytes = 2254857830, .measured = true}});
+    dialog.ShowTheSizes(TwoSides{.held = MeasuredFolder{.bytes = kHeldBytes, .measured = true},
+                                 .occupant = MeasuredFolder{.bytes = kOccupantBytes, .measured = true}});
 
-    QVERIFY(Says(dialog, QStringLiteral("1,90 GiB")));
+    QVERIFY(Says(dialog, AsSize(kHeldBytes)));
     QVERIFY(Says(dialog, QStringLiteral("2.4.1")));
     QVERIFY(!Says(dialog, QStringLiteral("could not be measured")));
 }
