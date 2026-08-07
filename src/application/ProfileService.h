@@ -26,6 +26,13 @@ struct LinkBatch
     std::vector<const TreeNode*> toEnable;
 };
 
+struct TakenPlace
+{
+    std::filesystem::path addonFolder{};
+    std::filesystem::path linkPath{};
+    std::filesystem::path occupant{};
+};
+
 class ProfileService
 {
 public:
@@ -43,6 +50,9 @@ public:
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;
 
     [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
+                                                      const std::vector<const TreeNode*>& nodes) const;
 
     [[nodiscard]] LinkBatchReport SetEnabled(const SimulatorProfile& profile,
                                              const ProfileSnapshot& shown,

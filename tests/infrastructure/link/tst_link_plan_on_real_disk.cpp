@@ -8,6 +8,7 @@
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
 #include "domain/importing/ImportPaths.h"
+#include "domain/journal/JournalEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -29,6 +30,7 @@ namespace
         static void EnablingAnAddonWhoseJunctionTheUserDeletedCreatesItAgain();
         static void ABatchWithNothingToDoStaysEmptyWhenTheDiskAgreesWithTheScan();
         static void ApplyingAPresetReachesAnAddonWhoseJunctionTheUserDeleted();
+        static void SwappingTheOccupantMovesTheRealJunctionAndIsOneEntryInTheJournal();
     };
 }
 
@@ -198,6 +200,53 @@ void LinkPlanOnRealDiskTest::ApplyingAPresetReachesAnAddonWhoseJunctionTheUserDe
     QVERIFY(report.unresolved.empty());
     QVERIFY(std::filesystem::exists(disk.Link()));
     QCOMPARE(linking.linkService.ReadLinkTarget(disk.Link()), std::optional<std::filesystem::path>{disk.Addon()});
+}
+
+void LinkPlanOnRealDiskTest::SwappingTheOccupantMovesTheRealJunctionAndIsOneEntryInTheJournal()
+{
+    const Disk disk;
+    Linking linking;
+
+    const std::filesystem::path spare = disk.Root() / "Spare";
+    const std::filesystem::path rival = spare / "Aircrafts" / kAddonFolder;
+    std::filesystem::create_directories(rival);
+    std::ofstream(ManifestPathIn(rival), std::ios::binary) << kManifest;
+
+    SimulatorProfile profile = ProfileOn(disk);
+    profile.libraries.push_back(Library{.id = "library-2", .path = spare, .label = "Spare"});
+
+    const ProfileSnapshot first = linking.profiles.Scan(profile);
+    QCOMPARE(
+        linking.profiles.SetEnabled(profile, first, {&first.libraries.front().children.front().children.front()}, true)
+            .results.size(),
+        std::size_t{1});
+    QCOMPARE(linking.linkService.ReadLinkTarget(disk.Link()), std::optional<std::filesystem::path>{disk.Addon()});
+
+    const ProfileSnapshot shown = linking.profiles.Scan(profile);
+    const TreeNode* wanted = &shown.libraries.back().children.front().children.front();
+    const TreeNode* occupant = &shown.libraries.front().children.front().children.front();
+
+    const std::vector<TakenPlace> taken = linking.profiles.PlacesTaken(profile, {wanted});
+
+    QCOMPARE(taken.size(), std::size_t{1});
+    QCOMPARE(taken.front().occupant, disk.Addon());
+    QCOMPARE(taken.front().linkPath, disk.Link());
+
+    linking.journal.appended.clear();
+
+    const LinkBatchReport report =
+        linking.profiles.SetEnabled(profile, shown, LinkBatch{.toDisable = {occupant}, .toEnable = {wanted}});
+
+    QCOMPARE(report.results.size(), std::size_t{2});
+    QVERIFY(report.results.front().outcome.Succeeded());
+    QVERIFY(report.results.back().outcome.Succeeded());
+    QCOMPARE(linking.linkService.ReadLinkTarget(disk.Link()), std::optional<std::filesystem::path>{rival});
+
+    const std::vector<JournalEntry> entries = GroupOperations(linking.journal.appended);
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QVERIFY(entries.front().IsASwap());
+    QVERIFY(entries.front().Succeeded());
 }
 
 QTEST_APPLESS_MAIN(LinkPlanOnRealDiskTest)
