@@ -10,6 +10,7 @@
 #include "view/panels/ModelRowDetail.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
 class ContextPanel;
@@ -29,6 +30,7 @@ class AddonTreePage final : public QWidget
 
 public:
     AddonTreePage(AddonTreeViewModel& viewModel,
+                  DeletionViewModel& deletion,
                   AddonTreeModel& model,
                   const SessionNotifier& notifier,
                   QWidget* parent = nullptr);
@@ -71,6 +73,12 @@ private:
     void MoveTheSelectedAddon();
 
     void OpenTheSelectedFolder() const;
+
+    void DeleteTheSelectedAddons();
+
+    void OfferToDelete(const DeletionPlan& plan);
+
+    void OnDeleted(const std::vector<DeletionResult>& results, DeletionRoute route);
 
     void ToggleSelection(bool enable);
 
@@ -125,6 +133,7 @@ private:
     void BrowseForLibrary();
 
     AddonTreeViewModel& viewModel_;
+    DeletionViewModel& deletion_;
     AddonTreeModel& model_;
     QStackedWidget* pages_ = nullptr;
     QTreeView* tree_ = nullptr;
@@ -134,6 +143,7 @@ private:
     QPushButton* relink_ = nullptr;
     QPushButton* moveTo_ = nullptr;
     QPushButton* openFolder_ = nullptr;
+    QPushButton* delete_ = nullptr;
     AddonTreeFilterModel* filter_ = nullptr;
     QPushButton* undo_ = nullptr;
     QPushButton* enable_ = nullptr;

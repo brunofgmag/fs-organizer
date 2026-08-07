@@ -3,6 +3,7 @@
 
 #include <QtCore/QString>
 
+#include "application/model/DeletionPlan.h"
 #include "application/model/FileOperationResult.h"
 #include "application/model/ImportOperationResult.h"
 #include "application/model/LinkOperationResult.h"
@@ -22,6 +23,8 @@
 [[nodiscard]] QString Describe(const ImportOperationResult& result);
 
 [[nodiscard]] QString Describe(const FileOperationResult& result);
+
+[[nodiscard]] QString Describe(const DeletionResult& result, DeletionRoute route);
 
 [[nodiscard]] QString NameOfImportStep(OperationKind kind);
 

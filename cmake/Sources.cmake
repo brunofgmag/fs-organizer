@@ -75,6 +75,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/DeletionViewModel.cpp
         src/viewmodel/DependencyText.cpp
         src/viewmodel/DiagnosticsViewModel.cpp
         src/viewmodel/FailureText.cpp
@@ -98,6 +99,7 @@ set(VIEW_SOURCES
         src/view/library/AddonTreePage.cpp
         src/view/community/CommunityPage.cpp
         src/view/community/ConflictDialog.cpp
+        src/view/library/DeleteDialog.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp

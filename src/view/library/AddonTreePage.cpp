@@ -29,6 +29,7 @@
 #include "domain/tree/EffectiveDestination.h"
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/library/DeleteDialog.h"
 #include "view/library/SuggestionDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/panels/ContextPanel.h"
@@ -91,10 +92,11 @@ namespace
 }
 
 AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
+                             DeletionViewModel& deletion,
                              AddonTreeModel& model,
                              const SessionNotifier& notifier,
                              QWidget* parent)
-    : QWidget(parent), viewModel_(viewModel), model_(model)
+    : QWidget(parent), viewModel_(viewModel), deletion_(deletion), model_(model)
 {
     tree_ = new QTreeView(this);
     filter_ = new AddonTreeFilterModel(this);
@@ -207,6 +209,15 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                 QMessageBox::warning(this, tr("Nothing changed"), explanation);
             });
 
+    connect(&deletion_, &DeletionViewModel::Weighing, this,
+            [this]
+            {
+                emit StatusChanged(tr("Measuring what you selected…"));
+            });
+
+    connect(&deletion_, &DeletionViewModel::Planned, this, &AddonTreePage::OfferToDelete);
+    connect(&deletion_, &DeletionViewModel::Deleted, this, &AddonTreePage::OnDeleted);
+
     RetranslateUi();
 }
 
@@ -234,6 +245,7 @@ void AddonTreePage::RetranslateUi() const
     relink_->setText(tr("Repoint to the library"));
     moveTo_->setText(tr("Move to…"));
     openFolder_->setText(tr("Open the folder"));
+    delete_->setText(tr("Delete…"));
     promise_->setText(tr("Repairing never touches the real files: only the reparse node is rewritten."));
     panel_->RenameTheFallback(tr("Addon selected"));
     invite_->Retell(tr("This profile has no library yet."),
@@ -313,6 +325,8 @@ QWidget* AddonTreePage::CreatePanel()
     relink_->setProperty("role", "primary");
     moveTo_ = new QPushButton(panel_);
     openFolder_ = new QPushButton(panel_);
+    delete_ = new QPushButton(panel_);
+    delete_->setObjectName(QStringLiteral("PanelDeleteAction"));
 
     promise_ = new QLabel(panel_);
     promise_->setObjectName(QStringLiteral("PanelPromise"));
@@ -323,6 +337,7 @@ QWidget* AddonTreePage::CreatePanel()
     panel_->Add(relink_);
     panel_->Add(moveTo_);
     panel_->Add(openFolder_);
+    panel_->Add(delete_);
     panel_->Add(promise_);
 
     panel_->RestoreCollapsedState();
@@ -335,6 +350,7 @@ QWidget* AddonTreePage::CreatePanel()
             });
     connect(moveTo_, &QPushButton::clicked, this, &AddonTreePage::MoveTheSelectedAddon);
     connect(openFolder_, &QPushButton::clicked, this, &AddonTreePage::OpenTheSelectedFolder);
+    connect(delete_, &QPushButton::clicked, this, &AddonTreePage::DeleteTheSelectedAddons);
     connect(panel_, &ContextPanel::CloseRequested, tree_->selectionModel(), &QItemSelectionModel::clearSelection);
 
     return panel_;
@@ -453,6 +469,7 @@ void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
 {
     int relinkable = 0;
     int movable = 0;
+    int deletable = 0;
 
     for (const QModelIndex& position : rows)
     {
@@ -463,6 +480,8 @@ void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
         {
             continue;
         }
+
+        ++deletable;
 
         relinkable += model_.data(source, AddonTreeModel::BrokenRole).toBool()
                 || model_.data(source, AddonTreeModel::DivergentRole).toBool()
@@ -478,6 +497,56 @@ void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
     moveTo_->setText(movable > 1 ? tr("Move %n addon to…", nullptr, movable) : tr("Move to…"));
 
     openFolder_->setEnabled(rows.size() == 1);
+
+    delete_->setEnabled(deletable > 0);
+    delete_->setText(deletable > 1 ? tr("Delete %n addon…", nullptr, deletable) : tr("Delete…"));
+}
+
+void AddonTreePage::DeleteTheSelectedAddons()
+{
+    deletion_.PlanToDelete(Chosen(nullptr));
+}
+
+void AddonTreePage::OfferToDelete(const DeletionPlan& plan)
+{
+    if (plan.addons.empty())
+    {
+        emit StatusChanged(tr("Nothing to delete: the selection has no addon in it."));
+        return;
+    }
+
+    DeleteDialog dialog(plan, deletion_, this);
+    static_cast<void>(dialog.exec());
+}
+
+void AddonTreePage::OnDeleted(const std::vector<DeletionResult>& results, const DeletionRoute route)
+{
+    QStringList lines;
+    int failed = 0;
+
+    for (const DeletionResult& result : results)
+    {
+        lines.append(Describe(result, route));
+        failed += Succeeded(result.result) ? 0 : 1;
+    }
+
+    const int done = static_cast<int>(results.size()) - failed;
+
+    if (failed == 0)
+    {
+        emit StatusChanged(tr("%n addon deleted.", nullptr, done));
+        return;
+    }
+
+    QMessageBox dialog(QMessageBox::Warning, tr("Not everything was deleted"),
+                       tr("%n addon was not deleted, and is still in the library.", nullptr, failed), QMessageBox::Ok,
+                       this);
+    dialog.setInformativeText(tr("%n addon deleted.", nullptr, done));
+    dialog.setDetailedText(lines.join('\n'));
+    dialog.exec();
+
+    emit StatusChanged(
+        tr("%1 · %2").arg(tr("%n addon deleted", nullptr, done), tr("%n left in the library", nullptr, failed)));
 }
 
 void AddonTreePage::MoveTheSelectedAddon()

@@ -134,6 +134,39 @@ QString Describe(const FileOperationResult& result)
         .arg(AsText(result.path.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
 }
 
+namespace
+{
+    QString WhatTheRouteDid(const DeletionRoute route)
+    {
+        return route == DeletionRoute::RecycleBin ? QObject::tr("moved to the Recycle Bin")
+                                                  : QObject::tr("deleted for good");
+    }
+
+    QString WhichLinksWentAway(const std::vector<std::filesystem::path>& links)
+    {
+        QString said;
+
+        for (const std::filesystem::path& link : links)
+        {
+            said += QObject::tr("\n    the link already removed: %1").arg(AsText(link));
+        }
+
+        return said;
+    }
+}
+
+QString Describe(const DeletionResult& result, const DeletionRoute route)
+{
+    const QString name = AsText(result.folder.filename());
+
+    if (Succeeded(result.result))
+    {
+        return QStringLiteral("%1: %2").arg(name, WhatTheRouteDid(route));
+    }
+
+    return QStringLiteral("%1: %2%3").arg(name, Explain(result.result), WhichLinksWentAway(result.linksRemoved));
+}
+
 QString NameOfImportStep(const OperationKind kind)
 {
     switch (kind)
