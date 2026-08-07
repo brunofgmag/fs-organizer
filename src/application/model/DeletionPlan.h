@@ -60,6 +60,10 @@ struct DeletionResult
 
 [[nodiscard]] const VolumeRoom* VolumeHolding(const DeletionPlan& plan, const std::filesystem::path& folder);
 
+[[nodiscard]] FileResult WhatTheRecycleBinRefuses(const DeletionPlan& plan, const AddonToDelete& addon);
+
 [[nodiscard]] bool TheRecycleBinCanTake(const DeletionPlan& plan);
+
+[[nodiscard]] std::size_t AddonsTheRecycleBinRefuses(const DeletionPlan& plan);
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_DELETION_PLAN_H

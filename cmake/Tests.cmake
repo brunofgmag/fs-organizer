@@ -606,6 +606,24 @@ fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-quarantine-view-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-deletion-view-model-tests deletion-view-model
+        tests/viewmodel/tst_deletion_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-deletion-view-model-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
         tests/viewmodel/tst_import_view_model.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -808,6 +826,25 @@ if (WIN32)
                 tests/doubles/RecordingSessionObserver.h)
         target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
+
+        fsorg_add_qt_test(fsorg-delete-dialog-tests delete-dialog
+                tests/view/tst_delete_dialog.cpp
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeClock.h
+                tests/doubles/FakeFileOperations.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeLinkService.h
+                tests/doubles/FakeOperationJournal.h
+                tests/doubles/FakeProcessProbe.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/doubles/InlineBackgroundRunner.h
+                tests/support/EnumPrinting.h
+                tests/support/PathPrinting.h
+                src/domain/support/PathUtils.h)
+        target_link_libraries(fsorg-delete-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-delete-dialog-tests delete-dialog)
 
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp

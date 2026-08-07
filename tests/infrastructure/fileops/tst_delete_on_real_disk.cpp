@@ -22,6 +22,7 @@ namespace
         static void AFolderPastTheCeilingIsRefusedInsteadOfDestroyedInSilence();
         static void ThePermanentRouteStillReachesPastTheCeiling();
         static void TheLongestEntryIsMeasuredOverTheWholeTree();
+        static void AnEmptyFolderDeeperThanEveryFileIsStillTheLongestEntry();
         static void TheRecycleBinOfAVolumeThatIsNotThereIsNotInvented();
     };
 
@@ -119,10 +120,25 @@ void DeleteOnRealDiskTest::TheLongestEntryIsMeasuredOverTheWholeTree()
     std::ofstream(buried / "aircraft.cfg") << "probe";
 
     const WindowsFilesystemProbe probe;
-    const std::optional<std::size_t> longest = probe.LongestEntryUnder(addon);
+    const std::optional<TreeFingerprint> walked = probe.FingerprintTree(addon);
 
-    QVERIFY(longest.has_value());
-    QCOMPARE(*longest, (buried / "aircraft.cfg").wstring().size());
+    QVERIFY(walked.has_value());
+    QCOMPARE(walked->longestEntry, (buried / "aircraft.cfg").wstring().size());
+}
+
+void DeleteOnRealDiskTest::AnEmptyFolderDeeperThanEveryFileIsStillTheLongestEntry()
+{
+    const TempFiles files;
+    const std::filesystem::path addon = AnAddonFolderIn(files.Root(), "hype-atr");
+    const std::filesystem::path empty = addon / "SimObjects" / "Airplanes" / "ATR72" / "texture.variation-that-is-long";
+    std::filesystem::create_directories(empty);
+
+    const WindowsFilesystemProbe probe;
+    const std::optional<TreeFingerprint> walked = probe.FingerprintTree(addon);
+
+    QVERIFY(walked.has_value());
+    QCOMPARE(walked->files.size(), std::size_t{1});
+    QCOMPARE(walked->longestEntry, empty.wstring().size());
 }
 
 void DeleteOnRealDiskTest::TheRecycleBinOfAVolumeThatIsNotThereIsNotInvented()

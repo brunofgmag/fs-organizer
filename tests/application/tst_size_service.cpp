@@ -1,10 +1,12 @@
 #include <QtTest/QtTest>
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <vector>
 
 #include "application/SizeService.h"
+#include "domain/support/PathUtils.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
@@ -122,6 +124,8 @@ namespace
         static void ALooseRequestOvertakenByAnotherEntersTheCacheAndIsNotEmitted();
         static void CancellingTheLooseWalkRefusesToPassPartialsAsTotals();
         static void MeasuringLooseFoldersAgainGoesBackToTheDiskEvenWhenTheNumberIsKnown();
+        static void TheWalkThatSumsTheBytesAnswersTheDeepestEntryOfTheSameTree();
+        static void TheDeepestEntryIsReadBackFromTheCacheJustLikeTheBytes();
     };
 
     TreeNode OneAddonLibrary(const std::filesystem::path& addon)
@@ -666,6 +670,36 @@ void SizeServiceTest::MeasuringLooseFoldersAgainGoesBackToTheDiskEvenWhenTheNumb
     QCOMPARE(fixture.filesystemProbe.TimesWalked(addon), std::size_t{2});
     QCOMPARE(remeasured.bytes, std::uintmax_t{5000});
     QCOMPARE(fixture.service.BytesOf(addon), std::optional<std::uintmax_t>{5000});
+}
+
+void SizeServiceTest::TheWalkThatSumsTheBytesAnswersTheDeepestEntryOfTheSameTree()
+{
+    Fixture fixture;
+    const std::filesystem::path addon = kLibrary / "Utils" / "sim-rate-selector";
+    const std::filesystem::path buried = addon / "SimObjects" / "Airplanes" / "CRJ700" / "model" / "aircraft.cfg";
+    fixture.GiveTheAddon(addon, 300);
+    fixture.disk.AddFile(buried, 12);
+
+    const FolderSizeReport weighed = fixture.Weighed({addon});
+
+    QCOMPARE(weighed.folders.front().bytes, std::uintmax_t{312});
+    QCOMPARE(weighed.folders.front().longestEntry, ComparablePath(buried).size());
+    QCOMPARE(fixture.filesystemProbe.TimesWalked(addon), std::size_t{1});
+}
+
+void SizeServiceTest::TheDeepestEntryIsReadBackFromTheCacheJustLikeTheBytes()
+{
+    Fixture fixture;
+    const std::filesystem::path addon = kLibrary / "Utils" / "sim-rate-selector";
+    const std::filesystem::path buried = addon / "SimObjects" / "Airplanes" / "CRJ700" / "model" / "aircraft.cfg";
+    fixture.GiveTheAddon(addon, 300);
+    fixture.disk.AddFile(buried, 12);
+
+    QCOMPARE(fixture.service.LongestEntryOf(addon), std::optional<std::size_t>{});
+
+    static_cast<void>(fixture.Weighed({addon}));
+
+    QCOMPARE(fixture.service.LongestEntryOf(addon), std::optional<std::size_t>{ComparablePath(buried).size()});
 }
 
 QTEST_APPLESS_MAIN(SizeServiceTest)

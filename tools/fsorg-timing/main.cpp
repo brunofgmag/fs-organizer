@@ -11,6 +11,7 @@
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/ProfileService.h"
+#include "application/DeletionService.h"
 #include "application/SizeService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -42,6 +43,7 @@
 #include "view/shell/PageNames.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -205,7 +207,9 @@ int main(int argc, char* argv[])
         ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
         packages.Reload(session.Profile().variant);
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
-        auto* treePage = new AddonTreePage(treeViewModel, treeModel, notifier);
+        const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+        DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+        auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, treeModel, notifier);
 
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 

@@ -5,14 +5,6 @@
 #include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
 
-namespace
-{
-    bool TheAddonIsWithinReach(const AddonToDelete& addon)
-    {
-        return TheRecycleBinReaches(addon.longestEntry);
-    }
-}
-
 std::filesystem::path VolumeOf(const std::filesystem::path& path)
 {
     const std::string text = WithGenericSeparators(AsUtf8(path));
@@ -43,13 +35,33 @@ const VolumeRoom* VolumeHolding(const DeletionPlan& plan, const std::filesystem:
     return found == plan.volumes.end() ? nullptr : &*found;
 }
 
-bool TheRecycleBinCanTake(const DeletionPlan& plan)
+FileResult WhatTheRecycleBinRefuses(const DeletionPlan& plan, const AddonToDelete& addon)
 {
-    if (plan.addons.empty())
+    const VolumeRoom* room = VolumeHolding(plan, addon.folder);
+
+    if (room == nullptr || !TheVolumeCanTake(*room))
     {
-        return false;
+        return FileResult::TheRecycleBinIsTooSmall;
     }
 
-    return std::ranges::all_of(plan.addons, TheAddonIsWithinReach)
-        && std::ranges::all_of(plan.volumes, TheVolumeCanTake);
+    if (!TheRecycleBinReaches(addon.longestEntry))
+    {
+        return FileResult::TheRecycleBinCannotReachIt;
+    }
+
+    return FileResult::Completed;
+}
+
+bool TheRecycleBinCanTake(const DeletionPlan& plan)
+{
+    return !plan.addons.empty() && AddonsTheRecycleBinRefuses(plan) == 0;
+}
+
+std::size_t AddonsTheRecycleBinRefuses(const DeletionPlan& plan)
+{
+    return static_cast<std::size_t>(std::ranges::count_if(plan.addons,
+                                                          [&plan](const AddonToDelete& addon)
+                                                          {
+                                                              return !Succeeded(WhatTheRecycleBinRefuses(plan, addon));
+                                                          }));
 }

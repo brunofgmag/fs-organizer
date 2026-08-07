@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -141,7 +140,7 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
                                             .addonId = IdentityOf(profile, node->path),
                                             .enabled = WhereItIsEnabled(seen, node->path),
                                             .bytes = sizes_.BytesOf(node->path),
-                                            .longestEntry = filesystemProbe_.LongestEntryUnder(node->path)});
+                                            .longestEntry = sizes_.LongestEntryOf(node->path)});
     }
 
     plan.volumes = RoomOnEachVolume(plan.addons);
@@ -152,24 +151,7 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
 FileResult
 DeletionService::TheRouteRefuses(const DeletionPlan& plan, const AddonToDelete& addon, const DeletionRoute route)
 {
-    if (route == DeletionRoute::Permanently)
-    {
-        return FileResult::Completed;
-    }
-
-    if (!TheRecycleBinReaches(addon.longestEntry))
-    {
-        return FileResult::TheRecycleBinCannotReachIt;
-    }
-
-    const VolumeRoom* room = VolumeHolding(plan, addon.folder);
-
-    if (room == nullptr || !TheVolumeCanTake(*room))
-    {
-        return FileResult::TheRecycleBinIsTooSmall;
-    }
-
-    return FileResult::Completed;
+    return route == DeletionRoute::Permanently ? FileResult::Completed : WhatTheRecycleBinRefuses(plan, addon);
 }
 
 DeletionResult DeletionService::DeleteOne(const AddonToDelete& addon,

@@ -29,6 +29,8 @@ namespace
         static void AddonsThatFitOneByOneAreStillRefusedWhenTheirSumDoesNot();
         static void AVolumeThatNeverRecyclesIsNotOfferedTheRecycleBin();
         static void AnAddonNobodyMeasuredIsNeverCountedAsWeighingNothing();
+        static void AnAddonNobodyMeasuredHasNoLengthToJudgeEither();
+        static void TheWalkThatSummedTheBytesIsTheOnlyOneThePlanNeeds();
         static void AnAddonTheShellCannotReachIsRefusedInsteadOfDeletedInSilence();
         static void AnAddonEnabledInAProfileThatIsNotTheActiveOneIsFoundByThePlan();
         static void DeletingAnEnabledAddonRemovesEveryLinkBeforeTheFolder();
@@ -235,6 +237,29 @@ void DeletionServiceTest::AnAddonNobodyMeasuredIsNeverCountedAsWeighingNothing()
 
     QCOMPARE(results.front().result, FileResult::TheRecycleBinIsTooSmall);
     QVERIFY(f.fileSystem.Exists(kCrj));
+}
+
+void DeletionServiceTest::AnAddonNobodyMeasuredHasNoLengthToJudgeEither()
+{
+    Fixture f;
+    f.BuryAFileUnder(kCrj, kTheRecycleBinStopsAt);
+
+    const DeletionPlan plan = f.PlanFor({f.Node(kCrj)});
+
+    QVERIFY(!plan.addons.front().longestEntry.has_value());
+    QVERIFY(!TheRecycleBinCanTake(plan));
+}
+
+void DeletionServiceTest::TheWalkThatSummedTheBytesIsTheOnlyOneThePlanNeeds()
+{
+    Fixture f;
+    f.Measure({kCrj});
+
+    const DeletionPlan plan = f.PlanFor({f.Node(kCrj)});
+
+    QVERIFY(plan.addons.front().bytes.has_value());
+    QVERIFY(plan.addons.front().longestEntry.has_value());
+    QCOMPARE(f.filesystemProbe.TimesWalked(kCrj), std::size_t{1});
 }
 
 void DeletionServiceTest::AnAddonTheShellCannotReachIsRefusedInsteadOfDeletedInSilence()

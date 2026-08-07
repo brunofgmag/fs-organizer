@@ -25,11 +25,15 @@ public:
 
     void AddFile(const std::filesystem::path& path, const std::uintmax_t size = 0)
     {
+        AddTheFoldersAbove(path);
+
         nodes_[Key(path)] = Node{.kind = NodeKind::File, .target = {}, .readable = true, .size = size};
     }
 
     void AddFileWithContents(const std::filesystem::path& path, std::string contents)
     {
+        AddTheFoldersAbove(path);
+
         nodes_[Key(path)] = Node{.kind = NodeKind::File,
                                  .target = {},
                                  .readable = true,
@@ -354,6 +358,20 @@ private:
                                });
 
         return head.ends_with(':') ? head : std::string{};
+    }
+
+    void AddTheFoldersAbove(const std::filesystem::path& path)
+    {
+        for (std::filesystem::path folder = path.parent_path(); !folder.empty() && folder != folder.root_path();
+             folder = folder.parent_path())
+        {
+            if (nodes_.contains(Key(folder)))
+            {
+                return;
+            }
+
+            nodes_[Key(folder)] = Node{.kind = NodeKind::Directory};
+        }
     }
 
     [[nodiscard]] static std::string Key(const std::filesystem::path& path)

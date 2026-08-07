@@ -7,6 +7,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
 
+#include "application/DeletionService.h"
 #include "application/ImportService.h"
 #include "application/LegacyConfigImporter.h"
 #include "application/LibraryOrganizer.h"
@@ -51,6 +52,7 @@
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
+#include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -194,12 +196,15 @@ int main(int argc, char* argv[])
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
 
+    const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
                      [&packages, &session]
                      {
                          packages.Reload(session.Profile().variant);
                      });
-    auto* page = new AddonTreePage(treeViewModel, model, notifier);
+    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, model, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -402,6 +407,11 @@ int main(int argc, char* argv[])
     QObject::connect(&importViewModel, &ImportViewModel::ConflictResolved, page, adoptWhatChangedOnDisk);
     QObject::connect(&quarantineViewModel, &QuarantineViewModel::Restored, page,
                      [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
+                     {
+                         adoptWhatChangedOnDisk();
+                     });
+    QObject::connect(&deletionViewModel, &DeletionViewModel::Deleted, page,
+                     [adoptWhatChangedOnDisk](const std::vector<DeletionResult>&, const DeletionRoute)
                      {
                          adoptWhatChangedOnDisk();
                      });

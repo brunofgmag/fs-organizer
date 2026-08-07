@@ -20,6 +20,7 @@
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QTreeView>
 
+#include "application/DeletionService.h"
 #include "application/ImportService.h"
 #include "application/SizeService.h"
 #include "application/LibraryOrganizer.h"
@@ -59,6 +60,7 @@
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -245,6 +247,19 @@ namespace
         return nullptr;
     }
 
+    QString TheFirstAddonOf(const ProfileSnapshot& snapshot)
+    {
+        for (const TreeNode& library : snapshot.libraries)
+        {
+            if (const std::vector<const TreeNode*> addons = AddonsUnder(library); !addons.empty())
+            {
+                return AsText(addons.front()->path.filename());
+            }
+        }
+
+        return {};
+    }
+
     std::optional<TakenPlace> APlaceWorthShowingAsTaken(const ProfileSnapshot& snapshot)
     {
         std::vector<const TreeNode*> addons;
@@ -422,7 +437,9 @@ int main(int argc, char* argv[])
     ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
     packages.Reload(session.Profile().variant);
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
-    auto* libraryPage = new AddonTreePage(treeViewModel, treeModel, notifier);
+    const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, treeModel, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -575,6 +592,27 @@ int main(int argc, char* argv[])
                      },
                      folder, QStringLiteral("17-library-swap"))
             && landed;
+
+        libraryTab->click();
+        LetTheLayoutSettle();
+
+        QPushButton* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
+
+        if (SelectTheAddonNamed(*libraryPage, TheFirstAddonOf(session.Snapshot())) && remove != nullptr
+            && remove->isEnabled())
+        {
+            landed = SaveTheDialogOpenedBy(
+                         [remove]
+                         {
+                             remove->click();
+                         },
+                         folder, QStringLiteral("18-library-delete"))
+                && landed;
+        }
+        else
+        {
+            Out() << "no addon offers the delete action, so there is no deletion dialog to write\n";
+        }
     }
     else
     {

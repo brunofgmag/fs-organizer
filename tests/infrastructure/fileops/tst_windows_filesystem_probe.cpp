@@ -199,10 +199,11 @@ void WindowsFilesystemProbeTest::EveryQuestionAboutAnEntryPastTheOldCeilingIsAns
     QVERIFY(filesystemProbe.LastWriteTime(deep).has_value());
     QVERIFY(filesystemProbe.VolumeIsAvailable(deep));
 
-    const std::optional<std::vector<FileFingerprint>> fingerprint = filesystemProbe.FingerprintTree(deep);
+    const std::optional<TreeFingerprint> fingerprint = filesystemProbe.FingerprintTree(deep);
     QVERIFY(fingerprint.has_value());
-    QCOMPARE(fingerprint->size(), std::size_t{1});
-    QCOMPARE(fingerprint->front().relativePath, std::filesystem::path("manifest.json"));
+    QCOMPARE(fingerprint->files.size(), std::size_t{1});
+    QCOMPARE(fingerprint->files.front().relativePath, std::filesystem::path("manifest.json"));
+    QCOMPARE(fingerprint->longestEntry, (deep / "manifest.json").wstring().size());
 }
 
 void WindowsFilesystemProbeTest::ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem()
@@ -239,12 +240,13 @@ void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersPastTheOldCeilin
              production.ContentsOf(addon / "manifest.json").value_or(std::string{}));
     QCOMPARE(double_.ChildDirectories(deep), production.ChildDirectories(deep));
 
-    const std::optional<std::vector<FileFingerprint>> byTheDouble = double_.FingerprintTree(addon);
-    const std::optional<std::vector<FileFingerprint>> byProduction = production.FingerprintTree(addon);
+    const std::optional<TreeFingerprint> byTheDouble = double_.FingerprintTree(addon);
+    const std::optional<TreeFingerprint> byProduction = production.FingerprintTree(addon);
     QVERIFY(byProduction.has_value());
     QVERIFY(byTheDouble.has_value());
-    QCOMPARE(byTheDouble->size(), byProduction->size());
-    QCOMPARE(byTheDouble->front().relativePath, byProduction->front().relativePath);
+    QCOMPARE(byTheDouble->files.size(), byProduction->files.size());
+    QCOMPARE(byTheDouble->files.front().relativePath, byProduction->files.front().relativePath);
+    QCOMPARE(byTheDouble->longestEntry, byProduction->longestEntry);
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

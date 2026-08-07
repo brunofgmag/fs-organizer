@@ -23,7 +23,9 @@
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "application/DeletionService.h"
 #include "view/library/AddonTreePage.h"
+#include "viewmodel/DeletionViewModel.h"
 
 namespace
 {
@@ -176,6 +178,8 @@ namespace
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
+        DeletionService deletionService{filesystemProbe, files, linking, classifier, processProbe, log, sizes};
+        DeletionViewModel deletion{session, service, settings, deletionService, sizes};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)
@@ -222,7 +226,7 @@ namespace
 
     struct Screen
     {
-        explicit Screen(Fixture& fixture) : page(fixture.viewModel, fixture.model, fixture.notifier)
+        explicit Screen(Fixture& fixture) : page(fixture.viewModel, fixture.deletion, fixture.model, fixture.notifier)
         {
             page.resize(900, 320);
             page.show();

@@ -51,26 +51,30 @@ public:
 
     [[nodiscard]] std::optional<std::uintmax_t> BytesOf(const std::filesystem::path& folder) const;
 
+    [[nodiscard]] std::optional<std::size_t> LongestEntryOf(const std::filesystem::path& folder) const;
+
 private:
     [[nodiscard]] SizeReport MeasureLibraries(const std::vector<std::filesystem::path>& libraryRoots,
-                                              const std::map<std::string, std::uintmax_t>& known,
-                                              std::map<std::string, std::uintmax_t>& fresh,
+                                              const std::map<std::string, MeasuredTree>& known,
+                                              std::map<std::string, MeasuredTree>& fresh,
                                               const std::function<bool(const SizeProgress&)>& onProgress) const;
 
     [[nodiscard]] FolderSizeReport WalkFolders(const std::vector<std::filesystem::path>& folders,
-                                               const std::map<std::string, std::uintmax_t>& known,
-                                               std::map<std::string, std::uintmax_t>& fresh,
+                                               const std::map<std::string, MeasuredTree>& known,
+                                               std::map<std::string, MeasuredTree>& fresh,
                                                const std::function<bool(const SizeProgress&)>& onProgress) const;
 
-    [[nodiscard]] std::shared_ptr<std::map<std::string, std::uintmax_t>> WhatIsKnown(Freshness freshness) const;
+    [[nodiscard]] std::shared_ptr<std::map<std::string, MeasuredTree>> WhatIsKnown(Freshness freshness) const;
 
-    [[nodiscard]] bool Adopt(MeasurementCaller caller, int request, const std::map<std::string, std::uintmax_t>& fresh);
+    [[nodiscard]] bool Adopt(MeasurementCaller caller, int request, const std::map<std::string, MeasuredTree>& fresh);
+
+    [[nodiscard]] std::optional<MeasuredTree> WhatIsKnownAbout(const std::filesystem::path& folder) const;
 
     const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;
     const Clock& clock_;
     BackgroundRunner& runner_;
-    std::map<std::string, std::uintmax_t> bytes_;
+    std::map<std::string, MeasuredTree> measured_;
     std::map<int, int> asked_;
     int callers_ = 0;
 };

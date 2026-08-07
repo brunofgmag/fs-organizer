@@ -122,22 +122,47 @@ const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::st
     return nullptr;
 }
 
-const TreeNode* AddonAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& folder)
+namespace
+{
+    const TreeNode* NodeUnder(const TreeNode& node, const std::string& wanted)
+    {
+        if (ComparablePath(node.path) == wanted)
+        {
+            return &node;
+        }
+
+        for (const TreeNode& child : node.children)
+        {
+            if (const TreeNode* found = NodeUnder(child, wanted))
+            {
+                return found;
+            }
+        }
+
+        return nullptr;
+    }
+}
+
+const TreeNode* NodeAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& folder)
 {
     const std::string wanted = ComparablePath(folder);
 
     for (const TreeNode& library : libraries)
     {
-        for (const TreeNode* addon : AddonsUnder(library))
+        if (const TreeNode* found = NodeUnder(library, wanted))
         {
-            if (ComparablePath(addon->path) == wanted)
-            {
-                return addon;
-            }
+            return found;
         }
     }
 
     return nullptr;
+}
+
+const TreeNode* AddonAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& folder)
+{
+    const TreeNode* found = NodeAt(libraries, folder);
+
+    return found != nullptr && found->kind == TreeNodeKind::Addon ? found : nullptr;
 }
 
 const TreeNode* AddonHoldingTheIdentity(const std::vector<TreeNode>& libraries,
