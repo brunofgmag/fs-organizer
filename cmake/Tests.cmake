@@ -656,6 +656,17 @@ if (WIN32)
 
     target_link_libraries(fsorg-windows-file-operations-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-link-plan-on-real-disk-tests link-plan-on-real-disk
+            tests/infrastructure/link/tst_link_plan_on_real_disk.cpp
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakePresetRepository.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-link-plan-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-catalog-on-real-disk-tests catalog-on-real-disk
             tests/infrastructure/catalog/tst_catalog_on_real_disk.cpp
             tests/support/DeepPaths.h
