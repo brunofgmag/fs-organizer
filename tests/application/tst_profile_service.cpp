@@ -44,6 +44,10 @@ namespace
         static void ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece();
         static void TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree();
         static void UndoingASwapPutsTheOldAddonBackInTheDestination();
+        static void EnablingAnAddonWhoseLinkVanishedAfterTheScanCreatesItAgain();
+        static void ABatchWithNothingToDoSaysNothingDrifted();
+        static void DisablingAnAddonWhoseLinkVanishedAfterTheScanReportsTheDrift();
+        static void TheSwapPlansTheEnableEvenWhenTheScanThoughtTheAddonWasAlreadyOn();
     };
 }
 
@@ -147,7 +151,7 @@ void ProfileServiceTest::MarkingACategoryEnablesEveryAddonUnderIt()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
+        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true).results;
 
     QCOMPARE(results.size(), std::size_t{3});
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
@@ -164,7 +168,7 @@ void ProfileServiceTest::ABatchKeepsGoingAfterAFailureAndReportsOneResultPerItem
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
+        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true).results;
 
     QCOMPARE(results.size(), std::size_t{3});
     QCOMPARE(results.front().outcome.Failure(), LinkFailure::DestinationHoldsRealFolder);
@@ -181,7 +185,7 @@ void ProfileServiceTest::AFailedItemInABatchDoesNotUndoTheItemsThatWorked()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
+        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true).results;
 
     QCOMPARE(results.size(), std::size_t{3});
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
@@ -199,7 +203,7 @@ void ProfileServiceTest::AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccu
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
+        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true).results;
 
     QCOMPARE(results.size(), std::size_t{2});
     for (const LinkOperationResult& result : results)
@@ -220,7 +224,7 @@ void ProfileServiceTest::DisablingAnAddonRemovesItsLinkInEveryDestination()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, false);
+        f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, false).results;
 
     QCOMPARE(results.size(), std::size_t{2});
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
@@ -236,7 +240,7 @@ void ProfileServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true);
+        f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true).results;
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().linkPath,
@@ -251,17 +255,18 @@ void ProfileServiceTest::TurningAnAddonOffAndOnAgainLeavesItInTheDestinationItLi
         Profile({{.libraryId = kLibraryId, .relativePath = "Aircrafts", .destination = kCommunity2024}});
 
     const ProfileSnapshot enabled = f.Snapshot(profile);
-    QCOMPARE(f.service.SetEnabled(profile, enabled, {Fixture::AddonAt(enabled, 1)}, true).size(), std::size_t{1});
+    QCOMPARE(f.service.SetEnabled(profile, enabled, {Fixture::AddonAt(enabled, 1)}, true).results.size(),
+             std::size_t{1});
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community2024/aerosoft-crj"));
 
     const ProfileSnapshot afterEnabling = f.Snapshot(profile);
-    QCOMPARE(f.service.SetEnabled(profile, afterEnabling, {Fixture::AddonAt(afterEnabling, 1)}, false).size(),
+    QCOMPARE(f.service.SetEnabled(profile, afterEnabling, {Fixture::AddonAt(afterEnabling, 1)}, false).results.size(),
              std::size_t{1});
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community2024/aerosoft-crj"));
 
     const ProfileSnapshot afterDisabling = f.Snapshot(profile);
     const std::vector<LinkOperationResult> again =
-        f.service.SetEnabled(profile, afterDisabling, {Fixture::AddonAt(afterDisabling, 1)}, true);
+        f.service.SetEnabled(profile, afterDisabling, {Fixture::AddonAt(afterDisabling, 1)}, true).results;
 
     QCOMPARE(again.size(), std::size_t{1});
     QCOMPARE(again.front().linkPath, std::filesystem::path("E:/Flight Simulator 2024/Community2024/aerosoft-crj"));
@@ -278,7 +283,7 @@ void ProfileServiceTest::EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
+        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true).results;
 
     QCOMPARE(results.size(), std::size_t{3});
     QCOMPARE(f.journal.appended.size(), std::size_t{3});
@@ -301,11 +306,11 @@ void ProfileServiceTest::UndoRevertsTheLastBatchAndNothingElse()
 
     const ProfileSnapshot first = f.Snapshot(profile);
     const std::vector<LinkOperationResult> kept =
-        f.service.SetEnabled(profile, first, {Fixture::AddonAt(first, 0), Fixture::AddonAt(first, 1)}, true);
+        f.service.SetEnabled(profile, first, {Fixture::AddonAt(first, 0), Fixture::AddonAt(first, 1)}, true).results;
 
     const ProfileSnapshot second = f.Snapshot(profile);
     const std::vector<LinkOperationResult> undone =
-        f.service.SetEnabled(profile, second, {Fixture::AddonAt(second, 2)}, true);
+        f.service.SetEnabled(profile, second, {Fixture::AddonAt(second, 2)}, true).results;
 
     QCOMPARE(kept.size(), std::size_t{2});
     QCOMPARE(undone.size(), std::size_t{1});
@@ -329,7 +334,7 @@ void ProfileServiceTest::UndoOnlyRevertsWhatTheBatchActuallyDid()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     const std::vector<LinkOperationResult> results =
-        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true);
+        f.service.SetEnabled(profile, snapshot, Fixture::Aircrafts(snapshot), true).results;
     const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
 
     QCOMPARE(results.size(), std::size_t{3});
@@ -373,11 +378,11 @@ void ProfileServiceTest::ABatchWithNothingToDoDoesNotThrowAwayThePreviousUndo()
 
     const ProfileSnapshot before = f.Snapshot(profile);
     const std::vector<LinkOperationResult> done =
-        f.service.SetEnabled(profile, before, {Fixture::AddonAt(before, 0)}, true);
+        f.service.SetEnabled(profile, before, {Fixture::AddonAt(before, 0)}, true).results;
 
     const ProfileSnapshot after = f.Snapshot(profile);
     const std::vector<LinkOperationResult> again =
-        f.service.SetEnabled(profile, after, {Fixture::AddonAt(after, 0)}, true);
+        f.service.SetEnabled(profile, after, {Fixture::AddonAt(after, 0)}, true).results;
 
     QCOMPARE(done.size(), std::size_t{1});
     QVERIFY(again.empty());
@@ -396,11 +401,11 @@ void ProfileServiceTest::ABatchWhereEveryStepFailedKeepsThePreviousUndo()
 
     const ProfileSnapshot before = f.Snapshot(profile);
     const std::vector<LinkOperationResult> done =
-        f.service.SetEnabled(profile, before, {Fixture::AddonAt(before, 0)}, true);
+        f.service.SetEnabled(profile, before, {Fixture::AddonAt(before, 0)}, true).results;
 
     const ProfileSnapshot after = f.Snapshot(profile);
     const std::vector<LinkOperationResult> failed =
-        f.service.SetEnabled(profile, after, {Fixture::AddonAt(after, 1)}, true);
+        f.service.SetEnabled(profile, after, {Fixture::AddonAt(after, 1)}, true).results;
 
     QCOMPARE(done.size(), std::size_t{1});
     QCOMPARE(failed.size(), std::size_t{1});
@@ -506,7 +511,8 @@ void ProfileServiceTest::ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBa
     const SimulatorProfile profile = Profile();
 
     const ProfileSnapshot snapshot = f.Snapshot(profile);
-    QCOMPARE(f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true).size(), std::size_t{1});
+    QCOMPARE(f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, true).results.size(),
+             std::size_t{1});
     QVERIFY(f.service.CanUndo());
 
     f.service.ForgetUndo();
@@ -525,9 +531,12 @@ void ProfileServiceTest::ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece()
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
-    const std::vector<LinkOperationResult> results = f.service.SetEnabled(
-        profile, snapshot,
-        LinkBatch{.toDisable = {Fixture::AddonAt(snapshot, 0)}, .toEnable = {Fixture::AddonAt(snapshot, 1)}});
+    const std::vector<LinkOperationResult> results =
+        f.service
+            .SetEnabled(
+                profile, snapshot,
+                LinkBatch{.toDisable = {Fixture::AddonAt(snapshot, 0)}, .toEnable = {Fixture::AddonAt(snapshot, 1)}})
+            .results;
 
     QCOMPARE(results.size(), std::size_t{2});
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
@@ -558,8 +567,11 @@ void ProfileServiceTest::TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
     const TreeNode* replacement = &snapshot.libraries[1].children.front();
 
-    const std::vector<LinkOperationResult> results = f.service.SetEnabled(
-        profile, snapshot, LinkBatch{.toDisable = {Fixture::AddonAt(snapshot, 0)}, .toEnable = {replacement}});
+    const std::vector<LinkOperationResult> results =
+        f.service
+            .SetEnabled(profile, snapshot,
+                        LinkBatch{.toDisable = {Fixture::AddonAt(snapshot, 0)}, .toEnable = {replacement}})
+            .results;
 
     QCOMPARE(results.size(), std::size_t{2});
     for (const LinkOperationResult& result : results)
@@ -589,7 +601,8 @@ void ProfileServiceTest::UndoingASwapPutsTheOldAddonBackInTheDestination()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
     const TreeNode* replacement = &snapshot.libraries[1].children.front();
 
-    QCOMPARE(f.service.SetEnabled(profile, snapshot, LinkBatch{{Fixture::AddonAt(snapshot, 0)}, {replacement}}).size(),
+    QCOMPARE(f.service.SetEnabled(profile, snapshot, LinkBatch{{Fixture::AddonAt(snapshot, 0)}, {replacement}})
+                 .results.size(),
              std::size_t{2});
 
     const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
@@ -602,6 +615,88 @@ void ProfileServiceTest::UndoingASwapPutsTheOldAddonBackInTheDestination()
 
     QCOMPARE(f.fileSystem.LinkTarget("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"),
              std::optional<std::filesystem::path>{"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"});
+}
+
+void ProfileServiceTest::EnablingAnAddonWhoseLinkVanishedAfterTheScanCreatesItAgain()
+{
+    const std::filesystem::path link = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    Fixture f;
+    f.fileSystem.AddLink(link, "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    QVERIFY(shown.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
+
+    QVERIFY(f.fileSystem.RemoveNode(link));
+
+    const LinkBatchReport report = f.service.SetEnabled(profile, shown, {Fixture::AddonAt(shown, 0)}, true);
+
+    QCOMPARE(report.results.size(), std::size_t{1});
+    QVERIFY(report.results.front().outcome.Succeeded());
+    QCOMPARE(report.drifted, std::size_t{1});
+    QVERIFY(f.fileSystem.IsLink(link));
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
+    QCOMPARE(f.journal.appended.front().kind, OperationKind::EnableAddon);
+    QCOMPARE(f.journal.appended.front().target, link);
+}
+
+void ProfileServiceTest::ABatchWithNothingToDoSaysNothingDrifted()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+
+    const LinkBatchReport report = f.service.SetEnabled(profile, shown, {Fixture::AddonAt(shown, 0)}, true);
+
+    QVERIFY(report.results.empty());
+    QCOMPARE(report.drifted, std::size_t{0});
+    QVERIFY(f.journal.appended.empty());
+}
+
+void ProfileServiceTest::DisablingAnAddonWhoseLinkVanishedAfterTheScanReportsTheDrift()
+{
+    const std::filesystem::path link = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    Fixture f;
+    f.fileSystem.AddLink(link, "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+
+    QVERIFY(f.fileSystem.RemoveNode(link));
+
+    const LinkBatchReport report = f.service.SetEnabled(profile, shown, {Fixture::AddonAt(shown, 0)}, false);
+
+    QVERIFY(report.results.empty());
+    QCOMPARE(report.drifted, std::size_t{1});
+    QVERIFY(f.journal.appended.empty());
+}
+
+void ProfileServiceTest::TheSwapPlansTheEnableEvenWhenTheScanThoughtTheAddonWasAlreadyOn()
+{
+    const std::filesystem::path vanished = "E:/Flight Simulator 2024/Community/aerosoft-crj";
+
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.fileSystem.AddLink(vanished, "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+
+    QVERIFY(f.fileSystem.RemoveNode(vanished));
+
+    const LinkBatchReport report = f.service.SetEnabled(
+        profile, shown, LinkBatch{.toDisable = {Fixture::AddonAt(shown, 0)}, .toEnable = {Fixture::AddonAt(shown, 1)}});
+
+    QCOMPARE(report.results.size(), std::size_t{2});
+    QCOMPARE(report.drifted, std::size_t{1});
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink(vanished));
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)

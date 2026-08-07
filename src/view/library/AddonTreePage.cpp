@@ -580,23 +580,39 @@ void AddonTreePage::RefreshUndoState() const
     undo_->setEnabled(viewModel_.CanUndo());
 }
 
-void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& results)
+QString AddonTreePage::NothingChangedBecause(const std::size_t drifted) const
+{
+    if (drifted == 0)
+    {
+        return tr("Nothing to do: the selection was already the way you asked.");
+    }
+
+    return tr("Nothing was applied: %n addon was not the way the screen showed it. The list is up to date now.",
+              nullptr, static_cast<int>(drifted));
+}
+
+void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
 {
     RefreshUndoState();
 
     std::vector<LinkOperationResult> failed;
-    std::ranges::copy_if(results, std::back_inserter(failed),
+    std::ranges::copy_if(report.results, std::back_inserter(failed),
                          [](const LinkOperationResult& result)
                          {
                              return !result.outcome.Succeeded();
                          });
 
-    const auto done = static_cast<int>(results.size() - failed.size());
+    const auto done = static_cast<int>(report.results.size() - failed.size());
+
+    if (report.results.empty())
+    {
+        emit StatusChanged(NothingChangedBecause(report.drifted));
+        return;
+    }
 
     if (failed.empty())
     {
-        emit StatusChanged(results.empty() ? tr("Nothing to do: the selection was already the way you asked.")
-                                           : tr("%n operation finished.", nullptr, done));
+        emit StatusChanged(tr("%n operation finished.", nullptr, done));
         return;
     }
 
@@ -606,12 +622,12 @@ void AddonTreePage::OnBatchFinished(const std::vector<LinkOperationResult>& resu
         lines.append(Describe(result));
     }
 
-    QMessageBox report(QMessageBox::Warning, tr("Not everything was applied"),
+    QMessageBox dialog(QMessageBox::Warning, tr("Not everything was applied"),
                        tr("%n operation failed. Nothing was deleted.", nullptr, static_cast<int>(failed.size())),
                        QMessageBox::Ok, this);
-    report.setInformativeText(tr("%n operation finished.", nullptr, done));
-    report.setDetailedText(lines.join('\n'));
-    report.exec();
+    dialog.setInformativeText(tr("%n operation finished.", nullptr, done));
+    dialog.setDetailedText(lines.join('\n'));
+    dialog.exec();
 
     emit StatusChanged(tr("%1 · %2").arg(tr("%n operation finished", nullptr, done),
                                          tr("%n failed", nullptr, static_cast<int>(failed.size()))));

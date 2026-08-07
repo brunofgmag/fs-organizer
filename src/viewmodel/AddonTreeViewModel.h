@@ -83,7 +83,7 @@ public:
 signals:
     void Shown();
 
-    void BatchFinished(const std::vector<LinkOperationResult>& results);
+    void BatchFinished(const LinkBatchReport& report);
 
     void Refused(const QString& explanation);
 
@@ -100,7 +100,7 @@ private:
 
     void AdoptScan();
 
-    void ApplyResults(const std::vector<LinkOperationResult>& results);
+    void ApplyResults(const LinkBatchReport& report);
 
     Session& session_;
     ProfileService& service_;

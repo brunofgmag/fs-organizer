@@ -36,6 +36,8 @@ namespace
         static void ARescanKeepsTheCurrentRowOfASelectionThatSpansSeveralAddons();
         static void AnAddonThatMovedRowIsFoundAgainBecauseItIsRememberedByPath();
         static void AnAddonThatVanishedLeavesTheTreeWithNothingSelected();
+        static void ABatchWithNothingToDoSaysTheSelectionWasAlreadyAsAsked();
+        static void ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectionWasAlreadyRight();
     };
 }
 
@@ -347,6 +349,56 @@ void AddonTreePageTest::AnAddonThatVanishedLeavesTheTreeWithNothingSelected()
 
     QVERIFY(!IndexOf(*screen.tree, kChosen, {}).isValid());
     QCOMPARE(screen.SelectedPaths(), std::vector<std::string>{});
+}
+
+namespace
+{
+    const TreeNode* AddonOf(const Screen& screen, const std::filesystem::path& path)
+    {
+        const QModelIndex position = IndexOf(*screen.tree, path, {});
+
+        return position.isValid() ? NodeUnder(*screen.tree, position) : nullptr;
+    }
+
+    QString LastStatusOf(const QSignalSpy& spy)
+    {
+        return spy.isEmpty() ? QString{} : spy.back().front().toString();
+    }
+}
+
+void AddonTreePageTest::ABatchWithNothingToDoSaysTheSelectionWasAlreadyAsAsked()
+{
+    Fixture f;
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "addon-17", kChosen);
+
+    const Screen screen(f);
+    QSignalSpy status(&screen.page, &AddonTreePage::StatusChanged);
+
+    const TreeNode* addon = AddonOf(screen, kChosen);
+    QVERIFY(addon != nullptr);
+
+    f.viewModel.Toggle({addon}, true);
+
+    QCOMPARE(LastStatusOf(status), QString{"Nothing to do: the selection was already the way you asked."});
+}
+
+void AddonTreePageTest::ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectionWasAlreadyRight()
+{
+    Fixture f;
+    const std::filesystem::path link = std::filesystem::path(kCommunity) / "addon-17";
+    f.fileSystem.AddLink(link, kChosen);
+
+    const Screen screen(f);
+    QSignalSpy status(&screen.page, &AddonTreePage::StatusChanged);
+
+    const TreeNode* addon = AddonOf(screen, kChosen);
+    QVERIFY(addon != nullptr);
+    QVERIFY(f.fileSystem.RemoveNode(link));
+
+    f.viewModel.Toggle({addon}, false);
+
+    QCOMPARE(LastStatusOf(status),
+             QString{"Nothing was applied: 1 addon was not the way the screen showed it. The list is up to date now."});
 }
 
 QTEST_MAIN(AddonTreePageTest)

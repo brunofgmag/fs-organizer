@@ -79,7 +79,7 @@ bool OptionsViewModel::RemoveProfile(const std::string& profileId, const bool di
         }
 
         const std::vector<LinkOperationResult> results =
-            service_.SetEnabled(session_.Profile(), session_.Snapshot(), everything, false);
+            service_.SetEnabled(session_.Profile(), session_.Snapshot(), everything, false).results;
 
         session_.NoteLinkResults(results);
         emit LinksDisabled(results);
@@ -334,7 +334,7 @@ void OptionsViewModel::UnregisterLibrary(const LibraryId& libraryId, const bool 
         if (const TreeNode* tree = TreeOf(libraryId); tree != nullptr)
         {
             const std::vector<LinkOperationResult> results =
-                service_.SetEnabled(session_.Profile(), session_.Snapshot(), {tree}, false);
+                service_.SetEnabled(session_.Profile(), session_.Snapshot(), {tree}, false).results;
 
             session_.NoteLinkResults(results);
             emit LinksDisabled(results);
