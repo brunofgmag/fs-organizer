@@ -13,6 +13,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/quarantine/CollisionDialog.h"
 #include "view/quarantine/RestoreDialog.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/TableColumns.h"
@@ -35,6 +36,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     table_->setShowGrid(false);
     LetTheColumnsBeDraggedAndStillFillTheTable(table_);
     table_->verticalHeader()->setVisible(false);
+    table_->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     DressTheHeaderOf(table_->horizontalHeader());
 
     restore_ = new QPushButton(this);
@@ -112,6 +114,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
             {
                 Report(tr("Restore"), results);
             });
+    connect(&viewModel_, &QuarantineViewModel::Swapped, this, &QuarantinePage::ReportTheSwaps);
     connect(&viewModel_, &QuarantineViewModel::Discarded, this,
             [this](const std::vector<FileOperationResult>& results)
             {
@@ -166,9 +169,46 @@ void QuarantinePage::ShowTheSelectedItem()
         return;
     }
 
-    detail_->Show(rows.front(), TheComparisonFor(rows.front()));
+    detail_->Show(rows.front(), WhatTheTableDoesNotShow(rows.front()));
     panel_->ShowTitle(model_.data(rows.front(), Qt::DisplayRole).toString(),
                       model_.data(rows.front(), QuarantineModel::ReplacedRole).toBool());
+}
+
+QList<ModelRowDetail::Field> QuarantinePage::WhatTheTableDoesNotShow(const QModelIndex& position) const
+{
+    const QuarantinedItem* item = model_.ItemAt(position);
+    if (item == nullptr)
+    {
+        return {};
+    }
+
+    QList<ModelRowDetail::Field> fields;
+
+    if (const QString size = model_.SizeOf(*item); !size.isEmpty())
+    {
+        fields.append({tr("Size on disk"), size});
+    }
+
+    if (const QString when = model_.WhenItWasQuarantined(*item); !when.isEmpty())
+    {
+        fields.append({tr("Quarantined on"), when});
+    }
+
+    fields.append({tr("Kept in"), AsText(item->path.parent_path())});
+    fields.append(WhereEachSourcePoints(*item));
+    fields.append(TheComparisonFor(position));
+
+    return fields;
+}
+
+QList<ModelRowDetail::Field> QuarantinePage::WhereEachSourcePoints(const QuarantinedItem& item)
+{
+    if (!item.TheSourcesDisagree())
+    {
+        return {};
+    }
+
+    return {{tr("The record says"), AsText(item.origin)}, {tr("The Journal says"), AsText(item.theOtherSourceSays)}};
 }
 
 QList<ModelRowDetail::Field> QuarantinePage::TheComparisonFor(const QModelIndex& position) const
@@ -179,13 +219,10 @@ QList<ModelRowDetail::Field> QuarantinePage::TheComparisonFor(const QModelIndex&
         return {};
     }
 
-    QList<ModelRowDetail::Field> comparison;
-    comparison.append({tr("Already in place"), AsText(detail->replacedBy)});
-    comparison.append({tr("Version there"),
-                       detail->replacementVersion.empty() ? tr("the manifest does not say")
-                                                          : QString::fromStdString(detail->replacementVersion)});
-
-    return comparison;
+    return {{tr("Already in place"), AsText(detail->replacedBy)},
+            {tr("Version there"),
+             detail->replacementVersion.empty() ? tr("the manifest does not say")
+                                                : QString::fromStdString(detail->replacementVersion)}};
 }
 
 void QuarantinePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
@@ -251,7 +288,13 @@ void QuarantinePage::RestoreSelected()
         return;
     }
 
-    RestoreDialog dialog(viewModel_.WhatRestoringWouldDo(items), this);
+    RestoreDialog dialog(
+        viewModel_.WhatRestoringWouldDo(items),
+        [this](const RestoreCheck& check)
+        {
+            return AskAboutTheCollision(check);
+        },
+        this);
 
     if (dialog.exec() != QDialog::Accepted)
     {
@@ -259,14 +302,23 @@ void QuarantinePage::RestoreSelected()
     }
 
     const std::vector<QuarantinedItem> going = dialog.Restorable();
+    const std::vector<QuarantinedItem> replacing = dialog.TheOnesReplacingWhatIsThere();
 
-    if (going.empty())
+    if (going.empty() && replacing.empty())
     {
         emit StatusChanged(tr("Nothing was restored."));
         return;
     }
 
-    viewModel_.Restore(going);
+    if (!going.empty())
+    {
+        viewModel_.Restore(going);
+    }
+
+    if (!replacing.empty())
+    {
+        viewModel_.Swap(replacing);
+    }
 }
 
 void QuarantinePage::DiscardSelected()
@@ -334,6 +386,43 @@ void QuarantinePage::Report(const QString& title, const std::vector<FileOperatio
                        this);
     report.setInformativeText(tr("%n item finished.", nullptr, done));
     report.setDetailedText(failed.join('\n'));
+    report.exec();
+}
+
+bool QuarantinePage::AskAboutTheCollision(const RestoreCheck& check)
+{
+    CollisionDialog dialog(check, this);
+
+    viewModel_.WeighBothSidesOf(check,
+                                [&dialog](const TwoSides& sides)
+                                {
+                                    dialog.ShowTheSizes(sides);
+                                });
+
+    return dialog.exec() == QDialog::Accepted;
+}
+
+void QuarantinePage::ReportTheSwaps(const std::vector<SwapResult>& results)
+{
+    QStringList told;
+    int stopped = 0;
+
+    for (const SwapResult& result : results)
+    {
+        told.append(Describe(result));
+        stopped += result.Succeeded() ? 0 : 1;
+    }
+
+    if (stopped == 0)
+    {
+        emit StatusChanged(tr("%n item replaced what was in its place.", nullptr, static_cast<int>(results.size())));
+        return;
+    }
+
+    QMessageBox report(QMessageBox::Warning, tr("Replace what's there"),
+                       tr("%n replacement stopped part of the way.", nullptr, stopped), QMessageBox::Ok, this);
+    report.setInformativeText(tr("Nothing was deleted. The detail says where each one stopped."));
+    report.setDetailedText(told.join('\n'));
     report.exec();
 }
 

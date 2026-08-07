@@ -110,6 +110,7 @@ set(VIEW_SOURCES
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/PresetsPage.cpp
+        src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp

@@ -833,6 +833,18 @@ if (WIN32)
         target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
 
+        fsorg_add_qt_test(fsorg-collision-dialog-tests collision-dialog
+                tests/view/tst_collision_dialog.cpp
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-collision-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-collision-dialog-tests collision-dialog)
+
+        fsorg_add_qt_test(fsorg-restore-dialog-tests restore-dialog
+                tests/view/tst_restore_dialog.cpp
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-restore-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-restore-dialog-tests restore-dialog)
+
         fsorg_add_qt_test(fsorg-delete-dialog-tests delete-dialog
                 tests/view/tst_delete_dialog.cpp
                 tests/doubles/FakeCatalogScanner.h
