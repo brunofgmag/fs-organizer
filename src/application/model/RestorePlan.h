@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "application/model/QuarantinedItem.h"
+#include "application/model/SizeReport.h"
 #include "domain/model/FileResult.h"
 
 struct RestoreCheck
@@ -16,6 +17,7 @@ struct RestoreCheck
     std::filesystem::path occupant{};
     std::string version{};
     std::string occupantVersion{};
+    bool occupantIsAnAddon = false;
 
     [[nodiscard]] bool CanProceed() const
     {
@@ -25,6 +27,42 @@ struct RestoreCheck
     [[nodiscard]] bool NeedsAPlace() const
     {
         return result == FileResult::TheOriginIsUnknown;
+    }
+
+    [[nodiscard]] bool CollidesWithAnOccupant() const
+    {
+        return result == FileResult::TheIdentityIsTaken || result == FileResult::TheOriginIsOccupied;
+    }
+
+    [[nodiscard]] bool CanBeSwapped() const
+    {
+        return CollidesWithAnOccupant() && occupantIsAnAddon && !occupant.empty();
+    }
+};
+
+struct TwoSides
+{
+    MeasuredFolder held{};
+    MeasuredFolder occupant{};
+};
+
+enum class SwapStep : int
+{
+    QuarantineTheOccupant = 0,
+    RestoreTheItem = 1,
+};
+
+struct SwapResult
+{
+    std::filesystem::path item{};
+    std::filesystem::path occupant{};
+    std::filesystem::path inTheLibrary{};
+    SwapStep stoppedAt = SwapStep::QuarantineTheOccupant;
+    FileResult result = FileResult::Completed;
+
+    [[nodiscard]] bool Succeeded() const
+    {
+        return ::Succeeded(result);
     }
 };
 

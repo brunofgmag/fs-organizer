@@ -17,6 +17,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/QuarantineViewModel.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -106,6 +107,11 @@ namespace
         QuarantineViewModel viewModel{service, profiles, session, notifier, model, sizes, runner};
     };
 
+    QString SecondLineAt(const QuarantineModel& model, const int row)
+    {
+        return model.data(model.index(row, QuarantineModel::NameColumn, {}), SecondLineRole).toString();
+    }
+
     QString CellAt(const QuarantineModel& model, const int row, const int column)
     {
         return model.data(model.index(row, column, {}), Qt::DisplayRole).toString();
@@ -154,7 +160,7 @@ void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAft
 
     QCOMPARE(f.model.rowCount({}), 1);
     QVERIFY(CellAt(f.model, 0, QuarantineModel::VersionColumn).isEmpty());
-    QVERIFY(CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QVERIFY(SecondLineAt(f.model, 0).isEmpty());
 
     while (f.runner.Pending())
     {
@@ -162,7 +168,7 @@ void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAft
     }
 
     QCOMPARE(CellAt(f.model, 0, QuarantineModel::VersionColumn), QStringLiteral("2.4.1"));
-    QVERIFY(!CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QVERIFY(!SecondLineAt(f.model, 0).isEmpty());
     QVERIFY(f.model.data(f.model.index(0, QuarantineModel::NameColumn, {}), QuarantineModel::ReplacedRole).toBool());
 }
 
@@ -178,7 +184,7 @@ void QuarantineViewModelTest::AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain()
 
     f.viewModel.Show();
 
-    QVERIFY(!CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QVERIFY(!SecondLineAt(f.model, 0).isEmpty());
     QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
 }
 

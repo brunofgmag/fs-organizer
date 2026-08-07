@@ -2,6 +2,25 @@
 
 #include <algorithm>
 #include <memory>
+#include <utility>
+
+#include "domain/support/PathUtils.h"
+
+namespace
+{
+    MeasuredFolder FolderIn(const std::vector<MeasuredFolder>& weighed, const std::filesystem::path& wanted)
+    {
+        const std::string key = ComparablePath(wanted);
+
+        const auto found = std::ranges::find_if(weighed,
+                                                [&key](const MeasuredFolder& folder)
+                                                {
+                                                    return ComparablePath(folder.folder) == key;
+                                                });
+
+        return found == weighed.end() ? MeasuredFolder{} : *found;
+    }
+}
 
 QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                                          ProfileService& profileService,
@@ -109,6 +128,17 @@ std::vector<RestoreOffer> QuarantineViewModel::WhatRestoringWouldDo(const std::v
     return offers;
 }
 
+void QuarantineViewModel::WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed)
+{
+    sizes_.MeasureFolders(
+        {check.item.path, check.occupant}, caller_, Freshness::ReuseWhatIsKnown, {},
+        [held = check.item.path, occupant = check.occupant,
+         weighed = std::move(onWeighed)](const FolderSizeReport& report)
+        {
+            weighed(TwoSides{.held = FolderIn(report.folders, held), .occupant = FolderIn(report.folders, occupant)});
+        });
+}
+
 void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
 {
     const std::vector<FileOperationResult> results = service_.Restore(session_.Profile(), items);
@@ -125,6 +155,32 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
     }
 
     emit Restored(results);
+}
+
+void QuarantineViewModel::Swap(const std::vector<QuarantinedItem>& items)
+{
+    const std::vector<DestinationEntry> entries = session_.Snapshot().entries;
+
+    std::vector<SwapResult> results;
+    results.reserve(items.size());
+
+    for (const QuarantinedItem& item : items)
+    {
+        results.push_back(service_.Swap(session_.Profile(), entries, item));
+    }
+
+    Show();
+
+    if (std::ranges::any_of(results,
+                            [](const SwapResult& result)
+                            {
+                                return result.Succeeded();
+                            }))
+    {
+        profileService_.ForgetUndo();
+    }
+
+    emit Swapped(results);
 }
 
 void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)

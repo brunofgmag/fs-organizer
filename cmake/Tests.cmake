@@ -89,6 +89,11 @@ add_test(NAME no-disk-in-view
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-disk-in-view.cmake")
 
+add_test(NAME no-retyped-formatting
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-retyped-formatting.cmake")
+
 if (WIN32 AND NOT FSORG_TESTS_ONLY)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"
@@ -122,6 +127,12 @@ fsorg_add_qt_test(fsorg-copy-conflicts-tests copy-conflicts
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-copy-conflicts-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-origin-sidecar-tests origin-sidecar
+        tests/domain/importing/tst_origin_sidecar.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-origin-sidecar-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
@@ -826,6 +837,18 @@ if (WIN32)
                 tests/doubles/RecordingSessionObserver.h)
         target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
+
+        fsorg_add_qt_test(fsorg-collision-dialog-tests collision-dialog
+                tests/view/tst_collision_dialog.cpp
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-collision-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-collision-dialog-tests collision-dialog)
+
+        fsorg_add_qt_test(fsorg-restore-dialog-tests restore-dialog
+                tests/view/tst_restore_dialog.cpp
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-restore-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-restore-dialog-tests restore-dialog)
 
         fsorg_add_qt_test(fsorg-delete-dialog-tests delete-dialog
                 tests/view/tst_delete_dialog.cpp

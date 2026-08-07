@@ -1,6 +1,7 @@
 set(DOMAIN_SOURCES
         src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ImportEngine.cpp
+        src/domain/importing/OriginSidecar.cpp
         src/domain/journal/JournalEntries.cpp
         src/domain/journal/OperationLog.cpp
         src/domain/legacy/LegacyPreset.cpp
@@ -109,6 +110,7 @@ set(VIEW_SOURCES
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/PresetsPage.cpp
+        src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp

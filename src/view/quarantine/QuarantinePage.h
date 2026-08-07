@@ -39,6 +39,10 @@ private:
 
     void ShowTheSelectedBatch(const QModelIndexList& rows) const;
 
+    [[nodiscard]] QList<ModelRowDetail::Field> WhatTheTableDoesNotShow(const QModelIndex& position) const;
+
+    [[nodiscard]] static QList<ModelRowDetail::Field> WhereEachSourcePoints(const QuarantinedItem& item);
+
     [[nodiscard]] QList<ModelRowDetail::Field> TheComparisonFor(const QModelIndex& position) const;
 
     void ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const;
@@ -54,6 +58,10 @@ private:
     void EmptyTheQuarantine();
 
     void Report(const QString& title, const std::vector<FileOperationResult>& results);
+
+    [[nodiscard]] bool AskAboutTheCollision(const RestoreCheck& check);
+
+    void ReportTheSwaps(const std::vector<SwapResult>& results);
 
     void UpdateSummary();
 

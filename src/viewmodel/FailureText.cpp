@@ -67,7 +67,8 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotRemoveSource: return QObject::tr("the source folder could not be removed");
     case FileResult::CouldNotCreateLink:
         return QObject::tr("the files are already in the library, but the link could not be created");
-    case FileResult::TheOriginIsUnknown: return QObject::tr("the journal does not know where this came from");
+    case FileResult::TheOriginIsUnknown:
+        return QObject::tr("neither the record beside it nor the journal says where this came from");
     case FileResult::CouldNotRestore: return QObject::tr("the folder could not be moved back");
     case FileResult::TheOriginIsOccupied:
         return QObject::tr("something with that name is already in the place this came from");
@@ -90,6 +91,8 @@ QString Explain(const FileResult result)
     case FileResult::TheRecycleBinCannotReachIt:
         return QObject::tr("the Recycle Bin stops at 260 characters, and this addon holds a longer path");
     case FileResult::CouldNotDelete: return QObject::tr("the folder could not be deleted");
+    case FileResult::CouldNotRecordTheOrigin:
+        return QObject::tr("the record that says where this came from could not be written, so nothing was moved");
     }
 
     return {};
@@ -132,6 +135,26 @@ QString Describe(const FileOperationResult& result)
 {
     return QStringLiteral("%1: %2%3")
         .arg(AsText(result.path.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
+}
+
+QString Describe(const SwapResult& result)
+{
+    if (result.Succeeded())
+    {
+        return QObject::tr("%1: it is back, and %2 is in the quarantine with its origin recorded.")
+            .arg(AsText(result.item.filename()), AsText(result.occupant.filename()));
+    }
+
+    const QString step = result.stoppedAt == SwapStep::QuarantineTheOccupant
+        ? QObject::tr("putting %1 in the quarantine").arg(AsText(result.occupant.filename()))
+        : QObject::tr("bringing %1 back").arg(AsText(result.item.filename()));
+
+    const QString holds = result.inTheLibrary.empty()
+        ? QObject::tr("\n    neither of them is in the library right now, and nothing was deleted")
+        : QObject::tr("\n    the library still holds: %1").arg(AsText(result.inTheLibrary));
+
+    return QObject::tr("%1: it stopped at %2, because %3.%4")
+        .arg(AsText(result.item.filename()), step, Explain(result.result), holds);
 }
 
 namespace

@@ -12,6 +12,7 @@ enum RowTagRole : int
     AlertRole = Qt::UserRole + 204,
     QuietSuffixRole = Qt::UserRole + 205,
     EmphasisRole = Qt::UserRole + 206,
+    SecondLineRole = Qt::UserRole + 207,
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_ROW_TAG_ROLES_H

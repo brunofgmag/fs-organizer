@@ -21,6 +21,7 @@ namespace
         static void AnAddonThatLeavesAndComesBackToItsOwnPlaceIsNotASwap();
         static void ADisableAndAnEnableInDifferentPlacesStayTwoEntries();
         static void ASwapThatFailedHalfwaySaysWhereItStopped();
+        static void AQuarantineFollowedByARestoreOverThatPlaceStaysTwoEntries();
     };
 }
 
@@ -204,6 +205,23 @@ void JournalEntriesTest::ASwapThatFailedHalfwaySaysWhereItStopped()
     QVERIFY(!entries.front().Succeeded());
     QCOMPARE(entries.front().WhereItStopped().addonId.folderName, std::string{"pmdg-aircraft-77w"});
     QCOMPARE(std::get<LinkFailure>(entries.front().WhereItStopped().outcome), LinkFailure::CouldNotRemoveLink);
+}
+
+void JournalEntriesTest::AQuarantineFollowedByARestoreOverThatPlaceStaysTwoEntries()
+{
+    const std::filesystem::path place = "D:/Library/Utils/simbridge";
+    const std::filesystem::path held = "D:/Library/_fsorganizer-quarantine/simbridge";
+
+    const std::vector<OperationRecord> records{
+        OperationRecord::OfImport(Moment(), OperationKind::QuarantineFromLibrary,
+                                  AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, place, held,
+                                  FileResult::Completed),
+        OperationRecord::OfImport(Moment(), OperationKind::RestoreFromQuarantine,
+                                  AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, held, place,
+                                  FileResult::Completed, OriginSource::Sidecar),
+    };
+
+    QCOMPARE(GroupOperations(records).size(), std::size_t{2});
 }
 
 QTEST_APPLESS_MAIN(JournalEntriesTest)

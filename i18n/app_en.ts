@@ -127,14 +127,14 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="245"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="493"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="494"/>
         <source>Repoint to the library</source>
         <translation>Repoint to the library</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="246"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="496"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="993"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="497"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="994"/>
         <source>Move to…</source>
         <translation>Move to…</translation>
     </message>
@@ -145,7 +145,7 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="248"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="501"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="502"/>
         <source>Delete…</source>
         <translation>Delete…</translation>
     </message>
@@ -176,60 +176,60 @@
         <translation>Register library…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="388"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="389"/>
         <source>Category</source>
         <translation>Category</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="389"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="390"/>
         <source>In the library</source>
         <translation>In the library</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="393"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="394"/>
         <source>Linked in</source>
         <translation>Linked in</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="394"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="395"/>
         <source>Target exists</source>
         <translation>Target exists</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="394"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="395"/>
         <source>no, the link cannot find the folder</source>
         <translation>no, the link cannot find the folder</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="394"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="396"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="395"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="397"/>
         <source>yes</source>
         <translation>yes</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="396"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="397"/>
         <source>Enabled</source>
         <translation>Enabled</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="396"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="397"/>
         <source>no</source>
         <translation>no</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="402"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="403"/>
         <source>Version</source>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="407"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="408"/>
         <source>Content</source>
         <translation>Content</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="407"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="750"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1172"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="408"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="751"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1173"/>
         <source>%n addon</source>
         <translation>
             <numerusform>%n addon</numerusform>
@@ -237,49 +237,49 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="408"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="409"/>
         <source>Destination</source>
         <translation>Destination</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="427"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="428"/>
         <source>Addons</source>
         <translation>Addons</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="428"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="429"/>
         <source>Enabled</source>
         <comment>several addons</comment>
         <translation>Enabled</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="428"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="429"/>
         <source>%1 of %2</source>
         <translation>%1 of %2</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="433"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="434"/>
         <source>Categories</source>
         <translation>Categories</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="438"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="439"/>
         <source>Broken</source>
         <translation>Broken</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="443"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="444"/>
         <source>Away from the destination</source>
         <translation>Away from the destination</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="446"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="447"/>
         <source>Spread across</source>
         <translation>Spread across</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="446"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1171"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="447"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1172"/>
         <source>%n category</source>
         <translation>
             <numerusform>%n category</numerusform>
@@ -287,7 +287,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="448"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="449"/>
         <source>%n item selected</source>
         <translation>
             <numerusform>%n item selected</numerusform>
@@ -295,12 +295,12 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="461"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="462"/>
         <source>Size on disk</source>
         <translation>Size on disk</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="493"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="494"/>
         <source>Repoint %n addon</source>
         <translation>
             <numerusform>Repoint %n addon</numerusform>
@@ -308,7 +308,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="496"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="497"/>
         <source>Move %n addon to…</source>
         <translation>
             <numerusform>Move %n addon to…</numerusform>
@@ -316,7 +316,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="501"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="502"/>
         <source>Delete %n addon…</source>
         <translation>
             <numerusform>Delete %n addon…</numerusform>
@@ -324,13 +324,13 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="513"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="514"/>
         <source>Nothing to delete: the selection has no addon in it.</source>
         <translation>Nothing to delete: the selection has no addon in it.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="536"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="543"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="537"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="544"/>
         <source>%n addon deleted.</source>
         <translation>
             <numerusform>%n addon deleted.</numerusform>
@@ -338,12 +338,12 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="540"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="541"/>
         <source>Not everything was deleted</source>
         <translation>Not everything was deleted</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="541"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="542"/>
         <source>%n addon was not deleted, and is still in the library.</source>
         <translation>
             <numerusform>%n addon was not deleted, and is still in the library.</numerusform>
@@ -351,7 +351,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="547"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="549"/>
         <source>%n addon deleted</source>
         <translation>
             <numerusform>%n addon deleted</numerusform>
@@ -359,7 +359,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="548"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="549"/>
         <source>%n left in the library</source>
         <translation>
             <numerusform>%n left in the library</numerusform>
@@ -367,22 +367,22 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="609"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="610"/>
         <source>Select at least one addon or category.</source>
         <translation>Select at least one addon or category.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="659"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="660"/>
         <source>Enable in bulk</source>
         <translation>Enable in bulk</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="659"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="660"/>
         <source>Disable in bulk</source>
         <translation>Disable in bulk</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="660"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="661"/>
         <source>This will enable %1 addons at once.
 
 Continue?</source>
@@ -391,7 +391,7 @@ Continue?</source>
 Continue?</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="661"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="662"/>
         <source>This will disable %1 addons at once.
 
 Continue?</source>
@@ -400,7 +400,7 @@ Continue?</source>
 Continue?</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="675"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="676"/>
         <source>Nothing was applied: %n addon was left as it is, because the place it goes is taken.</source>
         <translation>
             <numerusform>Nothing was applied: %n addon was left as it is, because the place it goes is taken.</numerusform>
@@ -408,12 +408,12 @@ Continue?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="681"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="682"/>
         <source>Nothing to do: the selection was already the way you asked.</source>
         <translation>Nothing to do: the selection was already the way you asked.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="684"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="685"/>
         <source>Nothing was applied: %n addon was not the way the screen showed it. The list is up to date now.</source>
         <translation>
             <numerusform>Nothing was applied: %n addon was not the way the screen showed it. The list is up to date now.</numerusform>
@@ -421,7 +421,7 @@ Continue?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="710"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="711"/>
         <source>%n addon left as it is, because the place it goes is taken</source>
         <translation>
             <numerusform>%n addon left as it is, because the place it goes is taken</numerusform>
@@ -429,8 +429,8 @@ Continue?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="717"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="730"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="718"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="731"/>
         <source>%n operation finished.</source>
         <translation>
             <numerusform>%n operation finished.</numerusform>
@@ -438,12 +438,12 @@ Continue?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="727"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="728"/>
         <source>Not everything was applied</source>
         <translation>Not everything was applied</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="728"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="729"/>
         <source>%n operation failed. Nothing was deleted.</source>
         <translation>
             <numerusform>%n operation failed. Nothing was deleted.</numerusform>
@@ -451,16 +451,16 @@ Continue?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="547"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="709"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="734"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="750"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="549"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="710"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="735"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="751"/>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="709"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="734"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="710"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="735"/>
         <source>%n operation finished</source>
         <translation>
             <numerusform>%n operation finished</numerusform>
@@ -468,7 +468,7 @@ Continue?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="735"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="736"/>
         <source>%n failed</source>
         <translation>
             <numerusform>%n failed</numerusform>
@@ -476,12 +476,12 @@ Continue?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="742"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="743"/>
         <source>Register a library to get started.</source>
         <translation>Register a library to get started.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="750"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="751"/>
         <source>%n enabled</source>
         <translation>
             <numerusform>%n enabled</numerusform>
@@ -489,77 +489,77 @@ Continue?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="971"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="972"/>
         <source>Resolve the copy conflict…</source>
         <translation>Resolve the copy conflict…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1008"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1009"/>
         <source>New category here…</source>
         <translation>New category here…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1011"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1012"/>
         <source>New category</source>
         <translation>New category</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1016"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1017"/>
         <source>Suggest categories…</source>
         <translation>Suggest categories…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1028"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1029"/>
         <source>Rename category…</source>
         <translation>Rename category…</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1035"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1036"/>
         <source>Rename category</source>
         <translation>Rename category</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1045"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1046"/>
         <source>Delete category</source>
         <translation>Delete category</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1059"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1060"/>
         <source>Category suggestions</source>
         <translation>Category suggestions</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1060"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1061"/>
         <source>No addon from here is in a category other than the one the rules suggest.</source>
         <translation>No addon from here is in a category other than the one the rules suggest.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1077"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1078"/>
         <source>Link again in the profile destination</source>
         <translation>Link again in the profile destination</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1085"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1086"/>
         <source>Adopt the destination the addons are already in</source>
         <translation>Adopt the destination the addons are already in</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1107"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1108"/>
         <source>Inherit the destination from above</source>
         <translation>Inherit the destination from above</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1116"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1117"/>
         <source>Pin the destination to %1</source>
         <translation>Pin the destination to %1</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1126"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1127"/>
         <source>Destination changed</source>
         <translation>Destination changed</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1127"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1128"/>
         <source>%n addon from here is still linked away from the destination the profile now says to use.</source>
         <translation>
             <numerusform>%n addon from here is still linked away from the destination the profile now says to use.</numerusform>
@@ -567,37 +567,37 @@ Continue?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1131"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1132"/>
         <source>Link again now</source>
         <translation>Link again now</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1132"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1133"/>
         <source>Leave it as it is</source>
         <translation>Leave it as it is</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1153"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1154"/>
         <source>Choose the library folder</source>
         <translation>Choose the library folder</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1163"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1164"/>
         <source>Repeated library</source>
         <translation>Repeated library</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1164"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1165"/>
         <source>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</source>
         <translation>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1169"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1170"/>
         <source>Library registered</source>
         <translation>Library registered</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="1170"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="1171"/>
         <source>%1 · %2, %3</source>
         <translation>%1 · %2, %3</translation>
     </message>
@@ -652,6 +652,39 @@ Continue?</translation>
         <location filename="../src/viewmodel/CategorySuggestionModel.cpp" line="147"/>
         <source>Rule</source>
         <translation>Rule</translation>
+    </message>
+</context>
+<context>
+    <name>CollisionDialog</name>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="33"/>
+        <source>Restoring would collide</source>
+        <translation>Restoring would collide</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="39"/>
+        <source>Something with this name is already in %1. Restoring would put two addons in one place, so the app does not pick for you.</source>
+        <translation>Something with this name is already in %1. Restoring would put two addons in one place, so the app does not pick for you.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="53"/>
+        <source>In quarantine</source>
+        <translation>In quarantine</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="54"/>
+        <source>Already there</source>
+        <translation>Already there</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="56"/>
+        <source>Replacing puts what is there in the quarantine, with its own origin recorded. Nothing is deleted, and the same dialog brings it back.</source>
+        <translation>Replacing puts what is there in the quarantine, with its own origin recorded. Nothing is deleted, and the same dialog brings it back.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="63"/>
+        <source>Replace what&apos;s there</source>
+        <translation>Replace what&apos;s there</translation>
     </message>
 </context>
 <context>
@@ -1151,35 +1184,35 @@ It also exists in the library: %2</translation>
 <context>
     <name>DeleteDialog</name>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="39"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="40"/>
         <source>Delete from the library</source>
         <translation>Delete from the library</translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="51"/>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="191"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="53"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="187"/>
         <source>Move to the Recycle Bin</source>
         <translation>Move to the Recycle Bin</translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="53"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="54"/>
         <source>You can put it back from Windows. Windows may quietly evict older items from the Bin to make room for these %1, and the app cannot prevent that.</source>
         <translation>You can put it back from Windows. Windows may quietly evict older items from the Bin to make room for these %1, and the app cannot prevent that.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="59"/>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="92"/>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="192"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="61"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="93"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="188"/>
         <source>Delete permanently</source>
         <translation>Delete permanently</translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="60"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="61"/>
         <source>It does not come back. Not through the Recycle Bin either.</source>
         <translation>It does not come back. Not through the Recycle Bin either.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/DeleteDialog.cpp" line="79"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="80"/>
         <source>%n selected item is not an addon and stays where it is.</source>
         <translation>
             <numerusform>%n selected item is not an addon and stays where it is.</numerusform>
@@ -1187,18 +1220,18 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="87"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="88"/>
         <source>Nothing happens until you say so.</source>
         <translation>Nothing happens until you say so.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="136"/>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="139"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="137"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="140"/>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/DeleteDialog.cpp" line="139"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="140"/>
         <source>%n addon</source>
         <translation>
             <numerusform>%n addon</numerusform>
@@ -1206,12 +1239,12 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="152"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="153"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/library/DeleteDialog.cpp" line="161"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="157"/>
         <source>%n of the selected addons cannot go there, and this route leaves them in the library:</source>
         <translation>
             <numerusform>%n of the selected addons cannot go there, and this route leaves it in the library:</numerusform>
@@ -1219,12 +1252,12 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="174"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="170"/>
         <source>%1: the link in %2 goes away with it · %3</source>
         <translation>%1: the link in %2 goes away with it · %3</translation>
     </message>
     <message>
-        <location filename="../src/view/library/DeleteDialog.cpp" line="185"/>
+        <location filename="../src/view/library/DeleteDialog.cpp" line="181"/>
         <source>Turning it off is part of this, and it happens because you asked for the deletion:</source>
         <translation>Turning it off is part of this, and it happens because you asked for the deletion:</translation>
     </message>
@@ -2664,7 +2697,7 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="26"/>
-        <location filename="../src/viewmodel/FailureText.cpp" line="85"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="86"/>
         <source>the journal records this operation, but does not say how it ended</source>
         <translation>the journal records this operation, but does not say how it ended</translation>
     </message>
@@ -2754,17 +2787,21 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>the files are already in the library, but the link could not be created</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="70"/>
-        <source>the journal does not know where this came from</source>
-        <translation>the journal does not know where this came from</translation>
+        <location filename="../src/viewmodel/FailureText.cpp" line="71"/>
+        <source>neither the record beside it nor the journal says where this came from</source>
+        <translation>neither the record beside it nor the journal says where this came from</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="71"/>
+        <source>the journal does not know where this came from</source>
+        <translation type="vanished">the journal does not know where this came from</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="72"/>
         <source>the folder could not be moved back</source>
         <translation>the folder could not be moved back</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="73"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="74"/>
         <source>something with that name is already in the place this came from</source>
         <translation>something with that name is already in the place this came from</translation>
     </message>
@@ -2773,69 +2810,74 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation type="vanished">there is already something in the source place</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="74"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="75"/>
         <source>it could not be discarded</source>
         <translation>it could not be discarded</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="76"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="77"/>
         <source>one of the links pointing at the library copy could not be removed</source>
         <translation>one of the links pointing at the library copy could not be removed</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="77"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="78"/>
         <source>this library already has an addon with that folder name</source>
         <translation>this library already has an addon with that folder name</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="79"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="80"/>
         <source>the target of the operation is not inside a library of the profile</source>
         <translation>the target of the operation is not inside a library of the profile</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="80"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="81"/>
         <source>the category could not be created</source>
         <translation>the category could not be created</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="82"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="83"/>
         <source>this category still holds addons, and only an empty category can be deleted</source>
         <translation>this category still holds addons, and only an empty category can be deleted</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="83"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="84"/>
         <source>the category could not be deleted</source>
         <translation>the category could not be deleted</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="87"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="88"/>
         <source>the source folder could not be walked, so nothing was copied</source>
         <translation>the source folder could not be walked, so nothing was copied</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="89"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="90"/>
         <source>the selection does not fit in the Recycle Bin of that volume</source>
         <translation>the selection does not fit in the Recycle Bin of that volume</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="91"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="92"/>
         <source>the Recycle Bin stops at 260 characters, and this addon holds a longer path</source>
         <translation>the Recycle Bin stops at 260 characters, and this addon holds a longer path</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="92"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="93"/>
         <source>the folder could not be deleted</source>
         <translation>the folder could not be deleted</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="102"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="95"/>
+        <source>the record that says where this came from could not be written, so nothing was moved</source>
+        <translation>the record that says where this came from could not be written, so nothing was moved</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="105"/>
         <source>
     the occupant is in: %1</source>
         <translation>
     the occupant is in: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="113"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="116"/>
         <source>
     folder in the destination: %1
     addon in the library: %2</source>
@@ -2844,51 +2886,85 @@ Apply the preset &quot;%2&quot;?</translation>
     addon in the library: %2</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="119"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="122"/>
         <source>
     the current link points at: %1</source>
         <translation>
     the current link points at: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="141"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="144"/>
+        <source>%1: it is back, and %2 is in the quarantine with its origin recorded.</source>
+        <translation>%1: it is back, and %2 is in the quarantine with its origin recorded.</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="149"/>
+        <source>putting %1 in the quarantine</source>
+        <translation>putting %1 in the quarantine</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="150"/>
+        <source>bringing %1 back</source>
+        <translation>bringing %1 back</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="153"/>
+        <source>
+    neither of them is in the library right now, and nothing was deleted</source>
+        <translation>
+    neither of them is in the library right now, and nothing was deleted</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="154"/>
+        <source>
+    the library still holds: %1</source>
+        <translation>
+    the library still holds: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="156"/>
+        <source>%1: it stopped at %2, because %3.%4</source>
+        <translation>%1: it stopped at %2, because %3.%4</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="164"/>
         <source>moved to the Recycle Bin</source>
         <translation>moved to the Recycle Bin</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="142"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="165"/>
         <source>deleted for good</source>
         <translation>deleted for good</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="151"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="174"/>
         <source>
     the link already removed: %1</source>
         <translation>
     the link already removed: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="174"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="197"/>
         <source>Copying to the library…</source>
         <translation>Copying to the library…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="175"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="198"/>
         <source>Checking whether the copy matches the source…</source>
         <translation>Checking whether the copy matches the source…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="176"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="199"/>
         <source>Putting the copy in its final place…</source>
         <translation>Putting the copy in its final place…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="177"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="200"/>
         <source>Removing the source folder…</source>
         <translation>Removing the source folder…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="178"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="201"/>
         <source>Creating the link in the destination…</source>
         <translation>Creating the link in the destination…</translation>
     </message>
@@ -2997,7 +3073,7 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="282"/>
-        <location filename="../src/main.cpp" line="515"/>
+        <location filename="../src/main.cpp" line="520"/>
         <source>Could not save</source>
         <translation>Could not save</translation>
     </message>
@@ -3007,17 +3083,17 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>The option could not be written to %1, so it stays as it was.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="516"/>
+        <location filename="../src/main.cpp" line="521"/>
         <source>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</source>
         <translation>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="554"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="567"/>
         <source>Restore the selected ones</source>
         <translation>Restore the selected ones</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="631"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="665"/>
         <source>Unregister</source>
         <translation>Unregister</translation>
     </message>
@@ -3057,156 +3133,240 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>not measured</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="26"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="28"/>
         <source>in quarantine: %1</source>
         <translation>in quarantine: %1</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="31"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="33"/>
         <source>already there: %1</source>
         <translation>already there: %1</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="44"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="46"/>
         <source>it is in %1</source>
         <translation>it is in %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="17"/>
+        <source>the manifest does not say</source>
+        <translation>the manifest does not say</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="22"/>
+        <source>it could not be measured</source>
+        <translation>it could not be measured</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/CollisionDialog.cpp" line="27"/>
+        <source>Version %1
+Size %2</source>
+        <translation>Version %1
+Size %2</translation>
     </message>
 </context>
 <context>
     <name>QuarantineModel</name>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="131"/>
         <source>already replaced</source>
-        <translation>already replaced</translation>
+        <translation type="vanished">already replaced</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="159"/>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="161"/>
         <source>(the journal does not know)</source>
-        <translation>(the journal does not know)</translation>
+        <translation type="vanished">(the journal does not know)</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="176"/>
         <source>Name</source>
-        <translation>Name</translation>
+        <translation type="vanished">Name</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="177"/>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="118"/>
+        <source>they disagree</source>
+        <translation>they disagree</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="123"/>
+        <source>the record and the Journal agree</source>
+        <translation>the record and the Journal agree</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="128"/>
+        <source>the record only</source>
+        <translation>the record only</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="129"/>
+        <source>the Journal only</source>
+        <translation>the Journal only</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="130"/>
+        <source>neither has it</source>
+        <translation>neither has it</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="154"/>
+        <source>quarantined %1</source>
+        <translation>quarantined %1</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="211"/>
+        <source>not recorded</source>
+        <translation>not recorded</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="226"/>
+        <source>Item</source>
+        <translation>Item</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="227"/>
         <source>Version</source>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="178"/>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="228"/>
+        <source>Goes back to</source>
+        <translation>Goes back to</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/QuarantineModel.cpp" line="229"/>
+        <source>Source</source>
+        <translation>Source</translation>
+    </message>
+    <message>
         <source>Size on disk</source>
-        <translation>Size on disk</translation>
+        <translation type="vanished">Size on disk</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="179"/>
         <source>Would go back to</source>
-        <translation>Would go back to</translation>
+        <translation type="vanished">Would go back to</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="180"/>
         <source>Quarantined on</source>
-        <translation>Quarantined on</translation>
+        <translation type="vanished">Quarantined on</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/QuarantineModel.cpp" line="181"/>
         <source>Kept in</source>
-        <translation>Kept in</translation>
+        <translation type="vanished">Kept in</translation>
     </message>
 </context>
 <context>
     <name>QuarantinePage</name>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="56"/>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="145"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="77"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="167"/>
         <source>Item held</source>
         <translation>Item held</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="113"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="134"/>
         <source>Restore</source>
         <translation>Restore</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="118"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="140"/>
         <source>Discard</source>
         <translation>Discard</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="140"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="162"/>
         <source>Restore the selected ones</source>
         <translation>Restore the selected ones</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="141"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="163"/>
         <source>Discard the selected ones</source>
         <translation>Discard the selected ones</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="142"/>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="302"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="164"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="364"/>
         <source>Empty the quarantine</source>
         <translation>Empty the quarantine</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="143"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="165"/>
         <source>Open the folder</source>
         <translation>Open the folder</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="144"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="166"/>
         <source>Nothing leaves the quarantine without you saying so.</source>
         <translation>Nothing leaves the quarantine without you saying so.</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="146"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="168"/>
         <source>The quarantine is empty.</source>
         <translation>The quarantine is empty.</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="147"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="169"/>
         <source>When two copies of the same addon fight over the same name, the losing one comes here instead of being deleted. Nothing has been held so far.</source>
         <translation>When two copies of the same addon fight over the same name, the losing one comes here instead of being deleted. Nothing has been held so far.</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="183"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="208"/>
+        <source>Size on disk</source>
+        <translation>Size on disk</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="213"/>
+        <source>Quarantined on</source>
+        <translation>Quarantined on</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="216"/>
+        <source>Kept in</source>
+        <translation>Kept in</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="220"/>
+        <source>The record says</source>
+        <translation>The record says</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="221"/>
+        <source>The Journal says</source>
+        <translation>The Journal says</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="230"/>
         <source>Already in place</source>
         <translation>Already in place</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="184"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="231"/>
         <source>Version there</source>
         <translation>Version there</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="185"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="232"/>
         <source>the manifest does not say</source>
         <translation>the manifest does not say</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="212"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="259"/>
         <source>Items</source>
         <translation>Items</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="213"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="260"/>
         <source>Know where they came from</source>
         <translation>Know where they came from</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="213"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="260"/>
         <source>%1 of %2</source>
         <translation>%1 of %2</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="214"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="261"/>
         <source>Go back to</source>
         <translation>Go back to</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="214"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="261"/>
         <source>%n place</source>
         <translation>
             <numerusform>%n place</numerusform>
@@ -3214,7 +3374,7 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="216"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="263"/>
         <source>%n item selected</source>
         <translation>
             <numerusform>%n item selected</numerusform>
@@ -3222,7 +3382,7 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="225"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="272"/>
         <source>Restore %n item to the library</source>
         <translation>
             <numerusform>Restore %n item to the library</numerusform>
@@ -3230,28 +3390,28 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="226"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="273"/>
         <source>Restore to the library</source>
         <translation>Restore to the library</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="250"/>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="277"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="297"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="339"/>
         <source>Select at least one item from the quarantine.</source>
         <translation>Select at least one item from the quarantine.</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="265"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="319"/>
         <source>Nothing was restored.</source>
         <translation>Nothing was restored.</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="282"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="344"/>
         <source>Discard from the quarantine</source>
         <translation>Discard from the quarantine</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="283"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="345"/>
         <source>%n item will be deleted from the disk for good. Continue?</source>
         <translation>
             <numerusform>%n item will be deleted from the disk for good. Continue?</numerusform>
@@ -3259,12 +3419,12 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="297"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="359"/>
         <source>The quarantine is already empty.</source>
         <translation>The quarantine is already empty.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="303"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="365"/>
         <source>Everything in the quarantine, %n item, will be deleted from the disk for good. Continue?</source>
         <translation>
             <numerusform>Everything in the quarantine, %n item, will be deleted from the disk for good. Continue?</numerusform>
@@ -3272,7 +3432,7 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="328"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="390"/>
         <source>%n item from the quarantine.</source>
         <translation>
             <numerusform>%n item from the quarantine.</numerusform>
@@ -3280,7 +3440,7 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="333"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="395"/>
         <source>%n item could not be handled.</source>
         <translation>
             <numerusform>%n item could not be handled.</numerusform>
@@ -3288,20 +3448,46 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="335"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="397"/>
         <source>%n item finished.</source>
         <translation>
             <numerusform>%n item finished.</numerusform>
             <numerusform>%n items finished.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="429"/>
+        <source>%n item replaced what was in its place.</source>
+        <translation>
+            <numerusform>%n item replaced what was in its place.</numerusform>
+            <numerusform>%n items replaced what was in their place.</numerusform>
+        </translation>
+    </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="361"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="433"/>
+        <source>Replace what&apos;s there</source>
+        <translation>Replace what&apos;s there</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="434"/>
+        <source>%n replacement stopped part of the way.</source>
+        <translation>
+            <numerusform>%n replacement stopped part of the way.</numerusform>
+            <numerusform>%n replacements stopped part of the way.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="435"/>
+        <source>Nothing was deleted. The detail says where each one stopped.</source>
+        <translation>Nothing was deleted. The detail says where each one stopped.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="461"/>
         <source>0 items in the quarantine</source>
         <translation>0 items in the quarantine</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="361"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="461"/>
         <source>%n item in the quarantine.</source>
         <translation>
             <numerusform>%n item in the quarantine.</numerusform>
@@ -3309,12 +3495,12 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="362"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="462"/>
         <source>0 bytes held</source>
         <translation>0 bytes held</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="362"/>
+        <location filename="../src/view/quarantine/QuarantinePage.cpp" line="462"/>
         <source>nothing leaves here without you saying so</source>
         <translation>nothing leaves here without you saying so</translation>
     </message>
@@ -3360,7 +3546,7 @@ Apply the preset &quot;%2&quot;?</translation>
 <context>
     <name>RestoreDialog</name>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="59"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="64"/>
         <source>Restore from the quarantine</source>
         <translation>Restore from the quarantine</translation>
     </message>
@@ -3369,26 +3555,58 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation type="vanished">Each folder goes back to where it came from. Nothing is overwritten: if something with the same name is already in the destination, that restore fails and says why.</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="62"/>
         <source>Each folder goes back to where it came from. Nothing is overwritten: what would collide is listed here with both versions, and the choice between them is yours.</source>
-        <translation>Each folder goes back to where it came from. Nothing is overwritten: what would collide is listed here with both versions, and the choice between them is yours.</translation>
+        <translation type="vanished">Each folder goes back to where it came from. Nothing is overwritten: what would collide is listed here with both versions, and the choice between them is yours.</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="136"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="67"/>
+        <source>Each folder goes back to where it came from. Nothing is overwritten and nothing is deleted: what would collide is listed here with both versions, and replacing puts the occupant in the quarantine with its own origin recorded.</source>
+        <translation>Each folder goes back to where it came from. Nothing is overwritten and nothing is deleted: what would collide is listed here with both versions, and replacing puts the occupant in the quarantine with its own origin recorded.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="157"/>
         <source>goes back to %1</source>
         <translation>goes back to %1</translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="151"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="172"/>
         <source>Choose where this goes back to</source>
         <translation>Choose where this goes back to</translation>
     </message>
+    <message>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="189"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="215"/>
+        <source>Compare and replace…</source>
+        <translation>Compare and replace…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="214"/>
+        <source>it will replace what is there</source>
+        <translation>it will replace what is there</translation>
+    </message>
+    <message>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="215"/>
+        <source>Change this…</source>
+        <translation>Change this…</translation>
+    </message>
+    <message>
+        <source>Replace what&apos;s there</source>
+        <translation type="vanished">Replace what&apos;s there</translation>
+    </message>
     <message numerus="yes">
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="166"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="227"/>
         <source>%n folder will be restored.</source>
         <translation>
             <numerusform>%n folder will be restored.</numerusform>
             <numerusform>%n folders will be restored.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="231"/>
+        <source>%n of them puts the occupant in the quarantine first.</source>
+        <translation>
+            <numerusform>%n of them puts the occupant in the quarantine first.</numerusform>
+            <numerusform>%n of them put the occupant in the quarantine first.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -3406,7 +3624,7 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="101"/>
+        <location filename="../src/view/quarantine/RestoreDialog.cpp" line="113"/>
         <source>Restore</source>
         <translation>Restore</translation>
     </message>

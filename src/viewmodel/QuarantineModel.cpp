@@ -3,6 +3,7 @@
 #include <utility>
 
 #include <QtCore/QDateTime>
+#include <QtCore/QStringList>
 #include <QtCore/QTimeZone>
 
 #include "domain/support/PathUtils.h"
@@ -69,7 +70,7 @@ void QuarantineModel::RepaintTheRows()
 
     const int last = static_cast<int>(items_.size()) - 1;
 
-    emit dataChanged(index(0, NameColumn, {}), index(last, WhereColumn, {}));
+    emit dataChanged(index(0, NameColumn, {}), index(last, SourceColumn, {}));
 }
 
 const QuarantinedItem* QuarantineModel::ItemAt(const QModelIndex& position) const
@@ -107,7 +108,58 @@ int QuarantineModel::rowCount(const QModelIndex& parent) const
 
 int QuarantineModel::columnCount(const QModelIndex& parent) const
 {
-    return parent.isValid() ? 0 : WhereColumn + 1;
+    return parent.isValid() ? 0 : SourceColumn + 1;
+}
+
+QString QuarantineModel::WhatTheSourcesSay(const QuarantinedItem& item) const
+{
+    if (item.TheSourcesDisagree())
+    {
+        return tr("they disagree");
+    }
+
+    if (item.TheSourcesAgree())
+    {
+        return tr("the record and the Journal agree");
+    }
+
+    switch (item.source)
+    {
+    case OriginSource::Sidecar: return tr("the record only");
+    case OriginSource::Journal: return tr("the Journal only");
+    case OriginSource::Unknown: return tr("neither has it");
+    }
+
+    return {};
+}
+
+QString QuarantineModel::SizeOf(const QuarantinedItem& item) const
+{
+    const auto measured = bytes_.find(ComparablePath(item.path));
+
+    return measured == bytes_.end() ? QString() : AsSize(measured->second);
+}
+
+QString QuarantineModel::WhenItWasQuarantined(const QuarantinedItem& item) const
+{
+    return item.quarantinedAt.has_value() ? Moment(*item.quarantinedAt) : QString();
+}
+
+QString QuarantineModel::WhenAndHowBigItIs(const QuarantinedItem& item) const
+{
+    QStringList told;
+
+    if (const QString when = WhenItWasQuarantined(item); !when.isEmpty())
+    {
+        told.append(tr("quarantined %1").arg(when));
+    }
+
+    if (const QString size = SizeOf(item); !size.isEmpty())
+    {
+        told.append(size);
+    }
+
+    return told.join(QStringLiteral(" · "));
 }
 
 QVariant QuarantineModel::data(const QModelIndex& position, const int role) const
@@ -126,19 +178,25 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
         return replaced;
     }
 
+    if (role == SecondLineRole)
+    {
+        return position.column() == NameColumn ? QVariant(WhenAndHowBigItIs(*item)) : QVariant();
+    }
+
     if (role == TagTextRole)
     {
-        return position.column() == NameColumn && replaced ? QVariant(tr("already replaced")) : QVariant();
+        return position.column() == SourceColumn && item->TheSourcesDisagree() ? QVariant(WhatTheSourcesSay(*item))
+                                                                               : QVariant();
     }
 
     if (role == TagToneRole)
     {
-        return static_cast<int>(TagTone::Muted);
+        return static_cast<int>(TagTone::Outlined);
     }
 
     if (role == QuietRole)
     {
-        return position.column() == WhereColumn || position.column() == VersionColumn;
+        return position.column() == VersionColumn || (position.column() == SourceColumn && !item->TheSourcesDisagree());
     }
 
     if (role != Qt::DisplayRole)
@@ -150,16 +208,8 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
     {
     case NameColumn: return AsText(item->path.filename());
     case VersionColumn: return detail == nullptr ? QString() : QString::fromStdString(detail->version);
-    case SizeColumn:
-    {
-        const auto measured = bytes_.find(ComparablePath(item->path));
-
-        return measured == bytes_.end() ? QString() : AsSize(measured->second);
-    }
-    case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("(the journal does not know)");
-    case WhenColumn:
-        return item->quarantinedAt.has_value() ? Moment(*item->quarantinedAt) : tr("(the journal does not know)");
-    case WhereColumn: return AsText(item->path.parent_path());
+    case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("not recorded");
+    case SourceColumn: return WhatTheSourcesSay(*item);
     default: return {};
     }
 }
@@ -173,12 +223,10 @@ QVariant QuarantineModel::headerData(const int section, const Qt::Orientation or
 
     switch (section)
     {
-    case NameColumn: return tr("Name");
+    case NameColumn: return tr("Item");
     case VersionColumn: return tr("Version");
-    case SizeColumn: return tr("Size on disk");
-    case OriginColumn: return tr("Would go back to");
-    case WhenColumn: return tr("Quarantined on");
-    case WhereColumn: return tr("Kept in");
+    case OriginColumn: return tr("Goes back to");
+    case SourceColumn: return tr("Source");
     default: return {};
     }
 }

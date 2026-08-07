@@ -1,5 +1,7 @@
 #include "view/quarantine/RestoreDialog.h"
 
+#include <utility>
+
 #include <QtCore/QStringList>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QDialogButtonBox>
@@ -54,13 +56,17 @@ namespace
     }
 }
 
-RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers, QWidget* parent) : QDialog(parent)
+RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
+                             AskAboutTheCollision askAboutTheCollision,
+                             QWidget* parent)
+    : QDialog(parent), askAboutTheCollision_(std::move(askAboutTheCollision))
 {
     setWindowTitle(tr("Restore from the quarantine"));
 
     auto* explanation =
-        new QLabel(tr("Each folder goes back to where it came from. Nothing is overwritten: what would collide is "
-                      "listed here with both versions, and the choice between them is yours."),
+        new QLabel(tr("Each folder goes back to where it came from. Nothing is overwritten and nothing is deleted: "
+                      "what would collide is listed here with both versions, and replacing puts the occupant in the "
+                      "quarantine with its own origin recorded."),
                    this);
     explanation->setWordWrap(true);
 
@@ -78,6 +84,12 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers, QWidget* p
         {
             asked_.push_back(Choice{.offer = offer, .places = new QComboBox(listed)});
             AddTheQuestionRow(*grid, asked_.back(), row);
+        }
+        else if (offer.check.CanBeSwapped())
+        {
+            collided_.push_back(
+                Collision{.offer = offer, .compare = new QPushButton(listed), .chosen = new QLabel(listed)});
+            AddTheCollisionRow(*grid, collided_.back(), row);
         }
         else
         {
@@ -110,6 +122,15 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers, QWidget* p
                 [this]
                 {
                     ShowHowManyWillGoBack();
+                });
+    }
+
+    for (Collision& collision : collided_)
+    {
+        connect(collision.compare, &QPushButton::clicked, this,
+                [this, &collision]
+                {
+                    AskAbout(collision);
                 });
     }
 
@@ -158,12 +179,71 @@ void RestoreDialog::AddTheQuestionRow(QGridLayout& grid, const Choice& choice, c
     grid.addWidget(choice.places, row, 1);
 }
 
+void RestoreDialog::AddTheCollisionRow(QGridLayout& grid, const Collision& collision, const int row)
+{
+    auto* name = new QLabel(AsText(collision.offer.check.item.path.filename()), grid.parentWidget());
+    name->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    grid.addWidget(name, row, 0, Qt::AlignTop);
+
+    collision.compare->setObjectName(QStringLiteral("CompareAndReplace"));
+    collision.compare->setText(tr("Compare and replace…"));
+
+    collision.chosen->setObjectName(QStringLiteral("PanelPromise"));
+    collision.chosen->setWordWrap(true);
+
+    auto* why = new QLabel(WhyItIsRefused(collision.offer.check), grid.parentWidget());
+    why->setObjectName(QStringLiteral("PanelPromise"));
+    why->setWordWrap(true);
+    why->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+    auto* both = new QWidget(grid.parentWidget());
+    auto* stacked = new QVBoxLayout(both);
+    stacked->setContentsMargins(0, 0, 0, 0);
+    stacked->setSpacing(4);
+    stacked->addWidget(why);
+    stacked->addWidget(collision.compare, 0, Qt::AlignLeft);
+    stacked->addWidget(collision.chosen);
+
+    grid.addWidget(both, row, 1);
+}
+
+void RestoreDialog::AskAbout(Collision& collision)
+{
+    collision.agreed = askAboutTheCollision_ && askAboutTheCollision_(collision.offer.check);
+
+    collision.chosen->setText(collision.agreed ? tr("it will replace what is there") : QString());
+    collision.compare->setText(collision.agreed ? tr("Change this…") : tr("Compare and replace…"));
+
+    ShowHowManyWillGoBack();
+}
+
 void RestoreDialog::ShowHowManyWillGoBack() const
 {
     const auto going = static_cast<int>(Restorable().size());
+    const auto replacing = static_cast<int>(TheOnesReplacingWhatIsThere().size());
 
-    restore_->setEnabled(going > 0);
-    counted_->setText(tr("%n folder will be restored.", nullptr, going));
+    restore_->setEnabled(going + replacing > 0);
+
+    const QString restored = tr("%n folder will be restored.", nullptr, going);
+
+    counted_->setText(replacing == 0 ? restored
+                                     : restored + QStringLiteral(" ")
+                              + tr("%n of them puts the occupant in the quarantine first.", nullptr, replacing));
+}
+
+std::vector<QuarantinedItem> RestoreDialog::TheOnesReplacingWhatIsThere() const
+{
+    std::vector<QuarantinedItem> items;
+
+    for (const Collision& collision : collided_)
+    {
+        if (collision.agreed)
+        {
+            items.push_back(collision.offer.check.item);
+        }
+    }
+
+    return items;
 }
 
 std::vector<QuarantinedItem> RestoreDialog::Restorable() const

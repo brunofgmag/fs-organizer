@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
 
 #include <algorithm>
+#include <optional>
 #include <string>
 
 #include "domain/ports/FileOperations.h"
@@ -30,6 +31,11 @@ public:
         moveFails_ = true;
     }
 
+    void MakeTheMoveFailAfter(const int moves)
+    {
+        movesLeft_ = moves;
+    }
+
     void MakeTheRemovalFail()
     {
         removalFails_ = true;
@@ -48,6 +54,11 @@ public:
     void MakeTheHiddenWriteFail()
     {
         theHiddenWriteFails_ = true;
+    }
+
+    void MakeTheTextWriteFail()
+    {
+        theTextWriteFails_ = true;
     }
 
     [[nodiscard]] CopyOutcome CopyTree(const std::filesystem::path& source,
@@ -120,8 +131,25 @@ public:
         return true;
     }
 
+    [[nodiscard]] bool WriteTextFile(const std::filesystem::path& path, const std::string& contents) override
+    {
+        if (theTextWriteFails_ || !fileSystem_.IsDirectory(path.parent_path()))
+        {
+            return false;
+        }
+
+        fileSystem_.AddFileWithContents(path, contents);
+
+        return true;
+    }
+
     [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override
     {
+        if (movesLeft_.has_value() && (*movesLeft_)-- <= 0)
+        {
+            return false;
+        }
+
         return !moveFails_ && fileSystem_.MoveTree(source, destination);
     }
 
@@ -148,12 +176,14 @@ private:
 
     InMemoryFileSystem& fileSystem_;
     std::vector<std::string> unremovable_;
+    std::optional<int> movesLeft_;
     bool copyFailsPartWayThrough_ = false;
     bool copyDropsAFile_ = false;
     bool moveFails_ = false;
     bool removalFails_ = false;
     bool creationFails_ = false;
     bool theHiddenWriteFails_ = false;
+    bool theTextWriteFails_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
