@@ -132,6 +132,9 @@ namespace QTest
         case FileResult::TheOutcomeIsUnknown: return qstrdup("TheOutcomeIsUnknown");
         case FileResult::CouldNotReadTheSource: return qstrdup("CouldNotReadTheSource");
         case FileResult::TheOriginIsOccupied: return qstrdup("TheOriginIsOccupied");
+        case FileResult::TheRecycleBinIsTooSmall: return qstrdup("TheRecycleBinIsTooSmall");
+        case FileResult::TheRecycleBinCannotReachIt: return qstrdup("TheRecycleBinCannotReachIt");
+        case FileResult::CouldNotDelete: return qstrdup("CouldNotDelete");
         }
 
         return qstrdup("FileResult(?)");
@@ -159,6 +162,8 @@ namespace QTest
         case OperationKind::CreateCategory: return qstrdup("CreateCategory");
         case OperationKind::RenameCategory: return qstrdup("RenameCategory");
         case OperationKind::RemoveCategory: return qstrdup("RemoveCategory");
+        case OperationKind::RecycleFromLibrary: return qstrdup("RecycleFromLibrary");
+        case OperationKind::DeleteFromLibrary: return qstrdup("DeleteFromLibrary");
         }
 
         return qstrdup("OperationKind(?)");
