@@ -115,26 +115,21 @@ std::size_t AddonTreeViewModel::AddonsThatWouldChange(const std::vector<const Tr
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes, const bool enable)
 {
-    const std::vector<LinkOperationResult> results =
-        service_.SetEnabled(session_.Profile(), session_.Snapshot(), nodes, enable);
-
-    ApplyResults(results);
+    ApplyResults(service_.SetEnabled(session_.Profile(), session_.Snapshot(), nodes, enable));
 }
 
 void AddonTreeViewModel::UndoLastBatch()
 {
-    const std::vector<LinkOperationResult> results = service_.UndoLastBatch();
-
-    ApplyResults(results);
+    ApplyResults({.results = service_.UndoLastBatch(), .drifted = 0});
 }
 
-void AddonTreeViewModel::ApplyResults(const std::vector<LinkOperationResult>& results)
+void AddonTreeViewModel::ApplyResults(const LinkBatchReport& report)
 {
     session_.RefreshEntries();
 
-    session_.NoteLinkResults(results);
+    session_.NoteLinkResults(report.results);
 
-    emit BatchFinished(results);
+    emit BatchFinished(report);
 }
 
 void AddonTreeViewModel::OverrideDestination(const std::vector<const TreeNode*>& nodes,

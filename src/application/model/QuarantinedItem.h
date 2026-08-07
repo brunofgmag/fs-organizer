@@ -8,9 +8,9 @@
 
 struct QuarantinedItem
 {
-    std::filesystem::path path;
-    std::filesystem::path origin;
-    std::optional<std::chrono::system_clock::time_point> quarantinedAt;
+    std::filesystem::path path{};
+    std::filesystem::path origin{};
+    std::optional<std::chrono::system_clock::time_point> quarantinedAt{};
 
     [[nodiscard]] bool KnowsWhereItCameFrom() const
     {

@@ -78,7 +78,9 @@ private:
 
     [[nodiscard]] bool TheUserMeantIt(const std::vector<const TreeNode*>& nodes, bool enable);
 
-    void OnBatchFinished(const std::vector<LinkOperationResult>& results);
+    void OnBatchFinished(const LinkBatchReport& report);
+
+    [[nodiscard]] QString NothingChangedBecause(std::size_t drifted) const;
 
     void OnShown();
 

@@ -20,12 +20,12 @@ struct DeclaredDependency
 
 struct Manifest
 {
-    std::string title;
-    std::string creator;
-    std::string manufacturer;
-    std::string contentType;
-    std::string packageVersion;
-    std::string minimumGameVersion;
+    std::string title{};
+    std::string creator{};
+    std::string manufacturer{};
+    std::string contentType{};
+    std::string packageVersion{};
+    std::string minimumGameVersion{};
     std::vector<DeclaredDependency> dependencies{};
 };
 
