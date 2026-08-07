@@ -2,6 +2,7 @@
 
 #include <string>
 #include <string_view>
+#include <system_error>
 
 namespace
 {
@@ -60,4 +61,36 @@ std::filesystem::path WithoutExtendedPrefix(const std::filesystem::path& path)
     }
 
     return path;
+}
+
+std::optional<std::size_t> LongestEntryUnder(const std::filesystem::path& root)
+{
+    std::error_code error;
+    std::filesystem::recursive_directory_iterator entry(
+        WithExtendedPrefix(root), std::filesystem::directory_options::skip_permission_denied, error);
+    if (error)
+    {
+        return std::nullopt;
+    }
+
+    std::size_t longest = WithoutExtendedPrefix(root).wstring().size();
+
+    const std::filesystem::recursive_directory_iterator end;
+
+    while (entry != end)
+    {
+        const std::size_t here = WithoutExtendedPrefix(entry->path()).wstring().size();
+        if (here > longest)
+        {
+            longest = here;
+        }
+
+        entry.increment(error);
+        if (error)
+        {
+            return std::nullopt;
+        }
+    }
+
+    return longest;
 }

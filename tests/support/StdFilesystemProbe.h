@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_TESTS_SUPPORT_STD_FILESYSTEM_PROBE_H
 #define FS_ORGANIZER_TESTS_SUPPORT_STD_FILESYSTEM_PROBE_H
 
+#include <cstddef>
 #include <fstream>
 #include <iterator>
 #include <system_error>
@@ -16,6 +17,15 @@
 {
 #ifdef _WIN32
     return WithExtendedPrefix(path);
+#else
+    return path;
+#endif
+}
+
+[[nodiscard]] inline std::filesystem::path WithoutTheReachPrefix(const std::filesystem::path& path)
+{
+#ifdef _WIN32
+    return WithoutExtendedPrefix(path);
 #else
     return path;
 #endif
@@ -96,6 +106,43 @@ public:
         const std::filesystem::space_info space = std::filesystem::space(AsFarAsTheProductionProbeReaches(path), error);
 
         return error ? std::nullopt : std::optional(space.available);
+    }
+
+    [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path&) const override
+    {
+        return std::nullopt;
+    }
+
+    [[nodiscard]] std::optional<std::size_t> LongestEntryUnder(const std::filesystem::path& root) const override
+    {
+        std::error_code error;
+        std::filesystem::recursive_directory_iterator entry(
+            AsFarAsTheProductionProbeReaches(root), std::filesystem::directory_options::skip_permission_denied, error);
+        if (error)
+        {
+            return std::nullopt;
+        }
+
+        std::size_t longest = root.native().size();
+
+        const std::filesystem::recursive_directory_iterator end;
+
+        while (entry != end)
+        {
+            const std::size_t here = WithoutTheReachPrefix(entry->path()).native().size();
+            if (here > longest)
+            {
+                longest = here;
+            }
+
+            entry.increment(error);
+            if (error)
+            {
+                return std::nullopt;
+            }
+        }
+
+        return longest;
     }
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>

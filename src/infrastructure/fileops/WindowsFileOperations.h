@@ -18,6 +18,8 @@ public:
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override;
 
+    [[nodiscard]] bool Recycle(const std::filesystem::path& path) override;
+
     [[nodiscard]] bool RemoveEmptyFolder(const std::filesystem::path& path) override;
 };
 

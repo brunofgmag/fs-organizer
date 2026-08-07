@@ -9,11 +9,14 @@
 
 #include <windows.h>
 
+#include <shellapi.h>
+
 #include <optional>
 #include <string>
 #include <system_error>
 #include <vector>
 
+#include "domain/model/RecycleLimits.h"
 #include "infrastructure/fileops/ExtendedPaths.h"
 
 namespace
@@ -225,6 +228,30 @@ bool WindowsFileOperations::RemoveEmptyFolder(const std::filesystem::path& path)
     }
 
     return RemoveDirectoryW(NativePath(path).c_str()) != FALSE;
+}
+
+bool WindowsFileOperations::Recycle(const std::filesystem::path& path)
+{
+    if (AttributesWithoutFollowingLinks(path) == INVALID_FILE_ATTRIBUTES)
+    {
+        return false;
+    }
+
+    if (!TheRecycleBinReaches(LongestEntryUnder(path)))
+    {
+        return false;
+    }
+
+    std::wstring called = WithoutExtendedPrefix(path).wstring();
+    called.push_back(L'\0');
+    called.push_back(L'\0');
+
+    SHFILEOPSTRUCTW operation{};
+    operation.wFunc = FO_DELETE;
+    operation.pFrom = called.c_str();
+    operation.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
+
+    return SHFileOperationW(&operation) == 0 && operation.fAnyOperationsAborted == FALSE;
 }
 
 bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)

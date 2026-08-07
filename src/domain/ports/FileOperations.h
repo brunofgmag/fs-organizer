@@ -23,6 +23,8 @@ public:
 
     [[nodiscard]] virtual bool RemoveTree(const std::filesystem::path& path) = 0;
 
+    [[nodiscard]] virtual bool Recycle(const std::filesystem::path& path) = 0;
+
     [[nodiscard]] virtual bool RemoveEmptyFolder(const std::filesystem::path& path) = 0;
 };
 
