@@ -89,6 +89,11 @@ add_test(NAME no-disk-in-view
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-disk-in-view.cmake")
 
+add_test(NAME no-retyped-formatting
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-retyped-formatting.cmake")
+
 if (WIN32 AND NOT FSORG_TESTS_ONLY)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"
