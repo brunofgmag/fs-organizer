@@ -141,7 +141,7 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
                                             .addonId = IdentityOf(profile, node->path),
                                             .enabled = WhereItIsEnabled(seen, node->path),
                                             .bytes = sizes_.BytesOf(node->path),
-                                            .longestEntry = filesystemProbe_.LongestEntryUnder(node->path)});
+                                            .longestEntry = sizes_.LongestEntryOf(node->path)});
     }
 
     plan.volumes = RoomOnEachVolume(plan.addons);
@@ -157,16 +157,16 @@ DeletionService::TheRouteRefuses(const DeletionPlan& plan, const AddonToDelete& 
         return FileResult::Completed;
     }
 
-    if (!TheRecycleBinReaches(addon.longestEntry))
-    {
-        return FileResult::TheRecycleBinCannotReachIt;
-    }
-
     const VolumeRoom* room = VolumeHolding(plan, addon.folder);
 
     if (room == nullptr || !TheVolumeCanTake(*room))
     {
         return FileResult::TheRecycleBinIsTooSmall;
+    }
+
+    if (!TheRecycleBinReaches(addon.longestEntry))
+    {
+        return FileResult::TheRecycleBinCannotReachIt;
     }
 
     return FileResult::Completed;

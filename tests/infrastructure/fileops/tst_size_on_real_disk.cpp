@@ -126,13 +126,13 @@ namespace
 
         [[nodiscard]] std::uintmax_t WalkedBytesOf(const std::filesystem::path& folder) const
         {
-            const std::optional<std::vector<FileFingerprint>> files = filesystemProbe.FingerprintTree(folder);
-            if (!files.has_value())
+            const std::optional<TreeFingerprint> walked = filesystemProbe.FingerprintTree(folder);
+            if (!walked.has_value())
             {
                 return 0;
             }
 
-            const auto sizes = *files | std::views::transform(&FileFingerprint::size);
+            const auto sizes = walked->files | std::views::transform(&FileFingerprint::size);
 
             return std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});
         }

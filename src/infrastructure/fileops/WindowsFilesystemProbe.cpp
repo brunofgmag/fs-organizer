@@ -189,11 +189,6 @@ std::optional<RecycleBinRoom> WindowsFilesystemProbe::RecycleBinOn(const std::fi
                           .itRecycles = !nuke.has_value() || *nuke == 0};
 }
 
-std::optional<std::size_t> WindowsFilesystemProbe::LongestEntryUnder(const std::filesystem::path& root) const
-{
-    return ::LongestEntryUnder(root);
-}
-
 std::optional<std::chrono::system_clock::time_point>
 WindowsFilesystemProbe::LastWriteTime(const std::filesystem::path& path) const
 {
@@ -218,8 +213,7 @@ std::optional<std::string> WindowsFilesystemProbe::ContentsOf(const std::filesys
     return std::string(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
 }
 
-std::optional<std::vector<FileFingerprint>>
-WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
+std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
 {
     const std::filesystem::path reachableRoot = WithExtendedPrefix(root);
 
@@ -231,7 +225,7 @@ WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
         return std::nullopt;
     }
 
-    std::vector<FileFingerprint> files;
+    TreeFingerprint walked{.longestEntry = WithoutExtendedPrefix(root).wstring().size()};
     const std::filesystem::recursive_directory_iterator end;
 
     while (entry != end)
@@ -242,6 +236,11 @@ WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
             return std::nullopt;
         }
 
+        if (const std::size_t here = WithoutExtendedPrefix(entry->path()).wstring().size(); here > walked.longestEntry)
+        {
+            walked.longestEntry = here;
+        }
+
         if (isFile)
         {
             const std::uintmax_t size = entry->file_size(error);
@@ -250,7 +249,7 @@ WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
                 return std::nullopt;
             }
 
-            files.push_back(
+            walked.files.push_back(
                 FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
         }
 
@@ -261,5 +260,5 @@ WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
         }
     }
 
-    return files;
+    return walked;
 }

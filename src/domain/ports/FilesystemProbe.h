@@ -33,12 +33,9 @@ public:
 
     [[nodiscard]] virtual std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const = 0;
 
-    [[nodiscard]] virtual std::optional<std::size_t> LongestEntryUnder(const std::filesystem::path& root) const = 0;
-
     [[nodiscard]] virtual std::optional<std::string> ContentsOf(const std::filesystem::path& path) const = 0;
 
-    [[nodiscard]] virtual std::optional<std::vector<FileFingerprint>>
-    FingerprintTree(const std::filesystem::path& root) const = 0;
+    [[nodiscard]] virtual std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const = 0;
 
     [[nodiscard]] virtual std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const = 0;

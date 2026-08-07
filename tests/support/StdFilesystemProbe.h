@@ -113,38 +113,6 @@ public:
         return std::nullopt;
     }
 
-    [[nodiscard]] std::optional<std::size_t> LongestEntryUnder(const std::filesystem::path& root) const override
-    {
-        std::error_code error;
-        std::filesystem::recursive_directory_iterator entry(
-            AsFarAsTheProductionProbeReaches(root), std::filesystem::directory_options::skip_permission_denied, error);
-        if (error)
-        {
-            return std::nullopt;
-        }
-
-        std::size_t longest = root.native().size();
-
-        const std::filesystem::recursive_directory_iterator end;
-
-        while (entry != end)
-        {
-            const std::size_t here = WithoutTheReachPrefix(entry->path()).native().size();
-            if (here > longest)
-            {
-                longest = here;
-            }
-
-            entry.increment(error);
-            if (error)
-            {
-                return std::nullopt;
-            }
-        }
-
-        return longest;
-    }
-
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override
     {
@@ -166,8 +134,7 @@ public:
         return std::string(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
     }
 
-    [[nodiscard]] std::optional<std::vector<FileFingerprint>>
-    FingerprintTree(const std::filesystem::path& root) const override
+    [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override
     {
         const std::filesystem::path reachableRoot = AsFarAsTheProductionProbeReaches(root);
 
@@ -179,7 +146,7 @@ public:
             return std::nullopt;
         }
 
-        std::vector<FileFingerprint> files;
+        TreeFingerprint walked{.longestEntry = root.native().size()};
         const std::filesystem::recursive_directory_iterator end;
 
         while (entry != end)
@@ -190,6 +157,12 @@ public:
                 return std::nullopt;
             }
 
+            if (const std::size_t here = WithoutTheReachPrefix(entry->path()).native().size();
+                here > walked.longestEntry)
+            {
+                walked.longestEntry = here;
+            }
+
             if (isFile)
             {
                 const std::uintmax_t size = entry->file_size(error);
@@ -198,7 +171,7 @@ public:
                     return std::nullopt;
                 }
 
-                files.push_back(
+                walked.files.push_back(
                     FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
             }
 
@@ -209,7 +182,7 @@ public:
             }
         }
 
-        return files;
+        return walked;
     }
 };
 
