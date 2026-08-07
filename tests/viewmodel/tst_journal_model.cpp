@@ -1,6 +1,7 @@
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QtTest>
 
+#include "support/PathText.h"
 #include "viewmodel/JournalModel.h"
 
 namespace
@@ -15,6 +16,7 @@ namespace
         static void TheNewestOperationComesFirst();
         static void FilteringKeepsOnlyWhatFailed();
         static void SearchingReachesTheStepsOfAnImport();
+        static void ASwapIsOneRowNamingBothAddons();
     };
 }
 
@@ -144,6 +146,29 @@ void JournalModelTest::SearchingReachesTheStepsOfAnImport()
 
     filter.Search(QStringLiteral("none of that exists"));
     QCOMPARE(filter.rowCount({}), 0);
+}
+
+void JournalModelTest::ASwapIsOneRowNamingBothAddons()
+{
+    const std::filesystem::path place = "E:/Sim/Community/pmdg-aircraft-77w";
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords({Link(OperationKind::DisableAddon, 0),
+                       OperationRecord::OfLink(Moment(1), OperationKind::EnableAddon,
+                                               AddonId{.libraryId = "lib-1", .folderName = "fenix-a320"},
+                                               "D:/Library/Aircrafts/fenix-a320", place, LinkFailure::None)},
+                      Profile());
+
+    QCOMPARE(model.rowCount({}), 1);
+    QCOMPARE(model.rowCount(model.index(0, 0, {})), 2);
+    QCOMPARE(model.index(0, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("Swap addons"));
+    QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("pmdg-aircraft-77w out, fenix-a320 in"));
+    QCOMPARE(model.index(0, JournalModel::TargetColumn, {}).data(Qt::DisplayRole).toString(), AsText(place));
+    QVERIFY(model.index(0, 0, {}).data(JournalModel::SucceededRole).toBool());
 }
 
 QTEST_MAIN(JournalModelTest)

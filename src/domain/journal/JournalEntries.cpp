@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <optional>
 
+#include "domain/support/PathUtils.h"
+
 namespace
 {
     constexpr std::array kImportRunSteps{
@@ -40,6 +42,30 @@ namespace
 
         return last - first + 1;
     }
+
+    bool ASwapStartsAt(const std::vector<OperationRecord>& records, const std::size_t first)
+    {
+        if (records[first].kind != OperationKind::DisableAddon || first + 1 >= records.size())
+        {
+            return false;
+        }
+
+        const OperationRecord& next = records[first + 1];
+
+        return next.kind == OperationKind::EnableAddon
+            && ComparablePath(next.target) == ComparablePath(records[first].target)
+            && !(next.addonId == records[first].addonId);
+    }
+
+    JournalEntry EntryOf(const std::vector<OperationRecord>& records,
+                         const std::size_t first,
+                         const std::size_t taken,
+                         const JournalEntryKind kind)
+    {
+        return JournalEntry{{records.begin() + static_cast<std::ptrdiff_t>(first),
+                             records.begin() + static_cast<std::ptrdiff_t>(first + taken)},
+                            kind};
+    }
 }
 
 const OperationRecord& JournalEntry::First() const
@@ -52,9 +78,26 @@ const OperationRecord& JournalEntry::Last() const
     return steps.back();
 }
 
+const OperationRecord& JournalEntry::WhereItStopped() const
+{
+    const auto stopped = std::ranges::find_if_not(steps, StepSucceeded);
+
+    return stopped == steps.end() ? Last() : *stopped;
+}
+
 bool JournalEntry::IsAnImportRun() const
 {
-    return steps.size() > 1;
+    return kind == JournalEntryKind::ImportRun;
+}
+
+bool JournalEntry::IsASwap() const
+{
+    return kind == JournalEntryKind::Swap;
+}
+
+bool JournalEntry::HasSteps() const
+{
+    return kind != JournalEntryKind::OneOperation;
 }
 
 bool JournalEntry::Succeeded() const
@@ -67,18 +110,31 @@ bool StepSucceeded(const OperationRecord& record)
     return Succeeded(record.outcome);
 }
 
-std::vector<JournalEntry> GroupImportRuns(const std::vector<OperationRecord>& records)
+std::vector<JournalEntry> GroupOperations(const std::vector<OperationRecord>& records)
 {
     std::vector<JournalEntry> entries;
 
     for (std::size_t first = 0; first < records.size();)
     {
-        const std::size_t taken =
-            records[first].kind == OperationKind::ImportCopyToStaging ? StepsOfTheRunStartingAt(records, first) : 1;
+        if (records[first].kind == OperationKind::ImportCopyToStaging)
+        {
+            const std::size_t taken = StepsOfTheRunStartingAt(records, first);
 
-        entries.push_back(JournalEntry{{records.begin() + static_cast<std::ptrdiff_t>(first),
-                                        records.begin() + static_cast<std::ptrdiff_t>(first + taken)}});
-        first += taken;
+            entries.push_back(EntryOf(records, first, taken,
+                                      taken > 1 ? JournalEntryKind::ImportRun : JournalEntryKind::OneOperation));
+            first += taken;
+            continue;
+        }
+
+        if (ASwapStartsAt(records, first))
+        {
+            entries.push_back(EntryOf(records, first, 2, JournalEntryKind::Swap));
+            first += 2;
+            continue;
+        }
+
+        entries.push_back(EntryOf(records, first, 1, JournalEntryKind::OneOperation));
+        ++first;
     }
 
     return entries;
