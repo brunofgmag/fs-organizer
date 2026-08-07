@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/brunofgmag/fs-organizer/compare/v0.11.0...v0.12.0) (2026-08-07)
+
+
+### Features
+
+* tell the two restore refusals apart, and swap the addon that holds the place ([#35](https://github.com/brunofgmag/fs-organizer/issues/35)) ([85868b8](https://github.com/brunofgmag/fs-organizer/commit/85868b8ca3921827c0f90a1854dc1f294f91983e))
+
 ## [0.11.0](https://github.com/brunofgmag/fs-organizer/compare/v0.10.0...v0.11.0) (2026-08-07)
 
 
