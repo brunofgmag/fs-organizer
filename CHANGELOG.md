@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/brunofgmag/fs-organizer/compare/v0.10.0...v0.11.0) (2026-08-07)
+
+
+### Features
+
+* plan the link batch against the disk, not against the last scan ([#33](https://github.com/brunofgmag/fs-organizer/issues/33)) ([0d428d8](https://github.com/brunofgmag/fs-organizer/commit/0d428d852062b6960076aa1b23493414a12d2d8a))
+
 ## [0.10.0](https://github.com/brunofgmag/fs-organizer/compare/v0.9.0...v0.10.0) (2026-08-06)
 
 
