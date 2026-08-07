@@ -22,8 +22,10 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/DeletionService.cpp
         src/application/DependencyReport.cpp
         src/application/ImportService.cpp
+        src/application/model/DeletionPlan.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
         src/application/PresetService.cpp
