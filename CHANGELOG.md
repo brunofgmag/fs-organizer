@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/brunofgmag/fs-organizer/compare/v0.13.0...v0.14.0) (2026-08-07)
+
+
+### Features
+
+* delete addons from the Library screen, by either route ([#39](https://github.com/brunofgmag/fs-organizer/issues/39)) ([600231c](https://github.com/brunofgmag/fs-organizer/commit/600231c5030a46379e8ba3a1d65bde6bf573e364))
+
 ## [0.13.0](https://github.com/brunofgmag/fs-organizer/compare/v0.12.0...v0.13.0) (2026-08-07)
 
 
