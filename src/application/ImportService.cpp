@@ -8,6 +8,7 @@
 
 #include "domain/importing/ImportPaths.h"
 #include "domain/linking/DisableLinks.h"
+#include "domain/model/LandingPath.h"
 #include "domain/model/Manifest.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
@@ -321,18 +322,92 @@ std::vector<QuarantineDetail> ImportService::Describe(const std::vector<Destinat
     return details;
 }
 
-FileResult ImportService::RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
+RestoreCheck ImportService::CheckOne(const std::vector<TreeNode>& libraries, const QuarantinedItem& item) const
 {
+    RestoreCheck check{.item = item, .target = item.origin};
+
     if (!item.KnowsWhereItCameFrom())
     {
-        return FileResult::TheOriginIsUnknown;
+        check.result = FileResult::TheOriginIsUnknown;
+
+        return check;
     }
 
-    if (filesystemProbe_.EntryExistsWithoutFollowingLinks(item.origin))
+    if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, item.origin, {}))
     {
-        return FileResult::CouldNotRestore;
+        check.result = FileResult::TheIdentityIsTaken;
+        check.occupant = occupant->path;
+    }
+    else if (filesystemProbe_.EntryExistsWithoutFollowingLinks(item.origin))
+    {
+        check.result = FileResult::TheOriginIsOccupied;
+        check.occupant = item.origin;
     }
 
+    if (check.CanProceed())
+    {
+        return check;
+    }
+
+    check.version = VersionIn(item.path);
+    check.occupantVersion = VersionIn(check.occupant);
+
+    return check;
+}
+
+std::vector<RestoreCheck> ImportService::CheckRestore(const SimulatorProfile& profile,
+                                                      const std::vector<QuarantinedItem>& items) const
+{
+    const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
+
+    std::vector<RestoreCheck> checks;
+    checks.reserve(items.size());
+
+    for (const QuarantinedItem& item : items)
+    {
+        checks.push_back(CheckOne(libraries, item));
+    }
+
+    return checks;
+}
+
+std::vector<RestorePlace> ImportService::PlacesFor(const SimulatorProfile& profile, const QuarantinedItem& item) const
+{
+    const std::string folder = ComparablePath(item.path.parent_path());
+
+    std::vector<RestorePlace> places;
+
+    for (const std::filesystem::path& destination : profile.destinations)
+    {
+        if (ComparablePath(QuarantineFolderBeside(destination)) == folder)
+        {
+            places.push_back(RestorePlace{
+                .place = destination, .target = LandingPathIn(destination, item.path), .label = destination});
+        }
+    }
+
+    for (const Library& library : profile.libraries)
+    {
+        if (ComparablePath(QuarantineFolderInside(library.path)) != folder)
+        {
+            continue;
+        }
+
+        const TreeNode tree = catalog_.Scan(library.path);
+
+        for (const TreeNode* category : CategoriesOfferedIn(tree, true))
+        {
+            places.push_back(RestorePlace{.place = category->path,
+                                          .target = LandingPathIn(category->path, item.path),
+                                          .label = category->path.lexically_relative(library.path)});
+        }
+    }
+
+    return places;
+}
+
+FileResult ImportService::RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
+{
     const bool moved = files_.Move(item.path, item.origin);
     const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotRestore;
 
@@ -373,18 +448,16 @@ std::vector<FileOperationResult> ImportService::Restore(const SimulatorProfile& 
         return results;
     }
 
-    const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
-
-    for (const QuarantinedItem& item : items)
+    for (const RestoreCheck& check : CheckRestore(profile, items))
     {
-        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, item.origin, {}))
+        if (!check.CanProceed())
         {
-            results.push_back(FileOperationResult{
-                .path = item.path, .result = FileResult::TheIdentityIsTaken, .occupant = occupant->path});
+            results.push_back(
+                FileOperationResult{.path = check.item.path, .result = check.result, .occupant = check.occupant});
             continue;
         }
 
-        results.push_back(FileOperationResult{.path = item.path, .result = RestoreOne(profile, item)});
+        results.push_back(FileOperationResult{.path = check.item.path, .result = RestoreOne(profile, check.item)});
     }
 
     return results;

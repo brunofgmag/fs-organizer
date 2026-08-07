@@ -19,6 +19,35 @@ namespace
     {
         return node.kind == TreeNodeKind::Addon ? node.path.parent_path() : node.path;
     }
+
+    bool WasAgreedTo(const std::vector<TakenPlace>& agreed, const TakenPlace& swap)
+    {
+        return std::ranges::any_of(agreed,
+                                   [&swap](const TakenPlace& candidate)
+                                   {
+                                       return ComparablePath(candidate.addonFolder) == ComparablePath(swap.addonFolder)
+                                           && ComparablePath(candidate.occupant) == ComparablePath(swap.occupant);
+                                   });
+    }
+
+    std::vector<const TreeNode*> AddonsToEnable(const std::vector<const TreeNode*>& nodes,
+                                                const std::set<std::string>& heldBack)
+    {
+        std::vector<const TreeNode*> wanted;
+
+        for (const TreeNode* node : nodes)
+        {
+            for (const TreeNode* addon : AddonsUnder(*node))
+            {
+                if (!heldBack.contains(ComparablePath(addon->path)))
+                {
+                    wanted.push_back(addon);
+                }
+            }
+        }
+
+        return wanted;
+    }
 }
 
 AddonTreeViewModel::AddonTreeViewModel(Session& session,
@@ -115,7 +144,71 @@ std::size_t AddonTreeViewModel::AddonsThatWouldChange(const std::vector<const Tr
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes, const bool enable)
 {
-    ApplyResults(service_.SetEnabled(session_.Profile(), session_.Snapshot(), nodes, enable));
+    Toggle(nodes, enable, {});
+}
+
+std::vector<TakenPlace> AddonTreeViewModel::SwapsNeededTo(const std::vector<const TreeNode*>& nodes) const
+{
+    const std::vector<TreeNode>& libraries = session_.Snapshot().libraries;
+
+    std::vector<TakenPlace> swaps;
+
+    for (const TakenPlace& taken : service_.PlacesTaken(session_.Profile(), nodes))
+    {
+        if (AddonAt(libraries, taken.occupant) != nullptr)
+        {
+            swaps.push_back(taken);
+        }
+    }
+
+    return swaps;
+}
+
+QString AddonTreeViewModel::VersionOf(const std::filesystem::path& addonFolder) const
+{
+    const TreeNode* addon = AddonAt(session_.Snapshot().libraries, addonFolder);
+
+    if (addon == nullptr || !addon->addon.has_value())
+    {
+        return {};
+    }
+
+    return QString::fromStdString(addon->addon->manifest.packageVersion);
+}
+
+void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
+                                const bool enable,
+                                const std::vector<TakenPlace>& agreedSwaps)
+{
+    if (!enable)
+    {
+        ApplyResults(service_.SetEnabled(session_.Profile(), session_.Snapshot(), nodes, false));
+        return;
+    }
+
+    const std::vector<TakenPlace> needed = SwapsNeededTo(nodes);
+    const std::vector<TreeNode>& libraries = session_.Snapshot().libraries;
+
+    std::vector<const TreeNode*> occupants;
+    std::set<std::string> heldBack;
+
+    for (const TakenPlace& swap : needed)
+    {
+        if (WasAgreedTo(agreedSwaps, swap))
+        {
+            occupants.push_back(AddonAt(libraries, swap.occupant));
+            continue;
+        }
+
+        heldBack.insert(ComparablePath(swap.addonFolder));
+    }
+
+    const LinkBatch batch{.toDisable = occupants, .toEnable = AddonsToEnable(nodes, heldBack)};
+
+    LinkBatchReport report = service_.SetEnabled(session_.Profile(), session_.Snapshot(), batch);
+    report.leftAlone = heldBack.size();
+
+    ApplyResults(report);
 }
 
 void AddonTreeViewModel::UndoLastBatch()

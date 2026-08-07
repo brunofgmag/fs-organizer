@@ -251,14 +251,22 @@ void QuarantinePage::RestoreSelected()
         return;
     }
 
-    RestoreDialog dialog(items, this);
+    RestoreDialog dialog(viewModel_.WhatRestoringWouldDo(items), this);
 
     if (dialog.exec() != QDialog::Accepted)
     {
         return;
     }
 
-    viewModel_.Restore(dialog.Restorable());
+    const std::vector<QuarantinedItem> going = dialog.Restorable();
+
+    if (going.empty())
+    {
+        emit StatusChanged(tr("Nothing was restored."));
+        return;
+    }
+
+    viewModel_.Restore(going);
 }
 
 void QuarantinePage::DiscardSelected()

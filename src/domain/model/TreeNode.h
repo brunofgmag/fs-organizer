@@ -17,9 +17,9 @@ enum class TreeNodeKind : int
 struct TreeNode
 {
     TreeNodeKind kind = TreeNodeKind::Category;
-    std::filesystem::path path;
-    std::optional<Addon> addon;
-    std::vector<TreeNode> children;
+    std::filesystem::path path{};
+    std::optional<Addon> addon{};
+    std::vector<TreeNode> children{};
     bool declaredAsCategory = false;
 };
 

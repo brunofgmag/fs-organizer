@@ -22,6 +22,21 @@ namespace
 
         return roots;
     }
+
+    std::map<std::string, const DestinationEntry*> LinksHeldByPath(const std::vector<DestinationEntry>& entries)
+    {
+        std::map<std::string, const DestinationEntry*> held;
+
+        for (const DestinationEntry& entry : entries)
+        {
+            if (CountsAsEnabled(entry.classification))
+            {
+                held.emplace(ComparablePath(entry.path), &entry);
+            }
+        }
+
+        return held;
+    }
 }
 
 ProfileService::ProfileService(const CatalogScanner& catalog,
@@ -106,6 +121,38 @@ std::size_t ProfileService::AddonsThatDrifted(const std::vector<const TreeNode*>
     }
 
     return drifted.size();
+}
+
+std::vector<TakenPlace> ProfileService::PlacesTaken(const SimulatorProfile& profile,
+                                                    const std::vector<const TreeNode*>& nodes) const
+{
+    const LinksOnDisk onDisk = ReadLinksNow(profile);
+    const std::map<std::string, const DestinationEntry*> held = LinksHeldByPath(onDisk.entries);
+
+    std::vector<TakenPlace> taken;
+    std::set<std::string> asked;
+
+    for (const TreeNode* node : nodes)
+    {
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            if (onDisk.enabled.Contains(addon->path) || !asked.insert(ComparablePath(addon->path)).second)
+            {
+                continue;
+            }
+
+            const std::filesystem::path place = PlannedLinkPath(profile, addon->path);
+            const auto occupied = held.find(ComparablePath(place));
+
+            if (occupied != held.end())
+            {
+                taken.push_back(
+                    TakenPlace{.addonFolder = addon->path, .linkPath = place, .occupant = occupied->second->target});
+            }
+        }
+    }
+
+    return taken;
 }
 
 std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfile& profile,

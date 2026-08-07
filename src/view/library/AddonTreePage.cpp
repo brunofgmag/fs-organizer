@@ -30,6 +30,7 @@
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/library/SuggestionDialog.h"
+#include "view/library/SwapDialog.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/DependencySection.h"
 #include "view/panels/EmptyState.h"
@@ -543,7 +544,7 @@ void AddonTreePage::ToggleSelection(const bool enable)
 
     if (TheUserMeantIt(nodes, enable))
     {
-        viewModel_.Toggle(nodes, enable);
+        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable));
     }
 }
 
@@ -554,8 +555,27 @@ void AddonTreePage::OnToggleRequested(const TreeNode* node)
 
     if (TheUserMeantIt(nodes, enable))
     {
-        viewModel_.Toggle(nodes, enable);
+        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable));
     }
+}
+
+std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,
+                                                            const bool enable)
+{
+    if (!enable)
+    {
+        return {};
+    }
+
+    const std::vector<TakenPlace> swaps = viewModel_.SwapsNeededTo(nodes);
+    if (swaps.empty())
+    {
+        return {};
+    }
+
+    SwapDialog dialog(swaps, viewModel_, this);
+
+    return dialog.exec() == QDialog::Accepted ? swaps : std::vector<TakenPlace>{};
 }
 
 bool AddonTreePage::TheUserMeantIt(const std::vector<const TreeNode*>& nodes, const bool enable)
@@ -580,15 +600,21 @@ void AddonTreePage::RefreshUndoState() const
     undo_->setEnabled(viewModel_.CanUndo());
 }
 
-QString AddonTreePage::NothingChangedBecause(const std::size_t drifted) const
+QString AddonTreePage::NothingChangedBecause(const LinkBatchReport& report) const
 {
-    if (drifted == 0)
+    if (report.leftAlone > 0)
+    {
+        return tr("Nothing was applied: %n addon was left as it is, because the place it goes is taken.", nullptr,
+                  static_cast<int>(report.leftAlone));
+    }
+
+    if (report.drifted == 0)
     {
         return tr("Nothing to do: the selection was already the way you asked.");
     }
 
     return tr("Nothing was applied: %n addon was not the way the screen showed it. The list is up to date now.",
-              nullptr, static_cast<int>(drifted));
+              nullptr, static_cast<int>(report.drifted));
 }
 
 void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
@@ -606,7 +632,15 @@ void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
 
     if (report.results.empty())
     {
-        emit StatusChanged(NothingChangedBecause(report.drifted));
+        emit StatusChanged(NothingChangedBecause(report));
+        return;
+    }
+
+    if (failed.empty() && report.leftAlone > 0)
+    {
+        emit StatusChanged(tr("%1 · %2").arg(tr("%n operation finished", nullptr, done),
+                                             tr("%n addon left as it is, because the place it goes is taken", nullptr,
+                                                static_cast<int>(report.leftAlone))));
         return;
     }
 

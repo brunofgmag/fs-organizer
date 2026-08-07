@@ -122,6 +122,24 @@ const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::st
     return nullptr;
 }
 
+const TreeNode* AddonAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& folder)
+{
+    const std::string wanted = ComparablePath(folder);
+
+    for (const TreeNode& library : libraries)
+    {
+        for (const TreeNode* addon : AddonsUnder(library))
+        {
+            if (ComparablePath(addon->path) == wanted)
+            {
+                return addon;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 const TreeNode* AddonHoldingTheIdentity(const std::vector<TreeNode>& libraries,
                                         const std::filesystem::path& wanted,
                                         const std::filesystem::path& ignoring)

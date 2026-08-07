@@ -78,9 +78,11 @@ private:
 
     [[nodiscard]] bool TheUserMeantIt(const std::vector<const TreeNode*>& nodes, bool enable);
 
+    [[nodiscard]] std::vector<TakenPlace> SwapsTheUserAgreedTo(const std::vector<const TreeNode*>& nodes, bool enable);
+
     void OnBatchFinished(const LinkBatchReport& report);
 
-    [[nodiscard]] QString NothingChangedBecause(std::size_t drifted) const;
+    [[nodiscard]] QString NothingChangedBecause(const LinkBatchReport& report) const;
 
     void OnShown();
 

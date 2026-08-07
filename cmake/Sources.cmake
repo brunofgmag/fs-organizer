@@ -113,6 +113,7 @@ set(VIEW_SOURCES
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/shell/StartupOffers.cpp
         src/view/library/SuggestionDialog.cpp
+        src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp

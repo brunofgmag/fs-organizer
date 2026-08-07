@@ -9,6 +9,7 @@
 #include "application/model/FileOperationResult.h"
 #include "application/model/ImportOperationResult.h"
 #include "application/model/QuarantinedItem.h"
+#include "application/model/RestorePlan.h"
 #include "application/model/StagingLeftover.h"
 #include "application/ports/ProcessProbe.h"
 #include "domain/importing/ImportEngine.h"
@@ -55,6 +56,12 @@ public:
     [[nodiscard]] std::vector<QuarantineDetail> Describe(const std::vector<DestinationEntry>& entries,
                                                          const std::vector<QuarantinedItem>& items) const;
 
+    [[nodiscard]] std::vector<RestoreCheck> CheckRestore(const SimulatorProfile& profile,
+                                                         const std::vector<QuarantinedItem>& items) const;
+
+    [[nodiscard]] std::vector<RestorePlace> PlacesFor(const SimulatorProfile& profile,
+                                                      const QuarantinedItem& item) const;
+
     [[nodiscard]] std::vector<FileOperationResult> Restore(const SimulatorProfile& profile,
                                                            const std::vector<QuarantinedItem>& items) const;
 
@@ -76,6 +83,8 @@ private:
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
 
     [[nodiscard]] std::string VersionIn(const std::filesystem::path& folder) const;
+
+    [[nodiscard]] RestoreCheck CheckOne(const std::vector<TreeNode>& libraries, const QuarantinedItem& item) const;
 
     [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
 

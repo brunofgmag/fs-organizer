@@ -47,7 +47,9 @@
 #include "view/JournalPage.h"
 #include "view/PresetsPage.h"
 #include "view/community/CommunityPage.h"
+#include "domain/tree/AddonTree.h"
 #include "view/library/AddonTreePage.h"
+#include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
 #include "view/quarantine/QuarantinePage.h"
@@ -241,6 +243,28 @@ namespace
         }
 
         return nullptr;
+    }
+
+    std::optional<TakenPlace> APlaceWorthShowingAsTaken(const ProfileSnapshot& snapshot)
+    {
+        std::vector<const TreeNode*> addons;
+
+        for (const TreeNode& library : snapshot.libraries)
+        {
+            for (const TreeNode* addon : AddonsUnder(library))
+            {
+                addons.push_back(addon);
+            }
+        }
+
+        if (addons.size() < 2)
+        {
+            return std::nullopt;
+        }
+
+        return TakenPlace{.addonFolder = addons[1]->path,
+                          .linkPath = addons[0]->path.parent_path() / addons[0]->path.filename(),
+                          .occupant = addons[0]->path};
     }
 
     QSize SizeFrom(const QString& text)
@@ -520,6 +544,42 @@ int main(int argc, char* argv[])
               quarantineViewModel.Show();
               selectIfAsked(*quarantinePage, QStringLiteral("the Quarantine"));
           });
+
+    if (SelectTheFirstRows(*quarantinePage, 4))
+    {
+        if (QPushButton* restore = ButtonLabelled(*quarantinePage, QObject::tr("Restore the selected ones"));
+            restore != nullptr)
+        {
+            landed = SaveTheDialogOpenedBy(
+                         [restore]
+                         {
+                             restore->click();
+                         },
+                         folder, QStringLiteral("16-quarantine-restore"))
+                && landed;
+        }
+    }
+    else
+    {
+        Out() << "nothing in the quarantine, so there is no restore dialog to write\n";
+    }
+
+    if (const std::optional<TakenPlace> pretend = APlaceWorthShowingAsTaken(session.Snapshot()); pretend.has_value())
+    {
+        SwapDialog swapDialog({*pretend}, treeViewModel, &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&swapDialog]
+                     {
+                         static_cast<void>(swapDialog.exec());
+                     },
+                     folder, QStringLiteral("17-library-swap"))
+            && landed;
+    }
+    else
+    {
+        Out() << "fewer than two addons in the libraries, so there is no swap to picture\n";
+    }
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
     const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),

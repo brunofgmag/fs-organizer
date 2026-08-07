@@ -29,6 +29,8 @@ public:
 
     void Show();
 
+    [[nodiscard]] std::vector<RestoreOffer> WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const;
+
     void Restore(const std::vector<QuarantinedItem>& items);
 
     void Discard(const std::vector<QuarantinedItem>& items);

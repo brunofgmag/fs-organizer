@@ -7,7 +7,7 @@
 
 struct Addon
 {
-    std::filesystem::path folderPath;
+    std::filesystem::path folderPath{};
     Manifest manifest{};
 };
 
