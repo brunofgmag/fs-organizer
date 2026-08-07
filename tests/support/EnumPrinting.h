@@ -131,6 +131,7 @@ namespace QTest
         case FileResult::CouldNotRemoveTheCategory: return qstrdup("CouldNotRemoveTheCategory");
         case FileResult::TheOutcomeIsUnknown: return qstrdup("TheOutcomeIsUnknown");
         case FileResult::CouldNotReadTheSource: return qstrdup("CouldNotReadTheSource");
+        case FileResult::TheOriginIsOccupied: return qstrdup("TheOriginIsOccupied");
         }
 
         return qstrdup("FileResult(?)");

@@ -68,7 +68,9 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotCreateLink:
         return QObject::tr("the files are already in the library, but the link could not be created");
     case FileResult::TheOriginIsUnknown: return QObject::tr("the journal does not know where this came from");
-    case FileResult::CouldNotRestore: return QObject::tr("there is already something in the source place");
+    case FileResult::CouldNotRestore: return QObject::tr("the folder could not be moved back");
+    case FileResult::TheOriginIsOccupied:
+        return QObject::tr("something with that name is already in the place this came from");
     case FileResult::CouldNotDiscard: return QObject::tr("it could not be discarded");
     case FileResult::CouldNotRemoveTheLink:
         return QObject::tr("one of the links pointing at the library copy could not be removed");

@@ -40,6 +40,9 @@ namespace
         static void AStagingLeftoverPastTheOldCeilingIsFoundAndTheDiscardEmptiesTheQueue();
         static void AStagingLeftoverPastTheOldCeilingResumesIntoAFinishedImport();
         static void TheQuarantineDetailReadsTheVersionOutOfARealManifestOnBothSides();
+        static void TheRestoreGuardTellsATakenIdentityFromAnOccupiedOriginOnRealDisk();
+        static void AnItemWithNoOriginIsOfferedTheRealCategoriesOfTheLibraryHoldingIt();
+        static void RestoringIntoTheChosenCategoryReallyMovesTheFolderThere();
     };
 }
 
@@ -94,12 +97,12 @@ namespace
 
     struct Engine
     {
-        WindowsLinkService linkService;
-        WindowsFilesystemProbe filesystemProbe;
-        WindowsFileOperations files;
+        WindowsLinkService linkService{};
+        WindowsFilesystemProbe filesystemProbe{};
+        WindowsFileOperations files{};
         LinkingEngine linking{linkService, filesystemProbe};
-        SystemClock clock;
-        std::filesystem::path journalFile;
+        SystemClock clock{};
+        std::filesystem::path journalFile{};
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
@@ -107,9 +110,9 @@ namespace
 
     struct Service
     {
-        Engine engine;
+        Engine engine{};
         WindowsProcessProbe processProbe{std::vector<std::string>{}};
-        JsonManifestParser manifestParser;
+        JsonManifestParser manifestParser{};
         FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
         ImportService service{engine.engine,  processProbe, engine.filesystemProbe, catalog, engine.files,
                               engine.linking, engine.log,   LinkType::Junction};
@@ -428,6 +431,97 @@ void ImportOnRealDiskTest::TheQuarantineDetailReadsTheVersionOutOfARealManifestO
     QVERIFY(details.front().WasReplaced());
     QCOMPARE(details.front().replacedBy, disk.Destination() / "simbridge");
     QCOMPARE(details.front().replacementVersion, std::string{"0.7.0"});
+}
+
+void ImportOnRealDiskTest::TheRestoreGuardTellsATakenIdentityFromAnOccupiedOriginOnRealDisk()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+
+    const std::filesystem::path held = disk.Root() / "Library" / "_fsorganizer-quarantine" / "simbridge";
+    const std::vector<QuarantinedItem> items{QuarantinedItem{.path = held, .origin = disk.Category() / "simbridge"}};
+
+    const std::vector<RestoreCheck> occupied = composed.service.CheckRestore(disk.Profile(), items);
+
+    QCOMPARE(occupied.size(), std::size_t{1});
+    QCOMPARE(occupied.front().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(occupied.front().occupant, disk.Category() / "simbridge");
+    QCOMPARE(occupied.front().version, std::string{"0.6.3"});
+    QCOMPARE(occupied.front().occupantVersion, std::string{"0.7.0"});
+
+    static_cast<void>(disk.AddFolder("Library/Sceneries/simbridge"));
+    const std::vector<QuarantinedItem> intoSceneries{
+        QuarantinedItem{.path = held, .origin = disk.Root() / "Library" / "Sceneries" / "simbridge"}};
+
+    const std::vector<RestoreCheck> taken = composed.service.CheckRestore(disk.Profile(), intoSceneries);
+
+    QCOMPARE(taken.front().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(taken.front().occupant, disk.Category() / "simbridge");
+
+    QVERIFY(std::filesystem::remove_all(disk.Category() / "simbridge") > 0);
+
+    const std::vector<RestoreCheck> onlyTheFolder = composed.service.CheckRestore(disk.Profile(), intoSceneries);
+
+    QCOMPARE(onlyTheFolder.front().result, FileResult::TheOriginIsOccupied);
+    QCOMPARE(onlyTheFolder.front().occupant, disk.Root() / "Library" / "Sceneries" / "simbridge");
+    QVERIFY(onlyTheFolder.front().occupantVersion.empty());
+    QCOMPARE(onlyTheFolder.front().version, std::string{"0.6.3"});
+}
+
+void ImportOnRealDiskTest::AnItemWithNoOriginIsOfferedTheRealCategoriesOfTheLibraryHoldingIt()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json", R"({"title": "SimBridge"})");
+    disk.AddFile("Library/Utils/pmdg-aircraft-77w/manifest.json", R"({"title": "77W"})");
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+
+    const std::filesystem::path held = disk.Root() / "Library" / "_fsorganizer-quarantine" / "simbridge";
+
+    const std::vector<QuarantinedItem> items{QuarantinedItem{.path = held}};
+    QCOMPARE(composed.service.CheckRestore(disk.Profile(), items).front().result, FileResult::TheOriginIsUnknown);
+
+    const std::vector<RestorePlace> places = composed.service.PlacesFor(disk.Profile(), items.front());
+
+    QCOMPARE(places.size(), std::size_t{2});
+    QCOMPARE(places.front().place, disk.Root() / "Library");
+    QCOMPARE(places.back().place, disk.Category());
+    QCOMPARE(places.back().target, disk.Category() / "simbridge");
+    QCOMPARE(places.back().label, std::filesystem::path{"Utils"});
+}
+
+void ImportOnRealDiskTest::RestoringIntoTheChosenCategoryReallyMovesTheFolderThere()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json", R"({"title": "SimBridge"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/dist/simbridge.exe", std::string(2048, 'x'));
+    disk.AddFile("Library/Utils/pmdg-aircraft-77w/manifest.json", R"({"title": "77W"})");
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+
+    const std::filesystem::path held = disk.Root() / "Library" / "_fsorganizer-quarantine" / "simbridge";
+    const std::vector<RestorePlace> places = composed.service.PlacesFor(disk.Profile(), QuarantinedItem{.path = held});
+
+    const auto chosen = std::ranges::find_if(places,
+                                             [&disk](const RestorePlace& place)
+                                             {
+                                                 return place.place == disk.Category();
+                                             });
+    QVERIFY(chosen != places.end());
+
+    const std::vector<FileOperationResult> restored =
+        composed.service.Restore(disk.Profile(), {QuarantinedItem{.path = held, .origin = chosen->target}});
+
+    QCOMPARE(restored.size(), std::size_t{1});
+    QCOMPARE(restored.front().result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(disk.Category() / "simbridge" / "dist" / "simbridge.exe"));
+    QVERIFY(!std::filesystem::exists(held));
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)

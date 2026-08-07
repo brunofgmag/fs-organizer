@@ -100,6 +100,7 @@ namespace
         case FileResult::CouldNotRemoveTheCategory: return "couldNotRemoveTheCategory";
         case FileResult::TheOutcomeIsUnknown: return "theOutcomeIsUnknown";
         case FileResult::CouldNotReadTheSource: return "couldNotReadTheSource";
+        case FileResult::TheOriginIsOccupied: return "theOriginIsOccupied";
         }
 
         return "unknown";

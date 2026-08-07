@@ -91,6 +91,24 @@ void QuarantineViewModel::Weigh(const std::vector<QuarantinedItem>& items)
                           });
 }
 
+std::vector<RestoreOffer> QuarantineViewModel::WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const
+{
+    std::vector<RestoreCheck> checks = service_.CheckRestore(session_.Profile(), items);
+
+    std::vector<RestoreOffer> offers;
+    offers.reserve(checks.size());
+
+    for (RestoreCheck& check : checks)
+    {
+        std::vector<RestorePlace> places =
+            check.NeedsAPlace() ? service_.PlacesFor(session_.Profile(), check.item) : std::vector<RestorePlace>{};
+
+        offers.push_back(RestoreOffer{.check = std::move(check), .places = std::move(places)});
+    }
+
+    return offers;
+}
+
 void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
 {
     const std::vector<FileOperationResult> results = service_.Restore(session_.Profile(), items);
