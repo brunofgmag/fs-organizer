@@ -28,7 +28,7 @@ namespace
 
     std::string WithForwardSlashes(const std::filesystem::path& path)
     {
-        std::string text = path.string();
+        std::string text = AsUtf8(path);
         std::ranges::replace(text, '\\', '/');
 
         return text;
@@ -94,7 +94,7 @@ namespace
         return std::ranges::all_of(relative,
                                    [](const std::filesystem::path& part)
                                    {
-                                       return PathSegment::From(part.string()).has_value();
+                                       return PathSegment::From(AsUtf8(part)).has_value();
                                    });
     }
 

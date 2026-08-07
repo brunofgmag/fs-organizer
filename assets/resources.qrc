@@ -8,6 +8,9 @@
         <file alias="app-icon_128.png">branding/icon_128.png</file>
         <file alias="app-icon_256.png">branding/icon_256.png</file>
     </qresource>
+    <qresource prefix="/scripts">
+        <file alias="apply.ps1">scripts/apply.ps1</file>
+    </qresource>
     <qresource prefix="/fonts">
         <file alias="Archivo-Regular.ttf">fonts/Archivo-Regular.ttf</file>
         <file alias="Archivo-SemiBold.ttf">fonts/Archivo-SemiBold.ttf</file>

@@ -25,6 +25,23 @@ public:
         nodes_[Key(path)] = Node{.kind = NodeKind::File, .target = {}, .readable = true, .size = size};
     }
 
+    void AddFileWithContents(const std::filesystem::path& path, std::string contents)
+    {
+        nodes_[Key(path)] = Node{.kind = NodeKind::File,
+                                 .target = {},
+                                 .readable = true,
+                                 .size = contents.size(),
+                                 .contents = std::move(contents)};
+    }
+
+    [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const
+    {
+        const auto node = nodes_.find(Key(path));
+
+        return node == nodes_.end() || node->second.kind != NodeKind::File ? std::nullopt
+                                                                           : std::optional(node->second.contents);
+    }
+
     void AddLink(const std::filesystem::path& path, const std::filesystem::path& target)
     {
         nodes_[Key(path)] = Node{.kind = NodeKind::Link, .target = target, .readable = true};
@@ -37,12 +54,12 @@ public:
 
     void MarkVolumeUnavailable(const std::filesystem::path& path)
     {
-        unavailableVolumes_.insert(path.root_name().generic_string());
+        unavailableVolumes_.insert(VolumeOf(path));
     }
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const
     {
-        return !unavailableVolumes_.contains(path.root_name().generic_string());
+        return !unavailableVolumes_.contains(VolumeOf(path));
     }
 
     void MarkReadOnly(const std::filesystem::path& path)
@@ -57,17 +74,17 @@ public:
 
     void SetFreeSpace(const std::filesystem::path& path, const std::uintmax_t bytes)
     {
-        freeSpace_[path.root_name().generic_string()] = bytes;
+        freeSpace_[VolumeOf(path)] = bytes;
     }
 
     void MarkFreeSpaceUnknown(const std::filesystem::path& path)
     {
-        unmeasurableVolumes_.insert(path.root_name().generic_string());
+        unmeasurableVolumes_.insert(VolumeOf(path));
     }
 
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const
     {
-        const std::string volume = path.root_name().generic_string();
+        const std::string volume = VolumeOf(path);
         if (unmeasurableVolumes_.contains(volume))
         {
             return std::nullopt;
@@ -260,7 +277,17 @@ private:
         std::filesystem::path target{};
         bool readable = true;
         std::uintmax_t size = 0;
+        std::string contents{};
     };
+
+    [[nodiscard]] static std::string VolumeOf(const std::filesystem::path& path)
+    {
+        const std::string text = path.generic_string();
+        const std::size_t slash = text.find('/');
+        const std::string head = slash == std::string::npos ? text : text.substr(0, slash);
+
+        return head.ends_with(':') ? head : std::string{};
+    }
 
     [[nodiscard]] static std::string Key(const std::filesystem::path& path)
     {

@@ -16,8 +16,12 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QAbstractItemView>
+#include <QtWidgets/QTableView>
+#include <QtWidgets/QTreeView>
 
 #include "application/ImportService.h"
+#include "application/SizeService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
@@ -33,7 +37,10 @@
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
+#include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
+#include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "infrastructure/update/GithubUpdateService.h"
 #include "shared/DisposableState.h"
 #include "support/PathText.h"
@@ -42,6 +49,7 @@
 #include "view/community/CommunityPage.h"
 #include "view/library/AddonTreePage.h"
 #include "view/options/OptionsPage.h"
+#include "view/diagnostics/DiagnosticsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
@@ -54,6 +62,7 @@
 #include "viewmodel/JournalViewModel.h"
 #include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/PresetViewModel.h"
+#include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 #include "viewmodel/UpdateViewModel.h"
@@ -82,6 +91,74 @@ namespace
         {
             QCoreApplication::processEvents();
         }
+    }
+
+    QAbstractItemView* TheViewThatCarriesTheRows(const QWidget& page)
+    {
+        if (auto* tree = page.findChild<QTreeView*>(); tree != nullptr)
+        {
+            tree->expandAll();
+
+            return tree;
+        }
+
+        return page.findChild<QTableView*>();
+    }
+
+    bool SelectTheAddonNamed(const QWidget& page, const QString& folderName)
+    {
+        QAbstractItemView* view = TheViewThatCarriesTheRows(page);
+        if (view == nullptr || view->model() == nullptr)
+        {
+            return false;
+        }
+
+        const QModelIndexList found = view->model()->match(view->model()->index(0, 0, {}), Qt::DisplayRole, folderName,
+                                                           1, Qt::MatchExactly | Qt::MatchRecursive);
+        if (found.isEmpty())
+        {
+            return false;
+        }
+
+        view->setCurrentIndex(found.front());
+        view->selectionModel()->select(found.front(), QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        view->scrollTo(found.front());
+
+        return true;
+    }
+
+    bool SelectTheFirstRows(const QWidget& page, const int many)
+    {
+        QAbstractItemView* view = TheViewThatCarriesTheRows(page);
+        if (view == nullptr || view->model() == nullptr)
+        {
+            return false;
+        }
+
+        QItemSelection chosen;
+        QModelIndex last;
+
+        for (int row = 0; row < many; ++row)
+        {
+            const QModelIndex position = view->model()->index(row, 0, {});
+            if (!position.isValid())
+            {
+                break;
+            }
+
+            chosen.select(position, position);
+            last = position;
+        }
+
+        if (!last.isValid())
+        {
+            return false;
+        }
+
+        view->setCurrentIndex(last);
+        view->selectionModel()->select(chosen, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+
+        return true;
     }
 
     bool Save(QWidget& window, const QDir& folder, const QString& name)
@@ -195,10 +272,21 @@ int main(int argc, char* argv[])
     const QCommandLineOption theme({"t", "theme"}, "dark, light or system.", "palette", "system");
     const QCommandLineOption size({"s", "size"}, "Window size, WIDTHxHEIGHT.", "size", "1140x760");
     const QCommandLineOption language({"l", "lang"}, "en or pt_BR.", "language", "en");
+    const QCommandLineOption select({"S", "select"},
+                                    "Folder name of an addon to select before the Library, Destinations, Journal "
+                                    "and Quarantine shots, so "
+                                    "the context panel is in the picture.",
+                                    "addon folder", "");
+    const QCommandLineOption batch({"b", "batch"},
+                                   "How many top rows to select before the Library, Destinations and Quarantine "
+                                   "shots, so the batch panel is in the picture. Wins over --select.",
+                                   "rows", "0");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
     parser.addOption(language);
+    parser.addOption(select);
+    parser.addOption(batch);
     parser.process(app);
 
     if (const QString wanted = parser.value(theme); wanted != QLatin1String("system"))
@@ -304,18 +392,23 @@ int main(int argc, char* argv[])
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, processProbe, runner, notifier);
 
+    SizeService sizes(catalog, filesystemProbe, clock, runner);
+
     AddonTreeModel treeModel;
-    AddonTreeViewModel treeViewModel(session, profileService, treeModel, notifier);
+    ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+    packages.Reload(session.Profile().variant);
+    AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
     auto* libraryPage = new AddonTreePage(treeViewModel, treeModel, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;
-    QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel);
+    QuarantineViewModel quarantineViewModel(importService, profileService, session, notifier, quarantineModel, sizes,
+                                            runner);
     auto* quarantinePage = new QuarantinePage(quarantineViewModel, quarantineModel);
 
     JournalModel journalModel;
@@ -326,6 +419,9 @@ int main(int argc, char* argv[])
     PresetService presetService(presetRepository, profileService);
     PresetViewModel presetViewModel(session, presetService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
+
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
+    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
@@ -339,6 +435,7 @@ int main(int argc, char* argv[])
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
     PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
+    PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -378,32 +475,79 @@ int main(int argc, char* argv[])
         landed = Save(shell, folder, name) && landed;
     };
 
-    shoot(libraryTab, QStringLiteral("01-library"), {});
+    const QString wantedAddon = parser.value(select);
+    const int wantedRows = parser.value(batch).toInt();
+
+    const auto selectIfAsked = [&wantedAddon, wantedRows](const QWidget& page, const QString& where)
+    {
+        if (wantedRows > 0)
+        {
+            if (!SelectTheFirstRows(page, wantedRows))
+            {
+                Out() << "no row at all in " << where << ", so the panel stays closed\n";
+            }
+
+            return;
+        }
+
+        if (!wantedAddon.isEmpty() && !SelectTheAddonNamed(page, wantedAddon))
+        {
+            Out() << "no row named " << wantedAddon << " in " << where << ", so the panel stays closed\n";
+        }
+    };
+
+    shoot(libraryTab, QStringLiteral("01-library"),
+          [libraryPage, &selectIfAsked]
+          {
+              selectIfAsked(*libraryPage, QStringLiteral("the library tree"));
+          });
     shoot(communityTab, QStringLiteral("02-community"),
-          [&communityViewModel]
+          [&communityViewModel, communityPage, &selectIfAsked]
           {
               communityViewModel.Show();
+              selectIfAsked(*communityPage, QStringLiteral("Destinations"));
           });
     shoot(presetsTab, QStringLiteral("03-presets"), {});
     shoot(journalTab, QStringLiteral("04-journal"),
-          [&journalViewModel]
+          [&journalViewModel, journalPage, &selectIfAsked]
           {
               journalViewModel.Show();
+              selectIfAsked(*journalPage, QStringLiteral("the Journal"));
           });
     shoot(quarantineTab, QStringLiteral("05-quarantine"),
-          [&quarantineViewModel]
+          [&quarantineViewModel, quarantinePage, &selectIfAsked]
           {
               quarantineViewModel.Show();
+              selectIfAsked(*quarantinePage, QStringLiteral("the Quarantine"));
           });
+
+    auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
+    const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),
+                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size")};
+
+    diagnosticsTab->click();
+    diagnosticsViewModel.Show();
+
+    for (int section = 0; section < diagnostics.size(); ++section)
+    {
+        if (!ClickingReaches(*sections, section))
+        {
+            Out() << "the section " << diagnostics[section] << " does not select on click, so no user reaches it\n";
+            continue;
+        }
+
+        LetTheLayoutSettle();
+        landed = Save(shell, folder, diagnostics[section]) && landed;
+    }
 
     libraryTab->click();
     shell.ShowOptions();
     optionsPage->Reload();
 
-    auto* navigation = optionsPage->findChild<QListWidget*>(QStringLiteral("OptionsNav"));
-    const QStringList panes{QStringLiteral("06-options-profiles"), QStringLiteral("07-options-links"),
-                            QStringLiteral("08-options-updates"), QStringLiteral("09-options-language"),
-                            QStringLiteral("10-options-about")};
+    auto* navigation = optionsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
+    const QStringList panes{QStringLiteral("10-options-profiles"), QStringLiteral("11-options-links"),
+                            QStringLiteral("12-options-updates"), QStringLiteral("13-options-language"),
+                            QStringLiteral("14-options-about")};
 
     for (int pane = 0; pane < panes.size(); ++pane)
     {
@@ -427,7 +571,7 @@ int main(int argc, char* argv[])
                      {
                          unregister->click();
                      },
-                     folder, QStringLiteral("11-options-unregister"))
+                     folder, QStringLiteral("15-options-unregister"))
             && landed;
     }
     else

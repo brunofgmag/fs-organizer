@@ -68,7 +68,7 @@ namespace
     {
         for (const TreeNode* category : CategoriesUnder(library))
         {
-            if (Folded(category->path.filename().string()) == name)
+            if (Folded(AsUtf8(category->path.filename())) == name)
             {
                 return category;
             }
@@ -84,7 +84,7 @@ namespace
                                       .suggestedCategory = {},
                                       .rule = CategoryRule::None};
 
-        const std::string baseName = Folded(addon.path.filename().string());
+        const std::string baseName = Folded(AsUtf8(addon.path.filename()));
         const std::string contentType =
             addon.addon.has_value() ? Folded(addon.addon->manifest.contentType) : std::string{};
 

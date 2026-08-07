@@ -32,6 +32,8 @@ public:
 
     [[nodiscard]] std::vector<LegacyMigration> Migrations() const;
 
+    [[nodiscard]] bool SomethingIsWaiting() const;
+
     [[nodiscard]] std::size_t PresetsWaitingIn(const std::filesystem::path& presetsPath) const;
 
     [[nodiscard]] LegacyImportReport Import(const LegacyImportRequest& request) const;

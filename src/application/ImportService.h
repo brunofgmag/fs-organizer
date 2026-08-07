@@ -52,6 +52,9 @@ public:
 
     [[nodiscard]] std::vector<QuarantinedItem> Quarantined(const SimulatorProfile& profile) const;
 
+    [[nodiscard]] std::vector<QuarantineDetail> Describe(const std::vector<DestinationEntry>& entries,
+                                                         const std::vector<QuarantinedItem>& items) const;
+
     [[nodiscard]] std::vector<FileOperationResult> Restore(const SimulatorProfile& profile,
                                                            const std::vector<QuarantinedItem>& items) const;
 
@@ -71,6 +74,8 @@ public:
 
 private:
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
+
+    [[nodiscard]] std::string VersionIn(const std::filesystem::path& folder) const;
 
     [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
 

@@ -216,7 +216,7 @@ void OptionsPageTest::TheLanguageTabOffersBothAndOpensOnTheStoredOne()
 {
     Fixture f;
 
-    auto* navigation = f.page.findChild<QListWidget*>(QStringLiteral("OptionsNav"));
+    auto* navigation = f.page.findChild<QListWidget*>(QStringLiteral("SectionRail"));
     const auto* panes = f.page.findChild<QStackedWidget*>();
     QVERIFY(navigation != nullptr);
     QVERIFY(panes != nullptr);

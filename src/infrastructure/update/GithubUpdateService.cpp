@@ -18,19 +18,7 @@ namespace
     constexpr auto kZipRootFolder = "fs-organizer";
     constexpr int kTransferTimeoutMs = 30000;
 
-    constexpr auto kApplyScript =
-        R"PS(param([int]$AppPid, [string]$Source, [string]$Dest, [string]$ExeName, [int]$Relaunch)
-$root = Split-Path -Parent $PSCommandPath
-Start-Transcript -Path (Join-Path $root 'apply.log') -Append | Out-Null
-Wait-Process -Id $AppPid -Timeout 60 -ErrorAction SilentlyContinue
-if (-not (Test-Path (Join-Path $Dest $ExeName))) { Stop-Transcript | Out-Null; exit 1 }
-robocopy $Source $Dest /MIR /R:20 /W:1
-if ($LASTEXITCODE -ge 8) { Stop-Transcript | Out-Null; exit 1 }
-if ($Relaunch -eq 1) { Start-Process -FilePath (Join-Path $Dest $ExeName) -WorkingDirectory $Dest }
-Stop-Transcript | Out-Null
-Remove-Item -Recurse -Force (Join-Path $root 'download'), (Join-Path $root 'staged') -ErrorAction SilentlyContinue
-Remove-Item -Force $PSCommandPath -ErrorAction SilentlyContinue
-)PS";
+    constexpr auto kApplyScriptResource = ":/scripts/apply.ps1";
 
     QString HttpError(const QNetworkReply* reply)
     {
@@ -63,13 +51,19 @@ Remove-Item -Force $PSCommandPath -ErrorAction SilentlyContinue
 
     bool WriteTheApplyScript(const QString& scriptPath)
     {
+        QFile source{QLatin1String(kApplyScriptResource)};
+        if (!source.open(QIODevice::ReadOnly))
+        {
+            return false;
+        }
+
         QFile script(scriptPath);
         if (!script.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
             return false;
         }
 
-        script.write(kApplyScript);
+        script.write(source.readAll());
         script.close();
 
         return true;

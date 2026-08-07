@@ -4,8 +4,10 @@
 #include <optional>
 #include <vector>
 
+#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QPair>
+#include <QtCore/QSet>
 #include <QtWidgets/QWidget>
 
 #include "viewmodel/CommunityViewModel.h"
@@ -76,7 +78,18 @@ private:
 
     void ShowTheSelectedEntry();
 
+    struct Tally
+    {
+        QHash<int, int> counted;
+        QSet<QString> destinations;
+        bool alarming = false;
+    };
+
+    [[nodiscard]] Tally TallyOf(const QModelIndexList& rows) const;
+
     void ShowTheSelectedBatch(const QModelIndexList& rows);
+
+    [[nodiscard]] std::vector<DestinationEntry> SelectedEntries(const QModelIndexList& rows) const;
 
     void ShowTheBatchFields(const QString& size) const;
 

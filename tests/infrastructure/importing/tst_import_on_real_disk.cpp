@@ -18,6 +18,7 @@
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
+#include "tests/support/DeepPaths.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
@@ -36,6 +37,9 @@ namespace
         static void RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder();
         static void MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewFolder();
         static void ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused();
+        static void AStagingLeftoverPastTheOldCeilingIsFoundAndTheDiscardEmptiesTheQueue();
+        static void AStagingLeftoverPastTheOldCeilingResumesIntoAFinishedImport();
+        static void TheQuarantineDetailReadsTheVersionOutOfARealManifestOnBothSides();
     };
 }
 
@@ -47,7 +51,7 @@ namespace
 
         [[nodiscard]] std::filesystem::path Root() const
         {
-            return std::filesystem::path(directory.path().toStdWString());
+            return directory.path().toStdWString();
         }
 
         [[nodiscard]] std::filesystem::path Destination() const
@@ -119,6 +123,16 @@ namespace
         }
     };
 
+    [[nodiscard]] SimulatorProfile ProfileWithTheLibraryAt(const Disk& disk, const std::filesystem::path& library)
+    {
+        SimulatorProfile profile;
+        profile.destinations = {disk.Destination()};
+        profile.defaultDestination = disk.Destination();
+        profile.libraries = {Library{.id = "lib-1", .path = library, .label = "Biblioteca"}};
+
+        return profile;
+    }
+
     void PutTwoCopiesOfTheSameAddonOnDisk(const Disk& disk, const std::string& name)
     {
         disk.AddFile("Library/Utils/" + name + "/manifest.json", R"({"title": "MD-11", "package_version": "0.6.3"})");
@@ -135,7 +149,7 @@ void ImportOnRealDiskTest::APhysicalAddonReallyMovesIntoTheLibraryAndLeavesAJunc
     disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge"})");
     disk.AddFile("Sim/Community/simbridge/dist/simbridge.exe", std::string(4096, 'x'));
 
-    Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
 
     const ImportRequest request{.source = disk.Destination() / "simbridge", .category = disk.Category()};
     const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
@@ -167,9 +181,11 @@ void ImportOnRealDiskTest::AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFr
     QVERIFY(filesystemProbe.FreeSpaceOn(disk.Category()).has_value());
     QVERIFY(!filesystemProbe.FreeSpaceOn(disk.Category() / "tlc-bgjn").has_value());
 
-    Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
 
-    QCOMPARE(engine.engine.Import(disk.Profile(), ImportRequest{disk.Destination() / "tlc-bgjn", disk.Category()}, {})
+    QCOMPARE(engine.engine
+                 .Import(disk.Profile(),
+                         ImportRequest{.source = disk.Destination() / "tlc-bgjn", .category = disk.Category()}, {})
                  .Result(),
              FileResult::Completed);
 }
@@ -181,7 +197,7 @@ void ImportOnRealDiskTest::TheSourceSurvivesWhenTheCopyFails()
     disk.AddFile("Sim/Community/fenix-a320/manifest.json", R"({"title": "A320"})");
     disk.AddFile("Library/Utils/fenix-a320.fsorg-partial/manifest.json", "restos de outra tentativa");
 
-    Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
 
     const ImportRequest request{.source = disk.Destination() / "fenix-a320", .category = disk.Category()};
     const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
@@ -210,7 +226,7 @@ void ImportOnRealDiskTest::ALiveJunctionOfAnotherProgramIsNeverReplaced()
         engine.linking.Enable(Addon{.folderPath = library}, disk.Destination(), LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
-    QVERIFY(outcome.Occupation().has_value());
+    QVERIFY(outcome.Occupation() != nullptr);
     QCOMPARE(outcome.Occupation()->existingTarget, foreign);
     QCOMPARE(NormalizeReparseTarget(engine.linkService.ReadLinkTarget(linkPath).value()), foreign);
     QVERIFY(std::filesystem::exists(foreign / "manifest.json"));
@@ -221,7 +237,7 @@ void ImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
     const Disk disk;
     PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
 
-    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
 
     const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
     QVERIFY(!std::filesystem::exists(quarantine));
@@ -247,7 +263,7 @@ void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder
     const Disk disk;
     PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
 
-    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
 
     const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
                                 .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
@@ -277,14 +293,15 @@ void ImportOnRealDiskTest::MovingAnEnabledAddonReallyCarriesItsJunctionToTheNewF
     disk.AddFile("Library/Aircrafts/aerosoft-crj/manifest.json", R"({"title": "CRJ", "content_type": "AIRCRAFT"})");
     disk.AddFile("Library/Aircrafts/aerosoft-crj/SimObjects/plane.cfg", std::string(2048, 'c'));
 
-    Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
     SimulatorProfile profile = disk.Profile();
 
     const std::filesystem::path addon = disk.Root() / "Library" / "Aircrafts" / "aerosoft-crj";
     const std::filesystem::path link = disk.Destination() / "aerosoft-crj";
 
-    QVERIFY(
-        service.engine.linking.Enable(Addon{addon, Manifest{}}, disk.Destination(), LinkType::Junction).Succeeded());
+    QVERIFY(service.engine.linking
+                .Enable(Addon{.folderPath = addon, .manifest = Manifest{}}, disk.Destination(), LinkType::Junction)
+                .Succeeded());
     QVERIFY(service.engine.filesystemProbe.IsReparsePoint(link));
 
     const std::filesystem::path category = disk.Root() / "Library" / "Aircrafts (2024)";
@@ -315,7 +332,7 @@ void ImportOnRealDiskTest::ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRef
     static_cast<void>(disk.AddFolder("Sim/Community"));
     static_cast<void>(disk.AddFolder("Library"));
 
-    Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
     const SimulatorProfile profile = disk.Profile();
     const std::filesystem::path library = disk.Root() / "Library";
 
@@ -328,6 +345,89 @@ void ImportOnRealDiskTest::ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRef
     QCOMPARE(service.organizer.CreateCategory(profile, disk.Destination(), "Sceneries").result,
              FileResult::TheTargetIsNotInALibrary);
     QVERIFY(!std::filesystem::exists(disk.Destination() / "Sceneries"));
+}
+
+void ImportOnRealDiskTest::AStagingLeftoverPastTheOldCeilingIsFoundAndTheDiscardEmptiesTheQueue()
+{
+    const Disk disk;
+    const std::filesystem::path library = FolderPastTheCeiling(disk.Root(), "Library");
+    const std::filesystem::path staging = library / "Utils" / "tfdidesign-aircraft-md11.fsorg-partial";
+    QVERIFY(staging.wstring().size() > kOldPathCeiling);
+
+    WriteFilePastTheCeiling(staging / "manifest.json", R"({"title": "MD-11"})");
+    WriteFilePastTheCeiling(staging / "SimObjects" / "Airplanes" / "md11" / "model.gltf", "vertices");
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const SimulatorProfile profile = ProfileWithTheLibraryAt(disk, library);
+
+    const std::vector<StagingLeftover> leftovers = composed.service.Leftovers(profile);
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().staging, staging);
+
+    const std::vector<FileOperationResult> discarded = composed.service.DiscardLeftovers(profile, leftovers);
+    QCOMPARE(discarded.size(), std::size_t{1});
+    QCOMPARE(discarded.front().result, FileResult::Completed);
+
+    QVERIFY(!ExistsPastTheCeiling(staging));
+    QVERIFY(composed.service.Leftovers(profile).empty());
+}
+
+void ImportOnRealDiskTest::AStagingLeftoverPastTheOldCeilingResumesIntoAFinishedImport()
+{
+    const Disk disk;
+    const std::filesystem::path library = FolderPastTheCeiling(disk.Root(), "Library");
+    const std::filesystem::path category = FolderPastTheCeiling(library, "Utils");
+    disk.AddFile("Sim/Community/tfdidesign-aircraft-md11/manifest.json", R"({"title": "MD-11"})");
+    disk.AddFile("Sim/Community/tfdidesign-aircraft-md11/aircraft.cfg", "the destination copy");
+
+    const std::filesystem::path target = category / "tfdidesign-aircraft-md11";
+    const std::filesystem::path blocker = FolderPastTheCeiling(category, "tfdidesign-aircraft-md11");
+    QCOMPARE(blocker, target);
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const SimulatorProfile profile = ProfileWithTheLibraryAt(disk, library);
+    const ImportRequest request{.source = disk.Destination() / "tfdidesign-aircraft-md11", .category = category};
+
+    QCOMPARE(composed.engine.engine.Import(profile, request, {}).Result(), FileResult::CouldNotMoveIntoPlace);
+
+    const std::vector<StagingLeftover> leftovers = composed.service.Leftovers(profile);
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().staging, StagingPathFor(target));
+    QVERIFY(leftovers.front().CanBeResumed());
+    QCOMPARE(leftovers.front().source, request.source);
+
+    QVERIFY(std::filesystem::remove(BeyondTheCeiling(target)));
+
+    const std::vector<ImportOperationResult> resumed = composed.service.Resume(profile, leftovers, {});
+    QCOMPARE(resumed.size(), std::size_t{1});
+    QCOMPARE(resumed.front().result, FileResult::Completed);
+
+    QVERIFY(ExistsPastTheCeiling(target / "aircraft.cfg"));
+    QVERIFY(!ExistsPastTheCeiling(StagingPathFor(target)));
+    QVERIFY(composed.service.Leftovers(profile).empty());
+    QCOMPARE(NormalizeReparseTarget(composed.engine.linkService.ReadLinkTarget(request.source).value()), target);
+}
+
+void ImportOnRealDiskTest::TheQuarantineDetailReadsTheVersionOutOfARealManifestOnBothSides()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Sim/Community/nothing-declared/marker.txt", "no manifest here");
+
+    const std::vector<QuarantinedItem> held = composed.service.Quarantined(disk.Profile());
+    QCOMPARE(held.size(), std::size_t{1});
+
+    const std::vector<QuarantineDetail> details = composed.service.Describe(composed.Entries(disk), held);
+
+    QCOMPARE(details.size(), std::size_t{1});
+    QCOMPARE(details.front().version, std::string{"0.6.3"});
+    QVERIFY(details.front().WasReplaced());
+    QCOMPARE(details.front().replacedBy, disk.Destination() / "simbridge");
+    QCOMPARE(details.front().replacementVersion, std::string{"0.7.0"});
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)

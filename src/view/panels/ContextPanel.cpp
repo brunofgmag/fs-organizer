@@ -5,6 +5,7 @@
 #include <QtGui/QFont>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QScrollArea>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 
@@ -57,7 +58,22 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
 
     body_ = new QWidget(this);
     body_->setObjectName(QStringLiteral("PanelBody"));
-    content_ = new QVBoxLayout(body_);
+
+    auto* scrolled = new QScrollArea(body_);
+    scrolled->setFrameShape(QFrame::NoFrame);
+    scrolled->setWidgetResizable(true);
+    scrolled->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrolled->viewport()->setAutoFillBackground(false);
+
+    auto* scrollable = new QWidget(scrolled);
+    scrollable->setAutoFillBackground(false);
+    scrolled->setWidget(scrollable);
+
+    auto* bodyLayout = new QVBoxLayout(body_);
+    bodyLayout->setContentsMargins(0, 0, 0, 0);
+    bodyLayout->addWidget(scrolled);
+
+    content_ = new QVBoxLayout(scrollable);
     content_->setContentsMargins(14, 12, 14, 12);
     content_->setSpacing(9);
     content_->addStretch();

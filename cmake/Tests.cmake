@@ -64,10 +64,37 @@ add_test(NAME no-em-dash
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-em-dash.cmake")
 
+add_test(NAME code-page
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-code-page.cmake")
+
 add_test(NAME portable-layer
         COMMAND "${CMAKE_COMMAND}"
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-portable-layer.cmake")
+
+add_test(NAME disabled-ink
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-disabled-ink.cmake")
+
+add_test(NAME no-nested-ternary
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-nested-ternary.cmake")
+
+add_test(NAME no-disk-in-view
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-disk-in-view.cmake")
+
+if (WIN32 AND NOT FSORG_TESTS_ONLY)
+    add_test(NAME long-path-aware
+            COMMAND "${CMAKE_COMMAND}"
+            "-DFSORG_EXECUTABLE=$<TARGET_FILE:${APP_NAME}>"
+            -P "${CMAKE_SOURCE_DIR}/tools/check-long-path-aware.cmake")
+endif ()
 
 fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
@@ -76,6 +103,7 @@ fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
 fsorg_add_qt_test(fsorg-path-utils-tests path-utils
         tests/domain/support/tst_path_utils.cpp
         tests/support/PathPrinting.h
+        src/domain/support/CaseFolding.h
         src/domain/support/PathUtils.h)
 
 fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
@@ -123,12 +151,31 @@ fsorg_add_qt_test(fsorg-import-service-tests import-service
         src/domain/importing/ImportPaths.h)
 target_link_libraries(fsorg-import-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-dependency-report-tests dependency-report
+        tests/application/tst_dependency_report.cpp
+        tests/doubles/FakeSimulatorPackages.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-dependency-report-tests PRIVATE fsorg-application)
+
+fsorg_add_qt_test(fsorg-size-service-tests size-service
+        tests/application/tst_size_service.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-size-service-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         tests/application/tst_legacy_config_importer.cpp
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLegacyConfigSource.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
+        tests/support/LegacyFixtures.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-legacy-config-importer-tests PRIVATE fsorg-application)
@@ -217,6 +264,7 @@ target_link_libraries(fsorg-legacy-preset-tests PRIVATE fsorg-domain)
 fsorg_add_qt_test(fsorg-legacy-proposal-tests legacy-proposal
         tests/domain/legacy/tst_legacy_proposal.cpp
         tests/support/EnumPrinting.h
+        tests/support/LegacyFixtures.h
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-legacy-proposal-tests PRIVATE fsorg-domain)
@@ -385,9 +433,36 @@ fsorg_add_qt_test(fsorg-journal-model-tests journal-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-journal-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-dependency-text-tests dependency-text
+        tests/viewmodel/tst_dependency_text.cpp)
+target_link_libraries(fsorg-dependency-text-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-failure-text-tests failure-text
         tests/viewmodel/tst_failure_text.cpp)
 target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
+
+fsorg_add_qt_test(fsorg-size-across-screens-tests size-across-screens
+        tests/viewmodel/tst_size_across_screens.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSimulatorPackages.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-size-across-screens-tests PRIVATE fsorg-viewmodel)
+
+fsorg_add_qt_test(fsorg-size-summary-tests size-summary
+        tests/viewmodel/tst_size_summary.cpp
+        src/support/SizeText.h)
+target_link_libraries(fsorg-size-summary-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-quarantine-model-tests quarantine-model
         tests/viewmodel/tst_quarantine_model.cpp
@@ -405,11 +480,30 @@ fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/doubles/FakeOperationJournal.h
         tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSimulatorPackages.h
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-addon-tree-view-model-tests PRIVATE fsorg-viewmodel)
+
+fsorg_add_qt_test(fsorg-legacy-import-view-model-tests legacy-import-view-model
+        tests/viewmodel/tst_legacy_import_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLegacyConfigSource.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/RecordingSessionObserver.h)
+target_link_libraries(fsorg-legacy-import-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
         tests/viewmodel/tst_options_view_model.cpp
@@ -462,6 +556,23 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-diagnostics-view-model-tests diagnostics-view-model
+        tests/viewmodel/tst_diagnostics_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-diagnostics-view-model-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/viewmodel/tst_quarantine_view_model.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -501,9 +612,38 @@ fsorg_add_qt_test(fsorg-windows-simulator-locator-tests windows-simulator-locato
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-windows-simulator-locator-tests PRIVATE fsorg-infrastructure)
 
+fsorg_add_qt_test(fsorg-content-list-locations-tests content-list-locations
+        tests/infrastructure/sim/tst_content_list_locations.cpp
+        tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h)
+target_link_libraries(fsorg-content-list-locations-tests PRIVATE fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-content-xml-packages-tests content-xml-packages
+        tests/infrastructure/sim/tst_content_xml_packages.cpp
+        tests/doubles/FakeSimulatorPackages.h
+        tests/support/EnumPrinting.h
+        tests/support/StdFilesystemProbe.h
+        tests/support/TempFiles.h)
+target_link_libraries(fsorg-content-xml-packages-tests PRIVATE fsorg-infrastructure)
+target_compile_definitions(fsorg-content-xml-packages-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-profile-packages-tests profile-packages
+        tests/infrastructure/sim/tst_profile_packages.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h)
+target_link_libraries(fsorg-profile-packages-tests PRIVATE fsorg-infrastructure)
+
 if (WIN32)
+    fsorg_add_qt_test(fsorg-extended-paths-tests extended-paths
+            tests/infrastructure/fileops/tst_extended_paths.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-extended-paths-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-windows-link-service-tests windows-link-service
             tests/infrastructure/link/tst_windows_link_service.cpp
+            tests/support/DeepPaths.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
             src/domain/support/PathUtils.h)
@@ -511,12 +651,35 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-windows-file-operations-tests windows-file-operations
             tests/infrastructure/fileops/tst_windows_file_operations.cpp
+            tests/support/DeepPaths.h
             tests/support/PathPrinting.h)
 
     target_link_libraries(fsorg-windows-file-operations-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-catalog-on-real-disk-tests catalog-on-real-disk
+            tests/infrastructure/catalog/tst_catalog_on_real_disk.cpp
+            tests/support/DeepPaths.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-catalog-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-case-folding-on-real-disk-tests case-folding-on-real-disk
+            tests/infrastructure/fileops/tst_case_folding_on_real_disk.cpp
+            tests/support/PathPrinting.h
+            src/domain/support/CaseFolding.h
+            src/domain/support/PathUtils.h)
+
+    fsorg_add_qt_test(fsorg-size-on-real-disk-tests size-on-real-disk
+            tests/infrastructure/fileops/tst_size_on_real_disk.cpp
+            tests/doubles/FakeClock.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-size-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-import-on-real-disk-tests import-on-real-disk
             tests/infrastructure/importing/tst_import_on_real_disk.cpp
+            tests/support/DeepPaths.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
             src/domain/importing/ImportPaths.h)
@@ -539,6 +702,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
+            tests/support/DeepPaths.h
             tests/support/PathPrinting.h)
 
     target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)
@@ -664,11 +828,36 @@ fsorg_add_qt_test(fsorg-context-panel-tests context-panel
 target_link_libraries(fsorg-context-panel-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-context-panel-tests context-panel)
 
+fsorg_add_qt_test(fsorg-dependency-section-tests dependency-section
+        tests/view/panels/tst_dependency_section.cpp
+        assets/resources.qrc)
+target_link_libraries(fsorg-dependency-section-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-dependency-section-tests dependency-section)
+
 fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         tests/view/delegates/tst_row_delegate.cpp
         assets/resources.qrc)
 target_link_libraries(fsorg-row-delegate-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
+
+fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
+        tests/view/tst_addon_tree_page.cpp
+        assets/resources.qrc
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-addon-tree-page-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
 
 fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
         tests/view/theme/tst_modernist_theme.cpp
@@ -676,3 +865,8 @@ fsorg_add_qt_test(fsorg-modernist-theme-tests modernist-theme
 target_link_libraries(fsorg-modernist-theme-tests PRIVATE fsorg-view)
 
 configure_fsorg_gui_test(fsorg-modernist-theme-tests modernist-theme)
+
+fsorg_add_qt_test(fsorg-theme-contrast-tests theme-contrast
+        tests/view/theme/tst_theme_contrast.cpp)
+target_link_libraries(fsorg-theme-contrast-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-theme-contrast-tests theme-contrast)

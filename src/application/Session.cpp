@@ -66,7 +66,13 @@ void Session::ShowActiveProfile()
     const AppSettings settings = settings_.Load().value_or(AppSettings{});
     const SimulatorProfile* active = ProfileById(settings, settings.activeProfileId);
 
-    Scan(active != nullptr ? *active : (settings.profiles.empty() ? SimulatorProfile{} : settings.profiles.front()));
+    if (active != nullptr)
+    {
+        Scan(*active);
+        return;
+    }
+
+    Scan(settings.profiles.empty() ? SimulatorProfile{} : settings.profiles.front());
 }
 
 void Session::ChooseProfile(const std::string& profileId)

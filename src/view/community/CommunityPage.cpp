@@ -33,6 +33,7 @@
 #include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/RowTagRoles.h"
+#include "viewmodel/SizeSummary.h"
 
 namespace
 {
@@ -128,8 +129,7 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
                 UpdateSummary();
             });
     connect(&viewModel_, &CommunityViewModel::RepairFinished, this, &CommunityPage::OnRepairFinished);
-    connect(&model_, &QAbstractItemModel::modelReset, &importViewModel_, &ImportViewModel::ForgetMeasuredSizes);
-    connect(&importViewModel_, &ImportViewModel::SizeMeasuring, this,
+    connect(&viewModel_, &CommunityViewModel::SizeMeasuring, this,
             [this]
             {
                 if (batch_)
@@ -137,12 +137,12 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
                     ShowTheBatchFields(tr("measuring…"));
                 }
             });
-    connect(&importViewModel_, &ImportViewModel::SizeMeasured, this,
-            [this](const qulonglong bytes)
+    connect(&viewModel_, &CommunityViewModel::SizeMeasured, this,
+            [this](const SelectionSize& size)
             {
                 if (batch_)
                 {
-                    ShowTheBatchFields(AsSize(bytes));
+                    ShowTheBatchFields(SizeOfTheSelection(size));
                 }
             });
     connect(&importViewModel_, &ImportViewModel::Started, this, &CommunityPage::OnImportStarted);
@@ -356,34 +356,39 @@ void CommunityPage::ShowTheSelectedEntry()
     detail_->ShowFields(fields);
 }
 
-void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
+CommunityPage::Tally CommunityPage::TallyOf(const QModelIndexList& rows) const
 {
-    batch_ = true;
-
-    QHash<int, int> counted;
-    QSet<QString> destinations;
-    bool alarming = false;
+    Tally tally;
 
     for (const QModelIndex& position : rows)
     {
         const QModelIndex source = filter_->mapToSource(position);
 
-        ++counted[model_.data(source, CommunityModel::ClassificationRole).toInt()];
-        counted[kConflictFilter] += model_.data(source, CommunityModel::ConflictRole).toBool() ? 1 : 0;
-        alarming = alarming || model_.data(source, AlarmingRole).toBool();
+        ++tally.counted[model_.data(source, CommunityModel::ClassificationRole).toInt()];
+        tally.counted[kConflictFilter] += model_.data(source, CommunityModel::ConflictRole).toBool() ? 1 : 0;
+        tally.alarming = tally.alarming || model_.data(source, AlarmingRole).toBool();
 
         if (const DestinationEntry* entry = model_.EntryAt(source); entry != nullptr)
         {
-            destinations.insert(AsText(entry->path.parent_path().filename()));
+            tally.destinations.insert(AsText(entry->path.parent_path().filename()));
         }
     }
+
+    return tally;
+}
+
+void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
+{
+    batch_ = true;
+
+    const Tally tally = TallyOf(rows);
 
     counted_.clear();
 
     for (const QToolButton* chip : chips_)
     {
         const int filter = chip->property("filter").toInt();
-        const int population = counted.value(filter);
+        const int population = tally.counted.value(filter);
 
         if (filter == kEveryFilter || population == 0)
         {
@@ -393,18 +398,29 @@ void CommunityPage::ShowTheSelectedBatch(const QModelIndexList& rows)
         counted_.append({chip->property("label").toString(), QString::number(population)});
     }
 
-    counted_.append({tr("Destinations"), QString::number(destinations.size())});
+    counted_.append({tr("Destinations"), QString::number(tally.destinations.size())});
 
-    panel_->ShowTitle(tr("%n entry selected", nullptr, static_cast<int>(rows.size())), alarming);
+    panel_->ShowTitle(tr("%n entry selected", nullptr, static_cast<int>(rows.size())), tally.alarming);
 
-    const std::vector<std::filesystem::path> importable = ChosenForImport(*table_, *filter_, model_).folders;
+    ShowTheBatchFields({});
 
-    ShowTheBatchFields(importable.empty() ? QString() : tr("measuring…"));
+    viewModel_.MeasureTheSelection(SelectedEntries(rows));
+}
 
-    if (!importable.empty())
+std::vector<DestinationEntry> CommunityPage::SelectedEntries(const QModelIndexList& rows) const
+{
+    std::vector<DestinationEntry> chosen;
+    chosen.reserve(static_cast<std::size_t>(rows.size()));
+
+    for (const QModelIndex& position : rows)
     {
-        importViewModel_.MeasureTotalSize(importable);
+        if (const DestinationEntry* entry = model_.EntryAt(filter_->mapToSource(position)); entry != nullptr)
+        {
+            chosen.push_back(*entry);
+        }
     }
+
+    return chosen;
 }
 
 void CommunityPage::ShowTheBatchFields(const QString& size) const

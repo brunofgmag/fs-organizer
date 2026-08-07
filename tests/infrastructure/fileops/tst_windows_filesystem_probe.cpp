@@ -5,6 +5,7 @@
 
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
+#include "tests/support/DeepPaths.h"
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 
@@ -22,6 +23,9 @@ namespace
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
         static void AFolderReportsWhenItWasLastWrittenTo();
         static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
+        static void EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable();
+        static void ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem();
+        static void TheStandardLibraryDoubleAnswersPastTheOldCeilingTheSameWayThisProbeDoes();
     };
 }
 
@@ -177,6 +181,70 @@ void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersAJunctionTheSame
 
     QCOMPARE(byProduction.size(), std::size_t{3});
     QCOMPARE(byTheDouble, byProduction);
+}
+
+void WindowsFilesystemProbeTest::EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "tfdidesign-aircraft-md11");
+    QVERIFY(deep.wstring().size() > kOldPathCeiling);
+    WriteFilePastTheCeiling(deep / "manifest.json", R"({"title": "MD-11"})");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.EntryExistsWithoutFollowingLinks(deep));
+    QVERIFY(filesystemProbe.TargetDirectoryExists(deep));
+    QVERIFY(!filesystemProbe.IsReparsePoint(deep));
+    QVERIFY(filesystemProbe.FreeSpaceOn(deep).has_value());
+    QVERIFY(filesystemProbe.LastWriteTime(deep).has_value());
+    QVERIFY(filesystemProbe.VolumeIsAvailable(deep));
+
+    const std::optional<std::vector<FileFingerprint>> fingerprint = filesystemProbe.FingerprintTree(deep);
+    QVERIFY(fingerprint.has_value());
+    QCOMPARE(fingerprint->size(), std::size_t{1});
+    QCOMPARE(fingerprint->front().relativePath, std::filesystem::path("manifest.json"));
+}
+
+void WindowsFilesystemProbeTest::ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "Utils");
+    const std::filesystem::path staging = FolderPastTheCeiling(deep, "tfdidesign-aircraft-md11.fsorg-partial");
+
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::vector<std::filesystem::path> children = filesystemProbe.ChildDirectories(deep);
+
+    QCOMPARE(children.size(), std::size_t{1});
+    QCOMPARE(children.front(), staging);
+    QVERIFY2(!children.front().wstring().starts_with(LR"(\\?\)"),
+             "a path that leaves the port carrying the prefix stops matching every path the domain built by hand");
+}
+
+void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersPastTheOldCeilingTheSameWayThisProbeDoes()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "Utils");
+    const std::filesystem::path addon = FolderPastTheCeiling(deep, "tfdidesign-aircraft-md11");
+    QVERIFY(addon.wstring().size() > kOldPathCeiling);
+    WriteFilePastTheCeiling(addon / "manifest.json", R"({"title": "MD-11"})");
+
+    const WindowsFilesystemProbe production;
+    const StdFilesystemProbe double_;
+
+    QCOMPARE(double_.EntryExistsWithoutFollowingLinks(addon), production.EntryExistsWithoutFollowingLinks(addon));
+    QCOMPARE(double_.TargetDirectoryExists(addon), production.TargetDirectoryExists(addon));
+    QCOMPARE(double_.IsReparsePoint(addon), production.IsReparsePoint(addon));
+    QCOMPARE(double_.LastWriteTime(addon).has_value(), production.LastWriteTime(addon).has_value());
+    QCOMPARE(double_.ContentsOf(addon / "manifest.json").value_or(std::string{}),
+             production.ContentsOf(addon / "manifest.json").value_or(std::string{}));
+    QCOMPARE(double_.ChildDirectories(deep), production.ChildDirectories(deep));
+
+    const std::optional<std::vector<FileFingerprint>> byTheDouble = double_.FingerprintTree(addon);
+    const std::optional<std::vector<FileFingerprint>> byProduction = production.FingerprintTree(addon);
+    QVERIFY(byProduction.has_value());
+    QVERIFY(byTheDouble.has_value());
+    QCOMPARE(byTheDouble->size(), byProduction->size());
+    QCOMPARE(byTheDouble->front().relativePath, byProduction->front().relativePath);
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

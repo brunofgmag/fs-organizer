@@ -5,38 +5,60 @@
 
 namespace
 {
+    constexpr int kGroundPartsPerTint = 6;
+
+    QColor Tinted(const QColor& ground, const QColor& tint)
+    {
+        constexpr int kParts = kGroundPartsPerTint + 1;
+
+        return {(ground.red() * kGroundPartsPerTint + tint.red()) / kParts,
+                (ground.green() * kGroundPartsPerTint + tint.green()) / kParts,
+                (ground.blue() * kGroundPartsPerTint + tint.blue()) / kParts};
+    }
+
+    ModernistTones WithTheGroundsItDerives(ModernistTones tones)
+    {
+        tones.alarming = Tinted(tones.window, tones.accent);
+
+        return tones;
+    }
+
     ModernistTones DarkTones()
     {
-        return {
+        return WithTheGroundsItDerives({
             .window = QColor("#1c1a19"),
             .chrome = QColor("#141312"),
-            .raised = QColor("#262322"),
+            .raised = QColor("#23201f"),
             .divider = QColor("#3a3634"),
-            .edge = QColor("#4a4542"),
+            .edge = QColor("#726d6a"),
             .text = QColor("#f3f2f2"),
             .secondary = QColor("#a8a29e"),
-            .tertiary = QColor("#6b6560"),
-            .accent = QColor("#ec3013"),
-            .accentBright = QColor("#ff6a4d"),
+            .faint = QColor("#8a8581"),
+            .disabled = QColor("#6b6560"),
+            .accent = QColor("#cc2c11"),
+            .accentWarm = QColor("#e03112"),
+            .accentInk = QColor("#ff6a4d"),
             .onAccent = QColor("#ffffff"),
-        };
+        });
     }
 
     ModernistTones LightTones()
     {
-        return {
+        return WithTheGroundsItDerives({
             .window = QColor("#f3f2f2"),
             .chrome = QColor("#eae9e9"),
             .raised = QColor("#f8f4f4"),
             .divider = QColor("#bab6b6"),
-            .edge = QColor("#9b9797"),
+            .edge = QColor("#888484"),
             .text = QColor("#201e1d"),
-            .secondary = QColor("#605d5d"),
-            .tertiary = QColor("#9b9797"),
-            .accent = QColor("#ec3013"),
-            .accentBright = QColor("#dd2b0f"),
+            .secondary = QColor("#504d4d"),
+            .faint = QColor("#6c6868"),
+            .disabled = QColor("#9b9797"),
+            .accent = QColor("#cc2c11"),
+            .accentWarm = QColor("#e03112"),
+            .accentInk = QColor("#ae260e"),
             .onAccent = QColor("#ffffff"),
-        };
+        });
     }
 }
 

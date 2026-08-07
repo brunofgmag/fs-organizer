@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 inline constexpr auto kManifestFileName = "manifest.json";
 
@@ -10,6 +11,12 @@ inline constexpr auto kManifestFileName = "manifest.json";
 {
     return folder / kManifestFileName;
 }
+
+struct DeclaredDependency
+{
+    std::string name;
+    std::string declaredVersion;
+};
 
 struct Manifest
 {
@@ -19,6 +26,7 @@ struct Manifest
     std::string contentType;
     std::string packageVersion;
     std::string minimumGameVersion;
+    std::vector<DeclaredDependency> dependencies{};
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_MANIFEST_H

@@ -98,7 +98,7 @@ void LinkingEngineTest::EnablingRefusesWhenTheDestinationHoldsARealFolder()
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsRealFolder);
-    QVERIFY(outcome.Conflict().has_value());
+    QVERIFY(outcome.Conflict() != nullptr);
     QCOMPARE(outcome.Conflict()->destinationPath,
              std::filesystem::path("E:/Sim/Community/flybywire-externaltools-simbridge"));
     QCOMPARE(outcome.Conflict()->libraryPath,
@@ -136,7 +136,7 @@ void LinkingEngineTest::EnablingRefusesWhenTheDestinationHoldsALiveForeignLink()
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
-    QVERIFY(outcome.Occupation().has_value());
+    QVERIFY(outcome.Occupation() != nullptr);
     QCOMPARE(outcome.Occupation()->existingTarget, foreignTarget);
     QCOMPARE(f.fileSystem.LinkTarget("E:/Sim/Community/fsdreamteam-gsx-pro").value(), foreignTarget);
 }
@@ -180,7 +180,7 @@ void LinkingEngineTest::ALiveForeignLinkIsRecognisedThroughTheRawReparsePrefix()
     const LinkOutcome outcome = f.engine.Enable(addon, "E:/Sim/Community", LinkType::Junction);
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
-    QVERIFY(outcome.Occupation().has_value());
+    QVERIFY(outcome.Occupation() != nullptr);
     QVERIFY(f.fileSystem.Exists(foreignTarget));
     QCOMPARE(f.fileSystem.LinkTarget("E:/Sim/Community/fsdreamteam-gsx-pro").value(),
              std::filesystem::path(R"(\??\C:\Program Files (x86)\Addon Manager\MSFS\fsdreamteam-gsx-pro)"));

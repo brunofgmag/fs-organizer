@@ -57,7 +57,7 @@ LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const s
     if (report.Accepted())
     {
         profile.libraries.push_back(
-            Library{.id = identities_.Generate(), .path = path, .label = path.filename().string()});
+            Library{.id = identities_.Generate(), .path = path, .label = AsUtf8(path.filename())});
     }
 
     return report;

@@ -284,6 +284,43 @@ std::vector<QuarantinedItem> ImportService::Quarantined(const SimulatorProfile& 
     return items;
 }
 
+std::string ImportService::VersionIn(const std::filesystem::path& folder) const
+{
+    const TreeNode scanned = catalog_.Scan(folder);
+
+    return scanned.addon.has_value() ? scanned.addon->manifest.packageVersion : std::string{};
+}
+
+std::vector<QuarantineDetail> ImportService::Describe(const std::vector<DestinationEntry>& entries,
+                                                      const std::vector<QuarantinedItem>& items) const
+{
+    std::vector<QuarantineDetail> details;
+    details.reserve(items.size());
+
+    for (const QuarantinedItem& item : items)
+    {
+        QuarantineDetail detail{.path = item.path, .version = VersionIn(item.path)};
+
+        const std::string name = ComparableFileName(item.path);
+        const auto occupant =
+            std::ranges::find_if(entries,
+                                 [&name](const DestinationEntry& entry)
+                                 {
+                                     return entry.target.empty() && ComparableFileName(entry.path) == name;
+                                 });
+
+        if (occupant != entries.end())
+        {
+            detail.replacedBy = occupant->path;
+            detail.replacementVersion = VersionIn(occupant->path);
+        }
+
+        details.push_back(std::move(detail));
+    }
+
+    return details;
+}
+
 FileResult ImportService::RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
 {
     if (!item.KnowsWhereItCameFrom())

@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.10.0](https://github.com/brunofgmag/fs-organizer/compare/v0.9.0...v0.10.0) (2026-08-06)
+
+
+### Features
+
+* size where the decision happens, read from a single cache ([#30](https://github.com/brunofgmag/fs-organizer/issues/30)) ([5c2806e](https://github.com/brunofgmag/fs-organizer/commit/5c2806eac8b5c627937c65cc9ae11e92d7900bf2))
+
+
+### Bug Fixes
+
+* guard the portable layers and the screens against what only the runner sees ([#29](https://github.com/brunofgmag/fs-organizer/issues/29)) ([d1a5b11](https://github.com/brunofgmag/fs-organizer/commit/d1a5b114f5e431abb874ee28f6b61549881847bb))
+
+## [0.9.0](https://github.com/brunofgmag/fs-organizer/compare/v0.8.0...v0.9.0) (2026-08-06)
+
+
+### Features
+
+* **diagnostics:** show what a profile has on disk, section by section ([#26](https://github.com/brunofgmag/fs-organizer/issues/26)) ([bc5fbce](https://github.com/brunofgmag/fs-organizer/commit/bc5fbcea145915830ee225d935d9f091f7929afc))
+
+## [0.8.0](https://github.com/brunofgmag/fs-organizer/compare/v0.7.0...v0.8.0) (2026-08-05)
+
+
+### Features
+
+* **sizing:** measure the disk each category and addon occupies ([#23](https://github.com/brunofgmag/fs-organizer/issues/23)) ([e03d16c](https://github.com/brunofgmag/fs-organizer/commit/e03d16cd379c54a8cdd2a12d10b6c5915b26ea41))
+
+## [0.7.0](https://github.com/brunofgmag/fs-organizer/compare/v0.6.0...v0.7.0) (2026-08-05)
+
+
+### Features
+
+* **library:** show what each declared dependency resolves to ([#21](https://github.com/brunofgmag/fs-organizer/issues/21)) ([ad90612](https://github.com/brunofgmag/fs-organizer/commit/ad906124beb2c61c31cc84f44f16e677d145d41f))
+
+## [0.6.0](https://github.com/brunofgmag/fs-organizer/compare/v0.5.0...v0.6.0) (2026-08-05)
+
+
+### Features
+
+* **sim:** answer whether the simulator already carries a package ([#19](https://github.com/brunofgmag/fs-organizer/issues/19)) ([4c002d3](https://github.com/brunofgmag/fs-organizer/commit/4c002d3863c0a8e472681f8f2e5c5b13024f4dbc))
+
+## [0.5.0](https://github.com/brunofgmag/fs-organizer/compare/v0.4.0...v0.5.0) (2026-08-05)
+
+
+### Features
+
+* **theme:** give every tone one job and measure the pairs it paints ([#17](https://github.com/brunofgmag/fs-organizer/issues/17)) ([57bfcad](https://github.com/brunofgmag/fs-organizer/commit/57bfcadbcf5c3e1ca99db56d247cc4aa8bdd127d))
+
+## [0.4.0](https://github.com/brunofgmag/fs-organizer/compare/v0.3.3...v0.4.0) (2026-08-05)
+
+
+### Features
+
+* **fileops:** reach paths past the old 260-character ceiling ([#15](https://github.com/brunofgmag/fs-organizer/issues/15)) ([0d08601](https://github.com/brunofgmag/fs-organizer/commit/0d086012dcd703224012cd4ee7a9717e3dcd2032))
+
 ## [0.3.3](https://github.com/brunofgmag/fs-organizer/compare/v0.3.2...v0.3.3) (2026-08-03)
 
 

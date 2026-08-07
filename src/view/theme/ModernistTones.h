@@ -12,10 +12,13 @@ struct ModernistTones
     QColor edge;
     QColor text;
     QColor secondary;
-    QColor tertiary;
+    QColor faint;
+    QColor disabled;
     QColor accent;
-    QColor accentBright;
+    QColor accentWarm;
+    QColor accentInk;
     QColor onAccent;
+    QColor alarming{};
 };
 
 [[nodiscard]] ModernistTones TonesOf(Qt::ColorScheme scheme);

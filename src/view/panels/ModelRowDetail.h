@@ -16,7 +16,7 @@ public:
 
     explicit ModelRowDetail(QWidget* parent = nullptr);
 
-    void Show(const QModelIndex& index);
+    void Show(const QModelIndex& index, const QList<Field>& alongside = {});
 
     void ShowFields(const QList<Field>& fields);
 
@@ -28,6 +28,7 @@ private:
 
     QGridLayout* rows_ = nullptr;
     QPersistentModelIndex shown_;
+    QList<Field> alongside_;
 };
 
 #endif // FS_ORGANIZER_VIEW_PANELS_MODEL_ROW_DETAIL_H

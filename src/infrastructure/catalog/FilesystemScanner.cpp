@@ -1,37 +1,11 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <string>
-#include <system_error>
 
 #include "domain/importing/ImportPaths.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/model/Manifest.h"
-
-namespace
-{
-    std::string ReadWholeFile(const std::filesystem::path& path)
-    {
-        std::ifstream file(path, std::ios::binary);
-
-        return {std::istreambuf_iterator(file), std::istreambuf_iterator<char>()};
-    }
-
-    bool HasManifest(const std::filesystem::path& folder)
-    {
-        std::error_code error;
-
-        return std::filesystem::exists(ManifestPathIn(folder), error);
-    }
-
-    bool WasDeclaredACategory(const std::filesystem::path& folder)
-    {
-        std::error_code error;
-
-        return std::filesystem::exists(CategoryMarkerPathIn(folder), error);
-    }
-}
 
 FilesystemScanner::FilesystemScanner(const ManifestParser& manifestParser, const FilesystemProbe& filesystemProbe)
     : manifestParser_(manifestParser), filesystemProbe_(filesystemProbe)
@@ -46,6 +20,16 @@ TreeNode FilesystemScanner::Scan(const std::filesystem::path& libraryRoot) const
     return root;
 }
 
+bool FilesystemScanner::HasManifest(const std::filesystem::path& folder) const
+{
+    return filesystemProbe_.EntryExistsWithoutFollowingLinks(ManifestPathIn(folder));
+}
+
+bool FilesystemScanner::WasDeclaredACategory(const std::filesystem::path& folder) const
+{
+    return filesystemProbe_.EntryExistsWithoutFollowingLinks(CategoryMarkerPathIn(folder));
+}
+
 TreeNode FilesystemScanner::ScanFolder(const std::filesystem::path& folder) const
 {
     return HasManifest(folder) ? ScanAddon(folder) : ScanCategory(folder);
@@ -56,9 +40,12 @@ TreeNode FilesystemScanner::ScanAddon(const std::filesystem::path& folder) const
     Addon addon;
     addon.folderPath = folder;
 
-    if (const std::optional<Manifest> manifest = manifestParser_.Parse(ReadWholeFile(ManifestPathIn(folder))))
+    if (const std::optional<std::string> contents = filesystemProbe_.ContentsOf(ManifestPathIn(folder)))
     {
-        addon.manifest = *manifest;
+        if (const std::optional<Manifest> manifest = manifestParser_.Parse(*contents))
+        {
+            addon.manifest = *manifest;
+        }
     }
 
     TreeNode node;

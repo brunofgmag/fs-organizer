@@ -24,10 +24,10 @@ inline constexpr auto kQuarantineFolderName = "_fsorganizer-quarantine";
 
 [[nodiscard]] inline std::filesystem::path ImportedPathFor(const std::filesystem::path& staging)
 {
-    const std::string name = staging.filename().string();
+    const std::string name = AsUtf8(staging.filename());
 
     return IsStagingPath(staging)
-        ? staging.parent_path() / name.substr(0, name.size() - std::string_view(kStagingSuffix).size())
+        ? staging.parent_path() / PathFromUtf8(name.substr(0, name.size() - std::string_view(kStagingSuffix).size()))
         : staging;
 }
 

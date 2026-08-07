@@ -5,6 +5,8 @@
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 
@@ -35,6 +37,7 @@ namespace
         static void TheStripKeepsQuietUntilSomethingBreaks();
         static void ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen();
         static void ClosingThePanelAsksForIt();
+        static void ContentTallerThanThePanelScrollsInsteadOfBeingSquashed();
     };
 }
 
@@ -399,6 +402,34 @@ void ContextPanelTest::ClosingThePanelAsksForIt()
 
     panel.Summon(true);
     QVERIFY(!panel.isHidden());
+}
+
+void ContextPanelTest::ContentTallerThanThePanelScrollsInsteadOfBeingSquashed()
+{
+    constexpr int kTallerThanAnyWindow = 2000;
+
+    QWidget window;
+    auto* beside = new QHBoxLayout(&window);
+    beside->setContentsMargins(0, 0, 0, 0);
+
+    auto* panel = new ContextPanel(QStringLiteral("Addon selected"), 380, &window);
+    panel->setObjectName(QStringLiteral("scroll-test"));
+    beside->addWidget(panel);
+
+    auto* tall = new QLabel(QStringLiteral("a block with more dependencies than the panel is high"));
+    tall->setMinimumHeight(kTallerThanAnyWindow);
+    panel->Add(tall);
+
+    window.setFixedHeight(300);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+
+    QCOMPARE(window.height(), 300);
+    QCOMPARE(tall->height(), kTallerThanAnyWindow);
+
+    const auto* scrolled = panel->findChild<QScrollArea*>();
+    QVERIFY2(scrolled != nullptr, "content taller than the panel would be clipped with no way to reach it");
+    QVERIFY(scrolled->verticalScrollBar()->maximum() > 0);
 }
 
 QTEST_MAIN(ContextPanelTest)

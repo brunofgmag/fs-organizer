@@ -3,6 +3,7 @@
 #include <string>
 
 #include "domain/model/AddonId.h"
+#include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -33,7 +34,7 @@ std::vector<RepairCandidate> PlanRepairs(const SimulatorProfile& profile,
         RepairCandidate candidate;
         candidate.entry = entry;
         candidate.targetsLibrary = LibraryContaining(profile, entry.target) != nullptr;
-        candidate.repointTo = ValidAddonNamed(libraries, entry.path.filename().string());
+        candidate.repointTo = ValidAddonNamed(libraries, AsUtf8(entry.path.filename()));
 
         plan.push_back(std::move(candidate));
     }

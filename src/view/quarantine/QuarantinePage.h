@@ -5,11 +5,11 @@
 
 #include <QtWidgets/QWidget>
 
+#include "view/panels/ModelRowDetail.h"
 #include "viewmodel/QuarantineViewModel.h"
 
 class ContextPanel;
 class EmptyState;
-class ModelRowDetail;
 class QLabel;
 class QPushButton;
 class QStackedWidget;
@@ -38,6 +38,8 @@ private:
     void ShowTheSelectedItem();
 
     void ShowTheSelectedBatch(const QModelIndexList& rows) const;
+
+    [[nodiscard]] QList<ModelRowDetail::Field> TheComparisonFor(const QModelIndex& position) const;
 
     void ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const;
 

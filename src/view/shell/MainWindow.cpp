@@ -9,6 +9,7 @@
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMessageBox>
 #include <QtWidgets/QProgressBar>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStatusBar>
@@ -289,6 +290,13 @@ void MainWindow::ShowRestartPending(const bool pending)
     restartPending_ = pending;
     restart_->setText(pending ? tr("Restart the simulator to apply.") : QString());
     restart_->setVisible(pending);
+}
+
+void MainWindow::WarnTheSimulatorIsOpen()
+{
+    QMessageBox::information(this, tr("Simulator open"),
+                             tr("The simulator is running. The changes were applied, but it will only see them "
+                                "after it is restarted."));
 }
 
 void MainWindow::changeEvent(QEvent* event)

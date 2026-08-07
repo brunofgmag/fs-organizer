@@ -15,6 +15,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSimulatorPackages.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -51,6 +52,11 @@ namespace
         static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
         static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
         static void ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState();
+        static void TheSimulatorListIsNotConsultedWhileTheTreeIsBeingScanned();
+        static void OnlyAnAddonHasDependenciesToReport();
+        static void TheSizeOfTheSelectionIsMeasuredInTheBackgroundAndAnnouncedWhenItLands();
+        static void AMeasurementOvertakenByANewSelectionIsNeverShown();
+        static void AnAddonTheLibraryWalkAlreadyMeasuredIsNotWalkedAgain();
     };
 }
 
@@ -72,6 +78,14 @@ namespace
         node.kind = TreeNodeKind::Addon;
         node.path = path;
         node.addon = Addon{.folderPath = path, .manifest = Manifest{}};
+
+        return node;
+    }
+
+    TreeNode AddonNodeDeclaring(const std::filesystem::path& path, std::vector<DeclaredDependency> dependencies)
+    {
+        TreeNode node = AddonNode(path);
+        node.addon->manifest.dependencies = std::move(dependencies);
 
         return node;
     }
@@ -159,8 +173,15 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, processProbe, runner, notifier};
         AddonTreeModel model;
-        AddonTreeViewModel viewModel{session, service, model, notifier};
+        FakeSimulatorPackages packages;
+        SizeService sizes{catalog, filesystemProbe, clock, runner};
+        AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
     };
+
+    SelectionSize LastSize(const QSignalSpy& measured)
+    {
+        return measured.isEmpty() ? SelectionSize{} : measured.back().front().value<SelectionSize>();
+    }
 }
 
 void AddonTreeViewModelTest::ABlankCategoryNameIsRefusedBeforeItReachesTheJournal()
@@ -549,6 +570,93 @@ void AddonTreeViewModelTest::ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedC
 
     QVERIFY(f.fileSystem.Exists("D:/MSFS 2024/Sceneries/pmdg-aircraft-77w"));
     QVERIFY(f.fileSystem.Exists("D:/MSFS 2024/Traffic/aerosoft-crj"));
+}
+
+void AddonTreeViewModelTest::TheSimulatorListIsNotConsultedWhileTheTreeIsBeingScanned()
+{
+    Fixture f;
+    const TreeNode declaring = AddonNodeDeclaring(kAddon, {{"fs-base-ui", "0.1.10"}});
+    f.catalog.SetTree(kLibrary, CategoryNode(kLibrary, {CategoryNode(kAircrafts, {declaring})}));
+    f.session.RefreshEntries();
+    f.viewModel.ShowActiveProfile();
+
+    QCOMPARE(f.packages.asked, std::size_t{0});
+
+    const DependencyReport report = f.viewModel.DependenciesOf(&declaring);
+
+    QCOMPARE(report.answers.size(), std::size_t{1});
+    QCOMPARE(f.packages.asked, std::size_t{1});
+}
+
+void AddonTreeViewModelTest::OnlyAnAddonHasDependenciesToReport()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {});
+
+    QVERIFY(f.viewModel.DependenciesOf(nullptr).answers.empty());
+    QVERIFY(f.viewModel.DependenciesOf(&category).answers.empty());
+    QCOMPARE(f.packages.asked, std::size_t{0});
+}
+
+void AddonTreeViewModelTest::TheSizeOfTheSelectionIsMeasuredInTheBackgroundAndAnnouncedWhenItLands()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+    f.fileSystem.AddFile(std::filesystem::path(kOtherAddon) / "content.bin", 700);
+    f.runner.defer = true;
+
+    const QSignalSpy measuring(&f.viewModel, &AddonTreeViewModel::SizeMeasuring);
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({kAddon, kOtherAddon});
+
+    QCOMPARE(measuring.size(), 1);
+    QCOMPARE(measured.size(), 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{1000});
+    QCOMPARE(LastSize(measured).measured, std::size_t{2});
+    QCOMPARE(LastSize(measured).selected, std::size_t{2});
+}
+
+void AddonTreeViewModelTest::AMeasurementOvertakenByANewSelectionIsNeverShown()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+    f.fileSystem.AddFile(std::filesystem::path(kOtherAddon) / "content.bin", 700);
+    f.runner.defer = true;
+
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({kAddon, kOtherAddon});
+    f.viewModel.MeasureTheSelection({kOtherAddon});
+
+    f.runner.Finish();
+    QCOMPARE(measured.size(), 0);
+
+    f.runner.Finish();
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{700});
+}
+
+void AddonTreeViewModelTest::AnAddonTheLibraryWalkAlreadyMeasuredIsNotWalkedAgain()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+
+    const MeasurementCaller elsewhere = f.sizes.NewCaller();
+    f.sizes.Measure({kLibrary}, elsewhere, Freshness::ReuseWhatIsKnown, {}, {});
+    QCOMPARE(f.filesystemProbe.TimesWalked(kAddon), std::size_t{1});
+
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+
+    f.viewModel.MeasureTheSelection({kAddon});
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{300});
+    QCOMPARE(f.filesystemProbe.TimesWalked(kAddon), std::size_t{1});
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

@@ -8,11 +8,15 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
+#include "application/DependencyReport.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/SizeService.h"
+#include "domain/ports/SimulatorPackages.h"
 #include "domain/tree/CategorySuggester.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/MoveTarget.h"
+#include "viewmodel/SelectionSize.h"
 #include "viewmodel/SessionNotifier.h"
 
 class AddonTreeViewModel final : public QObject
@@ -23,8 +27,12 @@ public:
     AddonTreeViewModel(Session& session,
                        ProfileService& service,
                        AddonTreeModel& model,
+                       const SimulatorPackages& packages,
+                       SizeService& sizes,
                        const SessionNotifier& notifier,
                        QObject* parent = nullptr);
+
+    void MeasureTheSelection(const std::vector<std::filesystem::path>& addonFolders);
 
     void ShowActiveProfile() const;
 
@@ -64,6 +72,8 @@ public:
 
     [[nodiscard]] std::vector<CategorySuggestion> SuggestionsFor(const TreeNode* node) const;
 
+    [[nodiscard]] DependencyReport DependenciesOf(const TreeNode* node) const;
+
     [[nodiscard]] LibraryReport AddLibrary(const std::filesystem::path& path) const;
 
     [[nodiscard]] bool CanUndo() const;
@@ -76,6 +86,10 @@ signals:
     void BatchFinished(const std::vector<LinkOperationResult>& results);
 
     void Refused(const QString& explanation);
+
+    void SizeMeasuring();
+
+    void SizeMeasured(const SelectionSize& size);
 
 private:
     [[nodiscard]] const TreeNode* LibraryTreeHolding(const TreeNode& node) const;
@@ -91,6 +105,9 @@ private:
     Session& session_;
     ProfileService& service_;
     AddonTreeModel& model_;
+    const SimulatorPackages& packages_;
+    SizeService& sizes_;
+    MeasurementCaller caller_;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H

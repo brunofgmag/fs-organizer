@@ -14,6 +14,17 @@ namespace
                                        return EqualsIgnoringCase(listing.name, name);
                                    });
     }
+
+    bool HoldsSomethingNew(const MigratableLibrary& library)
+    {
+        return library.rootExists
+            && (library.proposal.state == ProposedState::New
+                || std::ranges::any_of(library.proposal.categories,
+                                       [](const ProposedCategory& category)
+                                       {
+                                           return category.state == ProposedState::New;
+                                       }));
+    }
 }
 
 LegacyImportViewModel::LegacyImportViewModel(Session& session,
@@ -27,6 +38,17 @@ LegacyImportViewModel::LegacyImportViewModel(Session& session,
 std::vector<LegacyMigration> LegacyImportViewModel::Migrations() const
 {
     return importer_.Propose(session_.Profile(), session_.Snapshot().libraries);
+}
+
+bool LegacyImportViewModel::SomethingIsWaiting() const
+{
+    const std::vector<LegacyMigration> migrations = Migrations();
+
+    return std::ranges::any_of(migrations,
+                               [](const LegacyMigration& migration)
+                               {
+                                   return std::ranges::any_of(migration.libraries, HoldsSomethingNew);
+                               });
 }
 
 std::size_t LegacyImportViewModel::PresetsWaitingIn(const std::filesystem::path& presetsPath) const

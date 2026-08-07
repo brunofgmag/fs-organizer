@@ -4,6 +4,7 @@
 #include <chrono>
 #include <filesystem>
 #include <optional>
+#include <string>
 
 struct QuarantinedItem
 {
@@ -14,6 +15,19 @@ struct QuarantinedItem
     [[nodiscard]] bool KnowsWhereItCameFrom() const
     {
         return !origin.empty();
+    }
+};
+
+struct QuarantineDetail
+{
+    std::filesystem::path path{};
+    std::string version{};
+    std::filesystem::path replacedBy{};
+    std::string replacementVersion{};
+
+    [[nodiscard]] bool WasReplaced() const
+    {
+        return !replacedBy.empty();
     }
 };
 

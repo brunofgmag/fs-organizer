@@ -3,6 +3,7 @@
 
 #include <QtTest/QtTest>
 
+#include "application/DependencyReport.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
 #include "domain/model/DestinationEntry.h"
@@ -11,6 +12,7 @@
 #include "domain/model/LinkType.h"
 #include "domain/model/OperationKind.h"
 #include "domain/model/OperationRecord.h"
+#include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
 
 namespace QTest
@@ -159,6 +161,32 @@ namespace QTest
         }
 
         return qstrdup("OperationKind(?)");
+    }
+
+    template<>
+    inline char* toString(const DependencyResolution& t)
+    {
+        switch (t)
+        {
+        case DependencyResolution::InThisLibrary: return qstrdup("InThisLibrary");
+        case DependencyResolution::InTheSimulator: return qstrdup("InTheSimulator");
+        case DependencyResolution::Unverifiable: return qstrdup("Unverifiable");
+        }
+
+        return qstrdup("DependencyResolution(?)");
+    }
+
+    template<>
+    inline char* toString(const PackagePresence& t)
+    {
+        switch (t)
+        {
+        case PackagePresence::Present: return qstrdup("Present");
+        case PackagePresence::Absent: return qstrdup("Absent");
+        case PackagePresence::Unverifiable: return qstrdup("Unverifiable");
+        }
+
+        return qstrdup("PackagePresence(?)");
     }
 
     template<>

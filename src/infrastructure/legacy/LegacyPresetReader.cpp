@@ -43,7 +43,8 @@ namespace
     }
 }
 
-std::optional<LegacyPresetSelection> ReadLegacyPreset(const std::filesystem::path& file)
+std::optional<LegacyPresetSelection> ReadLegacyPreset(const std::filesystem::path& file,
+                                                      const QStringDecoder::Encoding whenThereIsNoBom)
 {
     QFile source(AsText(file));
 
@@ -52,7 +53,7 @@ std::optional<LegacyPresetSelection> ReadLegacyPreset(const std::filesystem::pat
         return std::nullopt;
     }
 
-    const std::optional<QString> text = DecodeLegacyText(source.readAll(), QStringDecoder::System);
+    const std::optional<QString> text = DecodeLegacyText(source.readAll(), whenThereIsNoBom);
 
     if (!text.has_value())
     {
@@ -77,7 +78,8 @@ std::optional<LegacyPresetSelection> ReadLegacyPreset(const std::filesystem::pat
     return selection;
 }
 
-std::vector<LegacyPresetSelection> ReadLegacyPresetsIn(const std::filesystem::path& folder)
+std::vector<LegacyPresetSelection> ReadLegacyPresetsIn(const std::filesystem::path& folder,
+                                                       const QStringDecoder::Encoding whenThereIsNoBom)
 {
     std::error_code failure;
     std::vector<LegacyPresetSelection> presets;
@@ -89,7 +91,7 @@ std::vector<LegacyPresetSelection> ReadLegacyPresetsIn(const std::filesystem::pa
             continue;
         }
 
-        if (const std::optional<LegacyPresetSelection> preset = ReadLegacyPreset(entry.path()))
+        if (const std::optional<LegacyPresetSelection> preset = ReadLegacyPreset(entry.path(), whenThereIsNoBom))
         {
             presets.push_back(*preset);
         }

@@ -105,7 +105,7 @@ namespace
         switch (tone)
         {
         case TagTone::Filled: return {.ground = tones.accent, .ink = tones.onAccent, .rule = tones.accent};
-        case TagTone::Outlined: return {.ground = Qt::transparent, .ink = tones.accentBright, .rule = tones.accent};
+        case TagTone::Outlined: return {.ground = Qt::transparent, .ink = tones.accentInk, .rule = tones.accent};
         case TagTone::Muted: return {.ground = tones.raised, .ink = tones.secondary, .rule = tones.raised};
         case TagTone::Line: break;
         }
@@ -181,14 +181,7 @@ void PaintTag(QPainter& painter, const QRect& box, const QString& text, const Ta
 
 QColor AlarmingRowGround()
 {
-    const ModernistTones tones = TonesOf(CurrentColorScheme());
-
-    QColor ground = tones.window;
-    ground.setRed((ground.red() * 4 + tones.accent.red()) / 5);
-    ground.setGreen((ground.green() * 4 + tones.accent.green()) / 5);
-    ground.setBlue((ground.blue() * 4 + tones.accent.blue()) / 5);
-
-    return ground;
+    return TonesOf(CurrentColorScheme()).alarming;
 }
 
 QColor PointedAtRowGround()
@@ -203,7 +196,7 @@ QColor QuietInk()
 
 QColor AlertInk()
 {
-    return TonesOf(CurrentColorScheme()).accentBright;
+    return TonesOf(CurrentColorScheme()).accentInk;
 }
 
 QIcon GearIcon(const int side)

@@ -22,6 +22,7 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/DependencyReport.cpp
         src/application/ImportService.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
@@ -29,6 +30,7 @@ set(APPLICATION_SOURCES
         src/application/ProfileService.cpp
         src/application/Session.cpp
         src/application/SetupService.cpp
+        src/application/SizeService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
@@ -41,12 +43,16 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
+        src/infrastructure/sim/ContentListLocations.cpp
+        src/infrastructure/sim/ContentXmlPackages.cpp
+        src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
 )
 
 set(WINDOWS_INFRASTRUCTURE_SOURCES
+        src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/link/WindowsLinkService.cpp
@@ -67,6 +73,8 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/DependencyText.cpp
+        src/viewmodel/DiagnosticsViewModel.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
@@ -80,6 +88,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/QuarantineViewModel.cpp
         src/viewmodel/SessionNotifier.cpp
         src/viewmodel/SetupViewModel.cpp
+        src/viewmodel/SizeSummary.cpp
         src/viewmodel/UpdateViewModel.cpp
 )
 
@@ -87,6 +96,7 @@ set(VIEW_SOURCES
         src/view/library/AddonTreePage.cpp
         src/view/community/CommunityPage.cpp
         src/view/community/ConflictDialog.cpp
+        src/view/diagnostics/DiagnosticsPage.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
         src/view/shell/LanguageSwitch.cpp
@@ -101,10 +111,12 @@ set(VIEW_SOURCES
         src/view/delegates/RowDelegate.cpp
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp
+        src/view/shell/StartupOffers.cpp
         src/view/library/SuggestionDialog.cpp
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp
+        src/view/panels/DependencySection.cpp
         src/view/panels/EmptyState.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp
@@ -129,5 +141,6 @@ set(APP_SOURCES
 
 list(APPEND APP_SOURCES
         assets/app.rc
+        assets/app.manifest
         assets/resources.qrc
 )

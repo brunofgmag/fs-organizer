@@ -7,13 +7,14 @@
 
 #include <QtWidgets/QWidget>
 
+#include "view/panels/ModelRowDetail.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
 class ContextPanel;
+class DependencySection;
 class EmptyState;
-class ModelRowDetail;
 class QCheckBox;
 class QLabel;
 class QLineEdit;
@@ -47,7 +48,7 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
-    void RetranslateUi();
+    void RetranslateUi() const;
 
     [[nodiscard]] QWidget* CreateActions();
 
@@ -59,9 +60,11 @@ private:
 
     [[nodiscard]] const TreeNode* Current() const;
 
-    void ShowTheSelectedAddon() const;
+    void ShowTheSelectedAddon();
 
-    void ShowTheSelectedBatch(const QModelIndexList& rows) const;
+    void ShowTheSelectedBatch(const QModelIndexList& rows);
+
+    void ShowTheFields(const QString& size) const;
 
     void ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const;
 
@@ -81,9 +84,19 @@ private:
 
     void NoteExpansion(const QModelIndex& position, bool expanded);
 
-    void CarryTheExpansion(const std::filesystem::path& from, const std::filesystem::path& to);
+    void NoteSelection();
+
+    void NoteScrolling(int value);
+
+    void CarryTheRememberedPaths(const std::filesystem::path& from, const std::filesystem::path& to);
 
     void RestoreExpansion(const QModelIndex& parent);
+
+    [[nodiscard]] bool RestoreSelection();
+
+    void RestoreScrolling(int value) const;
+
+    void GatherSelection(const QModelIndex& parent, QModelIndexList& found, QModelIndex& current) const;
 
     void PublishSummary();
 
@@ -113,6 +126,7 @@ private:
     QTreeView* tree_ = nullptr;
     ContextPanel* panel_ = nullptr;
     ModelRowDetail* detail_ = nullptr;
+    DependencySection* dependencies_ = nullptr;
     QPushButton* relink_ = nullptr;
     QPushButton* moveTo_ = nullptr;
     QPushButton* openFolder_ = nullptr;
@@ -126,7 +140,11 @@ private:
     QLabel* promise_ = nullptr;
     EmptyState* invite_ = nullptr;
     QPushButton* inviteAction_ = nullptr;
+    QList<ModelRowDetail::Field> fields_;
     std::set<std::string> expanded_;
+    std::set<std::string> selected_;
+    std::string current_;
+    int scrolled_ = 0;
     bool rebuilding_ = false;
     bool shownOnce_ = false;
 };

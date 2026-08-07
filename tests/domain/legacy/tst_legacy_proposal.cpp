@@ -2,6 +2,7 @@
 
 #include "domain/legacy/LegacyProposal.h"
 #include "domain/support/PathUtils.h"
+#include "tests/support/LegacyFixtures.h"
 #include "tests/support/PathPrinting.h"
 
 namespace
@@ -44,55 +45,6 @@ namespace
         return {"D:/MSFS 2024/Aircraft Mods", "D:/MSFS 2024/Aircrafts", "D:/MSFS 2024/Liveries",
                 "D:/MSFS 2024/Sceneries",     "D:/MSFS 2024/Sounds",    "D:/MSFS 2024/Traffic",
                 "D:/MSFS 2024/Utils"};
-    }
-
-    SimulatorProfile ProfileHolding(const std::vector<std::filesystem::path>& libraryPaths)
-    {
-        SimulatorProfile profile;
-        profile.id = "msfs2024";
-
-        for (const std::filesystem::path& path : libraryPaths)
-        {
-            profile.libraries.push_back(Library{.id = "library-1", .path = path, .label = "MSFS 2024"});
-        }
-
-        return profile;
-    }
-
-    TreeNode CategoryAt(const std::filesystem::path& path)
-    {
-        TreeNode node;
-        node.kind = TreeNodeKind::Category;
-        node.path = path;
-
-        return node;
-    }
-
-    TreeNode CategoryHolding(const std::filesystem::path& path)
-    {
-        TreeNode addon;
-        addon.kind = TreeNodeKind::Addon;
-        addon.path = path / "an-addon";
-
-        TreeNode category = CategoryAt(path);
-        category.children.push_back(std::move(addon));
-
-        return category;
-    }
-
-    std::vector<TreeNode> LibraryScannedAt(const std::filesystem::path& root,
-                                           const std::vector<std::filesystem::path>& categories)
-    {
-        TreeNode library;
-        library.kind = TreeNodeKind::Library;
-        library.path = root;
-
-        for (const std::filesystem::path& category : categories)
-        {
-            library.children.push_back(CategoryHolding(category));
-        }
-
-        return {library};
     }
 
     std::vector<TreeNode> AlsoHoldingTheEmptyFolder(std::vector<TreeNode> scanned, const std::filesystem::path& folder)

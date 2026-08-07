@@ -43,7 +43,7 @@ namespace
 
             for (const TreeNode* addon : AddonsUnder(*tree))
             {
-                folders.emplace(Lowered(addon->path.filename().string()), addon);
+                folders.emplace(Lowered(AsUtf8(addon->path.filename())), addon);
             }
         }
 
