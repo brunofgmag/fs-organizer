@@ -48,6 +48,8 @@ namespace
         case OperationKind::CreateCategory: return "createCategory";
         case OperationKind::RenameCategory: return "renameCategory";
         case OperationKind::RemoveCategory: return "removeCategory";
+        case OperationKind::RecycleFromLibrary: return "recycleFromLibrary";
+        case OperationKind::DeleteFromLibrary: return "deleteFromLibrary";
         }
 
         return "unknown";
@@ -101,6 +103,9 @@ namespace
         case FileResult::TheOutcomeIsUnknown: return "theOutcomeIsUnknown";
         case FileResult::CouldNotReadTheSource: return "couldNotReadTheSource";
         case FileResult::TheOriginIsOccupied: return "theOriginIsOccupied";
+        case FileResult::TheRecycleBinIsTooSmall: return "theRecycleBinIsTooSmall";
+        case FileResult::TheRecycleBinCannotReachIt: return "theRecycleBinCannotReachIt";
+        case FileResult::CouldNotDelete: return "couldNotDelete";
         }
 
         return "unknown";

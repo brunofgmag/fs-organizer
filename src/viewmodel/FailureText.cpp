@@ -85,6 +85,11 @@ QString Explain(const FileResult result)
         return QObject::tr("the journal records this operation, but does not say how it ended");
     case FileResult::CouldNotReadTheSource:
         return QObject::tr("the source folder could not be walked, so nothing was copied");
+    case FileResult::TheRecycleBinIsTooSmall:
+        return QObject::tr("the selection does not fit in the Recycle Bin of that volume");
+    case FileResult::TheRecycleBinCannotReachIt:
+        return QObject::tr("the Recycle Bin stops at 260 characters, and this addon holds a longer path");
+    case FileResult::CouldNotDelete: return QObject::tr("the folder could not be deleted");
     }
 
     return {};

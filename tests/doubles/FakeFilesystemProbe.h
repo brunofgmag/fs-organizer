@@ -58,6 +58,22 @@ public:
         return fileSystem_.FreeSpaceOn(path);
     }
 
+    [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override
+    {
+        const std::optional<std::uintmax_t> quota = fileSystem_.RecycleBinQuotaOn(path);
+        if (!quota.has_value())
+        {
+            return std::nullopt;
+        }
+
+        return RecycleBinRoom{.quota = *quota, .itRecycles = fileSystem_.VolumeRecycles(path)};
+    }
+
+    [[nodiscard]] std::optional<std::size_t> LongestEntryUnder(const std::filesystem::path& root) const override
+    {
+        return fileSystem_.LongestEntryUnder(root);
+    }
+
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override
     {

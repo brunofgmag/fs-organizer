@@ -70,6 +70,8 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::RenameCategory: return tr("Rename category");
     case OperationKind::RemoveCategory: return tr("Delete category");
     case OperationKind::DiscardStaging: return tr("Discard a half finished import");
+    case OperationKind::RecycleFromLibrary: return tr("Delete addon to the Recycle Bin");
+    case OperationKind::DeleteFromLibrary: return tr("Delete addon permanently");
     }
 
     return {};

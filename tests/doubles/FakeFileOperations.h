@@ -1,7 +1,11 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H
 
+#include <algorithm>
+#include <string>
+
 #include "domain/ports/FileOperations.h"
+#include "domain/support/PathUtils.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
 class FakeFileOperations final : public FileOperations
@@ -29,6 +33,11 @@ public:
     void MakeTheRemovalFail()
     {
         removalFails_ = true;
+    }
+
+    void MakeTheRemovalFailFor(const std::filesystem::path& path)
+    {
+        unremovable_.push_back(ComparablePath(path));
     }
 
     void MakeTheCreationFail()
@@ -118,7 +127,12 @@ public:
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override
     {
-        return !removalFails_ && fileSystem_.RemoveTree(path);
+        return TheRemovalIsAllowed(path) && fileSystem_.RemoveTree(path);
+    }
+
+    [[nodiscard]] bool Recycle(const std::filesystem::path& path) override
+    {
+        return TheRemovalIsAllowed(path) && fileSystem_.RecycleTree(path);
     }
 
     [[nodiscard]] bool RemoveEmptyFolder(const std::filesystem::path& path) override
@@ -127,7 +141,13 @@ public:
     }
 
 private:
+    [[nodiscard]] bool TheRemovalIsAllowed(const std::filesystem::path& path) const
+    {
+        return !removalFails_ && std::ranges::find(unremovable_, ComparablePath(path)) == unremovable_.end();
+    }
+
     InMemoryFileSystem& fileSystem_;
+    std::vector<std::string> unremovable_;
     bool copyFailsPartWayThrough_ = false;
     bool copyDropsAFile_ = false;
     bool moveFails_ = false;

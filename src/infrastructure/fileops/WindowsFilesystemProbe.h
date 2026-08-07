@@ -20,6 +20,10 @@ public:
 
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override;
+
+    [[nodiscard]] std::optional<std::size_t> LongestEntryUnder(const std::filesystem::path& root) const override;
+
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override;
 
     [[nodiscard]] std::optional<std::vector<FileFingerprint>>

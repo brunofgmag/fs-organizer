@@ -180,6 +180,22 @@ fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-legacy-config-importer-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-deletion-service-tests deletion-service
+        tests/application/tst_deletion_service.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-deletion-service-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-library-organizer-tests library-organizer
         tests/application/tst_library_organizer.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -679,6 +695,13 @@ if (WIN32)
             tests/support/PathPrinting.h
             src/domain/support/CaseFolding.h
             src/domain/support/PathUtils.h)
+
+    fsorg_add_qt_test(fsorg-delete-on-real-disk-tests delete-on-real-disk
+            tests/infrastructure/fileops/tst_delete_on_real_disk.cpp
+            tests/support/DeepPaths.h
+            tests/support/PathPrinting.h
+            tests/support/TempFiles.h)
+    target_link_libraries(fsorg-delete-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-size-on-real-disk-tests size-on-real-disk
             tests/infrastructure/fileops/tst_size_on_real_disk.cpp
