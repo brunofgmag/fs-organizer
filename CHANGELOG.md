@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/brunofgmag/fs-organizer/compare/v0.14.0...v0.15.0) (2026-08-07)
+
+
+### Features
+
+* quarantine that knows where each item came from ([#41](https://github.com/brunofgmag/fs-organizer/issues/41)) ([1853981](https://github.com/brunofgmag/fs-organizer/commit/18539813608ed55bc36915f613dc3de1d8d6c0e6))
+
 ## [0.14.0](https://github.com/brunofgmag/fs-organizer/compare/v0.13.0...v0.14.0) (2026-08-07)
 
 
