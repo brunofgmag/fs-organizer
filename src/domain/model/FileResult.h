@@ -34,6 +34,7 @@ enum class FileResult : int
     TheRecycleBinIsTooSmall = 25,
     TheRecycleBinCannotReachIt = 26,
     CouldNotDelete = 27,
+    CouldNotRecordTheOrigin = 28,
 };
 
 inline constexpr std::array kAllFileResults{
@@ -65,9 +66,10 @@ inline constexpr std::array kAllFileResults{
     FileResult::TheRecycleBinIsTooSmall,
     FileResult::TheRecycleBinCannotReachIt,
     FileResult::CouldNotDelete,
+    FileResult::CouldNotRecordTheOrigin,
 };
 
-static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::CouldNotDelete) + 1,
+static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::CouldNotRecordTheOrigin) + 1,
               "Every FileResult belongs in kAllFileResults, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool Succeeded(const FileResult result)

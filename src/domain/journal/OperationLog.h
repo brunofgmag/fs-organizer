@@ -27,7 +27,10 @@ public:
                       const AddonId& addon,
                       const std::filesystem::path& source,
                       const std::filesystem::path& target,
-                      FileResult result) const;
+                      FileResult result,
+                      OriginSource originSource = OriginSource::Unknown) const;
+
+    [[nodiscard]] std::chrono::system_clock::time_point Now() const;
 
     [[nodiscard]] std::vector<OperationRecord> History() const;
 

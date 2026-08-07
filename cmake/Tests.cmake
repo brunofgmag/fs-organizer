@@ -123,6 +123,12 @@ fsorg_add_qt_test(fsorg-copy-conflicts-tests copy-conflicts
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-copy-conflicts-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-origin-sidecar-tests origin-sidecar
+        tests/domain/importing/tst_origin_sidecar.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-origin-sidecar-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
         tests/doubles/FakeClock.h

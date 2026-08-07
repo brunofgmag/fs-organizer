@@ -4,6 +4,7 @@
 #include <QtTest/QtTest>
 
 #include "application/DependencyReport.h"
+#include "application/model/RestorePlan.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
 #include "domain/model/DestinationEntry.h"
@@ -14,6 +15,7 @@
 #include "domain/model/OperationRecord.h"
 #include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
+#include "domain/model/QuarantineOrigin.h"
 
 namespace QTest
 {
@@ -135,9 +137,35 @@ namespace QTest
         case FileResult::TheRecycleBinIsTooSmall: return qstrdup("TheRecycleBinIsTooSmall");
         case FileResult::TheRecycleBinCannotReachIt: return qstrdup("TheRecycleBinCannotReachIt");
         case FileResult::CouldNotDelete: return qstrdup("CouldNotDelete");
+        case FileResult::CouldNotRecordTheOrigin: return qstrdup("CouldNotRecordTheOrigin");
         }
 
         return qstrdup("FileResult(?)");
+    }
+
+    template<>
+    inline char* toString(const SwapStep& t)
+    {
+        switch (t)
+        {
+        case SwapStep::QuarantineTheOccupant: return qstrdup("QuarantineTheOccupant");
+        case SwapStep::RestoreTheItem: return qstrdup("RestoreTheItem");
+        }
+
+        return qstrdup("SwapStep(?)");
+    }
+
+    template<>
+    inline char* toString(const OriginSource& t)
+    {
+        switch (t)
+        {
+        case OriginSource::Unknown: return qstrdup("Unknown");
+        case OriginSource::Sidecar: return qstrdup("Sidecar");
+        case OriginSource::Journal: return qstrdup("Journal");
+        }
+
+        return qstrdup("OriginSource(?)");
     }
 
     template<>

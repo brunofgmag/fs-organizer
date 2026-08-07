@@ -4,11 +4,13 @@
 #include <variant>
 
 #include <fstream>
+#include <system_error>
 
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
 #include "domain/importing/ImportEngine.h"
 #include "domain/importing/ImportPaths.h"
+#include "domain/importing/OriginSidecar.h"
 #include "domain/journal/OperationLog.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -43,6 +45,10 @@ namespace
         static void TheRestoreGuardTellsATakenIdentityFromAnOccupiedOriginOnRealDisk();
         static void AnItemWithNoOriginIsOfferedTheRealCategoriesOfTheLibraryHoldingIt();
         static void RestoringIntoTheChosenCategoryReallyMovesTheFolderThere();
+        static void TheOriginBesideTheItemOutlivesTheJournalFile();
+        static void TheRecordBesideTheItemIsNeverEnumeratedAsAnItem();
+        static void AnAccentedOriginComesBackByteForByteFromTheRealFile();
+        static void TheSwapReallyExchangesTheOccupantAndTheItemOnDisk();
     };
 }
 
@@ -134,6 +140,13 @@ namespace
         profile.libraries = {Library{.id = "lib-1", .path = library, .label = "Biblioteca"}};
 
         return profile;
+    }
+
+    std::string ContentsOfFile(const std::filesystem::path& file)
+    {
+        std::ifstream stream(file, std::ios::binary);
+
+        return std::string(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
     }
 
     void PutTwoCopiesOfTheSameAddonOnDisk(const Disk& disk, const std::string& name)
@@ -522,6 +535,129 @@ void ImportOnRealDiskTest::RestoringIntoTheChosenCategoryReallyMovesTheFolderThe
     QCOMPARE(restored.front().result, FileResult::Completed);
     QVERIFY(std::filesystem::exists(disk.Category() / "simbridge" / "dist" / "simbridge.exe"));
     QVERIFY(!std::filesystem::exists(held));
+}
+
+void ImportOnRealDiskTest::TheOriginBesideTheItemOutlivesTheJournalFile()
+{
+    const Disk disk;
+    PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
+
+    const std::filesystem::path journalFile = disk.Root() / "journal" / "operations.jsonl";
+    const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "tfdidesign-aircraft-md11";
+
+    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
+
+    {
+        const Service wrote{.engine = {.journalFile = journalFile}};
+
+        QCOMPARE(wrote.service.ResolveConflict(disk.Profile(), wrote.Entries(disk), conflict,
+                                               ConflictChoice::KeepTheDestinationCopy),
+                 FileResult::Completed);
+    }
+
+    QVERIFY(std::filesystem::exists(SidecarPathFor(held)));
+
+    std::error_code error;
+    QVERIFY(std::filesystem::remove(journalFile, error));
+
+    const Service afterwards{.engine = {.journalFile = journalFile}};
+
+    QVERIFY(afterwards.engine.journal.Read().empty());
+
+    const std::vector<QuarantinedItem> items = afterwards.service.Quarantined(disk.Profile());
+
+    QCOMPARE(items.size(), std::size_t{1});
+    QCOMPARE(items.front().origin, conflict.libraryPath);
+    QCOMPARE(items.front().source, OriginSource::Sidecar);
+    QVERIFY(items.front().quarantinedAt.has_value());
+
+    const std::vector<FileOperationResult> restored = afterwards.service.Restore(disk.Profile(), items);
+
+    QCOMPARE(restored.front().result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(conflict.libraryPath / "aircraft.cfg"));
+    QVERIFY(!std::filesystem::exists(SidecarPathFor(held)));
+}
+
+void ImportOnRealDiskTest::TheRecordBesideTheItemIsNeverEnumeratedAsAnItem()
+{
+    const Disk disk;
+    PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
+
+    QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
+                                              ConflictChoice::KeepTheDestinationCopy),
+             FileResult::Completed);
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+
+    QCOMPARE(std::distance(std::filesystem::directory_iterator(quarantine), std::filesystem::directory_iterator{}),
+             std::ptrdiff_t{2});
+    QCOMPARE(composed.engine.filesystemProbe.ChildDirectories(quarantine).size(), std::size_t{1});
+    QCOMPARE(composed.service.Quarantined(disk.Profile()).size(), std::size_t{1});
+}
+
+void ImportOnRealDiskTest::AnAccentedOriginComesBackByteForByteFromTheRealFile()
+{
+    const Disk disk;
+    Service composed;
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+    const std::filesystem::path held = quarantine / "aviao";
+
+    static_cast<void>(disk.AddFolder("Library/_fsorganizer-quarantine/aviao"));
+
+    const std::filesystem::path accented = disk.Category()
+        / PathFromUtf8("Avi\xC3\xB5"
+                       "es");
+
+    QVERIFY(composed.engine.files.WriteTextFile(SidecarPathFor(held),
+                                                TextOfTheOrigin(QuarantineOrigin{.origin = accented})));
+
+    const std::vector<QuarantinedItem> items = composed.service.Quarantined(disk.Profile());
+
+    QCOMPARE(items.size(), std::size_t{1});
+    QCOMPARE(items.front().origin, accented);
+    QCOMPARE(items.front().source, OriginSource::Sidecar);
+}
+
+void ImportOnRealDiskTest::TheSwapReallyExchangesTheOccupantAndTheItemOnDisk()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/dist/simbridge.exe", "the older build");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Library/Utils/simbridge/dist/simbridge.exe", "the newer build");
+
+    const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "simbridge";
+    const std::filesystem::path place = disk.Category() / "simbridge";
+
+    QVERIFY(
+        composed.engine.files.WriteTextFile(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+
+    const QuarantinedItem item = composed.service.Quarantined(disk.Profile()).front();
+    const SwapResult swapped = composed.service.Swap(disk.Profile(), composed.Entries(disk), item);
+
+    QVERIFY(swapped.Succeeded());
+    QCOMPARE(swapped.stoppedAt, SwapStep::RestoreTheItem);
+    QCOMPARE(swapped.inTheLibrary, place);
+
+    QCOMPARE(ContentsOfFile(place / "dist" / "simbridge.exe"), std::string{"the older build"});
+    QCOMPARE(ContentsOfFile(held / "dist" / "simbridge.exe"), std::string{"the newer build"});
+    QVERIFY(!std::filesystem::exists(SwapSlotFor(held)));
+
+    const std::optional<QuarantineOrigin> recorded =
+        OriginFromText(composed.engine.filesystemProbe.ContentsOf(SidecarPathFor(held)).value_or(std::string{}));
+
+    QVERIFY(recorded.has_value());
+    QCOMPARE(recorded->origin, place);
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)

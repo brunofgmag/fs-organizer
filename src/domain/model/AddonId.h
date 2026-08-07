@@ -8,8 +8,8 @@
 
 struct AddonId
 {
-    LibraryId libraryId;
-    std::string folderName;
+    LibraryId libraryId{};
+    std::string folderName{};
 };
 
 [[nodiscard]] inline bool operator==(const AddonId& left, const AddonId& right)
