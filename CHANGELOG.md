@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/brunofgmag/fs-organizer/compare/v0.12.0...v0.13.0) (2026-08-07)
+
+
+### Features
+
+* delete addons from the library, to the Recycle Bin or for good ([#37](https://github.com/brunofgmag/fs-organizer/issues/37)) ([07a3217](https://github.com/brunofgmag/fs-organizer/commit/07a321728a49c56c5bbefd10a2ed6fdfc650cdbf))
+
 ## [0.12.0](https://github.com/brunofgmag/fs-organizer/compare/v0.11.0...v0.12.0) (2026-08-07)
 
 
