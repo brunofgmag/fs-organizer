@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/brunofgmag/fs-organizer/compare/v0.17.0...v0.18.0) (2026-08-08)
+
+
+### Features
+
+* switch the programs the simulator launches with itself, from the app ([#48](https://github.com/brunofgmag/fs-organizer/issues/48)) ([d3af55b](https://github.com/brunofgmag/fs-organizer/commit/d3af55bd1d7fd0d908c9058fa95482f8eb4c41c9))
+
 ## [0.17.0](https://github.com/brunofgmag/fs-organizer/compare/v0.16.0...v0.17.0) (2026-08-08)
 
 
