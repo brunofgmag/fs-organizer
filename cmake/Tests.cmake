@@ -186,6 +186,15 @@ fsorg_add_qt_test(fsorg-size-service-tests size-service
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-size-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-startup-report-tests startup-report
+        tests/application/tst_startup_report.cpp
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-startup-report-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-startup-service-tests startup-service
         tests/application/tst_startup_service.cpp
         tests/doubles/FakeProcessProbe.h

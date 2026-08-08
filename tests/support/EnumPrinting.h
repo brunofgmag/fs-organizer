@@ -4,6 +4,7 @@
 #include <QtTest/QtTest>
 
 #include "application/DependencyReport.h"
+#include "application/StartupReport.h"
 #include "application/model/RestorePlan.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
@@ -215,6 +216,31 @@ namespace QTest
         }
 
         return qstrdup("DependencyResolution(?)");
+    }
+
+    template<>
+    inline char* toString(const StartupReach& t)
+    {
+        switch (t)
+        {
+        case StartupReach::OutsideYourAddons: return qstrdup("OutsideYourAddons");
+        case StartupReach::InsideAnAddon: return qstrdup("InsideAnAddon");
+        }
+
+        return qstrdup("StartupReach(?)");
+    }
+
+    template<>
+    inline char* toString(const StartupAlarm& t)
+    {
+        switch (t)
+        {
+        case StartupAlarm::None: return qstrdup("None");
+        case StartupAlarm::TheExecutableIsMissing: return qstrdup("TheExecutableIsMissing");
+        case StartupAlarm::TheAddonHoldingItIsOff: return qstrdup("TheAddonHoldingItIsOff");
+        }
+
+        return qstrdup("StartupAlarm(?)");
     }
 
     template<>
