@@ -37,6 +37,7 @@ set(APPLICATION_SOURCES
         src/application/Session.cpp
         src/application/SetupService.cpp
         src/application/SizeService.cpp
+        src/application/StartupService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
