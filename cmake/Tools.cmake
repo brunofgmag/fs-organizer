@@ -42,6 +42,26 @@ add_custom_command(TARGET fsorg-packages POST_BUILD
         "$<TARGET_FILE_DIR:fsorg-packages>"
         VERBATIM)
 
+add_executable(fsorg-startup
+        tools/fsorg-startup/main.cpp
+)
+
+target_include_directories(fsorg-startup PRIVATE "${CMAKE_SOURCE_DIR}/src")
+
+target_compile_definitions(fsorg-startup PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+
+if (MSVC)
+    target_compile_options(fsorg-startup PRIVATE /permissive- /Zc:preprocessor)
+endif ()
+
+target_link_libraries(fsorg-startup PRIVATE fsorg-application fsorg-infrastructure Qt6::Core)
+
+add_custom_command(TARGET fsorg-startup POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::Core>"
+        "$<TARGET_FILE_DIR:fsorg-startup>"
+        VERBATIM)
+
 add_executable(fsorg-delete
         tools/fsorg-delete/main.cpp
         src/viewmodel/FailureText.cpp
