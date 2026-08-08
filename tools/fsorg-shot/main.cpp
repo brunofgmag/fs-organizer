@@ -419,7 +419,7 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
-    ProfileService profileService(catalog, classifier, linking, log, identities, stored->linkType);
+    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, stored->linkType);
     ImportEngine importEngine(filesystemProbe, files, linking, log, stored->linkType);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
                                 stored->linkType);

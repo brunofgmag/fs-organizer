@@ -5,9 +5,10 @@
 
 struct StagingLeftover
 {
-    std::filesystem::path staging;
-    std::filesystem::path target;
-    std::filesystem::path source;
+    std::filesystem::path staging{};
+    std::filesystem::path target{};
+    std::filesystem::path source{};
+    std::filesystem::path externalSource{};
 
     [[nodiscard]] bool CanBeResumed() const
     {

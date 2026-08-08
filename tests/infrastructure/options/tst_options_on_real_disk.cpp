@@ -103,7 +103,7 @@ namespace
               journal(journalFile),
               settingsFile(disk.SettingsFile()),
               settings(settingsFile),
-              service(catalog, classifier, linking, log, identities, linkType),
+              service(catalog, filesystemProbe, classifier, linking, log, identities, linkType),
               organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, linkType),
               session(service, organizer, settings, processProbe, runner, observer)
         {

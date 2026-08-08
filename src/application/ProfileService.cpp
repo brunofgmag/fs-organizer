@@ -4,6 +4,8 @@
 #include <string>
 #include <utility>
 
+#include "domain/importing/ExternalSidecar.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -40,12 +42,14 @@ namespace
 }
 
 ProfileService::ProfileService(const CatalogScanner& catalog,
+                               const FilesystemProbe& filesystemProbe,
                                const EntryClassifier& classifier,
                                const LinkingEngine& linking,
                                const OperationLog& log,
                                const LibraryIdGenerator& identities,
                                const LinkType linkType)
     : catalog_(catalog),
+      filesystemProbe_(filesystemProbe),
       classifier_(classifier),
       linking_(linking),
       log_(log),
@@ -83,16 +87,43 @@ ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile) const
     ProfileSnapshot snapshot;
 
     snapshot.libraries = LibraryTreesOf(catalog_, profile);
-    snapshot.entries = ResolveEntries(profile);
+    snapshot.entries = ResolveEntries(profile, snapshot.libraries);
     snapshot.enabled = EnabledAddons(EnabledAddonFolders(snapshot.entries));
     snapshot.conflicts = FindCopyConflicts(snapshot.entries, snapshot.libraries);
 
     return snapshot;
 }
 
-std::vector<DestinationEntry> ProfileService::ResolveEntries(const SimulatorProfile& profile) const
+std::vector<DestinationEntry> ProfileService::ResolveEntries(const SimulatorProfile& profile,
+                                                             const std::vector<TreeNode>& libraries) const
 {
-    return classifier_.Resolve(profile.destinations, LibraryRoots(profile));
+    return classifier_.Resolve(profile.destinations, LibraryRoots(profile),
+                               WhatCameFromAnotherProgram(profile, libraries));
+}
+
+std::vector<ExternalAddon> ProfileService::WhatCameFromAnotherProgram(const SimulatorProfile& profile,
+                                                                      const std::vector<TreeNode>& libraries) const
+{
+    std::vector<ExternalAddon> known = ExternalAddonsOf(profile);
+
+    for (const TreeNode& library : libraries)
+    {
+        for (const TreeNode* addon : AddonsUnder(library))
+        {
+            const std::optional<std::string> written = filesystemProbe_.ContentsOf(ExternalSidecarPathFor(addon->path));
+            if (!written.has_value())
+            {
+                continue;
+            }
+
+            if (const std::optional<std::filesystem::path> came = ExternalOriginFromText(*written); came.has_value())
+            {
+                RememberedByTheLibrary(known, addon->path, *came);
+            }
+        }
+    }
+
+    return known;
 }
 
 ProfileService::LinksOnDisk ProfileService::ReadLinksNow(const SimulatorProfile& profile) const

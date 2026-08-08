@@ -27,6 +27,8 @@ namespace
         static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
         static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
         static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
+        static void TheOriginOfAnAddonThatCameFromAnotherProgramSurvivesTheRoundTrip();
+        static void AProfileWrittenBeforeExternalOriginsExistedReadsWithNone();
     };
 }
 
@@ -231,6 +233,48 @@ void JsonSettingsRepositoryTest::TheUpdateModeAndTheLanguageSurviveTheRoundTrip(
 
     QCOMPARE(read.updateMode, UpdateMode::Automatic);
     QCOMPARE(read.language, std::string("pt_BR"));
+}
+
+void JsonSettingsRepositoryTest::TheOriginOfAnAddonThatCameFromAnotherProgramSurvivesTheRoundTrip()
+{
+    const Storage storage;
+    const LibraryId libraryId = "{f81d4fae-7dec-11d0-a765-00a0c91e6bf6}";
+
+    SimulatorProfile profile;
+    profile.id = "msfs2024";
+    profile.libraries = {Library{.id = libraryId, .path = "D:/MSFS 2024", .label = "MSFS 2024"}};
+    profile.externalOrigins = {
+        ExternalOrigin{.libraryId = libraryId,
+                       .relativePath = "Utilities/gsx-pro",
+                       .externalPath = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro"},
+    };
+
+    AppSettings written;
+    written.profiles = {profile};
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.profiles.size(), std::size_t{1});
+
+    const std::vector<ExternalOrigin>& origins = read.profiles[0].externalOrigins;
+    QCOMPARE(origins.size(), std::size_t{1});
+    QCOMPARE(origins[0].libraryId, libraryId);
+    QCOMPARE(origins[0].relativePath, std::filesystem::path("Utilities/gsx-pro"));
+    QCOMPARE(origins[0].externalPath, std::filesystem::path("C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro"));
+}
+
+void JsonSettingsRepositoryTest::AProfileWrittenBeforeExternalOriginsExistedReadsWithNone()
+{
+    const Storage storage;
+
+    std::filesystem::create_directories(storage.File().parent_path());
+    std::ofstream(storage.File(), std::ios::binary) << R"({"profiles":[{"id":"msfs2024"}]})";
+
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.profiles.size(), std::size_t{1});
+    QVERIFY(read.profiles[0].externalOrigins.empty());
 }
 
 QTEST_APPLESS_MAIN(JsonSettingsRepositoryTest)

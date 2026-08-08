@@ -18,6 +18,12 @@ void UnregisterLibrary(SimulatorProfile& profile, const LibraryId& libraryId)
                   {
                       return destinationOverride.libraryId == libraryId;
                   });
+
+    std::erase_if(profile.externalOrigins,
+                  [&libraryId](const ExternalOrigin& externalOrigin)
+                  {
+                      return externalOrigin.libraryId == libraryId;
+                  });
 }
 
 bool RemoveProfile(std::vector<SimulatorProfile>& profiles, const std::string& profileId)

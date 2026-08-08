@@ -111,6 +111,8 @@ private:
 
     [[nodiscard]] FileResult DiscardOneStaging(const SimulatorProfile& profile, const StagingLeftover& leftover) const;
 
+    [[nodiscard]] std::filesystem::path WhatTheOtherProgramOwns(const std::filesystem::path& target) const;
+
     void Record(const SimulatorProfile& profile,
                 OperationKind kind,
                 const std::filesystem::path& addonFolder,

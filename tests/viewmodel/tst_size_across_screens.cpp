@@ -125,7 +125,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
         ImportService imports{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,

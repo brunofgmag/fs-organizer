@@ -7,6 +7,7 @@
 #include "domain/journal/OperationLog.h"
 #include "application/ImportService.h"
 #include "domain/importing/ImportPaths.h"
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/OriginSidecar.h"
 #include "domain/linking/EntryClassifier.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -40,6 +41,7 @@ namespace
         static void EmptyingTheQuarantineNeverReachesAnythingOutsideIt();
         static void NoQuarantineIsTouchedWhileTheSimulatorIsRunning();
         static void LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFrom();
+        static void ALeftoverOfAnExternalImportRemembersWhichProgramItWasTakingOver();
         static void TheSearchForLeftoversNeverWalksIntoAnAddon();
         static void ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSource();
         static void DiscardingALeftoverRemovesOnlyTheStaging();
@@ -451,6 +453,28 @@ void ImportServiceTest::LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFro
     QCOMPARE(leftovers.front().target, std::filesystem::path{"D:/Library/Utils/imported"});
     QCOMPARE(leftovers.front().source, std::filesystem::path{"E:/Sim/Community/imported"});
     QVERIFY(leftovers.front().CanBeResumed());
+}
+
+void ImportServiceTest::ALeftoverOfAnExternalImportRemembersWhichProgramItWasTakingOver()
+{
+    Fixture f;
+    f.AddBothCopies();
+    const std::filesystem::path came = "C:/Addon Manager/Utils/imported";
+    f.fileSystem.AddDirectory("D:/Library/Utils/imported.fsorg-partial");
+    f.fileSystem.AddFile("D:/Library/Utils/imported.fsorg-partial/manifest.json", kMegabyte);
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor("D:/Library/Utils/imported"),
+                                     TextOfTheExternalOrigin(came));
+
+    f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportCopyToStaging,
+                                               AddonId{.libraryId = "lib-1", .folderName = "imported"}, came,
+                                               "D:/Library/Utils/imported.fsorg-partial", FileResult::Completed));
+
+    const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
+
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().externalSource, came);
+    QVERIFY2(leftovers.front().CanBeResumed(),
+             "a leftover that knows the program it was taking over is exactly the one worth resuming");
 }
 
 void ImportServiceTest::TheSearchForLeftoversNeverWalksIntoAnAddon()

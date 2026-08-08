@@ -754,6 +754,13 @@ if (WIN32)
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-import-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-external-import-on-real-disk-tests external-import-on-real-disk
+            tests/infrastructure/importing/tst_external_import_on_real_disk.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-external-import-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
             tests/infrastructure/options/tst_options_on_real_disk.cpp
             tests/doubles/InlineBackgroundRunner.h

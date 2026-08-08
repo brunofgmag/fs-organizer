@@ -2,6 +2,7 @@
 
 #include "application/LibraryOrganizer.h"
 #include "application/Session.h"
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
@@ -56,6 +57,10 @@ namespace
         static void ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain();
         static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
         static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
+        static void AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgain();
+        static void APlainImportRemembersNothingAndScansNothingAgain();
+        static void MovingAnAddonCarriesTheRecordOfWhereItCameFrom();
+        static void UnregisteringALibraryForgetsWhereItsAddonsCameFrom();
     };
 }
 
@@ -178,7 +183,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -661,6 +666,77 @@ void SessionTest::DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAno
     QCOMPARE(f.settings.stored.profiles.front().destinationOverrides.size(), std::size_t{1});
     QCOMPARE(f.observer.finished, 1);
     QCOMPARE(f.observer.refreshed, 1);
+}
+
+namespace
+{
+    constexpr auto kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+
+    [[nodiscard]] ImportOperationResult LandedFromAnotherProgram()
+    {
+        return ImportOperationResult{.request = ImportRequest{.source = std::filesystem::path(kCommunity) / "gsx-pro",
+                                                              .category = kAircrafts,
+                                                              .externalSource = kVendorFolder},
+                                     .result = FileResult::Completed};
+    }
+}
+
+void SessionTest::AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgain()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    f.session.RememberWhatCameFromAnotherProgram({LandedFromAnotherProgram()});
+
+    const std::vector<ExternalOrigin>& remembered = f.settings.stored.profiles.front().externalOrigins;
+    QCOMPARE(remembered.size(), std::size_t{1});
+    QCOMPARE(remembered.front().libraryId, LibraryId{"library-1"});
+    QCOMPARE(ComparablePath(remembered.front().relativePath), ComparablePath("Aircrafts/gsx-pro"));
+    QCOMPARE(remembered.front().externalPath, std::filesystem::path{kVendorFolder});
+    QCOMPARE(f.observer.started, 2);
+}
+
+void SessionTest::APlainImportRemembersNothingAndScansNothingAgain()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    ImportOperationResult plain = LandedFromAnotherProgram();
+    plain.request.externalSource.clear();
+
+    f.session.RememberWhatCameFromAnotherProgram({plain});
+
+    QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
+    QCOMPARE(f.observer.started, 1);
+}
+
+void SessionTest::MovingAnAddonCarriesTheRecordOfWhereItCameFrom()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kAircrafts);
+    f.fileSystem.AddDirectory(kSceneries);
+    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.session.ShowActiveProfile();
+
+    const std::vector<FileOperationResult> results =
+        f.session.MoveAddons({AddonMove{.addonFolder = kAddon, .category = kSceneries}});
+
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QCOMPARE(ComparablePath(f.settings.stored.profiles.front().externalOrigins.front().relativePath),
+             ComparablePath("Sceneries/pmdg-aircraft-77w"));
+}
+
+void SessionTest::UnregisteringALibraryForgetsWhereItsAddonsCameFrom()
+{
+    Fixture f;
+    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.session.ShowActiveProfile();
+
+    f.session.UnregisterLibrary("library-1");
+
+    QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
 }
 
 QTEST_MAIN(SessionTest)

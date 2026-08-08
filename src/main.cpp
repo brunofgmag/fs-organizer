@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
     const AppSettings onDisk = settings.Load().value_or(AppSettings{});
     const LinkType storedLinkType = onDisk.linkType;
 
-    ProfileService profileService(catalog, classifier, linking, log, identities, storedLinkType);
+    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, storedLinkType);
 
     ImportEngine importEngine(filesystemProbe, files, linking, log, storedLinkType);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,

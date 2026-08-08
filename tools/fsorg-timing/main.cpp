@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
-    ProfileService profileService(catalog, classifier, linking, log, identities, LinkType::Junction);
+    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction);
 
     const ImportEngine importEngine(filesystemProbe, files, linking, log, LinkType::Junction);
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
@@ -184,7 +184,8 @@ int main(int argc, char* argv[])
     if (QCoreApplication::arguments().contains(QStringLiteral("--journal-scroll")))
     {
         const NoLibrariesToScan nothingToScan;
-        ProfileService justTheProfile(nothingToScan, classifier, linking, log, identities, LinkType::Junction);
+        ProfileService justTheProfile(nothingToScan, filesystemProbe, classifier, linking, log, identities,
+                                      LinkType::Junction);
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
         SilentObserver silent;

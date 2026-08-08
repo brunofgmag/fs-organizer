@@ -1,7 +1,9 @@
 #include "application/LibraryOrganizer.h"
 
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/CategoryMarker.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -10,6 +12,24 @@
 
 namespace
 {
+    std::filesystem::path
+    CarriedTo(const std::filesystem::path& relativePath, const std::string& moved, const std::filesystem::path& landing)
+    {
+        const std::string key = ComparablePath(relativePath);
+
+        if (key == moved)
+        {
+            return landing;
+        }
+
+        if (key.size() > moved.size() && key.compare(0, moved.size(), moved) == 0 && key[moved.size()] == '/')
+        {
+            return landing / PathFromUtf8(key.substr(moved.size() + 1));
+        }
+
+        return relativePath;
+    }
+
     void CarryTheOverrides(SimulatorProfile& profile,
                            const Library& library,
                            const std::filesystem::path& from,
@@ -20,21 +40,17 @@ namespace
 
         for (DestinationOverride& known : profile.destinationOverrides)
         {
-            if (known.libraryId != library.id)
+            if (known.libraryId == library.id)
             {
-                continue;
+                known.relativePath = CarriedTo(known.relativePath, moved, landing);
             }
+        }
 
-            const std::string key = ComparablePath(known.relativePath);
-            if (key == moved)
+        for (ExternalOrigin& known : profile.externalOrigins)
+        {
+            if (known.libraryId == library.id)
             {
-                known.relativePath = landing;
-                continue;
-            }
-
-            if (key.size() > moved.size() && key.compare(0, moved.size(), moved) == 0 && key[moved.size()] == '/')
-            {
-                known.relativePath = landing / PathFromUtf8(key.substr(moved.size() + 1));
+                known.relativePath = CarriedTo(known.relativePath, moved, landing);
             }
         }
     }
@@ -60,6 +76,12 @@ namespace
 
         std::erase_if(profile.destinationOverrides,
                       [&library, &gone](const DestinationOverride& known)
+                      {
+                          return known.libraryId == library.id && PathIsInside(known.relativePath, gone);
+                      });
+
+        std::erase_if(profile.externalOrigins,
+                      [&library, &gone](const ExternalOrigin& known)
                       {
                           return known.libraryId == library.id && PathIsInside(known.relativePath, gone);
                       });
@@ -326,6 +348,7 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
     }
 
     DeclareACategory(*library, move.addonFolder.parent_path());
+    static_cast<void>(files_.Move(ExternalSidecarPathFor(move.addonFolder), ExternalSidecarPathFor(target)));
     CarryTheOverrides(profile, *library, move.addonFolder, target);
 
     if (links.empty())

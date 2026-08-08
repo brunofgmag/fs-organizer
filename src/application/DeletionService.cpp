@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iterator>
 
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -178,6 +179,11 @@ DeletionResult DeletionService::DeleteOne(const AddonToDelete& addon,
 
     const bool gone =
         route == DeletionRoute::RecycleBin ? files_.Recycle(addon.folder) : files_.RemoveTree(addon.folder);
+
+    if (gone)
+    {
+        static_cast<void>(files_.RemoveTree(ExternalSidecarPathFor(addon.folder)));
+    }
 
     result.result = gone ? FileResult::Completed : FileResult::CouldNotDelete;
 

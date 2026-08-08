@@ -7,6 +7,7 @@
 #include "domain/linking/RepairPlan.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
+#include "domain/importing/ExternalSidecar.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
@@ -22,6 +23,8 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void TheRecordBesideAnAddonIsReadOnEveryScanAndNotOnlyOnRegistration();
+        static void TheRecordBesideTheAddonWinsOverTheOneInTheSettings();
         static void MarkingACategoryEnablesEveryAddonUnderIt();
         static void ABatchKeepsGoingAfterAFailureAndReportsOneResultPerItem();
         static void AFailedItemInABatchDoesNotUndoTheItemsThatWorked();
@@ -143,7 +146,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
     };
 }
 
@@ -796,6 +799,65 @@ void ProfileServiceTest::ASwapThatFailedHalfwayIsUndoneBackToTheAddonThatWasOn()
     QVERIFY(reverted.front().outcome.Succeeded());
     QCOMPARE(f.fileSystem.LinkTarget(place),
              std::optional<std::filesystem::path>{"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"});
+}
+
+namespace
+{
+    constexpr auto kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+    constexpr auto kImportedExternal = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+
+    void PutTheOtherProgramsFolderBackOnDisk(Fixture& f)
+    {
+        f.fileSystem.AddDirectory("C:/Program Files (x86)/Addon Manager/MSFS");
+        f.fileSystem.AddDirectory(kVendorFolder);
+        f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kImportedExternal);
+    }
+}
+
+void ProfileServiceTest::TheRecordBesideAnAddonIsReadOnEveryScanAndNotOnlyOnRegistration()
+{
+    Fixture f;
+    PutTheOtherProgramsFolderBackOnDisk(f);
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kImportedExternal), TextOfTheExternalOrigin(kVendorFolder));
+
+    const SimulatorProfile forgetful = Profile();
+    QVERIFY(forgetful.externalOrigins.empty());
+
+    const ProfileSnapshot snapshot = f.Snapshot(forgetful);
+
+    const auto entry = std::ranges::find_if(snapshot.entries,
+                                            [](const DestinationEntry& candidate)
+                                            {
+                                                return candidate.classification == EntryClassification::Divergent;
+                                            });
+
+    QVERIFY(entry != snapshot.entries.end());
+    QCOMPARE(entry->externalOrigin, std::filesystem::path{kVendorFolder});
+}
+
+void ProfileServiceTest::TheRecordBesideTheAddonWinsOverTheOneInTheSettings()
+{
+    const std::filesystem::path movedTo = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro-2";
+
+    Fixture f;
+    PutTheOtherProgramsFolderBackOnDisk(f);
+    f.fileSystem.AddDirectory(movedTo);
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kImportedExternal), TextOfTheExternalOrigin(movedTo));
+
+    SimulatorProfile stale = Profile();
+    stale.externalOrigins = {ExternalOrigin{
+        .libraryId = kLibraryId, .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+
+    const ProfileSnapshot snapshot = f.Snapshot(stale);
+
+    const auto entry = std::ranges::find_if(snapshot.entries,
+                                            [](const DestinationEntry& candidate)
+                                            {
+                                                return candidate.classification == EntryClassification::Divergent;
+                                            });
+
+    QVERIFY(entry != snapshot.entries.end());
+    QCOMPARE(entry->externalOrigin, movedTo);
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)
