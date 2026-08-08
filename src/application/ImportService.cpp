@@ -6,6 +6,7 @@
 #include <set>
 #include <string>
 
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/importing/OriginSidecar.h"
 #include "domain/linking/DisableLinks.h"
@@ -51,8 +52,8 @@ namespace
     {
         if (choice == ConflictChoice::KeepTheLibraryCopy)
         {
-            return {.loser = conflict.destinationPath,
-                    .quarantine = QuarantineBesideTheDestination(profile, conflict.destinationPath),
+            return {.loser = conflict.provenancePath,
+                    .quarantine = QuarantineBesideTheDestination(profile, conflict.provenancePath),
                     .kind = OperationKind::QuarantineFromDestination,
                     .relinks = true};
         }
@@ -218,9 +219,9 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
     }
 
     const LinkOutcome link =
-        linking_.Enable(Addon{.folderPath = conflict.libraryPath}, conflict.destinationPath.parent_path(), linkType_);
+        linking_.Enable(Addon{.folderPath = conflict.libraryPath}, conflict.provenancePath.parent_path(), linkType_);
 
-    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, conflict.destinationPath, link.Failure());
+    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, conflict.provenancePath, link.Failure());
 
     return link.Succeeded() ? FileResult::Completed : FileResult::CouldNotCreateLink;
 }
@@ -241,9 +242,10 @@ ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
 ConflictDetails ImportService::DetailsOf(const std::vector<DestinationEntry>& entries,
                                          const CopyConflict& conflict) const
 {
-    return ConflictDetails{.destination = SideOf(conflict.destinationPath),
+    return ConflictDetails{.provenance = SideOf(conflict.provenancePath),
                            .library = SideOf(conflict.libraryPath),
-                           .linksToTheLibraryCopy = LinksPointingAt(entries, conflict.libraryPath)};
+                           .linksToTheLibraryCopy = LinksPointingAt(entries, conflict.libraryPath),
+                           .theProvenanceIsAnotherProgram = conflict.theProvenanceIsAnotherProgram};
 }
 
 std::uintmax_t ImportService::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const
@@ -310,6 +312,17 @@ void ImportService::Record(const SimulatorProfile& profile,
                            const OriginSource originSource) const
 {
     log_.RecordImport(kind, IdentityOf(profile, addonFolder), source, target, result, originSource);
+}
+
+std::filesystem::path ImportService::WhatTheOtherProgramOwns(const std::filesystem::path& target) const
+{
+    const std::optional<std::string> written = filesystemProbe_.ContentsOf(ExternalSidecarPathFor(target));
+    if (!written.has_value())
+    {
+        return {};
+    }
+
+    return ExternalOriginFromText(*written).value_or(std::filesystem::path{});
 }
 
 QuarantinedItem ImportService::WhereItCameFrom(const std::vector<OperationRecord>& history,
@@ -692,11 +705,12 @@ std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& pr
             }
 
             const OperationRecord* copied = LastRecordAbout(history, child, {OperationKind::ImportCopyToStaging});
+            const std::filesystem::path imported = ImportedPathFor(child);
 
-            leftovers.push_back(
-                StagingLeftover{.staging = child,
-                                .target = ImportedPathFor(child),
-                                .source = copied == nullptr ? std::filesystem::path{} : copied->source});
+            leftovers.push_back(StagingLeftover{.staging = child,
+                                                .target = imported,
+                                                .source = copied == nullptr ? std::filesystem::path{} : copied->source,
+                                                .externalSource = WhatTheOtherProgramOwns(imported)});
         }
     }
 
@@ -731,7 +745,9 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
 
     for (const StagingLeftover& leftover : leftovers)
     {
-        const ImportRequest request{.source = leftover.source, .category = leftover.target.parent_path()};
+        const ImportRequest request{.source = leftover.source,
+                                    .category = leftover.target.parent_path(),
+                                    .externalSource = leftover.externalSource};
 
         if (blocked)
         {

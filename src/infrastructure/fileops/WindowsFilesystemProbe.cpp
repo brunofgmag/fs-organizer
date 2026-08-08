@@ -91,6 +91,14 @@ bool WindowsFilesystemProbe::IsReparsePoint(const std::filesystem::path& path) c
     return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
 }
 
+bool WindowsFilesystemProbe::PhysicalDirectoryExists(const std::filesystem::path& path) const
+{
+    const DWORD attributes = AttributesWithoutFollowingLinks(path);
+
+    return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+        && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0;
+}
+
 bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& path) const
 {
     std::error_code error;

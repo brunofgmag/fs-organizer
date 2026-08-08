@@ -63,6 +63,7 @@ namespace
         case OperationKind::RemoveCategory: return "removeCategory";
         case OperationKind::RecycleFromLibrary: return "recycleFromLibrary";
         case OperationKind::DeleteFromLibrary: return "deleteFromLibrary";
+        case OperationKind::LinkTheOtherProgramsFolder: return "linkTheOtherProgramsFolder";
         }
 
         return "unknown";
@@ -120,6 +121,8 @@ namespace
         case FileResult::TheRecycleBinCannotReachIt: return "theRecycleBinCannotReachIt";
         case FileResult::CouldNotDelete: return "couldNotDelete";
         case FileResult::CouldNotRecordTheOrigin: return "couldNotRecordTheOrigin";
+        case FileResult::CannotWriteInTheOtherProgramsFolder: return "cannotWriteInTheOtherProgramsFolder";
+        case FileResult::TheDiskDisagreesWithTheScan: return "theDiskDisagreesWithTheScan";
         }
 
         return "unknown";

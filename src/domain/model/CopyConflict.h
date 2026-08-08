@@ -5,8 +5,9 @@
 
 struct CopyConflict
 {
-    std::filesystem::path destinationPath;
-    std::filesystem::path libraryPath;
+    std::filesystem::path provenancePath{};
+    std::filesystem::path libraryPath{};
+    bool theProvenanceIsAnotherProgram = false;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_COPY_CONFLICT_H

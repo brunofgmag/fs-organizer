@@ -47,6 +47,12 @@
     return separator == std::string::npos ? key : key.substr(separator + 1);
 }
 
+[[nodiscard]] inline std::filesystem::path PathUnder(const std::filesystem::path& root,
+                                                     const std::filesystem::path& relative)
+{
+    return root / relative;
+}
+
 [[nodiscard]] inline bool PathIsInside(const std::filesystem::path& path, const std::filesystem::path& root)
 {
     const std::string candidate = ComparablePath(path);

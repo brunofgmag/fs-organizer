@@ -26,8 +26,29 @@ public:
 
     [[nodiscard]] bool TargetDirectoryExists(const std::filesystem::path& path) const override
     {
-        return fileSystem_.IsDirectory(path);
+        if (fileSystem_.IsDirectory(path))
+        {
+            return true;
+        }
+
+        const std::optional<std::filesystem::path> target = fileSystem_.LinkTarget(path);
+
+        return target.has_value() && fileSystem_.IsDirectory(*target);
     }
+
+    [[nodiscard]] bool PhysicalDirectoryExists(const std::filesystem::path& path) const override
+    {
+        lookedAt.push_back(ComparablePath(path));
+
+        return fileSystem_.IsDirectory(path) && !fileSystem_.IsLink(path);
+    }
+
+    [[nodiscard]] std::size_t TimesLookedAt(const std::filesystem::path& path) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(lookedAt, ComparablePath(path)));
+    }
+
+    mutable std::vector<std::string> lookedAt;
 
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
     {

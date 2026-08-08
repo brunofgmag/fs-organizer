@@ -81,7 +81,7 @@ namespace
         LinkingEngine linking{linkService, filesystemProbe};
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
         ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
-        ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;

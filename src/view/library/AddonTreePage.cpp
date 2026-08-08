@@ -969,11 +969,12 @@ void AddonTreePage::AddConflictAction(QMenu& menu, const QModelIndex& position)
     }
 
     const auto chosen = conflict.value<CopyConflict>();
-    menu.addAction(tr("Resolve the copy conflict…"), this,
-                   [this, chosen]
-                   {
-                       emit ConflictChosen(chosen);
-                   });
+    menu.addAction(
+        chosen.theProvenanceIsAnotherProgram ? tr("Choose which copy stays…") : tr("Resolve the copy conflict…"), this,
+        [this, chosen]
+        {
+            emit ConflictChosen(chosen);
+        });
 }
 
 void AddonTreePage::AddMoveAction(QMenu& menu, const TreeNode* node)

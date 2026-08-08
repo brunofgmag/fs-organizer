@@ -4,7 +4,7 @@
 enum class ConflictChoice
 {
     KeepTheLibraryCopy,
-    KeepTheDestinationCopy
+    KeepTheProvenanceCopy
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_CONFLICT_CHOICE_H

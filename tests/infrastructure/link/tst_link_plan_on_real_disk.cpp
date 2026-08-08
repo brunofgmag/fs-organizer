@@ -90,7 +90,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{scanner, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{scanner, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         FakePresetRepository presets;
         PresetService service{presets, profiles};
     };

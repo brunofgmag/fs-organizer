@@ -1,7 +1,9 @@
 set(DOMAIN_SOURCES
         src/domain/importing/CopyConflicts.cpp
+        src/domain/importing/ExternalSidecar.cpp
         src/domain/importing/ImportEngine.cpp
         src/domain/importing/OriginSidecar.cpp
+        src/domain/importing/SidecarFile.cpp
         src/domain/journal/JournalEntries.cpp
         src/domain/journal/OperationLog.cpp
         src/domain/legacy/LegacyPreset.cpp
@@ -11,6 +13,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
         src/domain/preset/PresetPlan.cpp
+        src/domain/profile/ExternalOrigins.cpp
         src/domain/profile/OrphanOverrides.cpp
         src/domain/profile/ProfileEdits.cpp
         src/domain/tree/AddonTree.cpp

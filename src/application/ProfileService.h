@@ -16,7 +16,9 @@
 #include "domain/linking/LinkingEngine.h"
 #include "domain/linking/RepairPlan.h"
 #include "domain/model/SimulatorProfile.h"
+#include "domain/model/ExternalAddon.h"
 #include "domain/ports/CatalogScanner.h"
+#include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/OperationJournal.h"
 
@@ -37,6 +39,7 @@ class ProfileService
 {
 public:
     ProfileService(const CatalogScanner& catalog,
+                   const FilesystemProbe& filesystemProbe,
                    const EntryClassifier& classifier,
                    const LinkingEngine& linking,
                    const OperationLog& log,
@@ -49,7 +52,8 @@ public:
 
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;
 
-    [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile) const;
+    [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile,
+                                                               const std::vector<TreeNode>& libraries = {}) const;
 
     [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
                                                       const std::vector<const TreeNode*>& nodes) const;
@@ -116,7 +120,11 @@ private:
 
     [[nodiscard]] std::vector<LinkOperationResult> RunAsOneBatch(const std::vector<Step>& steps);
 
+    [[nodiscard]] std::vector<ExternalAddon> WhatCameFromAnotherProgram(const SimulatorProfile& profile,
+                                                                        const std::vector<TreeNode>& libraries) const;
+
     const CatalogScanner& catalog_;
+    const FilesystemProbe& filesystemProbe_;
     const EntryClassifier& classifier_;
     const LinkingEngine& linking_;
     const OperationLog& log_;

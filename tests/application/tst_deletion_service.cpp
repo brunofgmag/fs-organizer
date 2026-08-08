@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "application/DeletionService.h"
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
@@ -40,6 +41,9 @@ namespace
         static void TheJournalTellsTheTwoRoutesApartWithoutReadingText();
         static void TheBatchRunsToTheEndAndAnswersForEveryAddon();
         static void APermanentDeletionNeverAsksTheRecycleBinAnything();
+        static void DeletingAManagedExternalAddonTakesTheRecordOfWhereItCameFromWithIt();
+        static void TheRecycleBinRouteTakesTheRecordOfWhereItCameFromToo();
+        static void AFailedDeletionLeavesTheRecordOfWhereItCameFromAlone();
     };
 }
 
@@ -56,6 +60,7 @@ namespace
     const std::filesystem::path kAtr = "D:/Library/Aircrafts/hype-atr";
     const std::filesystem::path kCrjLink = "E:/Sim/Community/aerosoft-crj";
     const std::filesystem::path kCrjLinkElsewhere = "F:/Sim2020/Community/aerosoft-crj";
+    const std::filesystem::path kOtherProgramsFolder = "C:/Addon Manager/Aircraft/aerosoft-crj";
 
     TreeNode AddonNode(const std::filesystem::path& path)
     {
@@ -396,6 +401,46 @@ void DeletionServiceTest::APermanentDeletionNeverAsksTheRecycleBinAnything()
 
     QCOMPARE(results.front().result, FileResult::Completed);
     QVERIFY(!f.fileSystem.Exists(kCrj));
+}
+
+void DeletionServiceTest::DeletingAManagedExternalAddonTakesTheRecordOfWhereItCameFromWithIt()
+{
+    Fixture f;
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kCrj), TextOfTheExternalOrigin(kOtherProgramsFolder));
+    f.Measure({kCrj});
+
+    const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::Permanently);
+
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(!f.fileSystem.Exists(kCrj));
+    QVERIFY(!f.fileSystem.Exists(ExternalSidecarPathFor(kCrj)));
+}
+
+void DeletionServiceTest::TheRecycleBinRouteTakesTheRecordOfWhereItCameFromToo()
+{
+    Fixture f;
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kCrj), TextOfTheExternalOrigin(kOtherProgramsFolder));
+    f.Measure({kCrj});
+
+    const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::RecycleBin);
+
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(!f.fileSystem.Exists(kCrj));
+    QVERIFY(!f.fileSystem.Exists(ExternalSidecarPathFor(kCrj)));
+}
+
+void DeletionServiceTest::AFailedDeletionLeavesTheRecordOfWhereItCameFromAlone()
+{
+    Fixture f;
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kCrj), TextOfTheExternalOrigin(kOtherProgramsFolder));
+    f.files.MakeTheRemovalFailFor(kCrj);
+    f.Measure({kCrj});
+
+    const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::Permanently);
+
+    QCOMPARE(results.front().result, FileResult::CouldNotDelete);
+    QVERIFY(f.fileSystem.Exists(kCrj));
+    QVERIFY(f.fileSystem.Exists(ExternalSidecarPathFor(kCrj)));
 }
 
 QTEST_MAIN(DeletionServiceTest)

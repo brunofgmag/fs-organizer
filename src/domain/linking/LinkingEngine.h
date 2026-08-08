@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_DOMAIN_LINKING_LINKING_ENGINE_H
 
 #include <filesystem>
+#include <optional>
 
 #include "domain/model/Addon.h"
 #include "domain/model/LinkOutcome.h"
@@ -17,7 +18,12 @@ public:
     [[nodiscard]] LinkOutcome
     Enable(const Addon& addon, const std::filesystem::path& destinationRoot, LinkType linkType) const;
 
+    [[nodiscard]] LinkOutcome
+    LinkAt(const std::filesystem::path& linkPath, const Addon& addon, LinkType linkType) const;
+
     [[nodiscard]] LinkOutcome Disable(const std::filesystem::path& linkPath) const;
+
+    [[nodiscard]] std::optional<std::filesystem::path> PointsAt(const std::filesystem::path& linkPath) const;
 
 private:
     LinkService& linkService_;

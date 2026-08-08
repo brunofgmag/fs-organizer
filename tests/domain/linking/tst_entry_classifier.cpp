@@ -24,7 +24,19 @@ namespace
         static void OnlyManagedEntriesReportTheirTargetAsAnEnabledAddon();
         static void ADuplicatedAddonIsStillEnabledAndReportedOnce();
         static void EveryLinkThatPointsAtAnAddonFolderIsListedAcrossDestinations();
+        static void AnImportedExternalWhoseFolderTheOtherProgramRecreatedIsDivergent();
+        static void ADivergentEntryCarriesTheFolderTheOtherProgramOwns();
+        static void AnImportedExternalWhoseFolderIsStillALinkIsManaged();
+        static void AnImportedExternalWhoseLibraryCopyIsGoneIsVanished();
+        static void AVanishedEntryCarriesTheFolderTheOtherProgramOwns();
+        static void AnOriginOnAnAbsentVolumeIsNotADivergence();
+        static void ADivergentAddonIsStillEnabled();
+        static void OnlyTheAddonsThatCameFromAnotherProgramCostAnExtraLook();
+        static void ADivergentAddonLinkedTwiceIsDuplicatedAndStillKnowsAboutTheSecondCopy();
     };
+
+    constexpr auto kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+    constexpr auto kLibraryCopy = "D:/Library/Utilities/gsx-pro";
 }
 
 namespace
@@ -222,6 +234,146 @@ void EntryClassifierTest::EveryLinkThatPointsAtAnAddonFolderIsListedAcrossDestin
     QCOMPARE(pointing.front(), std::filesystem::path("E:/Sim/Community/tfdi-md11"));
     QCOMPARE(pointing.back(), std::filesystem::path("E:/Sim/Community2024/tfdi-md11"));
     QVERIFY(LinksPointingAt(entries, "D:/Library/Aircrafts/never-linked").empty());
+}
+
+namespace
+{
+    Fixture AnImportedExternal()
+    {
+        Fixture f;
+        f.fileSystem.AddDirectory(kLibraryCopy);
+        f.fileSystem.AddDirectory("E:/Sim/Community");
+        f.fileSystem.AddLink("E:/Sim/Community/gsx-pro", kLibraryCopy);
+        f.fileSystem.AddLink(kVendorFolder, kLibraryCopy);
+
+        return f;
+    }
+
+    std::vector<ExternalAddon> TheOneWeImported()
+    {
+        return {ExternalAddon{.addonFolder = kLibraryCopy, .externalPath = kVendorFolder}};
+    }
+}
+
+void EntryClassifierTest::AnImportedExternalWhoseFolderTheOtherProgramRecreatedIsDivergent()
+{
+    Fixture f = AnImportedExternal();
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+    f.fileSystem.AddDirectory(kVendorFolder);
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported());
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().classification, EntryClassification::Divergent);
+}
+
+void EntryClassifierTest::ADivergentEntryCarriesTheFolderTheOtherProgramOwns()
+{
+    Fixture f = AnImportedExternal();
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+    f.fileSystem.AddDirectory(kVendorFolder);
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported());
+
+    QCOMPARE(entries.front().externalOrigin, std::filesystem::path{kVendorFolder});
+}
+
+void EntryClassifierTest::AnImportedExternalWhoseFolderIsStillALinkIsManaged()
+{
+    const Fixture f = AnImportedExternal();
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported());
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().classification, EntryClassification::Managed);
+}
+
+void EntryClassifierTest::AnImportedExternalWhoseLibraryCopyIsGoneIsVanished()
+{
+    Fixture f = AnImportedExternal();
+    QVERIFY(f.fileSystem.RemoveNode(kLibraryCopy));
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported());
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().classification, EntryClassification::Vanished);
+}
+
+void EntryClassifierTest::AVanishedEntryCarriesTheFolderTheOtherProgramOwns()
+{
+    Fixture f = AnImportedExternal();
+    QVERIFY(f.fileSystem.RemoveNode(kLibraryCopy));
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported());
+
+    QCOMPARE(entries.front().externalOrigin, std::filesystem::path{kVendorFolder});
+}
+
+void EntryClassifierTest::AnOriginOnAnAbsentVolumeIsNotADivergence()
+{
+    const std::filesystem::path awayFolder = "Y:/Vendor/MSFS/gsx-pro";
+
+    Fixture f;
+    f.fileSystem.AddDirectory(kLibraryCopy);
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddLink("E:/Sim/Community/gsx-pro", kLibraryCopy);
+    f.fileSystem.MarkVolumeUnavailable("Y:/");
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve(
+        {"E:/Sim/Community"}, {"D:/Library"}, {ExternalAddon{.addonFolder = kLibraryCopy, .externalPath = awayFolder}});
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().classification, EntryClassification::Managed);
+}
+
+void EntryClassifierTest::ADivergentAddonIsStillEnabled()
+{
+    Fixture f = AnImportedExternal();
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+    f.fileSystem.AddDirectory(kVendorFolder);
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported());
+
+    QCOMPARE(entries.front().classification, EntryClassification::Divergent);
+    QCOMPARE(EnabledAddonFolders(entries), std::vector<std::filesystem::path>{kLibraryCopy});
+}
+
+void EntryClassifierTest::OnlyTheAddonsThatCameFromAnotherProgramCostAnExtraLook()
+{
+    Fixture f = AnImportedExternal();
+    f.fileSystem.AddDirectory("D:/Library/Aircrafts/aerosoft-crj");
+    f.fileSystem.AddLink("E:/Sim/Community/aerosoft-crj", "D:/Library/Aircrafts/aerosoft-crj");
+
+    static_cast<void>(f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported()));
+
+    QCOMPARE(f.filesystemProbe.TimesLookedAt(kVendorFolder), std::size_t{1});
+    QCOMPARE(f.filesystemProbe.TimesLookedAt("D:/Library/Aircrafts/aerosoft-crj"), std::size_t{0});
+}
+
+void EntryClassifierTest::ADivergentAddonLinkedTwiceIsDuplicatedAndStillKnowsAboutTheSecondCopy()
+{
+    Fixture f = AnImportedExternal();
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+    f.fileSystem.AddDirectory(kVendorFolder);
+    f.fileSystem.AddDirectory("E:/Sim/Community2024");
+    f.fileSystem.AddLink("E:/Sim/Community2024/gsx-pro", kLibraryCopy);
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community", "E:/Sim/Community2024"}, {"D:/Library"}, TheOneWeImported());
+
+    QCOMPARE(entries.size(), std::size_t{2});
+    for (const DestinationEntry& entry : entries)
+    {
+        QCOMPARE(entry.classification, EntryClassification::Duplicated);
+        QVERIFY(entry.theOtherProgramTookItsFolderBack);
+        QCOMPARE(entry.externalOrigin, std::filesystem::path{kVendorFolder});
+    }
 }
 
 QTEST_APPLESS_MAIN(EntryClassifierTest)

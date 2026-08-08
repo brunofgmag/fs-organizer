@@ -93,6 +93,11 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotDelete: return QObject::tr("the folder could not be deleted");
     case FileResult::CouldNotRecordTheOrigin:
         return QObject::tr("the record that says where this came from could not be written, so nothing was moved");
+    case FileResult::CannotWriteInTheOtherProgramsFolder:
+        return QObject::tr("the folder of the other program does not accept writes from you, so nothing was taken "
+                           "away from it");
+    case FileResult::TheDiskDisagreesWithTheScan:
+        return QObject::tr("the entry no longer points where the last scan saw it point, so nothing was touched");
     }
 
     return {};
@@ -114,7 +119,7 @@ QString Describe(const LinkOperationResult& result)
     if (const CopyConflict* conflict = result.outcome.Conflict(); conflict != nullptr)
     {
         line += QObject::tr("\n    folder in the destination: %1\n    addon in the library: %2")
-                    .arg(AsText(conflict->destinationPath), AsText(conflict->libraryPath));
+                    .arg(AsText(conflict->provenancePath), AsText(conflict->libraryPath));
     }
 
     if (const OccupiedDestination* occupation = result.outcome.Occupation(); occupation != nullptr)
@@ -125,10 +130,24 @@ QString Describe(const LinkOperationResult& result)
     return line;
 }
 
+namespace
+{
+    QString WhichFolderTheOtherProgramOwns(const ImportOperationResult& result)
+    {
+        if (result.result != FileResult::CannotWriteInTheOtherProgramsFolder)
+        {
+            return {};
+        }
+
+        return QObject::tr("\n    the folder that refused: %1").arg(AsText(result.request.externalSource));
+    }
+}
+
 QString Describe(const ImportOperationResult& result)
 {
-    return QStringLiteral("%1: %2%3")
-        .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
+    return QStringLiteral("%1: %2%3%4")
+        .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant),
+             WhichFolderTheOtherProgramOwns(result));
 }
 
 QString Describe(const FileOperationResult& result)

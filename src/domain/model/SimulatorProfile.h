@@ -16,16 +16,23 @@ enum class SimulatorVariant : int
 
 struct DestinationOverride
 {
-    LibraryId libraryId;
-    std::filesystem::path relativePath;
-    std::filesystem::path destination;
+    LibraryId libraryId{};
+    std::filesystem::path relativePath{};
+    std::filesystem::path destination{};
+};
+
+struct ExternalOrigin
+{
+    LibraryId libraryId{};
+    std::filesystem::path relativePath{};
+    std::filesystem::path externalPath{};
 };
 
 struct SimulatorCandidate
 {
     SimulatorVariant variant = SimulatorVariant::MSFS2024;
-    std::filesystem::path packagesPath;
-    std::vector<std::filesystem::path> destinations;
+    std::filesystem::path packagesPath{};
+    std::vector<std::filesystem::path> destinations{};
 };
 
 struct SimulatorProfile
@@ -36,6 +43,7 @@ struct SimulatorProfile
     std::filesystem::path defaultDestination{};
     std::vector<Library> libraries{};
     std::vector<DestinationOverride> destinationOverrides{};
+    std::vector<ExternalOrigin> externalOrigins{};
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_SIMULATOR_PROFILE_H

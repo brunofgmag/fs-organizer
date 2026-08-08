@@ -98,7 +98,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         FakeFileOperations files{fileSystem};
         FakeProcessProbe processProbe;
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,

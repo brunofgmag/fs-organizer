@@ -258,15 +258,15 @@ void ImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
     const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
     QVERIFY(!std::filesystem::exists(quarantine));
 
-    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
                                 .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
     const FileResult result = composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
-                                                               ConflictChoice::KeepTheDestinationCopy);
+                                                               ConflictChoice::KeepTheProvenanceCopy);
 
     QCOMPARE(result, FileResult::Completed);
     QVERIFY(std::filesystem::exists(quarantine / "tfdidesign-aircraft-md11" / "manifest.json"));
     QVERIFY(!std::filesystem::exists(conflict.libraryPath));
-    QVERIFY(std::filesystem::exists(conflict.destinationPath / "aircraft.cfg"));
+    QVERIFY(std::filesystem::exists(conflict.provenancePath / "aircraft.cfg"));
 
     const std::vector<OperationRecord> history = composed.engine.journal.Read();
     QCOMPARE(history.size(), std::size_t{1});
@@ -281,10 +281,10 @@ void ImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder
 
     const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
 
-    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
                                 .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
     QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
-                                              ConflictChoice::KeepTheDestinationCopy),
+                                              ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
 
     std::filesystem::remove_all(disk.Category());
@@ -545,14 +545,14 @@ void ImportOnRealDiskTest::TheOriginBesideTheItemOutlivesTheJournalFile()
     const std::filesystem::path journalFile = disk.Root() / "journal" / "operations.jsonl";
     const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "tfdidesign-aircraft-md11";
 
-    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
                                 .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
 
     {
         const Service wrote{.engine = {.journalFile = journalFile}};
 
         QCOMPARE(wrote.service.ResolveConflict(disk.Profile(), wrote.Entries(disk), conflict,
-                                               ConflictChoice::KeepTheDestinationCopy),
+                                               ConflictChoice::KeepTheProvenanceCopy),
                  FileResult::Completed);
     }
 
@@ -586,11 +586,11 @@ void ImportOnRealDiskTest::TheRecordBesideTheItemIsNeverEnumeratedAsAnItem()
 
     const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
 
-    const CopyConflict conflict{.destinationPath = disk.Destination() / "tfdidesign-aircraft-md11",
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
                                 .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
 
     QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
-                                              ConflictChoice::KeepTheDestinationCopy),
+                                              ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
 
     const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");

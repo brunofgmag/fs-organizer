@@ -7,6 +7,7 @@
 #include "domain/journal/OperationLog.h"
 #include "application/ImportService.h"
 #include "domain/importing/ImportPaths.h"
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/OriginSidecar.h"
 #include "domain/linking/EntryClassifier.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -40,6 +41,7 @@ namespace
         static void EmptyingTheQuarantineNeverReachesAnythingOutsideIt();
         static void NoQuarantineIsTouchedWhileTheSimulatorIsRunning();
         static void LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFrom();
+        static void ALeftoverOfAnExternalImportRemembersWhichProgramItWasTakingOver();
         static void TheSearchForLeftoversNeverWalksIntoAnAddon();
         static void ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSource();
         static void DiscardingALeftoverRemovesOnlyTheStaging();
@@ -221,7 +223,7 @@ void ImportServiceTest::ResolvingAConflictSendsTheLoserToQuarantineAndDeletesNot
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
         f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy);
 
@@ -238,9 +240,9 @@ void ImportServiceTest::KeepingTheDestinationCopySendsTheLibraryCopyToItsOwnQuar
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
-        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheProvenanceCopy);
 
     QCOMPARE(result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge/manifest.json"));
@@ -255,7 +257,7 @@ void ImportServiceTest::QuarantiningTheDestinationCopyIsJournalledAlongWithTheLi
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy),
              FileResult::Completed);
 
@@ -281,8 +283,8 @@ void ImportServiceTest::QuarantiningTheLibraryCopyIsJournalledOnItsOwn()
     Fixture f;
     f.AddBothCopies();
 
-    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
-    QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy),
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
+    QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
 
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
@@ -301,7 +303,7 @@ void ImportServiceTest::ARefusedBatchLeavesNothingInTheJournal()
     static_cast<void>(
         f.service.Import(f.profile, {ImportRequest{.source = kInDestination, .category = "D:/Library/Utils"}}, {}));
     static_cast<void>(f.service.ResolveConflict(
-        f.profile, f.Entries(), CopyConflict{.destinationPath = kInDestination, .libraryPath = kInLibrary},
+        f.profile, f.Entries(), CopyConflict{.provenancePath = kInDestination, .libraryPath = kInLibrary},
         ConflictChoice::KeepTheLibraryCopy));
 
     QVERIFY(f.journal.appended.empty());
@@ -331,7 +333,7 @@ void ImportServiceTest::RestoringPutsTheFolderBackWhereItCameFromAndSaysSoInTheJ
     f.AddBothCopies();
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
-                                       ConflictChoice::KeepTheDestinationCopy),
+                                       ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
 
     const std::vector<QuarantinedItem> items = f.service.Quarantined(f.profile);
@@ -359,7 +361,7 @@ void ImportServiceTest::RestoringIsRefusedWhenSomethingElseAlreadyOccupiesTheOri
     f.AddBothCopies();
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
-                                       ConflictChoice::KeepTheDestinationCopy),
+                                       ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
 
     f.fileSystem.AddDirectory(kInLibrary);
@@ -453,6 +455,28 @@ void ImportServiceTest::LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFro
     QVERIFY(leftovers.front().CanBeResumed());
 }
 
+void ImportServiceTest::ALeftoverOfAnExternalImportRemembersWhichProgramItWasTakingOver()
+{
+    Fixture f;
+    f.AddBothCopies();
+    const std::filesystem::path came = "C:/Addon Manager/Utils/imported";
+    f.fileSystem.AddDirectory("D:/Library/Utils/imported.fsorg-partial");
+    f.fileSystem.AddFile("D:/Library/Utils/imported.fsorg-partial/manifest.json", kMegabyte);
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor("D:/Library/Utils/imported"),
+                                     TextOfTheExternalOrigin(came));
+
+    f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportCopyToStaging,
+                                               AddonId{.libraryId = "lib-1", .folderName = "imported"}, came,
+                                               "D:/Library/Utils/imported.fsorg-partial", FileResult::Completed));
+
+    const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
+
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().externalSource, came);
+    QVERIFY2(leftovers.front().CanBeResumed(),
+             "a leftover that knows the program it was taking over is exactly the one worth resuming");
+}
+
 void ImportServiceTest::TheSearchForLeftoversNeverWalksIntoAnAddon()
 {
     Fixture f;
@@ -527,9 +551,9 @@ void ImportServiceTest::KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuar
     f.AddBothCopies();
     f.AddALinkToTheLibraryCopyInAnotherDestination();
 
-    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
-        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheProvenanceCopy);
 
     QCOMPARE(result, FileResult::Completed);
     QVERIFY(!f.fileSystem.Exists(kLinkedElsewhere));
@@ -551,9 +575,9 @@ void ImportServiceTest::NothingIsMovedWhenALinkToTheLibraryCopyCannotBeRemoved()
     f.AddALinkToTheLibraryCopyInAnotherDestination();
     f.linkService.MakeLinkRemovalFail();
 
-    const CopyConflict conflict{.destinationPath = kInDestination, .libraryPath = kInLibrary};
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
     const FileResult result =
-        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheDestinationCopy);
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheProvenanceCopy);
 
     QCOMPARE(result, FileResult::CouldNotRemoveTheLink);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
@@ -608,7 +632,7 @@ void ImportServiceTest::RestoringIsRefusedWhenTheBaseNameTookTheIdentityElsewher
     f.AddBothCopies();
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
-                                       ConflictChoice::KeepTheDestinationCopy),
+                                       ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
 
     f.fileSystem.AddDirectory("D:/Library/Sceneries");
@@ -848,7 +872,7 @@ void ImportServiceTest::TheOriginIsRecordedBesideTheItemAndNeverInsideIt()
     f.AddBothCopies();
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
-                                       ConflictChoice::KeepTheDestinationCopy),
+                                       ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
 
     const std::filesystem::path quarantined = "D:/Library/_fsorganizer-quarantine/simbridge";
@@ -874,7 +898,7 @@ void ImportServiceTest::NothingMovesWhenTheOriginCannotBeRecorded()
     f.files.MakeTheTextWriteFail();
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
-                                       ConflictChoice::KeepTheDestinationCopy),
+                                       ConflictChoice::KeepTheProvenanceCopy),
              FileResult::CouldNotRecordTheOrigin);
 
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
@@ -895,7 +919,7 @@ void ImportServiceTest::LeavingTheQuarantineTakesTheOriginRecordAway()
     f.fileSystem.AddFile("E:/Sim/Community2024/other/manifest.json", kMegabyte);
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
-                                       ConflictChoice::KeepTheDestinationCopy),
+                                       ConflictChoice::KeepTheProvenanceCopy),
              FileResult::Completed);
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{"E:/Sim/Community2024/other", kInLibrary},
                                        ConflictChoice::KeepTheLibraryCopy),
@@ -1161,7 +1185,7 @@ void ImportServiceTest::ASecondHomonymFailsToQuarantineWithoutTouchingTheRecordO
     f.fileSystem.AddFile(second / "manifest.json", 7 * kMegabyte);
 
     const FileResult refused = f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, second},
-                                                         ConflictChoice::KeepTheDestinationCopy);
+                                                         ConflictChoice::KeepTheProvenanceCopy);
 
     QVERIFY(!Succeeded(refused));
     QVERIFY(f.fileSystem.Exists(second / "manifest.json"));

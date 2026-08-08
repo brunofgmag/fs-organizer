@@ -134,6 +134,12 @@ fsorg_add_qt_test(fsorg-origin-sidecar-tests origin-sidecar
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-origin-sidecar-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-external-sidecar-tests external-sidecar
+        tests/domain/importing/tst_external_sidecar.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-external-sidecar-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
         tests/doubles/FakeClock.h
@@ -748,6 +754,13 @@ if (WIN32)
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-import-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-external-import-on-real-disk-tests external-import-on-real-disk
+            tests/infrastructure/importing/tst_external_import_on_real_disk.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-external-import-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
             tests/infrastructure/options/tst_options_on_real_disk.cpp
             tests/doubles/InlineBackgroundRunner.h
@@ -843,6 +856,13 @@ if (WIN32)
                 tests/support/PathPrinting.h)
         target_link_libraries(fsorg-collision-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-collision-dialog-tests collision-dialog)
+
+        fsorg_add_qt_test(fsorg-conflict-dialog-tests conflict-dialog
+                tests/view/tst_conflict_dialog.cpp
+                tests/support/EnumPrinting.h
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-conflict-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-conflict-dialog-tests conflict-dialog)
 
         fsorg_add_qt_test(fsorg-restore-dialog-tests restore-dialog
                 tests/view/tst_restore_dialog.cpp

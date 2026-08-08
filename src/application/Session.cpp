@@ -6,6 +6,7 @@
 
 #include "domain/importing/CopyConflicts.h"
 #include "domain/linking/EntryClassifier.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/profile/OrphanOverrides.h"
 #include "domain/profile/ProfileEdits.h"
 #include "domain/support/PathUtils.h"
@@ -150,7 +151,7 @@ bool Session::Scanning() const
 
 void Session::RefreshEntries()
 {
-    snapshot_.entries = service_.ResolveEntries(profile_);
+    snapshot_.entries = service_.ResolveEntries(profile_, snapshot_.libraries);
     snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
     snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
 
@@ -169,6 +170,31 @@ LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
     }
 
     return report;
+}
+
+void Session::RememberWhatCameFromAnotherProgram(const std::vector<ImportOperationResult>& results)
+{
+    SimulatorProfile next = profile_;
+    bool remembered = false;
+
+    for (const ImportOperationResult& result : results)
+    {
+        if (!Succeeded(result.result) || !result.request.CameFromAnotherProgram())
+        {
+            continue;
+        }
+
+        RememberWhereItCameFrom(next, result.request.Target(), result.request.externalSource);
+        remembered = true;
+    }
+
+    if (!remembered)
+    {
+        return;
+    }
+
+    Save(next);
+    Scan(std::move(next));
 }
 
 LegacyImportReport Session::ImportLegacy(const LegacyImportRequest& request)

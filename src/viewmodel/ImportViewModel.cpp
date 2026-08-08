@@ -9,7 +9,7 @@
 ImportViewModel::ImportViewModel(const ImportService& service,
                                  ProfileService& profileService,
                                  const ProcessProbe& probe,
-                                 const Session& session,
+                                 Session& session,
                                  BackgroundRunner& runner,
                                  QObject* parent)
     : QObject(parent),
@@ -171,6 +171,8 @@ void ImportViewModel::RunInAWorker(std::function<std::vector<ImportOperationResu
 void ImportViewModel::Adopt(std::vector<ImportOperationResult> results)
 {
     running_ = false;
+
+    session_.RememberWhatCameFromAnotherProgram(results);
 
     if (std::ranges::any_of(results,
                             [](const ImportOperationResult& result)

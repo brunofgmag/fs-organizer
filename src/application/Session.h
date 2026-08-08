@@ -9,6 +9,7 @@
 #include "application/ProfileService.h"
 #include "application/model/FileOperationResult.h"
 #include "application/model/LegacyImport.h"
+#include "application/model/ImportOperationResult.h"
 #include "application/model/LibraryReport.h"
 #include "application/model/ProfileSnapshot.h"
 #include "application/model/LinkOperationResult.h"
@@ -46,6 +47,8 @@ public:
     void RefreshEntries();
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
+
+    void RememberWhatCameFromAnotherProgram(const std::vector<ImportOperationResult>& results);
 
     [[nodiscard]] LegacyImportReport ImportLegacy(const LegacyImportRequest& request);
 
