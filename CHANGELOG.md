@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/brunofgmag/fs-organizer/compare/v0.16.0...v0.17.0) (2026-08-08)
+
+
+### Features
+
+* read the simulator's startup file and change only the switch ([#45](https://github.com/brunofgmag/fs-organizer/issues/45)) ([420af2b](https://github.com/brunofgmag/fs-organizer/commit/420af2bc25b586a43e62700166efbfc6bfc7b8eb))
+
 ## [0.16.0](https://github.com/brunofgmag/fs-organizer/compare/v0.15.0...v0.16.0) (2026-08-08)
 
 
