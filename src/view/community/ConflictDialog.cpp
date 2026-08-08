@@ -14,6 +14,7 @@
 
 #include "support/PathText.h"
 #include "support/SizeText.h"
+#include "view/TextThatIsNeverCut.h"
 #include "view/theme/ModernistMetrics.h"
 
 namespace
@@ -135,9 +136,7 @@ QGroupBox* ConflictDialog::CreateSide(const QString& title, const ConflictSide& 
 {
     auto* group = new QGroupBox(title, this);
 
-    auto* path = new QLabel(AsText(side.path), group);
-    path->setWordWrap(true);
-    path->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    auto* path = new TextThatIsNeverCut(AsText(side.path), group);
 
     auto* form = new QFormLayout(group);
     form->addRow(tr("Path:"), path);

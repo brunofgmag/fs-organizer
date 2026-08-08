@@ -6,6 +6,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QTableView>
+#include <QtWidgets/QToolTip>
 
 #include "view/delegates/RowDelegate.h"
 #include "view/theme/ModernistPaint.h"
@@ -28,6 +29,10 @@ namespace
         static void AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest();
         static void TheQuietSuffixIsLaidAfterTheTextAndNotOverIt();
         static void ARowTheModelCallsAlarmingIsGroundedInTheAlertColour();
+        static void ASecondLineTooWideForItsColumnAnswersWithATooltipCarryingBothLines();
+        static void ASecondLineThatFitsLeavesTheCellWithoutATooltip();
+        static void TheSecondLineIsCutInTheMiddleSoBothEndsSurvive();
+        static void ACellThatOnlyDrawsATagDoesNotAskForTheWidthOfTheTextItReplaced();
     };
 }
 
@@ -355,6 +360,107 @@ void RowDelegateTest::TheGroundGoesBackWhenThePointerLeaves()
     rows.PointAway();
 
     QCOMPARE(rows.GroundOf(rows.model.index(1, 0)), before);
+}
+
+namespace
+{
+    struct CellWithTwoLines
+    {
+        QStandardItemModel model{1, 1};
+        QTableView view;
+        RowDelegate delegate;
+
+        CellWithTwoLines(const QString& text, const QString& second, const int columnWidth)
+        {
+            auto* content = new QStandardItem(text);
+            content->setData(second, SecondLineRole);
+            model.setItem(0, 0, content);
+
+            view.setModel(&model);
+            view.setItemDelegate(&delegate);
+            view.verticalHeader()->setVisible(false);
+            view.horizontalHeader()->setVisible(false);
+            view.setShowGrid(false);
+            view.resize(columnWidth + 40, 120);
+            view.show();
+            static_cast<void>(QTest::qWaitForWindowExposed(&view));
+            view.horizontalHeader()->resizeSection(0, columnWidth);
+        }
+
+        [[nodiscard]] bool AsksForATooltip()
+        {
+            const QModelIndex cell = model.index(0, 0);
+
+            QStyleOptionViewItem option;
+            option.initFrom(&view);
+            option.widget = &view;
+            option.rect = view.visualRect(cell);
+            option.font = view.font();
+
+            QHelpEvent event(QEvent::ToolTip, QPoint(4, 4), view.viewport()->mapToGlobal(QPoint(4, 4)));
+
+            return delegate.helpEvent(&event, &view, option, cell);
+        }
+
+        [[nodiscard]] QImage Painted()
+        {
+            QPixmap shot(view.viewport()->size());
+            view.viewport()->render(&shot);
+
+            return shot.toImage();
+        }
+    };
+
+    constexpr auto kLongPath = "D:\\MSFS 2024\\Utils\\a-folder-with-a-name-far-too-long-for-the-column\\";
+}
+
+void RowDelegateTest::ASecondLineTooWideForItsColumnAnswersWithATooltipCarryingBothLines()
+{
+    CellWithTwoLines cell{QStringLiteral("p42-util-flow-pro"), QString::fromLatin1(kLongPath), 120};
+
+    QVERIFY2(cell.AsksForATooltip(), "the path under the name was cut with no way to read the rest");
+    QCOMPARE(QToolTip::text(), QStringLiteral("p42-util-flow-pro\n") + QString::fromLatin1(kLongPath));
+}
+
+void RowDelegateTest::ASecondLineThatFitsLeavesTheCellWithoutATooltip()
+{
+    CellWithTwoLines cell{QStringLiteral("p42"), QStringLiteral("D:\\Utils"), 600};
+
+    QVERIFY(!cell.AsksForATooltip());
+}
+
+void RowDelegateTest::TheSecondLineIsCutInTheMiddleSoBothEndsSurvive()
+{
+    ApplyModernistTheme(*qApp);
+
+    CellWithTwoLines alpha{QStringLiteral("p42"), QString::fromLatin1(kLongPath) + QStringLiteral("alpha"), 150};
+    CellWithTwoLines omega{QStringLiteral("p42"), QString::fromLatin1(kLongPath) + QStringLiteral("omega"), 150};
+
+    QVERIFY2(alpha.Painted() != omega.Painted(),
+             "two paths that differ only at the end were painted the same, so the end was the part thrown away");
+}
+
+void RowDelegateTest::ACellThatOnlyDrawsATagDoesNotAskForTheWidthOfTheTextItReplaced()
+{
+    const QString tag = QStringLiteral("Divergent");
+
+    QStandardItemModel model(2, 1);
+
+    auto* spelled = new QStandardItem(tag);
+    spelled->setData(tag, TagTextRole);
+    model.setItem(0, 0, spelled);
+
+    auto* bare = new QStandardItem(QString());
+    bare->setData(tag, TagTextRole);
+    model.setItem(1, 0, bare);
+
+    QStyleOptionViewItem item;
+    item.font = QApplication::font();
+    item.fontMetrics = QFontMetrics(item.font);
+
+    const RowDelegate delegate;
+
+    QCOMPARE(delegate.sizeHint(item, model.index(0, 0)).width(), delegate.sizeHint(item, model.index(1, 0)).width());
 }
 
 QTEST_MAIN(RowDelegateTest)

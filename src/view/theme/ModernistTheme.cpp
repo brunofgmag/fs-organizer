@@ -103,6 +103,10 @@ QLabel#PanelTitle { color: %text%; }
 QLabel#PanelSubHeading { color: %secondary%; font-weight: 700; }
 QLabel#PanelPromise { color: %secondary%; }
 QLabel#DetailFieldName { color: %secondary%; }
+QTextEdit#UncutText {
+    background: transparent; border: none;
+    selection-background-color: %accent%; selection-color: %onAccent%;
+}
 QToolButton#PanelToggle, QToolButton#PanelClose {
     background: transparent; border: none; color: %secondary%; padding: 2px 6px;
 }

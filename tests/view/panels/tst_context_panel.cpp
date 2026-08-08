@@ -7,6 +7,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QScrollBar>
+#include <QtWidgets/QTextEdit>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 
@@ -16,6 +17,7 @@
 #include "view/shell/TriageStrip.h"
 #include "view/theme/ModernistPaint.h"
 #include "view/theme/ModernistTheme.h"
+#include "view/theme/ModernistTones.h"
 
 namespace
 {
@@ -38,6 +40,9 @@ namespace
         static void ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen();
         static void ClosingThePanelAsksForIt();
         static void ContentTallerThanThePanelScrollsInsteadOfBeingSquashed();
+        static void APathWiderThanThePanelNeverAsksForMoreRoomThanItHas();
+        static void AFieldHandsOutExactlyTheTextItShows();
+        static void SelectingAPathPaintsItOnAGroundThatIsNotTheSurfaceUnderIt();
     };
 }
 
@@ -310,11 +315,14 @@ void ContextPanelTest::TheDetailShowsEveryColumnOfTheSelectedRow()
     ModelRowDetail detail;
     detail.Show(model.index(1, 0));
 
-    const QList<QLabel*> labels = detail.findChildren<QLabel*>();
     QStringList texts;
-    for (const QLabel* label : labels)
+    for (const QLabel* label : detail.findChildren<QLabel*>())
     {
         texts.append(label->text());
+    }
+    for (const QTextEdit* value : detail.findChildren<QTextEdit*>())
+    {
+        texts.append(value->toPlainText());
     }
 
     QVERIFY(texts.contains(QStringLiteral("Name")));
@@ -430,6 +438,93 @@ void ContextPanelTest::ContentTallerThanThePanelScrollsInsteadOfBeingSquashed()
     const auto* scrolled = panel->findChild<QScrollArea*>();
     QVERIFY2(scrolled != nullptr, "content taller than the panel would be clipped with no way to reach it");
     QVERIFY(scrolled->verticalScrollBar()->maximum() > 0);
+}
+
+namespace
+{
+    QString ADeepPath()
+    {
+        return QStringLiteral("C:\\Users\\bruno\\AppData\\Roaming\\SayIntentionsAI\\SayIntentionsAI\\si-flowpro\\"
+                              "p42-util-flow-SayIntentionsAI-widget");
+    }
+
+    struct PanelShowingAPath
+    {
+        QWidget window;
+        ContextPanel* panel = nullptr;
+        ModelRowDetail* detail = nullptr;
+
+        PanelShowingAPath()
+        {
+            auto* beside = new QHBoxLayout(&window);
+            beside->setContentsMargins(0, 0, 0, 0);
+
+            panel = new ContextPanel(QStringLiteral("Entry selected"), 380, &window);
+            panel->setObjectName(QStringLiteral("deep-path-test"));
+
+            detail = new ModelRowDetail(panel);
+            panel->Add(detail);
+            beside->addWidget(panel);
+
+            window.setFixedSize(380, 380);
+            window.show();
+            static_cast<void>(QTest::qWaitForWindowExposed(&window));
+
+            detail->ShowFields({{QStringLiteral("Came from"), ADeepPath()}});
+            QCoreApplication::processEvents();
+        }
+    };
+}
+
+void ContextPanelTest::APathWiderThanThePanelNeverAsksForMoreRoomThanItHas()
+{
+    const PanelShowingAPath shown;
+
+    const auto* value = shown.detail->findChild<QTextEdit*>(QStringLiteral("UncutText"));
+    QVERIFY(value != nullptr);
+    QVERIFY(value->viewport()->width() > 0);
+    QVERIFY2(value->minimumSizeHint().width() <= value->width(),
+             "the path asks the layout for more room than the panel has");
+    QVERIFY2(value->document()->size().width() <= value->viewport()->width(),
+             "a line of the path is wider than the room it was given, so its far end is cut at the border");
+}
+
+void ContextPanelTest::AFieldHandsOutExactlyTheTextItShows()
+{
+    const PanelShowingAPath shown;
+
+    auto* value = shown.detail->findChild<QTextEdit*>(QStringLiteral("UncutText"));
+    QVERIFY(value != nullptr);
+
+    value->selectAll();
+
+    QCOMPARE(value->textCursor().selectedText(), ADeepPath());
+}
+
+void ContextPanelTest::SelectingAPathPaintsItOnAGroundThatIsNotTheSurfaceUnderIt()
+{
+    const PanelShowingAPath shown;
+
+    auto* value = shown.detail->findChild<QTextEdit*>(QStringLiteral("UncutText"));
+    QVERIFY(value != nullptr);
+
+    const auto painted = [value]
+    {
+        QPixmap shot(value->size());
+        value->render(&shot);
+
+        return shot.toImage();
+    };
+
+    const QColor marking = TonesOf(CurrentColorScheme()).accent;
+
+    QCOMPARE(PixelsOf(painted(), marking), 0);
+
+    value->selectAll();
+    QCoreApplication::processEvents();
+
+    QVERIFY2(PixelsOf(painted(), marking) > 0,
+             "selected text is grounded in a surface tone, so on a dark scheme nothing tells it apart");
 }
 
 QTEST_MAIN(ContextPanelTest)
