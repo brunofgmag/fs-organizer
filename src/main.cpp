@@ -16,6 +16,7 @@
 #include "application/Session.h"
 #include "application/SetupService.h"
 #include "application/SizeService.h"
+#include "application/StartupService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -30,7 +31,9 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
+#include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
@@ -49,6 +52,7 @@
 #include "view/PresetsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/setup/SetupWizard.h"
+#include "view/simulator/StartupPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
@@ -62,6 +66,7 @@
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 #include "viewmodel/SetupViewModel.h"
+#include "viewmodel/StartupViewModel.h"
 #include "viewmodel/UpdateViewModel.h"
 
 namespace
@@ -224,6 +229,19 @@ int main(int argc, char* argv[])
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
+    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
+    ExeXmlStartupEntries startupEntries(StartupFileOf(startupFiles, session.Profile().variant));
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, onDisk.manageStartupEntries);
+    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    auto* startupPage = new StartupPage(startupViewModel);
+
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
+                     [&session, &startupEntries, &startupFiles, &startupViewModel]
+                     {
+                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                         startupViewModel.Show();
+                     });
+
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService);
     PresetViewModel presetViewModel(session, presetService);
@@ -250,6 +268,7 @@ int main(int argc, char* argv[])
     window.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
+    window.AddPage(PageNames::kSimulator, startupPage);
 
     window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);
@@ -440,6 +459,10 @@ int main(int argc, char* argv[])
                          {
                              diagnosticsViewModel.Show();
                          }
+                         else if (selected == startupPage)
+                         {
+                             startupViewModel.Show();
+                         }
                      });
 
     QObject::connect(diagnosticsPage, &DiagnosticsPage::SummaryChanged, &window, carryTheSummaryOf(diagnosticsPage));
@@ -450,6 +473,9 @@ int main(int argc, char* argv[])
                          quarantineButton->click();
                      });
     QObject::connect(diagnosticsPage, &DiagnosticsPage::RepairRequested, &window, &MainWindow::RepairRequested);
+
+    QObject::connect(startupPage, &StartupPage::SummaryChanged, &window, carryTheSummaryOf(startupPage));
+    QObject::connect(startupPage, &StartupPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
                      [&window](const AttentionBreakdown& breakdown)

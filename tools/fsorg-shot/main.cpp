@@ -39,7 +39,9 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
+#include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "infrastructure/update/GithubUpdateService.h"
@@ -53,6 +55,7 @@
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
+#include "view/simulator/StartupPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
@@ -69,6 +72,7 @@
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
+#include "viewmodel/StartupViewModel.h"
 #include "viewmodel/UpdateViewModel.h"
 
 namespace
@@ -464,6 +468,12 @@ int main(int argc, char* argv[])
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
+    ExeXmlStartupEntries startupEntries(
+        StartupFileOf(StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant));
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
+    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    auto* startupPage = new StartupPage(startupViewModel);
+
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
     UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
@@ -477,6 +487,7 @@ int main(int argc, char* argv[])
     PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
+    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, startupPage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -637,6 +648,16 @@ int main(int argc, char* argv[])
         LetTheLayoutSettle();
         landed = Save(shell, folder, diagnostics[section]) && landed;
     }
+
+    simulatorTab->click();
+    startupViewModel.Show();
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("19-simulator-startup")) && landed;
+
+    startupViewModel.Manage(false);
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("20-simulator-startup-loose")) && landed;
+    startupViewModel.Manage(true);
 
     libraryTab->click();
     shell.ShowOptions();

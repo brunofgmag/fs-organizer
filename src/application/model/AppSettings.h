@@ -14,6 +14,7 @@ struct AppSettings
     std::string activeProfileId;
     LinkType linkType = LinkType::Junction;
     bool verifyWithHash = false;
+    bool manageStartupEntries = true;
     UpdateMode updateMode = UpdateMode::Notify;
     std::string language;
 };

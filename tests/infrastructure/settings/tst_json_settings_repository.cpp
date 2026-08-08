@@ -29,6 +29,9 @@ namespace
         static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
         static void TheOriginOfAnAddonThatCameFromAnotherProgramSurvivesTheRoundTrip();
         static void AProfileWrittenBeforeExternalOriginsExistedReadsWithNone();
+        static void AFreshProfileIsWrittenWithTheStartupEntriesManaged();
+        static void TurningTheStartupEntriesLooseSurvivesTheRoundTrip();
+        static void AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries();
     };
 }
 
@@ -275,6 +278,50 @@ void JsonSettingsRepositoryTest::AProfileWrittenBeforeExternalOriginsExistedRead
 
     QCOMPARE(read.profiles.size(), std::size_t{1});
     QVERIFY(read.profiles[0].externalOrigins.empty());
+}
+
+void JsonSettingsRepositoryTest::AFreshProfileIsWrittenWithTheStartupEntriesManaged()
+{
+    const Storage storage;
+
+    SimulatorProfile profile;
+    profile.id = "msfs2024";
+
+    AppSettings written;
+    written.profiles = {profile};
+    written.activeProfileId = "msfs2024";
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.manageStartupEntries, true);
+}
+
+void JsonSettingsRepositoryTest::TurningTheStartupEntriesLooseSurvivesTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.manageStartupEntries = false;
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.manageStartupEntries, false);
+}
+
+void JsonSettingsRepositoryTest::AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries()
+{
+    const Storage storage;
+
+    std::filesystem::create_directories(storage.File().parent_path());
+    std::ofstream(storage.File(), std::ios::binary) << R"({"activeProfileId":"msfs2024","verifyWithHash":true})";
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QCOMPARE(read->verifyWithHash, true);
+    QCOMPARE(read->manageStartupEntries, true);
 }
 
 QTEST_APPLESS_MAIN(JsonSettingsRepositoryTest)

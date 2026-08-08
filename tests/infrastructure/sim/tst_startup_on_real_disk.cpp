@@ -30,6 +30,7 @@ namespace
         static void AFileThatIsNotThereIsRefusedBeforeAnythingIsWritten();
         static void AnEntryTheFileNoLongerCarriesIsRefusedAndNoBackupIsLeft();
         static void SwitchingAnEntryToTheValueItAlreadyHasWritesNothing();
+        static void PointingItAtAnotherProfilesFileReadsAndWritesThatOne();
     };
 
     constexpr auto kAny2GSX = R"(C:\Users\pilot\AppData\Roaming\Any2GSX\bin\Any2GSX.exe)";
@@ -188,6 +189,24 @@ void StartupOnRealDiskTest::SwitchingAnEntryToTheValueItAlreadyHasWritesNothing(
 
     QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), false), FileResult::Completed);
     QCOMPARE(FirstDifference(BytesOf(file), Fixture("simulator-exe.xml")), std::string::npos);
+    QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{1});
+}
+
+void StartupOnRealDiskTest::PointingItAtAnotherProfilesFileReadsAndWritesThatOne()
+{
+    const TempFiles files;
+    const std::filesystem::path other = files.Root() / "other";
+    std::filesystem::create_directories(other);
+    std::ofstream(other / "EXE.xml", std::ios::binary) << Fixture("simulator-exe-any2gsx-enabled.xml");
+
+    ExeXmlStartupEntries startup(files.Root() / "EXE.xml");
+    QVERIFY(startup.Entries().empty());
+
+    startup.Use(other / "EXE.xml");
+
+    QVERIFY(EnabledIn(startup.Entries(), "Any2GSX"));
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), false), FileResult::Completed);
+    QCOMPARE(FirstDifference(BytesOf(other / "EXE.xml"), Fixture("simulator-exe.xml")), std::string::npos);
     QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{1});
 }
 

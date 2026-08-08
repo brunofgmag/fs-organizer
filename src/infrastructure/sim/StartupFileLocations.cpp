@@ -48,6 +48,19 @@ std::vector<StartupFileLocation> StartupFileLocations(const std::vector<UserCfgL
     return found;
 }
 
+std::filesystem::path StartupFileOf(const std::vector<StartupFileLocation>& locations, const SimulatorVariant variant)
+{
+    for (const StartupFileLocation& location : locations)
+    {
+        if (location.variant == variant)
+        {
+            return location.filePath;
+        }
+    }
+
+    return {};
+}
+
 std::filesystem::path BackupOfStartupFile(const std::filesystem::path& filePath)
 {
     std::filesystem::path backup = filePath;

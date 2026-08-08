@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
         Out() << "    backup     " << AsText(BackupOfStartupFile(location.filePath)) << "\n";
 
         ExeXmlStartupEntries startup(location.filePath);
-        const StartupService service(startup, processProbe);
+        const StartupService service(startup, processProbe, filesystemProbe, true);
 
         ReportEntries(service);
     }

@@ -2087,6 +2087,11 @@ It also exists in the library: %2</translation>
         <source>Diagnostics</source>
         <translation>Diagnostics</translation>
     </message>
+    <message>
+        <location filename="../src/view/shell/PageNames.cpp" line="13"/>
+        <source>Simulator</source>
+        <translation>Simulator</translation>
+    </message>
 </context>
 <context>
     <name>ModelRowDetail</name>
@@ -3009,14 +3014,19 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>the startup file of the simulator could not be written, so nothing changed</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="110"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="106"/>
+        <source>the startup entries of the simulator are left loose in the options, so the app does not read or write that file</source>
+        <translation>the startup entries of the simulator are left loose in the options, so the app does not read or write that file</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="117"/>
         <source>
     the occupant is in: %1</source>
         <translation>
     the occupant is in: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="121"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="128"/>
         <source>
     folder in the destination: %1
     addon in the library: %2</source>
@@ -3025,92 +3035,92 @@ Apply the preset &quot;%2&quot;?</translation>
     addon in the library: %2</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="127"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="134"/>
         <source>
     the current link points at: %1</source>
         <translation>
     the current link points at: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="142"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="149"/>
         <source>
     the folder that refused: %1</source>
         <translation>
     the folder that refused: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="163"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="170"/>
         <source>%1: it is back, and %2 is in the quarantine with its origin recorded.</source>
         <translation>%1: it is back, and %2 is in the quarantine with its origin recorded.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="168"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="175"/>
         <source>putting %1 in the quarantine</source>
         <translation>putting %1 in the quarantine</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="169"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="176"/>
         <source>bringing %1 back</source>
         <translation>bringing %1 back</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="172"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="179"/>
         <source>
     neither of them is in the library right now, and nothing was deleted</source>
         <translation>
     neither of them is in the library right now, and nothing was deleted</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="173"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="180"/>
         <source>
     the library still holds: %1</source>
         <translation>
     the library still holds: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="175"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="182"/>
         <source>%1: it stopped at %2, because %3.%4</source>
         <translation>%1: it stopped at %2, because %3.%4</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="183"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="190"/>
         <source>moved to the Recycle Bin</source>
         <translation>moved to the Recycle Bin</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="184"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="191"/>
         <source>deleted for good</source>
         <translation>deleted for good</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="193"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="200"/>
         <source>
     the link already removed: %1</source>
         <translation>
     the link already removed: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="216"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="223"/>
         <source>Copying to the library…</source>
         <translation>Copying to the library…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="217"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="224"/>
         <source>Checking whether the copy matches the source…</source>
         <translation>Checking whether the copy matches the source…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="218"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="225"/>
         <source>Putting the copy in its final place…</source>
         <translation>Putting the copy in its final place…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="219"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="226"/>
         <source>Removing the source folder…</source>
         <translation>Removing the source folder…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="220"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="227"/>
         <source>Creating the link in the destination…</source>
         <translation>Creating the link in the destination…</translation>
     </message>
@@ -3233,38 +3243,38 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>Not now</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="158"/>
+        <location filename="../src/main.cpp" line="163"/>
         <source>Unreadable configuration</source>
         <translation>Unreadable configuration</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="159"/>
+        <location filename="../src/main.cpp" line="164"/>
         <source>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</source>
         <translation>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="271"/>
+        <location filename="../src/main.cpp" line="290"/>
         <source>Language not applied</source>
         <translation>Language not applied</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="272"/>
+        <location filename="../src/main.cpp" line="291"/>
         <source>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</source>
         <translation>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="282"/>
-        <location filename="../src/main.cpp" line="520"/>
+        <location filename="../src/main.cpp" line="301"/>
+        <location filename="../src/main.cpp" line="546"/>
         <source>Could not save</source>
         <translation>Could not save</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="283"/>
+        <location filename="../src/main.cpp" line="302"/>
         <source>The option could not be written to %1, so it stays as it was.</source>
         <translation>The option could not be written to %1, so it stays as it was.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="521"/>
+        <location filename="../src/main.cpp" line="547"/>
         <source>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</source>
         <translation>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</translation>
     </message>
@@ -3344,6 +3354,26 @@ Apply the preset &quot;%2&quot;?</translation>
 Size %2</source>
         <translation>Version %1
 Size %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="35"/>
+        <source>the program is not there</source>
+        <translation>the program is not there</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="36"/>
+        <source>the addon that holds it is off</source>
+        <translation>the addon that holds it is off</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="40"/>
+        <source>Inside an addon</source>
+        <translation>Inside an addon</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="41"/>
+        <source>outside your addons</source>
+        <translation>outside your addons</translation>
     </message>
 </context>
 <context>
@@ -4059,6 +4089,127 @@ Size %2</translation>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="62"/>
         <source>Apply</source>
         <translation>Apply</translation>
+    </message>
+</context>
+<context>
+    <name>StartupPage</name>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="102"/>
+        <source>The choice could not be written down, so it stays as it was.</source>
+        <translation>The choice could not be written down, so it stays as it was.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="176"/>
+        <source>Read it again</source>
+        <translation>Read it again</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="177"/>
+        <source>Leave these alone</source>
+        <translation>Leave these alone</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="178"/>
+        <source>Program</source>
+        <translation>Program</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="178"/>
+        <source>Path</source>
+        <translation>Path</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="178"/>
+        <source>State</source>
+        <translation>State</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="179"/>
+        <source>The app writes one thing here: the switch of an entry that already exists. It never adds, removes or reorders, and it keeps one backup copy of the file beside it.</source>
+        <translation>The app writes one thing here: the switch of an entry that already exists. It never adds, removes or reorders, and it keeps one backup copy of the file beside it.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="182"/>
+        <source>No startup entry to show</source>
+        <translation>No startup entry to show</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="183"/>
+        <source>The startup file of this profile was not found beside its UserCfg.opt, or it carries no program. Nothing was written.</source>
+        <translation>The startup file of this profile was not found beside its UserCfg.opt, or it carries no program. Nothing was written.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="185"/>
+        <source>The startup entries are left alone</source>
+        <translation>The startup entries are left alone</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="186"/>
+        <source>Turn this on and FS Organizer reads the startup file of the simulator, lists the programs it launches with itself, and lets you switch one off without editing XML. It changes one thing only: the switch of an entry that is already there.</source>
+        <translation>Turn this on and FS Organizer reads the startup file of the simulator, lists the programs it launches with itself, and lets you switch one off without editing XML. It changes one thing only: the switch of an entry that is already there.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="189"/>
+        <source>Turn it on</source>
+        <translation>Turn it on</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="200"/>
+        <source>The startup entries of the simulator are left alone.</source>
+        <translation>The startup entries of the simulator are left alone.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="208"/>
+        <source>%n program the simulator launches with itself.</source>
+        <translation>
+            <numerusform>%n program the simulator launches with itself.</numerusform>
+            <numerusform>%n programs the simulator launches with itself.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="237"/>
+        <source>startup file · read %1</source>
+        <translation>startup file · read %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="238"/>
+        <source>startup file · not read</source>
+        <translation>startup file · not read</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="264"/>
+        <source>The switch was not changed: %1.</source>
+        <translation>The switch was not changed: %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="270"/>
+        <source>%1 will start with the simulator.</source>
+        <translation>%1 will start with the simulator.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="271"/>
+        <source>%1 will not start with the simulator.</source>
+        <translation>%1 will not start with the simulator.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="278"/>
+        <source>Simulator open</source>
+        <translation>Simulator open</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="279"/>
+        <source>The startup file stays untouched while the simulator runs.</source>
+        <translation>The startup file stays untouched while the simulator runs.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="281"/>
+        <source>Close %1 and check again.</source>
+        <translation>Close %1 and check again.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="283"/>
+        <source>Check again</source>
+        <translation>Check again</translation>
     </message>
 </context>
 <context>
