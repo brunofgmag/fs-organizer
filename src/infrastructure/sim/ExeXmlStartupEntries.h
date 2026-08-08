@@ -11,6 +11,8 @@ class ExeXmlStartupEntries final : public StartupEntries
 public:
     explicit ExeXmlStartupEntries(std::filesystem::path filePath);
 
+    void Use(std::filesystem::path filePath);
+
     [[nodiscard]] std::vector<StartupEntry> Entries() const override;
 
     [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, bool enabled) override;

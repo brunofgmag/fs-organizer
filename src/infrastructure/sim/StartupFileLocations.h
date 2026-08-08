@@ -16,6 +16,9 @@ struct StartupFileLocation
 [[nodiscard]] std::vector<StartupFileLocation>
 StartupFileLocations(const std::vector<UserCfgLocation>& userCfgLocations, const FilesystemProbe& filesystemProbe);
 
+[[nodiscard]] std::filesystem::path StartupFileOf(const std::vector<StartupFileLocation>& locations,
+                                                  SimulatorVariant variant);
+
 [[nodiscard]] std::filesystem::path BackupOfStartupFile(const std::filesystem::path& filePath);
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_SIM_STARTUP_FILE_LOCATIONS_H
