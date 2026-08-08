@@ -68,6 +68,20 @@ std::filesystem::path ExternalOriginOf(const std::vector<ExternalAddon>& externa
     return match == externals.end() ? std::filesystem::path{} : match->externalPath;
 }
 
+std::filesystem::path LibraryCopyOf(const std::vector<ExternalAddon>& externals,
+                                    const std::filesystem::path& externalPath)
+{
+    const std::string wanted = ComparablePath(externalPath);
+
+    const auto match = std::ranges::find_if(externals,
+                                            [&wanted](const ExternalAddon& external)
+                                            {
+                                                return ComparablePath(external.externalPath) == wanted;
+                                            });
+
+    return match == externals.end() ? std::filesystem::path{} : match->addonFolder;
+}
+
 void RememberedByTheLibrary(std::vector<ExternalAddon>& externals,
                             const std::filesystem::path& addonFolder,
                             const std::filesystem::path& externalPath)

@@ -28,7 +28,10 @@ private:
                                                  const std::vector<std::filesystem::path>& libraryRoots,
                                                  const std::vector<ExternalAddon>& externals) const;
 
-    [[nodiscard]] bool TheOtherProgramTookItsFolderBack(const std::filesystem::path& externalPath) const;
+    [[nodiscard]] bool APhysicalFolderIsThere(const std::filesystem::path& path) const;
+
+    [[nodiscard]] bool BothCopiesAreThere(const std::filesystem::path& theOtherPrograms,
+                                          const std::filesystem::path& inTheLibrary) const;
 
     const LinkService& linkService_;
     const FilesystemProbe& filesystemProbe_;
