@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/brunofgmag/fs-organizer/compare/v0.15.0...v0.16.0) (2026-08-08)
+
+
+### Features
+
+* manage addons another program installed, and name the two ways they drift ([#43](https://github.com/brunofgmag/fs-organizer/issues/43)) ([7433a72](https://github.com/brunofgmag/fs-organizer/commit/7433a72a76738fa586d1b34ee13aa4b06e148759))
+
 ## [0.15.0](https://github.com/brunofgmag/fs-organizer/compare/v0.14.0...v0.15.0) (2026-08-07)
 
 
