@@ -93,6 +93,11 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotDelete: return QObject::tr("the folder could not be deleted");
     case FileResult::CouldNotRecordTheOrigin:
         return QObject::tr("the record that says where this came from could not be written, so nothing was moved");
+    case FileResult::CannotWriteInTheOtherProgramsFolder:
+        return QObject::tr("the folder of the other program does not accept writes from you, so nothing was taken "
+                           "away from it");
+    case FileResult::TheDiskDisagreesWithTheScan:
+        return QObject::tr("the entry no longer points where the last scan saw it point, so nothing was touched");
     }
 
     return {};

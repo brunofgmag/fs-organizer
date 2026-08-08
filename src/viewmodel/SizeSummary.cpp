@@ -15,6 +15,10 @@ namespace
             return QCoreApplication::translate("SizeSummary", "%n managed not measured", nullptr, many);
         case EntryClassification::External:
             return QCoreApplication::translate("SizeSummary", "%n external not measured", nullptr, many);
+        case EntryClassification::Divergent:
+            return QCoreApplication::translate("SizeSummary", "%n divergent not measured", nullptr, many);
+        case EntryClassification::Vanished:
+            return QCoreApplication::translate("SizeSummary", "%n vanished not measured", nullptr, many);
         case EntryClassification::Broken:
             return QCoreApplication::translate("SizeSummary", "%n broken not measured", nullptr, many);
         case EntryClassification::Unavailable:

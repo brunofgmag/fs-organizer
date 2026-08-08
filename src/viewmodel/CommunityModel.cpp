@@ -10,18 +10,25 @@ namespace
 {
     TagTone ToneOf(const EntryClassification classification, const bool conflicted)
     {
-        if (conflicted || classification == EntryClassification::Broken)
+        if (classification == EntryClassification::Broken || classification == EntryClassification::Vanished)
         {
-            return classification == EntryClassification::Broken ? TagTone::Filled : TagTone::Outlined;
+            return TagTone::Filled;
+        }
+
+        if (conflicted)
+        {
+            return TagTone::Outlined;
         }
 
         switch (classification)
         {
+        case EntryClassification::Divergent:
         case EntryClassification::Duplicated:
         case EntryClassification::Unmanaged: return TagTone::Outlined;
         case EntryClassification::External:
         case EntryClassification::Unavailable: return TagTone::Muted;
         case EntryClassification::Managed:
+        case EntryClassification::Vanished:
         case EntryClassification::Broken: break;
         }
 
@@ -39,6 +46,8 @@ QString CommunityModel::ClassificationName(const EntryClassification classificat
     {
     case EntryClassification::Managed: return tr("Managed");
     case EntryClassification::External: return tr("External");
+    case EntryClassification::Divergent: return tr("Divergent");
+    case EntryClassification::Vanished: return tr("Vanished");
     case EntryClassification::Broken: return tr("Broken");
     case EntryClassification::Unavailable: return tr("Unavailable");
     case EntryClassification::Unmanaged: return tr("Unmanaged");

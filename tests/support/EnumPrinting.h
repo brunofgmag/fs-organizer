@@ -63,6 +63,8 @@ namespace QTest
         {
         case EntryClassification::Managed: return qstrdup("Managed");
         case EntryClassification::External: return qstrdup("External");
+        case EntryClassification::Divergent: return qstrdup("Divergent");
+        case EntryClassification::Vanished: return qstrdup("Vanished");
         case EntryClassification::Broken: return qstrdup("Broken");
         case EntryClassification::Unavailable: return qstrdup("Unavailable");
         case EntryClassification::Unmanaged: return qstrdup("Unmanaged");
@@ -138,6 +140,8 @@ namespace QTest
         case FileResult::TheRecycleBinCannotReachIt: return qstrdup("TheRecycleBinCannotReachIt");
         case FileResult::CouldNotDelete: return qstrdup("CouldNotDelete");
         case FileResult::CouldNotRecordTheOrigin: return qstrdup("CouldNotRecordTheOrigin");
+        case FileResult::CannotWriteInTheOtherProgramsFolder: return qstrdup("CannotWriteInTheOtherProgramsFolder");
+        case FileResult::TheDiskDisagreesWithTheScan: return qstrdup("TheDiskDisagreesWithTheScan");
         }
 
         return qstrdup("FileResult(?)");
@@ -192,6 +196,7 @@ namespace QTest
         case OperationKind::RemoveCategory: return qstrdup("RemoveCategory");
         case OperationKind::RecycleFromLibrary: return qstrdup("RecycleFromLibrary");
         case OperationKind::DeleteFromLibrary: return qstrdup("DeleteFromLibrary");
+        case OperationKind::LinkTheOtherProgramsFolder: return qstrdup("LinkTheOtherProgramsFolder");
         }
 
         return qstrdup("OperationKind(?)");

@@ -72,6 +72,7 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::DiscardStaging: return tr("Discard a half finished import");
     case OperationKind::RecycleFromLibrary: return tr("Delete addon to the Recycle Bin");
     case OperationKind::DeleteFromLibrary: return tr("Delete addon permanently");
+    case OperationKind::LinkTheOtherProgramsFolder: return tr("Link the other program's folder into the library");
     }
 
     return {};
