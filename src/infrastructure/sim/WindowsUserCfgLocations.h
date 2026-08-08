@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "infrastructure/sim/WindowsSimulatorLocator.h"
+#include "infrastructure/sim/UserCfgLocation.h"
 
 [[nodiscard]] std::vector<UserCfgLocation> WindowsUserCfgLocations();
 

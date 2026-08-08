@@ -1,16 +1,10 @@
 #ifndef FS_ORGANIZER_INFRASTRUCTURE_SIM_WINDOWS_SIMULATOR_LOCATOR_H
 #define FS_ORGANIZER_INFRASTRUCTURE_SIM_WINDOWS_SIMULATOR_LOCATOR_H
 
-#include <filesystem>
 #include <vector>
 
 #include "application/ports/SimulatorLocator.h"
-
-struct UserCfgLocation
-{
-    SimulatorVariant variant = SimulatorVariant::MSFS2024;
-    std::filesystem::path configPath;
-};
+#include "infrastructure/sim/UserCfgLocation.h"
 
 class WindowsSimulatorLocator final : public SimulatorLocator
 {
