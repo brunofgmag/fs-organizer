@@ -131,6 +131,7 @@ set(VIEW_SOURCES
         src/view/library/SuggestionDialog.cpp
         src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp
+        src/view/TextThatIsNeverCut.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp
         src/view/panels/DependencySection.cpp

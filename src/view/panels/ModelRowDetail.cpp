@@ -4,6 +4,8 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 
+#include "view/TextThatIsNeverCut.h"
+
 namespace
 {
     constexpr int kFieldNameWidth = 92;
@@ -77,10 +79,7 @@ void ModelRowDetail::ShowFields(const QList<Field>& fields)
         name->setObjectName(QStringLiteral("DetailFieldName"));
         name->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-        auto* value = new QLabel(field.second, this);
-        value->setObjectName(QStringLiteral("DetailFieldValue"));
-        value->setWordWrap(true);
-        value->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        auto* value = new TextThatIsNeverCut(field.second, this);
 
         rows_->addWidget(name, row, 0);
         rows_->addWidget(value, row, 1);
