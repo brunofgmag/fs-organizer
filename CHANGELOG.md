@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/brunofgmag/fs-organizer/compare/v0.18.0...v0.18.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* **view:** show a whole path where it fits and cut it in the middle where it does not ([#50](https://github.com/brunofgmag/fs-organizer/issues/50)) ([24e52e9](https://github.com/brunofgmag/fs-organizer/commit/24e52e913ea93ed15bef1ec468ed1521f56a487b))
+
 ## [0.18.0](https://github.com/brunofgmag/fs-organizer/compare/v0.17.0...v0.18.0) (2026-08-08)
 
 
