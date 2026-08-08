@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
 #include <variant>
 
 #include "domain/journal/OperationLog.h"
@@ -48,6 +49,7 @@ namespace
         static void AnInterruptedImportNeverLeavesTheOtherProgramWithoutItsContent();
         static void AnEntryThatNoLongerPointsAtTheOtherProgramIsRefused();
         static void TheJournalHearsTheOtherProgramsFolderAsTheSourceOfTheImport();
+        static void TheEntryBeingTakenOverIsInTheJournalBeforeTheCopyStarts();
     };
 }
 
@@ -536,9 +538,27 @@ void ImportEngineTest::TheJournalHearsTheOtherProgramsFolderAsTheSourceOfTheImpo
 
     QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
 
+    const auto copied = std::ranges::find_if(f.journal.appended,
+                                             [](const OperationRecord& record)
+                                             {
+                                                 return record.kind == OperationKind::ImportCopyToStaging;
+                                             });
+
+    QVERIFY(copied != f.journal.appended.end());
+    QCOMPARE(copied->source, kVendorFolder);
+    QCOMPARE(copied->target, kExternalStaging);
+}
+
+void ImportEngineTest::TheEntryBeingTakenOverIsInTheJournalBeforeTheCopyStarts()
+{
+    ExternalFixture f;
+    f.files.MakeTheCopyFailPartWayThrough();
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::CouldNotCopy);
+
     QVERIFY(!f.journal.appended.empty());
-    QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportCopyToStaging);
-    QCOMPARE(f.journal.appended[0].source, kVendorFolder);
+    QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportFromAnotherProgram);
+    QCOMPARE(f.journal.appended[0].source, kEntry);
     QCOMPARE(f.journal.appended[0].target, kExternalStaging);
 }
 

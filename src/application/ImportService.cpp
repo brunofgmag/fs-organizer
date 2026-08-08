@@ -121,6 +121,25 @@ namespace
 
         return nullptr;
     }
+
+    StagingLeftover LeftoverFrom(const std::filesystem::path& staging,
+                                 const std::filesystem::path& imported,
+                                 const OperationRecord* copied,
+                                 const OperationRecord* announced,
+                                 const std::filesystem::path& theOtherProgramOwns)
+    {
+        const std::filesystem::path copiedFrom = copied == nullptr ? std::filesystem::path{} : copied->source;
+
+        if (announced == nullptr && theOtherProgramOwns.empty())
+        {
+            return StagingLeftover{.staging = staging, .target = imported, .source = copiedFrom};
+        }
+
+        return StagingLeftover{.staging = staging,
+                               .target = imported,
+                               .source = announced == nullptr ? std::filesystem::path{} : announced->source,
+                               .externalSource = theOtherProgramOwns.empty() ? copiedFrom : theOtherProgramOwns};
+    }
 }
 
 ImportService::ImportService(const ImportEngine& engine,
@@ -705,12 +724,11 @@ std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& pr
             }
 
             const OperationRecord* copied = LastRecordAbout(history, child, {OperationKind::ImportCopyToStaging});
+            const OperationRecord* announced =
+                LastRecordAbout(history, child, {OperationKind::ImportFromAnotherProgram});
             const std::filesystem::path imported = ImportedPathFor(child);
 
-            leftovers.push_back(StagingLeftover{.staging = child,
-                                                .target = imported,
-                                                .source = copied == nullptr ? std::filesystem::path{} : copied->source,
-                                                .externalSource = WhatTheOtherProgramOwns(imported)});
+            leftovers.push_back(LeftoverFrom(child, imported, copied, announced, WhatTheOtherProgramOwns(imported)));
         }
     }
 

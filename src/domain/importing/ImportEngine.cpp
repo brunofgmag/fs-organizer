@@ -92,6 +92,11 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     const std::filesystem::path staging = StagingPathFor(target);
     const AddonId addon = IdentityOf(profile, target);
 
+    if (request.CameFromAnotherProgram())
+    {
+        RecordStep(addon, OperationKind::ImportFromAnotherProgram, request.source, staging, FileResult::Completed);
+    }
+
     announce(OperationKind::ImportCopyToStaging);
     const ImportOutcome copy = CopyToStaging(request.Bytes(), staging, onProgress);
     RecordStep(addon, OperationKind::ImportCopyToStaging, request.Bytes(), staging, copy.Result());
