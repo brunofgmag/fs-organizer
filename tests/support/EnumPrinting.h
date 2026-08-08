@@ -142,6 +142,8 @@ namespace QTest
         case FileResult::CouldNotRecordTheOrigin: return qstrdup("CouldNotRecordTheOrigin");
         case FileResult::CannotWriteInTheOtherProgramsFolder: return qstrdup("CannotWriteInTheOtherProgramsFolder");
         case FileResult::TheDiskDisagreesWithTheScan: return qstrdup("TheDiskDisagreesWithTheScan");
+        case FileResult::CouldNotReadTheStartupFile: return qstrdup("CouldNotReadTheStartupFile");
+        case FileResult::CouldNotWriteTheStartupFile: return qstrdup("CouldNotWriteTheStartupFile");
         }
 
         return qstrdup("FileResult(?)");

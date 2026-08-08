@@ -2999,6 +2999,16 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>a entrada não aponta mais para onde a última varredura a viu apontar, então nada foi tocado</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="102"/>
+        <source>the startup file of the simulator could not be read</source>
+        <translation>não foi possível ler o arquivo de inicialização do simulador</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="104"/>
+        <source>the startup file of the simulator could not be written, so nothing changed</source>
+        <translation>não foi possível gravar o arquivo de inicialização do simulador, então nada mudou</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="110"/>
         <source>
     the occupant is in: %1</source>
