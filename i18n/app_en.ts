@@ -2999,6 +2999,16 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>the entry no longer points where the last scan saw it point, so nothing was touched</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="102"/>
+        <source>the startup file of the simulator could not be read</source>
+        <translation>the startup file of the simulator could not be read</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="104"/>
+        <source>the startup file of the simulator could not be written, so nothing changed</source>
+        <translation>the startup file of the simulator could not be written, so nothing changed</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="110"/>
         <source>
     the occupant is in: %1</source>

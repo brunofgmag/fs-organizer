@@ -186,6 +186,15 @@ fsorg_add_qt_test(fsorg-size-service-tests size-service
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-size-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-startup-service-tests startup-service
+        tests/application/tst_startup_service.cpp
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeStartupEntries.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-startup-service-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         tests/application/tst_legacy_config_importer.cpp
         tests/doubles/FakeFilesystemProbe.h
@@ -678,6 +687,32 @@ fsorg_add_qt_test(fsorg-content-xml-packages-tests content-xml-packages
 target_link_libraries(fsorg-content-xml-packages-tests PRIVATE fsorg-infrastructure)
 target_compile_definitions(fsorg-content-xml-packages-tests PRIVATE
         FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-exe-xml-document-tests exe-xml-document
+        tests/infrastructure/sim/tst_exe_xml_document.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-exe-xml-document-tests PRIVATE fsorg-infrastructure)
+target_compile_definitions(fsorg-exe-xml-document-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-startup-on-real-disk-tests startup-on-real-disk
+        tests/infrastructure/sim/tst_startup_on_real_disk.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        tests/support/TempFiles.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-startup-on-real-disk-tests PRIVATE fsorg-infrastructure)
+target_compile_definitions(fsorg-startup-on-real-disk-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-startup-file-locations-tests startup-file-locations
+        tests/infrastructure/sim/tst_startup_file_locations.cpp
+        tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h
+        tests/support/TempFiles.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-startup-file-locations-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-profile-packages-tests profile-packages
         tests/infrastructure/sim/tst_profile_packages.cpp

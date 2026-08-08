@@ -123,6 +123,8 @@ namespace
         case FileResult::CouldNotRecordTheOrigin: return "couldNotRecordTheOrigin";
         case FileResult::CannotWriteInTheOtherProgramsFolder: return "cannotWriteInTheOtherProgramsFolder";
         case FileResult::TheDiskDisagreesWithTheScan: return "theDiskDisagreesWithTheScan";
+        case FileResult::CouldNotReadTheStartupFile: return "couldNotReadTheStartupFile";
+        case FileResult::CouldNotWriteTheStartupFile: return "couldNotWriteTheStartupFile";
         }
 
         return "unknown";

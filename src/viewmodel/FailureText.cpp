@@ -98,6 +98,10 @@ QString Explain(const FileResult result)
                            "away from it");
     case FileResult::TheDiskDisagreesWithTheScan:
         return QObject::tr("the entry no longer points where the last scan saw it point, so nothing was touched");
+    case FileResult::CouldNotReadTheStartupFile:
+        return QObject::tr("the startup file of the simulator could not be read");
+    case FileResult::CouldNotWriteTheStartupFile:
+        return QObject::tr("the startup file of the simulator could not be written, so nothing changed");
     }
 
     return {};
