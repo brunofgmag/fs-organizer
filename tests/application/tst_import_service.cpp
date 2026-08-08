@@ -10,6 +10,7 @@
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/OriginSidecar.h"
 #include "domain/linking/EntryClassifier.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -43,6 +44,9 @@ namespace
         static void LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFrom();
         static void ALeftoverOfAnExternalImportRemembersWhichProgramItWasTakingOver();
         static void ALeftoverOfAnExternalImportKnowsTheEntryItWasImportingFrom();
+        static void GivingAnAddonBackTakesTheRecordBesideItAway();
+        static void AnAddonThatNeverCameFromAnotherProgramIsNotGivenBack();
+        static void NothingIsGivenBackWhileTheSimulatorIsRunning();
         static void ALeftoverThatOnlyKnowsTheProgramIsNotResumedAsAnOrdinaryImport();
         static void ResumingAnExternalLeftoverTakesTheOtherProgramsFolderOverAgain();
         static void TheSearchForLeftoversNeverWalksIntoAnAddon();
@@ -564,6 +568,61 @@ void ImportServiceTest::ResumingAnExternalLeftoverTakesTheOtherProgramsFolderOve
     QVERIFY(f.fileSystem.IsLink(kVendorFolder));
     QCOMPARE(f.fileSystem.LinkTarget(kVendorFolder).value(), kVendorInLibrary);
     QCOMPARE(f.fileSystem.LinkTarget(kVendorEntry).value(), kVendorInLibrary);
+}
+
+namespace
+{
+    void AManagedExternal(Fixture& f)
+    {
+        f.fileSystem.AddDirectory(kDestination);
+        f.fileSystem.AddDirectory(kLibrary);
+        f.fileSystem.AddDirectory("D:/Library/Utils");
+        f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+        f.fileSystem.AddDirectory(kVendorInLibrary);
+        f.fileSystem.AddFile(kVendorInLibrary / "manifest.json", kMegabyte);
+        f.fileSystem.AddLink(kVendorFolder, kVendorInLibrary);
+        f.fileSystem.AddLink(kVendorEntry, kVendorInLibrary);
+        f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kVendorInLibrary),
+                                         TextOfTheExternalOrigin(kVendorFolder));
+
+        RememberWhereItCameFrom(f.profile, kVendorInLibrary, kVendorFolder);
+    }
+}
+
+void ImportServiceTest::GivingAnAddonBackTakesTheRecordBesideItAway()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    const FileResult result = f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {});
+
+    QCOMPARE(result, FileResult::Completed);
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(!f.fileSystem.IsLink(kVendorFolder));
+    QVERIFY(!f.fileSystem.Exists(kVendorInLibrary));
+    QVERIFY2(!f.fileSystem.Exists(ExternalSidecarPathFor(kVendorInLibrary)),
+             "the record beside the addon outlives the folder unless the give back takes it too");
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorEntry).value(), kVendorFolder);
+}
+
+void ImportServiceTest::AnAddonThatNeverCameFromAnotherProgramIsNotGivenBack()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kInLibrary, {}), FileResult::TheOriginIsUnknown);
+    QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
+}
+
+void ImportServiceTest::NothingIsGivenBackWhileTheSimulatorIsRunning()
+{
+    Fixture f;
+    AManagedExternal(f);
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {}), FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.IsLink(kVendorFolder));
+    QVERIFY(f.fileSystem.Exists(kVendorInLibrary / "manifest.json"));
 }
 
 void ImportServiceTest::TheSearchForLeftoversNeverWalksIntoAnAddon()

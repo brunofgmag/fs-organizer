@@ -18,6 +18,13 @@
 
 inline constexpr std::uintmax_t kFreeSpaceMargin = 64ULL * 1024 * 1024;
 
+struct GiveBackRequest
+{
+    std::filesystem::path addonFolder{};
+    std::filesystem::path externalPath{};
+    std::vector<std::filesystem::path> links{};
+};
+
 class ImportEngine
 {
 public:
@@ -34,8 +41,23 @@ public:
                                        const std::function<bool(const CopyProgress&)>& onProgress,
                                        const std::function<void(OperationKind)>& onStep = {}) const;
 
+    [[nodiscard]] ImportOutcome GiveBack(const SimulatorProfile& profile,
+                                         const GiveBackRequest& request,
+                                         const std::function<bool(const CopyProgress&)>& onProgress,
+                                         const std::function<void(OperationKind)>& onStep = {}) const;
+
 private:
     [[nodiscard]] ImportOutcome CheckTheSource(const SimulatorProfile& profile, const ImportRequest& request) const;
+
+    [[nodiscard]] ImportOutcome CheckTheFolderWeAreGivingBack(const GiveBackRequest& request) const;
+
+    [[nodiscard]] ImportOutcome
+    TheOtherProgramTakesItsFolderBack(const AddonId& addon,
+                                      const GiveBackRequest& request,
+                                      const std::filesystem::path& staging,
+                                      const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] ImportOutcome RepointTheLinks(const AddonId& addon, const GiveBackRequest& request) const;
 
     [[nodiscard]] ImportOutcome PrepareTheOtherProgramsFolder(const std::filesystem::path& externalSource,
                                                               const std::filesystem::path& target) const;

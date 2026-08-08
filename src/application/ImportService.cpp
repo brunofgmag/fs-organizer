@@ -12,6 +12,7 @@
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/LandingPath.h"
 #include "domain/model/Manifest.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryLookup.h"
@@ -687,6 +688,36 @@ std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& 
     }
 
     return results;
+}
+
+FileResult ImportService::GiveBack(const SimulatorProfile& profile,
+                                   const std::vector<DestinationEntry>& entries,
+                                   const std::filesystem::path& addonFolder,
+                                   const std::function<bool(const CopyProgress&)>& onProgress,
+                                   const std::function<void(OperationKind)>& onStep) const
+{
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return FileResult::TheSimulatorIsRunning;
+    }
+
+    const std::filesystem::path externalPath = ExternalOriginOf(ExternalAddonsOf(profile), addonFolder);
+    if (externalPath.empty())
+    {
+        return FileResult::TheOriginIsUnknown;
+    }
+
+    const GiveBackRequest request{
+        .addonFolder = addonFolder, .externalPath = externalPath, .links = LinksPointingAt(entries, addonFolder)};
+
+    const FileResult result = engine_.GiveBack(profile, request, onProgress, onStep).Result();
+
+    if (Succeeded(result))
+    {
+        static_cast<void>(files_.RemoveTree(ExternalSidecarPathFor(addonFolder)));
+    }
+
+    return result;
 }
 
 std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& profile) const

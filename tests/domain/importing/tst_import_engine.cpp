@@ -50,6 +50,11 @@ namespace
         static void AnEntryThatNoLongerPointsAtTheOtherProgramIsRefused();
         static void TheJournalHearsTheOtherProgramsFolderAsTheSourceOfTheImport();
         static void TheEntryBeingTakenOverIsInTheJournalBeforeTheCopyStarts();
+        static void GivingItBackPutsTheBytesWhereTheOtherProgramLooksForThem();
+        static void GivingItBackPointsTheDestinationEntryAtTheOtherProgramAgain();
+        static void AGiveBackWhoseCopyFailsLeavesBothSidesExactlyAsTheyWere();
+        static void AGiveBackIsRefusedWhenTheOtherProgramsFolderIsNoLongerOurLink();
+        static void AGiveBackResumesWhenTheOtherProgramsFolderIsAlreadyGone();
     };
 }
 
@@ -560,6 +565,90 @@ void ImportEngineTest::TheEntryBeingTakenOverIsInTheJournalBeforeTheCopyStarts()
     QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportFromAnotherProgram);
     QCOMPARE(f.journal.appended[0].source, kEntry);
     QCOMPARE(f.journal.appended[0].target, kExternalStaging);
+}
+
+namespace
+{
+    struct GiveBackFixture : Fixture
+    {
+        GiveBackFixture()
+        {
+            fileSystem.AddDirectory("E:/Sim/Community");
+            fileSystem.AddDirectory("C:/Program Files (x86)/Addon Manager/MSFS");
+            fileSystem.AddDirectory("D:/Library/Utils");
+            fileSystem.AddDirectory(kExternalTarget);
+            fileSystem.AddFile(kExternalTarget / "manifest.json", 2 * kMegabyte);
+            fileSystem.AddDirectory(kExternalTarget / "SimObjects");
+            fileSystem.AddFile(kExternalTarget / "SimObjects/gsx.bgl", 900 * kMegabyte);
+            fileSystem.AddLink(kVendorFolder, kExternalTarget);
+            fileSystem.AddLink(kEntry, kExternalTarget);
+
+            request = GiveBackRequest{.addonFolder = kExternalTarget, .externalPath = kVendorFolder, .links = {kEntry}};
+        }
+
+        GiveBackRequest request{};
+    };
+}
+
+void ImportEngineTest::GivingItBackPutsTheBytesWhereTheOtherProgramLooksForThem()
+{
+    GiveBackFixture f;
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(!f.fileSystem.IsLink(kVendorFolder));
+    QVERIFY(f.fileSystem.Exists(kVendorFolder / "manifest.json"));
+    QVERIFY(f.fileSystem.Exists(kVendorFolder / "SimObjects/gsx.bgl"));
+    QVERIFY(!f.fileSystem.Exists(kExternalTarget));
+    QVERIFY(!f.fileSystem.Exists(StagingPathFor(kVendorFolder)));
+}
+
+void ImportEngineTest::GivingItBackPointsTheDestinationEntryAtTheOtherProgramAgain()
+{
+    GiveBackFixture f;
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsLink(kEntry));
+    QCOMPARE(f.fileSystem.LinkTarget(kEntry).value(), kVendorFolder);
+}
+
+void ImportEngineTest::AGiveBackWhoseCopyFailsLeavesBothSidesExactlyAsTheyWere()
+{
+    GiveBackFixture f;
+    f.files.MakeTheCopyFailPartWayThrough();
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::CouldNotCopy);
+
+    QVERIFY(f.fileSystem.Exists(kExternalTarget / "SimObjects/gsx.bgl"));
+    QVERIFY(f.fileSystem.IsLink(kVendorFolder));
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorFolder).value(), kExternalTarget);
+    QCOMPARE(f.fileSystem.LinkTarget(kEntry).value(), kExternalTarget);
+}
+
+void ImportEngineTest::AGiveBackIsRefusedWhenTheOtherProgramsFolderIsNoLongerOurLink()
+{
+    GiveBackFixture f;
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+    f.fileSystem.AddDirectory(kVendorFolder);
+    f.fileSystem.AddFile(kVendorFolder / "manifest.json", kMegabyte);
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::TheDiskDisagreesWithTheScan);
+
+    QVERIFY(f.fileSystem.Exists(kExternalTarget / "manifest.json"));
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+}
+
+void ImportEngineTest::AGiveBackResumesWhenTheOtherProgramsFolderIsAlreadyGone()
+{
+    GiveBackFixture f;
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(f.fileSystem.Exists(kVendorFolder / "manifest.json"));
 }
 
 QTEST_APPLESS_MAIN(ImportEngineTest)

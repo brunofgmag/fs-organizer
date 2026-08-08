@@ -61,6 +61,8 @@ namespace
         static void APlainImportRemembersNothingAndScansNothingAgain();
         static void MovingAnAddonCarriesTheRecordOfWhereItCameFrom();
         static void UnregisteringALibraryForgetsWhereItsAddonsCameFrom();
+        static void GivingAnAddonBackForgetsWhereItCameFromAndScansAgain();
+        static void ForgettingNothingNeitherSavesNorScans();
     };
 }
 
@@ -737,6 +739,32 @@ void SessionTest::UnregisteringALibraryForgetsWhereItsAddonsCameFrom()
     f.session.UnregisterLibrary("library-1");
 
     QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
+}
+
+void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
+{
+    Fixture f;
+    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.session.ShowActiveProfile();
+
+    f.session.ForgetWhatCameFromAnotherProgram({kAddon});
+
+    QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
+    QCOMPARE(f.observer.started, 2);
+}
+
+void SessionTest::ForgettingNothingNeitherSavesNorScans()
+{
+    Fixture f;
+    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.session.ShowActiveProfile();
+
+    f.session.ForgetWhatCameFromAnotherProgram({});
+
+    QCOMPARE(f.settings.stored.profiles.front().externalOrigins.size(), std::size_t{1});
+    QCOMPARE(f.observer.started, 1);
 }
 
 QTEST_MAIN(SessionTest)

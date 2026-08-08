@@ -202,6 +202,7 @@ namespace QTest
         case OperationKind::DeleteFromLibrary: return qstrdup("DeleteFromLibrary");
         case OperationKind::LinkTheOtherProgramsFolder: return qstrdup("LinkTheOtherProgramsFolder");
         case OperationKind::ImportFromAnotherProgram: return qstrdup("ImportFromAnotherProgram");
+        case OperationKind::GiveBackToAnotherProgram: return qstrdup("GiveBackToAnotherProgram");
         }
 
         return qstrdup("OperationKind(?)");

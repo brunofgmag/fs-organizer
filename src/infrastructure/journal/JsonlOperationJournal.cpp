@@ -65,6 +65,7 @@ namespace
         case OperationKind::DeleteFromLibrary: return "deleteFromLibrary";
         case OperationKind::LinkTheOtherProgramsFolder: return "linkTheOtherProgramsFolder";
         case OperationKind::ImportFromAnotherProgram: return "importFromAnotherProgram";
+        case OperationKind::GiveBackToAnotherProgram: return "giveBackToAnotherProgram";
         }
 
         return "unknown";

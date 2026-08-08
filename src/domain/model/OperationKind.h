@@ -27,6 +27,7 @@ enum class OperationKind : int
     DeleteFromLibrary = 18,
     LinkTheOtherProgramsFolder = 19,
     ImportFromAnotherProgram = 20,
+    GiveBackToAnotherProgram = 21,
 };
 
 inline constexpr std::array kAllOperationKinds{
@@ -51,9 +52,10 @@ inline constexpr std::array kAllOperationKinds{
     OperationKind::DeleteFromLibrary,
     OperationKind::LinkTheOtherProgramsFolder,
     OperationKind::ImportFromAnotherProgram,
+    OperationKind::GiveBackToAnotherProgram,
 };
 
-static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::ImportFromAnotherProgram) + 1,
+static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::GiveBackToAnotherProgram) + 1,
               "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool CarriesAFileReason(const OperationKind kind)
@@ -75,6 +77,7 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::RemoveCategory:
     case OperationKind::RecycleFromLibrary:
     case OperationKind::ImportFromAnotherProgram:
+    case OperationKind::GiveBackToAnotherProgram:
     case OperationKind::DeleteFromLibrary: return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:
@@ -110,6 +113,7 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::RemoveCategory:
     case OperationKind::RecycleFromLibrary:
     case OperationKind::ImportFromAnotherProgram:
+    case OperationKind::GiveBackToAnotherProgram:
     case OperationKind::DeleteFromLibrary: return false;
     }
 
