@@ -22,7 +22,7 @@ public:
     ImportViewModel(const ImportService& service,
                     ProfileService& profileService,
                     const ProcessProbe& probe,
-                    const Session& session,
+                    Session& session,
                     BackgroundRunner& runner,
                     QObject* parent = nullptr);
 
@@ -70,7 +70,7 @@ private:
     const ImportService& service_;
     ProfileService& profileService_;
     const ProcessProbe& probe_;
-    const Session& session_;
+    Session& session_;
     BackgroundRunner& runner_;
     bool running_ = false;
     std::atomic<bool> cancelled_{false};

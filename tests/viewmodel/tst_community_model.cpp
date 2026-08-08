@@ -4,6 +4,7 @@
 
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "support/PathText.h"
 #include "viewmodel/CommunityModel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
@@ -21,6 +22,12 @@ namespace
         static void AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn();
         static void ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate();
         static void ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone();
+        static void ADivergentEntrySaysTwoCopiesExistInsteadOfShowingAPath();
+        static void AVanishedEntrySaysTheLibraryCopyIsGoneAndLooksLikeALoss();
+        static void ADivergentEntryFindsItsConflictByTheFolderTheOtherProgramOwns();
+        static void TheNameCellCarriesUnderItTheFolderTheEntryPointsAt();
+        static void EveryClassificationSaysWhatItMeansInsteadOfRepeatingThePath();
+        static void APhysicalFolderCarriesItsOwnPathUnderTheName();
     };
 }
 
@@ -113,8 +120,11 @@ void CommunityModelTest::TheTableShowsOneRowPerEntry()
     QCOMPARE(model.data(model.index(5, CommunityModel::DestinationColumn), Qt::DisplayRole).toString(),
              QStringLiteral("Community2024"));
     QCOMPARE(model.data(model.index(0, CommunityModel::TargetColumn), Qt::DisplayRole).toString(),
+             QStringLiteral("the simulator loads it from your library"));
+    QCOMPARE(model.data(model.index(4, CommunityModel::TargetColumn), Qt::DisplayRole).toString(),
+             QStringLiteral("a real folder, not in a library yet"));
+    QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), SecondLineRole).toString(),
              QDir::toNativeSeparators(QStringLiteral("D:/MSFS 2024/Sceneries/managed")));
-    QCOMPARE(model.data(model.index(4, CommunityModel::TargetColumn), Qt::DisplayRole).toString(), QString());
 }
 
 void CommunityModelTest::FilteringByEachClassificationReturnsExactlyItsSubset()
@@ -190,6 +200,102 @@ void CommunityModelTest::ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate
     {
         QVERIFY(model.data(model.index(0, column), Qt::ToolTipRole).toString().isEmpty());
     }
+}
+
+namespace
+{
+    constexpr auto kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+    constexpr auto kLibraryCopy = "D:/MSFS 2024/Utils/gsx-pro";
+
+    DestinationEntry FromAnotherProgram(const EntryClassification classification)
+    {
+        return DestinationEntry{.path = "E:/Flight Simulator 2024/Community/fsdreamteam-gsx-pro",
+                                .target = kLibraryCopy,
+                                .classification = classification,
+                                .externalOrigin = kVendorFolder,
+                                .theOtherProgramTookItsFolderBack = classification == EntryClassification::Divergent};
+    }
+}
+
+void CommunityModelTest::ADivergentEntrySaysTwoCopiesExistInsteadOfShowingAPath()
+{
+    CommunityModel model;
+    model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent)}, Profile(), CopyConflicts{});
+
+    const QModelIndex classification = model.index(0, CommunityModel::ClassificationColumn);
+    const QModelIndex target = model.index(0, CommunityModel::TargetColumn);
+
+    QCOMPARE(model.data(classification, Qt::DisplayRole).toString(), QStringLiteral("Divergent"));
+    QCOMPARE(model.data(target, Qt::DisplayRole).toString(), QStringLiteral("two copies exist"));
+    QCOMPARE(model.data(classification, TagToneRole).toInt(), static_cast<int>(TagTone::Outlined));
+}
+
+void CommunityModelTest::AVanishedEntrySaysTheLibraryCopyIsGoneAndLooksLikeALoss()
+{
+    CommunityModel model;
+    model.ShowEntries({FromAnotherProgram(EntryClassification::Vanished)}, Profile(), CopyConflicts{});
+
+    const QModelIndex classification = model.index(0, CommunityModel::ClassificationColumn);
+    const QModelIndex target = model.index(0, CommunityModel::TargetColumn);
+
+    QCOMPARE(model.data(classification, Qt::DisplayRole).toString(), QStringLiteral("Vanished"));
+    QCOMPARE(model.data(target, Qt::DisplayRole).toString(), QStringLiteral("the library copy is gone"));
+    QCOMPARE(model.data(classification, TagToneRole).toInt(), static_cast<int>(TagTone::Filled));
+    QVERIFY(model.data(classification, AlarmingRole).toBool());
+}
+
+void CommunityModelTest::ADivergentEntryFindsItsConflictByTheFolderTheOtherProgramOwns()
+{
+    const CopyConflicts conflicts{{CopyConflict{
+        .provenancePath = kVendorFolder, .libraryPath = kLibraryCopy, .theProvenanceIsAnotherProgram = true}}};
+
+    CommunityModel model;
+    model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent)}, Profile(), conflicts);
+
+    const QModelIndex row = model.index(0, CommunityModel::ClassificationColumn);
+
+    QVERIFY(model.ConflictAt(row) != nullptr);
+    QCOMPARE(model.ConflictAt(row)->provenancePath, std::filesystem::path{kVendorFolder});
+    QCOMPARE(model.data(row, Qt::DisplayRole).toString(), QStringLiteral("Divergent"));
+}
+
+void CommunityModelTest::TheNameCellCarriesUnderItTheFolderTheEntryPointsAt()
+{
+    CommunityModel model;
+    model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent),
+                       Entry("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj",
+                             EntryClassification::Managed)},
+                      Profile(), CopyConflicts{});
+
+    QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), SecondLineRole).toString(),
+             AsText(std::filesystem::path{kVendorFolder}));
+    QCOMPARE(model.data(model.index(1, CommunityModel::NameColumn), SecondLineRole).toString(),
+             AsText(std::filesystem::path{"D:/MSFS 2024/Aircrafts/aerosoft-crj"}));
+    QVERIFY(model.data(model.index(0, CommunityModel::ClassificationColumn), SecondLineRole).toString().isEmpty());
+}
+
+void CommunityModelTest::EveryClassificationSaysWhatItMeansInsteadOfRepeatingThePath()
+{
+    CommunityModel model;
+    model.ShowEntries(OneOfEachClass(), Profile(), CopyConflicts{});
+
+    for (int row = 0; row < model.rowCount({}); ++row)
+    {
+        const QString meaning = model.data(model.index(row, CommunityModel::TargetColumn), Qt::DisplayRole).toString();
+
+        QVERIFY(!meaning.isEmpty());
+        QVERIFY(!meaning.contains(QStringLiteral("MSFS")));
+    }
+}
+
+void CommunityModelTest::APhysicalFolderCarriesItsOwnPathUnderTheName()
+{
+    CommunityModel model;
+    model.ShowEntries({Entry("E:/Flight Simulator 2024/Community/physical", {}, EntryClassification::Unmanaged)},
+                      Profile(), CopyConflicts{});
+
+    QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), SecondLineRole).toString(),
+             AsText(std::filesystem::path{"E:/Flight Simulator 2024/Community/physical"}));
 }
 
 QTEST_APPLESS_MAIN(CommunityModelTest)

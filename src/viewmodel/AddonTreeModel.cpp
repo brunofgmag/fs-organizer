@@ -303,7 +303,12 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
             return tr("No target");
         }
 
-        return conflict == nullptr ? QVariant() : QVariant(tr("In conflict"));
+        if (conflict == nullptr)
+        {
+            return {};
+        }
+
+        return QVariant(conflict->theProvenanceIsAnotherProgram ? tr("Two copies") : tr("In conflict"));
     }
 
     if (role == TagToneRole)
@@ -396,8 +401,11 @@ QString AddonTreeModel::ToolTipOf(const TreeNode& node, const CopyConflict* conf
 {
     if (conflict != nullptr)
     {
-        return tr("There is already a real folder with that name in the destination: %1")
-            .arg(AsText(conflict->provenancePath));
+        return conflict->theProvenanceIsAnotherProgram
+            ? tr("The other program took its folder back, so a second copy of this addon lives in: %1")
+                  .arg(AsText(conflict->provenancePath))
+            : tr("There is already a real folder with that name in the destination: %1")
+                  .arg(AsText(conflict->provenancePath));
     }
 
     const std::filesystem::path linked = WhereItIsLinked(node);

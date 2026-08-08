@@ -857,6 +857,13 @@ if (WIN32)
         target_link_libraries(fsorg-collision-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-collision-dialog-tests collision-dialog)
 
+        fsorg_add_qt_test(fsorg-conflict-dialog-tests conflict-dialog
+                tests/view/tst_conflict_dialog.cpp
+                tests/support/EnumPrinting.h
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-conflict-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-conflict-dialog-tests conflict-dialog)
+
         fsorg_add_qt_test(fsorg-restore-dialog-tests restore-dialog
                 tests/view/tst_restore_dialog.cpp
                 tests/support/PathPrinting.h)

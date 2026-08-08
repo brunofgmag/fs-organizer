@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <QtCore/QCoreApplication>
+
 #include "support/PathText.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
@@ -33,6 +35,30 @@ namespace
         }
 
         return TagTone::Line;
+    }
+
+    QString WhatTheStateMeans(const EntryClassification classification)
+    {
+        switch (classification)
+        {
+        case EntryClassification::Managed:
+            return QCoreApplication::translate("CommunityModel", "the simulator loads it from your library");
+        case EntryClassification::External:
+            return QCoreApplication::translate("CommunityModel", "another program owns this folder");
+        case EntryClassification::Divergent: return QCoreApplication::translate("CommunityModel", "two copies exist");
+        case EntryClassification::Vanished:
+            return QCoreApplication::translate("CommunityModel", "the library copy is gone");
+        case EntryClassification::Broken:
+            return QCoreApplication::translate("CommunityModel", "the target does not exist");
+        case EntryClassification::Unavailable:
+            return QCoreApplication::translate("CommunityModel", "the volume is not there right now");
+        case EntryClassification::Unmanaged:
+            return QCoreApplication::translate("CommunityModel", "a real folder, not in a library yet");
+        case EntryClassification::Duplicated:
+            return QCoreApplication::translate("CommunityModel", "linked in more than one destination");
+        }
+
+        return {};
     }
 }
 
@@ -71,8 +97,13 @@ void CommunityModel::ShowEntries(std::vector<DestinationEntry> entries,
 const CopyConflict* CommunityModel::ConflictAt(const QModelIndex& position) const
 {
     const DestinationEntry* entry = EntryAt(position);
+    if (entry == nullptr)
+    {
+        return nullptr;
+    }
 
-    return entry == nullptr ? nullptr : conflicts_.OverTheProvenance(entry->path);
+    return entry->theOtherProgramTookItsFolderBack ? conflicts_.OverTheProvenance(entry->externalOrigin)
+                                                   : conflicts_.OverTheProvenance(entry->path);
 }
 
 const DestinationEntry* CommunityModel::EntryAt(const QModelIndex& position) const
@@ -103,7 +134,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
-    const CopyConflict* conflict = conflicts_.OverTheProvenance(entry->path);
+    const CopyConflict* conflict = ConflictAt(position);
 
     if (role == ClassificationRole)
     {
@@ -118,7 +149,20 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     if (role == AlarmingRole)
     {
         return conflict != nullptr || entry->classification == EntryClassification::Broken
-            || entry->classification == EntryClassification::Duplicated;
+            || entry->classification == EntryClassification::Duplicated
+            || entry->classification == EntryClassification::Vanished;
+    }
+
+    if (role == SecondLineRole)
+    {
+        if (position.column() != NameColumn)
+        {
+            return {};
+        }
+
+        const std::filesystem::path& pointsAt = entry->externalOrigin.empty() ? entry->target : entry->externalOrigin;
+
+        return pointsAt.empty() ? QVariant(AsText(entry->path)) : QVariant(AsText(pointsAt));
     }
 
     if (role == TagTextRole)
@@ -157,9 +201,10 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     case NameColumn: return AsText(entry->path.filename());
     case DestinationColumn: return AsText(entry->path.parent_path().filename());
     case ClassificationColumn:
-        return conflict == nullptr ? ClassificationName(entry->classification)
-                                   : tr("%1 · in conflict").arg(ClassificationName(entry->classification));
-    case TargetColumn: return entry->target.empty() ? QString() : AsText(entry->target.generic_wstring());
+        return conflict == nullptr || conflict->theProvenanceIsAnotherProgram
+            ? ClassificationName(entry->classification)
+            : tr("%1 · in conflict").arg(ClassificationName(entry->classification));
+    case TargetColumn: return WhatTheStateMeans(entry->classification);
     default: return {};
     }
 }
@@ -176,7 +221,7 @@ QVariant CommunityModel::headerData(const int section, const Qt::Orientation ori
     case NameColumn: return tr("Name");
     case DestinationColumn: return tr("Destination");
     case ClassificationColumn: return tr("Classification");
-    case TargetColumn: return tr("Target");
+    case TargetColumn: return tr("What this means");
     default: return {};
     }
 }

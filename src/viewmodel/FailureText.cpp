@@ -130,10 +130,24 @@ QString Describe(const LinkOperationResult& result)
     return line;
 }
 
+namespace
+{
+    QString WhichFolderTheOtherProgramOwns(const ImportOperationResult& result)
+    {
+        if (result.result != FileResult::CannotWriteInTheOtherProgramsFolder)
+        {
+            return {};
+        }
+
+        return QObject::tr("\n    the folder that refused: %1").arg(AsText(result.request.externalSource));
+    }
+}
+
 QString Describe(const ImportOperationResult& result)
 {
-    return QStringLiteral("%1: %2%3")
-        .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
+    return QStringLiteral("%1: %2%3%4")
+        .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant),
+             WhichFolderTheOtherProgramOwns(result));
 }
 
 QString Describe(const FileOperationResult& result)

@@ -33,7 +33,40 @@ namespace
             .toString(QStringLiteral("dd/MM/yyyy HH:mm"));
     }
 
-    QString WarningAbout(const std::vector<std::filesystem::path>& links)
+    struct Wording
+    {
+        QString explanation{};
+        QString provenanceSide{};
+        QString keepTheProvenanceOne{};
+        QString warning{};
+    };
+
+    Wording WordingFor(const bool theProvenanceIsAnotherProgram)
+    {
+        if (theProvenanceIsAnotherProgram)
+        {
+            return Wording{
+                .explanation =
+                    QObject::tr("The other program put a real folder back where it installs this addon, and your copy "
+                                "is still in the library. Choose which one stays: the other goes to the quarantine, "
+                                "and nothing is deleted."),
+                .provenanceSide = QObject::tr("Copy in the other program's folder"),
+                .keepTheProvenanceOne = QObject::tr("Keep the other program's one"),
+                .warning = QObject::tr("The library copy is enabled in %1. Keeping the other program's one removes "
+                                       "those links before sending it to the quarantine.")};
+        }
+
+        return Wording{
+            .explanation =
+                QObject::tr("There is a real folder in the destination and an addon with the same name in the library. "
+                            "Choose which one stays: the other goes to the quarantine, and nothing is deleted."),
+            .provenanceSide = QObject::tr("Copy in the destination"),
+            .keepTheProvenanceOne = QObject::tr("Keep the destination one"),
+            .warning = QObject::tr("The library copy is enabled in %1. Keeping the destination one removes those links "
+                                   "before sending it to the quarantine.")};
+    }
+
+    QString WarningAbout(const QString& sentence, const std::vector<std::filesystem::path>& links)
     {
         QStringList destinations;
         for (const std::filesystem::path& link : links)
@@ -41,9 +74,7 @@ namespace
             destinations.append(AsText(link.parent_path().filename()));
         }
 
-        return QObject::tr("The library copy is enabled in %1. Keeping the destination one removes those links before "
-                           "sending it to the quarantine.")
-            .arg(destinations.join(QStringLiteral(", ")));
+        return sentence.arg(destinations.join(QStringLiteral(", ")));
     }
 
     QString Version(const Manifest& manifest)
@@ -57,24 +88,22 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
 {
     setWindowTitle(tr("Two copies of the same addon"));
 
-    auto* explanation =
-        new QLabel(tr("There is a real folder in the destination and an addon with the same name in the library. "
-                      "Choose which one stays: the other goes to the quarantine, and nothing is deleted."),
-                   this);
+    const Wording wording = WordingFor(details.theProvenanceIsAnotherProgram);
+
+    auto* explanation = new QLabel(wording.explanation, this);
     explanation->setWordWrap(true);
 
     auto* sides = new QHBoxLayout;
-    sides->addWidget(CreateSide(tr("Copy in the destination"), details.provenance));
+    sides->addWidget(CreateSide(wording.provenanceSide, details.provenance));
     sides->addWidget(CreateSide(tr("Copy in the library"), details.library));
 
-    auto* warning = new QLabel(WarningAbout(details.linksToTheLibraryCopy), this);
+    auto* warning = new QLabel(WarningAbout(wording.warning, details.linksToTheLibraryCopy), this);
     warning->setWordWrap(true);
     warning->setVisible(!details.linksToTheLibraryCopy.empty());
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
 
-    const QPushButton* keepDestination =
-        buttons->addButton(tr("Keep the destination one"), QDialogButtonBox::AcceptRole);
+    const QPushButton* keepDestination = buttons->addButton(wording.keepTheProvenanceOne, QDialogButtonBox::AcceptRole);
     QPushButton* keepLibrary = buttons->addButton(tr("Keep the library one"), QDialogButtonBox::AcceptRole);
     keepLibrary->setDefault(true);
 
