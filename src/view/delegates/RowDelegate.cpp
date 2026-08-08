@@ -76,6 +76,21 @@ namespace
         return tag == item.text ? QString() : item.text;
     }
 
+    [[nodiscard]] QString BothLinesOf(const QString& text, const QString& second)
+    {
+        QStringList whole;
+
+        for (const QString& line : {text, second})
+        {
+            if (!line.isEmpty())
+            {
+                whole.append(line);
+            }
+        }
+
+        return whole.join(QLatin1Char('\n'));
+    }
+
     void RepaintTheRowOf(QAbstractItemView& view, const QModelIndex& index)
     {
         if (!index.isValid())
@@ -306,16 +321,7 @@ bool RowDelegate::helpEvent(QHelpEvent* event,
         return false;
     }
 
-    QStringList whole;
-    for (const QString& line : {text, second})
-    {
-        if (!line.isEmpty())
-        {
-            whole.append(line);
-        }
-    }
-
-    QToolTip::showText(event->globalPos(), whole.join(QLatin1Char('\n')), view);
+    QToolTip::showText(event->globalPos(), BothLinesOf(text, second), view);
 
     return true;
 }
