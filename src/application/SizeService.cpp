@@ -11,20 +11,20 @@
 
 namespace
 {
-    using MeasuredBytes = std::map<std::string, std::uintmax_t>;
+    using MeasuredTrees = std::map<std::string, MeasuredTree>;
 
     struct Walk
     {
         const FilesystemProbe& filesystemProbe;
-        const MeasuredBytes& known;
-        MeasuredBytes& fresh;
+        const MeasuredTrees& known;
+        MeasuredTrees& fresh;
         const std::function<bool(const SizeProgress&)>& onProgress;
         std::size_t total = 0;
         std::size_t done = 0;
         bool cancelled = false;
     };
 
-    [[nodiscard]] std::optional<std::uintmax_t> BytesUnder(const Walk& walk, const std::filesystem::path& folder)
+    [[nodiscard]] std::optional<MeasuredTree> TreeUnder(const Walk& walk, const std::filesystem::path& folder)
     {
         const std::string key = ComparablePath(folder);
 
@@ -33,18 +33,19 @@ namespace
             return measured->second;
         }
 
-        const std::optional<std::vector<FileFingerprint>> files = walk.filesystemProbe.FingerprintTree(folder);
-        if (!files.has_value())
+        const std::optional<TreeFingerprint> walked = walk.filesystemProbe.FingerprintTree(folder);
+        if (!walked.has_value())
         {
             return std::nullopt;
         }
 
-        const auto sizes = *files | std::views::transform(&FileFingerprint::size);
-        const std::uintmax_t bytes = std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});
+        const auto sizes = walked->files | std::views::transform(&FileFingerprint::size);
+        const MeasuredTree measured{.bytes = std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0}),
+                                    .longestEntry = walked->longestEntry};
 
-        walk.fresh[key] = bytes;
+        walk.fresh[key] = measured;
 
-        return bytes;
+        return measured;
     }
 
     [[nodiscard]] MeasuredFolder WeighOne(Walk& walk, const std::filesystem::path& folder)
@@ -64,11 +65,12 @@ namespace
             return weighed;
         }
 
-        const std::optional<std::uintmax_t> bytes = BytesUnder(walk, folder);
+        const std::optional<MeasuredTree> measured = TreeUnder(walk, folder);
         ++walk.done;
 
-        weighed.measured = bytes.has_value();
-        weighed.bytes = bytes.value_or(0);
+        weighed.measured = measured.has_value();
+        weighed.bytes = measured.value_or(MeasuredTree{}).bytes;
+        weighed.longestEntry = measured.value_or(MeasuredTree{}).longestEntry;
 
         return weighed;
     }
@@ -113,9 +115,9 @@ MeasurementCaller SizeService::NewCaller()
     return MeasurementCaller{.id = ++callers_};
 }
 
-std::shared_ptr<MeasuredBytes> SizeService::WhatIsKnown(const Freshness freshness) const
+std::shared_ptr<MeasuredTrees> SizeService::WhatIsKnown(const Freshness freshness) const
 {
-    return std::make_shared<MeasuredBytes>(freshness == Freshness::ReuseWhatIsKnown ? bytes_ : MeasuredBytes{});
+    return std::make_shared<MeasuredTrees>(freshness == Freshness::ReuseWhatIsKnown ? measured_ : MeasuredTrees{});
 }
 
 void SizeService::Measure(const std::vector<std::filesystem::path>& libraryRoots,
@@ -127,7 +129,7 @@ void SizeService::Measure(const std::vector<std::filesystem::path>& libraryRoots
     const int mine = ++asked_[caller.id];
 
     const auto known = WhatIsKnown(freshness);
-    const auto fresh = std::make_shared<MeasuredBytes>();
+    const auto fresh = std::make_shared<MeasuredTrees>();
     const auto report = std::make_shared<SizeReport>();
 
     runner_.Run(
@@ -160,7 +162,7 @@ void SizeService::MeasureFolders(const std::vector<std::filesystem::path>& folde
     const int mine = ++asked_[caller.id];
 
     const auto known = WhatIsKnown(freshness);
-    const auto fresh = std::make_shared<MeasuredBytes>();
+    const auto fresh = std::make_shared<MeasuredTrees>();
     const auto report = std::make_shared<FolderSizeReport>();
 
     runner_.Run(
@@ -185,8 +187,8 @@ void SizeService::MeasureFolders(const std::vector<std::filesystem::path>& folde
 }
 
 FolderSizeReport SizeService::WalkFolders(const std::vector<std::filesystem::path>& folders,
-                                          const std::map<std::string, std::uintmax_t>& known,
-                                          std::map<std::string, std::uintmax_t>& fresh,
+                                          const std::map<std::string, MeasuredTree>& known,
+                                          std::map<std::string, MeasuredTree>& fresh,
                                           const std::function<bool(const SizeProgress&)>& onProgress) const
 {
     std::vector<std::filesystem::path> wanted;
@@ -222,8 +224,8 @@ FolderSizeReport SizeService::WalkFolders(const std::vector<std::filesystem::pat
 }
 
 SizeReport SizeService::MeasureLibraries(const std::vector<std::filesystem::path>& libraryRoots,
-                                         const std::map<std::string, std::uintmax_t>& known,
-                                         std::map<std::string, std::uintmax_t>& fresh,
+                                         const std::map<std::string, MeasuredTree>& known,
+                                         std::map<std::string, MeasuredTree>& fresh,
                                          const std::function<bool(const SizeProgress&)>& onProgress) const
 {
     std::vector<TreeNode> trees;
@@ -252,27 +254,41 @@ SizeReport SizeService::MeasureLibraries(const std::vector<std::filesystem::path
 
 bool SizeService::Adopt(const MeasurementCaller caller,
                         const int request,
-                        const std::map<std::string, std::uintmax_t>& fresh)
+                        const std::map<std::string, MeasuredTree>& fresh)
 {
     const bool overtaken = request != asked_[caller.id];
 
-    for (const auto& [folder, bytes] : fresh)
+    for (const auto& [folder, tree] : fresh)
     {
         if (overtaken)
         {
-            bytes_.emplace(folder, bytes);
+            measured_.emplace(folder, tree);
             continue;
         }
 
-        bytes_[folder] = bytes;
+        measured_[folder] = tree;
     }
 
     return !overtaken;
 }
 
+std::optional<MeasuredTree> SizeService::WhatIsKnownAbout(const std::filesystem::path& folder) const
+{
+    const auto known = measured_.find(ComparablePath(folder));
+
+    return known == measured_.end() ? std::nullopt : std::optional(known->second);
+}
+
 std::optional<std::uintmax_t> SizeService::BytesOf(const std::filesystem::path& folder) const
 {
-    const auto measured = bytes_.find(ComparablePath(folder));
+    const std::optional<MeasuredTree> known = WhatIsKnownAbout(folder);
 
-    return measured == bytes_.end() ? std::nullopt : std::optional(measured->second);
+    return known.has_value() ? std::optional(known->bytes) : std::nullopt;
+}
+
+std::optional<std::size_t> SizeService::LongestEntryOf(const std::filesystem::path& folder) const
+{
+    const std::optional<MeasuredTree> known = WhatIsKnownAbout(folder);
+
+    return known.has_value() ? std::optional(known->longestEntry) : std::nullopt;
 }

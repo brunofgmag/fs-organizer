@@ -18,7 +18,7 @@ public:
 
     explicit CopyConflicts(std::vector<CopyConflict> found);
 
-    [[nodiscard]] const CopyConflict* OverTheDestinationEntry(const std::filesystem::path& entry) const;
+    [[nodiscard]] const CopyConflict* OverTheProvenance(const std::filesystem::path& provenance) const;
 
     [[nodiscard]] const CopyConflict* OverTheLibraryAddon(const std::filesystem::path& addonFolder) const;
 
@@ -28,7 +28,7 @@ public:
 
 private:
     std::vector<CopyConflict> found_;
-    std::map<std::string, std::size_t> byDestination_;
+    std::map<std::string, std::size_t> byProvenance_;
     std::map<std::string, std::size_t> byLibrary_;
 };
 

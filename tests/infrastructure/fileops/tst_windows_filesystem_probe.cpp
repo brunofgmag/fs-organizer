@@ -20,6 +20,7 @@ namespace
         static void ChildDirectoriesReportsDanglingJunctionsToo();
         static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
         static void AJunctionIsAReparsePointAndARealFolderIsNot();
+        static void OnlyARealFolderIsPhysicalAndALiveJunctionOverItIsNot();
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
         static void AFolderReportsWhenItWasLastWrittenTo();
         static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
@@ -45,6 +46,21 @@ namespace
             const std::filesystem::path folder = Root() / relativePath;
             std::filesystem::create_directories(folder);
             return folder;
+        }
+
+        [[nodiscard]] std::filesystem::path AddLiveJunction(const std::string& relativePath,
+                                                            const std::filesystem::path& target) const
+        {
+            const std::filesystem::path linkPath = Root() / relativePath;
+            std::filesystem::create_directories(linkPath.parent_path());
+
+            WindowsLinkService linkService;
+            [&]
+            {
+                QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
+            }();
+
+            return linkPath;
         }
 
         [[nodiscard]] std::filesystem::path AddDanglingJunction(const std::string& relativePath) const
@@ -128,6 +144,26 @@ void WindowsFilesystemProbeTest::AJunctionIsAReparsePointAndARealFolderIsNot()
     QVERIFY(!filesystemProbe.IsReparsePoint(disk.Root() / "Community/never-created"));
 }
 
+void WindowsFilesystemProbeTest::OnlyARealFolderIsPhysicalAndALiveJunctionOverItIsNot()
+{
+    const Disk disk;
+    const std::filesystem::path physical = disk.AddFolder("Library/Aircrafts/aerosoft-crj");
+    const std::filesystem::path live = disk.AddLiveJunction("Addon Manager/aerosoft-crj", physical);
+    const std::filesystem::path dangling = disk.AddDanglingJunction("Addon Manager/ag-airport-bgqq");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.PhysicalDirectoryExists(physical));
+    QVERIFY2(!filesystemProbe.PhysicalDirectoryExists(live),
+             "a junction left by the importer read as a folder the other program put back");
+    QVERIFY(!filesystemProbe.PhysicalDirectoryExists(dangling));
+    QVERIFY(!filesystemProbe.PhysicalDirectoryExists(disk.Root() / "Addon Manager/never-created"));
+
+    QVERIFY2(filesystemProbe.TargetDirectoryExists(live),
+             "the two probes stopped disagreeing, so one of them is not answering what it promises");
+    QVERIFY(!filesystemProbe.TargetDirectoryExists(dangling));
+}
+
 void WindowsFilesystemProbeTest::FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists()
 {
     const Disk disk;
@@ -199,10 +235,11 @@ void WindowsFilesystemProbeTest::EveryQuestionAboutAnEntryPastTheOldCeilingIsAns
     QVERIFY(filesystemProbe.LastWriteTime(deep).has_value());
     QVERIFY(filesystemProbe.VolumeIsAvailable(deep));
 
-    const std::optional<std::vector<FileFingerprint>> fingerprint = filesystemProbe.FingerprintTree(deep);
+    const std::optional<TreeFingerprint> fingerprint = filesystemProbe.FingerprintTree(deep);
     QVERIFY(fingerprint.has_value());
-    QCOMPARE(fingerprint->size(), std::size_t{1});
-    QCOMPARE(fingerprint->front().relativePath, std::filesystem::path("manifest.json"));
+    QCOMPARE(fingerprint->files.size(), std::size_t{1});
+    QCOMPARE(fingerprint->files.front().relativePath, std::filesystem::path("manifest.json"));
+    QCOMPARE(fingerprint->longestEntry, (deep / "manifest.json").wstring().size());
 }
 
 void WindowsFilesystemProbeTest::ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem()
@@ -239,12 +276,13 @@ void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersPastTheOldCeilin
              production.ContentsOf(addon / "manifest.json").value_or(std::string{}));
     QCOMPARE(double_.ChildDirectories(deep), production.ChildDirectories(deep));
 
-    const std::optional<std::vector<FileFingerprint>> byTheDouble = double_.FingerprintTree(addon);
-    const std::optional<std::vector<FileFingerprint>> byProduction = production.FingerprintTree(addon);
+    const std::optional<TreeFingerprint> byTheDouble = double_.FingerprintTree(addon);
+    const std::optional<TreeFingerprint> byProduction = production.FingerprintTree(addon);
     QVERIFY(byProduction.has_value());
     QVERIFY(byTheDouble.has_value());
-    QCOMPARE(byTheDouble->size(), byProduction->size());
-    QCOMPARE(byTheDouble->front().relativePath, byProduction->front().relativePath);
+    QCOMPARE(byTheDouble->files.size(), byProduction->files.size());
+    QCOMPARE(byTheDouble->files.front().relativePath, byProduction->files.front().relativePath);
+    QCOMPARE(byTheDouble->longestEntry, byProduction->longestEntry);
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

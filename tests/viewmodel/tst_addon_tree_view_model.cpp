@@ -57,6 +57,11 @@ namespace
         static void TheSizeOfTheSelectionIsMeasuredInTheBackgroundAndAnnouncedWhenItLands();
         static void AMeasurementOvertakenByANewSelectionIsNeverShown();
         static void AnAddonTheLibraryWalkAlreadyMeasuredIsNotWalkedAgain();
+        static void ThePlaceTakenByAnAddonOfYoursIsOfferedAsASwapAndNothingElseIs();
+        static void AnAgreedSwapTurnsOneOffAndTheOtherOnInASingleBatch();
+        static void ARefusedSwapWritesNothingAndSaysTheAddonWasLeftAsItIs();
+        static void ARefusedSwapStillTurnsOnTheRestOfTheSelection();
+        static void ASwapAgreedOnAPairThatChangedOnTheDiskIsNotCarriedOut();
     };
 }
 
@@ -71,6 +76,10 @@ namespace
     constexpr auto kOtherAddon = "D:/MSFS 2024/Aircrafts/aerosoft-crj";
     constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
     constexpr auto kCommunity2024 = "E:/Flight Simulator 2024/Community2024";
+    constexpr auto kSpare = "F:/Spare";
+    constexpr auto kSpareAircrafts = "F:/Spare/Aircrafts";
+    constexpr auto kSpareRival = "F:/Spare/Aircrafts/pmdg-aircraft-77w";
+    constexpr auto kSpareLoner = "F:/Spare/Aircrafts/fenix-a320";
 
     TreeNode AddonNode(const std::filesystem::path& path)
     {
@@ -153,6 +162,31 @@ namespace
             fileSystem.AddLink(destination / addonFolder.filename(), addonFolder);
         }
 
+        void RegisterTheSpareLibrary()
+        {
+            fileSystem.AddDirectory(kSpare);
+            fileSystem.AddDirectory(kSpareAircrafts);
+            fileSystem.AddDirectory(kSpareRival);
+            fileSystem.AddDirectory(kSpareLoner);
+
+            TreeNode spare =
+                CategoryNode(kSpare, {CategoryNode(kSpareAircrafts, {AddonNode(kSpareRival), AddonNode(kSpareLoner)})});
+            spare.kind = TreeNodeKind::Library;
+            catalog.SetTree(kSpare, std::move(spare));
+
+            QVERIFY(session.RegisterLibrary(kSpare).Accepted());
+        }
+
+        [[nodiscard]] const TreeNode* SpareCategory() const
+        {
+            return &session.Snapshot().libraries.back().children.front();
+        }
+
+        [[nodiscard]] const TreeNode* SpareAddon(const std::size_t index) const
+        {
+            return &session.Snapshot().libraries.back().children.front().children[index];
+        }
+
         InMemoryFileSystem fileSystem;
         FakeLinkService linkService{fileSystem};
         FakeFilesystemProbe filesystemProbe{fileSystem};
@@ -165,7 +199,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -657,6 +691,113 @@ void AddonTreeViewModelTest::AnAddonTheLibraryWalkAlreadyMeasuredIsNotWalkedAgai
     QCOMPARE(measured.size(), 1);
     QCOMPARE(LastSize(measured).bytes, std::uintmax_t{300});
     QCOMPARE(f.filesystemProbe.TimesWalked(kAddon), std::size_t{1});
+}
+
+void AddonTreeViewModelTest::ThePlaceTakenByAnAddonOfYoursIsOfferedAsASwapAndNothingElseIs()
+{
+    Fixture f;
+    f.LinkIn(kCommunity, kAddon);
+    f.RegisterTheSpareLibrary();
+
+    const std::vector<TakenPlace> swaps = f.viewModel.SwapsNeededTo({f.SpareCategory()});
+
+    QCOMPARE(swaps.size(), std::size_t{1});
+    QCOMPARE(swaps.front().addonFolder, std::filesystem::path{kSpareRival});
+    QCOMPARE(swaps.front().occupant, std::filesystem::path{kAddon});
+    QCOMPARE(swaps.front().linkPath, std::filesystem::path{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"});
+
+    QVERIFY(f.viewModel.SwapsNeededTo({f.SpareAddon(1)}).empty());
+}
+
+void AddonTreeViewModelTest::AnAgreedSwapTurnsOneOffAndTheOtherOnInASingleBatch()
+{
+    Fixture f;
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    f.LinkIn(kCommunity, kAddon);
+    f.RegisterTheSpareLibrary();
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+    const std::vector<TakenPlace> swaps = f.viewModel.SwapsNeededTo({f.SpareAddon(0)});
+
+    f.viewModel.Toggle({f.SpareAddon(0)}, true, swaps);
+
+    QCOMPARE(finished.size(), 1);
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kSpareRival});
+    QCOMPARE(f.journal.appended.size(), std::size_t{2});
+    QCOMPARE(f.journal.appended.front().kind, OperationKind::DisableAddon);
+    QCOMPARE(f.journal.appended.back().kind, OperationKind::EnableAddon);
+
+    QVERIFY(f.viewModel.CanUndo());
+    f.viewModel.UndoLastBatch();
+
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+}
+
+void AddonTreeViewModelTest::ARefusedSwapWritesNothingAndSaysTheAddonWasLeftAsItIs()
+{
+    Fixture f;
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    f.LinkIn(kCommunity, kAddon);
+    f.RegisterTheSpareLibrary();
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.Toggle({f.SpareAddon(0)}, true, {});
+
+    QCOMPARE(finished.size(), 1);
+
+    const auto report = finished.front().front().value<LinkBatchReport>();
+    QVERIFY(report.results.empty());
+    QCOMPARE(report.leftAlone, std::size_t{1});
+    QVERIFY(f.journal.appended.empty());
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+}
+
+void AddonTreeViewModelTest::ARefusedSwapStillTurnsOnTheRestOfTheSelection()
+{
+    Fixture f;
+    f.LinkIn(kCommunity, kAddon);
+    f.RegisterTheSpareLibrary();
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.Toggle({f.SpareCategory()}, true, {});
+
+    const auto report = finished.front().front().value<LinkBatchReport>();
+    QCOMPARE(report.results.size(), std::size_t{1});
+    QCOMPARE(report.results.front().addonFolder, std::filesystem::path{kSpareLoner});
+    QCOMPARE(report.leftAlone, std::size_t{1});
+    QCOMPARE(f.fileSystem.LinkTarget("E:/Flight Simulator 2024/Community/fenix-a320"),
+             std::optional<std::filesystem::path>{kSpareLoner});
+    QCOMPARE(f.fileSystem.LinkTarget("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"),
+             std::optional<std::filesystem::path>{kAddon});
+}
+
+void AddonTreeViewModelTest::ASwapAgreedOnAPairThatChangedOnTheDiskIsNotCarriedOut()
+{
+    Fixture f;
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    f.LinkIn(kCommunity, kAddon);
+    f.RegisterTheSpareLibrary();
+
+    const std::vector<TakenPlace> swaps = f.viewModel.SwapsNeededTo({f.SpareAddon(0)});
+    QCOMPARE(swaps.size(), std::size_t{1});
+
+    QVERIFY(f.fileSystem.RemoveNode(place));
+    f.fileSystem.AddLink(place, kOtherAddon);
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.Toggle({f.SpareAddon(0)}, true, swaps);
+
+    const auto report = finished.front().front().value<LinkBatchReport>();
+    QVERIFY(report.results.empty());
+    QCOMPARE(report.leftAlone, std::size_t{1});
+    QVERIFY(f.journal.appended.empty());
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kOtherAddon});
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

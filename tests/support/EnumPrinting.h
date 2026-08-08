@@ -4,6 +4,7 @@
 #include <QtTest/QtTest>
 
 #include "application/DependencyReport.h"
+#include "application/model/RestorePlan.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
 #include "domain/model/DestinationEntry.h"
@@ -14,6 +15,7 @@
 #include "domain/model/OperationRecord.h"
 #include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
+#include "domain/model/QuarantineOrigin.h"
 
 namespace QTest
 {
@@ -61,6 +63,8 @@ namespace QTest
         {
         case EntryClassification::Managed: return qstrdup("Managed");
         case EntryClassification::External: return qstrdup("External");
+        case EntryClassification::Divergent: return qstrdup("Divergent");
+        case EntryClassification::Vanished: return qstrdup("Vanished");
         case EntryClassification::Broken: return qstrdup("Broken");
         case EntryClassification::Unavailable: return qstrdup("Unavailable");
         case EntryClassification::Unmanaged: return qstrdup("Unmanaged");
@@ -131,9 +135,43 @@ namespace QTest
         case FileResult::CouldNotRemoveTheCategory: return qstrdup("CouldNotRemoveTheCategory");
         case FileResult::TheOutcomeIsUnknown: return qstrdup("TheOutcomeIsUnknown");
         case FileResult::CouldNotReadTheSource: return qstrdup("CouldNotReadTheSource");
+        case FileResult::TheOriginIsOccupied: return qstrdup("TheOriginIsOccupied");
+        case FileResult::TheRecycleBinIsTooSmall: return qstrdup("TheRecycleBinIsTooSmall");
+        case FileResult::TheRecycleBinCannotReachIt: return qstrdup("TheRecycleBinCannotReachIt");
+        case FileResult::CouldNotDelete: return qstrdup("CouldNotDelete");
+        case FileResult::CouldNotRecordTheOrigin: return qstrdup("CouldNotRecordTheOrigin");
+        case FileResult::CannotWriteInTheOtherProgramsFolder: return qstrdup("CannotWriteInTheOtherProgramsFolder");
+        case FileResult::TheDiskDisagreesWithTheScan: return qstrdup("TheDiskDisagreesWithTheScan");
+        case FileResult::CouldNotReadTheStartupFile: return qstrdup("CouldNotReadTheStartupFile");
+        case FileResult::CouldNotWriteTheStartupFile: return qstrdup("CouldNotWriteTheStartupFile");
         }
 
         return qstrdup("FileResult(?)");
+    }
+
+    template<>
+    inline char* toString(const SwapStep& t)
+    {
+        switch (t)
+        {
+        case SwapStep::QuarantineTheOccupant: return qstrdup("QuarantineTheOccupant");
+        case SwapStep::RestoreTheItem: return qstrdup("RestoreTheItem");
+        }
+
+        return qstrdup("SwapStep(?)");
+    }
+
+    template<>
+    inline char* toString(const OriginSource& t)
+    {
+        switch (t)
+        {
+        case OriginSource::Unknown: return qstrdup("Unknown");
+        case OriginSource::Sidecar: return qstrdup("Sidecar");
+        case OriginSource::Journal: return qstrdup("Journal");
+        }
+
+        return qstrdup("OriginSource(?)");
     }
 
     template<>
@@ -158,6 +196,9 @@ namespace QTest
         case OperationKind::CreateCategory: return qstrdup("CreateCategory");
         case OperationKind::RenameCategory: return qstrdup("RenameCategory");
         case OperationKind::RemoveCategory: return qstrdup("RemoveCategory");
+        case OperationKind::RecycleFromLibrary: return qstrdup("RecycleFromLibrary");
+        case OperationKind::DeleteFromLibrary: return qstrdup("DeleteFromLibrary");
+        case OperationKind::LinkTheOtherProgramsFolder: return qstrdup("LinkTheOtherProgramsFolder");
         }
 
         return qstrdup("OperationKind(?)");

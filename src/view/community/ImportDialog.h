@@ -19,7 +19,7 @@ class ImportDialog final : public QDialog
     Q_OBJECT
 
 public:
-    ImportDialog(std::vector<std::filesystem::path> folders,
+    ImportDialog(std::vector<ImportRequest> chosen,
                  const std::vector<TreeNode>& libraries,
                  const SimulatorProfile& profile,
                  std::uintmax_t totalBytes,
@@ -30,7 +30,7 @@ public:
 private:
     void ShowCategoriesOfTheChosenLibrary() const;
 
-    std::vector<std::filesystem::path> folders_;
+    std::vector<ImportRequest> chosen_;
     const std::vector<TreeNode>& libraries_;
     QComboBox* library_ = nullptr;
     QComboBox* category_ = nullptr;

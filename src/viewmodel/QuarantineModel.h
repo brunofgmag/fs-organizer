@@ -20,10 +20,8 @@ public:
     {
         NameColumn = 0,
         VersionColumn = 1,
-        SizeColumn = 2,
-        OriginColumn = 3,
-        WhenColumn = 4,
-        WhereColumn = 5,
+        OriginColumn = 2,
+        SourceColumn = 3,
     };
 
     enum Role
@@ -44,6 +42,14 @@ public:
     [[nodiscard]] const QuarantineDetail* DetailAt(const QModelIndex& position) const;
 
     [[nodiscard]] const std::vector<QuarantinedItem>& Items() const;
+
+    [[nodiscard]] QString WhatTheSourcesSay(const QuarantinedItem& item) const;
+
+    [[nodiscard]] QString WhenAndHowBigItIs(const QuarantinedItem& item) const;
+
+    [[nodiscard]] QString SizeOf(const QuarantinedItem& item) const;
+
+    [[nodiscard]] QString WhenItWasQuarantined(const QuarantinedItem& item) const;
 
     [[nodiscard]] int rowCount(const QModelIndex& parent) const override;
 

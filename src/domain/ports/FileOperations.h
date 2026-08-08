@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <functional>
+#include <string>
 
 #include "domain/model/CopyOutcome.h"
 
@@ -19,9 +20,13 @@ public:
 
     [[nodiscard]] virtual bool WriteHiddenFile(const std::filesystem::path& path) = 0;
 
+    [[nodiscard]] virtual bool WriteTextFile(const std::filesystem::path& path, const std::string& contents) = 0;
+
     [[nodiscard]] virtual bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) = 0;
 
     [[nodiscard]] virtual bool RemoveTree(const std::filesystem::path& path) = 0;
+
+    [[nodiscard]] virtual bool Recycle(const std::filesystem::path& path) = 0;
 
     [[nodiscard]] virtual bool RemoveEmptyFolder(const std::filesystem::path& path) = 0;
 };

@@ -30,6 +30,15 @@ enum class FileResult : int
     CouldNotRemoveTheCategory = 21,
     TheOutcomeIsUnknown = 22,
     CouldNotReadTheSource = 23,
+    TheOriginIsOccupied = 24,
+    TheRecycleBinIsTooSmall = 25,
+    TheRecycleBinCannotReachIt = 26,
+    CouldNotDelete = 27,
+    CouldNotRecordTheOrigin = 28,
+    CannotWriteInTheOtherProgramsFolder = 29,
+    TheDiskDisagreesWithTheScan = 30,
+    CouldNotReadTheStartupFile = 31,
+    CouldNotWriteTheStartupFile = 32,
 };
 
 inline constexpr std::array kAllFileResults{
@@ -57,9 +66,18 @@ inline constexpr std::array kAllFileResults{
     FileResult::CouldNotRemoveTheCategory,
     FileResult::TheOutcomeIsUnknown,
     FileResult::CouldNotReadTheSource,
+    FileResult::TheOriginIsOccupied,
+    FileResult::TheRecycleBinIsTooSmall,
+    FileResult::TheRecycleBinCannotReachIt,
+    FileResult::CouldNotDelete,
+    FileResult::CouldNotRecordTheOrigin,
+    FileResult::CannotWriteInTheOtherProgramsFolder,
+    FileResult::TheDiskDisagreesWithTheScan,
+    FileResult::CouldNotReadTheStartupFile,
+    FileResult::CouldNotWriteTheStartupFile,
 };
 
-static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::CouldNotReadTheSource) + 1,
+static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::CouldNotWriteTheStartupFile) + 1,
               "Every FileResult belongs in kAllFileResults, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool Succeeded(const FileResult result)

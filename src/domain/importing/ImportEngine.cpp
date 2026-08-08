@@ -4,6 +4,7 @@
 #include <numeric>
 #include <ranges>
 
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -71,23 +72,18 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
         }
     };
 
-    if (!IsUnderADestination(profile, request.source))
+    if (const ImportOutcome refusal = CheckTheSource(profile, request); !refusal.Succeeded())
     {
-        return ImportOutcome::Stopped(FileResult::SourceIsNotUnderADestination);
+        return refusal;
     }
 
-    if (filesystemProbe_.IsReparsePoint(request.source))
-    {
-        return ImportOutcome::Stopped(FileResult::SourceIsAReparsePoint);
-    }
-
-    const std::optional<std::vector<FileFingerprint>> source = filesystemProbe_.FingerprintTree(request.source);
+    const std::optional<TreeFingerprint> source = filesystemProbe_.FingerprintTree(request.Bytes());
     if (!source.has_value())
     {
         return ImportOutcome::Stopped(FileResult::CouldNotReadTheSource);
     }
 
-    if (const ImportOutcome room = CheckFreeSpace(request.category, TotalSizeOf(*source)); !room.Succeeded())
+    if (const ImportOutcome room = CheckFreeSpace(request.category, TotalSizeOf(source->files)); !room.Succeeded())
     {
         return room;
     }
@@ -97,21 +93,31 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     const AddonId addon = IdentityOf(profile, target);
 
     announce(OperationKind::ImportCopyToStaging);
-    const ImportOutcome copy = CopyToStaging(request.source, staging, onProgress);
-    RecordStep(addon, OperationKind::ImportCopyToStaging, request.source, staging, copy.Result());
+    const ImportOutcome copy = CopyToStaging(request.Bytes(), staging, onProgress);
+    RecordStep(addon, OperationKind::ImportCopyToStaging, request.Bytes(), staging, copy.Result());
     if (!copy.Succeeded())
     {
         return copy;
     }
 
     announce(OperationKind::ImportVerifyStaging);
-    const std::optional<std::vector<FileFingerprint>> copied = filesystemProbe_.FingerprintTree(staging);
-    const bool verified = copied.has_value() && FingerprintsMatch(*source, *copied);
+    const std::optional<TreeFingerprint> copied = filesystemProbe_.FingerprintTree(staging);
+    const bool verified = copied.has_value() && FingerprintsMatch(source->files, copied->files);
     RecordStep(addon, OperationKind::ImportVerifyStaging, staging, target,
                verified ? FileResult::Completed : FileResult::VerificationFailed);
     if (!verified)
     {
         return ImportOutcome::Stopped(FileResult::VerificationFailed);
+    }
+
+    if (request.CameFromAnotherProgram())
+    {
+        if (const ImportOutcome refusal = PrepareTheOtherProgramsFolder(request.externalSource, target);
+            !refusal.Succeeded())
+        {
+            static_cast<void>(files_.RemoveTree(staging));
+            return refusal;
+        }
     }
 
     announce(OperationKind::ImportMoveIntoPlace);
@@ -124,6 +130,11 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     }
 
     announce(OperationKind::ImportRemoveSource);
+    if (request.CameFromAnotherProgram())
+    {
+        return TakeOverTheOtherProgramsFolder(addon, request, target);
+    }
+
     const bool removed = files_.RemoveTree(request.source);
     RecordStep(addon, OperationKind::ImportRemoveSource, request.source, target,
                removed ? FileResult::Completed : FileResult::CouldNotRemoveSource);
@@ -141,6 +152,89 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     }
 
     return ImportOutcome::Completed();
+}
+
+ImportOutcome ImportEngine::CheckTheSource(const SimulatorProfile& profile, const ImportRequest& request) const
+{
+    if (!IsUnderADestination(profile, request.source))
+    {
+        return ImportOutcome::Stopped(FileResult::SourceIsNotUnderADestination);
+    }
+
+    if (!request.CameFromAnotherProgram())
+    {
+        return filesystemProbe_.IsReparsePoint(request.source)
+            ? ImportOutcome::Stopped(FileResult::SourceIsAReparsePoint)
+            : ImportOutcome::Completed();
+    }
+
+    const std::optional<std::filesystem::path> pointsAt = linking_.PointsAt(request.source);
+    if (!pointsAt.has_value() || ComparablePath(*pointsAt) != ComparablePath(request.externalSource))
+    {
+        return ImportOutcome::Stopped(FileResult::TheDiskDisagreesWithTheScan);
+    }
+
+    return ImportOutcome::Completed();
+}
+
+ImportOutcome ImportEngine::PrepareTheOtherProgramsFolder(const std::filesystem::path& externalSource,
+                                                          const std::filesystem::path& target) const
+{
+    if (!filesystemProbe_.ProbeWritable(externalSource.parent_path()))
+    {
+        return ImportOutcome::Stopped(FileResult::CannotWriteInTheOtherProgramsFolder);
+    }
+
+    if (!files_.WriteTextFile(ExternalSidecarPathFor(target), TextOfTheExternalOrigin(externalSource)))
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotRecordTheOrigin);
+    }
+
+    return ImportOutcome::Completed();
+}
+
+ImportOutcome ImportEngine::TakeOverTheOtherProgramsFolder(const AddonId& addon,
+                                                           const ImportRequest& request,
+                                                           const std::filesystem::path& target) const
+{
+    const std::filesystem::path aside = SwapSlotFor(request.externalSource);
+
+    const bool movedAside = files_.Move(request.externalSource, aside);
+    RecordStep(addon, OperationKind::ImportRemoveSource, request.externalSource, target,
+               movedAside ? FileResult::Completed : FileResult::CouldNotRemoveSource);
+    if (!movedAside)
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotRemoveSource);
+    }
+
+    const LinkOutcome standIn = linking_.LinkAt(request.externalSource, Addon{.folderPath = target}, linkType_);
+    log_.RecordLink(OperationKind::LinkTheOtherProgramsFolder, addon, target, request.externalSource,
+                    standIn.Failure());
+    if (!standIn.Succeeded())
+    {
+        static_cast<void>(files_.Move(aside, request.externalSource));
+        return ImportOutcome::Stopped(FileResult::CouldNotCreateLink);
+    }
+
+    const LinkOutcome unlinked = linking_.Disable(request.source);
+    log_.RecordLink(OperationKind::DisableAddon, addon, target, request.source, unlinked.Failure());
+    if (!unlinked.Succeeded())
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotRemoveTheLink);
+    }
+
+    const LinkOutcome link = linking_.Enable(Addon{.folderPath = target}, request.source.parent_path(), linkType_);
+    log_.RecordLink(OperationKind::EnableAddon, addon, target, request.source, link.Failure());
+    if (!link.Succeeded())
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotCreateLink);
+    }
+
+    const bool removed = files_.RemoveTree(aside);
+    RecordStep(addon, OperationKind::ImportRemoveSource, aside, target,
+               removed ? FileResult::Completed : FileResult::CouldNotRemoveSource);
+
+    return removed ? ImportOutcome::Completed() : ImportOutcome::Stopped(FileResult::CouldNotRemoveSource);
 }
 
 void ImportEngine::RecordStep(const AddonId& addon,

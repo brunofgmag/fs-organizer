@@ -9,13 +9,16 @@ enum class EntryClassification : int
 {
     Managed = 0,
     External = 1,
-    Broken = 2,
-    Unavailable = 3,
-    Unmanaged = 4,
-    Duplicated = 5,
+    Divergent = 2,
+    Vanished = 3,
+    Broken = 4,
+    Unavailable = 5,
+    Unmanaged = 6,
+    Duplicated = 7,
 };
 
 inline constexpr std::array kEveryClassification = {EntryClassification::Managed,   EntryClassification::External,
+                                                    EntryClassification::Divergent, EntryClassification::Vanished,
                                                     EntryClassification::Broken,    EntryClassification::Unavailable,
                                                     EntryClassification::Unmanaged, EntryClassification::Duplicated};
 
@@ -25,10 +28,12 @@ inline constexpr std::array kEveryClassification = {EntryClassification::Managed
     {
     case EntryClassification::Managed: return 0;
     case EntryClassification::External: return 1;
-    case EntryClassification::Broken: return 2;
-    case EntryClassification::Unavailable: return 3;
-    case EntryClassification::Unmanaged: return 4;
-    case EntryClassification::Duplicated: return 5;
+    case EntryClassification::Divergent: return 2;
+    case EntryClassification::Vanished: return 3;
+    case EntryClassification::Broken: return 4;
+    case EntryClassification::Unavailable: return 5;
+    case EntryClassification::Unmanaged: return 6;
+    case EntryClassification::Duplicated: return 7;
     }
 
     return kEveryClassification.size();
@@ -51,14 +56,17 @@ static_assert(EveryClassificationIsListed());
 
 [[nodiscard]] constexpr bool CountsAsEnabled(const EntryClassification classification)
 {
-    return classification == EntryClassification::Managed || classification == EntryClassification::Duplicated;
+    return classification == EntryClassification::Managed || classification == EntryClassification::Duplicated
+        || classification == EntryClassification::Divergent;
 }
 
 struct DestinationEntry
 {
-    std::filesystem::path path;
-    std::filesystem::path target;
+    std::filesystem::path path{};
+    std::filesystem::path target{};
     EntryClassification classification = EntryClassification::Unmanaged;
+    std::filesystem::path externalOrigin{};
+    bool theOtherProgramTookItsFolderBack = false;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_DESTINATION_ENTRY_H

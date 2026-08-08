@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_TESTS_SUPPORT_STD_FILESYSTEM_PROBE_H
 #define FS_ORGANIZER_TESTS_SUPPORT_STD_FILESYSTEM_PROBE_H
 
+#include <cstddef>
 #include <fstream>
 #include <iterator>
 #include <system_error>
@@ -16,6 +17,15 @@
 {
 #ifdef _WIN32
     return WithExtendedPrefix(path);
+#else
+    return path;
+#endif
+}
+
+[[nodiscard]] inline std::filesystem::path WithoutTheReachPrefix(const std::filesystem::path& path)
+{
+#ifdef _WIN32
+    return WithoutExtendedPrefix(path);
 #else
     return path;
 #endif
@@ -60,6 +70,15 @@ public:
         return IsALinkWithoutFollowing(std::filesystem::symlink_status(AsFarAsTheProductionProbeReaches(path), error));
     }
 
+    [[nodiscard]] bool PhysicalDirectoryExists(const std::filesystem::path& path) const override
+    {
+        std::error_code error;
+        const std::filesystem::file_status status =
+            std::filesystem::symlink_status(AsFarAsTheProductionProbeReaches(path), error);
+
+        return status.type() == std::filesystem::file_type::directory && !IsALinkWithoutFollowing(status);
+    }
+
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
     {
         std::vector<std::filesystem::path> children;
@@ -98,6 +117,11 @@ public:
         return error ? std::nullopt : std::optional(space.available);
     }
 
+    [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path&) const override
+    {
+        return std::nullopt;
+    }
+
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override
     {
@@ -119,8 +143,7 @@ public:
         return std::string(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
     }
 
-    [[nodiscard]] std::optional<std::vector<FileFingerprint>>
-    FingerprintTree(const std::filesystem::path& root) const override
+    [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override
     {
         const std::filesystem::path reachableRoot = AsFarAsTheProductionProbeReaches(root);
 
@@ -132,7 +155,7 @@ public:
             return std::nullopt;
         }
 
-        std::vector<FileFingerprint> files;
+        TreeFingerprint walked{.longestEntry = root.native().size()};
         const std::filesystem::recursive_directory_iterator end;
 
         while (entry != end)
@@ -143,6 +166,12 @@ public:
                 return std::nullopt;
             }
 
+            if (const std::size_t here = WithoutTheReachPrefix(entry->path()).native().size();
+                here > walked.longestEntry)
+            {
+                walked.longestEntry = here;
+            }
+
             if (isFile)
             {
                 const std::uintmax_t size = entry->file_size(error);
@@ -151,7 +180,7 @@ public:
                     return std::nullopt;
                 }
 
-                files.push_back(
+                walked.files.push_back(
                     FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
             }
 
@@ -162,7 +191,7 @@ public:
             }
         }
 
-        return files;
+        return walked;
     }
 };
 

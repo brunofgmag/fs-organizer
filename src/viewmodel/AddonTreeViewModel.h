@@ -42,6 +42,12 @@ public:
 
     void Toggle(const std::vector<const TreeNode*>& nodes, bool enable);
 
+    void Toggle(const std::vector<const TreeNode*>& nodes, bool enable, const std::vector<TakenPlace>& agreedSwaps);
+
+    [[nodiscard]] std::vector<TakenPlace> SwapsNeededTo(const std::vector<const TreeNode*>& nodes) const;
+
+    [[nodiscard]] QString VersionOf(const std::filesystem::path& addonFolder) const;
+
     [[nodiscard]] bool WouldEnable(const std::vector<const TreeNode*>& nodes) const;
 
     [[nodiscard]] std::size_t AddonsThatWouldChange(const std::vector<const TreeNode*>& nodes, bool enable) const;
@@ -83,7 +89,7 @@ public:
 signals:
     void Shown();
 
-    void BatchFinished(const std::vector<LinkOperationResult>& results);
+    void BatchFinished(const LinkBatchReport& report);
 
     void Refused(const QString& explanation);
 
@@ -100,7 +106,7 @@ private:
 
     void AdoptScan();
 
-    void ApplyResults(const std::vector<LinkOperationResult>& results);
+    void ApplyResults(const LinkBatchReport& report);
 
     Session& session_;
     ProfileService& service_;

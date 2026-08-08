@@ -1,7 +1,12 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_LINK_SERVICE_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_LINK_SERVICE_H
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "domain/ports/LinkService.h"
+#include "domain/support/PathUtils.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
 class FakeLinkService final : public LinkService
@@ -26,6 +31,11 @@ public:
         linkRemovalFails_ = true;
     }
 
+    void MakeTheRemovalFailFor(const std::filesystem::path& linkPath)
+    {
+        unremovable_.push_back(ComparablePath(linkPath));
+    }
+
     [[nodiscard]] LinkFailure CreateLink(const std::filesystem::path& linkPath,
                                          const std::filesystem::path& target,
                                          const LinkType linkType) override
@@ -46,7 +56,12 @@ public:
 
     [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override
     {
-        return !linkRemovalFails_ && fileSystem_.RemoveNode(linkPath);
+        if (linkRemovalFails_ || std::ranges::find(unremovable_, ComparablePath(linkPath)) != unremovable_.end())
+        {
+            return false;
+        }
+
+        return fileSystem_.RemoveNode(linkPath);
     }
 
     [[nodiscard]] std::optional<std::filesystem::path> ReadLinkTarget(const std::filesystem::path& path) const override
@@ -58,6 +73,7 @@ public:
 
 private:
     InMemoryFileSystem& fileSystem_;
+    std::vector<std::string> unremovable_;
     LinkFailure linkCreationRefusal_ = LinkFailure::None;
     bool linkRemovalFails_ = false;
 };

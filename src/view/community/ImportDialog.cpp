@@ -16,20 +16,23 @@
 #include "view/WheelGuard.h"
 #include "view/theme/ModernistMetrics.h"
 
-ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
+ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
                            const std::vector<TreeNode>& libraries,
                            const SimulatorProfile& profile,
                            const std::uintmax_t totalBytes,
                            QWidget* parent)
-    : QDialog(parent), folders_(std::move(folders)), libraries_(libraries)
+    : QDialog(parent), chosen_(std::move(chosen)), libraries_(libraries)
 {
     setWindowTitle(tr("Import into the library"));
 
-    auto* chosen = new QListWidget(this);
-    chosen->setSelectionMode(QAbstractItemView::NoSelection);
-    for (const std::filesystem::path& folder : folders_)
+    auto* picked = new QListWidget(this);
+    picked->setSelectionMode(QAbstractItemView::NoSelection);
+    for (const ImportRequest& request : chosen_)
     {
-        chosen->addItem(AsText(folder));
+        picked->addItem(request.CameFromAnotherProgram()
+                            ? tr("%1 · installed by another program in %2")
+                                  .arg(AsText(request.source), AsText(request.externalSource))
+                            : AsText(request.source));
     }
 
     library_ = new QComboBox(this);
@@ -50,7 +53,7 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     landing_->setWordWrap(true);
 
     auto* total = new QLabel(tr("%1 in %2 will be copied to the library and replaced by links.")
-                                 .arg(AsSize(totalBytes), tr("%n folder", nullptr, static_cast<int>(folders_.size()))),
+                                 .arg(AsSize(totalBytes), tr("%n folder", nullptr, static_cast<int>(chosen_.size()))),
                              this);
     total->setWordWrap(true);
 
@@ -62,7 +65,7 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
     QPushButton* confirm = buttons->addButton(tr("Import"), QDialogButtonBox::AcceptRole);
     confirm->setDefault(true);
-    confirm->setEnabled(!folders_.empty() && !profile.libraries.empty());
+    confirm->setEnabled(!chosen_.empty() && !profile.libraries.empty());
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -76,7 +79,7 @@ ImportDialog::ImportDialog(std::vector<std::filesystem::path> folders,
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(new QLabel(tr("Selected folders:"), this));
-    layout->addWidget(chosen, 1);
+    layout->addWidget(picked, 1);
     layout->addWidget(total);
     layout->addLayout(form);
     layout->addWidget(buttons);
@@ -112,12 +115,11 @@ std::vector<ImportRequest> ImportDialog::ChosenRequests() const
         return {};
     }
 
-    std::vector<ImportRequest> requests;
-    requests.reserve(folders_.size());
+    std::vector<ImportRequest> requests = chosen_;
 
-    for (const std::filesystem::path& folder : folders_)
+    for (ImportRequest& request : requests)
     {
-        requests.push_back(ImportRequest{.source = folder, .category = category});
+        request.category = category;
     }
 
     return requests;

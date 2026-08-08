@@ -16,7 +16,7 @@ set(JOINS_A_BARE_NAME "[^/]/[ \t]+[A-Za-z_][A-Za-z0-9_.]*[ \t]*[;,)]")
 set(JOINS_A_CALL "[^/]/[ \t]+[A-Za-z_][A-Za-z0-9_.]*[ \t]*\\(")
 set(JOINS_A_KNOWN_CONSTANT "/[ \t]+k[A-Z]")
 set(JOINS_SOMETHING_ALREADY_A_PATH
-        "/[ \t]+([A-Za-z0-9_.]*\\.)?(PathFromUtf8|filename|parent_path|stem|lexically_relative)[ \t]*\\(")
+        "/[ \t]+([A-Za-z0-9_.]*\\.)?(PathFromUtf8|PathUnder|filename|parent_path|stem|lexically_relative)[ \t]*\\(")
 
 set(OFFENCES "")
 

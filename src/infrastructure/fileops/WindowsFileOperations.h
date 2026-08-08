@@ -14,9 +14,13 @@ public:
 
     [[nodiscard]] bool WriteHiddenFile(const std::filesystem::path& path) override;
 
+    [[nodiscard]] bool WriteTextFile(const std::filesystem::path& path, const std::string& contents) override;
+
     [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override;
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override;
+
+    [[nodiscard]] bool Recycle(const std::filesystem::path& path) override;
 
     [[nodiscard]] bool RemoveEmptyFolder(const std::filesystem::path& path) override;
 };

@@ -4,6 +4,7 @@
 
 #include "domain/journal/OperationLog.h"
 #include "application/LibraryOrganizer.h"
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/tree/LibraryLookup.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -28,6 +29,7 @@ namespace
         static void MovingAnAddonDoesNotChangeItsIdentity();
         static void MovingAnAddonToACategoryWithItsOwnDestinationRelinksThere();
         static void MovingADisabledAddonLeavesTheDestinationAlone();
+        static void MovingAnImportedExternalAddonTakesTheRecordBesideItAlong();
         static void MovingIsRefusedWhenTheNameIsAlreadyTakenInTheLibrary();
         static void NoFolderIsMovedWhileTheSimulatorIsRunning();
         static void EveryStepOfAMoveIsJournalled();
@@ -268,6 +270,21 @@ void LibraryOrganizerTest::EveryStepOfAMoveIsJournalled()
     QCOMPARE(f.journal.appended[2].kind, OperationKind::EnableAddon);
     QCOMPARE(f.journal.appended[2].source, kMoved);
     QCOMPARE(f.journal.appended[2].target, kLink);
+}
+
+void LibraryOrganizerTest::MovingAnImportedExternalAddonTakesTheRecordBesideItAlong()
+{
+    Fixture f;
+    const std::filesystem::path came = "C:/Addon Manager/Aircraft/aerosoft-crj";
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kAddon), TextOfTheExternalOrigin(came));
+
+    QCOMPARE(f.organizer.Move(f.profile, {AddonMove{kAddon, kAircrafts2024}}).front().result, FileResult::Completed);
+
+    QVERIFY2(!f.fileSystem.Exists(ExternalSidecarPathFor(kAddon)),
+             "the record stayed behind in the old category, where it will greet the next addon of the same name");
+    QVERIFY2(f.fileSystem.Exists(ExternalSidecarPathFor(kMoved)),
+             "the addon moved without the record that says which program it came from");
+    QCOMPARE(f.fileSystem.ContentsOf(ExternalSidecarPathFor(kMoved)), TextOfTheExternalOrigin(came));
 }
 
 void LibraryOrganizerTest::ACreatedCategoryIsAFolderInTheLibrary()

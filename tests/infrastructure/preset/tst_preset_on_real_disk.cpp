@@ -96,7 +96,7 @@ namespace
         FilesystemScanner catalog{manifestParser, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
         FakeLibraryIdGenerator identities;
-        ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         std::filesystem::path presetRoot;
         FilePresetRepository presets{presetRoot};
         PresetService service{presets, profiles};

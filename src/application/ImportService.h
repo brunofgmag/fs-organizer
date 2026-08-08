@@ -9,6 +9,7 @@
 #include "application/model/FileOperationResult.h"
 #include "application/model/ImportOperationResult.h"
 #include "application/model/QuarantinedItem.h"
+#include "application/model/RestorePlan.h"
 #include "application/model/StagingLeftover.h"
 #include "application/ports/ProcessProbe.h"
 #include "domain/importing/ImportEngine.h"
@@ -55,8 +56,18 @@ public:
     [[nodiscard]] std::vector<QuarantineDetail> Describe(const std::vector<DestinationEntry>& entries,
                                                          const std::vector<QuarantinedItem>& items) const;
 
+    [[nodiscard]] std::vector<RestoreCheck> CheckRestore(const SimulatorProfile& profile,
+                                                         const std::vector<QuarantinedItem>& items) const;
+
+    [[nodiscard]] std::vector<RestorePlace> PlacesFor(const SimulatorProfile& profile,
+                                                      const QuarantinedItem& item) const;
+
     [[nodiscard]] std::vector<FileOperationResult> Restore(const SimulatorProfile& profile,
                                                            const std::vector<QuarantinedItem>& items) const;
+
+    [[nodiscard]] SwapResult Swap(const SimulatorProfile& profile,
+                                  const std::vector<DestinationEntry>& entries,
+                                  const QuarantinedItem& item) const;
 
     [[nodiscard]] std::vector<FileOperationResult> Discard(const SimulatorProfile& profile,
                                                            const std::vector<QuarantinedItem>& items) const;
@@ -77,18 +88,38 @@ private:
 
     [[nodiscard]] std::string VersionIn(const std::filesystem::path& folder) const;
 
-    [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
+    [[nodiscard]] FileResult QuarantineInto(const std::filesystem::path& quarantine,
+                                            const std::filesystem::path& loser,
+                                            const AddonId& addon,
+                                            OperationKind kind) const;
+
+    void ForgetTheOriginOf(const std::filesystem::path& item) const;
+
+    [[nodiscard]] QuarantinedItem WhereItCameFrom(const std::vector<OperationRecord>& history,
+                                                  const std::filesystem::path& item) const;
+
+    [[nodiscard]] RestoreCheck CheckOne(const std::vector<TreeNode>& libraries, const QuarantinedItem& item) const;
+
+    [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile,
+                                        const QuarantinedItem& item,
+                                        const std::filesystem::path& recordedFrom = {}) const;
+
+    [[nodiscard]] SwapResult
+    TheItemComesBack(const SimulatorProfile& profile, const QuarantinedItem& item, SwapResult swapped) const;
 
     [[nodiscard]] FileResult DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
 
     [[nodiscard]] FileResult DiscardOneStaging(const SimulatorProfile& profile, const StagingLeftover& leftover) const;
+
+    [[nodiscard]] std::filesystem::path WhatTheOtherProgramOwns(const std::filesystem::path& target) const;
 
     void Record(const SimulatorProfile& profile,
                 OperationKind kind,
                 const std::filesystem::path& addonFolder,
                 const std::filesystem::path& source,
                 const std::filesystem::path& target,
-                FileResult result) const;
+                FileResult result,
+                OriginSource originSource = OriginSource::Unknown) const;
 
     const ImportEngine& engine_;
     const ProcessProbe& processProbe_;

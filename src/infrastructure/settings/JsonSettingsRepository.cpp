@@ -31,9 +31,11 @@ namespace
     constexpr auto kPath = "path";
     constexpr auto kLabel = "label";
     constexpr auto kDestinationOverrides = "destinationOverrides";
+    constexpr auto kExternalOrigins = "externalOrigins";
     constexpr auto kLibraryId = "libraryId";
     constexpr auto kRelativePath = "relativePath";
     constexpr auto kDestination = "destination";
+    constexpr auto kExternalPath = "externalPath";
 
     std::filesystem::path ToPath(const QJsonValue& value)
     {
@@ -134,6 +136,26 @@ namespace
         return destinationOverride;
     }
 
+    QJsonObject ToJson(const ExternalOrigin& externalOrigin)
+    {
+        QJsonObject object;
+        object[kLibraryId] = QString::fromStdString(externalOrigin.libraryId);
+        object[kRelativePath] = AsText(externalOrigin.relativePath);
+        object[kExternalPath] = AsText(externalOrigin.externalPath);
+
+        return object;
+    }
+
+    ExternalOrigin ExternalOriginFromJson(const QJsonObject& object)
+    {
+        ExternalOrigin externalOrigin;
+        externalOrigin.libraryId = object.value(kLibraryId).toString().toStdString();
+        externalOrigin.relativePath = ToPath(object.value(kRelativePath));
+        externalOrigin.externalPath = ToPath(object.value(kExternalPath));
+
+        return externalOrigin;
+    }
+
     QJsonObject ToJson(const SimulatorProfile& profile)
     {
         QJsonArray destinations;
@@ -154,6 +176,12 @@ namespace
             overrides.append(ToJson(destinationOverride));
         }
 
+        QJsonArray externalOrigins;
+        for (const ExternalOrigin& externalOrigin : profile.externalOrigins)
+        {
+            externalOrigins.append(ToJson(externalOrigin));
+        }
+
         QJsonObject object;
         object[kId] = QString::fromStdString(profile.id);
         object[kVariant] = VariantName(profile.variant);
@@ -161,6 +189,7 @@ namespace
         object[kDefaultDestination] = AsText(profile.defaultDestination);
         object[kLibraries] = libraries;
         object[kDestinationOverrides] = overrides;
+        object[kExternalOrigins] = externalOrigins;
 
         return object;
     }
@@ -185,6 +214,11 @@ namespace
         for (const QJsonValue destinationOverride : object.value(kDestinationOverrides).toArray())
         {
             profile.destinationOverrides.push_back(OverrideFromJson(destinationOverride.toObject()));
+        }
+
+        for (const QJsonValue externalOrigin : object.value(kExternalOrigins).toArray())
+        {
+            profile.externalOrigins.push_back(ExternalOriginFromJson(externalOrigin.toObject()));
         }
 
         return profile;

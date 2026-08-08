@@ -15,6 +15,9 @@ namespace
         static void AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict();
         static void TheBaseNameIsComparedWithoutCaringAboutCase();
         static void TheSameNameInTwoDestinationsIsTwoConflicts();
+        static void ADivergentEntryIsAConflictBetweenTheLibraryAndTheOtherProgramsFolder();
+        static void AVanishedEntryIsNotAConflictBecauseOnlyOneCopyIsLeft();
+        static void ADuplicatedEntryStillCarriesItsDivergenceIntoTheConflict();
     };
 }
 
@@ -68,9 +71,9 @@ void CopyConflictsTest::APhysicalFolderThatAlsoExistsInTheLibraryIsAConflict()
 
     QCOMPARE(conflicts.Count(), std::size_t{1});
 
-    const CopyConflict* found = conflicts.OverTheDestinationEntry(kCommunity / "flybywire-externaltools-simbridge");
+    const CopyConflict* found = conflicts.OverTheProvenance(kCommunity / "flybywire-externaltools-simbridge");
     QVERIFY(found != nullptr);
-    QCOMPARE(found->destinationPath, kCommunity / "flybywire-externaltools-simbridge");
+    QCOMPARE(found->provenancePath, kCommunity / "flybywire-externaltools-simbridge");
     QCOMPARE(found->libraryPath, kLibrary / "Utils/flybywire-externaltools-simbridge");
 
     QCOMPARE(conflicts.OverTheLibraryAddon(kLibrary / "Utils/flybywire-externaltools-simbridge"), found);
@@ -84,7 +87,7 @@ void CopyConflictsTest::AnEmptyFolderInTheLibraryIsNotAnAddonAndSoIsNotAConflict
     const CopyConflicts conflicts = FindCopyConflicts({PhysicalFolder(kCommunity / "fs2crew-cmd-center")}, libraries);
 
     QCOMPARE(conflicts.Count(), std::size_t{0});
-    QCOMPARE(conflicts.OverTheDestinationEntry(kCommunity / "fs2crew-cmd-center"), nullptr);
+    QCOMPARE(conflicts.OverTheProvenance(kCommunity / "fs2crew-cmd-center"), nullptr);
 }
 
 void CopyConflictsTest::AManagedLinkIsNotAPhysicalCopyAndSoIsNotAConflict()
@@ -119,8 +122,68 @@ void CopyConflictsTest::TheSameNameInTwoDestinationsIsTwoConflicts()
         {PhysicalFolder(kCommunity / "simbridge"), PhysicalFolder(kCommunity2024 / "simbridge")}, libraries);
 
     QCOMPARE(conflicts.Count(), std::size_t{2});
-    QVERIFY(conflicts.OverTheDestinationEntry(kCommunity / "simbridge") != nullptr);
-    QVERIFY(conflicts.OverTheDestinationEntry(kCommunity2024 / "simbridge") != nullptr);
+    QVERIFY(conflicts.OverTheProvenance(kCommunity / "simbridge") != nullptr);
+    QVERIFY(conflicts.OverTheProvenance(kCommunity2024 / "simbridge") != nullptr);
+}
+
+void CopyConflictsTest::ADivergentEntryIsAConflictBetweenTheLibraryAndTheOtherProgramsFolder()
+{
+    const std::filesystem::path vendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+    const std::filesystem::path libraryCopy = kLibrary / "Utils/gsx-pro";
+
+    const std::vector<TreeNode> libraries{LibraryWith({Category(kLibrary / "Utils", {AddonNode(libraryCopy)})})};
+
+    const CopyConflicts conflicts =
+        FindCopyConflicts({DestinationEntry{.path = kCommunity / "gsx-pro",
+                                            .target = libraryCopy,
+                                            .classification = EntryClassification::Divergent,
+                                            .externalOrigin = vendorFolder,
+                                            .theOtherProgramTookItsFolderBack = true}},
+                          libraries);
+
+    QCOMPARE(conflicts.Count(), std::size_t{1});
+
+    const CopyConflict* found = conflicts.OverTheProvenance(vendorFolder);
+    QVERIFY(found != nullptr);
+    QCOMPARE(found->provenancePath, vendorFolder);
+    QCOMPARE(found->libraryPath, libraryCopy);
+
+    QCOMPARE(conflicts.OverTheLibraryAddon(libraryCopy), found);
+}
+
+void CopyConflictsTest::AVanishedEntryIsNotAConflictBecauseOnlyOneCopyIsLeft()
+{
+    const std::vector<TreeNode> libraries{
+        LibraryWith({Category(kLibrary / "Utils", {AddonNode(kLibrary / "Utils/gsx-pro")})})};
+
+    const CopyConflicts conflicts =
+        FindCopyConflicts({DestinationEntry{.path = kCommunity / "gsx-pro",
+                                            .target = kLibrary / "Utils/gsx-pro",
+                                            .classification = EntryClassification::Vanished,
+                                            .externalOrigin = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro"}},
+                          libraries);
+
+    QCOMPARE(conflicts.Count(), std::size_t{0});
+}
+
+void CopyConflictsTest::ADuplicatedEntryStillCarriesItsDivergenceIntoTheConflict()
+{
+    const std::filesystem::path vendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+    const std::filesystem::path libraryCopy = kLibrary / "Utils/gsx-pro";
+
+    const std::vector<TreeNode> libraries{LibraryWith({Category(kLibrary / "Utils", {AddonNode(libraryCopy)})})};
+
+    const CopyConflicts conflicts =
+        FindCopyConflicts({DestinationEntry{.path = kCommunity / "gsx-pro",
+                                            .target = libraryCopy,
+                                            .classification = EntryClassification::Duplicated,
+                                            .externalOrigin = vendorFolder,
+                                            .theOtherProgramTookItsFolderBack = true}},
+                          libraries);
+
+    QCOMPARE(conflicts.Count(), std::size_t{1});
+    QVERIFY(conflicts.OverTheLibraryAddon(libraryCopy) != nullptr);
+    QVERIFY(conflicts.OverTheLibraryAddon(libraryCopy)->theProvenanceIsAnotherProgram);
 }
 
 QTEST_APPLESS_MAIN(CopyConflictsTest)

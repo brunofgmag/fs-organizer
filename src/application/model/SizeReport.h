@@ -25,10 +25,17 @@ struct SizeReport
     std::chrono::system_clock::time_point measuredAt{};
 };
 
+struct MeasuredTree
+{
+    std::uintmax_t bytes = 0;
+    std::size_t longestEntry = 0;
+};
+
 struct MeasuredFolder
 {
     std::filesystem::path folder{};
     std::uintmax_t bytes = 0;
+    std::size_t longestEntry = 0;
     bool measured = false;
 };
 

@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_VIEWMODEL_QUARANTINE_VIEW_MODEL_H
 #define FS_ORGANIZER_VIEWMODEL_QUARANTINE_VIEW_MODEL_H
 
+#include <functional>
 #include <vector>
 
 #include <QtCore/QObject>
@@ -29,12 +30,20 @@ public:
 
     void Show();
 
+    [[nodiscard]] std::vector<RestoreOffer> WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const;
+
+    void WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed);
+
     void Restore(const std::vector<QuarantinedItem>& items);
+
+    void Swap(const std::vector<QuarantinedItem>& items);
 
     void Discard(const std::vector<QuarantinedItem>& items);
 
 signals:
     void Restored(const std::vector<FileOperationResult>& results);
+
+    void Swapped(const std::vector<SwapResult>& results);
 
     void Discarded(const std::vector<FileOperationResult>& results);
 

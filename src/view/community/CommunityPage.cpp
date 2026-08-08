@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
@@ -46,9 +47,22 @@ namespace
 
     struct ImportableSelection
     {
-        std::vector<std::filesystem::path> folders;
+        std::vector<ImportRequest> requests;
         int conflicted = 0;
         int selected = 0;
+
+        [[nodiscard]] std::vector<std::filesystem::path> WhereTheBytesAre() const
+        {
+            std::vector<std::filesystem::path> folders;
+            folders.reserve(requests.size());
+
+            for (const ImportRequest& request : requests)
+            {
+                folders.push_back(request.Bytes());
+            }
+
+            return folders;
+        }
     };
 
     ImportableSelection
@@ -70,13 +84,73 @@ namespace
                 continue;
             }
 
-            if (entry != nullptr && entry->classification == EntryClassification::Unmanaged)
+            if (entry == nullptr)
             {
-                chosen.folders.push_back(entry->path);
+                continue;
+            }
+
+            if (entry->classification == EntryClassification::Unmanaged)
+            {
+                chosen.requests.push_back(ImportRequest{.source = entry->path});
+            }
+            else if (entry->classification == EntryClassification::External)
+            {
+                chosen.requests.push_back(ImportRequest{.source = entry->path, .externalSource = entry->target});
             }
         }
 
         return chosen;
+    }
+
+    QString WhatTheStateCosts(const EntryClassification classification)
+    {
+        switch (classification)
+        {
+        case EntryClassification::Divergent:
+            return QCoreApplication::translate(
+                "CommunityPage",
+                "The folder of the other program is a real folder again, so there are two copies. The simulator "
+                "loads the one in your library, and whatever that program updates from here on lands in the copy "
+                "the simulator does not read.");
+        case EntryClassification::Vanished:
+            return QCoreApplication::translate(
+                "CommunityPage",
+                "The copy in your library is gone, taken by the other program. Nothing can be repaired here: the "
+                "content no longer exists on this machine.");
+        case EntryClassification::Managed:
+        case EntryClassification::External:
+        case EntryClassification::Broken:
+        case EntryClassification::Unavailable:
+        case EntryClassification::Unmanaged:
+        case EntryClassification::Duplicated: break;
+        }
+
+        return {};
+    }
+
+    bool EveryConflictCameFromAnotherProgram(const QTableView& table,
+                                             const QSortFilterProxyModel& filter,
+                                             const CommunityModel& model)
+    {
+        bool anyone = false;
+
+        for (const QModelIndex& position : table.selectionModel()->selectedRows())
+        {
+            const CopyConflict* conflict = model.ConflictAt(filter.mapToSource(position));
+            if (conflict == nullptr)
+            {
+                continue;
+            }
+
+            if (!conflict->theProvenanceIsAnotherProgram)
+            {
+                return false;
+            }
+
+            anyone = true;
+        }
+
+        return anyone;
     }
 
     void Emphasise(QPushButton& button, const bool primary)
@@ -208,6 +282,8 @@ QList<CommunityPage::FilterChip> CommunityPage::FiltersOffered()
         {.label = tr("All"), .filter = kEveryFilter},
         {.label = tr("Managed"), .filter = static_cast<int>(EntryClassification::Managed)},
         {.label = tr("External"), .filter = static_cast<int>(EntryClassification::External)},
+        {.label = tr("Divergent"), .filter = static_cast<int>(EntryClassification::Divergent)},
+        {.label = tr("Vanished"), .filter = static_cast<int>(EntryClassification::Vanished)},
         {.label = tr("Broken"), .filter = static_cast<int>(EntryClassification::Broken)},
         {.label = tr("Unmanaged"), .filter = static_cast<int>(EntryClassification::Unmanaged)},
         {.label = tr("Unavailable"), .filter = static_cast<int>(EntryClassification::Unavailable)},
@@ -347,6 +423,16 @@ void CommunityPage::ShowTheSelectedEntry()
     fields.append({tr("Path"), AsText(entry->path)});
     fields.append({tr("Link?"), entry->target.empty() ? tr("no, a physical folder") : AsText(entry->target)});
 
+    if (!entry->externalOrigin.empty())
+    {
+        fields.append({tr("Came from"), AsText(entry->externalOrigin)});
+    }
+
+    if (const QString meaning = WhatTheStateCosts(entry->classification); !meaning.isEmpty())
+    {
+        fields.append({tr("What this means"), meaning});
+    }
+
     if (const CopyConflict* conflict = model_.ConflictAt(source); conflict != nullptr)
     {
         fields.append({tr("In the library"), AsText(conflict->libraryPath)});
@@ -438,15 +524,23 @@ void CommunityPage::ShowTheBatchFields(const QString& size) const
 void CommunityPage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const
 {
     const ImportableSelection chosen = ChosenForImport(*table_, *filter_, model_);
-    const auto importable = static_cast<int>(chosen.folders.size());
+    const auto importable = static_cast<int>(chosen.requests.size());
     const int blocked = chosen.conflicted;
 
     importOne_->setEnabled(importable > 0);
     importOne_->setText(importable > 1 ? tr("Import the %n folder…", nullptr, importable) : tr("Import this folder…"));
 
     resolveChosen_->setVisible(blocked > 0);
-    resolveChosen_->setText(blocked > 1 ? tr("Resolve the %n conflict…", nullptr, blocked)
-                                        : tr("Resolve the conflict…"));
+
+    if (EveryConflictCameFromAnotherProgram(*table_, *filter_, model_))
+    {
+        resolveChosen_->setText(tr("Choose which copy stays…"));
+    }
+    else
+    {
+        resolveChosen_->setText(blocked > 1 ? tr("Resolve the %n conflict…", nullptr, blocked)
+                                            : tr("Resolve the conflict…"));
+    }
 
     Emphasise(*resolveChosen_, blocked > 0);
     Emphasise(*importOne_, blocked == 0);
@@ -531,12 +625,12 @@ void CommunityPage::StartImport()
 {
     const ImportableSelection chosen = ChosenForImport(*table_, *filter_, model_);
 
-    if (chosen.folders.empty())
+    if (chosen.requests.empty())
     {
         emit StatusChanged(
             chosen.conflicted > 0
                 ? tr("Resolve the conflict before importing: the library already has an addon with that name.")
-                : tr("Select at least one unmanaged folder."));
+                : tr("Select at least one unmanaged or external entry."));
         return;
     }
 
@@ -545,8 +639,8 @@ void CommunityPage::StartImport()
         return;
     }
 
-    ImportDialog dialog(chosen.folders, viewModel_.Snapshot().libraries, importViewModel_.Profile(),
-                        importViewModel_.TotalSizeOf(chosen.folders), this);
+    ImportDialog dialog(chosen.requests, viewModel_.Snapshot().libraries, importViewModel_.Profile(),
+                        importViewModel_.TotalSizeOf(chosen.WhereTheBytesAre()), this);
 
     if (dialog.exec() != QDialog::Accepted)
     {

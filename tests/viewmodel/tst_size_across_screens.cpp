@@ -24,6 +24,7 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -124,7 +125,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
         ImportService imports{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
@@ -196,14 +197,14 @@ void SizeAcrossScreensTest::TheQuarantineReadsTheSameCacheAsTheDiagnosticsScreen
     QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
 
     const QString shown =
-        f.quarantineModel.data(f.quarantineModel.index(0, QuarantineModel::SizeColumn, {}), Qt::DisplayRole).toString();
+        f.quarantineModel.data(f.quarantineModel.index(0, QuarantineModel::NameColumn, {}), SecondLineRole).toString();
     QVERIFY(!shown.isEmpty());
 
     f.quarantine.Show();
 
     QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
     QCOMPARE(
-        f.quarantineModel.data(f.quarantineModel.index(0, QuarantineModel::SizeColumn, {}), Qt::DisplayRole).toString(),
+        f.quarantineModel.data(f.quarantineModel.index(0, QuarantineModel::NameColumn, {}), SecondLineRole).toString(),
         shown);
 }
 

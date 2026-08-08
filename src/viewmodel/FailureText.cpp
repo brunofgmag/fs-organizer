@@ -67,8 +67,11 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotRemoveSource: return QObject::tr("the source folder could not be removed");
     case FileResult::CouldNotCreateLink:
         return QObject::tr("the files are already in the library, but the link could not be created");
-    case FileResult::TheOriginIsUnknown: return QObject::tr("the journal does not know where this came from");
-    case FileResult::CouldNotRestore: return QObject::tr("there is already something in the source place");
+    case FileResult::TheOriginIsUnknown:
+        return QObject::tr("neither the record beside it nor the journal says where this came from");
+    case FileResult::CouldNotRestore: return QObject::tr("the folder could not be moved back");
+    case FileResult::TheOriginIsOccupied:
+        return QObject::tr("something with that name is already in the place this came from");
     case FileResult::CouldNotDiscard: return QObject::tr("it could not be discarded");
     case FileResult::CouldNotRemoveTheLink:
         return QObject::tr("one of the links pointing at the library copy could not be removed");
@@ -83,6 +86,22 @@ QString Explain(const FileResult result)
         return QObject::tr("the journal records this operation, but does not say how it ended");
     case FileResult::CouldNotReadTheSource:
         return QObject::tr("the source folder could not be walked, so nothing was copied");
+    case FileResult::TheRecycleBinIsTooSmall:
+        return QObject::tr("the selection does not fit in the Recycle Bin of that volume");
+    case FileResult::TheRecycleBinCannotReachIt:
+        return QObject::tr("the Recycle Bin stops at 260 characters, and this addon holds a longer path");
+    case FileResult::CouldNotDelete: return QObject::tr("the folder could not be deleted");
+    case FileResult::CouldNotRecordTheOrigin:
+        return QObject::tr("the record that says where this came from could not be written, so nothing was moved");
+    case FileResult::CannotWriteInTheOtherProgramsFolder:
+        return QObject::tr("the folder of the other program does not accept writes from you, so nothing was taken "
+                           "away from it");
+    case FileResult::TheDiskDisagreesWithTheScan:
+        return QObject::tr("the entry no longer points where the last scan saw it point, so nothing was touched");
+    case FileResult::CouldNotReadTheStartupFile:
+        return QObject::tr("the startup file of the simulator could not be read");
+    case FileResult::CouldNotWriteTheStartupFile:
+        return QObject::tr("the startup file of the simulator could not be written, so nothing changed");
     }
 
     return {};
@@ -104,7 +123,7 @@ QString Describe(const LinkOperationResult& result)
     if (const CopyConflict* conflict = result.outcome.Conflict(); conflict != nullptr)
     {
         line += QObject::tr("\n    folder in the destination: %1\n    addon in the library: %2")
-                    .arg(AsText(conflict->destinationPath), AsText(conflict->libraryPath));
+                    .arg(AsText(conflict->provenancePath), AsText(conflict->libraryPath));
     }
 
     if (const OccupiedDestination* occupation = result.outcome.Occupation(); occupation != nullptr)
@@ -115,16 +134,83 @@ QString Describe(const LinkOperationResult& result)
     return line;
 }
 
+namespace
+{
+    QString WhichFolderTheOtherProgramOwns(const ImportOperationResult& result)
+    {
+        if (result.result != FileResult::CannotWriteInTheOtherProgramsFolder)
+        {
+            return {};
+        }
+
+        return QObject::tr("\n    the folder that refused: %1").arg(AsText(result.request.externalSource));
+    }
+}
+
 QString Describe(const ImportOperationResult& result)
 {
-    return QStringLiteral("%1: %2%3")
-        .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
+    return QStringLiteral("%1: %2%3%4")
+        .arg(AsText(result.request.source.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant),
+             WhichFolderTheOtherProgramOwns(result));
 }
 
 QString Describe(const FileOperationResult& result)
 {
     return QStringLiteral("%1: %2%3")
         .arg(AsText(result.path.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
+}
+
+QString Describe(const SwapResult& result)
+{
+    if (result.Succeeded())
+    {
+        return QObject::tr("%1: it is back, and %2 is in the quarantine with its origin recorded.")
+            .arg(AsText(result.item.filename()), AsText(result.occupant.filename()));
+    }
+
+    const QString step = result.stoppedAt == SwapStep::QuarantineTheOccupant
+        ? QObject::tr("putting %1 in the quarantine").arg(AsText(result.occupant.filename()))
+        : QObject::tr("bringing %1 back").arg(AsText(result.item.filename()));
+
+    const QString holds = result.inTheLibrary.empty()
+        ? QObject::tr("\n    neither of them is in the library right now, and nothing was deleted")
+        : QObject::tr("\n    the library still holds: %1").arg(AsText(result.inTheLibrary));
+
+    return QObject::tr("%1: it stopped at %2, because %3.%4")
+        .arg(AsText(result.item.filename()), step, Explain(result.result), holds);
+}
+
+namespace
+{
+    QString WhatTheRouteDid(const DeletionRoute route)
+    {
+        return route == DeletionRoute::RecycleBin ? QObject::tr("moved to the Recycle Bin")
+                                                  : QObject::tr("deleted for good");
+    }
+
+    QString WhichLinksWentAway(const std::vector<std::filesystem::path>& links)
+    {
+        QString said;
+
+        for (const std::filesystem::path& link : links)
+        {
+            said += QObject::tr("\n    the link already removed: %1").arg(AsText(link));
+        }
+
+        return said;
+    }
+}
+
+QString Describe(const DeletionResult& result, const DeletionRoute route)
+{
+    const QString name = AsText(result.folder.filename());
+
+    if (Succeeded(result.result))
+    {
+        return QStringLiteral("%1: %2").arg(name, WhatTheRouteDid(route));
+    }
+
+    return QStringLiteral("%1: %2%3").arg(name, Explain(result.result), WhichLinksWentAway(result.linksRemoved));
 }
 
 QString NameOfImportStep(const OperationKind kind)

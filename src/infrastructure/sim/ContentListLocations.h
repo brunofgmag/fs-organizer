@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "domain/ports/FilesystemProbe.h"
-#include "infrastructure/sim/WindowsSimulatorLocator.h"
+#include "infrastructure/sim/UserCfgLocation.h"
 
 struct ContentListLocation
 {

@@ -16,6 +16,8 @@ namespace
         static void ARefusedImportNamesTheFolderAndWhyItWasRefused();
         static void AnIdentityAlreadyTakenSaysWhereTheOccupantIs();
         static void ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs();
+        static void EachDeletedAddonSaysWhichOfTheTwoRoutesTookIt();
+        static void ADeletionStoppedByALinkSaysWhichLinksAlreadyWentAway();
     };
 }
 
@@ -96,6 +98,30 @@ void FailureTextTest::ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs()
 
     QVERIFY(line.contains(QStringLiteral("simbridge")));
     QVERIFY(line.contains(AsText("D:/Library/Sceneries/simbridge")));
+}
+
+void FailureTextTest::EachDeletedAddonSaysWhichOfTheTwoRoutesTookIt()
+{
+    const DeletionResult gone{.folder = "D:/Library/Aircrafts/aerosoft-crj"};
+
+    const QString recycled = Describe(gone, DeletionRoute::RecycleBin);
+    const QString erased = Describe(gone, DeletionRoute::Permanently);
+
+    QVERIFY(recycled.contains(QStringLiteral("aerosoft-crj")));
+    QVERIFY(erased.contains(QStringLiteral("aerosoft-crj")));
+    QVERIFY(recycled != erased);
+}
+
+void FailureTextTest::ADeletionStoppedByALinkSaysWhichLinksAlreadyWentAway()
+{
+    const DeletionResult stopped{.folder = "D:/Library/Aircrafts/aerosoft-crj",
+                                 .result = FileResult::CouldNotRemoveTheLink,
+                                 .linksRemoved = {"E:/Sim/Community/aerosoft-crj"}};
+
+    const QString line = Describe(stopped, DeletionRoute::Permanently);
+
+    QVERIFY(line.contains(Explain(FileResult::CouldNotRemoveTheLink)));
+    QVERIFY(line.contains(AsText("E:/Sim/Community/aerosoft-crj")));
 }
 
 QTEST_APPLESS_MAIN(FailureTextTest)

@@ -12,6 +12,8 @@ public:
 
     [[nodiscard]] bool IsReparsePoint(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] bool PhysicalDirectoryExists(const std::filesystem::path& path) const override;
+
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;
@@ -20,10 +22,11 @@ public:
 
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override;
+
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override;
 
-    [[nodiscard]] std::optional<std::vector<FileFingerprint>>
-    FingerprintTree(const std::filesystem::path& root) const override;
+    [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override;
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override;

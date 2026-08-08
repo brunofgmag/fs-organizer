@@ -10,6 +10,7 @@
 #include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
+#include "domain/model/QuarantineOrigin.h"
 
 using OperationOutcome = std::variant<LinkFailure, FileResult>;
 
@@ -48,7 +49,8 @@ struct OperationRecord
                                                   AddonId addonId,
                                                   std::filesystem::path source,
                                                   std::filesystem::path target,
-                                                  FileResult result)
+                                                  FileResult result,
+                                                  OriginSource originSource = OriginSource::Unknown)
     {
         OperationRecord record;
         record.timestamp = timestamp;
@@ -57,6 +59,7 @@ struct OperationRecord
         record.source = std::move(source);
         record.target = std::move(target);
         record.outcome = result;
+        record.originSource = originSource;
 
         return record;
     }
@@ -67,6 +70,7 @@ struct OperationRecord
     std::filesystem::path source;
     std::filesystem::path target;
     OperationOutcome outcome = LinkFailure::None;
+    OriginSource originSource = OriginSource::Unknown;
 
 private:
     OperationRecord() = default;

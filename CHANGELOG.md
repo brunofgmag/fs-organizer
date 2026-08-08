@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.17.0](https://github.com/brunofgmag/fs-organizer/compare/v0.16.0...v0.17.0) (2026-08-08)
+
+
+### Features
+
+* read the simulator's startup file and change only the switch ([#45](https://github.com/brunofgmag/fs-organizer/issues/45)) ([420af2b](https://github.com/brunofgmag/fs-organizer/commit/420af2bc25b586a43e62700166efbfc6bfc7b8eb))
+
+## [0.16.0](https://github.com/brunofgmag/fs-organizer/compare/v0.15.0...v0.16.0) (2026-08-08)
+
+
+### Features
+
+* manage addons another program installed, and name the two ways they drift ([#43](https://github.com/brunofgmag/fs-organizer/issues/43)) ([7433a72](https://github.com/brunofgmag/fs-organizer/commit/7433a72a76738fa586d1b34ee13aa4b06e148759))
+
+## [0.15.0](https://github.com/brunofgmag/fs-organizer/compare/v0.14.0...v0.15.0) (2026-08-07)
+
+
+### Features
+
+* quarantine that knows where each item came from ([#41](https://github.com/brunofgmag/fs-organizer/issues/41)) ([1853981](https://github.com/brunofgmag/fs-organizer/commit/18539813608ed55bc36915f613dc3de1d8d6c0e6))
+
+## [0.14.0](https://github.com/brunofgmag/fs-organizer/compare/v0.13.0...v0.14.0) (2026-08-07)
+
+
+### Features
+
+* delete addons from the Library screen, by either route ([#39](https://github.com/brunofgmag/fs-organizer/issues/39)) ([600231c](https://github.com/brunofgmag/fs-organizer/commit/600231c5030a46379e8ba3a1d65bde6bf573e364))
+
+## [0.13.0](https://github.com/brunofgmag/fs-organizer/compare/v0.12.0...v0.13.0) (2026-08-07)
+
+
+### Features
+
+* delete addons from the library, to the Recycle Bin or for good ([#37](https://github.com/brunofgmag/fs-organizer/issues/37)) ([07a3217](https://github.com/brunofgmag/fs-organizer/commit/07a321728a49c56c5bbefd10a2ed6fdfc650cdbf))
+
+## [0.12.0](https://github.com/brunofgmag/fs-organizer/compare/v0.11.0...v0.12.0) (2026-08-07)
+
+
+### Features
+
+* tell the two restore refusals apart, and swap the addon that holds the place ([#35](https://github.com/brunofgmag/fs-organizer/issues/35)) ([85868b8](https://github.com/brunofgmag/fs-organizer/commit/85868b8ca3921827c0f90a1854dc1f294f91983e))
+
+## [0.11.0](https://github.com/brunofgmag/fs-organizer/compare/v0.10.0...v0.11.0) (2026-08-07)
+
+
+### Features
+
+* plan the link batch against the disk, not against the last scan ([#33](https://github.com/brunofgmag/fs-organizer/issues/33)) ([0d428d8](https://github.com/brunofgmag/fs-organizer/commit/0d428d852062b6960076aa1b23493414a12d2d8a))
+
 ## [0.10.0](https://github.com/brunofgmag/fs-organizer/compare/v0.9.0...v0.10.0) (2026-08-06)
 
 

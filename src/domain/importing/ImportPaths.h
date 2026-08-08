@@ -7,7 +7,16 @@
 #include "domain/support/PathUtils.h"
 
 inline constexpr auto kStagingSuffix = ".fsorg-partial";
+inline constexpr auto kSwapSlotSuffix = ".fsorg-swap";
 inline constexpr auto kQuarantineFolderName = "_fsorganizer-quarantine";
+
+[[nodiscard]] inline std::filesystem::path SwapSlotFor(const std::filesystem::path& item)
+{
+    std::filesystem::path room = item;
+    room += kSwapSlotSuffix;
+
+    return room;
+}
 
 [[nodiscard]] inline std::filesystem::path StagingPathFor(const std::filesystem::path& target)
 {

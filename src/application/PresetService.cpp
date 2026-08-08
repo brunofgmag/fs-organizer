@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "domain/linking/EntryClassifier.h"
+
 PresetService::PresetService(PresetRepository& presets, ProfileService& profiles)
     : presets_(presets), profiles_(profiles)
 {
@@ -97,9 +99,12 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
                                        const Preset& preset,
                                        const ApplyMode mode) const
 {
-    const PresetPlan plan = PlanPresetApplication(preset, mode, profile, snapshot.libraries, snapshot.enabled);
+    const EnabledAddons onDisk{EnabledAddonFolders(profiles_.ResolveEntries(profile))};
+    const PresetPlan plan = PlanPresetApplication(preset, mode, profile, snapshot.libraries, onDisk);
 
-    return {.results = profiles_.SetEnabled(profile, snapshot,
-                                            LinkBatch{.toDisable = plan.toDisable, .toEnable = plan.toEnable}),
-            .unresolved = plan.unresolved};
+    return {
+        .results =
+            profiles_.SetEnabled(profile, snapshot, LinkBatch{.toDisable = plan.toDisable, .toEnable = plan.toEnable})
+                .results,
+        .unresolved = plan.unresolved};
 }

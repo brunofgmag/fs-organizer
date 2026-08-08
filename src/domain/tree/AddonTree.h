@@ -20,6 +20,14 @@ std::vector<const TreeNode*> AddonsUnder(TreeNode&& node) = delete;
 
 const TreeNode* AddonNamed(std::vector<TreeNode>&& libraries, const std::string& baseName) = delete;
 
+[[nodiscard]] const TreeNode* AddonAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& folder);
+
+const TreeNode* AddonAt(std::vector<TreeNode>&& libraries, const std::filesystem::path& folder) = delete;
+
+[[nodiscard]] const TreeNode* NodeAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& folder);
+
+const TreeNode* NodeAt(std::vector<TreeNode>&& libraries, const std::filesystem::path& folder) = delete;
+
 [[nodiscard]] const TreeNode* AddonHoldingTheIdentity(const std::vector<TreeNode>& libraries,
                                                       const std::filesystem::path& wanted,
                                                       const std::filesystem::path& ignoring);

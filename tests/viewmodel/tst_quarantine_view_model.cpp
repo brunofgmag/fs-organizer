@@ -17,6 +17,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/QuarantineViewModel.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -30,6 +31,8 @@ namespace
         static void TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards();
         static void AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain();
         static void NothingIsReadFromTheQuarantineUntilTheScreenIsShown();
+        static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
+        static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
     };
 }
 
@@ -92,7 +95,7 @@ namespace
         LinkingEngine linking{linkService, filesystemProbe};
         ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
         ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
-        ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -103,6 +106,11 @@ namespace
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         QuarantineViewModel viewModel{service, profiles, session, notifier, model, sizes, runner};
     };
+
+    QString SecondLineAt(const QuarantineModel& model, const int row)
+    {
+        return model.data(model.index(row, QuarantineModel::NameColumn, {}), SecondLineRole).toString();
+    }
 
     QString CellAt(const QuarantineModel& model, const int row, const int column)
     {
@@ -152,7 +160,7 @@ void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAft
 
     QCOMPARE(f.model.rowCount({}), 1);
     QVERIFY(CellAt(f.model, 0, QuarantineModel::VersionColumn).isEmpty());
-    QVERIFY(CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QVERIFY(SecondLineAt(f.model, 0).isEmpty());
 
     while (f.runner.Pending())
     {
@@ -160,7 +168,7 @@ void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAft
     }
 
     QCOMPARE(CellAt(f.model, 0, QuarantineModel::VersionColumn), QStringLiteral("2.4.1"));
-    QVERIFY(!CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QVERIFY(!SecondLineAt(f.model, 0).isEmpty());
     QVERIFY(f.model.data(f.model.index(0, QuarantineModel::NameColumn, {}), QuarantineModel::ReplacedRole).toBool());
 }
 
@@ -176,7 +184,7 @@ void QuarantineViewModelTest::AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain()
 
     f.viewModel.Show();
 
-    QVERIFY(!CellAt(f.model, 0, QuarantineModel::SizeColumn).isEmpty());
+    QVERIFY(!SecondLineAt(f.model, 0).isEmpty());
     QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
 }
 
@@ -187,6 +195,54 @@ void QuarantineViewModelTest::NothingIsReadFromTheQuarantineUntilTheScreenIsShow
 
     QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{0});
     QVERIFY(!f.filesystemProbe.WasEnumerated("E:/Sim/_fsorganizer-quarantine"));
+}
+
+namespace
+{
+    TreeNode AddonNodeDeclaring(const std::filesystem::path& path, const std::string& version)
+    {
+        TreeNode node;
+        node.kind = TreeNodeKind::Addon;
+        node.path = path;
+        node.addon = Addon{.folderPath = path, .manifest = Manifest{.packageVersion = version}};
+
+        return node;
+    }
+}
+
+void QuarantineViewModelTest::AnItemWithNoOriginIsAskedWhereItShouldGoBackTo()
+{
+    Fixture f;
+    f.ScanLands();
+
+    const std::vector<RestoreOffer> offers = f.viewModel.WhatRestoringWouldDo({QuarantinedItem{.path = kQuarantined}});
+
+    QCOMPARE(offers.size(), std::size_t{1});
+    QVERIFY(offers.front().check.NeedsAPlace());
+    QCOMPARE(offers.front().places.size(), std::size_t{1});
+    QCOMPARE(offers.front().places.front().place, kDestination);
+    QCOMPARE(offers.front().places.front().target, std::filesystem::path{"E:/Sim/Community/simbridge"});
+}
+
+void QuarantineViewModelTest::AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides()
+{
+    Fixture f;
+    const std::filesystem::path origin = "E:/Sim/Community/simbridge";
+
+    f.fileSystem.AddDirectory(origin);
+    f.catalog.SetTree(kQuarantined, AddonNodeDeclaring(kQuarantined, "2.4.1"));
+    f.catalog.SetTree(origin, AddonNodeDeclaring(origin, "2.5.0"));
+    f.ScanLands();
+
+    const std::vector<RestoreOffer> offers =
+        f.viewModel.WhatRestoringWouldDo({QuarantinedItem{.path = kQuarantined, .origin = origin}});
+
+    QCOMPARE(offers.size(), std::size_t{1});
+    QCOMPARE(offers.front().check.result, FileResult::TheOriginIsOccupied);
+    QCOMPARE(offers.front().check.occupant, origin);
+    QCOMPARE(offers.front().check.version, std::string{"2.4.1"});
+    QCOMPARE(offers.front().check.occupantVersion, std::string{"2.5.0"});
+    QVERIFY(offers.front().places.empty());
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

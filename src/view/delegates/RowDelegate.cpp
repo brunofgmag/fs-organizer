@@ -205,14 +205,15 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
     const QString suffix = index.data(QuietSuffixRole).toString();
     const QString tag = index.data(TagTextRole).toString();
+    const QString second = index.data(SecondLineRole).toString();
     const QString text = TextThatIsDrawn(item, tag);
     const RoomForTheText room = RoomIn(item, suffix, tag);
 
     item.text.clear();
     style->drawControl(QStyle::CE_ItemViewItem, &item, painter, widget);
 
-    const QRect box = room.box;
-    if (box.width() <= 0 || (text.isEmpty() && suffix.isEmpty() && tag.isEmpty()))
+    QRect box = room.box;
+    if (box.width() <= 0 || (text.isEmpty() && suffix.isEmpty() && tag.isEmpty() && second.isEmpty()))
     {
         return;
     }
@@ -221,6 +222,17 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
     painter->save();
     painter->setFont(item.font);
+
+    if (!second.isEmpty())
+    {
+        const QRect under(box.left(), box.center().y(), box.width(), measured.height());
+
+        painter->setPen(QuietInk());
+        painter->drawText(under, Qt::AlignLeft | Qt::AlignVCenter,
+                          fitted_.In(second, item.font, item.textElideMode, box.width()));
+
+        box.setBottom(box.center().y());
+    }
 
     int pen = box.left();
 
@@ -305,6 +317,11 @@ QSize RowDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelInde
     if (const QString tag = index.data(TagTextRole).toString(); !tag.isEmpty())
     {
         wanted.setWidth(wanted.width() + TagSizeOf(tag, option.font).width() + kBeforeTheTag);
+    }
+
+    if (!index.data(SecondLineRole).toString().isEmpty())
+    {
+        wanted.setHeight(wanted.height() + QFontMetrics(option.font).height() + kBreathingRoom);
     }
 
     wanted.setHeight(std::max(wanted.height(), shortestRow_));

@@ -26,8 +26,29 @@ public:
 
     [[nodiscard]] bool TargetDirectoryExists(const std::filesystem::path& path) const override
     {
-        return fileSystem_.IsDirectory(path);
+        if (fileSystem_.IsDirectory(path))
+        {
+            return true;
+        }
+
+        const std::optional<std::filesystem::path> target = fileSystem_.LinkTarget(path);
+
+        return target.has_value() && fileSystem_.IsDirectory(*target);
     }
+
+    [[nodiscard]] bool PhysicalDirectoryExists(const std::filesystem::path& path) const override
+    {
+        lookedAt.push_back(ComparablePath(path));
+
+        return fileSystem_.IsDirectory(path) && !fileSystem_.IsLink(path);
+    }
+
+    [[nodiscard]] std::size_t TimesLookedAt(const std::filesystem::path& path) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(lookedAt, ComparablePath(path)));
+    }
+
+    mutable std::vector<std::string> lookedAt;
 
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
     {
@@ -58,6 +79,24 @@ public:
         return fileSystem_.FreeSpaceOn(path);
     }
 
+    [[nodiscard]] std::size_t TimesTheRecycleBinWasAsked() const
+    {
+        return recycleBinAsked;
+    }
+
+    [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override
+    {
+        ++recycleBinAsked;
+
+        const std::optional<std::uintmax_t> quota = fileSystem_.RecycleBinQuotaOn(path);
+        if (!quota.has_value())
+        {
+            return std::nullopt;
+        }
+
+        return RecycleBinRoom{.quota = *quota, .itRecycles = fileSystem_.VolumeRecycles(path)};
+    }
+
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override
     {
@@ -69,8 +108,7 @@ public:
         return fileSystem_.ContentsOf(path);
     }
 
-    [[nodiscard]] std::optional<std::vector<FileFingerprint>>
-    FingerprintTree(const std::filesystem::path& root) const override
+    [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override
     {
         walked.push_back(root);
 
@@ -79,13 +117,20 @@ public:
             return std::nullopt;
         }
 
-        std::vector<FileFingerprint> files;
+        const std::optional<std::size_t> longest = fileSystem_.LongestEntryUnder(root);
+        if (!longest.has_value())
+        {
+            return std::nullopt;
+        }
+
+        TreeFingerprint walk{.longestEntry = *longest};
         for (const std::filesystem::path& file : fileSystem_.FilesUnder(root))
         {
-            files.push_back(
+            walk.files.push_back(
                 FileFingerprint{.relativePath = file.lexically_relative(root), .size = fileSystem_.FileSize(file)});
         }
-        return files;
+
+        return walk;
     }
 
     void RefuseToWalk(const std::filesystem::path& root)
@@ -103,6 +148,7 @@ public:
 private:
     InMemoryFileSystem& fileSystem_;
     std::vector<std::string> unreadable_;
+    mutable std::size_t recycleBinAsked = 0;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILESYSTEM_PROBE_H

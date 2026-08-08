@@ -7,8 +7,19 @@
 
 struct ImportRequest
 {
-    std::filesystem::path source;
-    std::filesystem::path category;
+    std::filesystem::path source{};
+    std::filesystem::path category{};
+    std::filesystem::path externalSource{};
+
+    [[nodiscard]] bool CameFromAnotherProgram() const
+    {
+        return !externalSource.empty();
+    }
+
+    [[nodiscard]] const std::filesystem::path& Bytes() const
+    {
+        return CameFromAnotherProgram() ? externalSource : source;
+    }
 
     [[nodiscard]] std::filesystem::path Target() const
     {

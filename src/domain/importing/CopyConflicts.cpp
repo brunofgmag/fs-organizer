@@ -21,14 +21,14 @@ CopyConflicts::CopyConflicts(std::vector<CopyConflict> found) : found_(std::move
 {
     for (std::size_t position = 0; position < found_.size(); ++position)
     {
-        byDestination_.emplace(ComparablePath(found_[position].destinationPath), position);
+        byProvenance_.emplace(ComparablePath(found_[position].provenancePath), position);
         byLibrary_.emplace(ComparablePath(found_[position].libraryPath), position);
     }
 }
 
-const CopyConflict* CopyConflicts::OverTheDestinationEntry(const std::filesystem::path& entry) const
+const CopyConflict* CopyConflicts::OverTheProvenance(const std::filesystem::path& provenance) const
 {
-    return Lookup(found_, byDestination_, entry);
+    return Lookup(found_, byProvenance_, provenance);
 }
 
 const CopyConflict* CopyConflicts::OverTheLibraryAddon(const std::filesystem::path& addonFolder) const
@@ -52,6 +52,14 @@ CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, co
 
     for (const DestinationEntry& entry : entries)
     {
+        if (entry.theOtherProgramTookItsFolderBack)
+        {
+            found.push_back(CopyConflict{.provenancePath = entry.externalOrigin,
+                                         .libraryPath = entry.target,
+                                         .theProvenanceIsAnotherProgram = true});
+            continue;
+        }
+
         if (entry.classification != EntryClassification::Unmanaged)
         {
             continue;
@@ -59,7 +67,7 @@ CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, co
 
         if (const TreeNode* addon = AddonNamed(libraries, AsUtf8(entry.path.filename())))
         {
-            found.push_back(CopyConflict{.destinationPath = entry.path, .libraryPath = addon->path});
+            found.push_back(CopyConflict{.provenancePath = entry.path, .libraryPath = addon->path});
         }
     }
 

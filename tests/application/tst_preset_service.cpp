@@ -31,6 +31,7 @@ namespace
         static void ApplyingInReplaceRestoresExactlyTheSavedSet();
         static void ReplaceLeavesAFolderTheAppDidNotLinkAlone();
         static void ApplyingReportsTheEntriesThatNoLongerResolve();
+        static void ApplyingLinksAnAddonWhoseLinkVanishedAfterTheScan();
     };
 }
 
@@ -111,7 +112,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         FakePresetRepository repository;
         PresetService service{repository, profiles};
     };
@@ -219,7 +220,7 @@ void PresetServiceTest::ApplyingInReplaceRestoresExactlyTheSavedSet()
     const ProfileSnapshot before = f.Snapshot(profile);
     QCOMPARE(
         f.profiles.SetEnabled(profile, before, LinkBatch{{Fixture::AddonAt(before, 2)}, {Fixture::AddonAt(before, 0)}})
-            .size(),
+            .results.size(),
         std::size_t{2});
 
     const std::optional<Preset> preset = f.service.Load(kProfileId, "Voo curto");
@@ -274,6 +275,31 @@ void PresetServiceTest::ApplyingReportsTheEntriesThatNoLongerResolve()
     QCOMPARE(QString::fromStdString(report.unresolved.front().folderName), QString{"aircraft-que-sumiu"});
     QCOMPARE(report.results.size(), std::size_t{1});
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
+void PresetServiceTest::ApplyingLinksAnAddonWhoseLinkVanishedAfterTheScan()
+{
+    const std::filesystem::path link = "E:/Flight Simulator 2024/Community/aerosoft-crj";
+
+    Fixture f;
+    f.fileSystem.AddLink(link, "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    const SimulatorProfile profile = Profile();
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
+
+    const std::optional<Preset> preset = f.service.Load(kProfileId, "Voo curto");
+    QVERIFY(preset.has_value());
+
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    QVERIFY(shown.enabled.Contains("D:/MSFS 2024/Aircrafts/aerosoft-crj"));
+
+    QVERIFY(f.fileSystem.RemoveNode(link));
+
+    const PresetApplyReport report = f.service.Apply(profile, shown, *preset, ApplyMode::Replace);
+
+    QCOMPARE(report.results.size(), std::size_t{1});
+    QVERIFY(report.results.front().outcome.Succeeded());
+    QVERIFY(f.fileSystem.IsLink(link));
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)

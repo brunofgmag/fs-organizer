@@ -9,11 +9,14 @@
 
 #include <windows.h>
 
+#include <shellapi.h>
+
 #include <optional>
 #include <string>
 #include <system_error>
 #include <vector>
 
+#include "domain/model/RecycleLimits.h"
 #include "infrastructure/fileops/ExtendedPaths.h"
 
 namespace
@@ -203,6 +206,24 @@ bool WindowsFileOperations::WriteHiddenFile(const std::filesystem::path& path)
     return CloseHandle(file) != FALSE;
 }
 
+bool WindowsFileOperations::WriteTextFile(const std::filesystem::path& path, const std::string& contents)
+{
+    const HANDLE file =
+        CreateFileW(NativePath(path).c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    DWORD written = 0;
+    const bool wrote =
+        WriteFile(file, contents.data(), static_cast<DWORD>(contents.size()), &written, nullptr) != FALSE;
+    const bool closed = CloseHandle(file) != FALSE;
+
+    return closed && wrote && static_cast<std::size_t>(written) == contents.size();
+}
+
 bool WindowsFileOperations::Move(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
     std::error_code error;
@@ -225,6 +246,30 @@ bool WindowsFileOperations::RemoveEmptyFolder(const std::filesystem::path& path)
     }
 
     return RemoveDirectoryW(NativePath(path).c_str()) != FALSE;
+}
+
+bool WindowsFileOperations::Recycle(const std::filesystem::path& path)
+{
+    if (AttributesWithoutFollowingLinks(path) == INVALID_FILE_ATTRIBUTES)
+    {
+        return false;
+    }
+
+    if (!TheRecycleBinReaches(LongestEntryUnder(path)))
+    {
+        return false;
+    }
+
+    std::wstring called = WithoutExtendedPrefix(path).wstring();
+    called.push_back(L'\0');
+    called.push_back(L'\0');
+
+    SHFILEOPSTRUCTW operation{};
+    operation.wFunc = FO_DELETE;
+    operation.pFrom = called.c_str();
+    operation.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
+
+    return SHFileOperationW(&operation) == 0 && operation.fAnyOperationsAborted == FALSE;
 }
 
 bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)

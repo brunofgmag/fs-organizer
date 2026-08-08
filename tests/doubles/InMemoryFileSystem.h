@@ -1,7 +1,10 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H
 #define FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <limits>
@@ -22,11 +25,15 @@ public:
 
     void AddFile(const std::filesystem::path& path, const std::uintmax_t size = 0)
     {
+        AddTheFoldersAbove(path);
+
         nodes_[Key(path)] = Node{.kind = NodeKind::File, .target = {}, .readable = true, .size = size};
     }
 
     void AddFileWithContents(const std::filesystem::path& path, std::string contents)
     {
+        AddTheFoldersAbove(path);
+
         nodes_[Key(path)] = Node{.kind = NodeKind::File,
                                  .target = {},
                                  .readable = true,
@@ -92,6 +99,65 @@ public:
 
         const auto measured = freeSpace_.find(volume);
         return measured == freeSpace_.end() ? std::numeric_limits<std::uintmax_t>::max() : measured->second;
+    }
+
+    void SetRecycleBinQuota(const std::filesystem::path& path, const std::uintmax_t bytes)
+    {
+        recycleQuota_[VolumeOf(path)] = bytes;
+    }
+
+    void MakeTheVolumeDeletePermanently(const std::filesystem::path& path)
+    {
+        nukingVolumes_.insert(VolumeOf(path));
+    }
+
+    [[nodiscard]] std::optional<std::uintmax_t> RecycleBinQuotaOn(const std::filesystem::path& path) const
+    {
+        const auto quota = recycleQuota_.find(VolumeOf(path));
+
+        return quota == recycleQuota_.end() ? std::nullopt : std::optional(quota->second);
+    }
+
+    [[nodiscard]] bool VolumeRecycles(const std::filesystem::path& path) const
+    {
+        return !nukingVolumes_.contains(VolumeOf(path));
+    }
+
+    [[nodiscard]] std::optional<std::size_t> LongestEntryUnder(const std::filesystem::path& path) const
+    {
+        const std::string root = Key(path);
+        if (!nodes_.contains(root))
+        {
+            return std::nullopt;
+        }
+
+        std::size_t longest = root.size();
+        for (const std::string& key : nodes_ | std::views::keys)
+        {
+            if (IsUnder(key, root))
+            {
+                longest = std::max(longest, key.size());
+            }
+        }
+
+        return longest;
+    }
+
+    bool RecycleTree(const std::filesystem::path& path)
+    {
+        if (!RemoveTree(path))
+        {
+            return false;
+        }
+
+        recycled_.push_back(Key(path));
+
+        return true;
+    }
+
+    [[nodiscard]] bool WasRecycled(const std::filesystem::path& path) const
+    {
+        return std::ranges::find(recycled_, Key(path)) != recycled_.end();
     }
 
     void SetLastWriteTime(const std::filesystem::path& path, const std::chrono::system_clock::time_point when)
@@ -284,9 +350,28 @@ private:
     {
         const std::string text = path.generic_string();
         const std::size_t slash = text.find('/');
-        const std::string head = slash == std::string::npos ? text : text.substr(0, slash);
+        std::string head = slash == std::string::npos ? text : text.substr(0, slash);
+        std::ranges::transform(head, head.begin(),
+                               [](const unsigned char letter)
+                               {
+                                   return static_cast<char>(std::tolower(letter));
+                               });
 
         return head.ends_with(':') ? head : std::string{};
+    }
+
+    void AddTheFoldersAbove(const std::filesystem::path& path)
+    {
+        for (std::filesystem::path folder = path.parent_path(); !folder.empty() && folder != folder.root_path();
+             folder = folder.parent_path())
+        {
+            if (nodes_.contains(Key(folder)))
+            {
+                return;
+            }
+
+            nodes_[Key(folder)] = Node{.kind = NodeKind::Directory};
+        }
     }
 
     [[nodiscard]] static std::string Key(const std::filesystem::path& path)
@@ -318,6 +403,9 @@ private:
     std::map<std::string, Node> nodes_;
     std::map<std::string, std::chrono::system_clock::time_point> written_;
     std::map<std::string, std::uintmax_t> freeSpace_;
+    std::map<std::string, std::uintmax_t> recycleQuota_;
+    std::set<std::string> nukingVolumes_;
+    std::vector<std::string> recycled_;
     std::set<std::string> unmeasurableVolumes_;
     std::set<std::string> unavailableVolumes_;
     std::set<std::string> readOnlyPaths_;

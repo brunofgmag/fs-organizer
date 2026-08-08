@@ -1,6 +1,9 @@
 set(DOMAIN_SOURCES
         src/domain/importing/CopyConflicts.cpp
+        src/domain/importing/ExternalSidecar.cpp
         src/domain/importing/ImportEngine.cpp
+        src/domain/importing/OriginSidecar.cpp
+        src/domain/importing/SidecarFile.cpp
         src/domain/journal/JournalEntries.cpp
         src/domain/journal/OperationLog.cpp
         src/domain/legacy/LegacyPreset.cpp
@@ -10,6 +13,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
         src/domain/preset/PresetPlan.cpp
+        src/domain/profile/ExternalOrigins.cpp
         src/domain/profile/OrphanOverrides.cpp
         src/domain/profile/ProfileEdits.cpp
         src/domain/tree/AddonTree.cpp
@@ -22,8 +26,10 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/DeletionService.cpp
         src/application/DependencyReport.cpp
         src/application/ImportService.cpp
+        src/application/model/DeletionPlan.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
         src/application/PresetService.cpp
@@ -31,6 +37,7 @@ set(APPLICATION_SOURCES
         src/application/Session.cpp
         src/application/SetupService.cpp
         src/application/SizeService.cpp
+        src/application/StartupService.cpp
 )
 
 set(INFRASTRUCTURE_SOURCES
@@ -45,7 +52,10 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/settings/JsonSettingsRepository.cpp
         src/infrastructure/sim/ContentListLocations.cpp
         src/infrastructure/sim/ContentXmlPackages.cpp
+        src/infrastructure/sim/ExeXmlDocument.cpp
+        src/infrastructure/sim/ExeXmlStartupEntries.cpp
         src/infrastructure/sim/ProfilePackages.cpp
+        src/infrastructure/sim/StartupFileLocations.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
@@ -73,6 +83,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/DeletionViewModel.cpp
         src/viewmodel/DependencyText.cpp
         src/viewmodel/DiagnosticsViewModel.cpp
         src/viewmodel/FailureText.cpp
@@ -96,6 +107,7 @@ set(VIEW_SOURCES
         src/view/library/AddonTreePage.cpp
         src/view/community/CommunityPage.cpp
         src/view/community/ConflictDialog.cpp
+        src/view/library/DeleteDialog.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
@@ -105,6 +117,7 @@ set(VIEW_SOURCES
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/PresetsPage.cpp
+        src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp
@@ -113,6 +126,7 @@ set(VIEW_SOURCES
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/shell/StartupOffers.cpp
         src/view/library/SuggestionDialog.cpp
+        src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp

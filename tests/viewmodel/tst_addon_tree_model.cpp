@@ -213,8 +213,8 @@ void AddonTreeModelTest::OnlyANodeWhoseDestinationDiffersFromTheDefaultShowsIt()
 void AddonTreeModelTest::AnAddonInConflictSaysSoOnTheTreeAndInTheTooltip()
 {
     ProfileSnapshot snapshot = SnapshotWith({});
-    snapshot.conflicts = CopyConflicts{{CopyConflict{
-        .destinationPath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", .libraryPath = kPmdg}}};
+    snapshot.conflicts = CopyConflicts{
+        {CopyConflict{.provenancePath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", .libraryPath = kPmdg}}};
 
     AddonTreeModel model;
     model.Show(snapshot, Profile());
@@ -245,7 +245,7 @@ void AddonTreeModelTest::AConflictThatArrivesLaterShowsUpWithoutResettingTheTree
 
     ProfileSnapshot refreshed = SnapshotWith({});
     refreshed.conflicts = CopyConflicts{
-        {CopyConflict{.destinationPath = "E:/Flight Simulator 2024/Community/aerosoft-crj", .libraryPath = kCrj}}};
+        {CopyConflict{.provenancePath = "E:/Flight Simulator 2024/Community/aerosoft-crj", .libraryPath = kCrj}}};
 
     model.Refresh(refreshed, Profile());
 
@@ -267,8 +267,8 @@ void AddonTreeModelTest::OnlyAnAddonFolderAnswersThatItIsEnabled()
 void AddonTreeModelTest::TheConflictItselfIsHandedOverForWhoeverHasToResolveIt()
 {
     ProfileSnapshot snapshot = SnapshotWith({});
-    snapshot.conflicts = CopyConflicts{{CopyConflict{
-        .destinationPath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", .libraryPath = kPmdg}}};
+    snapshot.conflicts = CopyConflicts{
+        {CopyConflict{.provenancePath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", .libraryPath = kPmdg}}};
 
     AddonTreeModel model;
     model.Show(snapshot, Profile());
@@ -276,7 +276,7 @@ void AddonTreeModelTest::TheConflictItselfIsHandedOverForWhoeverHasToResolveIt()
     const QVariant details = model.data(model.index(0, 0, Category(model)), AddonTreeModel::ConflictDetailsRole);
 
     QVERIFY(details.isValid());
-    QCOMPARE(details.value<CopyConflict>().destinationPath,
+    QCOMPARE(details.value<CopyConflict>().provenancePath,
              std::filesystem::path("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QCOMPARE(details.value<CopyConflict>().libraryPath, std::filesystem::path(kPmdg));
 

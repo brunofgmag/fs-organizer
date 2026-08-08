@@ -26,6 +26,19 @@ namespace
     constexpr auto kTarget = "target";
     constexpr auto kFailure = "failure";
     constexpr auto kResult = "result";
+    constexpr auto kOriginSource = "originSource";
+
+    QString OriginSourceName(const OriginSource source)
+    {
+        switch (source)
+        {
+        case OriginSource::Unknown: return "unknown";
+        case OriginSource::Sidecar: return "sidecar";
+        case OriginSource::Journal: return "journal";
+        }
+
+        return "unknown";
+    }
 
     QString KindName(const OperationKind kind)
     {
@@ -48,6 +61,9 @@ namespace
         case OperationKind::CreateCategory: return "createCategory";
         case OperationKind::RenameCategory: return "renameCategory";
         case OperationKind::RemoveCategory: return "removeCategory";
+        case OperationKind::RecycleFromLibrary: return "recycleFromLibrary";
+        case OperationKind::DeleteFromLibrary: return "deleteFromLibrary";
+        case OperationKind::LinkTheOtherProgramsFolder: return "linkTheOtherProgramsFolder";
         }
 
         return "unknown";
@@ -100,6 +116,15 @@ namespace
         case FileResult::CouldNotRemoveTheCategory: return "couldNotRemoveTheCategory";
         case FileResult::TheOutcomeIsUnknown: return "theOutcomeIsUnknown";
         case FileResult::CouldNotReadTheSource: return "couldNotReadTheSource";
+        case FileResult::TheOriginIsOccupied: return "theOriginIsOccupied";
+        case FileResult::TheRecycleBinIsTooSmall: return "theRecycleBinIsTooSmall";
+        case FileResult::TheRecycleBinCannotReachIt: return "theRecycleBinCannotReachIt";
+        case FileResult::CouldNotDelete: return "couldNotDelete";
+        case FileResult::CouldNotRecordTheOrigin: return "couldNotRecordTheOrigin";
+        case FileResult::CannotWriteInTheOtherProgramsFolder: return "cannotWriteInTheOtherProgramsFolder";
+        case FileResult::TheDiskDisagreesWithTheScan: return "theDiskDisagreesWithTheScan";
+        case FileResult::CouldNotReadTheStartupFile: return "couldNotReadTheStartupFile";
+        case FileResult::CouldNotWriteTheStartupFile: return "couldNotWriteTheStartupFile";
         }
 
         return "unknown";
@@ -151,9 +176,12 @@ namespace
 
         if (object.contains(kResult))
         {
-            return OperationRecord::OfImport(timestamp, *kind, addon, source, target,
-                                             ValueNamed(kAllFileResults, ResultName, object[kResult].toString())
-                                                 .value_or(FileResult::TheOutcomeIsUnknown));
+            return OperationRecord::OfImport(
+                timestamp, *kind, addon, source, target,
+                ValueNamed(kAllFileResults, ResultName, object[kResult].toString())
+                    .value_or(FileResult::TheOutcomeIsUnknown),
+                ValueNamed(kAllOriginSources, OriginSourceName, object[kOriginSource].toString())
+                    .value_or(OriginSource::Unknown));
         }
 
         return OperationRecord::OfLink(timestamp, *kind, addon, source, target,
@@ -179,6 +207,11 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     if (const FileResult* result = std::get_if<FileResult>(&record.outcome))
     {
         object[kResult] = ResultName(*result);
+
+        if (record.originSource != OriginSource::Unknown)
+        {
+            object[kOriginSource] = OriginSourceName(record.originSource);
+        }
     }
     else
     {

@@ -27,6 +27,11 @@ namespace
             },
             record.outcome);
     }
+
+    const OperationRecord& TheStepThatNamesIt(const JournalEntry& entry)
+    {
+        return entry.IsASwap() ? entry.Last() : entry.First();
+    }
 }
 
 JournalModel::JournalModel(QObject* parent) : QAbstractItemModel(parent)
@@ -37,7 +42,7 @@ void JournalModel::ShowRecords(const std::vector<OperationRecord>& records, Simu
 {
     beginResetModel();
 
-    entries_ = GroupImportRuns(records);
+    entries_ = GroupOperations(records);
     std::ranges::reverse(entries_);
     profile_ = std::move(profile);
 
@@ -65,6 +70,9 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::RenameCategory: return tr("Rename category");
     case OperationKind::RemoveCategory: return tr("Delete category");
     case OperationKind::DiscardStaging: return tr("Discard a half finished import");
+    case OperationKind::RecycleFromLibrary: return tr("Delete addon to the Recycle Bin");
+    case OperationKind::DeleteFromLibrary: return tr("Delete addon permanently");
+    case OperationKind::LinkTheOtherProgramsFolder: return tr("Link the other program's folder into the library");
     }
 
     return {};
@@ -141,7 +149,7 @@ int JournalModel::rowCount(const QModelIndex& parent) const
 
     const JournalEntry* entry = EntryAt(parent);
 
-    return entry != nullptr && entry->IsAnImportRun() ? static_cast<int>(entry->steps.size()) : 0;
+    return entry != nullptr && entry->HasSteps() ? static_cast<int>(entry->steps.size()) : 0;
 }
 
 int JournalModel::columnCount(const QModelIndex&) const
@@ -151,7 +159,7 @@ int JournalModel::columnCount(const QModelIndex&) const
 
 QVariant JournalModel::EntryColumn(const JournalEntry& entry, const int column) const
 {
-    if (!entry.IsAnImportRun())
+    if (!entry.HasSteps())
     {
         return StepColumn(entry.First(), column);
     }
@@ -159,14 +167,36 @@ QVariant JournalModel::EntryColumn(const JournalEntry& entry, const int column) 
     switch (column)
     {
     case WhenColumn: return AsMoment(entry.First().timestamp);
-    case OperationColumn: return tr("Import (%n step)", nullptr, static_cast<int>(entry.steps.size()));
-    case AddonColumn: return QString::fromStdString(entry.First().addonId.folderName);
-    case LibraryColumn: return LibraryLabel(entry.First().addonId.libraryId);
-    case SourceColumn: return AsText(entry.First().source);
+    case OperationColumn: return NameOfTheGroup(entry);
+    case AddonColumn: return AddonsInTheGroup(entry);
+    case LibraryColumn: return LibraryLabel(TheStepThatNamesIt(entry).addonId.libraryId);
+    case SourceColumn: return AsText(TheStepThatNamesIt(entry).source);
     case TargetColumn: return AsText(entry.Last().target);
-    case OutcomeColumn: return entry.Succeeded() ? tr("finished") : OutcomeOf(entry.Last());
+    case OutcomeColumn: return entry.Succeeded() ? tr("finished") : OutcomeOf(entry.WhereItStopped());
     default: return {};
     }
+}
+
+QString JournalModel::NameOfTheGroup(const JournalEntry& entry)
+{
+    if (entry.IsASwap())
+    {
+        return tr("Swap addons");
+    }
+
+    return tr("Import (%n step)", nullptr, static_cast<int>(entry.steps.size()));
+}
+
+QString JournalModel::AddonsInTheGroup(const JournalEntry& entry)
+{
+    if (!entry.IsASwap())
+    {
+        return QString::fromStdString(entry.First().addonId.folderName);
+    }
+
+    return tr("%1 out, %2 in")
+        .arg(QString::fromStdString(entry.First().addonId.folderName),
+             QString::fromStdString(entry.Last().addonId.folderName));
 }
 
 QVariant JournalModel::StepColumn(const OperationRecord& record, const int column) const

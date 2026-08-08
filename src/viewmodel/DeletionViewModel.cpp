@@ -1,0 +1,105 @@
+#include "viewmodel/DeletionViewModel.h"
+
+#include <algorithm>
+
+#include "domain/tree/AddonTree.h"
+#include "viewmodel/SimulatorText.h"
+
+DeletionViewModel::DeletionViewModel(Session& session,
+                                     ProfileService& profileService,
+                                     const SettingsRepository& settings,
+                                     const DeletionService& service,
+                                     SizeService& sizes,
+                                     QObject* parent)
+    : QObject(parent),
+      session_(session),
+      profileService_(profileService),
+      settings_(settings),
+      service_(service),
+      sizes_(sizes),
+      caller_(sizes.NewCaller())
+{
+}
+
+std::vector<SimulatorProfile> DeletionViewModel::EveryProfile() const
+{
+    const std::vector<SimulatorProfile> stored = settings_.Load().value_or(AppSettings{}).profiles;
+
+    return stored.empty() ? std::vector<SimulatorProfile>{session_.Profile()} : stored;
+}
+
+std::vector<const TreeNode*> DeletionViewModel::NodesStillThere(const std::vector<std::filesystem::path>& chosen) const
+{
+    std::vector<const TreeNode*> nodes;
+    nodes.reserve(chosen.size());
+
+    for (const std::filesystem::path& folder : chosen)
+    {
+        if (const TreeNode* node = NodeAt(session_.Snapshot().libraries, folder))
+        {
+            nodes.push_back(node);
+        }
+    }
+
+    return nodes;
+}
+
+void DeletionViewModel::PlanToDelete(const std::vector<const TreeNode*>& nodes)
+{
+    std::vector<std::filesystem::path> chosen;
+    std::vector<std::filesystem::path> addonFolders;
+
+    for (const TreeNode* node : nodes)
+    {
+        if (node == nullptr)
+        {
+            continue;
+        }
+
+        chosen.push_back(node->path);
+
+        if (node->kind == TreeNodeKind::Addon)
+        {
+            addonFolders.push_back(node->path);
+        }
+    }
+
+    emit Weighing();
+
+    sizes_.MeasureFolders(addonFolders, caller_, Freshness::MeasureAgain, {},
+                          [this, chosen](const FolderSizeReport&)
+                          {
+                              const std::vector<const TreeNode*> stillThere = NodesStillThere(chosen);
+
+                              emit Planned(service_.Plan(session_.Profile(), EveryProfile(), stillThere));
+                          });
+}
+
+void DeletionViewModel::Delete(const DeletionPlan& plan, const DeletionRoute route)
+{
+    const std::vector<DeletionResult> results = service_.Delete(EveryProfile(), plan, route);
+
+    if (std::ranges::any_of(results,
+                            [](const DeletionResult& result)
+                            {
+                                return Succeeded(result.result);
+                            }))
+    {
+        profileService_.ForgetUndo();
+    }
+
+    emit Deleted(results, route);
+}
+
+QString DeletionViewModel::LabelOfProfile(const std::string& profileId) const
+{
+    for (const SimulatorProfile& profile : EveryProfile())
+    {
+        if (profile.id == profileId)
+        {
+            return NameOf(profile.variant);
+        }
+    }
+
+    return QString::fromStdString(profileId);
+}

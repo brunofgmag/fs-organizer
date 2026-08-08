@@ -23,7 +23,9 @@
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "application/DeletionService.h"
 #include "view/library/AddonTreePage.h"
+#include "viewmodel/DeletionViewModel.h"
 
 namespace
 {
@@ -36,6 +38,8 @@ namespace
         static void ARescanKeepsTheCurrentRowOfASelectionThatSpansSeveralAddons();
         static void AnAddonThatMovedRowIsFoundAgainBecauseItIsRememberedByPath();
         static void AnAddonThatVanishedLeavesTheTreeWithNothingSelected();
+        static void ABatchWithNothingToDoSaysTheSelectionWasAlreadyAsAsked();
+        static void ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectionWasAlreadyRight();
     };
 }
 
@@ -163,7 +167,7 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -174,6 +178,8 @@ namespace
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
+        DeletionService deletionService{filesystemProbe, files, linking, classifier, processProbe, log, sizes};
+        DeletionViewModel deletion{session, service, settings, deletionService, sizes};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)
@@ -220,7 +226,7 @@ namespace
 
     struct Screen
     {
-        explicit Screen(Fixture& fixture) : page(fixture.viewModel, fixture.model, fixture.notifier)
+        explicit Screen(Fixture& fixture) : page(fixture.viewModel, fixture.deletion, fixture.model, fixture.notifier)
         {
             page.resize(900, 320);
             page.show();
@@ -347,6 +353,56 @@ void AddonTreePageTest::AnAddonThatVanishedLeavesTheTreeWithNothingSelected()
 
     QVERIFY(!IndexOf(*screen.tree, kChosen, {}).isValid());
     QCOMPARE(screen.SelectedPaths(), std::vector<std::string>{});
+}
+
+namespace
+{
+    const TreeNode* AddonOf(const Screen& screen, const std::filesystem::path& path)
+    {
+        const QModelIndex position = IndexOf(*screen.tree, path, {});
+
+        return position.isValid() ? NodeUnder(*screen.tree, position) : nullptr;
+    }
+
+    QString LastStatusOf(const QSignalSpy& spy)
+    {
+        return spy.isEmpty() ? QString{} : spy.back().front().toString();
+    }
+}
+
+void AddonTreePageTest::ABatchWithNothingToDoSaysTheSelectionWasAlreadyAsAsked()
+{
+    Fixture f;
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "addon-17", kChosen);
+
+    const Screen screen(f);
+    QSignalSpy status(&screen.page, &AddonTreePage::StatusChanged);
+
+    const TreeNode* addon = AddonOf(screen, kChosen);
+    QVERIFY(addon != nullptr);
+
+    f.viewModel.Toggle({addon}, true);
+
+    QCOMPARE(LastStatusOf(status), QString{"Nothing to do: the selection was already the way you asked."});
+}
+
+void AddonTreePageTest::ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectionWasAlreadyRight()
+{
+    Fixture f;
+    const std::filesystem::path link = std::filesystem::path(kCommunity) / "addon-17";
+    f.fileSystem.AddLink(link, kChosen);
+
+    const Screen screen(f);
+    QSignalSpy status(&screen.page, &AddonTreePage::StatusChanged);
+
+    const TreeNode* addon = AddonOf(screen, kChosen);
+    QVERIFY(addon != nullptr);
+    QVERIFY(f.fileSystem.RemoveNode(link));
+
+    f.viewModel.Toggle({addon}, false);
+
+    QCOMPARE(LastStatusOf(status),
+             QString{"Nothing was applied: 1 addon was not the way the screen showed it. The list is up to date now."});
 }
 
 QTEST_MAIN(AddonTreePageTest)

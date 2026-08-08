@@ -103,7 +103,7 @@ namespace
               journal(journalFile),
               settingsFile(disk.SettingsFile()),
               settings(settingsFile),
-              service(catalog, classifier, linking, log, identities, linkType),
+              service(catalog, filesystemProbe, classifier, linking, log, identities, linkType),
               organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, linkType),
               session(service, organizer, settings, processProbe, runner, observer)
         {
@@ -166,7 +166,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
     QVERIFY2(addon != nullptr, "the scan did not find the addon, so asking for the link proves nothing");
 
     const std::vector<LinkOperationResult> asked =
-        symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {addon}, true);
+        symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {addon}, true).results;
 
     QCOMPARE(asked.size(), std::size_t{1});
 
@@ -183,7 +183,8 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
         QVERIFY(linked != nullptr);
 
         const std::vector<LinkOperationResult> undone =
-            symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {linked}, false);
+            symbolic.service.SetEnabled(symbolic.session.Profile(), symbolic.session.Snapshot(), {linked}, false)
+                .results;
 
         QCOMPARE(undone.size(), std::size_t{1});
         QVERIFY2(!std::filesystem::exists(linkPath), "disabling left the link in the destination");
@@ -202,7 +203,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
     QVERIFY(again != nullptr);
 
     const std::vector<LinkOperationResult> retried =
-        junction.service.SetEnabled(junction.session.Profile(), junction.session.Snapshot(), {again}, true);
+        junction.service.SetEnabled(junction.session.Profile(), junction.session.Snapshot(), {again}, true).results;
 
     QCOMPARE(retried.size(), std::size_t{1});
     QCOMPARE(retried.front().outcome.Failure(), LinkFailure::None);

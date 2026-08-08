@@ -20,6 +20,7 @@
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QTreeView>
 
+#include "application/DeletionService.h"
 #include "application/ImportService.h"
 #include "application/SizeService.h"
 #include "application/LibraryOrganizer.h"
@@ -47,7 +48,9 @@
 #include "view/JournalPage.h"
 #include "view/PresetsPage.h"
 #include "view/community/CommunityPage.h"
+#include "domain/tree/AddonTree.h"
 #include "view/library/AddonTreePage.h"
+#include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
 #include "view/quarantine/QuarantinePage.h"
@@ -57,6 +60,7 @@
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -243,6 +247,41 @@ namespace
         return nullptr;
     }
 
+    QString TheFirstAddonOf(const ProfileSnapshot& snapshot)
+    {
+        for (const TreeNode& library : snapshot.libraries)
+        {
+            if (const std::vector<const TreeNode*> addons = AddonsUnder(library); !addons.empty())
+            {
+                return AsText(addons.front()->path.filename());
+            }
+        }
+
+        return {};
+    }
+
+    std::optional<TakenPlace> APlaceWorthShowingAsTaken(const ProfileSnapshot& snapshot)
+    {
+        std::vector<const TreeNode*> addons;
+
+        for (const TreeNode& library : snapshot.libraries)
+        {
+            for (const TreeNode* addon : AddonsUnder(library))
+            {
+                addons.push_back(addon);
+            }
+        }
+
+        if (addons.size() < 2)
+        {
+            return std::nullopt;
+        }
+
+        return TakenPlace{.addonFolder = addons[1]->path,
+                          .linkPath = addons[0]->path.parent_path() / addons[0]->path.filename(),
+                          .occupant = addons[0]->path};
+    }
+
     QSize SizeFrom(const QString& text)
     {
         const QStringList parts = text.split(QLatin1Char('x'), Qt::SkipEmptyParts);
@@ -380,7 +419,7 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
-    ProfileService profileService(catalog, classifier, linking, log, identities, stored->linkType);
+    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, stored->linkType);
     ImportEngine importEngine(filesystemProbe, files, linking, log, stored->linkType);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
                                 stored->linkType);
@@ -398,7 +437,9 @@ int main(int argc, char* argv[])
     ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
     packages.Reload(session.Profile().variant);
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
-    auto* libraryPage = new AddonTreePage(treeViewModel, treeModel, notifier);
+    const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, treeModel, notifier);
 
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -520,6 +561,63 @@ int main(int argc, char* argv[])
               quarantineViewModel.Show();
               selectIfAsked(*quarantinePage, QStringLiteral("the Quarantine"));
           });
+
+    if (SelectTheFirstRows(*quarantinePage, 4))
+    {
+        if (QPushButton* restore = ButtonLabelled(*quarantinePage, QObject::tr("Restore the selected ones"));
+            restore != nullptr)
+        {
+            landed = SaveTheDialogOpenedBy(
+                         [restore]
+                         {
+                             restore->click();
+                         },
+                         folder, QStringLiteral("16-quarantine-restore"))
+                && landed;
+        }
+    }
+    else
+    {
+        Out() << "nothing in the quarantine, so there is no restore dialog to write\n";
+    }
+
+    if (const std::optional<TakenPlace> pretend = APlaceWorthShowingAsTaken(session.Snapshot()); pretend.has_value())
+    {
+        SwapDialog swapDialog({*pretend}, treeViewModel, &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&swapDialog]
+                     {
+                         static_cast<void>(swapDialog.exec());
+                     },
+                     folder, QStringLiteral("17-library-swap"))
+            && landed;
+
+        libraryTab->click();
+        LetTheLayoutSettle();
+
+        QPushButton* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
+
+        if (SelectTheAddonNamed(*libraryPage, TheFirstAddonOf(session.Snapshot())) && remove != nullptr
+            && remove->isEnabled())
+        {
+            landed = SaveTheDialogOpenedBy(
+                         [remove]
+                         {
+                             remove->click();
+                         },
+                         folder, QStringLiteral("18-library-delete"))
+                && landed;
+        }
+        else
+        {
+            Out() << "no addon offers the delete action, so there is no deletion dialog to write\n";
+        }
+    }
+    else
+    {
+        Out() << "fewer than two addons in the libraries, so there is no swap to picture\n";
+    }
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
     const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),
