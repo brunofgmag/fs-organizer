@@ -1,0 +1,3 @@
+# The EXE.xml fixtures reproduce a real file byte for byte, LF and all, and the
+# switching test compares whole files. Without this they arrive CRLF on Windows.
+tests/fixtures/simulator-exe*.xml eol=lf

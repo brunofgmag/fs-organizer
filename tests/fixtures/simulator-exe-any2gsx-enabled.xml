@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='utf-8'?>
+<SimBase.Document Type="Launch" version="1,0">
+    <Descr>Launch</Descr>
+    <Filename>EXE.xml</Filename>
+    <Disabled>False</Disabled>
+    <Launch.ManualLoad>False</Launch.ManualLoad>
+    <Launch.Addon>
+        <Name>FenixA320</Name>
+        <Disabled>False</Disabled>
+        <Path>C:\Program Files\FenixSim A320\deps\FenixBootstrapper.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Disabled>False</Disabled>
+        <ManualLoad>False</ManualLoad>
+        <Name>Any2GSX</Name>
+        <Path>C:\Users\pilot\AppData\Roaming\Any2GSX\bin\Any2GSX.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>Aerosoft VDGS Driver</Name>
+        <Disabled>True</Disabled>
+        <Path>E:\Flight Simulator 2024\Community\aerosoft-vdgs-driver\aerosoft-vdgs-driver.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>FSL Control Center</Name>
+        <Disabled>False</Disabled>
+        <Path>C:\FlightSimLabs\ControlCenter\FSLControlCenter.exe</Path>
+        <CommandLine>-NOTIFY</CommandLine>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Disabled>False</Disabled>
+        <ManualLoad>False</ManualLoad>
+        <Name>iFly Plugin</Name>
+        <Path>E:\Flight Simulator 2024\Community\ifly-aircraft-737max8\Data\Tool\737MAX_Plugin.exe</Path>
+        <CommandLine>auto</CommandLine>
+        <NewConsole>False</NewConsole>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Disabled>True</Disabled>
+        <ManualLoad>False</ManualLoad>
+        <Name>DynamicLOD_ResetEdition</Name>
+        <Path>C:\Users\pilot\AppData\Roaming\DynamicLOD_ResetEdition\bin\DynamicLOD_ResetEdition.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>ActiveSky utils</Name>
+        <Disabled>False</Disabled>
+        <Path>C:\Users\pilot\AppData\Roaming\HiFi\AS_FS\AddonFolder\ActiveSkyUtils.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>FlightLink Companion</Name>
+        <Disabled>True</Disabled>
+        <Path>C:\Users\pilot\Projetos\flight-link-companion\FlightLinkCompanion\bin\Release\net8.0\FlightLinkCompanion.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>Lorby AOHS</Name>
+        <Disabled>False</Disabled>
+        <Path>C:\Program Files\LorbyAxisAndOhs_MSFS24\LorbyAxisAndOhs_MSFS2024.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Disabled>True</Disabled>
+        <ManualLoad>False</ManualLoad>
+        <Name>MSFS_AutoFPS</Name>
+        <Path>C:\Users\pilot\AppData\Roaming\MSFS_AutoFPS\bin\MSFS_AutoFPS.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>FS2Crew Fenix A320 Custom Liveries Patcher</Name>
+        <Disabled>True</Disabled>
+        <Path>C:\Program Files (x86)\FS2Crew Animated FO Fenix A320 Project\liveries_patcher\fs2crew_fenix_a320_liveries_patcher.exe</Path>
+        <CommandLine>sp</CommandLine>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>FS2Crew Command Center</Name>
+        <Disabled>True</Disabled>
+        <Path>C:\Program Files (x86)\FS2Crew Command Center\FS2CrewCommandCenter.exe</Path>
+        <CommandLine/>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>noolaero-module-vdgs</Name>
+        <Disabled>True</Disabled>
+        <Path>E:\Flight Simulator 2024\Community\noolaero-module-vdgs\Binaries\vdgs-util.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>MDClient</Name>
+        <Disabled>True</Disabled>
+        <Path>C:\Users\pilot\AppData\Local\Maddog X Files\MSFS 2024\MDClient\MDClient.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>Couatl</Name>
+        <Disabled>False</Disabled>
+        <Path>C:\Program Files (x86)\Addon Manager\couatl64\couatl64_boot.exe</Path>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>CSS_Launcher</Name>
+        <Disabled>True</Disabled>
+        <Path>C:\CSS Software\CSS Launcher\CSS_Launcher.exe</Path>
+        <CommandLine>from_msfs</CommandLine>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Disabled>True</Disabled>
+        <ManualLoad>False</ManualLoad>
+        <Name>RAAS</Name>
+        <Path>C:\Users\pilot\AppData\Local\LAND3.vRAAS\current\vRAAS.exe</Path>
+        <CommandLine>-autostart</CommandLine>
+        <NewConsole>False</NewConsole>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Disabled>False</Disabled>
+        <ManualLoad>False</ManualLoad>
+        <Name>GSX Integrator</Name>
+        <Path>C:\Users\pilot\AppData\Local\Programs\gsx-integrator-client\gsx-integrator-client.exe</Path>
+        <CommandLine>--tray</CommandLine>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>Flow Manager</Name>
+        <Disabled>False</Disabled>
+        <Path>E:\Flight Simulator 2024\Community\p42-util-flow-pro\Flow for MSFS2024.exe</Path>
+        <CommandLine>--silent-update-latest --target-distro=steam</CommandLine>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>FlowShare</Name>
+        <Disabled>False</Disabled>
+        <Path>E:\Flight Simulator 2024\Community\p42-util-flow-pro\Tools\FlowShare.exe</Path>
+        <CommandLine/>
+    </Launch.Addon>
+    <Launch.Addon>
+        <Name>FSRealistic+</Name>
+        <Disabled>false</Disabled>
+        <Path>E:\Flight Simulator 2024\Community\rkapps-fsrealistic\service\FSRealistic-Plus.exe</Path>
+    </Launch.Addon>
+</SimBase.Document>
