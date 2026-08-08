@@ -10,8 +10,12 @@ LinkingEngine::LinkingEngine(LinkService& linkService, const FilesystemProbe& fi
 LinkOutcome
 LinkingEngine::Enable(const Addon& addon, const std::filesystem::path& destinationRoot, const LinkType linkType) const
 {
-    const std::filesystem::path linkPath = destinationRoot / addon.folderPath.filename();
+    return LinkAt(destinationRoot / addon.folderPath.filename(), addon, linkType);
+}
 
+LinkOutcome
+LinkingEngine::LinkAt(const std::filesystem::path& linkPath, const Addon& addon, const LinkType linkType) const
+{
     if (filesystemProbe_.EntryExistsWithoutFollowingLinks(linkPath))
     {
         if (!filesystemProbe_.IsReparsePoint(linkPath))
@@ -45,6 +49,18 @@ LinkingEngine::Enable(const Addon& addon, const std::filesystem::path& destinati
     }
 
     return LinkOutcome::Success();
+}
+
+std::optional<std::filesystem::path> LinkingEngine::PointsAt(const std::filesystem::path& linkPath) const
+{
+    if (!filesystemProbe_.IsReparsePoint(linkPath))
+    {
+        return std::nullopt;
+    }
+
+    const std::optional<std::filesystem::path> target = linkService_.ReadLinkTarget(linkPath);
+
+    return target.has_value() ? std::optional(NormalizeReparseTarget(*target)) : std::nullopt;
 }
 
 LinkOutcome LinkingEngine::Disable(const std::filesystem::path& linkPath) const

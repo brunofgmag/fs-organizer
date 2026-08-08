@@ -35,6 +35,15 @@ public:
                                        const std::function<void(OperationKind)>& onStep = {}) const;
 
 private:
+    [[nodiscard]] ImportOutcome CheckTheSource(const SimulatorProfile& profile, const ImportRequest& request) const;
+
+    [[nodiscard]] ImportOutcome PrepareTheOtherProgramsFolder(const std::filesystem::path& externalSource,
+                                                              const std::filesystem::path& target) const;
+
+    [[nodiscard]] ImportOutcome TakeOverTheOtherProgramsFolder(const AddonId& addon,
+                                                               const ImportRequest& request,
+                                                               const std::filesystem::path& target) const;
+
     [[nodiscard]] ImportOutcome CheckFreeSpace(const std::filesystem::path& category, std::uintmax_t sourceSize) const;
 
     [[nodiscard]] ImportOutcome CopyToStaging(const std::filesystem::path& source,

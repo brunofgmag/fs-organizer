@@ -3,6 +3,7 @@
 #include <variant>
 
 #include "domain/journal/OperationLog.h"
+#include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/ImportEngine.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -38,6 +39,15 @@ namespace
         static void AMoveThatFailsIsRecordedAndTheSourceSurvives();
         static void ARemovalThatFailsIsRecordedAndTheSourceSurvives();
         static void ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled();
+        static void AnAddonAnotherProgramInstalledIsCopiedFromThatProgramsFolder();
+        static void TheOtherProgramKeepsFindingItsFolderNowAsALinkIntoTheLibrary();
+        static void TheEntryInTheDestinationEndsUpPointingAtTheLibrary();
+        static void AFolderTheOtherProgramWillNotLetUsWriteInIsNeverEmptied();
+        static void TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouched();
+        static void AnOriginThatCannotBeRecordedStopsTheImportBeforeItMoves();
+        static void AnInterruptedImportNeverLeavesTheOtherProgramWithoutItsContent();
+        static void AnEntryThatNoLongerPointsAtTheOtherProgramIsRefused();
+        static void TheJournalHearsTheOtherProgramsFolderAsTheSourceOfTheImport();
     };
 }
 
@@ -386,6 +396,150 @@ void ImportEngineTest::ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled
     QCOMPARE(std::get<LinkFailure>(f.journal.appended[4].outcome), LinkFailure::CouldNotCreateLink);
     QCOMPARE(f.journal.appended[4].source, kTarget);
     QCOMPARE(f.journal.appended[4].target, kSource);
+}
+
+namespace
+{
+    const std::filesystem::path kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+    const std::filesystem::path kEntry = "E:/Sim/Community/fsdreamteam-gsx-pro";
+    const std::filesystem::path kExternalTarget = "D:/Library/Utils/fsdreamteam-gsx-pro";
+    const std::filesystem::path kExternalStaging = "D:/Library/Utils/fsdreamteam-gsx-pro.fsorg-partial";
+    const std::filesystem::path kExternalSidecar = "D:/Library/Utils/fsdreamteam-gsx-pro.fsorg-external";
+
+    struct ExternalFixture : Fixture
+    {
+        ExternalFixture()
+        {
+            fileSystem.AddDirectory("E:/Sim/Community");
+            fileSystem.AddDirectory("C:/Program Files (x86)/Addon Manager/MSFS");
+            fileSystem.AddDirectory(kVendorFolder);
+            fileSystem.AddFile(kVendorFolder / "manifest.json", 2 * kMegabyte);
+            fileSystem.AddDirectory(kVendorFolder / "SimObjects");
+            fileSystem.AddFile(kVendorFolder / "SimObjects/gsx.bgl", 900 * kMegabyte);
+            fileSystem.AddLink(kEntry, kVendorFolder);
+            fileSystem.AddDirectory("D:/Library/Utils");
+
+            request = ImportRequest{.source = kEntry, .category = kCategory, .externalSource = kVendorFolder};
+        }
+
+        void VerifyTheOtherProgramStillHasItsContent() const
+        {
+            [&]
+            {
+                QVERIFY(fileSystem.Exists(kVendorFolder));
+                QVERIFY(fileSystem.Exists(kVendorFolder / "manifest.json"));
+                QVERIFY(fileSystem.Exists(kVendorFolder / "SimObjects/gsx.bgl"));
+                QVERIFY(!fileSystem.IsLink(kVendorFolder));
+            }();
+        }
+    };
+}
+
+void ImportEngineTest::AnAddonAnotherProgramInstalledIsCopiedFromThatProgramsFolder()
+{
+    ExternalFixture f;
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::Completed);
+    QVERIFY(f.fileSystem.IsDirectory(kExternalTarget));
+    QVERIFY(f.fileSystem.Exists(kExternalTarget / "manifest.json"));
+    QVERIFY(f.fileSystem.Exists(kExternalTarget / "SimObjects/gsx.bgl"));
+    QVERIFY(!f.fileSystem.Exists(kExternalStaging));
+}
+
+void ImportEngineTest::TheOtherProgramKeepsFindingItsFolderNowAsALinkIntoTheLibrary()
+{
+    ExternalFixture f;
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsLink(kVendorFolder));
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorFolder).value(), kExternalTarget);
+    QVERIFY(!f.fileSystem.Exists(SwapSlotFor(kVendorFolder)));
+}
+
+void ImportEngineTest::TheEntryInTheDestinationEndsUpPointingAtTheLibrary()
+{
+    ExternalFixture f;
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsLink(kEntry));
+    QCOMPARE(f.fileSystem.LinkTarget(kEntry).value(), kExternalTarget);
+}
+
+void ImportEngineTest::AFolderTheOtherProgramWillNotLetUsWriteInIsNeverEmptied()
+{
+    ExternalFixture f;
+    f.fileSystem.MarkReadOnly(kVendorFolder.parent_path());
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::CannotWriteInTheOtherProgramsFolder);
+    f.VerifyTheOtherProgramStillHasItsContent();
+    QVERIFY(!f.fileSystem.Exists(kExternalStaging));
+    QVERIFY(!f.fileSystem.Exists(kExternalTarget));
+    QVERIFY(!f.fileSystem.Exists(kExternalSidecar));
+}
+
+void ImportEngineTest::TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouched()
+{
+    ExternalFixture f;
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QCOMPARE(f.fileSystem.ContentsOf(kExternalSidecar).value_or(std::string{}), TextOfTheExternalOrigin(kVendorFolder));
+}
+
+void ImportEngineTest::AnOriginThatCannotBeRecordedStopsTheImportBeforeItMoves()
+{
+    ExternalFixture f;
+    f.files.MakeTheTextWriteFail();
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::CouldNotRecordTheOrigin);
+    f.VerifyTheOtherProgramStillHasItsContent();
+    QVERIFY(!f.fileSystem.Exists(kExternalStaging));
+    QVERIFY(!f.fileSystem.Exists(kExternalTarget));
+}
+
+void ImportEngineTest::AnInterruptedImportNeverLeavesTheOtherProgramWithoutItsContent()
+{
+    ExternalFixture f;
+    f.linkService.MakeLinkCreationFail();
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::CouldNotCreateLink);
+    f.VerifyTheOtherProgramStillHasItsContent();
+    QVERIFY(!f.fileSystem.Exists(SwapSlotFor(kVendorFolder)));
+}
+
+void ImportEngineTest::AnEntryThatNoLongerPointsAtTheOtherProgramIsRefused()
+{
+    ExternalFixture f;
+    QVERIFY(f.fileSystem.RemoveNode(kEntry));
+    f.fileSystem.AddLink(kEntry, "D:/Library/Utils/somewhere-else");
+
+    const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::TheDiskDisagreesWithTheScan);
+    f.VerifyTheOtherProgramStillHasItsContent();
+    QVERIFY(!f.fileSystem.Exists(kExternalTarget));
+}
+
+void ImportEngineTest::TheJournalHearsTheOtherProgramsFolderAsTheSourceOfTheImport()
+{
+    ExternalFixture f;
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(!f.journal.appended.empty());
+    QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportCopyToStaging);
+    QCOMPARE(f.journal.appended[0].source, kVendorFolder);
+    QCOMPARE(f.journal.appended[0].target, kExternalStaging);
 }
 
 QTEST_APPLESS_MAIN(ImportEngineTest)
