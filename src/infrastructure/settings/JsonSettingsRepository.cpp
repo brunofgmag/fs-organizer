@@ -21,6 +21,7 @@ namespace
     constexpr auto kProfiles = "profiles";
     constexpr auto kLinkType = "linkType";
     constexpr auto kVerifyWithHash = "verifyWithHash";
+    constexpr auto kManageStartupEntries = "manageStartupEntries";
     constexpr auto kUpdateMode = "updateMode";
     constexpr auto kLanguage = "language";
     constexpr auto kId = "id";
@@ -253,6 +254,7 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     settings.activeProfileId = root.value(kActiveProfileId).toString().toStdString();
     settings.linkType = LinkTypeFromName(root.value(kLinkType));
     settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
+    settings.manageStartupEntries = root.value(kManageStartupEntries).toBool(true);
     settings.updateMode = UpdateModeFromName(root.value(kUpdateMode));
     settings.language = root.value(kLanguage).toString().toStdString();
 
@@ -277,6 +279,7 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
     root[kProfiles] = profiles;
     root[kLinkType] = LinkTypeName(settings.linkType);
     root[kVerifyWithHash] = settings.verifyWithHash;
+    root[kManageStartupEntries] = settings.manageStartupEntries;
     root[kUpdateMode] = UpdateModeName(settings.updateMode);
     root[kLanguage] = QString::fromStdString(settings.language);
 
