@@ -101,6 +101,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/SessionNotifier.cpp
         src/viewmodel/SetupViewModel.cpp
         src/viewmodel/SizeSummary.cpp
+        src/viewmodel/StartupViewModel.cpp
         src/viewmodel/UpdateViewModel.cpp
 )
 
@@ -126,6 +127,7 @@ set(VIEW_SOURCES
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/shell/StartupOffers.cpp
+        src/view/simulator/StartupPage.cpp
         src/view/library/SuggestionDialog.cpp
         src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp

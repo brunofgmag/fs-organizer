@@ -10,4 +10,5 @@ namespace PageNames
     const char* const kJournal = QT_TRANSLATE_NOOP("MainWindow", "Journal");
     const char* const kQuarantine = QT_TRANSLATE_NOOP("MainWindow", "Quarantine");
     const char* const kDiagnostics = QT_TRANSLATE_NOOP("MainWindow", "Diagnostics");
+    const char* const kSimulator = QT_TRANSLATE_NOOP("MainWindow", "Simulator");
 }

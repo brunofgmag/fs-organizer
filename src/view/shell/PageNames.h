@@ -9,6 +9,7 @@ namespace PageNames
     extern const char* const kJournal;
     extern const char* const kQuarantine;
     extern const char* const kDiagnostics;
+    extern const char* const kSimulator;
 }
 
 #endif // FS_ORGANIZER_VIEW_SHELL_PAGE_NAMES_H
