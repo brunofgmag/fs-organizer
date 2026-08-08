@@ -99,7 +99,7 @@ void LinkingEngineTest::EnablingRefusesWhenTheDestinationHoldsARealFolder()
 
     QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsRealFolder);
     QVERIFY(outcome.Conflict() != nullptr);
-    QCOMPARE(outcome.Conflict()->destinationPath,
+    QCOMPARE(outcome.Conflict()->provenancePath,
              std::filesystem::path("E:/Sim/Community/flybywire-externaltools-simbridge"));
     QCOMPARE(outcome.Conflict()->libraryPath,
              std::filesystem::path("D:/Library/Utils/flybywire-externaltools-simbridge"));

@@ -157,7 +157,7 @@ void CommunityModelTest::ClearingTheFilterShowsEverythingAgain()
 
 void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
 {
-    const CopyConflicts conflicts{{CopyConflict{.destinationPath = "E:/Flight Simulator 2024/Community/physical",
+    const CopyConflicts conflicts{{CopyConflict{.provenancePath = "E:/Flight Simulator 2024/Community/physical",
                                                 .libraryPath = "D:/MSFS 2024/Utils/physical"}}};
 
     CommunityModel model;

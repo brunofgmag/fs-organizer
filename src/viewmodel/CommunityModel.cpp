@@ -72,7 +72,7 @@ const CopyConflict* CommunityModel::ConflictAt(const QModelIndex& position) cons
 {
     const DestinationEntry* entry = EntryAt(position);
 
-    return entry == nullptr ? nullptr : conflicts_.OverTheDestinationEntry(entry->path);
+    return entry == nullptr ? nullptr : conflicts_.OverTheProvenance(entry->path);
 }
 
 const DestinationEntry* CommunityModel::EntryAt(const QModelIndex& position) const
@@ -103,7 +103,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
-    const CopyConflict* conflict = conflicts_.OverTheDestinationEntry(entry->path);
+    const CopyConflict* conflict = conflicts_.OverTheProvenance(entry->path);
 
     if (role == ClassificationRole)
     {

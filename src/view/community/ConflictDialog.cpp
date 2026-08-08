@@ -64,7 +64,7 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     explanation->setWordWrap(true);
 
     auto* sides = new QHBoxLayout;
-    sides->addWidget(CreateSide(tr("Copy in the destination"), details.destination));
+    sides->addWidget(CreateSide(tr("Copy in the destination"), details.provenance));
     sides->addWidget(CreateSide(tr("Copy in the library"), details.library));
 
     auto* warning = new QLabel(WarningAbout(details.linksToTheLibraryCopy), this);
@@ -87,7 +87,7 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     connect(keepDestination, &QPushButton::clicked, this,
             [this]
             {
-                choice_ = ConflictChoice::KeepTheDestinationCopy;
+                choice_ = ConflictChoice::KeepTheProvenanceCopy;
                 accept();
             });
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);

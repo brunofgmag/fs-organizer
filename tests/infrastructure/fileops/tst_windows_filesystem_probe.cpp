@@ -20,6 +20,7 @@ namespace
         static void ChildDirectoriesReportsDanglingJunctionsToo();
         static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
         static void AJunctionIsAReparsePointAndARealFolderIsNot();
+        static void OnlyARealFolderIsPhysicalAndALiveJunctionOverItIsNot();
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
         static void AFolderReportsWhenItWasLastWrittenTo();
         static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
@@ -45,6 +46,21 @@ namespace
             const std::filesystem::path folder = Root() / relativePath;
             std::filesystem::create_directories(folder);
             return folder;
+        }
+
+        [[nodiscard]] std::filesystem::path AddLiveJunction(const std::string& relativePath,
+                                                            const std::filesystem::path& target) const
+        {
+            const std::filesystem::path linkPath = Root() / relativePath;
+            std::filesystem::create_directories(linkPath.parent_path());
+
+            WindowsLinkService linkService;
+            [&]
+            {
+                QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
+            }();
+
+            return linkPath;
         }
 
         [[nodiscard]] std::filesystem::path AddDanglingJunction(const std::string& relativePath) const
@@ -126,6 +142,26 @@ void WindowsFilesystemProbeTest::AJunctionIsAReparsePointAndARealFolderIsNot()
     QVERIFY(filesystemProbe.IsReparsePoint(dangling));
     QVERIFY(!filesystemProbe.IsReparsePoint(physical));
     QVERIFY(!filesystemProbe.IsReparsePoint(disk.Root() / "Community/never-created"));
+}
+
+void WindowsFilesystemProbeTest::OnlyARealFolderIsPhysicalAndALiveJunctionOverItIsNot()
+{
+    const Disk disk;
+    const std::filesystem::path physical = disk.AddFolder("Library/Aircrafts/aerosoft-crj");
+    const std::filesystem::path live = disk.AddLiveJunction("Addon Manager/aerosoft-crj", physical);
+    const std::filesystem::path dangling = disk.AddDanglingJunction("Addon Manager/ag-airport-bgqq");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.PhysicalDirectoryExists(physical));
+    QVERIFY2(!filesystemProbe.PhysicalDirectoryExists(live),
+             "a junction left by the importer read as a folder the other program put back");
+    QVERIFY(!filesystemProbe.PhysicalDirectoryExists(dangling));
+    QVERIFY(!filesystemProbe.PhysicalDirectoryExists(disk.Root() / "Addon Manager/never-created"));
+
+    QVERIFY2(filesystemProbe.TargetDirectoryExists(live),
+             "the two probes stopped disagreeing, so one of them is not answering what it promises");
+    QVERIFY(!filesystemProbe.TargetDirectoryExists(dangling));
 }
 
 void WindowsFilesystemProbeTest::FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists()

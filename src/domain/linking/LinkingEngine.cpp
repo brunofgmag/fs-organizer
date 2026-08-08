@@ -16,7 +16,7 @@ LinkingEngine::Enable(const Addon& addon, const std::filesystem::path& destinati
     {
         if (!filesystemProbe_.IsReparsePoint(linkPath))
         {
-            return LinkOutcome::Conflicted(CopyConflict{.destinationPath = linkPath, .libraryPath = addon.folderPath});
+            return LinkOutcome::Conflicted(CopyConflict{.provenancePath = linkPath, .libraryPath = addon.folderPath});
         }
 
         const std::optional<std::filesystem::path> target = linkService_.ReadLinkTarget(linkPath);

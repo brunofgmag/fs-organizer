@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "domain/model/DestinationEntry.h"
+#include "domain/model/ExternalAddon.h"
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/LinkService.h"
 
@@ -19,11 +20,15 @@ public:
     EntryClassifier(const LinkService& linkService, const FilesystemProbe& filesystemProbe);
 
     [[nodiscard]] std::vector<DestinationEntry> Resolve(const std::vector<std::filesystem::path>& destinationRoots,
-                                                        const std::vector<std::filesystem::path>& libraryRoots) const;
+                                                        const std::vector<std::filesystem::path>& libraryRoots,
+                                                        const std::vector<ExternalAddon>& externals = {}) const;
 
 private:
     [[nodiscard]] DestinationEntry ClassifyEntry(const std::filesystem::path& entryPath,
-                                                 const std::vector<std::filesystem::path>& libraryRoots) const;
+                                                 const std::vector<std::filesystem::path>& libraryRoots,
+                                                 const std::vector<ExternalAddon>& externals) const;
+
+    [[nodiscard]] bool TheOtherProgramTookItsFolderBack(const std::filesystem::path& externalPath) const;
 
     const LinkService& linkService_;
     const FilesystemProbe& filesystemProbe_;

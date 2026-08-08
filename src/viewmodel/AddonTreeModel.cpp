@@ -397,7 +397,7 @@ QString AddonTreeModel::ToolTipOf(const TreeNode& node, const CopyConflict* conf
     if (conflict != nullptr)
     {
         return tr("There is already a real folder with that name in the destination: %1")
-            .arg(AsText(conflict->destinationPath));
+            .arg(AsText(conflict->provenancePath));
     }
 
     const std::filesystem::path linked = WhereItIsLinked(node);

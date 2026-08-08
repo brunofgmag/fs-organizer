@@ -70,6 +70,15 @@ public:
         return IsALinkWithoutFollowing(std::filesystem::symlink_status(AsFarAsTheProductionProbeReaches(path), error));
     }
 
+    [[nodiscard]] bool PhysicalDirectoryExists(const std::filesystem::path& path) const override
+    {
+        std::error_code error;
+        const std::filesystem::file_status status =
+            std::filesystem::symlink_status(AsFarAsTheProductionProbeReaches(path), error);
+
+        return status.type() == std::filesystem::file_type::directory && !IsALinkWithoutFollowing(status);
+    }
+
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
     {
         std::vector<std::filesystem::path> children;

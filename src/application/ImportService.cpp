@@ -51,8 +51,8 @@ namespace
     {
         if (choice == ConflictChoice::KeepTheLibraryCopy)
         {
-            return {.loser = conflict.destinationPath,
-                    .quarantine = QuarantineBesideTheDestination(profile, conflict.destinationPath),
+            return {.loser = conflict.provenancePath,
+                    .quarantine = QuarantineBesideTheDestination(profile, conflict.provenancePath),
                     .kind = OperationKind::QuarantineFromDestination,
                     .relinks = true};
         }
@@ -218,9 +218,9 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
     }
 
     const LinkOutcome link =
-        linking_.Enable(Addon{.folderPath = conflict.libraryPath}, conflict.destinationPath.parent_path(), linkType_);
+        linking_.Enable(Addon{.folderPath = conflict.libraryPath}, conflict.provenancePath.parent_path(), linkType_);
 
-    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, conflict.destinationPath, link.Failure());
+    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, conflict.provenancePath, link.Failure());
 
     return link.Succeeded() ? FileResult::Completed : FileResult::CouldNotCreateLink;
 }
@@ -241,9 +241,10 @@ ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
 ConflictDetails ImportService::DetailsOf(const std::vector<DestinationEntry>& entries,
                                          const CopyConflict& conflict) const
 {
-    return ConflictDetails{.destination = SideOf(conflict.destinationPath),
+    return ConflictDetails{.provenance = SideOf(conflict.provenancePath),
                            .library = SideOf(conflict.libraryPath),
-                           .linksToTheLibraryCopy = LinksPointingAt(entries, conflict.libraryPath)};
+                           .linksToTheLibraryCopy = LinksPointingAt(entries, conflict.libraryPath),
+                           .theProvenanceIsAnotherProgram = conflict.theProvenanceIsAnotherProgram};
 }
 
 std::uintmax_t ImportService::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const

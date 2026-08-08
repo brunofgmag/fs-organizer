@@ -22,6 +22,8 @@ public:
 
     [[nodiscard]] virtual bool IsReparsePoint(const std::filesystem::path& path) const = 0;
 
+    [[nodiscard]] virtual bool PhysicalDirectoryExists(const std::filesystem::path& path) const = 0;
+
     [[nodiscard]] virtual std::vector<std::filesystem::path>
     ChildDirectories(const std::filesystem::path& path) const = 0;
 

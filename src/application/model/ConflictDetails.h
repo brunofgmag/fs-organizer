@@ -11,17 +11,18 @@
 
 struct ConflictSide
 {
-    std::filesystem::path path;
-    Manifest manifest;
+    std::filesystem::path path{};
+    Manifest manifest{};
     std::uintmax_t sizeBytes = 0;
-    std::optional<std::chrono::system_clock::time_point> modified;
+    std::optional<std::chrono::system_clock::time_point> modified{};
 };
 
 struct ConflictDetails
 {
-    ConflictSide destination;
-    ConflictSide library;
-    std::vector<std::filesystem::path> linksToTheLibraryCopy;
+    ConflictSide provenance{};
+    ConflictSide library{};
+    std::vector<std::filesystem::path> linksToTheLibraryCopy{};
+    bool theProvenanceIsAnotherProgram = false;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_CONFLICT_DETAILS_H

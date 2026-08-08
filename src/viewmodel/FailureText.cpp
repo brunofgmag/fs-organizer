@@ -119,7 +119,7 @@ QString Describe(const LinkOperationResult& result)
     if (const CopyConflict* conflict = result.outcome.Conflict(); conflict != nullptr)
     {
         line += QObject::tr("\n    folder in the destination: %1\n    addon in the library: %2")
-                    .arg(AsText(conflict->destinationPath), AsText(conflict->libraryPath));
+                    .arg(AsText(conflict->provenancePath), AsText(conflict->libraryPath));
     }
 
     if (const OccupiedDestination* occupation = result.outcome.Occupation(); occupation != nullptr)

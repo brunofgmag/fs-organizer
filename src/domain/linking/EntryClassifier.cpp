@@ -5,6 +5,7 @@
 #include <ranges>
 #include <set>
 
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 
 namespace
@@ -32,7 +33,7 @@ namespace
 
         for (std::size_t index = 0; index < entries.size(); ++index)
         {
-            if (entries[index].classification == EntryClassification::Managed)
+            if (CountsAsEnabled(entries[index].classification))
             {
                 managedByTarget[ComparablePath(entries[index].target)].push_back(index);
             }
@@ -97,7 +98,8 @@ EntryClassifier::EntryClassifier(const LinkService& linkService, const Filesyste
 }
 
 std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::filesystem::path>& destinationRoots,
-                                                       const std::vector<std::filesystem::path>& libraryRoots) const
+                                                       const std::vector<std::filesystem::path>& libraryRoots,
+                                                       const std::vector<ExternalAddon>& externals) const
 {
     std::vector<DestinationEntry> entries;
 
@@ -105,7 +107,7 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::fi
     {
         for (const std::filesystem::path& child : filesystemProbe_.ChildDirectories(root))
         {
-            entries.push_back(ClassifyEntry(child, libraryRoots));
+            entries.push_back(ClassifyEntry(child, libraryRoots, externals));
         }
     }
 
@@ -115,7 +117,8 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::fi
 }
 
 DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& entryPath,
-                                                const std::vector<std::filesystem::path>& libraryRoots) const
+                                                const std::vector<std::filesystem::path>& libraryRoots,
+                                                const std::vector<ExternalAddon>& externals) const
 {
     DestinationEntry entry;
     entry.path = entryPath;
@@ -128,6 +131,7 @@ DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& ent
     }
 
     entry.target = NormalizeReparseTarget(*target);
+    entry.externalOrigin = ExternalOriginOf(externals, entry.target);
 
     if (!filesystemProbe_.VolumeIsAvailable(entry.target))
     {
@@ -135,13 +139,25 @@ DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& ent
     }
     else if (!filesystemProbe_.TargetDirectoryExists(entry.target))
     {
-        entry.classification = EntryClassification::Broken;
+        entry.classification =
+            entry.externalOrigin.empty() ? EntryClassification::Broken : EntryClassification::Vanished;
+    }
+    else if (!IsUnderAny(entry.target, libraryRoots))
+    {
+        entry.classification = EntryClassification::External;
     }
     else
     {
+        entry.theOtherProgramTookItsFolderBack = TheOtherProgramTookItsFolderBack(entry.externalOrigin);
         entry.classification =
-            IsUnderAny(entry.target, libraryRoots) ? EntryClassification::Managed : EntryClassification::External;
+            entry.theOtherProgramTookItsFolderBack ? EntryClassification::Divergent : EntryClassification::Managed;
     }
 
     return entry;
+}
+
+bool EntryClassifier::TheOtherProgramTookItsFolderBack(const std::filesystem::path& externalPath) const
+{
+    return !externalPath.empty() && filesystemProbe_.VolumeIsAvailable(externalPath)
+        && filesystemProbe_.PhysicalDirectoryExists(externalPath);
 }
