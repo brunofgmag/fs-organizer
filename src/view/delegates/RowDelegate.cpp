@@ -91,7 +91,7 @@ namespace
         return whole.join(QLatin1Char('\n'));
     }
 
-    void RepaintTheRowOf(QAbstractItemView& view, const QModelIndex& index)
+    void RepaintTheRowOf(const QAbstractItemView& view, const QModelIndex& index)
     {
         if (!index.isValid())
         {
