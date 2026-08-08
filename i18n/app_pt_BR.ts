@@ -2087,6 +2087,11 @@ Também existe na biblioteca: %2</translation>
         <source>Diagnostics</source>
         <translation>Diagnósticos</translation>
     </message>
+    <message>
+        <location filename="../src/view/shell/PageNames.cpp" line="13"/>
+        <source>Simulator</source>
+        <translation>Simulador</translation>
+    </message>
 </context>
 <context>
     <name>ModelRowDetail</name>
@@ -3009,14 +3014,19 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>não foi possível gravar o arquivo de inicialização do simulador, então nada mudou</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="110"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="106"/>
+        <source>the startup entries of the simulator are left loose in the options, so the app does not read or write that file</source>
+        <translation>as entradas de inicialização do simulador estão soltas nas opções, então o app não lê nem grava aquele arquivo</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="117"/>
         <source>
     the occupant is in: %1</source>
         <translation>
     o ocupante está em: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="121"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="128"/>
         <source>
     folder in the destination: %1
     addon in the library: %2</source>
@@ -3025,92 +3035,92 @@ Aplicar o preset &quot;%2&quot;?</translation>
     addon na biblioteca: %2</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="127"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="134"/>
         <source>
     the current link points at: %1</source>
         <translation>
     o link atual aponta para: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="142"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="149"/>
         <source>
     the folder that refused: %1</source>
         <translation>
     a pasta que recusou: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="163"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="170"/>
         <source>%1: it is back, and %2 is in the quarantine with its origin recorded.</source>
         <translation>%1: voltou, e %2 está na quarentena com a origem gravada.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="168"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="175"/>
         <source>putting %1 in the quarantine</source>
         <translation>pôr %1 na quarentena</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="169"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="176"/>
         <source>bringing %1 back</source>
         <translation>trazer %1 de volta</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="172"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="179"/>
         <source>
     neither of them is in the library right now, and nothing was deleted</source>
         <translation>
     nenhum dos dois está na biblioteca agora, e nada foi apagado</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="173"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="180"/>
         <source>
     the library still holds: %1</source>
         <translation>
     a biblioteca ainda tem: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="175"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="182"/>
         <source>%1: it stopped at %2, because %3.%4</source>
         <translation>%1: parou em %2, porque %3.%4</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="183"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="190"/>
         <source>moved to the Recycle Bin</source>
         <translation>movido para a Lixeira</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="184"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="191"/>
         <source>deleted for good</source>
         <translation>excluído de vez</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="193"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="200"/>
         <source>
     the link already removed: %1</source>
         <translation>
     o link já removido: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="216"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="223"/>
         <source>Copying to the library…</source>
         <translation>Copiando para a biblioteca…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="217"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="224"/>
         <source>Checking whether the copy matches the source…</source>
         <translation>Conferindo se a cópia bate com a origem…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="218"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="225"/>
         <source>Putting the copy in its final place…</source>
         <translation>Pondo a cópia no lugar definitivo…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="219"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="226"/>
         <source>Removing the source folder…</source>
         <translation>Removendo a pasta de origem…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="220"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="227"/>
         <source>Creating the link in the destination…</source>
         <translation>Criando o link no destino…</translation>
     </message>
@@ -3233,38 +3243,38 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>Agora não</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="158"/>
+        <location filename="../src/main.cpp" line="163"/>
         <source>Unreadable configuration</source>
         <translation>Configuração ilegível</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="159"/>
+        <location filename="../src/main.cpp" line="164"/>
         <source>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</source>
         <translation>O arquivo de configuração existe mas não pôde ser lido, então o FS Organizer não vai sobrescrevê-lo. Mova ou conserte %1 e abra o programa de novo.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="271"/>
+        <location filename="../src/main.cpp" line="290"/>
         <source>Language not applied</source>
         <translation>Idioma não aplicado</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="272"/>
+        <location filename="../src/main.cpp" line="291"/>
         <source>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</source>
         <translation>A tradução de %1 não carregou, então a interface continua em inglês. A escolha foi gravada mesmo assim.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="282"/>
-        <location filename="../src/main.cpp" line="520"/>
+        <location filename="../src/main.cpp" line="301"/>
+        <location filename="../src/main.cpp" line="546"/>
         <source>Could not save</source>
         <translation>Não foi possível salvar</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="283"/>
+        <location filename="../src/main.cpp" line="302"/>
         <source>The option could not be written to %1, so it stays as it was.</source>
         <translation>A opção não pôde ser gravada em %1, então ela continua como estava.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="521"/>
+        <location filename="../src/main.cpp" line="547"/>
         <source>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</source>
         <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
     </message>
@@ -3344,6 +3354,26 @@ Aplicar o preset &quot;%2&quot;?</translation>
 Size %2</source>
         <translation>Versão %1
 Tamanho %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="35"/>
+        <source>the program is not there</source>
+        <translation>o programa não está lá</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="36"/>
+        <source>the addon that holds it is off</source>
+        <translation>o addon que o guarda está desligado</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="40"/>
+        <source>Inside an addon</source>
+        <translation>Dentro de um addon</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="41"/>
+        <source>outside your addons</source>
+        <translation>fora dos seus addons</translation>
     </message>
 </context>
 <context>
@@ -4059,6 +4089,127 @@ Tamanho %2</translation>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="62"/>
         <source>Apply</source>
         <translation>Aplicar</translation>
+    </message>
+</context>
+<context>
+    <name>StartupPage</name>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="102"/>
+        <source>The choice could not be written down, so it stays as it was.</source>
+        <translation>A escolha não pôde ser registrada, então ela fica como estava.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="176"/>
+        <source>Read it again</source>
+        <translation>Ler de novo</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="177"/>
+        <source>Leave these alone</source>
+        <translation>Deixar soltas</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="178"/>
+        <source>Program</source>
+        <translation>Programa</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="178"/>
+        <source>Path</source>
+        <translation>Caminho</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="178"/>
+        <source>State</source>
+        <translation>Estado</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="179"/>
+        <source>The app writes one thing here: the switch of an entry that already exists. It never adds, removes or reorders, and it keeps one backup copy of the file beside it.</source>
+        <translation>O app grava uma coisa só aqui: o interruptor de uma entrada que já existe. Ele nunca acrescenta, remove nem reordena, e mantém uma cópia de segurança do arquivo ao lado dele.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="182"/>
+        <source>No startup entry to show</source>
+        <translation>Nenhuma entrada de inicialização para mostrar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="183"/>
+        <source>The startup file of this profile was not found beside its UserCfg.opt, or it carries no program. Nothing was written.</source>
+        <translation>O arquivo de inicialização deste perfil não foi encontrado ao lado do UserCfg.opt dele, ou não carrega programa nenhum. Nada foi gravado.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="185"/>
+        <source>The startup entries are left alone</source>
+        <translation>As entradas de inicialização estão soltas</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="186"/>
+        <source>Turn this on and FS Organizer reads the startup file of the simulator, lists the programs it launches with itself, and lets you switch one off without editing XML. It changes one thing only: the switch of an entry that is already there.</source>
+        <translation>Ligue isto e o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você desligar um sem editar XML. Ele muda uma coisa só: o interruptor de uma entrada que já está lá.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="189"/>
+        <source>Turn it on</source>
+        <translation>Ligar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="200"/>
+        <source>The startup entries of the simulator are left alone.</source>
+        <translation>As entradas de inicialização do simulador estão soltas.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="208"/>
+        <source>%n program the simulator launches with itself.</source>
+        <translation>
+            <numerusform>%n programa que o simulador abre junto consigo.</numerusform>
+            <numerusform>%n programas que o simulador abre junto consigo.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="237"/>
+        <source>startup file · read %1</source>
+        <translation>arquivo de inicialização · lido %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="238"/>
+        <source>startup file · not read</source>
+        <translation>arquivo de inicialização · não lido</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="264"/>
+        <source>The switch was not changed: %1.</source>
+        <translation>O interruptor não foi mudado: %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="270"/>
+        <source>%1 will start with the simulator.</source>
+        <translation>%1 vai abrir junto com o simulador.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="271"/>
+        <source>%1 will not start with the simulator.</source>
+        <translation>%1 não vai abrir junto com o simulador.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="278"/>
+        <source>Simulator open</source>
+        <translation>Simulador aberto</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="279"/>
+        <source>The startup file stays untouched while the simulator runs.</source>
+        <translation>O arquivo de inicialização fica intocado enquanto o simulador roda.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="281"/>
+        <source>Close %1 and check again.</source>
+        <translation>Feche %1 e verifique de novo.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="283"/>
+        <source>Check again</source>
+        <translation>Verificar de novo</translation>
     </message>
 </context>
 <context>
