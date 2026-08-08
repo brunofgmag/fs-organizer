@@ -687,6 +687,14 @@ target_link_libraries(fsorg-exe-xml-document-tests PRIVATE fsorg-infrastructure)
 target_compile_definitions(fsorg-exe-xml-document-tests PRIVATE
         FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
 
+fsorg_add_qt_test(fsorg-startup-file-locations-tests startup-file-locations
+        tests/infrastructure/sim/tst_startup_file_locations.cpp
+        tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h
+        tests/support/TempFiles.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-startup-file-locations-tests PRIVATE fsorg-infrastructure)
+
 fsorg_add_qt_test(fsorg-profile-packages-tests profile-packages
         tests/infrastructure/sim/tst_profile_packages.cpp
         tests/support/EnumPrinting.h

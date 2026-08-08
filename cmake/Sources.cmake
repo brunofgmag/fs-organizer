@@ -53,6 +53,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/ContentXmlPackages.cpp
         src/infrastructure/sim/ExeXmlDocument.cpp
         src/infrastructure/sim/ProfilePackages.cpp
+        src/infrastructure/sim/StartupFileLocations.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
