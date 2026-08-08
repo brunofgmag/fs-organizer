@@ -134,6 +134,12 @@ fsorg_add_qt_test(fsorg-origin-sidecar-tests origin-sidecar
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-origin-sidecar-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-external-sidecar-tests external-sidecar
+        tests/domain/importing/tst_external_sidecar.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-external-sidecar-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-import-engine-tests import-engine
         tests/domain/importing/tst_import_engine.cpp
         tests/doubles/FakeClock.h

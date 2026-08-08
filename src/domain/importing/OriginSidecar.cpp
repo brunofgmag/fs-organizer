@@ -2,25 +2,14 @@
 
 #include <charconv>
 #include <cstdint>
-#include <sstream>
-#include <string_view>
+#include <map>
+
+#include "domain/importing/SidecarFile.h"
 
 namespace
 {
-    constexpr auto kVersionKey = "version";
     constexpr auto kOriginKey = "origin";
     constexpr auto kQuarantinedKey = "quarantined";
-    constexpr auto kWrittenVersion = "1";
-
-    std::string WithoutTheCarriageReturn(std::string line)
-    {
-        if (!line.empty() && line.back() == '\r')
-        {
-            line.pop_back();
-        }
-
-        return line;
-    }
 
     std::optional<std::chrono::system_clock::time_point> MomentFromMilliseconds(const std::string& text)
     {
@@ -39,24 +28,19 @@ namespace
 
 std::filesystem::path SidecarPathFor(const std::filesystem::path& item)
 {
-    std::filesystem::path sidecar = item;
-    sidecar += kOriginSidecarSuffix;
-
-    return sidecar;
+    return SidecarBeside(item, kOriginSidecarSuffix);
 }
 
 std::string TextOfTheOrigin(const QuarantineOrigin& origin)
 {
-    std::string text;
-    text.append(kVersionKey).append("=").append(kWrittenVersion).append("\n");
-    text.append(kOriginKey).append("=").append(AsUtf8(origin.origin)).append("\n");
+    std::string text = SidecarHeader() + SidecarLine(kOriginKey, AsUtf8(origin.origin));
 
     if (origin.quarantinedAt.has_value())
     {
         const auto milliseconds =
             std::chrono::duration_cast<std::chrono::milliseconds>(origin.quarantinedAt->time_since_epoch()).count();
 
-        text.append(kQuarantinedKey).append("=").append(std::to_string(milliseconds)).append("\n");
+        text += SidecarLine(kQuarantinedKey, std::to_string(milliseconds));
     }
 
     return text;
@@ -64,41 +48,18 @@ std::string TextOfTheOrigin(const QuarantineOrigin& origin)
 
 std::optional<QuarantineOrigin> OriginFromText(const std::string& text)
 {
-    std::istringstream lines(text);
-
-    bool versionMatched = false;
-    QuarantineOrigin read;
-
-    for (std::string line; std::getline(lines, line);)
-    {
-        const std::string entry = WithoutTheCarriageReturn(std::move(line));
-        const std::size_t separator = entry.find('=');
-        if (separator == std::string::npos)
-        {
-            continue;
-        }
-
-        const std::string_view key(entry.data(), separator);
-        const std::string value = entry.substr(separator + 1);
-
-        if (key == kVersionKey)
-        {
-            versionMatched = value == kWrittenVersion;
-        }
-        else if (key == kOriginKey)
-        {
-            read.origin = PathFromUtf8(value);
-        }
-        else if (key == kQuarantinedKey)
-        {
-            read.quarantinedAt = MomentFromMilliseconds(value);
-        }
-    }
-
-    if (!versionMatched || read.origin.empty())
+    const std::optional<std::map<std::string, std::string>> fields = FieldsOfTheSidecar(text);
+    if (!fields.has_value())
     {
         return std::nullopt;
     }
 
-    return read;
+    const std::string origin = FieldNamed(*fields, kOriginKey);
+    if (origin.empty())
+    {
+        return std::nullopt;
+    }
+
+    return QuarantineOrigin{.origin = PathFromUtf8(origin),
+                            .quarantinedAt = MomentFromMilliseconds(FieldNamed(*fields, kQuarantinedKey))};
 }

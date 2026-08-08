@@ -1,7 +1,9 @@
 set(DOMAIN_SOURCES
         src/domain/importing/CopyConflicts.cpp
+        src/domain/importing/ExternalSidecar.cpp
         src/domain/importing/ImportEngine.cpp
         src/domain/importing/OriginSidecar.cpp
+        src/domain/importing/SidecarFile.cpp
         src/domain/journal/JournalEntries.cpp
         src/domain/journal/OperationLog.cpp
         src/domain/legacy/LegacyPreset.cpp
