@@ -13,6 +13,7 @@ class FakeStartupEntries final : public StartupEntries
 {
 public:
     std::size_t writes = 0;
+    mutable std::size_t reads = 0;
 
     void Carry(StartupEntry entry)
     {
@@ -21,6 +22,8 @@ public:
 
     [[nodiscard]] std::vector<StartupEntry> Entries() const override
     {
+        ++reads;
+
         return entries_;
     }
 

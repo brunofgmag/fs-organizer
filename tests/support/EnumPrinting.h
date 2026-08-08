@@ -145,6 +145,7 @@ namespace QTest
         case FileResult::TheDiskDisagreesWithTheScan: return qstrdup("TheDiskDisagreesWithTheScan");
         case FileResult::CouldNotReadTheStartupFile: return qstrdup("CouldNotReadTheStartupFile");
         case FileResult::CouldNotWriteTheStartupFile: return qstrdup("CouldNotWriteTheStartupFile");
+        case FileResult::TheStartupEntriesAreLeftLoose: return qstrdup("TheStartupEntriesAreLeftLoose");
         }
 
         return qstrdup("FileResult(?)");

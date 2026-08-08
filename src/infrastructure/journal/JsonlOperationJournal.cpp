@@ -125,6 +125,7 @@ namespace
         case FileResult::TheDiskDisagreesWithTheScan: return "theDiskDisagreesWithTheScan";
         case FileResult::CouldNotReadTheStartupFile: return "couldNotReadTheStartupFile";
         case FileResult::CouldNotWriteTheStartupFile: return "couldNotWriteTheStartupFile";
+        case FileResult::TheStartupEntriesAreLeftLoose: return "theStartupEntriesAreLeftLoose";
         }
 
         return "unknown";
