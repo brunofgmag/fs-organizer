@@ -1,13 +1,16 @@
 #ifndef FS_ORGANIZER_APPLICATION_MODEL_SIZE_REPORT_H
 #define FS_ORGANIZER_APPLICATION_MODEL_SIZE_REPORT_H
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <string>
 #include <vector>
 
 #include "domain/model/TreeNode.h"
+#include "domain/support/PathUtils.h"
 
 struct MeasuredNode
 {
@@ -54,5 +57,19 @@ struct SizeProgress
     std::size_t measured = 0;
     std::size_t total = 0;
 };
+
+[[nodiscard]] inline MeasuredFolder FolderIn(const std::vector<MeasuredFolder>& weighed,
+                                             const std::filesystem::path& wanted)
+{
+    const std::string key = ComparablePath(wanted);
+
+    const auto found = std::ranges::find_if(weighed,
+                                            [&key](const MeasuredFolder& folder)
+                                            {
+                                                return ComparablePath(folder.folder) == key;
+                                            });
+
+    return found == weighed.end() ? MeasuredFolder{} : *found;
+}
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_SIZE_REPORT_H

@@ -974,6 +974,24 @@ if (WIN32)
         target_link_libraries(fsorg-delete-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-delete-dialog-tests delete-dialog)
 
+        fsorg_add_qt_test(fsorg-swap-dialog-tests swap-dialog
+                tests/view/tst_swap_dialog.cpp
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeClock.h
+                tests/doubles/FakeFileOperations.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeLinkService.h
+                tests/doubles/FakeOperationJournal.h
+                tests/doubles/FakeProcessProbe.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/FakeSimulatorPackages.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/doubles/InlineBackgroundRunner.h
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-swap-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-swap-dialog-tests swap-dialog)
+
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp
                 tests/doubles/FakeCatalogScanner.h

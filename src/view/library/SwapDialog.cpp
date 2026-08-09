@@ -8,6 +8,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "support/SizeText.h"
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/AddonTreeViewModel.h"
 
@@ -44,8 +45,8 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     int row = 1;
     for (const TakenPlace& swap : swaps)
     {
-        grid->addWidget(new QLabel(NameAndVersionOf(swap.occupant), listed), row, 0, Qt::AlignTop);
-        grid->addWidget(new QLabel(NameAndVersionOf(swap.addonFolder), listed), row, 1, Qt::AlignTop);
+        goesOff_.push_back(AddTheSide(*grid, row, 0, NameAndVersionOf(swap.occupant)));
+        goesOn_.push_back(AddTheSide(*grid, row, 1, NameAndVersionOf(swap.addonFolder)));
 
         auto* place = new QLabel(AsText(swap.linkPath.parent_path()), listed);
         place->setObjectName(QStringLiteral("PanelPromise"));
@@ -60,9 +61,9 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     auto* scroll = new QScrollArea(this);
     scroll->setWidget(listed);
     scroll->setWidgetResizable(true);
+    scroll->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
-    auto* promise = new QLabel(
-        tr("One operation, one line in the Journal, undone as one. Nothing happens until you say so."), this);
+    auto* promise = new QLabel(tr("One operation, one line in the Journal, undone as one."), this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
 
@@ -81,7 +82,36 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     layout->addWidget(promise);
     layout->addWidget(buttons);
 
-    resize(620, 280);
+    ShowTheSizes(std::vector<WeighedSwap>(swaps.size()));
+
+    SizeToTheContent(*this, *layout, 620);
+}
+
+QLabel* SwapDialog::AddTheSide(QGridLayout& grid, const int row, const int column, const QString& nameAndVersion)
+{
+    auto* said = new QLabel(grid.parentWidget());
+    said->setWordWrap(true);
+    said->setProperty("nameAndVersion", nameAndVersion);
+
+    grid.addWidget(said, row, column, Qt::AlignTop);
+
+    return said;
+}
+
+void SwapDialog::ShowTheSizes(const std::vector<WeighedSwap>& weighed)
+{
+    for (std::size_t at = 0; at < weighed.size() && at < goesOff_.size(); ++at)
+    {
+        Retell(*goesOff_[at], weighed[at].goesOff);
+        Retell(*goesOn_[at], weighed[at].goesOn);
+    }
+}
+
+void SwapDialog::Retell(QLabel& side, const MeasuredFolder& measured)
+{
+    const QString nameAndVersion = side.property("nameAndVersion").toString();
+
+    side.setText(measured.measured ? tr("%1 · %2").arg(nameAndVersion, AsSize(measured.bytes)) : nameAndVersion);
 }
 
 QString SwapDialog::NameAndVersionOf(const std::filesystem::path& addonFolder) const

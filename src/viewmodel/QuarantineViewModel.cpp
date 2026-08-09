@@ -6,22 +6,6 @@
 
 #include "domain/support/PathUtils.h"
 
-namespace
-{
-    MeasuredFolder FolderIn(const std::vector<MeasuredFolder>& weighed, const std::filesystem::path& wanted)
-    {
-        const std::string key = ComparablePath(wanted);
-
-        const auto found = std::ranges::find_if(weighed,
-                                                [&key](const MeasuredFolder& folder)
-                                                {
-                                                    return ComparablePath(folder.folder) == key;
-                                                });
-
-        return found == weighed.end() ? MeasuredFolder{} : *found;
-    }
-}
-
 QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                                          ProfileService& profileService,
                                          const Session& session,
