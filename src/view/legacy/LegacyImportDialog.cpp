@@ -8,6 +8,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/theme/ModernistMetrics.h"
 
 namespace
 {
@@ -22,7 +23,6 @@ namespace
     };
 
     constexpr int kDialogWidth = 720;
-    constexpr int kDialogHeight = 520;
 
     template<typename Parent>
     QTreeWidgetItem* LineUnder(Parent* parent)
@@ -75,7 +75,6 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
     : QDialog(parent), viewModel_(viewModel)
 {
     setWindowTitle(tr("Import from MSFS Addons Linker"));
-    resize(kDialogWidth, kDialogHeight);
 
     auto* layout = new QVBoxLayout(this);
 
@@ -90,6 +89,7 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
     tree_->setColumnCount(2);
     tree_->setHeaderLabels({tr("Proposal"), tr("Status")});
     tree_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    tree_->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     layout->addWidget(tree_, 1);
 
     auto* buttons = new QDialogButtonBox(this);
@@ -106,6 +106,8 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
             });
 
     Fill();
+
+    SizeToTheContent(*this, *layout, kDialogWidth);
 }
 
 void LegacyImportDialog::Fill()
