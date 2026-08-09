@@ -12,8 +12,10 @@
 
 namespace
 {
-    std::filesystem::path
-    CarriedTo(const std::filesystem::path& relativePath, const std::string& moved, const std::filesystem::path& landing)
+    std::filesystem::path CarriedTo(const std::filesystem::path& relativePath,
+                                    const std::string& moved,
+                                    const std::size_t partsMoved,
+                                    const std::filesystem::path& landing)
     {
         const std::string key = ComparablePath(relativePath);
 
@@ -24,7 +26,7 @@ namespace
 
         if (key.size() > moved.size() && key.compare(0, moved.size(), moved) == 0 && key[moved.size()] == '/')
         {
-            return landing / PathFromUtf8(key.substr(moved.size() + 1));
+            return landing / TailBelow(relativePath, partsMoved);
         }
 
         return relativePath;
@@ -35,14 +37,16 @@ namespace
                            const std::filesystem::path& from,
                            const std::filesystem::path& to)
     {
-        const std::string moved = ComparablePath(RelativeToLibrary(library, from));
+        const std::filesystem::path leaving = RelativeToLibrary(library, from);
+        const std::string moved = ComparablePath(leaving);
+        const std::size_t partsMoved = PartsIn(leaving);
         const std::filesystem::path landing = RelativeToLibrary(library, to);
 
         for (DestinationOverride& known : profile.destinationOverrides)
         {
             if (known.libraryId == library.id)
             {
-                known.relativePath = CarriedTo(known.relativePath, moved, landing);
+                known.relativePath = CarriedTo(known.relativePath, moved, partsMoved, landing);
             }
         }
 
@@ -50,7 +54,7 @@ namespace
         {
             if (known.libraryId == library.id)
             {
-                known.relativePath = CarriedTo(known.relativePath, moved, landing);
+                known.relativePath = CarriedTo(known.relativePath, moved, partsMoved, landing);
             }
         }
     }

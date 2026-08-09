@@ -2,7 +2,9 @@
 #define FS_ORGANIZER_DOMAIN_SUPPORT_PATH_UTILS_H
 
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
+#include <iterator>
 #include <string>
 
 #include "domain/support/CaseFolding.h"
@@ -62,6 +64,28 @@
     const std::size_t separator = key.find_last_of('/');
 
     return separator == std::string::npos ? key : key.substr(separator + 1);
+}
+
+[[nodiscard]] inline std::size_t PartsIn(const std::filesystem::path& path)
+{
+    return static_cast<std::size_t>(std::distance(path.begin(), path.end()));
+}
+
+[[nodiscard]] inline std::filesystem::path TailBelow(const std::filesystem::path& path, const std::size_t partsAbove)
+{
+    auto part = path.begin();
+    for (std::size_t skipped = 0; skipped < partsAbove && part != path.end(); ++skipped)
+    {
+        ++part;
+    }
+
+    std::filesystem::path tail;
+    for (; part != path.end(); ++part)
+    {
+        tail /= *part;
+    }
+
+    return tail;
 }
 
 [[nodiscard]] inline std::filesystem::path PathUnder(const std::filesystem::path& root,

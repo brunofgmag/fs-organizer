@@ -27,7 +27,7 @@ std::filesystem::path RelativeToLibrary(const Library& library, const std::files
     const std::string folder = ComparablePath(path);
     const std::string root = ComparablePath(library.path);
 
-    return folder.size() > root.size() ? folder.substr(root.size() + 1) : std::string{};
+    return folder.size() > root.size() ? TailBelow(path, PartsIn(library.path)) : std::filesystem::path{};
 }
 
 AddonId IdentityOf(const SimulatorProfile& profile, const std::filesystem::path& addonFolder)

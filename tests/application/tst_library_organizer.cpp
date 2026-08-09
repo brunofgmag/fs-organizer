@@ -46,6 +46,7 @@ namespace
         static void TheLibraryRootIsNeverRemovedAsIfItWereACategory();
         static void NoCategoryIsRemovedWhileTheSimulatorIsRunning();
         static void RenamingACategoryCarriesItsEnabledAddonsAlong();
+        static void AnOverrideCarriedByARenameKeepsTheSpellingItWasWrittenWith();
     };
 }
 
@@ -447,6 +448,18 @@ void LibraryOrganizerTest::RenamingACategoryCarriesItsEnabledAddonsAlong()
     QVERIFY(!f.fileSystem.Exists(kAircrafts));
     QVERIFY(f.fileSystem.IsLink(kLink));
     QCOMPARE(f.fileSystem.LinkTarget(kLink).value(), std::filesystem::path{"D:/Library/Airplanes/aerosoft-crj"});
+}
+
+void LibraryOrganizerTest::AnOverrideCarriedByARenameKeepsTheSpellingItWasWrittenWith()
+{
+    Fixture f;
+    f.EnableTheAddonIn(kDestination);
+    f.profile.destinationOverrides.push_back(
+        {.libraryId = "lib-1", .relativePath = "Aircrafts/Aerosoft-CRJ", .destination = kOtherDestination});
+
+    QCOMPARE(f.organizer.RenameCategory(f.profile, kAircrafts, "Airplanes").result, FileResult::Completed);
+
+    QCOMPARE(f.profile.destinationOverrides.front().relativePath, std::filesystem::path{"Airplanes/Aerosoft-CRJ"});
 }
 
 QTEST_APPLESS_MAIN(LibraryOrganizerTest)
