@@ -848,6 +848,7 @@ if (WIN32)
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
             tests/support/DeepPaths.h
+            tests/support/EnumPrinting.h
             tests/support/PathPrinting.h)
 
     target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)

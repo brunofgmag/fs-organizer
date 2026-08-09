@@ -92,7 +92,7 @@ DestinationCheck SetupService::CheckDestination(const std::filesystem::path& pat
         return DestinationCheck::RejectedMissing;
     }
 
-    if (!filesystemProbe_.ProbeWritable(path))
+    if (!ItAcceptsWrites(filesystemProbe_.ProbeWritable(path)))
     {
         return DestinationCheck::RejectedNotWritable;
     }

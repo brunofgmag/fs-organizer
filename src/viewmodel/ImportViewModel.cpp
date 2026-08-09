@@ -165,11 +165,14 @@ void ImportViewModel::GiveBack(const std::vector<std::filesystem::path>& addonFo
         {
             for (const std::filesystem::path& addonFolder : addonFolders)
             {
-                const FileResult result = cancelled_
-                    ? FileResult::Cancelled
-                    : service_.GiveBack(profile, entries, addonFolder, OnProgressOfFolder(++folder_), OnStep());
+                if (cancelled_)
+                {
+                    landed->push_back(FileOperationResult{.path = addonFolder, .result = FileResult::Cancelled});
+                    continue;
+                }
 
-                landed->push_back(FileOperationResult{.path = addonFolder, .result = result});
+                landed->push_back(
+                    service_.GiveBack(profile, entries, addonFolder, OnProgressOfFolder(++folder_), OnStep()));
             }
         },
         [this, landed]

@@ -67,6 +67,7 @@ namespace
         case OperationKind::ImportFromAnotherProgram: return "importFromAnotherProgram";
         case OperationKind::GiveBackToAnotherProgram: return "giveBackToAnotherProgram";
         case OperationKind::UndoTheInterruptedSwap: return "undoTheInterruptedSwap";
+        case OperationKind::RestoreOverTheOccupant: return "restoreOverTheOccupant";
         }
 
         return "unknown";

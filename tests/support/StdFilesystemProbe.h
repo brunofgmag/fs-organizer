@@ -124,9 +124,9 @@ public:
         return true;
     }
 
-    [[nodiscard]] bool ProbeWritable(const std::filesystem::path& path) const override
+    [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override
     {
-        return TargetDirectoryExists(path);
+        return TargetDirectoryExists(path) ? WriteAccess::ItAccepts : WriteAccess::TheFolderIsNotThere;
     }
 
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override

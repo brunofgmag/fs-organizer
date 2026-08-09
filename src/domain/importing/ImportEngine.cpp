@@ -284,9 +284,10 @@ ImportOutcome ImportEngine::CheckTheFolderWeAreGivingBack(const GiveBackRequest&
         return ImportOutcome::Stopped(FileResult::CouldNotReadTheSource);
     }
 
-    if (!filesystemProbe_.ProbeWritable(request.externalPath.parent_path()))
+    if (const WriteAccess access = filesystemProbe_.ProbeWritable(request.externalPath.parent_path());
+        !ItAcceptsWrites(access))
     {
-        return ImportOutcome::Stopped(FileResult::CannotWriteInTheOtherProgramsFolder);
+        return ImportOutcome::Stopped(FileResult::CannotWriteInTheOtherProgramsFolder, access);
     }
 
     if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(request.externalPath))
@@ -385,9 +386,10 @@ ImportOutcome ImportEngine::CheckTheSource(const SimulatorProfile& profile, cons
 ImportOutcome ImportEngine::PrepareTheOtherProgramsFolder(const std::filesystem::path& externalSource,
                                                           const std::filesystem::path& target) const
 {
-    if (!filesystemProbe_.ProbeWritable(externalSource.parent_path()))
+    if (const WriteAccess access = filesystemProbe_.ProbeWritable(externalSource.parent_path());
+        !ItAcceptsWrites(access))
     {
-        return ImportOutcome::Stopped(FileResult::CannotWriteInTheOtherProgramsFolder);
+        return ImportOutcome::Stopped(FileResult::CannotWriteInTheOtherProgramsFolder, access);
     }
 
     if (!sidecars_.Write(ExternalSidecarPathFor(target), TextOfTheExternalOrigin(externalSource)))

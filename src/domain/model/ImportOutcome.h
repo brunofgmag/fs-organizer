@@ -2,18 +2,24 @@
 #define FS_ORGANIZER_DOMAIN_MODEL_IMPORT_OUTCOME_H
 
 #include "domain/model/FileResult.h"
+#include "domain/model/WriteAccess.h"
 
 class ImportOutcome
 {
 public:
     [[nodiscard]] static ImportOutcome Completed()
     {
-        return ImportOutcome{FileResult::Completed};
+        return ImportOutcome{FileResult::Completed, WriteAccess::ItAccepts};
     }
 
     [[nodiscard]] static ImportOutcome Stopped(const FileResult result)
     {
-        return ImportOutcome{result};
+        return ImportOutcome{result, WriteAccess::ItAccepts};
+    }
+
+    [[nodiscard]] static ImportOutcome Stopped(const FileResult result, const WriteAccess access)
+    {
+        return ImportOutcome{result, access};
     }
 
     [[nodiscard]] bool Succeeded() const
@@ -26,12 +32,18 @@ public:
         return result_;
     }
 
+    [[nodiscard]] WriteAccess Access() const
+    {
+        return access_;
+    }
+
 private:
-    explicit ImportOutcome(const FileResult result) : result_(result)
+    ImportOutcome(const FileResult result, const WriteAccess access) : result_(result), access_(access)
     {
     }
 
     FileResult result_;
+    WriteAccess access_;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_IMPORT_OUTCOME_H

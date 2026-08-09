@@ -17,9 +17,25 @@
 #include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
 #include "domain/model/QuarantineOrigin.h"
+#include "domain/model/WriteAccess.h"
 
 namespace QTest
 {
+    template<>
+    inline char* toString(const WriteAccess& t)
+    {
+        switch (t)
+        {
+        case WriteAccess::ItAccepts: return qstrdup("ItAccepts");
+        case WriteAccess::TheFolderIsNotThere: return qstrdup("TheFolderIsNotThere");
+        case WriteAccess::PermissionIsDenied: return qstrdup("PermissionIsDenied");
+        case WriteAccess::TheVolumeIsReadOnly: return qstrdup("TheVolumeIsReadOnly");
+        case WriteAccess::ItRefusedForAnotherReason: return qstrdup("ItRefusedForAnotherReason");
+        }
+
+        return qstrdup("WriteAccess(?)");
+    }
+
     template<>
     inline char* toString(const ProposedState& t)
     {
@@ -204,6 +220,7 @@ namespace QTest
         case OperationKind::ImportFromAnotherProgram: return qstrdup("ImportFromAnotherProgram");
         case OperationKind::GiveBackToAnotherProgram: return qstrdup("GiveBackToAnotherProgram");
         case OperationKind::UndoTheInterruptedSwap: return qstrdup("UndoTheInterruptedSwap");
+        case OperationKind::RestoreOverTheOccupant: return qstrdup("RestoreOverTheOccupant");
         }
 
         return qstrdup("OperationKind(?)");
