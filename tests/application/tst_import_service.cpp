@@ -671,9 +671,10 @@ void ImportServiceTest::GivingAnAddonBackTakesTheRecordBesideItAway()
     Fixture f;
     AManagedExternal(f);
 
-    const FileResult result = f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {});
+    const FileOperationResult result = f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {});
 
-    QCOMPARE(result, FileResult::Completed);
+    QCOMPARE(result.result, FileResult::Completed);
+    QCOMPARE(result.path, kVendorInLibrary);
     QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
     QVERIFY(!f.fileSystem.IsLink(kVendorFolder));
     QVERIFY(!f.fileSystem.Exists(kVendorInLibrary));
@@ -687,7 +688,7 @@ void ImportServiceTest::AnAddonThatNeverCameFromAnotherProgramIsNotGivenBack()
     Fixture f;
     f.AddBothCopies();
 
-    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kInLibrary, {}), FileResult::TheOriginIsUnknown);
+    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kInLibrary, {}).result, FileResult::TheOriginIsUnknown);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
 }
 
@@ -697,7 +698,8 @@ void ImportServiceTest::NothingIsGivenBackWhileTheSimulatorIsRunning()
     AManagedExternal(f);
     f.processProbe.ReportTheSimulatorAsRunning();
 
-    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {}), FileResult::TheSimulatorIsRunning);
+    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {}).result,
+             FileResult::TheSimulatorIsRunning);
     QVERIFY(f.fileSystem.IsLink(kVendorFolder));
     QVERIFY(f.fileSystem.Exists(kVendorInLibrary / "manifest.json"));
 }

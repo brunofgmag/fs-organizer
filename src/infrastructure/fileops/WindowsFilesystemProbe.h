@@ -20,7 +20,7 @@ public:
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;
 
-    [[nodiscard]] bool ProbeWritable(const std::filesystem::path& path) const override;
+    [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override;
 
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override;
 

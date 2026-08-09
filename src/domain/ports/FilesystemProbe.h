@@ -10,6 +10,7 @@
 
 #include "domain/model/FileFingerprint.h"
 #include "domain/model/RecycleBinRoom.h"
+#include "domain/model/WriteAccess.h"
 
 class FilesystemProbe
 {
@@ -31,7 +32,7 @@ public:
 
     [[nodiscard]] virtual bool VolumeIsAvailable(const std::filesystem::path& path) const = 0;
 
-    [[nodiscard]] virtual bool ProbeWritable(const std::filesystem::path& path) const = 0;
+    [[nodiscard]] virtual WriteAccess ProbeWritable(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const = 0;
 

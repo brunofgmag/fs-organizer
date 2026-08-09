@@ -39,6 +39,12 @@ struct TakenPlace
 class ProfileService
 {
 public:
+    struct LinksOnDisk
+    {
+        std::vector<DestinationEntry> entries{};
+        EnabledAddons enabled{};
+    };
+
     ProfileService(const CatalogScanner& catalog,
                    const FilesystemProbe& filesystemProbe,
                    const SidecarStore& sidecars,
@@ -57,6 +63,8 @@ public:
     [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile,
                                                                const std::vector<TreeNode>& libraries = {}) const;
 
+    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile) const;
+
     [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
                                                       const std::vector<const TreeNode*>& nodes) const;
 
@@ -67,6 +75,11 @@ public:
 
     [[nodiscard]] LinkBatchReport
     SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& shown, const LinkBatch& batch);
+
+    [[nodiscard]] LinkBatchReport SetEnabled(const SimulatorProfile& profile,
+                                             const ProfileSnapshot& shown,
+                                             const LinkBatch& batch,
+                                             const LinksOnDisk& onDisk);
 
     [[nodiscard]] LinkBatchReport
     Relink(const SimulatorProfile& profile, const ProfileSnapshot& shown, const std::vector<const TreeNode*>& nodes);
@@ -88,14 +101,6 @@ private:
         std::filesystem::path addonFolder;
         std::filesystem::path linkPath;
     };
-
-    struct LinksOnDisk
-    {
-        std::vector<DestinationEntry> entries;
-        EnabledAddons enabled;
-    };
-
-    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile) const;
 
     [[nodiscard]] static std::size_t AddonsThatDrifted(const std::vector<const TreeNode*>& nodes,
                                                        const EnabledAddons& shown,

@@ -283,8 +283,14 @@ LinkOperationResult ProfileService::Run(const Step& step) const
 LinkBatchReport
 ProfileService::SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& shown, const LinkBatch& batch)
 {
-    const LinksOnDisk onDisk = ReadLinksNow(profile);
+    return SetEnabled(profile, shown, batch, ReadLinksNow(profile));
+}
 
+LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
+                                           const ProfileSnapshot& shown,
+                                           const LinkBatch& batch,
+                                           const LinksOnDisk& onDisk)
+{
     std::vector<const TreeNode*> touched = batch.toDisable;
     touched.insert(touched.end(), batch.toEnable.begin(), batch.toEnable.end());
     const std::size_t drifted = AddonsThatDrifted(touched, shown.enabled, onDisk.enabled);

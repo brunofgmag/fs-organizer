@@ -45,6 +45,8 @@ namespace
         static void TheOtherProgramKeepsFindingItsFolderNowAsALinkIntoTheLibrary();
         static void TheEntryInTheDestinationEndsUpPointingAtTheLibrary();
         static void AFolderTheOtherProgramWillNotLetUsWriteInIsNeverEmptied();
+        static void TheRefusedImportCarriesWhichImpedimentTheFolderRaised();
+        static void AGiveBackRefusedByTheFolderCarriesTheImpedimentToo();
         static void TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouched();
         static void AnOriginThatCannotBeRecordedStopsTheImportBeforeItMoves();
         static void AnInterruptedImportNeverLeavesTheOtherProgramWithoutItsContent();
@@ -492,6 +494,18 @@ void ImportEngineTest::AFolderTheOtherProgramWillNotLetUsWriteInIsNeverEmptied()
     QVERIFY(!f.fileSystem.Exists(kExternalSidecar));
 }
 
+void ImportEngineTest::TheRefusedImportCarriesWhichImpedimentTheFolderRaised()
+{
+    ExternalFixture denied;
+    denied.fileSystem.DenyPermissionOn(kVendorFolder.parent_path());
+
+    ExternalFixture readOnly;
+    readOnly.fileSystem.MarkReadOnly(kVendorFolder.parent_path());
+
+    QCOMPARE(denied.engine.Import(denied.profile, denied.request, {}).Access(), WriteAccess::PermissionIsDenied);
+    QCOMPARE(readOnly.engine.Import(readOnly.profile, readOnly.request, {}).Access(), WriteAccess::TheVolumeIsReadOnly);
+}
+
 void ImportEngineTest::TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouched()
 {
     ExternalFixture f;
@@ -651,6 +665,17 @@ void ImportEngineTest::AGiveBackResumesWhenTheOtherProgramsFolderIsAlreadyGone()
 
     QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
     QVERIFY(f.fileSystem.Exists(kVendorFolder / "manifest.json"));
+}
+
+void ImportEngineTest::AGiveBackRefusedByTheFolderCarriesTheImpedimentToo()
+{
+    GiveBackFixture f;
+    f.fileSystem.DenyPermissionOn(kVendorFolder.parent_path());
+
+    const ImportOutcome outcome = f.engine.GiveBack(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::CannotWriteInTheOtherProgramsFolder);
+    QCOMPARE(outcome.Access(), WriteAccess::PermissionIsDenied);
 }
 
 QTEST_APPLESS_MAIN(ImportEngineTest)

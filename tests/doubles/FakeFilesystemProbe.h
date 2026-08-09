@@ -69,6 +69,11 @@ public:
         return std::ranges::find(enumerated, path) != enumerated.end();
     }
 
+    [[nodiscard]] std::size_t TimesEnumerated(const std::filesystem::path& path) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(enumerated, path));
+    }
+
     mutable std::vector<std::filesystem::path> enumerated;
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override
@@ -76,9 +81,9 @@ public:
         return fileSystem_.VolumeIsAvailable(path);
     }
 
-    [[nodiscard]] bool ProbeWritable(const std::filesystem::path& path) const override
+    [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override
     {
-        return fileSystem_.IsWritable(path);
+        return fileSystem_.WriteAccessOn(path);
     }
 
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override

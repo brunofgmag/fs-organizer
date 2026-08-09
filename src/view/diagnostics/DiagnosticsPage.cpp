@@ -11,6 +11,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 
+#include "domain/model/RecycleLimits.h"
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
@@ -322,12 +323,15 @@ QWidget* DiagnosticsPage::CreateSizePane()
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
 
+    longestPaths_ = Quiet({}, pane);
+
     auto* layout = new QVBoxLayout(pane);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
     layout->addLayout(header);
     layout->addLayout(progress);
     layout->addWidget(sizes_, 1);
+    layout->addWidget(longestPaths_);
     layout->addWidget(Quiet(tr("A managed entry in a destination is a link and holds no bytes of its own. What is "
                                "counted here is where the addon actually lives."),
                             pane));
@@ -347,6 +351,7 @@ void DiagnosticsPage::RetranslateUi() const
     sizes_->setHeaderLabels({tr("Category"), tr("Addons"), tr("Size")});
     sizeCost_->setText(tr("walks the whole tree, and that takes seconds"));
 
+    ShowTheLongestPaths();
     DressTheRail();
 }
 
@@ -453,8 +458,34 @@ void DiagnosticsPage::ShowWhatWasMeasured() const
 
     sizes_->setSortingEnabled(true);
 
+    ShowTheLongestPaths();
+
     DressTheSizeToolbar();
     DressTheRail();
+}
+
+void DiagnosticsPage::ShowTheLongestPaths() const
+{
+    QStringList said;
+
+    for (const MeasuredNode& library : viewModel_.Size().libraries)
+    {
+        if (!library.measured)
+        {
+            continue;
+        }
+
+        const QString measured =
+            tr("%1 · longest path %2")
+                .arg(AsText(library.path), tr("%n character", nullptr, static_cast<int>(library.longestEntry)));
+
+        said << (TheRecycleBinReaches(library.longestEntry)
+                     ? measured
+                     : tr("%1, past the %2 the Recycle Bin stops at").arg(measured).arg(kTheRecycleBinStopsAt));
+    }
+
+    longestPaths_->setText(said.join(QStringLiteral("\n")));
+    longestPaths_->setVisible(!said.isEmpty());
 }
 
 void DiagnosticsPage::ShowProgress(const QString& folder, const int measured, const int total) const

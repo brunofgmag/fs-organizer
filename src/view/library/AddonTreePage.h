@@ -136,6 +136,8 @@ private:
 
     void BrowseForLibrary();
 
+    [[nodiscard]] bool TheRootIsWorthKeeping(const std::filesystem::path& root);
+
     AddonTreeViewModel& viewModel_;
     DeletionViewModel& deletion_;
     ImportViewModel& importViewModel_;

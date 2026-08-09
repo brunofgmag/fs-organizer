@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "domain/model/WriteAccess.h"
+
 class InMemoryFileSystem
 {
 public:
@@ -76,12 +78,24 @@ public:
 
     void MarkReadOnly(const std::filesystem::path& path)
     {
-        readOnlyPaths_.insert(Key(path));
+        refusedPaths_[Key(path)] = WriteAccess::TheVolumeIsReadOnly;
     }
 
-    [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const
+    void DenyPermissionOn(const std::filesystem::path& path)
     {
-        return IsDirectory(path) && !readOnlyPaths_.contains(Key(path));
+        refusedPaths_[Key(path)] = WriteAccess::PermissionIsDenied;
+    }
+
+    [[nodiscard]] WriteAccess WriteAccessOn(const std::filesystem::path& path) const
+    {
+        if (!IsDirectory(path))
+        {
+            return WriteAccess::TheFolderIsNotThere;
+        }
+
+        const auto refused = refusedPaths_.find(Key(path));
+
+        return refused == refusedPaths_.end() ? WriteAccess::ItAccepts : refused->second;
     }
 
     void SetFreeSpace(const std::filesystem::path& path, const std::uintmax_t bytes)
@@ -432,7 +446,7 @@ private:
     std::vector<std::string> recycled_;
     std::set<std::string> unmeasurableVolumes_;
     std::set<std::string> unavailableVolumes_;
-    std::set<std::string> readOnlyPaths_;
+    std::map<std::string, WriteAccess> refusedPaths_;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H

@@ -93,11 +93,11 @@ public:
     [[nodiscard]] std::vector<FileOperationResult>
     DiscardLeftovers(const SimulatorProfile& profile, const std::vector<StagingLeftover>& leftovers) const;
 
-    [[nodiscard]] FileResult GiveBack(const SimulatorProfile& profile,
-                                      const std::vector<DestinationEntry>& entries,
-                                      const std::filesystem::path& addonFolder,
-                                      const std::function<bool(const CopyProgress&)>& onProgress,
-                                      const std::function<void(OperationKind)>& onStep = {}) const;
+    [[nodiscard]] FileOperationResult GiveBack(const SimulatorProfile& profile,
+                                               const std::vector<DestinationEntry>& entries,
+                                               const std::filesystem::path& addonFolder,
+                                               const std::function<bool(const CopyProgress&)>& onProgress,
+                                               const std::function<void(OperationKind)>& onStep = {}) const;
 
 private:
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
@@ -125,10 +125,13 @@ private:
 
     [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile,
                                         const QuarantinedItem& item,
-                                        const std::filesystem::path& recordedFrom = {}) const;
+                                        const std::filesystem::path& recordedFrom = {},
+                                        OperationKind kind = OperationKind::RestoreFromQuarantine) const;
 
-    [[nodiscard]] SwapResult
-    TheItemComesBack(const SimulatorProfile& profile, const QuarantinedItem& item, SwapResult swapped) const;
+    [[nodiscard]] SwapResult TheItemComesBack(const SimulatorProfile& profile,
+                                              const QuarantinedItem& item,
+                                              SwapResult swapped,
+                                              OperationKind kind) const;
 
     [[nodiscard]] FileResult DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
 

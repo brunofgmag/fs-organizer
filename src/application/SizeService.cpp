@@ -79,7 +79,11 @@ namespace
     {
         const MeasuredFolder weighed = WeighOne(walk, node.path);
 
-        return MeasuredNode{.kind = node.kind, .path = node.path, .bytes = weighed.bytes, .measured = weighed.measured};
+        return MeasuredNode{.kind = node.kind,
+                            .path = node.path,
+                            .bytes = weighed.bytes,
+                            .measured = weighed.measured,
+                            .longestEntry = weighed.longestEntry};
     }
 
     [[nodiscard]] MeasuredNode MeasureTree(Walk& walk, const TreeNode& node)
@@ -96,6 +100,7 @@ namespace
             measured.children.push_back(MeasureTree(walk, child));
             measured.bytes += measured.children.back().bytes;
             measured.measured = measured.measured && measured.children.back().measured;
+            measured.longestEntry = std::max(measured.longestEntry, measured.children.back().longestEntry);
         }
 
         return measured;

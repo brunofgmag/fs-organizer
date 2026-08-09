@@ -57,6 +57,15 @@ namespace
             && !(next.addonId == records[first].addonId);
     }
 
+    bool AQuarantineSwapStartsAt(const std::vector<OperationRecord>& records, const std::size_t first)
+    {
+        const bool quarantined = records[first].kind == OperationKind::QuarantineFromLibrary
+            || records[first].kind == OperationKind::QuarantineFromDestination;
+
+        return quarantined && first + 1 < records.size()
+            && records[first + 1].kind == OperationKind::RestoreOverTheOccupant;
+    }
+
     JournalEntry EntryOf(const std::vector<OperationRecord>& records,
                          const std::size_t first,
                          const std::size_t taken,
@@ -126,7 +135,7 @@ std::vector<JournalEntry> GroupOperations(const std::vector<OperationRecord>& re
             continue;
         }
 
-        if (ASwapStartsAt(records, first))
+        if (ASwapStartsAt(records, first) || AQuarantineSwapStartsAt(records, first))
         {
             entries.push_back(EntryOf(records, first, 2, JournalEntryKind::Swap));
             first += 2;

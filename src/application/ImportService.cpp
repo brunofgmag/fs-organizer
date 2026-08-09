@@ -210,8 +210,10 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
             continue;
         }
 
-        results.push_back(ImportOperationResult{
-            .request = request, .result = engine_.Import(profile, request, onProgress, onStep).Result()});
+        const ImportOutcome outcome = engine_.Import(profile, request, onProgress, onStep);
+
+        results.push_back(
+            ImportOperationResult{.request = request, .result = outcome.Result(), .writeAccess = outcome.Access()});
     }
 
     return results;
@@ -563,7 +565,8 @@ std::vector<RestorePlace> ImportService::PlacesFor(const SimulatorProfile& profi
 
 FileResult ImportService::RestoreOne(const SimulatorProfile& profile,
                                      const QuarantinedItem& item,
-                                     const std::filesystem::path& recordedFrom) const
+                                     const std::filesystem::path& recordedFrom,
+                                     const OperationKind kind) const
 {
     const bool moved = files_.Move(item.path, item.origin);
     const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotRestore;
@@ -573,8 +576,8 @@ FileResult ImportService::RestoreOne(const SimulatorProfile& profile,
         ForgetTheOriginOf(item.path);
     }
 
-    Record(profile, OperationKind::RestoreFromQuarantine, item.origin, recordedFrom.empty() ? item.path : recordedFrom,
-           item.origin, result, item.source);
+    Record(profile, kind, item.origin, recordedFrom.empty() ? item.path : recordedFrom, item.origin, result,
+           item.source);
 
     return result;
 }
@@ -658,7 +661,7 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
 
     if (check.CanProceed())
     {
-        return TheItemComesBack(profile, item, swapped);
+        return TheItemComesBack(profile, item, swapped, OperationKind::RestoreFromQuarantine);
     }
 
     const Resolution goes = WhereTheOccupantGoes(profile, check.occupant);
@@ -706,14 +709,16 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
         return swapped;
     }
 
-    return TheItemComesBack(profile, waiting, swapped);
+    return TheItemComesBack(profile, waiting, swapped, OperationKind::RestoreOverTheOccupant);
 }
 
-SwapResult
-ImportService::TheItemComesBack(const SimulatorProfile& profile, const QuarantinedItem& item, SwapResult swapped) const
+SwapResult ImportService::TheItemComesBack(const SimulatorProfile& profile,
+                                           const QuarantinedItem& item,
+                                           SwapResult swapped,
+                                           const OperationKind kind) const
 {
     swapped.stoppedAt = SwapStep::RestoreTheItem;
-    swapped.result = RestoreOne(profile, item, swapped.item);
+    swapped.result = RestoreOne(profile, item, swapped.item, kind);
     swapped.inTheLibrary = swapped.Succeeded() ? item.origin : std::filesystem::path{};
 
     return swapped;
@@ -736,34 +741,34 @@ std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& 
     return results;
 }
 
-FileResult ImportService::GiveBack(const SimulatorProfile& profile,
-                                   const std::vector<DestinationEntry>& entries,
-                                   const std::filesystem::path& addonFolder,
-                                   const std::function<bool(const CopyProgress&)>& onProgress,
-                                   const std::function<void(OperationKind)>& onStep) const
+FileOperationResult ImportService::GiveBack(const SimulatorProfile& profile,
+                                            const std::vector<DestinationEntry>& entries,
+                                            const std::filesystem::path& addonFolder,
+                                            const std::function<bool(const CopyProgress&)>& onProgress,
+                                            const std::function<void(OperationKind)>& onStep) const
 {
     if (processProbe_.SimulatorIsRunning())
     {
-        return FileResult::TheSimulatorIsRunning;
+        return FileOperationResult{.path = addonFolder, .result = FileResult::TheSimulatorIsRunning};
     }
 
     const std::filesystem::path externalPath = ExternalOriginOf(ExternalAddonsOf(profile), addonFolder);
     if (externalPath.empty())
     {
-        return FileResult::TheOriginIsUnknown;
+        return FileOperationResult{.path = addonFolder, .result = FileResult::TheOriginIsUnknown};
     }
 
     const GiveBackRequest request{
         .addonFolder = addonFolder, .externalPath = externalPath, .links = LinksPointingAt(entries, addonFolder)};
 
-    const FileResult result = engine_.GiveBack(profile, request, onProgress, onStep).Result();
+    const ImportOutcome outcome = engine_.GiveBack(profile, request, onProgress, onStep);
 
-    if (Succeeded(result))
+    if (outcome.Succeeded())
     {
         static_cast<void>(sidecars_.Forget(ExternalSidecarPathFor(addonFolder)));
     }
 
-    return result;
+    return FileOperationResult{.path = addonFolder, .result = outcome.Result(), .writeAccess = outcome.Access()};
 }
 
 std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& profile) const
@@ -939,8 +944,10 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
             continue;
         }
 
-        results.push_back(ImportOperationResult{
-            .request = request, .result = engine_.Import(profile, request, onProgress, onStep).Result()});
+        const ImportOutcome outcome = engine_.Import(profile, request, onProgress, onStep);
+
+        results.push_back(
+            ImportOperationResult{.request = request, .result = outcome.Result(), .writeAccess = outcome.Access()});
     }
 
     return results;
