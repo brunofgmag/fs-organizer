@@ -44,7 +44,9 @@ public:
     [[nodiscard]] FileResult ResolveConflict(const SimulatorProfile& profile,
                                              const std::vector<DestinationEntry>& entries,
                                              const CopyConflict& conflict,
-                                             ConflictChoice choice) const;
+                                             ConflictChoice choice,
+                                             const std::function<bool(const CopyProgress&)>& onProgress = {},
+                                             const std::function<void(OperationKind)>& onStep = {}) const;
 
     [[nodiscard]] ConflictDetails DetailsOf(const std::vector<DestinationEntry>& entries,
                                             const CopyConflict& conflict) const;
@@ -97,7 +99,14 @@ private:
     [[nodiscard]] FileResult QuarantineInto(const std::filesystem::path& quarantine,
                                             const std::filesystem::path& loser,
                                             const AddonId& addon,
-                                            OperationKind kind) const;
+                                            OperationKind kind,
+                                            const std::function<bool(const CopyProgress&)>& onProgress = {},
+                                            const std::function<void(OperationKind)>& onStep = {}) const;
+
+    [[nodiscard]] FileResult TheWinnerTakesTheirPlaces(const AddonId& addon,
+                                                       const CopyConflict& conflict,
+                                                       OperationKind linkKind,
+                                                       const std::vector<std::filesystem::path>& places) const;
 
     void ForgetTheOriginOf(const std::filesystem::path& item) const;
 
@@ -114,6 +123,8 @@ private:
     TheItemComesBack(const SimulatorProfile& profile, const QuarantinedItem& item, SwapResult swapped) const;
 
     [[nodiscard]] FileResult DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
+
+    [[nodiscard]] std::vector<StagingLeftover> WhatAnImportLeftBehind(const SimulatorProfile& profile) const;
 
     [[nodiscard]] FileResult DiscardOneStaging(const SimulatorProfile& profile, const StagingLeftover& leftover) const;
 

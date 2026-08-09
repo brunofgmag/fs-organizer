@@ -224,7 +224,7 @@ void RestoreDialog::ShowHowManyWillGoBack() const
 
     restore_->setEnabled(going + replacing > 0);
 
-    const QString restored = tr("%n folder will be restored.", nullptr, going);
+    const QString restored = tr("%n folder will be restored.", nullptr, going + replacing);
 
     counted_->setText(replacing == 0 ? restored
                                      : restored + QStringLiteral(" ")

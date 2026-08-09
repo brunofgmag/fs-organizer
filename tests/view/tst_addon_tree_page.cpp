@@ -24,8 +24,10 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "application/DeletionService.h"
+#include "application/ImportService.h"
 #include "view/library/AddonTreePage.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/ImportViewModel.h"
 
 namespace
 {
@@ -180,6 +182,10 @@ namespace
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
         DeletionService deletionService{filesystemProbe, files, linking, classifier, processProbe, log, sizes};
         DeletionViewModel deletion{session, service, settings, deletionService, sizes};
+        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
+        ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files,
+                                    linking, log,          LinkType::Junction};
+        ImportViewModel importViewModel{importService, service, processProbe, session, runner};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)
@@ -226,7 +232,8 @@ namespace
 
     struct Screen
     {
-        explicit Screen(Fixture& fixture) : page(fixture.viewModel, fixture.deletion, fixture.model, fixture.notifier)
+        explicit Screen(Fixture& fixture)
+            : page(fixture.viewModel, fixture.deletion, fixture.importViewModel, fixture.model, fixture.notifier)
         {
             page.resize(900, 320);
             page.show();

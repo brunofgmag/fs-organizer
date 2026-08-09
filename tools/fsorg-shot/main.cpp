@@ -443,9 +443,9 @@ int main(int argc, char* argv[])
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
     const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
     DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
-    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, treeModel, notifier);
-
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
+
+    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);

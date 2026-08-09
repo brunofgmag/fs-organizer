@@ -25,6 +25,20 @@ struct GiveBackRequest
     std::vector<std::filesystem::path> links{};
 };
 
+struct QuarantineRequest
+{
+    AddonId addon{};
+    std::filesystem::path loser{};
+    std::filesystem::path quarantine{};
+    OperationKind kind = OperationKind::QuarantineFromDestination;
+};
+
+struct MeasuredSource
+{
+    ImportOutcome outcome = ImportOutcome::Stopped(FileResult::TheOutcomeIsUnknown);
+    std::vector<FileFingerprint> files{};
+};
+
 class ImportEngine
 {
 public:
@@ -46,7 +60,25 @@ public:
                                          const std::function<bool(const CopyProgress&)>& onProgress,
                                          const std::function<void(OperationKind)>& onStep = {}) const;
 
+    [[nodiscard]] ImportOutcome Quarantine(const QuarantineRequest& request,
+                                           const std::function<bool(const CopyProgress&)>& onProgress,
+                                           const std::function<void(OperationKind)>& onStep = {}) const;
+
 private:
+    [[nodiscard]] MeasuredSource MeasureTheSource(const std::filesystem::path& source,
+                                                  const std::filesystem::path& roomOn) const;
+
+    [[nodiscard]] ImportOutcome CopyAndVerify(const AddonId& addon,
+                                              const std::filesystem::path& source,
+                                              const std::filesystem::path& target,
+                                              const std::vector<FileFingerprint>& expected,
+                                              const std::function<bool(const CopyProgress&)>& onProgress,
+                                              const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] ImportOutcome PutIntoPlace(const AddonId& addon,
+                                             const std::filesystem::path& target,
+                                             const std::function<void(OperationKind)>& onStep) const;
+
     [[nodiscard]] ImportOutcome CheckTheSource(const SimulatorProfile& profile, const ImportRequest& request) const;
 
     [[nodiscard]] ImportOutcome CheckTheFolderWeAreGivingBack(const GiveBackRequest& request) const;

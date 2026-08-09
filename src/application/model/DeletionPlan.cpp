@@ -5,18 +5,6 @@
 #include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
 
-std::filesystem::path VolumeOf(const std::filesystem::path& path)
-{
-    const std::string text = WithGenericSeparators(AsUtf8(path));
-
-    if (text.size() >= 2 && text[1] == ':')
-    {
-        return PathFromUtf8(text.substr(0, 2));
-    }
-
-    return PathFromUtf8("/");
-}
-
 bool TheVolumeCanTake(const VolumeRoom& room)
 {
     return room.itRecycles && room.selected.has_value() && room.quota.has_value() && *room.selected <= *room.quota;

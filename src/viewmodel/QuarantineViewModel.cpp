@@ -131,7 +131,7 @@ std::vector<RestoreOffer> QuarantineViewModel::WhatRestoringWouldDo(const std::v
 void QuarantineViewModel::WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed)
 {
     sizes_.MeasureFolders(
-        {check.item.path, check.occupant}, caller_, Freshness::ReuseWhatIsKnown, {},
+        {check.item.path, check.occupant}, caller_, Freshness::MeasureAgain, {},
         [held = check.item.path, occupant = check.occupant,
          weighed = std::move(onWeighed)](const FolderSizeReport& report)
         {

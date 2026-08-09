@@ -10,6 +10,7 @@
 
 #include "application/model/QuarantinedItem.h"
 #include "application/model/SizeReport.h"
+#include "viewmodel/SelectionSize.h"
 
 class QuarantineModel final : public QAbstractTableModel
 {
@@ -48,6 +49,8 @@ public:
     [[nodiscard]] QString WhenAndHowBigItIs(const QuarantinedItem& item) const;
 
     [[nodiscard]] QString SizeOf(const QuarantinedItem& item) const;
+
+    [[nodiscard]] SelectionSize TallyOf(const QModelIndexList& rows) const;
 
     [[nodiscard]] QString WhenItWasQuarantined(const QuarantinedItem& item) const;
 

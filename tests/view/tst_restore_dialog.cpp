@@ -23,6 +23,7 @@ namespace
         static void TheCountedLineSeparatesWhatGoesBackFromWhatReplaces();
         static void ARowThatNeedsAPlaceIsStillAskedInsteadOfBeingOfferedASwap();
         static void ARefusedComparisonLeavesTheRowAsItWas();
+        static void TheTotalCountsTheReplacementsItSaysAreAmongThem();
     };
 
     const std::filesystem::path kHeld = "D:/Library/_fsorganizer-quarantine/simbridge";
@@ -145,6 +146,26 @@ void RestoreDialogTest::ARefusedComparisonLeavesTheRowAsItWas()
 
     QVERIFY(dialog.TheOnesReplacingWhatIsThere().empty());
     QVERIFY(dialog.Restorable().empty());
+}
+
+void RestoreDialogTest::TheTotalCountsTheReplacementsItSaysAreAmongThem()
+{
+    RestoreDialog dialog({ACollisionThatCanBeSwapped()}, AlwaysAgrees());
+
+    TheOfferIn(dialog)->click();
+
+    const QList<QLabel*> labels = dialog.findChildren<QLabel*>();
+    const auto counted = std::ranges::find_if(labels,
+                                              [](const QLabel* label)
+                                              {
+                                                  return label->text().contains(QStringLiteral("will be restored"));
+                                              });
+
+    QVERIFY(counted != labels.end());
+    QVERIFY(dialog.Restorable().empty());
+    QCOMPARE(dialog.TheOnesReplacingWhatIsThere().size(), std::size_t{1});
+    QVERIFY2(!(*counted)->text().startsWith(QStringLiteral("0 ")),
+             "the button treats a replacement as work, so the sentence beside it cannot count zero");
 }
 
 QTEST_MAIN(RestoreDialogTest)

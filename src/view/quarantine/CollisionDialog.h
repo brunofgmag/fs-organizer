@@ -17,6 +17,9 @@ public:
 
     void ShowTheSizes(const TwoSides& sides);
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
 private:
     [[nodiscard]] QLabel* AddTheSide(QGridLayout& grid, int column, const QString& title, const QString& version);
 

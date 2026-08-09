@@ -85,6 +85,11 @@ namespace
         static void NothingIsSwappedWhileTheSimulatorIsRunning();
         static void TheSwapJustRestoresWhenTheOccupantLeftOnItsOwn();
         static void ASecondHomonymFailsToQuarantineWithoutTouchingTheRecordOfTheFirst();
+        static void KeepingTheLibraryCopyOfAnExternalSendsTheVendorFolderToTheLibraryQuarantine();
+        static void TheVendorFolderIsLeftWhereItIsWhenTheLibraryVolumeHasNoRoomForIt();
+        static void CancellingTheCopyLeavesBothCopiesWhereTheyWere();
+        static void AHalfCopiedResolutionIsFoundInsideTheQuarantineAndOnlyOfferedTheDiscard();
+        static void AHalfCopiedResolutionIsNeverListedAsAQuarantinedAddon();
     };
 }
 
@@ -1342,6 +1347,111 @@ void ImportServiceTest::ASecondHomonymFailsToQuarantineWithoutTouchingTheRecordO
 
     QVERIFY(written.has_value());
     QCOMPARE(OriginFromText(*written)->origin, kInLibrary);
+}
+
+namespace
+{
+    const std::filesystem::path kVendorQuarantine = "D:/Library/_fsorganizer-quarantine/gsx-pro";
+
+    void ADivergentManagedExternal(Fixture& f)
+    {
+        AManagedExternal(f);
+
+        f.fileSystem.AddDirectory(kVendorFolder);
+        f.fileSystem.AddFile(kVendorFolder / "manifest.json", 3 * kMegabyte);
+    }
+
+    CopyConflict TheDivergence()
+    {
+        return CopyConflict{
+            .provenancePath = kVendorFolder, .libraryPath = kVendorInLibrary, .theProvenanceIsAnotherProgram = true};
+    }
+}
+
+void ImportServiceTest::KeepingTheLibraryCopyOfAnExternalSendsTheVendorFolderToTheLibraryQuarantine()
+{
+    Fixture f;
+    ADivergentManagedExternal(f);
+
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), TheDivergence(), ConflictChoice::KeepTheLibraryCopy);
+
+    QCOMPARE(result, FileResult::Completed);
+    QCOMPARE(f.fileSystem.FileSize(kVendorQuarantine / "manifest.json"), 3 * kMegabyte);
+    QVERIFY2(!f.fileSystem.Exists(StagingPathFor(kVendorQuarantine)), "the staging goes away once the copy lands");
+    QVERIFY2(f.fileSystem.IsLink(kVendorFolder), "the arrangement the divergence broke is the one that comes back");
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorFolder).value(), kVendorInLibrary);
+    QCOMPARE(f.fileSystem.FileSize(kVendorInLibrary / "manifest.json"), kMegabyte);
+
+    const std::optional<std::string> written = f.fileSystem.ContentsOf(SidecarPathFor(kVendorQuarantine));
+
+    QVERIFY(written.has_value());
+    QCOMPARE(OriginFromText(*written)->origin, kVendorFolder);
+}
+
+void ImportServiceTest::TheVendorFolderIsLeftWhereItIsWhenTheLibraryVolumeHasNoRoomForIt()
+{
+    Fixture f;
+    ADivergentManagedExternal(f);
+    f.fileSystem.SetFreeSpace(kLibrary, kMegabyte);
+
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), TheDivergence(), ConflictChoice::KeepTheLibraryCopy);
+
+    QCOMPARE(result, FileResult::NotEnoughFreeSpace);
+    QCOMPARE(f.fileSystem.FileSize(kVendorFolder / "manifest.json"), 3 * kMegabyte);
+    QVERIFY(!f.fileSystem.IsLink(kVendorFolder));
+    QVERIFY(!f.fileSystem.Exists(kVendorQuarantine));
+    QVERIFY2(!f.fileSystem.Exists(SidecarPathFor(kVendorQuarantine)),
+             "the origin record goes with the movement it announced");
+}
+
+void ImportServiceTest::CancellingTheCopyLeavesBothCopiesWhereTheyWere()
+{
+    Fixture f;
+    ADivergentManagedExternal(f);
+
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), TheDivergence(), ConflictChoice::KeepTheLibraryCopy,
+                                  [](const CopyProgress&)
+                                  {
+                                      return false;
+                                  });
+
+    QCOMPARE(result, FileResult::Cancelled);
+    QCOMPARE(f.fileSystem.FileSize(kVendorFolder / "manifest.json"), 3 * kMegabyte);
+    QCOMPARE(f.fileSystem.FileSize(kVendorInLibrary / "manifest.json"), kMegabyte);
+    QVERIFY(!f.fileSystem.Exists(StagingPathFor(kVendorQuarantine)));
+}
+
+void ImportServiceTest::AHalfCopiedResolutionIsFoundInsideTheQuarantineAndOnlyOfferedTheDiscard()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.fileSystem.AddFile(StagingPathFor(kVendorQuarantine) / "manifest.json", kMegabyte);
+
+    const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
+
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().staging, StagingPathFor(kVendorQuarantine));
+    QCOMPARE(leftovers.front().target, kVendorQuarantine);
+    QVERIFY(leftovers.front().theCopyResolvedAConflict);
+    QVERIFY2(!leftovers.front().CanBeResumed(), "half a conflict resolution is not half an import");
+
+    QCOMPARE(f.service.DiscardLeftovers(f.profile, leftovers).front().result, FileResult::Completed);
+    QVERIFY(!f.fileSystem.Exists(StagingPathFor(kVendorQuarantine)));
+}
+
+void ImportServiceTest::AHalfCopiedResolutionIsNeverListedAsAQuarantinedAddon()
+{
+    Fixture f;
+    f.QuarantineHolds(kHeldInLibrary, kInLibrary, kInLibrary);
+    f.fileSystem.AddFile(StagingPathFor(kVendorQuarantine) / "manifest.json", kMegabyte);
+
+    const std::vector<QuarantinedItem> items = f.service.Quarantined(f.profile);
+
+    QCOMPARE(items.size(), std::size_t{1});
+    QCOMPARE(items.front().path, kHeldInLibrary);
 }
 
 QTEST_APPLESS_MAIN(ImportServiceTest)

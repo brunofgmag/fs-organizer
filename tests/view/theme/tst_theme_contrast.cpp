@@ -59,7 +59,8 @@ namespace
     QList<DeclaredPair> DeclaredOutlinePairs()
     {
         return Wherever(kAccent, {kWindow, kChrome, kRaised}) + Wherever(kAccentWarm, {kWindow, kChrome, kRaised})
-            + Wherever(kEdge, {kWindow, kChrome, kRaised});
+            + Wherever(kEdge, {kWindow, kChrome, kRaised})
+            + Wherever(kText, {kWindow, kChrome, kRaised, kAccent, kAccentWarm});
     }
 
     struct NamedScheme

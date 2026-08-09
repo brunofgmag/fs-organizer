@@ -36,19 +36,6 @@ std::optional<std::string> ImportViewModel::RunningSimulator() const
     return probe_.RunningSimulator();
 }
 
-FileResult ImportViewModel::ResolveConflict(const CopyConflict& conflict, const ConflictChoice choice)
-{
-    const FileResult result = service_.ResolveConflict(Profile(), session_.Snapshot().entries, conflict, choice);
-
-    if (Succeeded(result))
-    {
-        profileService_.ForgetUndo();
-        emit ConflictResolved();
-    }
-
-    return result;
-}
-
 ConflictDetails ImportViewModel::DetailsOf(const CopyConflict& conflict) const
 {
     return service_.DetailsOf(session_.Snapshot().entries, conflict);
@@ -77,35 +64,28 @@ void ImportViewModel::Cancel()
 void ImportViewModel::Import(const std::vector<ImportRequest>& requests)
 {
     const SimulatorProfile profile = Profile();
+    const auto landed = std::make_shared<std::vector<ImportOperationResult>>();
 
     RunInAWorker(
-        [this, profile, requests]
+        [this, profile, requests, landed]
         {
-            std::vector<ImportOperationResult> results;
-
             for (const ImportRequest& request : requests)
             {
                 if (cancelled_)
                 {
-                    results.push_back(ImportOperationResult{.request = request, .result = FileResult::Cancelled});
+                    landed->push_back(ImportOperationResult{.request = request, .result = FileResult::Cancelled});
                     continue;
                 }
 
-                const int folder = ++folder_;
-                const auto onProgress = [this, folder](const CopyProgress& progress)
-                {
-                    emit Progressed(progress.copiedBytes, progress.totalBytes, folder);
-
-                    return !cancelled_;
-                };
-
                 const std::vector<ImportOperationResult> one =
-                    service_.Import(profile, {request}, onProgress, OnStep());
+                    service_.Import(profile, {request}, OnProgressOfFolder(++folder_), OnStep());
 
-                results.insert(results.end(), one.begin(), one.end());
+                landed->insert(landed->end(), one.begin(), one.end());
             }
-
-            return results;
+        },
+        [this, landed]
+        {
+            Adopt(*landed);
         },
         static_cast<int>(requests.size()));
 }
@@ -113,22 +93,90 @@ void ImportViewModel::Import(const std::vector<ImportRequest>& requests)
 void ImportViewModel::Resume(const std::vector<StagingLeftover>& leftovers)
 {
     const SimulatorProfile profile = Profile();
+    const auto landed = std::make_shared<std::vector<ImportOperationResult>>();
 
     RunInAWorker(
-        [this, profile, leftovers]
+        [this, profile, leftovers, landed]
         {
-            const auto onProgress = [this](const CopyProgress& progress)
-            {
-                emit Progressed(progress.copiedBytes, progress.totalBytes, folder_);
-
-                return !cancelled_;
-            };
-
             folder_ = 1;
 
-            return service_.Resume(profile, leftovers, onProgress, OnStep());
+            *landed = service_.Resume(profile, leftovers, OnProgressOfFolder(folder_), OnStep());
+        },
+        [this, landed]
+        {
+            Adopt(*landed);
         },
         static_cast<int>(leftovers.size()));
+}
+
+void ImportViewModel::ResolveConflicts(const std::vector<ConflictToResolve>& chosen)
+{
+    const SimulatorProfile profile = Profile();
+    const std::vector<DestinationEntry> entries = session_.Snapshot().entries;
+    const auto landed = std::make_shared<std::vector<FileOperationResult>>();
+
+    RunInAWorker(
+        [this, profile, entries, chosen, landed]
+        {
+            for (const ConflictToResolve& one : chosen)
+            {
+                const FileResult result = cancelled_
+                    ? FileResult::Cancelled
+                    : service_.ResolveConflict(profile, entries, one.conflict, one.choice,
+                                               OnProgressOfFolder(++folder_), OnStep());
+
+                landed->push_back(FileOperationResult{.path = one.conflict.provenancePath, .result = result});
+            }
+        },
+        [this, landed]
+        {
+            if (std::ranges::any_of(*landed,
+                                    [](const FileOperationResult& result)
+                                    {
+                                        return Succeeded(result.result);
+                                    }))
+            {
+                profileService_.ForgetUndo();
+            }
+
+            emit ConflictsResolved(*landed);
+        },
+        static_cast<int>(chosen.size()));
+}
+
+void ImportViewModel::GiveBack(const std::vector<std::filesystem::path>& addonFolders)
+{
+    const SimulatorProfile profile = Profile();
+    const std::vector<DestinationEntry> entries = session_.Snapshot().entries;
+    const auto landed = std::make_shared<std::vector<FileOperationResult>>();
+
+    RunInAWorker(
+        [this, profile, entries, addonFolders, landed]
+        {
+            for (const std::filesystem::path& addonFolder : addonFolders)
+            {
+                const FileResult result = cancelled_
+                    ? FileResult::Cancelled
+                    : service_.GiveBack(profile, entries, addonFolder, OnProgressOfFolder(++folder_), OnStep());
+
+                landed->push_back(FileOperationResult{.path = addonFolder, .result = result});
+            }
+        },
+        [this, landed]
+        {
+            AdoptWhatWentBack(*landed);
+        },
+        static_cast<int>(addonFolders.size()));
+}
+
+std::function<bool(const CopyProgress&)> ImportViewModel::OnProgressOfFolder(const int folder)
+{
+    return [this, folder](const CopyProgress& progress)
+    {
+        emit Progressed(progress.copiedBytes, progress.totalBytes, folder);
+
+        return !cancelled_;
+    };
 }
 
 std::function<void(OperationKind)> ImportViewModel::OnStep()
@@ -142,7 +190,7 @@ std::function<void(OperationKind)> ImportViewModel::OnStep()
     };
 }
 
-void ImportViewModel::RunInAWorker(std::function<std::vector<ImportOperationResult>()> work, const int folders)
+void ImportViewModel::RunInAWorker(std::function<void()> work, std::function<void()> land, const int folders)
 {
     if (running_)
     {
@@ -155,23 +203,19 @@ void ImportViewModel::RunInAWorker(std::function<std::vector<ImportOperationResu
 
     emit Started(folders);
 
-    const auto landed = std::make_shared<std::vector<ImportOperationResult>>();
+    runner_.Run(std::move(work),
+                [this, land = std::move(land)]
+                {
+                    running_ = false;
 
-    runner_.Run(
-        [work = std::move(work), landed]
-        {
-            *landed = work();
-        },
-        [this, landed]
-        {
-            Adopt(std::move(*landed));
-        });
+                    emit Idle();
+
+                    land();
+                });
 }
 
-void ImportViewModel::Adopt(std::vector<ImportOperationResult> results)
+void ImportViewModel::Adopt(const std::vector<ImportOperationResult>& results)
 {
-    running_ = false;
-
     session_.RememberWhatCameFromAnotherProgram(results);
 
     if (std::ranges::any_of(results,
@@ -184,4 +228,26 @@ void ImportViewModel::Adopt(std::vector<ImportOperationResult> results)
     }
 
     emit Finished(results);
+}
+
+void ImportViewModel::AdoptWhatWentBack(const std::vector<FileOperationResult>& results)
+{
+    std::vector<std::filesystem::path> returned;
+
+    for (const FileOperationResult& result : results)
+    {
+        if (Succeeded(result.result))
+        {
+            returned.push_back(result.path);
+        }
+    }
+
+    session_.ForgetWhatCameFromAnotherProgram(returned);
+
+    if (!returned.empty())
+    {
+        profileService_.ForgetUndo();
+    }
+
+    emit GaveBack(results);
 }

@@ -20,6 +20,7 @@
 #include "view/panels/ContextPanel.h"
 #include "view/panels/EmptyState.h"
 #include "view/panels/ModelRowDetail.h"
+#include "viewmodel/SizeSummary.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/FailureText.h"
@@ -246,6 +247,7 @@ void QuarantinePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
     const auto held = static_cast<int>(rows.size());
 
     QList<ModelRowDetail::Field> fields;
+    fields.append({tr("Size on disk"), SizeOfTheSelection(model_.TallyOf(rows))});
     fields.append({tr("Items"), QString::number(held)});
     fields.append({tr("Know where they came from"), tr("%1 of %2").arg(known).arg(held)});
     fields.append({tr("Go back to"), tr("%n place", nullptr, static_cast<int>(origins.size()))});

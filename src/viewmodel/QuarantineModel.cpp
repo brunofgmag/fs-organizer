@@ -140,6 +140,30 @@ QString QuarantineModel::SizeOf(const QuarantinedItem& item) const
     return measured == bytes_.end() ? QString() : AsSize(measured->second);
 }
 
+SelectionSize QuarantineModel::TallyOf(const QModelIndexList& rows) const
+{
+    SelectionSize size;
+
+    for (const QModelIndex& position : rows)
+    {
+        const QuarantinedItem* item = ItemAt(position);
+        if (item == nullptr)
+        {
+            continue;
+        }
+
+        ++size.selected;
+
+        if (const auto measured = bytes_.find(ComparablePath(item->path)); measured != bytes_.end())
+        {
+            size.bytes += measured->second;
+            ++size.measured;
+        }
+    }
+
+    return size;
+}
+
 QString QuarantineModel::WhenItWasQuarantined(const QuarantinedItem& item) const
 {
     return item.quarantinedAt.has_value() ? Moment(*item.quarantinedAt) : QString();

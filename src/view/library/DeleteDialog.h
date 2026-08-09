@@ -18,8 +18,15 @@ class DeleteDialog final : public QDialog
 public:
     DeleteDialog(DeletionPlan plan, DeletionViewModel& viewModel, QWidget* parent = nullptr);
 
+signals:
+    void GiveBackRequested(const std::vector<std::filesystem::path>& addonFolders);
+
 private:
     [[nodiscard]] DeletionRoute ChosenRoute() const;
+
+    [[nodiscard]] bool GivingItBack() const;
+
+    [[nodiscard]] QString WhereItGoesBackTo() const;
 
     [[nodiscard]] QString WhatWasSelected() const;
 
@@ -37,6 +44,7 @@ private:
     DeletionViewModel& viewModel_;
     QRadioButton* recycle_ = nullptr;
     QRadioButton* forGood_ = nullptr;
+    QRadioButton* giveBack_ = nullptr;
     QPushButton* confirm_ = nullptr;
 };
 

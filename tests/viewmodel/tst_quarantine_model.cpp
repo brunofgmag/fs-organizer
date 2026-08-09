@@ -4,6 +4,7 @@
 
 #include "viewmodel/QuarantineModel.h"
 #include "viewmodel/RowTagRoles.h"
+#include "viewmodel/SizeSummary.h"
 
 namespace
 {
@@ -22,6 +23,7 @@ namespace
         static void TheWhenAndTheSizeShareTheSecondLineOfTheNameCell();
         static void TheSourceColumnTellsTheFourWaysAnOriginCanBeAnswered();
         static void OnlyTheDisagreementIsLoudEnoughToWearATag();
+        static void TheSelectionSumsWhatItMeasuredAndSaysHowMuchOfItItReached();
     };
 }
 
@@ -211,6 +213,23 @@ void QuarantineModelTest::OnlyTheDisagreementIsLoudEnoughToWearATag()
     QCOMPARE(model.data(model.index(1, QuarantineModel::SourceColumn), TagTextRole).toString(),
              QStringLiteral("they disagree"));
     QVERIFY(!model.data(model.index(1, QuarantineModel::SourceColumn), QuietRole).toBool());
+}
+
+void QuarantineModelTest::TheSelectionSumsWhatItMeasuredAndSaysHowMuchOfItItReached()
+{
+    QuarantineModel model;
+    model.ShowItems(TwoItems());
+    model.ShowSizes({MeasuredFolder{
+        .folder = "E:/Sim/_fsorganizer-quarantine/simbridge", .bytes = 2ULL * 1024 * 1024, .measured = true}});
+
+    const QModelIndexList both{model.index(0, 0), model.index(1, 0)};
+    const SelectionSize counted = model.TallyOf(both);
+
+    QCOMPARE(counted.selected, std::size_t{2});
+    QCOMPARE(counted.measured, std::size_t{1});
+    QCOMPARE(counted.bytes, 2ULL * 1024 * 1024);
+    QVERIFY2(SizeOfTheSelection(counted).contains(QStringLiteral("1 of 2")),
+             "an item nobody measured is not a zero, and the sum has to say so");
 }
 
 QTEST_APPLESS_MAIN(QuarantineModelTest)

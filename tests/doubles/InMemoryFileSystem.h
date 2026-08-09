@@ -69,6 +69,11 @@ public:
         return !unavailableVolumes_.contains(VolumeOf(path));
     }
 
+    [[nodiscard]] static bool SameVolume(const std::filesystem::path& left, const std::filesystem::path& right)
+    {
+        return VolumeOf(left) == VolumeOf(right);
+    }
+
     void MarkReadOnly(const std::filesystem::path& path)
     {
         readOnlyPaths_.insert(Key(path));

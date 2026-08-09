@@ -150,7 +150,8 @@ public:
             return false;
         }
 
-        return !moveFails_ && fileSystem_.MoveTree(source, destination);
+        return !moveFails_ && InMemoryFileSystem::SameVolume(source, destination)
+            && fileSystem_.MoveTree(source, destination);
     }
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override

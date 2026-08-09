@@ -11,6 +11,27 @@
 #include "view/WheelGuard.h"
 #include "view/theme/ModernistMetrics.h"
 
+namespace
+{
+    QString WhyThisOneIsHere(const StagingLeftover& leftover)
+    {
+        if (leftover.CanBeResumed())
+        {
+            return StagingLeftoverDialog::tr("came from: %1").arg(AsText(leftover.source));
+        }
+
+        if (leftover.theCopyResolvedAConflict)
+        {
+            return StagingLeftoverDialog::tr(
+                "half of a conflict resolution: the two copies are still where they were, so only discarding is "
+                "offered");
+        }
+
+        return StagingLeftoverDialog::tr(
+            "the journal does not know where this came from, so only discarding is offered");
+    }
+}
+
 StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers, QWidget* parent)
     : QDialog(parent)
 {
@@ -45,11 +66,7 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
         grid->addWidget(action, row, 1);
         ++row;
 
-        auto* origin =
-            new QLabel(leftover.CanBeResumed()
-                           ? tr("came from: %1").arg(AsText(leftover.source))
-                           : tr("the journal does not know where this came from, so only discarding is offered"),
-                       this);
+        auto* origin = new QLabel(WhyThisOneIsHere(leftover), this);
         origin->setWordWrap(true);
         origin->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         grid->addWidget(origin, row, 0, 1, 2);

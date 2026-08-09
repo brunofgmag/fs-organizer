@@ -14,6 +14,12 @@
 
 class QThread;
 
+struct ConflictToResolve
+{
+    CopyConflict conflict{};
+    ConflictChoice choice = ConflictChoice::KeepTheLibraryCopy;
+};
+
 class ImportViewModel final : public QObject
 {
     Q_OBJECT
@@ -30,9 +36,11 @@ public:
 
     void Resume(const std::vector<StagingLeftover>& leftovers);
 
-    void Cancel();
+    void ResolveConflicts(const std::vector<ConflictToResolve>& chosen);
 
-    [[nodiscard]] FileResult ResolveConflict(const CopyConflict& conflict, ConflictChoice choice);
+    void GiveBack(const std::vector<std::filesystem::path>& addonFolders);
+
+    void Cancel();
 
     [[nodiscard]] ConflictDetails DetailsOf(const CopyConflict& conflict) const;
 
@@ -56,16 +64,24 @@ signals:
 
     void StepChanged(const QString& step);
 
+    void Idle();
+
     void Finished(const std::vector<ImportOperationResult>& results);
 
-    void ConflictResolved();
+    void ConflictsResolved(const std::vector<FileOperationResult>& results);
+
+    void GaveBack(const std::vector<FileOperationResult>& results);
 
 private:
     [[nodiscard]] std::function<void(OperationKind)> OnStep();
 
-    void RunInAWorker(std::function<std::vector<ImportOperationResult>()> work, int folders);
+    [[nodiscard]] std::function<bool(const CopyProgress&)> OnProgressOfFolder(int folder);
 
-    void Adopt(std::vector<ImportOperationResult> results);
+    void RunInAWorker(std::function<void()> work, std::function<void()> land, int folders);
+
+    void Adopt(const std::vector<ImportOperationResult>& results);
+
+    void AdoptWhatWentBack(const std::vector<FileOperationResult>& results);
 
     const ImportService& service_;
     ProfileService& profileService_;

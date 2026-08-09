@@ -27,6 +27,8 @@ public:
 
     void Show();
 
+    void ReadTheDestinationsAgain();
+
     void MeasureTheSelection(const std::vector<DestinationEntry>& entries);
 
     [[nodiscard]] std::vector<RepairCandidate> PlanRepairs() const;

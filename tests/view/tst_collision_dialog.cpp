@@ -24,6 +24,7 @@ namespace
         static void ASideWithoutAVersionInItsManifestStillShowsTheSize();
         static void NothingIsPreselectedAndTheReplaceButtonIsNotTheDefault();
         static void TheDialogOpensBeforeTheMeasurementAndFillsInWhenItLands();
+        static void EnterOnAFreshDialogReplacesNothing();
     };
 
     constexpr std::uintmax_t kHeldBytes = 2040109466;
@@ -105,11 +106,12 @@ void CollisionDialogTest::NothingIsPreselectedAndTheReplaceButtonIsNotTheDefault
 
     const QPushButton* cancel = buttons->button(QDialogButtonBox::Cancel);
     QVERIFY(cancel != nullptr);
-    QVERIFY(cancel->isDefault());
+    QVERIFY(!cancel->autoDefault());
 
     const QPushButton* replace = dialog.findChild<QPushButton*>(QStringLiteral("ReplaceWhatIsThere"));
     QVERIFY(replace != nullptr);
     QVERIFY(!replace->isDefault());
+    QVERIFY(!replace->autoDefault());
 }
 
 void CollisionDialogTest::TheDialogOpensBeforeTheMeasurementAndFillsInWhenItLands()
@@ -126,6 +128,18 @@ void CollisionDialogTest::TheDialogOpensBeforeTheMeasurementAndFillsInWhenItLand
     QVERIFY(Says(dialog, AsSize(kHeldBytes)));
     QVERIFY(Says(dialog, QStringLiteral("2.4.1")));
     QVERIFY(!Says(dialog, QStringLiteral("could not be measured")));
+}
+
+void CollisionDialogTest::EnterOnAFreshDialogReplacesNothing()
+{
+    CollisionDialog dialog(ACollision());
+    dialog.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+
+    QTest::keyClick(&dialog, Qt::Key_Return);
+
+    QVERIFY2(dialog.isVisible(), "the choice is a click, and reading isDefault before showing never saw this");
+    QCOMPARE(dialog.result(), static_cast<int>(QDialog::Rejected));
 }
 
 QTEST_MAIN(CollisionDialogTest)

@@ -10,6 +10,7 @@
 
 #include "domain/model/AddonId.h"
 #include "domain/model/FileResult.h"
+#include "domain/support/PathUtils.h"
 
 enum class DeletionRoute : int
 {
@@ -54,8 +55,6 @@ struct DeletionResult
     FileResult result = FileResult::Completed;
     std::vector<std::filesystem::path> linksRemoved{};
 };
-
-[[nodiscard]] std::filesystem::path VolumeOf(const std::filesystem::path& path);
 
 [[nodiscard]] bool TheVolumeCanTake(const VolumeRoom& room);
 
