@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.0](https://github.com/brunofgmag/fs-organizer/compare/v0.19.0...v0.20.0) (2026-08-09)
+
+
+### Features
+
+* give a managed external back, quarantine the other program's folder, and close nine debts of the manual acceptance ([#54](https://github.com/brunofgmag/fs-organizer/issues/54)) ([d5a0a55](https://github.com/brunofgmag/fs-organizer/commit/d5a0a550ed3224be487ac449aee88106e4bfb2ee))
+
 ## [0.19.0](https://github.com/brunofgmag/fs-organizer/compare/v0.18.1...v0.19.0) (2026-08-09)
 
 
