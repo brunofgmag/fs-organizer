@@ -1,7 +1,11 @@
 #include "infrastructure/sim/StartupFileLocations.h"
 
 #include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
+
+#include "domain/support/PathUtils.h"
 
 namespace
 {
@@ -11,12 +15,18 @@ namespace
     [[nodiscard]] std::optional<std::filesystem::path> TheStartupFileBeside(const std::filesystem::path& base,
                                                                             const FilesystemProbe& filesystemProbe)
     {
+        const std::vector<std::filesystem::path> beside = filesystemProbe.ChildFiles(base);
+
         for (const std::string_view name : kStartupFileNames)
         {
-            if (const std::filesystem::path candidate = base / name;
-                filesystemProbe.EntryExistsWithoutFollowingLinks(candidate))
+            const std::string wanted = ComparableFileName(base / name);
+
+            for (const std::filesystem::path& entry : beside)
             {
-                return candidate;
+                if (ComparableFileName(entry) == wanted)
+                {
+                    return entry;
+                }
             }
         }
 

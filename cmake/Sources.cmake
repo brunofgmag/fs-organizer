@@ -66,6 +66,7 @@ set(WINDOWS_INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+        src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/SingleInstance.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
@@ -125,6 +126,7 @@ set(VIEW_SOURCES
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp
         src/view/delegates/RowDelegate.cpp
+        src/view/ScrollThatReportsItsContent.cpp
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/shell/StartupOffers.cpp

@@ -21,6 +21,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
@@ -147,6 +148,7 @@ int main(int argc, char* argv[])
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
     WindowsFileOperations files;
+    WindowsSidecarStore sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
@@ -184,10 +186,11 @@ int main(int argc, char* argv[])
     const AppSettings onDisk = settings.Load().value_or(AppSettings{});
     const LinkType storedLinkType = onDisk.linkType;
 
-    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, storedLinkType);
+    ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
+                                  storedLinkType);
 
-    ImportEngine importEngine(filesystemProbe, files, linking, log, storedLinkType);
-    ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
+    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType);
+    ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 storedLinkType);
 
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, storedLinkType);
@@ -202,7 +205,8 @@ int main(int argc, char* argv[])
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
 
-    const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
+                                          sizes);
     DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
@@ -571,6 +575,7 @@ int main(int argc, char* argv[])
 
                          once = true;
                          OfferToDropTheOverridesThatPointNowhere(session, &window);
+                         OfferToPutBackWhatALostSwapRenamed(importViewModel, &window);
                          OfferWhatALostImportLeftBehind(importViewModel, &window);
 
                          if (setupJustRan)

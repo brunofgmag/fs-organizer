@@ -11,6 +11,7 @@
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -72,12 +73,13 @@ namespace
         InMemoryFileSystem fileSystem;
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeLinkService linkService{fileSystem};
         LinkingEngine linking{linkService, filesystemProbe};
         FakeOperationJournal journal;
         FakeClock clock;
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
 
         SimulatorProfile profile{.destinations = {"E:/Sim/Community"},
                                  .defaultDestination = "E:/Sim/Community",
@@ -502,7 +504,7 @@ void ImportEngineTest::TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouche
 void ImportEngineTest::AnOriginThatCannotBeRecordedStopsTheImportBeforeItMoves()
 {
     ExternalFixture f;
-    f.files.MakeTheTextWriteFail();
+    f.sidecars.MakeTheWriteFail();
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 

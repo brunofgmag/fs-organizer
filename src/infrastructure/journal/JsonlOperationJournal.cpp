@@ -66,6 +66,7 @@ namespace
         case OperationKind::LinkTheOtherProgramsFolder: return "linkTheOtherProgramsFolder";
         case OperationKind::ImportFromAnotherProgram: return "importFromAnotherProgram";
         case OperationKind::GiveBackToAnotherProgram: return "giveBackToAnotherProgram";
+        case OperationKind::UndoTheInterruptedSwap: return "undoTheInterruptedSwap";
         }
 
         return "unknown";

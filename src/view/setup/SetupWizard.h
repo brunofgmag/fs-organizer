@@ -17,6 +17,9 @@ public:
 
     void accept() override;
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
 private:
     [[nodiscard]] QWizardPage* CreateSimulatorPage();
     [[nodiscard]] QWizardPage* CreateLibraryPage();
@@ -30,6 +33,7 @@ private:
     void RefreshCandidates() const;
 
     SetupViewModel& viewModel_;
+    bool sized_ = false;
     QComboBox* variant_ = nullptr;
     QListWidget* simulators_ = nullptr;
     QListWidget* libraries_ = nullptr;

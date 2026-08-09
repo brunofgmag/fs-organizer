@@ -74,6 +74,39 @@ void OfferWhatTheOldProgramKept(LegacyImportViewModel& legacyViewModel, QWidget*
     dialog.exec();
 }
 
+void OfferToPutBackWhatALostSwapRenamed(ImportViewModel& importViewModel, QWidget* parent)
+{
+    const std::vector<InterruptedSwap> swaps = importViewModel.InterruptedSwaps();
+    if (swaps.empty())
+    {
+        return;
+    }
+
+    QStringList detailed;
+    for (const InterruptedSwap& swap : swaps)
+    {
+        detailed.append(QStringLiteral("%1 -> %2").arg(AsText(swap.room), AsText(swap.folder)));
+    }
+
+    QMessageBox question(
+        QMessageBox::Warning, QObject::tr("A folder of another program was left renamed"),
+        QObject::tr("%n folder that FS Organizer took over is still under the name it was given while the swap ran, so "
+                    "the other program no longer finds it. Your addon is safe in the library: what is missing is the "
+                    "folder under its own name.",
+                    nullptr, static_cast<int>(swaps.size())),
+        QMessageBox::NoButton, parent);
+    question.setDetailedText(detailed.join(QChar::LineFeed));
+
+    const QPushButton* putBack = question.addButton(QObject::tr("Put the folders back"), QMessageBox::AcceptRole);
+    question.addButton(QObject::tr("Leave them and decide later"), QMessageBox::RejectRole);
+    question.exec();
+
+    if (question.clickedButton() == putBack)
+    {
+        static_cast<void>(importViewModel.UndoInterruptedSwaps(swaps));
+    }
+}
+
 void OfferWhatALostImportLeftBehind(ImportViewModel& importViewModel, QWidget* parent)
 {
     const std::vector<StagingLeftover> leftovers = importViewModel.Leftovers();

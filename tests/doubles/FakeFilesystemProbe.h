@@ -57,6 +57,13 @@ public:
         return fileSystem_.ChildDirectoriesOf(path);
     }
 
+    [[nodiscard]] std::vector<std::filesystem::path> ChildFiles(const std::filesystem::path& path) const override
+    {
+        enumerated.push_back(path);
+
+        return fileSystem_.ChildFilesOf(path);
+    }
+
     [[nodiscard]] bool WasEnumerated(const std::filesystem::path& path) const
     {
         return std::ranges::find(enumerated, path) != enumerated.end();

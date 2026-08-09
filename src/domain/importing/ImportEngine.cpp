@@ -55,10 +55,16 @@ namespace
 
 ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
                            FileOperations& files,
+                           SidecarStore& sidecars,
                            const LinkingEngine& linking,
                            const OperationLog& log,
                            const LinkType linkType)
-    : filesystemProbe_(filesystemProbe), files_(files), linking_(linking), log_(log), linkType_(linkType)
+    : filesystemProbe_(filesystemProbe),
+      files_(files),
+      sidecars_(sidecars),
+      linking_(linking),
+      log_(log),
+      linkType_(linkType)
 {
 }
 
@@ -384,7 +390,7 @@ ImportOutcome ImportEngine::PrepareTheOtherProgramsFolder(const std::filesystem:
         return ImportOutcome::Stopped(FileResult::CannotWriteInTheOtherProgramsFolder);
     }
 
-    if (!files_.WriteTextFile(ExternalSidecarPathFor(target), TextOfTheExternalOrigin(externalSource)))
+    if (!sidecars_.Write(ExternalSidecarPathFor(target), TextOfTheExternalOrigin(externalSource)))
     {
         return ImportOutcome::Stopped(FileResult::CouldNotRecordTheOrigin);
     }

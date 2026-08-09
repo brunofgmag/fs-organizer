@@ -21,6 +21,7 @@
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/OperationJournal.h"
+#include "domain/ports/SidecarStore.h"
 
 struct LinkBatch
 {
@@ -40,6 +41,7 @@ class ProfileService
 public:
     ProfileService(const CatalogScanner& catalog,
                    const FilesystemProbe& filesystemProbe,
+                   const SidecarStore& sidecars,
                    const EntryClassifier& classifier,
                    const LinkingEngine& linking,
                    const OperationLog& log,
@@ -125,6 +127,7 @@ private:
 
     const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;
+    const SidecarStore& sidecars_;
     const EntryClassifier& classifier_;
     const LinkingEngine& linking_;
     const OperationLog& log_;

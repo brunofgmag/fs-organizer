@@ -99,6 +99,26 @@ public:
         return children;
     }
 
+    [[nodiscard]] std::vector<std::filesystem::path> ChildFiles(const std::filesystem::path& path) const override
+    {
+        std::vector<std::filesystem::path> children;
+
+        std::error_code error;
+        for (const std::filesystem::directory_entry& entry :
+             std::filesystem::directory_iterator(AsFarAsTheProductionProbeReaches(path),
+                                                 std::filesystem::directory_options::skip_permission_denied, error))
+        {
+            const std::filesystem::file_status status = std::filesystem::symlink_status(entry.path(), error);
+
+            if (status.type() == std::filesystem::file_type::regular)
+            {
+                children.push_back(path / entry.path().filename());
+            }
+        }
+
+        return children;
+    }
+
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path&) const override
     {
         return true;

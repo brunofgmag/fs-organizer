@@ -18,6 +18,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/FakeSimulatorPackages.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
@@ -161,6 +162,7 @@ namespace
         FakeLinkService linkService{fileSystem};
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeProcessProbe processProbe;
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
@@ -169,7 +171,8 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
+                               log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -180,10 +183,11 @@ namespace
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
-        DeletionService deletionService{filesystemProbe, files, linking, classifier, processProbe, log, sizes};
+        DeletionService deletionService{filesystemProbe, files,        sidecars, linking,
+                                        classifier,      processProbe, log,      sizes};
         DeletionViewModel deletion{session, service, settings, deletionService, sizes};
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
-        ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files,
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                                     linking, log,          LinkType::Junction};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};
     };

@@ -160,6 +160,7 @@ ImportService::ImportService(const ImportEngine& engine,
                              const FilesystemProbe& filesystemProbe,
                              const CatalogScanner& catalog,
                              FileOperations& files,
+                             SidecarStore& sidecars,
                              const LinkingEngine& linking,
                              const OperationLog& log,
                              const LinkType linkType)
@@ -168,6 +169,7 @@ ImportService::ImportService(const ImportEngine& engine,
       filesystemProbe_(filesystemProbe),
       catalog_(catalog),
       files_(files),
+      sidecars_(sidecars),
       linking_(linking),
       log_(log),
       linkType_(linkType)
@@ -339,7 +341,7 @@ FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine
 
     static_cast<void>(files_.CreateFolder(quarantine.parent_path()));
 
-    if (!files_.WriteTextFile(sidecar, TextOfTheOrigin(QuarantineOrigin{.origin = loser, .quarantinedAt = log_.Now()})))
+    if (!sidecars_.Write(sidecar, TextOfTheOrigin(QuarantineOrigin{.origin = loser, .quarantinedAt = log_.Now()})))
     {
         log_.RecordImport(kind, addon, loser, quarantine, FileResult::CouldNotRecordTheOrigin);
 
@@ -359,7 +361,7 @@ FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine
 
 void ImportService::ForgetTheOriginOf(const std::filesystem::path& item) const
 {
-    static_cast<void>(files_.RemoveTree(SidecarPathFor(item)));
+    static_cast<void>(sidecars_.Forget(SidecarPathFor(item)));
 }
 
 void ImportService::Record(const SimulatorProfile& profile,
@@ -375,7 +377,7 @@ void ImportService::Record(const SimulatorProfile& profile,
 
 std::filesystem::path ImportService::WhatTheOtherProgramOwns(const std::filesystem::path& target) const
 {
-    const std::optional<std::string> written = filesystemProbe_.ContentsOf(ExternalSidecarPathFor(target));
+    const std::optional<std::string> written = sidecars_.Read(ExternalSidecarPathFor(target));
     if (!written.has_value())
     {
         return {};
@@ -387,7 +389,7 @@ std::filesystem::path ImportService::WhatTheOtherProgramOwns(const std::filesyst
 QuarantinedItem ImportService::WhereItCameFrom(const std::vector<OperationRecord>& history,
                                                const std::filesystem::path& item) const
 {
-    const std::optional<std::string> written = filesystemProbe_.ContentsOf(SidecarPathFor(item));
+    const std::optional<std::string> written = sidecars_.Read(SidecarPathFor(item));
 
     const OperationRecord* quarantined = LastRecordAbout(
         history, item, {OperationKind::QuarantineFromDestination, OperationKind::QuarantineFromLibrary});
@@ -758,7 +760,7 @@ FileResult ImportService::GiveBack(const SimulatorProfile& profile,
 
     if (Succeeded(result))
     {
-        static_cast<void>(files_.RemoveTree(ExternalSidecarPathFor(addonFolder)));
+        static_cast<void>(sidecars_.Forget(ExternalSidecarPathFor(addonFolder)));
     }
 
     return result;
@@ -780,7 +782,58 @@ std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& pr
         }
     }
 
+    for (const ExternalAddon& external : ExternalAddonsOf(profile))
+    {
+        const std::filesystem::path staging = StagingPathFor(external.externalPath);
+
+        if (filesystemProbe_.EntryExistsWithoutFollowingLinks(staging))
+        {
+            leftovers.push_back(
+                StagingLeftover{.staging = staging, .target = external.externalPath, .theCopyResolvedAConflict = true});
+        }
+    }
+
     return leftovers;
+}
+
+std::vector<InterruptedSwap> ImportService::InterruptedSwaps(const SimulatorProfile& profile) const
+{
+    std::vector<InterruptedSwap> interrupted;
+
+    for (const ExternalAddon& external : ExternalAddonsOf(profile))
+    {
+        const std::filesystem::path room = SwapSlotFor(external.externalPath);
+
+        if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(room)
+            || filesystemProbe_.EntryExistsWithoutFollowingLinks(external.externalPath))
+        {
+            continue;
+        }
+
+        interrupted.push_back(
+            InterruptedSwap{.room = room, .folder = external.externalPath, .libraryCopy = external.addonFolder});
+    }
+
+    return interrupted;
+}
+
+std::vector<FileOperationResult> ImportService::UndoInterruptedSwaps(const SimulatorProfile& profile,
+                                                                     const std::vector<InterruptedSwap>& swaps) const
+{
+    std::vector<FileOperationResult> results;
+
+    for (const InterruptedSwap& swap : swaps)
+    {
+        const bool moved = files_.Move(swap.room, swap.folder);
+        const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotMoveIntoPlace;
+
+        log_.RecordImport(OperationKind::UndoTheInterruptedSwap, IdentityOf(profile, swap.libraryCopy), swap.room,
+                          swap.folder, result);
+
+        results.push_back(FileOperationResult{.path = swap.folder, .result = result});
+    }
+
+    return results;
 }
 
 std::vector<StagingLeftover> ImportService::WhatAnImportLeftBehind(const SimulatorProfile& profile) const

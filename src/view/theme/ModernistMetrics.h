@@ -9,12 +9,19 @@
 
 inline constexpr int kPageGutter = 10;
 
-inline void SizeToTheContent(QWidget& dialog, QLayout& layout, const int wide)
+inline void SizeToTheContent(QWidget& dialog, const int wide)
 {
-    layout.activate();
+    QLayout* layout = dialog.layout();
+
+    if (layout != nullptr)
+    {
+        layout->activate();
+    }
+
+    const bool alongTheWidth = layout != nullptr && layout->hasHeightForWidth();
+    const int tall = alongTheWidth ? layout->totalHeightForWidth(wide) : dialog.sizeHint().height();
 
     const QScreen* screen = dialog.screen();
-    const int tall = layout.totalHeightForWidth(wide);
 
     dialog.resize(wide, screen == nullptr ? tall : std::min(tall, screen->availableGeometry().height() * 4 / 5));
 }

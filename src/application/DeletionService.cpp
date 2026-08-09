@@ -32,6 +32,7 @@ namespace
 
 DeletionService::DeletionService(const FilesystemProbe& filesystemProbe,
                                  FileOperations& files,
+                                 SidecarStore& sidecars,
                                  const LinkingEngine& linking,
                                  const EntryClassifier& classifier,
                                  const ProcessProbe& processProbe,
@@ -39,6 +40,7 @@ DeletionService::DeletionService(const FilesystemProbe& filesystemProbe,
                                  const SizeService& sizes)
     : filesystemProbe_(filesystemProbe),
       files_(files),
+      sidecars_(sidecars),
       linking_(linking),
       classifier_(classifier),
       processProbe_(processProbe),
@@ -185,7 +187,7 @@ DeletionResult DeletionService::DeleteOne(const AddonToDelete& addon,
 
     if (gone)
     {
-        static_cast<void>(files_.RemoveTree(ExternalSidecarPathFor(addon.folder)));
+        static_cast<void>(sidecars_.Forget(ExternalSidecarPathFor(addon.folder)));
     }
 
     result.result = gone ? FileResult::Completed : FileResult::CouldNotDelete;

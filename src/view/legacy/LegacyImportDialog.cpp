@@ -107,7 +107,7 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
 
     Fill();
 
-    SizeToTheContent(*this, *layout, kDialogWidth);
+    SizeToTheContent(*this, kDialogWidth);
 }
 
 void LegacyImportDialog::Fill()

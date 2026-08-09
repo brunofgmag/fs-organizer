@@ -12,6 +12,7 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
@@ -82,6 +83,7 @@ namespace
     {
         JsonManifestParser manifestParser;
         WindowsFilesystemProbe filesystemProbe;
+        WindowsSidecarStore sidecars;
         WindowsLinkService linkService;
         FilesystemScanner scanner{manifestParser, filesystemProbe};
         FakeOperationJournal journal;
@@ -90,7 +92,8 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{scanner, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{scanner, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         FakePresetRepository presets;
         PresetService service{presets, profiles};
     };

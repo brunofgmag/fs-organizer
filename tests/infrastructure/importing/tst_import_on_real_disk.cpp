@@ -16,6 +16,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -106,12 +107,13 @@ namespace
         WindowsLinkService linkService{};
         WindowsFilesystemProbe filesystemProbe{};
         WindowsFileOperations files{};
+        WindowsSidecarStore sidecars{};
         LinkingEngine linking{linkService, filesystemProbe};
         SystemClock clock{};
         std::filesystem::path journalFile{};
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
     };
 
     struct Service
@@ -120,7 +122,8 @@ namespace
         WindowsProcessProbe processProbe{std::vector<std::string>{}};
         JsonManifestParser manifestParser{};
         FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
-        ImportService service{engine.engine,  processProbe, engine.filesystemProbe, catalog, engine.files,
+        ImportService service{engine.engine,  processProbe, engine.filesystemProbe,
+                              catalog,        engine.files, engine.sidecars,
                               engine.linking, engine.log,   LinkType::Junction};
         EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
         LibraryOrganizer organizer{catalog,    engine.filesystemProbe, engine.files, engine.linking,
@@ -194,6 +197,7 @@ void ImportOnRealDiskTest::AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFr
 
     const WindowsFilesystemProbe filesystemProbe;
 
+    WindowsSidecarStore sidecars;
     QVERIFY(filesystemProbe.FreeSpaceOn(disk.Category()).has_value());
     QVERIFY(!filesystemProbe.FreeSpaceOn(disk.Category() / "tlc-bgjn").has_value());
 
@@ -615,8 +619,8 @@ void ImportOnRealDiskTest::AnAccentedOriginComesBackByteForByteFromTheRealFile()
         / PathFromUtf8("Avi\xC3\xB5"
                        "es");
 
-    QVERIFY(composed.engine.files.WriteTextFile(SidecarPathFor(held),
-                                                TextOfTheOrigin(QuarantineOrigin{.origin = accented})));
+    QVERIFY(
+        composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = accented})));
 
     const std::vector<QuarantinedItem> items = composed.service.Quarantined(disk.Profile());
 
@@ -639,8 +643,7 @@ void ImportOnRealDiskTest::TheSwapReallyExchangesTheOccupantAndTheItemOnDisk()
     const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "simbridge";
     const std::filesystem::path place = disk.Category() / "simbridge";
 
-    QVERIFY(
-        composed.engine.files.WriteTextFile(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
 
     const QuarantinedItem item = composed.service.Quarantined(disk.Profile()).front();
     const SwapResult swapped = composed.service.Swap(disk.Profile(), composed.Entries(disk), item);

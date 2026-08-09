@@ -76,6 +76,7 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::LinkTheOtherProgramsFolder: return tr("Link the other program's folder into the library");
     case OperationKind::ImportFromAnotherProgram: return tr("Start taking over another program's folder");
     case OperationKind::GiveBackToAnotherProgram: return tr("Give the folder back to the other program");
+    case OperationKind::UndoTheInterruptedSwap: return tr("Put back the folder a lost swap left renamed");
     }
 
     return {};

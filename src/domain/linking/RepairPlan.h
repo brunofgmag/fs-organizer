@@ -11,9 +11,9 @@
 
 struct RepairCandidate
 {
-    DestinationEntry entry;
+    DestinationEntry entry{};
     bool targetsLibrary = false;
-    std::optional<std::filesystem::path> repointTo;
+    std::optional<std::filesystem::path> repointTo{};
 };
 
 enum class RepairAction : int
@@ -24,7 +24,7 @@ enum class RepairAction : int
 
 struct RepairRequest
 {
-    RepairCandidate candidate;
+    RepairCandidate candidate{};
     RepairAction action = RepairAction::RemoveDeadNode;
 };
 

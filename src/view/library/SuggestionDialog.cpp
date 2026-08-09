@@ -62,7 +62,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
     layout->addWidget(table, 1);
     layout->addWidget(buttons);
 
-    SizeToTheContent(*this, *layout, 760);
+    SizeToTheContent(*this, 760);
 }
 
 std::vector<CategorySuggestion> SuggestionDialog::Chosen() const
