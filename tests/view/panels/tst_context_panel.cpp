@@ -512,6 +512,7 @@ void ContextPanelTest::SelectingAPathPaintsItOnAGroundThatIsNotTheSurfaceUnderIt
     const auto painted = [value]
     {
         QPixmap shot(value->size());
+        shot.fill(Qt::transparent);
         value->render(&shot);
 
         return shot.toImage();

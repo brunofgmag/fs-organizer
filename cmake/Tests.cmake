@@ -878,6 +878,26 @@ if (WIN32)
         configure_fsorg_gui_test(fsorg-startup-page-tests startup-page)
 
 
+        fsorg_add_qt_test(fsorg-diagnostics-page-tests diagnostics-page
+                tests/view/tst_diagnostics_page.cpp
+                assets/resources.qrc
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeClock.h
+                tests/doubles/FakeFileOperations.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeLinkService.h
+                tests/doubles/FakeOperationJournal.h
+                tests/doubles/FakeProcessProbe.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/doubles/InlineBackgroundRunner.h
+                tests/support/EnumPrinting.h
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-diagnostics-page-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-diagnostics-page-tests diagnostics-page)
+
+
         fsorg_add_qt_test(fsorg-presets-page-tests presets-page
                 tests/view/tst_presets_page.cpp
                 assets/resources.qrc

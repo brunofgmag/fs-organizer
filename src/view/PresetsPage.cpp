@@ -27,10 +27,12 @@
 #include "view/panels/EmptyState.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
     constexpr int kAddonColumn = 0;
+    constexpr int kLibraryColumn = 1;
     constexpr int kActionColumn = 2;
     constexpr int kNameColumn = 0;
     constexpr int kContentColumn = 1;
@@ -401,6 +403,9 @@ void PresetsPage::ReloadNames()
         names_->setItem(row, kContentColumn, new QTableWidgetItem(rows[row].content));
         names_->setItem(row, kUpdatedColumn, new QTableWidgetItem(rows[row].updated));
 
+        names_->item(row, kContentColumn)->setData(QuietRole, true);
+        names_->item(row, kUpdatedColumn)->setData(QuietRole, true);
+
         if (rows[row].name == wanted)
         {
             landOn = row;
@@ -454,7 +459,8 @@ void PresetsPage::ShowEntries()
     {
         const PresetEntry& entry = selected_->entries[static_cast<std::size_t>(row)];
         entries_->setItem(row, kAddonColumn, new QTableWidgetItem(QString::fromStdString(entry.addonId.folderName)));
-        entries_->setItem(row, 1, new QTableWidgetItem(viewModel_.LibraryLabel(entry.addonId.libraryId)));
+        entries_->setItem(row, kLibraryColumn, new QTableWidgetItem(viewModel_.LibraryLabel(entry.addonId.libraryId)));
+        entries_->item(row, kLibraryColumn)->setData(QuietRole, true);
 
         auto* action = new QTableWidgetItem;
         action->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);

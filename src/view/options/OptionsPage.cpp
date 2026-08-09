@@ -430,7 +430,7 @@ QWidget* OptionsPage::CreateUpdates()
          .objectName = "AutomaticUpdateChoice"},
         {.mode = UpdateMode::Notify,
          .name = tr("Notify"),
-         .explanation = tr("Looks for a new version and says it exists. Nothing is downloaded before you say so."),
+         .explanation = tr("Looks for a new version and says it exists, but only downloads it if you say so."),
          .objectName = "NotifyUpdateChoice"},
         {.mode = UpdateMode::Manual,
          .name = tr("Manual"),

@@ -18,6 +18,7 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/CommunityModel.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -73,6 +74,8 @@ namespace
         row->setData(2, kBytesRole, static_cast<qulonglong>(node.measured ? node.bytes : 0));
         row->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         row->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+        row->setData(1, QuietRole, true);
+        row->setData(2, QuietRole, true);
 
         for (const MeasuredNode& child : node.children)
         {
@@ -101,9 +104,7 @@ namespace
 
     void DressTheRowsOf(QTreeWidget* tree)
     {
-        auto* rows = new RowDelegate(tree);
-        rows->KeepRowsAtLeast(0);
-        tree->setItemDelegate(rows);
+        tree->setItemDelegate(new RowDelegate(tree));
     }
 }
 
@@ -206,6 +207,7 @@ QWidget* DiagnosticsPage::CreateCountsPane()
     auto* pane = new QWidget(this);
 
     counts_ = new QTreeWidget(pane);
+    counts_->setObjectName(QStringLiteral("DiagnosticsCounts"));
     counts_->setRootIsDecorated(false);
     counts_->setUniformRowHeights(true);
     counts_->setColumnCount(2);
@@ -228,6 +230,7 @@ QWidget* DiagnosticsPage::CreateBrokenPane()
     auto* pane = new QWidget(this);
 
     troubled_ = new QTreeWidget(pane);
+    troubled_->setObjectName(QStringLiteral("DiagnosticsTroubled"));
     troubled_->setUniformRowHeights(true);
     troubled_->setColumnCount(2);
     troubled_->header()->setStretchLastSection(true);
@@ -305,6 +308,7 @@ QWidget* DiagnosticsPage::CreateSizePane()
     progress->addWidget(cancel_);
 
     sizes_ = new QTreeWidget(pane);
+    sizes_->setObjectName(QStringLiteral("DiagnosticsSizes"));
     sizes_->setUniformRowHeights(true);
     sizes_->setColumnCount(3);
     sizes_->setSortingEnabled(true);
@@ -383,6 +387,7 @@ void DiagnosticsPage::ShowTheCounts() const
         item->setText(0, CommunityModel::ClassificationName(row.classification));
         item->setText(1, QString::number(row.count));
         item->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+        item->setData(1, QuietRole, true);
     }
 }
 
@@ -403,6 +408,7 @@ void DiagnosticsPage::ShowWhatIsTroubled() const
             auto* item = new QTreeWidgetItem(parent);
             item->setText(0, AsText(entry.path));
             item->setText(1, AsText(entry.target));
+            item->setData(1, QuietRole, true);
         }
 
         parent->setExpanded(true);

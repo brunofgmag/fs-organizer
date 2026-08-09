@@ -661,28 +661,28 @@ Continue?</translation>
 <context>
     <name>AddonTreeViewModel</name>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="278"/>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="295"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="267"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="284"/>
         <source>Give the category a name.</source>
         <translation>Give the category a name.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="342"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="331"/>
         <source>Select at least one addon to move.</source>
         <translation>Select at least one addon to move.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="389"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="378"/>
         <source>The enabled addons of this category are linked in different destinations. Choose a destination for the category instead of adopting what is on the disk.</source>
         <translation>The enabled addons of this category are linked in different destinations. Choose a destination for the category instead of adopting what is on the disk.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="396"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="385"/>
         <source>No addon of this category is enabled, so there is no destination to adopt.</source>
         <translation>No addon of this category is enabled, so there is no destination to adopt.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="435"/>
+        <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="424"/>
         <source>No addon from here is linked away from the destination the profile says to use.</source>
         <translation>No addon from here is linked away from the destination the profile says to use.</translation>
     </message>
@@ -2374,9 +2374,8 @@ It also exists in the library: %2</translation>
         <translation>Notify</translation>
     </message>
     <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="433"/>
         <source>Looks for a new version and says it exists. Nothing is downloaded before you say so.</source>
-        <translation>Looks for a new version and says it exists. Nothing is downloaded before you say so.</translation>
+        <translation type="vanished">Looks for a new version and says it exists. Nothing is downloaded before you say so.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="436"/>
@@ -2502,6 +2501,11 @@ It also exists in the library: %2</translation>
         <location filename="../src/view/options/OptionsPage.cpp" line="658"/>
         <source>View…</source>
         <translation>View…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="433"/>
+        <source>Looks for a new version and says it exists, but only downloads it if you say so.</source>
+        <translation>Looks for a new version and says it exists, but only downloads it if you say so.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="662"/>

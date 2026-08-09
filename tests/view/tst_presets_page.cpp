@@ -27,6 +27,7 @@
 #include "view/PresetsPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/PresetViewModel.h"
+#include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
 
 namespace
@@ -44,6 +45,7 @@ namespace
         static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
         static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
         static void ALanguageChangeReachesTheApplyButtonAndTheModeExplanation();
+        static void WhatSupportsTheNameIsQuietInBothTables();
     };
 }
 
@@ -346,6 +348,26 @@ void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation(
 
     QCOMPARE(apply->text(), applyBefore);
     QCOMPARE(explained->text(), explainedBefore);
+}
+
+void PresetsPageTest::WhatSupportsTheNameIsQuietInBothTables()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* entries = page.findChild<QTableWidget*>(QStringLiteral("PresetEntries"));
+    QVERIFY(names != nullptr);
+    QVERIFY(entries != nullptr);
+    QCOMPARE(names->rowCount(), 1);
+    QCOMPARE(entries->rowCount(), 1);
+
+    QVERIFY(!names->item(0, 0)->data(QuietRole).toBool());
+    QVERIFY(names->item(0, 1)->data(QuietRole).toBool());
+    QVERIFY(names->item(0, 2)->data(QuietRole).toBool());
+
+    QVERIFY(!entries->item(0, 0)->data(QuietRole).toBool());
+    QVERIFY(entries->item(0, 1)->data(QuietRole).toBool());
 }
 
 QTEST_MAIN(PresetsPageTest)

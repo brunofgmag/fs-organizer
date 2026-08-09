@@ -105,12 +105,14 @@ void ModernistThemeTest::ADisabledDefaultButtonTakesOffTheAccent()
     const QColor accent = ModernistPalette(Qt::ColorScheme::Dark).color(QPalette::Accent);
 
     QPixmap ready(button.size());
+    ready.fill(Qt::transparent);
     button.render(&ready);
     QCOMPARE(ready.toImage().pixelColor(ground), accent);
 
     button.setEnabled(false);
 
     QPixmap greyed(button.size());
+    greyed.fill(Qt::transparent);
     button.render(&greyed);
     QVERIFY(greyed.toImage().pixelColor(ground) != accent);
 }
