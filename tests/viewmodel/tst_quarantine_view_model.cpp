@@ -33,6 +33,7 @@ namespace
         static void NothingIsReadFromTheQuarantineUntilTheScreenIsShown();
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
+        static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
     };
 }
 
@@ -243,6 +244,27 @@ void QuarantineViewModelTest::AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfB
     QCOMPARE(offers.front().check.version, std::string{"2.4.1"});
     QCOMPARE(offers.front().check.occupantVersion, std::string{"2.5.0"});
     QVERIFY(offers.front().places.empty());
+}
+
+void QuarantineViewModelTest::TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache()
+{
+    Fixture f;
+    const std::filesystem::path occupied = "E:/Sim/Community/simbridge";
+    f.fileSystem.AddFile(std::filesystem::path(kQuarantined) / "content.bin", 4096);
+    f.fileSystem.AddFile(occupied / "content.bin", 4096);
+    f.ScanLands();
+
+    const MeasurementCaller elsewhere = f.sizes.NewCaller();
+    f.sizes.MeasureFolders({kQuarantined, occupied}, elsewhere, Freshness::ReuseWhatIsKnown, {}, {});
+    QCOMPARE(f.filesystemProbe.TimesWalked(occupied), std::size_t{1});
+
+    f.viewModel.WeighBothSidesOf(RestoreCheck{.item = QuarantinedItem{.path = kQuarantined},
+                                              .result = FileResult::TheOriginIsOccupied,
+                                              .occupant = occupied},
+                                 [](const TwoSides&) {});
+
+    QVERIFY2(f.filesystemProbe.TimesWalked(occupied) > std::size_t{1},
+             "the collision exists because somebody put a folder there by hand, which is what the cache missed");
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

@@ -329,6 +329,7 @@ void CommunityPage::RetranslateUi()
     }
 
     selectAll_->setText(tr("Select everything the filter shows"));
+    reread_->setText(tr("Read again from the disk"));
     search_->setPlaceholderText(tr("Filter entries"));
     openFolder_->setText(tr("Open the folder"));
     promise_->setText(tr("Importing copies into the library and leaves a link in its place. The original folder is "
@@ -343,18 +344,24 @@ QWidget* CommunityPage::CreateActions()
 
     selectAll_ = new QPushButton(bar);
 
+    reread_ = new QPushButton(bar);
+    reread_->setObjectName(QStringLiteral("ReadDestinationsAgain"));
+    reread_->setProperty("role", "primary");
+
     search_ = new QLineEdit(bar);
     search_->setClearButtonEnabled(true);
     search_->setMinimumWidth(180);
     search_->setMaximumWidth(240);
 
     connect(selectAll_, &QPushButton::clicked, table_, &QTableView::selectAll);
+    connect(reread_, &QPushButton::clicked, &viewModel_, &CommunityViewModel::ReadTheDestinationsAgain);
     connect(search_, &QLineEdit::textChanged, filter_, &QSortFilterProxyModel::setFilterFixedString);
 
     auto* layout = new QHBoxLayout(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
     layout->addWidget(selectAll_);
+    layout->addWidget(reread_);
     layout->addStretch();
     layout->addWidget(search_);
 
@@ -858,6 +865,32 @@ void CommunityPage::FitTheChips()
     }
 }
 
+void CommunityPage::LeaveAFilterThatRanOut(const QHash<int, int>& counted)
+{
+    const auto chosen = std::ranges::find_if(chips_,
+                                             [](const QToolButton* chip)
+                                             {
+                                                 return chip->isChecked();
+                                             });
+
+    if (chosen == chips_.end() || (*chosen)->property("filter").toInt() == kEveryFilter)
+    {
+        return;
+    }
+
+    if (counted.value((*chosen)->property("filter").toInt()) > 0)
+    {
+        return;
+    }
+
+    const QString ran = (*chosen)->property("label").toString();
+
+    chips_.front()->setChecked(true);
+    ApplyFilter(kEveryFilter);
+
+    emit StatusChanged(tr("Nothing is %1 any more, so every entry is showing again.").arg(ran.toLower()));
+}
+
 void CommunityPage::UpdateSummary()
 {
     const int rows = model_.rowCount({});
@@ -885,6 +918,7 @@ void CommunityPage::UpdateSummary()
     }
 
     FitTheChips();
+    LeaveAFilterThatRanOut(counted);
 
     const int broken = counted.value(static_cast<int>(EntryClassification::Broken));
     const int managed = counted.value(static_cast<int>(EntryClassification::Managed));

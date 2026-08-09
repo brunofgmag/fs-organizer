@@ -110,6 +110,8 @@ private:
 
     void FitTheChips();
 
+    void LeaveAFilterThatRanOut(const QHash<int, int>& counted);
+
     void UpdateSummary();
 
     CommunityViewModel& viewModel_;
@@ -120,6 +122,7 @@ private:
     QList<QToolButton*> chips_;
     ContextPanel* panel_ = nullptr;
     QPushButton* selectAll_ = nullptr;
+    QPushButton* reread_ = nullptr;
     QLineEdit* search_ = nullptr;
     QLabel* promise_ = nullptr;
     QPushButton* importOne_ = nullptr;

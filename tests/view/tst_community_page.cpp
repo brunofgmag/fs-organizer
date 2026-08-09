@@ -34,6 +34,8 @@ namespace
         static void OnlyTheActionThatUnblocksCarriesTheAccent();
         static void NothingConflictedMeansNoResolveButtonAtAll();
         static void ARescanThatEmptiesTheTableAlsoEmptiesThePanel();
+        static void AFilterThatRanOutHandsTheTableBackInsteadOfLeavingItBlank();
+        static void TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePortrait();
     };
 }
 
@@ -286,6 +288,43 @@ void CommunityPageTest::ARescanThatEmptiesTheTableAlsoEmptiesThePanel()
     QVERIFY(!panel->isVisibleTo(&page));
     QVERIFY(!importChosen->isEnabled());
     QVERIFY(!resolveChosen->isVisibleTo(&page));
+}
+
+void CommunityPageTest::AFilterThatRanOutHandsTheTableBackInsteadOfLeavingItBlank()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    f.viewModel.Show();
+
+    page.FilterBy(EntryClassification::Unmanaged);
+    QVERIFY(page.findChild<QTableView*>()->model()->rowCount() > 0);
+
+    QVERIFY(f.fileSystem.RemoveTree(std::filesystem::path(kCommunity) / "loose-one"));
+    QVERIFY(f.fileSystem.RemoveTree(std::filesystem::path(kCommunity) / "loose-two"));
+    f.viewModel.ReadTheDestinationsAgain();
+
+    QVERIFY2(page.findChild<QTableView*>()->model()->rowCount() > 0,
+             "the filter emptied, and a blank table with a chip reading zero says nothing about why");
+}
+
+void CommunityPageTest::TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePortrait()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    f.viewModel.Show();
+
+    const int before = f.model.rowCount({});
+
+    f.fileSystem.AddDirectory(std::filesystem::path(kCommunity) / "loose-three");
+
+    f.viewModel.Show();
+    QCOMPARE(f.model.rowCount({}), before);
+
+    auto* reread = page.findChild<QPushButton*>(QStringLiteral("ReadDestinationsAgain"));
+    QVERIFY(reread != nullptr);
+    reread->click();
+
+    QCOMPARE(f.model.rowCount({}), before + 1);
 }
 
 QTEST_MAIN(CommunityPageTest)

@@ -457,7 +457,7 @@ int main(int argc, char* argv[])
                      {
                          if (selected == communityPage)
                          {
-                             communityViewModel.Show();
+                             communityViewModel.ReadTheDestinationsAgain();
                          }
                          else if (selected == quarantinePage)
                          {
