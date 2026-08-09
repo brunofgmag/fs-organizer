@@ -89,6 +89,11 @@ add_test(NAME no-disk-in-view
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-disk-in-view.cmake")
 
+add_test(NAME no-dirty-pixmap
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-dirty-pixmap.cmake")
+
 add_test(NAME no-retyped-formatting
         COMMAND "${CMAKE_COMMAND}"
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
