@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0](https://github.com/brunofgmag/fs-organizer/compare/v0.21.1...v0.22.0) (2026-08-09)
+
+
+### Features
+
+* give the sidecar its own port, find the swap a lost process left renamed, and let the content decide the size ([#60](https://github.com/brunofgmag/fs-organizer/issues/60)) ([768242a](https://github.com/brunofgmag/fs-organizer/commit/768242a21e47c1c01dc45bf850ef26d530e7f4b1))
+
 ## [0.21.1](https://github.com/brunofgmag/fs-organizer/compare/v0.21.0...v0.21.1) (2026-08-09)
 
 
