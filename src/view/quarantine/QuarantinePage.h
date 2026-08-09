@@ -76,7 +76,6 @@ private:
     QPushButton* empty_ = nullptr;
     QPushButton* restoreFromPanel_ = nullptr;
     QPushButton* openFolder_ = nullptr;
-    QLabel* promise_ = nullptr;
     EmptyState* nothingHeld_ = nullptr;
 };
 

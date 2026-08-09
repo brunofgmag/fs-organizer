@@ -93,6 +93,34 @@ void AddonTreeViewModel::MeasureTheSelection(const std::vector<std::filesystem::
                           });
 }
 
+void AddonTreeViewModel::WeighTheSwaps(const std::vector<TakenPlace>& swaps,
+                                       std::function<void(const std::vector<WeighedSwap>&)> onWeighed)
+{
+    std::vector<std::filesystem::path> folders;
+    folders.reserve(swaps.size() * 2);
+
+    for (const TakenPlace& swap : swaps)
+    {
+        folders.push_back(swap.occupant);
+        folders.push_back(swap.addonFolder);
+    }
+
+    sizes_.MeasureFolders(folders, caller_, Freshness::ReuseWhatIsKnown, {},
+                          [swaps, weighed = std::move(onWeighed)](const FolderSizeReport& report)
+                          {
+                              std::vector<WeighedSwap> sides;
+                              sides.reserve(swaps.size());
+
+                              for (const TakenPlace& swap : swaps)
+                              {
+                                  sides.push_back(WeighedSwap{.goesOff = FolderIn(report.folders, swap.occupant),
+                                                              .goesOn = FolderIn(report.folders, swap.addonFolder)});
+                              }
+
+                              weighed(sides);
+                          });
+}
+
 void AddonTreeViewModel::ShowActiveProfile() const
 {
     session_.ShowActiveProfile();

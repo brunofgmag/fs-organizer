@@ -483,11 +483,11 @@ int main(int argc, char* argv[])
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);
     PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
+    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, startupPage);
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
-    PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
-    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, startupPage);
+    PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -595,6 +595,12 @@ int main(int argc, char* argv[])
     if (const std::optional<TakenPlace> pretend = APlaceWorthShowingAsTaken(session.Snapshot()); pretend.has_value())
     {
         SwapDialog swapDialog({*pretend}, treeViewModel, &shell);
+
+        treeViewModel.WeighTheSwaps({*pretend},
+                                    [&swapDialog](const std::vector<WeighedSwap>& weighed)
+                                    {
+                                        swapDialog.ShowTheSizes(weighed);
+                                    });
 
         landed = SaveTheDialogOpenedBy(
                      [&swapDialog]

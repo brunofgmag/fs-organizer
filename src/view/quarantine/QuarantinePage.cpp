@@ -62,13 +62,9 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     restoreFromPanel_ = new QPushButton(panel_);
     restoreFromPanel_->setProperty("role", "primary");
     openFolder_ = new QPushButton(panel_);
-    promise_ = new QLabel(panel_);
-    promise_->setObjectName(QStringLiteral("PanelPromise"));
-    promise_->setWordWrap(true);
     panel_->Add(detail_);
     panel_->Add(restoreFromPanel_);
     panel_->Add(openFolder_);
-    panel_->Add(promise_);
     panel_->RestoreCollapsedState();
     panel_->Summon(false);
 
@@ -145,7 +141,6 @@ void QuarantinePage::RetranslateUi()
     discard_->setText(tr("Discard the selected ones"));
     empty_->setText(tr("Empty the quarantine"));
     openFolder_->setText(tr("Open the folder"));
-    promise_->setText(tr("Nothing leaves the quarantine without you saying so."));
     panel_->RenameTheFallback(tr("Item held"));
     nothingHeld_->Retell(tr("The quarantine is empty."),
                          tr("When two copies of the same addon fight over the same name, the losing one comes here "
@@ -450,7 +445,7 @@ void QuarantinePage::UpdateSummary()
     pages_->setCurrentIndex(rows == 0 ? 1 : 0);
 
     emit SummaryChanged(rows == 0 ? tr("0 items in the quarantine") : tr("%n item in the quarantine.", nullptr, rows));
-    emit AsideChanged(rows == 0 ? tr("0 bytes held") : tr("nothing leaves here without you saying so"));
+    emit AsideChanged(rows == 0 ? tr("0 bytes held") : QString());
 
     restore_->setEnabled(selected > 0);
     discard_->setEnabled(selected > 0);

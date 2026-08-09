@@ -46,10 +46,10 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
     name->setObjectName(QStringLiteral("PanelTitle"));
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    auto* explanation = new QLabel(tr("Something with this name is already in %1. Restoring would put two addons in "
-                                      "one place, so the app does not pick for you.")
-                                       .arg(AsText(check.occupant.parent_path())),
-                                   this);
+    auto* explanation =
+        new QLabel(tr("Something with this name is already in %1. Restoring would put two addons in one place.")
+                       .arg(AsText(check.occupant.parent_path())),
+                   this);
     explanation->setWordWrap(true);
 
     auto* compared = new QWidget(this);
@@ -63,9 +63,8 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
     held_ = AddTheSide(*grid, 0, tr("In quarantine"), VersionOrSilence(check.version));
     occupant_ = AddTheSide(*grid, 1, tr("Already there"), VersionOrSilence(check.occupantVersion));
 
-    auto* promise = new QLabel(tr("Replacing puts what is there in the quarantine, with its own origin recorded. "
-                                  "Nothing is deleted, and the same dialog brings it back."),
-                               this);
+    auto* promise =
+        new QLabel(tr("Replacing puts what is there in the quarantine, with its own origin recorded."), this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
 
@@ -89,7 +88,7 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
 
     ShowTheSizes(TwoSides{});
 
-    resize(520, 300);
+    SizeToTheContent(*this, *layout, 520);
 }
 
 QLabel* CollisionDialog::AddTheSide(QGridLayout& grid, const int column, const QString& title, const QString& version)

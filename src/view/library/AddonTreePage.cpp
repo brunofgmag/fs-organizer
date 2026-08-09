@@ -252,7 +252,7 @@ void AddonTreePage::RetranslateUi() const
     panel_->RenameTheFallback(tr("Addon selected"));
     invite_->Retell(tr("This profile has no library yet."),
                     tr("A library is the folder where your addons live, outside the simulator. Enabling an addon "
-                       "creates a link from the simulator to there. Nothing is copied or moved."));
+                       "creates a link from the simulator to there."));
     inviteAction_->setText(tr("Register library…"));
 }
 
@@ -679,6 +679,12 @@ std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<co
     }
 
     SwapDialog dialog(swaps, viewModel_, this);
+
+    viewModel_.WeighTheSwaps(swaps,
+                             [&dialog](const std::vector<WeighedSwap>& weighed)
+                             {
+                                 dialog.ShowTheSizes(weighed);
+                             });
 
     return dialog.exec() == QDialog::Accepted ? swaps : std::vector<TakenPlace>{};
 }

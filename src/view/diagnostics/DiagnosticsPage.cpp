@@ -272,9 +272,6 @@ QWidget* DiagnosticsPage::CreateQuarantinePane()
     layout->addWidget(quarantineWeight_);
     layout->addWidget(quarantinePlaces_);
     layout->addLayout(actions);
-    layout->addWidget(Quiet(tr("Nothing is emptied from here: the Quarantine screen is where an item is restored or "
-                               "discarded, one gesture at a time."),
-                            pane));
     layout->addStretch();
 
     return pane;

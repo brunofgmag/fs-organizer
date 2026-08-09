@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H
 
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,12 @@
 #include "viewmodel/SelectionSize.h"
 #include "viewmodel/SessionNotifier.h"
 
+struct WeighedSwap
+{
+    MeasuredFolder goesOff{};
+    MeasuredFolder goesOn{};
+};
+
 class AddonTreeViewModel final : public QObject
 {
     Q_OBJECT
@@ -33,6 +40,9 @@ public:
                        QObject* parent = nullptr);
 
     void MeasureTheSelection(const std::vector<std::filesystem::path>& addonFolders);
+
+    void WeighTheSwaps(const std::vector<TakenPlace>& swaps,
+                       std::function<void(const std::vector<WeighedSwap>&)> onWeighed);
 
     void ShowActiveProfile() const;
 

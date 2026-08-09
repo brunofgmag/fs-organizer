@@ -103,10 +103,6 @@ DeleteDialog::DeleteDialog(DeletionPlan plan, DeletionViewModel& viewModel, QWid
         layout->addWidget(aside);
     }
 
-    auto* promise = new QLabel(tr("Nothing happens until you say so."), this);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
-
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
     confirm_ = buttons->addButton(tr("Delete permanently"), QDialogButtonBox::AcceptRole);
     confirm_->setProperty("role", "primary");
@@ -117,13 +113,11 @@ DeleteDialog::DeleteDialog(DeletionPlan plan, DeletionViewModel& viewModel, QWid
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(recycle_, &QRadioButton::toggled, this, &DeleteDialog::ShowTheChosenRoute);
 
-    layout->addWidget(promise);
     layout->addWidget(buttons);
 
     ShowTheChosenRoute();
 
-    layout->activate();
-    resize(kDialogWidth, layout->totalHeightForWidth(kDialogWidth));
+    SizeToTheContent(*this, *layout, kDialogWidth);
 }
 
 QRadioButton* DeleteDialog::AddRoute(QVBoxLayout& column, const QString& title, const QString& detail)

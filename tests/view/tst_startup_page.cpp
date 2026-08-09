@@ -41,6 +41,7 @@ namespace
         static void EachEntryLandsOnItsOwnRowWithTheSwitchItCarriesOnDisk();
         static void TheRowOfAnAlarmingEntryIsMarkedAlarmingInEveryColumn();
         static void AnEntryInsideAnAddonWithNothingWrongCarriesATagAndNotAnAlarm();
+        static void WhatSupportsTheNameIsQuietAndWhatAlarmsKeepsTheNameInk();
         static void TickingARowWritesTheSwitchAndTheRowStaysWhereTheDiskPutIt();
         static void WithTheSimulatorOpenTheRowGoesBackToWhatTheDiskSays();
         static void TheLooseStateOffersToTurnItOnInsteadOfShowingAnEmptyTable();
@@ -212,6 +213,23 @@ void StartupPageTest::AnEntryInsideAnAddonWithNothingWrongCarriesATagAndNotAnAla
     QVERIFY(!flow->data(2, AlarmingRole).toBool());
 }
 
+void StartupPageTest::WhatSupportsTheNameIsQuietAndWhatAlarmsKeepsTheNameInk()
+{
+    Fixture fixture;
+    fixture.viewModel.Show();
+
+    const QTreeWidget* table = TableOf(fixture.page);
+    const QTreeWidgetItem* outside = table->topLevelItem(1);
+    const QTreeWidgetItem* ghost = table->topLevelItem(2);
+
+    QVERIFY(!outside->data(0, QuietRole).toBool());
+    QVERIFY(outside->data(1, QuietRole).toBool());
+    QVERIFY(outside->data(2, QuietRole).toBool());
+
+    QVERIFY(ghost->data(1, QuietRole).toBool());
+    QVERIFY(!ghost->data(2, QuietRole).toBool());
+}
+
 void StartupPageTest::TickingARowWritesTheSwitchAndTheRowStaysWhereTheDiskPutIt()
 {
     Fixture fixture;
@@ -255,7 +273,7 @@ void StartupPageTest::TheLooseStateOffersToTurnItOnInsteadOfShowingAnEmptyTable(
     const QStackedWidget* panes = fixture.page.findChild<QStackedWidget*>();
 
     QCOMPARE(panes->currentIndex(), 2);
-    QVERIFY(ButtonSaying(fixture.page, "Turn it on") != nullptr);
+    QVERIFY(ButtonSaying(fixture.page, "Manage these") != nullptr);
     QCOMPARE(fixture.entries.reads, std::size_t{0});
 }
 
@@ -264,7 +282,7 @@ void StartupPageTest::TurningItOnFromTheLooseStateShowsTheEntries()
     Fixture fixture(false);
     fixture.viewModel.Show();
 
-    ButtonSaying(fixture.page, "Turn it on")->click();
+    ButtonSaying(fixture.page, "Manage these")->click();
 
     QCOMPARE(fixture.page.findChild<QStackedWidget*>()->currentIndex(), 0);
     QCOMPARE(TableOf(fixture.page)->topLevelItemCount(), 3);
@@ -279,7 +297,7 @@ void StartupPageTest::ALanguageChangeReachesTheToolbarAndTheLooseState()
     QEvent language(QEvent::LanguageChange);
     QCoreApplication::sendEvent(&fixture.page, &language);
 
-    QVERIFY(ButtonSaying(fixture.page, "Turn it on") != nullptr);
+    QVERIFY(ButtonSaying(fixture.page, "Manage these") != nullptr);
     QCOMPARE(fixture.page.findChild<QStackedWidget*>()->currentIndex(), 2);
     QCOMPARE(fixture.entries.reads, std::size_t{0});
 }
