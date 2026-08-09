@@ -13,6 +13,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -143,12 +144,13 @@ namespace
         WindowsLinkService linkService{};
         WindowsFilesystemProbe filesystemProbe{};
         WindowsFileOperations files{};
+        WindowsSidecarStore sidecars{};
         LinkingEngine linking{linkService, filesystemProbe};
         SystemClock clock{};
         std::filesystem::path journalFile{};
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
     };
 }
 
@@ -223,8 +225,8 @@ void ExternalImportOnRealDiskTest::TheRecordBesideTheAddonIsOnDiskAndBringsTheLi
     FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
     EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
     FakeLibraryIdGenerator identities;
-    const ProfileService profiles(catalog, engine.filesystemProbe, classifier, engine.linking, engine.log, identities,
-                                  LinkType::Junction);
+    const ProfileService profiles(catalog, engine.filesystemProbe, engine.sidecars, classifier, engine.linking,
+                                  engine.log, identities, LinkType::Junction);
 
     const SimulatorProfile forgetful = disk.Profile();
     QVERIFY(forgetful.externalOrigins.empty());
@@ -243,11 +245,12 @@ void ExternalImportOnRealDiskTest::AnInterruptedImportPutsTheOtherProgramsFolder
     ALinkServiceThatRefusesToCreate refusing;
     WindowsFilesystemProbe filesystemProbe;
     WindowsFileOperations files;
+    WindowsSidecarStore sidecars;
     const LinkingEngine linking{refusing, filesystemProbe};
     SystemClock clock;
     JsonlOperationJournal journal{disk.Root() / "journal" / "operations.jsonl"};
     const OperationLog log{journal, clock};
-    const ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
+    const ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
 
     QCOMPARE(engine.Import(disk.Profile(), RequestFor(disk), {}).Result(), FileResult::CouldNotCreateLink);
 

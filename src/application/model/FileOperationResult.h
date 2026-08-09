@@ -7,7 +7,7 @@
 
 struct FileOperationResult
 {
-    std::filesystem::path path;
+    std::filesystem::path path{};
     FileResult result = FileResult::Completed;
     std::filesystem::path occupant{};
 };

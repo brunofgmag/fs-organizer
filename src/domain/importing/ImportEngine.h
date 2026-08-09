@@ -15,6 +15,7 @@
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/OperationJournal.h"
+#include "domain/ports/SidecarStore.h"
 
 inline constexpr std::uintmax_t kFreeSpaceMargin = 64ULL * 1024 * 1024;
 
@@ -44,6 +45,7 @@ class ImportEngine
 public:
     ImportEngine(const FilesystemProbe& filesystemProbe,
                  FileOperations& files,
+                 SidecarStore& sidecars,
                  const LinkingEngine& linking,
                  const OperationLog& log,
                  LinkType linkType);
@@ -112,6 +114,7 @@ private:
 
     const FilesystemProbe& filesystemProbe_;
     FileOperations& files_;
+    SidecarStore& sidecars_;
     const LinkingEngine& linking_;
     const OperationLog& log_;
     LinkType linkType_;

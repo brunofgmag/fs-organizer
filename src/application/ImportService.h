@@ -10,6 +10,7 @@
 #include "application/model/ImportOperationResult.h"
 #include "application/model/QuarantinedItem.h"
 #include "application/model/RestorePlan.h"
+#include "application/model/InterruptedSwap.h"
 #include "application/model/StagingLeftover.h"
 #include "application/ports/ProcessProbe.h"
 #include "domain/importing/ImportEngine.h"
@@ -20,6 +21,7 @@
 #include "domain/ports/CatalogScanner.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/OperationJournal.h"
+#include "domain/ports/SidecarStore.h"
 
 class ImportService
 {
@@ -29,6 +31,7 @@ public:
                   const FilesystemProbe& filesystemProbe,
                   const CatalogScanner& catalog,
                   FileOperations& files,
+                  SidecarStore& sidecars,
                   const LinkingEngine& linking,
                   const OperationLog& log,
                   LinkType linkType);
@@ -75,6 +78,11 @@ public:
                                                            const std::vector<QuarantinedItem>& items) const;
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] std::vector<InterruptedSwap> InterruptedSwaps(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] std::vector<FileOperationResult>
+    UndoInterruptedSwaps(const SimulatorProfile& profile, const std::vector<InterruptedSwap>& swaps) const;
 
     [[nodiscard]] std::vector<ImportOperationResult>
     Resume(const SimulatorProfile& profile,
@@ -143,6 +151,7 @@ private:
     const FilesystemProbe& filesystemProbe_;
     const CatalogScanner& catalog_;
     FileOperations& files_;
+    SidecarStore& sidecars_;
     const LinkingEngine& linking_;
     const OperationLog& log_;
     LinkType linkType_;

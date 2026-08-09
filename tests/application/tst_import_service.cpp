@@ -18,6 +18,7 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -50,6 +51,10 @@ namespace
         static void ALeftoverThatOnlyKnowsTheProgramIsNotResumedAsAnOrdinaryImport();
         static void ResumingAnExternalLeftoverTakesTheOtherProgramsFolderOverAgain();
         static void TheSearchForLeftoversNeverWalksIntoAnAddon();
+        static void ASwapThatDiedHalfwayIsFoundInTheOtherProgramsFolder();
+        static void ASwapThatFinishedIsNotOfferedAsInterrupted();
+        static void PuttingTheFolderBackRenamesTheRoomToTheNameTheOtherProgramLooksFor();
+        static void AGiveBackThatDiedHalfwayIsFoundBesideTheOtherProgramsFolder();
         static void ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSource();
         static void DiscardingALeftoverRemovesOnlyTheStaging();
         static void KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuarantiningIt();
@@ -122,6 +127,7 @@ namespace
         InMemoryFileSystem fileSystem;
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeProcessProbe processProbe;
         EntryClassifier classifier{linkService, filesystemProbe};
@@ -130,8 +136,9 @@ namespace
         FakeClock clock;
         OperationLog log{journal, clock};
         FakeCatalogScanner catalog;
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
-        ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportService service{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
+                              linking, log,          LinkType::Junction};
 
         SimulatorProfile profile{.destinations = {kDestination},
                                  .defaultDestination = kDestination,
@@ -196,7 +203,7 @@ namespace
             log.RecordImport(OperationKind::QuarantineFromLibrary, AddonId{.libraryId = "lib-1"}, theJournalSays, item,
                              FileResult::Completed);
 
-            QVERIFY(files.WriteTextFile(
+            QVERIFY(sidecars.Write(
                 SidecarPathFor(item),
                 TextOfTheOrigin(QuarantineOrigin{.origin = theRecordBesideItSays, .quarantinedAt = clock.now})));
         }
@@ -592,6 +599,71 @@ namespace
 
         RememberWhereItCameFrom(f.profile, kVendorInLibrary, kVendorFolder);
     }
+}
+
+void ImportServiceTest::ASwapThatDiedHalfwayIsFoundInTheOtherProgramsFolder()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    f.fileSystem.RemoveTree(kVendorFolder);
+    f.fileSystem.AddDirectory(SwapSlotFor(kVendorFolder));
+
+    const std::vector<InterruptedSwap> interrupted = f.service.InterruptedSwaps(f.profile);
+
+    QCOMPARE(interrupted.size(), std::size_t{1});
+    QCOMPARE(interrupted.front().room, SwapSlotFor(kVendorFolder));
+    QCOMPARE(interrupted.front().folder, kVendorFolder);
+    QCOMPARE(interrupted.front().libraryCopy, kVendorInLibrary);
+}
+
+void ImportServiceTest::ASwapThatFinishedIsNotOfferedAsInterrupted()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    f.fileSystem.AddDirectory(SwapSlotFor(kVendorFolder));
+
+    QVERIFY2(f.service.InterruptedSwaps(f.profile).empty(),
+             "with the folder under its own name the other program finds it, so there is nothing to put back");
+}
+
+void ImportServiceTest::PuttingTheFolderBackRenamesTheRoomToTheNameTheOtherProgramLooksFor()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    f.fileSystem.RemoveTree(kVendorFolder);
+    f.fileSystem.AddDirectory(SwapSlotFor(kVendorFolder));
+
+    const std::vector<FileOperationResult> results =
+        f.service.UndoInterruptedSwaps(f.profile, f.service.InterruptedSwaps(f.profile));
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(f.fileSystem.Exists(kVendorFolder));
+    QVERIFY(!f.fileSystem.Exists(SwapSlotFor(kVendorFolder)));
+    QVERIFY(f.service.InterruptedSwaps(f.profile).empty());
+}
+
+void ImportServiceTest::AGiveBackThatDiedHalfwayIsFoundBesideTheOtherProgramsFolder()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    f.fileSystem.AddDirectory(StagingPathFor(kVendorFolder));
+
+    const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
+    const auto beside = std::ranges::find_if(leftovers,
+                                             [](const StagingLeftover& leftover)
+                                             {
+                                                 return leftover.staging == StagingPathFor(kVendorFolder);
+                                             });
+
+    QVERIFY2(beside != leftovers.end(),
+             "the manufacturer folder is neither destination nor library, so no other sweep walks it");
+    QCOMPARE(beside->target, kVendorFolder);
+    QVERIFY2(!beside->CanBeResumed(), "a half copied give back is discarded, not resumed");
 }
 
 void ImportServiceTest::GivingAnAddonBackTakesTheRecordBesideItAway()
@@ -1048,7 +1120,7 @@ void ImportServiceTest::NothingMovesWhenTheOriginCannotBeRecorded()
 {
     Fixture f;
     f.AddBothCopies();
-    f.files.MakeTheTextWriteFail();
+    f.sidecars.MakeTheWriteFail();
 
     QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, kInLibrary},
                                        ConflictChoice::KeepTheProvenanceCopy),

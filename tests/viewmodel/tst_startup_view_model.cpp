@@ -18,6 +18,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/FakeStartupEntries.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
@@ -115,6 +116,7 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
@@ -123,7 +125,8 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;

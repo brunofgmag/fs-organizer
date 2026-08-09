@@ -51,6 +51,16 @@ std::vector<StagingLeftover> ImportViewModel::Leftovers() const
     return service_.Leftovers(Profile());
 }
 
+std::vector<InterruptedSwap> ImportViewModel::InterruptedSwaps() const
+{
+    return service_.InterruptedSwaps(Profile());
+}
+
+std::vector<FileOperationResult> ImportViewModel::UndoInterruptedSwaps(const std::vector<InterruptedSwap>& swaps) const
+{
+    return service_.UndoInterruptedSwaps(Profile(), swaps);
+}
+
 std::vector<FileOperationResult> ImportViewModel::DiscardLeftovers(const std::vector<StagingLeftover>& leftovers) const
 {
     return service_.DiscardLeftovers(Profile(), leftovers);

@@ -25,6 +25,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -137,6 +138,7 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
@@ -145,7 +147,8 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -153,7 +156,7 @@ namespace
         SessionNotifier notifier{};
         Session session{profiles, organizer, settings, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DeletionService service{filesystemProbe, files, linking, classifier, processProbe, log, sizes};
+        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
         DeletionViewModel viewModel{session, profiles, settings, service, sizes};
     };
 

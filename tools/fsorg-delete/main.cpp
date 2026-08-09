@@ -13,6 +13,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -188,6 +189,7 @@ int main(int argc, char* argv[])
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
     WindowsFileOperations files;
+    WindowsSidecarStore sidecars;
     const JsonManifestParser manifestParser;
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
@@ -200,7 +202,7 @@ int main(int argc, char* argv[])
 
     RunHereAndNow runner;
     SizeService sizes(catalog, filesystemProbe, clock, runner);
-    const DeletionService service(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+    const DeletionService service(filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes);
 
     const std::vector<TreeNode> libraries = LibraryTreesOf(catalog, profile);
     const std::vector<const TreeNode*> nodes = AddonsNamed(libraries, arguments.addons);

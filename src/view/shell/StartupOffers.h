@@ -12,4 +12,6 @@ void OfferWhatTheOldProgramKept(LegacyImportViewModel& legacyViewModel, QWidget*
 
 void OfferWhatALostImportLeftBehind(ImportViewModel& importViewModel, QWidget* parent);
 
+void OfferToPutBackWhatALostSwapRenamed(ImportViewModel& importViewModel, QWidget* parent);
+
 #endif // FS_ORGANIZER_VIEW_SHELL_STARTUP_OFFERS_H

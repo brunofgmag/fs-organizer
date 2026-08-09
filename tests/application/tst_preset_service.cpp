@@ -13,6 +13,7 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakePresetRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -103,6 +104,8 @@ namespace
         }
 
         InMemoryFileSystem fileSystem;
+
+        FakeSidecarStore sidecars{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeCatalogScanner catalog;
@@ -112,7 +115,8 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         FakePresetRepository repository;
         PresetService service{repository, profiles};
     };

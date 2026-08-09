@@ -66,6 +66,7 @@ set(WINDOWS_INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+        src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/SingleInstance.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp

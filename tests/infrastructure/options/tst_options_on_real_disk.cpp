@@ -12,6 +12,7 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
@@ -103,7 +104,7 @@ namespace
               journal(journalFile),
               settingsFile(disk.SettingsFile()),
               settings(settingsFile),
-              service(catalog, filesystemProbe, classifier, linking, log, identities, linkType),
+              service(catalog, filesystemProbe, sidecars, classifier, linking, log, identities, linkType),
               organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, linkType),
               session(service, organizer, settings, processProbe, runner, observer)
         {
@@ -112,6 +113,7 @@ namespace
         WindowsLinkService linkService;
         WindowsFilesystemProbe filesystemProbe;
         WindowsFileOperations files;
+        WindowsSidecarStore sidecars;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
         SystemClock clock;

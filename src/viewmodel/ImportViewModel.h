@@ -48,6 +48,11 @@ public:
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers() const;
 
+    [[nodiscard]] std::vector<InterruptedSwap> InterruptedSwaps() const;
+
+    [[nodiscard]] std::vector<FileOperationResult>
+    UndoInterruptedSwaps(const std::vector<InterruptedSwap>& swaps) const;
+
     [[nodiscard]] std::vector<FileOperationResult>
     DiscardLeftovers(const std::vector<StagingLeftover>& leftovers) const;
 
