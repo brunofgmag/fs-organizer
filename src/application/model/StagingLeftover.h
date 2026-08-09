@@ -9,10 +9,11 @@ struct StagingLeftover
     std::filesystem::path target{};
     std::filesystem::path source{};
     std::filesystem::path externalSource{};
+    bool theCopyResolvedAConflict = false;
 
     [[nodiscard]] bool CanBeResumed() const
     {
-        return !source.empty();
+        return !source.empty() && !theCopyResolvedAConflict;
     }
 };
 

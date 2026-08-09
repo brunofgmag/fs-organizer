@@ -39,6 +39,23 @@
     return key;
 }
 
+[[nodiscard]] inline std::filesystem::path VolumeOf(const std::filesystem::path& path)
+{
+    const std::string text = WithGenericSeparators(AsUtf8(path));
+
+    if (text.size() >= 2 && text[1] == ':')
+    {
+        return PathFromUtf8(text.substr(0, 2));
+    }
+
+    return PathFromUtf8("/");
+}
+
+[[nodiscard]] inline bool OnTheSameVolume(const std::filesystem::path& left, const std::filesystem::path& right)
+{
+    return LoweredForComparison(AsUtf8(VolumeOf(left))) == LoweredForComparison(AsUtf8(VolumeOf(right)));
+}
+
 [[nodiscard]] inline std::string ComparableFileName(const std::filesystem::path& path)
 {
     const std::string key = ComparablePath(path);
