@@ -22,6 +22,7 @@ namespace
     private slots:
         static void TheExactNameIsTakenAndTheImpostorsBesideItAreNot();
         static void TheLowerCaseGraphyOfTheOlderSimulatorIsFoundToo();
+        static void TheNameComesBackWithTheGraphyTheDiskHasAndNotTheOneAskedFor();
         static void AStartupFileWithNoUserCfgBesideItIsNotAdopted();
         static void TheBackupTheAppWritesIsNotTakenForTheSimulatorsFile();
         static void TheFileOfEachVariantIsFoundBesideItsOwnUserCfg();
@@ -88,6 +89,25 @@ void StartupFileLocationsTest::TheLowerCaseGraphyOfTheOlderSimulatorIsFoundToo()
     QCOMPARE(ComparableFileName(found.front().filePath), std::string("exe.xml"));
 
     qInfo() << "the graphy taken was" << QString::fromStdString(AsUtf8(found.front().filePath.filename()));
+}
+
+void StartupFileLocationsTest::TheNameComesBackWithTheGraphyTheDiskHasAndNotTheOneAskedFor()
+{
+    const TempFiles files;
+
+    const std::filesystem::path older = FolderWith(files, "Microsoft Flight Simulator", {"UserCfg.opt", "exe.xml"});
+    const std::filesystem::path newer =
+        FolderWith(files, "Microsoft Flight Simulator 2024", {"UserCfg.opt", "EXE.xml"});
+
+    const StdFilesystemProbe probe;
+    const std::vector<StartupFileLocation> found =
+        StartupFileLocations({{.variant = SimulatorVariant::MSFS2020, .configPath = older / "UserCfg.opt"},
+                              {.variant = SimulatorVariant::MSFS2024, .configPath = newer / "UserCfg.opt"}},
+                             probe);
+
+    QCOMPARE(found.size(), std::size_t{2});
+    QCOMPARE(found[0].filePath.filename(), std::filesystem::path("exe.xml"));
+    QCOMPARE(found[1].filePath.filename(), std::filesystem::path("EXE.xml"));
 }
 
 void StartupFileLocationsTest::AStartupFileWithNoUserCfgBesideItIsNotAdopted()

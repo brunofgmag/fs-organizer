@@ -233,6 +233,25 @@ public:
         return children;
     }
 
+    [[nodiscard]] std::vector<std::filesystem::path> ChildFilesOf(const std::filesystem::path& path) const
+    {
+        const std::string parent = Key(path);
+        std::vector<std::filesystem::path> children;
+        for (const auto& [key, node] : nodes_)
+        {
+            if (node.kind != NodeKind::File)
+            {
+                continue;
+            }
+            const std::filesystem::path candidate(key);
+            if (candidate.parent_path().generic_string() == parent)
+            {
+                children.push_back(candidate);
+            }
+        }
+        return children;
+    }
+
     [[nodiscard]] std::vector<std::filesystem::path> FilesUnder(const std::filesystem::path& path) const
     {
         std::vector<std::filesystem::path> files;

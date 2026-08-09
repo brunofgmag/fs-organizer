@@ -27,6 +27,8 @@ public:
     [[nodiscard]] virtual std::vector<std::filesystem::path>
     ChildDirectories(const std::filesystem::path& path) const = 0;
 
+    [[nodiscard]] virtual std::vector<std::filesystem::path> ChildFiles(const std::filesystem::path& path) const = 0;
+
     [[nodiscard]] virtual bool VolumeIsAvailable(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual bool ProbeWritable(const std::filesystem::path& path) const = 0;
