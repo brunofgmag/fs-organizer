@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.1](https://github.com/brunofgmag/fs-organizer/compare/v0.21.0...v0.21.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* **view:** quiet what supports the name, size three dialogs to their content and kill the flaky pixmap ([#58](https://github.com/brunofgmag/fs-organizer/issues/58)) ([71986ee](https://github.com/brunofgmag/fs-organizer/commit/71986ee0a4e6eadf73a16a72203866783d6da28a))
+
 ## [0.21.0](https://github.com/brunofgmag/fs-organizer/compare/v0.20.0...v0.21.0) (2026-08-09)
 
 
