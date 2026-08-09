@@ -27,7 +27,6 @@ namespace
     constexpr int kPath = 1;
     constexpr int kState = 2;
     constexpr int kProgramWidth = 280;
-    constexpr int kStateWidth = 170;
 
     QString StateOf(const StartupLine& line)
     {
@@ -58,7 +57,10 @@ namespace
         const bool tagged = ItIsATag(line);
         row->setText(kState, tagged ? QString() : StateOf(line));
         row->setData(kState, TagTextRole, tagged ? StateOf(line) : QString());
-        row->setData(kState, TagToneRole, static_cast<int>(TagTone::Outlined));
+        row->setData(kState, TagToneRole, static_cast<int>(TagTone::Muted));
+
+        row->setData(kPath, QuietRole, true);
+        row->setData(kState, QuietRole, line.alarm == StartupAlarm::None);
 
         for (int column = kSwitch; column <= kState; ++column)
         {
@@ -154,24 +156,16 @@ QWidget* StartupPage::CreateEntriesPane()
     entries_->header()->setStretchLastSection(false);
     entries_->header()->setSectionResizeMode(kSwitch, QHeaderView::Interactive);
     entries_->header()->setSectionResizeMode(kPath, QHeaderView::Stretch);
-    entries_->header()->setSectionResizeMode(kState, QHeaderView::Fixed);
+    entries_->header()->setSectionResizeMode(kState, QHeaderView::ResizeToContents);
     entries_->setColumnWidth(kSwitch, kProgramWidth);
-    entries_->setColumnWidth(kState, kStateWidth);
     DressTheHeaderOf(entries_->header());
 
-    auto* rows = new RowDelegate(entries_);
-    rows->KeepRowsAtLeast(0);
-    entries_->setItemDelegate(rows);
-
-    promise_ = new QLabel(pane);
-    promise_->setObjectName(QStringLiteral("PanelPromise"));
-    promise_->setWordWrap(true);
+    entries_->setItemDelegate(new RowDelegate(entries_));
 
     auto* layout = new QVBoxLayout(pane);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
     layout->addWidget(entries_, 1);
-    layout->addWidget(promise_);
 
     return pane;
 }
@@ -179,19 +173,17 @@ QWidget* StartupPage::CreateEntriesPane()
 void StartupPage::RetranslateUi() const
 {
     readAgain_->setText(tr("Read it again"));
-    leaveAlone_->setText(tr("Leave these alone"));
+    leaveAlone_->setText(tr("Stop managing these"));
     entries_->setHeaderLabels({tr("Program"), tr("Path"), tr("State")});
-    promise_->setText(tr("The app writes one thing here: the switch of an entry that already exists. It never adds, "
-                         "removes or reorders, and it keeps one backup copy of the file beside it."));
 
     nothingToShow_->Retell(tr("No startup entry to show"),
                            tr("The startup file of this profile was not found beside its UserCfg.opt, or it carries no "
                               "program. Nothing was written."));
-    leftAlone_->Retell(tr("The startup entries are left alone"),
-                       tr("Turn this on and FS Organizer reads the startup file of the simulator, lists the programs "
+    leftAlone_->Retell(tr("The startup entries are not managed"),
+                       tr("Manage these and FS Organizer reads the startup file of the simulator, lists the programs "
                           "it launches with itself, and lets you switch one off without editing XML. It changes one "
                           "thing only: the switch of an entry that is already there."));
-    turnOn_->setText(tr("Turn it on"));
+    turnOn_->setText(tr("Manage these"));
 }
 
 void StartupPage::ShowWhatTheFileSays()
@@ -202,7 +194,7 @@ void StartupPage::ShowWhatTheFileSays()
     if (!viewModel_.Managing())
     {
         panes_->setCurrentIndex(LeftAlone);
-        emit SummaryChanged(tr("The startup entries of the simulator are left alone."));
+        emit SummaryChanged(tr("The startup entries of the simulator are not managed."));
 
         return;
     }

@@ -70,7 +70,6 @@ private:
     QPushButton* readAgain_ = nullptr;
     QPushButton* leaveAlone_ = nullptr;
     QLabel* readAt_ = nullptr;
-    QLabel* promise_ = nullptr;
     EmptyState* nothingToShow_ = nullptr;
     EmptyState* leftAlone_ = nullptr;
     QPushButton* turnOn_ = nullptr;

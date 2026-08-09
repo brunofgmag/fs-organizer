@@ -103,8 +103,8 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotWriteTheStartupFile:
         return QObject::tr("the startup file of the simulator could not be written, so nothing changed");
     case FileResult::TheStartupEntriesAreLeftLoose:
-        return QObject::tr("the startup entries of the simulator are left loose in the options, so the app does not "
-                           "read or write that file");
+        return QObject::tr("the startup entries of the simulator are not managed, so the app does not read or write "
+                           "that file");
     }
 
     return {};
