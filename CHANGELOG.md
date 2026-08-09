@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/brunofgmag/fs-organizer/compare/v0.22.0...v0.23.0) (2026-08-09)
+
+
+### Features
+
+* say what refused the write, warn before a deep root, group the swap and read the destinations once ([#62](https://github.com/brunofgmag/fs-organizer/issues/62)) ([13d2656](https://github.com/brunofgmag/fs-organizer/commit/13d26562d5018923f68823a6cf49036f1c8b7a03))
+
 ## [0.22.0](https://github.com/brunofgmag/fs-organizer/compare/v0.21.1...v0.22.0) (2026-08-09)
 
 
