@@ -360,8 +360,8 @@ QWidget* CommunityPage::CreateActions()
     auto* layout = new QHBoxLayout(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
-    layout->addWidget(selectAll_);
     layout->addWidget(reread_);
+    layout->addWidget(selectAll_);
     layout->addStretch();
     layout->addWidget(search_);
 
