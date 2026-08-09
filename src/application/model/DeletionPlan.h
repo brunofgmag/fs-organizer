@@ -30,6 +30,7 @@ struct AddonToDelete
     std::vector<EnabledSomewhere> enabled{};
     std::optional<std::uintmax_t> bytes{};
     std::optional<std::size_t> longestEntry{};
+    std::filesystem::path cameFrom{};
 };
 
 struct VolumeRoom
@@ -65,5 +66,7 @@ struct DeletionResult
 [[nodiscard]] bool TheRecycleBinCanTake(const DeletionPlan& plan);
 
 [[nodiscard]] std::size_t AddonsTheRecycleBinRefuses(const DeletionPlan& plan);
+
+[[nodiscard]] bool EveryAddonCameFromAnotherProgram(const DeletionPlan& plan);
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_DELETION_PLAN_H

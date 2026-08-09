@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <filesystem>
 
+#include "domain/support/PathUtils.h"
+
 enum class EntryClassification : int
 {
     Managed = 0,
@@ -66,7 +68,13 @@ struct DestinationEntry
     std::filesystem::path target{};
     EntryClassification classification = EntryClassification::Unmanaged;
     std::filesystem::path externalOrigin{};
+    std::filesystem::path libraryCopy{};
     bool theOtherProgramTookItsFolderBack = false;
 };
+
+[[nodiscard]] inline bool ItPointsAtTheOtherProgramsFolder(const DestinationEntry& entry)
+{
+    return !entry.externalOrigin.empty() && ComparablePath(entry.target) == ComparablePath(entry.externalOrigin);
+}
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_DESTINATION_ENTRY_H

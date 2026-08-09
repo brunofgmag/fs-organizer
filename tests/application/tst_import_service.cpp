@@ -10,6 +10,7 @@
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/OriginSidecar.h"
 #include "domain/linking/EntryClassifier.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -42,6 +43,12 @@ namespace
         static void NoQuarantineIsTouchedWhileTheSimulatorIsRunning();
         static void LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFrom();
         static void ALeftoverOfAnExternalImportRemembersWhichProgramItWasTakingOver();
+        static void ALeftoverOfAnExternalImportKnowsTheEntryItWasImportingFrom();
+        static void GivingAnAddonBackTakesTheRecordBesideItAway();
+        static void AnAddonThatNeverCameFromAnotherProgramIsNotGivenBack();
+        static void NothingIsGivenBackWhileTheSimulatorIsRunning();
+        static void ALeftoverThatOnlyKnowsTheProgramIsNotResumedAsAnOrdinaryImport();
+        static void ResumingAnExternalLeftoverTakesTheOtherProgramsFolderOverAgain();
         static void TheSearchForLeftoversNeverWalksIntoAnAddon();
         static void ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSource();
         static void DiscardingALeftoverRemovesOnlyTheStaging();
@@ -455,26 +462,167 @@ void ImportServiceTest::LeftoverStagingIsFoundInTheLibraryWithTheSourceItCameFro
     QVERIFY(leftovers.front().CanBeResumed());
 }
 
+namespace
+{
+    const std::filesystem::path kVendorFolder = "C:/Addon Manager/MSFS/gsx-pro";
+    const std::filesystem::path kVendorEntry = "E:/Sim/Community/gsx-pro";
+    const std::filesystem::path kVendorStaging = "D:/Library/Utils/gsx-pro.fsorg-partial";
+    const std::filesystem::path kVendorInLibrary = "D:/Library/Utils/gsx-pro";
+
+    struct HalfWayThroughAnExternalImport
+    {
+        static void SetUp(Fixture& f, const bool announced, const bool withSidecar)
+        {
+            f.fileSystem.AddDirectory(kDestination);
+            f.fileSystem.AddDirectory(kLibrary);
+            f.fileSystem.AddDirectory("D:/Library/Utils");
+            f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+            f.fileSystem.AddDirectory(kVendorFolder);
+            f.fileSystem.AddFile(kVendorFolder / "manifest.json", kMegabyte);
+            f.fileSystem.AddLink(kVendorEntry, kVendorFolder);
+            f.fileSystem.AddDirectory(kVendorStaging);
+            f.fileSystem.AddFile(kVendorStaging / "half.bin", kMegabyte / 2);
+
+            const AddonId addon{.libraryId = "lib-1", .folderName = "gsx-pro"};
+
+            if (announced)
+            {
+                f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportFromAnotherProgram, addon,
+                                                           kVendorEntry, kVendorStaging, FileResult::Completed));
+            }
+
+            f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportCopyToStaging, addon,
+                                                       kVendorFolder, kVendorStaging, FileResult::Completed));
+
+            if (withSidecar)
+            {
+                f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kVendorInLibrary),
+                                                 TextOfTheExternalOrigin(kVendorFolder));
+            }
+        }
+    };
+}
+
 void ImportServiceTest::ALeftoverOfAnExternalImportRemembersWhichProgramItWasTakingOver()
 {
     Fixture f;
-    f.AddBothCopies();
-    const std::filesystem::path came = "C:/Addon Manager/Utils/imported";
-    f.fileSystem.AddDirectory("D:/Library/Utils/imported.fsorg-partial");
-    f.fileSystem.AddFile("D:/Library/Utils/imported.fsorg-partial/manifest.json", kMegabyte);
-    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor("D:/Library/Utils/imported"),
-                                     TextOfTheExternalOrigin(came));
-
-    f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportCopyToStaging,
-                                               AddonId{.libraryId = "lib-1", .folderName = "imported"}, came,
-                                               "D:/Library/Utils/imported.fsorg-partial", FileResult::Completed));
+    HalfWayThroughAnExternalImport::SetUp(f, true, true);
+    f.journal.appended.clear();
+    f.journal.Append(OperationRecord::OfImport(f.clock.now, OperationKind::ImportFromAnotherProgram,
+                                               AddonId{.libraryId = "lib-1", .folderName = "gsx-pro"}, kVendorEntry,
+                                               kVendorStaging, FileResult::Completed));
 
     const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
 
     QCOMPARE(leftovers.size(), std::size_t{1});
-    QCOMPARE(leftovers.front().externalSource, came);
+    QCOMPARE(leftovers.front().externalSource, kVendorFolder);
     QVERIFY2(leftovers.front().CanBeResumed(),
-             "a leftover that knows the program it was taking over is exactly the one worth resuming");
+             "the record beside the addon names the program even when the journal never got to the copy step");
+}
+
+void ImportServiceTest::ALeftoverOfAnExternalImportKnowsTheEntryItWasImportingFrom()
+{
+    Fixture f;
+    HalfWayThroughAnExternalImport::SetUp(f, true, false);
+
+    const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
+
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().source, kVendorEntry);
+    QCOMPARE(leftovers.front().externalSource, kVendorFolder);
+    QVERIFY2(leftovers.front().CanBeResumed(),
+             "the journal alone answers both halves, so a crash during the copy is still resumable");
+}
+
+void ImportServiceTest::ALeftoverThatOnlyKnowsTheProgramIsNotResumedAsAnOrdinaryImport()
+{
+    Fixture f;
+    HalfWayThroughAnExternalImport::SetUp(f, false, true);
+
+    const std::vector<StagingLeftover> leftovers = f.service.Leftovers(f.profile);
+
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().externalSource, kVendorFolder);
+    QVERIFY2(!leftovers.front().CanBeResumed(),
+             "without the entry it was importing from, resuming would copy the bytes and leave the vendor folder "
+             "untouched, which is the duplicate this guards against");
+
+    const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, leftovers, {});
+
+    QCOMPARE(results.front().result, FileResult::TheOriginIsUnknown);
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(!f.fileSystem.IsLink(kVendorFolder));
+}
+
+void ImportServiceTest::ResumingAnExternalLeftoverTakesTheOtherProgramsFolderOverAgain()
+{
+    Fixture f;
+    HalfWayThroughAnExternalImport::SetUp(f, true, true);
+
+    const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, f.service.Leftovers(f.profile), {});
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(!f.fileSystem.Exists(kVendorStaging));
+    QVERIFY(f.fileSystem.Exists(kVendorInLibrary / "manifest.json"));
+    QVERIFY(f.fileSystem.IsLink(kVendorFolder));
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorFolder).value(), kVendorInLibrary);
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorEntry).value(), kVendorInLibrary);
+}
+
+namespace
+{
+    void AManagedExternal(Fixture& f)
+    {
+        f.fileSystem.AddDirectory(kDestination);
+        f.fileSystem.AddDirectory(kLibrary);
+        f.fileSystem.AddDirectory("D:/Library/Utils");
+        f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+        f.fileSystem.AddDirectory(kVendorInLibrary);
+        f.fileSystem.AddFile(kVendorInLibrary / "manifest.json", kMegabyte);
+        f.fileSystem.AddLink(kVendorFolder, kVendorInLibrary);
+        f.fileSystem.AddLink(kVendorEntry, kVendorInLibrary);
+        f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kVendorInLibrary),
+                                         TextOfTheExternalOrigin(kVendorFolder));
+
+        RememberWhereItCameFrom(f.profile, kVendorInLibrary, kVendorFolder);
+    }
+}
+
+void ImportServiceTest::GivingAnAddonBackTakesTheRecordBesideItAway()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    const FileResult result = f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {});
+
+    QCOMPARE(result, FileResult::Completed);
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(!f.fileSystem.IsLink(kVendorFolder));
+    QVERIFY(!f.fileSystem.Exists(kVendorInLibrary));
+    QVERIFY2(!f.fileSystem.Exists(ExternalSidecarPathFor(kVendorInLibrary)),
+             "the record beside the addon outlives the folder unless the give back takes it too");
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorEntry).value(), kVendorFolder);
+}
+
+void ImportServiceTest::AnAddonThatNeverCameFromAnotherProgramIsNotGivenBack()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kInLibrary, {}), FileResult::TheOriginIsUnknown);
+    QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
+}
+
+void ImportServiceTest::NothingIsGivenBackWhileTheSimulatorIsRunning()
+{
+    Fixture f;
+    AManagedExternal(f);
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    QCOMPARE(f.service.GiveBack(f.profile, f.Entries(), kVendorInLibrary, {}), FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.IsLink(kVendorFolder));
+    QVERIFY(f.fileSystem.Exists(kVendorInLibrary / "manifest.json"));
 }
 
 void ImportServiceTest::TheSearchForLeftoversNeverWalksIntoAnAddon()

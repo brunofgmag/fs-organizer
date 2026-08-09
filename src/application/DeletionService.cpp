@@ -4,6 +4,7 @@
 #include <iterator>
 
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -126,6 +127,7 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
                                    const std::vector<const TreeNode*>& nodes) const
 {
     const std::vector<LinksNow> seen = ReadLinksNow(everyProfile);
+    const std::vector<ExternalAddon> externals = ExternalAddonsOf(profile);
 
     DeletionPlan plan;
 
@@ -141,7 +143,8 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
                                             .addonId = IdentityOf(profile, node->path),
                                             .enabled = WhereItIsEnabled(seen, node->path),
                                             .bytes = sizes_.BytesOf(node->path),
-                                            .longestEntry = sizes_.LongestEntryOf(node->path)});
+                                            .longestEntry = sizes_.LongestEntryOf(node->path),
+                                            .cameFrom = ExternalOriginOf(externals, node->path)});
     }
 
     plan.volumes = RoomOnEachVolume(plan.addons);

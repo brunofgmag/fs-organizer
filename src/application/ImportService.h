@@ -83,6 +83,12 @@ public:
     [[nodiscard]] std::vector<FileOperationResult>
     DiscardLeftovers(const SimulatorProfile& profile, const std::vector<StagingLeftover>& leftovers) const;
 
+    [[nodiscard]] FileResult GiveBack(const SimulatorProfile& profile,
+                                      const std::vector<DestinationEntry>& entries,
+                                      const std::filesystem::path& addonFolder,
+                                      const std::function<bool(const CopyProgress&)>& onProgress,
+                                      const std::function<void(OperationKind)>& onStep = {}) const;
+
 private:
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
 

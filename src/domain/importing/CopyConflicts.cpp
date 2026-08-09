@@ -55,7 +55,7 @@ CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, co
         if (entry.theOtherProgramTookItsFolderBack)
         {
             found.push_back(CopyConflict{.provenancePath = entry.externalOrigin,
-                                         .libraryPath = entry.target,
+                                         .libraryPath = entry.libraryCopy,
                                          .theProvenanceIsAnotherProgram = true});
             continue;
         }

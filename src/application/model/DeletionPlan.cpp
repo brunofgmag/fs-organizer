@@ -65,3 +65,13 @@ std::size_t AddonsTheRecycleBinRefuses(const DeletionPlan& plan)
                                                               return !Succeeded(WhatTheRecycleBinRefuses(plan, addon));
                                                           }));
 }
+
+bool EveryAddonCameFromAnotherProgram(const DeletionPlan& plan)
+{
+    return !plan.addons.empty()
+        && std::ranges::all_of(plan.addons,
+                               [](const AddonToDelete& addon)
+                               {
+                                   return !addon.cameFrom.empty();
+                               });
+}

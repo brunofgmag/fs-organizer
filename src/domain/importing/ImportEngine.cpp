@@ -92,6 +92,11 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     const std::filesystem::path staging = StagingPathFor(target);
     const AddonId addon = IdentityOf(profile, target);
 
+    if (request.CameFromAnotherProgram())
+    {
+        RecordStep(addon, OperationKind::ImportFromAnotherProgram, request.source, staging, FileResult::Completed);
+    }
+
     announce(OperationKind::ImportCopyToStaging);
     const ImportOutcome copy = CopyToStaging(request.Bytes(), staging, onProgress);
     RecordStep(addon, OperationKind::ImportCopyToStaging, request.Bytes(), staging, copy.Result());
@@ -149,6 +154,157 @@ ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
     if (!link.Succeeded())
     {
         return ImportOutcome::Stopped(FileResult::CouldNotCreateLink);
+    }
+
+    return ImportOutcome::Completed();
+}
+
+ImportOutcome ImportEngine::GiveBack(const SimulatorProfile& profile,
+                                     const GiveBackRequest& request,
+                                     const std::function<bool(const CopyProgress&)>& onProgress,
+                                     const std::function<void(OperationKind)>& onStep) const
+{
+    const auto announce = [&onStep](const OperationKind kind)
+    {
+        if (onStep)
+        {
+            onStep(kind);
+        }
+    };
+
+    if (const ImportOutcome refusal = CheckTheFolderWeAreGivingBack(request); !refusal.Succeeded())
+    {
+        return refusal;
+    }
+
+    const std::optional<TreeFingerprint> source = filesystemProbe_.FingerprintTree(request.addonFolder);
+    if (!source.has_value())
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotReadTheSource);
+    }
+
+    if (const ImportOutcome room = CheckFreeSpace(request.externalPath.parent_path(), TotalSizeOf(source->files));
+        !room.Succeeded())
+    {
+        return room;
+    }
+
+    const std::filesystem::path staging = StagingPathFor(request.externalPath);
+    const AddonId addon = IdentityOf(profile, request.addonFolder);
+
+    RecordStep(addon, OperationKind::GiveBackToAnotherProgram, request.addonFolder, request.externalPath,
+               FileResult::Completed);
+
+    announce(OperationKind::ImportCopyToStaging);
+    const ImportOutcome copy = CopyToStaging(request.addonFolder, staging, onProgress);
+    RecordStep(addon, OperationKind::ImportCopyToStaging, request.addonFolder, staging, copy.Result());
+    if (!copy.Succeeded())
+    {
+        return copy;
+    }
+
+    announce(OperationKind::ImportVerifyStaging);
+    const std::optional<TreeFingerprint> copied = filesystemProbe_.FingerprintTree(staging);
+    const bool verified = copied.has_value() && FingerprintsMatch(source->files, copied->files);
+    RecordStep(addon, OperationKind::ImportVerifyStaging, staging, request.externalPath,
+               verified ? FileResult::Completed : FileResult::VerificationFailed);
+    if (!verified)
+    {
+        static_cast<void>(files_.RemoveTree(staging));
+        return ImportOutcome::Stopped(FileResult::VerificationFailed);
+    }
+
+    return TheOtherProgramTakesItsFolderBack(addon, request, staging, onStep);
+}
+
+ImportOutcome ImportEngine::CheckTheFolderWeAreGivingBack(const GiveBackRequest& request) const
+{
+    if (request.externalPath.empty() || !filesystemProbe_.PhysicalDirectoryExists(request.addonFolder))
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotReadTheSource);
+    }
+
+    if (!filesystemProbe_.ProbeWritable(request.externalPath.parent_path()))
+    {
+        return ImportOutcome::Stopped(FileResult::CannotWriteInTheOtherProgramsFolder);
+    }
+
+    if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(request.externalPath))
+    {
+        return ImportOutcome::Completed();
+    }
+
+    const std::optional<std::filesystem::path> pointsAt = linking_.PointsAt(request.externalPath);
+
+    return pointsAt.has_value() && ComparablePath(*pointsAt) == ComparablePath(request.addonFolder)
+        ? ImportOutcome::Completed()
+        : ImportOutcome::Stopped(FileResult::TheDiskDisagreesWithTheScan);
+}
+
+ImportOutcome ImportEngine::TheOtherProgramTakesItsFolderBack(const AddonId& addon,
+                                                              const GiveBackRequest& request,
+                                                              const std::filesystem::path& staging,
+                                                              const std::function<void(OperationKind)>& onStep) const
+{
+    if (filesystemProbe_.EntryExistsWithoutFollowingLinks(request.externalPath))
+    {
+        const LinkOutcome unlinked = linking_.Disable(request.externalPath);
+        log_.RecordLink(OperationKind::DisableAddon, addon, request.addonFolder, request.externalPath,
+                        unlinked.Failure());
+        if (!unlinked.Succeeded())
+        {
+            static_cast<void>(files_.RemoveTree(staging));
+            return ImportOutcome::Stopped(FileResult::CouldNotRemoveTheLink);
+        }
+    }
+
+    if (onStep)
+    {
+        onStep(OperationKind::ImportMoveIntoPlace);
+    }
+
+    const bool moved = files_.Move(staging, request.externalPath);
+    RecordStep(addon, OperationKind::ImportMoveIntoPlace, staging, request.externalPath,
+               moved ? FileResult::Completed : FileResult::CouldNotMoveIntoPlace);
+    if (!moved)
+    {
+        return ImportOutcome::Stopped(FileResult::CouldNotMoveIntoPlace);
+    }
+
+    if (const ImportOutcome repointed = RepointTheLinks(addon, request); !repointed.Succeeded())
+    {
+        return repointed;
+    }
+
+    if (onStep)
+    {
+        onStep(OperationKind::ImportRemoveSource);
+    }
+
+    const bool removed = files_.RemoveTree(request.addonFolder);
+    RecordStep(addon, OperationKind::ImportRemoveSource, request.addonFolder, request.externalPath,
+               removed ? FileResult::Completed : FileResult::CouldNotRemoveSource);
+
+    return removed ? ImportOutcome::Completed() : ImportOutcome::Stopped(FileResult::CouldNotRemoveSource);
+}
+
+ImportOutcome ImportEngine::RepointTheLinks(const AddonId& addon, const GiveBackRequest& request) const
+{
+    for (const std::filesystem::path& link : request.links)
+    {
+        const LinkOutcome off = linking_.Disable(link);
+        log_.RecordLink(OperationKind::DisableAddon, addon, request.addonFolder, link, off.Failure());
+        if (!off.Succeeded())
+        {
+            return ImportOutcome::Stopped(FileResult::CouldNotRemoveTheLink);
+        }
+
+        const LinkOutcome on = linking_.LinkAt(link, Addon{.folderPath = request.externalPath}, linkType_);
+        log_.RecordLink(OperationKind::EnableAddon, addon, request.externalPath, link, on.Failure());
+        if (!on.Succeeded())
+        {
+            return ImportOutcome::Stopped(FileResult::CouldNotCreateLink);
+        }
     }
 
     return ImportOutcome::Completed();

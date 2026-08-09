@@ -197,6 +197,24 @@ void Session::RememberWhatCameFromAnotherProgram(const std::vector<ImportOperati
     Scan(std::move(next));
 }
 
+void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem::path>& addonFolders)
+{
+    if (addonFolders.empty())
+    {
+        return;
+    }
+
+    SimulatorProfile next = profile_;
+
+    for (const std::filesystem::path& addonFolder : addonFolders)
+    {
+        ForgetWhereItCameFrom(next, addonFolder);
+    }
+
+    Save(next);
+    Scan(std::move(next));
+}
+
 LegacyImportReport Session::ImportLegacy(const LegacyImportRequest& request)
 {
     SimulatorProfile next = profile_;

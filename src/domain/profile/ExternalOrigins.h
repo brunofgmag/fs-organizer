@@ -12,6 +12,9 @@
 [[nodiscard]] std::filesystem::path ExternalOriginOf(const std::vector<ExternalAddon>& externals,
                                                      const std::filesystem::path& addonFolder);
 
+[[nodiscard]] std::filesystem::path LibraryCopyOf(const std::vector<ExternalAddon>& externals,
+                                                  const std::filesystem::path& externalPath);
+
 void RememberedByTheLibrary(std::vector<ExternalAddon>& externals,
                             const std::filesystem::path& addonFolder,
                             const std::filesystem::path& externalPath);

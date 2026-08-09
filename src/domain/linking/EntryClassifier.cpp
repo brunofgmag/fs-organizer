@@ -132,6 +132,9 @@ DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& ent
 
     entry.target = NormalizeReparseTarget(*target);
     entry.externalOrigin = ExternalOriginOf(externals, entry.target);
+    entry.libraryCopy = entry.externalOrigin.empty() ? std::filesystem::path{} : entry.target;
+
+    const std::filesystem::path handedOver = LibraryCopyOf(externals, entry.target);
 
     if (!filesystemProbe_.VolumeIsAvailable(entry.target))
     {
@@ -142,13 +145,20 @@ DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& ent
         entry.classification =
             entry.externalOrigin.empty() ? EntryClassification::Broken : EntryClassification::Vanished;
     }
+    else if (BothCopiesAreThere(entry.target, handedOver))
+    {
+        entry.externalOrigin = entry.target;
+        entry.libraryCopy = handedOver;
+        entry.theOtherProgramTookItsFolderBack = true;
+        entry.classification = EntryClassification::Divergent;
+    }
     else if (!IsUnderAny(entry.target, libraryRoots))
     {
         entry.classification = EntryClassification::External;
     }
     else
     {
-        entry.theOtherProgramTookItsFolderBack = TheOtherProgramTookItsFolderBack(entry.externalOrigin);
+        entry.theOtherProgramTookItsFolderBack = APhysicalFolderIsThere(entry.externalOrigin);
         entry.classification =
             entry.theOtherProgramTookItsFolderBack ? EntryClassification::Divergent : EntryClassification::Managed;
     }
@@ -156,8 +166,13 @@ DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& ent
     return entry;
 }
 
-bool EntryClassifier::TheOtherProgramTookItsFolderBack(const std::filesystem::path& externalPath) const
+bool EntryClassifier::APhysicalFolderIsThere(const std::filesystem::path& path) const
 {
-    return !externalPath.empty() && filesystemProbe_.VolumeIsAvailable(externalPath)
-        && filesystemProbe_.PhysicalDirectoryExists(externalPath);
+    return !path.empty() && filesystemProbe_.VolumeIsAvailable(path) && filesystemProbe_.PhysicalDirectoryExists(path);
+}
+
+bool EntryClassifier::BothCopiesAreThere(const std::filesystem::path& theOtherPrograms,
+                                         const std::filesystem::path& inTheLibrary) const
+{
+    return !inTheLibrary.empty() && APhysicalFolderIsThere(theOtherPrograms) && APhysicalFolderIsThere(inTheLibrary);
 }

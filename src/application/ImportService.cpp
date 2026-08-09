@@ -12,6 +12,7 @@
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/LandingPath.h"
 #include "domain/model/Manifest.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryLookup.h"
@@ -120,6 +121,25 @@ namespace
         }
 
         return nullptr;
+    }
+
+    StagingLeftover LeftoverFrom(const std::filesystem::path& staging,
+                                 const std::filesystem::path& imported,
+                                 const OperationRecord* copied,
+                                 const OperationRecord* announced,
+                                 const std::filesystem::path& theOtherProgramOwns)
+    {
+        const std::filesystem::path copiedFrom = copied == nullptr ? std::filesystem::path{} : copied->source;
+
+        if (announced == nullptr && theOtherProgramOwns.empty())
+        {
+            return StagingLeftover{.staging = staging, .target = imported, .source = copiedFrom};
+        }
+
+        return StagingLeftover{.staging = staging,
+                               .target = imported,
+                               .source = announced == nullptr ? std::filesystem::path{} : announced->source,
+                               .externalSource = theOtherProgramOwns.empty() ? copiedFrom : theOtherProgramOwns};
     }
 }
 
@@ -670,6 +690,36 @@ std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& 
     return results;
 }
 
+FileResult ImportService::GiveBack(const SimulatorProfile& profile,
+                                   const std::vector<DestinationEntry>& entries,
+                                   const std::filesystem::path& addonFolder,
+                                   const std::function<bool(const CopyProgress&)>& onProgress,
+                                   const std::function<void(OperationKind)>& onStep) const
+{
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return FileResult::TheSimulatorIsRunning;
+    }
+
+    const std::filesystem::path externalPath = ExternalOriginOf(ExternalAddonsOf(profile), addonFolder);
+    if (externalPath.empty())
+    {
+        return FileResult::TheOriginIsUnknown;
+    }
+
+    const GiveBackRequest request{
+        .addonFolder = addonFolder, .externalPath = externalPath, .links = LinksPointingAt(entries, addonFolder)};
+
+    const FileResult result = engine_.GiveBack(profile, request, onProgress, onStep).Result();
+
+    if (Succeeded(result))
+    {
+        static_cast<void>(files_.RemoveTree(ExternalSidecarPathFor(addonFolder)));
+    }
+
+    return result;
+}
+
 std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& profile) const
 {
     const std::vector<OperationRecord> history = log_.History();
@@ -705,12 +755,11 @@ std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& pr
             }
 
             const OperationRecord* copied = LastRecordAbout(history, child, {OperationKind::ImportCopyToStaging});
+            const OperationRecord* announced =
+                LastRecordAbout(history, child, {OperationKind::ImportFromAnotherProgram});
             const std::filesystem::path imported = ImportedPathFor(child);
 
-            leftovers.push_back(StagingLeftover{.staging = child,
-                                                .target = imported,
-                                                .source = copied == nullptr ? std::filesystem::path{} : copied->source,
-                                                .externalSource = WhatTheOtherProgramOwns(imported)});
+            leftovers.push_back(LeftoverFrom(child, imported, copied, announced, WhatTheOtherProgramOwns(imported)));
         }
     }
 

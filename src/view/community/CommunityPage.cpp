@@ -102,16 +102,29 @@ namespace
         return chosen;
     }
 
-    QString WhatTheStateCosts(const EntryClassification classification)
+    QString WhatTheDivergenceCosts(const bool itPointsAtTheOtherProgramsFolder)
     {
-        switch (classification)
+        if (itPointsAtTheOtherProgramsFolder)
         {
-        case EntryClassification::Divergent:
             return QCoreApplication::translate(
                 "CommunityPage",
-                "The folder of the other program is a real folder again, so there are two copies. The simulator "
-                "loads the one in your library, and whatever that program updates from here on lands in the copy "
-                "the simulator does not read.");
+                "The other program put a real folder back where it installs this addon and pointed this entry at it, "
+                "so there are two copies and the simulator now loads the other program's one. The copy in your "
+                "library is the one nothing reads any more.");
+        }
+
+        return QCoreApplication::translate(
+            "CommunityPage",
+            "The folder of the other program is a real folder again, so there are two copies. The simulator "
+            "loads the one in your library, and whatever that program updates from here on lands in the copy "
+            "the simulator does not read.");
+    }
+
+    QString WhatTheStateCosts(const DestinationEntry& entry)
+    {
+        switch (entry.classification)
+        {
+        case EntryClassification::Divergent: return WhatTheDivergenceCosts(ItPointsAtTheOtherProgramsFolder(entry));
         case EntryClassification::Vanished:
             return QCoreApplication::translate(
                 "CommunityPage",
@@ -423,12 +436,12 @@ void CommunityPage::ShowTheSelectedEntry()
     fields.append({tr("Path"), AsText(entry->path)});
     fields.append({tr("Link?"), entry->target.empty() ? tr("no, a physical folder") : AsText(entry->target)});
 
-    if (!entry->externalOrigin.empty())
+    if (!entry->externalOrigin.empty() && !ItPointsAtTheOtherProgramsFolder(*entry))
     {
         fields.append({tr("Came from"), AsText(entry->externalOrigin)});
     }
 
-    if (const QString meaning = WhatTheStateCosts(entry->classification); !meaning.isEmpty())
+    if (const QString meaning = WhatTheStateCosts(*entry); !meaning.isEmpty())
     {
         fields.append({tr("What this means"), meaning});
     }
