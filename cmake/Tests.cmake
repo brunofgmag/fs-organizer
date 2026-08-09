@@ -1018,6 +1018,12 @@ if (WIN32)
         target_link_libraries(fsorg-delete-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-delete-dialog-tests delete-dialog)
 
+        fsorg_add_qt_test(fsorg-library-root-dialog-tests library-root-dialog
+                tests/view/tst_library_root_dialog.cpp
+                src/domain/model/RecycleLimits.h)
+        target_link_libraries(fsorg-library-root-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-library-root-dialog-tests library-root-dialog)
+
         fsorg_add_qt_test(fsorg-swap-dialog-tests swap-dialog
                 tests/view/tst_swap_dialog.cpp
                 tests/doubles/FakeCatalogScanner.h

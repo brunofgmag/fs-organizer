@@ -53,6 +53,8 @@
 #include "view/community/CommunityPage.h"
 #include "domain/tree/AddonTree.h"
 #include "view/library/AddonTreePage.h"
+#include "domain/support/PathUtils.h"
+#include "view/library/LibraryRootDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
@@ -638,6 +640,20 @@ int main(int argc, char* argv[])
     else
     {
         Out() << "fewer than two addons in the libraries, so there is no swap to picture\n";
+    }
+
+    {
+        const std::filesystem::path deepRoot =
+            PathFromUtf8("C:/Users/bruno/Documents/Flight Simulator Addons/MSFS 2024 Library");
+        LibraryRootDialog rootDialog(deepRoot, MeasureTheRoot(deepRoot), &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&rootDialog]
+                     {
+                         static_cast<void>(rootDialog.exec());
+                     },
+                     folder, QStringLiteral("21-library-deep-root"))
+            && landed;
     }
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));

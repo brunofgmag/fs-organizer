@@ -38,4 +38,6 @@ void PaintTag(QPainter& painter, const QRect& box, const QString& text, TagTone 
 
 void DressTheHeaderOf(QHeaderView* header);
 
+void GiveItTheRole(QWidget* widget, const QString& role);
+
 #endif // FS_ORGANIZER_VIEW_THEME_MODERNIST_PAINT_H

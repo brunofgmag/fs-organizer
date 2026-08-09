@@ -18,6 +18,7 @@ struct MeasuredNode
     std::filesystem::path path{};
     std::uintmax_t bytes = 0;
     bool measured = true;
+    std::size_t longestEntry = 0;
     std::vector<MeasuredNode> children{};
 };
 

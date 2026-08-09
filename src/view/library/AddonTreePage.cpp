@@ -30,6 +30,7 @@
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/library/DeleteDialog.h"
+#include "view/library/LibraryRootDialog.h"
 #include "view/library/SuggestionDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/panels/ContextPanel.h"
@@ -1193,10 +1194,28 @@ void AddonTreePage::ChooseDestination(const std::vector<const TreeNode*>& nodes,
     }
 }
 
+bool AddonTreePage::TheRootIsWorthKeeping(const std::filesystem::path& root)
+{
+    const RootDepth depth = MeasureTheRoot(root);
+    if (depth.ItLeavesRoom())
+    {
+        return true;
+    }
+
+    LibraryRootDialog dialog(root, depth, this);
+
+    return dialog.exec() == QDialog::Accepted;
+}
+
 void AddonTreePage::BrowseForLibrary()
 {
     const QString chosen = QFileDialog::getExistingDirectory(this, tr("Choose the library folder"));
     if (chosen.isEmpty())
+    {
+        return;
+    }
+
+    if (!TheRootIsWorthKeeping(AsPath(chosen)))
     {
         return;
     }
