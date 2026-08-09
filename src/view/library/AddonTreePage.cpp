@@ -46,8 +46,8 @@
 namespace
 {
     constexpr std::size_t kAskAboveThisMany = 10;
+    constexpr int kAddonColumnWidth = 420;
     constexpr int kVersionColumnWidth = 92;
-    constexpr int kDestinationColumnWidth = 168;
 
     void StartASection(QMenu& menu)
     {
@@ -114,9 +114,10 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     QHeaderView* header = tree_->header();
     DressTheHeaderOf(header);
     header->setStretchLastSection(false);
-    header->setSectionResizeMode(AddonTreeModel::AddonColumn, QHeaderView::Stretch);
+    header->setSectionResizeMode(AddonTreeModel::AddonColumn, QHeaderView::Interactive);
+    header->setSectionResizeMode(AddonTreeModel::DestinationColumn, QHeaderView::Stretch);
+    header->resizeSection(AddonTreeModel::AddonColumn, kAddonColumnWidth);
     header->resizeSection(AddonTreeModel::VersionColumn, kVersionColumnWidth);
-    header->resizeSection(AddonTreeModel::DestinationColumn, kDestinationColumnWidth);
 
     auto* browser = new QWidget(this);
     auto* column = new QVBoxLayout;

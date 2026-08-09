@@ -23,6 +23,7 @@
 namespace
 {
     constexpr int kRailWidth = 210;
+    constexpr int kCategoryColumnWidth = 420;
     constexpr int kBytesRole = Qt::UserRole + 1;
 
     class MeasuredRow final : public QTreeWidgetItem
@@ -314,7 +315,10 @@ QWidget* DiagnosticsPage::CreateSizePane()
     sizes_->setSortingEnabled(true);
     sizes_->sortByColumn(2, Qt::DescendingOrder);
     sizes_->header()->setStretchLastSection(false);
-    sizes_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    sizes_->header()->setSectionResizeMode(0, QHeaderView::Interactive);
+    sizes_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    sizes_->header()->resizeSection(0, kCategoryColumnWidth);
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
 
