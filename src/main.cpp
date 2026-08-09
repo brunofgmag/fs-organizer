@@ -267,11 +267,11 @@ int main(int argc, char* argv[])
 
     PageTab* libraryButton = window.AddPage(PageNames::kLibrary, page);
     PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);
+    window.AddPage(PageNames::kSimulator, startupPage);
     PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
-    window.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
-    window.AddPage(PageNames::kSimulator, startupPage);
+    window.AddPage(PageNames::kJournal, journalPage);
 
     window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);
