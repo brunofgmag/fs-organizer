@@ -9,10 +9,10 @@
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QScrollArea>
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/ScrollThatReportsItsContent.h"
 #include "view/WheelGuard.h"
 #include "view/theme/ModernistMetrics.h"
 
@@ -42,7 +42,7 @@ RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidg
 
     groups->addStretch();
 
-    auto* scroll = new QScrollArea(this);
+    auto* scroll = new ScrollThatReportsItsContent(this);
     scroll->setWidget(content);
     scroll->setWidgetResizable(true);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -59,7 +59,7 @@ RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidg
     layout->addWidget(scroll, 1);
     layout->addWidget(buttons);
 
-    resize(720, 520);
+    SizeToTheContent(*this, 720);
 }
 
 QWidget* RepairDialog::CreateGroup(const QString& title,

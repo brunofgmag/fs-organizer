@@ -974,6 +974,24 @@ if (WIN32)
         target_link_libraries(fsorg-conflict-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-conflict-dialog-tests conflict-dialog)
 
+        fsorg_add_qt_test(fsorg-repair-dialog-tests repair-dialog
+                tests/view/tst_repair_dialog.cpp
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-repair-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-repair-dialog-tests repair-dialog)
+
+        fsorg_add_qt_test(fsorg-setup-wizard-tests setup-wizard
+                tests/view/tst_setup_wizard.cpp
+                tests/doubles/FakeCatalogScanner.h
+                tests/doubles/FakeFilesystemProbe.h
+                tests/doubles/FakeLibraryIdGenerator.h
+                tests/doubles/FakeSettingsRepository.h
+                tests/doubles/FakeSimulatorLocator.h
+                tests/doubles/InMemoryFileSystem.h
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-setup-wizard-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-setup-wizard-tests setup-wizard)
+
         fsorg_add_qt_test(fsorg-restore-dialog-tests restore-dialog
                 tests/view/tst_restore_dialog.cpp
                 tests/support/PathPrinting.h)

@@ -87,7 +87,7 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
 
     ShowCategoriesOfTheChosenLibrary();
 
-    SizeToTheContent(*this, *layout, 640);
+    SizeToTheContent(*this, 640);
 }
 
 void ImportDialog::ShowCategoriesOfTheChosenLibrary() const

@@ -88,7 +88,7 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
 
     ShowTheSizes(TwoSides{});
 
-    SizeToTheContent(*this, *layout, 520);
+    SizeToTheContent(*this, 520);
 }
 
 QLabel* CollisionDialog::AddTheSide(QGridLayout& grid, const int column, const QString& title, const QString& version)

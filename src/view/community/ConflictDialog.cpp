@@ -128,7 +128,7 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     layout->addWidget(warning);
     layout->addWidget(buttons);
 
-    SizeToTheContent(*this, *layout, 760);
+    SizeToTheContent(*this, 760);
 }
 
 QGroupBox* ConflictDialog::CreateSide(const QString& title, const ConflictSide& side)

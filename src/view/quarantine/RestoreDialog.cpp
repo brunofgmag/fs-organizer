@@ -143,7 +143,7 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
 
     ShowHowManyWillGoBack();
 
-    SizeToTheContent(*this, *layout, 660);
+    SizeToTheContent(*this, 660);
 }
 
 void RestoreDialog::AddTheSettledRow(QGridLayout& grid, const RestoreOffer& offer, const int row)

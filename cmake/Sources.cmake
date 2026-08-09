@@ -125,6 +125,7 @@ set(VIEW_SOURCES
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp
         src/view/delegates/RowDelegate.cpp
+        src/view/ScrollThatReportsItsContent.cpp
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/shell/StartupOffers.cpp

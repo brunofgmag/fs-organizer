@@ -84,7 +84,7 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
 
     ShowTheSizes(std::vector<WeighedSwap>(swaps.size()));
 
-    SizeToTheContent(*this, *layout, 620);
+    SizeToTheContent(*this, 620);
 }
 
 QLabel* SwapDialog::AddTheSide(QGridLayout& grid, const int row, const int column, const QString& nameAndVersion)

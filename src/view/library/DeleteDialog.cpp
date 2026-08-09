@@ -117,7 +117,7 @@ DeleteDialog::DeleteDialog(DeletionPlan plan, DeletionViewModel& viewModel, QWid
 
     ShowTheChosenRoute();
 
-    SizeToTheContent(*this, *layout, kDialogWidth);
+    SizeToTheContent(*this, kDialogWidth);
 }
 
 QRadioButton* DeleteDialog::AddRoute(QVBoxLayout& column, const QString& title, const QString& detail)
