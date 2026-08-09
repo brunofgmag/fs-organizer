@@ -88,7 +88,7 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
     layout->addLayout(grid, 1);
     layout->addWidget(buttons);
 
-    resize(680, 320);
+    SizeToTheContent(*this, *layout, 680);
 }
 
 std::vector<StagingLeftover> StagingLeftoverDialog::Chosen(const Action action) const

@@ -44,7 +44,6 @@ private:
     QLineEdit* search_ = nullptr;
     QCheckBox* failuresOnly_ = nullptr;
     QPushButton* reload_ = nullptr;
-    QLabel* promise_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_JOURNAL_PAGE_H

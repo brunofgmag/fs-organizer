@@ -57,12 +57,7 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     panel_->setObjectName(QStringLiteral("JournalOperationPanel"));
     detail_ = new ModelRowDetail(panel_);
 
-    promise_ = new QLabel(panel_);
-    promise_->setObjectName(QStringLiteral("PanelPromise"));
-    promise_->setWordWrap(true);
-
     panel_->Add(detail_);
-    panel_->Add(promise_);
     panel_->RestoreCollapsedState();
     panel_->Summon(false);
 
@@ -108,7 +103,6 @@ void JournalPage::RetranslateUi()
     search_->setPlaceholderText(tr("Search addon, path or operation…"));
     failuresOnly_->setText(tr("Only what failed"));
     reload_->setText(tr("Read the journal again"));
-    promise_->setText(tr("The journal is append-only. Nothing on this screen writes to the disk."));
     panel_->RenameTheFallback(tr("Operation"));
 }
 
@@ -135,7 +129,7 @@ void JournalPage::UpdateSummary()
     emit SummaryChanged(entries == 0 ? tr("The journal has not recorded any change on the disk yet.")
                                      : tr("%n operation recorded, from the newest to the oldest.", nullptr, entries));
 
-    emit AsideChanged(tr("the journal is never deleted by the app"));
+    emit AsideChanged({});
 
     for (int column = 0; column < model_.columnCount({}); ++column)
     {

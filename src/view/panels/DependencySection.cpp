@@ -76,11 +76,7 @@ void DependencySection::Rebuild() const
         stack_->addWidget(LineFor(answer));
     }
 
-    const QString provenance = WhereTheListCameFrom(shown_);
-    const QString caveat = tr("FS Organizer reports and does not conclude: nothing here blocks enabling this addon, "
-                              "and no version is compared against another.");
-
-    note_->setText(provenance.isEmpty() ? caveat : provenance + QStringLiteral(" ") + caveat);
+    note_->setText(WhereTheListCameFrom(shown_));
 }
 
 QWidget* DependencySection::LineFor(const DependencyAnswer& answer) const

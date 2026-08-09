@@ -64,9 +64,8 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
     setWindowTitle(tr("Restore from the quarantine"));
 
     auto* explanation =
-        new QLabel(tr("Each folder goes back to where it came from. Nothing is overwritten and nothing is deleted: "
-                      "what would collide is listed here with both versions, and replacing puts the occupant in the "
-                      "quarantine with its own origin recorded."),
+        new QLabel(tr("Each folder goes back to where it came from. What would collide is listed here with both "
+                      "versions, and replacing puts the occupant in the quarantine with its own origin recorded."),
                    this);
     explanation->setWordWrap(true);
 
@@ -105,6 +104,7 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
     auto* scroll = new QScrollArea(this);
     scroll->setWidget(listed);
     scroll->setWidgetResizable(true);
+    scroll->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
     counted_ = new QLabel(this);
     counted_->setWordWrap(true);
@@ -143,7 +143,7 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
 
     ShowHowManyWillGoBack();
 
-    resize(660, 420);
+    SizeToTheContent(*this, *layout, 660);
 }
 
 void RestoreDialog::AddTheSettledRow(QGridLayout& grid, const RestoreOffer& offer, const int row)

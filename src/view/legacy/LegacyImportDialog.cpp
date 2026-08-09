@@ -80,8 +80,7 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
     auto* layout = new QVBoxLayout(this);
 
     auto* promise = new QLabel(tr("FS Organizer has read the old program's configuration and proposes what follows. "
-                                  "Nothing is applied before you confirm, and no file is moved or deleted: importing "
-                                  "registers the library and the categories that are not here yet."),
+                                  "Importing registers the library and the categories that are not here yet."),
                                this);
     promise->setWordWrap(true);
     layout->addWidget(promise);
