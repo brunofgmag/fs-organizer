@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/brunofgmag/fs-organizer/compare/v0.18.1...v0.19.0) (2026-08-09)
+
+
+### Features
+
+* give a managed external back, and see the divergence the installer hides ([#52](https://github.com/brunofgmag/fs-organizer/issues/52)) ([b018b9d](https://github.com/brunofgmag/fs-organizer/commit/b018b9d01ace0ff20e3d5867731d33e8fe8ec524))
+
 ## [0.18.1](https://github.com/brunofgmag/fs-organizer/compare/v0.18.0...v0.18.1) (2026-08-08)
 
 
