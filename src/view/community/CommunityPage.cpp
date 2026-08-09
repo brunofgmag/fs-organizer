@@ -13,7 +13,6 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMessageBox>
-#include <QtWidgets/QProgressDialog>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyle>
 #include <QtWidgets/QTableView>
@@ -232,10 +231,8 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
                     ShowTheBatchFields(SizeOfTheSelection(size));
                 }
             });
-    connect(&importViewModel_, &ImportViewModel::Started, this, &CommunityPage::OnImportStarted);
-    connect(&importViewModel_, &ImportViewModel::Progressed, this, &CommunityPage::OnImportProgressed);
-    connect(&importViewModel_, &ImportViewModel::StepChanged, this, &CommunityPage::OnImportStep);
     connect(&importViewModel_, &ImportViewModel::Finished, this, &CommunityPage::OnImportFinished);
+    connect(&importViewModel_, &ImportViewModel::ConflictsResolved, this, &CommunityPage::OnConflictsResolved);
 
     RetranslateUi();
     UpdateSummary();
@@ -686,26 +683,7 @@ void CommunityPage::ResolveTheSelectedConflict()
         return;
     }
 
-    int resolved = 0;
-    std::size_t asked = 0;
-
-    for (const CopyConflict& conflict : conflicts)
-    {
-        const std::optional<FileResult> result = ResolveOneConflict(conflict, ++asked, conflicts.size());
-        if (!result.has_value())
-        {
-            --asked;
-            break;
-        }
-
-        resolved += Succeeded(*result) ? 1 : 0;
-    }
-
-    viewModel_.Show();
-
-    emit StatusChanged(asked == conflicts.size()
-                           ? tr("%n conflict resolved.", nullptr, resolved)
-                           : tr("%n conflict resolved, and the others are still open.", nullptr, resolved));
+    ResolveThem(conflicts);
 }
 
 void CommunityPage::ResolveConflict(const CopyConflict& conflict)
@@ -715,37 +693,76 @@ void CommunityPage::ResolveConflict(const CopyConflict& conflict)
         return;
     }
 
-    if (ResolveOneConflict(conflict, 1, 1).has_value())
-    {
-        viewModel_.Show();
-    }
+    ResolveThem({conflict});
 }
 
-std::optional<FileResult>
-CommunityPage::ResolveOneConflict(const CopyConflict& conflict, const std::size_t position, const std::size_t total)
+void CommunityPage::ResolveThem(const std::vector<CopyConflict>& conflicts)
 {
-    ConflictDialog dialog(importViewModel_.DetailsOf(conflict), this);
-    if (total > 1)
+    const std::vector<ConflictToResolve> chosen = WhatTheUserChoseFor(conflicts);
+
+    everyConflictWasAsked_ = chosen.size() == conflicts.size();
+
+    if (chosen.empty())
     {
-        dialog.setWindowTitle(tr("Two copies of the same addon (%1 of %2)").arg(position).arg(total));
+        return;
     }
 
-    if (dialog.exec() != QDialog::Accepted)
+    importViewModel_.ResolveConflicts(chosen);
+}
+
+std::vector<ConflictToResolve> CommunityPage::WhatTheUserChoseFor(const std::vector<CopyConflict>& conflicts)
+{
+    std::vector<ConflictToResolve> chosen;
+
+    for (const CopyConflict& conflict : conflicts)
     {
-        return std::nullopt;
+        ConflictDialog dialog(importViewModel_.DetailsOf(conflict), this);
+        if (conflicts.size() > 1)
+        {
+            dialog.setWindowTitle(
+                tr("Two copies of the same addon (%1 of %2)").arg(chosen.size() + 1).arg(conflicts.size()));
+        }
+
+        if (dialog.exec() != QDialog::Accepted)
+        {
+            break;
+        }
+
+        chosen.push_back(ConflictToResolve{.conflict = conflict, .choice = dialog.Choice()});
     }
 
-    const FileResult result = importViewModel_.ResolveConflict(conflict, dialog.Choice());
+    return chosen;
+}
 
-    if (!Succeeded(result))
+void CommunityPage::OnConflictsResolved(const std::vector<FileOperationResult>& results)
+{
+    QStringList failed;
+
+    for (const FileOperationResult& result : results)
     {
-        QMessageBox::warning(this, tr("The conflict is still there"),
-                             result == FileResult::CouldNotRemoveTheLink
-                                 ? tr("No folder was moved: %1.").arg(Explain(result))
-                                 : tr("Nothing was deleted: %1.").arg(Explain(result)));
+        if (!Succeeded(result.result))
+        {
+            failed.append(tr("%1: %2").arg(AsText(result.path.filename()), Explain(result.result)));
+        }
     }
 
-    return result;
+    const auto resolved = static_cast<int>(results.size()) - static_cast<int>(failed.size());
+
+    if (!failed.isEmpty())
+    {
+        QMessageBox report(
+            QMessageBox::Warning, tr("The conflict is still there"),
+            tr("%n conflict was left as it was, and nothing was deleted.", nullptr, static_cast<int>(failed.size())),
+            QMessageBox::Ok, this);
+        report.setDetailedText(failed.join('\n'));
+        report.exec();
+    }
+
+    viewModel_.Show();
+
+    emit StatusChanged(everyConflictWasAsked_
+                           ? tr("%n conflict resolved.", nullptr, resolved)
+                           : tr("%n conflict resolved, and the others are still open.", nullptr, resolved));
 }
 
 void CommunityPage::StartRepair()
@@ -767,66 +784,8 @@ void CommunityPage::StartRepair()
     viewModel_.Repair(dialog.ChosenRequests());
 }
 
-void CommunityPage::OnImportStarted(const int folders)
-{
-    folders_ = folders;
-    folder_ = 0;
-    step_ = NameOfImportStep(OperationKind::ImportCopyToStaging);
-
-    progress_ = new QProgressDialog(step_, tr("Cancel"), 0, 100, this);
-    progress_->setWindowModality(Qt::ApplicationModal);
-    progress_->setMinimumDuration(0);
-    progress_->setAutoClose(false);
-    progress_->setAutoReset(false);
-    progress_->setValue(0);
-
-    connect(progress_, &QProgressDialog::canceled, &importViewModel_, &ImportViewModel::Cancel);
-}
-
-void CommunityPage::OnImportProgressed(const qulonglong copiedBytes, const qulonglong totalBytes, const int folder)
-{
-    if (progress_ == nullptr)
-    {
-        return;
-    }
-
-    progress_->setRange(0, 100);
-    progress_->setLabelText(
-        tr("%1 · %2 · %3 of %4")
-            .arg(tr("Folder %1 of %2").arg(folder).arg(folders_), step_, AsSize(copiedBytes), AsSize(totalBytes)));
-
-    progress_->setValue(totalBytes == 0 ? 0 : static_cast<int>(copiedBytes * 100 / totalBytes));
-}
-
-void CommunityPage::OnImportStep(const QString& step)
-{
-    const bool copying = step == NameOfImportStep(OperationKind::ImportCopyToStaging);
-
-    step_ = step;
-    folder_ += copying ? 1 : 0;
-
-    if (progress_ == nullptr)
-    {
-        return;
-    }
-
-    progress_->setLabelText(tr("Folder %1 of %2 · %3").arg(folder_).arg(folders_).arg(step_));
-
-    if (!copying)
-    {
-        progress_->setRange(0, 0);
-    }
-}
-
 void CommunityPage::OnImportFinished(const std::vector<ImportOperationResult>& results)
 {
-    if (progress_ != nullptr)
-    {
-        progress_->close();
-        progress_->deleteLater();
-        progress_ = nullptr;
-    }
-
     QStringList failed;
     for (const ImportOperationResult& result : results)
     {

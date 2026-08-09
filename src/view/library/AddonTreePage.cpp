@@ -93,10 +93,11 @@ namespace
 
 AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                              DeletionViewModel& deletion,
+                             ImportViewModel& importViewModel,
                              AddonTreeModel& model,
                              const SessionNotifier& notifier,
                              QWidget* parent)
-    : QWidget(parent), viewModel_(viewModel), deletion_(deletion), model_(model)
+    : QWidget(parent), viewModel_(viewModel), deletion_(deletion), importViewModel_(importViewModel), model_(model)
 {
     tree_ = new QTreeView(this);
     filter_ = new AddonTreeFilterModel(this);
@@ -217,6 +218,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
 
     connect(&deletion_, &DeletionViewModel::Planned, this, &AddonTreePage::OfferToDelete);
     connect(&deletion_, &DeletionViewModel::Deleted, this, &AddonTreePage::OnDeleted);
+    connect(&importViewModel_, &ImportViewModel::GaveBack, this, &AddonTreePage::OnGaveBack);
 
     RetranslateUi();
 }
@@ -516,7 +518,41 @@ void AddonTreePage::OfferToDelete(const DeletionPlan& plan)
     }
 
     DeleteDialog dialog(plan, deletion_, this);
+    connect(&dialog, &DeleteDialog::GiveBackRequested, &importViewModel_, &ImportViewModel::GiveBack);
     static_cast<void>(dialog.exec());
+}
+
+void AddonTreePage::OnGaveBack(const std::vector<FileOperationResult>& results)
+{
+    QStringList lines;
+    int failed = 0;
+
+    for (const FileOperationResult& result : results)
+    {
+        if (!Succeeded(result.result))
+        {
+            lines.append(tr("%1: %2").arg(AsText(result.path.filename()), Explain(result.result)));
+            ++failed;
+        }
+    }
+
+    const int done = static_cast<int>(results.size()) - failed;
+
+    if (failed == 0)
+    {
+        emit StatusChanged(tr("%n addon went back to the program that installed it.", nullptr, done));
+        return;
+    }
+
+    QMessageBox dialog(QMessageBox::Warning, tr("Not everything went back"),
+                       tr("%n addon is still in the library, and nothing was deleted.", nullptr, failed),
+                       QMessageBox::Ok, this);
+    dialog.setInformativeText(tr("%n addon went back to the program that installed it.", nullptr, done));
+    dialog.setDetailedText(lines.join('\n'));
+    dialog.exec();
+
+    emit StatusChanged(
+        tr("%1 · %2").arg(tr("%n addon went back", nullptr, done), tr("%n left in the library", nullptr, failed)));
 }
 
 void AddonTreePage::OnDeleted(const std::vector<DeletionResult>& results, const DeletionRoute route)

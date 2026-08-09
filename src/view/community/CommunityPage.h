@@ -16,7 +16,6 @@
 class ContextPanel;
 class ModelRowDetail;
 class QLabel;
-class QProgressDialog;
 class QPushButton;
 class QTableView;
 class QToolButton;
@@ -99,14 +98,11 @@ private:
 
     void OnRepairFinished(const std::vector<LinkOperationResult>& results);
 
-    void OnImportStarted(int folders);
+    void ResolveThem(const std::vector<CopyConflict>& conflicts);
 
-    void OnImportProgressed(qulonglong copiedBytes, qulonglong totalBytes, int folder);
+    [[nodiscard]] std::vector<ConflictToResolve> WhatTheUserChoseFor(const std::vector<CopyConflict>& conflicts);
 
-    void OnImportStep(const QString& step);
-
-    [[nodiscard]] std::optional<FileResult>
-    ResolveOneConflict(const CopyConflict& conflict, std::size_t position, std::size_t total);
+    void OnConflictsResolved(const std::vector<FileOperationResult>& results);
 
     void OnImportFinished(const std::vector<ImportOperationResult>& results);
 
@@ -132,10 +128,7 @@ private:
     QList<QPair<QString, QString>> counted_;
     bool batch_ = false;
     ModelRowDetail* detail_ = nullptr;
-    QProgressDialog* progress_ = nullptr;
-    int folders_ = 0;
-    int folder_ = 0;
-    QString step_;
+    bool everyConflictWasAsked_ = true;
 };
 
 #endif // FS_ORGANIZER_VIEW_COMMUNITY_COMMUNITY_PAGE_H

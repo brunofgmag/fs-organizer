@@ -46,6 +46,7 @@
 #include "view/JournalPage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/options/OptionsPage.h"
+#include "view/shell/LongOperationProgress.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
 #include "view/shell/StartupOffers.h"
@@ -209,9 +210,11 @@ int main(int argc, char* argv[])
                      {
                          packages.Reload(session.Profile().variant);
                      });
-    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, model, notifier);
-
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
+
+    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, model, notifier);
+
+    LongOperationProgress progress(importViewModel, &window);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -423,7 +426,16 @@ int main(int argc, char* argv[])
                      {
                          adoptWhatChangedOnDisk();
                      });
-    QObject::connect(&importViewModel, &ImportViewModel::ConflictResolved, page, adoptWhatChangedOnDisk);
+    QObject::connect(&importViewModel, &ImportViewModel::ConflictsResolved, page,
+                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
+                     {
+                         adoptWhatChangedOnDisk();
+                     });
+    QObject::connect(&importViewModel, &ImportViewModel::GaveBack, page,
+                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
+                     {
+                         adoptWhatChangedOnDisk();
+                     });
     QObject::connect(&quarantineViewModel, &QuarantineViewModel::Restored, page,
                      [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
                      {

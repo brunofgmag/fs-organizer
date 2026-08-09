@@ -17,6 +17,18 @@ namespace
     constexpr int kDetailIndent = 22;
     constexpr int kDialogWidth = 520;
 
+    std::vector<std::filesystem::path> FoldersIn(const DeletionPlan& plan)
+    {
+        std::vector<std::filesystem::path> folders;
+
+        for (const AddonToDelete& addon : plan.addons)
+        {
+            folders.push_back(addon.folder);
+        }
+
+        return folders;
+    }
+
     SelectionSize WhatItWeighs(const DeletionPlan& plan)
     {
         SelectionSize size{.selected = plan.addons.size()};
@@ -59,6 +71,12 @@ DeleteDialog::DeleteDialog(DeletionPlan plan, DeletionViewModel& viewModel, QWid
 
     forGood_ =
         AddRoute(*column, tr("Delete permanently"), tr("It does not come back. Not through the Recycle Bin either."));
+
+    if (EveryAddonCameFromAnotherProgram(plan_))
+    {
+        giveBack_ = AddRoute(*column, tr("Give it back to the other program"), WhereItGoesBackTo());
+        connect(giveBack_, &QRadioButton::toggled, this, &DeleteDialog::ShowTheChosenRoute);
+    }
 
     recycle_->setChecked(anyGoes);
     forGood_->setChecked(!anyGoes);
@@ -128,6 +146,24 @@ DeletionRoute DeleteDialog::ChosenRoute() const
     return recycle_->isChecked() ? DeletionRoute::RecycleBin : DeletionRoute::Permanently;
 }
 
+bool DeleteDialog::GivingItBack() const
+{
+    return giveBack_ != nullptr && giveBack_->isChecked();
+}
+
+QString DeleteDialog::WhereItGoesBackTo() const
+{
+    if (plan_.addons.size() == 1)
+    {
+        return tr("The bytes move back to %1, the folder the other program manages, and the library copy goes away "
+                  "with the import that made it.")
+            .arg(AsText(plan_.addons.front().cameFrom));
+    }
+
+    return tr("The bytes move back to the folders the other programs manage, and each library copy goes away with the "
+              "import that made it.");
+}
+
 QString DeleteDialog::WhatWasSelected() const
 {
     const QString weight = SizeOfTheSelection(WhatItWeighs(plan_));
@@ -184,12 +220,26 @@ QString DeleteDialog::WhereTheLinksAre() const
 
 void DeleteDialog::ShowTheChosenRoute() const
 {
+    if (GivingItBack())
+    {
+        confirm_->setText(tr("Give it back"));
+        return;
+    }
+
     confirm_->setText(ChosenRoute() == DeletionRoute::RecycleBin ? tr("Move to the Recycle Bin")
                                                                  : tr("Delete permanently"));
 }
 
 void DeleteDialog::DeleteThem()
 {
+    if (GivingItBack())
+    {
+        emit GiveBackRequested(FoldersIn(plan_));
+
+        accept();
+        return;
+    }
+
     viewModel_.Delete(plan_, ChosenRoute());
 
     accept();
