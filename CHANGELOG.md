@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/brunofgmag/fs-organizer/compare/v0.20.0...v0.21.0) (2026-08-09)
+
+
+### Features
+
+* the interface says less, paints to the standard and weighs both sides of a swap ([#56](https://github.com/brunofgmag/fs-organizer/issues/56)) ([83482c9](https://github.com/brunofgmag/fs-organizer/commit/83482c904156dc067fce5809df53b944342bd597))
+
 ## [0.20.0](https://github.com/brunofgmag/fs-organizer/compare/v0.19.0...v0.20.0) (2026-08-09)
 
 
