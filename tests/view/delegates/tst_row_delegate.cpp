@@ -156,6 +156,7 @@ namespace
         }
 
         QPixmap shot(view.viewport()->size());
+        shot.fill(Qt::transparent);
         view.viewport()->render(&shot);
 
         SuffixShot taken{.painted = shot.toImage(), .cell = view.visualRect(model.index(0, 0)), .inkEndsAt = -1};
@@ -223,6 +224,7 @@ void RowDelegateTest::ARowTheModelCallsAlarmingIsGroundedInTheAlertColour()
     QVERIFY(QTest::qWaitForWindowExposed(&view));
 
     QPixmap shot(view.viewport()->size());
+    shot.fill(Qt::transparent);
     view.viewport()->render(&shot);
     const QImage painted = shot.toImage();
 
@@ -266,6 +268,7 @@ void RowDelegateTest::ASelectedRowInATableIsOutlinedOnceAndNotCellByCell()
     QVERIFY(second.left() > first.left());
 
     QPixmap shot(view.viewport()->size());
+    shot.fill(Qt::transparent);
     view.viewport()->render(&shot);
     const QImage painted = shot.toImage();
 
@@ -323,6 +326,7 @@ namespace
         [[nodiscard]] QColor GroundOf(const QModelIndex& cell) const
         {
             QPixmap shot(view.viewport()->size());
+            shot.fill(Qt::transparent);
             view.viewport()->render(&shot);
 
             const QRect where = view.visualRect(cell);
@@ -405,6 +409,7 @@ namespace
         [[nodiscard]] QImage Painted()
         {
             QPixmap shot(view.viewport()->size());
+            shot.fill(Qt::transparent);
             view.viewport()->render(&shot);
 
             return shot.toImage();
