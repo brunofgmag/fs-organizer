@@ -8,6 +8,7 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -216,18 +217,43 @@ QVariant JournalModel::StepColumn(const OperationRecord& record, const int colum
     }
 }
 
+bool JournalModel::ItWorked(const QModelIndex& position) const
+{
+    if (const JournalEntry* entry = EntryAt(position))
+    {
+        return entry->Succeeded();
+    }
+
+    const OperationRecord* step = StepAt(position);
+
+    return step != nullptr && StepSucceeded(*step);
+}
+
+bool JournalModel::SupportsTheName(const QModelIndex& position) const
+{
+    switch (position.column())
+    {
+    case WhenColumn:
+    case LibraryColumn:
+    case SourceColumn:
+    case TargetColumn: return true;
+    case OutcomeColumn: return ItWorked(position);
+    case OperationColumn:
+    case AddonColumn: return false;
+    default: return false;
+    }
+}
+
 QVariant JournalModel::data(const QModelIndex& position, const int role) const
 {
     if (role == SucceededRole)
     {
-        if (const JournalEntry* entry = EntryAt(position))
-        {
-            return entry->Succeeded();
-        }
+        return ItWorked(position);
+    }
 
-        const OperationRecord* step = StepAt(position);
-
-        return step != nullptr && StepSucceeded(*step);
+    if (role == QuietRole)
+    {
+        return SupportsTheName(position);
     }
 
     if (role != Qt::DisplayRole)

@@ -29,9 +29,7 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     operations_->setUniformRowHeights(true);
     operations_->setSelectionBehavior(QAbstractItemView::SelectRows);
     operations_->header()->setStretchLastSection(true);
-    auto* rows = new RowDelegate(operations_);
-    rows->KeepRowsAtLeast(0);
-    operations_->setItemDelegate(rows);
+    operations_->setItemDelegate(new RowDelegate(operations_));
     DressTheHeaderOf(operations_->header());
 
     search_ = new QLineEdit(this);

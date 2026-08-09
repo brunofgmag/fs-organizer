@@ -53,6 +53,10 @@ private:
 
     [[nodiscard]] const OperationRecord* StepAt(const QModelIndex& position) const;
 
+    [[nodiscard]] bool ItWorked(const QModelIndex& position) const;
+
+    [[nodiscard]] bool SupportsTheName(const QModelIndex& position) const;
+
     [[nodiscard]] QVariant EntryColumn(const JournalEntry& entry, int column) const;
 
     [[nodiscard]] QVariant StepColumn(const OperationRecord& record, int column) const;
