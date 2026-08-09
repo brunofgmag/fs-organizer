@@ -12,6 +12,16 @@
 
 namespace
 {
+    void LetNoButtonAnswerTheEnterKey(const QDialogButtonBox& buttons)
+    {
+        for (QAbstractButton* button : buttons.buttons())
+        {
+            auto* pushed = qobject_cast<QPushButton*>(button);
+            pushed->setAutoDefault(false);
+            pushed->setDefault(false);
+        }
+    }
+
     QString VersionOrSilence(const std::string& version)
     {
         return version.empty() ? QObject::tr("the manifest does not say") : QString::fromStdString(version);
@@ -63,7 +73,7 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
     QPushButton* replace = buttons->addButton(tr("Replace what's there"), QDialogButtonBox::AcceptRole);
     replace->setObjectName(QStringLiteral("ReplaceWhatIsThere"));
 
-    buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
+    LetNoButtonAnswerTheEnterKey(*buttons);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -96,6 +106,13 @@ QLabel* CollisionDialog::AddTheSide(QGridLayout& grid, const int column, const Q
     grid.addWidget(said, 1, column, Qt::AlignTop);
 
     return said;
+}
+
+void CollisionDialog::showEvent(QShowEvent* event)
+{
+    QDialog::showEvent(event);
+
+    LetNoButtonAnswerTheEnterKey(*findChild<QDialogButtonBox*>());
 }
 
 void CollisionDialog::ShowTheSizes(const TwoSides& sides)
