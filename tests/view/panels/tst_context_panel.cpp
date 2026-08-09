@@ -33,6 +33,7 @@ namespace
         static void TheSpineCarriesTheNameOfWhatIsSelected();
         static void ARowThatNeedsAttentionPutsADotOnTheSpine();
         static void TheSpineAndTheDotShareTheSameAxis();
+        static void TheHighlightOfTheExpandButtonIsSquareAndCentredOnTheRail();
         static void TheCollapsedStateSurvivesANewPanelWithTheSameName();
         static void TheDetailShowsEveryColumnOfTheSelectedRow();
         static void AnInvalidIndexClearsTheDetailToItsPlaceholder();
@@ -525,6 +526,14 @@ void ContextPanelTest::SelectingAPathPaintsItOnAGroundThatIsNotTheSurfaceUnderIt
 
     QVERIFY2(PixelsOf(painted(), marking) > 0,
              "selected text is grounded in a surface tone, so on a dark scheme nothing tells it apart");
+}
+
+void ContextPanelTest::TheHighlightOfTheExpandButtonIsSquareAndCentredOnTheRail()
+{
+    const auto [painted, arrow] = RailShotOf(QStringLiteral("Aircrafts"), false);
+
+    QCOMPARE(arrow.width(), arrow.height());
+    QCOMPARE(arrow.left(), painted.width() - arrow.right() - 1);
 }
 
 QTEST_MAIN(ContextPanelTest)

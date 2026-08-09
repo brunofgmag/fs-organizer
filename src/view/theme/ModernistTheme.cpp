@@ -96,7 +96,7 @@ QProgressBar#FooterMeter::chunk { background: %accent%; }
 #PanelBody { background: %chrome%; border-left: 1px solid %divider%; }
 #PanelRail { background: %chrome%; border-left: 1px solid %divider%; }
 QToolButton#PanelExpand {
-    background: transparent; border: none; color: %secondary%; padding: 3px 5px;
+    background: transparent; border: none; color: %secondary%; padding: 0;
 }
 QToolButton#PanelExpand:hover { color: %text%; background: %raised%; }
 QLabel#PanelTitle { color: %text%; }
@@ -147,7 +147,8 @@ QPushButton {
     padding: 5px 12px; font-weight: 600;
 }
 QPushButton:hover { border-color: %secondary%; background: %raised%; }
-QPushButton:default { background: %accent%; color: %onAccent%; border: none; }
+QPushButton:default { background: %accent%; color: %onAccent%; border: 1px solid %accent%; }
+QPushButton:default:hover { background: %accentWarm%; border-color: %accentWarm%; }
 QPushButton:disabled { color: %disabled%; border-color: %divider%; background: transparent; }
 QPushButton:default:disabled { background: transparent; color: %disabled%; border: 1px solid %divider%; }
 QPushButton[role="primary"] { background: %accent%; color: %onAccent%; border: 1px solid %accent%; }
@@ -158,6 +159,7 @@ QPushButton[role="destructive"] {
 }
 QPushButton[role="destructive"]:hover { background: %raised%; }
 QPushButton[role="destructive"]:disabled { border: 1px solid %divider%; color: %disabled%; }
+QPushButton:focus { border-color: %text%; }
 QPushButton[scale="small"] { padding: 2px 9px; }
 )")
         .replace(QStringLiteral("%window%"), tones.window.name())
