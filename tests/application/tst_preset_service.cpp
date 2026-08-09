@@ -33,6 +33,7 @@ namespace
         static void ReplaceLeavesAFolderTheAppDidNotLinkAlone();
         static void ApplyingReportsTheEntriesThatNoLongerResolve();
         static void ApplyingLinksAnAddonWhoseLinkVanishedAfterTheScan();
+        static void ApplyingWalksTheDestinationOnceAndPlansBothHalvesFromThatWalk();
     };
 }
 
@@ -304,6 +305,25 @@ void PresetServiceTest::ApplyingLinksAnAddonWhoseLinkVanishedAfterTheScan()
     QCOMPARE(report.results.size(), std::size_t{1});
     QVERIFY(report.results.front().outcome.Succeeded());
     QVERIFY(f.fileSystem.IsLink(link));
+}
+
+void PresetServiceTest::ApplyingWalksTheDestinationOnceAndPlansBothHalvesFromThatWalk()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    const SimulatorProfile profile = Profile();
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
+
+    const std::optional<Preset> preset = f.service.Load(kProfileId, "Voo curto");
+    QVERIFY(preset.has_value());
+
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    const std::size_t before = f.filesystemProbe.TimesEnumerated(kCommunity);
+
+    static_cast<void>(f.service.Apply(profile, shown, *preset, ApplyMode::Replace));
+
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity) - before, std::size_t{1});
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)
