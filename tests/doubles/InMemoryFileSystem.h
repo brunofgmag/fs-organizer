@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "domain/model/WriteAccess.h"
+
 class InMemoryFileSystem
 {
 public:
@@ -69,14 +71,31 @@ public:
         return !unavailableVolumes_.contains(VolumeOf(path));
     }
 
-    void MarkReadOnly(const std::filesystem::path& path)
+    [[nodiscard]] static bool SameVolume(const std::filesystem::path& left, const std::filesystem::path& right)
     {
-        readOnlyPaths_.insert(Key(path));
+        return VolumeOf(left) == VolumeOf(right);
     }
 
-    [[nodiscard]] bool IsWritable(const std::filesystem::path& path) const
+    void MarkReadOnly(const std::filesystem::path& path)
     {
-        return IsDirectory(path) && !readOnlyPaths_.contains(Key(path));
+        refusedPaths_[Key(path)] = WriteAccess::TheVolumeIsReadOnly;
+    }
+
+    void DenyPermissionOn(const std::filesystem::path& path)
+    {
+        refusedPaths_[Key(path)] = WriteAccess::PermissionIsDenied;
+    }
+
+    [[nodiscard]] WriteAccess WriteAccessOn(const std::filesystem::path& path) const
+    {
+        if (!IsDirectory(path))
+        {
+            return WriteAccess::TheFolderIsNotThere;
+        }
+
+        const auto refused = refusedPaths_.find(Key(path));
+
+        return refused == refusedPaths_.end() ? WriteAccess::ItAccepts : refused->second;
     }
 
     void SetFreeSpace(const std::filesystem::path& path, const std::uintmax_t bytes)
@@ -216,6 +235,25 @@ public:
         for (const auto& [key, node] : nodes_)
         {
             if (node.kind == NodeKind::File)
+            {
+                continue;
+            }
+            const std::filesystem::path candidate(key);
+            if (candidate.parent_path().generic_string() == parent)
+            {
+                children.push_back(candidate);
+            }
+        }
+        return children;
+    }
+
+    [[nodiscard]] std::vector<std::filesystem::path> ChildFilesOf(const std::filesystem::path& path) const
+    {
+        const std::string parent = Key(path);
+        std::vector<std::filesystem::path> children;
+        for (const auto& [key, node] : nodes_)
+        {
+            if (node.kind != NodeKind::File)
             {
                 continue;
             }
@@ -408,7 +446,7 @@ private:
     std::vector<std::string> recycled_;
     std::set<std::string> unmeasurableVolumes_;
     std::set<std::string> unavailableVolumes_;
-    std::set<std::string> readOnlyPaths_;
+    std::map<std::string, WriteAccess> refusedPaths_;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_IN_MEMORY_FILE_SYSTEM_H

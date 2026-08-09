@@ -13,6 +13,7 @@
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/model/RecycleLimits.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -24,6 +25,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -45,6 +47,8 @@ namespace
         static void TheGestureConcludesAndTheOutcomeOfEachAddonComesBackSeparately();
         static void AnEnabledAddonSaysWhereTheLinkIsAndInWhichProfile();
         static void TheConfirmationCarriesTheNameOfTheRouteItWillRun();
+        static void OnlyASelectionThatCameFromAnotherProgramIsOfferedTheWayBack();
+        static void TheWayBackNamesTheFolderAndAsksForTheGiveBackInsteadOfADeletion();
     };
 }
 
@@ -134,6 +138,7 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
@@ -142,7 +147,8 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -150,7 +156,7 @@ namespace
         SessionNotifier notifier{};
         Session session{profiles, organizer, settings, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DeletionService service{filesystemProbe, files, linking, classifier, processProbe, log, sizes};
+        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
         DeletionViewModel viewModel{session, profiles, settings, service, sizes};
     };
 
@@ -297,6 +303,65 @@ void DeleteDialogTest::TheConfirmationCarriesTheNameOfTheRouteItWillRun()
     forGood->setChecked(true);
 
     QVERIFY(ButtonLabelled(dialog, QStringLiteral("Delete permanently")) != nullptr);
+}
+
+namespace
+{
+    const std::filesystem::path kVendorFolder = "C:/Addon Manager/aerosoft-crj";
+
+    void TheCrjCameFromAnotherProgram(Fixture& f)
+    {
+        f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+        f.fileSystem.AddLink(kVendorFolder, kCrj);
+
+        SimulatorProfile stored = Profile();
+        RememberWhereItCameFrom(stored, kCrj, kVendorFolder);
+
+        f.settings.stored.profiles = {stored};
+        f.session.ShowActiveProfile();
+    }
+}
+
+void DeleteDialogTest::OnlyASelectionThatCameFromAnotherProgramIsOfferedTheWayBack()
+{
+    Fixture ordinary;
+    const DeleteDialog withoutIt(ordinary.PlanFor({ordinary.Node(kCrj)}), ordinary.viewModel);
+
+    QCOMPARE(RouteLabelled(withoutIt, QStringLiteral("Give it back to the other program")), nullptr);
+
+    Fixture managed;
+    TheCrjCameFromAnotherProgram(managed);
+
+    const DeleteDialog mixed(managed.PlanFor({managed.Node(kCrj), managed.Node(kAtr)}), managed.viewModel);
+
+    QVERIFY2(RouteLabelled(mixed, QStringLiteral("Give it back to the other program")) == nullptr,
+             "the route runs over the whole selection, so one addon that never came from outside takes it away");
+}
+
+void DeleteDialogTest::TheWayBackNamesTheFolderAndAsksForTheGiveBackInsteadOfADeletion()
+{
+    Fixture f;
+    TheCrjCameFromAnotherProgram(f);
+
+    DeleteDialog dialog(f.PlanFor({f.Node(kCrj)}), f.viewModel);
+    const QSignalSpy asked(&dialog, &DeleteDialog::GiveBackRequested);
+    const QSignalSpy deleted(&f.viewModel, &DeletionViewModel::Deleted);
+
+    QRadioButton* back = RouteLabelled(dialog, QStringLiteral("Give it back to the other program"));
+    QVERIFY(back != nullptr);
+    QVERIFY(EverythingItSays(dialog).contains(QStringLiteral("Addon Manager")));
+
+    back->setChecked(true);
+
+    QAbstractButton* confirm = ButtonLabelled(dialog, QStringLiteral("Give it back"));
+    QVERIFY2(confirm != nullptr, "giving it back is not deleting, and the button cannot keep saying it is");
+    confirm->click();
+
+    QCOMPARE(dialog.result(), static_cast<int>(QDialog::Accepted));
+    QCOMPARE(deleted.count(), 0);
+    QCOMPARE(asked.count(), 1);
+    QCOMPARE(asked.front().front().value<std::vector<std::filesystem::path>>().front(), kCrj);
+    QVERIFY(f.fileSystem.Exists(kCrj));
 }
 
 QTEST_MAIN(DeleteDialogTest)

@@ -28,6 +28,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
     table->setModel(&model_);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setItemDelegate(new PlainTextDelegate(table));
+    table->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     table->verticalHeader()->setVisible(false);
     LetTheColumnsBeDraggedAndStillFillTheTable(table);
 
@@ -61,7 +62,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
     layout->addWidget(table, 1);
     layout->addWidget(buttons);
 
-    resize(760, 480);
+    SizeToTheContent(*this, 760);
 }
 
 std::vector<CategorySuggestion> SuggestionDialog::Chosen() const

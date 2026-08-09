@@ -35,10 +35,22 @@ SetupWizard::SetupWizard(SetupViewModel& viewModel, QWidget* parent) : QWizard(p
     setWindowTitle(tr("FS Organizer · first setup"));
     setWizardStyle(ModernStyle);
     setOption(NoBackButtonOnStartPage, true);
-    resize(720, 460);
 
     addPage(CreateSimulatorPage());
     addPage(CreateLibraryPage());
+}
+
+void SetupWizard::showEvent(QShowEvent* event)
+{
+    QWizard::showEvent(event);
+
+    if (sized_)
+    {
+        return;
+    }
+
+    sized_ = true;
+    SizeToTheContent(*this, 720);
 }
 
 void SetupWizard::accept()
@@ -63,6 +75,7 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
     page->setSubTitle(tr("Choose the installation this profile will manage."));
 
     simulators_ = new QListWidget(page);
+    simulators_->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     RefreshCandidates();
 
     variant_ = new QComboBox(page);

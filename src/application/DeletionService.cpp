@@ -4,6 +4,7 @@
 #include <iterator>
 
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
 
@@ -31,6 +32,7 @@ namespace
 
 DeletionService::DeletionService(const FilesystemProbe& filesystemProbe,
                                  FileOperations& files,
+                                 SidecarStore& sidecars,
                                  const LinkingEngine& linking,
                                  const EntryClassifier& classifier,
                                  const ProcessProbe& processProbe,
@@ -38,6 +40,7 @@ DeletionService::DeletionService(const FilesystemProbe& filesystemProbe,
                                  const SizeService& sizes)
     : filesystemProbe_(filesystemProbe),
       files_(files),
+      sidecars_(sidecars),
       linking_(linking),
       classifier_(classifier),
       processProbe_(processProbe),
@@ -126,6 +129,7 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
                                    const std::vector<const TreeNode*>& nodes) const
 {
     const std::vector<LinksNow> seen = ReadLinksNow(everyProfile);
+    const std::vector<ExternalAddon> externals = ExternalAddonsOf(profile);
 
     DeletionPlan plan;
 
@@ -141,7 +145,8 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
                                             .addonId = IdentityOf(profile, node->path),
                                             .enabled = WhereItIsEnabled(seen, node->path),
                                             .bytes = sizes_.BytesOf(node->path),
-                                            .longestEntry = sizes_.LongestEntryOf(node->path)});
+                                            .longestEntry = sizes_.LongestEntryOf(node->path),
+                                            .cameFrom = ExternalOriginOf(externals, node->path)});
     }
 
     plan.volumes = RoomOnEachVolume(plan.addons);
@@ -182,7 +187,7 @@ DeletionResult DeletionService::DeleteOne(const AddonToDelete& addon,
 
     if (gone)
     {
-        static_cast<void>(files_.RemoveTree(ExternalSidecarPathFor(addon.folder)));
+        static_cast<void>(sidecars_.Forget(ExternalSidecarPathFor(addon.folder)));
     }
 
     result.result = gone ? FileResult::Completed : FileResult::CouldNotDelete;

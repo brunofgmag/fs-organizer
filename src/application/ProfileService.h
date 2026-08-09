@@ -21,6 +21,7 @@
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/OperationJournal.h"
+#include "domain/ports/SidecarStore.h"
 
 struct LinkBatch
 {
@@ -38,8 +39,15 @@ struct TakenPlace
 class ProfileService
 {
 public:
+    struct LinksOnDisk
+    {
+        std::vector<DestinationEntry> entries{};
+        EnabledAddons enabled{};
+    };
+
     ProfileService(const CatalogScanner& catalog,
                    const FilesystemProbe& filesystemProbe,
+                   const SidecarStore& sidecars,
                    const EntryClassifier& classifier,
                    const LinkingEngine& linking,
                    const OperationLog& log,
@@ -55,6 +63,8 @@ public:
     [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile,
                                                                const std::vector<TreeNode>& libraries = {}) const;
 
+    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile) const;
+
     [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
                                                       const std::vector<const TreeNode*>& nodes) const;
 
@@ -65,6 +75,11 @@ public:
 
     [[nodiscard]] LinkBatchReport
     SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& shown, const LinkBatch& batch);
+
+    [[nodiscard]] LinkBatchReport SetEnabled(const SimulatorProfile& profile,
+                                             const ProfileSnapshot& shown,
+                                             const LinkBatch& batch,
+                                             const LinksOnDisk& onDisk);
 
     [[nodiscard]] LinkBatchReport
     Relink(const SimulatorProfile& profile, const ProfileSnapshot& shown, const std::vector<const TreeNode*>& nodes);
@@ -86,14 +101,6 @@ private:
         std::filesystem::path addonFolder;
         std::filesystem::path linkPath;
     };
-
-    struct LinksOnDisk
-    {
-        std::vector<DestinationEntry> entries;
-        EnabledAddons enabled;
-    };
-
-    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile) const;
 
     [[nodiscard]] static std::size_t AddonsThatDrifted(const std::vector<const TreeNode*>& nodes,
                                                        const EnabledAddons& shown,
@@ -125,6 +132,7 @@ private:
 
     const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;
+    const SidecarStore& sidecars_;
     const EntryClassifier& classifier_;
     const LinkingEngine& linking_;
     const OperationLog& log_;

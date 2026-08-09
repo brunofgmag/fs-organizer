@@ -4,6 +4,7 @@
 #include <QtTest/QtTest>
 
 #include "application/DependencyReport.h"
+#include "application/StartupReport.h"
 #include "application/model/RestorePlan.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
@@ -16,9 +17,25 @@
 #include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
 #include "domain/model/QuarantineOrigin.h"
+#include "domain/model/WriteAccess.h"
 
 namespace QTest
 {
+    template<>
+    inline char* toString(const WriteAccess& t)
+    {
+        switch (t)
+        {
+        case WriteAccess::ItAccepts: return qstrdup("ItAccepts");
+        case WriteAccess::TheFolderIsNotThere: return qstrdup("TheFolderIsNotThere");
+        case WriteAccess::PermissionIsDenied: return qstrdup("PermissionIsDenied");
+        case WriteAccess::TheVolumeIsReadOnly: return qstrdup("TheVolumeIsReadOnly");
+        case WriteAccess::ItRefusedForAnotherReason: return qstrdup("ItRefusedForAnotherReason");
+        }
+
+        return qstrdup("WriteAccess(?)");
+    }
+
     template<>
     inline char* toString(const ProposedState& t)
     {
@@ -144,6 +161,7 @@ namespace QTest
         case FileResult::TheDiskDisagreesWithTheScan: return qstrdup("TheDiskDisagreesWithTheScan");
         case FileResult::CouldNotReadTheStartupFile: return qstrdup("CouldNotReadTheStartupFile");
         case FileResult::CouldNotWriteTheStartupFile: return qstrdup("CouldNotWriteTheStartupFile");
+        case FileResult::TheStartupEntriesAreLeftLoose: return qstrdup("TheStartupEntriesAreLeftLoose");
         }
 
         return qstrdup("FileResult(?)");
@@ -199,6 +217,10 @@ namespace QTest
         case OperationKind::RecycleFromLibrary: return qstrdup("RecycleFromLibrary");
         case OperationKind::DeleteFromLibrary: return qstrdup("DeleteFromLibrary");
         case OperationKind::LinkTheOtherProgramsFolder: return qstrdup("LinkTheOtherProgramsFolder");
+        case OperationKind::ImportFromAnotherProgram: return qstrdup("ImportFromAnotherProgram");
+        case OperationKind::GiveBackToAnotherProgram: return qstrdup("GiveBackToAnotherProgram");
+        case OperationKind::UndoTheInterruptedSwap: return qstrdup("UndoTheInterruptedSwap");
+        case OperationKind::RestoreOverTheOccupant: return qstrdup("RestoreOverTheOccupant");
         }
 
         return qstrdup("OperationKind(?)");
@@ -215,6 +237,31 @@ namespace QTest
         }
 
         return qstrdup("DependencyResolution(?)");
+    }
+
+    template<>
+    inline char* toString(const StartupReach& t)
+    {
+        switch (t)
+        {
+        case StartupReach::OutsideYourAddons: return qstrdup("OutsideYourAddons");
+        case StartupReach::InsideAnAddon: return qstrdup("InsideAnAddon");
+        }
+
+        return qstrdup("StartupReach(?)");
+    }
+
+    template<>
+    inline char* toString(const StartupAlarm& t)
+    {
+        switch (t)
+        {
+        case StartupAlarm::None: return qstrdup("None");
+        case StartupAlarm::TheExecutableIsMissing: return qstrdup("TheExecutableIsMissing");
+        case StartupAlarm::TheAddonHoldingItIsOff: return qstrdup("TheAddonHoldingItIsOff");
+        }
+
+        return qstrdup("StartupAlarm(?)");
     }
 
     template<>

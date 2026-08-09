@@ -206,24 +206,6 @@ bool WindowsFileOperations::WriteHiddenFile(const std::filesystem::path& path)
     return CloseHandle(file) != FALSE;
 }
 
-bool WindowsFileOperations::WriteTextFile(const std::filesystem::path& path, const std::string& contents)
-{
-    const HANDLE file =
-        CreateFileW(NativePath(path).c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-    if (file == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-
-    DWORD written = 0;
-    const bool wrote =
-        WriteFile(file, contents.data(), static_cast<DWORD>(contents.size()), &written, nullptr) != FALSE;
-    const bool closed = CloseHandle(file) != FALSE;
-
-    return closed && wrote && static_cast<std::size_t>(written) == contents.size();
-}
-
 bool WindowsFileOperations::Move(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
     std::error_code error;

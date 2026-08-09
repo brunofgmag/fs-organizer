@@ -50,6 +50,8 @@ public:
 
     void RememberWhatCameFromAnotherProgram(const std::vector<ImportOperationResult>& results);
 
+    void ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem::path>& addonFolders);
+
     [[nodiscard]] LegacyImportReport ImportLegacy(const LegacyImportRequest& request);
 
     void UnregisterLibrary(const LibraryId& libraryId);

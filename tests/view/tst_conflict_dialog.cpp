@@ -23,6 +23,7 @@ namespace
         static void AnOrdinaryConflictStillCallsItTheDestination();
         static void TheWarningAboutTheLinksFollowsTheSameWording();
         static void KeepingTheProvenanceCopyAnswersTheSameChoiceInBothWordings();
+        static void ADeepPathOnOneSideLeavesTheTwoSidesTheSameWidth();
     };
 
     const std::filesystem::path kOtherProgramsFolder = "C:/Addon Manager/Aircraft/aerosoft-crj";
@@ -136,6 +137,22 @@ void ConflictDialogTest::KeepingTheProvenanceCopyAnswersTheSameChoiceInBothWordi
     QVERIFY(keepDestination != nullptr);
     keepDestination->click();
     QCOMPARE(ordinary.Choice(), ConflictChoice::KeepTheProvenanceCopy);
+}
+
+void ConflictDialogTest::ADeepPathOnOneSideLeavesTheTwoSidesTheSameWidth()
+{
+    ConflictDetails details = AConflictFromAnotherProgram();
+    details.provenance.path = "C:/Users/bruno/AppData/Roaming/SayIntentionsAI/SayIntentionsAI/si-flowpro/"
+                              "p42-util-flow-SayIntentionsAI-widget";
+
+    ConflictDialog dialog(details);
+    dialog.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+
+    const QList<QGroupBox*> sides = dialog.findChildren<QGroupBox*>();
+    QCOMPARE(sides.size(), 2);
+    QVERIFY2(sides.first()->width() == sides.last()->width(),
+             "the deeper path pushed its own column, so a dialog whose job is to compare shows two unequal halves");
 }
 
 QTEST_MAIN(ConflictDialogTest)

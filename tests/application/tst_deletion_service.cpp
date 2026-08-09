@@ -14,6 +14,7 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -77,6 +78,7 @@ namespace
         InMemoryFileSystem fileSystem;
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeProcessProbe processProbe;
         EntryClassifier classifier{linkService, filesystemProbe};
@@ -87,7 +89,7 @@ namespace
         FakeCatalogScanner catalog;
         InlineBackgroundRunner runner;
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DeletionService service{filesystemProbe, files, linking, classifier, processProbe, log, sizes};
+        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
 
         SimulatorProfile profile{.id = "msfs2024",
                                  .destinations = {kDestination},

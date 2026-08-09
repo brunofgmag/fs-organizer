@@ -28,7 +28,19 @@ namespace
         static void ATagPaintsItsWordInsideItsOwnPadding();
         static void ATagKeepsRoomAroundItsWord();
         static void TheFocusRingTakesTheBorderOfAButtonAndTheBoxOfAnItem();
+        static void AButtonWearingTheStyleSheetStillShowsWhereTheKeyboardIs();
+        static void TheDefaultButtonKeepsItsHoverTone();
     };
+
+    QImage Painted(QWidget& widget)
+    {
+        QImage surface(widget.size(), QImage::Format_ARGB32_Premultiplied);
+        surface.fill(Qt::magenta);
+
+        widget.render(&surface);
+
+        return surface;
+    }
 }
 
 void ModernistThemeTest::TheArchivoFamilyResolvesFromTheBinary()
@@ -93,12 +105,14 @@ void ModernistThemeTest::ADisabledDefaultButtonTakesOffTheAccent()
     const QColor accent = ModernistPalette(Qt::ColorScheme::Dark).color(QPalette::Accent);
 
     QPixmap ready(button.size());
+    ready.fill(Qt::transparent);
     button.render(&ready);
     QCOMPARE(ready.toImage().pixelColor(ground), accent);
 
     button.setEnabled(false);
 
     QPixmap greyed(button.size());
+    greyed.fill(Qt::transparent);
     button.render(&greyed);
     QVERIFY(greyed.toImage().pixelColor(ground) != accent);
 }
@@ -212,6 +226,40 @@ void ModernistThemeTest::TheFocusRingTakesTheBorderOfAButtonAndTheBoxOfAnItem()
     overButton.end();
 
     QCOMPARE(onButton.pixelColor(button.rect().center().x(), button.rect().top()), accent);
+}
+
+void ModernistThemeTest::AButtonWearingTheStyleSheetStillShowsWhereTheKeyboardIs()
+{
+    QPushButton button(QStringLiteral("Restore"));
+    button.setStyleSheet(ModernistStyleSheet(Qt::ColorScheme::Dark));
+    button.resize(160, 30);
+    button.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&button));
+
+    const QPoint onTheBorder(button.width() / 2, 0);
+
+    button.clearFocus();
+    QVERIFY2(!button.hasFocus(), "showing a lone button hands it the focus, so the resting shot has to take it away");
+
+    const QImage resting = Painted(button);
+
+    button.activateWindow();
+    button.setFocus();
+    QVERIFY2(button.hasFocus(), "without focus the measurement below proves nothing");
+
+    QVERIFY2(Painted(button).pixelColor(onTheBorder) != resting.pixelColor(onTheBorder),
+             "the style sheet takes the native focus ring away, so it has to put one back");
+}
+
+void ModernistThemeTest::TheDefaultButtonKeepsItsHoverTone()
+{
+    const QString sheet = ModernistStyleSheet(Qt::ColorScheme::Dark);
+
+    const qsizetype hover = sheet.indexOf(QStringLiteral("QPushButton:default:hover"));
+    const qsizetype plain = sheet.indexOf(QStringLiteral("QPushButton:default {"));
+
+    QVERIFY2(hover > plain,
+             "with the same specificity the later rule wins, so the default button loses its hover to the rule above");
 }
 
 QTEST_MAIN(ModernistThemeTest)

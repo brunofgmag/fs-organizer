@@ -37,6 +37,7 @@ set(APPLICATION_SOURCES
         src/application/Session.cpp
         src/application/SetupService.cpp
         src/application/SizeService.cpp
+        src/application/StartupReport.cpp
         src/application/StartupService.cpp
 )
 
@@ -65,6 +66,7 @@ set(WINDOWS_INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+        src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/SingleInstance.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
@@ -100,6 +102,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/SessionNotifier.cpp
         src/viewmodel/SetupViewModel.cpp
         src/viewmodel/SizeSummary.cpp
+        src/viewmodel/StartupViewModel.cpp
         src/viewmodel/UpdateViewModel.cpp
 )
 
@@ -113,6 +116,8 @@ set(VIEW_SOURCES
         src/view/JournalPage.cpp
         src/view/shell/LanguageSwitch.cpp
         src/view/legacy/LegacyImportDialog.cpp
+        src/view/library/LibraryRootDialog.cpp
+        src/view/shell/LongOperationProgress.cpp
         src/view/options/OptionsPage.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
@@ -122,12 +127,15 @@ set(VIEW_SOURCES
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp
         src/view/delegates/RowDelegate.cpp
+        src/view/ScrollThatReportsItsContent.cpp
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/shell/StartupOffers.cpp
+        src/view/simulator/StartupPage.cpp
         src/view/library/SuggestionDialog.cpp
         src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp
+        src/view/TextThatIsNeverCut.cpp
         src/view/WheelGuard.cpp
         src/view/panels/ContextPanel.cpp
         src/view/panels/DependencySection.cpp

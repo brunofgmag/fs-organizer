@@ -64,6 +64,10 @@ namespace
         case OperationKind::RecycleFromLibrary: return "recycleFromLibrary";
         case OperationKind::DeleteFromLibrary: return "deleteFromLibrary";
         case OperationKind::LinkTheOtherProgramsFolder: return "linkTheOtherProgramsFolder";
+        case OperationKind::ImportFromAnotherProgram: return "importFromAnotherProgram";
+        case OperationKind::GiveBackToAnotherProgram: return "giveBackToAnotherProgram";
+        case OperationKind::UndoTheInterruptedSwap: return "undoTheInterruptedSwap";
+        case OperationKind::RestoreOverTheOccupant: return "restoreOverTheOccupant";
         }
 
         return "unknown";
@@ -125,6 +129,7 @@ namespace
         case FileResult::TheDiskDisagreesWithTheScan: return "theDiskDisagreesWithTheScan";
         case FileResult::CouldNotReadTheStartupFile: return "couldNotReadTheStartupFile";
         case FileResult::CouldNotWriteTheStartupFile: return "couldNotWriteTheStartupFile";
+        case FileResult::TheStartupEntriesAreLeftLoose: return "theStartupEntriesAreLeftLoose";
         }
 
         return "unknown";

@@ -9,6 +9,7 @@
 #include <QtGui/QPainterPath>
 #include <QtGui/QPixmap>
 #include <QtWidgets/QHeaderView>
+#include <QtWidgets/QStyle>
 
 #include "view/theme/ModernistTones.h"
 
@@ -246,4 +247,16 @@ void DressTheHeaderOf(QHeaderView* header)
 
     header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     header->setHighlightSections(false);
+}
+
+void GiveItTheRole(QWidget* widget, const QString& role)
+{
+    if (widget == nullptr)
+    {
+        return;
+    }
+
+    widget->setProperty("role", role);
+    widget->style()->unpolish(widget);
+    widget->style()->polish(widget);
 }

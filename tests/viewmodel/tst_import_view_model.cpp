@@ -3,6 +3,7 @@
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -12,6 +13,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -28,6 +30,8 @@ namespace
     private slots:
         static void CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo();
         static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
+        static void GivingAnAddonBackForgetsWhereItCameFromInsteadOfRememberingIt();
+        static void EveryLongOperationOpensAndClosesTheSameProgress();
     };
 }
 
@@ -71,6 +75,7 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
@@ -79,9 +84,11 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
-        ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
-        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportService service{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
+                              linking, log,          LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -128,6 +135,67 @@ void ImportViewModelTest::AnImportGoesThroughTheRunnerTheViewModelWasGiven()
 
     QCOMPARE(f.runner.runs, beforeTheImport + 1);
     QCOMPARE(finished.size(), 1);
+}
+
+namespace
+{
+    const std::filesystem::path kVendorFolder = "C:/Addon Manager/gsx-pro";
+    const std::filesystem::path kVendorInLibrary = "D:/Library/gsx-pro";
+
+    void AManagedExternal(Fixture& f)
+    {
+        f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+        f.fileSystem.AddDirectory(kVendorInLibrary);
+        f.fileSystem.AddFile(kVendorInLibrary / "manifest.json", 900);
+        f.fileSystem.AddLink(kVendorFolder, kVendorInLibrary);
+        f.fileSystem.AddLink(kDestination / "gsx-pro", kVendorInLibrary);
+
+        SimulatorProfile stored = Profile();
+        RememberWhereItCameFrom(stored, kVendorInLibrary, kVendorFolder);
+
+        f.settings.stored.profiles = {stored};
+        f.session.ShowActiveProfile();
+    }
+}
+
+void ImportViewModelTest::GivingAnAddonBackForgetsWhereItCameFromInsteadOfRememberingIt()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    QCOMPARE(ExternalAddonsOf(f.session.Profile()).size(), std::size_t{1});
+
+    const QSignalSpy gaveBack(&f.viewModel, &ImportViewModel::GaveBack);
+
+    f.viewModel.GiveBack({kVendorInLibrary});
+
+    QCOMPARE(gaveBack.size(), 1);
+
+    const auto results = gaveBack.front().front().value<std::vector<FileOperationResult>>();
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY2(ExternalAddonsOf(f.session.Profile()).empty(),
+             "an adoption that remembers would write back the origin the give back just erased");
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(!f.fileSystem.Exists(kVendorInLibrary));
+}
+
+void ImportViewModelTest::EveryLongOperationOpensAndClosesTheSameProgress()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    const QSignalSpy started(&f.viewModel, &ImportViewModel::Started);
+    const QSignalSpy idle(&f.viewModel, &ImportViewModel::Idle);
+
+    f.viewModel.Import({ImportRequest{.source = kSmall, .category = kLibrary}});
+    f.viewModel.GiveBack({kVendorInLibrary});
+    f.viewModel.ResolveConflicts(
+        {ConflictToResolve{.conflict = CopyConflict{.provenancePath = kBig, .libraryPath = kLibrary / "big-addon"},
+                           .choice = ConflictChoice::KeepTheProvenanceCopy}});
+
+    QCOMPARE(started.size(), 3);
+    QCOMPARE(idle.size(), 3);
 }
 
 QTEST_MAIN(ImportViewModelTest)

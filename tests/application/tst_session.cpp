@@ -15,6 +15,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/RecordingSessionObserver.h"
@@ -61,6 +62,8 @@ namespace
         static void APlainImportRemembersNothingAndScansNothingAgain();
         static void MovingAnAddonCarriesTheRecordOfWhereItCameFrom();
         static void UnregisteringALibraryForgetsWhereItsAddonsCameFrom();
+        static void GivingAnAddonBackForgetsWhereItCameFromAndScansAgain();
+        static void ForgettingNothingNeitherSavesNorScans();
     };
 }
 
@@ -175,6 +178,7 @@ namespace
         FakeLinkService linkService{fileSystem};
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeProcessProbe processProbe;
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
@@ -183,7 +187,8 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
+                               log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -737,6 +742,32 @@ void SessionTest::UnregisteringALibraryForgetsWhereItsAddonsCameFrom()
     f.session.UnregisterLibrary("library-1");
 
     QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
+}
+
+void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
+{
+    Fixture f;
+    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.session.ShowActiveProfile();
+
+    f.session.ForgetWhatCameFromAnotherProgram({kAddon});
+
+    QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
+    QCOMPARE(f.observer.started, 2);
+}
+
+void SessionTest::ForgettingNothingNeitherSavesNorScans()
+{
+    Fixture f;
+    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.session.ShowActiveProfile();
+
+    f.session.ForgetWhatCameFromAnotherProgram({});
+
+    QCOMPARE(f.settings.stored.profiles.front().externalOrigins.size(), std::size_t{1});
+    QCOMPARE(f.observer.started, 1);
 }
 
 QTEST_MAIN(SessionTest)

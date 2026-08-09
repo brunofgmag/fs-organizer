@@ -12,6 +12,16 @@
 
 namespace
 {
+    void LetNoButtonAnswerTheEnterKey(const QDialogButtonBox& buttons)
+    {
+        for (QAbstractButton* button : buttons.buttons())
+        {
+            auto* pushed = qobject_cast<QPushButton*>(button);
+            pushed->setAutoDefault(false);
+            pushed->setDefault(false);
+        }
+    }
+
     QString VersionOrSilence(const std::string& version)
     {
         return version.empty() ? QObject::tr("the manifest does not say") : QString::fromStdString(version);
@@ -36,10 +46,10 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
     name->setObjectName(QStringLiteral("PanelTitle"));
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    auto* explanation = new QLabel(tr("Something with this name is already in %1. Restoring would put two addons in "
-                                      "one place, so the app does not pick for you.")
-                                       .arg(AsText(check.occupant.parent_path())),
-                                   this);
+    auto* explanation =
+        new QLabel(tr("Something with this name is already in %1. Restoring would put two addons in one place.")
+                       .arg(AsText(check.occupant.parent_path())),
+                   this);
     explanation->setWordWrap(true);
 
     auto* compared = new QWidget(this);
@@ -53,9 +63,8 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
     held_ = AddTheSide(*grid, 0, tr("In quarantine"), VersionOrSilence(check.version));
     occupant_ = AddTheSide(*grid, 1, tr("Already there"), VersionOrSilence(check.occupantVersion));
 
-    auto* promise = new QLabel(tr("Replacing puts what is there in the quarantine, with its own origin recorded. "
-                                  "Nothing is deleted, and the same dialog brings it back."),
-                               this);
+    auto* promise =
+        new QLabel(tr("Replacing puts what is there in the quarantine, with its own origin recorded."), this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
 
@@ -63,7 +72,7 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
     QPushButton* replace = buttons->addButton(tr("Replace what's there"), QDialogButtonBox::AcceptRole);
     replace->setObjectName(QStringLiteral("ReplaceWhatIsThere"));
 
-    buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
+    LetNoButtonAnswerTheEnterKey(*buttons);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -79,7 +88,7 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
 
     ShowTheSizes(TwoSides{});
 
-    resize(520, 300);
+    SizeToTheContent(*this, 520);
 }
 
 QLabel* CollisionDialog::AddTheSide(QGridLayout& grid, const int column, const QString& title, const QString& version)
@@ -96,6 +105,13 @@ QLabel* CollisionDialog::AddTheSide(QGridLayout& grid, const int column, const Q
     grid.addWidget(said, 1, column, Qt::AlignTop);
 
     return said;
+}
+
+void CollisionDialog::showEvent(QShowEvent* event)
+{
+    QDialog::showEvent(event);
+
+    LetNoButtonAnswerTheEnterKey(*findChild<QDialogButtonBox*>());
 }
 
 void CollisionDialog::ShowTheSizes(const TwoSides& sides)

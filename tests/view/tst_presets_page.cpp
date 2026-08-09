@@ -20,6 +20,7 @@
 #include "tests/doubles/FakePresetRepository.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -27,6 +28,7 @@
 #include "view/PresetsPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/PresetViewModel.h"
+#include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
 
 namespace
@@ -44,6 +46,7 @@ namespace
         static void FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives();
         static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
         static void ALanguageChangeReachesTheApplyButtonAndTheModeExplanation();
+        static void WhatSupportsTheNameIsQuietInBothTables();
     };
 }
 
@@ -129,6 +132,7 @@ namespace
         FakeLinkService linkService{fileSystem};
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeProcessProbe processProbe;
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
@@ -137,7 +141,8 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
+                               log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -346,6 +351,26 @@ void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation(
 
     QCOMPARE(apply->text(), applyBefore);
     QCOMPARE(explained->text(), explainedBefore);
+}
+
+void PresetsPageTest::WhatSupportsTheNameIsQuietInBothTables()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* entries = page.findChild<QTableWidget*>(QStringLiteral("PresetEntries"));
+    QVERIFY(names != nullptr);
+    QVERIFY(entries != nullptr);
+    QCOMPARE(names->rowCount(), 1);
+    QCOMPARE(entries->rowCount(), 1);
+
+    QVERIFY(!names->item(0, 0)->data(QuietRole).toBool());
+    QVERIFY(names->item(0, 1)->data(QuietRole).toBool());
+    QVERIFY(names->item(0, 2)->data(QuietRole).toBool());
+
+    QVERIFY(!entries->item(0, 0)->data(QuietRole).toBool());
+    QVERIFY(entries->item(0, 1)->data(QuietRole).toBool());
 }
 
 QTEST_MAIN(PresetsPageTest)

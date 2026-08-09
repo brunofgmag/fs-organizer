@@ -8,6 +8,7 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -73,6 +74,10 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::RecycleFromLibrary: return tr("Delete addon to the Recycle Bin");
     case OperationKind::DeleteFromLibrary: return tr("Delete addon permanently");
     case OperationKind::LinkTheOtherProgramsFolder: return tr("Link the other program's folder into the library");
+    case OperationKind::ImportFromAnotherProgram: return tr("Start taking over another program's folder");
+    case OperationKind::GiveBackToAnotherProgram: return tr("Give the folder back to the other program");
+    case OperationKind::UndoTheInterruptedSwap: return tr("Put back the folder a lost swap left renamed");
+    case OperationKind::RestoreOverTheOccupant: return tr("Restore over the addon that held the place");
     }
 
     return {};
@@ -214,18 +219,43 @@ QVariant JournalModel::StepColumn(const OperationRecord& record, const int colum
     }
 }
 
+bool JournalModel::ItWorked(const QModelIndex& position) const
+{
+    if (const JournalEntry* entry = EntryAt(position))
+    {
+        return entry->Succeeded();
+    }
+
+    const OperationRecord* step = StepAt(position);
+
+    return step != nullptr && StepSucceeded(*step);
+}
+
+bool JournalModel::SupportsTheName(const QModelIndex& position) const
+{
+    switch (position.column())
+    {
+    case WhenColumn:
+    case LibraryColumn:
+    case SourceColumn:
+    case TargetColumn: return true;
+    case OutcomeColumn: return ItWorked(position);
+    case OperationColumn:
+    case AddonColumn: return false;
+    default: return false;
+    }
+}
+
 QVariant JournalModel::data(const QModelIndex& position, const int role) const
 {
     if (role == SucceededRole)
     {
-        if (const JournalEntry* entry = EntryAt(position))
-        {
-            return entry->Succeeded();
-        }
+        return ItWorked(position);
+    }
 
-        const OperationRecord* step = StepAt(position);
-
-        return step != nullptr && StepSucceeded(*step);
+    if (role == QuietRole)
+    {
+        return SupportsTheName(position);
     }
 
     if (role != Qt::DisplayRole)

@@ -30,6 +30,7 @@
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/library/DeleteDialog.h"
+#include "view/library/LibraryRootDialog.h"
 #include "view/library/SuggestionDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/panels/ContextPanel.h"
@@ -46,8 +47,8 @@
 namespace
 {
     constexpr std::size_t kAskAboveThisMany = 10;
+    constexpr int kAddonColumnWidth = 420;
     constexpr int kVersionColumnWidth = 92;
-    constexpr int kDestinationColumnWidth = 168;
 
     void StartASection(QMenu& menu)
     {
@@ -93,10 +94,11 @@ namespace
 
 AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                              DeletionViewModel& deletion,
+                             ImportViewModel& importViewModel,
                              AddonTreeModel& model,
                              const SessionNotifier& notifier,
                              QWidget* parent)
-    : QWidget(parent), viewModel_(viewModel), deletion_(deletion), model_(model)
+    : QWidget(parent), viewModel_(viewModel), deletion_(deletion), importViewModel_(importViewModel), model_(model)
 {
     tree_ = new QTreeView(this);
     filter_ = new AddonTreeFilterModel(this);
@@ -113,9 +115,10 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     QHeaderView* header = tree_->header();
     DressTheHeaderOf(header);
     header->setStretchLastSection(false);
-    header->setSectionResizeMode(AddonTreeModel::AddonColumn, QHeaderView::Stretch);
+    header->setSectionResizeMode(AddonTreeModel::AddonColumn, QHeaderView::Interactive);
+    header->setSectionResizeMode(AddonTreeModel::DestinationColumn, QHeaderView::Stretch);
+    header->resizeSection(AddonTreeModel::AddonColumn, kAddonColumnWidth);
     header->resizeSection(AddonTreeModel::VersionColumn, kVersionColumnWidth);
-    header->resizeSection(AddonTreeModel::DestinationColumn, kDestinationColumnWidth);
 
     auto* browser = new QWidget(this);
     auto* column = new QVBoxLayout;
@@ -217,6 +220,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
 
     connect(&deletion_, &DeletionViewModel::Planned, this, &AddonTreePage::OfferToDelete);
     connect(&deletion_, &DeletionViewModel::Deleted, this, &AddonTreePage::OnDeleted);
+    connect(&importViewModel_, &ImportViewModel::GaveBack, this, &AddonTreePage::OnGaveBack);
 
     RetranslateUi();
 }
@@ -250,7 +254,7 @@ void AddonTreePage::RetranslateUi() const
     panel_->RenameTheFallback(tr("Addon selected"));
     invite_->Retell(tr("This profile has no library yet."),
                     tr("A library is the folder where your addons live, outside the simulator. Enabling an addon "
-                       "creates a link from the simulator to there. Nothing is copied or moved."));
+                       "creates a link from the simulator to there."));
     inviteAction_->setText(tr("Register library…"));
 }
 
@@ -516,7 +520,41 @@ void AddonTreePage::OfferToDelete(const DeletionPlan& plan)
     }
 
     DeleteDialog dialog(plan, deletion_, this);
+    connect(&dialog, &DeleteDialog::GiveBackRequested, &importViewModel_, &ImportViewModel::GiveBack);
     static_cast<void>(dialog.exec());
+}
+
+void AddonTreePage::OnGaveBack(const std::vector<FileOperationResult>& results)
+{
+    QStringList lines;
+    int failed = 0;
+
+    for (const FileOperationResult& result : results)
+    {
+        if (!Succeeded(result.result))
+        {
+            lines.append(tr("%1: %2").arg(AsText(result.path.filename()), Explain(result.result)));
+            ++failed;
+        }
+    }
+
+    const int done = static_cast<int>(results.size()) - failed;
+
+    if (failed == 0)
+    {
+        emit StatusChanged(tr("%n addon went back to the program that installed it.", nullptr, done));
+        return;
+    }
+
+    QMessageBox dialog(QMessageBox::Warning, tr("Not everything went back"),
+                       tr("%n addon is still in the library, and nothing was deleted.", nullptr, failed),
+                       QMessageBox::Ok, this);
+    dialog.setInformativeText(tr("%n addon went back to the program that installed it.", nullptr, done));
+    dialog.setDetailedText(lines.join('\n'));
+    dialog.exec();
+
+    emit StatusChanged(
+        tr("%1 · %2").arg(tr("%n addon went back", nullptr, done), tr("%n left in the library", nullptr, failed)));
 }
 
 void AddonTreePage::OnDeleted(const std::vector<DeletionResult>& results, const DeletionRoute route)
@@ -643,6 +681,12 @@ std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<co
     }
 
     SwapDialog dialog(swaps, viewModel_, this);
+
+    viewModel_.WeighTheSwaps(swaps,
+                             [&dialog](const std::vector<WeighedSwap>& weighed)
+                             {
+                                 dialog.ShowTheSizes(weighed);
+                             });
 
     return dialog.exec() == QDialog::Accepted ? swaps : std::vector<TakenPlace>{};
 }
@@ -1150,10 +1194,28 @@ void AddonTreePage::ChooseDestination(const std::vector<const TreeNode*>& nodes,
     }
 }
 
+bool AddonTreePage::TheRootIsWorthKeeping(const std::filesystem::path& root)
+{
+    const RootDepth depth = MeasureTheRoot(root);
+    if (depth.ItLeavesRoom())
+    {
+        return true;
+    }
+
+    LibraryRootDialog dialog(root, depth, this);
+
+    return dialog.exec() == QDialog::Accepted;
+}
+
 void AddonTreePage::BrowseForLibrary()
 {
     const QString chosen = QFileDialog::getExistingDirectory(this, tr("Choose the library folder"));
     if (chosen.isEmpty())
+    {
+        return;
+    }
+
+    if (!TheRootIsWorthKeeping(AsPath(chosen)))
     {
         return;
     }

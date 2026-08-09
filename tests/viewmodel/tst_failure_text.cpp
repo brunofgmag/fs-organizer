@@ -13,7 +13,11 @@ namespace
         static void EveryFileResultExceptSuccessCarriesAnExplanation();
         static void EveryLinkFailureExceptSuccessCarriesAnExplanation();
         static void EveryCategoryRuleThatMatchedSaysWhyItMatched();
+        static void EveryWriteAccessThatRefusedCarriesAnExplanation();
         static void ARefusedImportNamesTheFolderAndWhyItWasRefused();
+        static void AFolderThatDeniedPermissionSaysAdministratorMayGetPastIt();
+        static void AReadOnlyVolumeSaysNoPrivilegeGetsPastIt();
+        static void AGiveBackTheFolderRefusedCarriesTheImpedimentToo();
         static void AnIdentityAlreadyTakenSaysWhereTheOccupantIs();
         static void ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs();
         static void EachDeletedAddonSaysWhichOfTheTwoRoutesTookIt();
@@ -61,6 +65,62 @@ void FailureTextTest::EveryCategoryRuleThatMatchedSaysWhyItMatched()
 
         QVERIFY2(!Explain(rule).isEmpty(), QByteArray::number(static_cast<int>(rule)).constData());
     }
+}
+
+void FailureTextTest::EveryWriteAccessThatRefusedCarriesAnExplanation()
+{
+    for (const WriteAccess access : kAllWriteAccesses)
+    {
+        if (access == WriteAccess::ItAccepts)
+        {
+            QVERIFY(Explain(access).isEmpty());
+            continue;
+        }
+
+        QVERIFY2(!Explain(access).isEmpty(), QByteArray::number(static_cast<int>(access)).constData());
+    }
+}
+
+void FailureTextTest::AFolderThatDeniedPermissionSaysAdministratorMayGetPastIt()
+{
+    const ImportOperationResult result{
+        .request = ImportRequest{.source = "E:/Sim/Community/gsx",
+                                 .category = "D:/Library/Utils",
+                                 .externalSource = "C:/Program Files (x86)/Addon Manager/MSFS/gsx"},
+        .result = FileResult::CannotWriteInTheOtherProgramsFolder,
+        .writeAccess = WriteAccess::PermissionIsDenied};
+
+    const QString line = Describe(result);
+
+    QVERIFY(line.contains(AsText("C:/Program Files (x86)/Addon Manager/MSFS/gsx")));
+    QVERIFY(line.contains(Explain(WriteAccess::PermissionIsDenied)));
+}
+
+void FailureTextTest::AReadOnlyVolumeSaysNoPrivilegeGetsPastIt()
+{
+    const ImportOperationResult result{
+        .request = ImportRequest{.source = "E:/Sim/Community/gsx",
+                                 .category = "D:/Library/Utils",
+                                 .externalSource = "C:/Program Files (x86)/Addon Manager/MSFS/gsx"},
+        .result = FileResult::CannotWriteInTheOtherProgramsFolder,
+        .writeAccess = WriteAccess::TheVolumeIsReadOnly};
+
+    const QString line = Describe(result);
+
+    QVERIFY(line.contains(Explain(WriteAccess::TheVolumeIsReadOnly)));
+    QVERIFY(!line.contains(Explain(WriteAccess::PermissionIsDenied)));
+}
+
+void FailureTextTest::AGiveBackTheFolderRefusedCarriesTheImpedimentToo()
+{
+    const FileOperationResult result{.path = "D:/Library/Utils/gsx",
+                                     .result = FileResult::CannotWriteInTheOtherProgramsFolder,
+                                     .writeAccess = WriteAccess::PermissionIsDenied};
+
+    const QString line = Describe(result);
+
+    QVERIFY(line.contains(Explain(FileResult::CannotWriteInTheOtherProgramsFolder)));
+    QVERIFY(line.contains(Explain(WriteAccess::PermissionIsDenied)));
 }
 
 void FailureTextTest::ARefusedImportNamesTheFolderAndWhyItWasRefused()

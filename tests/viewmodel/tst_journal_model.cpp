@@ -3,6 +3,7 @@
 
 #include "support/PathText.h"
 #include "viewmodel/JournalModel.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
@@ -17,6 +18,7 @@ namespace
         static void FilteringKeepsOnlyWhatFailed();
         static void SearchingReachesTheStepsOfAnImport();
         static void ASwapIsOneRowNamingBothAddons();
+        static void WhatSupportsTheOperationIsQuietAndAFailedResultKeepsTheNameInk();
     };
 }
 
@@ -169,6 +171,36 @@ void JournalModelTest::ASwapIsOneRowNamingBothAddons()
              QStringLiteral("pmdg-aircraft-77w out, fenix-a320 in"));
     QCOMPARE(model.index(0, JournalModel::TargetColumn, {}).data(Qt::DisplayRole).toString(), AsText(place));
     QVERIFY(model.index(0, 0, {}).data(JournalModel::SucceededRole).toBool());
+}
+
+void JournalModelTest::WhatSupportsTheOperationIsQuietAndAFailedResultKeepsTheNameInk()
+{
+    std::vector<OperationRecord> records = AnImportAndALink();
+    records.back() = Link(OperationKind::DisableAddon, 5, LinkFailure::CouldNotRemoveLink);
+
+    JournalModel model;
+    model.ShowRecords(records, Profile());
+
+    const QModelIndex failed = model.index(0, 0, {});
+    const QModelIndex worked = model.index(1, 0, {});
+
+    QVERIFY(!failed.data(JournalModel::SucceededRole).toBool());
+    QVERIFY(worked.data(JournalModel::SucceededRole).toBool());
+
+    for (const int column : {JournalModel::WhenColumn, JournalModel::LibraryColumn, JournalModel::SourceColumn,
+                             JournalModel::TargetColumn})
+    {
+        QVERIFY(worked.siblingAtColumn(column).data(QuietRole).toBool());
+    }
+
+    QVERIFY(!worked.siblingAtColumn(JournalModel::OperationColumn).data(QuietRole).toBool());
+    QVERIFY(!worked.siblingAtColumn(JournalModel::AddonColumn).data(QuietRole).toBool());
+
+    QVERIFY(worked.siblingAtColumn(JournalModel::OutcomeColumn).data(QuietRole).toBool());
+    QVERIFY(!failed.siblingAtColumn(JournalModel::OutcomeColumn).data(QuietRole).toBool());
+
+    const QModelIndex step = model.index(0, JournalModel::SourceColumn, model.index(1, 0, {}));
+    QVERIFY(step.data(QuietRole).toBool());
 }
 
 QTEST_MAIN(JournalModelTest)

@@ -17,6 +17,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
@@ -164,6 +165,7 @@ int main(int argc, char* argv[])
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
     WindowsFileOperations files;
+    WindowsSidecarStore sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
@@ -173,18 +175,19 @@ int main(int argc, char* argv[])
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
-    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction);
+    ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
+                                  LinkType::Junction);
 
-    const ImportEngine importEngine(filesystemProbe, files, linking, log, LinkType::Junction);
-    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
-                                      LinkType::Junction);
+    const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction);
+    const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking,
+                                      log, LinkType::Junction);
     const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
                                      LinkType::Junction);
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--journal-scroll")))
     {
         const NoLibrariesToScan nothingToScan;
-        ProfileService justTheProfile(nothingToScan, filesystemProbe, classifier, linking, log, identities,
+        ProfileService justTheProfile(nothingToScan, filesystemProbe, sidecars, classifier, linking, log, identities,
                                       LinkType::Junction);
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
@@ -208,11 +211,12 @@ int main(int argc, char* argv[])
         ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
         packages.Reload(session.Profile().variant);
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
-        const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+        const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
+                                              sizes);
         DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
-        auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, treeModel, notifier);
-
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
+
+        auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
 
         CommunityModel communityModel;
         CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);

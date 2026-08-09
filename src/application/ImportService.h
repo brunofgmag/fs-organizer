@@ -10,6 +10,7 @@
 #include "application/model/ImportOperationResult.h"
 #include "application/model/QuarantinedItem.h"
 #include "application/model/RestorePlan.h"
+#include "application/model/InterruptedSwap.h"
 #include "application/model/StagingLeftover.h"
 #include "application/ports/ProcessProbe.h"
 #include "domain/importing/ImportEngine.h"
@@ -20,6 +21,7 @@
 #include "domain/ports/CatalogScanner.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/OperationJournal.h"
+#include "domain/ports/SidecarStore.h"
 
 class ImportService
 {
@@ -29,6 +31,7 @@ public:
                   const FilesystemProbe& filesystemProbe,
                   const CatalogScanner& catalog,
                   FileOperations& files,
+                  SidecarStore& sidecars,
                   const LinkingEngine& linking,
                   const OperationLog& log,
                   LinkType linkType);
@@ -44,7 +47,9 @@ public:
     [[nodiscard]] FileResult ResolveConflict(const SimulatorProfile& profile,
                                              const std::vector<DestinationEntry>& entries,
                                              const CopyConflict& conflict,
-                                             ConflictChoice choice) const;
+                                             ConflictChoice choice,
+                                             const std::function<bool(const CopyProgress&)>& onProgress = {},
+                                             const std::function<void(OperationKind)>& onStep = {}) const;
 
     [[nodiscard]] ConflictDetails DetailsOf(const std::vector<DestinationEntry>& entries,
                                             const CopyConflict& conflict) const;
@@ -74,6 +79,11 @@ public:
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers(const SimulatorProfile& profile) const;
 
+    [[nodiscard]] std::vector<InterruptedSwap> InterruptedSwaps(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] std::vector<FileOperationResult>
+    UndoInterruptedSwaps(const SimulatorProfile& profile, const std::vector<InterruptedSwap>& swaps) const;
+
     [[nodiscard]] std::vector<ImportOperationResult>
     Resume(const SimulatorProfile& profile,
            const std::vector<StagingLeftover>& leftovers,
@@ -83,6 +93,12 @@ public:
     [[nodiscard]] std::vector<FileOperationResult>
     DiscardLeftovers(const SimulatorProfile& profile, const std::vector<StagingLeftover>& leftovers) const;
 
+    [[nodiscard]] FileOperationResult GiveBack(const SimulatorProfile& profile,
+                                               const std::vector<DestinationEntry>& entries,
+                                               const std::filesystem::path& addonFolder,
+                                               const std::function<bool(const CopyProgress&)>& onProgress,
+                                               const std::function<void(OperationKind)>& onStep = {}) const;
+
 private:
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
 
@@ -91,7 +107,14 @@ private:
     [[nodiscard]] FileResult QuarantineInto(const std::filesystem::path& quarantine,
                                             const std::filesystem::path& loser,
                                             const AddonId& addon,
-                                            OperationKind kind) const;
+                                            OperationKind kind,
+                                            const std::function<bool(const CopyProgress&)>& onProgress = {},
+                                            const std::function<void(OperationKind)>& onStep = {}) const;
+
+    [[nodiscard]] FileResult TheWinnerTakesTheirPlaces(const AddonId& addon,
+                                                       const CopyConflict& conflict,
+                                                       OperationKind linkKind,
+                                                       const std::vector<std::filesystem::path>& places) const;
 
     void ForgetTheOriginOf(const std::filesystem::path& item) const;
 
@@ -102,12 +125,17 @@ private:
 
     [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile,
                                         const QuarantinedItem& item,
-                                        const std::filesystem::path& recordedFrom = {}) const;
+                                        const std::filesystem::path& recordedFrom = {},
+                                        OperationKind kind = OperationKind::RestoreFromQuarantine) const;
 
-    [[nodiscard]] SwapResult
-    TheItemComesBack(const SimulatorProfile& profile, const QuarantinedItem& item, SwapResult swapped) const;
+    [[nodiscard]] SwapResult TheItemComesBack(const SimulatorProfile& profile,
+                                              const QuarantinedItem& item,
+                                              SwapResult swapped,
+                                              OperationKind kind) const;
 
     [[nodiscard]] FileResult DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const;
+
+    [[nodiscard]] std::vector<StagingLeftover> WhatAnImportLeftBehind(const SimulatorProfile& profile) const;
 
     [[nodiscard]] FileResult DiscardOneStaging(const SimulatorProfile& profile, const StagingLeftover& leftover) const;
 
@@ -126,6 +154,7 @@ private:
     const FilesystemProbe& filesystemProbe_;
     const CatalogScanner& catalog_;
     FileOperations& files_;
+    SidecarStore& sidecars_;
     const LinkingEngine& linking_;
     const OperationLog& log_;
     LinkType linkType_;

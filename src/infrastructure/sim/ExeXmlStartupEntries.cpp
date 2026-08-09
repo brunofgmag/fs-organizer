@@ -28,6 +28,11 @@ ExeXmlStartupEntries::ExeXmlStartupEntries(std::filesystem::path filePath) : fil
 {
 }
 
+void ExeXmlStartupEntries::Use(std::filesystem::path filePath)
+{
+    filePath_ = std::move(filePath);
+}
+
 std::vector<StartupEntry> ExeXmlStartupEntries::Entries() const
 {
     const std::optional<std::string> document = BytesOf(filePath_);

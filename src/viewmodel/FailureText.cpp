@@ -45,6 +45,23 @@ QString Explain(const CategoryRule rule)
     return {};
 }
 
+QString Explain(const WriteAccess access)
+{
+    switch (access)
+    {
+    case WriteAccess::TheFolderIsNotThere: return QObject::tr("that folder is no longer there");
+    case WriteAccess::PermissionIsDenied:
+        return QObject::tr("Windows denied permission there, so running the app as administrator may get past it");
+    case WriteAccess::TheVolumeIsReadOnly:
+        return QObject::tr("that volume is read-only, and no privilege gets past that");
+    case WriteAccess::ItRefusedForAnotherReason:
+        return QObject::tr("Windows refused for a reason that is neither permission nor a read-only volume");
+    case WriteAccess::ItAccepts: break;
+    }
+
+    return {};
+}
+
 QString Explain(const FileResult result)
 {
     switch (result)
@@ -102,6 +119,9 @@ QString Explain(const FileResult result)
         return QObject::tr("the startup file of the simulator could not be read");
     case FileResult::CouldNotWriteTheStartupFile:
         return QObject::tr("the startup file of the simulator could not be written, so nothing changed");
+    case FileResult::TheStartupEntriesAreLeftLoose:
+        return QObject::tr("the startup entries of the simulator are not managed, so the app does not read or write "
+                           "that file");
     }
 
     return {};
@@ -136,6 +156,11 @@ QString Describe(const LinkOperationResult& result)
 
 namespace
 {
+    QString WhatStoppedTheWrite(const WriteAccess access)
+    {
+        return ItAcceptsWrites(access) ? QString{} : QObject::tr("\n    what stopped it: %1").arg(Explain(access));
+    }
+
     QString WhichFolderTheOtherProgramOwns(const ImportOperationResult& result)
     {
         if (result.result != FileResult::CannotWriteInTheOtherProgramsFolder)
@@ -143,7 +168,8 @@ namespace
             return {};
         }
 
-        return QObject::tr("\n    the folder that refused: %1").arg(AsText(result.request.externalSource));
+        return QObject::tr("\n    the folder that refused: %1").arg(AsText(result.request.externalSource))
+            + WhatStoppedTheWrite(result.writeAccess);
     }
 }
 
@@ -156,8 +182,9 @@ QString Describe(const ImportOperationResult& result)
 
 QString Describe(const FileOperationResult& result)
 {
-    return QStringLiteral("%1: %2%3")
-        .arg(AsText(result.path.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant));
+    return QStringLiteral("%1: %2%3%4")
+        .arg(AsText(result.path.filename()), Explain(result.result), WhereTheOccupantIs(result.occupant),
+             WhatStoppedTheWrite(result.writeAccess));
 }
 
 QString Describe(const SwapResult& result)

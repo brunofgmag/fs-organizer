@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QtCore/QStringList>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QHelpEvent>
 #include <QtGui/QMouseEvent>
@@ -75,7 +76,22 @@ namespace
         return tag == item.text ? QString() : item.text;
     }
 
-    void RepaintTheRowOf(QAbstractItemView& view, const QModelIndex& index)
+    [[nodiscard]] QString BothLinesOf(const QString& text, const QString& second)
+    {
+        QStringList whole;
+
+        for (const QString& line : {text, second})
+        {
+            if (!line.isEmpty())
+            {
+                whole.append(line);
+            }
+        }
+
+        return whole.join(QLatin1Char('\n'));
+    }
+
+    void RepaintTheRowOf(const QAbstractItemView& view, const QModelIndex& index)
     {
         if (!index.isValid())
         {
@@ -229,7 +245,7 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
         painter->setPen(QuietInk());
         painter->drawText(under, Qt::AlignLeft | Qt::AlignVCenter,
-                          fitted_.In(second, item.font, item.textElideMode, box.width()));
+                          fitted_.In(second, item.font, Qt::ElideMiddle, box.width()));
 
         box.setBottom(box.center().y());
     }
@@ -292,20 +308,29 @@ bool RowDelegate::helpEvent(QHelpEvent* event,
     const QString suffix = index.data(QuietSuffixRole).toString();
     const QString tag = index.data(TagTextRole).toString();
     const QString text = TextThatIsDrawn(item, tag);
+    const QString second = index.data(SecondLineRole).toString();
+    const RoomForTheText room = RoomIn(item, suffix, tag);
+    const QFontMetrics measured(item.font);
 
-    if (text.isEmpty() || QFontMetrics(item.font).horizontalAdvance(text) <= RoomIn(item, suffix, tag).wide)
+    const bool cropped = !text.isEmpty() && measured.horizontalAdvance(text) > room.wide;
+    const bool croppedUnderneath = !second.isEmpty() && measured.horizontalAdvance(second) > room.box.width();
+
+    if (!cropped && !croppedUnderneath)
     {
         QToolTip::hideText();
         return false;
     }
 
-    QToolTip::showText(event->globalPos(), text, view);
+    QToolTip::showText(event->globalPos(), BothLinesOf(text, second), view);
 
     return true;
 }
 
 QSize RowDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
+    QStyleOptionViewItem item = option;
+    initStyleOption(&item, index);
+
     QSize wanted = QStyledItemDelegate::sizeHint(option, index);
     wanted.setWidth(wanted.width() + 2 * kBreathingRoom);
 
@@ -316,7 +341,11 @@ QSize RowDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelInde
 
     if (const QString tag = index.data(TagTextRole).toString(); !tag.isEmpty())
     {
-        wanted.setWidth(wanted.width() + TagSizeOf(tag, option.font).width() + kBeforeTheTag);
+        const QFontMetrics measured(option.font);
+        const int dropped =
+            measured.horizontalAdvance(item.text) - measured.horizontalAdvance(TextThatIsDrawn(item, tag));
+
+        wanted.setWidth(wanted.width() - dropped + TagSizeOf(tag, option.font).width() + kBeforeTheTag);
     }
 
     if (!index.data(SecondLineRole).toString().isEmpty())

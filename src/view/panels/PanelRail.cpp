@@ -13,6 +13,7 @@
 namespace
 {
     constexpr int kRailWidth = 34;
+    constexpr int kArrowSide = 24;
     constexpr int kAboveTheArrow = 7;
     constexpr int kBeforeTheSpine = 12;
     constexpr int kDotSide = 5;
@@ -27,6 +28,7 @@ PanelRail::PanelRail(QWidget* parent) : QWidget(parent)
     expand_->setObjectName(QStringLiteral("PanelExpand"));
     expand_->setAutoRaise(true);
     expand_->setArrowType(Qt::LeftArrow);
+    expand_->setFixedSize(kArrowSide, kArrowSide);
     RetranslateUi();
     expand_->setCursor(Qt::PointingHandCursor);
 

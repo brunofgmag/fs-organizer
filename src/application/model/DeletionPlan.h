@@ -10,6 +10,7 @@
 
 #include "domain/model/AddonId.h"
 #include "domain/model/FileResult.h"
+#include "domain/support/PathUtils.h"
 
 enum class DeletionRoute : int
 {
@@ -30,6 +31,7 @@ struct AddonToDelete
     std::vector<EnabledSomewhere> enabled{};
     std::optional<std::uintmax_t> bytes{};
     std::optional<std::size_t> longestEntry{};
+    std::filesystem::path cameFrom{};
 };
 
 struct VolumeRoom
@@ -54,8 +56,6 @@ struct DeletionResult
     std::vector<std::filesystem::path> linksRemoved{};
 };
 
-[[nodiscard]] std::filesystem::path VolumeOf(const std::filesystem::path& path);
-
 [[nodiscard]] bool TheVolumeCanTake(const VolumeRoom& room);
 
 [[nodiscard]] const VolumeRoom* VolumeHolding(const DeletionPlan& plan, const std::filesystem::path& folder);
@@ -65,5 +65,7 @@ struct DeletionResult
 [[nodiscard]] bool TheRecycleBinCanTake(const DeletionPlan& plan);
 
 [[nodiscard]] std::size_t AddonsTheRecycleBinRefuses(const DeletionPlan& plan);
+
+[[nodiscard]] bool EveryAddonCameFromAnotherProgram(const DeletionPlan& plan);
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_DELETION_PLAN_H

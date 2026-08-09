@@ -66,6 +66,8 @@ private:
 
     void ShowWhatWasMeasured() const;
 
+    void ShowTheLongestPaths() const;
+
     void ShowProgress(const QString& folder, int measured, int total) const;
 
     void DressTheRail() const;
@@ -85,6 +87,7 @@ private:
     QLabel* quarantinePlaces_ = nullptr;
     QPushButton* openQuarantine_ = nullptr;
     QTreeWidget* sizes_ = nullptr;
+    QLabel* longestPaths_ = nullptr;
     QLabel* sizeMeasuredAt_ = nullptr;
     QLabel* sizeCost_ = nullptr;
     QLabel* sizeProgress_ = nullptr;

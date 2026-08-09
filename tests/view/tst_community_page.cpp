@@ -12,6 +12,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -34,6 +35,8 @@ namespace
         static void OnlyTheActionThatUnblocksCarriesTheAccent();
         static void NothingConflictedMeansNoResolveButtonAtAll();
         static void ARescanThatEmptiesTheTableAlsoEmptiesThePanel();
+        static void AFilterThatRanOutHandsTheTableBackInsteadOfLeavingItBlank();
+        static void TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePortrait();
     };
 }
 
@@ -102,11 +105,13 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
+                               log,     identities,      LinkType::Junction};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeProcessProbe processProbe;
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
-        ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files,
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                                     linking, log,          LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
@@ -286,6 +291,43 @@ void CommunityPageTest::ARescanThatEmptiesTheTableAlsoEmptiesThePanel()
     QVERIFY(!panel->isVisibleTo(&page));
     QVERIFY(!importChosen->isEnabled());
     QVERIFY(!resolveChosen->isVisibleTo(&page));
+}
+
+void CommunityPageTest::AFilterThatRanOutHandsTheTableBackInsteadOfLeavingItBlank()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    f.viewModel.Show();
+
+    page.FilterBy(EntryClassification::Unmanaged);
+    QVERIFY(page.findChild<QTableView*>()->model()->rowCount() > 0);
+
+    QVERIFY(f.fileSystem.RemoveTree(std::filesystem::path(kCommunity) / "loose-one"));
+    QVERIFY(f.fileSystem.RemoveTree(std::filesystem::path(kCommunity) / "loose-two"));
+    f.viewModel.ReadTheDestinationsAgain();
+
+    QVERIFY2(page.findChild<QTableView*>()->model()->rowCount() > 0,
+             "the filter emptied, and a blank table with a chip reading zero says nothing about why");
+}
+
+void CommunityPageTest::TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePortrait()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    f.viewModel.Show();
+
+    const int before = f.model.rowCount({});
+
+    f.fileSystem.AddDirectory(std::filesystem::path(kCommunity) / "loose-three");
+
+    f.viewModel.Show();
+    QCOMPARE(f.model.rowCount({}), before);
+
+    auto* reread = page.findChild<QPushButton*>(QStringLiteral("ReadDestinationsAgain"));
+    QVERIFY(reread != nullptr);
+    reread->click();
+
+    QCOMPARE(f.model.rowCount({}), before + 1);
 }
 
 QTEST_MAIN(CommunityPageTest)

@@ -22,6 +22,7 @@ namespace
         static void ADisableAndAnEnableInDifferentPlacesStayTwoEntries();
         static void ASwapThatFailedHalfwaySaysWhereItStopped();
         static void AQuarantineFollowedByARestoreOverThatPlaceStaysTwoEntries();
+        static void AQuarantineFollowedByARestoreOverTheOccupantIsOneSwap();
     };
 }
 
@@ -222,6 +223,27 @@ void JournalEntriesTest::AQuarantineFollowedByARestoreOverThatPlaceStaysTwoEntri
     };
 
     QCOMPARE(GroupOperations(records).size(), std::size_t{2});
+}
+
+void JournalEntriesTest::AQuarantineFollowedByARestoreOverTheOccupantIsOneSwap()
+{
+    const std::filesystem::path place = "D:/Library/Utils/simbridge";
+    const std::filesystem::path held = "D:/Library/_fsorganizer-quarantine/simbridge";
+
+    const std::vector<OperationRecord> records{
+        OperationRecord::OfImport(Moment(), OperationKind::QuarantineFromLibrary,
+                                  AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, place, held,
+                                  FileResult::Completed),
+        OperationRecord::OfImport(Moment(), OperationKind::RestoreOverTheOccupant,
+                                  AddonId{.libraryId = "lib-1", .folderName = "simbridge"}, held, place,
+                                  FileResult::Completed, OriginSource::Sidecar),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().kind, JournalEntryKind::Swap);
+    QCOMPARE(entries.front().steps.size(), std::size_t{2});
 }
 
 QTEST_APPLESS_MAIN(JournalEntriesTest)

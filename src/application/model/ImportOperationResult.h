@@ -5,12 +5,14 @@
 
 #include "domain/model/ImportRequest.h"
 #include "domain/model/FileResult.h"
+#include "domain/model/WriteAccess.h"
 
 struct ImportOperationResult
 {
-    ImportRequest request;
+    ImportRequest request{};
     FileResult result = FileResult::Completed;
     std::filesystem::path occupant{};
+    WriteAccess writeAccess = WriteAccess::ItAccepts;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_IMPORT_OPERATION_RESULT_H

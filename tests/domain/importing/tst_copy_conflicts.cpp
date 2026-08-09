@@ -18,6 +18,7 @@ namespace
         static void ADivergentEntryIsAConflictBetweenTheLibraryAndTheOtherProgramsFolder();
         static void AVanishedEntryIsNotAConflictBecauseOnlyOneCopyIsLeft();
         static void ADuplicatedEntryStillCarriesItsDivergenceIntoTheConflict();
+        static void AnEntryPointedBackAtItsVendorStillPutsTheLibraryCopyOnTheOtherSide();
     };
 }
 
@@ -138,6 +139,7 @@ void CopyConflictsTest::ADivergentEntryIsAConflictBetweenTheLibraryAndTheOtherPr
                                             .target = libraryCopy,
                                             .classification = EntryClassification::Divergent,
                                             .externalOrigin = vendorFolder,
+                                            .libraryCopy = libraryCopy,
                                             .theOtherProgramTookItsFolderBack = true}},
                           libraries);
 
@@ -178,12 +180,36 @@ void CopyConflictsTest::ADuplicatedEntryStillCarriesItsDivergenceIntoTheConflict
                                             .target = libraryCopy,
                                             .classification = EntryClassification::Duplicated,
                                             .externalOrigin = vendorFolder,
+                                            .libraryCopy = libraryCopy,
                                             .theOtherProgramTookItsFolderBack = true}},
                           libraries);
 
     QCOMPARE(conflicts.Count(), std::size_t{1});
     QVERIFY(conflicts.OverTheLibraryAddon(libraryCopy) != nullptr);
     QVERIFY(conflicts.OverTheLibraryAddon(libraryCopy)->theProvenanceIsAnotherProgram);
+}
+
+void CopyConflictsTest::AnEntryPointedBackAtItsVendorStillPutsTheLibraryCopyOnTheOtherSide()
+{
+    const std::filesystem::path vendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
+    const std::filesystem::path libraryCopy = kLibrary / "Utils/gsx-pro";
+
+    const std::vector<TreeNode> libraries{LibraryWith({Category(kLibrary / "Utils", {AddonNode(libraryCopy)})})};
+
+    const CopyConflicts conflicts =
+        FindCopyConflicts({DestinationEntry{.path = kCommunity / "gsx-pro",
+                                            .target = vendorFolder,
+                                            .classification = EntryClassification::Divergent,
+                                            .externalOrigin = vendorFolder,
+                                            .libraryCopy = libraryCopy,
+                                            .theOtherProgramTookItsFolderBack = true}},
+                          libraries);
+
+    const CopyConflict* found = conflicts.OverTheProvenance(vendorFolder);
+    QVERIFY(found != nullptr);
+    QCOMPARE(found->libraryPath, libraryCopy);
+    QVERIFY2(conflicts.OverTheLibraryAddon(libraryCopy) == found,
+             "the library copy is still the addon the tree has to mark, even when no entry points at it");
 }
 
 QTEST_APPLESS_MAIN(CopyConflictsTest)

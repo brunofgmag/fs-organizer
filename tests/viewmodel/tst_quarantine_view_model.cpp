@@ -12,6 +12,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -33,6 +34,7 @@ namespace
         static void NothingIsReadFromTheQuarantineUntilTheScreenIsShown();
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
+        static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
     };
 }
 
@@ -85,6 +87,7 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeLinkService linkService{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
@@ -93,9 +96,11 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
-        ImportService service{engine, processProbe, filesystemProbe, catalog, files, linking, log, LinkType::Junction};
-        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportService service{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
+                              linking, log,          LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
@@ -243,6 +248,27 @@ void QuarantineViewModelTest::AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfB
     QCOMPARE(offers.front().check.version, std::string{"2.4.1"});
     QCOMPARE(offers.front().check.occupantVersion, std::string{"2.5.0"});
     QVERIFY(offers.front().places.empty());
+}
+
+void QuarantineViewModelTest::TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache()
+{
+    Fixture f;
+    const std::filesystem::path occupied = "E:/Sim/Community/simbridge";
+    f.fileSystem.AddFile(std::filesystem::path(kQuarantined) / "content.bin", 4096);
+    f.fileSystem.AddFile(occupied / "content.bin", 4096);
+    f.ScanLands();
+
+    const MeasurementCaller elsewhere = f.sizes.NewCaller();
+    f.sizes.MeasureFolders({kQuarantined, occupied}, elsewhere, Freshness::ReuseWhatIsKnown, {}, {});
+    QCOMPARE(f.filesystemProbe.TimesWalked(occupied), std::size_t{1});
+
+    f.viewModel.WeighBothSidesOf(RestoreCheck{.item = QuarantinedItem{.path = kQuarantined},
+                                              .result = FileResult::TheOriginIsOccupied,
+                                              .occupant = occupied},
+                                 [](const TwoSides&) {});
+
+    QVERIFY2(f.filesystemProbe.TimesWalked(occupied) > std::size_t{1},
+             "the collision exists because somebody put a folder there by hand, which is what the cache missed");
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

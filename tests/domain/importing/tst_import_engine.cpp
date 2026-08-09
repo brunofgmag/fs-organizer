@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
 #include <variant>
 
 #include "domain/journal/OperationLog.h"
@@ -10,6 +11,7 @@
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
+#include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -43,11 +45,19 @@ namespace
         static void TheOtherProgramKeepsFindingItsFolderNowAsALinkIntoTheLibrary();
         static void TheEntryInTheDestinationEndsUpPointingAtTheLibrary();
         static void AFolderTheOtherProgramWillNotLetUsWriteInIsNeverEmptied();
+        static void TheRefusedImportCarriesWhichImpedimentTheFolderRaised();
+        static void AGiveBackRefusedByTheFolderCarriesTheImpedimentToo();
         static void TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouched();
         static void AnOriginThatCannotBeRecordedStopsTheImportBeforeItMoves();
         static void AnInterruptedImportNeverLeavesTheOtherProgramWithoutItsContent();
         static void AnEntryThatNoLongerPointsAtTheOtherProgramIsRefused();
         static void TheJournalHearsTheOtherProgramsFolderAsTheSourceOfTheImport();
+        static void TheEntryBeingTakenOverIsInTheJournalBeforeTheCopyStarts();
+        static void GivingItBackPutsTheBytesWhereTheOtherProgramLooksForThem();
+        static void GivingItBackPointsTheDestinationEntryAtTheOtherProgramAgain();
+        static void AGiveBackWhoseCopyFailsLeavesBothSidesExactlyAsTheyWere();
+        static void AGiveBackIsRefusedWhenTheOtherProgramsFolderIsNoLongerOurLink();
+        static void AGiveBackResumesWhenTheOtherProgramsFolderIsAlreadyGone();
     };
 }
 
@@ -65,12 +75,13 @@ namespace
         InMemoryFileSystem fileSystem;
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
+        FakeSidecarStore sidecars{fileSystem};
         FakeLinkService linkService{fileSystem};
         LinkingEngine linking{linkService, filesystemProbe};
         FakeOperationJournal journal;
         FakeClock clock;
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe, files, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
 
         SimulatorProfile profile{.destinations = {"E:/Sim/Community"},
                                  .defaultDestination = "E:/Sim/Community",
@@ -483,6 +494,18 @@ void ImportEngineTest::AFolderTheOtherProgramWillNotLetUsWriteInIsNeverEmptied()
     QVERIFY(!f.fileSystem.Exists(kExternalSidecar));
 }
 
+void ImportEngineTest::TheRefusedImportCarriesWhichImpedimentTheFolderRaised()
+{
+    ExternalFixture denied;
+    denied.fileSystem.DenyPermissionOn(kVendorFolder.parent_path());
+
+    ExternalFixture readOnly;
+    readOnly.fileSystem.MarkReadOnly(kVendorFolder.parent_path());
+
+    QCOMPARE(denied.engine.Import(denied.profile, denied.request, {}).Access(), WriteAccess::PermissionIsDenied);
+    QCOMPARE(readOnly.engine.Import(readOnly.profile, readOnly.request, {}).Access(), WriteAccess::TheVolumeIsReadOnly);
+}
+
 void ImportEngineTest::TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouched()
 {
     ExternalFixture f;
@@ -495,7 +518,7 @@ void ImportEngineTest::TheRecordOfWhereItCameFromIsWrittenBeforeAnythingIsTouche
 void ImportEngineTest::AnOriginThatCannotBeRecordedStopsTheImportBeforeItMoves()
 {
     ExternalFixture f;
-    f.files.MakeTheTextWriteFail();
+    f.sidecars.MakeTheWriteFail();
 
     const ImportOutcome outcome = f.engine.Import(f.profile, f.request, {});
 
@@ -536,10 +559,123 @@ void ImportEngineTest::TheJournalHearsTheOtherProgramsFolderAsTheSourceOfTheImpo
 
     QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
 
+    const auto copied = std::ranges::find_if(f.journal.appended,
+                                             [](const OperationRecord& record)
+                                             {
+                                                 return record.kind == OperationKind::ImportCopyToStaging;
+                                             });
+
+    QVERIFY(copied != f.journal.appended.end());
+    QCOMPARE(copied->source, kVendorFolder);
+    QCOMPARE(copied->target, kExternalStaging);
+}
+
+void ImportEngineTest::TheEntryBeingTakenOverIsInTheJournalBeforeTheCopyStarts()
+{
+    ExternalFixture f;
+    f.files.MakeTheCopyFailPartWayThrough();
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::CouldNotCopy);
+
     QVERIFY(!f.journal.appended.empty());
-    QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportCopyToStaging);
-    QCOMPARE(f.journal.appended[0].source, kVendorFolder);
+    QCOMPARE(f.journal.appended[0].kind, OperationKind::ImportFromAnotherProgram);
+    QCOMPARE(f.journal.appended[0].source, kEntry);
     QCOMPARE(f.journal.appended[0].target, kExternalStaging);
+}
+
+namespace
+{
+    struct GiveBackFixture : Fixture
+    {
+        GiveBackFixture()
+        {
+            fileSystem.AddDirectory("E:/Sim/Community");
+            fileSystem.AddDirectory("C:/Program Files (x86)/Addon Manager/MSFS");
+            fileSystem.AddDirectory("D:/Library/Utils");
+            fileSystem.AddDirectory(kExternalTarget);
+            fileSystem.AddFile(kExternalTarget / "manifest.json", 2 * kMegabyte);
+            fileSystem.AddDirectory(kExternalTarget / "SimObjects");
+            fileSystem.AddFile(kExternalTarget / "SimObjects/gsx.bgl", 900 * kMegabyte);
+            fileSystem.AddLink(kVendorFolder, kExternalTarget);
+            fileSystem.AddLink(kEntry, kExternalTarget);
+
+            request = GiveBackRequest{.addonFolder = kExternalTarget, .externalPath = kVendorFolder, .links = {kEntry}};
+        }
+
+        GiveBackRequest request{};
+    };
+}
+
+void ImportEngineTest::GivingItBackPutsTheBytesWhereTheOtherProgramLooksForThem()
+{
+    GiveBackFixture f;
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(!f.fileSystem.IsLink(kVendorFolder));
+    QVERIFY(f.fileSystem.Exists(kVendorFolder / "manifest.json"));
+    QVERIFY(f.fileSystem.Exists(kVendorFolder / "SimObjects/gsx.bgl"));
+    QVERIFY(!f.fileSystem.Exists(kExternalTarget));
+    QVERIFY(!f.fileSystem.Exists(StagingPathFor(kVendorFolder)));
+}
+
+void ImportEngineTest::GivingItBackPointsTheDestinationEntryAtTheOtherProgramAgain()
+{
+    GiveBackFixture f;
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsLink(kEntry));
+    QCOMPARE(f.fileSystem.LinkTarget(kEntry).value(), kVendorFolder);
+}
+
+void ImportEngineTest::AGiveBackWhoseCopyFailsLeavesBothSidesExactlyAsTheyWere()
+{
+    GiveBackFixture f;
+    f.files.MakeTheCopyFailPartWayThrough();
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::CouldNotCopy);
+
+    QVERIFY(f.fileSystem.Exists(kExternalTarget / "SimObjects/gsx.bgl"));
+    QVERIFY(f.fileSystem.IsLink(kVendorFolder));
+    QCOMPARE(f.fileSystem.LinkTarget(kVendorFolder).value(), kExternalTarget);
+    QCOMPARE(f.fileSystem.LinkTarget(kEntry).value(), kExternalTarget);
+}
+
+void ImportEngineTest::AGiveBackIsRefusedWhenTheOtherProgramsFolderIsNoLongerOurLink()
+{
+    GiveBackFixture f;
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+    f.fileSystem.AddDirectory(kVendorFolder);
+    f.fileSystem.AddFile(kVendorFolder / "manifest.json", kMegabyte);
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::TheDiskDisagreesWithTheScan);
+
+    QVERIFY(f.fileSystem.Exists(kExternalTarget / "manifest.json"));
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+}
+
+void ImportEngineTest::AGiveBackResumesWhenTheOtherProgramsFolderIsAlreadyGone()
+{
+    GiveBackFixture f;
+    QVERIFY(f.fileSystem.RemoveNode(kVendorFolder));
+
+    QCOMPARE(f.engine.GiveBack(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+    QVERIFY(f.fileSystem.Exists(kVendorFolder / "manifest.json"));
+}
+
+void ImportEngineTest::AGiveBackRefusedByTheFolderCarriesTheImpedimentToo()
+{
+    GiveBackFixture f;
+    f.fileSystem.DenyPermissionOn(kVendorFolder.parent_path());
+
+    const ImportOutcome outcome = f.engine.GiveBack(f.profile, f.request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::CannotWriteInTheOtherProgramsFolder);
+    QCOMPARE(outcome.Access(), WriteAccess::PermissionIsDenied);
 }
 
 QTEST_APPLESS_MAIN(ImportEngineTest)

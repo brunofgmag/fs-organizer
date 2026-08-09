@@ -11,6 +11,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 
+#include "domain/model/RecycleLimits.h"
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
@@ -18,10 +19,12 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/CommunityModel.h"
+#include "viewmodel/RowTagRoles.h"
 
 namespace
 {
     constexpr int kRailWidth = 210;
+    constexpr int kCategoryColumnWidth = 420;
     constexpr int kBytesRole = Qt::UserRole + 1;
 
     class MeasuredRow final : public QTreeWidgetItem
@@ -73,6 +76,8 @@ namespace
         row->setData(2, kBytesRole, static_cast<qulonglong>(node.measured ? node.bytes : 0));
         row->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         row->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+        row->setData(1, QuietRole, true);
+        row->setData(2, QuietRole, true);
 
         for (const MeasuredNode& child : node.children)
         {
@@ -101,9 +106,7 @@ namespace
 
     void DressTheRowsOf(QTreeWidget* tree)
     {
-        auto* rows = new RowDelegate(tree);
-        rows->KeepRowsAtLeast(0);
-        tree->setItemDelegate(rows);
+        tree->setItemDelegate(new RowDelegate(tree));
     }
 }
 
@@ -206,6 +209,7 @@ QWidget* DiagnosticsPage::CreateCountsPane()
     auto* pane = new QWidget(this);
 
     counts_ = new QTreeWidget(pane);
+    counts_->setObjectName(QStringLiteral("DiagnosticsCounts"));
     counts_->setRootIsDecorated(false);
     counts_->setUniformRowHeights(true);
     counts_->setColumnCount(2);
@@ -228,6 +232,7 @@ QWidget* DiagnosticsPage::CreateBrokenPane()
     auto* pane = new QWidget(this);
 
     troubled_ = new QTreeWidget(pane);
+    troubled_->setObjectName(QStringLiteral("DiagnosticsTroubled"));
     troubled_->setUniformRowHeights(true);
     troubled_->setColumnCount(2);
     troubled_->header()->setStretchLastSection(true);
@@ -272,9 +277,6 @@ QWidget* DiagnosticsPage::CreateQuarantinePane()
     layout->addWidget(quarantineWeight_);
     layout->addWidget(quarantinePlaces_);
     layout->addLayout(actions);
-    layout->addWidget(Quiet(tr("Nothing is emptied from here: the Quarantine screen is where an item is restored or "
-                               "discarded, one gesture at a time."),
-                            pane));
     layout->addStretch();
 
     return pane;
@@ -308,14 +310,20 @@ QWidget* DiagnosticsPage::CreateSizePane()
     progress->addWidget(cancel_);
 
     sizes_ = new QTreeWidget(pane);
+    sizes_->setObjectName(QStringLiteral("DiagnosticsSizes"));
     sizes_->setUniformRowHeights(true);
     sizes_->setColumnCount(3);
     sizes_->setSortingEnabled(true);
     sizes_->sortByColumn(2, Qt::DescendingOrder);
     sizes_->header()->setStretchLastSection(false);
-    sizes_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    sizes_->header()->setSectionResizeMode(0, QHeaderView::Interactive);
+    sizes_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    sizes_->header()->resizeSection(0, kCategoryColumnWidth);
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
+
+    longestPaths_ = Quiet({}, pane);
 
     auto* layout = new QVBoxLayout(pane);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
@@ -323,6 +331,7 @@ QWidget* DiagnosticsPage::CreateSizePane()
     layout->addLayout(header);
     layout->addLayout(progress);
     layout->addWidget(sizes_, 1);
+    layout->addWidget(longestPaths_);
     layout->addWidget(Quiet(tr("A managed entry in a destination is a link and holds no bytes of its own. What is "
                                "counted here is where the addon actually lives."),
                             pane));
@@ -342,6 +351,7 @@ void DiagnosticsPage::RetranslateUi() const
     sizes_->setHeaderLabels({tr("Category"), tr("Addons"), tr("Size")});
     sizeCost_->setText(tr("walks the whole tree, and that takes seconds"));
 
+    ShowTheLongestPaths();
     DressTheRail();
 }
 
@@ -386,6 +396,7 @@ void DiagnosticsPage::ShowTheCounts() const
         item->setText(0, CommunityModel::ClassificationName(row.classification));
         item->setText(1, QString::number(row.count));
         item->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+        item->setData(1, QuietRole, true);
     }
 }
 
@@ -406,6 +417,7 @@ void DiagnosticsPage::ShowWhatIsTroubled() const
             auto* item = new QTreeWidgetItem(parent);
             item->setText(0, AsText(entry.path));
             item->setText(1, AsText(entry.target));
+            item->setData(1, QuietRole, true);
         }
 
         parent->setExpanded(true);
@@ -446,8 +458,34 @@ void DiagnosticsPage::ShowWhatWasMeasured() const
 
     sizes_->setSortingEnabled(true);
 
+    ShowTheLongestPaths();
+
     DressTheSizeToolbar();
     DressTheRail();
+}
+
+void DiagnosticsPage::ShowTheLongestPaths() const
+{
+    QStringList said;
+
+    for (const MeasuredNode& library : viewModel_.Size().libraries)
+    {
+        if (!library.measured)
+        {
+            continue;
+        }
+
+        const QString measured =
+            tr("%1 · longest path %2")
+                .arg(AsText(library.path), tr("%n character", nullptr, static_cast<int>(library.longestEntry)));
+
+        said << (TheRecycleBinReaches(library.longestEntry)
+                     ? measured
+                     : tr("%1, past the %2 the Recycle Bin stops at").arg(measured).arg(kTheRecycleBinStopsAt));
+    }
+
+    longestPaths_->setText(said.join(QStringLiteral("\n")));
+    longestPaths_->setVisible(!said.isEmpty());
 }
 
 void DiagnosticsPage::ShowProgress(const QString& folder, const int measured, const int total) const

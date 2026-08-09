@@ -12,6 +12,7 @@
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/LandingPath.h"
 #include "domain/model/Manifest.h"
+#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryLookup.h"
@@ -42,26 +43,38 @@ namespace
 
     struct Resolution
     {
-        std::filesystem::path loser;
-        std::filesystem::path quarantine;
+        std::filesystem::path loser{};
+        std::filesystem::path quarantine{};
         OperationKind kind = OperationKind::QuarantineFromDestination;
+        OperationKind linkKind = OperationKind::EnableAddon;
         bool relinks = false;
     };
 
     Resolution ResolutionFor(const SimulatorProfile& profile, const CopyConflict& conflict, const ConflictChoice choice)
     {
-        if (choice == ConflictChoice::KeepTheLibraryCopy)
+        if (choice != ConflictChoice::KeepTheLibraryCopy)
+        {
+            return {.loser = conflict.libraryPath,
+                    .quarantine = QuarantineInsideTheLibrary(profile, conflict.libraryPath),
+                    .kind = OperationKind::QuarantineFromLibrary,
+                    .linkKind = OperationKind::EnableAddon,
+                    .relinks = false};
+        }
+
+        if (conflict.theProvenanceIsAnotherProgram)
         {
             return {.loser = conflict.provenancePath,
-                    .quarantine = QuarantineBesideTheDestination(profile, conflict.provenancePath),
+                    .quarantine = QuarantineInsideTheLibrary(profile, conflict.libraryPath),
                     .kind = OperationKind::QuarantineFromDestination,
+                    .linkKind = OperationKind::LinkTheOtherProgramsFolder,
                     .relinks = true};
         }
 
-        return {.loser = conflict.libraryPath,
-                .quarantine = QuarantineInsideTheLibrary(profile, conflict.libraryPath),
-                .kind = OperationKind::QuarantineFromLibrary,
-                .relinks = false};
+        return {.loser = conflict.provenancePath,
+                .quarantine = QuarantineBesideTheDestination(profile, conflict.provenancePath),
+                .kind = OperationKind::QuarantineFromDestination,
+                .linkKind = OperationKind::EnableAddon,
+                .relinks = true};
     }
 
     Resolution WhereTheOccupantGoes(const SimulatorProfile& profile, const std::filesystem::path& occupant)
@@ -121,6 +134,25 @@ namespace
 
         return nullptr;
     }
+
+    StagingLeftover LeftoverFrom(const std::filesystem::path& staging,
+                                 const std::filesystem::path& imported,
+                                 const OperationRecord* copied,
+                                 const OperationRecord* announced,
+                                 const std::filesystem::path& theOtherProgramOwns)
+    {
+        const std::filesystem::path copiedFrom = copied == nullptr ? std::filesystem::path{} : copied->source;
+
+        if (announced == nullptr && theOtherProgramOwns.empty())
+        {
+            return StagingLeftover{.staging = staging, .target = imported, .source = copiedFrom};
+        }
+
+        return StagingLeftover{.staging = staging,
+                               .target = imported,
+                               .source = announced == nullptr ? std::filesystem::path{} : announced->source,
+                               .externalSource = theOtherProgramOwns.empty() ? copiedFrom : theOtherProgramOwns};
+    }
 }
 
 ImportService::ImportService(const ImportEngine& engine,
@@ -128,6 +160,7 @@ ImportService::ImportService(const ImportEngine& engine,
                              const FilesystemProbe& filesystemProbe,
                              const CatalogScanner& catalog,
                              FileOperations& files,
+                             SidecarStore& sidecars,
                              const LinkingEngine& linking,
                              const OperationLog& log,
                              const LinkType linkType)
@@ -136,6 +169,7 @@ ImportService::ImportService(const ImportEngine& engine,
       filesystemProbe_(filesystemProbe),
       catalog_(catalog),
       files_(files),
+      sidecars_(sidecars),
       linking_(linking),
       log_(log),
       linkType_(linkType)
@@ -176,8 +210,10 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
             continue;
         }
 
-        results.push_back(ImportOperationResult{
-            .request = request, .result = engine_.Import(profile, request, onProgress, onStep).Result()});
+        const ImportOutcome outcome = engine_.Import(profile, request, onProgress, onStep);
+
+        results.push_back(
+            ImportOperationResult{.request = request, .result = outcome.Result(), .writeAccess = outcome.Access()});
     }
 
     return results;
@@ -186,7 +222,9 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
 FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
                                           const std::vector<DestinationEntry>& entries,
                                           const CopyConflict& conflict,
-                                          const ConflictChoice choice) const
+                                          const ConflictChoice choice,
+                                          const std::function<bool(const CopyProgress&)>& onProgress,
+                                          const std::function<void(OperationKind)>& onStep) const
 {
     if (processProbe_.SimulatorIsRunning())
     {
@@ -201,13 +239,15 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
     }
 
     const AddonId addon = IdentityOf(profile, conflict.libraryPath);
+    const std::vector<std::filesystem::path> pointedAtTheLoser = LinksPointingAt(entries, resolution.loser);
 
-    if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, resolution.loser), addon, resolution.loser))
+    if (!DisableEveryLink(linking_, log_, pointedAtTheLoser, addon, resolution.loser))
     {
         return FileResult::CouldNotRemoveTheLink;
     }
 
-    if (const FileResult quarantined = QuarantineInto(resolution.quarantine, resolution.loser, addon, resolution.kind);
+    if (const FileResult quarantined =
+            QuarantineInto(resolution.quarantine, resolution.loser, addon, resolution.kind, onProgress, onStep);
         !Succeeded(quarantined))
     {
         return quarantined;
@@ -218,12 +258,34 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
         return FileResult::Completed;
     }
 
-    const LinkOutcome link =
-        linking_.Enable(Addon{.folderPath = conflict.libraryPath}, conflict.provenancePath.parent_path(), linkType_);
+    return TheWinnerTakesTheirPlaces(addon, conflict, resolution.linkKind, pointedAtTheLoser);
+}
 
-    log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, conflict.provenancePath, link.Failure());
+FileResult ImportService::TheWinnerTakesTheirPlaces(const AddonId& addon,
+                                                    const CopyConflict& conflict,
+                                                    const OperationKind linkKind,
+                                                    const std::vector<std::filesystem::path>& places) const
+{
+    const Addon winner{.folderPath = conflict.libraryPath};
 
-    return link.Succeeded() ? FileResult::Completed : FileResult::CouldNotCreateLink;
+    const LinkOutcome standIn = linking_.LinkAt(conflict.provenancePath, winner, linkType_);
+    log_.RecordLink(linkKind, addon, conflict.libraryPath, conflict.provenancePath, standIn.Failure());
+    if (!standIn.Succeeded())
+    {
+        return FileResult::CouldNotCreateLink;
+    }
+
+    for (const std::filesystem::path& place : places)
+    {
+        const LinkOutcome back = linking_.LinkAt(place, winner, linkType_);
+        log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, place, back.Failure());
+        if (!back.Succeeded())
+        {
+            return FileResult::CouldNotCreateLink;
+        }
+    }
+
+    return FileResult::Completed;
 }
 
 ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
@@ -266,7 +328,9 @@ std::uintmax_t ImportService::TotalSizeOf(const std::vector<std::filesystem::pat
 FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine,
                                          const std::filesystem::path& loser,
                                          const AddonId& addon,
-                                         const OperationKind kind) const
+                                         const OperationKind kind,
+                                         const std::function<bool(const CopyProgress&)>& onProgress,
+                                         const std::function<void(OperationKind)>& onStep) const
 {
     if (filesystemProbe_.EntryExistsWithoutFollowingLinks(quarantine))
     {
@@ -279,28 +343,27 @@ FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine
 
     static_cast<void>(files_.CreateFolder(quarantine.parent_path()));
 
-    if (!files_.WriteTextFile(sidecar, TextOfTheOrigin(QuarantineOrigin{.origin = loser, .quarantinedAt = log_.Now()})))
+    if (!sidecars_.Write(sidecar, TextOfTheOrigin(QuarantineOrigin{.origin = loser, .quarantinedAt = log_.Now()})))
     {
         log_.RecordImport(kind, addon, loser, quarantine, FileResult::CouldNotRecordTheOrigin);
 
         return FileResult::CouldNotRecordTheOrigin;
     }
 
-    const bool moved = files_.Move(loser, quarantine);
+    const QuarantineRequest request{.addon = addon, .loser = loser, .quarantine = quarantine, .kind = kind};
+    const FileResult moved = engine_.Quarantine(request, onProgress, onStep).Result();
 
-    if (!moved)
+    if (!Succeeded(moved))
     {
         static_cast<void>(files_.RemoveTree(sidecar));
     }
 
-    log_.RecordImport(kind, addon, loser, quarantine, moved ? FileResult::Completed : FileResult::CouldNotQuarantine);
-
-    return moved ? FileResult::Completed : FileResult::CouldNotQuarantine;
+    return moved;
 }
 
 void ImportService::ForgetTheOriginOf(const std::filesystem::path& item) const
 {
-    static_cast<void>(files_.RemoveTree(SidecarPathFor(item)));
+    static_cast<void>(sidecars_.Forget(SidecarPathFor(item)));
 }
 
 void ImportService::Record(const SimulatorProfile& profile,
@@ -316,7 +379,7 @@ void ImportService::Record(const SimulatorProfile& profile,
 
 std::filesystem::path ImportService::WhatTheOtherProgramOwns(const std::filesystem::path& target) const
 {
-    const std::optional<std::string> written = filesystemProbe_.ContentsOf(ExternalSidecarPathFor(target));
+    const std::optional<std::string> written = sidecars_.Read(ExternalSidecarPathFor(target));
     if (!written.has_value())
     {
         return {};
@@ -328,7 +391,7 @@ std::filesystem::path ImportService::WhatTheOtherProgramOwns(const std::filesyst
 QuarantinedItem ImportService::WhereItCameFrom(const std::vector<OperationRecord>& history,
                                                const std::filesystem::path& item) const
 {
-    const std::optional<std::string> written = filesystemProbe_.ContentsOf(SidecarPathFor(item));
+    const std::optional<std::string> written = sidecars_.Read(SidecarPathFor(item));
 
     const OperationRecord* quarantined = LastRecordAbout(
         history, item, {OperationKind::QuarantineFromDestination, OperationKind::QuarantineFromLibrary});
@@ -364,6 +427,11 @@ std::vector<QuarantinedItem> ImportService::Quarantined(const SimulatorProfile& 
     {
         for (const std::filesystem::path& item : filesystemProbe_.ChildDirectories(folder))
         {
+            if (IsStagingPath(item))
+            {
+                continue;
+            }
+
             items.push_back(WhereItCameFrom(history, item));
         }
     }
@@ -497,7 +565,8 @@ std::vector<RestorePlace> ImportService::PlacesFor(const SimulatorProfile& profi
 
 FileResult ImportService::RestoreOne(const SimulatorProfile& profile,
                                      const QuarantinedItem& item,
-                                     const std::filesystem::path& recordedFrom) const
+                                     const std::filesystem::path& recordedFrom,
+                                     const OperationKind kind) const
 {
     const bool moved = files_.Move(item.path, item.origin);
     const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotRestore;
@@ -507,8 +576,8 @@ FileResult ImportService::RestoreOne(const SimulatorProfile& profile,
         ForgetTheOriginOf(item.path);
     }
 
-    Record(profile, OperationKind::RestoreFromQuarantine, item.origin, recordedFrom.empty() ? item.path : recordedFrom,
-           item.origin, result, item.source);
+    Record(profile, kind, item.origin, recordedFrom.empty() ? item.path : recordedFrom, item.origin, result,
+           item.source);
 
     return result;
 }
@@ -592,7 +661,7 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
 
     if (check.CanProceed())
     {
-        return TheItemComesBack(profile, item, swapped);
+        return TheItemComesBack(profile, item, swapped, OperationKind::RestoreFromQuarantine);
     }
 
     const Resolution goes = WhereTheOccupantGoes(profile, check.occupant);
@@ -640,14 +709,16 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
         return swapped;
     }
 
-    return TheItemComesBack(profile, waiting, swapped);
+    return TheItemComesBack(profile, waiting, swapped, OperationKind::RestoreOverTheOccupant);
 }
 
-SwapResult
-ImportService::TheItemComesBack(const SimulatorProfile& profile, const QuarantinedItem& item, SwapResult swapped) const
+SwapResult ImportService::TheItemComesBack(const SimulatorProfile& profile,
+                                           const QuarantinedItem& item,
+                                           SwapResult swapped,
+                                           const OperationKind kind) const
 {
     swapped.stoppedAt = SwapStep::RestoreTheItem;
-    swapped.result = RestoreOne(profile, item, swapped.item);
+    swapped.result = RestoreOne(profile, item, swapped.item, kind);
     swapped.inTheLibrary = swapped.Succeeded() ? item.origin : std::filesystem::path{};
 
     return swapped;
@@ -670,7 +741,107 @@ std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& 
     return results;
 }
 
+FileOperationResult ImportService::GiveBack(const SimulatorProfile& profile,
+                                            const std::vector<DestinationEntry>& entries,
+                                            const std::filesystem::path& addonFolder,
+                                            const std::function<bool(const CopyProgress&)>& onProgress,
+                                            const std::function<void(OperationKind)>& onStep) const
+{
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return FileOperationResult{.path = addonFolder, .result = FileResult::TheSimulatorIsRunning};
+    }
+
+    const std::filesystem::path externalPath = ExternalOriginOf(ExternalAddonsOf(profile), addonFolder);
+    if (externalPath.empty())
+    {
+        return FileOperationResult{.path = addonFolder, .result = FileResult::TheOriginIsUnknown};
+    }
+
+    const GiveBackRequest request{
+        .addonFolder = addonFolder, .externalPath = externalPath, .links = LinksPointingAt(entries, addonFolder)};
+
+    const ImportOutcome outcome = engine_.GiveBack(profile, request, onProgress, onStep);
+
+    if (outcome.Succeeded())
+    {
+        static_cast<void>(sidecars_.Forget(ExternalSidecarPathFor(addonFolder)));
+    }
+
+    return FileOperationResult{.path = addonFolder, .result = outcome.Result(), .writeAccess = outcome.Access()};
+}
+
 std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& profile) const
+{
+    std::vector<StagingLeftover> leftovers = WhatAnImportLeftBehind(profile);
+
+    for (const std::filesystem::path& quarantine : QuarantineFoldersOf(profile))
+    {
+        for (const std::filesystem::path& child : filesystemProbe_.ChildDirectories(quarantine))
+        {
+            if (IsStagingPath(child))
+            {
+                leftovers.push_back(StagingLeftover{
+                    .staging = child, .target = ImportedPathFor(child), .theCopyResolvedAConflict = true});
+            }
+        }
+    }
+
+    for (const ExternalAddon& external : ExternalAddonsOf(profile))
+    {
+        const std::filesystem::path staging = StagingPathFor(external.externalPath);
+
+        if (filesystemProbe_.EntryExistsWithoutFollowingLinks(staging))
+        {
+            leftovers.push_back(
+                StagingLeftover{.staging = staging, .target = external.externalPath, .theCopyResolvedAConflict = true});
+        }
+    }
+
+    return leftovers;
+}
+
+std::vector<InterruptedSwap> ImportService::InterruptedSwaps(const SimulatorProfile& profile) const
+{
+    std::vector<InterruptedSwap> interrupted;
+
+    for (const ExternalAddon& external : ExternalAddonsOf(profile))
+    {
+        const std::filesystem::path room = SwapSlotFor(external.externalPath);
+
+        if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(room)
+            || filesystemProbe_.EntryExistsWithoutFollowingLinks(external.externalPath))
+        {
+            continue;
+        }
+
+        interrupted.push_back(
+            InterruptedSwap{.room = room, .folder = external.externalPath, .libraryCopy = external.addonFolder});
+    }
+
+    return interrupted;
+}
+
+std::vector<FileOperationResult> ImportService::UndoInterruptedSwaps(const SimulatorProfile& profile,
+                                                                     const std::vector<InterruptedSwap>& swaps) const
+{
+    std::vector<FileOperationResult> results;
+
+    for (const InterruptedSwap& swap : swaps)
+    {
+        const bool moved = files_.Move(swap.room, swap.folder);
+        const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotMoveIntoPlace;
+
+        log_.RecordImport(OperationKind::UndoTheInterruptedSwap, IdentityOf(profile, swap.libraryCopy), swap.room,
+                          swap.folder, result);
+
+        results.push_back(FileOperationResult{.path = swap.folder, .result = result});
+    }
+
+    return results;
+}
+
+std::vector<StagingLeftover> ImportService::WhatAnImportLeftBehind(const SimulatorProfile& profile) const
 {
     const std::vector<OperationRecord> history = log_.History();
 
@@ -705,12 +876,11 @@ std::vector<StagingLeftover> ImportService::Leftovers(const SimulatorProfile& pr
             }
 
             const OperationRecord* copied = LastRecordAbout(history, child, {OperationKind::ImportCopyToStaging});
+            const OperationRecord* announced =
+                LastRecordAbout(history, child, {OperationKind::ImportFromAnotherProgram});
             const std::filesystem::path imported = ImportedPathFor(child);
 
-            leftovers.push_back(StagingLeftover{.staging = child,
-                                                .target = imported,
-                                                .source = copied == nullptr ? std::filesystem::path{} : copied->source,
-                                                .externalSource = WhatTheOtherProgramOwns(imported)});
+            leftovers.push_back(LeftoverFrom(child, imported, copied, announced, WhatTheOtherProgramOwns(imported)));
         }
     }
 
@@ -774,8 +944,10 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
             continue;
         }
 
-        results.push_back(ImportOperationResult{
-            .request = request, .result = engine_.Import(profile, request, onProgress, onStep).Result()});
+        const ImportOutcome outcome = engine_.Import(profile, request, onProgress, onStep);
+
+        results.push_back(
+            ImportOperationResult{.request = request, .result = outcome.Result(), .writeAccess = outcome.Access()});
     }
 
     return results;

@@ -99,12 +99,12 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
                                        const Preset& preset,
                                        const ApplyMode mode) const
 {
-    const EnabledAddons onDisk{EnabledAddonFolders(profiles_.ResolveEntries(profile))};
-    const PresetPlan plan = PlanPresetApplication(preset, mode, profile, snapshot.libraries, onDisk);
+    const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile);
+    const PresetPlan plan = PlanPresetApplication(preset, mode, profile, snapshot.libraries, onDisk.enabled);
 
-    return {
-        .results =
-            profiles_.SetEnabled(profile, snapshot, LinkBatch{.toDisable = plan.toDisable, .toEnable = plan.toEnable})
-                .results,
-        .unresolved = plan.unresolved};
+    return {.results = profiles_
+                           .SetEnabled(profile, snapshot,
+                                       LinkBatch{.toDisable = plan.toDisable, .toEnable = plan.toEnable}, onDisk)
+                           .results,
+            .unresolved = plan.unresolved};
 }

@@ -16,10 +16,12 @@
 #include "application/Session.h"
 #include "application/SetupService.h"
 #include "application/SizeService.h"
+#include "application/StartupService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
@@ -30,7 +32,9 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
+#include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
@@ -43,12 +47,14 @@
 #include "view/JournalPage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/options/OptionsPage.h"
+#include "view/shell/LongOperationProgress.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
 #include "view/shell/StartupOffers.h"
 #include "view/PresetsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/setup/SetupWizard.h"
+#include "view/simulator/StartupPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
@@ -62,6 +68,7 @@
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 #include "viewmodel/SetupViewModel.h"
+#include "viewmodel/StartupViewModel.h"
 #include "viewmodel/UpdateViewModel.h"
 
 namespace
@@ -141,6 +148,7 @@ int main(int argc, char* argv[])
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
     WindowsFileOperations files;
+    WindowsSidecarStore sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
@@ -178,10 +186,11 @@ int main(int argc, char* argv[])
     const AppSettings onDisk = settings.Load().value_or(AppSettings{});
     const LinkType storedLinkType = onDisk.linkType;
 
-    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, storedLinkType);
+    ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
+                                  storedLinkType);
 
-    ImportEngine importEngine(filesystemProbe, files, linking, log, storedLinkType);
-    ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
+    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType);
+    ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 storedLinkType);
 
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, storedLinkType);
@@ -196,7 +205,8 @@ int main(int argc, char* argv[])
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
 
-    const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
+                                          sizes);
     DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
@@ -204,9 +214,11 @@ int main(int argc, char* argv[])
                      {
                          packages.Reload(session.Profile().variant);
                      });
-    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, model, notifier);
-
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
+
+    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, model, notifier);
+
+    LongOperationProgress progress(importViewModel, &window);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -223,6 +235,19 @@ int main(int argc, char* argv[])
 
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
+
+    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
+    ExeXmlStartupEntries startupEntries(StartupFileOf(startupFiles, session.Profile().variant));
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, onDisk.manageStartupEntries);
+    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    auto* startupPage = new StartupPage(startupViewModel);
+
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
+                     [&session, &startupEntries, &startupFiles, &startupViewModel]
+                     {
+                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                         startupViewModel.Show();
+                     });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService);
@@ -246,10 +271,11 @@ int main(int argc, char* argv[])
 
     PageTab* libraryButton = window.AddPage(PageNames::kLibrary, page);
     PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);
+    window.AddPage(PageNames::kSimulator, startupPage);
     PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
-    window.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
+    window.AddPage(PageNames::kJournal, journalPage);
 
     window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);
@@ -404,7 +430,16 @@ int main(int argc, char* argv[])
                      {
                          adoptWhatChangedOnDisk();
                      });
-    QObject::connect(&importViewModel, &ImportViewModel::ConflictResolved, page, adoptWhatChangedOnDisk);
+    QObject::connect(&importViewModel, &ImportViewModel::ConflictsResolved, page,
+                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
+                     {
+                         adoptWhatChangedOnDisk();
+                     });
+    QObject::connect(&importViewModel, &ImportViewModel::GaveBack, page,
+                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
+                     {
+                         adoptWhatChangedOnDisk();
+                     });
     QObject::connect(&quarantineViewModel, &QuarantineViewModel::Restored, page,
                      [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
                      {
@@ -426,7 +461,7 @@ int main(int argc, char* argv[])
                      {
                          if (selected == communityPage)
                          {
-                             communityViewModel.Show();
+                             communityViewModel.ReadTheDestinationsAgain();
                          }
                          else if (selected == quarantinePage)
                          {
@@ -440,6 +475,10 @@ int main(int argc, char* argv[])
                          {
                              diagnosticsViewModel.Show();
                          }
+                         else if (selected == startupPage)
+                         {
+                             startupViewModel.Show();
+                         }
                      });
 
     QObject::connect(diagnosticsPage, &DiagnosticsPage::SummaryChanged, &window, carryTheSummaryOf(diagnosticsPage));
@@ -450,6 +489,9 @@ int main(int argc, char* argv[])
                          quarantineButton->click();
                      });
     QObject::connect(diagnosticsPage, &DiagnosticsPage::RepairRequested, &window, &MainWindow::RepairRequested);
+
+    QObject::connect(startupPage, &StartupPage::SummaryChanged, &window, carryTheSummaryOf(startupPage));
+    QObject::connect(startupPage, &StartupPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
                      [&window](const AttentionBreakdown& breakdown)
@@ -533,6 +575,7 @@ int main(int argc, char* argv[])
 
                          once = true;
                          OfferToDropTheOverridesThatPointNowhere(session, &window);
+                         OfferToPutBackWhatALostSwapRenamed(importViewModel, &window);
                          OfferWhatALostImportLeftBehind(importViewModel, &window);
 
                          if (setupJustRan)

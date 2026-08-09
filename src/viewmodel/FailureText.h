@@ -12,12 +12,15 @@
 #include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 #include "domain/model/OperationKind.h"
+#include "domain/model/WriteAccess.h"
 
 [[nodiscard]] QString Explain(LinkFailure failure);
 
 [[nodiscard]] QString Explain(CategoryRule rule);
 
 [[nodiscard]] QString Explain(FileResult result);
+
+[[nodiscard]] QString Explain(WriteAccess access);
 
 [[nodiscard]] QString Describe(const LinkOperationResult& result);
 

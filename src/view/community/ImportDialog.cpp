@@ -27,6 +27,7 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
 
     auto* picked = new QListWidget(this);
     picked->setSelectionMode(QAbstractItemView::NoSelection);
+    picked->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     for (const ImportRequest& request : chosen_)
     {
         picked->addItem(request.CameFromAnotherProgram()
@@ -86,7 +87,7 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
 
     ShowCategoriesOfTheChosenLibrary();
 
-    resize(640, 460);
+    SizeToTheContent(*this, 640);
 }
 
 void ImportDialog::ShowCategoriesOfTheChosenLibrary() const

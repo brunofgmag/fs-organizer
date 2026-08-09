@@ -56,11 +56,6 @@ public:
         theHiddenWriteFails_ = true;
     }
 
-    void MakeTheTextWriteFail()
-    {
-        theTextWriteFails_ = true;
-    }
-
     [[nodiscard]] CopyOutcome CopyTree(const std::filesystem::path& source,
                                        const std::filesystem::path& destination,
                                        const std::function<bool(const CopyProgress&)>& onProgress) override
@@ -131,18 +126,6 @@ public:
         return true;
     }
 
-    [[nodiscard]] bool WriteTextFile(const std::filesystem::path& path, const std::string& contents) override
-    {
-        if (theTextWriteFails_ || !fileSystem_.IsDirectory(path.parent_path()))
-        {
-            return false;
-        }
-
-        fileSystem_.AddFileWithContents(path, contents);
-
-        return true;
-    }
-
     [[nodiscard]] bool Move(const std::filesystem::path& source, const std::filesystem::path& destination) override
     {
         if (movesLeft_.has_value() && (*movesLeft_)-- <= 0)
@@ -150,7 +133,8 @@ public:
             return false;
         }
 
-        return !moveFails_ && fileSystem_.MoveTree(source, destination);
+        return !moveFails_ && InMemoryFileSystem::SameVolume(source, destination)
+            && fileSystem_.MoveTree(source, destination);
     }
 
     [[nodiscard]] bool RemoveTree(const std::filesystem::path& path) override
@@ -183,7 +167,6 @@ private:
     bool removalFails_ = false;
     bool creationFails_ = false;
     bool theHiddenWriteFails_ = false;
-    bool theTextWriteFails_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILE_OPERATIONS_H

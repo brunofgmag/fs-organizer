@@ -31,6 +31,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
@@ -39,7 +40,9 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
+#include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "infrastructure/update/GithubUpdateService.h"
@@ -50,9 +53,12 @@
 #include "view/community/CommunityPage.h"
 #include "domain/tree/AddonTree.h"
 #include "view/library/AddonTreePage.h"
+#include "domain/support/PathUtils.h"
+#include "view/library/LibraryRootDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
+#include "view/simulator/StartupPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
@@ -69,6 +75,7 @@
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
+#include "viewmodel/StartupViewModel.h"
 #include "viewmodel/UpdateViewModel.h"
 
 namespace
@@ -408,6 +415,7 @@ int main(int argc, char* argv[])
     WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
     WindowsFileOperations files;
+    WindowsSidecarStore sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const FilesystemScanner catalog(manifestParser, filesystemProbe);
@@ -419,9 +427,10 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
-    ProfileService profileService(catalog, filesystemProbe, classifier, linking, log, identities, stored->linkType);
-    ImportEngine importEngine(filesystemProbe, files, linking, log, stored->linkType);
-    ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, linking, log,
+    ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
+                                  stored->linkType);
+    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, stored->linkType);
+    ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 stored->linkType);
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
                                stored->linkType);
@@ -437,11 +446,12 @@ int main(int argc, char* argv[])
     ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
     packages.Reload(session.Profile().variant);
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
-    const DeletionService deletionService(filesystemProbe, files, linking, classifier, processProbe, log, sizes);
+    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
+                                          sizes);
     DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
-    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, treeModel, notifier);
-
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
+
+    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -464,6 +474,12 @@ int main(int argc, char* argv[])
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
+    ExeXmlStartupEntries startupEntries(
+        StartupFileOf(StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant));
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
+    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    auto* startupPage = new StartupPage(startupViewModel);
+
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
     UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
@@ -473,10 +489,11 @@ int main(int argc, char* argv[])
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);
     PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
+    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, startupPage);
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
-    PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
+    PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     shell.CarryOptionsOn(optionsPage);
 
     shell.CarryTriageOn(libraryPage);
@@ -585,6 +602,12 @@ int main(int argc, char* argv[])
     {
         SwapDialog swapDialog({*pretend}, treeViewModel, &shell);
 
+        treeViewModel.WeighTheSwaps({*pretend},
+                                    [&swapDialog](const std::vector<WeighedSwap>& weighed)
+                                    {
+                                        swapDialog.ShowTheSizes(weighed);
+                                    });
+
         landed = SaveTheDialogOpenedBy(
                      [&swapDialog]
                      {
@@ -619,6 +642,20 @@ int main(int argc, char* argv[])
         Out() << "fewer than two addons in the libraries, so there is no swap to picture\n";
     }
 
+    {
+        const std::filesystem::path deepRoot =
+            PathFromUtf8("C:/Users/bruno/Documents/Flight Simulator Addons/MSFS 2024 Library");
+        LibraryRootDialog rootDialog(deepRoot, MeasureTheRoot(deepRoot), &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&rootDialog]
+                     {
+                         static_cast<void>(rootDialog.exec());
+                     },
+                     folder, QStringLiteral("21-library-deep-root"))
+            && landed;
+    }
+
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
     const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),
                                   QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size")};
@@ -637,6 +674,16 @@ int main(int argc, char* argv[])
         LetTheLayoutSettle();
         landed = Save(shell, folder, diagnostics[section]) && landed;
     }
+
+    simulatorTab->click();
+    startupViewModel.Show();
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("19-simulator-startup")) && landed;
+
+    startupViewModel.Manage(false);
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("20-simulator-startup-loose")) && landed;
+    startupViewModel.Manage(true);
 
     libraryTab->click();
     shell.ShowOptions();

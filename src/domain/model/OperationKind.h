@@ -26,6 +26,10 @@ enum class OperationKind : int
     RecycleFromLibrary = 17,
     DeleteFromLibrary = 18,
     LinkTheOtherProgramsFolder = 19,
+    ImportFromAnotherProgram = 20,
+    GiveBackToAnotherProgram = 21,
+    UndoTheInterruptedSwap = 22,
+    RestoreOverTheOccupant = 23,
 };
 
 inline constexpr std::array kAllOperationKinds{
@@ -49,9 +53,13 @@ inline constexpr std::array kAllOperationKinds{
     OperationKind::RecycleFromLibrary,
     OperationKind::DeleteFromLibrary,
     OperationKind::LinkTheOtherProgramsFolder,
+    OperationKind::ImportFromAnotherProgram,
+    OperationKind::GiveBackToAnotherProgram,
+    OperationKind::UndoTheInterruptedSwap,
+    OperationKind::RestoreOverTheOccupant,
 };
 
-static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::LinkTheOtherProgramsFolder) + 1,
+static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::RestoreOverTheOccupant) + 1,
               "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool CarriesAFileReason(const OperationKind kind)
@@ -65,6 +73,7 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::QuarantineFromDestination:
     case OperationKind::QuarantineFromLibrary:
     case OperationKind::RestoreFromQuarantine:
+    case OperationKind::RestoreOverTheOccupant:
     case OperationKind::DiscardFromQuarantine:
     case OperationKind::DiscardStaging:
     case OperationKind::MoveAddon:
@@ -72,6 +81,9 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::RenameCategory:
     case OperationKind::RemoveCategory:
     case OperationKind::RecycleFromLibrary:
+    case OperationKind::ImportFromAnotherProgram:
+    case OperationKind::GiveBackToAnotherProgram:
+    case OperationKind::UndoTheInterruptedSwap:
     case OperationKind::DeleteFromLibrary: return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:
@@ -99,6 +111,7 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::QuarantineFromDestination:
     case OperationKind::QuarantineFromLibrary:
     case OperationKind::RestoreFromQuarantine:
+    case OperationKind::RestoreOverTheOccupant:
     case OperationKind::DiscardFromQuarantine:
     case OperationKind::DiscardStaging:
     case OperationKind::MoveAddon:
@@ -106,6 +119,9 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::RenameCategory:
     case OperationKind::RemoveCategory:
     case OperationKind::RecycleFromLibrary:
+    case OperationKind::ImportFromAnotherProgram:
+    case OperationKind::GiveBackToAnotherProgram:
+    case OperationKind::UndoTheInterruptedSwap:
     case OperationKind::DeleteFromLibrary: return false;
     }
 

@@ -3,9 +3,14 @@
 
 #include <windows.h>
 
+#include <aclapi.h>
+
+#include <vector>
+
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "tests/support/DeepPaths.h"
+#include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 
@@ -22,6 +27,8 @@ namespace
         static void AJunctionIsAReparsePointAndARealFolderIsNot();
         static void OnlyARealFolderIsPhysicalAndALiveJunctionOverItIsNot();
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
+        static void AFolderThatIsNotThereIsNotTheSameAsOneThatRefusesTheWrite();
+        static void AFolderThatWillNotTakeAFileSaysPermissionIsWhatStoppedIt();
         static void AFolderReportsWhenItWasLastWrittenTo();
         static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
         static void EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable();
@@ -173,6 +180,109 @@ void WindowsFilesystemProbeTest::FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyE
 
     QVERIFY(filesystemProbe.FreeSpaceOn(category).has_value());
     QVERIFY(!filesystemProbe.FreeSpaceOn(category / "flybywire-externaltools-simbridge").has_value());
+}
+
+namespace
+{
+    std::vector<BYTE> SidOfWhoeverIsRunning()
+    {
+        HANDLE token = nullptr;
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0)
+        {
+            return {};
+        }
+
+        DWORD size = 0;
+        static_cast<void>(GetTokenInformation(token, TokenUser, nullptr, 0, &size));
+
+        std::vector<BYTE> information(size);
+        const BOOL read = GetTokenInformation(token, TokenUser, information.data(), size, &size);
+        CloseHandle(token);
+
+        if (read == 0)
+        {
+            return {};
+        }
+
+        const PSID inside = reinterpret_cast<TOKEN_USER*>(information.data())->User.Sid;
+        std::vector<BYTE> sid(GetLengthSid(inside));
+
+        if (CopySid(static_cast<DWORD>(sid.size()), sid.data(), inside) == 0)
+        {
+            return {};
+        }
+
+        return sid;
+    }
+
+    bool DenyAddingFilesTo(const std::filesystem::path& folder, std::vector<BYTE>& user)
+    {
+        if (user.empty())
+        {
+            return false;
+        }
+
+        EXPLICIT_ACCESS_W denial{};
+        denial.grfAccessPermissions = FILE_ADD_FILE;
+        denial.grfAccessMode = DENY_ACCESS;
+        denial.grfInheritance = NO_INHERITANCE;
+        denial.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+        denial.Trustee.TrusteeType = TRUSTEE_IS_USER;
+        denial.Trustee.ptstrName = static_cast<LPWSTR>(static_cast<void*>(user.data()));
+
+        std::wstring native = folder.wstring();
+
+        PACL existing = nullptr;
+        PSECURITY_DESCRIPTOR descriptor = nullptr;
+        if (GetNamedSecurityInfoW(native.c_str(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr,
+                                  &existing, nullptr, &descriptor)
+            != ERROR_SUCCESS)
+        {
+            return false;
+        }
+
+        PACL updated = nullptr;
+        const DWORD merged = SetEntriesInAclW(1, &denial, existing, &updated);
+        const DWORD applied = merged == ERROR_SUCCESS
+            ? SetNamedSecurityInfoW(native.data(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr, updated,
+                                    nullptr)
+            : merged;
+
+        LocalFree(updated);
+        LocalFree(descriptor);
+
+        return applied == ERROR_SUCCESS;
+    }
+}
+
+void WindowsFilesystemProbeTest::AFolderThatIsNotThereIsNotTheSameAsOneThatRefusesTheWrite()
+{
+    const Disk disk;
+    const std::filesystem::path folder = disk.AddFolder("Addon Manager/MSFS");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QCOMPARE(filesystemProbe.ProbeWritable(folder), WriteAccess::ItAccepts);
+    QCOMPARE(filesystemProbe.ProbeWritable(folder / "never-created"), WriteAccess::TheFolderIsNotThere);
+    QVERIFY2(!std::filesystem::exists(folder / ".fsorg-write-probe"),
+             "the probe file outlived the probe, so it will be walked as content later");
+}
+
+void WindowsFilesystemProbeTest::AFolderThatWillNotTakeAFileSaysPermissionIsWhatStoppedIt()
+{
+    const Disk disk;
+    const std::filesystem::path folder = disk.AddFolder("Addon Manager/MSFS");
+
+    std::vector<BYTE> user = SidOfWhoeverIsRunning();
+    if (!DenyAddingFilesTo(folder, user))
+    {
+        QFAIL("the deny entry could not be staged, so the mapping this test exists for was never exercised");
+    }
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY2(filesystemProbe.TargetDirectoryExists(folder), "a denial of writes is not a folder that went away");
+    QCOMPARE(filesystemProbe.ProbeWritable(folder), WriteAccess::PermissionIsDenied);
 }
 
 void WindowsFilesystemProbeTest::AFolderReportsWhenItWasLastWrittenTo()

@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.23.0](https://github.com/brunofgmag/fs-organizer/compare/v0.22.0...v0.23.0) (2026-08-09)
+
+
+### Features
+
+* say what refused the write, warn before a deep root, group the swap and read the destinations once ([#62](https://github.com/brunofgmag/fs-organizer/issues/62)) ([13d2656](https://github.com/brunofgmag/fs-organizer/commit/13d26562d5018923f68823a6cf49036f1c8b7a03))
+
+## [0.22.0](https://github.com/brunofgmag/fs-organizer/compare/v0.21.1...v0.22.0) (2026-08-09)
+
+
+### Features
+
+* give the sidecar its own port, find the swap a lost process left renamed, and let the content decide the size ([#60](https://github.com/brunofgmag/fs-organizer/issues/60)) ([768242a](https://github.com/brunofgmag/fs-organizer/commit/768242a21e47c1c01dc45bf850ef26d530e7f4b1))
+
+## [0.21.1](https://github.com/brunofgmag/fs-organizer/compare/v0.21.0...v0.21.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* **view:** quiet what supports the name, size three dialogs to their content and kill the flaky pixmap ([#58](https://github.com/brunofgmag/fs-organizer/issues/58)) ([71986ee](https://github.com/brunofgmag/fs-organizer/commit/71986ee0a4e6eadf73a16a72203866783d6da28a))
+
+## [0.21.0](https://github.com/brunofgmag/fs-organizer/compare/v0.20.0...v0.21.0) (2026-08-09)
+
+
+### Features
+
+* the interface says less, paints to the standard and weighs both sides of a swap ([#56](https://github.com/brunofgmag/fs-organizer/issues/56)) ([83482c9](https://github.com/brunofgmag/fs-organizer/commit/83482c904156dc067fce5809df53b944342bd597))
+
+## [0.20.0](https://github.com/brunofgmag/fs-organizer/compare/v0.19.0...v0.20.0) (2026-08-09)
+
+
+### Features
+
+* give a managed external back, quarantine the other program's folder, and close nine debts of the manual acceptance ([#54](https://github.com/brunofgmag/fs-organizer/issues/54)) ([d5a0a55](https://github.com/brunofgmag/fs-organizer/commit/d5a0a550ed3224be487ac449aee88106e4bfb2ee))
+
+## [0.19.0](https://github.com/brunofgmag/fs-organizer/compare/v0.18.1...v0.19.0) (2026-08-09)
+
+
+### Features
+
+* give a managed external back, and see the divergence the installer hides ([#52](https://github.com/brunofgmag/fs-organizer/issues/52)) ([b018b9d](https://github.com/brunofgmag/fs-organizer/commit/b018b9d01ace0ff20e3d5867731d33e8fe8ec524))
+
+## [0.18.1](https://github.com/brunofgmag/fs-organizer/compare/v0.18.0...v0.18.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* **view:** show a whole path where it fits and cut it in the middle where it does not ([#50](https://github.com/brunofgmag/fs-organizer/issues/50)) ([24e52e9](https://github.com/brunofgmag/fs-organizer/commit/24e52e913ea93ed15bef1ec468ed1521f56a487b))
+
+## [0.18.0](https://github.com/brunofgmag/fs-organizer/compare/v0.17.0...v0.18.0) (2026-08-08)
+
+
+### Features
+
+* switch the programs the simulator launches with itself, from the app ([#48](https://github.com/brunofgmag/fs-organizer/issues/48)) ([d3af55b](https://github.com/brunofgmag/fs-organizer/commit/d3af55bd1d7fd0d908c9058fa95482f8eb4c41c9))
+
 ## [0.17.0](https://github.com/brunofgmag/fs-organizer/compare/v0.16.0...v0.17.0) (2026-08-08)
 
 

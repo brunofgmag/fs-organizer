@@ -14,6 +14,7 @@
 
 #include "support/PathText.h"
 #include "support/SizeText.h"
+#include "view/TextThatIsNeverCut.h"
 #include "view/theme/ModernistMetrics.h"
 
 namespace
@@ -48,8 +49,7 @@ namespace
             return Wording{
                 .explanation =
                     QObject::tr("The other program put a real folder back where it installs this addon, and your copy "
-                                "is still in the library. Choose which one stays: the other goes to the quarantine, "
-                                "and nothing is deleted."),
+                                "is still in the library. Choose which one stays: the other goes to the quarantine."),
                 .provenanceSide = QObject::tr("Copy in the other program's folder"),
                 .keepTheProvenanceOne = QObject::tr("Keep the other program's one"),
                 .warning = QObject::tr("The library copy is enabled in %1. Keeping the other program's one removes "
@@ -59,7 +59,7 @@ namespace
         return Wording{
             .explanation =
                 QObject::tr("There is a real folder in the destination and an addon with the same name in the library. "
-                            "Choose which one stays: the other goes to the quarantine, and nothing is deleted."),
+                            "Choose which one stays: the other goes to the quarantine."),
             .provenanceSide = QObject::tr("Copy in the destination"),
             .keepTheProvenanceOne = QObject::tr("Keep the destination one"),
             .warning = QObject::tr("The library copy is enabled in %1. Keeping the destination one removes those links "
@@ -128,16 +128,14 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     layout->addWidget(warning);
     layout->addWidget(buttons);
 
-    resize(760, 320);
+    SizeToTheContent(*this, 760);
 }
 
 QGroupBox* ConflictDialog::CreateSide(const QString& title, const ConflictSide& side)
 {
     auto* group = new QGroupBox(title, this);
 
-    auto* path = new QLabel(AsText(side.path), group);
-    path->setWordWrap(true);
-    path->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    auto* path = new TextThatIsNeverCut(AsText(side.path), group);
 
     auto* form = new QFormLayout(group);
     form->addRow(tr("Path:"), path);

@@ -85,6 +85,13 @@ void CommunityViewModel::Show()
     Refresh();
 }
 
+void CommunityViewModel::ReadTheDestinationsAgain()
+{
+    session_.RefreshEntries();
+
+    Refresh();
+}
+
 void CommunityViewModel::MeasureTheSelection(const std::vector<DestinationEntry>& entries)
 {
     std::vector<std::filesystem::path> folders;

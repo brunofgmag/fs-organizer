@@ -14,12 +14,14 @@
 #include "domain/model/TreeNode.h"
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/FilesystemProbe.h"
+#include "domain/ports/SidecarStore.h"
 
 class DeletionService
 {
 public:
     DeletionService(const FilesystemProbe& filesystemProbe,
                     FileOperations& files,
+                    SidecarStore& sidecars,
                     const LinkingEngine& linking,
                     const EntryClassifier& classifier,
                     const ProcessProbe& processProbe,
@@ -55,6 +57,7 @@ private:
 
     const FilesystemProbe& filesystemProbe_;
     FileOperations& files_;
+    SidecarStore& sidecars_;
     const LinkingEngine& linking_;
     const EntryClassifier& classifier_;
     const ProcessProbe& processProbe_;

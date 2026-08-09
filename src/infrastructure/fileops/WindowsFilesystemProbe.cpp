@@ -30,6 +30,50 @@ namespace
         return GetFileAttributesW(NativePath(path).c_str());
     }
 
+    WriteAccess WhatTheProbeRanInto(const DWORD error)
+    {
+        switch (error)
+        {
+        case ERROR_ACCESS_DENIED:
+        case ERROR_NETWORK_ACCESS_DENIED: return WriteAccess::PermissionIsDenied;
+        case ERROR_WRITE_PROTECT: return WriteAccess::TheVolumeIsReadOnly;
+        default: return WriteAccess::ItRefusedForAnotherReason;
+        }
+    }
+
+    template<typename Wanted>
+    std::vector<std::filesystem::path> ChildrenWhoseAttributesPass(const std::filesystem::path& path,
+                                                                   const Wanted& wanted)
+    {
+        std::error_code error;
+        std::filesystem::directory_iterator entry(WithExtendedPrefix(path),
+                                                  std::filesystem::directory_options::skip_permission_denied, error);
+        if (error)
+        {
+            return {};
+        }
+
+        std::vector<std::filesystem::path> children;
+        const std::filesystem::directory_iterator end;
+
+        while (entry != end)
+        {
+            if (const DWORD attributes = AttributesWithoutFollowingLinks(entry->path());
+                attributes != INVALID_FILE_ATTRIBUTES && wanted(attributes))
+            {
+                children.push_back(path / entry->path().filename());
+            }
+
+            entry.increment(error);
+            if (error)
+            {
+                return {};
+            }
+        }
+
+        return children;
+    }
+
     std::optional<std::wstring> VolumeIdentifierOf(const std::filesystem::path& path)
     {
         std::filesystem::path root = WithoutExtendedPrefix(path).root_path();
@@ -107,33 +151,20 @@ bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& 
 
 std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildDirectories(const std::filesystem::path& path) const
 {
-    std::error_code error;
-    std::filesystem::directory_iterator entry(WithExtendedPrefix(path),
-                                              std::filesystem::directory_options::skip_permission_denied, error);
-    if (error)
-    {
-        return {};
-    }
+    return ChildrenWhoseAttributesPass(path,
+                                       [](const DWORD attributes)
+                                       {
+                                           return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+                                       });
+}
 
-    std::vector<std::filesystem::path> children;
-    const std::filesystem::directory_iterator end;
-
-    while (entry != end)
-    {
-        const DWORD attributes = AttributesWithoutFollowingLinks(entry->path());
-        if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-        {
-            children.push_back(path / entry->path().filename());
-        }
-
-        entry.increment(error);
-        if (error)
-        {
-            return {};
-        }
-    }
-
-    return children;
+std::vector<std::filesystem::path> WindowsFilesystemProbe::ChildFiles(const std::filesystem::path& path) const
+{
+    return ChildrenWhoseAttributesPass(path,
+                                       [](const DWORD attributes)
+                                       {
+                                           return (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+                                       });
 }
 
 bool WindowsFilesystemProbe::VolumeIsAvailable(const std::filesystem::path& path) const
@@ -147,23 +178,23 @@ bool WindowsFilesystemProbe::VolumeIsAvailable(const std::filesystem::path& path
     return GetDriveTypeW(NativePath(root).c_str()) != DRIVE_NO_ROOT_DIR;
 }
 
-bool WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& path) const
+WriteAccess WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& path) const
 {
     if (!TargetDirectoryExists(path))
     {
-        return false;
+        return WriteAccess::TheFolderIsNotThere;
     }
 
     const HANDLE probe = CreateFileW(NativePath(path / ".fsorg-write-probe").c_str(), GENERIC_WRITE, 0, nullptr,
                                      CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
     if (probe == INVALID_HANDLE_VALUE)
     {
-        return false;
+        return WhatTheProbeRanInto(GetLastError());
     }
 
     CloseHandle(probe);
 
-    return true;
+    return WriteAccess::ItAccepts;
 }
 
 std::optional<std::uintmax_t> WindowsFilesystemProbe::FreeSpaceOn(const std::filesystem::path& path) const

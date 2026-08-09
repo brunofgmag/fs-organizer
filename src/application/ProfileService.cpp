@@ -43,6 +43,7 @@ namespace
 
 ProfileService::ProfileService(const CatalogScanner& catalog,
                                const FilesystemProbe& filesystemProbe,
+                               const SidecarStore& sidecars,
                                const EntryClassifier& classifier,
                                const LinkingEngine& linking,
                                const OperationLog& log,
@@ -50,6 +51,7 @@ ProfileService::ProfileService(const CatalogScanner& catalog,
                                const LinkType linkType)
     : catalog_(catalog),
       filesystemProbe_(filesystemProbe),
+      sidecars_(sidecars),
       classifier_(classifier),
       linking_(linking),
       log_(log),
@@ -110,7 +112,7 @@ std::vector<ExternalAddon> ProfileService::WhatCameFromAnotherProgram(const Simu
     {
         for (const TreeNode* addon : AddonsUnder(library))
         {
-            const std::optional<std::string> written = filesystemProbe_.ContentsOf(ExternalSidecarPathFor(addon->path));
+            const std::optional<std::string> written = sidecars_.Read(ExternalSidecarPathFor(addon->path));
             if (!written.has_value())
             {
                 continue;
@@ -281,8 +283,14 @@ LinkOperationResult ProfileService::Run(const Step& step) const
 LinkBatchReport
 ProfileService::SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& shown, const LinkBatch& batch)
 {
-    const LinksOnDisk onDisk = ReadLinksNow(profile);
+    return SetEnabled(profile, shown, batch, ReadLinksNow(profile));
+}
 
+LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
+                                           const ProfileSnapshot& shown,
+                                           const LinkBatch& batch,
+                                           const LinksOnDisk& onDisk)
+{
     std::vector<const TreeNode*> touched = batch.toDisable;
     touched.insert(touched.end(), batch.toEnable.begin(), batch.toEnable.end());
     const std::size_t drifted = AddonsThatDrifted(touched, shown.enabled, onDisk.enabled);

@@ -15,14 +15,37 @@
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/ports/OperationJournal.h"
+#include "domain/ports/SidecarStore.h"
 
 inline constexpr std::uintmax_t kFreeSpaceMargin = 64ULL * 1024 * 1024;
+
+struct GiveBackRequest
+{
+    std::filesystem::path addonFolder{};
+    std::filesystem::path externalPath{};
+    std::vector<std::filesystem::path> links{};
+};
+
+struct QuarantineRequest
+{
+    AddonId addon{};
+    std::filesystem::path loser{};
+    std::filesystem::path quarantine{};
+    OperationKind kind = OperationKind::QuarantineFromDestination;
+};
+
+struct MeasuredSource
+{
+    ImportOutcome outcome = ImportOutcome::Stopped(FileResult::TheOutcomeIsUnknown);
+    std::vector<FileFingerprint> files{};
+};
 
 class ImportEngine
 {
 public:
     ImportEngine(const FilesystemProbe& filesystemProbe,
                  FileOperations& files,
+                 SidecarStore& sidecars,
                  const LinkingEngine& linking,
                  const OperationLog& log,
                  LinkType linkType);
@@ -34,8 +57,41 @@ public:
                                        const std::function<bool(const CopyProgress&)>& onProgress,
                                        const std::function<void(OperationKind)>& onStep = {}) const;
 
+    [[nodiscard]] ImportOutcome GiveBack(const SimulatorProfile& profile,
+                                         const GiveBackRequest& request,
+                                         const std::function<bool(const CopyProgress&)>& onProgress,
+                                         const std::function<void(OperationKind)>& onStep = {}) const;
+
+    [[nodiscard]] ImportOutcome Quarantine(const QuarantineRequest& request,
+                                           const std::function<bool(const CopyProgress&)>& onProgress,
+                                           const std::function<void(OperationKind)>& onStep = {}) const;
+
 private:
+    [[nodiscard]] MeasuredSource MeasureTheSource(const std::filesystem::path& source,
+                                                  const std::filesystem::path& roomOn) const;
+
+    [[nodiscard]] ImportOutcome CopyAndVerify(const AddonId& addon,
+                                              const std::filesystem::path& source,
+                                              const std::filesystem::path& target,
+                                              const std::vector<FileFingerprint>& expected,
+                                              const std::function<bool(const CopyProgress&)>& onProgress,
+                                              const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] ImportOutcome PutIntoPlace(const AddonId& addon,
+                                             const std::filesystem::path& target,
+                                             const std::function<void(OperationKind)>& onStep) const;
+
     [[nodiscard]] ImportOutcome CheckTheSource(const SimulatorProfile& profile, const ImportRequest& request) const;
+
+    [[nodiscard]] ImportOutcome CheckTheFolderWeAreGivingBack(const GiveBackRequest& request) const;
+
+    [[nodiscard]] ImportOutcome
+    TheOtherProgramTakesItsFolderBack(const AddonId& addon,
+                                      const GiveBackRequest& request,
+                                      const std::filesystem::path& staging,
+                                      const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] ImportOutcome RepointTheLinks(const AddonId& addon, const GiveBackRequest& request) const;
 
     [[nodiscard]] ImportOutcome PrepareTheOtherProgramsFolder(const std::filesystem::path& externalSource,
                                                               const std::filesystem::path& target) const;
@@ -58,6 +114,7 @@ private:
 
     const FilesystemProbe& filesystemProbe_;
     FileOperations& files_;
+    SidecarStore& sidecars_;
     const LinkingEngine& linking_;
     const OperationLog& log_;
     LinkType linkType_;

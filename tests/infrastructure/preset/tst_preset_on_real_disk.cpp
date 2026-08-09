@@ -13,6 +13,7 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -87,6 +88,7 @@ namespace
     {
         WindowsLinkService linkService;
         WindowsFilesystemProbe filesystemProbe;
+        WindowsSidecarStore sidecars;
         LinkingEngine linking{linkService, filesystemProbe};
         SystemClock clock;
         std::filesystem::path journalFile;
@@ -96,7 +98,8 @@ namespace
         FilesystemScanner catalog{manifestParser, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
         FakeLibraryIdGenerator identities;
-        ProfileService profiles{catalog, filesystemProbe, classifier, linking, log, identities, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
+                                log,     identities,      LinkType::Junction};
         std::filesystem::path presetRoot;
         FilePresetRepository presets{presetRoot};
         PresetService service{presets, profiles};
