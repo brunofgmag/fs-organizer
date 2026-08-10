@@ -186,8 +186,12 @@ int main(int argc, char* argv[])
     const AppSettings onDisk = settings.Load().value_or(AppSettings{});
     const LinkType storedLinkType = onDisk.linkType;
 
+    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
+    ExeXmlStartupEntries startupEntries{{}};
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, onDisk.manageStartupEntries);
+
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                  storedLinkType);
+                                  startupService, storedLinkType);
 
     ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
@@ -236,10 +240,6 @@ int main(int argc, char* argv[])
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
-    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
-    ExeXmlStartupEntries startupEntries(StartupFileOf(startupFiles, session.Profile().variant));
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, onDisk.manageStartupEntries);
-    profileService.AlsoSwitchesStartupEntries(startupService);
     StartupViewModel startupViewModel(startupService, session, settings, clock);
     auto* startupPage = new StartupPage(startupViewModel);
 

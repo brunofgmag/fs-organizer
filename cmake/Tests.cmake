@@ -341,6 +341,7 @@ target_link_libraries(fsorg-profile-edits-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/application/tst_profile_service.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFilesystemProbe.h
@@ -355,6 +356,7 @@ target_link_libraries(fsorg-profile-service-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-preset-service-tests preset-service
         tests/application/tst_preset_service.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFilesystemProbe.h
@@ -369,6 +371,7 @@ target_link_libraries(fsorg-preset-service-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-session-tests session
         tests/application/tst_session.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -503,6 +506,7 @@ target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-size-across-screens-tests size-across-screens
         tests/viewmodel/tst_size_across_screens.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -531,6 +535,7 @@ target_link_libraries(fsorg-quarantine-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-addon-tree-view-model-tests addon-tree-view-model
         tests/viewmodel/tst_addon_tree_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -549,6 +554,7 @@ target_link_libraries(fsorg-addon-tree-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-legacy-import-view-model-tests legacy-import-view-model
         tests/viewmodel/tst_legacy_import_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -567,6 +573,7 @@ target_link_libraries(fsorg-legacy-import-view-model-tests PRIVATE fsorg-viewmod
 
 fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
         tests/viewmodel/tst_options_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -584,6 +591,7 @@ target_link_libraries(fsorg-options-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-preset-view-model-tests preset-view-model
         tests/viewmodel/tst_preset_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -602,6 +610,7 @@ target_link_libraries(fsorg-preset-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/viewmodel/tst_community_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -618,6 +627,7 @@ target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-diagnostics-view-model-tests diagnostics-view-model
         tests/viewmodel/tst_diagnostics_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -635,6 +645,7 @@ target_link_libraries(fsorg-diagnostics-view-model-tests PRIVATE fsorg-viewmodel
 
 fsorg_add_qt_test(fsorg-startup-view-model-tests startup-view-model
         tests/viewmodel/tst_startup_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -653,6 +664,7 @@ target_link_libraries(fsorg-startup-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
         tests/viewmodel/tst_quarantine_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -670,6 +682,7 @@ target_link_libraries(fsorg-quarantine-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-deletion-view-model-tests deletion-view-model
         tests/viewmodel/tst_deletion_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -688,6 +701,7 @@ target_link_libraries(fsorg-deletion-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-import-view-model-tests import-view-model
         tests/viewmodel/tst_import_view_model.cpp
+        tests/doubles/StartupOverFakes.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
@@ -781,6 +795,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-link-plan-on-real-disk-tests link-plan-on-real-disk
             tests/infrastructure/link/tst_link_plan_on_real_disk.cpp
+            tests/doubles/StartupOverFakes.h
             tests/doubles/FakeClock.h
             tests/doubles/FakeLibraryIdGenerator.h
             tests/doubles/FakeOperationJournal.h
@@ -828,6 +843,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-external-import-on-real-disk-tests external-import-on-real-disk
             tests/infrastructure/importing/tst_external_import_on_real_disk.cpp
+            tests/doubles/StartupOverFakes.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
             src/domain/importing/ImportPaths.h)
@@ -835,6 +851,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
             tests/infrastructure/options/tst_options_on_real_disk.cpp
+            tests/doubles/StartupOverFakes.h
             tests/doubles/InlineBackgroundRunner.h
             tests/doubles/RecordingSessionObserver.h
             tests/support/EnumPrinting.h
@@ -843,6 +860,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-preset-on-real-disk-tests preset-on-real-disk
             tests/infrastructure/preset/tst_preset_on_real_disk.cpp
+            tests/doubles/StartupOverFakes.h
             tests/doubles/FakeLibraryIdGenerator.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h)
@@ -868,6 +886,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-startup-page-tests startup-page
                 tests/view/tst_startup_page.cpp
+                tests/doubles/StartupOverFakes.h
                 assets/resources.qrc
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
@@ -889,6 +908,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-diagnostics-page-tests diagnostics-page
                 tests/view/tst_diagnostics_page.cpp
+                tests/doubles/StartupOverFakes.h
                 assets/resources.qrc
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
@@ -909,6 +929,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-presets-page-tests presets-page
                 tests/view/tst_presets_page.cpp
+                tests/doubles/StartupOverFakes.h
                 assets/resources.qrc
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
@@ -930,6 +951,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-options-page-tests options-page
                 tests/view/tst_options_page.cpp
+                tests/doubles/StartupOverFakes.h
                 assets/resources.qrc
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
@@ -948,6 +970,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-legacy-import-dialog-tests legacy-import-dialog
                 tests/view/tst_legacy_import_dialog.cpp
+                tests/doubles/StartupOverFakes.h
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
                 tests/doubles/FakeFileOperations.h
@@ -1004,6 +1027,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-delete-dialog-tests delete-dialog
                 tests/view/tst_delete_dialog.cpp
+                tests/doubles/StartupOverFakes.h
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
                 tests/doubles/FakeFileOperations.h
@@ -1029,6 +1053,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-swap-dialog-tests swap-dialog
                 tests/view/tst_swap_dialog.cpp
+                tests/doubles/StartupOverFakes.h
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
                 tests/doubles/FakeFileOperations.h
@@ -1053,6 +1078,7 @@ if (WIN32)
 
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp
+                tests/doubles/StartupOverFakes.h
                 tests/doubles/FakeCatalogScanner.h
                 tests/doubles/FakeClock.h
                 tests/doubles/FakeFileOperations.h
@@ -1118,6 +1144,7 @@ configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
 
 fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/view/tst_addon_tree_page.cpp
+        tests/doubles/StartupOverFakes.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeClock.h

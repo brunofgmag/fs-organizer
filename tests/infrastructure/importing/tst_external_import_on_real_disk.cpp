@@ -19,6 +19,7 @@
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
@@ -225,8 +226,9 @@ void ExternalImportOnRealDiskTest::TheRecordBesideTheAddonIsOnDiskAndBringsTheLi
     FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
     EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
     FakeLibraryIdGenerator identities;
+    StartupOverFakes startup{engine.filesystemProbe};
     const ProfileService profiles(catalog, engine.filesystemProbe, engine.sidecars, classifier, engine.linking,
-                                  engine.log, identities, LinkType::Junction);
+                                  engine.log, identities, startup.service, LinkType::Junction);
 
     const SimulatorProfile forgetful = disk.Profile();
     QVERIFY(forgetful.externalOrigins.empty());

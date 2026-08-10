@@ -21,6 +21,7 @@
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/RecordingSessionObserver.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -104,7 +105,15 @@ namespace
               journal(journalFile),
               settingsFile(disk.SettingsFile()),
               settings(settingsFile),
-              service(catalog, filesystemProbe, sidecars, classifier, linking, log, identities, linkType),
+              service(catalog,
+                      filesystemProbe,
+                      sidecars,
+                      classifier,
+                      linking,
+                      log,
+                      identities,
+                      startup.service,
+                      linkType),
               organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, linkType),
               session(service, organizer, settings, processProbe, runner, observer)
         {
@@ -126,6 +135,7 @@ namespace
         WindowsProcessProbe processProbe{std::vector<std::string>{}};
         std::filesystem::path settingsFile;
         JsonSettingsRepository settings;
+        StartupOverFakes startup{filesystemProbe};
         ProfileService service;
         LibraryOrganizer organizer;
         InlineBackgroundRunner runner;
