@@ -74,7 +74,17 @@ namespace
         static void TheEntryInsideADestinationNamesTheFolderItReachesInto();
         static void AnExecutableMissingOutsideEveryDestinationIsMissingAndNotAnAddonThatIsOff();
         static void EveryEntryOfTheFileGetsALineAndTheOrderIsTheFileOrder();
+        static void AnEnabledEntryReachingIntoTheAddonIsCarriedByIt();
+        static void ADisabledEntryReachingIntoTheAddonIsNotCarriedByIt();
+        static void AnEntryInAnotherAddonOfTheSameDestinationIsNotCarried();
+        static void AnEntryOutsideEveryDestinationIsNotCarried();
+        static void TheFolderNameIsMatchedWithoutMindingItsCase();
     };
+
+    StartupReport ReportOf(const std::vector<StartupEntry>& entries, const FilesystemProbe& probe)
+    {
+        return ReportStartupEntries(entries, ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
+    }
 }
 
 void StartupReportTest::AnEnabledEntryWhoseExecutableIsGoneAlarms()
@@ -221,6 +231,70 @@ void StartupReportTest::EveryEntryOfTheFileGetsALineAndTheOrderIsTheFileOrder()
     QCOMPARE(report.lines[0].reach, StartupReach::InsideAnAddon);
     QCOMPARE(report.lines[1].reach, StartupReach::OutsideYourAddons);
     QCOMPARE(report.lines[2].reach, StartupReach::OutsideYourAddons);
+}
+
+void StartupReportTest::AnEnabledEntryReachingIntoTheAddonIsCarriedByIt()
+{
+    InMemoryFileSystem disk;
+    disk.AddFile(kFlowExecutable);
+    const FakeFilesystemProbe probe(disk);
+
+    const std::vector<StartupLine> carried =
+        EntriesCarriedBy(ReportOf({Entry("FlowPro", kFlowExecutable, true)}, probe), {kFlowInTheLibrary});
+
+    QCOMPARE(carried.size(), std::size_t{1});
+    QCOMPARE(carried.front().label, std::string("FlowPro"));
+    QCOMPARE(carried.front().path, kFlowExecutable);
+}
+
+void StartupReportTest::ADisabledEntryReachingIntoTheAddonIsNotCarriedByIt()
+{
+    InMemoryFileSystem disk;
+    disk.AddFile(kFlowExecutable);
+    const FakeFilesystemProbe probe(disk);
+
+    const std::vector<StartupLine> carried =
+        EntriesCarriedBy(ReportOf({Entry("FlowPro", kFlowExecutable, false)}, probe), {kFlowInTheLibrary});
+
+    QVERIFY(carried.empty());
+}
+
+void StartupReportTest::AnEntryInAnotherAddonOfTheSameDestinationIsNotCarried()
+{
+    const std::filesystem::path otherExecutable = kCommunity / "fbw-aircraft-a320" / "bin" / "sync.exe";
+
+    InMemoryFileSystem disk;
+    disk.AddFile(otherExecutable);
+    const FakeFilesystemProbe probe(disk);
+
+    const std::vector<StartupLine> carried =
+        EntriesCarriedBy(ReportOf({Entry("A320 Sync", otherExecutable, true)}, probe), {kFlowInTheLibrary});
+
+    QVERIFY(carried.empty());
+}
+
+void StartupReportTest::AnEntryOutsideEveryDestinationIsNotCarried()
+{
+    InMemoryFileSystem disk;
+    disk.AddFile(kSimlink);
+    const FakeFilesystemProbe probe(disk);
+
+    const std::vector<StartupLine> carried =
+        EntriesCarriedBy(ReportOf({Entry("Navigraph Simlink", kSimlink, true)}, probe), {kFlowInTheLibrary});
+
+    QVERIFY(carried.empty());
+}
+
+void StartupReportTest::TheFolderNameIsMatchedWithoutMindingItsCase()
+{
+    InMemoryFileSystem disk;
+    disk.AddFile(kFlowExecutable);
+    const FakeFilesystemProbe probe(disk);
+
+    const std::vector<StartupLine> carried = EntriesCarriedBy(
+        ReportOf({Entry("FlowPro", kFlowExecutable, true)}, probe), {kLibrary / "Utilities" / "P42-Util-Flow-Pro"});
+
+    QCOMPARE(carried.size(), std::size_t{1});
 }
 
 QTEST_APPLESS_MAIN(StartupReportTest)

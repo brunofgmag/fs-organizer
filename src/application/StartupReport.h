@@ -43,4 +43,7 @@ struct StartupReport
                                                  const ProfileSnapshot& snapshot,
                                                  const FilesystemProbe& filesystemProbe);
 
+[[nodiscard]] std::vector<StartupLine> EntriesCarriedBy(const StartupReport& report,
+                                                        const std::vector<std::filesystem::path>& addonFolders);
+
 #endif // FS_ORGANIZER_APPLICATION_STARTUP_REPORT_H
