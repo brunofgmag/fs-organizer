@@ -760,7 +760,7 @@ void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
     std::ranges::copy_if(report.results, std::back_inserter(failed),
                          [](const LinkOperationResult& result)
                          {
-                             return !result.Worked();
+                             return !result.outcome.Succeeded();
                          });
 
     const auto done = static_cast<int>(report.results.size() - failed.size());

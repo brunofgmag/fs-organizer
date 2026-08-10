@@ -60,6 +60,7 @@ namespace
         static void ASwapThatFailedHalfwayIsUndoneBackToTheAddonThatWasOn();
         static void TheAddonBeingDisabledNamesTheStartupEntryItCarries();
         static void AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack();
+        static void AStartupStepThatCouldNotWriteIsAFailureAndIsNotUndone();
         static void RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalAlone();
         static void WithTheStartupManagementOffNothingIsAskedAndTheFileIsNeverRead();
         static void ADisabledEntryInsideTheAddonIsNotWorthAsking();
@@ -937,6 +938,39 @@ void ProfileServiceTest::AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack()
     QCOMPARE(reverted.size(), std::size_t{2});
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QVERIFY(f.startup.entries.Entries().front().enabled);
+}
+
+void ProfileServiceTest::AStartupStepThatCouldNotWriteIsAFailureAndIsNotUndone()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(true);
+    f.startup.entries.MakeSwitchingFailWith(FileResult::CouldNotWriteTheStartupFile);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const LinkBatch batch{.toDisable = f.Pmdg(snapshot),
+                          .toEnable = {},
+                          .startupEntriesToTurnOff =
+                              f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot))};
+
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(profile, snapshot, batch).results;
+
+    QCOMPARE(results.size(), std::size_t{2});
+
+    const auto startupStep =
+        std::ranges::find(results, OperationKind::TurnOffTheStartupEntry, &LinkOperationResult::kind);
+
+    QVERIFY(startupStep != results.end());
+    QVERIFY(!startupStep->outcome.Succeeded());
+    QVERIFY(f.startup.entries.Entries().front().enabled);
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{1});
+    QCOMPARE(reverted.front().kind, OperationKind::EnableAddon);
 }
 
 void ProfileServiceTest::RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalAlone()

@@ -137,9 +137,9 @@ namespace
 
 QString Describe(const LinkOperationResult& result)
 {
-    if (result.fileResult.has_value())
+    if (const FileResult* file = result.outcome.File(); file != nullptr)
     {
-        return QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(*result.fileResult));
+        return QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(*file));
     }
 
     QString line =

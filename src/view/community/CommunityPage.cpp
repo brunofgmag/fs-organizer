@@ -822,7 +822,7 @@ void CommunityPage::OnRepairFinished(const std::vector<LinkOperationResult>& res
     QStringList failed;
     for (const LinkOperationResult& result : results)
     {
-        if (!result.Worked())
+        if (!result.outcome.Succeeded())
         {
             failed.append(Describe(result));
         }

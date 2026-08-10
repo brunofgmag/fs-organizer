@@ -318,8 +318,7 @@ LinkOperationResult ProfileService::RunTheStartupStep(const Step& step) const
                                .addonFolder = step.addonFolder,
                                .linkPath = step.linkPath,
                                .kind = step.kind,
-                               .outcome = LinkOutcome::Success(),
-                               .fileResult = result};
+                               .outcome = LinkOutcome::OfFile(result)};
 }
 
 LinkOperationResult ProfileService::Run(const Step& step) const
@@ -340,8 +339,7 @@ LinkOperationResult ProfileService::Run(const Step& step) const
                                .addonFolder = step.addonFolder,
                                .linkPath = step.linkPath,
                                .kind = step.kind,
-                               .outcome = outcome,
-                               .fileResult = std::nullopt};
+                               .outcome = outcome};
 }
 
 LinkBatchReport
@@ -375,7 +373,7 @@ std::vector<LinkOperationResult> ProfileService::RunAsOneBatch(const std::vector
     {
         LinkOperationResult result = Run(step);
 
-        if (result.Worked())
+        if (result.outcome.Succeeded())
         {
             undo.push_back(Inverse(step));
         }
@@ -490,7 +488,7 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
 
         LinkOperationResult result = Run(*step);
 
-        if (result.Worked())
+        if (result.outcome.Succeeded())
         {
             const std::vector<Step> inverse = Inverse(profile, request);
             undo.insert(undo.end(), inverse.begin(), inverse.end());
