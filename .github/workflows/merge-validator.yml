@@ -22,5 +22,4 @@ jobs:
     with:
       fork-tests-only: true
       tests-only-flag: FSORG_TESTS_ONLY
-      domain-tests: true
     secrets: inherit
