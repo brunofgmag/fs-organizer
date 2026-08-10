@@ -131,6 +131,19 @@ PresetPlan PlanPresetApplication(const Preset& preset,
     return plan;
 }
 
+std::size_t AddonsThatWouldChange(const PresetPlan& plan)
+{
+    return plan.toEnable.size() + plan.toDisable.size();
+}
+
+bool PresetIsSatisfied(const Preset& preset,
+                       const SimulatorProfile& profile,
+                       const std::vector<TreeNode>& libraries,
+                       const EnabledAddons& enabled)
+{
+    return AddonsThatWouldChange(PlanPresetApplication(preset, ApplyMode::Replace, profile, libraries, enabled)) == 0;
+}
+
 PresetContent ContentOf(const Preset& preset, const SimulatorProfile& profile, const std::vector<TreeNode>& libraries)
 {
     const AddonsByLibrary index = AddonsOfEveryLibrary(libraries, profile);

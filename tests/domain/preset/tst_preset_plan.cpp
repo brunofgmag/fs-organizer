@@ -24,6 +24,12 @@ namespace
         static void TheContentCountsEveryEntryAndTheCategoriesTheyLandIn();
         static void AnEntryThatNoLongerResolvesStillCountsAsAnAddonAndAddsNoCategory();
         static void ADisableEntryWeighsTheSameAsAnEnableOneInTheContent();
+        static void APresetMadeOutOfWhatIsEnabledIsSatisfiedTheSameInstant();
+        static void TwoPresetsThatDescribeTheSameStateAreBothSatisfied();
+        static void EnablingOneAddonByHandStopsSatisfyingThePreset();
+        static void APresetIsJudgedAsReplaceEvenWhereAnotherModeWouldChangeNothing();
+        static void AnEntryWhoseAddonIsGoneDoesNotKeepThePresetFromBeingSatisfied();
+        static void WhatWouldChangeCountsTheTwoSidesAndNothingElse();
     };
 }
 
@@ -299,6 +305,71 @@ void PresetPlanTest::ADisableEntryWeighsTheSameAsAnEnableOneInTheContent()
 
     QCOMPARE(content.addons, std::size_t{2});
     QCOMPARE(content.categories, std::size_t{1});
+}
+
+void PresetPlanTest::APresetMadeOutOfWhatIsEnabledIsSatisfiedTheSameInstant()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftB, kAircraftC}};
+
+    const Preset preset{.name = "Agora", .entries = EntriesForWhatIsEnabled(Profile(), libraries, enabled)};
+
+    QVERIFY(PresetIsSatisfied(preset, Profile(), libraries, enabled));
+}
+
+void PresetPlanTest::TwoPresetsThatDescribeTheSameStateAreBothSatisfied()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftB}};
+
+    const Preset one{.name = "Voo curto", .entries = {Enabling("aircraft-b")}};
+    const Preset other{.name = "Treino", .entries = {Enabling("aircraft-b"), Disabling("aircraft-a")}};
+
+    QVERIFY(PresetIsSatisfied(one, Profile(), libraries, enabled));
+    QVERIFY(PresetIsSatisfied(other, Profile(), libraries, enabled));
+}
+
+void PresetPlanTest::EnablingOneAddonByHandStopsSatisfyingThePreset()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-b")}};
+
+    QVERIFY(PresetIsSatisfied(preset, Profile(), libraries, EnabledAddons{{kAircraftB}}));
+    QVERIFY(!PresetIsSatisfied(preset, Profile(), libraries, EnabledAddons{{kAircraftB, kAircraftC}}));
+}
+
+void PresetPlanTest::APresetIsJudgedAsReplaceEvenWhereAnotherModeWouldChangeNothing()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftB, kAircraftC}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-b")}};
+
+    const PresetPlan cumulative = PlanPresetApplication(preset, ApplyMode::Cumulative, Profile(), libraries, enabled);
+
+    QCOMPARE(AddonsThatWouldChange(cumulative), std::size_t{0});
+    QVERIFY(!PresetIsSatisfied(preset, Profile(), libraries, enabled));
+}
+
+void PresetPlanTest::AnEntryWhoseAddonIsGoneDoesNotKeepThePresetFromBeingSatisfied()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftB}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-b"), Enabling("aircraft-que-sumiu")}};
+
+    QVERIFY(PresetIsSatisfied(preset, Profile(), libraries, enabled));
+}
+
+void PresetPlanTest::WhatWouldChangeCountsTheTwoSidesAndNothingElse()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftB, kAircraftC}};
+    const Preset preset{.name = "Voo curto", .entries = {Enabling("aircraft-a"), Enabling("aircraft-b")}};
+
+    const PresetPlan plan = PlanPresetApplication(preset, ApplyMode::Replace, Profile(), libraries, enabled);
+
+    QCOMPARE(plan.alreadyInPlace.size(), std::size_t{1});
+    QCOMPARE(AddonsThatWouldChange(plan), plan.toEnable.size() + plan.toDisable.size());
+    QCOMPARE(AddonsThatWouldChange(plan), std::size_t{2});
 }
 
 QTEST_MAIN(PresetPlanTest)
