@@ -123,6 +123,7 @@ set(VIEW_SOURCES
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/presets/OmittedDialog.cpp
+        src/view/presets/PresetPlanPanel.cpp
         src/view/PresetsPage.cpp
         src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
