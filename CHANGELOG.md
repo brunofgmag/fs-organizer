@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/brunofgmag/fs-organizer/compare/v0.24.2...v0.25.0) (2026-08-10)
+
+
+### Features
+
+* **presets:** tell the truth about presets and keep a way back ([#72](https://github.com/brunofgmag/fs-organizer/issues/72)) ([f6c636c](https://github.com/brunofgmag/fs-organizer/commit/f6c636c2afb6df486e4a1da1954d18d0512f873c))
+
 ## [0.24.2](https://github.com/brunofgmag/fs-organizer/compare/v0.24.1...v0.24.2) (2026-08-10)
 
 
