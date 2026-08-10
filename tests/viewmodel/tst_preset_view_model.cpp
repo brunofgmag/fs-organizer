@@ -51,6 +51,7 @@ namespace
         static void ApplyingSaysWhatTheStartupHalfLeftUndoneInsteadOfPassingInSilence();
         static void ASatisfiedPresetStillCountsWhatDisableWouldChange();
         static void GoingBackDoesNotOverwriteTheReturnPreset();
+        static void AGoverningPresetRowIsNotSatisfiedWhenTheStartupFileDisagrees();
     };
 }
 
@@ -580,6 +581,26 @@ void PresetViewModelTest::GoingBackDoesNotOverwriteTheReturnPreset()
 
     QVERIFY(f.session.Snapshot().enabled.Contains(kOtherAddon));
     QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void PresetViewModelTest::AGoverningPresetRowIsNotSatisfiedWhenTheStartupFileDisagrees()
+{
+    Fixture f;
+    const std::filesystem::path launcher = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe";
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = launcher, .enabled = false});
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.startupEntries = {PresetStartupEntry{.path = launcher, .action = PresetAction::Enable}};
+    preset.governsStartup = true;
+    QVERIFY(f.repository.Save(kProfileId, preset));
+
+    const QList<PresetRow> rows = f.viewModel.Rows(ApplyMode::Replace);
+
+    QCOMPARE(rows.size(), 1);
+    QCOMPARE(rows.front().changes, std::size_t{0});
+    QVERIFY(!rows.front().satisfied);
 }
 
 QTEST_MAIN(PresetViewModelTest)

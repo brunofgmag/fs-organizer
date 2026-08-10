@@ -70,6 +70,8 @@ public:
                                                                    const ProfileSnapshot& shown,
                                                                    const std::vector<const TreeNode*>& nodes) const;
 
+    [[nodiscard]] std::vector<StartupEntry> StartupEntriesNow() const;
+
     [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
 
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;

@@ -78,6 +78,9 @@ public:
     [[nodiscard]] PresetApplyReport
     ApplyTheReturn(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
 
+    [[nodiscard]] bool
+    IsSatisfied(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
+
 private:
     [[nodiscard]] PresetApplyReport Apply(const SimulatorProfile& profile,
                                           const ProfileSnapshot& snapshot,

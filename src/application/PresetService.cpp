@@ -162,6 +162,26 @@ std::optional<Preset> PresetService::ReturnPreset(const std::string& profileId) 
     return presets_.LoadReturnPreset(profileId);
 }
 
+bool PresetService::IsSatisfied(const SimulatorProfile& profile,
+                                const ProfileSnapshot& snapshot,
+                                const Preset& preset) const
+{
+    if (!PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled))
+    {
+        return false;
+    }
+
+    std::vector<StartupLine> lines;
+    for (const StartupEntry& entry : snapshot.startupEntries)
+    {
+        lines.push_back(StartupLine{.label = entry.label, .path = entry.path, .enabled = entry.enabled});
+    }
+
+    const PresetStartupPlan startup = PlanPresetStartup(preset, ApplyMode::Replace, lines, startup_.Managing());
+
+    return startup.toTurnOn.empty() && startup.toTurnOff.empty();
+}
+
 Preset PresetService::WhatIsOnRightNow(const SimulatorProfile& profile,
                                        const std::vector<TreeNode>& libraries,
                                        const EnabledAddons& enabled,

@@ -84,6 +84,11 @@ std::vector<StartupLine> ProfileService::StartupEntriesCarriedBy(const Simulator
     return EntriesCarriedBy(startup_.Report(profile, shown), folders);
 }
 
+std::vector<StartupEntry> ProfileService::StartupEntriesNow() const
+{
+    return startup_.Entries();
+}
+
 LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const
 {
     const TreeNode tree = catalog_.Scan(path);
@@ -111,6 +116,7 @@ ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile) const
     snapshot.entries = ResolveEntries(profile, snapshot.libraries);
     snapshot.enabled = EnabledAddons(EnabledAddonFolders(snapshot.entries));
     snapshot.conflicts = FindCopyConflicts(snapshot.entries, snapshot.libraries);
+    snapshot.startupEntries = startup_.Entries();
 
     return snapshot;
 }

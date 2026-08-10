@@ -36,7 +36,7 @@ PresetRow PresetViewModel::RowFor(const Preset& preset, const PresetListing& lis
                 + tr(" · %n category", nullptr, static_cast<int>(content.categories)),
             .updated = listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{},
             .changes = AddonsThatWouldChange(plan),
-            .satisfied = PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled)};
+            .satisfied = service_.IsSatisfied(profile, snapshot, preset)};
 }
 
 QList<PresetRow> PresetViewModel::Rows(const ApplyMode mode) const

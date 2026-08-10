@@ -53,6 +53,9 @@ namespace
         static void TurningTheFlagOnCapturesTheStartupEntriesThatAreOnRightNow();
         static void UpdatingRefreshesTheStartupEntriesOnlyOfAPresetThatGovernsThem();
         static void ApplyingAGoverningPresetActuallyFlipsTheStartupEntry();
+        static void AGoverningPresetIsNotSatisfiedWhenTheStartupFileDisagrees();
+        static void AGoverningPresetIsSatisfiedWhenTheStartupFileMatches();
+        static void ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction();
     };
 }
 
@@ -698,6 +701,40 @@ void PresetServiceTest::ApplyingAGoverningPresetActuallyFlipsTheStartupEntry()
 
     QCOMPARE(after.front().enabled, true);
     QCOMPARE(after.back().enabled, true);
+}
+
+void PresetServiceTest::AGoverningPresetIsNotSatisfiedWhenTheStartupFileDisagrees()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset = GoverningStartup({TurningOn(kLauncher)});
+
+    QVERIFY(!f.service.IsSatisfied(profile, f.Snapshot(profile), preset));
+}
+
+void PresetServiceTest::AGoverningPresetIsSatisfiedWhenTheStartupFileMatches()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = true});
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset = GoverningStartup({TurningOn(kLauncher)});
+
+    QVERIFY(f.service.IsSatisfied(profile, f.Snapshot(profile), preset));
+}
+
+void PresetServiceTest::ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    Preset preset;
+    preset.name = "Voo curto";
+
+    QVERIFY(f.service.IsSatisfied(profile, f.Snapshot(profile), preset));
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)
