@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0](https://github.com/brunofgmag/fs-organizer/compare/v0.23.0...v0.24.0) (2026-08-10)
+
+
+### Features
+
+* warn before disabling the addon that starts a program, and turn both off as one operation ([#65](https://github.com/brunofgmag/fs-organizer/issues/65)) ([2e7a2b8](https://github.com/brunofgmag/fs-organizer/commit/2e7a2b8bbe278388d494d42300016ede73179365))
+
 ## [0.23.0](https://github.com/brunofgmag/fs-organizer/compare/v0.22.0...v0.23.0) (2026-08-09)
 
 
