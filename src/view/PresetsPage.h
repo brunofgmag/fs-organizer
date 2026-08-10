@@ -79,7 +79,6 @@ private:
     QPushButton* remove_ = nullptr;
     QPushButton* create_ = nullptr;
     QLabel* applyAs_ = nullptr;
-    QLabel* promise_ = nullptr;
     EmptyState* nothing_ = nullptr;
     QPushButton* nothingAction_ = nullptr;
     std::optional<Preset> selected_;

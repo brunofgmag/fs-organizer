@@ -251,7 +251,6 @@ void AddonTreePage::RetranslateUi() const
     moveTo_->setText(tr("Move to…"));
     openFolder_->setText(tr("Open the folder"));
     delete_->setText(tr("Delete…"));
-    promise_->setText(tr("Repairing never touches the real files: only the reparse node is rewritten."));
     panel_->RenameTheFallback(tr("Addon selected"));
     invite_->Retell(tr("This profile has no library yet."),
                     tr("A library is the folder where your addons live, outside the simulator. Enabling an addon "
@@ -333,17 +332,12 @@ QWidget* AddonTreePage::CreatePanel()
     delete_ = new QPushButton(panel_);
     delete_->setObjectName(QStringLiteral("PanelDeleteAction"));
 
-    promise_ = new QLabel(panel_);
-    promise_->setObjectName(QStringLiteral("PanelPromise"));
-    promise_->setWordWrap(true);
-
     panel_->Add(detail_);
     panel_->Add(dependencies_);
     panel_->Add(relink_);
     panel_->Add(moveTo_);
     panel_->Add(openFolder_);
     panel_->Add(delete_);
-    panel_->Add(promise_);
 
     panel_->RestoreCollapsedState();
     panel_->Summon(false);

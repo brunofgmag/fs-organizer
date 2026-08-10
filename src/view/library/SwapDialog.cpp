@@ -63,10 +63,6 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     scroll->setWidgetResizable(true);
     scroll->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
-    auto* promise = new QLabel(tr("One operation, one line in the Journal, undone as one."), this);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
-
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
     QPushButton* swap = buttons->addButton(tr("Swap them"), QDialogButtonBox::AcceptRole);
     swap->setProperty("role", "primary");
@@ -79,7 +75,6 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
     layout->addWidget(scroll, 1);
-    layout->addWidget(promise);
     layout->addWidget(buttons);
 
     ShowTheSizes(std::vector<WeighedSwap>(swaps.size()));

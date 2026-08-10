@@ -65,12 +65,6 @@ LibraryRootDialog::LibraryRootDialog(const std::filesystem::path& root, const Ro
     AddTheSide(*grid, 0, tr("This folder"), HowMuchItLeaves(depth));
     AddTheSide(*grid, 1, tr("A short root, for comparison"), TheShortRootForComparison());
 
-    auto* promise = new QLabel(tr("Nothing is blocked. Addons that go past the limit will say so when it matters, and "
-                                  "Diagnostics keeps the longest path of each library."),
-                               this);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
-
     auto* buttons = new QDialogButtonBox(this);
     QPushButton* another = buttons->addButton(tr("Pick another folder"), QDialogButtonBox::RejectRole);
     another->setObjectName(QStringLiteral("PickAnotherFolder"));
@@ -88,7 +82,6 @@ LibraryRootDialog::LibraryRootDialog(const std::filesystem::path& root, const Ro
     layout->addWidget(name);
     layout->addWidget(explanation);
     layout->addWidget(compared);
-    layout->addWidget(promise);
     layout->addStretch();
     layout->addWidget(buttons);
 

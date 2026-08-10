@@ -276,11 +276,6 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
                                        "as active to switch a destination or a library."),
                                     libraryGroup);
     underTheLibraries->addWidget(onlyForTheProfileInUse_);
-    underTheLibraries->addWidget(
-        Quiet(tr("Unregistering takes the library out of the configuration and deletes no file at all. The links that "
-                 "pointed at it keep working in the simulator, but start showing up as third party links, which FS "
-                 "Organizer does not touch."),
-              libraryGroup));
     layout->addWidget(libraryGroup);
     layout->addStretch();
 
