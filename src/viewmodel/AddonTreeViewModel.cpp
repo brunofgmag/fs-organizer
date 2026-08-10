@@ -204,13 +204,28 @@ QString AddonTreeViewModel::VersionOf(const std::filesystem::path& addonFolder) 
     return QString::fromStdString(addon->addon->manifest.packageVersion);
 }
 
+std::vector<StartupLine> AddonTreeViewModel::StartupEntriesAtRisk(const std::vector<const TreeNode*>& nodes) const
+{
+    return service_.StartupEntriesCarriedBy(session_.Profile(), session_.Snapshot(), nodes);
+}
+
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
                                 const bool enable,
                                 const std::vector<TakenPlace>& agreedSwaps)
 {
+    Toggle(nodes, enable, agreedSwaps, {});
+}
+
+void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
+                                const bool enable,
+                                const std::vector<TakenPlace>& agreedSwaps,
+                                const std::vector<StartupLine>& agreedEntries)
+{
     if (!enable)
     {
-        ApplyResults(service_.SetEnabled(session_.Profile(), session_.Snapshot(), nodes, false));
+        ApplyResults(service_.SetEnabled(
+            session_.Profile(), session_.Snapshot(),
+            LinkBatch{.toDisable = nodes, .toEnable = {}, .startupEntriesToTurnOff = agreedEntries}));
         return;
     }
 

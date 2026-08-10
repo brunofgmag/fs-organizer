@@ -55,6 +55,7 @@
 #include "view/library/AddonTreePage.h"
 #include "domain/support/PathUtils.h"
 #include "view/library/LibraryRootDialog.h"
+#include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
@@ -287,6 +288,23 @@ namespace
         return TakenPlace{.addonFolder = addons[1]->path,
                           .linkPath = addons[0]->path.parent_path() / addons[0]->path.filename(),
                           .occupant = addons[0]->path};
+    }
+
+    std::vector<StartupLine> AStartupEntryWorthShowing(StartupViewModel& startup)
+    {
+        startup.Show();
+
+        std::vector<StartupLine> carried;
+
+        for (const StartupLine& line : startup.Lines())
+        {
+            if (line.enabled && line.reach == StartupReach::InsideAnAddon)
+            {
+                carried.push_back(line);
+            }
+        }
+
+        return carried;
     }
 
     QSize SizeFrom(const QString& text)
@@ -618,6 +636,26 @@ int main(int argc, char* argv[])
 
         libraryTab->click();
         LetTheLayoutSettle();
+
+        if (const std::vector<StartupLine> carried = AStartupEntryWorthShowing(startupViewModel); !carried.empty())
+        {
+            StartupEntryDialog carriedDialog(carried, &shell);
+
+            landed = SaveTheDialogOpenedBy(
+                         [&carriedDialog]
+                         {
+                             static_cast<void>(carriedDialog.exec());
+                         },
+                         folder, QStringLiteral("22-library-startup-entry"))
+                && landed;
+
+            libraryTab->click();
+            LetTheLayoutSettle();
+        }
+        else
+        {
+            Out() << "no enabled startup entry reaches into an addon, so there is no warning to write\n";
+        }
 
         QPushButton* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
 

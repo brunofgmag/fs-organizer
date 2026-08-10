@@ -65,6 +65,33 @@ void ProfileService::UseLinkType(const LinkType linkType)
     linkType_ = linkType;
 }
 
+void ProfileService::AlsoSwitchesStartupEntries(StartupService& startup)
+{
+    startup_ = &startup;
+}
+
+std::vector<StartupLine> ProfileService::StartupEntriesCarriedBy(const SimulatorProfile& profile,
+                                                                 const ProfileSnapshot& shown,
+                                                                 const std::vector<const TreeNode*>& nodes) const
+{
+    if (startup_ == nullptr)
+    {
+        return {};
+    }
+
+    std::vector<std::filesystem::path> folders;
+
+    for (const TreeNode* node : nodes)
+    {
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            folders.push_back(addon->path);
+        }
+    }
+
+    return EntriesCarriedBy(startup_->Report(profile, shown), folders);
+}
+
 LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const
 {
     const TreeNode tree = catalog_.Scan(path);
@@ -191,7 +218,8 @@ std::vector<TakenPlace> ProfileService::PlacesTaken(const SimulatorProfile& prof
 std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfile& profile,
                                                             const LinksOnDisk& onDisk,
                                                             const std::vector<const TreeNode*>& nodes,
-                                                            const bool enable)
+                                                            const bool enable,
+                                                            const std::vector<StartupLine>& startupEntriesToTurnOff)
 {
     std::vector<Step> steps;
     std::set<std::string> planned;
@@ -219,7 +247,7 @@ std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfi
                 continue;
             }
 
-            const std::vector<Step> next = StepsFor(profile, linksByTarget, *addon, enable);
+            const std::vector<Step> next = StepsFor(profile, linksByTarget, *addon, enable, startupEntriesToTurnOff);
             steps.insert(steps.end(), next.begin(), next.end());
         }
     }
@@ -231,7 +259,8 @@ std::vector<ProfileService::Step>
 ProfileService::StepsFor(const SimulatorProfile& profile,
                          const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
                          const TreeNode& addon,
-                         const bool enable)
+                         const bool enable,
+                         const std::vector<StartupLine>& startupEntriesToTurnOff)
 {
     const AddonId identity = IdentityOf(profile, addon.path);
 
@@ -253,19 +282,62 @@ ProfileService::StepsFor(const SimulatorProfile& profile,
                          .linkPath = entry->second->path});
     }
 
+    for (const StartupLine& line : EntriesCarriedBy(StartupReport{.lines = startupEntriesToTurnOff}, {addon.path}))
+    {
+        steps.push_back({.kind = OperationKind::TurnOffTheStartupEntry,
+                         .addonId = identity,
+                         .addonFolder = addon.path,
+                         .linkPath = line.path});
+    }
+
     return steps;
+}
+
+namespace
+{
+    OperationKind TheOppositeOf(const OperationKind kind)
+    {
+        switch (kind)
+        {
+        case OperationKind::EnableAddon: return OperationKind::DisableAddon;
+        case OperationKind::TurnOffTheStartupEntry: return OperationKind::TurnOnTheStartupEntry;
+        case OperationKind::TurnOnTheStartupEntry: return OperationKind::TurnOffTheStartupEntry;
+        default: return OperationKind::EnableAddon;
+        }
+    }
 }
 
 ProfileService::Step ProfileService::Inverse(const Step& step)
 {
-    return {.kind = step.kind == OperationKind::EnableAddon ? OperationKind::DisableAddon : OperationKind::EnableAddon,
+    return {.kind = TheOppositeOf(step.kind),
             .addonId = step.addonId,
             .addonFolder = step.addonFolder,
             .linkPath = step.linkPath};
 }
 
+LinkOperationResult ProfileService::RunTheStartupStep(const Step& step) const
+{
+    const bool turningOn = step.kind == OperationKind::TurnOnTheStartupEntry;
+    const FileResult result =
+        startup_ == nullptr ? FileResult::TheStartupEntriesAreLeftLoose : startup_->Switch(step.linkPath, turningOn);
+
+    log_.RecordImport(step.kind, step.addonId, step.addonFolder, step.linkPath, result);
+
+    return LinkOperationResult{.addonId = step.addonId,
+                               .addonFolder = step.addonFolder,
+                               .linkPath = step.linkPath,
+                               .kind = step.kind,
+                               .outcome = LinkOutcome::Success(),
+                               .fileResult = result};
+}
+
 LinkOperationResult ProfileService::Run(const Step& step) const
 {
+    if (step.kind == OperationKind::TurnOffTheStartupEntry || step.kind == OperationKind::TurnOnTheStartupEntry)
+    {
+        return RunTheStartupStep(step);
+    }
+
     const LinkOutcome outcome = CreatesALink(step.kind)
         ? linking_.Enable(Addon{.folderPath = step.addonFolder, .manifest = Manifest{}}, step.linkPath.parent_path(),
                           linkType_)
@@ -277,7 +349,8 @@ LinkOperationResult ProfileService::Run(const Step& step) const
                                .addonFolder = step.addonFolder,
                                .linkPath = step.linkPath,
                                .kind = step.kind,
-                               .outcome = outcome};
+                               .outcome = outcome,
+                               .fileResult = std::nullopt};
 }
 
 LinkBatchReport
@@ -295,7 +368,7 @@ LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
     touched.insert(touched.end(), batch.toEnable.begin(), batch.toEnable.end());
     const std::size_t drifted = AddonsThatDrifted(touched, shown.enabled, onDisk.enabled);
 
-    std::vector<Step> steps = PlanSteps(profile, onDisk, batch.toDisable, false);
+    std::vector<Step> steps = PlanSteps(profile, onDisk, batch.toDisable, false, batch.startupEntriesToTurnOff);
     const std::vector<Step> enabling = PlanSteps(profile, onDisk, batch.toEnable, true);
     steps.insert(steps.end(), enabling.begin(), enabling.end());
 
@@ -311,7 +384,7 @@ std::vector<LinkOperationResult> ProfileService::RunAsOneBatch(const std::vector
     {
         LinkOperationResult result = Run(step);
 
-        if (result.outcome.Succeeded())
+        if (result.Worked())
         {
             undo.push_back(Inverse(step));
         }
@@ -426,7 +499,7 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
 
         LinkOperationResult result = Run(*step);
 
-        if (result.outcome.Succeeded())
+        if (result.Worked())
         {
             const std::vector<Step> inverse = Inverse(profile, request);
             undo.insert(undo.end(), inverse.begin(), inverse.end());

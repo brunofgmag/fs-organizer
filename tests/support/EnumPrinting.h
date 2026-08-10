@@ -221,6 +221,8 @@ namespace QTest
         case OperationKind::GiveBackToAnotherProgram: return qstrdup("GiveBackToAnotherProgram");
         case OperationKind::UndoTheInterruptedSwap: return qstrdup("UndoTheInterruptedSwap");
         case OperationKind::RestoreOverTheOccupant: return qstrdup("RestoreOverTheOccupant");
+        case OperationKind::TurnOffTheStartupEntry: return qstrdup("TurnOffTheStartupEntry");
+        case OperationKind::TurnOnTheStartupEntry: return qstrdup("TurnOnTheStartupEntry");
         }
 
         return qstrdup("OperationKind(?)");

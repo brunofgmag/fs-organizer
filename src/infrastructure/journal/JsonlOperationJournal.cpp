@@ -68,6 +68,8 @@ namespace
         case OperationKind::GiveBackToAnotherProgram: return "giveBackToAnotherProgram";
         case OperationKind::UndoTheInterruptedSwap: return "undoTheInterruptedSwap";
         case OperationKind::RestoreOverTheOccupant: return "restoreOverTheOccupant";
+        case OperationKind::TurnOffTheStartupEntry: return "turnOffTheStartupEntry";
+        case OperationKind::TurnOnTheStartupEntry: return "turnOnTheStartupEntry";
         }
 
         return "unknown";

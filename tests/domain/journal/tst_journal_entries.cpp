@@ -23,6 +23,11 @@ namespace
         static void ASwapThatFailedHalfwaySaysWhereItStopped();
         static void AQuarantineFollowedByARestoreOverThatPlaceStaysTwoEntries();
         static void AQuarantineFollowedByARestoreOverTheOccupantIsOneSwap();
+        static void ADisableAndTheEntryItCarriesBecomeOneOperation();
+        static void TheUndoOfThatPairIsOneOperationToo();
+        static void TwoAddonsEachCarryingAnEntryStayTwoOperations();
+        static void TwoLinksOfTheSameAddonWithNoEntryStayTwoOperations();
+        static void AnEntryTurnedOffAfterAnotherAddonsDisableIsNotPartOfIt();
     };
 }
 
@@ -244,6 +249,80 @@ void JournalEntriesTest::AQuarantineFollowedByARestoreOverTheOccupantIsOneSwap()
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().kind, JournalEntryKind::Swap);
     QCOMPARE(entries.front().steps.size(), std::size_t{2});
+}
+
+void JournalEntriesTest::ADisableAndTheEntryItCarriesBecomeOneOperation()
+{
+    const std::vector<OperationRecord> records = {
+        Link(OperationKind::DisableAddon, "simbridge"),
+        Step(OperationKind::TurnOffTheStartupEntry, "simbridge"),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QVERIFY(entries.front().IsAnAddonAndItsStartupEntry());
+    QVERIFY(entries.front().HasSteps());
+    QCOMPARE(entries.front().steps.size(), std::size_t{2});
+    QCOMPARE(entries.front().First().kind, OperationKind::DisableAddon);
+}
+
+void JournalEntriesTest::TheUndoOfThatPairIsOneOperationToo()
+{
+    const std::vector<OperationRecord> records = {
+        Step(OperationKind::TurnOnTheStartupEntry, "simbridge"),
+        Link(OperationKind::EnableAddon, "simbridge"),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QVERIFY(entries.front().IsAnAddonAndItsStartupEntry());
+    QCOMPARE(entries.front().steps.size(), std::size_t{2});
+}
+
+void JournalEntriesTest::TwoAddonsEachCarryingAnEntryStayTwoOperations()
+{
+    const std::vector<OperationRecord> records = {
+        Link(OperationKind::DisableAddon, "simbridge"),
+        Step(OperationKind::TurnOffTheStartupEntry, "simbridge"),
+        Link(OperationKind::DisableAddon, "flow-pro"),
+        Step(OperationKind::TurnOffTheStartupEntry, "flow-pro"),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), std::size_t{2});
+    QCOMPARE(entries[0].steps.size(), std::size_t{2});
+    QCOMPARE(entries[1].steps.size(), std::size_t{2});
+    QCOMPARE(entries[1].First().addonId.folderName, std::string("flow-pro"));
+}
+
+void JournalEntriesTest::TwoLinksOfTheSameAddonWithNoEntryStayTwoOperations()
+{
+    const std::vector<OperationRecord> records = {
+        Link(OperationKind::DisableAddon, "simbridge"),
+        Link(OperationKind::DisableAddon, "simbridge"),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), std::size_t{2});
+    QVERIFY(!entries.front().HasSteps());
+}
+
+void JournalEntriesTest::AnEntryTurnedOffAfterAnotherAddonsDisableIsNotPartOfIt()
+{
+    const std::vector<OperationRecord> records = {
+        Link(OperationKind::DisableAddon, "simbridge"),
+        Step(OperationKind::TurnOffTheStartupEntry, "flow-pro"),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), std::size_t{2});
+    QVERIFY(!entries.front().HasSteps());
+    QVERIFY(!entries.back().HasSteps());
 }
 
 QTEST_APPLESS_MAIN(JournalEntriesTest)

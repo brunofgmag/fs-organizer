@@ -29,16 +29,20 @@ public:
 
     [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, const bool enabled) override
     {
-        ++writes;
-
         for (StartupEntry& entry : entries_)
         {
-            if (ComparablePath(entry.path) == ComparablePath(entryPath))
+            if (ComparablePath(entry.path) != ComparablePath(entryPath))
+            {
+                continue;
+            }
+
+            if (entry.enabled != enabled)
             {
                 entry.enabled = enabled;
-
-                return FileResult::Completed;
+                ++writes;
             }
+
+            return FileResult::Completed;
         }
 
         return FileResult::TheDiskDisagreesWithTheScan;

@@ -78,6 +78,8 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::GiveBackToAnotherProgram: return tr("Give the folder back to the other program");
     case OperationKind::UndoTheInterruptedSwap: return tr("Put back the folder a lost swap left renamed");
     case OperationKind::RestoreOverTheOccupant: return tr("Restore over the addon that held the place");
+    case OperationKind::TurnOffTheStartupEntry: return tr("Turn off the startup entry it carries");
+    case OperationKind::TurnOnTheStartupEntry: return tr("Turn the startup entry back on");
     }
 
     return {};
@@ -187,6 +189,18 @@ QString JournalModel::NameOfTheGroup(const JournalEntry& entry)
     if (entry.IsASwap())
     {
         return tr("Swap addons");
+    }
+
+    if (entry.IsAnAddonAndItsStartupEntry())
+    {
+        const bool disabling = std::ranges::any_of(entry.steps,
+                                                   [](const OperationRecord& step)
+                                                   {
+                                                       return step.kind == OperationKind::DisableAddon;
+                                                   });
+
+        return disabling ? tr("Disable addon and the startup entry it carries")
+                         : tr("Enable addon and the startup entry it carries");
     }
 
     return tr("Import (%n step)", nullptr, static_cast<int>(entry.steps.size()));

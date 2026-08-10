@@ -26,6 +26,8 @@ namespace
         static void WithTheEntriesLeftLooseTheFileIsNeverRead();
         static void WithTheEntriesLeftLooseTheSwitchIsRefusedWithoutTouchingTheFile();
         static void TakingTheEntriesBackMakesTheFileReadableAgain();
+        static void SwitchingAnEntryToTheValueItAlreadyHasWritesNothing();
+        static void SwitchingAnEntryTheFileNoLongerCarriesWritesNothing();
     };
 
     constexpr auto kFlowManager = R"(E:\Flight Simulator 2024\Community\p42-util-flow-pro\Flow for MSFS2024.exe)";
@@ -131,6 +133,34 @@ void StartupServiceTest::TakingTheEntriesBackMakesTheFileReadableAgain()
     QVERIFY(service.Managing());
     QCOMPARE(service.Entries().size(), std::size_t{1});
     QCOMPARE(service.Switch(PathFromUtf8(kFlowManager), false), FileResult::Completed);
+}
+
+void StartupServiceTest::SwitchingAnEntryToTheValueItAlreadyHasWritesNothing()
+{
+    FakeStartupEntries entries;
+    GiveItOneEntry(entries);
+
+    const FakeProcessProbe processProbe;
+    const Disk disk;
+    StartupService service(entries, processProbe, disk.probe, true);
+
+    QCOMPARE(service.Switch(PathFromUtf8(kFlowManager), true), FileResult::Completed);
+    QCOMPARE(entries.writes, std::size_t{0});
+    QVERIFY(service.Entries().front().enabled);
+}
+
+void StartupServiceTest::SwitchingAnEntryTheFileNoLongerCarriesWritesNothing()
+{
+    FakeStartupEntries entries;
+    GiveItOneEntry(entries);
+
+    const FakeProcessProbe processProbe;
+    const Disk disk;
+    StartupService service(entries, processProbe, disk.probe, true);
+
+    QCOMPARE(service.Switch(PathFromUtf8(R"(C:\Nothing\Like\This\was-ever-installed.exe)"), true),
+             FileResult::TheDiskDisagreesWithTheScan);
+    QCOMPARE(entries.writes, std::size_t{0});
 }
 
 QTEST_APPLESS_MAIN(StartupServiceTest)

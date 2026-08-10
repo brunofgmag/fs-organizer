@@ -133,6 +133,7 @@ set(VIEW_SOURCES
         src/view/shell/StartupOffers.cpp
         src/view/simulator/StartupPage.cpp
         src/view/library/SuggestionDialog.cpp
+        src/view/library/StartupEntryDialog.cpp
         src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp
         src/view/TextThatIsNeverCut.cpp

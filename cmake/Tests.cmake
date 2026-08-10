@@ -346,6 +346,8 @@ fsorg_add_qt_test(fsorg-profile-service-tests profile-service
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeStartupEntries.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h)
@@ -734,6 +736,7 @@ fsorg_add_qt_test(fsorg-startup-on-real-disk-tests startup-on-real-disk
         tests/infrastructure/sim/tst_startup_on_real_disk.cpp
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h
         tests/support/TempFiles.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-startup-on-real-disk-tests PRIVATE fsorg-infrastructure)
@@ -1041,6 +1044,12 @@ if (WIN32)
                 tests/support/PathPrinting.h)
         target_link_libraries(fsorg-swap-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-swap-dialog-tests swap-dialog)
+
+        fsorg_add_qt_test(fsorg-startup-entry-dialog-tests startup-entry-dialog
+                tests/view/tst_startup_entry_dialog.cpp
+                tests/support/PathPrinting.h)
+        target_link_libraries(fsorg-startup-entry-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-startup-entry-dialog-tests startup-entry-dialog)
 
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp
