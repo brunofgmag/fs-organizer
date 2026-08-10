@@ -111,9 +111,10 @@ private:
     struct Step
     {
         OperationKind kind = OperationKind::EnableAddon;
-        AddonId addonId;
-        std::filesystem::path addonFolder;
-        std::filesystem::path linkPath;
+        AddonId addonId{};
+        std::filesystem::path addonFolder{};
+        std::filesystem::path linkPath{};
+        std::string label{};
     };
 
     [[nodiscard]] static std::size_t AddonsThatDrifted(const std::vector<const TreeNode*>& nodes,

@@ -21,6 +21,7 @@ namespace
         static void ReadingSkipsALineWrittenByANewerVersion();
         static void AnOutcomeThisVersionCannotReadIsNotASuccess();
         static void AnAbsentJournalReadsAsNoHistoryAtAll();
+        static void TheLabelOfAStartupEntrySurvivesTheRoundTrip();
     };
 }
 
@@ -215,6 +216,25 @@ void JsonlOperationJournalTest::AnAbsentJournalReadsAsNoHistoryAtAll()
     const Storage storage;
 
     QVERIFY(JsonlOperationJournal(storage.File()).Read().empty());
+}
+
+void JsonlOperationJournalTest::TheLabelOfAStartupEntrySurvivesTheRoundTrip()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(OperationRecord::OfImport(std::chrono::system_clock::time_point{kMoment},
+                                             OperationKind::TurnOffTheStartupEntry, AddonId{}, std::filesystem::path{},
+                                             "C:/Program Files/Other/agent.exe", FileResult::Completed,
+                                             OriginSource::Unknown, "Other launcher"));
+
+    const QStringList lines = LinesOf(storage.File());
+    QCOMPARE(lines.size(), 1);
+    QVERIFY(lines.front().contains(QStringLiteral("\"label\":\"Other launcher\"")));
+
+    const std::vector<OperationRecord> read = journal.Read();
+    QCOMPARE(read.size(), std::size_t{1});
+    QCOMPARE(read.front().label, std::string("Other launcher"));
 }
 
 QTEST_APPLESS_MAIN(JsonlOperationJournalTest)

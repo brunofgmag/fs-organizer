@@ -279,7 +279,8 @@ ProfileService::StepsFor(const SimulatorProfile& profile,
         steps.push_back({.kind = OperationKind::TurnOffTheStartupEntry,
                          .addonId = identity,
                          .addonFolder = addon.path,
-                         .linkPath = line.path});
+                         .linkPath = line.path,
+                         .label = line.label});
     }
 
     return steps;
@@ -304,7 +305,8 @@ ProfileService::Step ProfileService::Inverse(const Step& step)
     return {.kind = TheOppositeOf(step.kind),
             .addonId = step.addonId,
             .addonFolder = step.addonFolder,
-            .linkPath = step.linkPath};
+            .linkPath = step.linkPath,
+            .label = step.label};
 }
 
 LinkOperationResult ProfileService::RunTheStartupStep(const Step& step) const
@@ -312,7 +314,8 @@ LinkOperationResult ProfileService::RunTheStartupStep(const Step& step) const
     const bool turningOn = step.kind == OperationKind::TurnOnTheStartupEntry;
     const FileResult result = startup_.Switch(step.linkPath, turningOn);
 
-    log_.RecordImport(step.kind, step.addonId, step.addonFolder, step.linkPath, result);
+    log_.RecordImport(step.kind, step.addonId, step.addonFolder, step.linkPath, result, OriginSource::Unknown,
+                      step.label);
 
     return LinkOperationResult{.addonId = step.addonId,
                                .addonFolder = step.addonFolder,
@@ -367,7 +370,8 @@ LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
             {.kind = request.enable ? OperationKind::TurnOnTheStartupEntry : OperationKind::TurnOffTheStartupEntry,
              .addonId = IdentityOf(profile, request.line.addonFolder),
              .addonFolder = request.line.addonFolder,
-             .linkPath = request.line.path});
+             .linkPath = request.line.path,
+             .label = request.line.label});
     }
 
     return {.results = RunAsOneBatch(steps), .drifted = drifted};

@@ -27,6 +27,7 @@ namespace
     constexpr auto kFailure = "failure";
     constexpr auto kResult = "result";
     constexpr auto kOriginSource = "originSource";
+    constexpr auto kLabel = "label";
 
     QString OriginSourceName(const OriginSource source)
     {
@@ -188,7 +189,8 @@ namespace
                 ValueNamed(kAllFileResults, ResultName, object[kResult].toString())
                     .value_or(FileResult::TheOutcomeIsUnknown),
                 ValueNamed(kAllOriginSources, OriginSourceName, object[kOriginSource].toString())
-                    .value_or(OriginSource::Unknown));
+                    .value_or(OriginSource::Unknown),
+                object[kLabel].toString().toStdString());
         }
 
         return OperationRecord::OfLink(timestamp, *kind, addon, source, target,
@@ -223,6 +225,11 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     else
     {
         object[kFailure] = FailureName(std::get<LinkFailure>(record.outcome));
+    }
+
+    if (!record.label.empty())
+    {
+        object[kLabel] = QString::fromStdString(record.label);
     }
 
     if (!stream_.is_open())
