@@ -2491,9 +2491,8 @@ Também existe na biblioteca: %2</translation>
         <translation>Aplicar e reiniciar</translation>
     </message>
     <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="530"/>
         <source>The interface ships in English and in Brazilian Portuguese. Choosing a language writes the language key in settings.json and changes the interface right away.</source>
-        <translation>A interface vem em inglês e em português do Brasil. Escolher um idioma grava a chave language no settings.json e troca a interface na hora.</translation>
+        <translation type="vanished">A interface vem em inglês e em português do Brasil. Escolher um idioma grava a chave language no settings.json e troca a interface na hora.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="574"/>
@@ -2594,6 +2593,11 @@ Também existe na biblioteca: %2</translation>
         <location filename="../src/view/options/OptionsPage.cpp" line="428"/>
         <source>Looks for a new version and says it exists, but only downloads it if you say so.</source>
         <translation>Procura versão nova e diz que ela existe, mas só baixa se você mandar.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="531"/>
+        <source>Choosing a language writes the language key in settings.json and changes the interface right away.</source>
+        <translation>Escolher um idioma grava a chave language no settings.json e troca a interface na hora.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="657"/>
@@ -3555,12 +3559,12 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="622"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="610"/>
         <source>Restore the selected ones</source>
         <translation>Restaurar selecionados</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="770"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="758"/>
         <source>Unregister</source>
         <translation>Descadastrar</translation>
     </message>
