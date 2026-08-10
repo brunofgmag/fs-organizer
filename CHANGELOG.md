@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.1](https://github.com/brunofgmag/fs-organizer/compare/v0.24.0...v0.24.1) (2026-08-10)
+
+
+### Bug Fixes
+
+* read the path of a startup entry the same way on both platforms ([#67](https://github.com/brunofgmag/fs-organizer/issues/67)) ([4dc1b3f](https://github.com/brunofgmag/fs-organizer/commit/4dc1b3f945341e3f1499f19e6b639a0cd49916ba))
+
 ## [0.24.0](https://github.com/brunofgmag/fs-organizer/compare/v0.23.0...v0.24.0) (2026-08-10)
 
 
