@@ -211,15 +211,35 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
                                        const Preset& preset,
                                        const ApplyMode mode) const
 {
+    return Apply(profile, snapshot, preset, mode, true);
+}
+
+PresetApplyReport PresetService::ApplyTheReturn(const SimulatorProfile& profile,
+                                                const ProfileSnapshot& snapshot,
+                                                const Preset& preset) const
+{
+    return Apply(profile, snapshot, preset, ApplyMode::Replace, false);
+}
+
+PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
+                                       const ProfileSnapshot& snapshot,
+                                       const Preset& preset,
+                                       const ApplyMode mode,
+                                       const bool recordReturn) const
+{
     const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile);
     const PresetApplyPlan plan = Plan(profile, snapshot, preset, mode, onDisk.enabled);
-    const std::vector<StartupLine> lines = startup_.Report(profile, snapshot).lines;
-    const bool governsStartup = preset.governsStartup && startup_.Managing();
 
-    if (!presets_.SaveReturnPreset(
-            profile.id, WhatIsOnRightNow(profile, snapshot.libraries, onDisk.enabled, lines, governsStartup)))
+    if (recordReturn)
     {
-        return {.refusal = PresetApplyRefusal::TheReturnPresetCouldNotBeWritten};
+        const std::vector<StartupLine> lines = startup_.Report(profile, snapshot).lines;
+        const bool governsStartup = preset.governsStartup && startup_.Managing();
+
+        if (!presets_.SaveReturnPreset(
+                profile.id, WhatIsOnRightNow(profile, snapshot.libraries, onDisk.enabled, lines, governsStartup)))
+        {
+            return {.refusal = PresetApplyRefusal::TheReturnPresetCouldNotBeWritten};
+        }
     }
 
     const LinkBatch batch{.toDisable = plan.addons.toDisable,

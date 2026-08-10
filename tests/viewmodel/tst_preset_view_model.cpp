@@ -50,6 +50,7 @@ namespace
         static void TurningOnTheStartupFlagOfAPresetIsStored();
         static void ApplyingSaysWhatTheStartupHalfLeftUndoneInsteadOfPassingInSilence();
         static void ASatisfiedPresetStillCountsWhatDisableWouldChange();
+        static void GoingBackDoesNotOverwriteTheReturnPreset();
     };
 }
 
@@ -550,6 +551,35 @@ void PresetViewModelTest::ASatisfiedPresetStillCountsWhatDisableWouldChange()
 
     QVERIFY(asDisable.satisfied);
     QCOMPARE(asDisable.changes, std::size_t{1});
+}
+
+void PresetViewModelTest::GoingBackDoesNotOverwriteTheReturnPreset()
+{
+    Fixture f;
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    f.viewModel.Apply(preset, ApplyMode::Replace);
+
+    const std::optional<Preset> back = f.viewModel.ReturnPreset();
+    QVERIFY(back.has_value());
+    QCOMPARE(back->entries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(back->entries.front().addonId.folderName), QStringLiteral("fenix-a320"));
+
+    f.viewModel.ApplyReturn(*back);
+
+    const std::optional<Preset> anchor = f.viewModel.ReturnPreset();
+    QVERIFY(anchor.has_value());
+    QCOMPARE(anchor->entries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(anchor->entries.front().addonId.folderName), QStringLiteral("fenix-a320"));
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kOtherAddon));
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
 }
 
 QTEST_MAIN(PresetViewModelTest)

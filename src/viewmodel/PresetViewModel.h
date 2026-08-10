@@ -82,6 +82,8 @@ public:
 
     void Apply(const Preset& preset, ApplyMode mode);
 
+    void ApplyReturn(const Preset& preset);
+
 signals:
     void Changed();
 
@@ -90,6 +92,8 @@ signals:
     void Applied(const QStringList& unresolved, const QString& whatTheStartupHalfLeftUndone);
 
 private:
+    void NoteApplied(const PresetApplyReport& report);
+
     void RefuseTheWriteOf(const QString& name);
 
     [[nodiscard]] bool Accepts(const QString& name);

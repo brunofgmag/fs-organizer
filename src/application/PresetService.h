@@ -75,7 +75,16 @@ public:
     [[nodiscard]] PresetApplyReport
     Apply(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset, ApplyMode mode) const;
 
+    [[nodiscard]] PresetApplyReport
+    ApplyTheReturn(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
+
 private:
+    [[nodiscard]] PresetApplyReport Apply(const SimulatorProfile& profile,
+                                          const ProfileSnapshot& snapshot,
+                                          const Preset& preset,
+                                          ApplyMode mode,
+                                          bool recordReturn) const;
+
     [[nodiscard]] PresetApplyPlan Plan(const SimulatorProfile& profile,
                                        const ProfileSnapshot& snapshot,
                                        const Preset& preset,

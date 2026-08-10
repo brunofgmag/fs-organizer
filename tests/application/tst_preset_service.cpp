@@ -48,6 +48,7 @@ namespace
         static void TheReturnPresetIsOverwrittenAtEachApplication();
         static void TheReturnPresetIsNotOneOfThePresetsOfTheProfile();
         static void ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApplication();
+        static void ApplyingTheReturnPresetDoesNotOverwriteTheReturnPreset();
         static void TheReturnPresetGovernsStartupOnlyWhenTheAppliedPresetDid();
         static void TurningTheFlagOnCapturesTheStartupEntriesThatAreOnRightNow();
         static void UpdatingRefreshesTheStartupEntriesOnlyOfAPresetThatGovernsThem();
@@ -582,6 +583,33 @@ void PresetServiceTest::ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApp
     QVERIFY(back.has_value());
 
     static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), *back, ApplyMode::Replace));
+
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
+void PresetServiceTest::ApplyingTheReturnPresetDoesNotOverwriteTheReturnPreset()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset{
+        .name = "Voo curto",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
+
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace));
+
+    const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
+    QVERIFY(back.has_value());
+    QCOMPARE(FolderNamesOf(*back), std::vector<std::string>{"pmdg-aircraft-77w"});
+
+    static_cast<void>(f.service.ApplyTheReturn(profile, f.Snapshot(profile), *back));
+
+    const std::optional<Preset> anchor = f.service.ReturnPreset(kProfileId);
+    QVERIFY(anchor.has_value());
+    QCOMPARE(FolderNamesOf(*anchor), std::vector<std::string>{"pmdg-aircraft-77w"});
 
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));

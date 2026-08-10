@@ -746,7 +746,7 @@ void PresetsPage::GoBack()
 
     if (const std::optional<Preset> back = viewModel_.ReturnPreset(); back.has_value())
     {
-        viewModel_.Apply(*back, ApplyMode::Replace);
+        viewModel_.ApplyReturn(*back);
     }
 }
 

@@ -232,8 +232,16 @@ void PresetViewModel::UndoLastBatch()
 
 void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)
 {
-    const PresetApplyReport report = service_.Apply(session_.Profile(), session_.Snapshot(), preset, mode);
+    NoteApplied(service_.Apply(session_.Profile(), session_.Snapshot(), preset, mode));
+}
 
+void PresetViewModel::ApplyReturn(const Preset& preset)
+{
+    NoteApplied(service_.ApplyTheReturn(session_.Profile(), session_.Snapshot(), preset));
+}
+
+void PresetViewModel::NoteApplied(const PresetApplyReport& report)
+{
     if (report.refusal == PresetApplyRefusal::TheReturnPresetCouldNotBeWritten)
     {
         emit Refused(tr("Nothing was applied. The app writes down what is enabled right now before applying a preset, "
