@@ -215,11 +215,6 @@ void StartupOnRealDiskTest::PointingItAtAnotherProfilesFileReadsAndWritesThatOne
 
 void StartupOnRealDiskTest::TheEntryOfTheRealFileIsRecognisedAsCarriedByTheAddonItPointsInto()
 {
-#ifndef _WIN32
-    QSKIP("the entries of a real EXE.xml carry Windows paths, and on POSIX one of those is a single component, so it "
-          "reaches into nothing and the match this case exists to prove cannot happen");
-#endif
-
     const TempFiles files;
     const ExeXmlStartupEntries startup(StartupFileIn(files, "simulator-exe.xml"));
 
