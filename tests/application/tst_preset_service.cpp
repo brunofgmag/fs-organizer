@@ -56,6 +56,8 @@ namespace
         static void AGoverningPresetIsNotSatisfiedWhenTheStartupFileDisagrees();
         static void AGoverningPresetIsSatisfiedWhenTheStartupFileMatches();
         static void ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction();
+        static void SettingAStartupActionRefusesWhenTheRowNoLongerHoldsThatEntry();
+        static void RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns();
     };
 }
 
@@ -735,6 +737,45 @@ void PresetServiceTest::ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction
     preset.name = "Voo curto";
 
     QVERIFY(f.service.IsSatisfied(profile, f.Snapshot(profile), preset));
+}
+
+void PresetServiceTest::SettingAStartupActionRefusesWhenTheRowNoLongerHoldsThatEntry()
+{
+    Fixture f;
+
+    Preset stored;
+    stored.name = "Voo curto";
+    stored.governsStartup = true;
+    stored.startupEntries = {TurningOn(kLauncher), TurningOn(kOtherLauncher)};
+    QVERIFY(f.repository.Save(kProfileId, stored));
+
+    QVERIFY(f.service.SetStartupAction(kProfileId, "Voo curto", 1, kOtherLauncher, PresetAction::Disable));
+    QVERIFY(!f.service.SetStartupAction(kProfileId, "Voo curto", 1, kLauncher, PresetAction::Disable));
+
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
+
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->startupEntries.front().action == PresetAction::Enable);
+    QVERIFY(saved->startupEntries.back().action == PresetAction::Disable);
+}
+
+void PresetServiceTest::RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = true});
+    f.startup.entries.Carry(StartupEntry{.label = "Aerosoft", .path = kOtherLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
+
+    QVERIFY(f.service.RecaptureStartup(profile, f.Snapshot(profile), "Voo curto"));
+
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
+
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->governsStartup);
+    QCOMPARE(saved->startupEntries.size(), std::size_t{1});
+    QCOMPARE(saved->startupEntries.front().path, std::filesystem::path{kLauncher});
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)

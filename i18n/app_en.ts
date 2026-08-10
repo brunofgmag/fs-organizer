@@ -1778,157 +1778,157 @@ It also exists in the library: %2</translation>
 <context>
     <name>JournalModel</name>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="57"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="72"/>
         <source>Enable addon</source>
         <translation>Enable addon</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="58"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="73"/>
         <source>Disable addon</source>
         <translation>Disable addon</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="59"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="74"/>
         <source>Remove broken link</source>
         <translation>Remove broken link</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="60"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="75"/>
         <source>Repoint link</source>
         <translation>Repoint link</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="61"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="76"/>
         <source>Copy to the staging area</source>
         <translation>Copy to the staging area</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="62"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="77"/>
         <source>Check the copy</source>
         <translation>Check the copy</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="63"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="78"/>
         <source>Put the copy in place</source>
         <translation>Put the copy in place</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="64"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="79"/>
         <source>Remove the source folder</source>
         <translation>Remove the source folder</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="65"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="80"/>
         <source>Quarantine the destination copy</source>
         <translation>Quarantine the destination copy</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="66"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="81"/>
         <source>Quarantine the library copy</source>
         <translation>Quarantine the library copy</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="67"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="82"/>
         <source>Restore from the quarantine</source>
         <translation>Restore from the quarantine</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="68"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="83"/>
         <source>Discard from the quarantine</source>
         <translation>Discard from the quarantine</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="69"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="84"/>
         <source>Move addon to another category</source>
         <translation>Move addon to another category</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="70"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="85"/>
         <source>Create category</source>
         <translation>Create category</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="71"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="86"/>
         <source>Rename category</source>
         <translation>Rename category</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="72"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="87"/>
         <source>Delete category</source>
         <translation>Delete category</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="73"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="88"/>
         <source>Discard a half finished import</source>
         <translation>Discard a half finished import</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="74"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="89"/>
         <source>Delete addon to the Recycle Bin</source>
         <translation>Delete addon to the Recycle Bin</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="75"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="90"/>
         <source>Delete addon permanently</source>
         <translation>Delete addon permanently</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="76"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="91"/>
         <source>Link the other program&apos;s folder into the library</source>
         <translation>Link the other program&apos;s folder into the library</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="77"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="92"/>
         <source>Start taking over another program&apos;s folder</source>
         <translation>Start taking over another program&apos;s folder</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="78"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="93"/>
         <source>Give the folder back to the other program</source>
         <translation>Give the folder back to the other program</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="79"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="94"/>
         <source>Put back the folder a lost swap left renamed</source>
         <translation>Put back the folder a lost swap left renamed</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="80"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="95"/>
         <source>Restore over the addon that held the place</source>
         <translation>Restore over the addon that held the place</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="81"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="96"/>
         <source>Turn off the startup entry it carries</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="82"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="97"/>
         <source>Turn the startup entry back on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
         <source>(library removed)</source>
         <translation>(library removed)</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="191"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="206"/>
         <source>Swap addons</source>
         <translation>Swap addons</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="202"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="217"/>
         <source>Disable addon and the startup entry it carries</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="203"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="218"/>
         <source>Enable addon and the startup entry it carries</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/viewmodel/JournalModel.cpp" line="206"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="221"/>
         <source>Import (%n step)</source>
         <translation>
             <numerusform>Import (%n step)</numerusform>
@@ -1936,47 +1936,47 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="182"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="197"/>
         <source>finished</source>
         <translation>finished</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="216"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="231"/>
         <source>%1 out, %2 in</source>
         <translation>%1 out, %2 in</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="302"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="317"/>
         <source>When</source>
         <translation>When</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="303"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="318"/>
         <source>Operation</source>
         <translation>Operation</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="304"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="319"/>
         <source>Addon</source>
         <translation>Addon</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="305"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="320"/>
         <source>Library</source>
         <translation>Library</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="306"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="321"/>
         <source>Source</source>
         <translation>Source</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="307"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="322"/>
         <source>Destination</source>
         <translation>Destination</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/JournalModel.cpp" line="308"/>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="323"/>
         <source>Result</source>
         <translation>Result</translation>
     </message>
@@ -2777,115 +2777,114 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 <context>
     <name>PresetPlanPanel</name>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="275"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="260"/>
         <source>Leaves only what the preset enables.</source>
         <translation>Leaves only what the preset enables.</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="276"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="261"/>
         <source>The plan, as Replace</source>
         <translation>The plan, as Replace</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="279"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="264"/>
         <source>Enables what the preset names, without touching the rest.</source>
         <translation>Enables what the preset names, without touching the rest.</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="280"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="265"/>
         <source>The plan, as Accumulate</source>
         <translation>The plan, as Accumulate</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="283"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="268"/>
         <source>Disables what the preset enables.</source>
         <translation>Disables what the preset enables.</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="284"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="269"/>
         <source>The plan, as Disable</source>
         <translation>The plan, as Disable</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="295"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="278"/>
         <source>Apply</source>
         <translation>Apply</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="301"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="284"/>
         <source>Apply: enables %1, disables %2</source>
         <translation>Apply: enables %1, disables %2</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="317"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="300"/>
         <source>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</source>
         <translation>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="336"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="319"/>
         <source>Apply as</source>
         <translation>Apply as</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="337"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="320"/>
         <source>Replace</source>
         <translation>Replace</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="338"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="321"/>
         <source>Accumulate</source>
         <translation>Accumulate</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="339"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="322"/>
         <source>Disable</source>
         <translation>Disable</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="340"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="323"/>
         <source>Turn on</source>
         <translation>Turn on</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="341"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="324"/>
         <source>Turn off</source>
         <translation>Turn off</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="342"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="325"/>
         <source>Already as the preset asks</source>
         <translation>Already as the preset asks</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="343"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="326"/>
         <source>Named, but no addon found</source>
         <translation>Named, but no addon found</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="344"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="327"/>
         <source>Off because Replace omits them</source>
         <translation>Off because Replace omits them</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="345"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="328"/>
         <source>Asked for, but not applied</source>
         <translation>Asked for, but not applied</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="346"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="329"/>
         <source>Show them…</source>
         <translation>Show them…</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="347"/>
         <source>This preset also governs startup entries</source>
-        <translation>This preset also governs startup entries</translation>
+        <translation type="vanished">This preset also governs startup entries</translation>
     </message>
 </context>
 <context>
     <name>PresetViewModel</name>
     <message numerus="yes">
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="35"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="36"/>
         <source>%n addon</source>
         <translation>
             <numerusform>%n addon</numerusform>
@@ -2893,7 +2892,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="36"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="37"/>
         <source> · %n category</source>
         <translation>
             <numerusform> · %n category</numerusform>
@@ -2901,17 +2900,18 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="158"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="159"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="176"/>
         <source>The change could not be written to the preset &quot;%1&quot;. It may have changed since the table was built, or the presets folder may be full or protected.</source>
         <translation>The change could not be written to the preset &quot;%1&quot;. It may have changed since the table was built, or the presets folder may be full or protected.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="239"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="303"/>
         <source>Nothing was applied. The app writes down what is enabled right now before applying a preset, so that you can come back to it, and this time it could not: the presets folder may be full or protected.</source>
         <translation>Nothing was applied. The app writes down what is enabled right now before applying a preset, so that you can come back to it, and this time it could not: the presets folder may be full or protected.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="262"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="326"/>
         <source>%n startup entry the preset asks for was not applied, because startup management is off in Options.</source>
         <translation>
             <numerusform>%n startup entry the preset asks for was not applied, because startup management is off in Options.</numerusform>
@@ -2919,7 +2919,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="278"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="342"/>
         <source>These startup entries of the preset are no longer in the simulator file:
 
 %1</source>
@@ -2928,22 +2928,22 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="284"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="348"/>
         <source>The preset &quot;%1&quot; could not be written. The name may be too long for the disk, or the presets folder may be full or protected.</source>
         <translation>The preset &quot;%1&quot; could not be written. The name may be too long for the disk, or the presets folder may be full or protected.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="295"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="359"/>
         <source>Give the preset a name.</source>
         <translation>Give the preset a name.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="301"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="365"/>
         <source>The preset name cannot contain %1, and cannot end with a space or a full stop.</source>
         <translation>The preset name cannot contain %1, and cannot end with a space or a full stop.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="308"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="372"/>
         <source>There is already a preset with that name.</source>
         <translation>There is already a preset with that name.</translation>
     </message>
@@ -2951,20 +2951,21 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 <context>
     <name>PresetsPage</name>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="169"/>
-        <location filename="../src/view/PresetsPage.cpp" line="296"/>
+        <location filename="../src/view/PresetsPage.cpp" line="167"/>
+        <location filename="../src/view/PresetsPage.cpp" line="306"/>
         <source>Addon</source>
         <translation>Addon</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="169"/>
-        <location filename="../src/view/PresetsPage.cpp" line="296"/>
+        <location filename="../src/view/PresetsPage.cpp" line="167"/>
+        <location filename="../src/view/PresetsPage.cpp" line="306"/>
         <source>Library</source>
         <translation>Library</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="169"/>
-        <location filename="../src/view/PresetsPage.cpp" line="296"/>
+        <location filename="../src/view/PresetsPage.cpp" line="167"/>
+        <location filename="../src/view/PresetsPage.cpp" line="306"/>
+        <location filename="../src/view/PresetsPage.cpp" line="307"/>
         <source>Enables</source>
         <translation>Enables</translation>
     </message>
@@ -2973,7 +2974,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">Apply as</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="241"/>
+        <location filename="../src/view/PresetsPage.cpp" line="251"/>
         <source>Nothing changed</source>
         <translation>Nothing changed</translation>
     </message>
@@ -2986,7 +2987,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">The changes only count after the simulator is restarted.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="248"/>
+        <location filename="../src/view/PresetsPage.cpp" line="258"/>
         <source>Restart the simulator to apply the changes.</source>
         <translation>Restart the simulator to apply the changes.</translation>
     </message>
@@ -2995,7 +2996,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">Entries not found</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="258"/>
+        <location filename="../src/view/PresetsPage.cpp" line="268"/>
         <source>These addons of the preset are no longer in the library:
 
 %1</source>
@@ -3004,28 +3005,29 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 %1</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="269"/>
+        <location filename="../src/view/PresetsPage.cpp" line="279"/>
         <source>Not everything the preset asked for happened</source>
         <translation>Not everything the preset asked for happened</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="291"/>
-        <location filename="../src/view/PresetsPage.cpp" line="302"/>
+        <location filename="../src/view/PresetsPage.cpp" line="301"/>
+        <location filename="../src/view/PresetsPage.cpp" line="319"/>
         <source>New from the enabled ones…</source>
         <translation>New from the enabled ones…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="292"/>
+        <location filename="../src/view/PresetsPage.cpp" line="302"/>
+        <location filename="../src/view/PresetsPage.cpp" line="312"/>
         <source>Update with the enabled ones</source>
         <translation>Update with the enabled ones</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="293"/>
+        <location filename="../src/view/PresetsPage.cpp" line="303"/>
         <source>Rename…</source>
         <translation>Rename…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="294"/>
+        <location filename="../src/view/PresetsPage.cpp" line="304"/>
         <source>Delete</source>
         <translation>Delete</translation>
     </message>
@@ -3034,35 +3036,46 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">Show them…</translation>
     </message>
     <message>
+        <location filename="../src/view/PresetsPage.cpp" line="311"/>
         <source>This preset also governs startup entries</source>
-        <translation type="vanished">This preset also governs startup entries</translation>
+        <translation>This preset also governs startup entries</translation>
     </message>
     <message>
         <source>What is enabled right now is written down first, so you can come back to it even after an import or a quarantine operation, which lose the batch undo.</source>
         <translation type="vanished">What is enabled right now is written down first, so you can come back to it even after an import or a quarantine operation, which lose the batch undo.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="295"/>
+        <location filename="../src/view/PresetsPage.cpp" line="305"/>
         <source>Filter presets</source>
         <translation>Filter presets</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="297"/>
+        <location filename="../src/view/PresetsPage.cpp" line="307"/>
+        <source>Entry</source>
+        <translation>Entry</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="307"/>
+        <source>Target</source>
+        <translation>Target</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="308"/>
         <source>Preset</source>
         <translation>Preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="297"/>
+        <location filename="../src/view/PresetsPage.cpp" line="308"/>
         <source>Content</source>
         <translation>Content</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="297"/>
+        <location filename="../src/view/PresetsPage.cpp" line="308"/>
         <source>Changed</source>
         <translation>Changed</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="297"/>
+        <location filename="../src/view/PresetsPage.cpp" line="308"/>
         <source>Would change</source>
         <translation>Would change</translation>
     </message>
@@ -3091,7 +3104,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">Asked for, but not applied</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="298"/>
+        <location filename="../src/view/PresetsPage.cpp" line="309"/>
         <source>Plan</source>
         <translation>Plan</translation>
     </message>
@@ -3108,7 +3121,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">Disable</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="766"/>
+        <location filename="../src/view/PresetsPage.cpp" line="913"/>
         <source>%1
 
 Apply &quot;%2&quot;?</source>
@@ -3121,18 +3134,18 @@ Apply &quot;%2&quot;?</translation>
         <translation type="vanished">Applying is a single batch: &quot;Undo the last batch&quot; takes it all back at once.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="299"/>
-        <location filename="../src/view/PresetsPage.cpp" line="496"/>
+        <location filename="../src/view/PresetsPage.cpp" line="316"/>
+        <location filename="../src/view/PresetsPage.cpp" line="562"/>
         <source>No preset in this profile yet.</source>
         <translation>No preset in this profile yet.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="300"/>
+        <location filename="../src/view/PresetsPage.cpp" line="317"/>
         <source>A preset keeps which addons stay enabled. Enable what you want to fly and keep that combination under a name. Applying it later is a single batch, with a whole undo.</source>
         <translation>A preset keeps which addons stay enabled. Enable what you want to fly and keep that combination under a name. Applying it later is a single batch, with a whole undo.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/PresetsPage.cpp" line="497"/>
+        <location filename="../src/view/PresetsPage.cpp" line="563"/>
         <source>%n preset in this profile.</source>
         <translation>
             <numerusform>%n preset in this profile.</numerusform>
@@ -3148,7 +3161,7 @@ Apply &quot;%2&quot;?</translation>
         <translation type="vanished">Undo the last batch</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="593"/>
+        <location filename="../src/view/PresetsPage.cpp" line="663"/>
         <source>Content · %1</source>
         <translation>Content · %1</translation>
     </message>
@@ -3189,43 +3202,58 @@ Apply &quot;%2&quot;?</translation>
         <translation type="vanished">Apply: enables %1, disables %2</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="534"/>
+        <location filename="../src/view/PresetsPage.cpp" line="310"/>
+        <source>Startup</source>
+        <translation>Startup</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="313"/>
+        <source>Check the box above to have this preset also manage the simulator&apos;s startup entries. Checking it captures the entries enabled right now. You can then turn each on or off here.</source>
+        <translation>Check the box above to have this preset also manage the simulator&apos;s startup entries. Checking it captures the entries enabled right now. You can then turn each on or off here.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="600"/>
         <source>Undoes the batch you just applied.</source>
         <translation>Undoes the batch you just applied.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="535"/>
+        <location filename="../src/view/PresetsPage.cpp" line="601"/>
         <source>Applies the return preset, written down before the last application.</source>
         <translation>Applies the return preset, written down before the last application.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="657"/>
+        <location filename="../src/view/PresetsPage.cpp" line="694"/>
+        <source>Startup · %1</source>
+        <translation>Startup · %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="802"/>
         <source>New preset</source>
         <translation>New preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="657"/>
-        <location filename="../src/view/PresetsPage.cpp" line="686"/>
+        <location filename="../src/view/PresetsPage.cpp" line="802"/>
+        <location filename="../src/view/PresetsPage.cpp" line="831"/>
         <source>Name:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="686"/>
+        <location filename="../src/view/PresetsPage.cpp" line="831"/>
         <source>Rename preset</source>
         <translation>Rename preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="704"/>
+        <location filename="../src/view/PresetsPage.cpp" line="849"/>
         <source>Delete preset</source>
         <translation>Delete preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="704"/>
+        <location filename="../src/view/PresetsPage.cpp" line="849"/>
         <source>Delete the preset &quot;%1&quot;?</source>
         <translation>Delete the preset &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="766"/>
+        <location filename="../src/view/PresetsPage.cpp" line="913"/>
         <source>Replace what is enabled</source>
         <translation>Replace what is enabled</translation>
     </message>
@@ -3685,22 +3713,22 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>(no version in the manifest)</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="81"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="80"/>
         <source>Enables %1, disables %2. %3 already match what the preset asks, %4 were not found, and %5 destination entries stay as they are.</source>
         <translation>Enables %1, disables %2. %3 already match what the preset asks, %4 were not found, and %5 destination entries stay as they are.</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="91"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="90"/>
         <source> Of the ones it disables, %1 entered the library after the preset was saved.</source>
         <translation> Of the ones it disables, %1 entered the library after the preset was saved.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="115"/>
+        <location filename="../src/view/PresetsPage.cpp" line="113"/>
         <source>Back to the previous set</source>
         <translation>Back to the previous set</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="60"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="59"/>
         <source>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</source>
         <translation>
             <numerusform>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</numerusform>
@@ -3708,12 +3736,12 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="67"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="66"/>
         <source>This preset asks for %1 startup entries. %2 of them are no longer in the simulator file, and %3 will be switched.</source>
         <translation>This preset asks for %1 startup entries. %2 of them are no longer in the simulator file, and %3 will be switched.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="74"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="73"/>
         <source>This preset asks for %n startup entry, and all of them will be applied.</source>
         <translation>
             <numerusform>This preset asks for %n startup entry, and all of them will be applied.</numerusform>
@@ -3721,12 +3749,12 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="450"/>
+        <location filename="../src/view/PresetsPage.cpp" line="516"/>
         <source>Satisfied</source>
         <translation>Satisfied</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/PresetsPage.cpp" line="445"/>
+        <location filename="../src/view/PresetsPage.cpp" line="511"/>
         <source>%n change</source>
         <translation>
             <numerusform>%n change</numerusform>

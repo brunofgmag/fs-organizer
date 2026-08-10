@@ -159,6 +159,13 @@ void Session::RefreshEntries()
     observer_.OnRefreshed();
 }
 
+void Session::RefreshStartupEntries()
+{
+    snapshot_.startupEntries = service_.StartupEntriesNow();
+
+    observer_.OnRefreshed();
+}
+
 LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
 {
     SimulatorProfile next = profile_;

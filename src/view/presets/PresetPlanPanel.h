@@ -7,7 +7,6 @@
 #include "viewmodel/PresetViewModel.h"
 
 class QButtonGroup;
-class QCheckBox;
 class QLabel;
 class QPushButton;
 
@@ -17,7 +16,6 @@ struct PresetPlanState
     PresetPreview preview{};
     bool holdsOne = false;
     bool governsStartup = false;
-    bool canGovern = false;
 };
 
 class PresetPlanPanel final : public QWidget
@@ -37,8 +35,6 @@ signals:
     void ApplyRequested();
 
     void OmittedRequested();
-
-    void GovernStartupToggled(bool governs);
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -71,7 +67,6 @@ private:
     QLabel* notApplied_ = nullptr;
     QLabel* omittedNote_ = nullptr;
     QPushButton* showOmitted_ = nullptr;
-    QCheckBox* governsStartup_ = nullptr;
     QWidget* startupSection_ = nullptr;
     QLabel* startupSaid_ = nullptr;
     QPushButton* apply_ = nullptr;

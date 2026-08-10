@@ -248,6 +248,7 @@ int main(int argc, char* argv[])
                      {
                          startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
                          startupViewModel.Show();
+                         session.RefreshStartupEntries();
                      });
 
     FilePresetRepository presetRepository(PresetsFolderPath());

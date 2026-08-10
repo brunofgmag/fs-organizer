@@ -62,6 +62,7 @@ namespace
         static void ASatisfiedPresetStillShowsWhatDisableWouldChange();
         static void AFilterThatMatchesNothingLeavesNoStaleCountBehind();
         static void ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable();
+        static void TheStartupTabEditsTheStartupEntriesOfAGoverningPreset();
     };
 }
 
@@ -664,6 +665,39 @@ void PresetsPageTest::ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable()
     QCOMPARE(planFor->text(), QStringLiteral("Voo de linha"));
     QCOMPARE(back->currentRow(), -1);
     QVERIFY(entries->item(0, 2)->flags().testFlag(Qt::ItemIsUserCheckable));
+}
+
+void PresetsPageTest::TheStartupTabEditsTheStartupEntriesOfAGoverningPreset()
+{
+    Fixture f;
+    const std::filesystem::path launcher = "D:/MSFS 2024/Aircrafts/aerosoft-crj/launcher.exe";
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = launcher, .enabled = true});
+    f.session.RefreshEntries();
+
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* governs = page.findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup"));
+    auto* startupEntries = page.findChild<QTableWidget*>(QStringLiteral("PresetStartupEntries"));
+    QVERIFY(governs != nullptr && startupEntries != nullptr);
+
+    QVERIFY(!governs->isChecked());
+    QCOMPARE(startupEntries->rowCount(), 0);
+
+    governs->click();
+
+    QVERIFY(governs->isChecked());
+    QCOMPARE(startupEntries->rowCount(), 1);
+    QCOMPARE(startupEntries->item(0, 0)->text(), QStringLiteral("Fenix"));
+    QCOMPARE(startupEntries->item(0, 2)->checkState(), Qt::Checked);
+    QVERIFY(startupEntries->item(0, 2)->flags().testFlag(Qt::ItemIsUserCheckable));
+
+    startupEntries->item(0, 2)->setCheckState(Qt::Unchecked);
+
+    const std::optional<Preset> saved = f.viewModel.Load(QStringLiteral("Voo de linha"));
+
+    QVERIFY(saved.has_value());
+    QCOMPARE(saved->startupEntries.size(), std::size_t{1});
+    QVERIFY(saved->startupEntries.front().action == PresetAction::Disable);
 }
 
 QTEST_MAIN(PresetsPageTest)

@@ -2,7 +2,6 @@
 
 #include <QtCore/QEvent>
 #include <QtWidgets/QButtonGroup>
-#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -141,7 +140,6 @@ PresetPlanPanel::PresetPlanPanel(QWidget* parent) : QWidget(parent)
 
     connect(apply_, &QPushButton::clicked, this, &PresetPlanPanel::ApplyRequested);
     connect(showOmitted_, &QPushButton::clicked, this, &PresetPlanPanel::OmittedRequested);
-    connect(governsStartup_, &QCheckBox::clicked, this, &PresetPlanPanel::GovernStartupToggled);
     connect(modes_, &QButtonGroup::idClicked, this,
             [this]
             {
@@ -234,12 +232,7 @@ QWidget* PresetPlanPanel::CreateThePlanFields()
 
 QWidget* PresetPlanPanel::CreateTheStartupSection()
 {
-    auto* block = new QWidget(this);
-
-    governsStartup_ = new QCheckBox(block);
-    governsStartup_->setObjectName(QStringLiteral("PresetGovernsStartup"));
-
-    startupSection_ = new QWidget(block);
+    startupSection_ = new QWidget(this);
     startupSection_->setObjectName(QStringLiteral("PresetStartupSection"));
 
     startupSaid_ = new QLabel(startupSection_);
@@ -250,15 +243,9 @@ QWidget* PresetPlanPanel::CreateTheStartupSection()
     inside->setContentsMargins(0, 0, 0, 0);
     inside->addWidget(startupSaid_);
 
-    auto* column = new QVBoxLayout(block);
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(5);
-    column->addWidget(governsStartup_);
-    column->addWidget(startupSection_);
-
     startupSection_->hide();
 
-    return block;
+    return startupSection_;
 }
 
 void PresetPlanPanel::Show(const PresetPlanState& state)
@@ -284,8 +271,6 @@ void PresetPlanPanel::Show(const PresetPlanState& state)
     }
 
     apply_->setEnabled(state.holdsOne);
-    governsStartup_->setEnabled(state.canGovern);
-    governsStartup_->setChecked(state.governsStartup);
     startupSection_->setVisible(state.governsStartup);
 
     if (!state.holdsOne)
@@ -342,5 +327,4 @@ void PresetPlanPanel::RetranslateUi()
     notNamedName_->setText(tr("Off because Replace omits them"));
     notAppliedName_->setText(tr("Asked for, but not applied"));
     showOmitted_->setText(tr("Show them…"));
-    governsStartup_->setText(tr("This preset also governs startup entries"));
 }

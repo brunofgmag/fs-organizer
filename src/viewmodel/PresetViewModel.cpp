@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "domain/support/PathSegment.h"
+#include "domain/support/PathUtils.h"
 #include "domain/support/StringUtils.h"
 #include "support/MomentText.h"
 #include "support/PathText.h"
@@ -162,6 +163,51 @@ bool PresetViewModel::SetAction(const QString& name,
     return false;
 }
 
+bool PresetViewModel::SetStartupAction(const QString& name,
+                                       const std::size_t index,
+                                       const std::filesystem::path& expected,
+                                       const PresetAction action)
+{
+    if (service_.SetStartupAction(session_.Profile().id, name.toStdString(), index, expected, action))
+    {
+        return true;
+    }
+
+    emit Refused(tr("The change could not be written to the preset \"%1\". It may have changed since the table was "
+                    "built, or the presets folder may be full or protected.")
+                     .arg(name));
+
+    return false;
+}
+
+QList<PresetStartupRow> PresetViewModel::StartupRows(const Preset& preset) const
+{
+    const std::vector<StartupEntry>& lines = session_.Snapshot().startupEntries;
+
+    QList<PresetStartupRow> rows;
+
+    for (const PresetStartupEntry& entry : preset.startupEntries)
+    {
+        QString label;
+
+        for (const StartupEntry& line : lines)
+        {
+            if (ComparablePath(line.path) == ComparablePath(entry.path))
+            {
+                label = QString::fromStdString(line.label);
+                break;
+            }
+        }
+
+        rows.append(PresetStartupRow{.label = label.isEmpty() ? AsText(entry.path.stem()) : label,
+                                     .target = AsText(entry.path),
+                                     .path = entry.path,
+                                     .action = entry.action});
+    }
+
+    return rows;
+}
+
 bool PresetViewModel::GovernStartup(const QString& name, const bool governs)
 {
     if (service_.GovernStartup(session_.Profile(), session_.Snapshot(), name.toStdString(), governs))
@@ -172,6 +218,16 @@ bool PresetViewModel::GovernStartup(const QString& name, const bool governs)
     RefuseTheWriteOf(name);
 
     return false;
+}
+
+void PresetViewModel::RecaptureStartup(const QString& name)
+{
+    if (!service_.RecaptureStartup(session_.Profile(), session_.Snapshot(), name.toStdString()))
+    {
+        RefuseTheWriteOf(name);
+    }
+
+    emit Changed();
 }
 
 PresetPreview PresetViewModel::Preview(const Preset& preset, const ApplyMode mode) const

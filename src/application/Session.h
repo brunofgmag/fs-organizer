@@ -46,6 +46,8 @@ public:
 
     void RefreshEntries();
 
+    void RefreshStartupEntries();
+
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
 
     void RememberWhatCameFromAnotherProgram(const std::vector<ImportOperationResult>& results);
