@@ -12,18 +12,19 @@ namespace
     {
         const std::string wanted = ComparablePath(destination);
 
-        std::filesystem::path folder = entryPath.parent_path();
-        while (!folder.empty() && ComparablePath(folder.parent_path()) != wanted)
+        std::filesystem::path folder = ParentOf(entryPath);
+        while (!folder.empty())
         {
-            if (folder.parent_path() == folder)
+            const std::filesystem::path above = ParentOf(folder);
+            if (ComparablePath(above) == wanted)
             {
-                return {};
+                return folder;
             }
 
-            folder = folder.parent_path();
+            folder = above;
         }
 
-        return folder;
+        return {};
     }
 
     std::filesystem::path AddonFolderReachedBy(const SimulatorProfile& profile, const std::filesystem::path& entryPath)
@@ -47,7 +48,7 @@ namespace
 
     bool AnAddonOfYoursLandsThereAndIsOffNow(const ProfileSnapshot& snapshot, const std::filesystem::path& folder)
     {
-        const TreeNode* addon = AddonNamed(snapshot.libraries, AsUtf8(folder.filename()));
+        const TreeNode* addon = AddonNamed(snapshot.libraries, AsUtf8(folder));
 
         return addon != nullptr && !snapshot.enabled.Contains(addon->path);
     }
@@ -77,7 +78,7 @@ std::vector<StartupLine> EntriesCarriedBy(const StartupReport& report,
     std::set<std::string> wanted;
     for (const std::filesystem::path& folder : addonFolders)
     {
-        wanted.insert(ComparablePath(folder.filename()));
+        wanted.insert(ComparableFileName(folder));
     }
 
     std::vector<StartupLine> carried;
@@ -88,7 +89,7 @@ std::vector<StartupLine> EntriesCarriedBy(const StartupReport& report,
             continue;
         }
 
-        if (wanted.contains(ComparablePath(line.addonFolder.filename())))
+        if (wanted.contains(ComparableFileName(line.addonFolder)))
         {
             carried.push_back(line);
         }

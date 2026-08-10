@@ -66,6 +66,19 @@
     return separator == std::string::npos ? key : key.substr(separator + 1);
 }
 
+[[nodiscard]] inline std::filesystem::path ParentOf(const std::filesystem::path& path)
+{
+    const std::string text = AsUtf8(path);
+    const std::size_t separator = WithGenericSeparators(text).find_last_of('/');
+
+    if (separator == std::string::npos)
+    {
+        return {};
+    }
+
+    return PathFromUtf8(text.substr(0, separator));
+}
+
 [[nodiscard]] inline std::size_t PartsIn(const std::filesystem::path& path)
 {
     return static_cast<std::size_t>(std::distance(path.begin(), path.end()));

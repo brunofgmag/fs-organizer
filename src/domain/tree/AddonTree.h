@@ -16,9 +16,9 @@
 
 std::vector<const TreeNode*> AddonsUnder(TreeNode&& node) = delete;
 
-[[nodiscard]] const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& baseName);
+[[nodiscard]] const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& nameOrFolder);
 
-const TreeNode* AddonNamed(std::vector<TreeNode>&& libraries, const std::string& baseName) = delete;
+const TreeNode* AddonNamed(std::vector<TreeNode>&& libraries, const std::string& nameOrFolder) = delete;
 
 [[nodiscard]] const TreeNode* AddonAt(const std::vector<TreeNode>& libraries, const std::filesystem::path& folder);
 

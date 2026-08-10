@@ -11,6 +11,7 @@
 #include "domain/model/RecycleLimits.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "viewmodel/SessionNotifier.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -170,8 +171,10 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
-                                log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;

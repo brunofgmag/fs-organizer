@@ -221,8 +221,6 @@ QWidget* DiagnosticsPage::CreateCountsPane()
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
     layout->addWidget(counts_, 1);
-    layout->addWidget(
-        Quiet(tr("These are the entries the Destinations screen lists, counted by what each one is."), pane));
 
     return pane;
 }
@@ -332,9 +330,6 @@ QWidget* DiagnosticsPage::CreateSizePane()
     layout->addLayout(progress);
     layout->addWidget(sizes_, 1);
     layout->addWidget(longestPaths_);
-    layout->addWidget(Quiet(tr("A managed entry in a destination is a link and holds no bytes of its own. What is "
-                               "counted here is where the addon actually lives."),
-                            pane));
 
     return pane;
 }

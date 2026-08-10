@@ -445,8 +445,13 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
+    const std::vector<StartupFileLocation> startupFiles =
+        StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe);
+    ExeXmlStartupEntries startupEntries{{}};
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
+
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                  stored->linkType);
+                                  startupService, stored->linkType);
     ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, stored->linkType);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 stored->linkType);
@@ -457,6 +462,12 @@ int main(int argc, char* argv[])
     RunsRightHere runner;
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, processProbe, runner, notifier);
+
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, &shell,
+                     [&session, &startupEntries, &startupFiles]
+                     {
+                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                     });
 
     SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -492,9 +503,6 @@ int main(int argc, char* argv[])
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
-    ExeXmlStartupEntries startupEntries(
-        StartupFileOf(StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant));
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
     StartupViewModel startupViewModel(startupService, session, settings, clock);
     auto* startupPage = new StartupPage(startupViewModel);
 

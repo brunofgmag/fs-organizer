@@ -161,7 +161,6 @@ private:
     QPushButton* rescan_ = nullptr;
     QLineEdit* search_ = nullptr;
     QCheckBox* hideEmpty_ = nullptr;
-    QLabel* promise_ = nullptr;
     EmptyState* invite_ = nullptr;
     QPushButton* inviteAction_ = nullptr;
     QList<ModelRowDetail::Field> fields_;

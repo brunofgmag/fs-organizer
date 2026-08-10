@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "domain/model/CopyConflict.h"
+#include "domain/model/FileResult.h"
 #include "domain/model/LinkFailure.h"
 
 struct OccupiedDestination
@@ -37,8 +38,18 @@ public:
         return {LinkFailure::DestinationHoldsLiveLink, std::move(occupation)};
     }
 
+    [[nodiscard]] static LinkOutcome OfFile(const FileResult result)
+    {
+        return {LinkFailure::None, result};
+    }
+
     [[nodiscard]] bool Succeeded() const
     {
+        if (const FileResult* file = File(); file != nullptr)
+        {
+            return ::Succeeded(*file);
+        }
+
         return failure_ == LinkFailure::None;
     }
 
@@ -57,8 +68,13 @@ public:
         return std::get_if<OccupiedDestination>(&detail_);
     }
 
+    [[nodiscard]] const FileResult* File() const
+    {
+        return std::get_if<FileResult>(&detail_);
+    }
+
 private:
-    using Detail = std::variant<std::monostate, CopyConflict, OccupiedDestination>;
+    using Detail = std::variant<std::monostate, CopyConflict, OccupiedDestination, FileResult>;
 
     LinkOutcome(const LinkFailure failure, Detail detail) : failure_(failure), detail_(std::move(detail))
     {

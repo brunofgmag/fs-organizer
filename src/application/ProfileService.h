@@ -54,11 +54,10 @@ public:
                    const LinkingEngine& linking,
                    const OperationLog& log,
                    const LibraryIdGenerator& identities,
+                   StartupService& startup,
                    LinkType linkType);
 
     void UseLinkType(LinkType linkType);
-
-    void AlsoSwitchesStartupEntries(StartupService& startup);
 
     [[nodiscard]] std::vector<StartupLine> StartupEntriesCarriedBy(const SimulatorProfile& profile,
                                                                    const ProfileSnapshot& shown,
@@ -149,8 +148,8 @@ private:
     const LinkingEngine& linking_;
     const OperationLog& log_;
     const LibraryIdGenerator& identities_;
+    StartupService& startup_;
     LinkType linkType_;
-    StartupService* startup_ = nullptr;
     std::vector<Step> undo_;
 };
 

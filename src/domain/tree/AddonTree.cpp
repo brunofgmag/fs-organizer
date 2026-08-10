@@ -104,9 +104,9 @@ std::vector<const TreeNode*> CategoriesOfferedIn(const TreeNode& tree, const boo
     return offered;
 }
 
-const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& baseName)
+const TreeNode* AddonNamed(const std::vector<TreeNode>& libraries, const std::string& nameOrFolder)
 {
-    const std::string wanted = ComparableFileName(baseName);
+    const std::string wanted = ComparableFileName(nameOrFolder);
 
     for (const TreeNode& library : libraries)
     {

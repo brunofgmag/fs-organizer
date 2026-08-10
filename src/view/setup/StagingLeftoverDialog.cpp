@@ -37,11 +37,6 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
 {
     setWindowTitle(tr("Imports that were left half finished"));
 
-    auto* explanation = new QLabel(tr("An import was interrupted before it finished. The original files are still "
-                                      "where they were: nothing was removed from the destination."),
-                                   this);
-    explanation->setWordWrap(true);
-
     auto* grid = new QGridLayout;
     grid->setColumnStretch(0, 1);
     grid->setHorizontalSpacing(12);
@@ -84,7 +79,6 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->addWidget(explanation);
     layout->addLayout(grid, 1);
     layout->addWidget(buttons);
 

@@ -192,10 +192,6 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     preview_ = new QLabel(panel);
     preview_->setWordWrap(true);
 
-    promise_ = new QLabel(panel);
-    promise_->setObjectName(QStringLiteral("PanelPromise"));
-    promise_->setWordWrap(true);
-
     apply_ = new QPushButton(panel);
     apply_->setObjectName(QStringLiteral("PresetApply"));
     apply_->setProperty("role", "primary");
@@ -208,7 +204,6 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     panel->Add(modeExplained_);
     panel->Add(preview_);
     panel->Add(apply_);
-    panel->Add(promise_);
 
     panel->RestoreCollapsedState();
 
@@ -317,7 +312,6 @@ void PresetsPage::RetranslateUi()
     modes_->button(static_cast<int>(ApplyMode::Replace))->setText(tr("Replace"));
     modes_->button(static_cast<int>(ApplyMode::Cumulative))->setText(tr("Accumulate"));
     modes_->button(static_cast<int>(ApplyMode::Disable))->setText(tr("Disable"));
-    promise_->setText(tr("Applying is a single batch: \"Undo the last batch\" takes it all back at once."));
     nothing_->Retell(tr("No preset in this profile yet."),
                      tr("A preset keeps which addons stay enabled. Enable what you want to fly and keep that "
                         "combination under a name. Applying it later is a single batch, with a whole undo."));

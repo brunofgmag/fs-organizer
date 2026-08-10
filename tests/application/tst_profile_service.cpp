@@ -15,7 +15,7 @@
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSidecarStore.h"
-#include "tests/doubles/FakeStartupEntries.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -60,6 +60,7 @@ namespace
         static void ASwapThatFailedHalfwayIsUndoneBackToTheAddonThatWasOn();
         static void TheAddonBeingDisabledNamesTheStartupEntryItCarries();
         static void AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack();
+        static void AStartupStepThatCouldNotWriteIsAFailureAndIsNotUndone();
         static void RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalAlone();
         static void WithTheStartupManagementOffNothingIsAskedAndTheFileIsNeverRead();
         static void ADisabledEntryInsideTheAddonIsNotWorthAsking();
@@ -156,7 +157,7 @@ namespace
         void CarryTheEntry(const bool enabled)
         {
             fileSystem.AddFile(kPmdgLoader);
-            startupEntries.Carry(
+            startup.entries.Carry(
                 StartupEntry{.label = "PMDG Operations Center", .path = kPmdgLoader, .enabled = enabled});
         }
 
@@ -172,12 +173,11 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
 
-        FakeStartupEntries startupEntries;
-        FakeProcessProbe processProbe;
-        StartupService startup{startupEntries, processProbe, filesystemProbe, true};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
     };
 }
 
@@ -897,7 +897,6 @@ void ProfileServiceTest::TheAddonBeingDisabledNamesTheStartupEntryItCarries()
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
     f.CarryTheEntry(true);
-    f.service.AlsoSwitchesStartupEntries(f.startup);
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot snapshot = f.Snapshot(profile);
@@ -915,7 +914,6 @@ void ProfileServiceTest::AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack()
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
     f.CarryTheEntry(true);
-    f.service.AlsoSwitchesStartupEntries(f.startup);
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot snapshot = f.Snapshot(profile);
@@ -929,7 +927,7 @@ void ProfileServiceTest::AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack()
 
     QCOMPARE(results.size(), std::size_t{2});
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
-    QVERIFY(!f.startupEntries.Entries().front().enabled);
+    QVERIFY(!f.startup.entries.Entries().front().enabled);
 
     const std::vector<JournalEntry> written = GroupOperations(f.journal.Read());
     QCOMPARE(written.size(), std::size_t{1});
@@ -939,7 +937,40 @@ void ProfileServiceTest::AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack()
 
     QCOMPARE(reverted.size(), std::size_t{2});
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
-    QVERIFY(f.startupEntries.Entries().front().enabled);
+    QVERIFY(f.startup.entries.Entries().front().enabled);
+}
+
+void ProfileServiceTest::AStartupStepThatCouldNotWriteIsAFailureAndIsNotUndone()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(true);
+    f.startup.entries.MakeSwitchingFailWith(FileResult::CouldNotWriteTheStartupFile);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const LinkBatch batch{.toDisable = f.Pmdg(snapshot),
+                          .toEnable = {},
+                          .startupEntriesToTurnOff =
+                              f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot))};
+
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(profile, snapshot, batch).results;
+
+    QCOMPARE(results.size(), std::size_t{2});
+
+    const auto startupStep =
+        std::ranges::find(results, OperationKind::TurnOffTheStartupEntry, &LinkOperationResult::kind);
+
+    QVERIFY(startupStep != results.end());
+    QVERIFY(!startupStep->outcome.Succeeded());
+    QVERIFY(f.startup.entries.Entries().front().enabled);
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{1});
+    QCOMPARE(reverted.front().kind, OperationKind::EnableAddon);
 }
 
 void ProfileServiceTest::RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalAlone()
@@ -948,7 +979,6 @@ void ProfileServiceTest::RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalA
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
     f.CarryTheEntry(true);
-    f.service.AlsoSwitchesStartupEntries(f.startup);
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot snapshot = f.Snapshot(profile);
@@ -958,8 +988,8 @@ void ProfileServiceTest::RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalA
 
     QCOMPARE(results.size(), std::size_t{1});
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
-    QVERIFY(f.startupEntries.Entries().front().enabled);
-    QCOMPARE(f.startupEntries.writes, std::size_t{0});
+    QVERIFY(f.startup.entries.Entries().front().enabled);
+    QCOMPARE(f.startup.entries.writes, std::size_t{0});
 
     for (const OperationRecord& record : f.journal.Read())
     {
@@ -973,14 +1003,13 @@ void ProfileServiceTest::WithTheStartupManagementOffNothingIsAskedAndTheFileIsNe
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
     f.CarryTheEntry(true);
-    f.startup.Manage(false);
-    f.service.AlsoSwitchesStartupEntries(f.startup);
+    f.startup.service.Manage(false);
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     QVERIFY(f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot)).empty());
-    QCOMPARE(f.startupEntries.reads, std::size_t{0});
+    QCOMPARE(f.startup.entries.reads, std::size_t{0});
 }
 
 void ProfileServiceTest::ADisabledEntryInsideTheAddonIsNotWorthAsking()
@@ -989,7 +1018,6 @@ void ProfileServiceTest::ADisabledEntryInsideTheAddonIsNotWorthAsking()
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
     f.CarryTheEntry(false);
-    f.service.AlsoSwitchesStartupEntries(f.startup);
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot snapshot = f.Snapshot(profile);
@@ -1005,8 +1033,7 @@ void ProfileServiceTest::AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAs
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
                          "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
     f.fileSystem.AddFile(elsewhere);
-    f.startupEntries.Carry(StartupEntry{.label = "CRJ Updater", .path = elsewhere, .enabled = true});
-    f.service.AlsoSwitchesStartupEntries(f.startup);
+    f.startup.entries.Carry(StartupEntry{.label = "CRJ Updater", .path = elsewhere, .enabled = true});
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot snapshot = f.Snapshot(profile);

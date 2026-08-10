@@ -13,6 +13,8 @@
 #include "application/ProfileService.h"
 #include "application/DeletionService.h"
 #include "application/SizeService.h"
+#include "application/StartupService.h"
+#include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -175,8 +177,12 @@ int main(int argc, char* argv[])
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
+
+    ExeXmlStartupEntries startupEntries{{}};
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, false);
+
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                  LinkType::Junction);
+                                  startupService, LinkType::Junction);
 
     const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction);
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking,
@@ -188,7 +194,7 @@ int main(int argc, char* argv[])
     {
         const NoLibrariesToScan nothingToScan;
         ProfileService justTheProfile(nothingToScan, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                      LinkType::Junction);
+                                      startupService, LinkType::Junction);
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
         SilentObserver silent;

@@ -78,12 +78,6 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
 
     auto* layout = new QVBoxLayout(this);
 
-    auto* promise = new QLabel(tr("FS Organizer has read the old program's configuration and proposes what follows. "
-                                  "Importing registers the library and the categories that are not here yet."),
-                               this);
-    promise->setWordWrap(true);
-    layout->addWidget(promise);
-
     tree_ = new QTreeWidget(this);
     tree_->setObjectName(QStringLiteral("LegacyProposal"));
     tree_->setColumnCount(2);

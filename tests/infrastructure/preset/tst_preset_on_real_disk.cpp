@@ -19,6 +19,7 @@
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
@@ -98,8 +99,10 @@ namespace
         FilesystemScanner catalog{manifestParser, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
         FakeLibraryIdGenerator identities;
-        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
-                                log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                                log,     identities,      startup.service, LinkType::Junction};
         std::filesystem::path presetRoot;
         FilePresetRepository presets{presetRoot};
         PresetService service{presets, profiles};
