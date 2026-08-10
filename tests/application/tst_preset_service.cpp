@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "application/PresetService.h"
+#include "application/preset/PresetStartupPlan.h"
 #include "domain/tree/LibraryTrees.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -35,6 +36,22 @@ namespace
         static void ApplyingReportsTheEntriesThatNoLongerResolve();
         static void ApplyingLinksAnAddonWhoseLinkVanishedAfterTheScan();
         static void ApplyingWalksTheDestinationOnceAndPlansBothHalvesFromThatWalk();
+        static void APresetThatDoesNotGovernStartupPlansNothingEvenHoldingEntries();
+        static void AGoverningPresetTurnsOnWhatItNamesAndLeavesWhatIsAlreadyOn();
+        static void ReplaceTurnsOffTheStartupEntriesThePresetDoesNotName();
+        static void CumulativeLeavesTheStartupEntriesThePresetDoesNotName();
+        static void TheDisableModeIgnoresTheStartupEntriesThePresetTurnsOff();
+        static void WithStartupManagementOffThePlanCountsWhatWillNotBeApplied();
+        static void AStartupEntryTheFileNoLongerHoldsIsReportedAndPlansNothing();
+        static void ApplyingWritesTheReturnPresetWithWhatWasOnBeforeIt();
+        static void NothingIsAppliedWhenTheReturnPresetCannotBeWritten();
+        static void TheReturnPresetIsOverwrittenAtEachApplication();
+        static void TheReturnPresetIsNotOneOfThePresetsOfTheProfile();
+        static void ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApplication();
+        static void TheReturnPresetGovernsStartupOnlyWhenTheAppliedPresetDid();
+        static void TurningTheFlagOnCapturesTheStartupEntriesThatAreOnRightNow();
+        static void UpdatingRefreshesTheStartupEntriesOnlyOfAPresetThatGovernsThem();
+        static void ApplyingAGoverningPresetActuallyFlipsTheStartupEntry();
     };
 }
 
@@ -122,7 +139,7 @@ namespace
         ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
                                 log,     identities,      startup.service, LinkType::Junction};
         FakePresetRepository repository;
-        PresetService service{repository, profiles};
+        PresetService service{repository, profiles, startup.service};
     };
 }
 
@@ -327,6 +344,332 @@ void PresetServiceTest::ApplyingWalksTheDestinationOnceAndPlansBothHalvesFromTha
     static_cast<void>(f.service.Apply(profile, shown, *preset, ApplyMode::Replace));
 
     QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity) - before, std::size_t{1});
+}
+
+namespace
+{
+    constexpr auto kLauncher = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe";
+    constexpr auto kOtherLauncher = "D:/MSFS 2024/Aircrafts/aerosoft-crj/tool.exe";
+    constexpr auto kStranger = "C:/Program Files/Outro/agent.exe";
+
+    StartupLine Line(const std::filesystem::path& path, const bool enabled)
+    {
+        return {.label = path.stem().string(), .path = path, .enabled = enabled};
+    }
+
+    Preset GoverningStartup(std::vector<PresetStartupEntry> entries)
+    {
+        return {.name = "Voo curto", .entries = {}, .startupEntries = std::move(entries), .governsStartup = true};
+    }
+
+    PresetStartupEntry TurningOn(const std::filesystem::path& path)
+    {
+        return {.path = path, .action = PresetAction::Enable};
+    }
+
+    PresetStartupEntry TurningOff(const std::filesystem::path& path)
+    {
+        return {.path = path, .action = PresetAction::Disable};
+    }
+}
+
+void PresetServiceTest::APresetThatDoesNotGovernStartupPlansNothingEvenHoldingEntries()
+{
+    Preset preset = GoverningStartup({TurningOn(kLauncher)});
+    preset.governsStartup = false;
+
+    const PresetStartupPlan plan =
+        PlanPresetStartup(preset, ApplyMode::Replace, {Line(kLauncher, false), Line(kStranger, true)}, true);
+
+    QVERIFY(plan.toTurnOn.empty());
+    QVERIFY(plan.toTurnOff.empty());
+    QCOMPARE(plan.asked, std::size_t{0});
+    QCOMPARE(plan.notApplied, std::size_t{0});
+}
+
+void PresetServiceTest::AGoverningPresetTurnsOnWhatItNamesAndLeavesWhatIsAlreadyOn()
+{
+    const Preset preset = GoverningStartup({TurningOn(kLauncher), TurningOn(kOtherLauncher)});
+
+    const PresetStartupPlan plan =
+        PlanPresetStartup(preset, ApplyMode::Cumulative, {Line(kLauncher, false), Line(kOtherLauncher, true)}, true);
+
+    QCOMPARE(plan.toTurnOn.size(), std::size_t{1});
+    QCOMPARE(plan.toTurnOn.front().path, std::filesystem::path{kLauncher});
+    QVERIFY(plan.toTurnOff.empty());
+    QCOMPARE(plan.asked, std::size_t{2});
+    QCOMPARE(plan.notApplied, std::size_t{0});
+}
+
+void PresetServiceTest::ReplaceTurnsOffTheStartupEntriesThePresetDoesNotName()
+{
+    const Preset preset = GoverningStartup({TurningOn(kLauncher)});
+
+    const PresetStartupPlan plan = PlanPresetStartup(
+        preset, ApplyMode::Replace, {Line(kLauncher, true), Line(kOtherLauncher, true), Line(kStranger, false)}, true);
+
+    QVERIFY(plan.toTurnOn.empty());
+    QCOMPARE(plan.toTurnOff.size(), std::size_t{1});
+    QCOMPARE(plan.toTurnOff.front().path, std::filesystem::path{kOtherLauncher});
+}
+
+void PresetServiceTest::CumulativeLeavesTheStartupEntriesThePresetDoesNotName()
+{
+    const Preset preset = GoverningStartup({TurningOn(kLauncher)});
+
+    const PresetStartupPlan plan =
+        PlanPresetStartup(preset, ApplyMode::Cumulative, {Line(kLauncher, true), Line(kOtherLauncher, true)}, true);
+
+    QVERIFY(plan.toTurnOn.empty());
+    QVERIFY(plan.toTurnOff.empty());
+}
+
+void PresetServiceTest::TheDisableModeIgnoresTheStartupEntriesThePresetTurnsOff()
+{
+    const Preset preset = GoverningStartup({TurningOn(kLauncher), TurningOff(kOtherLauncher)});
+
+    const PresetStartupPlan plan =
+        PlanPresetStartup(preset, ApplyMode::Disable, {Line(kLauncher, true), Line(kOtherLauncher, false)}, true);
+
+    QCOMPARE(plan.toTurnOff.size(), std::size_t{1});
+    QCOMPARE(plan.toTurnOff.front().path, std::filesystem::path{kLauncher});
+    QVERIFY(plan.toTurnOn.empty());
+}
+
+void PresetServiceTest::WithStartupManagementOffThePlanCountsWhatWillNotBeApplied()
+{
+    const Preset preset = GoverningStartup({TurningOn(kLauncher), TurningOn(kOtherLauncher)});
+
+    const PresetStartupPlan plan = PlanPresetStartup(preset, ApplyMode::Replace, {}, false);
+
+    QVERIFY(plan.toTurnOn.empty());
+    QVERIFY(plan.toTurnOff.empty());
+    QCOMPARE(plan.asked, std::size_t{2});
+    QCOMPARE(plan.notApplied, std::size_t{2});
+}
+
+void PresetServiceTest::AStartupEntryTheFileNoLongerHoldsIsReportedAndPlansNothing()
+{
+    const Preset preset = GoverningStartup({TurningOn(kLauncher), TurningOn(kOtherLauncher)});
+
+    const PresetStartupPlan plan = PlanPresetStartup(preset, ApplyMode::Cumulative, {Line(kLauncher, false)}, true);
+
+    QCOMPARE(plan.toTurnOn.size(), std::size_t{1});
+    QCOMPARE(plan.unresolved.size(), std::size_t{1});
+    QCOMPARE(plan.unresolved.front(), std::filesystem::path{kOtherLauncher});
+    QCOMPARE(plan.notApplied, std::size_t{0});
+}
+
+namespace
+{
+    std::vector<std::string> FolderNamesOf(const Preset& preset)
+    {
+        std::vector<std::string> names;
+
+        for (const PresetEntry& entry : preset.entries)
+        {
+            names.push_back(entry.addonId.folderName);
+        }
+
+        std::ranges::sort(names);
+
+        return names;
+    }
+}
+
+void PresetServiceTest::ApplyingWritesTheReturnPresetWithWhatWasOnBeforeIt()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset{
+        .name = "Voo curto",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
+
+    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace);
+
+    QVERIFY(report.refusal == PresetApplyRefusal::None);
+
+    const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
+
+    QVERIFY(back.has_value());
+    QCOMPARE(FolderNamesOf(*back), std::vector<std::string>{"pmdg-aircraft-77w"});
+    QVERIFY(!back->governsStartup);
+}
+
+void PresetServiceTest::NothingIsAppliedWhenTheReturnPresetCannotBeWritten()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.repository.RefuseEveryWrite();
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset{
+        .name = "Voo curto",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
+
+    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace);
+
+    QVERIFY(report.refusal == PresetApplyRefusal::TheReturnPresetCouldNotBeWritten);
+    QVERIFY(report.results.empty());
+    QVERIFY(!f.service.ReturnPreset(kProfileId).has_value());
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
+void PresetServiceTest::TheReturnPresetIsOverwrittenAtEachApplication()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const Preset first{
+        .name = "Um",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
+    const Preset second{
+        .name = "Dois",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "fenix-a320"}, .action = PresetAction::Enable}}};
+
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), first, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), second, ApplyMode::Replace));
+
+    const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
+
+    QVERIFY(back.has_value());
+    QCOMPARE(FolderNamesOf(*back), std::vector<std::string>{"aerosoft-crj"});
+}
+
+void PresetServiceTest::TheReturnPresetIsNotOneOfThePresetsOfTheProfile()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
+
+    const std::optional<Preset> preset = f.service.Load(kProfileId, "Voo curto");
+    QVERIFY(preset.has_value());
+
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), *preset, ApplyMode::Replace));
+
+    QVERIFY(f.service.ReturnPreset(kProfileId).has_value());
+    QCOMPARE(f.service.List(kProfileId).size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.service.List(kProfileId).front().name), QString{"Voo curto"});
+}
+
+void PresetServiceTest::ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApplication()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset{
+        .name = "Voo curto",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
+
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace));
+
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+
+    const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
+    QVERIFY(back.has_value());
+
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), *back, ApplyMode::Replace));
+
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
+void PresetServiceTest::TheReturnPresetGovernsStartupOnlyWhenTheAppliedPresetDid()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = true});
+
+    const SimulatorProfile profile = Profile();
+    const Preset governing = GoverningStartup({TurningOn(kLauncher)});
+
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), governing, ApplyMode::Cumulative));
+
+    const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
+
+    QVERIFY(back.has_value());
+    QVERIFY(back->governsStartup);
+    QCOMPARE(back->startupEntries.size(), std::size_t{1});
+    QCOMPARE(back->startupEntries.front().path, std::filesystem::path{kLauncher});
+    QVERIFY(back->startupEntries.front().action == PresetAction::Enable);
+}
+
+void PresetServiceTest::TurningTheFlagOnCapturesTheStartupEntriesThatAreOnRightNow()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = true});
+    f.startup.entries.Carry(StartupEntry{.label = "Aerosoft", .path = kOtherLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
+
+    QVERIFY(f.service.GovernStartup(profile, f.Snapshot(profile), "Voo curto", true));
+
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
+
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->governsStartup);
+    QCOMPARE(saved->startupEntries.size(), std::size_t{1});
+    QCOMPARE(saved->startupEntries.front().path, std::filesystem::path{kLauncher});
+}
+
+void PresetServiceTest::UpdatingRefreshesTheStartupEntriesOnlyOfAPresetThatGovernsThem()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Quieto"));
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Governa"));
+    QVERIFY(f.service.GovernStartup(profile, f.Snapshot(profile), "Governa", true));
+
+    QCOMPARE(f.service.Load(kProfileId, "Governa")->startupEntries.size(), std::size_t{0});
+
+    QVERIFY(f.startup.service.Switch(kLauncher, true) == FileResult::Completed);
+
+    QVERIFY(f.service.Update(profile, f.Snapshot(profile), "Governa"));
+    QVERIFY(f.service.Update(profile, f.Snapshot(profile), "Quieto"));
+
+    QCOMPARE(f.service.Load(kProfileId, "Governa")->startupEntries.size(), std::size_t{1});
+    QVERIFY(f.service.Load(kProfileId, "Governa")->governsStartup);
+    QCOMPARE(f.service.Load(kProfileId, "Quieto")->startupEntries.size(), std::size_t{0});
+    QVERIFY(!f.service.Load(kProfileId, "Quieto")->governsStartup);
+}
+
+void PresetServiceTest::ApplyingAGoverningPresetActuallyFlipsTheStartupEntry()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = false});
+    f.startup.entries.Carry(StartupEntry{.label = "Outro", .path = kStranger, .enabled = true});
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset = GoverningStartup({TurningOn(kLauncher)});
+
+    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Cumulative);
+
+    QVERIFY(report.refusal == PresetApplyRefusal::None);
+    QCOMPARE(f.startup.entries.writes, std::size_t{1});
+    QCOMPARE(report.results.size(), std::size_t{1});
+    QVERIFY(report.results.front().kind == OperationKind::TurnOnTheStartupEntry);
+    QVERIFY(report.results.front().outcome.Succeeded());
+    QCOMPARE(report.results.front().linkPath, std::filesystem::path{kLauncher});
+
+    const std::vector<StartupEntry> after = f.startup.entries.Entries();
+
+    QCOMPARE(after.front().enabled, true);
+    QCOMPARE(after.back().enabled, true);
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)

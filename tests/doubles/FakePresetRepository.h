@@ -98,6 +98,25 @@ public:
         byProfile_[profileId].erase(name);
     }
 
+    [[nodiscard]] std::optional<Preset> LoadReturnPreset(const std::string& profileId) const override
+    {
+        const auto preset = returns_.find(profileId);
+
+        return preset == returns_.end() ? std::nullopt : std::optional(preset->second);
+    }
+
+    [[nodiscard]] bool SaveReturnPreset(const std::string& profileId, const Preset& preset) override
+    {
+        if (refusing_)
+        {
+            return false;
+        }
+
+        returns_[profileId] = preset;
+
+        return true;
+    }
+
     void RefuseEveryWrite()
     {
         refusing_ = true;
@@ -105,6 +124,7 @@ public:
 
 private:
     std::map<std::string, std::map<std::string, Preset>> byProfile_;
+    std::map<std::string, Preset> returns_;
     std::map<std::string, std::chrono::system_clock::time_point> writtenAt_;
     bool refusing_ = false;
 };

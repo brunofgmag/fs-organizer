@@ -98,7 +98,7 @@ namespace
         ProfileService profiles{scanner, filesystemProbe, sidecars,        classifier,        linking,
                                 log,     identities,      startup.service, LinkType::Junction};
         FakePresetRepository presets;
-        PresetService service{presets, profiles};
+        PresetService service{presets, profiles, startup.service};
     };
 
     SimulatorProfile ProfileOn(const Disk& disk)

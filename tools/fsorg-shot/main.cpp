@@ -496,8 +496,8 @@ int main(int argc, char* argv[])
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
     FilePresetRepository presetRepository(staged->presetsFolder);
-    PresetService presetService(presetRepository, profileService);
-    PresetViewModel presetViewModel(session, presetService);
+    PresetService presetService(presetRepository, profileService, startupService);
+    PresetViewModel presetViewModel(session, presetService, profileService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
@@ -592,6 +592,14 @@ int main(int argc, char* argv[])
               selectIfAsked(*communityPage, QStringLiteral("Destinations"));
           });
     shoot(presetsTab, QStringLiteral("03-presets"), {});
+    shoot(presetsTab, QStringLiteral("03b-presets-plan"),
+          [presetsPage]
+          {
+              if (auto* plan = presetsPage->findChild<QPushButton*>(QStringLiteral("PresetPlanTab")))
+              {
+                  plan->click();
+              }
+          });
     shoot(journalTab, QStringLiteral("04-journal"),
           [&journalViewModel, journalPage, &selectIfAsked]
           {

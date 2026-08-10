@@ -32,6 +32,7 @@ set(APPLICATION_SOURCES
         src/application/model/DeletionPlan.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
+        src/application/preset/PresetStartupPlan.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
         src/application/Session.cpp
@@ -121,6 +122,7 @@ set(VIEW_SOURCES
         src/view/options/OptionsPage.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
+        src/view/presets/OmittedDialog.cpp
         src/view/PresetsPage.cpp
         src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
