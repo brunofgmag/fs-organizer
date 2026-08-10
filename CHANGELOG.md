@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.2](https://github.com/brunofgmag/fs-organizer/compare/v0.24.1...v0.24.2) (2026-08-10)
+
+
+### Bug Fixes
+
+* **view:** drop the half of the language footer that repeats the radios ([#69](https://github.com/brunofgmag/fs-organizer/issues/69)) ([5226bbd](https://github.com/brunofgmag/fs-organizer/commit/5226bbdc85eed2099c401049399ac75bf118776d))
+
 ## [0.24.1](https://github.com/brunofgmag/fs-organizer/compare/v0.24.0...v0.24.1) (2026-08-10)
 
 
