@@ -137,6 +137,11 @@ namespace
 
 QString Describe(const LinkOperationResult& result)
 {
+    if (result.fileResult.has_value())
+    {
+        return QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(*result.fileResult));
+    }
+
     QString line =
         QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(result.outcome.Failure()));
 

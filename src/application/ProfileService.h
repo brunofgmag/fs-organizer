@@ -9,6 +9,7 @@
 #include "application/model/LibraryReport.h"
 #include "application/model/LinkBatchReport.h"
 #include "application/model/LinkOperationResult.h"
+#include "application/StartupService.h"
 #include "application/model/ProfileSnapshot.h"
 #include "application/ports/LibraryIdGenerator.h"
 #include "domain/journal/OperationLog.h"
@@ -25,8 +26,9 @@
 
 struct LinkBatch
 {
-    std::vector<const TreeNode*> toDisable;
-    std::vector<const TreeNode*> toEnable;
+    std::vector<const TreeNode*> toDisable{};
+    std::vector<const TreeNode*> toEnable{};
+    std::vector<StartupLine> startupEntriesToTurnOff{};
 };
 
 struct TakenPlace
@@ -55,6 +57,12 @@ public:
                    LinkType linkType);
 
     void UseLinkType(LinkType linkType);
+
+    void AlsoSwitchesStartupEntries(StartupService& startup);
+
+    [[nodiscard]] std::vector<StartupLine> StartupEntriesCarriedBy(const SimulatorProfile& profile,
+                                                                   const ProfileSnapshot& shown,
+                                                                   const std::vector<const TreeNode*>& nodes) const;
 
     [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
 
@@ -109,13 +117,15 @@ private:
     [[nodiscard]] static std::vector<Step> PlanSteps(const SimulatorProfile& profile,
                                                      const LinksOnDisk& onDisk,
                                                      const std::vector<const TreeNode*>& nodes,
-                                                     bool enable);
+                                                     bool enable,
+                                                     const std::vector<StartupLine>& startupEntriesToTurnOff = {});
 
     [[nodiscard]] static std::vector<Step>
     StepsFor(const SimulatorProfile& profile,
              const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
              const TreeNode& addon,
-             bool enable);
+             bool enable,
+             const std::vector<StartupLine>& startupEntriesToTurnOff);
 
     [[nodiscard]] static Step Inverse(const Step& step);
 
@@ -124,6 +134,8 @@ private:
     [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile, const RepairRequest& request);
 
     [[nodiscard]] LinkOperationResult Run(const Step& step) const;
+
+    [[nodiscard]] LinkOperationResult RunTheStartupStep(const Step& step) const;
 
     [[nodiscard]] std::vector<LinkOperationResult> RunAsOneBatch(const std::vector<Step>& steps);
 
@@ -138,6 +150,7 @@ private:
     const OperationLog& log_;
     const LibraryIdGenerator& identities_;
     LinkType linkType_;
+    StartupService* startup_ = nullptr;
     std::vector<Step> undo_;
 };
 

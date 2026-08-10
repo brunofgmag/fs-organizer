@@ -41,7 +41,7 @@ void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results)
     const bool changed = std::ranges::any_of(results,
                                              [](const LinkOperationResult& result)
                                              {
-                                                 return result.outcome.Succeeded();
+                                                 return result.Worked();
                                              });
 
     if (!changed || !probe_.SimulatorIsRunning())
