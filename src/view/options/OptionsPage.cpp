@@ -527,9 +527,9 @@ QWidget* OptionsPage::CreateLanguage()
     }
 
     layout->addLayout(choices);
-    layout->addWidget(Quiet(tr("The interface ships in English and in Brazilian Portuguese. Choosing a language "
-                               "writes the language key in settings.json and changes the interface right away."),
-                            pane));
+    layout->addWidget(
+        Quiet(tr("Choosing a language writes the language key in settings.json and changes the interface right away."),
+              pane));
     layout->addStretch();
 
     connect(languages_, &QButtonGroup::idClicked, this,

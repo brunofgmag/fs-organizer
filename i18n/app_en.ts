@@ -2491,9 +2491,8 @@ It also exists in the library: %2</translation>
         <translation>Apply and restart</translation>
     </message>
     <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="530"/>
         <source>The interface ships in English and in Brazilian Portuguese. Choosing a language writes the language key in settings.json and changes the interface right away.</source>
-        <translation>The interface ships in English and in Brazilian Portuguese. Choosing a language writes the language key in settings.json and changes the interface right away.</translation>
+        <translation type="vanished">The interface ships in English and in Brazilian Portuguese. Choosing a language writes the language key in settings.json and changes the interface right away.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="574"/>
@@ -2594,6 +2593,11 @@ It also exists in the library: %2</translation>
         <location filename="../src/view/options/OptionsPage.cpp" line="428"/>
         <source>Looks for a new version and says it exists, but only downloads it if you say so.</source>
         <translation>Looks for a new version and says it exists, but only downloads it if you say so.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="531"/>
+        <source>Choosing a language writes the language key in settings.json and changes the interface right away.</source>
+        <translation>Choosing a language writes the language key in settings.json and changes the interface right away.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="657"/>
@@ -3555,12 +3559,12 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="622"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="610"/>
         <source>Restore the selected ones</source>
         <translation>Restore the selected ones</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="770"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="758"/>
         <source>Unregister</source>
         <translation>Unregister</translation>
     </message>
