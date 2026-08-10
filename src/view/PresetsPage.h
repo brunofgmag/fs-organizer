@@ -9,10 +9,8 @@
 #include "viewmodel/SessionNotifier.h"
 
 class EmptyState;
-class QButtonGroup;
-class QCheckBox;
+class PresetPlanPanel;
 class QFrame;
-class QLabel;
 class QLineEdit;
 class QPushButton;
 class QStackedWidget;
@@ -41,15 +39,7 @@ private:
 
     [[nodiscard]] QTableWidget* CreateReturnTable();
 
-    [[nodiscard]] QWidget* CreateThePlanFields();
-
-    [[nodiscard]] QWidget* CreateTheModeRow();
-
-    [[nodiscard]] QWidget* CreateThePlanHalf();
-
     [[nodiscard]] QWidget* CreateTheTwoHalves();
-
-    [[nodiscard]] QWidget* CreateTheStartupSection();
 
     [[nodiscard]] QString SelectedName() const;
 
@@ -95,39 +85,17 @@ private:
     QStackedWidget* pages_ = nullptr;
     QPushButton* content_ = nullptr;
     QPushButton* plan_ = nullptr;
-    QLabel* planFor_ = nullptr;
     QTableWidget* names_ = nullptr;
     QTableWidget* return_ = nullptr;
     QFrame* returnRule_ = nullptr;
     QLineEdit* filter_ = nullptr;
-    QButtonGroup* modes_ = nullptr;
-    QLabel* modeExplained_ = nullptr;
     QTableWidget* entries_ = nullptr;
-    QLabel* planTitle_ = nullptr;
-    QLabel* toEnableName_ = nullptr;
-    QLabel* toEnable_ = nullptr;
-    QLabel* toDisableName_ = nullptr;
-    QLabel* toDisable_ = nullptr;
-    QLabel* alreadyName_ = nullptr;
-    QLabel* already_ = nullptr;
-    QLabel* unresolvedName_ = nullptr;
-    QLabel* unresolved_ = nullptr;
-    QLabel* notNamedName_ = nullptr;
-    QLabel* notNamed_ = nullptr;
-    QLabel* notAppliedName_ = nullptr;
-    QLabel* notApplied_ = nullptr;
-    QLabel* omittedNote_ = nullptr;
-    QPushButton* showOmitted_ = nullptr;
-    QCheckBox* governsStartup_ = nullptr;
-    QWidget* startupSection_ = nullptr;
-    QLabel* startupSaid_ = nullptr;
-    QPushButton* apply_ = nullptr;
+    PresetPlanPanel* planPanel_ = nullptr;
     QPushButton* update_ = nullptr;
     QPushButton* rename_ = nullptr;
     QPushButton* remove_ = nullptr;
     QPushButton* create_ = nullptr;
     QPushButton* goBack_ = nullptr;
-    QLabel* applyAs_ = nullptr;
     EmptyState* nothing_ = nullptr;
     QPushButton* nothingAction_ = nullptr;
     std::optional<Preset> selected_;

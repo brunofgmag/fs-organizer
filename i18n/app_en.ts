@@ -2775,6 +2775,114 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
 </context>
 <context>
+    <name>PresetPlanPanel</name>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="275"/>
+        <source>Leaves only what the preset enables.</source>
+        <translation>Leaves only what the preset enables.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="276"/>
+        <source>The plan, as Replace</source>
+        <translation>The plan, as Replace</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="279"/>
+        <source>Enables what the preset names, without touching the rest.</source>
+        <translation>Enables what the preset names, without touching the rest.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="280"/>
+        <source>The plan, as Accumulate</source>
+        <translation>The plan, as Accumulate</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="283"/>
+        <source>Disables what the preset enables.</source>
+        <translation>Disables what the preset enables.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="284"/>
+        <source>The plan, as Disable</source>
+        <translation>The plan, as Disable</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="295"/>
+        <source>Apply</source>
+        <translation>Apply</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="301"/>
+        <source>Apply: enables %1, disables %2</source>
+        <translation>Apply: enables %1, disables %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="317"/>
+        <source>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</source>
+        <translation>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="336"/>
+        <source>Apply as</source>
+        <translation>Apply as</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="337"/>
+        <source>Replace</source>
+        <translation>Replace</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="338"/>
+        <source>Accumulate</source>
+        <translation>Accumulate</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="339"/>
+        <source>Disable</source>
+        <translation>Disable</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="340"/>
+        <source>Turn on</source>
+        <translation>Turn on</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="341"/>
+        <source>Turn off</source>
+        <translation>Turn off</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="342"/>
+        <source>Already as the preset asks</source>
+        <translation>Already as the preset asks</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="343"/>
+        <source>Named, but no addon found</source>
+        <translation>Named, but no addon found</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="344"/>
+        <source>Off because Replace omits them</source>
+        <translation>Off because Replace omits them</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="345"/>
+        <source>Asked for, but not applied</source>
+        <translation>Asked for, but not applied</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="346"/>
+        <source>Show them…</source>
+        <translation>Show them…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="347"/>
+        <source>This preset also governs startup entries</source>
+        <translation>This preset also governs startup entries</translation>
+    </message>
+</context>
+<context>
     <name>PresetViewModel</name>
     <message numerus="yes">
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="35"/>
@@ -2843,30 +2951,29 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 <context>
     <name>PresetsPage</name>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="247"/>
-        <location filename="../src/view/PresetsPage.cpp" line="379"/>
+        <location filename="../src/view/PresetsPage.cpp" line="169"/>
+        <location filename="../src/view/PresetsPage.cpp" line="296"/>
         <source>Addon</source>
         <translation>Addon</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="247"/>
-        <location filename="../src/view/PresetsPage.cpp" line="379"/>
+        <location filename="../src/view/PresetsPage.cpp" line="169"/>
+        <location filename="../src/view/PresetsPage.cpp" line="296"/>
         <source>Library</source>
         <translation>Library</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="247"/>
-        <location filename="../src/view/PresetsPage.cpp" line="379"/>
+        <location filename="../src/view/PresetsPage.cpp" line="169"/>
+        <location filename="../src/view/PresetsPage.cpp" line="296"/>
         <source>Enables</source>
         <translation>Enables</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="387"/>
         <source>Apply as</source>
-        <translation>Apply as</translation>
+        <translation type="vanished">Apply as</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="322"/>
+        <location filename="../src/view/PresetsPage.cpp" line="241"/>
         <source>Nothing changed</source>
         <translation>Nothing changed</translation>
     </message>
@@ -2879,7 +2986,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">The changes only count after the simulator is restarted.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="329"/>
+        <location filename="../src/view/PresetsPage.cpp" line="248"/>
         <source>Restart the simulator to apply the changes.</source>
         <translation>Restart the simulator to apply the changes.</translation>
     </message>
@@ -2888,7 +2995,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">Entries not found</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="339"/>
+        <location filename="../src/view/PresetsPage.cpp" line="258"/>
         <source>These addons of the preset are no longer in the library:
 
 %1</source>
@@ -2897,122 +3004,111 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 %1</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="350"/>
+        <location filename="../src/view/PresetsPage.cpp" line="269"/>
         <source>Not everything the preset asked for happened</source>
         <translation>Not everything the preset asked for happened</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="372"/>
-        <location filename="../src/view/PresetsPage.cpp" line="395"/>
+        <location filename="../src/view/PresetsPage.cpp" line="291"/>
+        <location filename="../src/view/PresetsPage.cpp" line="302"/>
         <source>New from the enabled ones…</source>
         <translation>New from the enabled ones…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="373"/>
+        <location filename="../src/view/PresetsPage.cpp" line="292"/>
         <source>Update with the enabled ones</source>
         <translation>Update with the enabled ones</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="374"/>
+        <location filename="../src/view/PresetsPage.cpp" line="293"/>
         <source>Rename…</source>
         <translation>Rename…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="375"/>
+        <location filename="../src/view/PresetsPage.cpp" line="294"/>
         <source>Delete</source>
         <translation>Delete</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="376"/>
         <source>Show them…</source>
-        <translation>Show them…</translation>
+        <translation type="vanished">Show them…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="377"/>
         <source>This preset also governs startup entries</source>
-        <translation>This preset also governs startup entries</translation>
+        <translation type="vanished">This preset also governs startup entries</translation>
     </message>
     <message>
         <source>What is enabled right now is written down first, so you can come back to it even after an import or a quarantine operation, which lose the batch undo.</source>
         <translation type="vanished">What is enabled right now is written down first, so you can come back to it even after an import or a quarantine operation, which lose the batch undo.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="378"/>
+        <location filename="../src/view/PresetsPage.cpp" line="295"/>
         <source>Filter presets</source>
         <translation>Filter presets</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="380"/>
+        <location filename="../src/view/PresetsPage.cpp" line="297"/>
         <source>Preset</source>
         <translation>Preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="380"/>
+        <location filename="../src/view/PresetsPage.cpp" line="297"/>
         <source>Content</source>
         <translation>Content</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="380"/>
+        <location filename="../src/view/PresetsPage.cpp" line="297"/>
         <source>Changed</source>
         <translation>Changed</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="380"/>
+        <location filename="../src/view/PresetsPage.cpp" line="297"/>
         <source>Would change</source>
         <translation>Would change</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="381"/>
         <source>Turn on</source>
-        <translation>Turn on</translation>
+        <translation type="vanished">Turn on</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="382"/>
         <source>Turn off</source>
-        <translation>Turn off</translation>
+        <translation type="vanished">Turn off</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="383"/>
         <source>Already as the preset asks</source>
-        <translation>Already as the preset asks</translation>
+        <translation type="vanished">Already as the preset asks</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="384"/>
         <source>Named, but no addon found</source>
-        <translation>Named, but no addon found</translation>
+        <translation type="vanished">Named, but no addon found</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="385"/>
         <source>Off because Replace omits them</source>
-        <translation>Off because Replace omits them</translation>
+        <translation type="vanished">Off because Replace omits them</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="386"/>
         <source>Asked for, but not applied</source>
-        <translation>Asked for, but not applied</translation>
+        <translation type="vanished">Asked for, but not applied</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="388"/>
+        <location filename="../src/view/PresetsPage.cpp" line="298"/>
         <source>Plan</source>
         <translation>Plan</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="389"/>
         <source>Replace</source>
-        <translation>Replace</translation>
+        <translation type="vanished">Replace</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="390"/>
         <source>Accumulate</source>
-        <translation>Accumulate</translation>
+        <translation type="vanished">Accumulate</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="391"/>
         <source>Disable</source>
-        <translation>Disable</translation>
+        <translation type="vanished">Disable</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="1061"/>
+        <location filename="../src/view/PresetsPage.cpp" line="766"/>
         <source>%1
 
 Apply &quot;%2&quot;?</source>
@@ -3025,18 +3121,18 @@ Apply &quot;%2&quot;?</translation>
         <translation type="vanished">Applying is a single batch: &quot;Undo the last batch&quot; takes it all back at once.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="392"/>
-        <location filename="../src/view/PresetsPage.cpp" line="743"/>
+        <location filename="../src/view/PresetsPage.cpp" line="299"/>
+        <location filename="../src/view/PresetsPage.cpp" line="496"/>
         <source>No preset in this profile yet.</source>
         <translation>No preset in this profile yet.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="393"/>
+        <location filename="../src/view/PresetsPage.cpp" line="300"/>
         <source>A preset keeps which addons stay enabled. Enable what you want to fly and keep that combination under a name. Applying it later is a single batch, with a whole undo.</source>
         <translation>A preset keeps which addons stay enabled. Enable what you want to fly and keep that combination under a name. Applying it later is a single batch, with a whole undo.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/PresetsPage.cpp" line="744"/>
+        <location filename="../src/view/PresetsPage.cpp" line="497"/>
         <source>%n preset in this profile.</source>
         <translation>
             <numerusform>%n preset in this profile.</numerusform>
@@ -3052,93 +3148,84 @@ Apply &quot;%2&quot;?</translation>
         <translation type="vanished">Undo the last batch</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="846"/>
+        <location filename="../src/view/PresetsPage.cpp" line="593"/>
         <source>Content · %1</source>
         <translation>Content · %1</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="901"/>
         <source>Leaves only what the preset enables.</source>
-        <translation>Leaves only what the preset enables.</translation>
+        <translation type="vanished">Leaves only what the preset enables.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="902"/>
         <source>The plan, as Replace</source>
-        <translation>The plan, as Replace</translation>
+        <translation type="vanished">The plan, as Replace</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="905"/>
         <source>Enables what the preset names, without touching the rest.</source>
-        <translation>Enables what the preset names, without touching the rest.</translation>
+        <translation type="vanished">Enables what the preset names, without touching the rest.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="906"/>
         <source>The plan, as Accumulate</source>
-        <translation>The plan, as Accumulate</translation>
+        <translation type="vanished">The plan, as Accumulate</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="909"/>
         <source>Disables what the preset enables.</source>
-        <translation>Disables what the preset enables.</translation>
+        <translation type="vanished">Disables what the preset enables.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="910"/>
         <source>The plan, as Disable</source>
-        <translation>The plan, as Disable</translation>
+        <translation type="vanished">The plan, as Disable</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="921"/>
         <source>Apply</source>
-        <translation>Apply</translation>
+        <translation type="vanished">Apply</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="943"/>
         <source>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</source>
-        <translation>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</translation>
+        <translation type="vanished">The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="927"/>
         <source>Apply: enables %1, disables %2</source>
-        <translation>Apply: enables %1, disables %2</translation>
+        <translation type="vanished">Apply: enables %1, disables %2</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="781"/>
+        <location filename="../src/view/PresetsPage.cpp" line="534"/>
         <source>Undoes the batch you just applied.</source>
         <translation>Undoes the batch you just applied.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="782"/>
+        <location filename="../src/view/PresetsPage.cpp" line="535"/>
         <source>Applies the return preset, written down before the last application.</source>
         <translation>Applies the return preset, written down before the last application.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="953"/>
+        <location filename="../src/view/PresetsPage.cpp" line="657"/>
         <source>New preset</source>
         <translation>New preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="953"/>
-        <location filename="../src/view/PresetsPage.cpp" line="982"/>
+        <location filename="../src/view/PresetsPage.cpp" line="657"/>
+        <location filename="../src/view/PresetsPage.cpp" line="686"/>
         <source>Name:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="982"/>
+        <location filename="../src/view/PresetsPage.cpp" line="686"/>
         <source>Rename preset</source>
         <translation>Rename preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="1000"/>
+        <location filename="../src/view/PresetsPage.cpp" line="704"/>
         <source>Delete preset</source>
         <translation>Delete preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="1000"/>
+        <location filename="../src/view/PresetsPage.cpp" line="704"/>
         <source>Delete the preset &quot;%1&quot;?</source>
         <translation>Delete the preset &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="1061"/>
+        <location filename="../src/view/PresetsPage.cpp" line="766"/>
         <source>Replace what is enabled</source>
         <translation>Replace what is enabled</translation>
     </message>
@@ -3598,22 +3685,22 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>(no version in the manifest)</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="115"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="81"/>
         <source>Enables %1, disables %2. %3 already match what the preset asks, %4 were not found, and %5 destination entries stay as they are.</source>
         <translation>Enables %1, disables %2. %3 already match what the preset asks, %4 were not found, and %5 destination entries stay as they are.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="125"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="91"/>
         <source> Of the ones it disables, %1 entered the library after the preset was saved.</source>
         <translation> Of the ones it disables, %1 entered the library after the preset was saved.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="171"/>
+        <location filename="../src/view/PresetsPage.cpp" line="115"/>
         <source>Back to the previous set</source>
         <translation>Back to the previous set</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/PresetsPage.cpp" line="178"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="60"/>
         <source>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</source>
         <translation>
             <numerusform>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</numerusform>
@@ -3621,12 +3708,12 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="185"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="67"/>
         <source>This preset asks for %1 startup entries. %2 of them are no longer in the simulator file, and %3 will be switched.</source>
         <translation>This preset asks for %1 startup entries. %2 of them are no longer in the simulator file, and %3 will be switched.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/PresetsPage.cpp" line="192"/>
+        <location filename="../src/view/presets/PresetPlanPanel.cpp" line="74"/>
         <source>This preset asks for %n startup entry, and all of them will be applied.</source>
         <translation>
             <numerusform>This preset asks for %n startup entry, and all of them will be applied.</numerusform>
@@ -3634,12 +3721,12 @@ Apply the preset &quot;%2&quot;?</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="697"/>
+        <location filename="../src/view/PresetsPage.cpp" line="450"/>
         <source>Satisfied</source>
         <translation>Satisfied</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/PresetsPage.cpp" line="692"/>
+        <location filename="../src/view/PresetsPage.cpp" line="445"/>
         <source>%n change</source>
         <translation>
             <numerusform>%n change</numerusform>
