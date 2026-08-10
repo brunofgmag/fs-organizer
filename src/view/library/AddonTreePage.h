@@ -92,6 +92,9 @@ private:
 
     [[nodiscard]] std::vector<TakenPlace> SwapsTheUserAgreedTo(const std::vector<const TreeNode*>& nodes, bool enable);
 
+    [[nodiscard]] std::vector<StartupLine> StartupEntriesTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,
+                                                                         bool enable);
+
     void OnBatchFinished(const LinkBatchReport& report);
 
     [[nodiscard]] QString NothingChangedBecause(const LinkBatchReport& report) const;

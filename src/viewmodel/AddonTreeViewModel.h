@@ -54,7 +54,14 @@ public:
 
     void Toggle(const std::vector<const TreeNode*>& nodes, bool enable, const std::vector<TakenPlace>& agreedSwaps);
 
+    void Toggle(const std::vector<const TreeNode*>& nodes,
+                bool enable,
+                const std::vector<TakenPlace>& agreedSwaps,
+                const std::vector<StartupLine>& agreedEntries);
+
     [[nodiscard]] std::vector<TakenPlace> SwapsNeededTo(const std::vector<const TreeNode*>& nodes) const;
+
+    [[nodiscard]] std::vector<StartupLine> StartupEntriesAtRisk(const std::vector<const TreeNode*>& nodes) const;
 
     [[nodiscard]] QString VersionOf(const std::filesystem::path& addonFolder) const;
 

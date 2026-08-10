@@ -32,6 +32,7 @@
 #include "view/library/DeleteDialog.h"
 #include "view/library/LibraryRootDialog.h"
 #include "view/library/SuggestionDialog.h"
+#include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/DependencySection.h"
@@ -651,7 +652,8 @@ void AddonTreePage::ToggleSelection(const bool enable)
 
     if (TheUserMeantIt(nodes, enable))
     {
-        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable));
+        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable),
+                          StartupEntriesTheUserAgreedTo(nodes, enable));
     }
 }
 
@@ -662,7 +664,8 @@ void AddonTreePage::OnToggleRequested(const TreeNode* node)
 
     if (TheUserMeantIt(nodes, enable))
     {
-        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable));
+        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable),
+                          StartupEntriesTheUserAgreedTo(nodes, enable));
     }
 }
 
@@ -689,6 +692,25 @@ std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<co
                              });
 
     return dialog.exec() == QDialog::Accepted ? swaps : std::vector<TakenPlace>{};
+}
+
+std::vector<StartupLine> AddonTreePage::StartupEntriesTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,
+                                                                      const bool enable)
+{
+    if (enable)
+    {
+        return {};
+    }
+
+    const std::vector<StartupLine> carried = viewModel_.StartupEntriesAtRisk(nodes);
+    if (carried.empty())
+    {
+        return {};
+    }
+
+    StartupEntryDialog dialog(carried, this);
+
+    return dialog.exec() == QDialog::Accepted ? carried : std::vector<StartupLine>{};
 }
 
 bool AddonTreePage::TheUserMeantIt(const std::vector<const TreeNode*>& nodes, const bool enable)
@@ -738,7 +760,7 @@ void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
     std::ranges::copy_if(report.results, std::back_inserter(failed),
                          [](const LinkOperationResult& result)
                          {
-                             return !result.outcome.Succeeded();
+                             return !result.Worked();
                          });
 
     const auto done = static_cast<int>(report.results.size() - failed.size());

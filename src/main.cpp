@@ -239,6 +239,7 @@ int main(int argc, char* argv[])
     const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries(StartupFileOf(startupFiles, session.Profile().variant));
     StartupService startupService(startupEntries, processProbe, filesystemProbe, onDisk.manageStartupEntries);
+    profileService.AlsoSwitchesStartupEntries(startupService);
     StartupViewModel startupViewModel(startupService, session, settings, clock);
     auto* startupPage = new StartupPage(startupViewModel);
 
