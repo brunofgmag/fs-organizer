@@ -131,7 +131,7 @@ namespace
         FakeLegacyConfigSource legacy;
         LegacyConfigImporter importer{legacy, filesystemProbe};
         FakePresetRepository presetRepository;
-        PresetService presets{presetRepository, service};
+        PresetService presets{presetRepository, service, startup.service};
         LegacyImportViewModel viewModel{session, importer, presets};
     };
 

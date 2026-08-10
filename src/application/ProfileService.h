@@ -24,11 +24,18 @@
 #include "domain/ports/OperationJournal.h"
 #include "domain/ports/SidecarStore.h"
 
+struct StartupSwitch
+{
+    StartupLine line{};
+    bool enable = false;
+};
+
 struct LinkBatch
 {
     std::vector<const TreeNode*> toDisable{};
     std::vector<const TreeNode*> toEnable{};
     std::vector<StartupLine> startupEntriesToTurnOff{};
+    std::vector<StartupSwitch> startupSwitches{};
 };
 
 struct TakenPlace

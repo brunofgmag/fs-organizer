@@ -2314,6 +2314,32 @@ Também existe na biblioteca: %2</translation>
     </message>
 </context>
 <context>
+    <name>OmittedDialog</name>
+    <message>
+        <location filename="../src/view/presets/OmittedDialog.cpp" line="17"/>
+        <source>Off because Replace omits them</source>
+        <translation>Desligados porque Substituir os omite</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/presets/OmittedDialog.cpp" line="19"/>
+        <source>%n addon of yours is enabled now and this preset does not name it, so Replace turns it off. It is part of what the plan already counts as turned off, and not a pile on top of it.</source>
+        <translation>
+            <numerusform>%n addon seu está habilitado agora e este preset não o cita, então Substituir o desliga. Ele faz parte do que o plano já conta como desligado, e não uma pilha em cima disso.</numerusform>
+            <numerusform>%n addons seus estão habilitados agora e este preset não os cita, então Substituir os desliga. Eles fazem parte do que o plano já conta como desligado, e não uma pilha em cima disso.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/OmittedDialog.cpp" line="30"/>
+        <source>Addon</source>
+        <translation>Addon</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/OmittedDialog.cpp" line="30"/>
+        <source>Category</source>
+        <translation>Categoria</translation>
+    </message>
+</context>
+<context>
     <name>OptionsPage</name>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="213"/>
@@ -2751,7 +2777,7 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
 <context>
     <name>PresetViewModel</name>
     <message numerus="yes">
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="38"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="35"/>
         <source>%n addon</source>
         <translation>
             <numerusform>%n addon</numerusform>
@@ -2759,7 +2785,7 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="39"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="36"/>
         <source> · %n category</source>
         <translation>
             <numerusform> · %n categoria</numerusform>
@@ -2767,27 +2793,49 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="130"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="158"/>
         <source>The change could not be written to the preset &quot;%1&quot;. It may have changed since the table was built, or the presets folder may be full or protected.</source>
         <translation>Não deu para gravar a mudança no preset &quot;%1&quot;. Ele pode ter mudado desde que a tabela foi montada, ou a pasta dos presets pode estar cheia ou protegida.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="176"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="239"/>
+        <source>Nothing was applied. The app writes down what is enabled right now before applying a preset, so that you can come back to it, and this time it could not: the presets folder may be full or protected.</source>
+        <translation>Nada foi aplicado. O app anota o que está habilitado agora antes de aplicar um preset, para você poder voltar a isso, e desta vez não conseguiu: a pasta de presets pode estar cheia ou protegida.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="262"/>
+        <source>%n startup entry the preset asks for was not applied, because startup management is off in Options.</source>
+        <translation>
+            <numerusform>%n entrada de inicialização que o preset pede não foi aplicada, porque o gerenciamento de inicialização está desligado em Opções.</numerusform>
+            <numerusform>%n entradas de inicialização que o preset pede não foram aplicadas, porque o gerenciamento de inicialização está desligado em Opções.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="278"/>
+        <source>These startup entries of the preset are no longer in the simulator file:
+
+%1</source>
+        <translation>Estas entradas de inicialização do preset não estão mais no arquivo do simulador:
+
+%1</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="284"/>
         <source>The preset &quot;%1&quot; could not be written. The name may be too long for the disk, or the presets folder may be full or protected.</source>
         <translation>Não deu para gravar o preset &quot;%1&quot;. O nome pode ser longo demais para o disco, ou a pasta dos presets pode estar cheia ou protegida.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="187"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="295"/>
         <source>Give the preset a name.</source>
         <translation>Dê um nome ao preset.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="193"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="301"/>
         <source>The preset name cannot contain %1, and cannot end with a space or a full stop.</source>
         <translation>O nome do preset não pode conter %1, nem terminar com espaço ou ponto.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="200"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="308"/>
         <source>There is already a preset with that name.</source>
         <translation>Já existe um preset com esse nome.</translation>
     </message>
@@ -2795,31 +2843,30 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
 <context>
     <name>PresetsPage</name>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="159"/>
-        <location filename="../src/view/PresetsPage.cpp" line="308"/>
+        <location filename="../src/view/PresetsPage.cpp" line="247"/>
+        <location filename="../src/view/PresetsPage.cpp" line="379"/>
         <source>Addon</source>
         <translation>Addon</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="159"/>
-        <location filename="../src/view/PresetsPage.cpp" line="308"/>
+        <location filename="../src/view/PresetsPage.cpp" line="247"/>
+        <location filename="../src/view/PresetsPage.cpp" line="379"/>
         <source>Library</source>
         <translation>Biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="159"/>
-        <location filename="../src/view/PresetsPage.cpp" line="308"/>
+        <location filename="../src/view/PresetsPage.cpp" line="247"/>
+        <location filename="../src/view/PresetsPage.cpp" line="379"/>
         <source>Enables</source>
         <translation>Liga</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="310"/>
-        <location filename="../src/view/PresetsPage.cpp" line="311"/>
+        <location filename="../src/view/PresetsPage.cpp" line="387"/>
         <source>Apply as</source>
         <translation>Aplicar como</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="265"/>
+        <location filename="../src/view/PresetsPage.cpp" line="322"/>
         <source>Nothing changed</source>
         <translation>Nada foi alterado</translation>
     </message>
@@ -2832,17 +2879,16 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
         <translation type="vanished">As mudanças só valem depois de reiniciar o simulador.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="272"/>
+        <location filename="../src/view/PresetsPage.cpp" line="329"/>
         <source>Restart the simulator to apply the changes.</source>
         <translation>Reinicie o simulador para aplicar as mudanças.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="280"/>
         <source>Entries not found</source>
-        <translation>Entradas não encontradas</translation>
+        <translation type="vanished">Entradas não encontradas</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="281"/>
+        <location filename="../src/view/PresetsPage.cpp" line="339"/>
         <source>These addons of the preset are no longer in the library:
 
 %1</source>
@@ -2851,78 +2897,146 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
 %1</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="303"/>
-        <location filename="../src/view/PresetsPage.cpp" line="318"/>
+        <location filename="../src/view/PresetsPage.cpp" line="350"/>
+        <source>Not everything the preset asked for happened</source>
+        <translation>Nem tudo que o preset pediu aconteceu</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="372"/>
+        <location filename="../src/view/PresetsPage.cpp" line="395"/>
         <source>New from the enabled ones…</source>
         <translation>Novo a partir dos habilitados…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="304"/>
+        <location filename="../src/view/PresetsPage.cpp" line="373"/>
         <source>Update with the enabled ones</source>
         <translation>Atualizar com os habilitados</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="305"/>
+        <location filename="../src/view/PresetsPage.cpp" line="374"/>
         <source>Rename…</source>
         <translation>Renomear…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="306"/>
+        <location filename="../src/view/PresetsPage.cpp" line="375"/>
         <source>Delete</source>
         <translation>Excluir</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="307"/>
+        <location filename="../src/view/PresetsPage.cpp" line="376"/>
+        <source>Show them…</source>
+        <translation>Ver quais…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="377"/>
+        <source>This preset also governs startup entries</source>
+        <translation>Este preset também governa entradas de inicialização</translation>
+    </message>
+    <message>
+        <source>What is enabled right now is written down first, so you can come back to it even after an import or a quarantine operation, which lose the batch undo.</source>
+        <translation type="vanished">O que está habilitado agora é anotado antes, para você poder voltar a isso mesmo depois de uma importação ou de uma operação de quarentena, que perdem o desfazer de lote.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="378"/>
         <source>Filter presets</source>
         <translation>Filtrar presets</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="309"/>
+        <location filename="../src/view/PresetsPage.cpp" line="380"/>
         <source>Preset</source>
         <translation>Preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="309"/>
+        <location filename="../src/view/PresetsPage.cpp" line="380"/>
         <source>Content</source>
         <translation>Conteúdo</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="309"/>
+        <location filename="../src/view/PresetsPage.cpp" line="380"/>
         <source>Changed</source>
         <translation>Atualizado</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="312"/>
+        <location filename="../src/view/PresetsPage.cpp" line="380"/>
+        <source>Would change</source>
+        <translation>Mudaria</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="381"/>
+        <source>Turn on</source>
+        <translation>Ligar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="382"/>
+        <source>Turn off</source>
+        <translation>Desligar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="383"/>
+        <source>Already as the preset asks</source>
+        <translation>Já como o preset pede</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="384"/>
+        <source>Named, but no addon found</source>
+        <translation>Citados, sem addon encontrado</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="385"/>
+        <source>Off because Replace omits them</source>
+        <translation>Desligados porque Substituir os omite</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="386"/>
+        <source>Asked for, but not applied</source>
+        <translation>Pedidos, e não aplicados</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="388"/>
+        <source>Plan</source>
+        <translation>Plano</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="389"/>
         <source>Replace</source>
         <translation>Substituir</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="313"/>
+        <location filename="../src/view/PresetsPage.cpp" line="390"/>
         <source>Accumulate</source>
         <translation>Acumular</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="314"/>
+        <location filename="../src/view/PresetsPage.cpp" line="391"/>
         <source>Disable</source>
         <translation>Desabilitar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="1061"/>
+        <source>%1
+
+Apply &quot;%2&quot;?</source>
+        <translation>%1
+
+Aplicar &quot;%2&quot;?</translation>
     </message>
     <message>
         <source>Applying is a single batch: &quot;Undo the last batch&quot; takes it all back at once.</source>
         <translation type="vanished">Aplicar é um lote só: &quot;Desfazer último lote&quot; volta tudo de uma vez.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="315"/>
-        <location filename="../src/view/PresetsPage.cpp" line="416"/>
+        <location filename="../src/view/PresetsPage.cpp" line="392"/>
+        <location filename="../src/view/PresetsPage.cpp" line="743"/>
         <source>No preset in this profile yet.</source>
         <translation>Nenhum preset neste perfil ainda.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="316"/>
+        <location filename="../src/view/PresetsPage.cpp" line="393"/>
         <source>A preset keeps which addons stay enabled. Enable what you want to fly and keep that combination under a name. Applying it later is a single batch, with a whole undo.</source>
         <translation>Um preset guarda quais addons ficam ligados. Habilite o que você quer voar e guarde essa combinação com um nome. Aplicar depois é um lote só, com desfazer inteiro.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/PresetsPage.cpp" line="417"/>
+        <location filename="../src/view/PresetsPage.cpp" line="744"/>
         <source>%n preset in this profile.</source>
         <translation>
             <numerusform>%n preset neste perfil.</numerusform>
@@ -2930,67 +3044,109 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
         </translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="500"/>
+        <source>Back to the previous set</source>
+        <translation type="vanished">Voltar ao conjunto anterior</translation>
+    </message>
+    <message>
+        <source>Undo the last batch</source>
+        <translation type="vanished">Desfazer último lote</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="846"/>
+        <source>Content · %1</source>
+        <translation>Conteúdo · %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="901"/>
         <source>Leaves only what the preset enables.</source>
         <translation>Deixa só o que o preset liga.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="502"/>
+        <location filename="../src/view/PresetsPage.cpp" line="902"/>
+        <source>The plan, as Replace</source>
+        <translation>O plano, como Substituir</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="905"/>
         <source>Enables what the preset names, without touching the rest.</source>
         <translation>Liga o do preset, sem mexer no resto.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="504"/>
+        <location filename="../src/view/PresetsPage.cpp" line="906"/>
+        <source>The plan, as Accumulate</source>
+        <translation>O plano, como Acumular</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="909"/>
         <source>Disables what the preset enables.</source>
         <translation>Desliga o que o preset liga.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="510"/>
+        <location filename="../src/view/PresetsPage.cpp" line="910"/>
+        <source>The plan, as Disable</source>
+        <translation>O plano, como Desabilitar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="921"/>
         <source>Apply</source>
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="517"/>
+        <location filename="../src/view/PresetsPage.cpp" line="943"/>
+        <source>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</source>
+        <translation>Os %1 omitidos fazem parte dos %2 que serão desligados, e não uma pilha em cima deles.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="927"/>
         <source>Apply: enables %1, disables %2</source>
         <translation>Aplicar: liga %1, desliga %2</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="523"/>
+        <location filename="../src/view/PresetsPage.cpp" line="781"/>
+        <source>Undoes the batch you just applied.</source>
+        <translation>Desfaz o lote que você acabou de aplicar.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="782"/>
+        <source>Applies the return preset, written down before the last application.</source>
+        <translation>Aplica o preset de retorno, anotado antes da última aplicação.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="953"/>
         <source>New preset</source>
         <translation>Novo preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="523"/>
-        <location filename="../src/view/PresetsPage.cpp" line="552"/>
+        <location filename="../src/view/PresetsPage.cpp" line="953"/>
+        <location filename="../src/view/PresetsPage.cpp" line="982"/>
         <source>Name:</source>
         <translation>Nome:</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="552"/>
+        <location filename="../src/view/PresetsPage.cpp" line="982"/>
         <source>Rename preset</source>
         <translation>Renomear preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="570"/>
+        <location filename="../src/view/PresetsPage.cpp" line="1000"/>
         <source>Delete preset</source>
         <translation>Excluir preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="570"/>
+        <location filename="../src/view/PresetsPage.cpp" line="1000"/>
         <source>Delete the preset &quot;%1&quot;?</source>
         <translation>Excluir o preset &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="591"/>
+        <location filename="../src/view/PresetsPage.cpp" line="1061"/>
         <source>Replace what is enabled</source>
         <translation>Substituir o que está habilitado</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="592"/>
         <source>%1
 
 Apply the preset &quot;%2&quot;?</source>
-        <translation>%1
+        <translation type="vanished">%1
 
 Aplicar o preset &quot;%2&quot;?</translation>
     </message>
@@ -3442,14 +3598,53 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>(sem versão no manifest)</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="109"/>
+        <location filename="../src/view/PresetsPage.cpp" line="115"/>
         <source>Enables %1, disables %2. %3 already match what the preset asks, %4 were not found, and %5 destination entries stay as they are.</source>
         <translation>Liga %1, desliga %2. %3 já estão como o preset pede, %4 não foram encontrados, e %5 entradas do destino ficam como estão.</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="119"/>
+        <location filename="../src/view/PresetsPage.cpp" line="125"/>
         <source> Of the ones it disables, %1 entered the library after the preset was saved.</source>
         <translation> Dos que ele desliga, %1 entraram na biblioteca depois de o preset ser salvo.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="171"/>
+        <source>Back to the previous set</source>
+        <translation>Voltar ao conjunto anterior</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/PresetsPage.cpp" line="178"/>
+        <source>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</source>
+        <translation>
+            <numerusform>Este preset pede %n entrada de inicialização, e ela não será aplicada, porque o gerenciamento de inicialização está desligado em Opções.</numerusform>
+            <numerusform>Este preset pede %n entradas de inicialização, e nenhuma será aplicada, porque o gerenciamento de inicialização está desligado em Opções.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="185"/>
+        <source>This preset asks for %1 startup entries. %2 of them are no longer in the simulator file, and %3 will be switched.</source>
+        <translation>Este preset pede %1 entradas de inicialização. %2 delas não estão mais no arquivo do simulador, e %3 serão trocadas.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/PresetsPage.cpp" line="192"/>
+        <source>This preset asks for %n startup entry, and all of them will be applied.</source>
+        <translation>
+            <numerusform>Este preset pede %n entrada de inicialização, e ela será aplicada.</numerusform>
+            <numerusform>Este preset pede %n entradas de inicialização, e todas serão aplicadas.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/PresetsPage.cpp" line="697"/>
+        <source>Satisfied</source>
+        <translation>Satisfeito</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/PresetsPage.cpp" line="692"/>
+        <source>%n change</source>
+        <translation>
+            <numerusform>%n mudança</numerusform>
+            <numerusform>%n mudanças</numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="28"/>
@@ -3559,12 +3754,12 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="610"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="618"/>
         <source>Restore the selected ones</source>
         <translation>Restaurar selecionados</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="758"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="766"/>
         <source>Unregister</source>
         <translation>Descadastrar</translation>
     </message>

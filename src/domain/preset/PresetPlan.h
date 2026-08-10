@@ -38,6 +38,18 @@ PresetPlan PlanPresetApplication(const Preset& preset,
                                  std::vector<TreeNode>&& libraries,
                                  const EnabledAddons& enabled) = delete;
 
+[[nodiscard]] std::size_t AddonsThatWouldChange(const PresetPlan& plan);
+
+[[nodiscard]] bool PresetIsSatisfied(const Preset& preset,
+                                     const SimulatorProfile& profile,
+                                     const std::vector<TreeNode>& libraries,
+                                     const EnabledAddons& enabled);
+
+bool PresetIsSatisfied(const Preset& preset,
+                       const SimulatorProfile& profile,
+                       std::vector<TreeNode>&& libraries,
+                       const EnabledAddons& enabled) = delete;
+
 struct PresetContent
 {
     std::size_t addons = 0;

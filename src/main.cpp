@@ -251,8 +251,8 @@ int main(int argc, char* argv[])
                      });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
-    PresetService presetService(presetRepository, profileService);
-    PresetViewModel presetViewModel(session, presetService);
+    PresetService presetService(presetRepository, profileService, startupService);
+    PresetViewModel presetViewModel(session, presetService, profileService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
     GithubUpdateService updateService(

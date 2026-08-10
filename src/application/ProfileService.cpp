@@ -361,6 +361,15 @@ LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
     const std::vector<Step> enabling = PlanSteps(profile, onDisk, batch.toEnable, true);
     steps.insert(steps.end(), enabling.begin(), enabling.end());
 
+    for (const StartupSwitch& request : batch.startupSwitches)
+    {
+        steps.push_back(
+            {.kind = request.enable ? OperationKind::TurnOnTheStartupEntry : OperationKind::TurnOffTheStartupEntry,
+             .addonId = IdentityOf(profile, request.line.addonFolder),
+             .addonFolder = request.line.addonFolder,
+             .linkPath = request.line.path});
+    }
+
     return {.results = RunAsOneBatch(steps), .drifted = drifted};
 }
 

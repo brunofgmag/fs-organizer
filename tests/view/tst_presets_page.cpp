@@ -2,11 +2,13 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QTranslator>
 #include <QtTest/QtTest>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QRadioButton>
+#include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTableWidget>
 
 #include "application/LibraryOrganizer.h"
@@ -48,6 +50,18 @@ namespace
         static void FilteringPastTheSelectedPresetMovesTheSelectionInsteadOfStranding();
         static void ALanguageChangeReachesTheApplyButtonAndTheModeExplanation();
         static void WhatSupportsTheNameIsQuietInBothTables();
+        static void TheNameTableSaysWhatEachPresetWouldChangeAndTagsTheSatisfiedOnes();
+        static void TheReturnPresetSitsInItsOwnTableAndAppearsOnlyAfterAnApplication();
+        static void ThePanelBreaksThePlanIntoTheSixCountsTheGlossaryFixes();
+        static void TheOmittedCountAndItsButtonLeaveThePanelOutsideReplace();
+        static void TheOmittedAddonsAreListedOnlyWhenAsked();
+        static void TheStartupSectionStaysHiddenUntilThePresetGovernsStartup();
+        static void TheWayBackIsTheBatchUndoAndFallsBackToTheReturnPreset();
+        static void TheTwoHalvesSwapWhatTheRightSideShows();
+        static void TheContentTabCountsTheEntriesOfTheSelectedPreset();
+        static void ASatisfiedPresetStillShowsWhatDisableWouldChange();
+        static void AFilterThatMatchesNothingLeavesNoStaleCountBehind();
+        static void ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable();
     };
 }
 
@@ -153,8 +167,8 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, processProbe, runner, notifier};
         FakePresetRepository presets;
-        PresetService presetService{presets, service};
-        PresetViewModel viewModel{session, presetService};
+        PresetService presetService{presets, service, startup.service};
+        PresetViewModel viewModel{session, presetService, service};
     };
 }
 
@@ -217,10 +231,56 @@ void PresetsPageTest::TheFirstPresetStartsBelowTheTableHeaderAndNotInsideIt()
 
     QHeaderView* heading = names->horizontalHeader();
 
-    QCOMPARE(heading->mapTo(&page, QPoint()).y(), entries->horizontalHeader()->mapTo(&page, QPoint()).y());
     QCOMPARE(heading->height(), entries->horizontalHeader()->height());
     QCOMPARE(heading->font(), entries->horizontalHeader()->font());
-    QTRY_COMPARE(names->viewport()->mapTo(&page, QPoint()).y(), entries->viewport()->mapTo(&page, QPoint()).y());
+
+    for (const QTableWidget* table : {names, entries})
+    {
+        const QHeaderView* header = table->horizontalHeader();
+
+        QTRY_VERIFY2(
+            table->viewport()->mapTo(&page, QPoint()).y() >= header->mapTo(&page, QPoint()).y() + header->height(),
+            qPrintable(QStringLiteral("%1 draws its first row inside its own header").arg(table->objectName())));
+    }
+}
+
+void PresetsPageTest::TheTwoHalvesSwapWhatTheRightSideShows()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* content = page.findChild<QPushButton*>(QStringLiteral("PresetContentTab"));
+    auto* plan = page.findChild<QPushButton*>(QStringLiteral("PresetPlanTab"));
+    auto* entries = page.findChild<QTableWidget*>(QStringLiteral("PresetEntries"));
+    auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
+    QVERIFY(content != nullptr && plan != nullptr && entries != nullptr && apply != nullptr);
+
+    QVERIFY(content->isChecked());
+    QVERIFY(!plan->isChecked());
+
+    auto* shown = qobject_cast<QStackedWidget*>(entries->parentWidget());
+    QVERIFY(shown != nullptr);
+    QCOMPARE(shown->currentWidget(), entries);
+
+    plan->click();
+
+    QVERIFY(plan->isChecked());
+    QVERIFY(!content->isChecked());
+    QVERIFY(shown->currentWidget() != entries);
+    QVERIFY(shown->currentWidget()->isAncestorOf(apply));
+}
+
+void PresetsPageTest::TheContentTabCountsTheEntriesOfTheSelectedPreset()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* content = page.findChild<QPushButton*>(QStringLiteral("PresetContentTab"));
+    auto* planFor = page.findChild<QLabel*>(QStringLiteral("PresetPlanFor"));
+    QVERIFY(content != nullptr && planFor != nullptr);
+
+    QCOMPARE(content->text(), QStringLiteral("Content · 1"));
+    QCOMPARE(planFor->text(), QStringLiteral("Voo de linha"));
 }
 
 void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
@@ -234,7 +294,7 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
-    QCOMPARE(names->columnCount(), 3);
+    QCOMPARE(names->columnCount(), 4);
     QCOMPARE(names->rowCount(), 1);
 
     QCOMPARE(names->horizontalHeaderItem(0)->text(), QStringLiteral("Preset"));
@@ -374,6 +434,236 @@ void PresetsPageTest::WhatSupportsTheNameIsQuietInBothTables()
 
     QVERIFY(!entries->item(0, 0)->data(QuietRole).toBool());
     QVERIFY(entries->item(0, 1)->data(QuietRole).toBool());
+}
+
+void PresetsPageTest::TheNameTableSaysWhatEachPresetWouldChangeAndTagsTheSatisfiedOnes()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QVERIFY(names != nullptr);
+    QCOMPARE(names->columnCount(), 4);
+    QCOMPARE(names->horizontalHeaderItem(3)->text(), QStringLiteral("Would change"));
+
+    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Satisfied"));
+
+    f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
+    f.session.RefreshEntries();
+
+    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
+    QVERIFY(names->item(0, 3)->data(TagTextRole).toString().isEmpty());
+    QVERIFY(!names->item(0, 0)->text().isEmpty());
+}
+
+void PresetsPageTest::TheReturnPresetSitsInItsOwnTableAndAppearsOnlyAfterAnApplication()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* back = page.findChild<QTableWidget*>(QStringLiteral("PresetReturn"));
+    QVERIFY(back != nullptr);
+    QVERIFY(back->isHidden());
+
+    page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"))->click();
+
+    auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
+    QVERIFY(apply != nullptr);
+    apply->click();
+
+    QVERIFY(!back->isHidden());
+    QCOMPARE(back->rowCount(), 1);
+    QCOMPARE(back->item(0, 0)->text(), QStringLiteral("Back to the previous set"));
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QCOMPARE(names->rowCount(), 1);
+    QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
+}
+
+void PresetsPageTest::ThePanelBreaksThePlanIntoTheSixCountsTheGlossaryFixes()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    const auto valueOf = [&page](const QString& name)
+    {
+        auto* label = page.findChild<QLabel*>(name);
+
+        return label == nullptr ? QString{} : label->text();
+    };
+
+    QCOMPARE(valueOf(QStringLiteral("PlanToEnable")), QStringLiteral("0"));
+    QCOMPARE(valueOf(QStringLiteral("PlanToDisable")), QStringLiteral("0"));
+    QCOMPARE(valueOf(QStringLiteral("PlanAlreadyInPlace")), QStringLiteral("1"));
+    QCOMPARE(valueOf(QStringLiteral("PlanUnresolved")), QStringLiteral("0"));
+    QCOMPARE(valueOf(QStringLiteral("PlanNotNamed")), QStringLiteral("0"));
+    QCOMPARE(valueOf(QStringLiteral("PlanNotApplied")), QStringLiteral("0"));
+}
+
+void PresetsPageTest::TheOmittedCountAndItsButtonLeaveThePanelOutsideReplace()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* omitted = page.findChild<QLabel*>(QStringLiteral("PlanNotNamed"));
+    auto* show = page.findChild<QPushButton*>(QStringLiteral("PresetShowOmitted"));
+    QVERIFY(omitted != nullptr && show != nullptr);
+    QVERIFY(!omitted->isHidden());
+
+    auto* cumulative = page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"));
+    QVERIFY(cumulative != nullptr);
+    cumulative->click();
+
+    QVERIFY(omitted->isHidden());
+    QVERIFY(show->isHidden());
+}
+
+void PresetsPageTest::TheOmittedAddonsAreListedOnlyWhenAsked()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("D:/MSFS 2024/Aircrafts/fenix-a320");
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "fenix-a320", "D:/MSFS 2024/Aircrafts/fenix-a320");
+
+    TreeNode aircrafts;
+    aircrafts.kind = TreeNodeKind::Category;
+    aircrafts.path = kAircrafts;
+    aircrafts.children = {AddonNode(kAddon), AddonNode("D:/MSFS 2024/Aircrafts/fenix-a320")};
+
+    TreeNode library;
+    library.kind = TreeNodeKind::Library;
+    library.path = kLibrary;
+    library.children = {std::move(aircrafts)};
+
+    f.catalog.SetTree(kLibrary, library);
+    f.session.ShowActiveProfile();
+
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* show = page.findChild<QPushButton*>(QStringLiteral("PresetShowOmitted"));
+    auto* omitted = page.findChild<QLabel*>(QStringLiteral("PlanNotNamed"));
+    QVERIFY(show != nullptr && omitted != nullptr);
+
+    QCOMPARE(omitted->text(), QStringLiteral("1"));
+    QVERIFY(show->isEnabled());
+
+    QCOMPARE(f.viewModel.Omitted(*f.viewModel.Load(QStringLiteral("Voo de linha")), ApplyMode::Replace).size(), 1);
+}
+
+void PresetsPageTest::TheStartupSectionStaysHiddenUntilThePresetGovernsStartup()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* governs = page.findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup"));
+    auto* section = page.findChild<QWidget*>(QStringLiteral("PresetStartupSection"));
+    QVERIFY(governs != nullptr && section != nullptr);
+
+    QVERIFY(!governs->isChecked());
+    QVERIFY(section->isHidden());
+
+    governs->click();
+
+    QVERIFY(section->isHidden() == false);
+
+    const std::optional<Preset> saved = f.viewModel.Load(QStringLiteral("Voo de linha"));
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->governsStartup);
+}
+
+void PresetsPageTest::TheWayBackIsTheBatchUndoAndFallsBackToTheReturnPreset()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* back = page.findChild<QPushButton*>(QStringLiteral("PresetGoBack"));
+    QVERIFY(back != nullptr);
+    QVERIFY(!back->isEnabled());
+
+    f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
+    f.session.RefreshEntries();
+
+    page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"))->click();
+    page.findChild<QPushButton*>(QStringLiteral("PresetApply"))->click();
+
+    QVERIFY(back->isEnabled());
+    QCOMPARE(back->text(), QStringLiteral("Back to the previous set"));
+    QVERIFY(back->toolTip().contains(QStringLiteral("batch")));
+
+    f.service.ForgetUndo();
+    f.session.RefreshEntries();
+
+    QVERIFY(back->isEnabled());
+    QCOMPARE(back->text(), QStringLiteral("Back to the previous set"));
+    QVERIFY(back->toolTip().contains(QStringLiteral("return preset")));
+}
+
+void PresetsPageTest::ASatisfiedPresetStillShowsWhatDisableWouldChange()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QVERIFY(names != nullptr);
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Satisfied"));
+    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
+
+    page.findChild<QRadioButton*>(QStringLiteral("ModeDisable"))->click();
+
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Satisfied"));
+    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
+}
+
+void PresetsPageTest::AFilterThatMatchesNothingLeavesNoStaleCountBehind()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* already = page.findChild<QLabel*>(QStringLiteral("PlanAlreadyInPlace"));
+    auto* filter = page.findChild<QLineEdit*>();
+    QVERIFY(already != nullptr && filter != nullptr);
+
+    QCOMPARE(already->text(), QStringLiteral("1"));
+
+    filter->setText(QStringLiteral("nada casa com isto"));
+
+    QCOMPARE(already->text(), QStringLiteral("0"));
+    QCOMPARE(page.findChild<QPushButton*>(QStringLiteral("PresetApply"))->text(), QStringLiteral("Apply"));
+}
+
+void PresetsPageTest::ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("D:/MSFS 2024/Aircrafts/fenix-a320");
+    PresetsPage page(f.viewModel, f.notifier);
+
+    page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"))->click();
+    page.findChild<QPushButton*>(QStringLiteral("PresetApply"))->click();
+
+    auto* back = page.findChild<QTableWidget*>(QStringLiteral("PresetReturn"));
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* planFor = page.findChild<QLabel*>(QStringLiteral("PresetPlanFor"));
+    auto* entries = page.findChild<QTableWidget*>(QStringLiteral("PresetEntries"));
+    QVERIFY(back != nullptr && names != nullptr && planFor != nullptr && entries != nullptr);
+
+    back->setCurrentCell(0, 0);
+
+    QCOMPARE(planFor->text(), QStringLiteral("Back to the previous set"));
+    QCOMPARE(names->currentRow(), -1);
+    QCOMPARE(back->currentRow(), 0);
+    QVERIFY(!entries->item(0, 2)->flags().testFlag(Qt::ItemIsUserCheckable));
+
+    f.session.RefreshEntries();
+
+    QCOMPARE(planFor->text(), QStringLiteral("Back to the previous set"));
+    QCOMPARE(back->currentRow(), 0);
+    QCOMPARE(names->currentRow(), -1);
+
+    names->setCurrentCell(0, 0);
+
+    QCOMPARE(planFor->text(), QStringLiteral("Voo de linha"));
+    QCOMPARE(back->currentRow(), -1);
+    QVERIFY(entries->item(0, 2)->flags().testFlag(Qt::ItemIsUserCheckable));
 }
 
 QTEST_MAIN(PresetsPageTest)

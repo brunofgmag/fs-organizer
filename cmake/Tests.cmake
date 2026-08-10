@@ -1076,6 +1076,11 @@ if (WIN32)
         target_link_libraries(fsorg-startup-entry-dialog-tests PRIVATE fsorg-view)
         configure_fsorg_gui_test(fsorg-startup-entry-dialog-tests startup-entry-dialog)
 
+        fsorg_add_qt_test(fsorg-omitted-dialog-tests omitted-dialog
+                tests/view/tst_omitted_dialog.cpp)
+        target_link_libraries(fsorg-omitted-dialog-tests PRIVATE fsorg-view)
+        configure_fsorg_gui_test(fsorg-omitted-dialog-tests omitted-dialog)
+
         fsorg_add_qt_test(fsorg-community-page-tests community-page
                 tests/view/tst_community_page.cpp
                 tests/doubles/StartupOverFakes.h

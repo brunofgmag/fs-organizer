@@ -26,6 +26,8 @@ namespace
         static void ANameThatClimbsOutOfThePresetRootIsRefusedInsteadOfWritten();
         static void AProfileIdThatClimbsOutOfThePresetRootNeverReachesAnotherFolder();
         static void TheListingCarriesWhenThePresetFileWasLastWritten();
+        static void TheStartupEntriesAndTheFlagSurviveTheRoundTrip();
+        static void TheReturnPresetIsWrittenBesideTheFolderAndNeverListed();
     };
 }
 
@@ -224,6 +226,54 @@ void FilePresetRepositoryTest::TheListingCarriesWhenThePresetFileWasLastWritten(
 
     QVERIFY2(std::chrono::abs(ago - twoDays) < std::chrono::seconds{5},
              qPrintable(QStringLiteral("reported %1 s ago").arg(ago.count())));
+}
+
+void FilePresetRepositoryTest::TheStartupEntriesAndTheFlagSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    Preset preset = ShortFlight();
+    preset.governsStartup = true;
+    preset.startupEntries = {
+        PresetStartupEntry{.path = "D:/Simulador/Programas/fenix/launcher.exe", .action = PresetAction::Enable},
+        PresetStartupEntry{.path = "D:/Simulador/Programas/aviônica/ferramenta.exe", .action = PresetAction::Disable}};
+
+    FilePresetRepository repository(storage.Root());
+    QVERIFY(repository.Save("msfs2024", preset));
+
+    const std::optional<Preset> read = FilePresetRepository(storage.Root()).Load("msfs2024", "Voo curto");
+
+    QVERIFY(read.has_value());
+    QVERIFY(read->governsStartup);
+    QCOMPARE(read->startupEntries.size(), std::size_t{2});
+    QCOMPARE(read->startupEntries.front().path, std::filesystem::path{"D:/Simulador/Programas/fenix/launcher.exe"});
+    QCOMPARE(read->startupEntries.front().action, PresetAction::Enable);
+    QCOMPARE(read->startupEntries.back().path, std::filesystem::path{"D:/Simulador/Programas/aviônica/ferramenta.exe"});
+    QCOMPARE(read->startupEntries.back().action, PresetAction::Disable);
+}
+
+void FilePresetRepositoryTest::TheReturnPresetIsWrittenBesideTheFolderAndNeverListed()
+{
+    const Storage storage;
+
+    FilePresetRepository repository(storage.Root());
+    QVERIFY(repository.Save("msfs2024", ShortFlight()));
+
+    Preset back;
+    back.entries = {PresetEntry{.addonId = AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"},
+                                .action = PresetAction::Enable}};
+    QVERIFY(repository.SaveReturnPreset("msfs2024", back));
+
+    QVERIFY(std::filesystem::exists(storage.Root() / "msfs2024.return.json"));
+    QCOMPARE(repository.List("msfs2024").size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(repository.List("msfs2024").front().name), QString{"Voo curto"});
+
+    const std::optional<Preset> read = FilePresetRepository(storage.Root()).LoadReturnPreset("msfs2024");
+
+    QVERIFY(read.has_value());
+    QCOMPARE(read->entries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(read->entries.front().addonId.folderName), QString{"pmdg-aircraft-77w"});
+    QVERIFY(!FilePresetRepository(storage.Root()).LoadReturnPreset("msfs2020").has_value());
 }
 
 QTEST_MAIN(FilePresetRepositoryTest)
