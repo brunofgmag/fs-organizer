@@ -12,7 +12,7 @@ void ProfilePackages::Reload(const SimulatorVariant variant)
     const std::optional<ChosenContentList> chosen = ChooseContentList(locations_, variant);
 
     accountFolder_ = chosen.has_value() ? chosen->accountFolder : std::string();
-    read_ = ContentXmlPackages(filesystemProbe_, chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+    read_.ReadAgain(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
 }
 
 PackagePresence ProfilePackages::PresenceOf(const std::string_view packageName) const
