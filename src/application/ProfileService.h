@@ -9,6 +9,7 @@
 #include "application/model/LibraryReport.h"
 #include "application/model/LinkBatchReport.h"
 #include "application/model/LinkOperationResult.h"
+#include "application/StartupService.h"
 #include "application/model/ProfileSnapshot.h"
 #include "application/ports/LibraryIdGenerator.h"
 #include "domain/journal/OperationLog.h"
@@ -23,10 +24,18 @@
 #include "domain/ports/OperationJournal.h"
 #include "domain/ports/SidecarStore.h"
 
+struct StartupSwitch
+{
+    StartupLine line{};
+    bool enable = false;
+};
+
 struct LinkBatch
 {
-    std::vector<const TreeNode*> toDisable;
-    std::vector<const TreeNode*> toEnable;
+    std::vector<const TreeNode*> toDisable{};
+    std::vector<const TreeNode*> toEnable{};
+    std::vector<StartupLine> startupEntriesToTurnOff{};
+    std::vector<StartupSwitch> startupSwitches{};
 };
 
 struct TakenPlace
@@ -52,11 +61,18 @@ public:
                    const LinkingEngine& linking,
                    const OperationLog& log,
                    const LibraryIdGenerator& identities,
+                   StartupService& startup,
                    LinkType linkType);
 
     void UseLinkType(LinkType linkType);
 
-    [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
+    [[nodiscard]] std::vector<StartupLine> StartupEntriesCarriedBy(const SimulatorProfile& profile,
+                                                                   const ProfileSnapshot& shown,
+                                                                   const std::vector<const TreeNode*>& nodes) const;
+
+    [[nodiscard]] std::vector<StartupEntry> StartupEntriesNow() const;
+
+    [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile, const ScanGate& gate = {}) const;
 
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;
 
@@ -97,9 +113,10 @@ private:
     struct Step
     {
         OperationKind kind = OperationKind::EnableAddon;
-        AddonId addonId;
-        std::filesystem::path addonFolder;
-        std::filesystem::path linkPath;
+        AddonId addonId{};
+        std::filesystem::path addonFolder{};
+        std::filesystem::path linkPath{};
+        std::string label{};
     };
 
     [[nodiscard]] static std::size_t AddonsThatDrifted(const std::vector<const TreeNode*>& nodes,
@@ -109,13 +126,15 @@ private:
     [[nodiscard]] static std::vector<Step> PlanSteps(const SimulatorProfile& profile,
                                                      const LinksOnDisk& onDisk,
                                                      const std::vector<const TreeNode*>& nodes,
-                                                     bool enable);
+                                                     bool enable,
+                                                     const std::vector<StartupLine>& startupEntriesToTurnOff = {});
 
     [[nodiscard]] static std::vector<Step>
     StepsFor(const SimulatorProfile& profile,
              const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
              const TreeNode& addon,
-             bool enable);
+             bool enable,
+             const std::vector<StartupLine>& startupEntriesToTurnOff);
 
     [[nodiscard]] static Step Inverse(const Step& step);
 
@@ -124,6 +143,8 @@ private:
     [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile, const RepairRequest& request);
 
     [[nodiscard]] LinkOperationResult Run(const Step& step) const;
+
+    [[nodiscard]] LinkOperationResult RunTheStartupStep(const Step& step) const;
 
     [[nodiscard]] std::vector<LinkOperationResult> RunAsOneBatch(const std::vector<Step>& steps);
 
@@ -137,6 +158,7 @@ private:
     const LinkingEngine& linking_;
     const OperationLog& log_;
     const LibraryIdGenerator& identities_;
+    StartupService& startup_;
     LinkType linkType_;
     std::vector<Step> undo_;
 };

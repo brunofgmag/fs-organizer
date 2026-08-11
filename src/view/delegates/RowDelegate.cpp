@@ -56,7 +56,8 @@ namespace
         int wide = 0;
     };
 
-    [[nodiscard]] RoomForTheText RoomIn(const QStyleOptionViewItem& item, const QString& suffix, const QString& tag)
+    [[nodiscard]] RoomForTheText
+    RoomIn(const QStyleOptionViewItem& item, const QString& suffix, const QString& tag, const FittedText& fitted)
     {
         const QWidget* widget = item.widget;
         const QStyle* style = widget != nullptr ? widget->style() : QApplication::style();
@@ -65,8 +66,7 @@ namespace
         const QRect box = written.adjusted(kBreathingRoom, 0, -kBreathingRoom, 0);
 
         const int tagRoom = tag.isEmpty() ? 0 : TagSizeOf(tag, item.font).width() + kBeforeTheTag;
-        const int suffixRoom =
-            suffix.isEmpty() ? 0 : QFontMetrics(item.font).horizontalAdvance(suffix) + kBeforeTheSuffix;
+        const int suffixRoom = suffix.isEmpty() ? 0 : fitted.AdvanceOf(suffix, item.font) + kBeforeTheSuffix;
 
         return {.box = box, .wide = std::max(0, box.width() - tagRoom - suffixRoom)};
     }
@@ -223,7 +223,7 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
     const QString tag = index.data(TagTextRole).toString();
     const QString second = index.data(SecondLineRole).toString();
     const QString text = TextThatIsDrawn(item, tag);
-    const RoomForTheText room = RoomIn(item, suffix, tag);
+    const RoomForTheText room = RoomIn(item, suffix, tag, fitted_);
 
     item.text.clear();
     style->drawControl(QStyle::CE_ItemViewItem, &item, painter, widget);
@@ -261,16 +261,16 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
         if (!suffix.isEmpty() || !tag.isEmpty())
         {
-            pen += measured.horizontalAdvance(fitted) + kBeforeTheSuffix;
+            pen += fitted_.AdvanceOf(fitted, item.font) + kBeforeTheSuffix;
         }
     }
 
-    if (!suffix.isEmpty() && pen + measured.horizontalAdvance(suffix) + kBeforeTheSuffix <= box.right())
+    if (!suffix.isEmpty() && pen + fitted_.AdvanceOf(suffix, item.font) + kBeforeTheSuffix <= box.right())
     {
         painter->setPen(QuietInk());
         painter->drawText(QRect(pen, box.top(), box.right() - pen + 1, box.height()),
                           static_cast<int>(item.displayAlignment), suffix);
-        pen += measured.horizontalAdvance(suffix) + kBeforeTheTag;
+        pen += fitted_.AdvanceOf(suffix, item.font) + kBeforeTheTag;
     }
 
     if (!tag.isEmpty())
@@ -309,7 +309,7 @@ bool RowDelegate::helpEvent(QHelpEvent* event,
     const QString tag = index.data(TagTextRole).toString();
     const QString text = TextThatIsDrawn(item, tag);
     const QString second = index.data(SecondLineRole).toString();
-    const RoomForTheText room = RoomIn(item, suffix, tag);
+    const RoomForTheText room = RoomIn(item, suffix, tag, fitted_);
     const QFontMetrics measured(item.font);
 
     const bool cropped = !text.isEmpty() && measured.horizontalAdvance(text) > room.wide;
@@ -324,6 +324,11 @@ bool RowDelegate::helpEvent(QHelpEvent* event,
     QToolTip::showText(event->globalPos(), BothLinesOf(text, second), view);
 
     return true;
+}
+
+int RowDelegate::TimesItAskedTheFont() const
+{
+    return fitted_.TimesItAskedTheFont();
 }
 
 QSize RowDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const

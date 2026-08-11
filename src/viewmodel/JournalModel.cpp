@@ -33,6 +33,21 @@ namespace
     {
         return entry.IsASwap() ? entry.Last() : entry.First();
     }
+
+    bool IsAStartupStep(const OperationKind kind)
+    {
+        return kind == OperationKind::TurnOffTheStartupEntry || kind == OperationKind::TurnOnTheStartupEntry;
+    }
+
+    QString AddonName(const OperationRecord& record)
+    {
+        if (record.addonId.folderName.empty() && IsAStartupStep(record.kind))
+        {
+            return QString::fromStdString(record.label);
+        }
+
+        return QString::fromStdString(record.addonId.folderName);
+    }
 }
 
 JournalModel::JournalModel(QObject* parent) : QAbstractItemModel(parent)
@@ -78,6 +93,8 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::GiveBackToAnotherProgram: return tr("Give the folder back to the other program");
     case OperationKind::UndoTheInterruptedSwap: return tr("Put back the folder a lost swap left renamed");
     case OperationKind::RestoreOverTheOccupant: return tr("Restore over the addon that held the place");
+    case OperationKind::TurnOffTheStartupEntry: return tr("Turn off the startup entry it carries");
+    case OperationKind::TurnOnTheStartupEntry: return tr("Turn the startup entry back on");
     }
 
     return {};
@@ -189,6 +206,18 @@ QString JournalModel::NameOfTheGroup(const JournalEntry& entry)
         return tr("Swap addons");
     }
 
+    if (entry.IsAnAddonAndItsStartupEntry())
+    {
+        const bool disabling = std::ranges::any_of(entry.steps,
+                                                   [](const OperationRecord& step)
+                                                   {
+                                                       return step.kind == OperationKind::DisableAddon;
+                                                   });
+
+        return disabling ? tr("Disable addon and the startup entry it carries")
+                         : tr("Enable addon and the startup entry it carries");
+    }
+
     return tr("Import (%n step)", nullptr, static_cast<int>(entry.steps.size()));
 }
 
@@ -210,7 +239,7 @@ QVariant JournalModel::StepColumn(const OperationRecord& record, const int colum
     {
     case WhenColumn: return AsMoment(record.timestamp);
     case OperationColumn: return KindLabel(record.kind);
-    case AddonColumn: return QString::fromStdString(record.addonId.folderName);
+    case AddonColumn: return AddonName(record);
     case LibraryColumn: return LibraryLabel(record.addonId.libraryId);
     case SourceColumn: return AsText(record.source);
     case TargetColumn: return AsText(record.target);

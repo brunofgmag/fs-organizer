@@ -4,13 +4,18 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QScrollArea>
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
 #include "support/SizeText.h"
+#include "view/ScrollThatReportsItsContent.h"
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/AddonTreeViewModel.h"
+
+namespace
+{
+    constexpr int kDialogWidth = 620;
+}
 
 SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeViewModel& viewModel, QWidget* parent)
     : QDialog(parent), viewModel_(viewModel)
@@ -58,14 +63,10 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
 
     grid->setRowStretch(row, 1);
 
-    auto* scroll = new QScrollArea(this);
+    auto* scroll = new ScrollThatReportsItsContent(this);
     scroll->setWidget(listed);
     scroll->setWidgetResizable(true);
-    scroll->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-
-    auto* promise = new QLabel(tr("One operation, one line in the Journal, undone as one."), this);
-    promise->setObjectName(QStringLiteral("PanelPromise"));
-    promise->setWordWrap(true);
+    scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
     QPushButton* swap = buttons->addButton(tr("Swap them"), QDialogButtonBox::AcceptRole);
@@ -79,12 +80,11 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
     layout->addWidget(scroll, 1);
-    layout->addWidget(promise);
     layout->addWidget(buttons);
 
     ShowTheSizes(std::vector<WeighedSwap>(swaps.size()));
 
-    SizeToTheContent(*this, 620);
+    SizeToTheContent(*this, kDialogWidth);
 }
 
 QLabel* SwapDialog::AddTheSide(QGridLayout& grid, const int row, const int column, const QString& nameAndVersion)

@@ -13,6 +13,8 @@
 #include "application/ProfileService.h"
 #include "application/DeletionService.h"
 #include "application/SizeService.h"
+#include "application/StartupService.h"
+#include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -37,7 +39,13 @@
 #include "application/Session.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/CommunityModel.h"
+#include "application/CoverageService.h"
+#include "application/SceneryService.h"
+#include "infrastructure/scenery/BglSceneryParser.h"
+#include "infrastructure/scenery/JsonSceneryCache.h"
+#include "infrastructure/sim/ContentXmlPackageList.h"
 #include "view/library/AddonTreePage.h"
+#include "viewmodel/CoverageViewModel.h"
 #include "view/community/CommunityPage.h"
 #include "view/JournalPage.h"
 #include "view/shell/MainWindow.h"
@@ -175,8 +183,12 @@ int main(int argc, char* argv[])
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
+
+    ExeXmlStartupEntries startupEntries{{}};
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, false);
+
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                  LinkType::Junction);
+                                  startupService, LinkType::Junction);
 
     const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction);
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking,
@@ -188,11 +200,12 @@ int main(int argc, char* argv[])
     {
         const NoLibrariesToScan nothingToScan;
         ProfileService justTheProfile(nothingToScan, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                      LinkType::Junction);
+                                      startupService, LinkType::Junction);
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
         SilentObserver silent;
-        Session session(justTheProfile, organizer, onlySettings, processProbe, runInline, silent);
+        Session session(justTheProfile, organizer, onlySettings, onlySettings.Stored(), processProbe, runInline,
+                        silent);
         session.ShowActiveProfile();
 
         return MeasureTheJournalScroll(journal, session);
@@ -203,7 +216,7 @@ int main(int argc, char* argv[])
         MainWindow window(loaded);
         QtBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session(profileService, organizer, settings, processProbe, runner, notifier);
+        Session session(profileService, organizer, settings, loaded, processProbe, runner, notifier);
 
         SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -213,10 +226,18 @@ int main(int argc, char* argv[])
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
         const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                               sizes);
-        DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+        DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-        auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
+        ContentXmlPackageList packageList{{}};
+        CoverageService coverageService(packageList, processProbe, false);
+        const BglSceneryParser sceneryParser;
+        JsonSceneryCache sceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
+        SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
+        CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+
+        auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
+                                           treeModel, notifier);
 
         CommunityModel communityModel;
         CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -250,7 +271,7 @@ int main(int argc, char* argv[])
     CommunityModel communityModel;
     InlineRunner runInline;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, processProbe, runInline, notifier);
+    Session session(profileService, organizer, settings, loaded, processProbe, runInline, notifier);
     SizeService inlineSizes(catalog, filesystemProbe, clock, runInline);
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, inlineSizes);
 

@@ -1,5 +1,68 @@
 # Changelog
 
+## [0.30.0](https://github.com/brunofgmag/fs-organizer/compare/v0.29.0...v0.30.0) (2026-08-11)
+
+
+### Features
+
+* warn when an airport is covered twice and offer to switch the simulator's one off ([#85](https://github.com/brunofgmag/fs-organizer/issues/85)) ([3505516](https://github.com/brunofgmag/fs-organizer/commit/35055165eca0a6a11112b8ee984b5851796e4fa8))
+
+## [0.29.0](https://github.com/brunofgmag/fs-organizer/compare/v0.28.0...v0.29.0) (2026-08-11)
+
+
+### Features
+
+* the airport code comes out of the bgl, read per addon and never in the scan ([#82](https://github.com/brunofgmag/fs-organizer/issues/82)) ([72c4ddb](https://github.com/brunofgmag/fs-organizer/commit/72c4ddb946f8d33be1c28a818236c1a84e41a803))
+
+## [0.28.0](https://github.com/brunofgmag/fs-organizer/compare/v0.27.0...v0.28.0) (2026-08-11)
+
+
+### Features
+
+* close the five open debts, with the scan gate and the paint ratchet ([#80](https://github.com/brunofgmag/fs-organizer/issues/80)) ([3a15818](https://github.com/brunofgmag/fs-organizer/commit/3a1581815c5c162dcaa8b83dd7c4e9814ba62db1))
+
+## [0.27.0](https://github.com/brunofgmag/fs-organizer/compare/v0.26.0...v0.27.0) (2026-08-11)
+
+
+### Features
+
+* close seven debts, with typed refusals and a measured free-space margin ([#77](https://github.com/brunofgmag/fs-organizer/issues/77)) ([e1571d1](https://github.com/brunofgmag/fs-organizer/commit/e1571d1d519ab3beeedfc1441baf0c3d9fbb8370))
+
+## [0.26.0](https://github.com/brunofgmag/fs-organizer/compare/v0.25.0...v0.26.0) (2026-08-11)
+
+
+### Features
+
+* **presets:** edit startup entries and tell the truth about them ([#75](https://github.com/brunofgmag/fs-organizer/issues/75)) ([cf3f6a6](https://github.com/brunofgmag/fs-organizer/commit/cf3f6a6872ffabf95187ade9e3d2563297e8efab))
+
+## [0.25.0](https://github.com/brunofgmag/fs-organizer/compare/v0.24.2...v0.25.0) (2026-08-10)
+
+
+### Features
+
+* **presets:** tell the truth about presets and keep a way back ([#72](https://github.com/brunofgmag/fs-organizer/issues/72)) ([f6c636c](https://github.com/brunofgmag/fs-organizer/commit/f6c636c2afb6df486e4a1da1954d18d0512f873c))
+
+## [0.24.2](https://github.com/brunofgmag/fs-organizer/compare/v0.24.1...v0.24.2) (2026-08-10)
+
+
+### Bug Fixes
+
+* **view:** drop the half of the language footer that repeats the radios ([#69](https://github.com/brunofgmag/fs-organizer/issues/69)) ([5226bbd](https://github.com/brunofgmag/fs-organizer/commit/5226bbdc85eed2099c401049399ac75bf118776d))
+
+## [0.24.1](https://github.com/brunofgmag/fs-organizer/compare/v0.24.0...v0.24.1) (2026-08-10)
+
+
+### Bug Fixes
+
+* read the path of a startup entry the same way on both platforms ([#67](https://github.com/brunofgmag/fs-organizer/issues/67)) ([4dc1b3f](https://github.com/brunofgmag/fs-organizer/commit/4dc1b3f945341e3f1499f19e6b639a0cd49916ba))
+
+## [0.24.0](https://github.com/brunofgmag/fs-organizer/compare/v0.23.0...v0.24.0) (2026-08-10)
+
+
+### Features
+
+* warn before disabling the addon that starts a program, and turn both off as one operation ([#65](https://github.com/brunofgmag/fs-organizer/issues/65)) ([2e7a2b8](https://github.com/brunofgmag/fs-organizer/commit/2e7a2b8bbe278388d494d42300016ede73179365))
+
 ## [0.23.0](https://github.com/brunofgmag/fs-organizer/compare/v0.22.0...v0.23.0) (2026-08-09)
 
 

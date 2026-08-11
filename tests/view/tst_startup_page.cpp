@@ -21,6 +21,7 @@
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/FakeStartupEntries.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
@@ -94,9 +95,17 @@ namespace
         return profile;
     }
 
+    AppSettings Stored(const bool managing)
+    {
+        AppSettings settings = SettingsWith(Active());
+        settings.manageStartupEntries = managing;
+
+        return settings;
+    }
+
     struct Fixture
     {
-        explicit Fixture(const bool managing = true)
+        explicit Fixture(const bool managing = true) : settings(Stored(managing))
         {
             fileSystem.AddDirectory(kDestination);
             fileSystem.AddDirectory(kLibrary);
@@ -107,10 +116,6 @@ namespace
             fileSystem.AddFile(kSimlink);
 
             catalog.SetTree(kLibrary, LibraryTree());
-
-            settings.stored.profiles = {Active()};
-            settings.stored.activeProfileId = Active().id;
-            settings.stored.manageStartupEntries = managing;
 
             entries.Carry(StartupEntry{.label = "FlowPro", .path = kFlowExecutable, .enabled = true});
             entries.Carry(StartupEntry{.label = "Navigraph Simlink", .path = kSimlink, .enabled = false});
@@ -133,17 +138,19 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
-                                log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier{};
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakeStartupEntries entries;
         StartupService service{entries, processProbe, filesystemProbe, true};
-        StartupViewModel viewModel{service, session, settings, clock};
+        StartupViewModel viewModel{service, session, clock};
         StartupPage page{viewModel};
     };
 

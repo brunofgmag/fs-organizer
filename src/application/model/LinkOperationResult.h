@@ -9,9 +9,9 @@
 
 struct LinkOperationResult
 {
-    AddonId addonId;
-    std::filesystem::path addonFolder;
-    std::filesystem::path linkPath;
+    AddonId addonId{};
+    std::filesystem::path addonFolder{};
+    std::filesystem::path linkPath{};
     OperationKind kind = OperationKind::EnableAddon;
     LinkOutcome outcome = LinkOutcome::Success();
 };

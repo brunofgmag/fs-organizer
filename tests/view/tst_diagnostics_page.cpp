@@ -12,8 +12,11 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSceneryCache.h"
+#include "tests/doubles/FakeSceneryParser.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -88,9 +91,6 @@ namespace
             fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = "msfs2024";
-
             session.ShowActiveProfile();
         }
 
@@ -104,8 +104,10 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
         FakeFileOperations files{fileSystem};
         FakeSidecarStore sidecars{fileSystem};
         FakeProcessProbe processProbe;
@@ -114,12 +116,15 @@ namespace
         ImportEngine importEngine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
         ImportService imports{importEngine, processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking,      log,          LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DiagnosticsViewModel viewModel{imports, sizes, session, clock};
+        FakeSceneryParser sceneryParser;
+        FakeSceneryCache sceneryCache;
+        SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
+        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, clock, runner};
     };
 
     QTreeWidget* TableNamed(const DiagnosticsPage& page, const QString& name)

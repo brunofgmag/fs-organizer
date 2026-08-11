@@ -16,6 +16,7 @@
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/RecordingSessionObserver.h"
@@ -31,13 +32,17 @@ namespace
     private slots:
         static void TheProfileAndItsSnapshotOnlyLandTogetherWhenTheScanFinishes();
         static void AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost();
+        static void TheScanAskedForNextAbandonsTheOneRunningInsteadOfWaitingItOut();
+        static void ACancelledScanLeavesTheTreeAsItWasAndStillSaysItEnded();
         static void ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk();
+        static void TheSettingsFileIsNeverReadAgainAfterTheSessionIsBuilt();
         static void RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain();
         static void OverridingADestinationSavesTheProfileWithoutAnotherScan();
         static void OverridingADestinationForAWholeSelectionSavesOnceInsteadOfOncePerNode();
         static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
         static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
         static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
+        static void RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated();
         static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
         static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
         static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
@@ -169,9 +174,28 @@ namespace
             fileSystem.AddDirectory(kLibrary);
             fileSystem.AddDirectory(kAddon);
             catalog.SetTree(kLibrary, LibraryTree());
+        }
 
-            settings.stored.profiles = {Profile("msfs2024")};
-            settings.stored.activeProfileId = "msfs2024";
+        void Seed(const std::function<void(SimulatorProfile&)>& change)
+        {
+            static_cast<void>(session.Rewrite(
+                [&change](AppSettings& settings)
+                {
+                    change(settings.profiles.front());
+
+                    return true;
+                }));
+        }
+
+        void Add(const SimulatorProfile& profile)
+        {
+            static_cast<void>(session.Rewrite(
+                [&profile](AppSettings& settings)
+                {
+                    settings.profiles.push_back(profile);
+
+                    return true;
+                }));
         }
 
         InMemoryFileSystem fileSystem;
@@ -187,14 +211,16 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile("msfs2024"))};
         InlineBackgroundRunner runner;
         RecordingSessionObserver observer;
-        Session session{service, organizer, settings, processProbe, runner, observer};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, observer};
     };
 }
 
@@ -244,16 +270,69 @@ void SessionTest::AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost()
     QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
 }
 
+void SessionTest::TheScanAskedForNextAbandonsTheOneRunningInsteadOfWaitingItOut()
+{
+    Fixture f;
+    f.runner.defer = true;
+
+    f.session.ShowActiveProfile();
+    f.session.ShowActiveProfile();
+
+    f.runner.Finish();
+
+    QCOMPARE(f.catalog.scanned, std::size_t{0});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.catalog.scanned, std::size_t{1});
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+    QVERIFY(f.session.Snapshot().complete);
+}
+
+void SessionTest::ACancelledScanLeavesTheTreeAsItWasAndStillSaysItEnded()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+    QCOMPARE(f.catalog.scanned, std::size_t{1});
+
+    f.runner.defer = true;
+    f.session.ShowActiveProfile();
+    f.session.CancelScan();
+    f.runner.Finish();
+
+    QVERIFY(!f.session.Scanning());
+    QCOMPARE(f.catalog.scanned, std::size_t{1});
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.session.Profile().id), QStringLiteral("msfs2024"));
+    QCOMPARE(f.observer.finished, 2);
+}
+
 void SessionTest::ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(Profile("msfs2020"));
+    f.Add(Profile("msfs2020"));
 
     f.session.ChooseProfile("msfs2020");
 
     QCOMPARE(QString::fromStdString(f.settings.stored.activeProfileId), QStringLiteral("msfs2020"));
     QCOMPARE(QString::fromStdString(f.session.Profile().id), QStringLiteral("msfs2020"));
     QCOMPARE(f.observer.finished, 1);
+}
+
+void SessionTest::TheSettingsFileIsNeverReadAgainAfterTheSessionIsBuilt()
+{
+    Fixture f;
+    f.Add(Profile("msfs2020"));
+
+    f.session.ShowActiveProfile();
+    f.session.ChooseProfile("msfs2020");
+    static_cast<void>(f.session.RegisterLibrary(kExtraLibrary));
+    static_cast<void>(f.session.RemoveProfile("msfs2020"));
+
+    QCOMPARE(f.settings.loads, 0);
+    QCOMPARE(f.session.Settings().profiles.size(), std::size_t{1});
 }
 
 void SessionTest::RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain()
@@ -342,6 +421,21 @@ void SessionTest::RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan()
     QCOMPARE(f.session.Snapshot().conflicts.Count(), std::size_t{1});
 }
 
+void SessionTest::RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.session.Snapshot().startupEntries.empty());
+
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.session.Snapshot().startupEntries.front().label), QString{"Fenix"});
+    QCOMPARE(f.observer.refreshed, 1);
+}
+
 void SessionTest::CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt()
 {
     Fixture f;
@@ -359,8 +453,12 @@ void SessionTest::RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain(
 {
     Fixture f;
     f.fileSystem.AddDirectory(kAircrafts);
-    f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{
+                .libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+        });
     f.session.ShowActiveProfile();
 
     const FileOperationResult result = f.session.RenameCategory(kAircrafts, "Airplanes");
@@ -376,8 +474,12 @@ void SessionTest::ARefusedCategoryLeavesTheProfileAndTheDiskAlone()
 {
     Fixture f;
     f.fileSystem.AddDirectory(kAircrafts);
-    f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{
+                .libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+        });
     f.session.ShowActiveProfile();
     f.processProbe.ReportTheSimulatorAsRunning();
 
@@ -396,8 +498,13 @@ void SessionTest::MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain()
     Fixture f;
     f.fileSystem.AddDirectory(kAircrafts);
     f.fileSystem.AddDirectory(kSceneries);
-    f.settings.stored.profiles.front().destinationOverrides = {DestinationOverride{
-        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .destination = kOtherDestination}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                                .destination = kOtherDestination}};
+        });
     f.session.ShowActiveProfile();
 
     const std::vector<FileOperationResult> results =
@@ -436,8 +543,12 @@ void SessionTest::UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeTh
     Fixture f;
     f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/manifest.json");
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kAddon);
-    f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{
+                .libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+        });
 
     f.session.ShowActiveProfile();
 
@@ -466,8 +577,12 @@ void SessionTest::RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain()
 {
     Fixture f;
     f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community2025");
-    f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{.libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{
+                .libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+        });
 
     f.session.ShowActiveProfile();
     const int scansBefore = f.observer.started;
@@ -577,7 +692,7 @@ void SessionTest::ImportingNothingSavesNothingAndScansNothing()
 void SessionTest::RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(Profile("msfs2020"));
+    f.Add(Profile("msfs2020"));
     f.session.ShowActiveProfile();
 
     QVERIFY(f.session.RemoveProfile("msfs2024"));
@@ -591,7 +706,7 @@ void SessionTest::RemovingTheActiveProfileAdoptsTheOneThatIsLeftAndReadsItsDisk(
 void SessionTest::RemovingAProfileThatIsNotInUseLeavesTheDiskAlone()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(Profile("msfs2020"));
+    f.Add(Profile("msfs2020"));
     f.session.ShowActiveProfile();
 
     QVERIFY(f.session.RemoveProfile("msfs2020"));
@@ -644,10 +759,16 @@ void SessionTest::TheLastProfileIsNeverRemovedAndNothingIsWritten()
 void SessionTest::AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn()
 {
     Fixture f;
-    f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{
-            .libraryId = "library-1", .relativePath = "Aircrafts", .destination = "E:/Flight Simulator 2024/Retired"},
-        DestinationOverride{.libraryId = "library-1", .relativePath = "Sceneries", .destination = kOtherDestination}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Aircrafts",
+                                                                .destination = "E:/Flight Simulator 2024/Retired"},
+                                            DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Sceneries",
+                                                                .destination = kOtherDestination}};
+        });
 
     f.session.ShowActiveProfile();
 
@@ -659,10 +780,16 @@ void SessionTest::AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsO
 void SessionTest::DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan()
 {
     Fixture f;
-    f.settings.stored.profiles.front().destinationOverrides = {
-        DestinationOverride{
-            .libraryId = "library-1", .relativePath = "Aircrafts", .destination = "E:/Flight Simulator 2024/Retired"},
-        DestinationOverride{.libraryId = "library-1", .relativePath = "Sceneries", .destination = kOtherDestination}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Aircrafts",
+                                                                .destination = "E:/Flight Simulator 2024/Retired"},
+                                            DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Sceneries",
+                                                                .destination = kOtherDestination}};
+        });
 
     f.session.ShowActiveProfile();
     f.session.DropOverridesPointingNowhere();
@@ -720,8 +847,13 @@ void SessionTest::MovingAnAddonCarriesTheRecordOfWhereItCameFrom()
     Fixture f;
     f.fileSystem.AddDirectory(kAircrafts);
     f.fileSystem.AddDirectory(kSceneries);
-    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
-        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.externalOrigins = {ExternalOrigin{.libraryId = "library-1",
+                                                      .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                      .externalPath = kVendorFolder}};
+        });
     f.session.ShowActiveProfile();
 
     const std::vector<FileOperationResult> results =
@@ -735,8 +867,13 @@ void SessionTest::MovingAnAddonCarriesTheRecordOfWhereItCameFrom()
 void SessionTest::UnregisteringALibraryForgetsWhereItsAddonsCameFrom()
 {
     Fixture f;
-    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
-        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.externalOrigins = {ExternalOrigin{.libraryId = "library-1",
+                                                      .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                      .externalPath = kVendorFolder}};
+        });
     f.session.ShowActiveProfile();
 
     f.session.UnregisterLibrary("library-1");
@@ -747,8 +884,13 @@ void SessionTest::UnregisteringALibraryForgetsWhereItsAddonsCameFrom()
 void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
 {
     Fixture f;
-    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
-        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.externalOrigins = {ExternalOrigin{.libraryId = "library-1",
+                                                      .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                      .externalPath = kVendorFolder}};
+        });
     f.session.ShowActiveProfile();
 
     f.session.ForgetWhatCameFromAnotherProgram({kAddon});
@@ -760,8 +902,13 @@ void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
 void SessionTest::ForgettingNothingNeitherSavesNorScans()
 {
     Fixture f;
-    f.settings.stored.profiles.front().externalOrigins = {ExternalOrigin{
-        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .externalPath = kVendorFolder}};
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.externalOrigins = {ExternalOrigin{.libraryId = "library-1",
+                                                      .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                      .externalPath = kVendorFolder}};
+        });
     f.session.ShowActiveProfile();
 
     f.session.ForgetWhatCameFromAnotherProgram({});

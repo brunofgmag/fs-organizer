@@ -83,6 +83,26 @@ add_custom_command(TARGET fsorg-delete POST_BUILD
         "$<TARGET_FILE_DIR:fsorg-delete>"
         VERBATIM)
 
+add_executable(fsorg-bgl
+        tools/fsorg-bgl/main.cpp
+)
+
+target_include_directories(fsorg-bgl PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/tools")
+
+target_compile_definitions(fsorg-bgl PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+
+if (MSVC)
+    target_compile_options(fsorg-bgl PRIVATE /permissive- /Zc:preprocessor)
+endif ()
+
+target_link_libraries(fsorg-bgl PRIVATE fsorg-domain fsorg-infrastructure Qt6::Core)
+
+add_custom_command(TARGET fsorg-bgl POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::Core>"
+        "$<TARGET_FILE_DIR:fsorg-bgl>"
+        VERBATIM)
+
 add_executable(fsorg-size
         tools/fsorg-size/main.cpp
 )
@@ -140,6 +160,11 @@ add_custom_command(TARGET fsorg-shot POST_BUILD
         "${CMAKE_BINARY_DIR}/app_en.qm"
         "${CMAKE_BINARY_DIR}/app_pt_BR.qm"
         "$<TARGET_FILE_DIR:fsorg-shot>/i18n/"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "$<TARGET_FILE_DIR:fsorg-shot>/translations"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE_DIR:Qt6::Core>/../translations/qtbase_pt_BR.qm"
+        "$<TARGET_FILE_DIR:fsorg-shot>/translations/qt_pt_BR.qm"
         VERBATIM)
 
 add_dependencies(fsorg-shot release_translations)

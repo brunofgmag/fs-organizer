@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_DOMAIN_JOURNAL_OPERATION_LOG_H
 
 #include <filesystem>
+#include <string>
 #include <vector>
 
 #include "domain/model/AddonId.h"
@@ -28,7 +29,8 @@ public:
                       const std::filesystem::path& source,
                       const std::filesystem::path& target,
                       FileResult result,
-                      OriginSource originSource = OriginSource::Unknown) const;
+                      OriginSource originSource = OriginSource::Unknown,
+                      const std::string& label = {}) const;
 
     [[nodiscard]] std::chrono::system_clock::time_point Now() const;
 

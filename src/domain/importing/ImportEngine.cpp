@@ -234,7 +234,8 @@ MeasuredSource ImportEngine::MeasureTheSource(const std::filesystem::path& sourc
         return MeasuredSource{.outcome = ImportOutcome::Stopped(FileResult::CouldNotReadTheSource)};
     }
 
-    return MeasuredSource{.outcome = CheckFreeSpace(roomOn, TotalSizeOf(walked->files)), .files = walked->files};
+    return MeasuredSource{.outcome = CheckFreeSpace(roomOn, TotalSizeOf(walked->files), walked->files.size()),
+                          .files = walked->files};
 }
 
 ImportOutcome ImportEngine::CopyAndVerify(const AddonId& addon,
@@ -453,9 +454,11 @@ void ImportEngine::RecordStep(const AddonId& addon,
     log_.RecordImport(kind, addon, source, target, result);
 }
 
-ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category, const std::uintmax_t sourceSize) const
+ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category,
+                                           const std::uintmax_t sourceSize,
+                                           const std::size_t files) const
 {
-    const std::uintmax_t needed = sourceSize + kFreeSpaceMargin;
+    const std::uintmax_t needed = FreeSpaceNeededFor(sourceSize, files);
 
     const std::optional<std::uintmax_t> free = filesystemProbe_.FreeSpaceOn(category);
     if (!free.has_value())

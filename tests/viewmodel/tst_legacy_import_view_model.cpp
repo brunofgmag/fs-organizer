@@ -17,6 +17,7 @@
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/RecordingSessionObserver.h"
@@ -34,6 +35,8 @@ namespace
         static void ALibraryAlreadyRegisteredWithEveryCategoryOnDiskWaitsForNothing();
         static void ACategoryTheLibraryDoesNotHaveYetIsWaiting();
         static void ALibraryWhoseRootIsGoneWaitsForNothing();
+        static void TheCounterAnswersHowManyPresetsAreInTheFolder();
+        static void NoPresetWaitsInAnInstallationThatNamesNoPresetsFolder();
     };
 }
 
@@ -74,6 +77,18 @@ namespace
         return installation;
     }
 
+    SimulatorProfile Profile()
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2024";
+        profile.variant = SimulatorVariant::MSFS2024;
+        profile.destinations = {kCommunity};
+        profile.defaultDestination = kCommunity;
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
+
+        return profile;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -82,16 +97,6 @@ namespace
             fileSystem.AddDirectory(kLibrary);
             fileSystem.AddDirectory(kAddon);
             catalog.SetTree(kLibrary, LibraryTree());
-
-            SimulatorProfile profile;
-            profile.id = "msfs2024";
-            profile.variant = SimulatorVariant::MSFS2024;
-            profile.destinations = {kCommunity};
-            profile.defaultDestination = kCommunity;
-            profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
-
-            settings.stored.profiles = {profile};
-            settings.stored.activeProfileId = "msfs2024";
 
             session.ShowActiveProfile();
         }
@@ -109,18 +114,20 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         RecordingSessionObserver observer;
-        Session session{service, organizer, settings, processProbe, runner, observer};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, observer};
         FakeLegacyConfigSource legacy;
         LegacyConfigImporter importer{legacy, filesystemProbe};
         FakePresetRepository presetRepository;
-        PresetService presets{presetRepository, service};
+        PresetService presets{presetRepository, service, startup.service};
         LegacyImportViewModel viewModel{session, importer, presets};
     };
 }
@@ -163,6 +170,25 @@ void LegacyImportViewModelTest::ALibraryWhoseRootIsGoneWaitsForNothing()
     f.legacy.Add(InstallationAt("C:/ProgramData/MSFS Addons Linker", {"D:/MSFS 2020/Aircrafts", "D:/MSFS 2020/Utils"}));
 
     QVERIFY(!f.viewModel.SomethingIsWaiting());
+}
+
+void LegacyImportViewModelTest::TheCounterAnswersHowManyPresetsAreInTheFolder()
+{
+    Fixture f;
+    const std::filesystem::path presets = std::filesystem::path{kLegacy2024} / "Presets";
+
+    f.legacy.PlacePreset(presets, LegacyPresetSelection{.name = "VFR", .enabledAddonNames = {"pmdg-aircraft-77w"}});
+    f.legacy.PlacePreset(presets, LegacyPresetSelection{.name = "IFR", .enabledAddonNames = {"nobody-scanned-this"}});
+    f.legacy.PlacePreset(presets, LegacyPresetSelection{.name = "Empty"});
+
+    QCOMPARE(f.viewModel.PresetsWaitingIn(presets), std::size_t{3});
+}
+
+void LegacyImportViewModelTest::NoPresetWaitsInAnInstallationThatNamesNoPresetsFolder()
+{
+    const Fixture f;
+
+    QCOMPARE(f.viewModel.PresetsWaitingIn({}), std::size_t{0});
 }
 
 QTEST_GUILESS_MAIN(LegacyImportViewModelTest)

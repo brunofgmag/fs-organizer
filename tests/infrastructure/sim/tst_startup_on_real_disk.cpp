@@ -8,11 +8,13 @@
 #include <string>
 #include <vector>
 
+#include "application/StartupReport.h"
 #include "domain/support/PathUtils.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/StartupFileLocations.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/StdFilesystemProbe.h"
 #include "tests/support/TempFiles.h"
 
 namespace
@@ -31,6 +33,7 @@ namespace
         static void AnEntryTheFileNoLongerCarriesIsRefusedAndNoBackupIsLeft();
         static void SwitchingAnEntryToTheValueItAlreadyHasWritesNothing();
         static void PointingItAtAnotherProfilesFileReadsAndWritesThatOne();
+        static void TheEntryOfTheRealFileIsRecognisedAsCarriedByTheAddonItPointsInto();
     };
 
     constexpr auto kAny2GSX = R"(C:\Users\pilot\AppData\Roaming\Any2GSX\bin\Any2GSX.exe)";
@@ -208,6 +211,27 @@ void StartupOnRealDiskTest::PointingItAtAnotherProfilesFileReadsAndWritesThatOne
     QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), false), FileResult::Completed);
     QCOMPARE(FirstDifference(BytesOf(other / "EXE.xml"), Fixture("simulator-exe.xml")), std::string::npos);
     QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{1});
+}
+
+void StartupOnRealDiskTest::TheEntryOfTheRealFileIsRecognisedAsCarriedByTheAddonItPointsInto()
+{
+    const TempFiles files;
+    const ExeXmlStartupEntries startup(StartupFileIn(files, "simulator-exe.xml"));
+
+    SimulatorProfile profile;
+    profile.id = "msfs2024";
+    profile.destinations = {PathFromUtf8(R"(E:\Flight Simulator 2024\Community)")};
+
+    const StdFilesystemProbe probe;
+    const StartupReport report = ReportStartupEntries(startup.Entries(), profile, ProfileSnapshot{}, probe);
+
+    const std::vector<StartupLine> carried =
+        EntriesCarriedBy(report, {PathFromUtf8(R"(D:\MSFS 2024\Utilities\rkapps-fsrealistic)")});
+
+    QCOMPARE(carried.size(), std::size_t{1});
+    QCOMPARE(carried.front().label, std::string("FSRealistic+"));
+    QCOMPARE(carried.front().path, PathFromUtf8(kFsRealistic));
+    QVERIFY(EntriesCarriedBy(report, {PathFromUtf8(R"(D:\MSFS 2024\Utilities\any2gsx)")}).empty());
 }
 
 QTEST_APPLESS_MAIN(StartupOnRealDiskTest)

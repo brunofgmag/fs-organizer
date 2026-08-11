@@ -14,8 +14,11 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSceneryCache.h"
+#include "tests/doubles/FakeSceneryParser.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/FakeSimulatorPackages.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
@@ -95,9 +98,6 @@ namespace
             fileSystem.AddFile(kQuarantined / "content.bin", 900);
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = "msfs2024";
-
             session.ShowActiveProfile();
         }
 
@@ -127,17 +127,19 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
-                                log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                                log,     identities,      startup.service, LinkType::Junction};
         ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
         ImportService imports{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking, log,          LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
 
         AddonTreeModel treeModel;
@@ -150,7 +152,10 @@ namespace
         QuarantineModel quarantineModel;
         QuarantineViewModel quarantine{imports, profiles, session, notifier, quarantineModel, sizes, runner};
 
-        DiagnosticsViewModel diagnostics{imports, sizes, session, clock};
+        FakeSceneryParser sceneryParser;
+        FakeSceneryCache sceneryCache;
+        SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
+        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, clock, runner};
     };
 
     SelectionSize LastSize(const QSignalSpy& measured)

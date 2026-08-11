@@ -18,9 +18,10 @@ void OperationLog::RecordImport(const OperationKind kind,
                                 const std::filesystem::path& source,
                                 const std::filesystem::path& target,
                                 const FileResult result,
-                                const OriginSource originSource) const
+                                const OriginSource originSource,
+                                const std::string& label) const
 {
-    journal_.Append(OperationRecord::OfImport(clock_.Now(), kind, addon, source, target, result, originSource));
+    journal_.Append(OperationRecord::OfImport(clock_.Now(), kind, addon, source, target, result, originSource, label));
 }
 
 std::chrono::system_clock::time_point OperationLog::Now() const

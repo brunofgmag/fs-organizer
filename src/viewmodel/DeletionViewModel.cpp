@@ -7,14 +7,12 @@
 
 DeletionViewModel::DeletionViewModel(Session& session,
                                      ProfileService& profileService,
-                                     const SettingsRepository& settings,
                                      const DeletionService& service,
                                      SizeService& sizes,
                                      QObject* parent)
     : QObject(parent),
       session_(session),
       profileService_(profileService),
-      settings_(settings),
       service_(service),
       sizes_(sizes),
       caller_(sizes.NewCaller())
@@ -23,7 +21,7 @@ DeletionViewModel::DeletionViewModel(Session& session,
 
 std::vector<SimulatorProfile> DeletionViewModel::EveryProfile() const
 {
-    const std::vector<SimulatorProfile> stored = settings_.Load().value_or(AppSettings{}).profiles;
+    const std::vector<SimulatorProfile>& stored = session_.Settings().profiles;
 
     return stored.empty() ? std::vector<SimulatorProfile>{session_.Profile()} : stored;
 }

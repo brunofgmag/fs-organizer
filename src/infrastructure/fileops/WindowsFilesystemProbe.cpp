@@ -252,6 +252,22 @@ std::optional<std::string> WindowsFilesystemProbe::ContentsOf(const std::filesys
     return std::string(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
 }
 
+std::optional<std::string> WindowsFilesystemProbe::FirstBytesOf(const std::filesystem::path& path,
+                                                                const std::size_t most) const
+{
+    std::ifstream file(WithExtendedPrefix(path), std::ios::binary);
+    if (!file.is_open())
+    {
+        return std::nullopt;
+    }
+
+    std::string bytes(most, '\0');
+    file.read(bytes.data(), static_cast<std::streamsize>(most));
+    bytes.resize(static_cast<std::size_t>(file.gcount()));
+
+    return bytes;
+}
+
 std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const
 {
     const std::filesystem::path reachableRoot = WithExtendedPrefix(root);

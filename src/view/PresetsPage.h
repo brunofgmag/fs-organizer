@@ -8,9 +8,10 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
-class ContextPanel;
 class EmptyState;
-class QButtonGroup;
+class PresetPlanPanel;
+class QCheckBox;
+class QFrame;
 class QLabel;
 class QLineEdit;
 class QPushButton;
@@ -38,19 +39,41 @@ private:
 
     [[nodiscard]] QTableWidget* CreateNameTable();
 
+    [[nodiscard]] QTableWidget* CreateReturnTable();
+
+    [[nodiscard]] QWidget* CreateTheTwoHalves();
+
+    [[nodiscard]] QWidget* CreateTheStartupTab();
+
     [[nodiscard]] QString SelectedName() const;
 
     [[nodiscard]] ApplyMode Mode() const;
 
     void ReloadNames();
 
+    void ShowTheWayBack();
+
+    [[nodiscard]] int HideTheNamesThatDoNotMatch() const;
+
     void ShowOnlyTheNamesThatMatch() const;
+
+    void LetGoOf(QTableWidget* table);
 
     void ShowSelected();
 
+    void ShowTheReturnPreset();
+
     void ShowEntries();
 
+    void ShowStartupTab();
+
     void ActionToggled(const QTableWidgetItem* item);
+
+    void StartupActionToggled(const QTableWidgetItem* item);
+
+    void RecaptureStartup();
+
+    void GovernStartupToggled(bool governs);
 
     void RefreshPreview() const;
 
@@ -64,25 +87,35 @@ private:
 
     void ApplySelected();
 
+    void ListTheOmitted();
+
+    void GoBack();
+
     PresetViewModel& viewModel_;
     QStackedWidget* pages_ = nullptr;
-    ContextPanel* panel_ = nullptr;
+    QPushButton* content_ = nullptr;
+    QPushButton* plan_ = nullptr;
     QTableWidget* names_ = nullptr;
+    QTableWidget* return_ = nullptr;
+    QFrame* returnRule_ = nullptr;
     QLineEdit* filter_ = nullptr;
-    QButtonGroup* modes_ = nullptr;
-    QLabel* modeExplained_ = nullptr;
     QTableWidget* entries_ = nullptr;
-    QLabel* preview_ = nullptr;
-    QPushButton* apply_ = nullptr;
+    QPushButton* startup_ = nullptr;
+    QCheckBox* governsStartup_ = nullptr;
+    QStackedWidget* startupBody_ = nullptr;
+    QLabel* startupEmpty_ = nullptr;
+    QTableWidget* startupEntries_ = nullptr;
+    QPushButton* updateStartup_ = nullptr;
+    PresetPlanPanel* planPanel_ = nullptr;
     QPushButton* update_ = nullptr;
     QPushButton* rename_ = nullptr;
     QPushButton* remove_ = nullptr;
     QPushButton* create_ = nullptr;
-    QLabel* applyAs_ = nullptr;
-    QLabel* promise_ = nullptr;
+    QPushButton* goBack_ = nullptr;
     EmptyState* nothing_ = nullptr;
     QPushButton* nothingAction_ = nullptr;
     std::optional<Preset> selected_;
+    bool showingReturn_ = false;
     bool populating_ = false;
 };
 

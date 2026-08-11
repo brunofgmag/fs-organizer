@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <string>
 #include <utility>
 #include <variant>
 
@@ -50,7 +51,8 @@ struct OperationRecord
                                                   std::filesystem::path source,
                                                   std::filesystem::path target,
                                                   FileResult result,
-                                                  OriginSource originSource = OriginSource::Unknown)
+                                                  OriginSource originSource = OriginSource::Unknown,
+                                                  std::string label = {})
     {
         OperationRecord record;
         record.timestamp = timestamp;
@@ -60,6 +62,7 @@ struct OperationRecord
         record.target = std::move(target);
         record.outcome = result;
         record.originSource = originSource;
+        record.label = std::move(label);
 
         return record;
     }
@@ -71,6 +74,7 @@ struct OperationRecord
     std::filesystem::path target;
     OperationOutcome outcome = LinkFailure::None;
     OriginSource originSource = OriginSource::Unknown;
+    std::string label{};
 
 private:
     OperationRecord() = default;

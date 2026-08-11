@@ -24,6 +24,7 @@ namespace
         static void ASymlinkEitherLandsOrSaysThePrivilegeIsMissing();
         static void AJunctionWhoseLinkPathPassesTheOldCeilingStillLandsAndReadsBack();
         static void TheTargetWrittenInsideTheJunctionNeverCarriesTheExtendedPrefix();
+        static void AJunctionWhoseTargetPassesTheOldCeilingLandsAndReadsBack();
     };
 }
 
@@ -180,6 +181,27 @@ void WindowsLinkServiceTest::TheTargetWrittenInsideTheJunctionNeverCarriesTheExt
              "the substitute name is no longer the object namespace prefix followed by the raw target");
     QVERIFY2(buffer.find(LR"(\\?\)") == std::wstring::npos,
              "the extended prefix reached the reparse buffer, which is how a junction ends up corrupted");
+}
+
+void WindowsLinkServiceTest::AJunctionWhoseTargetPassesTheOldCeilingLandsAndReadsBack()
+{
+    const Disk disk;
+    const std::filesystem::path target = FolderPastTheCeiling(disk.Root(), "tfdidesign-aircraft-md11");
+    const std::filesystem::path linkPath = disk.Destination("tfdidesign-aircraft-md11");
+
+    QVERIFY(target.wstring().size() > kOldPathCeiling);
+
+    WindowsLinkService linkService;
+
+    QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
+
+    const std::optional<std::filesystem::path> readBack = linkService.ReadLinkTarget(linkPath);
+    QVERIFY(readBack.has_value());
+    QCOMPARE(ComparablePath(*readBack), ComparablePath(target));
+    QVERIFY(std::filesystem::is_directory(linkPath));
+
+    QVERIFY(linkService.RemoveReparseNode(linkPath));
+    RemovePastTheCeiling(target);
 }
 
 QTEST_APPLESS_MAIN(WindowsLinkServiceTest)

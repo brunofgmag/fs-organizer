@@ -1,9 +1,12 @@
 #include <QtTest/QtTest>
 
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QScrollBar>
 
 #include <cstdint>
 #include <filesystem>
+#include <string>
 #include <vector>
 
 #include "application/LibraryOrganizer.h"
@@ -20,11 +23,13 @@
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/FakeSimulatorPackages.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/PathPrinting.h"
 #include "view/library/SwapDialog.h"
+#include "view/theme/ModernistTheme.h"
 
 namespace
 {
@@ -37,6 +42,8 @@ namespace
         static void TheMeasurementLandsAfterTheDialogIsBuiltAndFillsBothSides();
         static void ASideNobodyCouldMeasureKeepsItsNameInsteadOfShowingZero();
         static void TheSizeThatArrivesIsTheOneTheServiceMeasuredOnDisk();
+        static void EverySwapIsVisibleWithoutScrolling();
+        static void TheViewportIsNoTallerThanWhatTheSwapsNeed();
     };
 
     constexpr std::uintmax_t kMegabyte = 1024 * 1024;
@@ -101,9 +108,6 @@ namespace
 
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = Profile().id;
-
             session.ShowActiveProfile();
         }
 
@@ -120,14 +124,16 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         AddonTreeModel model;
         FakeSimulatorPackages packages;
@@ -137,6 +143,35 @@ namespace
     std::vector<TakenPlace> OneSwap()
     {
         return {TakenPlace{.addonFolder = kAtr, .linkPath = kDestination / "hype-atr", .occupant = kCrj}};
+    }
+
+    std::vector<TakenPlace> ManySwaps(const int count)
+    {
+        const std::filesystem::path deep =
+            kDestination / "Vendor With A Long Enough Name" / "Second Level Of Folders" / "Third Level";
+
+        std::vector<TakenPlace> swaps;
+
+        for (int index = 0; index < count; ++index)
+        {
+            const std::string name = "addon-" + std::to_string(index);
+
+            swaps.push_back(TakenPlace{
+                .addonFolder = kAircrafts / name, .linkPath = deep / name, .occupant = kAircrafts / ("held-" + name)});
+        }
+
+        return swaps;
+    }
+
+    QScrollArea* TheScrollIn(const SwapDialog& dialog)
+    {
+        return dialog.findChild<QScrollArea*>();
+    }
+
+    void Expose(SwapDialog& dialog)
+    {
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
     }
 
     QString EverythingWritten(const SwapDialog& dialog)
@@ -213,6 +248,38 @@ void SwapDialogTest::TheSizeThatArrivesIsTheOneTheServiceMeasuredOnDisk()
     QCOMPARE(landed.front().goesOn.folder, kAtr);
     QCOMPARE(landed.front().goesOff.bytes, kCrjBytes);
     QCOMPARE(landed.front().goesOn.bytes, kAtrBytes);
+}
+
+void SwapDialogTest::EverySwapIsVisibleWithoutScrolling()
+{
+    ApplyModernistTheme(*qobject_cast<QApplication*>(QCoreApplication::instance()));
+
+    Fixture fixture;
+    SwapDialog dialog(ManySwaps(6), fixture.viewModel);
+    Expose(dialog);
+
+    QScrollArea* scroll = TheScrollIn(dialog);
+
+    QVERIFY(scroll != nullptr);
+    QCOMPARE(scroll->verticalScrollBar()->maximum(), 0);
+}
+
+void SwapDialogTest::TheViewportIsNoTallerThanWhatTheSwapsNeed()
+{
+    ApplyModernistTheme(*qobject_cast<QApplication*>(QCoreApplication::instance()));
+
+    Fixture fixture;
+    SwapDialog dialog(ManySwaps(4), fixture.viewModel);
+    Expose(dialog);
+
+    const QScrollArea* scroll = TheScrollIn(dialog);
+    const int needed = scroll->widget()->heightForWidth(scroll->viewport()->width());
+
+    QVERIFY(needed > 0);
+    QVERIFY2(scroll->viewport()->height() - needed < dialog.fontMetrics().height(),
+             qPrintable(QStringLiteral("the viewport is %1 tall for content that needs %2")
+                            .arg(scroll->viewport()->height())
+                            .arg(needed)));
 }
 
 QTEST_MAIN(SwapDialogTest)

@@ -19,6 +19,7 @@
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
@@ -32,6 +33,8 @@ namespace
         static void ACapturedPresetNamesExactlyTheAddonsThatAreLinked();
         static void UpdatingACapturedPresetKeepsNamingOnlyWhatIsLinked();
         static void ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsItWas();
+        static void TheReturnPresetLandsOnDiskWithWhatWasEnabledAndStaysOutOfTheList();
+        static void ApplyingTheReturnPresetPutsTheDestinationBackAsItWas();
     };
 }
 
@@ -86,23 +89,25 @@ namespace
 
     struct Composition
     {
-        WindowsLinkService linkService;
-        WindowsFilesystemProbe filesystemProbe;
-        WindowsSidecarStore sidecars;
+        WindowsLinkService linkService{};
+        WindowsFilesystemProbe filesystemProbe{};
+        WindowsSidecarStore sidecars{};
         LinkingEngine linking{linkService, filesystemProbe};
-        SystemClock clock;
-        std::filesystem::path journalFile;
+        SystemClock clock{};
+        std::filesystem::path journalFile{};
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
-        JsonManifestParser manifestParser;
+        JsonManifestParser manifestParser{};
         FilesystemScanner catalog{manifestParser, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        FakeLibraryIdGenerator identities;
-        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
-                                log,     identities,      LinkType::Junction};
-        std::filesystem::path presetRoot;
+        FakeLibraryIdGenerator identities{};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                                log,     identities,      startup.service, LinkType::Junction};
+        std::filesystem::path presetRoot{};
         FilePresetRepository presets{presetRoot};
-        PresetService service{presets, profiles};
+        PresetService service{presets, profiles, startup.service};
     };
 
     std::string AddonNameAt(const std::string& category, const int index)
@@ -249,6 +254,89 @@ void PresetOnRealDiskTest::ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsI
 
     QCOMPARE(report.results.size(), std::size_t{0});
     QCOMPARE(ChildrenOf(disk.Community()), before);
+}
+
+namespace
+{
+    std::vector<std::string> LinkNamesIn(const std::filesystem::path& folder)
+    {
+        std::vector<std::string> names;
+
+        for (const auto& entry : std::filesystem::directory_iterator(folder))
+        {
+            names.push_back(entry.path().filename().string());
+        }
+
+        std::ranges::sort(names);
+
+        return names;
+    }
+}
+
+void PresetOnRealDiskTest::TheReturnPresetLandsOnDiskWithWhatWasEnabledAndStaysOutOfTheList()
+{
+    const Disk disk;
+    PutALibraryOnDisk(disk);
+
+    Composition composed{.journalFile = disk.Root() / "journal" / "operations.jsonl",
+                         .presetRoot = disk.Root() / "presets"};
+    const SimulatorProfile profile = disk.Profile();
+
+    ReallyEnable(composed, disk, "Aircrafts", 0);
+    ReallyEnable(composed, disk, "Sceneries", 2);
+
+    QVERIFY(composed.service.Create(profile, composed.profiles.Scan(profile), "Voo curto"));
+
+    const std::optional<Preset> stored = composed.service.Load(profile.id, "Voo curto");
+    QVERIFY(stored.has_value());
+
+    ReallyEnable(composed, disk, "Utils", 1);
+
+    const PresetApplyReport report =
+        composed.service.Apply(profile, composed.profiles.Scan(profile), *stored, ApplyMode::Replace);
+
+    QVERIFY(report.refusal == PresetApplyRefusal::None);
+    QVERIFY(std::filesystem::exists(disk.Root() / "presets" / "msfs2024.return.json"));
+
+    const std::optional<Preset> back = composed.service.ReturnPreset(profile.id);
+
+    QVERIFY(back.has_value());
+    QCOMPARE(back->entries.size(), std::size_t{3});
+    QCOMPARE(composed.service.List(profile.id).size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(composed.service.List(profile.id).front().name), QString{"Voo curto"});
+}
+
+void PresetOnRealDiskTest::ApplyingTheReturnPresetPutsTheDestinationBackAsItWas()
+{
+    const Disk disk;
+    PutALibraryOnDisk(disk);
+    PutFoldersTheAppDoesNotOwnInTheDestination(disk, 3);
+
+    Composition composed{.journalFile = disk.Root() / "journal" / "operations.jsonl",
+                         .presetRoot = disk.Root() / "presets"};
+    const SimulatorProfile profile = disk.Profile();
+
+    ReallyEnable(composed, disk, "Aircrafts", 0);
+    ReallyEnable(composed, disk, "Sceneries", 2);
+    ReallyEnable(composed, disk, "Utils", 1);
+
+    const std::vector<std::string> before = LinkNamesIn(disk.Community());
+
+    Preset preset;
+    preset.name = "Só um";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = "lib-1", .folderName = AddonNameAt("Utils", 3)},
+                                  .action = PresetAction::Enable}};
+
+    static_cast<void>(composed.service.Apply(profile, composed.profiles.Scan(profile), preset, ApplyMode::Replace));
+
+    QVERIFY(LinkNamesIn(disk.Community()) != before);
+
+    const std::optional<Preset> back = composed.service.ReturnPreset(profile.id);
+    QVERIFY(back.has_value());
+
+    static_cast<void>(composed.service.Apply(profile, composed.profiles.Scan(profile), *back, ApplyMode::Replace));
+
+    QCOMPARE(LinkNamesIn(disk.Community()), before);
 }
 
 QTEST_APPLESS_MAIN(PresetOnRealDiskTest)

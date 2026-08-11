@@ -18,6 +18,7 @@
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakePresetRepository.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
@@ -92,10 +93,12 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService profiles{scanner, filesystemProbe, sidecars,          classifier, linking,
-                                log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService profiles{scanner, filesystemProbe, sidecars,        classifier,        linking,
+                                log,     identities,      startup.service, LinkType::Junction};
         FakePresetRepository presets;
-        PresetService service{presets, profiles};
+        PresetService service{presets, profiles, startup.service};
     };
 
     SimulatorProfile ProfileOn(const Disk& disk)

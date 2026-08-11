@@ -48,6 +48,7 @@ ProfileService::ProfileService(const CatalogScanner& catalog,
                                const LinkingEngine& linking,
                                const OperationLog& log,
                                const LibraryIdGenerator& identities,
+                               StartupService& startup,
                                const LinkType linkType)
     : catalog_(catalog),
       filesystemProbe_(filesystemProbe),
@@ -56,6 +57,7 @@ ProfileService::ProfileService(const CatalogScanner& catalog,
       linking_(linking),
       log_(log),
       identities_(identities),
+      startup_(startup),
       linkType_(linkType)
 {
 }
@@ -63,6 +65,28 @@ ProfileService::ProfileService(const CatalogScanner& catalog,
 void ProfileService::UseLinkType(const LinkType linkType)
 {
     linkType_ = linkType;
+}
+
+std::vector<StartupLine> ProfileService::StartupEntriesCarriedBy(const SimulatorProfile& profile,
+                                                                 const ProfileSnapshot& shown,
+                                                                 const std::vector<const TreeNode*>& nodes) const
+{
+    std::vector<std::filesystem::path> folders;
+
+    for (const TreeNode* node : nodes)
+    {
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            folders.push_back(addon->path);
+        }
+    }
+
+    return EntriesCarriedBy(startup_.Report(profile, shown), folders);
+}
+
+std::vector<StartupEntry> ProfileService::StartupEntriesNow() const
+{
+    return startup_.Entries();
 }
 
 LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const
@@ -84,14 +108,23 @@ LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const s
     return report;
 }
 
-ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile) const
+ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile, const ScanGate& gate) const
 {
     ProfileSnapshot snapshot;
 
-    snapshot.libraries = LibraryTreesOf(catalog_, profile);
+    snapshot.libraries = LibraryTreesOf(catalog_, profile, gate);
+
+    if (!gate.StillWanted())
+    {
+        snapshot.complete = false;
+
+        return snapshot;
+    }
+
     snapshot.entries = ResolveEntries(profile, snapshot.libraries);
     snapshot.enabled = EnabledAddons(EnabledAddonFolders(snapshot.entries));
     snapshot.conflicts = FindCopyConflicts(snapshot.entries, snapshot.libraries);
+    snapshot.startupEntries = startup_.Entries();
 
     return snapshot;
 }
@@ -191,7 +224,8 @@ std::vector<TakenPlace> ProfileService::PlacesTaken(const SimulatorProfile& prof
 std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfile& profile,
                                                             const LinksOnDisk& onDisk,
                                                             const std::vector<const TreeNode*>& nodes,
-                                                            const bool enable)
+                                                            const bool enable,
+                                                            const std::vector<StartupLine>& startupEntriesToTurnOff)
 {
     std::vector<Step> steps;
     std::set<std::string> planned;
@@ -219,7 +253,7 @@ std::vector<ProfileService::Step> ProfileService::PlanSteps(const SimulatorProfi
                 continue;
             }
 
-            const std::vector<Step> next = StepsFor(profile, linksByTarget, *addon, enable);
+            const std::vector<Step> next = StepsFor(profile, linksByTarget, *addon, enable, startupEntriesToTurnOff);
             steps.insert(steps.end(), next.begin(), next.end());
         }
     }
@@ -231,7 +265,8 @@ std::vector<ProfileService::Step>
 ProfileService::StepsFor(const SimulatorProfile& profile,
                          const std::multimap<std::string, const DestinationEntry*>& linksByTarget,
                          const TreeNode& addon,
-                         const bool enable)
+                         const bool enable,
+                         const std::vector<StartupLine>& startupEntriesToTurnOff)
 {
     const AddonId identity = IdentityOf(profile, addon.path);
 
@@ -253,19 +288,63 @@ ProfileService::StepsFor(const SimulatorProfile& profile,
                          .linkPath = entry->second->path});
     }
 
+    for (const StartupLine& line : EntriesCarriedBy(StartupReport{.lines = startupEntriesToTurnOff}, {addon.path}))
+    {
+        steps.push_back({.kind = OperationKind::TurnOffTheStartupEntry,
+                         .addonId = identity,
+                         .addonFolder = addon.path,
+                         .linkPath = line.path,
+                         .label = line.label});
+    }
+
     return steps;
+}
+
+namespace
+{
+    OperationKind TheOppositeOf(const OperationKind kind)
+    {
+        switch (kind)
+        {
+        case OperationKind::EnableAddon: return OperationKind::DisableAddon;
+        case OperationKind::TurnOffTheStartupEntry: return OperationKind::TurnOnTheStartupEntry;
+        case OperationKind::TurnOnTheStartupEntry: return OperationKind::TurnOffTheStartupEntry;
+        default: return OperationKind::EnableAddon;
+        }
+    }
 }
 
 ProfileService::Step ProfileService::Inverse(const Step& step)
 {
-    return {.kind = step.kind == OperationKind::EnableAddon ? OperationKind::DisableAddon : OperationKind::EnableAddon,
+    return {.kind = TheOppositeOf(step.kind),
             .addonId = step.addonId,
             .addonFolder = step.addonFolder,
-            .linkPath = step.linkPath};
+            .linkPath = step.linkPath,
+            .label = step.label};
+}
+
+LinkOperationResult ProfileService::RunTheStartupStep(const Step& step) const
+{
+    const bool turningOn = step.kind == OperationKind::TurnOnTheStartupEntry;
+    const FileResult result = startup_.Switch(step.linkPath, turningOn);
+
+    log_.RecordImport(step.kind, step.addonId, step.addonFolder, step.linkPath, result, OriginSource::Unknown,
+                      step.label);
+
+    return LinkOperationResult{.addonId = step.addonId,
+                               .addonFolder = step.addonFolder,
+                               .linkPath = step.linkPath,
+                               .kind = step.kind,
+                               .outcome = LinkOutcome::OfFile(result)};
 }
 
 LinkOperationResult ProfileService::Run(const Step& step) const
 {
+    if (step.kind == OperationKind::TurnOffTheStartupEntry || step.kind == OperationKind::TurnOnTheStartupEntry)
+    {
+        return RunTheStartupStep(step);
+    }
+
     const LinkOutcome outcome = CreatesALink(step.kind)
         ? linking_.Enable(Addon{.folderPath = step.addonFolder, .manifest = Manifest{}}, step.linkPath.parent_path(),
                           linkType_)
@@ -295,9 +374,19 @@ LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
     touched.insert(touched.end(), batch.toEnable.begin(), batch.toEnable.end());
     const std::size_t drifted = AddonsThatDrifted(touched, shown.enabled, onDisk.enabled);
 
-    std::vector<Step> steps = PlanSteps(profile, onDisk, batch.toDisable, false);
+    std::vector<Step> steps = PlanSteps(profile, onDisk, batch.toDisable, false, batch.startupEntriesToTurnOff);
     const std::vector<Step> enabling = PlanSteps(profile, onDisk, batch.toEnable, true);
     steps.insert(steps.end(), enabling.begin(), enabling.end());
+
+    for (const StartupSwitch& request : batch.startupSwitches)
+    {
+        steps.push_back(
+            {.kind = request.enable ? OperationKind::TurnOnTheStartupEntry : OperationKind::TurnOffTheStartupEntry,
+             .addonId = IdentityOf(profile, request.line.addonFolder),
+             .addonFolder = request.line.addonFolder,
+             .linkPath = request.line.path,
+             .label = request.line.label});
+    }
 
     return {.results = RunAsOneBatch(steps), .drifted = drifted};
 }

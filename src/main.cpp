@@ -7,6 +7,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
 
+#include "application/CoverageService.h"
 #include "application/DeletionService.h"
 #include "application/ImportService.h"
 #include "application/LegacyConfigImporter.h"
@@ -14,6 +15,7 @@
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/SceneryService.h"
 #include "application/SetupService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
@@ -30,8 +32,11 @@
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
+#include "infrastructure/scenery/BglSceneryParser.h"
+#include "infrastructure/scenery/JsonSceneryCache.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ContentXmlPackageList.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/StartupFileLocations.h"
@@ -54,10 +59,13 @@
 #include "view/PresetsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/setup/SetupWizard.h"
+#include "view/simulator/PackageListPage.h"
+#include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
+#include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
@@ -101,13 +109,46 @@ namespace
         return true;
     }
 
-    bool RunSetup(SettingsRepository& settings,
+    KeepTheProfile WriteItTo(SettingsRepository& repository, AppSettings& stored)
+    {
+        return [&repository, &stored](const SimulatorProfile& profile)
+        {
+            AppSettings next = stored;
+            AddProfile(next, profile);
+
+            if (!repository.Save(next))
+            {
+                return false;
+            }
+
+            stored = std::move(next);
+
+            return true;
+        };
+    }
+
+    KeepTheProfile AddItTo(Session& session)
+    {
+        return [&session](const SimulatorProfile& profile)
+        {
+            return session.Rewrite(
+                [&profile](AppSettings& settings)
+                {
+                    AddProfile(settings, profile);
+
+                    return true;
+                });
+        };
+    }
+
+    bool RunSetup(std::vector<SimulatorProfile> existing,
+                  KeepTheProfile keep,
                   const SimulatorLocator& locator,
                   const FilesystemProbe& filesystemProbe,
                   const LibraryIdGenerator& identities,
                   const CatalogScanner& catalog)
     {
-        SetupService service(locator, filesystemProbe, settings, identities, catalog);
+        SetupService service(locator, filesystemProbe, identities, catalog, std::move(existing), std::move(keep));
         SetupViewModel viewModel(service);
         viewModel.Detect();
 
@@ -160,8 +201,8 @@ int main(int argc, char* argv[])
     JsonSettingsRepository settings(SettingsFilePath());
     JsonlOperationJournal journal(JournalFilePath());
 
-    const std::optional<AppSettings> stored = settings.Load();
-    if (!stored.has_value())
+    const std::optional<AppSettings> loaded = settings.Load();
+    if (!loaded.has_value())
     {
         QMessageBox::critical(nullptr, QObject::tr("Unreadable configuration"),
                               QObject::tr("The configuration file exists but could not be read, so FS Organizer will "
@@ -171,10 +212,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    static_cast<void>(language.Use(QString::fromStdString(stored->language)));
+    AppSettings stored = *loaded;
 
-    const bool setupJustRan = stored->profiles.empty();
-    if (setupJustRan && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
+    static_cast<void>(language.Use(QString::fromStdString(stored.language)));
+
+    const bool setupJustRan = stored.profiles.empty();
+    if (setupJustRan
+        && !RunSetup(stored.profiles, WriteItTo(settings, stored), locator, filesystemProbe, identities, catalog))
     {
         return 0;
     }
@@ -183,11 +227,21 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
-    const AppSettings onDisk = settings.Load().value_or(AppSettings{});
-    const LinkType storedLinkType = onDisk.linkType;
+    const LinkType storedLinkType = stored.linkType;
+
+    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
+    ExeXmlStartupEntries startupEntries{{}};
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
+
+    const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
+    ContentXmlPackageList packageList{{}};
+    CoverageService coverageService(packageList, processProbe, stored.managePackageList);
+
+    const BglSceneryParser sceneryParser;
+    JsonSceneryCache sceneryCache(SceneryCacheFilePath());
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                  storedLinkType);
+                                  startupService, storedLinkType);
 
     ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
@@ -195,19 +249,22 @@ int main(int argc, char* argv[])
 
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, storedLinkType);
 
-    MainWindow window(onDisk);
+    MainWindow window(stored);
     QtBackgroundRunner runner;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, processProbe, runner, notifier);
+    Session session(profileService, organizer, settings, stored, processProbe, runner, notifier);
 
     SizeService sizes(catalog, filesystemProbe, clock, runner);
+    SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
+
+    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
 
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
 
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                           sizes);
-    DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
                      [&packages, &session]
@@ -216,7 +273,8 @@ int main(int argc, char* argv[])
                      });
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, model, notifier);
+    auto* page =
+        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, model, notifier);
 
     LongOperationProgress progress(importViewModel, &window);
 
@@ -233,25 +291,30 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, clock, runner);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
-    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
-    ExeXmlStartupEntries startupEntries(StartupFileOf(startupFiles, session.Profile().variant));
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, onDisk.manageStartupEntries);
-    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
+    auto* packageListPage = new PackageListPage(coverageViewModel);
+    auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
-                     [&session, &startupEntries, &startupFiles, &startupViewModel]
-                     {
-                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
-                         startupViewModel.Show();
-                     });
+    QObject::connect(
+        &notifier, &SessionNotifier::ScanFinished, startupPage,
+        [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists, &coverageViewModel]
+        {
+            startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+            startupViewModel.Show();
+            session.RefreshStartupEntries();
+
+            const std::optional<ChosenContentList> chosen = ChooseContentList(contentLists, session.Profile().variant);
+            packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+            coverageViewModel.Show();
+        });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
-    PresetService presetService(presetRepository, profileService);
-    PresetViewModel presetViewModel(session, presetService);
+    PresetService presetService(presetRepository, profileService, startupService);
+    PresetViewModel presetViewModel(session, presetService, profileService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
     GithubUpdateService updateService(
@@ -259,10 +322,9 @@ int main(int argc, char* argv[])
         QCoreApplication::applicationVersion(), GithubUpdateService::DefaultUpdatesFolder());
     updateService.DiscardStaged();
 
-    UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), onDisk.updateMode,
-                                    UpdatesAreOn());
+    UpdateViewModel updateViewModel(updateService, stored.updateMode, UpdatesAreOn());
 
-    OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
+    OptionsViewModel optionsViewModel(session, profileService, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
 
     const WindowsLegacyConfigSource legacyConfig(ProgramDataFolder());
@@ -271,7 +333,7 @@ int main(int argc, char* argv[])
 
     PageTab* libraryButton = window.AddPage(PageNames::kLibrary, page);
     PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);
-    window.AddPage(PageNames::kSimulator, startupPage);
+    window.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
@@ -318,6 +380,8 @@ int main(int argc, char* argv[])
                              static_cast<void>(updateService.LaunchApplyHelper(false));
                          }
                      });
+
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &treeViewModel, &AddonTreeViewModel::CancelScan);
 
     QTimer::singleShot(kFirstUpdateCheckDelayMs, &updateViewModel, &UpdateViewModel::CheckQuietly);
 
@@ -475,9 +539,10 @@ int main(int argc, char* argv[])
                          {
                              diagnosticsViewModel.Show();
                          }
-                         else if (selected == startupPage)
+                         else if (selected == simulatorPage)
                          {
                              startupViewModel.Show();
+                             coverageViewModel.Show();
                          }
                      });
 
@@ -490,8 +555,19 @@ int main(int argc, char* argv[])
                      });
     QObject::connect(diagnosticsPage, &DiagnosticsPage::RepairRequested, &window, &MainWindow::RepairRequested);
 
-    QObject::connect(startupPage, &StartupPage::SummaryChanged, &window, carryTheSummaryOf(startupPage));
+    QObject::connect(startupPage, &StartupPage::SummaryChanged, simulatorPage,
+                     [simulatorPage, startupPage](const QString& summary)
+                     {
+                         simulatorPage->CarrySummaryFrom(startupPage, summary);
+                     });
+    QObject::connect(packageListPage, &PackageListPage::SummaryChanged, simulatorPage,
+                     [simulatorPage, packageListPage](const QString& summary)
+                     {
+                         simulatorPage->CarrySummaryFrom(packageListPage, summary);
+                     });
+    QObject::connect(simulatorPage, &SimulatorPage::SummaryChanged, &window, carryTheSummaryOf(simulatorPage));
     QObject::connect(startupPage, &StartupPage::StatusChanged, &window, &MainWindow::ShowStatus);
+    QObject::connect(packageListPage, &PackageListPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
                      [&window](const AttentionBreakdown& breakdown)
@@ -536,26 +612,27 @@ int main(int argc, char* argv[])
                      });
     QObject::connect(&window, &MainWindow::ProfileChosen, &treeViewModel, &AddonTreeViewModel::ChooseProfile);
 
-    QObject::connect(&window, &MainWindow::AddProfileRequested, &window,
-                     [&]
-                     {
-                         if (RunSetup(settings, locator, filesystemProbe, identities, catalog))
-                         {
-                             window.ShowProfiles(settings.Load().value_or(AppSettings{}));
-                             treeViewModel.ShowActiveProfile();
-                         }
-                     });
+    QObject::connect(
+        &window, &MainWindow::AddProfileRequested, &window,
+        [&]
+        {
+            if (RunSetup(session.Settings().profiles, AddItTo(session), locator, filesystemProbe, identities, catalog))
+            {
+                window.ShowProfiles(session.Settings());
+                treeViewModel.ShowActiveProfile();
+            }
+        });
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
-                     [&window, &settings]
+                     [&window, &session]
                      {
-                         window.ShowProfiles(settings.Load().value_or(AppSettings{}));
+                         window.ShowProfiles(session.Settings());
                      });
 
     QObject::connect(&notifier, &SessionNotifier::SettingsCouldNotBeSaved, &window,
                      [&]
                      {
-                         window.ShowProfiles(settings.Load().value_or(AppSettings{}));
+                         window.ShowProfiles(session.Settings());
                          optionsPage->Reload();
 
                          QMessageBox::warning(

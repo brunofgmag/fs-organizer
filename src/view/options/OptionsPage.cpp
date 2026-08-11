@@ -276,11 +276,6 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
                                        "as active to switch a destination or a library."),
                                     libraryGroup);
     underTheLibraries->addWidget(onlyForTheProfileInUse_);
-    underTheLibraries->addWidget(
-        Quiet(tr("Unregistering takes the library out of the configuration and deletes no file at all. The links that "
-                 "pointed at it keep working in the simulator, but start showing up as third party links, which FS "
-                 "Organizer does not touch."),
-              libraryGroup));
     layout->addWidget(libraryGroup);
     layout->addStretch();
 
@@ -532,9 +527,9 @@ QWidget* OptionsPage::CreateLanguage()
     }
 
     layout->addLayout(choices);
-    layout->addWidget(Quiet(tr("The interface ships in English and in Brazilian Portuguese. Choosing a language "
-                               "writes the language key in settings.json and changes the interface right away."),
-                            pane));
+    layout->addWidget(
+        Quiet(tr("Choosing a language writes the language key in settings.json and changes the interface right away."),
+              pane));
     layout->addStretch();
 
     connect(languages_, &QButtonGroup::idClicked, this,
@@ -548,8 +543,7 @@ QWidget* OptionsPage::CreateLanguage()
 
 void OptionsPage::ReloadLanguage() const
 {
-    const QString inUse =
-        LanguageSwitch::Resolve(QString::fromStdString(viewModel_.Language().value_or(std::string{})));
+    const QString inUse = LanguageSwitch::Resolve(QString::fromStdString(viewModel_.Language()));
 
     int row = 0;
     for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())

@@ -6,8 +6,9 @@
 #include <QtGui/QPainter>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QFrame>
 #include <QtWidgets/QHBoxLayout>
-#include <QtWidgets/QRadioButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLabel>
@@ -23,11 +24,13 @@
 
 #include "view/delegates/RowDelegate.h"
 #include "view/TableColumns.h"
-#include "view/panels/ContextPanel.h"
 #include "view/panels/EmptyState.h"
+#include "view/presets/OmittedDialog.h"
+#include "view/presets/PresetPlanPanel.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
+#include "viewmodel/TagTone.h"
 
 namespace
 {
@@ -37,7 +40,8 @@ namespace
     constexpr int kNameColumn = 0;
     constexpr int kContentColumn = 1;
     constexpr int kUpdatedColumn = 2;
-    constexpr int kNameTableWidth = 380;
+    constexpr int kChangesColumn = 3;
+    constexpr int kNameTableWidth = 440;
 
     class CenteredCheckDelegate final : public QStyledItemDelegate
     {
@@ -104,23 +108,9 @@ namespace
         }
     };
 
-    QString CountsOf(const PresetPreview& preview)
+    QString TheWayBackIsCalled()
     {
-        QString counted = QObject::tr("Enables %1, disables %2. %3 already match what the preset asks, %4 were not "
-                                      "found, and %5 destination entries stay as they are.")
-                              .arg(preview.toEnable)
-                              .arg(preview.toDisable)
-                              .arg(preview.alreadyInPlace)
-                              .arg(preview.unresolved)
-                              .arg(preview.leftAlone);
-
-        if (preview.notNamedByThePreset > 0)
-        {
-            counted += QObject::tr(" Of the ones it disables, %1 entered the library after the preset was saved.")
-                           .arg(preview.notNamedByThePreset);
-        }
-
-        return counted;
+        return QObject::tr("Back to the previous set");
     }
 }
 
@@ -129,11 +119,28 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
 {
     names_ = CreateNameTable();
 
+    return_ = CreateReturnTable();
+
+    returnRule_ = new QFrame(this);
+    returnRule_->setObjectName(QStringLiteral("TriageSeparator"));
+    returnRule_->setFixedHeight(1);
+
+    auto* leftColumn = new QWidget(this);
+    auto* leftLayout = new QVBoxLayout(leftColumn);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->setSpacing(0);
+    leftLayout->addWidget(names_, 1);
+    leftLayout->addWidget(returnRule_);
+    leftLayout->addWidget(return_);
+    leftColumn->setFixedWidth(kNameTableWidth);
+
     create_ = new QPushButton(this);
     create_->setProperty("role", "primary");
     update_ = new QPushButton(this);
     rename_ = new QPushButton(this);
     remove_ = new QPushButton(this);
+    goBack_ = new QPushButton(this);
+    goBack_->setObjectName(QStringLiteral("PresetGoBack"));
 
     auto* toolbar = new QWidget(this);
     toolbar->setObjectName(QStringLiteral("PageToolbar"));
@@ -150,6 +157,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     bar->addWidget(update_);
     bar->addWidget(rename_);
     bar->addWidget(remove_);
+    bar->addWidget(goBack_);
     bar->addStretch();
     bar->addWidget(filter_);
 
@@ -166,58 +174,25 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     entries_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(entries_->horizontalHeader());
 
-    auto* panel = new ContextPanel({}, 440, this);
-    panel->setObjectName(QStringLiteral("PresetApplyPanel"));
-    panel_ = panel;
+    startupEntries_ = new QTableWidget(this);
+    startupEntries_->setObjectName(QStringLiteral("PresetStartupEntries"));
+    startupEntries_->setColumnCount(3);
+    startupEntries_->setSelectionBehavior(QAbstractItemView::SelectRows);
+    startupEntries_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    startupEntries_->setItemDelegate(new RowDelegate(startupEntries_));
+    startupEntries_->setItemDelegateForColumn(kActionColumn, new CenteredCheckDelegate(startupEntries_));
+    startupEntries_->setShowGrid(false);
+    LetTheColumnsBeDraggedAndStillFillTheTable(startupEntries_, kLibraryColumn);
+    startupEntries_->verticalHeader()->setVisible(false);
+    DressTheHeaderOf(startupEntries_->horizontalHeader());
 
-    applyAs_ = new QLabel(panel);
-    applyAs_->setObjectName(QStringLiteral("PanelSubHeading"));
-
-    modes_ = new QButtonGroup(panel);
-    auto* replace = new QRadioButton(panel);
-    replace->setObjectName(QStringLiteral("ModeReplace"));
-    auto* cumulative = new QRadioButton(panel);
-    cumulative->setObjectName(QStringLiteral("ModeCumulative"));
-    auto* disable = new QRadioButton(panel);
-    disable->setObjectName(QStringLiteral("ModeDisable"));
-    modes_->addButton(replace, static_cast<int>(ApplyMode::Replace));
-    modes_->addButton(cumulative, static_cast<int>(ApplyMode::Cumulative));
-    modes_->addButton(disable, static_cast<int>(ApplyMode::Disable));
-    replace->setChecked(true);
-
-    modeExplained_ = new QLabel(panel);
-    modeExplained_->setObjectName(QStringLiteral("ModeExplained"));
-    modeExplained_->setWordWrap(true);
-
-    preview_ = new QLabel(panel);
-    preview_->setWordWrap(true);
-
-    promise_ = new QLabel(panel);
-    promise_->setObjectName(QStringLiteral("PanelPromise"));
-    promise_->setWordWrap(true);
-
-    apply_ = new QPushButton(panel);
-    apply_->setObjectName(QStringLiteral("PresetApply"));
-    apply_->setProperty("role", "primary");
-    apply_->setDefault(true);
-
-    panel->Add(applyAs_);
-    panel->Add(replace);
-    panel->Add(cumulative);
-    panel->Add(disable);
-    panel->Add(modeExplained_);
-    panel->Add(preview_);
-    panel->Add(apply_);
-    panel->Add(promise_);
-
-    panel->RestoreCollapsedState();
+    planPanel_ = new PresetPlanPanel(this);
 
     auto* tables = new QHBoxLayout;
     tables->setContentsMargins(0, 0, 0, 0);
     tables->setSpacing(0);
-    tables->addWidget(names_);
-    tables->addWidget(entries_, 1);
-    tables->addWidget(panel);
+    tables->addWidget(leftColumn);
+    tables->addWidget(CreateTheTwoHalves(), 1);
 
     auto* kept = new QWidget(this);
     auto* keptLayout = new QVBoxLayout(kept);
@@ -242,7 +217,10 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(update_, &QPushButton::clicked, this, &PresetsPage::UpdateFromWhatIsEnabled);
     connect(rename_, &QPushButton::clicked, this, &PresetsPage::RenameSelected);
     connect(remove_, &QPushButton::clicked, this, &PresetsPage::RemoveSelected);
-    connect(apply_, &QPushButton::clicked, this, &PresetsPage::ApplySelected);
+    connect(goBack_, &QPushButton::clicked, this, &PresetsPage::GoBack);
+    connect(planPanel_, &PresetPlanPanel::ApplyRequested, this, &PresetsPage::ApplySelected);
+    connect(planPanel_, &PresetPlanPanel::OmittedRequested, this, &PresetsPage::ListTheOmitted);
+    connect(planPanel_, &PresetPlanPanel::ModeChanged, this, &PresetsPage::ReloadNames);
     connect(names_, &QTableWidget::currentCellChanged, this,
             [this](const int row, int, const int previous, int)
             {
@@ -251,18 +229,21 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
                     ShowSelected();
                 }
             });
-    connect(modes_, &QButtonGroup::idClicked, this,
-            [this]
+    connect(return_, &QTableWidget::currentCellChanged, this,
+            [this](const int row, int, const int previous, int)
             {
-                RefreshPreview();
+                if (row >= 0 && row != previous)
+                {
+                    ShowTheReturnPreset();
+                }
             });
-
     connect(filter_, &QLineEdit::textChanged, this, &PresetsPage::ShowOnlyTheNamesThatMatch);
 
     connect(entries_, &QTableWidget::itemChanged, this, &PresetsPage::ActionToggled);
+    connect(startupEntries_, &QTableWidget::itemChanged, this, &PresetsPage::StartupActionToggled);
 
     connect(&viewModel_, &PresetViewModel::Changed, this, &PresetsPage::ReloadNames);
-    connect(&notifier, &SessionNotifier::Refreshed, this, &PresetsPage::RefreshPreview);
+    connect(&notifier, &SessionNotifier::Refreshed, this, &PresetsPage::ReloadNames);
     connect(&notifier, &SessionNotifier::ScanFinished, this, &PresetsPage::ReloadNames);
     connect(&viewModel_, &PresetViewModel::Refused, this,
             [this](const QString& explanation)
@@ -278,13 +259,25 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
                 }
             });
     connect(&viewModel_, &PresetViewModel::Applied, this,
-            [this](const QStringList& unresolved)
+            [this](const QStringList& unresolved, const QString& startupLeftUndone)
             {
+                QStringList said;
+
                 if (!unresolved.isEmpty())
                 {
-                    QMessageBox::warning(this, tr("Entries not found"),
-                                         tr("These addons of the preset are no longer in the library:\n\n%1")
-                                             .arg(unresolved.join(QStringLiteral("\n"))));
+                    said.append(tr("These addons of the preset are no longer in the library:\n\n%1")
+                                    .arg(unresolved.join(QStringLiteral("\n"))));
+                }
+
+                if (!startupLeftUndone.isEmpty())
+                {
+                    said.append(startupLeftUndone);
+                }
+
+                if (!said.isEmpty())
+                {
+                    QMessageBox::warning(this, tr("Not everything the preset asked for happened"),
+                                         said.join(QStringLiteral("\n\n")));
                 }
             });
 
@@ -311,13 +304,15 @@ void PresetsPage::RetranslateUi()
     remove_->setText(tr("Delete"));
     filter_->setPlaceholderText(tr("Filter presets"));
     entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Library"), tr("Enables")});
-    names_->setHorizontalHeaderLabels({tr("Preset"), tr("Content"), tr("Changed")});
-    applyAs_->setText(tr("Apply as"));
-    panel_->RenameTheFallback(tr("Apply as"));
-    modes_->button(static_cast<int>(ApplyMode::Replace))->setText(tr("Replace"));
-    modes_->button(static_cast<int>(ApplyMode::Cumulative))->setText(tr("Accumulate"));
-    modes_->button(static_cast<int>(ApplyMode::Disable))->setText(tr("Disable"));
-    promise_->setText(tr("Applying is a single batch: \"Undo the last batch\" takes it all back at once."));
+    startupEntries_->setHorizontalHeaderLabels({tr("Entry"), tr("Target"), tr("Enables")});
+    names_->setHorizontalHeaderLabels({tr("Preset"), tr("Content"), tr("Changed"), tr("Would change")});
+    plan_->setText(tr("Plan"));
+    startup_->setText(tr("Startup"));
+    governsStartup_->setText(tr("This preset also governs startup entries"));
+    updateStartup_->setText(tr("Update with the enabled ones"));
+    startupEmpty_->setText(tr("Check the box above to have this preset also manage the simulator's startup entries. "
+                              "Checking it captures the entries enabled right now. You can then turn each on or off "
+                              "here."));
     nothing_->Retell(tr("No preset in this profile yet."),
                      tr("A preset keeps which addons stay enabled. Enable what you want to fly and keep that "
                         "combination under a name. Applying it later is a single batch, with a whole undo."));
@@ -328,8 +323,7 @@ QTableWidget* PresetsPage::CreateNameTable()
 {
     auto* table = new QTableWidget(this);
     table->setObjectName(QStringLiteral("PresetNames"));
-    table->setFixedWidth(kNameTableWidth);
-    table->setColumnCount(3);
+    table->setColumnCount(4);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -342,7 +336,119 @@ QTableWidget* PresetsPage::CreateNameTable()
     return table;
 }
 
-void PresetsPage::ShowOnlyTheNamesThatMatch() const
+QTableWidget* PresetsPage::CreateReturnTable()
+{
+    auto* table = new QTableWidget(this);
+    table->setObjectName(QStringLiteral("PresetReturn"));
+    table->setColumnCount(4);
+    table->setRowCount(1);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setItemDelegate(new RowDelegate(table));
+    table->setShowGrid(false);
+    table->verticalHeader()->setVisible(false);
+    table->horizontalHeader()->setVisible(false);
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->setFrameShape(QFrame::NoFrame);
+    table->hide();
+    LetTheColumnsBeDraggedAndStillFillTheTable(table, kNameColumn);
+
+    return table;
+}
+
+QWidget* PresetsPage::CreateTheTwoHalves()
+{
+    auto* right = new QWidget(this);
+
+    content_ = new QPushButton(right);
+    content_->setObjectName(QStringLiteral("PresetContentTab"));
+    content_->setCheckable(true);
+    content_->setChecked(true);
+    startup_ = new QPushButton(right);
+    startup_->setObjectName(QStringLiteral("PresetStartupTab"));
+    startup_->setCheckable(true);
+    plan_ = new QPushButton(right);
+    plan_->setObjectName(QStringLiteral("PresetPlanTab"));
+    plan_->setCheckable(true);
+
+    auto* halves = new QButtonGroup(right);
+    halves->addButton(content_, 0);
+    halves->addButton(plan_, 1);
+    halves->addButton(startup_, 2);
+
+    auto* strip = new QWidget(right);
+    strip->setObjectName(QStringLiteral("PresetHalves"));
+
+    auto* stripRow = new QHBoxLayout(strip);
+    stripRow->setContentsMargins(0, 0, 0, 0);
+    stripRow->setSpacing(0);
+    stripRow->addWidget(content_);
+    stripRow->addWidget(startup_);
+    stripRow->addWidget(plan_);
+    stripRow->addStretch();
+
+    auto* shown = new QStackedWidget(right);
+    shown->addWidget(entries_);
+    shown->addWidget(planPanel_);
+    shown->addWidget(CreateTheStartupTab());
+
+    auto* column = new QVBoxLayout(right);
+    column->setContentsMargins(0, 0, 0, 0);
+    column->setSpacing(0);
+    column->addWidget(strip);
+    column->addWidget(shown, 1);
+
+    connect(halves, &QButtonGroup::idClicked, shown, &QStackedWidget::setCurrentIndex);
+
+    return right;
+}
+
+QWidget* PresetsPage::CreateTheStartupTab()
+{
+    auto* tab = new QWidget(this);
+
+    governsStartup_ = new QCheckBox(tab);
+    governsStartup_->setObjectName(QStringLiteral("PresetGovernsStartup"));
+
+    startupEmpty_ = new QLabel(tab);
+    startupEmpty_->setObjectName(QStringLiteral("PanelPromise"));
+    startupEmpty_->setWordWrap(true);
+    startupEmpty_->setAlignment(Qt::AlignTop);
+
+    updateStartup_ = new QPushButton(tab);
+    updateStartup_->setObjectName(QStringLiteral("PresetUpdateStartup"));
+
+    auto* live = new QWidget(tab);
+    auto* liveColumn = new QVBoxLayout(live);
+    liveColumn->setContentsMargins(0, 0, 0, 0);
+    liveColumn->setSpacing(8);
+    liveColumn->addWidget(startupEntries_, 1);
+
+    auto* updateRow = new QHBoxLayout;
+    updateRow->setContentsMargins(0, 0, 0, 0);
+    updateRow->addWidget(updateStartup_);
+    updateRow->addStretch();
+    liveColumn->addLayout(updateRow);
+
+    startupBody_ = new QStackedWidget(tab);
+    startupBody_->addWidget(startupEmpty_);
+    startupBody_->addWidget(live);
+
+    auto* column = new QVBoxLayout(tab);
+    column->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+    column->setSpacing(12);
+    column->addWidget(governsStartup_);
+    column->addWidget(startupBody_, 1);
+
+    connect(governsStartup_, &QCheckBox::clicked, this, &PresetsPage::GovernStartupToggled);
+    connect(updateStartup_, &QPushButton::clicked, this, &PresetsPage::RecaptureStartup);
+
+    return tab;
+}
+
+int PresetsPage::HideTheNamesThatDoNotMatch() const
 {
     const QString wanted = filter_->text().trimmed();
     int firstStanding = -1;
@@ -358,6 +464,18 @@ void PresetsPage::ShowOnlyTheNamesThatMatch() const
         {
             firstStanding = row;
         }
+    }
+
+    return firstStanding;
+}
+
+void PresetsPage::ShowOnlyTheNamesThatMatch() const
+{
+    const int firstStanding = HideTheNamesThatDoNotMatch();
+
+    if (showingReturn_)
+    {
+        return;
     }
 
     if (names_->currentRow() >= 0 && !names_->isRowHidden(names_->currentRow()))
@@ -383,13 +501,30 @@ QString PresetsPage::SelectedName() const
 
 ApplyMode PresetsPage::Mode() const
 {
-    return static_cast<ApplyMode>(modes_->checkedId());
+    return planPanel_->Mode();
+}
+
+namespace
+{
+    QTableWidgetItem* ChangeCell(const PresetRow& row)
+    {
+        auto* item = new QTableWidgetItem(QObject::tr("%n change", nullptr, static_cast<int>(row.changes)));
+        item->setData(QuietRole, row.changes == 0);
+
+        if (row.satisfied)
+        {
+            item->setData(TagTextRole, QObject::tr("Satisfied"));
+            item->setData(TagToneRole, static_cast<int>(TagTone::Muted));
+        }
+
+        return item;
+    }
 }
 
 void PresetsPage::ReloadNames()
 {
     const QString wanted = SelectedName();
-    const QList<PresetRow> rows = viewModel_.Rows();
+    const QList<PresetRow> rows = viewModel_.Rows(Mode());
 
     populating_ = true;
     names_->clearContents();
@@ -402,6 +537,7 @@ void PresetsPage::ReloadNames()
         names_->setItem(row, kNameColumn, new QTableWidgetItem(rows[row].name));
         names_->setItem(row, kContentColumn, new QTableWidgetItem(rows[row].content));
         names_->setItem(row, kUpdatedColumn, new QTableWidgetItem(rows[row].updated));
+        names_->setItem(row, kChangesColumn, ChangeCell(rows[row]));
 
         names_->item(row, kContentColumn)->setData(QuietRole, true);
         names_->item(row, kUpdatedColumn)->setData(QuietRole, true);
@@ -412,7 +548,11 @@ void PresetsPage::ReloadNames()
         }
     }
 
-    names_->setCurrentCell(landOn, kNameColumn);
+    if (!showingReturn_)
+    {
+        names_->setCurrentCell(landOn, kNameColumn);
+    }
+
     populating_ = false;
 
     ShowOnlyTheNamesThatMatch();
@@ -422,7 +562,51 @@ void PresetsPage::ReloadNames()
     emit SummaryChanged(rows.isEmpty() ? tr("No preset in this profile yet.")
                                        : tr("%n preset in this profile.", nullptr, static_cast<int>(rows.size())));
 
+    ShowTheWayBack();
+
+    if (showingReturn_)
+    {
+        ShowTheReturnPreset();
+        return;
+    }
+
     ShowSelected();
+}
+
+void PresetsPage::ShowTheWayBack()
+{
+    const std::optional<PresetRow> back = viewModel_.ReturnRow(Mode());
+    const bool undoable = viewModel_.CanUndo();
+
+    populating_ = true;
+    return_->setVisible(back.has_value());
+    returnRule_->setVisible(back.has_value());
+
+    if (back.has_value())
+    {
+        return_->setItem(0, kNameColumn, new QTableWidgetItem(TheWayBackIsCalled()));
+        return_->setItem(0, kContentColumn, new QTableWidgetItem(back->content));
+        return_->setItem(0, kUpdatedColumn, new QTableWidgetItem);
+        return_->setItem(0, kChangesColumn, ChangeCell(*back));
+        return_->item(0, kContentColumn)->setData(QuietRole, true);
+        return_->resizeRowsToContents();
+        return_->setFixedHeight(return_->rowHeight(0) + 2);
+    }
+
+    populating_ = false;
+
+    goBack_->setEnabled(undoable || back.has_value());
+    goBack_->setText(TheWayBackIsCalled());
+    goBack_->setToolTip(undoable ? tr("Undoes the batch you just applied.")
+                                 : tr("Applies the return preset, written down before the last application."));
+}
+
+void PresetsPage::LetGoOf(QTableWidget* table)
+{
+    const bool was = populating_;
+    populating_ = true;
+    table->setCurrentItem(nullptr);
+    populating_ = was;
 }
 
 void PresetsPage::ShowSelected()
@@ -432,6 +616,9 @@ void PresetsPage::ShowSelected()
         return;
     }
 
+    showingReturn_ = false;
+    LetGoOf(return_);
+
     const QString name = SelectedName();
     selected_ = name.isEmpty() ? std::nullopt : viewModel_.Load(name);
 
@@ -439,18 +626,41 @@ void PresetsPage::ShowSelected()
     update_->setEnabled(holdsOne);
     rename_->setEnabled(holdsOne);
     remove_->setEnabled(holdsOne);
-    apply_->setEnabled(holdsOne);
-    panel_->Summon(holdsOne);
-    panel_->ShowTitle(name);
 
     ShowEntries();
 
     RefreshPreview();
+
+    ShowStartupTab();
+}
+
+void PresetsPage::ShowTheReturnPreset()
+{
+    if (populating_)
+    {
+        return;
+    }
+
+    showingReturn_ = true;
+    LetGoOf(names_);
+    selected_ = viewModel_.ReturnPreset();
+
+    update_->setEnabled(false);
+    rename_->setEnabled(false);
+    remove_->setEnabled(false);
+
+    ShowEntries();
+
+    RefreshPreview();
+
+    ShowStartupTab();
 }
 
 void PresetsPage::ShowEntries()
 {
     const int rows = selected_.has_value() ? static_cast<int>(selected_->entries.size()) : 0;
+
+    content_->setText(tr("Content · %1").arg(rows));
 
     populating_ = true;
     entries_->setRowCount(rows);
@@ -463,10 +673,47 @@ void PresetsPage::ShowEntries()
         entries_->item(row, kLibraryColumn)->setData(QuietRole, true);
 
         auto* action = new QTableWidgetItem;
-        action->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+        action->setFlags(showingReturn_ ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
+                                        : Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
         action->setCheckState(entry.action == PresetAction::Disable ? Qt::Unchecked : Qt::Checked);
 
         entries_->setItem(row, kActionColumn, action);
+    }
+
+    populating_ = false;
+}
+
+void PresetsPage::ShowStartupTab()
+{
+    const bool holdsOne = selected_.has_value();
+    const bool governs = holdsOne && selected_->governsStartup;
+    const std::size_t stored = holdsOne ? selected_->startupEntries.size() : 0;
+
+    populating_ = true;
+
+    startup_->setText(tr("Startup · %1").arg(stored));
+    governsStartup_->setEnabled(holdsOne && !showingReturn_);
+    governsStartup_->setChecked(governs);
+    updateStartup_->setEnabled(!showingReturn_);
+    startupBody_->setCurrentIndex(governs ? 1 : 0);
+
+    const QList<PresetStartupRow> rows = governs ? viewModel_.StartupRows(*selected_) : QList<PresetStartupRow>{};
+
+    startupEntries_->setRowCount(static_cast<int>(rows.size()));
+
+    for (int row = 0; row < rows.size(); ++row)
+    {
+        const PresetStartupRow& entry = rows[row];
+        startupEntries_->setItem(row, kAddonColumn, new QTableWidgetItem(entry.label));
+        startupEntries_->setItem(row, kLibraryColumn, new QTableWidgetItem(entry.target));
+        startupEntries_->item(row, kLibraryColumn)->setData(QuietRole, true);
+
+        auto* action = new QTableWidgetItem;
+        action->setFlags(showingReturn_ ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
+                                        : Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+        action->setCheckState(entry.action == PresetAction::Disable ? Qt::Unchecked : Qt::Checked);
+
+        startupEntries_->setItem(row, kActionColumn, action);
     }
 
     populating_ = false;
@@ -499,28 +746,51 @@ void PresetsPage::ActionToggled(const QTableWidgetItem* item)
     RefreshPreview();
 }
 
-void PresetsPage::RefreshPreview() const
+void PresetsPage::StartupActionToggled(const QTableWidgetItem* item)
 {
-    switch (Mode())
+    if (populating_ || item->column() != kActionColumn || !selected_.has_value())
     {
-    case ApplyMode::Replace: modeExplained_->setText(tr("Leaves only what the preset enables.")); break;
-    case ApplyMode::Cumulative:
-        modeExplained_->setText(tr("Enables what the preset names, without touching the rest."));
-        break;
-    case ApplyMode::Disable: modeExplained_->setText(tr("Disables what the preset enables.")); break;
-    }
-
-    if (!selected_.has_value())
-    {
-        preview_->clear();
-        apply_->setText(tr("Apply"));
         return;
     }
 
-    const PresetPreview preview = viewModel_.Preview(*selected_, Mode());
+    const auto row = static_cast<std::size_t>(item->row());
 
-    preview_->setText(CountsOf(preview));
-    apply_->setText(tr("Apply: enables %1, disables %2").arg(preview.toEnable).arg(preview.toDisable));
+    if (row >= selected_->startupEntries.size())
+    {
+        return;
+    }
+
+    const PresetAction wanted = item->checkState() == Qt::Checked ? PresetAction::Enable : PresetAction::Disable;
+
+    if (!viewModel_.SetStartupAction(SelectedName(), row, selected_->startupEntries[row].path, wanted))
+    {
+        QMetaObject::invokeMethod(this, &PresetsPage::ReloadNames, Qt::QueuedConnection);
+        return;
+    }
+
+    selected_->startupEntries[row].action = wanted;
+
+    RefreshPreview();
+}
+
+void PresetsPage::RecaptureStartup()
+{
+    const QString name = SelectedName();
+
+    if (!name.isEmpty())
+    {
+        viewModel_.RecaptureStartup(name);
+    }
+}
+
+void PresetsPage::RefreshPreview() const
+{
+    const QString planFor = showingReturn_ ? TheWayBackIsCalled() : SelectedName();
+    const bool holdsOne = selected_.has_value();
+    const bool governsStartup = holdsOne && selected_->governsStartup;
+    const PresetPreview preview = holdsOne ? viewModel_.Preview(*selected_, planPanel_->Mode()) : PresetPreview{};
+
+    planPanel_->Show({.planFor = planFor, .preview = preview, .holdsOne = holdsOne, .governsStartup = governsStartup});
 }
 
 void PresetsPage::CreateFromWhatIsEnabled()
@@ -581,6 +851,48 @@ void PresetsPage::RemoveSelected()
     }
 }
 
+void PresetsPage::GovernStartupToggled(const bool governs)
+{
+    const QString name = SelectedName();
+
+    if (name.isEmpty() || !viewModel_.GovernStartup(name, governs))
+    {
+        RefreshPreview();
+        ShowStartupTab();
+        return;
+    }
+
+    selected_ = viewModel_.Load(name);
+
+    RefreshPreview();
+    ShowStartupTab();
+}
+
+void PresetsPage::ListTheOmitted()
+{
+    if (!selected_.has_value())
+    {
+        return;
+    }
+
+    OmittedDialog dialog(viewModel_.Omitted(*selected_, Mode()), this);
+    dialog.exec();
+}
+
+void PresetsPage::GoBack()
+{
+    if (viewModel_.CanUndo())
+    {
+        viewModel_.UndoLastBatch();
+        return;
+    }
+
+    if (const std::optional<Preset> back = viewModel_.ReturnPreset(); back.has_value())
+    {
+        viewModel_.ApplyReturn(*back);
+    }
+}
+
 void PresetsPage::ApplySelected()
 {
     if (!selected_.has_value())
@@ -593,9 +905,9 @@ void PresetsPage::ApplySelected()
     if (mode == ApplyMode::Replace)
     {
         const PresetPreview preview = viewModel_.Preview(*selected_, mode);
-        const QMessageBox::StandardButton answer =
-            QMessageBox::question(this, tr("Replace what is enabled"),
-                                  tr("%1\n\nApply the preset \"%2\"?").arg(CountsOf(preview), selected_->name.c_str()));
+        const QString label = showingReturn_ ? TheWayBackIsCalled() : SelectedName();
+        const QMessageBox::StandardButton answer = QMessageBox::question(
+            this, tr("Replace what is enabled"), tr("%1\n\nApply \"%2\"?").arg(CountsSentenceFor(preview), label));
 
         if (answer != QMessageBox::Yes)
         {

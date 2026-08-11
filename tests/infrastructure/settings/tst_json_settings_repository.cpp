@@ -32,6 +32,8 @@ namespace
         static void AFreshProfileIsWrittenWithTheStartupEntriesManaged();
         static void TurningTheStartupEntriesLooseSurvivesTheRoundTrip();
         static void AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries();
+        static void AFreshProfileIsWrittenWithThePackageListLeftAlone();
+        static void TheAirportsTheUserSaidCanCoexistSurviveTheRoundTrip();
     };
 }
 
@@ -322,6 +324,49 @@ void JsonSettingsRepositoryTest::AFileWrittenBeforeTheStartupKeyExistedStillMana
     QVERIFY(read.has_value());
     QCOMPARE(read->verifyWithHash, true);
     QCOMPARE(read->manageStartupEntries, true);
+    QVERIFY2(!read->managePackageList,
+             "this one is born off, and a file written before the key existed adopts the default instead of being "
+             "refused");
+    QVERIFY(read->coexistingAirports.empty());
+}
+
+void JsonSettingsRepositoryTest::AFreshProfileIsWrittenWithThePackageListLeftAlone()
+{
+    const Storage storage;
+
+    SimulatorProfile profile;
+    profile.id = "msfs2024";
+
+    AppSettings written;
+    written.profiles = {profile};
+    written.activeProfileId = "msfs2024";
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QVERIFY2(!read.managePackageList,
+             "unlike the startup file, this one prevents no defect and writes into the file the simulator wipes when "
+             "it dislikes the XML");
+    QCOMPARE(read.manageStartupEntries, true);
+}
+
+void JsonSettingsRepositoryTest::TheAirportsTheUserSaidCanCoexistSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.managePackageList = true;
+    written.coexistingAirports = {{.one = {.libraryId = "library-1", .folderName = "one-eham"},
+                                   .other = {.libraryId = "library-1", .folderName = "another-eham"}}};
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QVERIFY(read.managePackageList);
+    QCOMPARE(read.coexistingAirports.size(), std::size_t{1});
+    QVERIFY2(read.coexistingAirports.front().one == written.coexistingAirports.front().one,
+             "the key is the pair of addon identities, which survives renaming a category and moving an addon");
+    QVERIFY(read.coexistingAirports.front().other == written.coexistingAirports.front().other);
 }
 
 QTEST_APPLESS_MAIN(JsonSettingsRepositoryTest)

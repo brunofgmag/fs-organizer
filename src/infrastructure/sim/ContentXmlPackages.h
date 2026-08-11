@@ -15,7 +15,9 @@
 class ContentXmlPackages final : public SimulatorPackages
 {
 public:
-    ContentXmlPackages(const FilesystemProbe& filesystemProbe, const std::filesystem::path& listPath);
+    ContentXmlPackages(const FilesystemProbe& filesystemProbe, std::filesystem::path listPath);
+
+    void ReadAgain(std::filesystem::path listPath);
 
     [[nodiscard]] PackagePresence PresenceOf(std::string_view packageName) const override;
 
@@ -23,11 +25,11 @@ public:
 
     [[nodiscard]] std::string ListAccountFolder() const override;
 
-    [[nodiscard]] std::size_t HowManyEntries() const;
-
-    [[nodiscard]] std::size_t HowManyPackages() const;
-
 private:
+    void Forget(std::filesystem::path listPath);
+
+    const FilesystemProbe& filesystemProbe_;
+    std::filesystem::path listPath_;
     std::set<std::string, std::less<>> names_;
     std::optional<std::chrono::system_clock::time_point> takenAt_;
     std::size_t entries_ = 0;

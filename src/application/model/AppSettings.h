@@ -2,11 +2,13 @@
 #define FS_ORGANIZER_APPLICATION_MODEL_APP_SETTINGS_H
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "application/model/UpdateMode.h"
 #include "domain/model/LinkType.h"
 #include "domain/model/SimulatorProfile.h"
+#include "domain/scenery/AirportCoverage.h"
 
 struct AppSettings
 {
@@ -15,8 +17,16 @@ struct AppSettings
     LinkType linkType = LinkType::Junction;
     bool verifyWithHash = false;
     bool manageStartupEntries = true;
+    bool managePackageList = false;
     UpdateMode updateMode = UpdateMode::Notify;
     std::string language;
+    std::vector<CoexistingPair> coexistingAirports;
 };
+
+inline void AddProfile(AppSettings& settings, SimulatorProfile profile)
+{
+    settings.activeProfileId = profile.id;
+    settings.profiles.push_back(std::move(profile));
+}
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_APP_SETTINGS_H

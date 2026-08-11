@@ -19,6 +19,7 @@
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/RecordingSessionObserver.h"
@@ -80,6 +81,18 @@ namespace
         return installation;
     }
 
+    SimulatorProfile Profile()
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2024";
+        profile.variant = SimulatorVariant::MSFS2024;
+        profile.destinations = {kCommunity};
+        profile.defaultDestination = kCommunity;
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
+
+        return profile;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -90,16 +103,6 @@ namespace
             fileSystem.AddDirectory(kOtherLibrary);
             catalog.SetTree(kLibrary, LibraryTree());
             catalog.SetTree(kOtherLibrary, TreeNode{});
-
-            SimulatorProfile profile;
-            profile.id = "msfs2024";
-            profile.variant = SimulatorVariant::MSFS2024;
-            profile.destinations = {kCommunity};
-            profile.defaultDestination = kCommunity;
-            profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
-
-            settings.stored.profiles = {profile};
-            settings.stored.activeProfileId = "msfs2024";
 
             session.ShowActiveProfile();
         }
@@ -117,18 +120,20 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         RecordingSessionObserver observer;
-        Session session{service, organizer, settings, processProbe, runner, observer};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, observer};
         FakeLegacyConfigSource legacy;
         LegacyConfigImporter importer{legacy, filesystemProbe};
         FakePresetRepository presetRepository;
-        PresetService presets{presetRepository, service};
+        PresetService presets{presetRepository, service, startup.service};
         LegacyImportViewModel viewModel{session, importer, presets};
     };
 

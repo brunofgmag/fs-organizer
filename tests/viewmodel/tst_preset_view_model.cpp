@@ -2,6 +2,7 @@
 
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
+#include "domain/support/PathSegment.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -13,6 +14,7 @@
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
@@ -29,6 +31,7 @@ namespace
     private slots:
         static void ABlankNameIsRefusedBeforeAnythingIsWritten();
         static void ANameThatCannotBecomeAFileNameIsRefused();
+        static void ANameLongerThanAFolderNameIsRefusedForItsLengthAndNotItsCharacters();
         static void ANameAlreadyTakenIsRefused();
         static void CreatingCapturesTheEnabledSetAndListsThePreset();
         static void ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked();
@@ -38,6 +41,20 @@ namespace
         static void AWriteTheStoreRefusesIsExplainedInsteadOfPassingInSilence();
         static void ARowCarriesTheContentAndTheDayThePresetWasWritten();
         static void ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInventingOne();
+        static void ARowSaysWhetherThePresetIsSatisfiedAndHowMuchItWouldChange();
+        static void TheChangeCountFollowsTheModeTheScreenIsShowing();
+        static void TheReturnPresetHasItsOwnRowAndIsNotAmongThePresetsOfTheUser();
+        static void TheOmittedAddonsAreNamedWithTheirCategory();
+        static void NothingIsOmittedOutsideReplace();
+        static void AnApplicationTheReturnPresetRefusesIsExplainedAndChangesNothing();
+        static void TheUndoOfThisScreenIsTheSameBatchUndoTheLibraryOffers();
+        static void WithStartupManagementOffThePreviewCountsWhatWillNotBeApplied();
+        static void TurningOnTheStartupFlagOfAPresetIsStored();
+        static void ApplyingSaysWhatTheStartupHalfLeftUndoneInsteadOfPassingInSilence();
+        static void ASatisfiedPresetStillCountsWhatDisableWouldChange();
+        static void GoingBackDoesNotOverwriteTheReturnPreset();
+        static void AGoverningPresetRowIsNotSatisfiedWhenTheStartupFileDisagrees();
+        static void TheStartupRowsCarryTheLabelFromTheFileAndSettingAnActionIsStored();
     };
 }
 
@@ -99,9 +116,6 @@ namespace
             fileSystem.AddDirectory(kOtherAddon);
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = kProfileId;
-
             session.ShowActiveProfile();
         }
 
@@ -123,17 +137,19 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakePresetRepository repository;
-        PresetService presets{repository, service};
-        PresetViewModel viewModel{session, presets};
+        PresetService presets{repository, service, startup.service};
+        PresetViewModel viewModel{session, presets, service};
     };
 }
 
@@ -157,6 +173,23 @@ void PresetViewModelTest::ANameThatCannotBecomeAFileNameIsRefused()
 
     QCOMPARE(refused.count(), 1);
     QVERIFY(f.viewModel.Names().isEmpty());
+}
+
+void PresetViewModelTest::ANameLongerThanAFolderNameIsRefusedForItsLengthAndNotItsCharacters()
+{
+    Fixture f;
+
+    f.viewModel.Create(QString(static_cast<int>(kASegmentStopsAt), QLatin1Char('n')));
+
+    QCOMPARE(f.viewModel.Names().size(), 1);
+
+    const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
+
+    f.viewModel.Create(QString(static_cast<int>(kASegmentStopsAt) + 1, QLatin1Char('n')));
+
+    QCOMPARE(refused.count(), 1);
+    QCOMPARE(f.viewModel.Names().size(), 1);
+    QVERIFY(!refused.front().front().toString().contains(QLatin1Char('*')));
 }
 
 void PresetViewModelTest::ANameAlreadyTakenIsRefused()
@@ -293,7 +326,7 @@ void PresetViewModelTest::ARowCarriesTheContentAndTheDayThePresetWasWritten()
     f.repository.SayItWasWrittenAt(
         "Voo curto", std::chrono::system_clock::time_point(std::chrono::milliseconds(carnival.toMSecsSinceEpoch())));
 
-    const QList<PresetRow> rows = f.viewModel.Rows();
+    const QList<PresetRow> rows = f.viewModel.Rows(ApplyMode::Replace);
 
     QCOMPARE(rows.size(), 1);
     QCOMPARE(rows.front().name, QStringLiteral("Voo curto"));
@@ -309,11 +342,309 @@ void PresetViewModelTest::ARowWithoutAWriteDateLeavesTheColumnEmptyInsteadOfInve
 
     f.viewModel.Create("Voo curto");
 
-    const QList<PresetRow> rows = f.viewModel.Rows();
+    const QList<PresetRow> rows = f.viewModel.Rows(ApplyMode::Replace);
 
     QCOMPARE(rows.size(), 1);
     QCOMPARE(rows.front().content, QStringLiteral("1 addon · 1 category"));
     QVERIFY(rows.front().updated.isEmpty());
+}
+
+void PresetViewModelTest::ARowSaysWhetherThePresetIsSatisfiedAndHowMuchItWouldChange()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.session.RefreshEntries();
+
+    f.viewModel.Create("Agora");
+
+    QCOMPARE(f.viewModel.Rows(ApplyMode::Replace).size(), 1);
+    QVERIFY(f.viewModel.Rows(ApplyMode::Replace).front().satisfied);
+    QCOMPARE(f.viewModel.Rows(ApplyMode::Replace).front().changes, std::size_t{0});
+
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    QVERIFY(!f.viewModel.Rows(ApplyMode::Replace).front().satisfied);
+    QCOMPARE(f.viewModel.Rows(ApplyMode::Replace).front().changes, std::size_t{1});
+}
+
+void PresetViewModelTest::TheChangeCountFollowsTheModeTheScreenIsShowing()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+    QVERIFY(f.repository.Save(kProfileId, preset));
+
+    QCOMPARE(f.viewModel.Rows(ApplyMode::Replace).front().changes, std::size_t{1});
+    QCOMPARE(f.viewModel.Rows(ApplyMode::Cumulative).front().changes, std::size_t{0});
+    QVERIFY(!f.viewModel.Rows(ApplyMode::Cumulative).front().satisfied);
+}
+
+void PresetViewModelTest::TheReturnPresetHasItsOwnRowAndIsNotAmongThePresetsOfTheUser()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.session.RefreshEntries();
+
+    QVERIFY(!f.viewModel.ReturnRow(ApplyMode::Replace).has_value());
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "fenix-a320"},
+                                  .action = PresetAction::Enable}};
+    QVERIFY(f.repository.Save(kProfileId, preset));
+
+    f.viewModel.Apply(preset, ApplyMode::Replace);
+
+    const std::optional<PresetRow> back = f.viewModel.ReturnRow(ApplyMode::Replace);
+
+    QVERIFY(back.has_value());
+    QCOMPARE(back->changes, std::size_t{2});
+    QVERIFY(!back->satisfied);
+    QCOMPARE(f.viewModel.Names(), QStringList{"Voo curto"});
+    QCOMPARE(f.viewModel.Rows(ApplyMode::Replace).size(), 1);
+}
+
+void PresetViewModelTest::TheOmittedAddonsAreNamedWithTheirCategory()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    const QList<OmittedAddon> omitted = f.viewModel.Omitted(preset, ApplyMode::Replace);
+
+    QCOMPARE(omitted.size(), 1);
+    QCOMPARE(omitted.front().name, QStringLiteral("fenix-a320"));
+    QCOMPARE(omitted.front().category, QStringLiteral("Aircrafts"));
+}
+
+void PresetViewModelTest::NothingIsOmittedOutsideReplace()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    QVERIFY(f.viewModel.Omitted(preset, ApplyMode::Cumulative).isEmpty());
+    QCOMPARE(f.viewModel.Preview(preset, ApplyMode::Cumulative).notNamedByThePreset, std::size_t{0});
+}
+
+void PresetViewModelTest::AnApplicationTheReturnPresetRefusesIsExplainedAndChangesNothing()
+{
+    Fixture f;
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+    f.repository.RefuseEveryWrite();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
+    const QSignalSpy applied(&f.viewModel, &PresetViewModel::Applied);
+
+    f.viewModel.Apply(preset, ApplyMode::Replace);
+
+    QCOMPARE(refused.count(), 1);
+    QCOMPARE(applied.count(), 0);
+    QVERIFY(f.session.Snapshot().enabled.Contains(kOtherAddon));
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void PresetViewModelTest::TheUndoOfThisScreenIsTheSameBatchUndoTheLibraryOffers()
+{
+    Fixture f;
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    QVERIFY(!f.viewModel.CanUndo());
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    f.viewModel.Apply(preset, ApplyMode::Replace);
+
+    QVERIFY(f.viewModel.CanUndo());
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kOtherAddon));
+
+    f.viewModel.UndoLastBatch();
+
+    QVERIFY(!f.viewModel.CanUndo());
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QVERIFY(f.session.Snapshot().enabled.Contains(kOtherAddon));
+}
+
+void PresetViewModelTest::WithStartupManagementOffThePreviewCountsWhatWillNotBeApplied()
+{
+    Fixture f;
+    f.startup.entries.Carry(
+        StartupEntry{.label = "Fenix", .path = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe", .enabled = false});
+    f.startup.service.Manage(false);
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.startupEntries = {
+        PresetStartupEntry{.path = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe", .action = PresetAction::Enable}};
+    preset.governsStartup = true;
+
+    const PresetPreview preview = f.viewModel.Preview(preset, ApplyMode::Replace);
+
+    QCOMPARE(preview.startupAsked, std::size_t{1});
+    QCOMPARE(preview.notApplied, std::size_t{1});
+    QCOMPARE(preview.startupToApply, std::size_t{0});
+}
+
+void PresetViewModelTest::TurningOnTheStartupFlagOfAPresetIsStored()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.session.RefreshEntries();
+    f.viewModel.Create("Voo curto");
+
+    QVERIFY(f.viewModel.GovernStartup("Voo curto", true));
+
+    const std::optional<Preset> saved = f.viewModel.Load("Voo curto");
+
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->governsStartup);
+    QCOMPARE(saved->entries.size(), std::size_t{1});
+}
+
+void PresetViewModelTest::ApplyingSaysWhatTheStartupHalfLeftUndoneInsteadOfPassingInSilence()
+{
+    Fixture f;
+    f.startup.service.Manage(false);
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.startupEntries = {
+        PresetStartupEntry{.path = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe", .action = PresetAction::Enable}};
+    preset.governsStartup = true;
+
+    const QSignalSpy applied(&f.viewModel, &PresetViewModel::Applied);
+
+    f.viewModel.Apply(preset, ApplyMode::Cumulative);
+
+    QCOMPARE(applied.count(), 1);
+    QVERIFY(applied.front().at(0).toStringList().isEmpty());
+    QVERIFY(applied.front().at(1).toString().contains(QStringLiteral("startup management is off")));
+}
+
+void PresetViewModelTest::ASatisfiedPresetStillCountsWhatDisableWouldChange()
+{
+    Fixture f;
+    f.LinkIn(kAddon);
+    f.session.RefreshEntries();
+
+    f.viewModel.Create("Agora");
+
+    const PresetRow asReplace = f.viewModel.Rows(ApplyMode::Replace).front();
+
+    QVERIFY(asReplace.satisfied);
+    QCOMPARE(asReplace.changes, std::size_t{0});
+
+    const PresetRow asDisable = f.viewModel.Rows(ApplyMode::Disable).front();
+
+    QVERIFY(asDisable.satisfied);
+    QCOMPARE(asDisable.changes, std::size_t{1});
+}
+
+void PresetViewModelTest::GoingBackDoesNotOverwriteTheReturnPreset()
+{
+    Fixture f;
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    f.viewModel.Apply(preset, ApplyMode::Replace);
+
+    const std::optional<Preset> back = f.viewModel.ReturnPreset();
+    QVERIFY(back.has_value());
+    QCOMPARE(back->entries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(back->entries.front().addonId.folderName), QStringLiteral("fenix-a320"));
+
+    f.viewModel.ApplyReturn(*back);
+
+    const std::optional<Preset> anchor = f.viewModel.ReturnPreset();
+    QVERIFY(anchor.has_value());
+    QCOMPARE(anchor->entries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(anchor->entries.front().addonId.folderName), QStringLiteral("fenix-a320"));
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kOtherAddon));
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void PresetViewModelTest::AGoverningPresetRowIsNotSatisfiedWhenTheStartupFileDisagrees()
+{
+    Fixture f;
+    const std::filesystem::path launcher = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe";
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = launcher, .enabled = false});
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.startupEntries = {PresetStartupEntry{.path = launcher, .action = PresetAction::Enable}};
+    preset.governsStartup = true;
+    QVERIFY(f.repository.Save(kProfileId, preset));
+
+    const QList<PresetRow> rows = f.viewModel.Rows(ApplyMode::Replace);
+
+    QCOMPARE(rows.size(), 1);
+    QCOMPARE(rows.front().changes, std::size_t{0});
+    QVERIFY(!rows.front().satisfied);
+}
+
+void PresetViewModelTest::TheStartupRowsCarryTheLabelFromTheFileAndSettingAnActionIsStored()
+{
+    Fixture f;
+    const std::filesystem::path launcher = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe";
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = launcher, .enabled = true});
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.governsStartup = true;
+    preset.startupEntries = {PresetStartupEntry{.path = launcher, .action = PresetAction::Enable}};
+    QVERIFY(f.repository.Save(kProfileId, preset));
+
+    const QList<PresetStartupRow> rows = f.viewModel.StartupRows(preset);
+
+    QCOMPARE(rows.size(), 1);
+    QCOMPARE(rows.front().label, QStringLiteral("Fenix"));
+    QVERIFY(rows.front().action == PresetAction::Enable);
+
+    QVERIFY(f.viewModel.SetStartupAction("Voo curto", 0, launcher, PresetAction::Disable));
+
+    const std::optional<Preset> saved = f.viewModel.Load("Voo curto");
+
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->startupEntries.front().action == PresetAction::Disable);
 }
 
 QTEST_MAIN(PresetViewModelTest)

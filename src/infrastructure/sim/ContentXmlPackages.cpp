@@ -38,9 +38,26 @@ namespace
     }
 }
 
-ContentXmlPackages::ContentXmlPackages(const FilesystemProbe& filesystemProbe, const std::filesystem::path& listPath)
+ContentXmlPackages::ContentXmlPackages(const FilesystemProbe& filesystemProbe, std::filesystem::path listPath)
+    : filesystemProbe_(filesystemProbe)
 {
-    const std::optional<std::string> contents = filesystemProbe.ContentsOf(listPath);
+    ReadAgain(std::move(listPath));
+}
+
+void ContentXmlPackages::Forget(std::filesystem::path listPath)
+{
+    listPath_ = std::move(listPath);
+    names_.clear();
+    takenAt_.reset();
+    entries_ = 0;
+    listWasRead_ = false;
+}
+
+void ContentXmlPackages::ReadAgain(std::filesystem::path listPath)
+{
+    Forget(std::move(listPath));
+
+    const std::optional<std::string> contents = filesystemProbe_.ContentsOf(listPath_);
     if (!contents.has_value())
     {
         return;
@@ -64,7 +81,7 @@ ContentXmlPackages::ContentXmlPackages(const FilesystemProbe& filesystemProbe, c
 
     if (listWasRead_)
     {
-        takenAt_ = filesystemProbe.LastWriteTime(listPath);
+        takenAt_ = filesystemProbe_.LastWriteTime(listPath_);
     }
 }
 
@@ -86,14 +103,4 @@ std::optional<std::chrono::system_clock::time_point> ContentXmlPackages::ListTak
 std::string ContentXmlPackages::ListAccountFolder() const
 {
     return {};
-}
-
-std::size_t ContentXmlPackages::HowManyEntries() const
-{
-    return entries_;
-}
-
-std::size_t ContentXmlPackages::HowManyPackages() const
-{
-    return names_.size();
 }

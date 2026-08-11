@@ -1,5 +1,7 @@
 #include "application/StartupReport.h"
 
+#include <set>
+
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 
@@ -10,18 +12,19 @@ namespace
     {
         const std::string wanted = ComparablePath(destination);
 
-        std::filesystem::path folder = entryPath.parent_path();
-        while (!folder.empty() && ComparablePath(folder.parent_path()) != wanted)
+        std::filesystem::path folder = ParentOf(entryPath);
+        while (!folder.empty())
         {
-            if (folder.parent_path() == folder)
+            const std::filesystem::path above = ParentOf(folder);
+            if (ComparablePath(above) == wanted)
             {
-                return {};
+                return folder;
             }
 
-            folder = folder.parent_path();
+            folder = above;
         }
 
-        return folder;
+        return {};
     }
 
     std::filesystem::path AddonFolderReachedBy(const SimulatorProfile& profile, const std::filesystem::path& entryPath)
@@ -45,7 +48,7 @@ namespace
 
     bool AnAddonOfYoursLandsThereAndIsOffNow(const ProfileSnapshot& snapshot, const std::filesystem::path& folder)
     {
-        const TreeNode* addon = AddonNamed(snapshot.libraries, AsUtf8(folder.filename()));
+        const TreeNode* addon = AddonNamed(snapshot.libraries, AsUtf8(folder));
 
         return addon != nullptr && !snapshot.enabled.Contains(addon->path);
     }
@@ -67,6 +70,32 @@ namespace
 
         return StartupAlarm::TheExecutableIsMissing;
     }
+}
+
+std::vector<StartupLine> EntriesCarriedBy(const StartupReport& report,
+                                          const std::vector<std::filesystem::path>& addonFolders)
+{
+    std::set<std::string> wanted;
+    for (const std::filesystem::path& folder : addonFolders)
+    {
+        wanted.insert(ComparableFileName(folder));
+    }
+
+    std::vector<StartupLine> carried;
+    for (const StartupLine& line : report.lines)
+    {
+        if (!line.enabled || line.addonFolder.empty())
+        {
+            continue;
+        }
+
+        if (wanted.contains(ComparableFileName(line.addonFolder)))
+        {
+            carried.push_back(line);
+        }
+    }
+
+    return carried;
 }
 
 StartupReport ReportStartupEntries(const std::vector<StartupEntry>& entries,

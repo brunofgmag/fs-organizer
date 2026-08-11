@@ -11,6 +11,7 @@
 #include "domain/model/RecycleLimits.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "viewmodel/SessionNotifier.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -37,6 +38,7 @@ namespace
         static void TheSelectionIsWeighedBeforeThePlanIsAllowedToJudgeIt();
         static void ASelectionOnTwoVolumesWherePartFitsTheBinAnswersForEachAddon();
         static void AnAddonTooDeepForTheBinIsTheOnlyOneOfTheSelectionLeftBehind();
+        static void AnAddonNobodyMeasuredSaysSoInsteadOfBlamingTheBin();
         static void TheGestureIsPlannedOnceAndTheDeletionRunsAgainstThatSamePlan();
         static void AnAddonMeasuredByAnotherScreenIsWeighedAgainBeforeTheGuardsJudgeIt();
         static void ADeletionThatTookSomethingAwayForgetsTheUndoOfTheLastBatch();
@@ -120,6 +122,14 @@ namespace
         return profile;
     }
 
+    AppSettings Stored()
+    {
+        AppSettings settings = SettingsWith(Active());
+        settings.profiles.push_back(Other());
+
+        return settings;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -140,9 +150,6 @@ namespace
 
             catalog.SetTree(kLibrary, LibraryTree());
             catalog.SetTree(kArchive, ArchiveTree());
-
-            settings.stored.profiles = {Active(), Other()};
-            settings.stored.activeProfileId = Active().id;
 
             session.ShowActiveProfile();
         }
@@ -170,17 +177,19 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ProfileService profiles{catalog, filesystemProbe, sidecars,          classifier, linking,
-                                log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{Stored()};
         InlineBackgroundRunner runner;
         SessionNotifier notifier{};
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
-        DeletionViewModel viewModel{session, profiles, settings, service, sizes};
+        DeletionViewModel viewModel{session, profiles, service, sizes};
     };
 
     DeletionPlan LastPlan(const QSignalSpy& spy)
@@ -258,6 +267,17 @@ void DeletionViewModelTest::AnAddonTooDeepForTheBinIsTheOnlyOneOfTheSelectionLef
     QCOMPARE(results.back().result, FileResult::TheRecycleBinCannotReachIt);
     QVERIFY(!f.fileSystem.Exists(kCrj));
     QVERIFY(f.fileSystem.Exists(kAtr));
+}
+
+void DeletionViewModelTest::AnAddonNobodyMeasuredSaysSoInsteadOfBlamingTheBin()
+{
+    const DeletionPlan unmeasured{.addons = {AddonToDelete{.folder = kCrj}}};
+
+    QCOMPARE(WhatTheRecycleBinRefuses(unmeasured, unmeasured.addons.front()), FileResult::TheAddonWasNeverMeasured);
+
+    const DeletionPlan measured{.addons = {AddonToDelete{.folder = kCrj, .bytes = kMegabyte}}};
+
+    QCOMPARE(WhatTheRecycleBinRefuses(measured, measured.addons.front()), FileResult::TheRecycleBinIsTooSmall);
 }
 
 void DeletionViewModelTest::TheGestureIsPlannedOnceAndTheDeletionRunsAgainstThatSamePlan()

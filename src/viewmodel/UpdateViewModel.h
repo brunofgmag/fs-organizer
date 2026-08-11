@@ -26,11 +26,7 @@ class UpdateViewModel final : public QObject, public UpdateServiceObserver
     Q_OBJECT
 
 public:
-    UpdateViewModel(UpdateService& service,
-                    QString currentVersion,
-                    UpdateMode mode,
-                    bool updatesAreOn,
-                    QObject* parent = nullptr);
+    UpdateViewModel(UpdateService& service, UpdateMode mode, bool updatesAreOn, QObject* parent = nullptr);
 
     ~UpdateViewModel() override;
 
@@ -38,11 +34,7 @@ public:
 
     [[nodiscard]] QString WhatIsGoingOn() const;
 
-    [[nodiscard]] QString CurrentVersion() const;
-
     [[nodiscard]] QString OfferedVersion() const;
-
-    [[nodiscard]] QString ReleasePageUrl() const;
 
     [[nodiscard]] bool UpdatesAreOn() const;
 
@@ -81,7 +73,6 @@ private:
     void SetState(UpdateState state);
 
     UpdateService& service_;
-    QString currentVersion_;
     UpdateMode mode_;
     bool updatesAreOn_;
 

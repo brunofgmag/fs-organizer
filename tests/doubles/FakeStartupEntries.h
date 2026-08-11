@@ -27,18 +27,32 @@ public:
         return entries_;
     }
 
+    void MakeSwitchingFailWith(const FileResult result)
+    {
+        refusal_ = result;
+    }
+
     [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, const bool enabled) override
     {
-        ++writes;
+        if (refusal_ != FileResult::Completed)
+        {
+            return refusal_;
+        }
 
         for (StartupEntry& entry : entries_)
         {
-            if (ComparablePath(entry.path) == ComparablePath(entryPath))
+            if (ComparablePath(entry.path) != ComparablePath(entryPath))
+            {
+                continue;
+            }
+
+            if (entry.enabled != enabled)
             {
                 entry.enabled = enabled;
-
-                return FileResult::Completed;
+                ++writes;
             }
+
+            return FileResult::Completed;
         }
 
         return FileResult::TheDiskDisagreesWithTheScan;
@@ -46,6 +60,7 @@ public:
 
 private:
     std::vector<StartupEntry> entries_;
+    FileResult refusal_ = FileResult::Completed;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_STARTUP_ENTRIES_H

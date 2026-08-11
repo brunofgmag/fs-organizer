@@ -5,6 +5,7 @@
 
 #include "application/DependencyReport.h"
 #include "application/StartupReport.h"
+#include "application/ports/PackageList.h"
 #include "application/model/RestorePlan.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
@@ -17,7 +18,9 @@
 #include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
 #include "domain/model/QuarantineOrigin.h"
+#include "domain/model/SceneryCodes.h"
 #include "domain/model/WriteAccess.h"
+#include "domain/scenery/AirportCoverage.h"
 
 namespace QTest
 {
@@ -155,6 +158,8 @@ namespace QTest
         case FileResult::TheOriginIsOccupied: return qstrdup("TheOriginIsOccupied");
         case FileResult::TheRecycleBinIsTooSmall: return qstrdup("TheRecycleBinIsTooSmall");
         case FileResult::TheRecycleBinCannotReachIt: return qstrdup("TheRecycleBinCannotReachIt");
+        case FileResult::TheAddonWasNeverMeasured: return qstrdup("TheAddonWasNeverMeasured");
+        case FileResult::ThePathIsTooLong: return qstrdup("ThePathIsTooLong");
         case FileResult::CouldNotDelete: return qstrdup("CouldNotDelete");
         case FileResult::CouldNotRecordTheOrigin: return qstrdup("CouldNotRecordTheOrigin");
         case FileResult::CannotWriteInTheOtherProgramsFolder: return qstrdup("CannotWriteInTheOtherProgramsFolder");
@@ -162,6 +167,9 @@ namespace QTest
         case FileResult::CouldNotReadTheStartupFile: return qstrdup("CouldNotReadTheStartupFile");
         case FileResult::CouldNotWriteTheStartupFile: return qstrdup("CouldNotWriteTheStartupFile");
         case FileResult::TheStartupEntriesAreLeftLoose: return qstrdup("TheStartupEntriesAreLeftLoose");
+        case FileResult::CouldNotReadThePackageList: return qstrdup("CouldNotReadThePackageList");
+        case FileResult::CouldNotWriteThePackageList: return qstrdup("CouldNotWriteThePackageList");
+        case FileResult::ThePackageListIsLeftLoose: return qstrdup("ThePackageListIsLeftLoose");
         }
 
         return qstrdup("FileResult(?)");
@@ -221,6 +229,8 @@ namespace QTest
         case OperationKind::GiveBackToAnotherProgram: return qstrdup("GiveBackToAnotherProgram");
         case OperationKind::UndoTheInterruptedSwap: return qstrdup("UndoTheInterruptedSwap");
         case OperationKind::RestoreOverTheOccupant: return qstrdup("RestoreOverTheOccupant");
+        case OperationKind::TurnOffTheStartupEntry: return qstrdup("TurnOffTheStartupEntry");
+        case OperationKind::TurnOnTheStartupEntry: return qstrdup("TurnOnTheStartupEntry");
         }
 
         return qstrdup("OperationKind(?)");
@@ -275,6 +285,46 @@ namespace QTest
         }
 
         return qstrdup("PackagePresence(?)");
+    }
+
+    template<>
+    inline char* toString(const PackageActivation& t)
+    {
+        switch (t)
+        {
+        case PackageActivation::Activated: return qstrdup("Activated");
+        case PackageActivation::UserDisabled: return qstrdup("UserDisabled");
+        case PackageActivation::SystemDisabled: return qstrdup("SystemDisabled");
+        case PackageActivation::ItSaysSomethingElse: return qstrdup("ItSaysSomethingElse");
+        }
+
+        return qstrdup("PackageActivation(?)");
+    }
+
+    template<>
+    inline char* toString(const SceneryReading& t)
+    {
+        switch (t)
+        {
+        case SceneryReading::Read: return qstrdup("Read");
+        case SceneryReading::ItCarriesNoSignature: return qstrdup("ItCarriesNoSignature");
+        case SceneryReading::ItEndsBeforeItSaysItDoes: return qstrdup("ItEndsBeforeItSaysItDoes");
+        }
+
+        return qstrdup("SceneryReading(?)");
+    }
+
+    template<>
+    inline char* toString(const AirportEvidence& t)
+    {
+        switch (t)
+        {
+        case AirportEvidence::ItCarriesNoAirportRecord: return qstrdup("ItCarriesNoAirportRecord");
+        case AirportEvidence::ARecordWasNotRead: return qstrdup("ARecordWasNotRead");
+        case AirportEvidence::TheCodeWasRead: return qstrdup("TheCodeWasRead");
+        }
+
+        return qstrdup("AirportEvidence(?)");
     }
 
     template<>

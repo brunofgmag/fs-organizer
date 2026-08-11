@@ -27,6 +27,8 @@ public:
 
     [[nodiscard]] static QString Resolve(const QString& stored);
 
+    [[nodiscard]] static bool LoadNativeWidgets(QTranslator& translator, const QString& language);
+
     [[nodiscard]] bool Use(const QString& language);
 
     [[nodiscard]] QString InUse() const;

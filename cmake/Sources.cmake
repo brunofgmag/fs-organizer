@@ -16,6 +16,7 @@ set(DOMAIN_SOURCES
         src/domain/profile/ExternalOrigins.cpp
         src/domain/profile/OrphanOverrides.cpp
         src/domain/profile/ProfileEdits.cpp
+        src/domain/scenery/AirportCoverage.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/CategorySuggester.cpp
         src/domain/tree/DestinationDivergence.cpp
@@ -26,14 +27,17 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/CoverageService.cpp
         src/application/DeletionService.cpp
         src/application/DependencyReport.cpp
         src/application/ImportService.cpp
         src/application/model/DeletionPlan.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
+        src/application/preset/PresetStartupPlan.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
+        src/application/SceneryService.cpp
         src/application/Session.cpp
         src/application/SetupService.cpp
         src/application/SizeService.cpp
@@ -44,33 +48,35 @@ set(APPLICATION_SOURCES
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
+        src/infrastructure/fileops/ExtendedPaths.cpp
+        src/infrastructure/fileops/WindowsFileOperations.cpp
+        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+        src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/legacy/IniLegacyConfigReader.cpp
         src/infrastructure/legacy/LegacyPresetReader.cpp
         src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
-        src/infrastructure/preset/FilePresetRepository.cpp
-        src/infrastructure/settings/JsonSettingsRepository.cpp
-        src/infrastructure/sim/ContentListLocations.cpp
-        src/infrastructure/sim/ContentXmlPackages.cpp
-        src/infrastructure/sim/ExeXmlDocument.cpp
-        src/infrastructure/sim/ExeXmlStartupEntries.cpp
-        src/infrastructure/sim/ProfilePackages.cpp
-        src/infrastructure/sim/StartupFileLocations.cpp
-        src/infrastructure/sim/WindowsSimulatorLocator.cpp
-        src/infrastructure/sim/WindowsUserCfgLocations.cpp
-        src/infrastructure/update/GithubReleaseParser.cpp
-)
-
-set(WINDOWS_INFRASTRUCTURE_SOURCES
-        src/infrastructure/fileops/ExtendedPaths.cpp
-        src/infrastructure/fileops/WindowsFileOperations.cpp
-        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
-        src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/link/WindowsLinkService.cpp
         src/infrastructure/platform/SingleInstance.cpp
         src/infrastructure/platform/WindowsKnownFolders.cpp
+        src/infrastructure/preset/FilePresetRepository.cpp
+        src/infrastructure/scenery/BglSceneryParser.cpp
+        src/infrastructure/scenery/JsonSceneryCache.cpp
+        src/infrastructure/settings/JsonSettingsRepository.cpp
+        src/infrastructure/sim/ContentListLocations.cpp
+        src/infrastructure/sim/ContentXmlDocument.cpp
+        src/infrastructure/sim/ContentXmlPackageList.cpp
+        src/infrastructure/sim/ContentXmlPackages.cpp
+        src/infrastructure/sim/ExeXmlDocument.cpp
+        src/infrastructure/sim/ExeXmlStartupEntries.cpp
+        src/infrastructure/sim/PackageNaming.cpp
+        src/infrastructure/sim/ProfilePackages.cpp
+        src/infrastructure/sim/StartupFileLocations.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
+        src/infrastructure/sim/WindowsSimulatorLocator.cpp
+        src/infrastructure/sim/WindowsUserCfgLocations.cpp
+        src/infrastructure/update/GithubReleaseParser.cpp
         src/view/platform/WindowsTitleBar.cpp
 )
 
@@ -85,6 +91,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
+        src/viewmodel/CoverageViewModel.cpp
         src/viewmodel/DeletionViewModel.cpp
         src/viewmodel/DependencyText.cpp
         src/viewmodel/DiagnosticsViewModel.cpp
@@ -110,6 +117,7 @@ set(VIEW_SOURCES
         src/view/library/AddonTreePage.cpp
         src/view/community/CommunityPage.cpp
         src/view/community/ConflictDialog.cpp
+        src/view/library/CoverageDialog.cpp
         src/view/library/DeleteDialog.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
         src/view/community/ImportDialog.cpp
@@ -121,6 +129,8 @@ set(VIEW_SOURCES
         src/view/options/OptionsPage.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
+        src/view/presets/OmittedDialog.cpp
+        src/view/presets/PresetPlanPanel.cpp
         src/view/PresetsPage.cpp
         src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
@@ -131,8 +141,11 @@ set(VIEW_SOURCES
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp
         src/view/shell/StartupOffers.cpp
+        src/view/simulator/PackageListPage.cpp
+        src/view/simulator/SimulatorPage.cpp
         src/view/simulator/StartupPage.cpp
         src/view/library/SuggestionDialog.cpp
+        src/view/library/StartupEntryDialog.cpp
         src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp
         src/view/TextThatIsNeverCut.cpp

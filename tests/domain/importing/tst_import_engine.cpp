@@ -1,7 +1,10 @@
 #include <QtTest/QtTest>
 
 #include <algorithm>
+#include <string>
 #include <variant>
+
+#include "domain/support/PathUtils.h"
 
 #include "domain/journal/OperationLog.h"
 #include "domain/importing/ExternalSidecar.h"
@@ -25,6 +28,7 @@ namespace
     private slots:
         static void AnImportThatDoesNotFitOnTheTargetVolumeTouchesNothing();
         static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
+        static void TheRoomAskedForGrowsWithTheFileCountAndNotOnlyWithTheBytes();
         static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
         static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
         static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
@@ -136,6 +140,36 @@ void ImportEngineTest::AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne
     QCOMPARE(outcome.Result(), FileResult::CouldNotCheckFreeSpace);
     QVERIFY(!f.fileSystem.Exists(kTarget));
     f.VerifySimBridgeIsStillWhereItWas();
+}
+
+void ImportEngineTest::TheRoomAskedForGrowsWithTheFileCountAndNotOnlyWithTheBytes()
+{
+    constexpr std::size_t kManySmallFiles = 4000;
+    constexpr std::uintmax_t kEachFile = 1024;
+
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory(kSource);
+    f.fileSystem.AddDirectory("D:/Library/Utils");
+
+    for (std::size_t file = 0; file < kManySmallFiles; ++file)
+    {
+        f.fileSystem.AddFile(kSource / PathFromUtf8("piece-" + std::to_string(file) + ".bin"), kEachFile);
+    }
+
+    const std::uintmax_t bytes = kManySmallFiles * kEachFile;
+
+    QVERIFY(bytes + kFreeSpaceFloor < FreeSpaceNeededFor(bytes, kManySmallFiles));
+
+    f.fileSystem.SetFreeSpace("D:/Library", bytes + kFreeSpaceFloor + kMegabyte);
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::NotEnoughFreeSpace);
+    QVERIFY(!f.fileSystem.Exists(kTarget));
+
+    f.fileSystem.SetFreeSpace("D:/Library", FreeSpaceNeededFor(bytes, kManySmallFiles) + kMegabyte);
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+    QVERIFY(f.fileSystem.Exists(kTarget));
 }
 
 void ImportEngineTest::CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact()

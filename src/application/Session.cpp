@@ -28,12 +28,43 @@ namespace
 
 Session::Session(ProfileService& service,
                  const LibraryOrganizer& organizer,
-                 SettingsRepository& settings,
+                 SettingsRepository& repository,
+                 AppSettings stored,
                  const ProcessProbe& probe,
                  BackgroundRunner& runner,
                  SessionObserver& observer)
-    : service_(service), organizer_(organizer), settings_(settings), probe_(probe), runner_(runner), observer_(observer)
+    : service_(service),
+      organizer_(organizer),
+      repository_(repository),
+      settings_(std::move(stored)),
+      probe_(probe),
+      runner_(runner),
+      observer_(observer)
 {
+}
+
+const AppSettings& Session::Settings() const
+{
+    return settings_;
+}
+
+bool Session::Rewrite(const std::function<bool(AppSettings&)>& change)
+{
+    AppSettings next = settings_;
+
+    return change(next) && Commit(std::move(next));
+}
+
+bool Session::Commit(AppSettings next)
+{
+    if (!repository_.Save(next))
+    {
+        return false;
+    }
+
+    settings_ = std::move(next);
+
+    return true;
 }
 
 void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results)
@@ -64,8 +95,7 @@ void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results)
 
 void Session::ShowActiveProfile()
 {
-    const AppSettings settings = settings_.Load().value_or(AppSettings{});
-    const SimulatorProfile* active = ProfileById(settings, settings.activeProfileId);
+    const SimulatorProfile* active = ProfileById(settings_, settings_.activeProfileId);
 
     if (active != nullptr)
     {
@@ -73,22 +103,20 @@ void Session::ShowActiveProfile()
         return;
     }
 
-    Scan(settings.profiles.empty() ? SimulatorProfile{} : settings.profiles.front());
+    Scan(settings_.profiles.empty() ? SimulatorProfile{} : settings_.profiles.front());
 }
 
 void Session::ChooseProfile(const std::string& profileId)
 {
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
-    {
-        observer_.OnSettingsCouldNotBeSaved();
-        return;
-    }
+    const bool written = Rewrite(
+        [&profileId](AppSettings& settings)
+        {
+            settings.activeProfileId = profileId;
 
-    AppSettings settings = *loaded;
-    settings.activeProfileId = profileId;
+            return true;
+        });
 
-    if (!settings_.Save(settings))
+    if (!written)
     {
         observer_.OnSettingsCouldNotBeSaved();
         return;
@@ -99,26 +127,20 @@ void Session::ChooseProfile(const std::string& profileId)
 
 bool Session::RemoveProfile(const std::string& profileId)
 {
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
-    {
-        observer_.OnSettingsCouldNotBeSaved();
-        return false;
-    }
+    AppSettings next = settings_;
 
-    AppSettings settings = *loaded;
-    if (!::RemoveProfile(settings.profiles, profileId))
+    if (!::RemoveProfile(next.profiles, profileId))
     {
         return false;
     }
 
-    const bool itWasInUse = settings.activeProfileId == profileId;
+    const bool itWasInUse = settings_.activeProfileId == profileId;
     if (itWasInUse)
     {
-        settings.activeProfileId = settings.profiles.front().id;
+        next.activeProfileId = next.profiles.front().id;
     }
 
-    if (!settings_.Save(settings))
+    if (!Commit(std::move(next)))
     {
         observer_.OnSettingsCouldNotBeSaved();
         return false;
@@ -149,11 +171,27 @@ bool Session::Scanning() const
     return running_;
 }
 
+void Session::CancelScan()
+{
+    if (running_)
+    {
+        cancelled_ = true;
+    }
+}
+
 void Session::RefreshEntries()
 {
     snapshot_.entries = service_.ResolveEntries(profile_, snapshot_.libraries);
     snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
     snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
+    snapshot_.startupEntries = service_.StartupEntriesNow();
+
+    observer_.OnRefreshed();
+}
+
+void Session::RefreshStartupEntries()
+{
+    snapshot_.startupEntries = service_.StartupEntriesNow();
 
     observer_.OnRefreshed();
 }
@@ -407,9 +445,12 @@ void Session::Scan(SimulatorProfile profile)
     if (running_)
     {
         queued_ = std::move(profile);
+        cancelled_ = true;
+
         return;
     }
 
+    cancelled_ = false;
     running_ = true;
     scanning_ = std::move(profile);
 
@@ -418,7 +459,12 @@ void Session::Scan(SimulatorProfile profile)
     runner_.Run(
         [this]
         {
-            scanned_ = service_.Scan(scanning_);
+            const ScanGate gate{.keepGoing = [this]
+                                {
+                                    return !cancelled_;
+                                }};
+
+            scanned_ = service_.Scan(scanning_, gate);
         },
         [this]
         {
@@ -459,6 +505,15 @@ void Session::Adopt()
         return;
     }
 
+    if (!scanned_.complete)
+    {
+        scanned_ = {};
+        scanning_ = {};
+
+        observer_.OnScanFinished();
+        return;
+    }
+
     profile_ = std::move(scanning_);
     snapshot_ = std::move(scanned_);
     scanned_ = {};
@@ -473,26 +528,23 @@ void Session::Adopt()
     observer_.OnScanFinished();
 }
 
-void Session::Save(const SimulatorProfile& profile) const
+void Session::Save(const SimulatorProfile& profile)
 {
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
-    {
-        observer_.OnSettingsCouldNotBeSaved();
-        return;
-    }
-
-    AppSettings settings = *loaded;
-
-    for (SimulatorProfile& stored : settings.profiles)
-    {
-        if (stored.id == profile.id)
+    const bool written = Rewrite(
+        [&profile](AppSettings& settings)
         {
-            stored = profile;
-        }
-    }
+            for (SimulatorProfile& stored : settings.profiles)
+            {
+                if (stored.id == profile.id)
+                {
+                    stored = profile;
+                }
+            }
 
-    if (!settings_.Save(settings))
+            return true;
+        });
+
+    if (!written)
     {
         observer_.OnSettingsCouldNotBeSaved();
     }

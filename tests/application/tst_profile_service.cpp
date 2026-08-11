@@ -2,6 +2,7 @@
 
 #include <variant>
 
+#include "domain/journal/JournalEntries.h"
 #include "domain/journal/OperationLog.h"
 #include "application/ProfileService.h"
 #include "domain/linking/RepairPlan.h"
@@ -12,7 +13,9 @@
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
+#include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -55,6 +58,14 @@ namespace
         static void ThePlaceAnAddonWantsNamesTheAddonOfYoursHoldingIt();
         static void APlaceHeldByAFolderOrByAForeignLinkIsNotOfferedForSwapping();
         static void ASwapThatFailedHalfwayIsUndoneBackToTheAddonThatWasOn();
+        static void TheAddonBeingDisabledNamesTheStartupEntryItCarries();
+        static void AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack();
+        static void AStartupStepThatCouldNotWriteIsAFailureAndIsNotUndone();
+        static void RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalAlone();
+        static void WithTheStartupManagementOffNothingIsAskedAndTheFileIsNeverRead();
+        static void ADisabledEntryInsideTheAddonIsNotWorthAsking();
+        static void AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAsking();
+        static void TurningOffAStartupEntryOutsideTheAddonsCarriesItsLabelToTheJournal();
     };
 }
 
@@ -64,6 +75,8 @@ namespace
     constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
     constexpr auto kCommunity2024 = "E:/Flight Simulator 2024/Community2024";
     constexpr auto kLibraryId = "library-1";
+    const std::filesystem::path kPmdgLoader =
+        std::filesystem::path(kCommunity) / "pmdg-aircraft-77w" / "bin" / "loader.exe";
 
     TreeNode AddonNode(const std::filesystem::path& path)
     {
@@ -137,6 +150,18 @@ namespace
             return &snapshot.libraries.front().children.front().children[index];
         }
 
+        [[nodiscard]] std::vector<const TreeNode*> Pmdg(const ProfileSnapshot& snapshot) const
+        {
+            return {AddonAt(snapshot, 0)};
+        }
+
+        void CarryTheEntry(const bool enabled)
+        {
+            fileSystem.AddFile(kPmdgLoader);
+            startup.entries.Carry(
+                StartupEntry{.label = "PMDG Operations Center", .path = kPmdgLoader, .enabled = enabled});
+        }
+
         InMemoryFileSystem fileSystem;
 
         FakeSidecarStore sidecars{fileSystem};
@@ -149,8 +174,11 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
     };
 }
 
@@ -862,6 +890,182 @@ void ProfileServiceTest::TheRecordBesideTheAddonWinsOverTheOneInTheSettings()
 
     QVERIFY(entry != snapshot.entries.end());
     QCOMPARE(entry->externalOrigin, movedTo);
+}
+
+void ProfileServiceTest::TheAddonBeingDisabledNamesTheStartupEntryItCarries()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(true);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const std::vector<StartupLine> carried = f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot));
+
+    QCOMPARE(carried.size(), std::size_t{1});
+    QCOMPARE(carried.front().label, std::string("PMDG Operations Center"));
+    QCOMPARE(carried.front().path, kPmdgLoader);
+}
+
+void ProfileServiceTest::AgreeingTurnsBothOffAsOneOperationAndUndoPutsBothBack()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(true);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const LinkBatch batch{.toDisable = f.Pmdg(snapshot),
+                          .toEnable = {},
+                          .startupEntriesToTurnOff =
+                              f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot))};
+
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(profile, snapshot, batch).results;
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.startup.entries.Entries().front().enabled);
+
+    const std::vector<JournalEntry> written = GroupOperations(f.journal.Read());
+    QCOMPARE(written.size(), std::size_t{1});
+    QVERIFY(written.front().IsAnAddonAndItsStartupEntry());
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{2});
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.startup.entries.Entries().front().enabled);
+}
+
+void ProfileServiceTest::AStartupStepThatCouldNotWriteIsAFailureAndIsNotUndone()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(true);
+    f.startup.entries.MakeSwitchingFailWith(FileResult::CouldNotWriteTheStartupFile);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const LinkBatch batch{.toDisable = f.Pmdg(snapshot),
+                          .toEnable = {},
+                          .startupEntriesToTurnOff =
+                              f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot))};
+
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(profile, snapshot, batch).results;
+
+    QCOMPARE(results.size(), std::size_t{2});
+
+    const auto startupStep =
+        std::ranges::find(results, OperationKind::TurnOffTheStartupEntry, &LinkOperationResult::kind);
+
+    QVERIFY(startupStep != results.end());
+    QVERIFY(!startupStep->outcome.Succeeded());
+    QVERIFY(f.startup.entries.Entries().front().enabled);
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{1});
+    QCOMPARE(reverted.front().kind, OperationKind::EnableAddon);
+}
+
+void ProfileServiceTest::RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalAlone()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(true);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const std::vector<LinkOperationResult> results =
+        f.service.SetEnabled(profile, snapshot, LinkBatch{.toDisable = f.Pmdg(snapshot)}).results;
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.startup.entries.Entries().front().enabled);
+    QCOMPARE(f.startup.entries.writes, std::size_t{0});
+
+    for (const OperationRecord& record : f.journal.Read())
+    {
+        QVERIFY(record.kind != OperationKind::TurnOffTheStartupEntry);
+    }
+}
+
+void ProfileServiceTest::TurningOffAStartupEntryOutsideTheAddonsCarriesItsLabelToTheJournal()
+{
+    Fixture f;
+    const std::filesystem::path stranger = "C:/Program Files/Other/agent.exe";
+    f.fileSystem.AddFile(stranger);
+    f.startup.entries.Carry(StartupEntry{.label = "Other launcher", .path = stranger, .enabled = true});
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const StartupLine line{
+        .label = "Other launcher", .path = stranger, .enabled = true, .reach = StartupReach::OutsideYourAddons};
+    const LinkBatch batch{.startupSwitches = {StartupSwitch{.line = line, .enable = false}}};
+
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(profile, snapshot, batch).results;
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QVERIFY(results.front().outcome.Succeeded());
+
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
+    const OperationRecord& record = f.journal.appended.front();
+    QCOMPARE(record.kind, OperationKind::TurnOffTheStartupEntry);
+    QVERIFY(record.addonId.folderName.empty());
+    QCOMPARE(record.label, std::string("Other launcher"));
+}
+
+void ProfileServiceTest::WithTheStartupManagementOffNothingIsAskedAndTheFileIsNeverRead()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(true);
+    f.startup.service.Manage(false);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    QVERIFY(f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot)).empty());
+    QCOMPARE(f.startup.entries.reads, std::size_t{0});
+}
+
+void ProfileServiceTest::ADisabledEntryInsideTheAddonIsNotWorthAsking()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.CarryTheEntry(false);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    QVERIFY(f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot)).empty());
+}
+
+void ProfileServiceTest::AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAsking()
+{
+    const std::filesystem::path elsewhere = std::filesystem::path(kCommunity) / "aerosoft-crj" / "bin" / "updater.exe";
+
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.fileSystem.AddFile(elsewhere);
+    f.startup.entries.Carry(StartupEntry{.label = "CRJ Updater", .path = elsewhere, .enabled = true});
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    QVERIFY(f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot)).empty());
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)

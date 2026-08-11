@@ -19,6 +19,7 @@
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
+#include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/FakeSimulatorPackages.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
@@ -26,6 +27,9 @@
 #include "tests/support/PathPrinting.h"
 #include "application/DeletionService.h"
 #include "application/ImportService.h"
+#include "tests/doubles/FakePackageList.h"
+#include "tests/doubles/FakeSceneryCache.h"
+#include "tests/doubles/FakeSceneryParser.h"
 #include "view/library/AddonTreePage.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/ImportViewModel.h"
@@ -153,9 +157,6 @@ namespace
             }
 
             catalog.SetTree(kLibrary, LibraryTree(Ascending(), {}));
-
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = Profile().id;
         }
 
         InMemoryFileSystem fileSystem;
@@ -171,25 +172,33 @@ namespace
         FakeLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
-        ProfileService service{catalog, filesystemProbe, sidecars,          classifier, linking,
-                               log,     identities,      LinkType::Junction};
+        StartupOverFakes startup{filesystemProbe};
+
+        ProfileService service{catalog, filesystemProbe, sidecars,        classifier,        linking,
+                               log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
         DeletionService deletionService{filesystemProbe, files,        sidecars, linking,
                                         classifier,      processProbe, log,      sizes};
-        DeletionViewModel deletion{session, service, settings, deletionService, sizes};
+        DeletionViewModel deletion{session, service, deletionService, sizes};
         ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
         ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                                     linking, log,          LinkType::Junction};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};
+        FakePackageList packageList;
+        CoverageService coverageService{packageList, processProbe, false};
+        FakeSceneryParser sceneryParser;
+        FakeSceneryCache sceneryCache;
+        SceneryService sceneryService{filesystemProbe, sceneryParser, clock, sceneryCache};
+        CoverageViewModel coverage{coverageService, sceneryService, session, clock};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)
@@ -237,7 +246,12 @@ namespace
     struct Screen
     {
         explicit Screen(Fixture& fixture)
-            : page(fixture.viewModel, fixture.deletion, fixture.importViewModel, fixture.model, fixture.notifier)
+            : page(fixture.viewModel,
+                   fixture.deletion,
+                   fixture.importViewModel,
+                   fixture.coverage,
+                   fixture.model,
+                   fixture.notifier)
         {
             page.resize(900, 320);
             page.show();

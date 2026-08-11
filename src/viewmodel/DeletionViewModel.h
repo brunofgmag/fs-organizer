@@ -12,7 +12,6 @@
 #include "application/Session.h"
 #include "application/SizeService.h"
 #include "application/model/DeletionPlan.h"
-#include "application/ports/SettingsRepository.h"
 #include "domain/model/TreeNode.h"
 
 Q_DECLARE_METATYPE(DeletionPlan)
@@ -26,7 +25,6 @@ class DeletionViewModel final : public QObject
 public:
     DeletionViewModel(Session& session,
                       ProfileService& profileService,
-                      const SettingsRepository& settings,
                       const DeletionService& service,
                       SizeService& sizes,
                       QObject* parent = nullptr);
@@ -51,7 +49,6 @@ private:
 
     Session& session_;
     ProfileService& profileService_;
-    const SettingsRepository& settings_;
     const DeletionService& service_;
     SizeService& sizes_;
     MeasurementCaller caller_;

@@ -10,6 +10,7 @@ enum class JournalEntryKind : int
     OneOperation = 0,
     ImportRun = 1,
     Swap = 2,
+    AddonAndItsStartupEntry = 3,
 };
 
 struct JournalEntry
@@ -26,6 +27,8 @@ struct JournalEntry
     [[nodiscard]] bool IsAnImportRun() const;
 
     [[nodiscard]] bool IsASwap() const;
+
+    [[nodiscard]] bool IsAnAddonAndItsStartupEntry() const;
 
     [[nodiscard]] bool HasSteps() const;
 

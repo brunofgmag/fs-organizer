@@ -1,11 +1,7 @@
 #include "viewmodel/StartupViewModel.h"
 
-StartupViewModel::StartupViewModel(StartupService& service,
-                                   Session& session,
-                                   SettingsRepository& settings,
-                                   const Clock& clock,
-                                   QObject* parent)
-    : QObject(parent), service_(service), session_(session), settings_(settings), clock_(clock)
+StartupViewModel::StartupViewModel(StartupService& service, Session& session, const Clock& clock, QObject* parent)
+    : QObject(parent), service_(service), session_(session), clock_(clock)
 {
 }
 
@@ -28,17 +24,15 @@ void StartupViewModel::Manage(const bool managing)
         return;
     }
 
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
-    {
-        emit SettingsCouldNotBeSaved();
-        return;
-    }
+    const bool written = session_.Rewrite(
+        [managing](AppSettings& settings)
+        {
+            settings.manageStartupEntries = managing;
 
-    AppSettings settings = *loaded;
-    settings.manageStartupEntries = managing;
+            return true;
+        });
 
-    if (!settings_.Save(settings))
+    if (!written)
     {
         emit SettingsCouldNotBeSaved();
         return;

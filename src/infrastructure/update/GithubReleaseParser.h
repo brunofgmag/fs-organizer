@@ -12,6 +12,6 @@
 
 [[nodiscard]] QString ParseSha256File(const QByteArray& content);
 
-[[nodiscard]] bool IsNewerVersion(const QString& tagName, const QString& currentVersion);
+[[nodiscard]] bool IsNewerVersion(const QString& offered, const QString& currentVersion);
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_UPDATE_GITHUB_RELEASE_PARSER_H

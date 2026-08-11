@@ -21,6 +21,11 @@ public:
         stored_.profiles = {std::move(profile)};
     }
 
+    [[nodiscard]] const AppSettings& Stored() const
+    {
+        return stored_;
+    }
+
     [[nodiscard]] std::optional<AppSettings> Load() const override
     {
         return stored_;
@@ -50,7 +55,7 @@ public:
 class NoLibrariesToScan final : public CatalogScanner
 {
 public:
-    [[nodiscard]] TreeNode Scan(const std::filesystem::path&) const override
+    [[nodiscard]] TreeNode ScanWhile(const std::filesystem::path&, const ScanGate&) const override
     {
         return {};
     }

@@ -69,6 +69,16 @@ QStatusBar::item { border: none; }
 #TabStrip { background: %window%; border-bottom: 1px solid %divider%; }
 #TriageStrip { background: %chrome%; border-bottom: 1px solid %divider%; }
 #PageToolbar { border-bottom: 1px solid %divider%; }
+#PresetHalves { background: %chrome%; border-bottom: 1px solid %divider%; }
+QPushButton#PresetContentTab, QPushButton#PresetPlanTab {
+    background: transparent; border: none; border-right: 1px solid %divider%;
+    color: %secondary%; padding: 7px 18px; text-align: center;
+}
+QPushButton#PresetContentTab:hover, QPushButton#PresetPlanTab:hover { color: %text%; }
+QPushButton#PresetContentTab:checked, QPushButton#PresetPlanTab:checked {
+    background: %window%; color: %text%; font-weight: 600; border-bottom: 2px solid %accent%;
+    padding-bottom: 5px;
+}
 QToolButton#Gear {
     background: transparent; border: 1px solid %edge%; color: %secondary%; padding: 4px 6px;
 }
@@ -101,6 +111,7 @@ QToolButton#PanelExpand {
 QToolButton#PanelExpand:hover { color: %text%; background: %raised%; }
 QLabel#PanelTitle { color: %text%; }
 QLabel#PanelSubHeading { color: %secondary%; font-weight: 700; }
+QLabel#PresetPlanFor { color: %text%; font-weight: 700; }
 QLabel#PanelPromise { color: %secondary%; }
 QLabel#DetailFieldName { color: %secondary%; }
 QTextEdit#UncutText {

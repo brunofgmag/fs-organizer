@@ -19,6 +19,8 @@ namespace
         static void SearchingReachesTheStepsOfAnImport();
         static void ASwapIsOneRowNamingBothAddons();
         static void WhatSupportsTheOperationIsQuietAndAFailedResultKeepsTheNameInk();
+        static void ADisableWithItsStartupEntryIsOneRowNamedAfterBoth();
+        static void AStartupEntryOutsideYourAddonsIsNamedByItsLabel();
     };
 }
 
@@ -201,6 +203,46 @@ void JournalModelTest::WhatSupportsTheOperationIsQuietAndAFailedResultKeepsTheNa
 
     const QModelIndex step = model.index(0, JournalModel::SourceColumn, model.index(1, 0, {}));
     QVERIFY(step.data(QuietRole).toBool());
+}
+
+void JournalModelTest::ADisableWithItsStartupEntryIsOneRowNamedAfterBoth()
+{
+    const std::filesystem::path executable = "E:/Sim/Community/pmdg-aircraft-77w/bin/loader.exe";
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords(
+        {Link(OperationKind::DisableAddon, 0),
+         OperationRecord::OfImport(Moment(1), OperationKind::TurnOffTheStartupEntry,
+                                   AddonId{.libraryId = "lib-1", .folderName = "pmdg-aircraft-77w"},
+                                   "D:/Library/Aircrafts/pmdg-aircraft-77w", executable, FileResult::Completed)},
+        Profile());
+
+    QCOMPARE(model.rowCount({}), 1);
+    QCOMPARE(model.rowCount(model.index(0, 0, {})), 2);
+    QCOMPARE(model.index(0, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("Disable addon and the startup entry it carries"));
+    QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("pmdg-aircraft-77w"));
+    QCOMPARE(model.index(0, JournalModel::TargetColumn, {}).data(Qt::DisplayRole).toString(), AsText(executable));
+    QVERIFY(model.index(0, 0, {}).data(JournalModel::SucceededRole).toBool());
+}
+
+void JournalModelTest::AStartupEntryOutsideYourAddonsIsNamedByItsLabel()
+{
+    const std::filesystem::path executable = "C:/Program Files/Other/agent.exe";
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords(
+        {OperationRecord::OfImport(Moment(0), OperationKind::TurnOffTheStartupEntry, AddonId{}, std::filesystem::path{},
+                                   executable, FileResult::Completed, OriginSource::Unknown, "Fenix")},
+        Profile());
+
+    QCOMPARE(model.rowCount({}), 1);
+    QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(), QStringLiteral("Fenix"));
 }
 
 QTEST_MAIN(JournalModelTest)

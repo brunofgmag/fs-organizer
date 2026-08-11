@@ -38,6 +38,7 @@ private:
         BrokenAndUnavailable = 1,
         Quarantine = 2,
         SizeOnDisk = 3,
+        AirportsInTheScenery = 4,
     };
 
     [[nodiscard]] QWidget* CreateToolbar();
@@ -51,6 +52,8 @@ private:
     [[nodiscard]] QWidget* CreateQuarantinePane();
 
     [[nodiscard]] QWidget* CreateSizePane();
+
+    [[nodiscard]] QWidget* CreateSceneryPane();
 
     void RetranslateUi() const;
 
@@ -74,6 +77,12 @@ private:
 
     void DressTheSizeToolbar() const;
 
+    void ShowWhatTheSceneryCarries() const;
+
+    void ShowSceneryProgress(int read, int total) const;
+
+    void DressTheSceneryToolbar() const;
+
     DiagnosticsViewModel& viewModel_;
     QListWidget* rail_ = nullptr;
     QStackedWidget* panes_ = nullptr;
@@ -94,6 +103,13 @@ private:
     QProgressBar* sizeMeter_ = nullptr;
     QPushButton* measureAgain_ = nullptr;
     QPushButton* cancel_ = nullptr;
+    QTreeWidget* scenery_ = nullptr;
+    QLabel* sceneryReadAt_ = nullptr;
+    QLabel* sceneryCost_ = nullptr;
+    QLabel* sceneryProgress_ = nullptr;
+    QProgressBar* sceneryMeter_ = nullptr;
+    QPushButton* readSceneryAgain_ = nullptr;
+    QPushButton* stopScenery_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_DIAGNOSTICS_DIAGNOSTICS_PAGE_H

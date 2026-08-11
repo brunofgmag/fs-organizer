@@ -27,6 +27,7 @@ namespace
     constexpr auto kFailure = "failure";
     constexpr auto kResult = "result";
     constexpr auto kOriginSource = "originSource";
+    constexpr auto kLabel = "label";
 
     QString OriginSourceName(const OriginSource source)
     {
@@ -68,6 +69,8 @@ namespace
         case OperationKind::GiveBackToAnotherProgram: return "giveBackToAnotherProgram";
         case OperationKind::UndoTheInterruptedSwap: return "undoTheInterruptedSwap";
         case OperationKind::RestoreOverTheOccupant: return "restoreOverTheOccupant";
+        case OperationKind::TurnOffTheStartupEntry: return "turnOffTheStartupEntry";
+        case OperationKind::TurnOnTheStartupEntry: return "turnOnTheStartupEntry";
         }
 
         return "unknown";
@@ -123,6 +126,8 @@ namespace
         case FileResult::TheOriginIsOccupied: return "theOriginIsOccupied";
         case FileResult::TheRecycleBinIsTooSmall: return "theRecycleBinIsTooSmall";
         case FileResult::TheRecycleBinCannotReachIt: return "theRecycleBinCannotReachIt";
+        case FileResult::TheAddonWasNeverMeasured: return "theAddonWasNeverMeasured";
+        case FileResult::ThePathIsTooLong: return "thePathIsTooLong";
         case FileResult::CouldNotDelete: return "couldNotDelete";
         case FileResult::CouldNotRecordTheOrigin: return "couldNotRecordTheOrigin";
         case FileResult::CannotWriteInTheOtherProgramsFolder: return "cannotWriteInTheOtherProgramsFolder";
@@ -130,6 +135,9 @@ namespace
         case FileResult::CouldNotReadTheStartupFile: return "couldNotReadTheStartupFile";
         case FileResult::CouldNotWriteTheStartupFile: return "couldNotWriteTheStartupFile";
         case FileResult::TheStartupEntriesAreLeftLoose: return "theStartupEntriesAreLeftLoose";
+        case FileResult::CouldNotReadThePackageList: return "couldNotReadThePackageList";
+        case FileResult::CouldNotWriteThePackageList: return "couldNotWriteThePackageList";
+        case FileResult::ThePackageListIsLeftLoose: return "thePackageListIsLeftLoose";
         }
 
         return "unknown";
@@ -186,7 +194,8 @@ namespace
                 ValueNamed(kAllFileResults, ResultName, object[kResult].toString())
                     .value_or(FileResult::TheOutcomeIsUnknown),
                 ValueNamed(kAllOriginSources, OriginSourceName, object[kOriginSource].toString())
-                    .value_or(OriginSource::Unknown));
+                    .value_or(OriginSource::Unknown),
+                object[kLabel].toString().toStdString());
         }
 
         return OperationRecord::OfLink(timestamp, *kind, addon, source, target,
@@ -221,6 +230,11 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     else
     {
         object[kFailure] = FailureName(std::get<LinkFailure>(record.outcome));
+    }
+
+    if (!record.label.empty())
+    {
+        object[kLabel] = QString::fromStdString(record.label);
     }
 
     if (!stream_.is_open())

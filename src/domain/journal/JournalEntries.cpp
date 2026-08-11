@@ -66,6 +66,56 @@ namespace
             && records[first + 1].kind == OperationKind::RestoreOverTheOccupant;
     }
 
+    std::size_t StepsOfTheStartupRunAt(const std::vector<OperationRecord>& records,
+                                       const std::size_t first,
+                                       const OperationKind addonKind,
+                                       const OperationKind entryKind)
+    {
+        bool addonSeen = records[first].kind == addonKind;
+        bool entrySeen = records[first].kind == entryKind;
+
+        if (!addonSeen && !entrySeen)
+        {
+            return 0;
+        }
+
+        std::size_t taken = 1;
+
+        for (std::size_t next = first + 1; next < records.size(); ++next)
+        {
+            const OperationKind kind = records[next].kind;
+
+            if (kind != addonKind && kind != entryKind)
+            {
+                break;
+            }
+
+            if (!(records[next].addonId == records[first].addonId))
+            {
+                break;
+            }
+
+            addonSeen = addonSeen || kind == addonKind;
+            entrySeen = entrySeen || kind == entryKind;
+            ++taken;
+        }
+
+        return addonSeen && entrySeen ? taken : 0;
+    }
+
+    std::size_t StepsOfAnAddonAndItsEntryAt(const std::vector<OperationRecord>& records, const std::size_t first)
+    {
+        const std::size_t turnedOff =
+            StepsOfTheStartupRunAt(records, first, OperationKind::DisableAddon, OperationKind::TurnOffTheStartupEntry);
+
+        if (turnedOff > 0)
+        {
+            return turnedOff;
+        }
+
+        return StepsOfTheStartupRunAt(records, first, OperationKind::EnableAddon, OperationKind::TurnOnTheStartupEntry);
+    }
+
     JournalEntry EntryOf(const std::vector<OperationRecord>& records,
                          const std::size_t first,
                          const std::size_t taken,
@@ -104,6 +154,11 @@ bool JournalEntry::IsASwap() const
     return kind == JournalEntryKind::Swap;
 }
 
+bool JournalEntry::IsAnAddonAndItsStartupEntry() const
+{
+    return kind == JournalEntryKind::AddonAndItsStartupEntry;
+}
+
 bool JournalEntry::HasSteps() const
 {
     return kind != JournalEntryKind::OneOperation;
@@ -139,6 +194,13 @@ std::vector<JournalEntry> GroupOperations(const std::vector<OperationRecord>& re
         {
             entries.push_back(EntryOf(records, first, 2, JournalEntryKind::Swap));
             first += 2;
+            continue;
+        }
+
+        if (const std::size_t taken = StepsOfAnAddonAndItsEntryAt(records, first); taken > 0)
+        {
+            entries.push_back(EntryOf(records, first, taken, JournalEntryKind::AddonAndItsStartupEntry));
+            first += taken;
             continue;
         }
 

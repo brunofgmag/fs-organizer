@@ -64,14 +64,16 @@ namespace
 
 SetupService::SetupService(const SimulatorLocator& locator,
                            const FilesystemProbe& filesystemProbe,
-                           SettingsRepository& settings,
                            const LibraryIdGenerator& identities,
-                           const CatalogScanner& catalog)
+                           const CatalogScanner& catalog,
+                           std::vector<SimulatorProfile> existing,
+                           KeepTheProfile keep)
     : locator_(locator),
       filesystemProbe_(filesystemProbe),
-      settings_(settings),
       identities_(identities),
-      catalog_(catalog)
+      catalog_(catalog),
+      existing_(std::move(existing)),
+      keep_(std::move(keep))
 {
 }
 
@@ -146,17 +148,10 @@ bool SetupService::Complete() const
         return false;
     }
 
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
-    {
-        return false;
-    }
-
     const SimulatorCandidate& candidate = candidates_[chosen_];
-    AppSettings settings = *loaded;
 
     SimulatorProfile profile;
-    profile.id = ProfileId(candidate.variant, settings.profiles);
+    profile.id = ProfileId(candidate.variant, existing_);
     profile.variant = candidate.variant;
     profile.destinations = candidate.destinations;
     profile.defaultDestination = DefaultDestination(candidate.destinations);
@@ -166,8 +161,5 @@ bool SetupService::Complete() const
         profile.libraries.push_back(registered.library);
     }
 
-    settings.profiles.push_back(profile);
-    settings.activeProfileId = profile.id;
-
-    return settings_.Save(settings);
+    return keep_ && keep_(profile);
 }

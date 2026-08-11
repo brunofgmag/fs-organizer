@@ -15,6 +15,7 @@
 #include <QtGui/QStyleHints>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QListWidget>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QTableView>
@@ -39,7 +40,13 @@
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
+#include "application/CoverageService.h"
+#include "application/SceneryService.h"
+#include "infrastructure/scenery/BglSceneryParser.h"
+#include "infrastructure/scenery/JsonSceneryCache.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ContentXmlPackageList.h"
+#include "viewmodel/CoverageViewModel.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/StartupFileLocations.h"
@@ -55,9 +62,12 @@
 #include "view/library/AddonTreePage.h"
 #include "domain/support/PathUtils.h"
 #include "view/library/LibraryRootDialog.h"
+#include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
+#include "view/simulator/PackageListPage.h"
+#include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/shell/LanguageSwitch.h"
@@ -289,6 +299,23 @@ namespace
                           .occupant = addons[0]->path};
     }
 
+    std::vector<StartupLine> AStartupEntryWorthShowing(StartupViewModel& startup)
+    {
+        startup.Show();
+
+        std::vector<StartupLine> carried;
+
+        for (const StartupLine& line : startup.Lines())
+        {
+            if (line.enabled && line.reach == StartupReach::InsideAnAddon)
+            {
+                carried.push_back(line);
+            }
+        }
+
+        return carried;
+    }
+
     QSize SizeFrom(const QString& text)
     {
         const QStringList parts = text.split(QLatin1Char('x'), Qt::SkipEmptyParts);
@@ -372,6 +399,19 @@ int main(int argc, char* argv[])
 
     QCoreApplication::installTranslator(&interface);
 
+    QTranslator nativeWidgets;
+    if (LanguageSwitch::LoadNativeWidgets(nativeWidgets, wantedLanguage))
+    {
+        QCoreApplication::installTranslator(&nativeWidgets);
+    }
+    else if (wantedLanguage != QLatin1String("en"))
+    {
+        Out() << "no Qt catalogue for " << wantedLanguage
+              << ", so the standard buttons would come out in English while the app has them "
+                 "translated. Build fsorg-shot again.\n";
+        return 1;
+    }
+
     ApplyModernistTheme(app);
 
     const QDir folder(parser.value(out));
@@ -427,8 +467,13 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
+    const std::vector<StartupFileLocation> startupFiles =
+        StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe);
+    ExeXmlStartupEntries startupEntries{{}};
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
+
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                  stored->linkType);
+                                  startupService, stored->linkType);
     ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, stored->linkType);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 stored->linkType);
@@ -438,7 +483,14 @@ int main(int argc, char* argv[])
     MainWindow shell(*stored);
     RunsRightHere runner;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, processProbe, runner, notifier);
+    Session session(profileService, organizer, settings, *stored, processProbe, runner, notifier);
+
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, &shell,
+                     [&session, &startupEntries, &startupFiles]
+                     {
+                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                         session.RefreshStartupEntries();
+                     });
 
     SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -448,10 +500,22 @@ int main(int argc, char* argv[])
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                           sizes);
-    DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
+    ContentXmlPackageList packageList(
+        ChooseContentList(ContentListLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant)
+            .value_or(ChosenContentList{})
+            .listPath);
+    CoverageService coverageService(packageList, processProbe, true);
+
+    const BglSceneryParser sceneryParser;
+    JsonSceneryCache sceneryCache(staged->settingsFile.parent_path() / "scenery-cache.json");
+    SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
+    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+
+    auto* libraryPage =
+        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -467,29 +531,28 @@ int main(int argc, char* argv[])
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
     FilePresetRepository presetRepository(staged->presetsFolder);
-    PresetService presetService(presetRepository, profileService);
-    PresetViewModel presetViewModel(session, presetService);
+    PresetService presetService(presetRepository, profileService, startupService);
+    PresetViewModel presetViewModel(session, presetService, profileService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, clock, runner);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
-    ExeXmlStartupEntries startupEntries(
-        StartupFileOf(StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant));
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
-    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
+    auto* packageListPage = new PackageListPage(coverageViewModel);
+    auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
-    UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
+    UpdateViewModel updateViewModel(updateService, UpdateMode::Notify, false);
 
-    OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
+    OptionsViewModel optionsViewModel(session, profileService, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);
     PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
-    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, startupPage);
+    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
@@ -566,6 +629,37 @@ int main(int argc, char* argv[])
               selectIfAsked(*communityPage, QStringLiteral("Destinations"));
           });
     shoot(presetsTab, QStringLiteral("03-presets"), {});
+    shoot(presetsTab, QStringLiteral("03b-presets-plan"),
+          [presetsPage]
+          {
+              if (auto* plan = presetsPage->findChild<QPushButton*>(QStringLiteral("PresetPlanTab")))
+              {
+                  plan->click();
+              }
+          });
+    shoot(presetsTab, QStringLiteral("03c-presets-startup-empty"),
+          [presetsPage]
+          {
+              if (auto* startup = presetsPage->findChild<QPushButton*>(QStringLiteral("PresetStartupTab")))
+              {
+                  startup->click();
+              }
+          });
+    shoot(presetsTab, QStringLiteral("03d-presets-startup-table"),
+          [presetsPage]
+          {
+              if (auto* startup = presetsPage->findChild<QPushButton*>(QStringLiteral("PresetStartupTab")))
+              {
+                  startup->click();
+              }
+              if (auto* governs = presetsPage->findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup")))
+              {
+                  if (!governs->isChecked())
+                  {
+                      governs->click();
+                  }
+              }
+          });
     shoot(journalTab, QStringLiteral("04-journal"),
           [&journalViewModel, journalPage, &selectIfAsked]
           {
@@ -619,6 +713,26 @@ int main(int argc, char* argv[])
         libraryTab->click();
         LetTheLayoutSettle();
 
+        if (const std::vector<StartupLine> carried = AStartupEntryWorthShowing(startupViewModel); !carried.empty())
+        {
+            StartupEntryDialog carriedDialog(carried, &shell);
+
+            landed = SaveTheDialogOpenedBy(
+                         [&carriedDialog]
+                         {
+                             static_cast<void>(carriedDialog.exec());
+                         },
+                         folder, QStringLiteral("22-library-startup-entry"))
+                && landed;
+
+            libraryTab->click();
+            LetTheLayoutSettle();
+        }
+        else
+        {
+            Out() << "no enabled startup entry reaches into an addon, so there is no warning to write\n";
+        }
+
         QPushButton* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
 
         if (SelectTheAddonNamed(*libraryPage, TheFirstAddonOf(session.Snapshot())) && remove != nullptr
@@ -658,7 +772,8 @@ int main(int argc, char* argv[])
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
     const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),
-                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size")};
+                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size"),
+                                  QStringLiteral("24-diagnostics-scenery")};
 
     diagnosticsTab->click();
     diagnosticsViewModel.Show();
@@ -676,6 +791,7 @@ int main(int argc, char* argv[])
     }
 
     simulatorTab->click();
+    simulatorPage->ShowTheStartupEntries();
     startupViewModel.Show();
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("19-simulator-startup")) && landed;
@@ -684,6 +800,16 @@ int main(int argc, char* argv[])
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("20-simulator-startup-loose")) && landed;
     startupViewModel.Manage(true);
+
+    simulatorPage->ShowThePackageList();
+    coverageViewModel.Show();
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("22-simulator-packages")) && landed;
+
+    coverageViewModel.Manage(false);
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("23-simulator-packages-loose")) && landed;
+    coverageViewModel.Manage(true);
 
     libraryTab->click();
     shell.ShowOptions();

@@ -12,9 +12,9 @@ FilesystemScanner::FilesystemScanner(const ManifestParser& manifestParser, const
 {
 }
 
-TreeNode FilesystemScanner::Scan(const std::filesystem::path& libraryRoot) const
+TreeNode FilesystemScanner::ScanWhile(const std::filesystem::path& libraryRoot, const ScanGate& gate) const
 {
-    TreeNode root = ScanFolder(libraryRoot);
+    TreeNode root = ScanFolder(libraryRoot, gate);
     root.kind = TreeNodeKind::Library;
 
     return root;
@@ -30,9 +30,9 @@ bool FilesystemScanner::WasDeclaredACategory(const std::filesystem::path& folder
     return filesystemProbe_.EntryExistsWithoutFollowingLinks(CategoryMarkerPathIn(folder));
 }
 
-TreeNode FilesystemScanner::ScanFolder(const std::filesystem::path& folder) const
+TreeNode FilesystemScanner::ScanFolder(const std::filesystem::path& folder, const ScanGate& gate) const
 {
-    return HasManifest(folder) ? ScanAddon(folder) : ScanCategory(folder);
+    return HasManifest(folder) ? ScanAddon(folder) : ScanCategory(folder, gate);
 }
 
 TreeNode FilesystemScanner::ScanAddon(const std::filesystem::path& folder) const
@@ -56,7 +56,7 @@ TreeNode FilesystemScanner::ScanAddon(const std::filesystem::path& folder) const
     return node;
 }
 
-TreeNode FilesystemScanner::ScanCategory(const std::filesystem::path& folder) const
+TreeNode FilesystemScanner::ScanCategory(const std::filesystem::path& folder, const ScanGate& gate) const
 {
     TreeNode node;
     node.kind = TreeNodeKind::Category;
@@ -65,9 +65,14 @@ TreeNode FilesystemScanner::ScanCategory(const std::filesystem::path& folder) co
 
     for (const std::filesystem::path& child : filesystemProbe_.ChildDirectories(folder))
     {
+        if (!gate.StillWanted())
+        {
+            break;
+        }
+
         if (!CreatedByTheImporter(child))
         {
-            node.children.push_back(ScanFolder(child));
+            node.children.push_back(ScanFolder(child, gate));
         }
     }
 

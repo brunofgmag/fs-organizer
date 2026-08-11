@@ -122,6 +122,18 @@ QString Explain(const FileResult result)
     case FileResult::TheStartupEntriesAreLeftLoose:
         return QObject::tr("the startup entries of the simulator are not managed, so the app does not read or write "
                            "that file");
+    case FileResult::TheAddonWasNeverMeasured:
+        return QObject::tr("nobody measured this addon, so there is no telling whether the Recycle Bin of that volume "
+                           "takes it");
+    case FileResult::ThePathIsTooLong:
+        return QObject::tr("the name is longer than a folder name can be, so the disk would refuse it");
+    case FileResult::CouldNotReadThePackageList:
+        return QObject::tr("the package list of the simulator could not be read");
+    case FileResult::CouldNotWriteThePackageList:
+        return QObject::tr("the package list of the simulator could not be written, so nothing changed");
+    case FileResult::ThePackageListIsLeftLoose:
+        return QObject::tr("the package list of the simulator is not managed, so the app does not read or write that "
+                           "file");
     }
 
     return {};
@@ -137,6 +149,11 @@ namespace
 
 QString Describe(const LinkOperationResult& result)
 {
+    if (const FileResult* file = result.outcome.File(); file != nullptr)
+    {
+        return QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(*file));
+    }
+
     QString line =
         QStringLiteral("%1: %2").arg(AsText(result.addonFolder.filename()), Explain(result.outcome.Failure()));
 

@@ -20,11 +20,17 @@ public:
 
     void Remove(const std::string& profileId, const std::string& name) override;
 
+    [[nodiscard]] std::optional<Preset> LoadReturnPreset(const std::string& profileId) const override;
+
+    [[nodiscard]] bool SaveReturnPreset(const std::string& profileId, const Preset& preset) override;
+
 private:
     [[nodiscard]] std::optional<std::filesystem::path> FolderOf(const std::string& profileId) const;
 
     [[nodiscard]] std::optional<std::filesystem::path> FileOf(const std::string& profileId,
                                                               const std::string& name) const;
+
+    [[nodiscard]] std::optional<std::filesystem::path> ReturnFileOf(const std::string& profileId) const;
 
     std::filesystem::path root_;
 };

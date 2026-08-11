@@ -9,26 +9,16 @@
 #include "domain/ports/FilesystemProbe.h"
 #include "support/FileClock.h"
 
-#ifdef _WIN32
 #include "infrastructure/fileops/ExtendedPaths.h"
-#endif
 
 [[nodiscard]] inline std::filesystem::path AsFarAsTheProductionProbeReaches(const std::filesystem::path& path)
 {
-#ifdef _WIN32
     return WithExtendedPrefix(path);
-#else
-    return path;
-#endif
 }
 
 [[nodiscard]] inline std::filesystem::path WithoutTheReachPrefix(const std::filesystem::path& path)
 {
-#ifdef _WIN32
     return WithoutExtendedPrefix(path);
-#else
-    return path;
-#endif
 }
 
 class StdFilesystemProbe final : public FilesystemProbe
@@ -41,11 +31,7 @@ public:
             return true;
         }
 
-#ifdef _WIN32
         return status.type() == std::filesystem::file_type::junction;
-#else
-        return false;
-#endif
     }
 
     [[nodiscard]] bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const override
@@ -161,6 +147,22 @@ public:
         }
 
         return std::string(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
+    }
+
+    [[nodiscard]] std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,
+                                                          const std::size_t most) const override
+    {
+        std::ifstream file(AsFarAsTheProductionProbeReaches(path), std::ios::binary);
+        if (!file.is_open())
+        {
+            return std::nullopt;
+        }
+
+        std::string bytes(most, '\0');
+        file.read(bytes.data(), static_cast<std::streamsize>(most));
+        bytes.resize(static_cast<std::size_t>(file.gcount()));
+
+        return bytes;
     }
 
     [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override

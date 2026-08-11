@@ -10,6 +10,7 @@
 #include "view/panels/ModelRowDetail.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/SessionNotifier.h"
@@ -33,6 +34,7 @@ public:
     AddonTreePage(AddonTreeViewModel& viewModel,
                   DeletionViewModel& deletion,
                   ImportViewModel& importViewModel,
+                  CoverageViewModel& coverage,
                   AddonTreeModel& model,
                   const SessionNotifier& notifier,
                   QWidget* parent = nullptr);
@@ -92,6 +94,13 @@ private:
 
     [[nodiscard]] std::vector<TakenPlace> SwapsTheUserAgreedTo(const std::vector<const TreeNode*>& nodes, bool enable);
 
+    void Apply(const std::vector<const TreeNode*>& nodes, bool enable);
+
+    void TurnOffWhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes, bool enable);
+
+    [[nodiscard]] std::vector<StartupLine> StartupEntriesTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,
+                                                                         bool enable);
+
     void OnBatchFinished(const LinkBatchReport& report);
 
     [[nodiscard]] QString NothingChangedBecause(const LinkBatchReport& report) const;
@@ -141,6 +150,7 @@ private:
     AddonTreeViewModel& viewModel_;
     DeletionViewModel& deletion_;
     ImportViewModel& importViewModel_;
+    CoverageViewModel& coverage_;
     AddonTreeModel& model_;
     QStackedWidget* pages_ = nullptr;
     QTreeView* tree_ = nullptr;
@@ -158,7 +168,6 @@ private:
     QPushButton* rescan_ = nullptr;
     QLineEdit* search_ = nullptr;
     QCheckBox* hideEmpty_ = nullptr;
-    QLabel* promise_ = nullptr;
     EmptyState* invite_ = nullptr;
     QPushButton* inviteAction_ = nullptr;
     QList<ModelRowDetail::Field> fields_;

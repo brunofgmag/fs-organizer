@@ -1,12 +1,15 @@
 #ifndef FS_ORGANIZER_APPLICATION_SESSION_H
 #define FS_ORGANIZER_APPLICATION_SESSION_H
 
+#include <atomic>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <string>
 
 #include "application/LibraryOrganizer.h"
 #include "application/ProfileService.h"
+#include "application/model/AppSettings.h"
 #include "application/model/FileOperationResult.h"
 #include "application/model/LegacyImport.h"
 #include "application/model/ImportOperationResult.h"
@@ -25,10 +28,15 @@ class Session
 public:
     Session(ProfileService& service,
             const LibraryOrganizer& organizer,
-            SettingsRepository& settings,
+            SettingsRepository& repository,
+            AppSettings stored,
             const ProcessProbe& probe,
             BackgroundRunner& runner,
             SessionObserver& observer);
+
+    [[nodiscard]] const AppSettings& Settings() const;
+
+    bool Rewrite(const std::function<bool(AppSettings&)>& change);
 
     void NoteLinkResults(const std::vector<LinkOperationResult>& results);
 
@@ -44,7 +52,11 @@ public:
 
     [[nodiscard]] bool Scanning() const;
 
+    void CancelScan();
+
     void RefreshEntries();
+
+    void RefreshStartupEntries();
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
 
@@ -81,11 +93,14 @@ private:
 
     void Adopt();
 
-    void Save(const SimulatorProfile& profile) const;
+    void Save(const SimulatorProfile& profile);
+
+    bool Commit(AppSettings next);
 
     ProfileService& service_;
     const LibraryOrganizer& organizer_;
-    SettingsRepository& settings_;
+    SettingsRepository& repository_;
+    AppSettings settings_;
     const ProcessProbe& probe_;
     BackgroundRunner& runner_;
     SessionObserver& observer_;
@@ -94,6 +109,7 @@ private:
     SimulatorProfile scanning_;
     ProfileSnapshot scanned_;
     std::optional<SimulatorProfile> queued_;
+    std::atomic<bool> cancelled_{false};
     bool running_ = false;
     bool warnedAboutSimulator_ = false;
     bool restartPending_ = false;
