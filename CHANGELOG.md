@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.0](https://github.com/brunofgmag/fs-organizer/compare/v0.29.0...v0.30.0) (2026-08-11)
+
+
+### Features
+
+* warn when an airport is covered twice and offer to switch the simulator's one off ([#85](https://github.com/brunofgmag/fs-organizer/issues/85)) ([3505516](https://github.com/brunofgmag/fs-organizer/commit/35055165eca0a6a11112b8ee984b5851796e4fa8))
+
 ## [0.29.0](https://github.com/brunofgmag/fs-organizer/compare/v0.28.0...v0.29.0) (2026-08-11)
 
 
