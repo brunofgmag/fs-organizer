@@ -156,6 +156,7 @@ namespace QTest
         case FileResult::TheRecycleBinIsTooSmall: return qstrdup("TheRecycleBinIsTooSmall");
         case FileResult::TheRecycleBinCannotReachIt: return qstrdup("TheRecycleBinCannotReachIt");
         case FileResult::TheAddonWasNeverMeasured: return qstrdup("TheAddonWasNeverMeasured");
+        case FileResult::ThePathIsTooLong: return qstrdup("ThePathIsTooLong");
         case FileResult::CouldNotDelete: return qstrdup("CouldNotDelete");
         case FileResult::CouldNotRecordTheOrigin: return qstrdup("CouldNotRecordTheOrigin");
         case FileResult::CannotWriteInTheOtherProgramsFolder: return qstrdup("CannotWriteInTheOtherProgramsFolder");

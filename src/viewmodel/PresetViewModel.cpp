@@ -360,6 +360,12 @@ bool PresetViewModel::Accepts(const QString& name)
         return false;
     }
 
+    if (PathTooLong(wanted.toStdString()))
+    {
+        emit Refused(tr("The preset name has to fit in %n character(s).", nullptr, static_cast<int>(kASegmentStopsAt)));
+        return false;
+    }
+
     if (!PathSegment::From(wanted.toStdString()).has_value())
     {
         emit Refused(tr("The preset name cannot contain %1, and cannot end with a space or a full stop.")

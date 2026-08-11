@@ -127,6 +127,7 @@ namespace
         case FileResult::TheRecycleBinIsTooSmall: return "theRecycleBinIsTooSmall";
         case FileResult::TheRecycleBinCannotReachIt: return "theRecycleBinCannotReachIt";
         case FileResult::TheAddonWasNeverMeasured: return "theAddonWasNeverMeasured";
+        case FileResult::ThePathIsTooLong: return "thePathIsTooLong";
         case FileResult::CouldNotDelete: return "couldNotDelete";
         case FileResult::CouldNotRecordTheOrigin: return "couldNotRecordTheOrigin";
         case FileResult::CannotWriteInTheOtherProgramsFolder: return "cannotWriteInTheOtherProgramsFolder";

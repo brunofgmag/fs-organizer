@@ -41,6 +41,7 @@ enum class FileResult : int
     CouldNotWriteTheStartupFile = 32,
     TheStartupEntriesAreLeftLoose = 33,
     TheAddonWasNeverMeasured = 34,
+    ThePathIsTooLong = 35,
 };
 
 inline constexpr std::array kAllFileResults{
@@ -79,9 +80,10 @@ inline constexpr std::array kAllFileResults{
     FileResult::CouldNotWriteTheStartupFile,
     FileResult::TheStartupEntriesAreLeftLoose,
     FileResult::TheAddonWasNeverMeasured,
+    FileResult::ThePathIsTooLong,
 };
 
-static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::TheAddonWasNeverMeasured) + 1,
+static_assert(kAllFileResults.size() == static_cast<std::size_t>(FileResult::ThePathIsTooLong) + 1,
               "Every FileResult belongs in kAllFileResults, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool Succeeded(const FileResult result)
