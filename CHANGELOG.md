@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.1](https://github.com/brunofgmag/fs-organizer/compare/v0.30.0...v0.30.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* run the diagnostics tables edge to edge, and correct the build the README documents ([#88](https://github.com/brunofgmag/fs-organizer/issues/88)) ([3fdc26b](https://github.com/brunofgmag/fs-organizer/commit/3fdc26b4601a7920e34dc85b74cc58911142a3b8))
+
 ## [0.30.0](https://github.com/brunofgmag/fs-organizer/compare/v0.29.0...v0.30.0) (2026-08-11)
 
 
