@@ -8,16 +8,17 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QScrollArea>
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/ScrollThatReportsItsContent.h"
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/FailureText.h"
 
 namespace
 {
     constexpr int kNoPlaceChosen = 0;
+    constexpr int kDialogWidth = 660;
 
     QString VersionsOf(const RestoreCheck& check)
     {
@@ -101,10 +102,10 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
 
     grid->setRowStretch(row, 1);
 
-    auto* scroll = new QScrollArea(this);
+    auto* scroll = new ScrollThatReportsItsContent(this);
     scroll->setWidget(listed);
     scroll->setWidgetResizable(true);
-    scroll->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
 
     counted_ = new QLabel(this);
     counted_->setWordWrap(true);
@@ -143,7 +144,7 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
 
     ShowHowManyWillGoBack();
 
-    SizeToTheContent(*this, 660);
+    SizeToTheContent(*this, kDialogWidth);
 }
 
 void RestoreDialog::AddTheSettledRow(QGridLayout& grid, const RestoreOffer& offer, const int row)
