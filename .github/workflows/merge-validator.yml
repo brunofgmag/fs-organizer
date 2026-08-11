@@ -19,7 +19,4 @@ concurrency:
 jobs:
   validate:
     uses: brunofgmag/gsx-integrator-ci/.github/workflows/merge-validator.yml@main
-    with:
-      fork-tests-only: true
-      tests-only-flag: FSORG_TESTS_ONLY
     secrets: inherit

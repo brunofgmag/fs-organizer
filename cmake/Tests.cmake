@@ -69,10 +69,10 @@ add_test(NAME code-page
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-code-page.cmake")
 
-add_test(NAME portable-layer
+add_test(NAME no-win32-in-the-core
         COMMAND "${CMAKE_COMMAND}"
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
-        -P "${CMAKE_SOURCE_DIR}/tools/check-portable-layer.cmake")
+        -P "${CMAKE_SOURCE_DIR}/tools/check-no-win32-in-the-core.cmake")
 
 add_test(NAME disabled-ink
         COMMAND "${CMAKE_COMMAND}"
@@ -99,7 +99,7 @@ add_test(NAME no-retyped-formatting
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-retyped-formatting.cmake")
 
-if (WIN32 AND NOT FSORG_TESTS_ONLY)
+if (WIN32)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"
             "-DFSORG_EXECUTABLE=$<TARGET_FILE:${APP_NAME}>"
@@ -459,19 +459,17 @@ target_link_libraries(fsorg-github-release-parser-tests PRIVATE fsorg-infrastruc
 target_compile_definitions(fsorg-github-release-parser-tests PRIVATE
         FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
 
-if (NOT FSORG_TESTS_ONLY)
-    fsorg_add_qt_test(fsorg-github-update-service-tests github-update-service
-            tests/infrastructure/update/tst_github_update_service.cpp
-            src/infrastructure/update/GithubUpdateService.cpp)
-    target_link_libraries(fsorg-github-update-service-tests PRIVATE fsorg-infrastructure Qt6::Network)
+fsorg_add_qt_test(fsorg-github-update-service-tests github-update-service
+        tests/infrastructure/update/tst_github_update_service.cpp
+        src/infrastructure/update/GithubUpdateService.cpp)
+target_link_libraries(fsorg-github-update-service-tests PRIVATE fsorg-infrastructure Qt6::Network)
 
-    if (WIN32)
-        add_custom_command(TARGET fsorg-github-update-service-tests POST_BUILD
-                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "$<TARGET_FILE:Qt6::Network>"
-                "$<TARGET_FILE_DIR:fsorg-github-update-service-tests>"
-                VERBATIM)
-    endif ()
+if (WIN32)
+    add_custom_command(TARGET fsorg-github-update-service-tests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "$<TARGET_FILE:Qt6::Network>"
+            "$<TARGET_FILE_DIR:fsorg-github-update-service-tests>"
+            VERBATIM)
 endif ()
 
 fsorg_add_qt_test(fsorg-update-view-model-tests update-view-model
@@ -894,234 +892,232 @@ if (WIN32)
 
     target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)
 
-    if (NOT FSORG_TESTS_ONLY)
-        fsorg_add_qt_test(fsorg-main-window-tests main-window
-                tests/view/tst_main_window.cpp
-                assets/resources.qrc
-                ${WINDOWS_SHELL_SOURCES})
-        target_link_libraries(fsorg-main-window-tests PRIVATE fsorg-view fsorg-infrastructure)
-        configure_fsorg_gui_test(fsorg-main-window-tests main-window)
+    fsorg_add_qt_test(fsorg-main-window-tests main-window
+            tests/view/tst_main_window.cpp
+            assets/resources.qrc
+            ${WINDOWS_SHELL_SOURCES})
+    target_link_libraries(fsorg-main-window-tests PRIVATE fsorg-view fsorg-infrastructure)
+    configure_fsorg_gui_test(fsorg-main-window-tests main-window)
 
 
 
-        fsorg_add_qt_test(fsorg-startup-page-tests startup-page
-                tests/view/tst_startup_page.cpp
-                tests/doubles/StartupOverFakes.h
-                assets/resources.qrc
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/FakeStartupEntries.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/support/EnumPrinting.h
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-startup-page-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-startup-page-tests startup-page)
+    fsorg_add_qt_test(fsorg-startup-page-tests startup-page
+            tests/view/tst_startup_page.cpp
+            tests/doubles/StartupOverFakes.h
+            assets/resources.qrc
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/FakeStartupEntries.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-startup-page-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-startup-page-tests startup-page)
 
 
-        fsorg_add_qt_test(fsorg-diagnostics-page-tests diagnostics-page
-                tests/view/tst_diagnostics_page.cpp
-                tests/doubles/StartupOverFakes.h
-                assets/resources.qrc
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/support/EnumPrinting.h
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-diagnostics-page-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-diagnostics-page-tests diagnostics-page)
+    fsorg_add_qt_test(fsorg-diagnostics-page-tests diagnostics-page
+            tests/view/tst_diagnostics_page.cpp
+            tests/doubles/StartupOverFakes.h
+            assets/resources.qrc
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-diagnostics-page-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-diagnostics-page-tests diagnostics-page)
 
 
-        fsorg_add_qt_test(fsorg-presets-page-tests presets-page
-                tests/view/tst_presets_page.cpp
-                tests/doubles/StartupOverFakes.h
-                assets/resources.qrc
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakePresetRepository.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/support/EnumPrinting.h
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-presets-page-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
+    fsorg_add_qt_test(fsorg-presets-page-tests presets-page
+            tests/view/tst_presets_page.cpp
+            tests/doubles/StartupOverFakes.h
+            assets/resources.qrc
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakePresetRepository.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-presets-page-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
 
 
-        fsorg_add_qt_test(fsorg-options-page-tests options-page
-                tests/view/tst_options_page.cpp
-                tests/doubles/StartupOverFakes.h
-                assets/resources.qrc
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/doubles/FakeUpdateService.h)
-        target_link_libraries(fsorg-options-page-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-options-page-tests options-page)
+    fsorg_add_qt_test(fsorg-options-page-tests options-page
+            tests/view/tst_options_page.cpp
+            tests/doubles/StartupOverFakes.h
+            assets/resources.qrc
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/doubles/FakeUpdateService.h)
+    target_link_libraries(fsorg-options-page-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-options-page-tests options-page)
 
-        fsorg_add_qt_test(fsorg-legacy-import-dialog-tests legacy-import-dialog
-                tests/view/tst_legacy_import_dialog.cpp
-                tests/doubles/StartupOverFakes.h
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLegacyConfigSource.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakePresetRepository.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/doubles/RecordingSessionObserver.h)
-        target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
+    fsorg_add_qt_test(fsorg-legacy-import-dialog-tests legacy-import-dialog
+            tests/view/tst_legacy_import_dialog.cpp
+            tests/doubles/StartupOverFakes.h
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLegacyConfigSource.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakePresetRepository.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/doubles/RecordingSessionObserver.h)
+    target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
 
-        fsorg_add_qt_test(fsorg-collision-dialog-tests collision-dialog
-                tests/view/tst_collision_dialog.cpp
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-collision-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-collision-dialog-tests collision-dialog)
+    fsorg_add_qt_test(fsorg-collision-dialog-tests collision-dialog
+            tests/view/tst_collision_dialog.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-collision-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-collision-dialog-tests collision-dialog)
 
-        fsorg_add_qt_test(fsorg-conflict-dialog-tests conflict-dialog
-                tests/view/tst_conflict_dialog.cpp
-                tests/support/EnumPrinting.h
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-conflict-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-conflict-dialog-tests conflict-dialog)
+    fsorg_add_qt_test(fsorg-conflict-dialog-tests conflict-dialog
+            tests/view/tst_conflict_dialog.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-conflict-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-conflict-dialog-tests conflict-dialog)
 
-        fsorg_add_qt_test(fsorg-repair-dialog-tests repair-dialog
-                tests/view/tst_repair_dialog.cpp
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-repair-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-repair-dialog-tests repair-dialog)
+    fsorg_add_qt_test(fsorg-repair-dialog-tests repair-dialog
+            tests/view/tst_repair_dialog.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-repair-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-repair-dialog-tests repair-dialog)
 
-        fsorg_add_qt_test(fsorg-setup-wizard-tests setup-wizard
-                tests/view/tst_setup_wizard.cpp
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/FakeSimulatorLocator.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-setup-wizard-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-setup-wizard-tests setup-wizard)
+    fsorg_add_qt_test(fsorg-setup-wizard-tests setup-wizard
+            tests/view/tst_setup_wizard.cpp
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/FakeSimulatorLocator.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-setup-wizard-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-setup-wizard-tests setup-wizard)
 
-        fsorg_add_qt_test(fsorg-restore-dialog-tests restore-dialog
-                tests/view/tst_restore_dialog.cpp
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-restore-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-restore-dialog-tests restore-dialog)
+    fsorg_add_qt_test(fsorg-restore-dialog-tests restore-dialog
+            tests/view/tst_restore_dialog.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-restore-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-restore-dialog-tests restore-dialog)
 
-        fsorg_add_qt_test(fsorg-delete-dialog-tests delete-dialog
-                tests/view/tst_delete_dialog.cpp
-                tests/doubles/StartupOverFakes.h
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/support/EnumPrinting.h
-                tests/support/PathPrinting.h
-                src/domain/support/PathUtils.h)
-        target_link_libraries(fsorg-delete-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-delete-dialog-tests delete-dialog)
+    fsorg_add_qt_test(fsorg-delete-dialog-tests delete-dialog
+            tests/view/tst_delete_dialog.cpp
+            tests/doubles/StartupOverFakes.h
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/support/PathUtils.h)
+    target_link_libraries(fsorg-delete-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-delete-dialog-tests delete-dialog)
 
-        fsorg_add_qt_test(fsorg-library-root-dialog-tests library-root-dialog
-                tests/view/tst_library_root_dialog.cpp
-                src/domain/model/RecycleLimits.h)
-        target_link_libraries(fsorg-library-root-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-library-root-dialog-tests library-root-dialog)
+    fsorg_add_qt_test(fsorg-library-root-dialog-tests library-root-dialog
+            tests/view/tst_library_root_dialog.cpp
+            src/domain/model/RecycleLimits.h)
+    target_link_libraries(fsorg-library-root-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-library-root-dialog-tests library-root-dialog)
 
-        fsorg_add_qt_test(fsorg-swap-dialog-tests swap-dialog
-                tests/view/tst_swap_dialog.cpp
-                tests/doubles/StartupOverFakes.h
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/FakeSimulatorPackages.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-swap-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-swap-dialog-tests swap-dialog)
+    fsorg_add_qt_test(fsorg-swap-dialog-tests swap-dialog
+            tests/view/tst_swap_dialog.cpp
+            tests/doubles/StartupOverFakes.h
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/FakeSimulatorPackages.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-swap-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-swap-dialog-tests swap-dialog)
 
-        fsorg_add_qt_test(fsorg-startup-entry-dialog-tests startup-entry-dialog
-                tests/view/tst_startup_entry_dialog.cpp
-                tests/support/PathPrinting.h)
-        target_link_libraries(fsorg-startup-entry-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-startup-entry-dialog-tests startup-entry-dialog)
+    fsorg_add_qt_test(fsorg-startup-entry-dialog-tests startup-entry-dialog
+            tests/view/tst_startup_entry_dialog.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-startup-entry-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-startup-entry-dialog-tests startup-entry-dialog)
 
-        fsorg_add_qt_test(fsorg-omitted-dialog-tests omitted-dialog
-                tests/view/tst_omitted_dialog.cpp)
-        target_link_libraries(fsorg-omitted-dialog-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-omitted-dialog-tests omitted-dialog)
+    fsorg_add_qt_test(fsorg-omitted-dialog-tests omitted-dialog
+            tests/view/tst_omitted_dialog.cpp)
+    target_link_libraries(fsorg-omitted-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-omitted-dialog-tests omitted-dialog)
 
-        fsorg_add_qt_test(fsorg-community-page-tests community-page
-                tests/view/tst_community_page.cpp
-                tests/doubles/StartupOverFakes.h
-                tests/doubles/FakeCatalogScanner.h
-                tests/doubles/FakeClock.h
-                tests/doubles/FakeFileOperations.h
-                tests/doubles/FakeFilesystemProbe.h
-                tests/doubles/FakeLibraryIdGenerator.h
-                tests/doubles/FakeLinkService.h
-                tests/doubles/FakeOperationJournal.h
-                tests/doubles/FakeProcessProbe.h
-                tests/doubles/FakeSettingsRepository.h
-                tests/doubles/InMemoryFileSystem.h
-                tests/doubles/InlineBackgroundRunner.h
-                tests/support/EnumPrinting.h
-                tests/support/PathPrinting.h
-                assets/resources.qrc)
-        target_link_libraries(fsorg-community-page-tests PRIVATE fsorg-view)
-        configure_fsorg_gui_test(fsorg-community-page-tests community-page)
+    fsorg_add_qt_test(fsorg-community-page-tests community-page
+            tests/view/tst_community_page.cpp
+            tests/doubles/StartupOverFakes.h
+            tests/doubles/FakeCatalogScanner.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeFileOperations.h
+            tests/doubles/FakeFilesystemProbe.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLinkService.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakeProcessProbe.h
+            tests/doubles/FakeSettingsRepository.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            assets/resources.qrc)
+    target_link_libraries(fsorg-community-page-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-community-page-tests community-page)
 
-    endif ()
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
             tests/infrastructure/sim/tst_windows_process_probe.cpp)

@@ -1,11 +1,7 @@
-if (FSORG_TESTS_ONLY)
-    return()
-endif ()
-
 if (NOT WIN32)
     message(FATAL_ERROR
-            "fs-organizer targets Windows: NTFS reparse points have no portable equivalent. "
-            "Configure with -DFSORG_TESTS_ONLY=ON to build the domain tests on a host platform.")
+            "fs-organizer targets Windows and only Windows: NTFS reparse points have no portable "
+            "equivalent, and the domain tests are built and run here like every other target.")
 endif ()
 
 if (MSVC)

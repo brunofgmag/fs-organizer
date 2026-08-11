@@ -13,15 +13,11 @@ include(cmake/Dependencies.cmake)
 include(cmake/Sources.cmake)
 include(cmake/Libraries.cmake)
 
-if (NOT FSORG_TESTS_ONLY)
-    include(cmake/AppTarget.cmake)
-    include(cmake/Tools.cmake)
-endif ()
+include(cmake/AppTarget.cmake)
+include(cmake/Tools.cmake)
 
 if (BUILD_TESTING)
     include(cmake/Tests.cmake)
 endif ()
 
-if (NOT FSORG_TESTS_ONLY)
-    include(cmake/Deployment.cmake)
-endif ()
+include(cmake/Deployment.cmake)

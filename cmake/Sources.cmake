@@ -46,11 +46,18 @@ set(APPLICATION_SOURCES
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
+        src/infrastructure/fileops/ExtendedPaths.cpp
+        src/infrastructure/fileops/WindowsFileOperations.cpp
+        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+        src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/legacy/IniLegacyConfigReader.cpp
         src/infrastructure/legacy/LegacyPresetReader.cpp
         src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
+        src/infrastructure/link/WindowsLinkService.cpp
+        src/infrastructure/platform/SingleInstance.cpp
+        src/infrastructure/platform/WindowsKnownFolders.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
         src/infrastructure/scenery/BglSceneryParser.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
@@ -60,20 +67,10 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/ExeXmlStartupEntries.cpp
         src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/StartupFileLocations.cpp
+        src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
-)
-
-set(WINDOWS_INFRASTRUCTURE_SOURCES
-        src/infrastructure/fileops/ExtendedPaths.cpp
-        src/infrastructure/fileops/WindowsFileOperations.cpp
-        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
-        src/infrastructure/fileops/WindowsSidecarStore.cpp
-        src/infrastructure/link/WindowsLinkService.cpp
-        src/infrastructure/platform/SingleInstance.cpp
-        src/infrastructure/platform/WindowsKnownFolders.cpp
-        src/infrastructure/sim/WindowsProcessProbe.cpp
         src/view/platform/WindowsTitleBar.cpp
 )
 
