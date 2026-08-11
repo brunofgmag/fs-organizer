@@ -7,6 +7,7 @@
 #include "domain/model/TreeNode.h"
 #include "domain/ports/CatalogScanner.h"
 
-[[nodiscard]] std::vector<TreeNode> LibraryTreesOf(const CatalogScanner& catalog, const SimulatorProfile& profile);
+[[nodiscard]] std::vector<TreeNode>
+LibraryTreesOf(const CatalogScanner& catalog, const SimulatorProfile& profile, const ScanGate& gate = {});
 
 #endif // FS_ORGANIZER_DOMAIN_TREE_LIBRARY_TREES_H

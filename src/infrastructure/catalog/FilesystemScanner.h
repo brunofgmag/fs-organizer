@@ -10,18 +10,18 @@ class FilesystemScanner final : public CatalogScanner
 public:
     FilesystemScanner(const ManifestParser& manifestParser, const FilesystemProbe& filesystemProbe);
 
-    [[nodiscard]] TreeNode Scan(const std::filesystem::path& libraryRoot) const override;
+    [[nodiscard]] TreeNode ScanWhile(const std::filesystem::path& libraryRoot, const ScanGate& gate) const override;
 
 private:
     [[nodiscard]] bool HasManifest(const std::filesystem::path& folder) const;
 
     [[nodiscard]] bool WasDeclaredACategory(const std::filesystem::path& folder) const;
 
-    [[nodiscard]] TreeNode ScanFolder(const std::filesystem::path& folder) const;
+    [[nodiscard]] TreeNode ScanFolder(const std::filesystem::path& folder, const ScanGate& gate) const;
 
     [[nodiscard]] TreeNode ScanAddon(const std::filesystem::path& folder) const;
 
-    [[nodiscard]] TreeNode ScanCategory(const std::filesystem::path& folder) const;
+    [[nodiscard]] TreeNode ScanCategory(const std::filesystem::path& folder, const ScanGate& gate) const;
 
     const ManifestParser& manifestParser_;
     const FilesystemProbe& filesystemProbe_;

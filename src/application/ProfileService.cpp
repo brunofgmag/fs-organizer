@@ -108,11 +108,19 @@ LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const s
     return report;
 }
 
-ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile) const
+ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile, const ScanGate& gate) const
 {
     ProfileSnapshot snapshot;
 
-    snapshot.libraries = LibraryTreesOf(catalog_, profile);
+    snapshot.libraries = LibraryTreesOf(catalog_, profile, gate);
+
+    if (!gate.StillWanted())
+    {
+        snapshot.complete = false;
+
+        return snapshot;
+    }
+
     snapshot.entries = ResolveEntries(profile, snapshot.libraries);
     snapshot.enabled = EnabledAddons(EnabledAddonFolders(snapshot.entries));
     snapshot.conflicts = FindCopyConflicts(snapshot.entries, snapshot.libraries);

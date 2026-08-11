@@ -48,6 +48,8 @@ public:
 
     void ChooseProfile(const std::string& profileId) const;
 
+    void CancelScan() const;
+
     void Toggle(const std::vector<const TreeNode*>& nodes);
 
     void Toggle(const std::vector<const TreeNode*>& nodes, bool enable);

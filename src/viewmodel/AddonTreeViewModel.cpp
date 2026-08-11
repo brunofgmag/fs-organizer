@@ -131,6 +131,11 @@ void AddonTreeViewModel::ChooseProfile(const std::string& profileId) const
     session_.ChooseProfile(profileId);
 }
 
+void AddonTreeViewModel::CancelScan() const
+{
+    session_.CancelScan();
+}
+
 void AddonTreeViewModel::AdoptScan()
 {
     model_.Show(session_.Snapshot(), session_.Profile());
