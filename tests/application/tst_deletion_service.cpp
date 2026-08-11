@@ -242,7 +242,7 @@ void DeletionServiceTest::AnAddonNobodyMeasuredIsNeverCountedAsWeighingNothing()
 
     const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::RecycleBin);
 
-    QCOMPARE(results.front().result, FileResult::TheRecycleBinIsTooSmall);
+    QCOMPARE(results.front().result, FileResult::TheAddonWasNeverMeasured);
     QVERIFY(f.fileSystem.Exists(kCrj));
 }
 
