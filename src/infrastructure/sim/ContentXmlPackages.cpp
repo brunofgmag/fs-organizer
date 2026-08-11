@@ -44,13 +44,18 @@ ContentXmlPackages::ContentXmlPackages(const FilesystemProbe& filesystemProbe, s
     ReadAgain(std::move(listPath));
 }
 
-void ContentXmlPackages::ReadAgain(std::filesystem::path listPath)
+void ContentXmlPackages::Forget(std::filesystem::path listPath)
 {
     listPath_ = std::move(listPath);
     names_.clear();
     takenAt_.reset();
     entries_ = 0;
     listWasRead_ = false;
+}
+
+void ContentXmlPackages::ReadAgain(std::filesystem::path listPath)
+{
+    Forget(std::move(listPath));
 
     const std::optional<std::string> contents = filesystemProbe_.ContentsOf(listPath_);
     if (!contents.has_value())

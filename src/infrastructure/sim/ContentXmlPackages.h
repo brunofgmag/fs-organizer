@@ -30,6 +30,8 @@ public:
     [[nodiscard]] std::size_t HowManyPackages() const;
 
 private:
+    void Forget(std::filesystem::path listPath);
+
     const FilesystemProbe& filesystemProbe_;
     std::filesystem::path listPath_;
     std::set<std::string, std::less<>> names_;
