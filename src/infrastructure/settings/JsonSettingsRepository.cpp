@@ -22,6 +22,11 @@ namespace
     constexpr auto kLinkType = "linkType";
     constexpr auto kVerifyWithHash = "verifyWithHash";
     constexpr auto kManageStartupEntries = "manageStartupEntries";
+    constexpr auto kManagePackageList = "managePackageList";
+    constexpr auto kCoexistingAirports = "coexistingAirports";
+    constexpr auto kOne = "one";
+    constexpr auto kOther = "other";
+    constexpr auto kFolderName = "folderName";
     constexpr auto kUpdateMode = "updateMode";
     constexpr auto kLanguage = "language";
     constexpr auto kId = "id";
@@ -157,6 +162,36 @@ namespace
         return externalOrigin;
     }
 
+    QJsonObject ToJson(const AddonId& addon)
+    {
+        QJsonObject object;
+        object[kLibraryId] = QString::fromStdString(addon.libraryId);
+        object[kFolderName] = QString::fromStdString(addon.folderName);
+
+        return object;
+    }
+
+    AddonId AddonFromJson(const QJsonObject& object)
+    {
+        return {.libraryId = object.value(kLibraryId).toString().toStdString(),
+                .folderName = object.value(kFolderName).toString().toStdString()};
+    }
+
+    QJsonObject ToJson(const CoexistingPair& pair)
+    {
+        QJsonObject object;
+        object[kOne] = ToJson(pair.one);
+        object[kOther] = ToJson(pair.other);
+
+        return object;
+    }
+
+    CoexistingPair CoexistingPairFromJson(const QJsonObject& object)
+    {
+        return {.one = AddonFromJson(object.value(kOne).toObject()),
+                .other = AddonFromJson(object.value(kOther).toObject())};
+    }
+
     QJsonObject ToJson(const SimulatorProfile& profile)
     {
         QJsonArray destinations;
@@ -255,12 +290,18 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     settings.linkType = LinkTypeFromName(root.value(kLinkType));
     settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
     settings.manageStartupEntries = root.value(kManageStartupEntries).toBool(true);
+    settings.managePackageList = root.value(kManagePackageList).toBool(false);
     settings.updateMode = UpdateModeFromName(root.value(kUpdateMode));
     settings.language = root.value(kLanguage).toString().toStdString();
 
     for (const QJsonValue profile : root.value(kProfiles).toArray())
     {
         settings.profiles.push_back(ProfileFromJson(profile.toObject()));
+    }
+
+    for (const QJsonValue pair : root.value(kCoexistingAirports).toArray())
+    {
+        settings.coexistingAirports.push_back(CoexistingPairFromJson(pair.toObject()));
     }
 
     return settings;
@@ -274,14 +315,22 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
         profiles.append(ToJson(profile));
     }
 
+    QJsonArray coexisting;
+    for (const CoexistingPair& pair : settings.coexistingAirports)
+    {
+        coexisting.append(ToJson(pair));
+    }
+
     QJsonObject root;
     root[kActiveProfileId] = QString::fromStdString(settings.activeProfileId);
     root[kProfiles] = profiles;
     root[kLinkType] = LinkTypeName(settings.linkType);
     root[kVerifyWithHash] = settings.verifyWithHash;
     root[kManageStartupEntries] = settings.manageStartupEntries;
+    root[kManagePackageList] = settings.managePackageList;
     root[kUpdateMode] = UpdateModeName(settings.updateMode);
     root[kLanguage] = QString::fromStdString(settings.language);
+    root[kCoexistingAirports] = coexisting;
 
     std::error_code error;
     std::filesystem::create_directories(file_.parent_path(), error);

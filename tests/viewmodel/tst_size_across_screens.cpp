@@ -14,6 +14,8 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSceneryCache.h"
+#include "tests/doubles/FakeSceneryParser.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/StartupOverFakes.h"
@@ -150,7 +152,10 @@ namespace
         QuarantineModel quarantineModel;
         QuarantineViewModel quarantine{imports, profiles, session, notifier, quarantineModel, sizes, runner};
 
-        DiagnosticsViewModel diagnostics{imports, sizes, session, clock};
+        FakeSceneryParser sceneryParser;
+        FakeSceneryCache sceneryCache;
+        SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
+        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, clock, runner};
     };
 
     SelectionSize LastSize(const QSignalSpy& measured)

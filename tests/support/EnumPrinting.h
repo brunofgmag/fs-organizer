@@ -5,6 +5,7 @@
 
 #include "application/DependencyReport.h"
 #include "application/StartupReport.h"
+#include "application/ports/PackageList.h"
 #include "application/model/RestorePlan.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
@@ -166,6 +167,9 @@ namespace QTest
         case FileResult::CouldNotReadTheStartupFile: return qstrdup("CouldNotReadTheStartupFile");
         case FileResult::CouldNotWriteTheStartupFile: return qstrdup("CouldNotWriteTheStartupFile");
         case FileResult::TheStartupEntriesAreLeftLoose: return qstrdup("TheStartupEntriesAreLeftLoose");
+        case FileResult::CouldNotReadThePackageList: return qstrdup("CouldNotReadThePackageList");
+        case FileResult::CouldNotWriteThePackageList: return qstrdup("CouldNotWriteThePackageList");
+        case FileResult::ThePackageListIsLeftLoose: return qstrdup("ThePackageListIsLeftLoose");
         }
 
         return qstrdup("FileResult(?)");
@@ -281,6 +285,20 @@ namespace QTest
         }
 
         return qstrdup("PackagePresence(?)");
+    }
+
+    template<>
+    inline char* toString(const PackageActivation& t)
+    {
+        switch (t)
+        {
+        case PackageActivation::Activated: return qstrdup("Activated");
+        case PackageActivation::UserDisabled: return qstrdup("UserDisabled");
+        case PackageActivation::SystemDisabled: return qstrdup("SystemDisabled");
+        case PackageActivation::ItSaysSomethingElse: return qstrdup("ItSaysSomethingElse");
+        }
+
+        return qstrdup("PackageActivation(?)");
     }
 
     template<>

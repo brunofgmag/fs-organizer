@@ -39,7 +39,13 @@
 #include "application/Session.h"
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/CommunityModel.h"
+#include "application/CoverageService.h"
+#include "application/SceneryService.h"
+#include "infrastructure/scenery/BglSceneryParser.h"
+#include "infrastructure/scenery/JsonSceneryCache.h"
+#include "infrastructure/sim/ContentXmlPackageList.h"
 #include "view/library/AddonTreePage.h"
+#include "viewmodel/CoverageViewModel.h"
 #include "view/community/CommunityPage.h"
 #include "view/JournalPage.h"
 #include "view/shell/MainWindow.h"
@@ -223,7 +229,15 @@ int main(int argc, char* argv[])
         DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-        auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
+        ContentXmlPackageList packageList{{}};
+        CoverageService coverageService(packageList, processProbe, false);
+        const BglSceneryParser sceneryParser;
+        JsonSceneryCache sceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
+        SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
+        CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+
+        auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
+                                           treeModel, notifier);
 
         CommunityModel communityModel;
         CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);

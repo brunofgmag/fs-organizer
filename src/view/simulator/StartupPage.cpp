@@ -163,8 +163,8 @@ QWidget* StartupPage::CreateEntriesPane()
     entries_->setItemDelegate(new RowDelegate(entries_));
 
     auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
     layout->addWidget(entries_, 1);
 
     return pane;

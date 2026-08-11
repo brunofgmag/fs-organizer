@@ -127,6 +127,13 @@ QString Explain(const FileResult result)
                            "takes it");
     case FileResult::ThePathIsTooLong:
         return QObject::tr("the name is longer than a folder name can be, so the disk would refuse it");
+    case FileResult::CouldNotReadThePackageList:
+        return QObject::tr("the package list of the simulator could not be read");
+    case FileResult::CouldNotWriteThePackageList:
+        return QObject::tr("the package list of the simulator could not be written, so nothing changed");
+    case FileResult::ThePackageListIsLeftLoose:
+        return QObject::tr("the package list of the simulator is not managed, so the app does not read or write that "
+                           "file");
     }
 
     return {};

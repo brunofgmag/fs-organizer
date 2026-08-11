@@ -32,6 +32,7 @@
 #include "view/library/DeleteDialog.h"
 #include "view/library/LibraryRootDialog.h"
 #include "view/library/SuggestionDialog.h"
+#include "view/library/CoverageDialog.h"
 #include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/panels/ContextPanel.h"
@@ -50,6 +51,21 @@ namespace
     constexpr std::size_t kAskAboveThisMany = 10;
     constexpr int kAddonColumnWidth = 420;
     constexpr int kVersionColumnWidth = 92;
+
+    [[nodiscard]] std::vector<const TreeNode*> AddonsAmong(const std::vector<const TreeNode*>& nodes)
+    {
+        std::vector<const TreeNode*> addons;
+
+        for (const TreeNode* node : nodes)
+        {
+            for (const TreeNode* addon : AddonsUnder(*node))
+            {
+                addons.push_back(addon);
+            }
+        }
+
+        return addons;
+    }
 
     void StartASection(QMenu& menu)
     {
@@ -96,10 +112,16 @@ namespace
 AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                              DeletionViewModel& deletion,
                              ImportViewModel& importViewModel,
+                             CoverageViewModel& coverage,
                              AddonTreeModel& model,
                              const SessionNotifier& notifier,
                              QWidget* parent)
-    : QWidget(parent), viewModel_(viewModel), deletion_(deletion), importViewModel_(importViewModel), model_(model)
+    : QWidget(parent),
+      viewModel_(viewModel),
+      deletion_(deletion),
+      importViewModel_(importViewModel),
+      coverage_(coverage),
+      model_(model)
 {
     tree_ = new QTreeView(this);
     filter_ = new AddonTreeFilterModel(this);
@@ -644,23 +666,62 @@ void AddonTreePage::ToggleSelection(const bool enable)
         return;
     }
 
-    if (TheUserMeantIt(nodes, enable))
-    {
-        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable),
-                          StartupEntriesTheUserAgreedTo(nodes, enable));
-    }
+    Apply(nodes, enable);
 }
 
 void AddonTreePage::OnToggleRequested(const TreeNode* node)
 {
     const std::vector<const TreeNode*> nodes = Chosen(node);
-    const bool enable = viewModel_.WouldEnable(nodes);
 
-    if (TheUserMeantIt(nodes, enable))
+    Apply(nodes, viewModel_.WouldEnable(nodes));
+}
+
+void AddonTreePage::Apply(const std::vector<const TreeNode*>& nodes, const bool enable)
+{
+    if (!TheUserMeantIt(nodes, enable))
     {
-        viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable),
-                          StartupEntriesTheUserAgreedTo(nodes, enable));
+        return;
     }
+
+    viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable), StartupEntriesTheUserAgreedTo(nodes, enable));
+
+    TurnOffWhatTheSimulatorAlsoCovers(nodes, enable);
+}
+
+void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes, const bool enable)
+{
+    if (!enable)
+    {
+        return;
+    }
+
+    const std::vector<CoverageLine> covered = coverage_.WhatTheSimulatorAlsoCovers(AddonsAmong(nodes));
+    if (covered.empty())
+    {
+        return;
+    }
+
+    CoverageDialog dialog(covered, this);
+    if (dialog.exec() != QDialog::Accepted)
+    {
+        emit StatusChanged(tr("%n airport of the simulator was left on, and yours is on too.", nullptr,
+                              static_cast<int>(covered.size())));
+
+        return;
+    }
+
+    for (const CoverageLine& line : covered)
+    {
+        if (const FileResult result = coverage_.Switch(line.packageName, false); !Succeeded(result))
+        {
+            emit StatusChanged(tr("The package list was not changed: %1.").arg(Explain(result)));
+
+            return;
+        }
+    }
+
+    emit StatusChanged(
+        tr("%n airport of the simulator will not load any more.", nullptr, static_cast<int>(covered.size())));
 }
 
 std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,

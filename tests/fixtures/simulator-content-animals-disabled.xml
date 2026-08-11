@@ -1,0 +1,11 @@
+<Packages>
+	<Package name="fs24-asobo-vcockpits-core" active="Activated"/>
+	<Package name="fs24-asobo-airport-lpma-madeira" active="UserDisabled"/>
+	<Package name="fs20-asobo-activities" active="Activated"/>
+	<Package name="fs24-asobo-activities" active="Activated"/>
+	<Package name="communityfs24-aaa-simaddons-animals" active="UserDisabled"/>
+	<Package name="communityfs24-Mixed-Case-Package" active="Activated"/>
+	<Package name="communityfs20-xmd11_light_mod_fs24" active="Activated"/>
+	<Package name="communityfs20-ag-airport-bgno-station-nord" active="SystemDisabled"/>
+	<Package name="unprefixed-legacy-package" active="Activated"/>
+</Packages>
