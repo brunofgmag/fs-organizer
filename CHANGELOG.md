@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.0](https://github.com/brunofgmag/fs-organizer/compare/v0.28.0...v0.29.0) (2026-08-11)
+
+
+### Features
+
+* the airport code comes out of the bgl, read per addon and never in the scan ([#82](https://github.com/brunofgmag/fs-organizer/issues/82)) ([72c4ddb](https://github.com/brunofgmag/fs-organizer/commit/72c4ddb946f8d33be1c28a818236c1a84e41a803))
+
 ## [0.28.0](https://github.com/brunofgmag/fs-organizer/compare/v0.27.0...v0.28.0) (2026-08-11)
 
 
