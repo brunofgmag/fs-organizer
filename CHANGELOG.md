@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/brunofgmag/fs-organizer/compare/v0.26.0...v0.27.0) (2026-08-11)
+
+
+### Features
+
+* close seven debts, with typed refusals and a measured free-space margin ([#77](https://github.com/brunofgmag/fs-organizer/issues/77)) ([e1571d1](https://github.com/brunofgmag/fs-organizer/commit/e1571d1d519ab3beeedfc1441baf0c3d9fbb8370))
+
 ## [0.26.0](https://github.com/brunofgmag/fs-organizer/compare/v0.25.0...v0.26.0) (2026-08-11)
 
 
