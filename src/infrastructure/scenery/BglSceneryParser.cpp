@@ -1,6 +1,8 @@
-#include "shared/BglAirportCodes.h"
+#include "infrastructure/scenery/BglSceneryParser.h"
 
 #include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace
 {
@@ -26,17 +28,17 @@ namespace
         {.record = 0x113, .at = 76, .shift = 6},
     };
 
-    [[nodiscard]] bool Reaches(const std::vector<std::uint8_t>& bytes, const std::size_t at, const std::size_t wide)
+    [[nodiscard]] bool Reaches(const std::span<const std::uint8_t> bytes, const std::size_t at, const std::size_t wide)
     {
         return at + wide <= bytes.size();
     }
 
-    [[nodiscard]] std::uint16_t WordAt(const std::vector<std::uint8_t>& bytes, const std::size_t at)
+    [[nodiscard]] std::uint16_t WordAt(const std::span<const std::uint8_t> bytes, const std::size_t at)
     {
         return static_cast<std::uint16_t>(bytes[at] | bytes[at + 1] << 8);
     }
 
-    [[nodiscard]] std::uint32_t DoubleWordAt(const std::vector<std::uint8_t>& bytes, const std::size_t at)
+    [[nodiscard]] std::uint32_t DoubleWordAt(const std::span<const std::uint8_t> bytes, const std::size_t at)
     {
         return static_cast<std::uint32_t>(bytes[at]) | static_cast<std::uint32_t>(bytes[at + 1]) << 8
             | static_cast<std::uint32_t>(bytes[at + 2]) << 16 | static_cast<std::uint32_t>(bytes[at + 3]) << 24;
@@ -55,26 +57,49 @@ namespace
         return nullptr;
     }
 
-    [[nodiscard]] bool CarriesTheSignature(const std::vector<std::uint8_t>& bytes)
+    [[nodiscard]] bool CarriesTheSignature(const std::span<const std::uint8_t> bytes)
     {
         return Reaches(bytes, 0, kSmallestHeader) && DoubleWordAt(bytes, 0) == kSignature;
     }
 
-    [[nodiscard]] std::size_t SectionAt(const std::vector<std::uint8_t>& bytes, const std::uint32_t section)
+    [[nodiscard]] std::size_t SectionAt(const std::span<const std::uint8_t> bytes, const std::uint32_t section)
     {
         return DoubleWordAt(bytes, 4) + section * kSectionEntry;
     }
 
-    [[nodiscard]] BglReading ReadRecords(const std::vector<std::uint8_t>& bytes,
-                                         std::size_t at,
-                                         const std::uint32_t records,
-                                         std::vector<std::string>& into)
+    void ReadTheIdentifier(const std::span<const std::uint8_t> bytes,
+                           const std::size_t at,
+                           const std::size_t size,
+                           const IdentifierIn& identifier,
+                           SceneryCodes& into)
+    {
+        if (identifier.at + 4 > size)
+        {
+            into.anIdentifierDidNotDecode = true;
+            return;
+        }
+
+        std::string code = AirportCodeFrom(DoubleWordAt(bytes, at + identifier.at), identifier.shift);
+
+        if (code.empty())
+        {
+            into.anIdentifierDidNotDecode = true;
+            return;
+        }
+
+        into.codes.push_back(std::move(code));
+    }
+
+    [[nodiscard]] SceneryReading ReadRecords(const std::span<const std::uint8_t> bytes,
+                                             std::size_t at,
+                                             const std::uint32_t records,
+                                             SceneryCodes& into)
     {
         for (std::uint32_t record = 0; record < records; ++record)
         {
             if (!Reaches(bytes, at, 6))
             {
-                return BglReading::ItEndsBeforeItSaysItDoes;
+                return SceneryReading::ItEndsBeforeItSaysItDoes;
             }
 
             const std::uint16_t kind = WordAt(bytes, at);
@@ -82,28 +107,22 @@ namespace
 
             if (size < 6 || !Reaches(bytes, at, size))
             {
-                return BglReading::ItEndsBeforeItSaysItDoes;
+                return SceneryReading::ItEndsBeforeItSaysItDoes;
             }
 
-            const IdentifierIn* identifier = IdentifierOf(kind);
-
-            if (identifier != nullptr && identifier->at + 4 <= size)
+            if (const IdentifierIn* identifier = IdentifierOf(kind); identifier != nullptr)
             {
-                if (std::string code = AirportCodeFrom(DoubleWordAt(bytes, at + identifier->at), identifier->shift);
-                    !code.empty())
-                {
-                    into.push_back(std::move(code));
-                }
+                ReadTheIdentifier(bytes, at, size, *identifier, into);
             }
 
             at += size;
         }
 
-        return BglReading::Read;
+        return SceneryReading::Read;
     }
 
-    [[nodiscard]] BglReading
-    ReadSubsections(const std::vector<std::uint8_t>& bytes, const std::size_t entry, std::vector<std::string>& into)
+    [[nodiscard]] SceneryReading
+    ReadSubsections(const std::span<const std::uint8_t> bytes, const std::size_t entry, SceneryCodes& into)
     {
         const std::uint32_t subsections = DoubleWordAt(bytes, entry + 8);
         const std::size_t subsectionsAt = DoubleWordAt(bytes, entry + 12);
@@ -114,19 +133,19 @@ namespace
 
             if (!Reaches(bytes, where, kSubsectionEntry))
             {
-                return BglReading::ItEndsBeforeItSaysItDoes;
+                return SceneryReading::ItEndsBeforeItSaysItDoes;
             }
 
-            const BglReading reading =
+            const SceneryReading reading =
                 ReadRecords(bytes, DoubleWordAt(bytes, where + 8), DoubleWordAt(bytes, where + 4), into);
 
-            if (reading != BglReading::Read)
+            if (reading != SceneryReading::Read)
             {
                 return reading;
             }
         }
 
-        return BglReading::Read;
+        return SceneryReading::Read;
     }
 }
 
@@ -151,7 +170,7 @@ std::string AirportCodeFrom(const std::uint32_t packed, const unsigned int shift
     return code;
 }
 
-bool CouldCarryAnAirportSection(const std::vector<std::uint8_t>& head)
+bool BglSceneryParser::CouldCarryAnAirportSection(const std::span<const std::uint8_t> head) const
 {
     if (!CarriesTheSignature(head))
     {
@@ -173,14 +192,14 @@ bool CouldCarryAnAirportSection(const std::vector<std::uint8_t>& head)
     return false;
 }
 
-BglAirportCodes AirportCodesIn(const std::vector<std::uint8_t>& bytes)
+SceneryCodes BglSceneryParser::Parse(const std::span<const std::uint8_t> bytes) const
 {
     if (!CarriesTheSignature(bytes))
     {
-        return {.reading = BglReading::ItCarriesNoSignature};
+        return {.reading = SceneryReading::ItCarriesNoSignature};
     }
 
-    BglAirportCodes found;
+    SceneryCodes found;
 
     const std::uint32_t sections = DoubleWordAt(bytes, 20);
 
@@ -190,7 +209,7 @@ BglAirportCodes AirportCodesIn(const std::vector<std::uint8_t>& bytes)
 
         if (!Reaches(bytes, entry, kSectionEntry))
         {
-            found.reading = BglReading::ItEndsBeforeItSaysItDoes;
+            found.reading = SceneryReading::ItEndsBeforeItSaysItDoes;
             return found;
         }
 
@@ -199,9 +218,9 @@ BglAirportCodes AirportCodesIn(const std::vector<std::uint8_t>& bytes)
             continue;
         }
 
-        found.reading = ReadSubsections(bytes, entry, found.codes);
+        found.reading = ReadSubsections(bytes, entry, found);
 
-        if (found.reading != BglReading::Read)
+        if (found.reading != SceneryReading::Read)
         {
             return found;
         }

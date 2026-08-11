@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILESYSTEM_PROBE_H
 
 #include <algorithm>
+#include <string_view>
 
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/support/PathUtils.h"
@@ -117,8 +118,21 @@ public:
 
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override
     {
+        read.push_back(ComparablePath(path));
+
         return fileSystem_.ContentsOf(path);
     }
+
+    [[nodiscard]] std::size_t TimesItReadSomethingEndingIn(const std::string_view suffix) const
+    {
+        return static_cast<std::size_t>(std::ranges::count_if(read,
+                                                              [suffix](const std::string& path)
+                                                              {
+                                                                  return path.ends_with(suffix);
+                                                              }));
+    }
+
+    mutable std::vector<std::string> read;
 
     [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override
     {

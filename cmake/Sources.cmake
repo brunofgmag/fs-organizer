@@ -16,6 +16,7 @@ set(DOMAIN_SOURCES
         src/domain/profile/ExternalOrigins.cpp
         src/domain/profile/OrphanOverrides.cpp
         src/domain/profile/ProfileEdits.cpp
+        src/domain/scenery/AirportCoverage.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/CategorySuggester.cpp
         src/domain/tree/DestinationDivergence.cpp
@@ -51,6 +52,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/legacy/LegacyPresetReader.cpp
         src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
+        src/infrastructure/scenery/BglSceneryParser.cpp
         src/infrastructure/settings/JsonSettingsRepository.cpp
         src/infrastructure/sim/ContentListLocations.cpp
         src/infrastructure/sim/ContentXmlPackages.cpp

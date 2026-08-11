@@ -85,8 +85,6 @@ add_custom_command(TARGET fsorg-delete POST_BUILD
 
 add_executable(fsorg-bgl
         tools/fsorg-bgl/main.cpp
-        tools/shared/BglAirportCodes.cpp
-        tools/shared/BglAirportCodes.h
 )
 
 target_include_directories(fsorg-bgl PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/tools")
@@ -97,7 +95,7 @@ if (MSVC)
     target_compile_options(fsorg-bgl PRIVATE /permissive- /Zc:preprocessor)
 endif ()
 
-target_link_libraries(fsorg-bgl PRIVATE Qt6::Core)
+target_link_libraries(fsorg-bgl PRIVATE fsorg-domain fsorg-infrastructure Qt6::Core)
 
 add_custom_command(TARGET fsorg-bgl POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
