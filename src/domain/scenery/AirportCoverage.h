@@ -35,8 +35,44 @@ struct AirportGroup
     std::vector<AddonId> addons{};
 };
 
+struct CoexistingPair
+{
+    AddonId one{};
+    AddonId other{};
+};
+
+struct AirportPair
+{
+    std::string code{};
+    AddonId one{};
+    AddonId other{};
+};
+
+struct SimulatorAirport
+{
+    std::string packageName{};
+    std::string code{};
+    bool activated = true;
+};
+
+struct AirportTheSimulatorAlsoCovers
+{
+    std::string code{};
+    AddonId addon{};
+    std::string packageName{};
+};
+
 [[nodiscard]] std::vector<AirportsOfAnAddon> AirportsOfEachAddon(const std::vector<SceneryOfAnAddon>& scenery);
 
 [[nodiscard]] std::vector<AirportGroup> GroupsOfTheSameAirport(const std::vector<AirportsOfAnAddon>& addons);
+
+[[nodiscard]] bool ItIsTheSamePair(const CoexistingPair& left, const CoexistingPair& right);
+
+[[nodiscard]] std::vector<AirportPair> PairsOfTheSameAirport(const std::vector<AirportsOfAnAddon>& addons,
+                                                             const std::vector<CoexistingPair>& coexisting);
+
+[[nodiscard]] std::vector<AirportTheSimulatorAlsoCovers>
+AirportsTheSimulatorAlsoCovers(const std::vector<AirportsOfAnAddon>& addons,
+                               const std::vector<SimulatorAirport>& simulator);
 
 #endif // FS_ORGANIZER_DOMAIN_SCENERY_AIRPORT_COVERAGE_H

@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -22,9 +23,20 @@ namespace
         static void TwoAddonsOfTheSameAirportMakeAGroup();
         static void AnAddonWithoutACodeNeverJoinsAGroup();
         static void TheSceneryFolderIsRecognisedWhateverTheCaseAndNothingElseIs();
+        static void TwoAddonsOfTheSameAirportMakeAPair();
+        static void APairTheUserSaidCanCoexistLeavesTheThirdAddonStillWarning();
+        static void TheOrderTheUserMarkedThePairInDoesNotDecideWhetherItIsSilenced();
+        static void AnAddonReachedTwiceOrCarryingNoCodeMakesNoPair();
+        static void ThePackageTheSimulatorShipsMeetsTheAddonByCode();
+        static void ThePackageTheSimulatorKeepsTurnedOffCoversNothing();
     };
 
     const LibraryId kLibrary = "library-1";
+
+    [[nodiscard]] AddonId Named(const std::string& folderName)
+    {
+        return {.libraryId = kLibrary, .folderName = folderName};
+    }
 
     [[nodiscard]] SceneryOfAnAddon AddonAt(const std::string& folderName, std::vector<SceneryCodes> files)
     {
@@ -142,6 +154,93 @@ void AirportCoverageTest::TheSceneryFolderIsRecognisedWhateverTheCaseAndNothingE
              "the category folder of a library is named Sceneries, and it is not the scenery folder of an addon");
     QVERIFY(!ItIsTheSceneryFolderOfAnAddon(PathFromUtf8("D:/Library/Sceneries/someone-airport/scenery-old")));
     QVERIFY(!ItIsTheSceneryFolderOfAnAddon(PathFromUtf8("D:/Library/Sceneries/someone-airport/Contrail")));
+}
+
+void AirportCoverageTest::TwoAddonsOfTheSameAirportMakeAPair()
+{
+    const std::vector<AirportPair> pairs = PairsOfTheSameAirport(
+        AirportsOfEachAddon({AddonAt("one-eham", {Carrying({"EHAM"})}), AddonAt("another-eham", {Carrying({"EHAM"})})}),
+        {});
+
+    QCOMPARE(pairs.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(pairs.front().code), QStringLiteral("EHAM"));
+    QVERIFY(pairs.front().one == Named("one-eham"));
+    QVERIFY(pairs.front().other == Named("another-eham"));
+}
+
+void AirportCoverageTest::APairTheUserSaidCanCoexistLeavesTheThirdAddonStillWarning()
+{
+    const std::vector<AirportsOfAnAddon> two =
+        AirportsOfEachAddon({AddonAt("one-eham", {Carrying({"EHAM"})}), AddonAt("another-eham", {Carrying({"EHAM"})})});
+
+    const std::vector<CoexistingPair> marked = {{.one = Named("one-eham"), .other = Named("another-eham")}};
+
+    QVERIFY2(PairsOfTheSameAirport(two, marked).empty(), "the pair the user marked is the one that stops warning");
+
+    const std::vector<AirportsOfAnAddon> three =
+        AirportsOfEachAddon({AddonAt("one-eham", {Carrying({"EHAM"})}), AddonAt("another-eham", {Carrying({"EHAM"})}),
+                             AddonAt("a-third-eham", {Carrying({"EHAM"})})});
+
+    const std::vector<AirportPair> pairs = PairsOfTheSameAirport(three, marked);
+
+    QCOMPARE(pairs.size(), std::size_t{2});
+    QVERIFY2(std::ranges::none_of(pairs,
+                                  [](const AirportPair& pair)
+                                  {
+                                      return pair.one == Named("one-eham") && pair.other == Named("another-eham");
+                                  }),
+             "the exclusion is by pair, so it survives the third addon arriving");
+    QVERIFY(pairs.front().other == Named("a-third-eham"));
+}
+
+void AirportCoverageTest::TheOrderTheUserMarkedThePairInDoesNotDecideWhetherItIsSilenced()
+{
+    const std::vector<AirportsOfAnAddon> two =
+        AirportsOfEachAddon({AddonAt("one-eham", {Carrying({"EHAM"})}), AddonAt("another-eham", {Carrying({"EHAM"})})});
+
+    QVERIFY(PairsOfTheSameAirport(two, {{.one = Named("another-eham"), .other = Named("one-eham")}}).empty());
+    QVERIFY(PairsOfTheSameAirport(two, {{.one = Named("ANOTHER-EHAM"), .other = Named("One-Eham")}}).empty());
+}
+
+void AirportCoverageTest::AnAddonReachedTwiceOrCarryingNoCodeMakesNoPair()
+{
+    SceneryOfAnAddon throughTheLink = AddonAt("eham", {Carrying({"EHAM"})});
+    throughTheLink.resolvedPath = PathFromUtf8("D:\\Library\\Sceneries\\.\\eham");
+
+    QVERIFY2(
+        PairsOfTheSameAirport(AirportsOfEachAddon({AddonAt("eham", {Carrying({"EHAM"})}), throughTheLink}), {}).empty(),
+        "the addon and its junction are one addon, and an addon never pairs with itself");
+
+    QVERIFY(PairsOfTheSameAirport(AirportsOfEachAddon({AddonAt("unread", {ThatDidNotDecode()}),
+                                                       AddonAt("also-unread", {ThatDidNotDecode()}),
+                                                       AddonAt("no-record", {CarryingNoRecord()})}),
+                                  {})
+                .empty());
+}
+
+void AirportCoverageTest::ThePackageTheSimulatorShipsMeetsTheAddonByCode()
+{
+    const std::vector<AirportTheSimulatorAlsoCovers> covered = AirportsTheSimulatorAlsoCovers(
+        AirportsOfEachAddon({AddonAt("payware-eham", {Carrying({"EHAM"})}),
+                             AddonAt("payware-lpma", {Carrying({"LPMA"})}),
+                             AddonAt("no-record", {CarryingNoRecord()})}),
+        {{.packageName = "fs24-asobo-airport-eham-amsterdam", .code = "EHAM", .activated = true},
+         {.packageName = "fs24-asobo-airport-vqpr-paro", .code = "VQPR", .activated = true}});
+
+    QCOMPARE(covered.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(covered.front().code), QStringLiteral("EHAM"));
+    QVERIFY(covered.front().addon == Named("payware-eham"));
+    QCOMPARE(QString::fromStdString(covered.front().packageName), QStringLiteral("fs24-asobo-airport-eham-amsterdam"));
+}
+
+void AirportCoverageTest::ThePackageTheSimulatorKeepsTurnedOffCoversNothing()
+{
+    const std::vector<AirportsOfAnAddon> addons = AirportsOfEachAddon({AddonAt("payware-eham", {Carrying({"EHAM"})})});
+
+    QVERIFY2(AirportsTheSimulatorAlsoCovers(
+                 addons, {{.packageName = "fs24-asobo-airport-eham-amsterdam", .code = "EHAM", .activated = false}})
+                 .empty(),
+             "a package the simulator is not loading covers nothing, so there is nothing to warn about");
 }
 
 QTEST_APPLESS_MAIN(AirportCoverageTest)
