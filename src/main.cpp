@@ -261,8 +261,7 @@ int main(int argc, char* argv[])
         QCoreApplication::applicationVersion(), GithubUpdateService::DefaultUpdatesFolder());
     updateService.DiscardStaged();
 
-    UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), onDisk.updateMode,
-                                    UpdatesAreOn());
+    UpdateViewModel updateViewModel(updateService, onDisk.updateMode, UpdatesAreOn());
 
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());

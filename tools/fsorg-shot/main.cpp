@@ -510,7 +510,7 @@ int main(int argc, char* argv[])
 
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
-    UpdateViewModel updateViewModel(updateService, QCoreApplication::applicationVersion(), UpdateMode::Notify, false);
+    UpdateViewModel updateViewModel(updateService, UpdateMode::Notify, false);
 
     OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);

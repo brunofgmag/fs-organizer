@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_APPLICATION_LEGACY_CONFIG_IMPORTER_H
 #define FS_ORGANIZER_APPLICATION_LEGACY_CONFIG_IMPORTER_H
 
+#include <cstddef>
 #include <filesystem>
 #include <vector>
 
@@ -18,6 +19,8 @@ public:
 
     [[nodiscard]] std::vector<LegacyMigration> Propose(const SimulatorProfile& current,
                                                        const std::vector<TreeNode>& scanned) const;
+
+    [[nodiscard]] std::size_t PresetsWaitingIn(const std::filesystem::path& presetsPath) const;
 
     [[nodiscard]] std::vector<ImportedPreset> ImportPresets(const std::filesystem::path& presetsPath,
                                                             const SimulatorProfile& profile,

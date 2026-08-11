@@ -5,15 +5,10 @@
 #include <QtCore/QCoreApplication>
 
 UpdateViewModel::UpdateViewModel(UpdateService& service,
-                                 QString currentVersion,
                                  const UpdateMode mode,
                                  const bool updatesAreOn,
                                  QObject* parent)
-    : QObject(parent),
-      service_(service),
-      currentVersion_(std::move(currentVersion)),
-      mode_(mode),
-      updatesAreOn_(updatesAreOn)
+    : QObject(parent), service_(service), mode_(mode), updatesAreOn_(updatesAreOn)
 {
     service_.AddObserver(this);
 }
@@ -51,19 +46,9 @@ QString UpdateViewModel::WhatIsGoingOn() const
     return tr("Nothing has been checked yet.");
 }
 
-QString UpdateViewModel::CurrentVersion() const
-{
-    return currentVersion_;
-}
-
 QString UpdateViewModel::OfferedVersion() const
 {
     return QString::fromStdString(offered_.version);
-}
-
-QString UpdateViewModel::ReleasePageUrl() const
-{
-    return QString::fromStdString(offered_.releasePageUrl);
 }
 
 bool UpdateViewModel::UpdatesAreOn() const

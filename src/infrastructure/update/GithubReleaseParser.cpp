@@ -79,9 +79,9 @@ QString ParseSha256File(const QByteArray& content)
     return kHexHash.match(hash).hasMatch() ? hash : QString{};
 }
 
-bool IsNewerVersion(const QString& tagName, const QString& currentVersion)
+bool IsNewerVersion(const QString& offered, const QString& currentVersion)
 {
-    const QVersionNumber latest = QVersionNumber::fromString(WithoutTheTagPrefix(tagName));
+    const QVersionNumber latest = QVersionNumber::fromString(WithoutTheTagPrefix(offered));
     const QVersionNumber current = QVersionNumber::fromString(WithoutTheTagPrefix(currentVersion));
 
     if (latest.isNull() || current.isNull())
