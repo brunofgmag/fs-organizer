@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.0](https://github.com/brunofgmag/fs-organizer/compare/v0.27.0...v0.28.0) (2026-08-11)
+
+
+### Features
+
+* close the five open debts, with the scan gate and the paint ratchet ([#80](https://github.com/brunofgmag/fs-organizer/issues/80)) ([3a15818](https://github.com/brunofgmag/fs-organizer/commit/3a1581815c5c162dcaa8b83dd7c4e9814ba62db1))
+
 ## [0.27.0](https://github.com/brunofgmag/fs-organizer/compare/v0.26.0...v0.27.0) (2026-08-11)
 
 
