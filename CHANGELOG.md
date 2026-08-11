@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.0](https://github.com/brunofgmag/fs-organizer/compare/v0.25.0...v0.26.0) (2026-08-11)
+
+
+### Features
+
+* **presets:** edit startup entries and tell the truth about them ([#75](https://github.com/brunofgmag/fs-organizer/issues/75)) ([cf3f6a6](https://github.com/brunofgmag/fs-organizer/commit/cf3f6a6872ffabf95187ade9e3d2563297e8efab))
+
 ## [0.25.0](https://github.com/brunofgmag/fs-organizer/compare/v0.24.2...v0.25.0) (2026-08-10)
 
 
