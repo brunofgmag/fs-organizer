@@ -118,6 +118,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
     panes_->addWidget(CreateBrokenPane());
     panes_->addWidget(CreateQuarantinePane());
     panes_->addWidget(CreateSizePane());
+    panes_->addWidget(CreateSceneryPane());
 
     auto* body = new QHBoxLayout;
     body->setContentsMargins(0, 0, 0, 0);
@@ -150,6 +151,20 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
     connect(&viewModel_, &DiagnosticsViewModel::Counted, this, &DiagnosticsPage::ShowWhatWasCounted);
     connect(&viewModel_, &DiagnosticsViewModel::SizeMeasured, this, &DiagnosticsPage::ShowWhatWasMeasured);
     connect(&viewModel_, &DiagnosticsViewModel::SizeProgressed, this, &DiagnosticsPage::ShowProgress);
+    connect(readSceneryAgain_, &QPushButton::clicked, this,
+            [this]
+            {
+                viewModel_.ReadTheSceneryAgain();
+                DressTheSceneryToolbar();
+            });
+    connect(stopScenery_, &QPushButton::clicked, this,
+            [this]
+            {
+                viewModel_.CancelScenery();
+                emit StatusChanged(tr("Stopping the reading after the addon being read now."));
+            });
+    connect(&viewModel_, &DiagnosticsViewModel::SceneryRead, this, &DiagnosticsPage::ShowWhatTheSceneryCarries);
+    connect(&viewModel_, &DiagnosticsViewModel::SceneryProgressed, this, &DiagnosticsPage::ShowSceneryProgress);
 
     RetranslateUi();
     rail_->setCurrentRow(DestinationEntries);
@@ -196,7 +211,7 @@ QWidget* DiagnosticsPage::CreateRail()
     rail_->setFrameShape(QFrame::NoFrame);
     rail_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    for (int section = DestinationEntries; section <= SizeOnDisk; ++section)
+    for (int section = DestinationEntries; section <= AirportsInTheScenery; ++section)
     {
         rail_->addItem(QString());
     }
@@ -334,6 +349,50 @@ QWidget* DiagnosticsPage::CreateSizePane()
     return pane;
 }
 
+QWidget* DiagnosticsPage::CreateSceneryPane()
+{
+    auto* pane = new QWidget(this);
+
+    sceneryReadAt_ = QuietOnOneLine(pane);
+    sceneryCost_ = QuietOnOneLine(pane);
+    readSceneryAgain_ = new QPushButton(pane);
+
+    auto* header = new QHBoxLayout;
+    header->setContentsMargins(0, 0, 0, 0);
+    header->addWidget(readSceneryAgain_);
+    header->addWidget(sceneryCost_);
+    header->addStretch();
+    header->addWidget(sceneryReadAt_);
+
+    sceneryProgress_ = QuietOnOneLine(pane);
+    sceneryMeter_ = new QProgressBar(pane);
+    sceneryMeter_->setTextVisible(false);
+    sceneryMeter_->setFixedWidth(160);
+    stopScenery_ = new QPushButton(pane);
+
+    auto* progress = new QHBoxLayout;
+    progress->setContentsMargins(0, 0, 0, 0);
+    progress->addWidget(sceneryMeter_);
+    progress->addWidget(sceneryProgress_, 1);
+    progress->addWidget(stopScenery_);
+
+    scenery_ = new QTreeWidget(pane);
+    scenery_->setUniformRowHeights(true);
+    scenery_->setColumnCount(1);
+    scenery_->header()->setStretchLastSection(true);
+    DressTheHeaderOf(scenery_->header());
+    DressTheRowsOf(scenery_);
+
+    auto* layout = new QVBoxLayout(pane);
+    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+    layout->setSpacing(8);
+    layout->addLayout(header);
+    layout->addLayout(progress);
+    layout->addWidget(scenery_, 1);
+
+    return pane;
+}
+
 void DiagnosticsPage::RetranslateUi() const
 {
     refresh_->setText(tr("Measure again"));
@@ -345,6 +404,10 @@ void DiagnosticsPage::RetranslateUi() const
     cancel_->setText(tr("Stop"));
     sizes_->setHeaderLabels({tr("Category"), tr("Addons"), tr("Size")});
     sizeCost_->setText(tr("walks the whole tree, and that takes seconds"));
+    readSceneryAgain_->setText(tr("Read them again"));
+    stopScenery_->setText(tr("Stop"));
+    sceneryCost_->setText(tr("opens the scenery folder of every addon, and that takes a moment"));
+    scenery_->setHeaderLabels({tr("Addon")});
 
     ShowTheLongestPaths();
     DressTheRail();
@@ -359,6 +422,69 @@ void DiagnosticsPage::OpenSection(const int section) const
         viewModel_.ShowSize();
         DressTheSizeToolbar();
     }
+
+    if (section == AirportsInTheScenery)
+    {
+        viewModel_.ShowScenery();
+        DressTheSceneryToolbar();
+    }
+}
+
+void DiagnosticsPage::ShowWhatTheSceneryCarries() const
+{
+    const SceneryCensus& census = viewModel_.Scenery();
+
+    scenery_->clear();
+
+    const auto group = [this](const QString& title, const std::vector<QString>& addons)
+    {
+        auto* parent = new QTreeWidgetItem(scenery_);
+        parent->setText(0, title);
+        parent->setFirstColumnSpanned(true);
+
+        for (const QString& addon : addons)
+        {
+            auto* row = new QTreeWidgetItem(parent);
+            row->setText(0, addon);
+        }
+
+        parent->setExpanded(!addons.empty());
+    };
+
+    group(tr("Carrying an airport code · %1").arg(census.carryingACode.size()), census.carryingACode);
+    group(tr("Carrying a record that did not decode · %1").arg(census.whoseRecordWasNotRead.size()),
+          census.whoseRecordWasNotRead);
+    group(tr("Carrying no airport record · %1").arg(census.carryingNoAirportRecord), {});
+
+    DressTheSceneryToolbar();
+    DressTheRail();
+}
+
+void DiagnosticsPage::ShowSceneryProgress(const int read, const int total) const
+{
+    sceneryMeter_->setRange(0, total);
+    sceneryMeter_->setValue(read);
+    sceneryProgress_->setText(tr("reading %1 of %2").arg(read).arg(total));
+}
+
+void DiagnosticsPage::DressTheSceneryToolbar() const
+{
+    const bool reading = viewModel_.ReadingTheScenery();
+
+    sceneryMeter_->setVisible(reading);
+    sceneryProgress_->setVisible(reading);
+    stopScenery_->setVisible(reading);
+    readSceneryAgain_->setEnabled(!reading);
+
+    const std::optional<std::chrono::system_clock::time_point> read = viewModel_.SceneryReadAt();
+
+    if (read.has_value())
+    {
+        sceneryReadAt_->setText(tr("read %1").arg(AsMoment(*read)));
+        return;
+    }
+
+    sceneryReadAt_->setText(reading ? tr("reading now") : tr("not read yet"));
 }
 
 void DiagnosticsPage::ShowWhatWasCounted()
@@ -516,6 +642,13 @@ void DiagnosticsPage::DressTheRail() const
     rail_->item(Quarantine)->setText(tr("Quarantine · %1").arg(AsSize(weight.bytes)));
     rail_->item(SizeOnDisk)
         ->setText(measured.has_value() ? tr("Size on disk · %1").arg(AsSize(bytes)) : tr("Size on disk"));
+
+    const SceneryCensus& census = viewModel_.Scenery();
+
+    rail_->item(AirportsInTheScenery)
+        ->setText(viewModel_.SceneryReadAt().has_value()
+                      ? tr("Airports in the scenery · %1").arg(census.carryingACode.size())
+                      : tr("Airports in the scenery"));
 }
 
 void DiagnosticsPage::DressTheSizeToolbar() const

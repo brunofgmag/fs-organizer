@@ -106,3 +106,69 @@ std::vector<AirportGroup> GroupsOfTheSameAirport(const std::vector<AirportsOfAnA
 
     return groups;
 }
+
+bool ItIsTheSamePair(const CoexistingPair& left, const CoexistingPair& right)
+{
+    if (left.one == right.one && left.other == right.other)
+    {
+        return true;
+    }
+
+    return left.one == right.other && left.other == right.one;
+}
+
+std::vector<AirportPair> PairsOfTheSameAirport(const std::vector<AirportsOfAnAddon>& addons,
+                                               const std::vector<CoexistingPair>& coexisting)
+{
+    const auto theUserSaidTheyCanCoexist = [&coexisting](const AddonId& one, const AddonId& other)
+    {
+        return std::ranges::any_of(coexisting,
+                                   [&one, &other](const CoexistingPair& marked)
+                                   {
+                                       return ItIsTheSamePair(marked, {.one = one, .other = other});
+                                   });
+    };
+
+    std::vector<AirportPair> pairs;
+
+    for (const AirportGroup& group : GroupsOfTheSameAirport(addons))
+    {
+        for (std::size_t one = 0; one < group.addons.size(); ++one)
+        {
+            for (std::size_t other = one + 1; other < group.addons.size(); ++other)
+            {
+                if (theUserSaidTheyCanCoexist(group.addons[one], group.addons[other]))
+                {
+                    continue;
+                }
+
+                pairs.push_back({.code = group.code, .one = group.addons[one], .other = group.addons[other]});
+            }
+        }
+    }
+
+    return pairs;
+}
+
+std::vector<AirportTheSimulatorAlsoCovers>
+AirportsTheSimulatorAlsoCovers(const std::vector<AirportsOfAnAddon>& addons,
+                               const std::vector<SimulatorAirport>& simulator)
+{
+    std::vector<AirportTheSimulatorAlsoCovers> covered;
+
+    for (const AirportsOfAnAddon& addon : addons)
+    {
+        for (const std::string& code : addon.codes)
+        {
+            for (const SimulatorAirport& package : simulator)
+            {
+                if (package.activated && package.code == code)
+                {
+                    covered.push_back({.code = code, .addon = addon.addon, .packageName = package.packageName});
+                }
+            }
+        }
+    }
+
+    return covered;
+}

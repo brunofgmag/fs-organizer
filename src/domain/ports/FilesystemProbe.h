@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_DOMAIN_PORTS_FILESYSTEM_PROBE_H
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -39,6 +40,9 @@ public:
     [[nodiscard]] virtual std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual std::optional<std::string> ContentsOf(const std::filesystem::path& path) const = 0;
+
+    [[nodiscard]] virtual std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,
+                                                                  std::size_t most) const = 0;
 
     [[nodiscard]] virtual std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const = 0;
 

@@ -8,6 +8,7 @@
 #include "application/model/UpdateMode.h"
 #include "domain/model/LinkType.h"
 #include "domain/model/SimulatorProfile.h"
+#include "domain/scenery/AirportCoverage.h"
 
 struct AppSettings
 {
@@ -16,8 +17,10 @@ struct AppSettings
     LinkType linkType = LinkType::Junction;
     bool verifyWithHash = false;
     bool manageStartupEntries = true;
+    bool managePackageList = false;
     UpdateMode updateMode = UpdateMode::Notify;
     std::string language;
+    std::vector<CoexistingPair> coexistingAirports;
 };
 
 inline void AddProfile(AppSettings& settings, SimulatorProfile profile)

@@ -40,7 +40,13 @@
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
+#include "application/CoverageService.h"
+#include "application/SceneryService.h"
+#include "infrastructure/scenery/BglSceneryParser.h"
+#include "infrastructure/scenery/JsonSceneryCache.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ContentXmlPackageList.h"
+#include "viewmodel/CoverageViewModel.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/StartupFileLocations.h"
@@ -60,6 +66,8 @@
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
+#include "view/simulator/PackageListPage.h"
+#include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/shell/LanguageSwitch.h"
@@ -495,7 +503,19 @@ int main(int argc, char* argv[])
     DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
+    ContentXmlPackageList packageList(
+        ChooseContentList(ContentListLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant)
+            .value_or(ChosenContentList{})
+            .listPath);
+    CoverageService coverageService(packageList, processProbe, true);
+
+    const BglSceneryParser sceneryParser;
+    JsonSceneryCache sceneryCache(staged->settingsFile.parent_path() / "scenery-cache.json");
+    SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
+    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+
+    auto* libraryPage =
+        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -515,11 +535,13 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService, profileService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, clock, runner);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
     StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
+    auto* packageListPage = new PackageListPage(coverageViewModel);
+    auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
@@ -530,7 +552,7 @@ int main(int argc, char* argv[])
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);
     PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
-    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, startupPage);
+    PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
@@ -750,7 +772,8 @@ int main(int argc, char* argv[])
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
     const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),
-                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size")};
+                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size"),
+                                  QStringLiteral("24-diagnostics-scenery")};
 
     diagnosticsTab->click();
     diagnosticsViewModel.Show();
@@ -768,6 +791,7 @@ int main(int argc, char* argv[])
     }
 
     simulatorTab->click();
+    simulatorPage->ShowTheStartupEntries();
     startupViewModel.Show();
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("19-simulator-startup")) && landed;
@@ -776,6 +800,16 @@ int main(int argc, char* argv[])
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("20-simulator-startup-loose")) && landed;
     startupViewModel.Manage(true);
+
+    simulatorPage->ShowThePackageList();
+    coverageViewModel.Show();
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("22-simulator-packages")) && landed;
+
+    coverageViewModel.Manage(false);
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("23-simulator-packages-loose")) && landed;
+    coverageViewModel.Manage(true);
 
     libraryTab->click();
     shell.ShowOptions();

@@ -1,6 +1,7 @@
 #include "viewmodel/DiagnosticsViewModel.h"
 
 #include <algorithm>
+#include <memory>
 #include <utility>
 
 #include "domain/importing/ImportPaths.h"
@@ -34,14 +35,45 @@ namespace
 
         return folders;
     }
+
+    SceneryCensus CensusOf(const std::vector<SceneryOfAnAddon>& walked, const std::size_t addons)
+    {
+        SceneryCensus census{
+            .carryingACode = {}, .whoseRecordWasNotRead = {}, .carryingNoAirportRecord = 0, .addons = addons};
+
+        for (const AirportsOfAnAddon& addon : AirportsOfEachAddon(walked))
+        {
+            switch (addon.evidence)
+            {
+            case AirportEvidence::TheCodeWasRead:
+                census.carryingACode.push_back(QString::fromStdString(addon.addon.folderName));
+                break;
+            case AirportEvidence::ARecordWasNotRead:
+                census.whoseRecordWasNotRead.push_back(QString::fromStdString(addon.addon.folderName));
+                break;
+            case AirportEvidence::ItCarriesNoAirportRecord: ++census.carryingNoAirportRecord; break;
+            }
+        }
+
+        return census;
+    }
 }
 
 DiagnosticsViewModel::DiagnosticsViewModel(const ImportService& imports,
                                            SizeService& sizes,
+                                           SceneryService& scenery,
                                            Session& session,
                                            const Clock& clock,
+                                           BackgroundRunner& runner,
                                            QObject* parent)
-    : QObject(parent), imports_(imports), sizes_(sizes), session_(session), clock_(clock), caller_(sizes.NewCaller())
+    : QObject(parent),
+      imports_(imports),
+      sizes_(sizes),
+      scenery_(scenery),
+      session_(session),
+      clock_(clock),
+      runner_(runner),
+      caller_(sizes.NewCaller())
 {
 }
 
@@ -69,6 +101,81 @@ void DiagnosticsViewModel::MeasureSizeAgain()
 void DiagnosticsViewModel::CancelSize()
 {
     cancelling_ = true;
+}
+
+void DiagnosticsViewModel::ShowScenery()
+{
+    if (sceneryReadAt_.has_value() || reading_)
+    {
+        return;
+    }
+
+    Walk(SceneryService::AddonsOf(session_.Profile(), session_.Snapshot()), SceneryFreshness::ReuseWhatIsKnown);
+}
+
+void DiagnosticsViewModel::ReadTheSceneryAgain()
+{
+    if (reading_)
+    {
+        return;
+    }
+
+    Walk(SceneryService::AddonsOf(session_.Profile(), session_.Snapshot()), SceneryFreshness::ReadAgain);
+}
+
+void DiagnosticsViewModel::CancelScenery()
+{
+    stopReading_ = true;
+}
+
+const SceneryCensus& DiagnosticsViewModel::Scenery() const
+{
+    return census_;
+}
+
+bool DiagnosticsViewModel::ReadingTheScenery() const
+{
+    return reading_;
+}
+
+std::optional<std::chrono::system_clock::time_point> DiagnosticsViewModel::SceneryReadAt() const
+{
+    return sceneryReadAt_;
+}
+
+void DiagnosticsViewModel::Walk(const std::vector<AddonToRead>& addons, const SceneryFreshness freshness)
+{
+    reading_ = true;
+    stopReading_ = false;
+
+    auto walked = std::make_shared<std::vector<SceneryOfAnAddon>>();
+
+    runner_.Run(
+        [this, addons, walked, freshness]
+        {
+            *walked = scenery_.SceneryOfEach(
+                addons,
+                [this](const std::size_t read, const std::size_t outOf)
+                {
+                    QMetaObject::invokeMethod(this,
+                                              [this, read, outOf]
+                                              {
+                                                  emit SceneryProgressed(static_cast<int>(read),
+                                                                         static_cast<int>(outOf));
+                                              });
+
+                    return !stopReading_;
+                },
+                freshness);
+        },
+        [this, addons, walked]
+        {
+            census_ = CensusOf(*walked, addons.size());
+            reading_ = false;
+            sceneryReadAt_ = clock_.Now();
+
+            emit SceneryRead();
+        });
 }
 
 const std::vector<ClassificationCount>& DiagnosticsViewModel::Counts() const

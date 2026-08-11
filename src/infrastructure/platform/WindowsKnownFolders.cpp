@@ -17,6 +17,7 @@ namespace
     constexpr auto kJournalFolderName = "journal";
     constexpr auto kJournalFileName = "operations.jsonl";
     constexpr auto kPresetsFolderName = "presets";
+    constexpr auto kSceneryCacheFileName = "scenery-cache.json";
 
     std::filesystem::path KnownFolder(const KNOWNFOLDERID& folderId)
     {
@@ -62,4 +63,9 @@ std::filesystem::path JournalFilePath()
 std::filesystem::path PresetsFolderPath()
 {
     return LocalAppDataFolder() / kApplicationFolderName / kPresetsFolderName;
+}
+
+std::filesystem::path SceneryCacheFilePath()
+{
+    return LocalAppDataFolder() / kApplicationFolderName / kSceneryCacheFileName;
 }

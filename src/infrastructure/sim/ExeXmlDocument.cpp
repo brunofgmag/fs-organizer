@@ -10,6 +10,7 @@
 #include <QtCore/QXmlStreamReader>
 
 #include "domain/support/PathUtils.h"
+#include "infrastructure/sim/XmlEscaping.h"
 
 namespace
 {
@@ -21,12 +22,6 @@ namespace
     constexpr std::string_view kPathClose = "</Path>";
     constexpr std::string_view kSwitchedOff = "True";
     constexpr std::string_view kSwitchedOn = "False";
-
-    constexpr std::pair<std::string_view, char> kEntities[] = {{"&amp;", '&'},
-                                                               {"&lt;", '<'},
-                                                               {"&gt;", '>'},
-                                                               {"&quot;", '"'},
-                                                               {"&apos;", '\''}};
 
     struct TextRange
     {
@@ -60,38 +55,9 @@ namespace
         return TextRange{.from = opened + open.size(), .to = closed};
     }
 
-    [[nodiscard]] std::string Unescaped(const std::string_view text)
-    {
-        std::string plain;
-        plain.reserve(text.size());
-
-        for (std::size_t at = 0; at < text.size();)
-        {
-            const auto entity =
-                std::ranges::find_if(kEntities,
-                                     [text, at](const std::pair<std::string_view, char>& candidate)
-                                     {
-                                         return text.compare(at, candidate.first.size(), candidate.first) == 0;
-                                     });
-
-            if (entity == std::ranges::end(kEntities))
-            {
-                plain.push_back(text[at]);
-                ++at;
-
-                continue;
-            }
-
-            plain.push_back(entity->second);
-            at += entity->first.size();
-        }
-
-        return plain;
-    }
-
     [[nodiscard]] std::string ComparableTargetIn(const std::string_view document, const TextRange& path)
     {
-        return ComparablePath(PathFromUtf8(Unescaped(document.substr(path.from, path.to - path.from))));
+        return ComparablePath(PathFromUtf8(UnescapedXmlText(document.substr(path.from, path.to - path.from))));
     }
 
     [[nodiscard]] bool SaysTrue(const QString& text)

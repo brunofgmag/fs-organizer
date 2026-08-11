@@ -14,6 +14,8 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
+#include "tests/doubles/FakeSceneryCache.h"
+#include "tests/doubles/FakeSceneryParser.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/StartupOverFakes.h"
@@ -144,7 +146,10 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DiagnosticsViewModel viewModel{imports, sizes, session, clock};
+        FakeSceneryParser sceneryParser;
+        FakeSceneryCache sceneryCache;
+        SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
+        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, clock, runner};
     };
 }
 

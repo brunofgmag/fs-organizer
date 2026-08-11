@@ -123,6 +123,20 @@ public:
         return fileSystem_.ContentsOf(path);
     }
 
+    [[nodiscard]] std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,
+                                                          const std::size_t most) const override
+    {
+        read.push_back(ComparablePath(path));
+
+        std::optional<std::string> contents = fileSystem_.ContentsOf(path);
+        if (contents.has_value() && contents->size() > most)
+        {
+            contents->resize(most);
+        }
+
+        return contents;
+    }
+
     [[nodiscard]] std::size_t TimesItReadSomethingEndingIn(const std::string_view suffix) const
     {
         return static_cast<std::size_t>(std::ranges::count_if(read,

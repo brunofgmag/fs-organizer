@@ -27,6 +27,9 @@
 #include "tests/support/PathPrinting.h"
 #include "application/DeletionService.h"
 #include "application/ImportService.h"
+#include "tests/doubles/FakePackageList.h"
+#include "tests/doubles/FakeSceneryCache.h"
+#include "tests/doubles/FakeSceneryParser.h"
 #include "view/library/AddonTreePage.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/ImportViewModel.h"
@@ -190,6 +193,12 @@ namespace
         ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                                     linking, log,          LinkType::Junction};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};
+        FakePackageList packageList;
+        CoverageService coverageService{packageList, processProbe, false};
+        FakeSceneryParser sceneryParser;
+        FakeSceneryCache sceneryCache;
+        SceneryService sceneryService{filesystemProbe, sceneryParser, clock, sceneryCache};
+        CoverageViewModel coverage{coverageService, sceneryService, session, clock};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)
@@ -237,7 +246,12 @@ namespace
     struct Screen
     {
         explicit Screen(Fixture& fixture)
-            : page(fixture.viewModel, fixture.deletion, fixture.importViewModel, fixture.model, fixture.notifier)
+            : page(fixture.viewModel,
+                   fixture.deletion,
+                   fixture.importViewModel,
+                   fixture.coverage,
+                   fixture.model,
+                   fixture.notifier)
         {
             page.resize(900, 320);
             page.show();

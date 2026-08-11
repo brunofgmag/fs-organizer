@@ -15,4 +15,6 @@
 
 [[nodiscard]] std::filesystem::path PresetsFolderPath();
 
+[[nodiscard]] std::filesystem::path SceneryCacheFilePath();
+
 #endif // FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_WINDOWS_KNOWN_FOLDERS_H

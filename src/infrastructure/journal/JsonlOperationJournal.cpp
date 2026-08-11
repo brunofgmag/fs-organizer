@@ -135,6 +135,9 @@ namespace
         case FileResult::CouldNotReadTheStartupFile: return "couldNotReadTheStartupFile";
         case FileResult::CouldNotWriteTheStartupFile: return "couldNotWriteTheStartupFile";
         case FileResult::TheStartupEntriesAreLeftLoose: return "theStartupEntriesAreLeftLoose";
+        case FileResult::CouldNotReadThePackageList: return "couldNotReadThePackageList";
+        case FileResult::CouldNotWriteThePackageList: return "couldNotWriteThePackageList";
+        case FileResult::ThePackageListIsLeftLoose: return "thePackageListIsLeftLoose";
         }
 
         return "unknown";

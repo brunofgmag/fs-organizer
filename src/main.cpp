@@ -7,6 +7,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
 
+#include "application/CoverageService.h"
 #include "application/DeletionService.h"
 #include "application/ImportService.h"
 #include "application/LegacyConfigImporter.h"
@@ -14,6 +15,7 @@
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/SceneryService.h"
 #include "application/SetupService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
@@ -30,8 +32,11 @@
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
+#include "infrastructure/scenery/BglSceneryParser.h"
+#include "infrastructure/scenery/JsonSceneryCache.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
+#include "infrastructure/sim/ContentXmlPackageList.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/StartupFileLocations.h"
@@ -54,10 +59,13 @@
 #include "view/PresetsPage.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "view/setup/SetupWizard.h"
+#include "view/simulator/PackageListPage.h"
+#include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/CommunityViewModel.h"
+#include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
@@ -225,6 +233,13 @@ int main(int argc, char* argv[])
     ExeXmlStartupEntries startupEntries{{}};
     StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
 
+    const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
+    ContentXmlPackageList packageList{{}};
+    CoverageService coverageService(packageList, processProbe, stored.managePackageList);
+
+    const BglSceneryParser sceneryParser;
+    JsonSceneryCache sceneryCache(SceneryCacheFilePath());
+
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, storedLinkType);
 
@@ -240,6 +255,9 @@ int main(int argc, char* argv[])
     Session session(profileService, organizer, settings, stored, processProbe, runner, notifier);
 
     SizeService sizes(catalog, filesystemProbe, clock, runner);
+    SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
+
+    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
 
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
@@ -255,7 +273,8 @@ int main(int argc, char* argv[])
                      });
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, model, notifier);
+    auto* page =
+        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, model, notifier);
 
     LongOperationProgress progress(importViewModel, &window);
 
@@ -272,19 +291,26 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, clock, runner);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
     StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
+    auto* packageListPage = new PackageListPage(coverageViewModel);
+    auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
-                     [&session, &startupEntries, &startupFiles, &startupViewModel]
-                     {
-                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
-                         startupViewModel.Show();
-                         session.RefreshStartupEntries();
-                     });
+    QObject::connect(
+        &notifier, &SessionNotifier::ScanFinished, startupPage,
+        [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists, &coverageViewModel]
+        {
+            startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+            startupViewModel.Show();
+            session.RefreshStartupEntries();
+
+            const std::optional<ChosenContentList> chosen = ChooseContentList(contentLists, session.Profile().variant);
+            packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+            coverageViewModel.Show();
+        });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService, startupService);
@@ -307,7 +333,7 @@ int main(int argc, char* argv[])
 
     PageTab* libraryButton = window.AddPage(PageNames::kLibrary, page);
     PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);
-    window.AddPage(PageNames::kSimulator, startupPage);
+    window.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
@@ -513,9 +539,10 @@ int main(int argc, char* argv[])
                          {
                              diagnosticsViewModel.Show();
                          }
-                         else if (selected == startupPage)
+                         else if (selected == simulatorPage)
                          {
                              startupViewModel.Show();
+                             coverageViewModel.Show();
                          }
                      });
 
@@ -528,8 +555,19 @@ int main(int argc, char* argv[])
                      });
     QObject::connect(diagnosticsPage, &DiagnosticsPage::RepairRequested, &window, &MainWindow::RepairRequested);
 
-    QObject::connect(startupPage, &StartupPage::SummaryChanged, &window, carryTheSummaryOf(startupPage));
+    QObject::connect(startupPage, &StartupPage::SummaryChanged, simulatorPage,
+                     [simulatorPage, startupPage](const QString& summary)
+                     {
+                         simulatorPage->CarrySummaryFrom(startupPage, summary);
+                     });
+    QObject::connect(packageListPage, &PackageListPage::SummaryChanged, simulatorPage,
+                     [simulatorPage, packageListPage](const QString& summary)
+                     {
+                         simulatorPage->CarrySummaryFrom(packageListPage, summary);
+                     });
+    QObject::connect(simulatorPage, &SimulatorPage::SummaryChanged, &window, carryTheSummaryOf(simulatorPage));
     QObject::connect(startupPage, &StartupPage::StatusChanged, &window, &MainWindow::ShowStatus);
+    QObject::connect(packageListPage, &PackageListPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
                      [&window](const AttentionBreakdown& breakdown)
