@@ -25,10 +25,6 @@ public:
 
     [[nodiscard]] std::string ListAccountFolder() const override;
 
-    [[nodiscard]] std::size_t HowManyEntries() const;
-
-    [[nodiscard]] std::size_t HowManyPackages() const;
-
 private:
     void Forget(std::filesystem::path listPath);
 
