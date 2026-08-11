@@ -24,7 +24,6 @@
 namespace
 {
     constexpr int kRailWidth = 210;
-    constexpr int kCategoryColumnWidth = 420;
     constexpr int kBytesRole = Qt::UserRole + 1;
 
     class MeasuredRow final : public QTreeWidgetItem
@@ -107,6 +106,24 @@ namespace
     void DressTheRowsOf(QTreeWidget* tree)
     {
         tree->setItemDelegate(new RowDelegate(tree));
+    }
+
+    QVBoxLayout* InsetLikeAToolbar()
+    {
+        auto* inset = new QVBoxLayout;
+        inset->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+        inset->setSpacing(8);
+
+        return inset;
+    }
+
+    QVBoxLayout* AroundTheTableOf(QWidget* pane)
+    {
+        auto* layout = new QVBoxLayout(pane);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(0);
+
+        return layout;
     }
 }
 
@@ -232,10 +249,7 @@ QWidget* DiagnosticsPage::CreateCountsPane()
     DressTheHeaderOf(counts_->header());
     DressTheRowsOf(counts_);
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
-    layout->addWidget(counts_, 1);
+    AroundTheTableOf(pane)->addWidget(counts_, 1);
 
     return pane;
 }
@@ -260,12 +274,13 @@ QWidget* DiagnosticsPage::CreateBrokenPane()
     actions->addWidget(repair_);
     actions->addStretch();
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
+    auto* below = InsetLikeAToolbar();
+    below->addLayout(actions);
+    below->addWidget(troubledPromise_);
+
+    auto* layout = AroundTheTableOf(pane);
     layout->addWidget(troubled_, 1);
-    layout->addLayout(actions);
-    layout->addWidget(troubledPromise_);
+    layout->addLayout(below);
 
     return pane;
 }
@@ -318,9 +333,9 @@ QWidget* DiagnosticsPage::CreateSizePane()
 
     auto* progress = new QHBoxLayout;
     progress->setContentsMargins(0, 0, 0, 0);
+    progress->addWidget(cancel_);
     progress->addWidget(sizeMeter_);
     progress->addWidget(sizeProgress_, 1);
-    progress->addWidget(cancel_);
 
     sizes_ = new QTreeWidget(pane);
     sizes_->setObjectName(QStringLiteral("DiagnosticsSizes"));
@@ -329,22 +344,25 @@ QWidget* DiagnosticsPage::CreateSizePane()
     sizes_->setSortingEnabled(true);
     sizes_->sortByColumn(2, Qt::DescendingOrder);
     sizes_->header()->setStretchLastSection(false);
-    sizes_->header()->setSectionResizeMode(0, QHeaderView::Interactive);
+    sizes_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     sizes_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    sizes_->header()->resizeSection(0, kCategoryColumnWidth);
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
 
     longestPaths_ = Quiet({}, pane);
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
-    layout->addLayout(header);
-    layout->addLayout(progress);
+    auto* above = InsetLikeAToolbar();
+    above->addLayout(header);
+    above->addLayout(progress);
+
+    auto* below = InsetLikeAToolbar();
+    below->addWidget(longestPaths_);
+
+    auto* layout = AroundTheTableOf(pane);
+    layout->addLayout(above);
     layout->addWidget(sizes_, 1);
-    layout->addWidget(longestPaths_);
+    layout->addLayout(below);
 
     return pane;
 }
@@ -372,9 +390,9 @@ QWidget* DiagnosticsPage::CreateSceneryPane()
 
     auto* progress = new QHBoxLayout;
     progress->setContentsMargins(0, 0, 0, 0);
+    progress->addWidget(stopScenery_);
     progress->addWidget(sceneryMeter_);
     progress->addWidget(sceneryProgress_, 1);
-    progress->addWidget(stopScenery_);
 
     scenery_ = new QTreeWidget(pane);
     scenery_->setUniformRowHeights(true);
@@ -383,11 +401,12 @@ QWidget* DiagnosticsPage::CreateSceneryPane()
     DressTheHeaderOf(scenery_->header());
     DressTheRowsOf(scenery_);
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
-    layout->addLayout(header);
-    layout->addLayout(progress);
+    auto* above = InsetLikeAToolbar();
+    above->addLayout(header);
+    above->addLayout(progress);
+
+    auto* layout = AroundTheTableOf(pane);
+    layout->addLayout(above);
     layout->addWidget(scenery_, 1);
 
     return pane;

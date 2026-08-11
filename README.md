@@ -81,14 +81,10 @@ To run the tests alone, optionally filtered by name:
 ./run-tests.ps1 -Filter linking-engine
 ```
 
-The domain layer is plain C++ with no Qt and no Win32, so it builds anywhere for
-testing:
-
-```bash
-cmake -S . -B build/tests-only -DFSORG_TESTS_ONLY=ON
-cmake --build build/tests-only
-ctest --test-dir build/tests-only --output-on-failure
-```
+The domain, application and viewmodel layers include neither Qt nor Win32
+headers, and the `no-win32-in-the-core` test is what keeps it that way. It runs
+with the rest of the suite. There is one build configuration, so those tests are
+built and run along with everything else.
 
 The source list lives in `cmake/`, not in globs. Adding or removing a file means
 editing a `.cmake` there, and a build directory configured before that edit will
@@ -99,7 +95,6 @@ sitting right there. Reconfigure each one you still use:
 
 ```powershell
 cmake -S . -B build/debug
-cmake -S . -B build/tests-only -DFSORG_TESTS_ONLY=ON -DCMAKE_BUILD_TYPE=Debug
 ```
 
 `build.ps1` warns when it finds a build directory older than `cmake/`.
