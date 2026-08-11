@@ -171,6 +171,14 @@ bool Session::Scanning() const
     return running_;
 }
 
+void Session::CancelScan()
+{
+    if (running_)
+    {
+        cancelled_ = true;
+    }
+}
+
 void Session::RefreshEntries()
 {
     snapshot_.entries = service_.ResolveEntries(profile_, snapshot_.libraries);
@@ -437,9 +445,12 @@ void Session::Scan(SimulatorProfile profile)
     if (running_)
     {
         queued_ = std::move(profile);
+        cancelled_ = true;
+
         return;
     }
 
+    cancelled_ = false;
     running_ = true;
     scanning_ = std::move(profile);
 
@@ -448,7 +459,12 @@ void Session::Scan(SimulatorProfile profile)
     runner_.Run(
         [this]
         {
-            scanned_ = service_.Scan(scanning_);
+            const ScanGate gate{.keepGoing = [this]
+                                {
+                                    return !cancelled_;
+                                }};
+
+            scanned_ = service_.Scan(scanning_, gate);
         },
         [this]
         {
@@ -486,6 +502,15 @@ void Session::Adopt()
         scanning_ = {};
 
         Scan(std::move(next));
+        return;
+    }
+
+    if (!scanned_.complete)
+    {
+        scanned_ = {};
+        scanning_ = {};
+
+        observer_.OnScanFinished();
         return;
     }
 

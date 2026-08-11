@@ -62,9 +62,8 @@ namespace
     void ReportList(const ContentXmlPackages& packages, const std::vector<QString>& names)
     {
         Out() << "    written    "
-              << (packages.ListTakenAt().has_value() ? AsMoment(*packages.ListTakenAt()) : QString("unknown")) << "\n";
-        Out() << "    entries    " << packages.HowManyEntries() << "\n";
-        Out() << "    packages   " << packages.HowManyPackages() << " after the generation prefix comes off\n";
+              << (packages.ListTakenAt().has_value() ? AsMoment(*packages.ListTakenAt()) : QString("unknown"))
+              << ", and a list nobody could read carries no day\n";
 
         for (const QString& name : names)
         {

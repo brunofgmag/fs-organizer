@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_APPLICATION_SESSION_H
 #define FS_ORGANIZER_APPLICATION_SESSION_H
 
+#include <atomic>
 #include <filesystem>
 #include <functional>
 #include <optional>
@@ -50,6 +51,8 @@ public:
     [[nodiscard]] const ProfileSnapshot& Snapshot() const;
 
     [[nodiscard]] bool Scanning() const;
+
+    void CancelScan();
 
     void RefreshEntries();
 
@@ -106,6 +109,7 @@ private:
     SimulatorProfile scanning_;
     ProfileSnapshot scanned_;
     std::optional<SimulatorProfile> queued_;
+    std::atomic<bool> cancelled_{false};
     bool running_ = false;
     bool warnedAboutSimulator_ = false;
     bool restartPending_ = false;

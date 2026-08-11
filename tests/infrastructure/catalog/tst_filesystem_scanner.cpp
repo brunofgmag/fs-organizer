@@ -25,6 +25,7 @@ namespace
         static void TheMarkerTellsADeclaredCategoryApartFromALeftoverFolder();
         static void AFolderWithAnUnreadableManifestIsStillAnAddon();
         static void WhatTheImporterCreatedIsNotPartOfTheLibrary();
+        static void AGateThatClosesStopsTheWalkWhereItWasInsteadOfFinishing();
     };
 }
 
@@ -94,6 +95,29 @@ void FilesystemScannerTest::ScanningStopsAtTheFirstManifest()
     QCOMPARE(addon.kind, TreeNodeKind::Addon);
     QCOMPARE(addon.path.filename(), std::filesystem::path("pmdg-aircraft-77w"));
     QCOMPARE(addon.children.size(), std::size_t{0});
+}
+
+void FilesystemScannerTest::AGateThatClosesStopsTheWalkWhereItWasInsteadOfFinishing()
+{
+    const Library library;
+    library.AddManifest("Aircraft Mods/pmdg-aircraft-77w", R"({"title": "PMDG 777"})");
+    library.AddManifest("Sceneries/tlc-bgjn", R"({"title": "Ilulissat"})");
+    library.AddManifest("Liveries/fenix-a320", R"({"title": "Fenix"})");
+
+    const FilesystemScanner scanner(parser, probe);
+
+    int asked = 0;
+    const ScanGate closesAfterTheFirstFolder{.keepGoing = [&asked]
+                                             {
+                                                 return ++asked <= 1;
+                                             }};
+
+    const TreeNode stopped = scanner.ScanWhile(library.Root(), closesAfterTheFirstFolder);
+    const TreeNode whole = scanner.Scan(library.Root());
+
+    QCOMPARE(whole.children.size(), std::size_t{3});
+    QCOMPARE(stopped.children.size(), std::size_t{1});
+    QVERIFY2(stopped.children.front().children.empty(), "the walk kept descending after the gate had closed");
 }
 
 void FilesystemScannerTest::AnAddonCarriesTheMetadataFromItsManifest()

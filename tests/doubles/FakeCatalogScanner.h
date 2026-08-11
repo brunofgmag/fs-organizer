@@ -16,9 +16,14 @@ public:
         trees_[root.generic_string()] = std::move(tree);
     }
 
-    [[nodiscard]] TreeNode Scan(const std::filesystem::path& root) const override
+    [[nodiscard]] TreeNode ScanWhile(const std::filesystem::path& root, const ScanGate& gate) const override
     {
         ++scanned;
+
+        if (!gate.StillWanted())
+        {
+            return TreeNode{};
+        }
 
         const auto found = trees_.find(root.generic_string());
 

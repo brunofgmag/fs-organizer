@@ -72,7 +72,7 @@ public:
 
     [[nodiscard]] std::vector<StartupEntry> StartupEntriesNow() const;
 
-    [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile) const;
+    [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile, const ScanGate& gate = {}) const;
 
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;
 

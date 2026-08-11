@@ -55,7 +55,7 @@ public:
 class NoLibrariesToScan final : public CatalogScanner
 {
 public:
-    [[nodiscard]] TreeNode Scan(const std::filesystem::path&) const override
+    [[nodiscard]] TreeNode ScanWhile(const std::filesystem::path&, const ScanGate&) const override
     {
         return {};
     }

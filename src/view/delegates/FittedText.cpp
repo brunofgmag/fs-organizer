@@ -32,5 +32,19 @@ QString FittedText::In(const QString& text, const QFont& font, const Qt::TextEli
         atThisWidth.clear();
     }
 
+    ++asked_;
+
     return *atThisWidth.insert(text, QFontMetrics(font).elidedText(text, mode, width));
+}
+
+int FittedText::AdvanceOf(const QString& text, const QFont& font) const
+{
+    ++asked_;
+
+    return QFontMetrics(font).horizontalAdvance(text);
+}
+
+int FittedText::TimesItAskedTheFont() const
+{
+    return asked_;
 }

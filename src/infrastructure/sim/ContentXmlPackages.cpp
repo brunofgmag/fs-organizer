@@ -104,13 +104,3 @@ std::string ContentXmlPackages::ListAccountFolder() const
 {
     return {};
 }
-
-std::size_t ContentXmlPackages::HowManyEntries() const
-{
-    return entries_;
-}
-
-std::size_t ContentXmlPackages::HowManyPackages() const
-{
-    return names_.size();
-}

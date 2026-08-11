@@ -355,6 +355,8 @@ int main(int argc, char* argv[])
                          }
                      });
 
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &treeViewModel, &AddonTreeViewModel::CancelScan);
+
     QTimer::singleShot(kFirstUpdateCheckDelayMs, &updateViewModel, &UpdateViewModel::CheckQuietly);
 
     QObject::connect(&window, &MainWindow::OptionsRequested, optionsPage, &OptionsPage::Reload);

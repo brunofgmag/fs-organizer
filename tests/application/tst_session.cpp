@@ -32,6 +32,8 @@ namespace
     private slots:
         static void TheProfileAndItsSnapshotOnlyLandTogetherWhenTheScanFinishes();
         static void AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost();
+        static void TheScanAskedForNextAbandonsTheOneRunningInsteadOfWaitingItOut();
+        static void ACancelledScanLeavesTheTreeAsItWasAndStillSaysItEnded();
         static void ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk();
         static void TheSettingsFileIsNeverReadAgainAfterTheSessionIsBuilt();
         static void RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain();
@@ -266,6 +268,45 @@ void SessionTest::AScanAskedForWhileAnotherIsRunningIsRunAgainInsteadOfLost()
     QCOMPARE(f.observer.finished, 1);
     QVERIFY(!f.session.Scanning());
     QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+}
+
+void SessionTest::TheScanAskedForNextAbandonsTheOneRunningInsteadOfWaitingItOut()
+{
+    Fixture f;
+    f.runner.defer = true;
+
+    f.session.ShowActiveProfile();
+    f.session.ShowActiveProfile();
+
+    f.runner.Finish();
+
+    QCOMPARE(f.catalog.scanned, std::size_t{0});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.catalog.scanned, std::size_t{1});
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+    QVERIFY(f.session.Snapshot().complete);
+}
+
+void SessionTest::ACancelledScanLeavesTheTreeAsItWasAndStillSaysItEnded()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+    QCOMPARE(f.catalog.scanned, std::size_t{1});
+
+    f.runner.defer = true;
+    f.session.ShowActiveProfile();
+    f.session.CancelScan();
+    f.runner.Finish();
+
+    QVERIFY(!f.session.Scanning());
+    QCOMPARE(f.catalog.scanned, std::size_t{1});
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.session.Profile().id), QStringLiteral("msfs2024"));
+    QCOMPARE(f.observer.finished, 2);
 }
 
 void SessionTest::ChoosingAProfileRemembersTheChoiceBeforeReadingTheDisk()

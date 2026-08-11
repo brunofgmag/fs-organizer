@@ -110,6 +110,13 @@ fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
         tests/support/EnumPrinting.h)
 
+fsorg_add_qt_test(fsorg-bgl-airport-codes-tests bgl-airport-codes
+        tests/tools/tst_bgl_airport_codes.cpp
+        tools/shared/BglAirportCodes.cpp
+        tools/shared/BglAirportCodes.h
+        tests/support/EnumPrinting.h)
+target_include_directories(fsorg-bgl-airport-codes-tests PRIVATE "${CMAKE_SOURCE_DIR}/tools")
+
 fsorg_add_qt_test(fsorg-path-utils-tests path-utils
         tests/domain/support/tst_path_utils.cpp
         tests/support/PathPrinting.h
@@ -1146,6 +1153,12 @@ fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         assets/resources.qrc)
 target_link_libraries(fsorg-row-delegate-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
+
+fsorg_add_qt_test(fsorg-paint-timing-tests paint-timing
+        tests/view/delegates/tst_paint_timing.cpp
+        assets/resources.qrc)
+target_link_libraries(fsorg-paint-timing-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-paint-timing-tests paint-timing)
 
 fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/view/tst_addon_tree_page.cpp

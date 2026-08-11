@@ -26,6 +26,8 @@ public:
 
     [[nodiscard]] QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
+    [[nodiscard]] int TimesItAskedTheFont() const;
+
 private:
     void PointAt(const QModelIndex& index);
 
