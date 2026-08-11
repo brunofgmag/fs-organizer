@@ -140,6 +140,11 @@ add_custom_command(TARGET fsorg-shot POST_BUILD
         "${CMAKE_BINARY_DIR}/app_en.qm"
         "${CMAKE_BINARY_DIR}/app_pt_BR.qm"
         "$<TARGET_FILE_DIR:fsorg-shot>/i18n/"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "$<TARGET_FILE_DIR:fsorg-shot>/translations"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE_DIR:Qt6::Core>/../translations/qtbase_pt_BR.qm"
+        "$<TARGET_FILE_DIR:fsorg-shot>/translations/qt_pt_BR.qm"
         VERBATIM)
 
 add_dependencies(fsorg-shot release_translations)

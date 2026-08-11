@@ -391,6 +391,19 @@ int main(int argc, char* argv[])
 
     QCoreApplication::installTranslator(&interface);
 
+    QTranslator nativeWidgets;
+    if (LanguageSwitch::LoadNativeWidgets(nativeWidgets, wantedLanguage))
+    {
+        QCoreApplication::installTranslator(&nativeWidgets);
+    }
+    else if (wantedLanguage != QLatin1String("en"))
+    {
+        Out() << "no Qt catalogue for " << wantedLanguage
+              << ", so the standard buttons would come out in English while the app has them "
+                 "translated. Build fsorg-shot again.\n";
+        return 1;
+    }
+
     ApplyModernistTheme(app);
 
     const QDir folder(parser.value(out));
