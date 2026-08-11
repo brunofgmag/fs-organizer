@@ -1147,6 +1147,12 @@ fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
 target_link_libraries(fsorg-row-delegate-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
 
+fsorg_add_qt_test(fsorg-paint-timing-tests paint-timing
+        tests/view/delegates/tst_paint_timing.cpp
+        assets/resources.qrc)
+target_link_libraries(fsorg-paint-timing-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-paint-timing-tests paint-timing)
+
 fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/view/tst_addon_tree_page.cpp
         tests/doubles/StartupOverFakes.h
