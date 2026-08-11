@@ -8,11 +8,7 @@ if (NOT CMAKE_PREFIX_PATH AND EXISTS "C:/Qt")
     endif ()
 endif ()
 
-if (FSORG_TESTS_ONLY)
-    find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Test Widgets)
-else ()
-    find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets Network LinguistTools)
-endif ()
+find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets Network LinguistTools)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
