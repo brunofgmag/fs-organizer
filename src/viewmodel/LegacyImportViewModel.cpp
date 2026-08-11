@@ -58,7 +58,7 @@ std::size_t LegacyImportViewModel::PresetsWaitingIn(const std::filesystem::path&
         return 0;
     }
 
-    return importer_.ImportPresets(presetsPath, session_.Profile(), session_.Snapshot().libraries).size();
+    return importer_.PresetsWaitingIn(presetsPath);
 }
 
 LegacyImportReport LegacyImportViewModel::Import(const LegacyImportRequest& request) const

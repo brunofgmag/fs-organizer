@@ -2937,13 +2937,21 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <source>Give the preset a name.</source>
         <translation>Give the preset a name.</translation>
     </message>
-    <message>
+    <message numerus="yes">
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="365"/>
+        <source>The preset name has to fit in %n character(s).</source>
+        <translation>
+            <numerusform>The preset name has to fit in %n character.</numerusform>
+            <numerusform>The preset name has to fit in %n characters.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="371"/>
         <source>The preset name cannot contain %1, and cannot end with a space or a full stop.</source>
         <translation>The preset name cannot contain %1, and cannot end with a space or a full stop.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="372"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="378"/>
         <source>There is already a preset with that name.</source>
         <translation>There is already a preset with that name.</translation>
     </message>
@@ -3121,7 +3129,7 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation type="vanished">Disable</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="913"/>
+        <location filename="../src/view/PresetsPage.cpp" line="910"/>
         <source>%1
 
 Apply &quot;%2&quot;?</source>
@@ -3227,33 +3235,33 @@ Apply &quot;%2&quot;?</translation>
         <translation>Startup · %1</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="802"/>
+        <location filename="../src/view/PresetsPage.cpp" line="799"/>
         <source>New preset</source>
         <translation>New preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="802"/>
-        <location filename="../src/view/PresetsPage.cpp" line="831"/>
+        <location filename="../src/view/PresetsPage.cpp" line="799"/>
+        <location filename="../src/view/PresetsPage.cpp" line="828"/>
         <source>Name:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="831"/>
+        <location filename="../src/view/PresetsPage.cpp" line="828"/>
         <source>Rename preset</source>
         <translation>Rename preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="849"/>
+        <location filename="../src/view/PresetsPage.cpp" line="846"/>
         <source>Delete preset</source>
         <translation>Delete preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="849"/>
+        <location filename="../src/view/PresetsPage.cpp" line="846"/>
         <source>Delete the preset &quot;%1&quot;?</source>
         <translation>Delete the preset &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="913"/>
+        <location filename="../src/view/PresetsPage.cpp" line="910"/>
         <source>Replace what is enabled</source>
         <translation>Replace what is enabled</translation>
     </message>
@@ -3430,6 +3438,16 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>the startup entries of the simulator are not managed, so the app does not read or write that file</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="126"/>
+        <source>nobody measured this addon, so there is no telling whether the Recycle Bin of that volume takes it</source>
+        <translation>nobody measured this addon, so there is no telling whether the Recycle Bin of that volume takes it</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="129"/>
+        <source>the name is longer than a folder name can be, so the disk would refuse it</source>
+        <translation>the name is longer than a folder name can be, so the disk would refuse it</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">the journal does not know where this came from</translation>
     </message>
@@ -3532,14 +3550,14 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation type="vanished">the startup entries of the simulator are left loose in the options, so the app does not read or write that file</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="134"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="139"/>
         <source>
     the occupant is in: %1</source>
         <translation>
     the occupant is in: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="150"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="155"/>
         <source>
     folder in the destination: %1
     addon in the library: %2</source>
@@ -3548,99 +3566,99 @@ Apply the preset &quot;%2&quot;?</translation>
     addon in the library: %2</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="156"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="161"/>
         <source>
     the current link points at: %1</source>
         <translation>
     the current link points at: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="166"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="171"/>
         <source>
     what stopped it: %1</source>
         <translation>
     what stopped it: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="176"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="181"/>
         <source>
     the folder that refused: %1</source>
         <translation>
     the folder that refused: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="199"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="204"/>
         <source>%1: it is back, and %2 is in the quarantine with its origin recorded.</source>
         <translation>%1: it is back, and %2 is in the quarantine with its origin recorded.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="204"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="209"/>
         <source>putting %1 in the quarantine</source>
         <translation>putting %1 in the quarantine</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="205"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="210"/>
         <source>bringing %1 back</source>
         <translation>bringing %1 back</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="208"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="213"/>
         <source>
     neither of them is in the library right now, and nothing was deleted</source>
         <translation>
     neither of them is in the library right now, and nothing was deleted</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="209"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="214"/>
         <source>
     the library still holds: %1</source>
         <translation>
     the library still holds: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="211"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="216"/>
         <source>%1: it stopped at %2, because %3.%4</source>
         <translation>%1: it stopped at %2, because %3.%4</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="219"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="224"/>
         <source>moved to the Recycle Bin</source>
         <translation>moved to the Recycle Bin</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="220"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="225"/>
         <source>deleted for good</source>
         <translation>deleted for good</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="229"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="234"/>
         <source>
     the link already removed: %1</source>
         <translation>
     the link already removed: %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="252"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="257"/>
         <source>Copying to the library…</source>
         <translation>Copying to the library…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="253"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="258"/>
         <source>Checking whether the copy matches the source…</source>
         <translation>Checking whether the copy matches the source…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="254"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="259"/>
         <source>Putting the copy in its final place…</source>
         <translation>Putting the copy in its final place…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="255"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="260"/>
         <source>Removing the source folder…</source>
         <translation>Removing the source folder…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/FailureText.cpp" line="256"/>
+        <location filename="../src/viewmodel/FailureText.cpp" line="261"/>
         <source>Creating the link in the destination…</source>
         <translation>Creating the link in the destination…</translation>
     </message>
@@ -3869,12 +3887,12 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="618"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="656"/>
         <source>Restore the selected ones</source>
         <translation>Restore the selected ones</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="766"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="804"/>
         <source>Unregister</source>
         <translation>Unregister</translation>
     </message>
@@ -5020,42 +5038,42 @@ Size %2</translation>
 <context>
     <name>UpdateViewModel</name>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="35"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="30"/>
         <source>Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.</source>
         <translation>Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="41"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="36"/>
         <source>Looking for a new version…</source>
         <translation>Looking for a new version…</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="42"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="37"/>
         <source>The installed version is the newest one.</source>
         <translation>The installed version is the newest one.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="43"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="38"/>
         <source>Version %1 is available.</source>
         <translation>Version %1 is available.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="44"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="39"/>
         <source>Downloading version %1: %2%</source>
         <translation>Downloading version %1: %2%</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="46"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="41"/>
         <source>Version %1 is ready and goes in when the program closes.</source>
         <translation>Version %1 is ready and goes in when the program closes.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="51"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="46"/>
         <source>Nothing has been checked yet.</source>
         <translation>Nothing has been checked yet.</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="159"/>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="144"/>
         <source>The updater could not be started.</source>
         <translation>The updater could not be started.</translation>
     </message>

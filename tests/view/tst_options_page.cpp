@@ -213,7 +213,7 @@ namespace
         Session session{service, organizer, settings, processProbe, runner, notifier};
         OptionsViewModel viewModel{session, service, settings, notifier};
         FakeUpdateService updateService;
-        UpdateViewModel updates{updateService, QStringLiteral("0.1.0"), UpdateMode::Notify, true};
+        UpdateViewModel updates{updateService, UpdateMode::Notify, true};
         OptionsPage page{viewModel, updates, kSettingsFile};
     };
 }

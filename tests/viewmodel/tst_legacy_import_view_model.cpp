@@ -35,6 +35,8 @@ namespace
         static void ALibraryAlreadyRegisteredWithEveryCategoryOnDiskWaitsForNothing();
         static void ACategoryTheLibraryDoesNotHaveYetIsWaiting();
         static void ALibraryWhoseRootIsGoneWaitsForNothing();
+        static void TheCounterAnswersHowManyPresetsAreInTheFolder();
+        static void NoPresetWaitsInAnInstallationThatNamesNoPresetsFolder();
     };
 }
 
@@ -166,6 +168,25 @@ void LegacyImportViewModelTest::ALibraryWhoseRootIsGoneWaitsForNothing()
     f.legacy.Add(InstallationAt("C:/ProgramData/MSFS Addons Linker", {"D:/MSFS 2020/Aircrafts", "D:/MSFS 2020/Utils"}));
 
     QVERIFY(!f.viewModel.SomethingIsWaiting());
+}
+
+void LegacyImportViewModelTest::TheCounterAnswersHowManyPresetsAreInTheFolder()
+{
+    Fixture f;
+    const std::filesystem::path presets = std::filesystem::path{kLegacy2024} / "Presets";
+
+    f.legacy.PlacePreset(presets, LegacyPresetSelection{.name = "VFR", .enabledAddonNames = {"pmdg-aircraft-77w"}});
+    f.legacy.PlacePreset(presets, LegacyPresetSelection{.name = "IFR", .enabledAddonNames = {"nobody-scanned-this"}});
+    f.legacy.PlacePreset(presets, LegacyPresetSelection{.name = "Empty"});
+
+    QCOMPARE(f.viewModel.PresetsWaitingIn(presets), std::size_t{3});
+}
+
+void LegacyImportViewModelTest::NoPresetWaitsInAnInstallationThatNamesNoPresetsFolder()
+{
+    const Fixture f;
+
+    QCOMPARE(f.viewModel.PresetsWaitingIn({}), std::size_t{0});
 }
 
 QTEST_GUILESS_MAIN(LegacyImportViewModelTest)

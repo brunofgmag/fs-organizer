@@ -38,6 +38,7 @@ namespace
         static void TheSelectionIsWeighedBeforeThePlanIsAllowedToJudgeIt();
         static void ASelectionOnTwoVolumesWherePartFitsTheBinAnswersForEachAddon();
         static void AnAddonTooDeepForTheBinIsTheOnlyOneOfTheSelectionLeftBehind();
+        static void AnAddonNobodyMeasuredSaysSoInsteadOfBlamingTheBin();
         static void TheGestureIsPlannedOnceAndTheDeletionRunsAgainstThatSamePlan();
         static void AnAddonMeasuredByAnotherScreenIsWeighedAgainBeforeTheGuardsJudgeIt();
         static void ADeletionThatTookSomethingAwayForgetsTheUndoOfTheLastBatch();
@@ -261,6 +262,17 @@ void DeletionViewModelTest::AnAddonTooDeepForTheBinIsTheOnlyOneOfTheSelectionLef
     QCOMPARE(results.back().result, FileResult::TheRecycleBinCannotReachIt);
     QVERIFY(!f.fileSystem.Exists(kCrj));
     QVERIFY(f.fileSystem.Exists(kAtr));
+}
+
+void DeletionViewModelTest::AnAddonNobodyMeasuredSaysSoInsteadOfBlamingTheBin()
+{
+    const DeletionPlan unmeasured{.addons = {AddonToDelete{.folder = kCrj}}};
+
+    QCOMPARE(WhatTheRecycleBinRefuses(unmeasured, unmeasured.addons.front()), FileResult::TheAddonWasNeverMeasured);
+
+    const DeletionPlan measured{.addons = {AddonToDelete{.folder = kCrj, .bytes = kMegabyte}}};
+
+    QCOMPARE(WhatTheRecycleBinRefuses(measured, measured.addons.front()), FileResult::TheRecycleBinIsTooSmall);
 }
 
 void DeletionViewModelTest::TheGestureIsPlannedOnceAndTheDeletionRunsAgainstThatSamePlan()

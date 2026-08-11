@@ -32,6 +32,8 @@ namespace
         static void TheSameNameUnderTwoGenerationsIsOnePackageAndTwoEntries();
         static void TheListTheDiscoveryFindsOnRealDiskIsTheListTheAdapterReads();
         static void TheDoubleAnswersUnverifiableUntilItIsGivenAList();
+        static void APackageInstalledAfterTheFirstReadShowsUpOnTheNextOne();
+        static void ReadingAgainForgetsWhatThePreviousListSaid();
     };
 
     [[nodiscard]] std::filesystem::path FixtureList()
@@ -45,6 +47,49 @@ namespace
             + std::chrono::duration_cast<std::filesystem::file_time_type::duration>(moment
                                                                                     - std::chrono::system_clock::now());
     }
+}
+
+void ContentXmlPackagesTest::APackageInstalledAfterTheFirstReadShowsUpOnTheNextOne()
+{
+    const TempFiles files;
+    const std::filesystem::path listPath = files.WriteText(
+        "Content.xml", "<Packages>\n\t<Package name=\"fs24-asobo-activities\" active=\"Activated\"/>\n</Packages>\n");
+
+    const StdFilesystemProbe probe;
+    ContentXmlPackages packages(probe, listPath);
+
+    QCOMPARE(packages.PresenceOf("aaa-simaddons-animals"), PackagePresence::Absent);
+    QCOMPARE(packages.HowManyPackages(), std::size_t{1});
+
+    static_cast<void>(files.WriteText("Content.xml",
+                                      "<Packages>\n\t<Package name=\"fs24-asobo-activities\" active=\"Activated\"/>\n"
+                                      "\t<Package name=\"fs24-aaa-simaddons-animals\" active=\"Activated\"/>\n"
+                                      "</Packages>\n"));
+
+    packages.ReadAgain(listPath);
+
+    QCOMPARE(packages.PresenceOf("aaa-simaddons-animals"), PackagePresence::Present);
+    QCOMPARE(packages.HowManyPackages(), std::size_t{2});
+}
+
+void ContentXmlPackagesTest::ReadingAgainForgetsWhatThePreviousListSaid()
+{
+    const TempFiles files;
+    const std::filesystem::path listPath = files.WriteText(
+        "Content.xml", "<Packages>\n\t<Package name=\"fs24-asobo-activities\" active=\"Activated\"/>\n</Packages>\n");
+
+    const StdFilesystemProbe probe;
+    ContentXmlPackages packages(probe, listPath);
+
+    QCOMPARE(packages.PresenceOf("asobo-activities"), PackagePresence::Present);
+    QVERIFY(packages.ListTakenAt().has_value());
+
+    packages.ReadAgain(files.Root() / "no-such-content.xml");
+
+    QCOMPARE(packages.PresenceOf("asobo-activities"), PackagePresence::Unverifiable);
+    QCOMPARE(packages.HowManyPackages(), std::size_t{0});
+    QCOMPARE(packages.HowManyEntries(), std::size_t{0});
+    QVERIFY(!packages.ListTakenAt().has_value());
 }
 
 void ContentXmlPackagesTest::TheFourGenerationPrefixesAnswerToTheBareName()

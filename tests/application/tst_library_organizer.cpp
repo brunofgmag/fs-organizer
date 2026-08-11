@@ -1,6 +1,9 @@
 #include <QtTest/QtTest>
 
+#include <string>
 #include <variant>
+
+#include "domain/support/PathSegment.h"
 
 #include "domain/journal/OperationLog.h"
 #include "application/LibraryOrganizer.h"
@@ -39,6 +42,7 @@ namespace
         static void ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently();
         static void DeclaringAFolderThatIsNotOnDiskRefusesInsteadOfCreatingIt();
         static void ACategoryIsNotCreatedOutsideALibrary();
+        static void ANameLongerThanAFolderNameSaysSoBeforeTheDiskIsTouched();
         static void AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride();
         static void AStaleOverrideBelowTheRemovedCategoryIsForgottenToo();
         static void ACategoryThatStillHoldsAnAddonIsNotRemovedEvenWhenTheTreeSaysItIsEmpty();
@@ -301,6 +305,21 @@ void LibraryOrganizerTest::ACreatedCategoryIsAFolderInTheLibrary()
     QCOMPARE(f.journal.appended.front().kind, OperationKind::CreateCategory);
     QCOMPARE(f.journal.appended.front().target, std::filesystem::path{"D:/Library/Sceneries"});
     QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn("D:/Library/Sceneries")));
+}
+
+void LibraryOrganizerTest::ANameLongerThanAFolderNameSaysSoBeforeTheDiskIsTouched()
+{
+    const Fixture f;
+    const std::string longest(kASegmentStopsAt, 'n');
+
+    QCOMPARE(f.organizer.CreateCategory(f.profile, kLibrary, longest).result, FileResult::Completed);
+
+    const std::string tooLong(kASegmentStopsAt + 1, 'n');
+    const FileOperationResult refused = f.organizer.CreateCategory(f.profile, kLibrary, tooLong);
+
+    QCOMPARE(refused.result, FileResult::ThePathIsTooLong);
+    QVERIFY(!f.fileSystem.Exists(refused.path));
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
 }
 
 void LibraryOrganizerTest::ACategoryTheMarkerCouldNotReachIsReportedInsteadOfPassingSilently()

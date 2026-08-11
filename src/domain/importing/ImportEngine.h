@@ -1,6 +1,8 @@
 #ifndef FS_ORGANIZER_DOMAIN_IMPORTING_IMPORT_ENGINE_H
 #define FS_ORGANIZER_DOMAIN_IMPORTING_IMPORT_ENGINE_H
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 
 #include "domain/importing/ImportPaths.h"
@@ -17,7 +19,14 @@
 #include "domain/ports/OperationJournal.h"
 #include "domain/ports/SidecarStore.h"
 
-inline constexpr std::uintmax_t kFreeSpaceMargin = 64ULL * 1024 * 1024;
+inline constexpr std::uintmax_t kFreeSpaceFloor = 64ULL * 1024 * 1024;
+
+inline constexpr std::uintmax_t kRoomEachFileMayRoundUpTo = 4ULL * 1024;
+
+[[nodiscard]] constexpr std::uintmax_t FreeSpaceNeededFor(const std::uintmax_t sourceSize, const std::size_t files)
+{
+    return sourceSize + kFreeSpaceFloor + static_cast<std::uintmax_t>(files) * kRoomEachFileMayRoundUpTo;
+}
 
 struct GiveBackRequest
 {
@@ -100,7 +109,8 @@ private:
                                                                const ImportRequest& request,
                                                                const std::filesystem::path& target) const;
 
-    [[nodiscard]] ImportOutcome CheckFreeSpace(const std::filesystem::path& category, std::uintmax_t sourceSize) const;
+    [[nodiscard]] ImportOutcome
+    CheckFreeSpace(const std::filesystem::path& category, std::uintmax_t sourceSize, std::size_t files) const;
 
     [[nodiscard]] ImportOutcome CopyToStaging(const std::filesystem::path& source,
                                               const std::filesystem::path& staging,

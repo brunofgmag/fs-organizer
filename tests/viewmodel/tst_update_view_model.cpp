@@ -40,7 +40,7 @@ namespace
 void UpdateViewModelTest::WithUpdatesOffNothingIsCheckedAndTheScreenSaysWhy()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Automatic, false);
+    UpdateViewModel viewModel(service, UpdateMode::Automatic, false);
 
     viewModel.Check();
     viewModel.CheckQuietly();
@@ -53,7 +53,7 @@ void UpdateViewModelTest::WithUpdatesOffNothingIsCheckedAndTheScreenSaysWhy()
 void UpdateViewModelTest::TheManualModeDoesNotLookOnItsOwn()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Manual, true);
+    UpdateViewModel viewModel(service, UpdateMode::Manual, true);
 
     viewModel.CheckQuietly();
     QCOMPARE(service.checks, 0);
@@ -65,7 +65,7 @@ void UpdateViewModelTest::TheManualModeDoesNotLookOnItsOwn()
 void UpdateViewModelTest::TheNotifyModeSaysAVersionIsThereWithoutDownloadingIt()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Notify, true);
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true);
 
     viewModel.CheckQuietly();
     service.SayTheCheckFound(Version("0.2.0"), true);
@@ -79,7 +79,7 @@ void UpdateViewModelTest::TheNotifyModeSaysAVersionIsThereWithoutDownloadingIt()
 void UpdateViewModelTest::TheAutomaticModeDownloadsAsSoonAsItKnows()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Automatic, true);
+    UpdateViewModel viewModel(service, UpdateMode::Automatic, true);
 
     viewModel.CheckQuietly();
     service.SayTheCheckFound(Version("0.2.0"), true);
@@ -96,7 +96,7 @@ void UpdateViewModelTest::TheAutomaticModeDownloadsAsSoonAsItKnows()
 void UpdateViewModelTest::AStagedUpdateIsAppliedOnExitUnlessTheModeIsManual()
 {
     FakeUpdateService service;
-    UpdateViewModel automatic(service, QStringLiteral("0.1.0"), UpdateMode::Automatic, true);
+    UpdateViewModel automatic(service, UpdateMode::Automatic, true);
 
     QVERIFY(!automatic.ShouldApplyOnExit());
 
@@ -104,7 +104,7 @@ void UpdateViewModelTest::AStagedUpdateIsAppliedOnExitUnlessTheModeIsManual()
 
     QVERIFY(automatic.ShouldApplyOnExit());
 
-    UpdateViewModel manual(service, QStringLiteral("0.1.0"), UpdateMode::Manual, true);
+    UpdateViewModel manual(service, UpdateMode::Manual, true);
 
     QVERIFY(!manual.ShouldApplyOnExit());
 }
@@ -112,7 +112,7 @@ void UpdateViewModelTest::AStagedUpdateIsAppliedOnExitUnlessTheModeIsManual()
 void UpdateViewModelTest::ACheckNobodyAskedForFailsQuietly()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Notify, true);
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true);
 
     viewModel.CheckQuietly();
     service.SayTheCheckFailed("HTTP 503");
@@ -123,7 +123,7 @@ void UpdateViewModelTest::ACheckNobodyAskedForFailsQuietly()
 void UpdateViewModelTest::ACheckTheUserAskedForShowsTheFailure()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Notify, true);
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true);
 
     viewModel.Check();
     service.SayTheCheckFailed("HTTP 503");
@@ -135,7 +135,7 @@ void UpdateViewModelTest::ACheckTheUserAskedForShowsTheFailure()
 void UpdateViewModelTest::ChoosingAutomaticWhileAVersionWaitsStartsTheDownload()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Notify, true);
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true);
 
     viewModel.Check();
     service.SayTheCheckFound(Version("0.2.0"), true);
@@ -152,7 +152,7 @@ void UpdateViewModelTest::ChoosingAutomaticWhileAVersionWaitsStartsTheDownload()
 void UpdateViewModelTest::AQuietCheckHoldsTheDoorSoAHandCheckDoesNotStackOnTopOfIt()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Notify, true);
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true);
 
     viewModel.CheckQuietly();
 
@@ -167,7 +167,7 @@ void UpdateViewModelTest::AQuietCheckHoldsTheDoorSoAHandCheckDoesNotStackOnTopOf
 void UpdateViewModelTest::AVersionThatBroughtNoFileIsNotOfferedForDownload()
 {
     FakeUpdateService service;
-    UpdateViewModel viewModel(service, QStringLiteral("0.1.0"), UpdateMode::Notify, true);
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true);
 
     UpdateInfo withoutFiles;
     withoutFiles.version = "0.2.0";

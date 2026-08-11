@@ -4,6 +4,7 @@
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/profile/ExternalOrigins.h"
+#include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -157,6 +158,11 @@ FileOperationResult LibraryOrganizer::CreateCategory(const SimulatorProfile& pro
                                                      const std::string& name) const
 {
     const std::filesystem::path folder = parent / PathFromUtf8(name);
+
+    if (PathTooLong(name))
+    {
+        return FileOperationResult{.path = folder, .result = FileResult::ThePathIsTooLong};
+    }
 
     if (processProbe_.SimulatorIsRunning())
     {

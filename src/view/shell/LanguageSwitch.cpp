@@ -7,15 +7,14 @@
 namespace
 {
     constexpr auto kSourceLanguage = "en";
+}
 
-    bool LoadNativeWidgets(QTranslator& translator, const QString& language)
-    {
-        const QString beside = QCoreApplication::applicationDirPath() + QStringLiteral("/translations");
-        const QString name = QStringLiteral("qt_%1").arg(language);
+bool LanguageSwitch::LoadNativeWidgets(QTranslator& translator, const QString& language)
+{
+    const QString beside = QCoreApplication::applicationDirPath() + QStringLiteral("/translations");
+    const QString name = QStringLiteral("qt_%1").arg(language);
 
-        return translator.load(name, beside)
-            || translator.load(name, QLibraryInfo::path(QLibraryInfo::TranslationsPath));
-    }
+    return translator.load(name, beside) || translator.load(name, QLibraryInfo::path(QLibraryInfo::TranslationsPath));
 }
 
 const std::array<LanguageSwitch::Offer, 2>& LanguageSwitch::Offered()

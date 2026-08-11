@@ -37,6 +37,11 @@ std::vector<LegacyMigration> LegacyConfigImporter::Propose(const SimulatorProfil
     return migrations;
 }
 
+std::size_t LegacyConfigImporter::PresetsWaitingIn(const std::filesystem::path& presetsPath) const
+{
+    return source_.PresetsIn(presetsPath).size();
+}
+
 std::vector<ImportedPreset> LegacyConfigImporter::ImportPresets(const std::filesystem::path& presetsPath,
                                                                 const SimulatorProfile& profile,
                                                                 const std::vector<TreeNode>& scanned) const

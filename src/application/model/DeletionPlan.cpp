@@ -25,6 +25,11 @@ const VolumeRoom* VolumeHolding(const DeletionPlan& plan, const std::filesystem:
 
 FileResult WhatTheRecycleBinRefuses(const DeletionPlan& plan, const AddonToDelete& addon)
 {
+    if (!addon.bytes.has_value())
+    {
+        return FileResult::TheAddonWasNeverMeasured;
+    }
+
     const VolumeRoom* room = VolumeHolding(plan, addon.folder);
 
     if (room == nullptr || !TheVolumeCanTake(*room))

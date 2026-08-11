@@ -122,6 +122,11 @@ QString Explain(const FileResult result)
     case FileResult::TheStartupEntriesAreLeftLoose:
         return QObject::tr("the startup entries of the simulator are not managed, so the app does not read or write "
                            "that file");
+    case FileResult::TheAddonWasNeverMeasured:
+        return QObject::tr("nobody measured this addon, so there is no telling whether the Recycle Bin of that volume "
+                           "takes it");
+    case FileResult::ThePathIsTooLong:
+        return QObject::tr("the name is longer than a folder name can be, so the disk would refuse it");
     }
 
     return {};

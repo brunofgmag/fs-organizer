@@ -2,6 +2,7 @@
 
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
+#include "domain/support/PathSegment.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -30,6 +31,7 @@ namespace
     private slots:
         static void ABlankNameIsRefusedBeforeAnythingIsWritten();
         static void ANameThatCannotBecomeAFileNameIsRefused();
+        static void ANameLongerThanAFolderNameIsRefusedForItsLengthAndNotItsCharacters();
         static void ANameAlreadyTakenIsRefused();
         static void CreatingCapturesTheEnabledSetAndListsThePreset();
         static void ThePreviewSeparatesWhatMovesFromWhatTheAppNeverLinked();
@@ -174,6 +176,23 @@ void PresetViewModelTest::ANameThatCannotBecomeAFileNameIsRefused()
 
     QCOMPARE(refused.count(), 1);
     QVERIFY(f.viewModel.Names().isEmpty());
+}
+
+void PresetViewModelTest::ANameLongerThanAFolderNameIsRefusedForItsLengthAndNotItsCharacters()
+{
+    Fixture f;
+
+    f.viewModel.Create(QString(static_cast<int>(kASegmentStopsAt), QLatin1Char('n')));
+
+    QCOMPARE(f.viewModel.Names().size(), 1);
+
+    const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
+
+    f.viewModel.Create(QString(static_cast<int>(kASegmentStopsAt) + 1, QLatin1Char('n')));
+
+    QCOMPARE(refused.count(), 1);
+    QCOMPARE(f.viewModel.Names().size(), 1);
+    QVERIFY(!refused.front().front().toString().contains(QLatin1Char('*')));
 }
 
 void PresetViewModelTest::ANameAlreadyTakenIsRefused()

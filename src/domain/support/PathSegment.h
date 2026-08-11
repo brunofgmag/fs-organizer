@@ -1,10 +1,18 @@
 #ifndef FS_ORGANIZER_DOMAIN_SUPPORT_PATH_SEGMENT_H
 #define FS_ORGANIZER_DOMAIN_SUPPORT_PATH_SEGMENT_H
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
+
+inline constexpr std::size_t kASegmentStopsAt = 255;
+
+[[nodiscard]] constexpr bool PathTooLong(const std::string_view segment)
+{
+    return segment.size() > kASegmentStopsAt;
+}
 
 class PathSegment
 {
@@ -14,6 +22,11 @@ public:
         constexpr std::string_view forbidden = R"(<>:"/\|?*)";
 
         if (text.empty() || text == "." || text == "..")
+        {
+            return std::nullopt;
+        }
+
+        if (PathTooLong(text))
         {
             return std::nullopt;
         }
