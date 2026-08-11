@@ -89,9 +89,17 @@ namespace
         return profile;
     }
 
+    AppSettings Stored(const bool managing)
+    {
+        AppSettings settings = SettingsWith(Active());
+        settings.manageStartupEntries = managing;
+
+        return settings;
+    }
+
     struct Fixture
     {
-        explicit Fixture(const bool managing = true)
+        explicit Fixture(const bool managing = true) : settings(Stored(managing))
         {
             fileSystem.AddDirectory(kDestination);
             fileSystem.AddDirectory(kLibrary);
@@ -101,10 +109,6 @@ namespace
             fileSystem.AddFile(kSimlink);
 
             catalog.SetTree(kLibrary, LibraryTree());
-
-            settings.stored.profiles = {Active()};
-            settings.stored.activeProfileId = Active().id;
-            settings.stored.manageStartupEntries = managing;
 
             entries.Carry(StartupEntry{.label = "FlowPro", .path = kFlowExecutable, .enabled = true});
             entries.Carry(StartupEntry{.label = "Navigraph Simlink", .path = kSimlink, .enabled = true});
@@ -135,10 +139,10 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier{};
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakeStartupEntries entries;
         StartupService service{entries, processProbe, filesystemProbe, true};
-        StartupViewModel viewModel{service, session, settings, clock};
+        StartupViewModel viewModel{service, session, clock};
     };
 }
 

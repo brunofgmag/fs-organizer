@@ -136,9 +136,6 @@ namespace
             fileSystem.AddLink(std::filesystem::path(kCommunity) / "aerosoft-crj", kAddon);
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = kProfileId;
-
             session.ShowActiveProfile();
 
             viewModel.Create(QStringLiteral("Voo de linha"));
@@ -163,10 +160,10 @@ namespace
                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakePresetRepository presets;
         PresetService presetService{presets, service, startup.service};
         PresetViewModel viewModel{session, presetService, service};

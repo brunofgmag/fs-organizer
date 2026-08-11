@@ -543,8 +543,7 @@ QWidget* OptionsPage::CreateLanguage()
 
 void OptionsPage::ReloadLanguage() const
 {
-    const QString inUse =
-        LanguageSwitch::Resolve(QString::fromStdString(viewModel_.Language().value_or(std::string{})));
+    const QString inUse = LanguageSwitch::Resolve(QString::fromStdString(viewModel_.Language()));
 
     int row = 0;
     for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())

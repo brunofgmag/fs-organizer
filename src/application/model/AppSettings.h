@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_APPLICATION_MODEL_APP_SETTINGS_H
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "application/model/UpdateMode.h"
@@ -18,5 +19,11 @@ struct AppSettings
     UpdateMode updateMode = UpdateMode::Notify;
     std::string language;
 };
+
+inline void AddProfile(AppSettings& settings, SimulatorProfile profile)
+{
+    settings.activeProfileId = profile.id;
+    settings.profiles.push_back(std::move(profile));
+}
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_APP_SETTINGS_H

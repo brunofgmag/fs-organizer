@@ -85,13 +85,19 @@ namespace
 
     struct Fixture
     {
+        Fixture() = default;
+
+        explicit Fixture(SimulatorProfile existing) : settings(SettingsWith(std::move(existing)))
+        {
+        }
+
         InMemoryFileSystem fileSystem;
         FakeSimulatorLocator locator{{}};
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeSettingsRepository settings;
         FakeLibraryIdGenerator identities;
         FakeCatalogScanner catalog;
-        SetupService service{locator, filesystemProbe, settings, identities, catalog};
+        SetupService service{locator, filesystemProbe, identities, catalog, settings.stored.profiles, KeepIn(settings)};
         SetupViewModel viewModel{service};
     };
 }
@@ -110,7 +116,7 @@ void SetupViewModelTest::EveryDetectedCandidateIsProposedNotJustTheFirst()
     const FakeLibraryIdGenerator identities;
     const FakeCatalogScanner catalog;
 
-    SetupService service(locator, filesystemProbe, settings, identities, catalog);
+    SetupService service(locator, filesystemProbe, identities, catalog, settings.stored.profiles, KeepIn(settings));
     SetupViewModel viewModel(service);
     viewModel.Detect();
 
@@ -249,13 +255,11 @@ void SetupViewModelTest::AFolderInsideAnAlreadyRegisteredLibraryIsRefused()
 
 void SetupViewModelTest::ASecondProfileIsAppendedAndKeepsADistinctIdentity()
 {
-    Fixture f;
-
     SimulatorProfile existing;
     existing.id = "msfs2024";
     existing.variant = SimulatorVariant::MSFS2024;
-    f.settings.stored.profiles = {existing};
-    f.settings.stored.activeProfileId = "msfs2024";
+
+    Fixture f(existing);
 
     f.locator = FakeSimulatorLocator({
         Candidate(SimulatorVariant::MSFS2024, "F:/Second Install"),

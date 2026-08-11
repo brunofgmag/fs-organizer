@@ -165,6 +165,18 @@ namespace
         return profile;
     }
 
+    SimulatorProfile Profile()
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2024";
+        profile.variant = SimulatorVariant::MSFS2024;
+        profile.destinations = {kCommunity};
+        profile.defaultDestination = kCommunity;
+        profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
+
+        return profile;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -174,18 +186,19 @@ namespace
             fileSystem.AddDirectory(kAddon);
             catalog.SetTree(kLibrary, LibraryTree());
 
-            SimulatorProfile profile;
-            profile.id = "msfs2024";
-            profile.variant = SimulatorVariant::MSFS2024;
-            profile.destinations = {kCommunity};
-            profile.defaultDestination = kCommunity;
-            profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
-
-            settings.stored.profiles = {profile};
-            settings.stored.activeProfileId = "msfs2024";
-
             session.ShowActiveProfile();
             page.Reload();
+        }
+
+        void Seed(const std::function<void(AppSettings&)>& change)
+        {
+            static_cast<void>(session.Rewrite(
+                [&change](AppSettings& settings)
+                {
+                    change(settings);
+
+                    return true;
+                }));
         }
 
         InMemoryFileSystem fileSystem;
@@ -207,11 +220,11 @@ namespace
                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
-        OptionsViewModel viewModel{session, service, settings, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
+        OptionsViewModel viewModel{session, service, notifier};
         FakeUpdateService updateService;
         UpdateViewModel updates{updateService, UpdateMode::Notify, true};
         OptionsPage page{viewModel, updates, kSettingsFile};
@@ -278,7 +291,11 @@ void OptionsPageTest::TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands()
 void OptionsPageTest::TheLinksTabOpensOnTheTypeThatIsStored()
 {
     Fixture f;
-    f.settings.stored.linkType = LinkType::Symbolic;
+    f.Seed(
+        [](AppSettings& settings)
+        {
+            settings.linkType = LinkType::Symbolic;
+        });
     f.page.Reload();
 
     const auto* symbolic = f.page.findChild<QRadioButton*>(QStringLiteral("SymbolicChoice"));
@@ -347,7 +364,11 @@ void OptionsPageTest::OnlyOneProfileCanBeMarkedAtATime()
     legacy.id = "msfs2020";
     legacy.variant = SimulatorVariant::MSFS2020;
     legacy.destinations = {"C:/Packages/Community"};
-    f.settings.stored.profiles.push_back(legacy);
+    f.Seed(
+        [&legacy](AppSettings& settings)
+        {
+            settings.profiles.push_back(legacy);
+        });
     f.page.Reload();
 
     const auto marks = f.page.findChildren<QRadioButton*>();
@@ -409,7 +430,11 @@ void OptionsPageTest::WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion()
 void OptionsPageTest::EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUse()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(SecondProfile());
+    f.Seed(
+        [](AppSettings& settings)
+        {
+            settings.profiles.push_back(SecondProfile());
+        });
     f.page.Reload();
 
     QVERIFY(LastButtonLabelled(f.page, QStringLiteral("View…")) != nullptr);
@@ -429,7 +454,11 @@ void OptionsPageTest::EditingAnotherProfileShowsItsLibrariesInsteadOfTheOnesInUs
 void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(SecondProfile());
+    f.Seed(
+        [](AppSettings& settings)
+        {
+            settings.profiles.push_back(SecondProfile());
+        });
     f.page.Reload();
 
     LastButtonLabelled(f.page, QStringLiteral("View…"))->click();
@@ -450,7 +479,11 @@ void OptionsPageTest::TheOnlyProfileCannotBeRemoved()
 void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(SecondProfile());
+    f.Seed(
+        [](AppSettings& settings)
+        {
+            settings.profiles.push_back(SecondProfile());
+        });
     f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kAddon);
     f.session.ShowActiveProfile();
     f.page.Reload();

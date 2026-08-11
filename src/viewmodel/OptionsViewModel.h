@@ -51,7 +51,6 @@ class OptionsViewModel final : public QObject
 public:
     OptionsViewModel(Session& session,
                      ProfileService& service,
-                     SettingsRepository& settings,
                      const SessionNotifier& notifier,
                      QObject* parent = nullptr);
 
@@ -81,7 +80,7 @@ public:
 
     void ChooseUpdateMode(UpdateMode mode);
 
-    [[nodiscard]] std::optional<std::string> Language() const;
+    [[nodiscard]] std::string Language() const;
 
     void ChooseLanguage(const std::string& language);
 
@@ -108,7 +107,6 @@ private:
 
     Session& session_;
     ProfileService& service_;
-    SettingsRepository& settings_;
     std::string shown_;
 };
 

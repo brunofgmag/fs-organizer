@@ -21,6 +21,11 @@ public:
         stored_.profiles = {std::move(profile)};
     }
 
+    [[nodiscard]] const AppSettings& Stored() const
+    {
+        return stored_;
+    }
+
     [[nodiscard]] std::optional<AppSettings> Load() const override
     {
         return stored_;

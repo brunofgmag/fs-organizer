@@ -11,17 +11,16 @@
 
 OptionsViewModel::OptionsViewModel(Session& session,
                                    ProfileService& service,
-                                   SettingsRepository& settings,
                                    const SessionNotifier& notifier,
                                    QObject* parent)
-    : QObject(parent), session_(session), service_(service), settings_(settings)
+    : QObject(parent), session_(session), service_(service)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &OptionsViewModel::Changed);
 }
 
 std::vector<ProfileLine> OptionsViewModel::Profiles() const
 {
-    const AppSettings settings = settings_.Load().value_or(AppSettings{});
+    const AppSettings& settings = session_.Settings();
     const std::string& loaded = session_.Profile().id;
 
     std::vector<ProfileLine> lines;
@@ -53,7 +52,7 @@ SimulatorProfile OptionsViewModel::ProfileShown() const
         return session_.Profile();
     }
 
-    const AppSettings settings = settings_.Load().value_or(AppSettings{});
+    const AppSettings& settings = session_.Settings();
     const auto found = std::ranges::find_if(settings.profiles,
                                             [this](const SimulatorProfile& profile)
                                             {
@@ -206,35 +205,29 @@ std::vector<LibraryLine> OptionsViewModel::Libraries() const
 
 LinkType OptionsViewModel::TypeOfLink() const
 {
-    return settings_.Load().value_or(AppSettings{}).linkType;
+    return session_.Settings().linkType;
 }
 
 bool OptionsViewModel::VerifiesWithHash() const
 {
-    return settings_.Load().value_or(AppSettings{}).verifyWithHash;
+    return session_.Settings().verifyWithHash;
 }
 
 void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
 {
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
-    {
-        emit SettingsCouldNotBeSaved();
-        emit Changed();
-        return;
-    }
-
-    if (loaded->linkType == linkType)
+    if (session_.Settings().linkType == linkType)
     {
         return;
     }
 
-    AppSettings settings = *loaded;
-    settings.linkType = linkType;
+    if (!Rewrite(
+            [linkType](AppSettings& settings)
+            {
+                settings.linkType = linkType;
 
-    if (!settings_.Save(settings))
+                return true;
+            }))
     {
-        emit SettingsCouldNotBeSaved();
         emit Changed();
         return;
     }
@@ -247,26 +240,22 @@ void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
 
 bool OptionsViewModel::Rewrite(const std::function<bool(AppSettings&)>& change)
 {
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
+    bool asked = false;
+
+    const bool written = session_.Rewrite(
+        [&change, &asked](AppSettings& settings)
+        {
+            asked = change(settings);
+
+            return asked;
+        });
+
+    if (asked && !written)
     {
         emit SettingsCouldNotBeSaved();
-        return false;
     }
 
-    AppSettings settings = *loaded;
-    if (!change(settings))
-    {
-        return false;
-    }
-
-    if (!settings_.Save(settings))
-    {
-        emit SettingsCouldNotBeSaved();
-        return false;
-    }
-
-    return true;
+    return written;
 }
 
 void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
@@ -285,15 +274,9 @@ void OptionsViewModel::ChooseUpdateMode(const UpdateMode mode)
         }));
 }
 
-std::optional<std::string> OptionsViewModel::Language() const
+std::string OptionsViewModel::Language() const
 {
-    const std::optional<AppSettings> loaded = settings_.Load();
-    if (!loaded.has_value())
-    {
-        return std::nullopt;
-    }
-
-    return loaded->language;
+    return session_.Settings().language;
 }
 
 void OptionsViewModel::ChooseLanguage(const std::string& language)

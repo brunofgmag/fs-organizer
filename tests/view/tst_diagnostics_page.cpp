@@ -89,9 +89,6 @@ namespace
             fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = "msfs2024";
-
             session.ShowActiveProfile();
         }
 
@@ -117,10 +114,10 @@ namespace
         ImportEngine importEngine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
         ImportService imports{importEngine, processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking,      log,          LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         DiagnosticsViewModel viewModel{imports, sizes, session, clock};
     };

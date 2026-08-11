@@ -153,9 +153,6 @@ namespace
             fileSystem.AddDirectory(kOtherAddon);
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = "msfs2024";
-
             session.ShowActiveProfile();
         }
 
@@ -208,10 +205,10 @@ namespace
                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         SizeService sizes{catalog, filesystemProbe, clock, runner};

@@ -122,6 +122,14 @@ namespace
         return profile;
     }
 
+    AppSettings Stored()
+    {
+        AppSettings settings = SettingsWith(Active());
+        settings.profiles.push_back(Other());
+
+        return settings;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -142,9 +150,6 @@ namespace
 
             catalog.SetTree(kLibrary, LibraryTree());
             catalog.SetTree(kArchive, ArchiveTree());
-
-            settings.stored.profiles = {Active(), Other()};
-            settings.stored.activeProfileId = Active().id;
 
             session.ShowActiveProfile();
         }
@@ -178,13 +183,13 @@ namespace
                                 log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{Stored()};
         InlineBackgroundRunner runner;
         SessionNotifier notifier{};
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
-        DeletionViewModel viewModel{session, profiles, settings, service, sizes};
+        DeletionViewModel viewModel{session, profiles, service, sizes};
     };
 
     DeletionPlan LastPlan(const QSignalSpy& spy)

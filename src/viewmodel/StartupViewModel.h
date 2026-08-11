@@ -11,7 +11,6 @@
 
 #include "application/Session.h"
 #include "application/StartupService.h"
-#include "application/ports/SettingsRepository.h"
 #include "domain/ports/Clock.h"
 
 class StartupViewModel final : public QObject
@@ -19,11 +18,7 @@ class StartupViewModel final : public QObject
     Q_OBJECT
 
 public:
-    StartupViewModel(StartupService& service,
-                     Session& session,
-                     SettingsRepository& settings,
-                     const Clock& clock,
-                     QObject* parent = nullptr);
+    StartupViewModel(StartupService& service, Session& session, const Clock& clock, QObject* parent = nullptr);
 
     void Show();
 
@@ -49,7 +44,6 @@ private:
 
     StartupService& service_;
     Session& session_;
-    SettingsRepository& settings_;
     const Clock& clock_;
     StartupReport report_;
     std::optional<std::chrono::system_clock::time_point> readAt_;
