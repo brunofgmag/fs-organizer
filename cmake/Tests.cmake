@@ -110,12 +110,12 @@ fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
         tests/support/EnumPrinting.h)
 
-fsorg_add_qt_test(fsorg-bgl-airport-codes-tests bgl-airport-codes
-        tests/tools/tst_bgl_airport_codes.cpp
-        tools/shared/BglAirportCodes.cpp
-        tools/shared/BglAirportCodes.h
-        tests/support/EnumPrinting.h)
-target_include_directories(fsorg-bgl-airport-codes-tests PRIVATE "${CMAKE_SOURCE_DIR}/tools")
+fsorg_add_qt_test(fsorg-scenery-outside-the-scan-tests scenery-outside-the-scan
+        tests/infrastructure/scenery/tst_scenery_outside_the_scan.cpp
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-scenery-outside-the-scan-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-path-utils-tests path-utils
         tests/domain/support/tst_path_utils.cpp
