@@ -15,6 +15,7 @@
 #include <QtGui/QStyleHints>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QListWidget>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QTableView>
@@ -467,6 +468,7 @@ int main(int argc, char* argv[])
                      [&session, &startupEntries, &startupFiles]
                      {
                          startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                         session.RefreshStartupEntries();
                      });
 
     SizeService sizes(catalog, filesystemProbe, clock, runner);
@@ -598,6 +600,29 @@ int main(int argc, char* argv[])
               if (auto* plan = presetsPage->findChild<QPushButton*>(QStringLiteral("PresetPlanTab")))
               {
                   plan->click();
+              }
+          });
+    shoot(presetsTab, QStringLiteral("03c-presets-startup-empty"),
+          [presetsPage]
+          {
+              if (auto* startup = presetsPage->findChild<QPushButton*>(QStringLiteral("PresetStartupTab")))
+              {
+                  startup->click();
+              }
+          });
+    shoot(presetsTab, QStringLiteral("03d-presets-startup-table"),
+          [presetsPage]
+          {
+              if (auto* startup = presetsPage->findChild<QPushButton*>(QStringLiteral("PresetStartupTab")))
+              {
+                  startup->click();
+              }
+              if (auto* governs = presetsPage->findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup")))
+              {
+                  if (!governs->isChecked())
+                  {
+                      governs->click();
+                  }
               }
           });
     shoot(journalTab, QStringLiteral("04-journal"),

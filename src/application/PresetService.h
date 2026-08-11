@@ -57,11 +57,20 @@ public:
                                      const std::string& name,
                                      bool governs) const;
 
+    [[nodiscard]] bool
+    RecaptureStartup(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const std::string& name) const;
+
     [[nodiscard]] bool SetAction(const std::string& profileId,
                                  const std::string& name,
                                  std::size_t index,
                                  const AddonId& expected,
                                  PresetAction action) const;
+
+    [[nodiscard]] bool SetStartupAction(const std::string& profileId,
+                                        const std::string& name,
+                                        std::size_t index,
+                                        const std::filesystem::path& expected,
+                                        PresetAction action) const;
 
     [[nodiscard]] bool Rename(const std::string& profileId, const std::string& from, const std::string& to) const;
 
@@ -75,7 +84,19 @@ public:
     [[nodiscard]] PresetApplyReport
     Apply(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset, ApplyMode mode) const;
 
+    [[nodiscard]] PresetApplyReport
+    ApplyTheReturn(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
+
+    [[nodiscard]] bool
+    IsSatisfied(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
+
 private:
+    [[nodiscard]] PresetApplyReport Apply(const SimulatorProfile& profile,
+                                          const ProfileSnapshot& snapshot,
+                                          const Preset& preset,
+                                          ApplyMode mode,
+                                          bool recordReturn) const;
+
     [[nodiscard]] PresetApplyPlan Plan(const SimulatorProfile& profile,
                                        const ProfileSnapshot& snapshot,
                                        const Preset& preset,

@@ -48,10 +48,16 @@ namespace
         static void TheReturnPresetIsOverwrittenAtEachApplication();
         static void TheReturnPresetIsNotOneOfThePresetsOfTheProfile();
         static void ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApplication();
+        static void ApplyingTheReturnPresetDoesNotOverwriteTheReturnPreset();
         static void TheReturnPresetGovernsStartupOnlyWhenTheAppliedPresetDid();
         static void TurningTheFlagOnCapturesTheStartupEntriesThatAreOnRightNow();
         static void UpdatingRefreshesTheStartupEntriesOnlyOfAPresetThatGovernsThem();
         static void ApplyingAGoverningPresetActuallyFlipsTheStartupEntry();
+        static void AGoverningPresetIsNotSatisfiedWhenTheStartupFileDisagrees();
+        static void AGoverningPresetIsSatisfiedWhenTheStartupFileMatches();
+        static void ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction();
+        static void SettingAStartupActionRefusesWhenTheRowNoLongerHoldsThatEntry();
+        static void RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns();
     };
 }
 
@@ -587,6 +593,33 @@ void PresetServiceTest::ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApp
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
 }
 
+void PresetServiceTest::ApplyingTheReturnPresetDoesNotOverwriteTheReturnPreset()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset{
+        .name = "Voo curto",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
+
+    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace));
+
+    const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
+    QVERIFY(back.has_value());
+    QCOMPARE(FolderNamesOf(*back), std::vector<std::string>{"pmdg-aircraft-77w"});
+
+    static_cast<void>(f.service.ApplyTheReturn(profile, f.Snapshot(profile), *back));
+
+    const std::optional<Preset> anchor = f.service.ReturnPreset(kProfileId);
+    QVERIFY(anchor.has_value());
+    QCOMPARE(FolderNamesOf(*anchor), std::vector<std::string>{"pmdg-aircraft-77w"});
+
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
 void PresetServiceTest::TheReturnPresetGovernsStartupOnlyWhenTheAppliedPresetDid()
 {
     Fixture f;
@@ -670,6 +703,79 @@ void PresetServiceTest::ApplyingAGoverningPresetActuallyFlipsTheStartupEntry()
 
     QCOMPARE(after.front().enabled, true);
     QCOMPARE(after.back().enabled, true);
+}
+
+void PresetServiceTest::AGoverningPresetIsNotSatisfiedWhenTheStartupFileDisagrees()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset = GoverningStartup({TurningOn(kLauncher)});
+
+    QVERIFY(!f.service.IsSatisfied(profile, f.Snapshot(profile), preset));
+}
+
+void PresetServiceTest::AGoverningPresetIsSatisfiedWhenTheStartupFileMatches()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = true});
+
+    const SimulatorProfile profile = Profile();
+    const Preset preset = GoverningStartup({TurningOn(kLauncher)});
+
+    QVERIFY(f.service.IsSatisfied(profile, f.Snapshot(profile), preset));
+}
+
+void PresetServiceTest::ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    Preset preset;
+    preset.name = "Voo curto";
+
+    QVERIFY(f.service.IsSatisfied(profile, f.Snapshot(profile), preset));
+}
+
+void PresetServiceTest::SettingAStartupActionRefusesWhenTheRowNoLongerHoldsThatEntry()
+{
+    Fixture f;
+
+    Preset stored;
+    stored.name = "Voo curto";
+    stored.governsStartup = true;
+    stored.startupEntries = {TurningOn(kLauncher), TurningOn(kOtherLauncher)};
+    QVERIFY(f.repository.Save(kProfileId, stored));
+
+    QVERIFY(f.service.SetStartupAction(kProfileId, "Voo curto", 1, kOtherLauncher, PresetAction::Disable));
+    QVERIFY(!f.service.SetStartupAction(kProfileId, "Voo curto", 1, kLauncher, PresetAction::Disable));
+
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
+
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->startupEntries.front().action == PresetAction::Enable);
+    QVERIFY(saved->startupEntries.back().action == PresetAction::Disable);
+}
+
+void PresetServiceTest::RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = true});
+    f.startup.entries.Carry(StartupEntry{.label = "Aerosoft", .path = kOtherLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    QVERIFY(f.service.Create(profile, f.Snapshot(profile), "Voo curto"));
+
+    QVERIFY(f.service.RecaptureStartup(profile, f.Snapshot(profile), "Voo curto"));
+
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
+
+    QVERIFY(saved.has_value());
+    QVERIFY(saved->governsStartup);
+    QCOMPARE(saved->startupEntries.size(), std::size_t{1});
+    QCOMPARE(saved->startupEntries.front().path, std::filesystem::path{kLauncher});
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)

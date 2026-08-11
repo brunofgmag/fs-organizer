@@ -154,6 +154,14 @@ void Session::RefreshEntries()
     snapshot_.entries = service_.ResolveEntries(profile_, snapshot_.libraries);
     snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
     snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
+    snapshot_.startupEntries = service_.StartupEntriesNow();
+
+    observer_.OnRefreshed();
+}
+
+void Session::RefreshStartupEntries()
+{
+    snapshot_.startupEntries = service_.StartupEntriesNow();
 
     observer_.OnRefreshed();
 }

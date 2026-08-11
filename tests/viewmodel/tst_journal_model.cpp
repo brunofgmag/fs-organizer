@@ -20,6 +20,7 @@ namespace
         static void ASwapIsOneRowNamingBothAddons();
         static void WhatSupportsTheOperationIsQuietAndAFailedResultKeepsTheNameInk();
         static void ADisableWithItsStartupEntryIsOneRowNamedAfterBoth();
+        static void AStartupEntryOutsideYourAddonsIsNamedByItsLabel();
     };
 }
 
@@ -226,6 +227,22 @@ void JournalModelTest::ADisableWithItsStartupEntryIsOneRowNamedAfterBoth()
              QStringLiteral("pmdg-aircraft-77w"));
     QCOMPARE(model.index(0, JournalModel::TargetColumn, {}).data(Qt::DisplayRole).toString(), AsText(executable));
     QVERIFY(model.index(0, 0, {}).data(JournalModel::SucceededRole).toBool());
+}
+
+void JournalModelTest::AStartupEntryOutsideYourAddonsIsNamedByItsLabel()
+{
+    const std::filesystem::path executable = "C:/Program Files/Other/agent.exe";
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords(
+        {OperationRecord::OfImport(Moment(0), OperationKind::TurnOffTheStartupEntry, AddonId{}, std::filesystem::path{},
+                                   executable, FileResult::Completed, OriginSource::Unknown, "Fenix")},
+        Profile());
+
+    QCOMPARE(model.rowCount({}), 1);
+    QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(), QStringLiteral("Fenix"));
 }
 
 QTEST_MAIN(JournalModelTest)

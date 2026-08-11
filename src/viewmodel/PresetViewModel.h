@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_VIEWMODEL_PRESET_VIEW_MODEL_H
 
 #include <cstddef>
+#include <filesystem>
 #include <optional>
 
 #include <QtCore/QList>
@@ -41,6 +42,14 @@ struct OmittedAddon
     QString category{};
 };
 
+struct PresetStartupRow
+{
+    QString label{};
+    QString target{};
+    std::filesystem::path path{};
+    PresetAction action = PresetAction::Enable;
+};
+
 class PresetViewModel final : public QObject
 {
     Q_OBJECT
@@ -70,7 +79,16 @@ public:
 
     [[nodiscard]] bool SetAction(const QString& name, std::size_t index, const AddonId& expected, PresetAction action);
 
+    [[nodiscard]] bool SetStartupAction(const QString& name,
+                                        std::size_t index,
+                                        const std::filesystem::path& expected,
+                                        PresetAction action);
+
+    [[nodiscard]] QList<PresetStartupRow> StartupRows(const Preset& preset) const;
+
     [[nodiscard]] bool GovernStartup(const QString& name, bool governs);
+
+    void RecaptureStartup(const QString& name);
 
     [[nodiscard]] PresetPreview Preview(const Preset& preset, ApplyMode mode) const;
 
@@ -82,6 +100,8 @@ public:
 
     void Apply(const Preset& preset, ApplyMode mode);
 
+    void ApplyReturn(const Preset& preset);
+
 signals:
     void Changed();
 
@@ -90,6 +110,8 @@ signals:
     void Applied(const QStringList& unresolved, const QString& whatTheStartupHalfLeftUndone);
 
 private:
+    void NoteApplied(const PresetApplyReport& report);
+
     void RefuseTheWriteOf(const QString& name);
 
     [[nodiscard]] bool Accepts(const QString& name);

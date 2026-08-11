@@ -33,6 +33,21 @@ namespace
     {
         return entry.IsASwap() ? entry.Last() : entry.First();
     }
+
+    bool IsAStartupStep(const OperationKind kind)
+    {
+        return kind == OperationKind::TurnOffTheStartupEntry || kind == OperationKind::TurnOnTheStartupEntry;
+    }
+
+    QString AddonName(const OperationRecord& record)
+    {
+        if (record.addonId.folderName.empty() && IsAStartupStep(record.kind))
+        {
+            return QString::fromStdString(record.label);
+        }
+
+        return QString::fromStdString(record.addonId.folderName);
+    }
 }
 
 JournalModel::JournalModel(QObject* parent) : QAbstractItemModel(parent)
@@ -224,7 +239,7 @@ QVariant JournalModel::StepColumn(const OperationRecord& record, const int colum
     {
     case WhenColumn: return AsMoment(record.timestamp);
     case OperationColumn: return KindLabel(record.kind);
-    case AddonColumn: return QString::fromStdString(record.addonId.folderName);
+    case AddonColumn: return AddonName(record);
     case LibraryColumn: return LibraryLabel(record.addonId.libraryId);
     case SourceColumn: return AsText(record.source);
     case TargetColumn: return AsText(record.target);

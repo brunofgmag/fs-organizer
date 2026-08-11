@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "domain/support/PathSegment.h"
+#include "domain/support/PathUtils.h"
 #include "domain/support/StringUtils.h"
 #include "support/MomentText.h"
 #include "support/PathText.h"
@@ -36,7 +37,7 @@ PresetRow PresetViewModel::RowFor(const Preset& preset, const PresetListing& lis
                 + tr(" · %n category", nullptr, static_cast<int>(content.categories)),
             .updated = listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{},
             .changes = AddonsThatWouldChange(plan),
-            .satisfied = PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled)};
+            .satisfied = service_.IsSatisfied(profile, snapshot, preset)};
 }
 
 QList<PresetRow> PresetViewModel::Rows(const ApplyMode mode) const
@@ -162,6 +163,51 @@ bool PresetViewModel::SetAction(const QString& name,
     return false;
 }
 
+bool PresetViewModel::SetStartupAction(const QString& name,
+                                       const std::size_t index,
+                                       const std::filesystem::path& expected,
+                                       const PresetAction action)
+{
+    if (service_.SetStartupAction(session_.Profile().id, name.toStdString(), index, expected, action))
+    {
+        return true;
+    }
+
+    emit Refused(tr("The change could not be written to the preset \"%1\". It may have changed since the table was "
+                    "built, or the presets folder may be full or protected.")
+                     .arg(name));
+
+    return false;
+}
+
+QList<PresetStartupRow> PresetViewModel::StartupRows(const Preset& preset) const
+{
+    const std::vector<StartupEntry>& lines = session_.Snapshot().startupEntries;
+
+    QList<PresetStartupRow> rows;
+
+    for (const PresetStartupEntry& entry : preset.startupEntries)
+    {
+        QString label;
+
+        for (const StartupEntry& line : lines)
+        {
+            if (ComparablePath(line.path) == ComparablePath(entry.path))
+            {
+                label = QString::fromStdString(line.label);
+                break;
+            }
+        }
+
+        rows.append(PresetStartupRow{.label = label.isEmpty() ? AsText(entry.path.stem()) : label,
+                                     .target = AsText(entry.path),
+                                     .path = entry.path,
+                                     .action = entry.action});
+    }
+
+    return rows;
+}
+
 bool PresetViewModel::GovernStartup(const QString& name, const bool governs)
 {
     if (service_.GovernStartup(session_.Profile(), session_.Snapshot(), name.toStdString(), governs))
@@ -172,6 +218,16 @@ bool PresetViewModel::GovernStartup(const QString& name, const bool governs)
     RefuseTheWriteOf(name);
 
     return false;
+}
+
+void PresetViewModel::RecaptureStartup(const QString& name)
+{
+    if (!service_.RecaptureStartup(session_.Profile(), session_.Snapshot(), name.toStdString()))
+    {
+        RefuseTheWriteOf(name);
+    }
+
+    emit Changed();
 }
 
 PresetPreview PresetViewModel::Preview(const Preset& preset, const ApplyMode mode) const
@@ -232,8 +288,16 @@ void PresetViewModel::UndoLastBatch()
 
 void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)
 {
-    const PresetApplyReport report = service_.Apply(session_.Profile(), session_.Snapshot(), preset, mode);
+    NoteApplied(service_.Apply(session_.Profile(), session_.Snapshot(), preset, mode));
+}
 
+void PresetViewModel::ApplyReturn(const Preset& preset)
+{
+    NoteApplied(service_.ApplyTheReturn(session_.Profile(), session_.Snapshot(), preset));
+}
+
+void PresetViewModel::NoteApplied(const PresetApplyReport& report)
+{
     if (report.refusal == PresetApplyRefusal::TheReturnPresetCouldNotBeWritten)
     {
         emit Refused(tr("Nothing was applied. The app writes down what is enabled right now before applying a preset, "

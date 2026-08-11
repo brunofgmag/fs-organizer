@@ -94,6 +94,23 @@ bool PresetService::GovernStartup(const SimulatorProfile& profile,
     return presets_.Save(profile.id, *preset);
 }
 
+bool PresetService::RecaptureStartup(const SimulatorProfile& profile,
+                                     const ProfileSnapshot& snapshot,
+                                     const std::string& name) const
+{
+    std::optional<Preset> preset = presets_.Load(profile.id, name);
+
+    if (!preset.has_value())
+    {
+        return false;
+    }
+
+    preset->governsStartup = true;
+    preset->startupEntries = StartupEntriesForWhatIsOn(profile, snapshot);
+
+    return presets_.Save(profile.id, *preset);
+}
+
 bool PresetService::Update(const SimulatorProfile& profile,
                            const ProfileSnapshot& snapshot,
                            const std::string& name) const
@@ -147,6 +164,24 @@ bool PresetService::SetAction(const std::string& profileId,
     return presets_.Save(profileId, *preset);
 }
 
+bool PresetService::SetStartupAction(const std::string& profileId,
+                                     const std::string& name,
+                                     const std::size_t index,
+                                     const std::filesystem::path& expected,
+                                     const PresetAction action) const
+{
+    std::optional<Preset> preset = presets_.Load(profileId, name);
+
+    if (!preset.has_value() || index >= preset->startupEntries.size() || preset->startupEntries[index].path != expected)
+    {
+        return false;
+    }
+
+    preset->startupEntries[index].action = action;
+
+    return presets_.Save(profileId, *preset);
+}
+
 bool PresetService::Rename(const std::string& profileId, const std::string& from, const std::string& to) const
 {
     return presets_.Rename(profileId, from, to);
@@ -160,6 +195,26 @@ void PresetService::Remove(const std::string& profileId, const std::string& name
 std::optional<Preset> PresetService::ReturnPreset(const std::string& profileId) const
 {
     return presets_.LoadReturnPreset(profileId);
+}
+
+bool PresetService::IsSatisfied(const SimulatorProfile& profile,
+                                const ProfileSnapshot& snapshot,
+                                const Preset& preset) const
+{
+    if (!PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled))
+    {
+        return false;
+    }
+
+    std::vector<StartupLine> lines;
+    for (const StartupEntry& entry : snapshot.startupEntries)
+    {
+        lines.push_back(StartupLine{.label = entry.label, .path = entry.path, .enabled = entry.enabled});
+    }
+
+    const PresetStartupPlan startup = PlanPresetStartup(preset, ApplyMode::Replace, lines, startup_.Managing());
+
+    return startup.toTurnOn.empty() && startup.toTurnOff.empty();
 }
 
 Preset PresetService::WhatIsOnRightNow(const SimulatorProfile& profile,
@@ -211,15 +266,35 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
                                        const Preset& preset,
                                        const ApplyMode mode) const
 {
+    return Apply(profile, snapshot, preset, mode, true);
+}
+
+PresetApplyReport PresetService::ApplyTheReturn(const SimulatorProfile& profile,
+                                                const ProfileSnapshot& snapshot,
+                                                const Preset& preset) const
+{
+    return Apply(profile, snapshot, preset, ApplyMode::Replace, false);
+}
+
+PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
+                                       const ProfileSnapshot& snapshot,
+                                       const Preset& preset,
+                                       const ApplyMode mode,
+                                       const bool recordReturn) const
+{
     const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile);
     const PresetApplyPlan plan = Plan(profile, snapshot, preset, mode, onDisk.enabled);
-    const std::vector<StartupLine> lines = startup_.Report(profile, snapshot).lines;
-    const bool governsStartup = preset.governsStartup && startup_.Managing();
 
-    if (!presets_.SaveReturnPreset(
-            profile.id, WhatIsOnRightNow(profile, snapshot.libraries, onDisk.enabled, lines, governsStartup)))
+    if (recordReturn)
     {
-        return {.refusal = PresetApplyRefusal::TheReturnPresetCouldNotBeWritten};
+        const std::vector<StartupLine> lines = startup_.Report(profile, snapshot).lines;
+        const bool governsStartup = preset.governsStartup && startup_.Managing();
+
+        if (!presets_.SaveReturnPreset(
+                profile.id, WhatIsOnRightNow(profile, snapshot.libraries, onDisk.enabled, lines, governsStartup)))
+        {
+            return {.refusal = PresetApplyRefusal::TheReturnPresetCouldNotBeWritten};
+        }
     }
 
     const LinkBatch batch{.toDisable = plan.addons.toDisable,

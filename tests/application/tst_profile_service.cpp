@@ -65,6 +65,7 @@ namespace
         static void WithTheStartupManagementOffNothingIsAskedAndTheFileIsNeverRead();
         static void ADisabledEntryInsideTheAddonIsNotWorthAsking();
         static void AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAsking();
+        static void TurningOffAStartupEntryOutsideTheAddonsCarriesItsLabelToTheJournal();
     };
 }
 
@@ -995,6 +996,32 @@ void ProfileServiceTest::RefusingDisablesTheAddonAndLeavesTheEntryAndTheJournalA
     {
         QVERIFY(record.kind != OperationKind::TurnOffTheStartupEntry);
     }
+}
+
+void ProfileServiceTest::TurningOffAStartupEntryOutsideTheAddonsCarriesItsLabelToTheJournal()
+{
+    Fixture f;
+    const std::filesystem::path stranger = "C:/Program Files/Other/agent.exe";
+    f.fileSystem.AddFile(stranger);
+    f.startup.entries.Carry(StartupEntry{.label = "Other launcher", .path = stranger, .enabled = true});
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const StartupLine line{
+        .label = "Other launcher", .path = stranger, .enabled = true, .reach = StartupReach::OutsideYourAddons};
+    const LinkBatch batch{.startupSwitches = {StartupSwitch{.line = line, .enable = false}}};
+
+    const std::vector<LinkOperationResult> results = f.service.SetEnabled(profile, snapshot, batch).results;
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QVERIFY(results.front().outcome.Succeeded());
+
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
+    const OperationRecord& record = f.journal.appended.front();
+    QCOMPARE(record.kind, OperationKind::TurnOffTheStartupEntry);
+    QVERIFY(record.addonId.folderName.empty());
+    QCOMPARE(record.label, std::string("Other launcher"));
 }
 
 void ProfileServiceTest::WithTheStartupManagementOffNothingIsAskedAndTheFileIsNeverRead()

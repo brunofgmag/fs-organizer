@@ -39,6 +39,7 @@ namespace
         static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
         static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
         static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
+        static void RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated();
         static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
         static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
         static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
@@ -343,6 +344,21 @@ void SessionTest::RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan()
     f.session.RefreshEntries();
 
     QCOMPARE(f.session.Snapshot().conflicts.Count(), std::size_t{1});
+}
+
+void SessionTest::RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.session.Snapshot().startupEntries.empty());
+
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.session.Snapshot().startupEntries.front().label), QString{"Fenix"});
+    QCOMPARE(f.observer.refreshed, 1);
 }
 
 void SessionTest::CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt()
