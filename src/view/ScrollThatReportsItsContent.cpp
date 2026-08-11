@@ -7,6 +7,11 @@ ScrollThatReportsItsContent::ScrollThatReportsItsContent(QWidget* parent) : QScr
     setSizeAdjustPolicy(AdjustToContents);
 }
 
+void ScrollThatReportsItsContent::MeasureTheContentAt(const int wide)
+{
+    wide_ = wide;
+}
+
 QSize ScrollThatReportsItsContent::sizeHint() const
 {
     if (widget() == nullptr)
@@ -15,6 +20,12 @@ QSize ScrollThatReportsItsContent::sizeHint() const
     }
 
     const int frame = 2 * frameWidth();
+    const QSize hint = widget()->sizeHint();
 
-    return widget()->sizeHint() + QSize(frame, frame);
+    if (wide_ <= frame || !widget()->hasHeightForWidth())
+    {
+        return hint + QSize(frame, frame);
+    }
+
+    return {hint.width() + frame, widget()->heightForWidth(wide_ - frame) + frame};
 }

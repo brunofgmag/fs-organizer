@@ -154,9 +154,6 @@ namespace
             }
 
             catalog.SetTree(kLibrary, LibraryTree(Ascending(), {}));
-
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = Profile().id;
         }
 
         InMemoryFileSystem fileSystem;
@@ -178,17 +175,17 @@ namespace
                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
         DeletionService deletionService{filesystemProbe, files,        sidecars, linking,
                                         classifier,      processProbe, log,      sizes};
-        DeletionViewModel deletion{session, service, settings, deletionService, sizes};
+        DeletionViewModel deletion{session, service, deletionService, sizes};
         ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
         ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                                     linking, log,          LinkType::Junction};

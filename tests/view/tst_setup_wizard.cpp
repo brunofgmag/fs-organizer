@@ -58,7 +58,7 @@ namespace
         FakeSettingsRepository settings;
         FakeLibraryIdGenerator identities;
         FakeCatalogScanner catalog;
-        SetupService service{locator, filesystemProbe, settings, identities, catalog};
+        SetupService service{locator, filesystemProbe, identities, catalog, settings.stored.profiles, KeepIn(settings)};
         SetupViewModel viewModel{service};
     };
 

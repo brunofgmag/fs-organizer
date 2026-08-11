@@ -101,13 +101,46 @@ namespace
         return true;
     }
 
-    bool RunSetup(SettingsRepository& settings,
+    KeepTheProfile WriteItTo(SettingsRepository& repository, AppSettings& stored)
+    {
+        return [&repository, &stored](const SimulatorProfile& profile)
+        {
+            AppSettings next = stored;
+            AddProfile(next, profile);
+
+            if (!repository.Save(next))
+            {
+                return false;
+            }
+
+            stored = std::move(next);
+
+            return true;
+        };
+    }
+
+    KeepTheProfile AddItTo(Session& session)
+    {
+        return [&session](const SimulatorProfile& profile)
+        {
+            return session.Rewrite(
+                [&profile](AppSettings& settings)
+                {
+                    AddProfile(settings, profile);
+
+                    return true;
+                });
+        };
+    }
+
+    bool RunSetup(std::vector<SimulatorProfile> existing,
+                  KeepTheProfile keep,
                   const SimulatorLocator& locator,
                   const FilesystemProbe& filesystemProbe,
                   const LibraryIdGenerator& identities,
                   const CatalogScanner& catalog)
     {
-        SetupService service(locator, filesystemProbe, settings, identities, catalog);
+        SetupService service(locator, filesystemProbe, identities, catalog, std::move(existing), std::move(keep));
         SetupViewModel viewModel(service);
         viewModel.Detect();
 
@@ -160,8 +193,8 @@ int main(int argc, char* argv[])
     JsonSettingsRepository settings(SettingsFilePath());
     JsonlOperationJournal journal(JournalFilePath());
 
-    const std::optional<AppSettings> stored = settings.Load();
-    if (!stored.has_value())
+    const std::optional<AppSettings> loaded = settings.Load();
+    if (!loaded.has_value())
     {
         QMessageBox::critical(nullptr, QObject::tr("Unreadable configuration"),
                               QObject::tr("The configuration file exists but could not be read, so FS Organizer will "
@@ -171,10 +204,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    static_cast<void>(language.Use(QString::fromStdString(stored->language)));
+    AppSettings stored = *loaded;
 
-    const bool setupJustRan = stored->profiles.empty();
-    if (setupJustRan && !RunSetup(settings, locator, filesystemProbe, identities, catalog))
+    static_cast<void>(language.Use(QString::fromStdString(stored.language)));
+
+    const bool setupJustRan = stored.profiles.empty();
+    if (setupJustRan
+        && !RunSetup(stored.profiles, WriteItTo(settings, stored), locator, filesystemProbe, identities, catalog))
     {
         return 0;
     }
@@ -183,12 +219,11 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
-    const AppSettings onDisk = settings.Load().value_or(AppSettings{});
-    const LinkType storedLinkType = onDisk.linkType;
+    const LinkType storedLinkType = stored.linkType;
 
     const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries{{}};
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, onDisk.manageStartupEntries);
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, storedLinkType);
@@ -199,10 +234,10 @@ int main(int argc, char* argv[])
 
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, storedLinkType);
 
-    MainWindow window(onDisk);
+    MainWindow window(stored);
     QtBackgroundRunner runner;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, processProbe, runner, notifier);
+    Session session(profileService, organizer, settings, stored, processProbe, runner, notifier);
 
     SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -211,7 +246,7 @@ int main(int argc, char* argv[])
 
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                           sizes);
-    DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
                      [&packages, &session]
@@ -240,7 +275,7 @@ int main(int argc, char* argv[])
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
-    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
@@ -261,9 +296,9 @@ int main(int argc, char* argv[])
         QCoreApplication::applicationVersion(), GithubUpdateService::DefaultUpdatesFolder());
     updateService.DiscardStaged();
 
-    UpdateViewModel updateViewModel(updateService, onDisk.updateMode, UpdatesAreOn());
+    UpdateViewModel updateViewModel(updateService, stored.updateMode, UpdatesAreOn());
 
-    OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
+    OptionsViewModel optionsViewModel(session, profileService, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
 
     const WindowsLegacyConfigSource legacyConfig(ProgramDataFolder());
@@ -537,26 +572,27 @@ int main(int argc, char* argv[])
                      });
     QObject::connect(&window, &MainWindow::ProfileChosen, &treeViewModel, &AddonTreeViewModel::ChooseProfile);
 
-    QObject::connect(&window, &MainWindow::AddProfileRequested, &window,
-                     [&]
-                     {
-                         if (RunSetup(settings, locator, filesystemProbe, identities, catalog))
-                         {
-                             window.ShowProfiles(settings.Load().value_or(AppSettings{}));
-                             treeViewModel.ShowActiveProfile();
-                         }
-                     });
+    QObject::connect(
+        &window, &MainWindow::AddProfileRequested, &window,
+        [&]
+        {
+            if (RunSetup(session.Settings().profiles, AddItTo(session), locator, filesystemProbe, identities, catalog))
+            {
+                window.ShowProfiles(session.Settings());
+                treeViewModel.ShowActiveProfile();
+            }
+        });
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
-                     [&window, &settings]
+                     [&window, &session]
                      {
-                         window.ShowProfiles(settings.Load().value_or(AppSettings{}));
+                         window.ShowProfiles(session.Settings());
                      });
 
     QObject::connect(&notifier, &SessionNotifier::SettingsCouldNotBeSaved, &window,
                      [&]
                      {
-                         window.ShowProfiles(settings.Load().value_or(AppSettings{}));
+                         window.ShowProfiles(session.Settings());
                          optionsPage->Reload();
 
                          QMessageBox::warning(

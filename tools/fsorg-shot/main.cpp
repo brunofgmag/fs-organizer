@@ -475,7 +475,7 @@ int main(int argc, char* argv[])
     MainWindow shell(*stored);
     RunsRightHere runner;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, processProbe, runner, notifier);
+    Session session(profileService, organizer, settings, *stored, processProbe, runner, notifier);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &shell,
                      [&session, &startupEntries, &startupFiles]
@@ -492,7 +492,7 @@ int main(int argc, char* argv[])
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                           sizes);
-    DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
     auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
@@ -518,14 +518,14 @@ int main(int argc, char* argv[])
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, session, clock);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
-    StartupViewModel startupViewModel(startupService, session, settings, clock);
+    StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
 
     GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
     UpdateViewModel updateViewModel(updateService, UpdateMode::Notify, false);
 
-    OptionsViewModel optionsViewModel(session, profileService, settings, notifier);
+    OptionsViewModel optionsViewModel(session, profileService, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);

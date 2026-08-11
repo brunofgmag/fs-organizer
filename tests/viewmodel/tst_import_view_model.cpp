@@ -67,8 +67,6 @@ namespace
             fileSystem.AddFile(kBig / "manifest.json", 700);
             fileSystem.AddFile(kBig / "scenery" / "big.bgl", 4000);
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = Profile().id;
             session.ShowActiveProfile();
         }
 
@@ -94,10 +92,10 @@ namespace
                                 log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         ImportViewModel viewModel{service, profiles, processProbe, session, runner};
     };
 }
@@ -156,7 +154,14 @@ namespace
         SimulatorProfile stored = Profile();
         RememberWhereItCameFrom(stored, kVendorInLibrary, kVendorFolder);
 
-        f.settings.stored.profiles = {stored};
+        static_cast<void>(f.session.Rewrite(
+            [&stored](AppSettings& settings)
+            {
+                settings.profiles = {stored};
+
+                return true;
+            }));
+
         f.session.ShowActiveProfile();
     }
 }

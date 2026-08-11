@@ -198,7 +198,8 @@ int main(int argc, char* argv[])
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
         SilentObserver silent;
-        Session session(justTheProfile, organizer, onlySettings, processProbe, runInline, silent);
+        Session session(justTheProfile, organizer, onlySettings, onlySettings.Stored(), processProbe, runInline,
+                        silent);
         session.ShowActiveProfile();
 
         return MeasureTheJournalScroll(journal, session);
@@ -209,7 +210,7 @@ int main(int argc, char* argv[])
         MainWindow window(loaded);
         QtBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session(profileService, organizer, settings, processProbe, runner, notifier);
+        Session session(profileService, organizer, settings, loaded, processProbe, runner, notifier);
 
         SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -219,7 +220,7 @@ int main(int argc, char* argv[])
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
         const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                               sizes);
-        DeletionViewModel deletionViewModel(session, profileService, settings, deletionService, sizes);
+        DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
         auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, treeModel, notifier);
@@ -256,7 +257,7 @@ int main(int argc, char* argv[])
     CommunityModel communityModel;
     InlineRunner runInline;
     SessionNotifier notifier;
-    Session session(profileService, organizer, settings, processProbe, runInline, notifier);
+    Session session(profileService, organizer, settings, loaded, processProbe, runInline, notifier);
     SizeService inlineSizes(catalog, filesystemProbe, clock, runInline);
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, inlineSizes);
 

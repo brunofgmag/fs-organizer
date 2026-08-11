@@ -116,9 +116,6 @@ namespace
 
             catalog.SetTree(kLibrary, LibraryTree());
 
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = Profile().id;
-
             session.ShowActiveProfile();
         }
 
@@ -154,13 +151,13 @@ namespace
                                 log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier{};
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
-        DeletionViewModel viewModel{session, profiles, settings, service, sizes};
+        DeletionViewModel viewModel{session, profiles, service, sizes};
     };
 
     void BuryAFileUnder(InMemoryFileSystem& fileSystem, const std::filesystem::path& folder, const std::size_t reach)
@@ -320,7 +317,14 @@ namespace
         SimulatorProfile stored = Profile();
         RememberWhereItCameFrom(stored, kCrj, kVendorFolder);
 
-        f.settings.stored.profiles = {stored};
+        static_cast<void>(f.session.Rewrite(
+            [&stored](AppSettings& settings)
+            {
+                settings.profiles = {stored};
+
+                return true;
+            }));
+
         f.session.ShowActiveProfile();
     }
 }

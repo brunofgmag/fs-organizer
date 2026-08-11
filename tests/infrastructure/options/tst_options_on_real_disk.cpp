@@ -115,7 +115,13 @@ namespace
                       startup.service,
                       linkType),
               organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, linkType),
-              session(service, organizer, settings, processProbe, runner, observer)
+              session(service,
+                      organizer,
+                      settings,
+                      settings.Load().value_or(AppSettings{}),
+                      processProbe,
+                      runner,
+                      observer)
         {
         }
 
@@ -143,7 +149,7 @@ namespace
         Session session;
     };
 
-    [[nodiscard]] std::string WriteAProfileFor(const Disk& disk, Stack& stack)
+    [[nodiscard]] std::string WriteAProfileFor(const Disk& disk)
     {
         SimulatorProfile profile;
         profile.id = "msfs2024";
@@ -156,7 +162,8 @@ namespace
         settings.profiles = {profile};
         settings.activeProfileId = profile.id;
 
-        [[maybe_unused]] const bool saved = stack.settings.Save(settings);
+        JsonSettingsRepository repository(disk.SettingsFile());
+        [[maybe_unused]] const bool saved = repository.Save(settings);
 
         return profile.id;
     }
@@ -170,8 +177,8 @@ namespace
 void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivilegeItLacks()
 {
     const Disk disk;
+    static_cast<void>(WriteAProfileFor(disk));
     Stack symbolic(disk, LinkType::Symbolic);
-    static_cast<void>(WriteAProfileFor(disk, symbolic));
     symbolic.session.ShowActiveProfile();
 
     const TreeNode* addon = AddonUnder(symbolic, kAddon);
@@ -227,8 +234,8 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
 void OptionsOnRealDiskTest::UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThirdParty()
 {
     const Disk disk;
+    static_cast<void>(WriteAProfileFor(disk));
     Stack stack(disk);
-    static_cast<void>(WriteAProfileFor(disk, stack));
     stack.session.ShowActiveProfile();
 
     const TreeNode* addon = AddonUnder(stack, kAddon);
@@ -259,8 +266,8 @@ void OptionsOnRealDiskTest::UnregisteringKeepsEveryJunctionOnDiskAndCallsThemThi
 void OptionsOnRealDiskTest::RegisteringTheLibraryBackRebuildsTheTreeUnderANewIdentity()
 {
     const Disk disk;
+    static_cast<void>(WriteAProfileFor(disk));
     Stack stack(disk);
-    static_cast<void>(WriteAProfileFor(disk, stack));
     stack.session.ShowActiveProfile();
 
     QCOMPARE(stack.session.Snapshot().libraries.size(), std::size_t{1});
@@ -284,8 +291,8 @@ void OptionsOnRealDiskTest::RegisteringTheLibraryBackRebuildsTheTreeUnderANewIde
 void OptionsOnRealDiskTest::RepointingADestinationCarriesThePinnedCategoryIntoTheFileOnDisk()
 {
     const Disk disk;
+    static_cast<void>(WriteAProfileFor(disk));
     Stack stack(disk);
-    static_cast<void>(WriteAProfileFor(disk, stack));
     stack.session.ShowActiveProfile();
 
     const TreeNode* library = &stack.session.Snapshot().libraries.front();

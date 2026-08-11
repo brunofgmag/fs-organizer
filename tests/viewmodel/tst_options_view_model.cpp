@@ -111,9 +111,6 @@ namespace
             fileSystem.AddDirectory(kOtherAddon);
             fileSystem.AddFile(std::filesystem::path(kOtherAddon) / "manifest.json");
             catalog.SetTree(kLibrary, LibraryTree());
-
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = "msfs2024";
         }
 
         void EnableOnDisk(const std::filesystem::path& addon) const
@@ -140,12 +137,23 @@ namespace
                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
-        OptionsViewModel viewModel{session, service, settings, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
+        OptionsViewModel viewModel{session, service, notifier};
     };
+
+    void AddProfile(Fixture& f, const SimulatorProfile& profile)
+    {
+        static_cast<void>(f.session.Rewrite(
+            [&profile](AppSettings& settings)
+            {
+                settings.profiles.push_back(profile);
+
+                return true;
+            }));
+    }
 }
 
 void OptionsViewModelTest::ALibraryLineCarriesItsCategoriesAddonsAndWhatIsEnabledFromIt()
@@ -197,7 +205,7 @@ void OptionsViewModelTest::UnregisteringWhileDisablingRemovesTheLinksAndSparesTh
 void OptionsViewModelTest::RemovingTheActiveProfileWithoutDisablingLeavesEveryLinkWhereItIs()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(LegacyProfile());
+    AddProfile(f, LegacyProfile());
     f.EnableOnDisk(kAddon);
     f.session.ShowActiveProfile();
 
@@ -217,7 +225,7 @@ void OptionsViewModelTest::OnlyTheActiveProfileIsAskedForItsAddonCount()
     legacy.variant = SimulatorVariant::MSFS2020;
     legacy.destinations = {"C:/Packages/Community"};
     legacy.libraries = {Library{.id = "library-9", .path = "Z:/Never Scanned", .label = "Legado"}};
-    f.settings.stored.profiles.push_back(legacy);
+    AddProfile(f, legacy);
 
     f.session.ShowActiveProfile();
 
@@ -235,7 +243,7 @@ void OptionsViewModelTest::OnlyTheActiveProfileIsAskedForItsAddonCount()
 void OptionsViewModelTest::TheProfileMarkedActiveIsTheOneTheOtherPanelsDescribe()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(LegacyProfile());
+    AddProfile(f, LegacyProfile());
     f.session.ShowActiveProfile();
 
     f.runner.defer = true;
@@ -260,7 +268,7 @@ void OptionsViewModelTest::TheProfileMarkedActiveIsTheOneTheOtherPanelsDescribe(
 void OptionsViewModelTest::TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLands()
 {
     Fixture f;
-    f.settings.stored.profiles.push_back(LegacyProfile());
+    AddProfile(f, LegacyProfile());
     f.session.ShowActiveProfile();
 
     f.runner.defer = true;

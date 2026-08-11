@@ -84,8 +84,14 @@ namespace
 
         void Seed(const SimulatorProfile& profile)
         {
-            settings.stored.profiles = {profile};
-            settings.stored.activeProfileId = profile.id;
+            static_cast<void>(session.Rewrite(
+                [&profile](AppSettings& settings)
+                {
+                    settings.profiles = {profile};
+                    settings.activeProfileId = profile.id;
+
+                    return true;
+                }));
 
             session.ShowActiveProfile();
         }
@@ -112,7 +118,7 @@ namespace
         FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{service, organizer, settings, processProbe, runner, notifier};
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         CommunityModel model;
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         CommunityViewModel viewModel{service, session, notifier, model, sizes};

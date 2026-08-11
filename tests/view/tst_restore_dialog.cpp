@@ -3,13 +3,17 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QScrollBar>
 
 #include <filesystem>
+#include <string>
 #include <vector>
 
 #include "application/model/RestorePlan.h"
 #include "tests/support/PathPrinting.h"
 #include "view/quarantine/RestoreDialog.h"
+#include "view/theme/ModernistTheme.h"
 
 namespace
 {
@@ -24,6 +28,8 @@ namespace
         static void ARowThatNeedsAPlaceIsStillAskedInsteadOfBeingOfferedASwap();
         static void ARefusedComparisonLeavesTheRowAsItWas();
         static void TheTotalCountsTheReplacementsItSaysAreAmongThem();
+        static void EveryOfferIsVisibleWithoutScrolling();
+        static void TheViewportIsNoTallerThanWhatTheOffersNeed();
     };
 
     const std::filesystem::path kHeld = "D:/Library/_fsorganizer-quarantine/simbridge";
@@ -67,6 +73,37 @@ namespace
         {
             return false;
         };
+    }
+
+    std::vector<RestoreOffer> ManyOffers(const int count)
+    {
+        const std::filesystem::path deep =
+            "D:/Library/Aircraft/Vendor With A Long Enough Name/Second Level Of Folders/Third Level Of Folders";
+
+        std::vector<RestoreOffer> offers;
+
+        for (int index = 0; index < count; ++index)
+        {
+            const std::string name = "addon-" + std::to_string(index);
+
+            offers.push_back(RestoreOffer{
+                .check =
+                    RestoreCheck{.item = QuarantinedItem{.path = kHeld.parent_path() / name, .origin = deep / name},
+                                 .target = deep / name}});
+        }
+
+        return offers;
+    }
+
+    QScrollArea* TheScrollIn(const RestoreDialog& dialog)
+    {
+        return dialog.findChild<QScrollArea*>();
+    }
+
+    void Expose(RestoreDialog& dialog)
+    {
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
     }
 }
 
@@ -166,6 +203,36 @@ void RestoreDialogTest::TheTotalCountsTheReplacementsItSaysAreAmongThem()
     QCOMPARE(dialog.TheOnesReplacingWhatIsThere().size(), std::size_t{1});
     QVERIFY2(!(*counted)->text().startsWith(QStringLiteral("0 ")),
              "the button treats a replacement as work, so the sentence beside it cannot count zero");
+}
+
+void RestoreDialogTest::EveryOfferIsVisibleWithoutScrolling()
+{
+    ApplyModernistTheme(*qobject_cast<QApplication*>(QCoreApplication::instance()));
+
+    RestoreDialog dialog(ManyOffers(8), AlwaysAgrees());
+    Expose(dialog);
+
+    QScrollArea* scroll = TheScrollIn(dialog);
+
+    QVERIFY(scroll != nullptr);
+    QCOMPARE(scroll->verticalScrollBar()->maximum(), 0);
+}
+
+void RestoreDialogTest::TheViewportIsNoTallerThanWhatTheOffersNeed()
+{
+    ApplyModernistTheme(*qobject_cast<QApplication*>(QCoreApplication::instance()));
+
+    RestoreDialog dialog(ManyOffers(4), AlwaysAgrees());
+    Expose(dialog);
+
+    const QScrollArea* scroll = TheScrollIn(dialog);
+    const int needed = scroll->widget()->heightForWidth(scroll->viewport()->width());
+
+    QVERIFY(needed > 0);
+    QVERIFY2(scroll->viewport()->height() - needed < dialog.fontMetrics().height(),
+             qPrintable(QStringLiteral("the viewport is %1 tall for content that needs %2")
+                            .arg(scroll->viewport()->height())
+                            .arg(needed)));
 }
 
 QTEST_MAIN(RestoreDialogTest)

@@ -74,9 +74,6 @@ namespace
             fileSystem.AddDirectory(kLibrary);
             fileSystem.AddDirectory(kQuarantined);
             catalog.SetTree(kLibrary, LibraryTree());
-
-            settings.stored.profiles = {Profile()};
-            settings.stored.activeProfileId = Profile().id;
         }
 
         void ScanLands()
@@ -106,10 +103,10 @@ namespace
                                 log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings;
+        FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
-        Session session{profiles, organizer, settings, processProbe, runner, notifier};
+        Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         QuarantineModel model;
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         QuarantineViewModel viewModel{service, profiles, session, notifier, model, sizes, runner};
