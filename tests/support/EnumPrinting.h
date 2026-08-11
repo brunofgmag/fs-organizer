@@ -17,7 +17,9 @@
 #include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
 #include "domain/model/QuarantineOrigin.h"
+#include "domain/model/SceneryCodes.h"
 #include "domain/model/WriteAccess.h"
+#include "domain/scenery/AirportCoverage.h"
 
 namespace QTest
 {
@@ -279,6 +281,32 @@ namespace QTest
         }
 
         return qstrdup("PackagePresence(?)");
+    }
+
+    template<>
+    inline char* toString(const SceneryReading& t)
+    {
+        switch (t)
+        {
+        case SceneryReading::Read: return qstrdup("Read");
+        case SceneryReading::ItCarriesNoSignature: return qstrdup("ItCarriesNoSignature");
+        case SceneryReading::ItEndsBeforeItSaysItDoes: return qstrdup("ItEndsBeforeItSaysItDoes");
+        }
+
+        return qstrdup("SceneryReading(?)");
+    }
+
+    template<>
+    inline char* toString(const AirportEvidence& t)
+    {
+        switch (t)
+        {
+        case AirportEvidence::ItCarriesNoAirportRecord: return qstrdup("ItCarriesNoAirportRecord");
+        case AirportEvidence::ARecordWasNotRead: return qstrdup("ARecordWasNotRead");
+        case AirportEvidence::TheCodeWasRead: return qstrdup("TheCodeWasRead");
+        }
+
+        return qstrdup("AirportEvidence(?)");
     }
 
     template<>

@@ -117,6 +117,19 @@ fsorg_add_qt_test(fsorg-scenery-outside-the-scan-tests scenery-outside-the-scan
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-scenery-outside-the-scan-tests PRIVATE fsorg-infrastructure)
 
+fsorg_add_qt_test(fsorg-airport-coverage-tests airport-coverage
+        tests/domain/scenery/tst_airport_coverage.cpp
+        tests/support/EnumPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-airport-coverage-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-bgl-scenery-parser-tests bgl-scenery-parser
+        tests/infrastructure/scenery/tst_bgl_scenery_parser.cpp
+        tests/support/EnumPrinting.h
+        src/domain/model/SceneryCodes.h
+        src/domain/ports/SceneryParser.h)
+target_link_libraries(fsorg-bgl-scenery-parser-tests PRIVATE fsorg-infrastructure)
+
 fsorg_add_qt_test(fsorg-path-utils-tests path-utils
         tests/domain/support/tst_path_utils.cpp
         tests/support/PathPrinting.h
