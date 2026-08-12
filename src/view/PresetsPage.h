@@ -10,9 +10,8 @@
 
 class EmptyState;
 class PresetPlanPanel;
-class QCheckBox;
+class PresetStartupPanel;
 class QFrame;
-class QLabel;
 class QLineEdit;
 class QPushButton;
 class QStackedWidget;
@@ -43,8 +42,6 @@ private:
 
     [[nodiscard]] QWidget* CreateTheTwoHalves();
 
-    [[nodiscard]] QWidget* CreateTheStartupTab();
-
     [[nodiscard]] QString SelectedName() const;
 
     [[nodiscard]] ApplyMode Mode() const;
@@ -69,7 +66,7 @@ private:
 
     void ActionToggled(const QTableWidgetItem* item);
 
-    void StartupActionToggled(const QTableWidgetItem* item);
+    void StartupActionToggled(int row, PresetAction wanted);
 
     void RecaptureStartup();
 
@@ -101,11 +98,7 @@ private:
     QLineEdit* filter_ = nullptr;
     QTableWidget* entries_ = nullptr;
     QPushButton* startup_ = nullptr;
-    QCheckBox* governsStartup_ = nullptr;
-    QStackedWidget* startupBody_ = nullptr;
-    QLabel* startupEmpty_ = nullptr;
-    QTableWidget* startupEntries_ = nullptr;
-    QPushButton* updateStartup_ = nullptr;
+    PresetStartupPanel* startupPanel_ = nullptr;
     PresetPlanPanel* planPanel_ = nullptr;
     QPushButton* update_ = nullptr;
     QPushButton* rename_ = nullptr;

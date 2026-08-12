@@ -2957,6 +2957,42 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
 </context>
 <context>
+    <name>PresetStartupPanel</name>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <source>Enables</source>
+        <translation>Liga</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <source>Update with the enabled ones</source>
+        <translation>Atualizar com os habilitados</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <source>This preset also governs startup entries</source>
+        <translation>Este preset também governa entradas de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <source>Entry</source>
+        <translation>Entrada</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <source>Target</source>
+        <translation>Alvo</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp"/>
+        <source>Check the box above to have this preset also manage the simulator&apos;s startup entries. Checking it captures the entries enabled right now. You can then turn each on or off here.</source>
+        <translation>Marque a caixa acima para este preset também gerenciar as entradas de inicialização do simulador. Marcar captura as entradas habilitadas agora. Depois você liga ou desliga cada uma aqui.</translation>
+    </message>
+</context>
+<context>
     <name>PresetsPage</name>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="167"/>
@@ -3044,11 +3080,6 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
         <translation type="vanished">Ver quais…</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="311"/>
-        <source>This preset also governs startup entries</source>
-        <translation>Este preset também governa entradas de inicialização</translation>
-    </message>
-    <message>
         <source>What is enabled right now is written down first, so you can come back to it even after an import or a quarantine operation, which lose the batch undo.</source>
         <translation type="vanished">O que está habilitado agora é anotado antes, para você poder voltar a isso mesmo depois de uma importação ou de uma operação de quarentena, que perdem o desfazer de lote.</translation>
     </message>
@@ -3056,16 +3087,6 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
         <location filename="../src/view/PresetsPage.cpp" line="305"/>
         <source>Filter presets</source>
         <translation>Filtrar presets</translation>
-    </message>
-    <message>
-        <location filename="../src/view/PresetsPage.cpp" line="307"/>
-        <source>Entry</source>
-        <translation>Entrada</translation>
-    </message>
-    <message>
-        <location filename="../src/view/PresetsPage.cpp" line="307"/>
-        <source>Target</source>
-        <translation>Alvo</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="308"/>
@@ -3213,11 +3234,6 @@ Aplicar &quot;%2&quot;?</translation>
         <location filename="../src/view/PresetsPage.cpp" line="310"/>
         <source>Startup</source>
         <translation>Inicialização</translation>
-    </message>
-    <message>
-        <location filename="../src/view/PresetsPage.cpp" line="313"/>
-        <source>Check the box above to have this preset also manage the simulator&apos;s startup entries. Checking it captures the entries enabled right now. You can then turn each on or off here.</source>
-        <translation>Marque a caixa acima para este preset também gerenciar as entradas de inicialização do simulador. Marcar captura as entradas habilitadas agora. Depois você liga ou desliga cada uma aqui.</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="600"/>
