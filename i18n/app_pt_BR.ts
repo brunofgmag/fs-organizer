@@ -924,150 +924,155 @@ Também existe na biblioteca: %2</translation>
         <translation>A cópia na sua biblioteca sumiu, levada pelo outro programa. Aqui não há o que reparar: o conteúdo não existe mais nesta máquina.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="223"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="133"/>
+        <source>Taking it over moves the folder into your library and leaves a link where it was. The other program does not know that, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop it.</source>
+        <translation>Adotar move a pasta para a sua biblioteca e deixa um link no lugar dela. O outro programa não sabe disso, então a próxima atualização dele pode escrever dentro do link, ou substituí-lo por uma pasta de verdade e deixar você com duas cópias. Nada aqui consegue impedir.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/CommunityPage.cpp" line="228"/>
         <source>measuring…</source>
         <translation>medindo…</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="292"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="297"/>
         <source>All</source>
         <translation>Todas</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="293"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="298"/>
         <source>Managed</source>
         <translation>Gerenciada</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="294"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="299"/>
         <source>External</source>
         <translation>Externa</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="295"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="300"/>
         <source>Divergent</source>
         <translation>Divergente</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="296"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="301"/>
         <source>Vanished</source>
         <translation>Sumida</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="297"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="302"/>
         <source>Broken</source>
         <translation>Quebrada</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="298"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="303"/>
         <source>Unmanaged</source>
         <translation>Não gerenciada</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="299"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="304"/>
         <source>Unavailable</source>
         <translation>Indisponível</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="300"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="305"/>
         <source>Duplicated</source>
         <translation>Duplicada</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="301"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="306"/>
         <source>In conflict</source>
         <translation>Em conflito</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="331"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="336"/>
         <source>Select everything the filter shows</source>
         <translation>Selecionar tudo que o filtro mostra</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="332"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="337"/>
         <source>Read again from the disk</source>
         <translation>Ler de novo do disco</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="333"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="338"/>
         <source>Filter entries</source>
         <translation>Filtrar entradas</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="334"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="339"/>
         <source>Open the folder</source>
         <translation>Abrir a pasta</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="335"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="340"/>
         <source>Importing copies into the library and leaves a link in its place. The original folder is only removed after the check.</source>
         <translation>Importar copia para a biblioteca e deixa um link no lugar. A pasta original só é removida depois da verificação.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="337"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="373"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="342"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="378"/>
         <source>Entry selected</source>
         <translation>Entrada selecionada</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="378"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="548"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="383"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="553"/>
         <source>Import this folder…</source>
         <translation>Importar esta pasta…</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="382"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="559"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="387"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="564"/>
         <source>Resolve the conflict…</source>
         <translation>Resolver o conflito…</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="438"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="443"/>
         <source>Classification</source>
         <translation>Classificação</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="439"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="444"/>
         <source>Destination</source>
         <translation>Destino</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="440"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="445"/>
         <source>Path</source>
         <translation>Caminho</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="441"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="446"/>
         <source>Link?</source>
         <translation>É link?</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="441"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="446"/>
         <source>no, a physical folder</source>
         <translation>não, pasta física</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="445"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="450"/>
         <source>Came from</source>
         <translation>Veio de</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="450"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="455"/>
         <source>What this means</source>
         <translation>O que isso significa</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="455"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="460"/>
         <source>In the library</source>
         <translation>Na biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="504"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="509"/>
         <source>Destinations</source>
         <translation>Destinos</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="506"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="511"/>
         <source>%n entry selected</source>
         <translation>
             <numerusform>%n entrada selecionada</numerusform>
@@ -1075,12 +1080,12 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="535"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="540"/>
         <source>Size on disk</source>
         <translation>Tamanho em disco</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="548"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="553"/>
         <source>Import the %n folder…</source>
         <translation>
             <numerusform>Importar a %n pasta…</numerusform>
@@ -1088,12 +1093,12 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="554"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="559"/>
         <source>Choose which copy stays…</source>
         <translation>Escolher qual cópia fica…</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="558"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="563"/>
         <source>Resolve the %n conflict…</source>
         <translation>
             <numerusform>Resolver o %n conflito…</numerusform>
@@ -1101,32 +1106,32 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="625"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="630"/>
         <source>Simulator open</source>
         <translation>Simulador aberto</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="626"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="631"/>
         <source>File operations stay blocked while the simulator runs.</source>
         <translation>Operações de arquivo ficam bloqueadas enquanto o simulador roda.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="627"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="632"/>
         <source>Close %1 and check again.</source>
         <translation>Feche %1 e verifique de novo.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="629"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="634"/>
         <source>Check again</source>
         <translation>Verificar de novo</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="649"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="654"/>
         <source>Resolve the conflict before importing: the library already has an addon with that name.</source>
         <translation>Resolva o conflito antes de importar: a biblioteca já tem um addon com esse nome.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="650"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="655"/>
         <source>Select at least one unmanaged or external entry.</source>
         <translation>Selecione ao menos uma entrada não gerenciada ou externa.</translation>
     </message>
@@ -1135,17 +1140,17 @@ Também existe na biblioteca: %2</translation>
         <translation type="vanished">Selecione ao menos uma pasta não gerenciada.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="684"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="689"/>
         <source>Select an entry marked as in conflict.</source>
         <translation>Selecione uma entrada marcada como em conflito.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="752"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="757"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="762"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="767"/>
         <source>%n conflict was left as it was, and nothing was deleted.</source>
         <translation>
             <numerusform>%n conflito ficou como estava, e nada foi apagado.</numerusform>
@@ -1153,7 +1158,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="771"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="776"/>
         <source>%n conflict resolved.</source>
         <translation>
             <numerusform>%n conflito resolvido.</numerusform>
@@ -1161,7 +1166,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="772"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="777"/>
         <source>%n conflict resolved, and the others are still open.</source>
         <translation>
             <numerusform>%n conflito resolvido, e os outros continuam abertos.</numerusform>
@@ -1169,7 +1174,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="730"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="735"/>
         <source>Two copies of the same addon (%1 of %2)</source>
         <translation>Duas cópias do mesmo addon (%1 de %2)</translation>
     </message>
@@ -1179,7 +1184,7 @@ Também existe na biblioteca: %2</translation>
         <translation>O outro programa recolocou uma pasta de verdade onde instala este addon e apontou esta entrada para ela, então existem duas cópias e o simulador agora carrega a do outro programa. A cópia da sua biblioteca é a que ninguém lê mais.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="761"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="766"/>
         <source>The conflict is still there</source>
         <translation>O conflito continua</translation>
     </message>
@@ -1192,7 +1197,7 @@ Também existe na biblioteca: %2</translation>
         <translation type="vanished">Nada foi apagado: %1.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="781"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="786"/>
         <source>No broken link to repair.</source>
         <translation>Nenhum link quebrado para reparar.</translation>
     </message>
@@ -1213,12 +1218,12 @@ Também existe na biblioteca: %2</translation>
         <translation type="vanished">Pasta %1 de %2 · %3</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="809"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="814"/>
         <source>Not everything was imported</source>
         <translation>Nem tudo foi importado</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="810"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="815"/>
         <source>%n import did not finish.</source>
         <translation>
             <numerusform>%n importação não terminou.</numerusform>
@@ -1226,7 +1231,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="812"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="817"/>
         <source>%n addon now lives in the library.</source>
         <translation>
             <numerusform>%n addon agora mora na biblioteca.</numerusform>
@@ -1234,7 +1239,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="817"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="822"/>
         <source>%n addon imported into the library.</source>
         <translation>
             <numerusform>%n addon importado para a biblioteca.</numerusform>
@@ -1242,8 +1247,8 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="835"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="841"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="840"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="846"/>
         <source>%n repair finished.</source>
         <translation>
             <numerusform>%n reparo concluído.</numerusform>
@@ -1251,12 +1256,12 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="839"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="844"/>
         <source>Not everything was repaired</source>
         <translation>Nem tudo foi reparado</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="840"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="845"/>
         <source>%n repair failed.</source>
         <translation>
             <numerusform>%n reparo falhou.</numerusform>
@@ -1264,12 +1269,12 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="845"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="850"/>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="845"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="850"/>
         <source>%n repair finished</source>
         <translation>
             <numerusform>%n reparo concluído</numerusform>
@@ -1277,7 +1282,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="846"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="851"/>
         <source>%n failed</source>
         <translation>
             <numerusform>%n falhou</numerusform>
@@ -1285,17 +1290,17 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="891"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="896"/>
         <source>Nothing is %1 any more, so every entry is showing again.</source>
         <translation>Nada está %1 agora, então todas as entradas voltaram a aparecer.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="926"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="931"/>
         <source>%1 · %2 · %3 · %4</source>
         <translation>%1 · %2 · %3 · %4</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="927"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="932"/>
         <source>%n entry</source>
         <translation>
             <numerusform>%n entrada</numerusform>
@@ -1303,7 +1308,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="927"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="932"/>
         <source>%n managed</source>
         <translation>
             <numerusform>%n gerenciada</numerusform>
@@ -1311,7 +1316,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="928"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="933"/>
         <source>%n broken</source>
         <translation>
             <numerusform>%n quebrada</numerusform>
@@ -1319,7 +1324,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="929"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="934"/>
         <source>%n in conflict</source>
         <translation>
             <numerusform>%n em conflito</numerusform>
@@ -1327,7 +1332,7 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="931"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="936"/>
         <source>%n destination</source>
         <translation>
             <numerusform>%n destino</numerusform>
@@ -1865,47 +1870,47 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentReader</name>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="175"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="90"/>
         <source>Previous page</source>
         <translation>Página anterior</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="176"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="91"/>
         <source>Next page</source>
         <translation>Próxima página</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="177"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="92"/>
         <source>Fit width</source>
         <translation>Ajustar à largura</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="178"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="93"/>
         <source>Open folder</source>
         <translation>Abrir a pasta</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="179"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="94"/>
         <source>Outline</source>
         <translation>Índice</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="180"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="95"/>
         <source>Search in this document</source>
         <translation>Buscar neste documento</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="191"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="106"/>
         <source>Not found</source>
         <translation>Nada encontrado</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="196"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="111"/>
         <source>%1 of %2</source>
         <translation>%1 de %2</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="201"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="116"/>
         <source>Page %1 of %2</source>
         <translation>Página %1 de %2</translation>
     </message>
@@ -1961,12 +1966,12 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="187"/>
+        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="186"/>
         <source>Favourites</source>
         <translation>Favoritos</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="191"/>
+        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="171"/>
         <source>Manuals</source>
         <translation>Manuais</translation>
     </message>
@@ -1974,7 +1979,7 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentsWindow</name>
     <message>
-        <location filename="../src/view/documents/DocumentsWindow.cpp" line="100"/>
+        <location filename="../src/view/documents/DocumentsWindow.cpp" line="141"/>
         <source>Documents · %1</source>
         <translation>Documentos · %1</translation>
     </message>
@@ -2020,22 +2025,22 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>ImportDialog</name>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="26"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="27"/>
         <source>Import into the library</source>
         <translation>Importar para a biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="34"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="35"/>
         <source>%1 · installed by another program in %2</source>
         <translation>%1 · instalado por outro programa em %2</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="56"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="57"/>
         <source>%1 in %2 will be copied to the library and replaced by links.</source>
         <translation>%1 em %2 serão copiados para a biblioteca e substituídos por links.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/ImportDialog.cpp" line="57"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="58"/>
         <source>%n folder</source>
         <translation>
             <numerusform>%n pasta</numerusform>
@@ -2043,32 +2048,37 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="62"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="70"/>
+        <source>The program that installed those folders does not know about the link this leaves behind, so its next update can write inside the link, or replace it and give you two copies. You can give the addon back to that program later.</source>
+        <translation>O programa que instalou essas pastas não sabe do link que isto deixa para trás, então a próxima atualização dele pode escrever dentro do link, ou substituí-lo e deixar você com duas cópias. Você pode devolver o addon a esse programa depois.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/ImportDialog.cpp" line="79"/>
         <source>Library:</source>
         <translation>Biblioteca:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="63"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="80"/>
         <source>Category:</source>
         <translation>Categoria:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="64"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="81"/>
         <source>Will become:</source>
         <translation>Vai virar:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="67"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="84"/>
         <source>Import</source>
         <translation>Importar</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="82"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="99"/>
         <source>Selected folders:</source>
         <translation>Pastas selecionadas:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="107"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="130"/>
         <source>(library root)</source>
         <translation>(raiz da biblioteca)</translation>
     </message>
@@ -4426,7 +4436,7 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>Restaurar selecionados</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="930"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="931"/>
         <source>Unregister</source>
         <translation>Descadastrar</translation>
     </message>

@@ -129,8 +129,13 @@ namespace
                 "CommunityPage",
                 "The copy in your library is gone, taken by the other program. Nothing can be repaired here: the "
                 "content no longer exists on this machine.");
-        case EntryClassification::Managed:
         case EntryClassification::External:
+            return QCoreApplication::translate(
+                "CommunityPage",
+                "Taking it over moves the folder into your library and leaves a link where it was. The other "
+                "program does not know that, so its next update can write inside the link, or replace it with a "
+                "real folder and give you two copies. Nothing here can stop it.");
+        case EntryClassification::Managed:
         case EntryClassification::Broken:
         case EntryClassification::Unavailable:
         case EntryClassification::Unmanaged:
