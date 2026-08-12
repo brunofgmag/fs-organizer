@@ -70,6 +70,7 @@
 #include "view/library/AddonTreePage.h"
 #include "domain/support/PathUtils.h"
 #include "view/library/LibraryRootDialog.h"
+#include "view/community/ImportDialog.h"
 #include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
@@ -799,6 +800,23 @@ int main(int argc, char* argv[])
     else
     {
         Out() << "fewer than two addons in the libraries, so there is no swap to picture\n";
+    }
+
+    {
+        ImportRequest owned;
+        owned.source = PathFromUtf8("C:/Users/bruno/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
+                                    "fsdreamteam-gsx-pro");
+        owned.externalSource = PathFromUtf8("C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro");
+
+        ImportDialog importDialog({owned}, session.Snapshot().libraries, session.Profile(), 2147483648ULL, &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&importDialog]
+                     {
+                         static_cast<void>(importDialog.exec());
+                     },
+                     folder, QStringLiteral("27-community-import"))
+            && landed;
     }
 
     {

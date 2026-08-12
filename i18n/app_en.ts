@@ -924,150 +924,154 @@ It also exists in the library: %2</translation>
         <translation>The copy in your library is gone, taken by the other program. Nothing can be repaired here: the content no longer exists on this machine.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="223"/>
+        <source>Taking it over moves the folder into your library and leaves a link where it was. The other program does not know that, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop it.</source>
+        <translation type="vanished">Taking it over moves the folder into your library and leaves a link where it was. The other program does not know that, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop it.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/CommunityPage.cpp" line="228"/>
         <source>measuring…</source>
         <translation>measuring…</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="292"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="297"/>
         <source>All</source>
         <translation>All</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="293"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="298"/>
         <source>Managed</source>
         <translation>Managed</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="294"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="299"/>
         <source>External</source>
         <translation>External</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="295"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="300"/>
         <source>Divergent</source>
         <translation>Divergent</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="296"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="301"/>
         <source>Vanished</source>
         <translation>Vanished</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="297"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="302"/>
         <source>Broken</source>
         <translation>Broken</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="298"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="303"/>
         <source>Unmanaged</source>
         <translation>Unmanaged</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="299"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="304"/>
         <source>Unavailable</source>
         <translation>Unavailable</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="300"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="305"/>
         <source>Duplicated</source>
         <translation>Duplicated</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="301"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="306"/>
         <source>In conflict</source>
         <translation>In conflict</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="331"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="336"/>
         <source>Select everything the filter shows</source>
         <translation>Select everything the filter shows</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="332"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="337"/>
         <source>Read again from the disk</source>
         <translation>Read again from the disk</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="333"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="338"/>
         <source>Filter entries</source>
         <translation>Filter entries</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="334"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="339"/>
         <source>Open the folder</source>
         <translation>Open the folder</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="335"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="340"/>
         <source>Importing copies into the library and leaves a link in its place. The original folder is only removed after the check.</source>
         <translation>Importing copies into the library and leaves a link in its place. The original folder is only removed after the check.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="337"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="373"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="342"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="378"/>
         <source>Entry selected</source>
         <translation>Entry selected</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="378"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="548"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="383"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="553"/>
         <source>Import this folder…</source>
         <translation>Import this folder…</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="382"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="559"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="387"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="564"/>
         <source>Resolve the conflict…</source>
         <translation>Resolve the conflict…</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="438"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="443"/>
         <source>Classification</source>
         <translation>Classification</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="439"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="444"/>
         <source>Destination</source>
         <translation>Destination</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="440"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="445"/>
         <source>Path</source>
         <translation>Path</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="441"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="446"/>
         <source>Link?</source>
         <translation>Link?</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="441"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="446"/>
         <source>no, a physical folder</source>
         <translation>no, a physical folder</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="445"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="450"/>
         <source>Came from</source>
         <translation>Came from</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="450"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="455"/>
         <source>What this means</source>
         <translation>What this means</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="455"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="460"/>
         <source>In the library</source>
         <translation>In the library</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="504"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="509"/>
         <source>Destinations</source>
         <translation>Destinations</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="506"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="511"/>
         <source>%n entry selected</source>
         <translation>
             <numerusform>%n entry selected</numerusform>
@@ -1075,12 +1079,12 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="535"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="540"/>
         <source>Size on disk</source>
         <translation>Size on disk</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="548"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="553"/>
         <source>Import the %n folder…</source>
         <translation>
             <numerusform>Import the %n folder…</numerusform>
@@ -1088,12 +1092,12 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="554"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="559"/>
         <source>Choose which copy stays…</source>
         <translation>Choose which copy stays…</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="558"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="563"/>
         <source>Resolve the %n conflict…</source>
         <translation>
             <numerusform>Resolve the %n conflict…</numerusform>
@@ -1101,32 +1105,32 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="625"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="630"/>
         <source>Simulator open</source>
         <translation>Simulator open</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="626"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="631"/>
         <source>File operations stay blocked while the simulator runs.</source>
         <translation>File operations stay blocked while the simulator runs.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="627"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="632"/>
         <source>Close %1 and check again.</source>
         <translation>Close %1 and check again.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="629"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="634"/>
         <source>Check again</source>
         <translation>Check again</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="649"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="654"/>
         <source>Resolve the conflict before importing: the library already has an addon with that name.</source>
         <translation>Resolve the conflict before importing: the library already has an addon with that name.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="650"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="655"/>
         <source>Select at least one unmanaged or external entry.</source>
         <translation>Select at least one unmanaged or external entry.</translation>
     </message>
@@ -1135,17 +1139,17 @@ It also exists in the library: %2</translation>
         <translation type="vanished">Select at least one unmanaged folder.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="684"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="689"/>
         <source>Select an entry marked as in conflict.</source>
         <translation>Select an entry marked as in conflict.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="752"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="757"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="762"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="767"/>
         <source>%n conflict was left as it was, and nothing was deleted.</source>
         <translation>
             <numerusform>%n conflict was left as it was, and nothing was deleted.</numerusform>
@@ -1153,7 +1157,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="771"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="776"/>
         <source>%n conflict resolved.</source>
         <translation>
             <numerusform>%n conflict resolved.</numerusform>
@@ -1161,7 +1165,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="772"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="777"/>
         <source>%n conflict resolved, and the others are still open.</source>
         <translation>
             <numerusform>%n conflict resolved, and the others are still open.</numerusform>
@@ -1169,7 +1173,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="730"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="735"/>
         <source>Two copies of the same addon (%1 of %2)</source>
         <translation>Two copies of the same addon (%1 of %2)</translation>
     </message>
@@ -1179,7 +1183,12 @@ It also exists in the library: %2</translation>
         <translation>The other program put a real folder back where it installs this addon and pointed this entry at it, so there are two copies and the simulator now loads the other program&apos;s one. The copy in your library is the one nothing reads any more.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="761"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="133"/>
+        <source>The other program does not know about the link that taking it over leaves behind, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop that.</source>
+        <translation>The other program does not know about the link that taking it over leaves behind, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop that.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/CommunityPage.cpp" line="766"/>
         <source>The conflict is still there</source>
         <translation>The conflict is still there</translation>
     </message>
@@ -1192,7 +1201,7 @@ It also exists in the library: %2</translation>
         <translation type="vanished">Nothing was deleted: %1.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="781"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="786"/>
         <source>No broken link to repair.</source>
         <translation>No broken link to repair.</translation>
     </message>
@@ -1213,12 +1222,12 @@ It also exists in the library: %2</translation>
         <translation type="vanished">Folder %1 of %2 · %3</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="809"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="814"/>
         <source>Not everything was imported</source>
         <translation>Not everything was imported</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="810"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="815"/>
         <source>%n import did not finish.</source>
         <translation>
             <numerusform>%n import did not finish.</numerusform>
@@ -1226,7 +1235,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="812"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="817"/>
         <source>%n addon now lives in the library.</source>
         <translation>
             <numerusform>%n addon now lives in the library.</numerusform>
@@ -1234,7 +1243,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="817"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="822"/>
         <source>%n addon imported into the library.</source>
         <translation>
             <numerusform>%n addon imported into the library.</numerusform>
@@ -1242,8 +1251,8 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="835"/>
-        <location filename="../src/view/community/CommunityPage.cpp" line="841"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="840"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="846"/>
         <source>%n repair finished.</source>
         <translation>
             <numerusform>%n repair finished.</numerusform>
@@ -1251,12 +1260,12 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="839"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="844"/>
         <source>Not everything was repaired</source>
         <translation>Not everything was repaired</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="840"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="845"/>
         <source>%n repair failed.</source>
         <translation>
             <numerusform>%n repair failed.</numerusform>
@@ -1264,12 +1273,12 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="845"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="850"/>
         <source>%1 · %2</source>
         <translation>%1 · %2</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="845"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="850"/>
         <source>%n repair finished</source>
         <translation>
             <numerusform>%n repair finished</numerusform>
@@ -1277,7 +1286,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="846"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="851"/>
         <source>%n failed</source>
         <translation>
             <numerusform>%n failed</numerusform>
@@ -1285,17 +1294,17 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="891"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="896"/>
         <source>Nothing is %1 any more, so every entry is showing again.</source>
         <translation>Nothing is %1 any more, so every entry is showing again.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="926"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="931"/>
         <source>%1 · %2 · %3 · %4</source>
         <translation>%1 · %2 · %3 · %4</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="927"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="932"/>
         <source>%n entry</source>
         <translation>
             <numerusform>%n entry</numerusform>
@@ -1303,7 +1312,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="927"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="932"/>
         <source>%n managed</source>
         <translation>
             <numerusform>%n managed</numerusform>
@@ -1311,7 +1320,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="928"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="933"/>
         <source>%n broken</source>
         <translation>
             <numerusform>%n broken</numerusform>
@@ -1319,7 +1328,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="929"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="934"/>
         <source>%n in conflict</source>
         <translation>
             <numerusform>%n in conflict</numerusform>
@@ -1327,7 +1336,7 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="931"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="936"/>
         <source>%n destination</source>
         <translation>
             <numerusform>%n destination</numerusform>
@@ -1865,47 +1874,47 @@ It also exists in the library: %2</translation>
 <context>
     <name>DocumentReader</name>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="175"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="90"/>
         <source>Previous page</source>
         <translation>Previous page</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="176"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="91"/>
         <source>Next page</source>
         <translation>Next page</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="177"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="92"/>
         <source>Fit width</source>
         <translation>Fit width</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="178"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="93"/>
         <source>Open folder</source>
         <translation>Open folder</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="179"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="94"/>
         <source>Outline</source>
         <translation>Outline</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="180"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="95"/>
         <source>Search in this document</source>
         <translation>Search in this document</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="191"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="106"/>
         <source>Not found</source>
         <translation>Not found</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="196"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="111"/>
         <source>%1 of %2</source>
         <translation>%1 of %2</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="201"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="116"/>
         <source>Page %1 of %2</source>
         <translation>Page %1 of %2</translation>
     </message>
@@ -1961,12 +1970,12 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="187"/>
+        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="186"/>
         <source>Favourites</source>
         <translation>Favourites</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="191"/>
+        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="171"/>
         <source>Manuals</source>
         <translation>Manuals</translation>
     </message>
@@ -1974,7 +1983,7 @@ It also exists in the library: %2</translation>
 <context>
     <name>DocumentsWindow</name>
     <message>
-        <location filename="../src/view/documents/DocumentsWindow.cpp" line="100"/>
+        <location filename="../src/view/documents/DocumentsWindow.cpp" line="137"/>
         <source>Documents · %1</source>
         <translation>Documents · %1</translation>
     </message>
@@ -2020,22 +2029,22 @@ It also exists in the library: %2</translation>
 <context>
     <name>ImportDialog</name>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="26"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="27"/>
         <source>Import into the library</source>
         <translation>Import into the library</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="34"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="35"/>
         <source>%1 · installed by another program in %2</source>
         <translation>%1 · installed by another program in %2</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="56"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="57"/>
         <source>%1 in %2 will be copied to the library and replaced by links.</source>
         <translation>%1 in %2 will be copied to the library and replaced by links.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/ImportDialog.cpp" line="57"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="58"/>
         <source>%n folder</source>
         <translation>
             <numerusform>%n folder</numerusform>
@@ -2043,32 +2052,44 @@ It also exists in the library: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="62"/>
+        <source>The program that installed those folders does not know about the link this leaves behind, so its next update can write inside the link, or replace it and give you two copies. You can give the addon back to that program later.</source>
+        <translation type="vanished">The program that installed those folders does not know about the link this leaves behind, so its next update can write inside the link, or replace it and give you two copies. You can give the addon back to that program later.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/ImportDialog.cpp" line="63"/>
         <source>Library:</source>
         <translation>Library:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="63"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="64"/>
         <source>Category:</source>
         <translation>Category:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="64"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="65"/>
         <source>Will become:</source>
         <translation>Will become:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="67"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="68"/>
         <source>Import</source>
         <translation>Import</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="82"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="83"/>
         <source>Selected folders:</source>
         <translation>Selected folders:</translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/ImportDialog.cpp" line="97"/>
+        <source>%n folder above is installed by another program, and that program does not know about the link this leaves behind: its next update can write inside the link, or replace it and give you two copies. You can give it back later, from Delete in the library.</source>
+        <translation>
+            <numerusform>%n folder above is installed by another program, and that program does not know about the link this leaves behind: its next update can write inside the link, or replace it and give you two copies. You can give it back later, from Delete in the library.</numerusform>
+            <numerusform>%n folders above are installed by another program, and that program does not know about the link this leaves behind: its next update can write inside the link, or replace it and give you two copies. You can give them back later, from Delete in the library.</numerusform>
+        </translation>
+    </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="107"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="128"/>
         <source>(library root)</source>
         <translation>(library root)</translation>
     </message>
@@ -4421,12 +4442,12 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="723"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="724"/>
         <source>Restore the selected ones</source>
         <translation>Restore the selected ones</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="930"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="949"/>
         <source>Unregister</source>
         <translation>Unregister</translation>
     </message>

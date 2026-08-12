@@ -115,7 +115,7 @@ DocumentsWindow::DocumentsWindow(DocumentsViewModel& viewModel, QWidget* parent)
             });
     connect(&viewModel_, &DocumentsViewModel::Indexed, this, &DocumentsWindow::Rebuild);
 
-    resize(kWindowWidth, kWindowHeight);
+    SizeToTheContent(*this, kWindowWidth, kWindowHeight);
 
     Retranslate();
     Rebuild();

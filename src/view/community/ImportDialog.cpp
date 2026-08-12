@@ -1,5 +1,6 @@
 #include "view/community/ImportDialog.h"
 
+#include <algorithm>
 #include <utility>
 
 #include <QtWidgets/QComboBox>
@@ -83,6 +84,26 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
     layout->addWidget(picked, 1);
     layout->addWidget(total);
     layout->addLayout(form);
+
+    const auto owned = static_cast<int>(std::count_if(chosen_.begin(), chosen_.end(),
+                                                      [](const ImportRequest& request)
+                                                      {
+                                                          return request.CameFromAnotherProgram();
+                                                      }));
+
+    if (owned > 0)
+    {
+        auto* caveat =
+            new QLabel(tr("%n folder above is installed by another program, and that program does not know about the "
+                          "link this leaves behind: its next update can write inside the link, or replace it and give "
+                          "you two copies. You can give it back later, from Delete in the library.",
+                          nullptr, owned),
+                       this);
+        caveat->setWordWrap(true);
+
+        layout->addWidget(caveat);
+    }
+
     layout->addWidget(buttons);
 
     ShowCategoriesOfTheChosenLibrary();
