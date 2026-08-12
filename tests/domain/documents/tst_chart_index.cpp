@@ -27,7 +27,16 @@ namespace
         static void AFileTheCatalogueDoesNotNameStillAppearsUnderNoType();
         static void ACatalogueEntryWithNoFileBesideItProducesNoLine();
         static void TheAirportSaysHowManyEntriesItsCatalogueCarriesSoTheMatchCanBeMeasured();
+        static void TheCodeInTheFileNameGroupsTheChartWhenTheFolderGaveNone();
+        static void OneFolderCanHoldTheChartsOfMoreThanOneAirportAndEachGetsItsGroup();
+        static void TheTokenInTheFileNameBecomesTheTypeOfTheGroup();
+        static void AFileWhoseTokenTheAppDoesNotKnowStaysInTheGroupWithNoType();
     };
+
+    [[nodiscard]] ChartFile ChartWithNoCodeNamed(const std::string& name)
+    {
+        return {.relativePath = PathFromUtf8("Charts/" + name), .code = {}};
+    }
 
     [[nodiscard]] ChartFile FileOf(const std::string& code, const std::string& name)
     {
@@ -235,6 +244,53 @@ namespace
                                                  {.chartId = "53999", .chartType = "AGC", .chartName = "AGC"}})});
 
         QCOMPARE(AirportNamed(airports, "EBBR")->entriesInTheCatalogue, std::size_t{2});
+    }
+
+    void ChartIndexTest::TheCodeInTheFileNameGroupsTheChartWhenTheFolderGaveNone()
+    {
+        const std::vector<ChartsOfAnAirport> airports =
+            ChartsGroupedByAirport({ChartWithNoCodeNamed("AD2_LFRN_VAC.pdf")}, {});
+
+        QCOMPARE(airports.size(), std::size_t{1});
+        QCOMPARE(QString::fromStdString(airports.front().code), QString("LFRN"));
+    }
+
+    void ChartIndexTest::OneFolderCanHoldTheChartsOfMoreThanOneAirportAndEachGetsItsGroup()
+    {
+        const std::vector<ChartsOfAnAirport> airports =
+            ChartsGroupedByAirport({ChartWithNoCodeNamed("AD2_LFST_VAC.pdf"), ChartWithNoCodeNamed("AD3_LFWH_HELI.pdf"),
+                                    ChartWithNoCodeNamed("AD3_LFWN_HELI.pdf")},
+                                   {});
+
+        QCOMPARE(airports.size(), std::size_t{3});
+        QVERIFY(AirportNamed(airports, "LFST") != nullptr);
+        QVERIFY(AirportNamed(airports, "LFWH") != nullptr);
+        QVERIFY(AirportNamed(airports, "LFWN") != nullptr);
+        QCOMPARE(PagesIn(airports), std::size_t{3});
+    }
+
+    void ChartIndexTest::TheTokenInTheFileNameBecomesTheTypeOfTheGroup()
+    {
+        const std::vector<ChartsOfAnAirport> airports =
+            ChartsGroupedByAirport({ChartWithNoCodeNamed("AD2_LFST_VAC.pdf")}, {});
+
+        const ChartsOfAnAirport* strasbourg = AirportNamed(airports, "LFST");
+
+        QVERIFY(!strasbourg->catalogued);
+        QCOMPARE(strasbourg->types.size(), std::size_t{1});
+        QCOMPARE(QString::fromStdString(strasbourg->types.front().type), QString("VAC"));
+        QCOMPARE(QString::fromStdString(strasbourg->types.front().charts.front().name), QString("AD2_LFST_VAC"));
+    }
+
+    void ChartIndexTest::AFileWhoseTokenTheAppDoesNotKnowStaysInTheGroupWithNoType()
+    {
+        const std::vector<ChartsOfAnAirport> airports =
+            ChartsGroupedByAirport({ChartWithNoCodeNamed("AD2_LFST_XYZ.pdf")}, {});
+
+        const ChartsOfAnAirport* strasbourg = AirportNamed(airports, "LFST");
+
+        QCOMPARE(strasbourg->types.size(), std::size_t{1});
+        QCOMPARE(QString::fromStdString(strasbourg->types.front().type), QString());
     }
 }
 

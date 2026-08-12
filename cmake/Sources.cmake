@@ -1,4 +1,5 @@
 set(DOMAIN_SOURCES
+        src/domain/documents/ChartFileNaming.cpp
         src/domain/documents/ChartIndex.cpp
         src/domain/documents/DocumentClassification.cpp
         src/domain/importing/CopyConflicts.cpp

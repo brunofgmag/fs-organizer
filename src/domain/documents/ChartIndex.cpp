@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <utility>
 
+#include "domain/documents/ChartFileNaming.h"
 #include "domain/support/CaseFolding.h"
 #include "domain/support/PathUtils.h"
 
@@ -84,6 +85,16 @@ namespace
         return chartName.substr(0, marker);
     }
 
+    [[nodiscard]] std::string CodeOf(const ChartFile& chart)
+    {
+        if (!chart.code.empty())
+        {
+            return chart.code;
+        }
+
+        return ReadTheChartFileName(chart.relativePath).code;
+    }
+
     [[nodiscard]] std::vector<FilesOfAnAirport> ByAirport(const std::vector<ChartFile>& charts)
     {
         std::vector<FilesOfAnAirport> airports;
@@ -91,21 +102,23 @@ namespace
 
         for (const ChartFile& chart : charts)
         {
-            if (chart.code.empty())
+            const std::string code = CodeOf(chart);
+
+            if (code.empty())
             {
                 undetermined.files.push_back(chart.relativePath);
                 continue;
             }
 
             const auto known = std::ranges::find_if(airports,
-                                                    [&chart](const FilesOfAnAirport& airport)
+                                                    [&code](const FilesOfAnAirport& airport)
                                                     {
-                                                        return airport.code == chart.code;
+                                                        return airport.code == code;
                                                     });
 
             if (known == airports.end())
             {
-                airports.push_back({.code = chart.code, .files = {chart.relativePath}});
+                airports.push_back({.code = code, .files = {chart.relativePath}});
                 continue;
             }
 
@@ -277,7 +290,8 @@ namespace
                 continue;
             }
 
-            GroupOfType(types, {}).charts.push_back({.name = stem, .pages = {{.number = 0, .file = file}}});
+            GroupOfType(types, ReadTheChartFileName(file).type)
+                .charts.push_back({.name = stem, .pages = {{.number = 0, .file = file}}});
         }
     }
 

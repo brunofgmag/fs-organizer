@@ -122,6 +122,12 @@ fsorg_add_qt_test(fsorg-scenery-outside-the-scan-tests scenery-outside-the-scan
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-scenery-outside-the-scan-tests PRIVATE fsorg-infrastructure)
 
+fsorg_add_qt_test(fsorg-chart-file-naming-tests chart-file-naming
+        tests/domain/documents/tst_chart_file_naming.cpp
+        src/domain/documents/ChartFileNaming.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-chart-file-naming-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-chart-index-tests chart-index
         tests/domain/documents/tst_chart_index.cpp
         tests/support/PathPrinting.h
