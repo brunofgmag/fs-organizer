@@ -16,6 +16,8 @@ if (WIN32)
             "$<TARGET_FILE:Qt6::Test>"
             "$<TARGET_FILE:Qt6::Gui>"
             "$<TARGET_FILE:Qt6::Widgets>"
+            "$<TARGET_FILE:Qt6::Network>"
+            "$<TARGET_FILE:Qt6::Pdf>"
             "${CMAKE_BINARY_DIR}/$<CONFIG>"
             COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
@@ -135,6 +137,12 @@ fsorg_add_qt_test(fsorg-chart-index-tests chart-index
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-chart-index-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-chart-revisions-tests chart-revisions
+        tests/domain/documents/tst_chart_revisions.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-chart-revisions-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-document-classification-tests document-classification
         tests/domain/documents/tst_document_classification.cpp
         tests/support/EnumPrinting.h
@@ -247,8 +255,10 @@ fsorg_add_qt_test(fsorg-document-service-tests document-service
         tests/application/tst_document_service.cpp
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeChartCatalogueParser.h
+        tests/doubles/FakeChartVersions.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/InMemoryFileSystem.h
+        tests/support/EnumPrinting.h
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-document-service-tests PRIVATE fsorg-application)
 
@@ -925,10 +935,18 @@ if (WIN32)
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-link-plan-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-chart-versions-on-real-disk-tests chart-versions-on-real-disk
+            tests/infrastructure/documents/tst_chart_versions_on_real_disk.cpp
+            ${PDF_INFRASTRUCTURE_SOURCES}
+            src/support/PathText.h)
+    target_link_libraries(fsorg-chart-versions-on-real-disk-tests PRIVATE fsorg-domain Qt6::Pdf)
+
     fsorg_add_qt_test(fsorg-documents-on-real-disk-tests documents-on-real-disk
             tests/application/tst_documents_on_real_disk.cpp
-            tests/support/PathPrinting.h)
-    target_link_libraries(fsorg-documents-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+            tests/support/APdf.h
+            tests/support/PathPrinting.h
+            ${PDF_INFRASTRUCTURE_SOURCES})
+    target_link_libraries(fsorg-documents-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure Qt6::Pdf)
 
     fsorg_add_qt_test(fsorg-catalog-on-real-disk-tests catalog-on-real-disk
             tests/infrastructure/catalog/tst_catalog_on_real_disk.cpp
@@ -1284,6 +1302,8 @@ fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/doubles/StartupOverFakes.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeChartCatalogueParser.h
+        tests/doubles/FakeChartVersions.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
@@ -1312,6 +1332,8 @@ fsorg_add_qt_test(fsorg-package-list-page-tests package-list-page
         tests/view/tst_package_list_page.cpp
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeChartCatalogueParser.h
+        tests/doubles/FakeChartVersions.h
         tests/doubles/FakeClock.h
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h

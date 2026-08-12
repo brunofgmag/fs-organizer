@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "domain/documents/ChartIndex.h"
+#include "tests/support/EnumPrinting.h"
 #include "domain/support/PathUtils.h"
 #include "tests/support/PathPrinting.h"
 
@@ -24,6 +25,10 @@ namespace
         static void APageOfASidComesOutAsAPageOfThatSidAndNeverAsAChartOfItsOwn();
         static void APageWhoseSidIsMissingStaysAChartOfItsOwnInsteadOfDisappearing();
         static void TheAoiEntriesOfAnAirportBecomeOneLineCarryingEveryPage();
+        static void TheAoiLineCountsDistinctPagesAndKeepsTheFileOfTheHighestVersionOfEach();
+        static void TheRevisionAnAoiPageSupersededComesOutOnASecondLineInsteadOfDisappearing();
+        static void OnlyTheFilesOfAPageThatRepeatsHaveToHaveTheirRevisionRead();
+        static void APageOfASidIsNeverReadForRevisionBecauseTheRuleIsTheInformationLinesAlone();
         static void AFileTheCatalogueDoesNotNameStillAppearsUnderNoType();
         static void ACatalogueEntryWithNoFileBesideItProducesNoLine();
         static void TheAirportSaysHowManyEntriesItsCatalogueCarriesSoTheMatchCanBeMeasured();
@@ -206,6 +211,68 @@ namespace
         QCOMPARE(information->charts.size(), std::size_t{1});
         QCOMPARE(information->charts.front().pages.size(), std::size_t{3});
         QCOMPARE(information->charts.front().pages[1], PathFromUtf8("NavDataPro/EBBR/22.pdf"));
+    }
+
+    void ChartIndexTest::TheAoiLineCountsDistinctPagesAndKeepsTheFileOfTheHighestVersionOfEach()
+    {
+        const std::vector<ChartsOfAnAirport> airports =
+            ChartsGroupedByAirport({FileOf("EBBR", "20.pdf"), FileOf("EBBR", "21.pdf"), FileOf("EBBR", "22.pdf")},
+                                   {CatalogueOf("EBBR",
+                                                {{.chartId = "20", .chartType = "AOI", .chartName = "1"},
+                                                 {.chartId = "21", .chartType = "AOI", .chartName = "1"},
+                                                 {.chartId = "22", .chartType = "AOI", .chartName = "2"}})},
+                                   {{.file = PathFromUtf8("NavDataPro/EBBR/20.pdf"), .version = 1473008},
+                                    {.file = PathFromUtf8("NavDataPro/EBBR/21.pdf"), .version = 1486381}});
+
+        const ChartsOfAType* information = TypeNamed(*AirportNamed(airports, "EBBR"), "AOI");
+
+        QCOMPARE(information->charts.front().pages.size(), std::size_t{2});
+        QCOMPARE(information->charts.front().pages.front(), PathFromUtf8("NavDataPro/EBBR/21.pdf"));
+        QCOMPARE(information->charts.front().pages.back(), PathFromUtf8("NavDataPro/EBBR/22.pdf"));
+    }
+
+    void ChartIndexTest::TheRevisionAnAoiPageSupersededComesOutOnASecondLineInsteadOfDisappearing()
+    {
+        const std::vector<ChartsOfAnAirport> airports =
+            ChartsGroupedByAirport({FileOf("EBBR", "20.pdf"), FileOf("EBBR", "21.pdf")},
+                                   {CatalogueOf("EBBR",
+                                                {{.chartId = "20", .chartType = "AOI", .chartName = "1"},
+                                                 {.chartId = "21", .chartType = "AOI", .chartName = "1"}})},
+                                   {{.file = PathFromUtf8("NavDataPro/EBBR/20.pdf"), .version = 1473008},
+                                    {.file = PathFromUtf8("NavDataPro/EBBR/21.pdf"), .version = 1486381}});
+
+        const ChartsOfAType* information = TypeNamed(*AirportNamed(airports, "EBBR"), "AOI");
+
+        QCOMPARE(information->charts.size(), std::size_t{2});
+        QCOMPARE(information->charts.front().revision, ChartRevision::InForce);
+        QCOMPARE(information->charts.back().revision, ChartRevision::Previous);
+        QCOMPARE(information->charts.back().pages.size(), std::size_t{1});
+        QCOMPARE(information->charts.back().pages.front(), PathFromUtf8("NavDataPro/EBBR/20.pdf"));
+    }
+
+    void ChartIndexTest::OnlyTheFilesOfAPageThatRepeatsHaveToHaveTheirRevisionRead()
+    {
+        const std::vector<std::filesystem::path> toBeRead =
+            FilesOfARepeatedPage({FileOf("EBBR", "20.pdf"), FileOf("EBBR", "21.pdf"), FileOf("EBBR", "22.pdf")},
+                                 {CatalogueOf("EBBR",
+                                              {{.chartId = "20", .chartType = "AOI", .chartName = "1"},
+                                               {.chartId = "21", .chartType = "AOI", .chartName = "1"},
+                                               {.chartId = "22", .chartType = "AOI", .chartName = "2"}})});
+
+        QCOMPARE(toBeRead.size(), std::size_t{2});
+        QCOMPARE(toBeRead.front(), PathFromUtf8("NavDataPro/EBBR/20.pdf"));
+        QCOMPARE(toBeRead.back(), PathFromUtf8("NavDataPro/EBBR/21.pdf"));
+    }
+
+    void ChartIndexTest::APageOfASidIsNeverReadForRevisionBecauseTheRuleIsTheInformationLinesAlone()
+    {
+        const std::vector<std::filesystem::path> toBeRead =
+            FilesOfARepeatedPage({FileOf("EDDB", "30.pdf"), FileOf("EDDB", "31.pdf")},
+                                 {CatalogueOf("EDDB",
+                                              {{.chartId = "30", .chartType = "SIDPT", .chartName = "SID GERGA p1"},
+                                               {.chartId = "31", .chartType = "SIDPT", .chartName = "SID LUKOP p1"}})});
+
+        QVERIFY(toBeRead.empty());
     }
 
     void ChartIndexTest::AFileTheCatalogueDoesNotNameStillAppearsUnderNoType()

@@ -15,6 +15,7 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
@@ -58,6 +59,31 @@ namespace
         void Keep(const std::filesystem::path&, const RememberedScenery&) override
         {
         }
+    };
+
+    class VersionsItCounts final : public ChartVersions
+    {
+    public:
+        explicit VersionsItCounts(const ChartVersions& reading) : reading_(reading)
+        {
+        }
+
+        [[nodiscard]] long long VersionOf(const std::filesystem::path& chart) const override
+        {
+            const std::chrono::steady_clock::time_point before = std::chrono::steady_clock::now();
+            const long long version = reading_.VersionOf(chart);
+
+            spent += std::chrono::steady_clock::now() - before;
+            ++read;
+
+            return version;
+        }
+
+        mutable std::size_t read = 0;
+        mutable std::chrono::steady_clock::duration spent{};
+
+    private:
+        const ChartVersions& reading_;
     };
 
     struct Arguments
@@ -191,6 +217,21 @@ namespace
         }
     }
 
+    [[nodiscard]] QString NameOf(const ChartEntry& chart)
+    {
+        if (chart.revision == ChartRevision::Previous)
+        {
+            return QString("(the revision it superseded)");
+        }
+
+        if (chart.name.empty())
+        {
+            return QString("(unnamed)");
+        }
+
+        return QString::fromStdString(chart.name);
+    }
+
     void ReportTheAirport(const ChartsOfAnAirport& airport, const bool inFull)
     {
         const QString code = airport.code.empty() ? QString("no code") : QString::fromStdString(airport.code);
@@ -213,7 +254,7 @@ namespace
 
             for (const ChartEntry& chart : group.charts)
             {
-                const QString name = chart.name.empty() ? QString("(unnamed)") : QString::fromStdString(chart.name);
+                const QString name = NameOf(chart);
 
                 Out() << "        " << name.leftJustified(44)
                       << (chart.pages.size() > 1 ? QString("%1 pages").arg(chart.pages.size()) : QString()) << "  "
@@ -280,7 +321,9 @@ int main(int argc, char* argv[])
     const SystemClock clock;
     RememberNothing cache;
     SceneryService scenery(filesystemProbe, sceneryParser, clock, cache);
-    const DocumentService documents(scanner, filesystemProbe, catalogueParser);
+    const QtPdfChartVersions readTheVersions;
+    const VersionsItCounts chartVersions(readTheVersions);
+    const DocumentService documents(scanner, filesystemProbe, catalogueParser, chartVersions);
 
     std::vector<Library> libraries;
     for (const std::filesystem::path& path : arguments.libraries)
@@ -347,7 +390,9 @@ int main(int argc, char* argv[])
           << QString::number(tally.entriesWithNoFile) << ", files no entry names "
           << QString::number(tally.filesNoEntryNames) << "\n"
           << "reading the scenery " << AsMilliseconds(beforeTheIndex - beforeTheCodes) << ", walking for PDFs "
-          << AsMilliseconds(afterTheIndex - beforeTheIndex) << "\n";
+          << AsMilliseconds(afterTheIndex - beforeTheIndex) << "\n"
+          << "chart versions read " << QString::number(chartVersions.read) << " of " << QString::number(tally.charts)
+          << " chart files, in " << AsMilliseconds(chartVersions.spent) << "\n";
 
     Out().flush();
 

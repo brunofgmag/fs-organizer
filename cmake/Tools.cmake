@@ -125,6 +125,7 @@ add_custom_command(TARGET fsorg-size POST_BUILD
 
 add_executable(fsorg-docs
         tools/fsorg-docs/main.cpp
+        ${PDF_INFRASTRUCTURE_SOURCES}
 )
 
 target_include_directories(fsorg-docs PRIVATE "${CMAKE_SOURCE_DIR}/src")
@@ -135,16 +136,20 @@ if (MSVC)
     target_compile_options(fsorg-docs PRIVATE /permissive- /Zc:preprocessor)
 endif ()
 
-target_link_libraries(fsorg-docs PRIVATE fsorg-application fsorg-infrastructure Qt6::Core)
+target_link_libraries(fsorg-docs PRIVATE fsorg-application fsorg-infrastructure Qt6::Core Qt6::Pdf)
 
 add_custom_command(TARGET fsorg-docs POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "$<TARGET_FILE:Qt6::Core>"
+        "$<TARGET_FILE:Qt6::Gui>"
+        "$<TARGET_FILE:Qt6::Network>"
+        "$<TARGET_FILE:Qt6::Pdf>"
         "$<TARGET_FILE_DIR:fsorg-docs>"
         VERBATIM)
 
 add_executable(fsorg-shot
         tools/fsorg-shot/main.cpp
+        ${PDF_INFRASTRUCTURE_SOURCES}
         tools/shared/DisposableState.h
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
@@ -155,7 +160,7 @@ target_include_directories(fsorg-shot PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMAKE
 
 target_compile_definitions(fsorg-shot PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX FSORG_VERSION="${FSORG_VERSION}")
 
-target_link_libraries(fsorg-shot PRIVATE fsorg-view fsorg-infrastructure Qt6::Widgets Qt6::Network dwmapi)
+target_link_libraries(fsorg-shot PRIVATE fsorg-view fsorg-infrastructure Qt6::Widgets Qt6::Network Qt6::Pdf dwmapi)
 
 add_custom_command(TARGET fsorg-shot POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
@@ -163,6 +168,8 @@ add_custom_command(TARGET fsorg-shot POST_BUILD
         "$<TARGET_FILE:Qt6::Gui>"
         "$<TARGET_FILE:Qt6::Network>"
         "$<TARGET_FILE:Qt6::Widgets>"
+        "$<TARGET_FILE:Qt6::Pdf>"
+        "$<TARGET_FILE:Qt6::PdfWidgets>"
         "$<TARGET_FILE_DIR:fsorg-shot>"
         COMMAND "${CMAKE_COMMAND}" -E make_directory
         "$<TARGET_FILE_DIR:fsorg-shot>/platforms"
@@ -191,6 +198,7 @@ add_dependencies(fsorg-shot release_translations)
 
 add_executable(fsorg-timing
         tools/fsorg-timing/main.cpp
+        ${PDF_INFRASTRUCTURE_SOURCES}
         tools/fsorg-timing/JournalScroll.cpp
         tools/fsorg-timing/AppScroll.cpp
         tools/shared/DisposableState.h
@@ -202,7 +210,7 @@ target_include_directories(fsorg-timing PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMA
 
 target_compile_definitions(fsorg-timing PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 
-target_link_libraries(fsorg-timing PRIVATE fsorg-view fsorg-infrastructure Qt6::Widgets Qt6::Network dwmapi)
+target_link_libraries(fsorg-timing PRIVATE fsorg-view fsorg-infrastructure Qt6::Widgets Qt6::Network Qt6::Pdf dwmapi)
 
 add_custom_command(TARGET fsorg-timing POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
@@ -210,6 +218,8 @@ add_custom_command(TARGET fsorg-timing POST_BUILD
         "$<TARGET_FILE:Qt6::Gui>"
         "$<TARGET_FILE:Qt6::Network>"
         "$<TARGET_FILE:Qt6::Widgets>"
+        "$<TARGET_FILE:Qt6::Pdf>"
+        "$<TARGET_FILE:Qt6::PdfWidgets>"
         "$<TARGET_FILE_DIR:fsorg-timing>"
         COMMAND "${CMAKE_COMMAND}" -E make_directory
         "$<TARGET_FILE_DIR:fsorg-timing>/platforms"

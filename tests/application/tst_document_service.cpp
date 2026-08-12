@@ -8,8 +8,10 @@
 #include "domain/support/PathUtils.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeChartCatalogueParser.h"
+#include "tests/doubles/FakeChartVersions.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/InMemoryFileSystem.h"
+#include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 
 namespace
@@ -29,6 +31,8 @@ namespace
         static void TheSweepWalksEveryLibraryThroughTheScanAndAnswersPerAddon();
         static void TheSweepReportsProgressAndStopsWhereItIsToldTo();
         static void AnAddonTheProbeCannotWalkSaysSoInsteadOfSayingItHasNothing();
+        static void OnlyTheChartsOfAPageThatRepeatsHaveTheirVersionRead();
+        static void TheInformationLineCarriesTheNewestRevisionOfEachPage();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library/Sceneries");
@@ -87,7 +91,8 @@ namespace
         const FakeCatalogScanner scanner;
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {});
 
@@ -104,7 +109,8 @@ namespace
         const FakeCatalogScanner scanner;
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {"EBBR"});
 
@@ -121,7 +127,8 @@ namespace
         const FakeCatalogScanner scanner;
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {});
 
@@ -137,7 +144,8 @@ namespace
         const FakeCatalogScanner scanner;
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {"EBBR"});
 
@@ -158,7 +166,8 @@ namespace
         FakeChartCatalogueParser catalogueParser;
         catalogueParser.Answer(kTheCatalogueOfBrussels, TheBrusselsCatalogue());
 
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {"EBBR"});
         const ChartsOfAnAirport* brussels = AirportNamed(documents, "EBBR");
@@ -178,7 +187,8 @@ namespace
         const FakeCatalogScanner scanner;
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {"EBBR"});
         const ChartsOfAnAirport* brussels = AirportNamed(documents, "EBBR");
@@ -196,13 +206,82 @@ namespace
         const FakeCatalogScanner scanner;
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {"EBBR"});
 
         QVERIFY(documents.documents.empty());
         QVERIFY(documents.airports.empty());
         QVERIFY(documents.itWasWalked);
+    }
+
+    const std::string kTheCatalogueOfMunich = "the catalogue of Munich";
+
+    [[nodiscard]] ChartCatalogue TheMunichCatalogue()
+    {
+        return {.icao = "EDDM",
+                .entries = {{.chartId = "1", .chartType = "AOI", .chartName = "1"},
+                            {.chartId = "2", .chartType = "AOI", .chartName = "1"},
+                            {.chartId = "3", .chartType = "AOI", .chartName = "2"}}};
+    }
+
+    struct AnAirportOfRepeatedPages
+    {
+        InMemoryFileSystem fileSystem;
+        FakeCatalogScanner scanner;
+        FakeChartCatalogueParser catalogueParser;
+        FakeChartVersions chartVersions;
+
+        AnAirportOfRepeatedPages()
+        {
+            const std::filesystem::path beside = FolderOf("addon") / "NavDataPro" / "EDDM";
+
+            for (const std::string& chart : {"1.pdf", "2.pdf", "3.pdf"})
+            {
+                fileSystem.AddFile(beside / chart);
+            }
+
+            fileSystem.AddFileWithContents(beside / "catalogue.json", kTheCatalogueOfMunich);
+            catalogueParser.Answer(kTheCatalogueOfMunich, TheMunichCatalogue());
+            chartVersions.Answer(beside / "1.pdf", 1473008);
+            chartVersions.Answer(beside / "2.pdf", 1486381);
+        }
+
+        [[nodiscard]] DocumentsOfAnAddon Indexed()
+        {
+            const FakeFilesystemProbe probe(fileSystem);
+            const DocumentService service(scanner, probe, catalogueParser, chartVersions);
+
+            return service.DocumentsOf(Named("addon"), FolderOf("addon"), {"EDDM"});
+        }
+    };
+
+    void DocumentServiceTest::OnlyTheChartsOfAPageThatRepeatsHaveTheirVersionRead()
+    {
+        AnAirportOfRepeatedPages munich;
+        static_cast<void>(munich.Indexed());
+
+        const std::filesystem::path beside = FolderOf("addon") / "NavDataPro" / "EDDM";
+
+        QCOMPARE(munich.chartVersions.asked.size(), std::size_t{2});
+        QCOMPARE(munich.chartVersions.asked.front(), beside / "1.pdf");
+        QCOMPARE(munich.chartVersions.asked.back(), beside / "2.pdf");
+    }
+
+    void DocumentServiceTest::TheInformationLineCarriesTheNewestRevisionOfEachPage()
+    {
+        AnAirportOfRepeatedPages munich;
+        const DocumentsOfAnAddon documents = munich.Indexed();
+        const ChartsOfAnAirport* airport = AirportNamed(documents, "EDDM");
+
+        QVERIFY(airport != nullptr);
+        QCOMPARE(airport->types.size(), std::size_t{1});
+        QCOMPARE(airport->types.front().charts.size(), std::size_t{2});
+        QCOMPARE(airport->types.front().charts.front().pages.size(), std::size_t{2});
+        QCOMPARE(airport->types.front().charts.front().pages.front(), PathFromUtf8("NavDataPro/EDDM/2.pdf"));
+        QCOMPARE(airport->types.front().charts.back().revision, ChartRevision::Previous);
+        QCOMPARE(airport->types.front().charts.back().pages.front(), PathFromUtf8("NavDataPro/EDDM/1.pdf"));
     }
 
     void DocumentServiceTest::TheSweepWalksEveryLibraryThroughTheScanAndAnswersPerAddon()
@@ -216,7 +295,8 @@ namespace
 
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const std::vector<AirportsOfAnAddon> airports = {
             {.addon = Named("brussels"), .evidence = AirportEvidence::TheCodeWasRead, .codes = {"EBBR"}}};
@@ -242,7 +322,8 @@ namespace
 
         const FakeFilesystemProbe probe(fileSystem);
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         std::vector<std::size_t> seen;
         const std::vector<DocumentsOfAnAddon> indexed =
@@ -269,7 +350,8 @@ namespace
         probe.RefuseToWalk(FolderOf("addon"));
 
         const FakeChartCatalogueParser catalogueParser;
-        const DocumentService service(scanner, probe, catalogueParser);
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         const DocumentsOfAnAddon documents = service.DocumentsOf(Named("addon"), FolderOf("addon"), {});
 

@@ -14,9 +14,16 @@ struct ChartFile
     std::string code{};
 };
 
+enum class ChartRevision : int
+{
+    InForce = 0,
+    Previous = 1,
+};
+
 struct ChartEntry
 {
     std::string name{};
+    ChartRevision revision = ChartRevision::InForce;
     std::vector<std::filesystem::path> pages{};
 };
 
@@ -40,7 +47,17 @@ struct CatalogueOfAnAirport
     ChartCatalogue catalogue{};
 };
 
-[[nodiscard]] std::vector<ChartsOfAnAirport>
-ChartsGroupedByAirport(const std::vector<ChartFile>& charts, const std::vector<CatalogueOfAnAirport>& catalogues);
+struct ChartVersion
+{
+    std::filesystem::path file{};
+    long long version = 0;
+};
+
+[[nodiscard]] std::vector<ChartsOfAnAirport> ChartsGroupedByAirport(const std::vector<ChartFile>& charts,
+                                                                    const std::vector<CatalogueOfAnAirport>& catalogues,
+                                                                    const std::vector<ChartVersion>& versions = {});
+
+[[nodiscard]] std::vector<std::filesystem::path>
+FilesOfARepeatedPage(const std::vector<ChartFile>& charts, const std::vector<CatalogueOfAnAirport>& catalogues);
 
 #endif // FS_ORGANIZER_DOMAIN_DOCUMENTS_CHART_INDEX_H

@@ -39,6 +39,8 @@ target_link_libraries(${APP_NAME} PRIVATE
         fsorg-infrastructure
         Qt6::Widgets
         Qt6::Network
+        Qt6::Pdf
+        Qt6::PdfWidgets
         dwmapi
 )
 

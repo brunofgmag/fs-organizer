@@ -28,6 +28,11 @@ namespace
     constexpr auto kOther = "other";
     constexpr auto kFolderName = "folderName";
     constexpr auto kUpdateMode = "updateMode";
+    constexpr auto kDocuments = "documents";
+    constexpr auto kAddon = "addon";
+    constexpr auto kDocument = "document";
+    constexpr auto kPage = "page";
+    constexpr auto kFavourite = "favourite";
     constexpr auto kLanguage = "language";
     constexpr auto kId = "id";
     constexpr auto kVariant = "variant";
@@ -192,6 +197,25 @@ namespace
                 .other = AddonFromJson(object.value(kOther).toObject())};
     }
 
+    QJsonObject ToJson(const ReadDocument& document)
+    {
+        QJsonObject object;
+        object[kAddon] = QString::fromStdString(document.addon);
+        object[kDocument] = QString::fromStdString(document.document);
+        object[kPage] = document.page;
+        object[kFavourite] = document.favourite;
+
+        return object;
+    }
+
+    ReadDocument ReadDocumentFromJson(const QJsonObject& object)
+    {
+        return {.addon = object.value(kAddon).toString().toStdString(),
+                .document = object.value(kDocument).toString().toStdString(),
+                .page = object.value(kPage).toInt(),
+                .favourite = object.value(kFavourite).toBool()};
+    }
+
     QJsonObject ToJson(const SimulatorProfile& profile)
     {
         QJsonArray destinations;
@@ -304,6 +328,11 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
         settings.coexistingAirports.push_back(CoexistingPairFromJson(pair.toObject()));
     }
 
+    for (const QJsonValue read : root.value(kDocuments).toArray())
+    {
+        settings.documents.push_back(ReadDocumentFromJson(read.toObject()));
+    }
+
     return settings;
 }
 
@@ -321,6 +350,12 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
         coexisting.append(ToJson(pair));
     }
 
+    QJsonArray documents;
+    for (const ReadDocument& document : settings.documents)
+    {
+        documents.append(ToJson(document));
+    }
+
     QJsonObject root;
     root[kActiveProfileId] = QString::fromStdString(settings.activeProfileId);
     root[kProfiles] = profiles;
@@ -331,6 +366,7 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
     root[kUpdateMode] = UpdateModeName(settings.updateMode);
     root[kLanguage] = QString::fromStdString(settings.language);
     root[kCoexistingAirports] = coexisting;
+    root[kDocuments] = documents;
 
     std::error_code error;
     std::filesystem::create_directories(file_.parent_path(), error);
