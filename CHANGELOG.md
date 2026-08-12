@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.0](https://github.com/brunofgmag/fs-organizer/compare/v0.30.1...v0.31.0) (2026-08-12)
+
+
+### Features
+
+* read the simulator's loading report, and guard unfinished translations ([#91](https://github.com/brunofgmag/fs-organizer/issues/91)) ([4fb34ae](https://github.com/brunofgmag/fs-organizer/commit/4fb34ae1a71a59acd2d8c432f70c84142cf84e1d))
+
 ## [0.30.1](https://github.com/brunofgmag/fs-organizer/compare/v0.30.0...v0.30.1) (2026-08-11)
 
 
