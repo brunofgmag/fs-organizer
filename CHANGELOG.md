@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.0](https://github.com/brunofgmag/fs-organizer/compare/v0.33.0...v0.34.0) (2026-08-12)
+
+
+### Features
+
+* **documents:** read a chart or a manual inside the app ([#97](https://github.com/brunofgmag/fs-organizer/issues/97)) ([3b4c0fb](https://github.com/brunofgmag/fs-organizer/commit/3b4c0fbab52c79559ca995b9080842365733957f))
+
 ## [0.33.0](https://github.com/brunofgmag/fs-organizer/compare/v0.32.0...v0.33.0) (2026-08-12)
 
 
