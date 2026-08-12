@@ -1,15 +1,18 @@
 #include <QtTest/QtTest>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QTreeWidget>
 
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/SizeService.h"
+#include "support/PathText.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeLoadingReportSource.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSceneryCache.h"
@@ -23,6 +26,7 @@
 #include "tests/support/PathPrinting.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/diagnostics/DiagnosticsPage.h"
+#include "view/diagnostics/LoadPanel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
 
@@ -36,6 +40,9 @@ namespace
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void WhatSupportsTheNameIsQuietInTheThreeTables();
         static void TheThreeTablesKeepTheShippedRowHeight();
+        static void WithNoReportTheLoadSectionSaysSoAndTheRestOfTheScreenStillAnswers();
+        static void TheLoadSectionNamesTheAddonBehindAPackageAndTheReportsNameForTheRest();
+        static void NoWordOnTheLoadSectionOffersATimePerAddon();
     };
 }
 
@@ -124,7 +131,8 @@ namespace
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
-        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, clock, runner};
+        FakeLoadingReportSource loading;
+        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, loading, clock, runner};
     };
 
     QTreeWidget* TableNamed(const DiagnosticsPage& page, const QString& name)
@@ -209,6 +217,75 @@ void DiagnosticsPageTest::TheThreeTablesKeepTheShippedRowHeight()
         const int shipped = asShipped.sizeHint(item, first).height();
         QVERIFY(shipped > shortened.sizeHint(item, first).height());
         QCOMPARE(table->visualItemRect(table->topLevelItem(0)).height(), shipped);
+    }
+}
+
+void DiagnosticsPageTest::WithNoReportTheLoadSectionSaysSoAndTheRestOfTheScreenStillAnswers()
+{
+    Fixture f;
+    DiagnosticsPage page(f.viewModel);
+
+    f.viewModel.Show();
+    f.viewModel.ShowTheLoad();
+
+    const QTreeWidget* modules = TableNamed(page, QStringLiteral("DiagnosticsModules"));
+
+    QVERIFY(modules != nullptr);
+    QCOMPARE(modules->topLevelItemCount(), 0);
+    QVERIFY(!modules->isVisible());
+    QVERIFY(!f.viewModel.Load().reportWasRead);
+    QVERIFY(!f.viewModel.Counts().empty());
+}
+
+void DiagnosticsPageTest::TheLoadSectionNamesTheAddonBehindAPackageAndTheReportsNameForTheRest()
+{
+    Fixture f;
+    f.loading.ReportAModule("fmc.wasm", "pmdg-aircraft-77w", 327680);
+    f.loading.ReportAModule("fsdt-msfs-bridge.wasm", "fsdreamteam-gsx-pro", 268763136);
+    f.loading.ReportPackagesRegistered(264);
+
+    DiagnosticsPage page(f.viewModel);
+
+    f.viewModel.Show();
+    f.viewModel.ShowTheLoad();
+
+    const QTreeWidget* modules = TableNamed(page, QStringLiteral("DiagnosticsModules"));
+
+    QCOMPARE(modules->topLevelItemCount(), 2);
+    QCOMPARE(modules->topLevelItem(0)->text(0), QStringLiteral("fsdt-msfs-bridge.wasm"));
+    QCOMPARE(modules->topLevelItem(1)->text(0), QStringLiteral("fmc.wasm"));
+    QCOMPARE(modules->topLevelItem(1)->text(2), AsText(std::filesystem::path("Aircrafts") / "pmdg-aircraft-77w"));
+    QVERIFY(!modules->topLevelItem(1)->data(2, QuietRole).toBool());
+    QCOMPARE(modules->topLevelItem(0)->text(1), QStringLiteral("fsdreamteam-gsx-pro"));
+    QVERIFY(modules->topLevelItem(0)->data(2, QuietRole).toBool());
+}
+
+void DiagnosticsPageTest::NoWordOnTheLoadSectionOffersATimePerAddon()
+{
+    Fixture f;
+    f.loading.ReportAModule("fmc.wasm", "pmdg-aircraft-77w", 327680);
+    f.loading.ReportPackagesRegistered(264);
+
+    DiagnosticsPage page(f.viewModel);
+
+    f.viewModel.Show();
+    f.viewModel.ShowTheLoad();
+
+    const LoadPanel* panel = page.findChild<LoadPanel*>();
+
+    QVERIFY(panel != nullptr);
+
+    for (const QLabel* said : panel->findChildren<QLabel*>())
+    {
+        QVERIFY(!said->text().contains(QStringLiteral("second"), Qt::CaseInsensitive));
+        QVERIFY(!said->text().contains(QStringLiteral("minute"), Qt::CaseInsensitive));
+    }
+
+    const QTreeWidget* modules = TableNamed(page, QStringLiteral("DiagnosticsModules"));
+
+    for (int column = 0; column < modules->columnCount(); ++column)
+    {
+        QVERIFY(!modules->headerItem()->text(column).contains(QStringLiteral("time"), Qt::CaseInsensitive));
     }
 }
 

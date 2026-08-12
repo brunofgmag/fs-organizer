@@ -99,6 +99,11 @@ add_test(NAME no-retyped-formatting
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-retyped-formatting.cmake")
 
+add_test(NAME translations-are-finished
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-translations-are-finished.cmake")
+
 if (WIN32)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"
@@ -548,6 +553,7 @@ fsorg_add_qt_test(fsorg-size-across-screens-tests size-across-screens
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLoadingReportSource.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
         tests/doubles/FakeProcessProbe.h
@@ -671,6 +677,7 @@ fsorg_add_qt_test(fsorg-diagnostics-view-model-tests diagnostics-view-model
         tests/doubles/FakeFileOperations.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLoadingReportSource.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
         tests/doubles/FakeProcessProbe.h
@@ -776,6 +783,25 @@ fsorg_add_qt_test(fsorg-content-xml-packages-tests content-xml-packages
         tests/support/TempFiles.h)
 target_link_libraries(fsorg-content-xml-packages-tests PRIVATE fsorg-infrastructure)
 target_compile_definitions(fsorg-content-xml-packages-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-load-report-tests load-report
+        tests/application/tst_load_report.cpp
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-load-report-tests PRIVATE fsorg-application)
+
+fsorg_add_qt_test(fsorg-loading-report-on-real-disk-tests loading-report-on-real-disk
+        tests/infrastructure/sim/tst_loading_report_on_real_disk.cpp
+        tests/support/PathPrinting.h
+        tests/support/TempFiles.h)
+target_link_libraries(fsorg-loading-report-on-real-disk-tests PRIVATE fsorg-infrastructure)
+target_compile_definitions(fsorg-loading-report-on-real-disk-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-loading-report-text-tests loading-report-text
+        tests/infrastructure/sim/tst_loading_report_text.cpp)
+target_link_libraries(fsorg-loading-report-text-tests PRIVATE fsorg-infrastructure)
+target_compile_definitions(fsorg-loading-report-text-tests PRIVATE
         FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
 
 fsorg_add_qt_test(fsorg-content-xml-document-tests content-xml-document
@@ -974,6 +1000,7 @@ if (WIN32)
             tests/doubles/FakeFileOperations.h
             tests/doubles/FakeFilesystemProbe.h
             tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeLoadingReportSource.h
             tests/doubles/FakeLinkService.h
             tests/doubles/FakeOperationJournal.h
             tests/doubles/FakeProcessProbe.h

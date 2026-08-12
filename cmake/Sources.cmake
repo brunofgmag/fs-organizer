@@ -34,6 +34,7 @@ set(APPLICATION_SOURCES
         src/application/model/DeletionPlan.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
+        src/application/LoadReport.cpp
         src/application/preset/PresetStartupPlan.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
@@ -70,7 +71,10 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/ContentXmlPackages.cpp
         src/infrastructure/sim/ExeXmlDocument.cpp
         src/infrastructure/sim/ExeXmlStartupEntries.cpp
+        src/infrastructure/sim/LoadingReportLocations.cpp
+        src/infrastructure/sim/LoadingReportText.cpp
         src/infrastructure/sim/PackageNaming.cpp
+        src/infrastructure/sim/ProfileLoadingReport.cpp
         src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/StartupFileLocations.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
@@ -120,6 +124,7 @@ set(VIEW_SOURCES
         src/view/library/CoverageDialog.cpp
         src/view/library/DeleteDialog.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
+        src/view/diagnostics/LoadPanel.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
         src/view/shell/LanguageSwitch.cpp

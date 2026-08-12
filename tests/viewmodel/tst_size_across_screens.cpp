@@ -12,6 +12,7 @@
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeLoadingReportSource.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSceneryCache.h"
@@ -155,7 +156,8 @@ namespace
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
-        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, clock, runner};
+        FakeLoadingReportSource loading;
+        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, loading, clock, runner};
     };
 
     SelectionSize LastSize(const QSignalSpy& measured)

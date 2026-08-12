@@ -7,6 +7,7 @@
 namespace
 {
     constexpr std::string_view kShippedPrefixes[] = {"fs24-", "fs20-"};
+    constexpr std::string_view kGenerationPrefixes[] = {"communityfs24-", "communityfs20-", "fs24-", "fs20-"};
     constexpr std::string_view kAirportMarker = "-airport-";
     constexpr std::size_t kShortestCode = 3;
     constexpr std::size_t kLongestCode = 4;
@@ -38,6 +39,19 @@ bool ItIsContentTheSimulatorShips(const std::string_view packageName)
                                {
                                    return packageName.starts_with(prefix);
                                });
+}
+
+std::string WithoutTheGenerationPrefix(const std::string_view packageName)
+{
+    for (const std::string_view prefix : kGenerationPrefixes)
+    {
+        if (packageName.size() > prefix.size() && packageName.starts_with(prefix))
+        {
+            return std::string(packageName.substr(prefix.size()));
+        }
+    }
+
+    return std::string(packageName);
 }
 
 std::string AirportCodeInAPackageName(const std::string_view packageName)

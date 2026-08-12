@@ -137,6 +137,9 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
     panes_->addWidget(CreateSizePane());
     panes_->addWidget(CreateSceneryPane());
 
+    load_ = new LoadPanel(this);
+    panes_->addWidget(load_);
+
     auto* body = new QHBoxLayout;
     body->setContentsMargins(0, 0, 0, 0);
     body->setSpacing(0);
@@ -182,6 +185,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
             });
     connect(&viewModel_, &DiagnosticsViewModel::SceneryRead, this, &DiagnosticsPage::ShowWhatTheSceneryCarries);
     connect(&viewModel_, &DiagnosticsViewModel::SceneryProgressed, this, &DiagnosticsPage::ShowSceneryProgress);
+    connect(&viewModel_, &DiagnosticsViewModel::LoadRead, this, &DiagnosticsPage::ShowWhatTheSimulatorLoaded);
 
     RetranslateUi();
     rail_->setCurrentRow(DestinationEntries);
@@ -228,7 +232,7 @@ QWidget* DiagnosticsPage::CreateRail()
     rail_->setFrameShape(QFrame::NoFrame);
     rail_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    for (int section = DestinationEntries; section <= AirportsInTheScenery; ++section)
+    for (int section = DestinationEntries; section <= WhatTheSimulatorLoaded; ++section)
     {
         rail_->addItem(QString());
     }
@@ -446,6 +450,11 @@ void DiagnosticsPage::OpenSection(const int section) const
     {
         viewModel_.ShowScenery();
         DressTheSceneryToolbar();
+    }
+
+    if (section == WhatTheSimulatorLoaded)
+    {
+        viewModel_.ShowTheLoad();
     }
 }
 
@@ -668,6 +677,18 @@ void DiagnosticsPage::DressTheRail() const
         ->setText(viewModel_.SceneryReadAt().has_value()
                       ? tr("Airports in the scenery · %1").arg(census.carryingACode.size())
                       : tr("Airports in the scenery"));
+
+    const LoadDiagnostics& load = viewModel_.Load();
+
+    rail_->item(WhatTheSimulatorLoaded)
+        ->setText(load.reportWasRead ? tr("Modules loaded · %1").arg(load.modules.size()) : tr("Modules loaded"));
+}
+
+void DiagnosticsPage::ShowWhatTheSimulatorLoaded() const
+{
+    load_->Show(viewModel_.Load());
+
+    DressTheRail();
 }
 
 void DiagnosticsPage::DressTheSizeToolbar() const
