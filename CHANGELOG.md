@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.0](https://github.com/brunofgmag/fs-organizer/compare/v0.34.0...v0.35.0) (2026-08-12)
+
+
+### Features
+
+* warn before adopting another program's addon, and keep dialogs inside the window ([#99](https://github.com/brunofgmag/fs-organizer/issues/99)) ([92ebfcc](https://github.com/brunofgmag/fs-organizer/commit/92ebfccfaeb1f0370f33f0e6be74d3f303bde196))
+
 ## [0.34.0](https://github.com/brunofgmag/fs-organizer/compare/v0.33.0...v0.34.0) (2026-08-12)
 
 
