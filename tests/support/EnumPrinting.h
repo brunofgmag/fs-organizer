@@ -7,6 +7,7 @@
 #include "application/StartupReport.h"
 #include "application/ports/PackageList.h"
 #include "application/model/RestorePlan.h"
+#include "domain/documents/DocumentClassification.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
 #include "domain/model/DestinationEntry.h"
@@ -325,6 +326,18 @@ namespace QTest
         }
 
         return qstrdup("AirportEvidence(?)");
+    }
+
+    template<>
+    inline char* toString(const DocumentKind& t)
+    {
+        switch (t)
+        {
+        case DocumentKind::Document: return qstrdup("Document");
+        case DocumentKind::Chart: return qstrdup("Chart");
+        }
+
+        return qstrdup("DocumentKind(?)");
     }
 
     template<>
