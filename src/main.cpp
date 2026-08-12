@@ -17,10 +17,13 @@
 #include "application/Session.h"
 #include "application/SceneryService.h"
 #include "application/SetupService.h"
+#include "application/DocumentService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
+#include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
@@ -69,6 +72,7 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -278,8 +282,13 @@ int main(int argc, char* argv[])
                      });
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-    auto* page =
-        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, model, notifier);
+    const JsonChartCatalogueParser catalogueParser;
+    const QtPdfChartVersions chartVersions;
+    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner);
+
+    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
+                                   documentsViewModel, model, notifier);
 
     LongOperationProgress progress(importViewModel, &window);
 

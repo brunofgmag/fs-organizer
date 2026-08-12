@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "application/model/ReadDocument.h"
 #include "application/model/UpdateMode.h"
 #include "domain/model/LinkType.h"
 #include "domain/model/SimulatorProfile.h"
@@ -21,6 +22,7 @@ struct AppSettings
     UpdateMode updateMode = UpdateMode::Notify;
     std::string language;
     std::vector<CoexistingPair> coexistingAirports;
+    std::vector<ReadDocument> documents;
 };
 
 inline void AddProfile(AppSettings& settings, SimulatorProfile profile)

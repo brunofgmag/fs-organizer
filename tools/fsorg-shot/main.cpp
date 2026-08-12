@@ -7,6 +7,7 @@
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QDir>
 #include <QtCore/QTextStream>
+#include <QtCore/QThread>
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
@@ -17,6 +18,7 @@
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QTreeView>
@@ -29,7 +31,9 @@
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
+#include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
@@ -41,6 +45,7 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "application/CoverageService.h"
+#include "application/DocumentService.h"
 #include "application/SceneryService.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
 #include "infrastructure/scenery/JsonSceneryCache.h"
@@ -61,6 +66,7 @@
 #include "view/PresetsPage.h"
 #include "view/community/CommunityPage.h"
 #include "domain/tree/AddonTree.h"
+#include "view/documents/DocumentsWindow.h"
 #include "view/library/AddonTreePage.h"
 #include "domain/support/PathUtils.h"
 #include "view/library/LibraryRootDialog.h"
@@ -79,6 +85,7 @@
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -126,6 +133,32 @@ namespace
         }
 
         return page.findChild<QTableView*>();
+    }
+
+    void KeepTheEventLoopTurning(const int passes)
+    {
+        for (int pass = 0; pass < passes; ++pass)
+        {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 25);
+            QThread::msleep(20);
+        }
+    }
+
+    QTreeWidgetItem* TheFirstLineUnderAGroupOf(QTreeWidget& index)
+    {
+        for (int group = 0; group < index.topLevelItemCount(); ++group)
+        {
+            QTreeWidgetItem* heading = index.topLevelItem(group);
+
+            if (heading->childCount() > 0 && heading->text(1).contains(QString::fromUtf8("·")))
+            {
+                heading->setExpanded(true);
+
+                return heading->child(0);
+            }
+        }
+
+        return nullptr;
     }
 
     bool SelectTheAddonNamed(const QWidget& page, const QString& folderName)
@@ -516,8 +549,13 @@ int main(int argc, char* argv[])
     SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
     CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
 
-    auto* libraryPage =
-        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, treeModel, notifier);
+    const JsonChartCatalogueParser catalogueParser;
+    const QtPdfChartVersions chartVersions;
+    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner);
+
+    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
+                                          documentsViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -775,6 +813,54 @@ int main(int argc, char* argv[])
                      },
                      folder, QStringLiteral("21-library-deep-root"))
             && landed;
+    }
+
+    {
+        const QString carryingCharts = QStringLiteral("aerosoft-airport-ebbr-brussels");
+        QPushButton* documentation = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDocumentationAction"));
+
+        if (SelectTheAddonNamed(*libraryPage, carryingCharts) && documentation != nullptr)
+        {
+            KeepTheEventLoopTurning(80);
+        }
+
+        if (documentation != nullptr && documentation->isVisible())
+        {
+            documentation->click();
+            LetTheLayoutSettle();
+
+            auto* reader = libraryPage->findChild<DocumentsWindow*>();
+
+            if (reader != nullptr)
+            {
+                if (auto* index = reader->findChild<QTreeWidget*>(); index != nullptr)
+                {
+                    for (int group = 0; group < index->topLevelItemCount(); ++group)
+                    {
+                        index->topLevelItem(group)->setExpanded(true);
+                    }
+
+                    if (QTreeWidgetItem* line = TheFirstLineUnderAGroupOf(*index); line != nullptr)
+                    {
+                        index->setCurrentItem(line);
+                        emit index->itemActivated(line, 1);
+                        emit index->itemClicked(line, 0);
+                    }
+                }
+
+                KeepTheEventLoopTurning(60);
+                landed = Save(*reader, folder, QStringLiteral("26-documents")) && landed;
+                reader->close();
+            }
+            else
+            {
+                Out() << "the documentation button opened no window, so there is no reader to write\n";
+            }
+        }
+        else
+        {
+            Out() << "the chosen addon carries no documentation, so there is no reader to write\n";
+        }
     }
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));

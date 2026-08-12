@@ -1,6 +1,7 @@
 set(DOMAIN_SOURCES
         src/domain/documents/ChartFileNaming.cpp
         src/domain/documents/ChartIndex.cpp
+        src/domain/documents/ChartRevisions.cpp
         src/domain/documents/DocumentClassification.cpp
         src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ExternalSidecar.cpp
@@ -93,6 +94,10 @@ set(NETWORK_INFRASTRUCTURE_SOURCES
         src/infrastructure/update/GithubUpdateService.cpp
 )
 
+set(PDF_INFRASTRUCTURE_SOURCES
+        src/infrastructure/documents/QtPdfChartVersions.cpp
+)
+
 set(VIEWMODEL_SOURCES
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
@@ -104,6 +109,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/DeletionViewModel.cpp
         src/viewmodel/DependencyText.cpp
         src/viewmodel/DiagnosticsViewModel.cpp
+        src/viewmodel/DocumentsViewModel.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
@@ -129,6 +135,8 @@ set(VIEW_SOURCES
         src/view/library/CoverageDialog.cpp
         src/view/library/DeleteDialog.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
+        src/view/documents/DocumentReader.cpp
+        src/view/documents/DocumentsWindow.cpp
         src/view/diagnostics/LoadPanel.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
@@ -183,6 +191,7 @@ set(WINDOWS_SHELL_SOURCES
 set(APP_SOURCES
         src/main.cpp
         ${NETWORK_INFRASTRUCTURE_SOURCES}
+        ${PDF_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
 )
 

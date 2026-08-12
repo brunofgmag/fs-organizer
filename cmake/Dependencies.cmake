@@ -8,7 +8,7 @@ if (NOT CMAKE_PREFIX_PATH AND EXISTS "C:/Qt")
     endif ()
 endif ()
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets Network LinguistTools)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets Network Pdf PdfWidgets LinguistTools)
 
 qt_standard_project_setup(REQUIRES 6.8)
 

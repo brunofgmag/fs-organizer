@@ -16,7 +16,9 @@
 #include "application/StartupService.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
+#include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
@@ -40,6 +42,7 @@
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/CommunityModel.h"
 #include "application/CoverageService.h"
+#include "application/DocumentService.h"
 #include "application/SceneryService.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
 #include "infrastructure/scenery/JsonSceneryCache.h"
@@ -53,6 +56,7 @@
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -236,8 +240,13 @@ int main(int argc, char* argv[])
         SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
         CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
 
+        const JsonChartCatalogueParser catalogueParser;
+        const QtPdfChartVersions chartVersions;
+        const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+        DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner);
+
         auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
-                                           treeModel, notifier);
+                                           documentsViewModel, treeModel, notifier);
 
         CommunityModel communityModel;
         CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);

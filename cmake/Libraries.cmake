@@ -24,5 +24,5 @@ target_link_libraries(fsorg-viewmodel PUBLIC fsorg-application Qt6::Core)
 target_precompile_headers(fsorg-viewmodel PRIVATE <QtCore/QtCore>)
 
 fsorg_add_layer(fsorg-view ${VIEW_SOURCES})
-target_link_libraries(fsorg-view PUBLIC fsorg-viewmodel Qt6::Widgets)
+target_link_libraries(fsorg-view PUBLIC fsorg-viewmodel Qt6::Widgets Qt6::PdfWidgets)
 target_precompile_headers(fsorg-view PRIVATE <QtWidgets/QtWidgets>)

@@ -10,6 +10,8 @@
 #include "application/LibraryOrganizer.h"
 #include "domain/support/PathUtils.h"
 #include "tests/doubles/FakeCatalogScanner.h"
+#include "tests/doubles/FakeChartCatalogueParser.h"
+#include "tests/doubles/FakeChartVersions.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
@@ -199,6 +201,10 @@ namespace
         FakeSceneryCache sceneryCache;
         SceneryService sceneryService{filesystemProbe, sceneryParser, clock, sceneryCache};
         CoverageViewModel coverage{coverageService, sceneryService, session, clock};
+        FakeChartCatalogueParser catalogueParser;
+        FakeChartVersions chartVersions;
+        DocumentService documentService{catalog, filesystemProbe, catalogueParser, chartVersions};
+        DocumentsViewModel documents{documentService, sceneryService, session, runner};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)
@@ -250,6 +256,7 @@ namespace
                    fixture.deletion,
                    fixture.importViewModel,
                    fixture.coverage,
+                   fixture.documents,
                    fixture.model,
                    fixture.notifier)
         {

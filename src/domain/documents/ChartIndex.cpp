@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "domain/documents/ChartFileNaming.h"
+#include "domain/documents/ChartRevisions.h"
 #include "domain/support/CaseFolding.h"
 #include "domain/support/PathUtils.h"
 
@@ -24,6 +25,7 @@ namespace
     struct EntryBeingBuilt
     {
         std::string name{};
+        ChartRevision revision = ChartRevision::InForce;
         std::vector<Page> pages{};
     };
 
@@ -225,6 +227,97 @@ namespace
         information.charts.front().pages.push_back(page);
     }
 
+    [[nodiscard]] std::vector<Page> TheInformationPagesOf(const FilesOfAnAirport& airport,
+                                                          const ChartCatalogue& catalogue)
+    {
+        std::vector<Page> pages;
+
+        for (const CatalogueEntry& entry : catalogue.entries)
+        {
+            const std::filesystem::path* file = FileNamed(airport.files, entry.chartId);
+
+            if (entry.chartType != kInformation || file == nullptr)
+            {
+                continue;
+            }
+
+            pages.push_back({.number = PageNumberIn(entry.chartName), .file = *file});
+        }
+
+        return pages;
+    }
+
+    [[nodiscard]] std::size_t HowManyCarryThePage(const std::vector<Page>& pages, const int number)
+    {
+        const auto carrying = std::ranges::count_if(pages,
+                                                    [number](const Page& page)
+                                                    {
+                                                        return page.number == number;
+                                                    });
+
+        return static_cast<std::size_t>(carrying);
+    }
+
+    [[nodiscard]] long long VersionOf(const std::vector<ChartVersion>& versions, const std::filesystem::path& file)
+    {
+        for (const ChartVersion& known : versions)
+        {
+            if (known.file == file)
+            {
+                return known.version;
+            }
+        }
+
+        return 0;
+    }
+
+    [[nodiscard]] std::vector<Page> AsPages(const std::vector<PageRevision>& revisions)
+    {
+        std::vector<Page> pages;
+        pages.reserve(revisions.size());
+
+        for (const PageRevision& revision : revisions)
+        {
+            pages.push_back({.number = revision.page, .file = revision.file});
+        }
+
+        return pages;
+    }
+
+    void SplitTheRevisionsOfTheInformationLine(std::vector<TypeBeingBuilt>& types,
+                                               const std::vector<ChartVersion>& versions)
+    {
+        for (TypeBeingBuilt& group : types)
+        {
+            if (group.type != kInformation || group.charts.empty())
+            {
+                continue;
+            }
+
+            std::vector<PageRevision> revisions;
+            revisions.reserve(group.charts.front().pages.size());
+
+            for (const Page& page : group.charts.front().pages)
+            {
+                revisions.push_back(
+                    {.page = page.number, .file = page.file, .version = VersionOf(versions, page.file)});
+            }
+
+            const WhichRevisionOfEachPage chosen = TheRevisionInForceOfEachPage(revisions);
+
+            group.charts.clear();
+            group.charts.push_back({.name = {}, .revision = ChartRevision::InForce, .pages = AsPages(chosen.inForce)});
+
+            if (chosen.previous.empty())
+            {
+                continue;
+            }
+
+            group.charts.push_back(
+                {.name = {}, .revision = ChartRevision::Previous, .pages = AsPages(chosen.previous)});
+        }
+    }
+
     void PlaceThePageOfASid(std::vector<TypeBeingBuilt>& types,
                             const CatalogueEntry& entry,
                             const std::filesystem::path& file)
@@ -312,7 +405,7 @@ namespace
                                              return left.number < right.number;
                                          });
 
-                ChartEntry entry{.name = chart.name, .pages = {}};
+                ChartEntry entry{.name = chart.name, .revision = chart.revision, .pages = {}};
                 entry.pages.reserve(chart.pages.size());
 
                 for (const Page& page : chart.pages)
@@ -339,11 +432,13 @@ namespace
     }
 
     [[nodiscard]] ChartsOfAnAirport TheCataloguedListOf(const FilesOfAnAirport& airport,
-                                                        const ChartCatalogue& catalogue)
+                                                        const ChartCatalogue& catalogue,
+                                                        const std::vector<ChartVersion>& versions)
     {
         std::vector<std::string> placed;
         std::vector<TypeBeingBuilt> types = WhatTheCatalogueNames(airport, catalogue, placed);
 
+        SplitTheRevisionsOfTheInformationLine(types, versions);
         AddWhatTheCatalogueDoesNotName(types, airport, placed);
 
         return {.code = airport.code,
@@ -354,7 +449,8 @@ namespace
 }
 
 std::vector<ChartsOfAnAirport> ChartsGroupedByAirport(const std::vector<ChartFile>& charts,
-                                                      const std::vector<CatalogueOfAnAirport>& catalogues)
+                                                      const std::vector<CatalogueOfAnAirport>& catalogues,
+                                                      const std::vector<ChartVersion>& versions)
 {
     std::vector<ChartsOfAnAirport> grouped;
 
@@ -368,8 +464,36 @@ std::vector<ChartsOfAnAirport> ChartsGroupedByAirport(const std::vector<ChartFil
             continue;
         }
 
-        grouped.push_back(TheCataloguedListOf(airport, *catalogue));
+        grouped.push_back(TheCataloguedListOf(airport, *catalogue, versions));
     }
 
     return grouped;
+}
+
+std::vector<std::filesystem::path> FilesOfARepeatedPage(const std::vector<ChartFile>& charts,
+                                                        const std::vector<CatalogueOfAnAirport>& catalogues)
+{
+    std::vector<std::filesystem::path> repeated;
+
+    for (const FilesOfAnAirport& airport : ByAirport(charts))
+    {
+        const ChartCatalogue* catalogue = CatalogueOf(airport.code, catalogues);
+
+        if (catalogue == nullptr || airport.code.empty())
+        {
+            continue;
+        }
+
+        const std::vector<Page> information = TheInformationPagesOf(airport, *catalogue);
+
+        for (const Page& page : information)
+        {
+            if (HowManyCarryThePage(information, page.number) > 1)
+            {
+                repeated.push_back(page.file);
+            }
+        }
+    }
+
+    return repeated;
 }

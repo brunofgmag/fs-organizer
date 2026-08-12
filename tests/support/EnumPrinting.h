@@ -7,6 +7,7 @@
 #include "application/StartupReport.h"
 #include "application/ports/PackageList.h"
 #include "application/model/RestorePlan.h"
+#include "domain/documents/ChartIndex.h"
 #include "domain/documents/DocumentClassification.h"
 #include "domain/legacy/ProposedState.h"
 #include "domain/model/CheckState.h"
@@ -38,6 +39,18 @@ namespace QTest
         }
 
         return qstrdup("WriteAccess(?)");
+    }
+
+    template<>
+    inline char* toString(const ChartRevision& t)
+    {
+        switch (t)
+        {
+        case ChartRevision::InForce: return qstrdup("InForce");
+        case ChartRevision::Previous: return qstrdup("Previous");
+        }
+
+        return qstrdup("ChartRevision(?)");
     }
 
     template<>

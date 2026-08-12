@@ -78,9 +78,27 @@ namespace
 
 DocumentService::DocumentService(const CatalogScanner& catalog,
                                  const FilesystemProbe& filesystemProbe,
-                                 const ChartCatalogueParser& catalogueParser)
-    : catalog_(catalog), filesystemProbe_(filesystemProbe), catalogueParser_(catalogueParser)
+                                 const ChartCatalogueParser& catalogueParser,
+                                 const ChartVersions& chartVersions)
+    : catalog_(catalog),
+      filesystemProbe_(filesystemProbe),
+      catalogueParser_(catalogueParser),
+      chartVersions_(chartVersions)
 {
+}
+
+std::vector<ChartVersion> DocumentService::TheVersionsOf(const std::vector<std::filesystem::path>& charts,
+                                                         const std::filesystem::path& folder) const
+{
+    std::vector<ChartVersion> versions;
+    versions.reserve(charts.size());
+
+    for (const std::filesystem::path& chart : charts)
+    {
+        versions.push_back({.file = chart, .version = chartVersions_.VersionOf(PathUnder(folder, chart))});
+    }
+
+    return versions;
 }
 
 std::vector<CatalogueOfAnAirport> DocumentService::CataloguesBeside(const std::filesystem::path& folder,
@@ -147,7 +165,10 @@ DocumentsOfAnAddon DocumentService::DocumentsOf(const AddonId& addon,
         charts.push_back({.relativePath = file.relativePath, .code = classified.code});
     }
 
-    found.airports = ChartsGroupedByAirport(charts, CataloguesBeside(folder, charts));
+    const std::vector<CatalogueOfAnAirport> catalogues = CataloguesBeside(folder, charts);
+
+    found.airports =
+        ChartsGroupedByAirport(charts, catalogues, TheVersionsOf(FilesOfARepeatedPage(charts, catalogues), folder));
 
     return found;
 }
