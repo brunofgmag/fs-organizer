@@ -127,10 +127,12 @@ set(VIEW_SOURCES
         src/view/library/LibraryRootDialog.cpp
         src/view/shell/LongOperationProgress.cpp
         src/view/options/OptionsPage.cpp
+        src/view/delegates/CenteredCheckDelegate.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/presets/OmittedDialog.cpp
         src/view/presets/PresetPlanPanel.cpp
+        src/view/presets/PresetStartupPanel.cpp
         src/view/PresetsPage.cpp
         src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp

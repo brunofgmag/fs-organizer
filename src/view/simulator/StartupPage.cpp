@@ -102,7 +102,7 @@ StartupPage::StartupPage(StartupViewModel& viewModel, QWidget* parent) : QWidget
     connect(&viewModel_, &StartupViewModel::SettingsCouldNotBeSaved, this,
             [this]
             {
-                emit StatusChanged(tr("The choice could not be written down, so it stays as it was."));
+                emit StatusChanged(tr("The app could not write the choice down, so it stays as it was."));
             });
 
     RetranslateUi();

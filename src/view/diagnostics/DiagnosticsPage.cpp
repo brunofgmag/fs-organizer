@@ -161,7 +161,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
             [this]
             {
                 viewModel_.CancelSize();
-                emit StatusChanged(tr("Stopping the measurement after the addon being walked now."));
+                emit StatusChanged(tr("Stopping after the addon it is measuring now."));
             });
     connect(openQuarantine_, &QPushButton::clicked, this, &DiagnosticsPage::QuarantineRequested);
     connect(repair_, &QPushButton::clicked, this, &DiagnosticsPage::RepairRequested);
@@ -178,7 +178,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
             [this]
             {
                 viewModel_.CancelScenery();
-                emit StatusChanged(tr("Stopping the reading after the addon being read now."));
+                emit StatusChanged(tr("Stopping after the addon it is reading now."));
             });
     connect(&viewModel_, &DiagnosticsViewModel::SceneryRead, this, &DiagnosticsPage::ShowWhatTheSceneryCarries);
     connect(&viewModel_, &DiagnosticsViewModel::SceneryProgressed, this, &DiagnosticsPage::ShowSceneryProgress);
