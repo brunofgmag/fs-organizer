@@ -132,9 +132,9 @@ namespace
         case EntryClassification::External:
             return QCoreApplication::translate(
                 "CommunityPage",
-                "Taking it over moves the folder into your library and leaves a link where it was. The other "
-                "program does not know that, so its next update can write inside the link, or replace it with a "
-                "real folder and give you two copies. Nothing here can stop it.");
+                "The other program does not know about the link that taking it over leaves behind, so its next "
+                "update can write inside the link, or replace it with a real folder and give you two copies. "
+                "Nothing here can stop that.");
         case EntryClassification::Managed:
         case EntryClassification::Broken:
         case EntryClassification::Unavailable:

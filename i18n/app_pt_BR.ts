@@ -924,9 +924,8 @@ Também existe na biblioteca: %2</translation>
         <translation>A cópia na sua biblioteca sumiu, levada pelo outro programa. Aqui não há o que reparar: o conteúdo não existe mais nesta máquina.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/CommunityPage.cpp" line="133"/>
         <source>Taking it over moves the folder into your library and leaves a link where it was. The other program does not know that, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop it.</source>
-        <translation>Adotar move a pasta para a sua biblioteca e deixa um link no lugar dela. O outro programa não sabe disso, então a próxima atualização dele pode escrever dentro do link, ou substituí-lo por uma pasta de verdade e deixar você com duas cópias. Nada aqui consegue impedir.</translation>
+        <translation type="vanished">Adotar move a pasta para a sua biblioteca e deixa um link no lugar dela. O outro programa não sabe disso, então a próxima atualização dele pode escrever dentro do link, ou substituí-lo por uma pasta de verdade e deixar você com duas cópias. Nada aqui consegue impedir.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="228"/>
@@ -1182,6 +1181,11 @@ Também existe na biblioteca: %2</translation>
         <location filename="../src/view/community/CommunityPage.cpp" line="108"/>
         <source>The other program put a real folder back where it installs this addon and pointed this entry at it, so there are two copies and the simulator now loads the other program&apos;s one. The copy in your library is the one nothing reads any more.</source>
         <translation>O outro programa recolocou uma pasta de verdade onde instala este addon e apontou esta entrada para ela, então existem duas cópias e o simulador agora carrega a do outro programa. A cópia da sua biblioteca é a que ninguém lê mais.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/CommunityPage.cpp" line="133"/>
+        <source>The other program does not know about the link that taking it over leaves behind, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop that.</source>
+        <translation>O outro programa não sabe do link que a adoção deixa para trás, então a próxima atualização dele pode escrever dentro do link, ou substituí-lo por uma pasta de verdade e deixar você com duas cópias. Nada aqui impede isso.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="766"/>
@@ -1979,7 +1983,7 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentsWindow</name>
     <message>
-        <location filename="../src/view/documents/DocumentsWindow.cpp" line="141"/>
+        <location filename="../src/view/documents/DocumentsWindow.cpp" line="137"/>
         <source>Documents · %1</source>
         <translation>Documentos · %1</translation>
     </message>
@@ -2048,37 +2052,44 @@ Também existe na biblioteca: %2</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="70"/>
         <source>The program that installed those folders does not know about the link this leaves behind, so its next update can write inside the link, or replace it and give you two copies. You can give the addon back to that program later.</source>
-        <translation>O programa que instalou essas pastas não sabe do link que isto deixa para trás, então a próxima atualização dele pode escrever dentro do link, ou substituí-lo e deixar você com duas cópias. Você pode devolver o addon a esse programa depois.</translation>
+        <translation type="vanished">O programa que instalou essas pastas não sabe do link que isto deixa para trás, então a próxima atualização dele pode escrever dentro do link, ou substituí-lo e deixar você com duas cópias. Você pode devolver o addon a esse programa depois.</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="79"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="63"/>
         <source>Library:</source>
         <translation>Biblioteca:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="80"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="64"/>
         <source>Category:</source>
         <translation>Categoria:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="81"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="65"/>
         <source>Will become:</source>
         <translation>Vai virar:</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="84"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="68"/>
         <source>Import</source>
         <translation>Importar</translation>
     </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="99"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="83"/>
         <source>Selected folders:</source>
         <translation>Pastas selecionadas:</translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/ImportDialog.cpp" line="97"/>
+        <source>%n folder above is installed by another program, and that program does not know about the link this leaves behind: its next update can write inside the link, or replace it and give you two copies. You can give it back later, from Delete in the library.</source>
+        <translation>
+            <numerusform>%n pasta acima foi instalada por outro programa, e esse programa não sabe do link que isto deixa para trás: a próxima atualização dele pode escrever dentro do link, ou substituí-lo e deixar você com duas cópias. Você pode devolvê-la depois, pelo Excluir da biblioteca.</numerusform>
+            <numerusform>%n pastas acima foram instaladas por outro programa, e esse programa não sabe do link que isto deixa para trás: a próxima atualização dele pode escrever dentro do link, ou substituí-lo e deixar você com duas cópias. Você pode devolvê-las depois, pelo Excluir da biblioteca.</numerusform>
+        </translation>
+    </message>
     <message>
-        <location filename="../src/view/community/ImportDialog.cpp" line="130"/>
+        <location filename="../src/view/community/ImportDialog.cpp" line="128"/>
         <source>(library root)</source>
         <translation>(raiz da biblioteca)</translation>
     </message>
@@ -4431,12 +4442,12 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="723"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="724"/>
         <source>Restore the selected ones</source>
         <translation>Restaurar selecionados</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="931"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="949"/>
         <source>Unregister</source>
         <translation>Descadastrar</translation>
     </message>

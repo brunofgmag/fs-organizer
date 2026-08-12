@@ -28,17 +28,9 @@ inline constexpr int kPageGutter = 10;
     return 0;
 }
 
-inline void SizeToTheContent(QWidget& dialog, const int wide)
+inline void SizeToTheContent(QWidget& dialog, const int wide, const int tall)
 {
     QLayout* layout = dialog.layout();
-
-    if (layout != nullptr)
-    {
-        layout->activate();
-    }
-
-    const bool alongTheWidth = layout != nullptr && layout->hasHeightForWidth();
-    const int tall = alongTheWidth ? layout->totalHeightForWidth(wide) : dialog.sizeHint().height();
 
     const int ceiling = TheTallestADialogMayBe(dialog);
     const int floor = layout == nullptr ? 0 : layout->minimumSize().height();
@@ -50,14 +42,27 @@ inline void SizeToTheContent(QWidget& dialog, const int wide)
         return;
     }
 
-    if (layout != nullptr)
+    if (layout != nullptr && floor > ceiling)
     {
         layout->setSizeConstraint(QLayout::SetNoConstraint);
+        dialog.setMinimumHeight(0);
     }
 
-    dialog.setMinimumHeight(0);
-    dialog.setMaximumHeight(ceiling);
     dialog.resize(wide, std::min(tall, ceiling));
+}
+
+inline void SizeToTheContent(QWidget& dialog, const int wide)
+{
+    QLayout* layout = dialog.layout();
+
+    if (layout != nullptr)
+    {
+        layout->activate();
+    }
+
+    const bool alongTheWidth = layout != nullptr && layout->hasHeightForWidth();
+
+    SizeToTheContent(dialog, wide, alongTheWidth ? layout->totalHeightForWidth(wide) : dialog.sizeHint().height());
 }
 
 #endif // FS_ORGANIZER_VIEW_THEME_MODERNIST_METRICS_H

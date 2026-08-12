@@ -1,7 +1,5 @@
 #include "view/documents/DocumentsWindow.h"
 
-#include <algorithm>
-
 #include <QtCore/QEvent>
 #include <QtCore/QSet>
 #include <QtCore/QUrl>
@@ -117,9 +115,7 @@ DocumentsWindow::DocumentsWindow(DocumentsViewModel& viewModel, QWidget* parent)
             });
     connect(&viewModel_, &DocumentsViewModel::Indexed, this, &DocumentsWindow::Rebuild);
 
-    const int ceiling = TheTallestADialogMayBe(*this);
-
-    resize(kWindowWidth, ceiling == 0 ? kWindowHeight : std::min(kWindowHeight, ceiling));
+    SizeToTheContent(*this, kWindowWidth, kWindowHeight);
 
     Retranslate();
     Rebuild();

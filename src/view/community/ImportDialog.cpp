@@ -59,24 +59,6 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
                              this);
     total->setWordWrap(true);
 
-    const bool anyoneCameFromAnotherProgram = std::any_of(chosen_.begin(), chosen_.end(),
-                                                          [](const ImportRequest& request)
-                                                          {
-                                                              return request.CameFromAnotherProgram();
-                                                          });
-
-    QLabel* owned = nullptr;
-
-    if (anyoneCameFromAnotherProgram)
-    {
-        owned = new QLabel(tr("The program that installed those folders does not know about the link this leaves "
-                              "behind, so its next update can write inside the link, or replace it and give you two "
-                              "copies. You can give the addon back to that program later."),
-                           this);
-        owned->setObjectName(QStringLiteral("PanelPromise"));
-        owned->setWordWrap(true);
-    }
-
     auto* form = new QFormLayout;
     form->addRow(tr("Library:"), library_);
     form->addRow(tr("Category:"), category_);
@@ -101,13 +83,27 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
     layout->addWidget(new QLabel(tr("Selected folders:"), this));
     layout->addWidget(picked, 1);
     layout->addWidget(total);
+    layout->addLayout(form);
 
-    if (owned != nullptr)
+    const auto owned = static_cast<int>(std::count_if(chosen_.begin(), chosen_.end(),
+                                                      [](const ImportRequest& request)
+                                                      {
+                                                          return request.CameFromAnotherProgram();
+                                                      }));
+
+    if (owned > 0)
     {
-        layout->addWidget(owned);
+        auto* caveat =
+            new QLabel(tr("%n folder above is installed by another program, and that program does not know about the "
+                          "link this leaves behind: its next update can write inside the link, or replace it and give "
+                          "you two copies. You can give it back later, from Delete in the library.",
+                          nullptr, owned),
+                       this);
+        caveat->setWordWrap(true);
+
+        layout->addWidget(caveat);
     }
 
-    layout->addLayout(form);
     layout->addWidget(buttons);
 
     ShowCategoriesOfTheChosenLibrary();
