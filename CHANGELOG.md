@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.0](https://github.com/brunofgmag/fs-organizer/compare/v0.32.0...v0.33.0) (2026-08-12)
+
+
+### Features
+
+* read the chart type and the airport code out of the chart file name ([#95](https://github.com/brunofgmag/fs-organizer/issues/95)) ([7bd475a](https://github.com/brunofgmag/fs-organizer/commit/7bd475a0157de01c889ee5c06f8e8e7a27127ea2))
+
 ## [0.32.0](https://github.com/brunofgmag/fs-organizer/compare/v0.31.0...v0.32.0) (2026-08-12)
 
 
