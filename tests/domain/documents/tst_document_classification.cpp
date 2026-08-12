@@ -22,6 +22,10 @@ namespace
         static void APdfAtTheRootOfTheAddonIsADocument();
         static void AnAddonWhoseCodeWasNeverExtractedHasNoChartByCode();
         static void AnAddonWhoseCodeWasNeverExtractedStillHasTheChartsClause();
+        static void ATokenThatNamesADocumentContradictsTheFolderNamedCharts();
+        static void ATokenThatNamesADocumentContradictsAFolderNamedAfterACodeToo();
+        static void ATokenThatNamesAChartLeavesTheChartsClauseAlone();
+        static void ATokenTheAppDoesNotKnowContradictsNothing();
     };
 
     const std::vector<std::string> kBrussels = {"EBBR"};
@@ -78,6 +82,36 @@ namespace
     {
         const ClassifiedDocument classified =
             ClassifyDocument(PathFromUtf8("Charts/approach.pdf"), kNothingWasExtracted);
+
+        QCOMPARE(classified.kind, DocumentKind::Chart);
+    }
+
+    void DocumentClassificationTest::ATokenThatNamesADocumentContradictsTheFolderNamedCharts()
+    {
+        const ClassifiedDocument classified = ClassifyDocument(PathFromUtf8("Charts/AD2_LFRN_APT.pdf"), kBrussels);
+
+        QCOMPARE(classified.kind, DocumentKind::Document);
+        QCOMPARE(QString::fromStdString(classified.code), QString());
+    }
+
+    void DocumentClassificationTest::ATokenThatNamesADocumentContradictsAFolderNamedAfterACodeToo()
+    {
+        const ClassifiedDocument classified =
+            ClassifyDocument(PathFromUtf8("NavDataPro/EBBR/AD2_EBBR_APT.pdf"), kBrussels);
+
+        QCOMPARE(classified.kind, DocumentKind::Document);
+    }
+
+    void DocumentClassificationTest::ATokenThatNamesAChartLeavesTheChartsClauseAlone()
+    {
+        const ClassifiedDocument classified = ClassifyDocument(PathFromUtf8("Charts/AD2_LFRN_VAC.pdf"), kBrussels);
+
+        QCOMPARE(classified.kind, DocumentKind::Chart);
+    }
+
+    void DocumentClassificationTest::ATokenTheAppDoesNotKnowContradictsNothing()
+    {
+        const ClassifiedDocument classified = ClassifyDocument(PathFromUtf8("Charts/AD2_LFRN_XYZ.pdf"), kBrussels);
 
         QCOMPARE(classified.kind, DocumentKind::Chart);
     }
