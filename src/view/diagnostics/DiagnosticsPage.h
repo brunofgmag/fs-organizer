@@ -3,6 +3,7 @@
 
 #include <QtWidgets/QWidget>
 
+#include "view/diagnostics/LoadPanel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 
 class QLabel;
@@ -39,6 +40,7 @@ private:
         Quarantine = 2,
         SizeOnDisk = 3,
         AirportsInTheScenery = 4,
+        WhatTheSimulatorLoaded = 5,
     };
 
     [[nodiscard]] QWidget* CreateToolbar();
@@ -81,6 +83,8 @@ private:
 
     void ShowSceneryProgress(int read, int total) const;
 
+    void ShowWhatTheSimulatorLoaded() const;
+
     void DressTheSceneryToolbar() const;
 
     DiagnosticsViewModel& viewModel_;
@@ -110,6 +114,7 @@ private:
     QProgressBar* sceneryMeter_ = nullptr;
     QPushButton* readSceneryAgain_ = nullptr;
     QPushButton* stopScenery_ = nullptr;
+    LoadPanel* load_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_DIAGNOSTICS_DIAGNOSTICS_PAGE_H

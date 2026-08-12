@@ -38,6 +38,8 @@
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ContentXmlPackageList.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
+#include "infrastructure/sim/LoadingReportLocations.h"
+#include "infrastructure/sim/ProfileLoadingReport.h"
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
@@ -233,6 +235,9 @@ int main(int argc, char* argv[])
     ExeXmlStartupEntries startupEntries{{}};
     StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
 
+    const std::vector<LoadingReportLocation> loadingReports = LoadingReportLocations(userCfgLocations, filesystemProbe);
+    ProfileLoadingReport loadingReport(filesystemProbe, {});
+
     const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
     ContentXmlPackageList packageList{{}};
     CoverageService coverageService(packageList, processProbe, stored.managePackageList);
@@ -291,7 +296,8 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, clock, runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
+                                              runner);
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
 
     StartupViewModel startupViewModel(startupService, session, clock);
@@ -299,18 +305,20 @@ int main(int argc, char* argv[])
     auto* packageListPage = new PackageListPage(coverageViewModel);
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    QObject::connect(
-        &notifier, &SessionNotifier::ScanFinished, startupPage,
-        [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists, &coverageViewModel]
-        {
-            startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
-            startupViewModel.Show();
-            session.RefreshStartupEntries();
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
+                     [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists,
+                      &coverageViewModel, &loadingReport, &loadingReports]
+                     {
+                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                         loadingReport.Use(LoadingReportOf(loadingReports, session.Profile().variant));
+                         startupViewModel.Show();
+                         session.RefreshStartupEntries();
 
-            const std::optional<ChosenContentList> chosen = ChooseContentList(contentLists, session.Profile().variant);
-            packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
-            coverageViewModel.Show();
-        });
+                         const std::optional<ChosenContentList> chosen =
+                             ChooseContentList(contentLists, session.Profile().variant);
+                         packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+                         coverageViewModel.Show();
+                     });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService, startupService);

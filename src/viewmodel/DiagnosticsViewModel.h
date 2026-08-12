@@ -12,10 +12,12 @@
 #include <QtCore/QString>
 
 #include "application/ImportService.h"
+#include "application/LoadReport.h"
 #include "application/SceneryService.h"
 #include "application/Session.h"
 #include "application/SizeService.h"
 #include "application/ports/BackgroundRunner.h"
+#include "application/ports/LoadingReportSource.h"
 #include "domain/ports/Clock.h"
 
 struct ClassificationCount
@@ -48,6 +50,7 @@ public:
                          SizeService& sizes,
                          SceneryService& scenery,
                          Session& session,
+                         const LoadingReportSource& loading,
                          const Clock& clock,
                          BackgroundRunner& runner,
                          QObject* parent = nullptr);
@@ -60,11 +63,15 @@ public:
 
     void CancelSize();
 
+    void ShowTheLoad();
+
     void ShowScenery();
 
     void ReadTheSceneryAgain();
 
     void CancelScenery();
+
+    [[nodiscard]] const LoadDiagnostics& Load() const;
 
     [[nodiscard]] const SceneryCensus& Scenery() const;
 
@@ -95,6 +102,8 @@ signals:
 
     void SizeMeasured();
 
+    void LoadRead();
+
     void SceneryProgressed(int read, int total);
 
     void SceneryRead();
@@ -112,6 +121,7 @@ private:
     SizeService& sizes_;
     SceneryService& scenery_;
     Session& session_;
+    const LoadingReportSource& loading_;
     const Clock& clock_;
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
@@ -120,6 +130,7 @@ private:
     std::vector<DestinationEntry> unavailable_;
     QuarantineWeight quarantine_;
     SizeReport size_;
+    LoadDiagnostics load_{};
     SceneryCensus census_;
     std::optional<std::chrono::system_clock::time_point> countedAt_;
     std::optional<std::chrono::system_clock::time_point> measuredAt_;
