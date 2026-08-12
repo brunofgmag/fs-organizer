@@ -1,4 +1,6 @@
 set(DOMAIN_SOURCES
+        src/domain/documents/ChartIndex.cpp
+        src/domain/documents/DocumentClassification.cpp
         src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ExternalSidecar.cpp
         src/domain/importing/ImportEngine.cpp
@@ -30,6 +32,7 @@ set(APPLICATION_SOURCES
         src/application/CoverageService.cpp
         src/application/DeletionService.cpp
         src/application/DependencyReport.cpp
+        src/application/DocumentService.cpp
         src/application/ImportService.cpp
         src/application/model/DeletionPlan.cpp
         src/application/LegacyConfigImporter.cpp
@@ -48,6 +51,7 @@ set(APPLICATION_SOURCES
 
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
+        src/infrastructure/catalog/JsonChartCatalogueParser.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp

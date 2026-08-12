@@ -122,6 +122,20 @@ fsorg_add_qt_test(fsorg-scenery-outside-the-scan-tests scenery-outside-the-scan
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-scenery-outside-the-scan-tests PRIVATE fsorg-infrastructure)
 
+fsorg_add_qt_test(fsorg-chart-index-tests chart-index
+        tests/domain/documents/tst_chart_index.cpp
+        tests/support/PathPrinting.h
+        src/domain/model/ChartCatalogue.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-chart-index-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-document-classification-tests document-classification
+        tests/domain/documents/tst_document_classification.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-document-classification-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-airport-coverage-tests airport-coverage
         tests/domain/scenery/tst_airport_coverage.cpp
         tests/support/EnumPrinting.h
@@ -222,6 +236,15 @@ fsorg_add_qt_test(fsorg-coverage-service-tests coverage-service
         tests/doubles/FakeProcessProbe.h
         tests/support/EnumPrinting.h)
 target_link_libraries(fsorg-coverage-service-tests PRIVATE fsorg-application)
+
+fsorg_add_qt_test(fsorg-document-service-tests document-service
+        tests/application/tst_document_service.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeChartCatalogueParser.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-document-service-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-scenery-service-tests scenery-service
         tests/application/tst_scenery_service.cpp
@@ -430,6 +453,11 @@ fsorg_add_qt_test(fsorg-session-tests session
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-session-tests PRIVATE fsorg-application)
+
+fsorg_add_qt_test(fsorg-json-chart-catalogue-parser-tests json-chart-catalogue-parser
+        tests/infrastructure/catalog/tst_json_chart_catalogue_parser.cpp
+        src/domain/model/ChartCatalogue.h)
+target_link_libraries(fsorg-json-chart-catalogue-parser-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-json-manifest-parser-tests json-manifest-parser
         tests/infrastructure/catalog/tst_json_manifest_parser.cpp)
@@ -890,6 +918,11 @@ if (WIN32)
             tests/support/PathPrinting.h
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-link-plan-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-documents-on-real-disk-tests documents-on-real-disk
+            tests/application/tst_documents_on_real_disk.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-documents-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-catalog-on-real-disk-tests catalog-on-real-disk
             tests/infrastructure/catalog/tst_catalog_on_real_disk.cpp
