@@ -1,10 +1,6 @@
 #include "view/PresetsPage.h"
 
 #include <QtCore/QEvent>
-#include <QtGui/QKeyEvent>
-#include <QtGui/QMouseEvent>
-#include <QtGui/QPainter>
-#include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFrame>
@@ -15,13 +11,12 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QStyle>
-#include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QVBoxLayout>
 
 #include <QtWidgets/QStackedWidget>
 
+#include "view/delegates/CenteredCheckDelegate.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/TableColumns.h"
 #include "view/panels/EmptyState.h"
@@ -42,71 +37,6 @@ namespace
     constexpr int kUpdatedColumn = 2;
     constexpr int kChangesColumn = 3;
     constexpr int kNameTableWidth = 440;
-
-    class CenteredCheckDelegate final : public QStyledItemDelegate
-    {
-    public:
-        using QStyledItemDelegate::QStyledItemDelegate;
-
-        void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override
-        {
-            QStyleOptionViewItem cell = option;
-            initStyleOption(&cell, index);
-
-            QStyle* style = cell.widget != nullptr ? cell.widget->style() : QApplication::style();
-
-            QStyleOptionViewItem background = cell;
-            background.features &= ~QStyleOptionViewItem::HasCheckIndicator;
-            style->drawControl(QStyle::CE_ItemViewItem, &background, painter, cell.widget);
-
-            QStyleOptionViewItem check = cell;
-            check.rect = style->subElementRect(QStyle::SE_ItemViewItemCheckIndicator, &cell, cell.widget);
-            check.rect.moveCenter(cell.rect.center());
-            check.state &= ~QStyle::State_HasFocus;
-            check.state |= cell.checkState == Qt::Checked ? QStyle::State_On : QStyle::State_Off;
-            style->drawPrimitive(QStyle::PE_IndicatorItemViewItemCheck, &check, painter, cell.widget);
-        }
-
-    protected:
-        bool editorEvent(QEvent* event,
-                         QAbstractItemModel* model,
-                         const QStyleOptionViewItem& option,
-                         const QModelIndex& index) override
-        {
-            if (!index.flags().testFlag(Qt::ItemIsUserCheckable) || !index.flags().testFlag(Qt::ItemIsEnabled))
-            {
-                return false;
-            }
-
-            if (event->type() == QEvent::MouseButtonRelease)
-            {
-                const auto* mouse = static_cast<QMouseEvent*>(event);
-
-                if (!option.rect.contains(mouse->position().toPoint()))
-                {
-                    return false;
-                }
-            }
-            else if (event->type() == QEvent::KeyPress)
-            {
-                const auto* keys = static_cast<QKeyEvent*>(event);
-
-                if (keys->key() != Qt::Key_Space && keys->key() != Qt::Key_Select)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-
-            const Qt::CheckState flipped =
-                index.data(Qt::CheckStateRole).value<Qt::CheckState>() == Qt::Checked ? Qt::Unchecked : Qt::Checked;
-
-            return model->setData(index, flipped, Qt::CheckStateRole);
-        }
-    };
 
     QString TheWayBackIsCalled()
     {

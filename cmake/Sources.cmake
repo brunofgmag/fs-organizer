@@ -127,6 +127,7 @@ set(VIEW_SOURCES
         src/view/library/LibraryRootDialog.cpp
         src/view/shell/LongOperationProgress.cpp
         src/view/options/OptionsPage.cpp
+        src/view/delegates/CenteredCheckDelegate.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/presets/OmittedDialog.cpp
