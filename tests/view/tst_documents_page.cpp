@@ -8,6 +8,7 @@
 #include <QtPdfWidgets/QPdfView>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
@@ -73,6 +74,7 @@ namespace
         static void ADerivedMarkIsNamedByItsPageAndANameTheUserGaveWins();
         static void ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark();
         static void TheMenuAnswersOnAMarkAndOnNothingElse();
+        static void TheSearchStepsForwardAndBackThroughWhatItFound();
         static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
         static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
@@ -727,6 +729,46 @@ void DocumentsPageTest::TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt()
     QVERIFY2(!menu->isVisible(),
              "the empty space under the last line carries no mark, and the menu of whichever line happened to be "
              "chosen is not the menu of that space");
+}
+
+void DocumentsPageTest::TheSearchStepsForwardAndBackThroughWhatItFound()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* found = reader.findChild<QLabel*>(QStringLiteral("PanelPromise"));
+    auto* back = reader.findChild<QPushButton*>(QStringLiteral("PreviousMatch"));
+    auto* forth = reader.findChild<QPushButton*>(QStringLiteral("NextMatch"));
+
+    QVERIFY(found != nullptr);
+    QVERIFY(back != nullptr);
+    QVERIFY(forth != nullptr);
+    QVERIFY2(!back->isEnabled(), "with nothing searched for there is nothing to step through");
+
+    reader.findChild<QLineEdit*>()->setText(QString::fromStdString(kOnEveryPage));
+
+    QTRY_COMPARE(found->text(), QStringLiteral("1 of 24"));
+    QVERIFY(forth->isEnabled());
+
+    forth->click();
+
+    QCOMPARE(found->text(), QStringLiteral("2 of 24"));
+
+    back->click();
+
+    QCOMPARE(found->text(), QStringLiteral("1 of 24"));
+
+    back->click();
+
+    QVERIFY2(found->text() == QStringLiteral("24 of 24"),
+             "the only way back was the wrap, because until now the one gesture the search had was the Enter key and "
+             "it only ever went forward");
 }
 
 void DocumentsPageTest::TheMenuAnswersOnAMarkAndOnNothingElse()

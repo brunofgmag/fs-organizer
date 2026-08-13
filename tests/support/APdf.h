@@ -71,10 +71,14 @@ struct ASectionOfAManual
     return APdfWhoseInfoSays("/Title(" + AsAUtf16Literal("CV-" + std::to_string(version)) + ")");
 }
 
+inline const std::string kOnEveryPage = "flight manual";
+
 [[nodiscard]] inline std::string AManualOf(const int pages, const std::vector<ASectionOfAManual>& sections)
 {
     const std::size_t firstPage = 4;
     const std::size_t firstSection = firstPage + static_cast<std::size_t>(pages);
+    const std::size_t theInk = firstSection + sections.size();
+    const std::size_t theFont = theInk + 1;
 
     std::string kids;
     for (int page = 0; page < pages; ++page)
@@ -103,7 +107,8 @@ struct ASectionOfAManual
 
     for (int page = 0; page < pages; ++page)
     {
-        objects.emplace_back("<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>");
+        objects.emplace_back("<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents " + std::to_string(theInk)
+                             + " 0 R/Resources<</Font<</F1 " + std::to_string(theFont) + " 0 R>>>>>>");
     }
 
     for (std::size_t which = 0; which < sections.size(); ++which)
@@ -126,6 +131,11 @@ struct ASectionOfAManual
 
         objects.push_back(item + ">>");
     }
+
+    const std::string drawn = "BT /F1 12 Tf 20 100 Td (" + kOnEveryPage + ") Tj ET";
+
+    objects.push_back("<</Length " + std::to_string(drawn.size()) + ">>\nstream\n" + drawn + "\nendstream");
+    objects.emplace_back("<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>");
 
     return APdfMadeOf(objects, {});
 }

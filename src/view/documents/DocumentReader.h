@@ -123,6 +123,8 @@ private:
     QLabel* found_ = nullptr;
     QLabel* position_ = nullptr;
     QPushButton* previous_ = nullptr;
+    QPushButton* previousResult_ = nullptr;
+    QPushButton* nextResult_ = nullptr;
     QPushButton* next_ = nullptr;
     QPushButton* fitWidth_ = nullptr;
     QPushButton* bookmark_ = nullptr;

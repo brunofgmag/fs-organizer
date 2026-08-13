@@ -33,7 +33,8 @@ namespace
 {
     constexpr int kOutlineWidth = 210;
     constexpr int kPageSpacing = 8;
-    constexpr int kSearchWidth = 240;
+    constexpr int kSearchWidth = 160;
+    constexpr int kStepWidth = 28;
     constexpr qreal kOneNotchCloser = 1.1;
     constexpr int kNotch = 120;
     constexpr int kTheOnlyColumn = 0;
@@ -43,6 +44,8 @@ namespace
     constexpr int kBookmarkRole = Qt::UserRole + 3;
 
     const QString kDisc = QString::fromUtf8("●");
+    const QString kBack = QString::fromUtf8("‹");
+    const QString kForth = QString::fromUtf8("›");
 
     [[nodiscard]] bool ItIsABookmark(const QTreeWidgetItem& item)
     {
@@ -273,6 +276,13 @@ void DocumentReader::Retranslate() const
     rename_->setText(tr("Rename this bookmark…"));
     forget_->setText(tr("Remove this bookmark"));
     wanted_->setPlaceholderText(tr("Search in this document"));
+    previousResult_->setToolTip(tr("Previous match"));
+    nextResult_->setToolTip(tr("Next match"));
+
+    const bool anythingToStepThrough = !wanted_->text().isEmpty() && search_->rowCount({}) > 0;
+
+    previousResult_->setEnabled(anythingToStepThrough);
+    nextResult_->setEnabled(anythingToStepThrough);
 
     if (wanted_->text().isEmpty())
     {
@@ -613,6 +623,15 @@ QLayout* DocumentReader::TheBar()
     wanted_->setMinimumWidth(kSearchWidth);
     found_ = new QLabel(this);
     found_->setObjectName(QStringLiteral("PanelPromise"));
+    previousResult_ = new QPushButton(kBack, this);
+    previousResult_->setObjectName(QStringLiteral("PreviousMatch"));
+    nextResult_ = new QPushButton(kForth, this);
+    nextResult_->setObjectName(QStringLiteral("NextMatch"));
+
+    for (QPushButton* step : {previousResult_, nextResult_})
+    {
+        step->setFixedWidth(kStepWidth);
+    }
     fitWidth_ = new QPushButton(this);
     bookmark_ = new QPushButton(this);
     bookmark_->setObjectName(QStringLiteral("BookmarkThePage"));
@@ -627,7 +646,8 @@ QLayout* DocumentReader::TheBar()
     detach_ = new QPushButton(this);
     openFolder_ = new QPushButton(this);
 
-    for (QPushButton* button : {previous_, next_, fitWidth_, bookmark_, detach_, openFolder_})
+    for (QPushButton* button :
+         {previous_, next_, previousResult_, nextResult_, fitWidth_, bookmark_, detach_, openFolder_})
     {
         button->setAutoDefault(false);
         button->setDefault(false);
@@ -642,6 +662,8 @@ QLayout* DocumentReader::TheBar()
     bar->addSpacing(12);
     bar->addWidget(wanted_, 1);
     bar->addWidget(found_);
+    bar->addWidget(previousResult_);
+    bar->addWidget(nextResult_);
     bar->addWidget(fitWidth_);
     bar->addWidget(bookmark_);
     bar->addWidget(detach_);
@@ -677,6 +699,16 @@ void DocumentReader::ConnectTheBar()
             });
     connect(wanted_, &QLineEdit::textChanged, this, &DocumentReader::SearchFor);
     connect(wanted_, &QLineEdit::returnPressed, this,
+            [this]
+            {
+                StepThroughTheResults(1);
+            });
+    connect(previousResult_, &QPushButton::clicked, this,
+            [this]
+            {
+                StepThroughTheResults(-1);
+            });
+    connect(nextResult_, &QPushButton::clicked, this,
             [this]
             {
                 StepThroughTheResults(1);
