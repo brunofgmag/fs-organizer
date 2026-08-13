@@ -14,6 +14,7 @@ class QAction;
 class QLabel;
 class QLayout;
 class QLineEdit;
+class QMenu;
 class QModelIndex;
 class QPdfBookmarkModel;
 class QPdfDocument;
@@ -102,6 +103,8 @@ private:
 
     void SayWhatTheMenuCanDo() const;
 
+    void OfferTheMenuAt(const QPoint& where);
+
     void RenameWhatIsChosen();
 
     void ForgetWhatIsChosen();
@@ -120,6 +123,10 @@ private:
     QLabel* found_ = nullptr;
     QLabel* position_ = nullptr;
     QPushButton* previous_ = nullptr;
+    QPushButton* previousResult_ = nullptr;
+    QPushButton* nextResult_ = nullptr;
+    QPushButton* closer_ = nullptr;
+    QPushButton* further_ = nullptr;
     QPushButton* next_ = nullptr;
     QPushButton* fitWidth_ = nullptr;
     QPushButton* bookmark_ = nullptr;
@@ -127,6 +134,7 @@ private:
     QPushButton* openFolder_ = nullptr;
     QLabel* caption_ = nullptr;
     QWidget* outlinePane_ = nullptr;
+    QMenu* menu_ = nullptr;
     QAction* rename_ = nullptr;
     QAction* forget_ = nullptr;
     std::vector<DocumentSection> sections_{};

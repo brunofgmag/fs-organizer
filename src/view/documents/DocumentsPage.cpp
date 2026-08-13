@@ -587,6 +587,7 @@ void DocumentsPage::DetachTheReading()
 
     readingSide_->removeWidget(reader_);
     alone->addWidget(reader_);
+    reader_->show();
 
     reader_->SayItIsDetached(true);
 

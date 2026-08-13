@@ -3,9 +3,14 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
 #include <QtGui/QAction>
+#include <QtGui/QContextMenuEvent>
 #include <QtGui/QWheelEvent>
 #include <QtPdfWidgets/QPdfView>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTreeWidget>
@@ -58,6 +63,7 @@ namespace
         static void TheBarSwapsTheListAndLeavesOpenWhatWasOpen();
         static void TheNameIsCutInTheMiddleBecauseWhatTellsTwoApartIsAtTheEnd();
         static void DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft();
+        static void TheDetachedWindowShowsTheReadingAndNotAnEmptyPane();
         static void TheAddonAsksForThePanelThatCarriesIt();
         static void TheIndexKeepsTheWidthTheFormWasMeasuredAt();
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
@@ -68,6 +74,9 @@ namespace
         static void ADerivedMarkIsNamedByItsPageAndANameTheUserGaveWins();
         static void ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark();
         static void TheMenuAnswersOnAMarkAndOnNothingElse();
+        static void TheSearchStepsForwardAndBackThroughWhatItFound();
+        static void TheLensesTakeTheReadingCloserAndFurtherAway();
+        static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
         static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
         static void AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt();
@@ -230,6 +239,13 @@ namespace
     void ClickAt(QTreeWidget& index, const QPoint& where)
     {
         QTest::mouseClick(index.viewport(), Qt::LeftButton, {}, where);
+    }
+
+    void RightClickAt(QTreeWidget& index, const QPoint& where)
+    {
+        QContextMenuEvent asked(QContextMenuEvent::Mouse, where, index.viewport()->mapToGlobal(where));
+
+        QApplication::sendEvent(index.viewport(), &asked);
     }
 
     [[nodiscard]] bool WhatTheMenuAsks(const QMessageBox::StandardButton answer, QAction& action)
@@ -395,6 +411,31 @@ void DocumentsPageTest::TheNameIsCutInTheMiddleBecauseWhatTellsTwoApartIsAtTheEn
 
     QCOMPARE(TheIndexOf(page, DocumentPanel::Documents)->textElideMode(), Qt::ElideMiddle);
     QCOMPARE(TheIndexOf(page, DocumentPanel::Charts)->textElideMode(), Qt::ElideMiddle);
+}
+
+void DocumentsPageTest::TheDetachedWindowShowsTheReadingAndNotAnEmptyPane()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+    page.show();
+    f.viewModel.ReadTheLibrary();
+
+    QTreeWidget* documents = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* crj = GroupNamed(*documents, QString::fromStdString(kCrj));
+    crj->setExpanded(true);
+    ClickAt(*documents, documents->visualItemRect(crj->child(0)).center());
+
+    page.DetachTheReading();
+
+    const QDialog* window = page.findChild<QDialog*>();
+    const DocumentReader* reading = page.findChild<DocumentReader*>();
+
+    QVERIFY(window != nullptr);
+    QVERIFY(reading != nullptr);
+    QCOMPARE(reading->parentWidget(), window);
+    QVERIFY2(reading->isVisible(),
+             "the stack hides whatever it removes, so a window that only reparents the reading opens on nothing");
 }
 
 void DocumentsPageTest::DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft()
@@ -651,6 +692,119 @@ void DocumentsPageTest::ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark(
     QCOMPARE(pane->topLevelItemCount(), 1);
     QCOMPARE(pane->topLevelItem(0)->text(0), QString::fromUtf8("● Page 41"));
     QCOMPARE(reader.findChild<QLabel*>(QStringLiteral("PanelSubHeading"))->text(), QStringLiteral("Bookmarks"));
+}
+
+void DocumentsPageTest::TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    reader.Read(manual, 13, DocumentKind::Document, {{.page = 13, .name = {}}});
+
+    QTreeWidget* pane = ThePaneOf(reader);
+    QTreeWidgetItem* hydraulics = SectionNamed(*pane, QStringLiteral("Hydraulics"));
+    hydraulics->setExpanded(true);
+
+    QMenu* menu = reader.findChild<QMenu*>();
+
+    QVERIFY(menu != nullptr);
+    QVERIFY(!menu->isVisible());
+
+    RightClickAt(*pane, pane->visualItemRect(hydraulics->child(0)).center());
+
+    QVERIFY2(menu->isVisible(), "the mark is what the two entries act on, so asking on the mark offers them");
+
+    menu->hide();
+    pane->setCurrentItem(hydraulics->child(0));
+
+    const QPoint below(pane->viewport()->width() / 2, pane->viewport()->height() - 4);
+
+    QVERIFY2(pane->itemAt(below) == nullptr, "the second point has to be empty for the check below to mean anything");
+
+    RightClickAt(*pane, below);
+
+    QVERIFY2(!menu->isVisible(),
+             "the empty space under the last line carries no mark, and the menu of whichever line happened to be "
+             "chosen is not the menu of that space");
+}
+
+void DocumentsPageTest::TheLensesTakeTheReadingCloserAndFurtherAway()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(4, {}));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* shown = reader.findChild<QPdfView*>();
+    auto* closer = reader.findChild<QPushButton*>(QStringLiteral("ZoomIn"));
+    auto* further = reader.findChild<QPushButton*>(QStringLiteral("ZoomOut"));
+
+    QVERIFY(shown != nullptr);
+    QVERIFY(closer != nullptr);
+    QVERIFY(further != nullptr);
+
+    const qreal fitted = shown->zoomFactor();
+
+    closer->click();
+
+    QCOMPARE(shown->zoomMode(), QPdfView::ZoomMode::Custom);
+    QVERIFY2(shown->zoomFactor() > fitted, "the lens carrying the plus takes the reading closer");
+
+    const qreal nearer = shown->zoomFactor();
+
+    further->click();
+
+    QVERIFY2(shown->zoomFactor() < nearer,
+             "and the one carrying the minus takes it back, which on a document no gesture could do, because the "
+             "wheel only zooms a chart");
+}
+
+void DocumentsPageTest::TheSearchStepsForwardAndBackThroughWhatItFound()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* found = reader.findChild<QLabel*>(QStringLiteral("PanelPromise"));
+    auto* back = reader.findChild<QPushButton*>(QStringLiteral("PreviousMatch"));
+    auto* forth = reader.findChild<QPushButton*>(QStringLiteral("NextMatch"));
+
+    QVERIFY(found != nullptr);
+    QVERIFY(back != nullptr);
+    QVERIFY(forth != nullptr);
+    QVERIFY2(!back->isEnabled(), "with nothing searched for there is nothing to step through");
+
+    reader.findChild<QLineEdit*>()->setText(QString::fromStdString(kOnEveryPage));
+
+    QTRY_COMPARE(found->text(), QStringLiteral("1 of 24"));
+    QVERIFY(forth->isEnabled());
+
+    forth->click();
+
+    QCOMPARE(found->text(), QStringLiteral("2 of 24"));
+
+    back->click();
+
+    QCOMPARE(found->text(), QStringLiteral("1 of 24"));
+
+    back->click();
+
+    QVERIFY2(found->text() == QStringLiteral("24 of 24"),
+             "the only way back was the wrap, because until now the one gesture the search had was the Enter key and "
+             "it only ever went forward");
 }
 
 void DocumentsPageTest::TheMenuAnswersOnAMarkAndOnNothingElse()
