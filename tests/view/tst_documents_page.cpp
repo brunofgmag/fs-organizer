@@ -16,6 +16,8 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QSplitter>
 
 #include <cstddef>
 #include <fstream>
@@ -68,6 +70,7 @@ namespace
         static void TheDetachedWindowShowsTheReadingAndNotAnEmptyPane();
         static void TheAddonAsksForThePanelThatCarriesIt();
         static void TheIndexKeepsTheWidthTheFormWasMeasuredAt();
+        static void TheIndexRunsToTheEdgeOfThePageLikeEveryOtherList();
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
         static void TheWheelZoomsAChartAndScrollsADocument();
         static void TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot();
@@ -495,6 +498,25 @@ void DocumentsPageTest::TheAddonAsksForThePanelThatCarriesIt()
 
     QVERIFY(TheIndexOf(page, DocumentPanel::Documents)->isVisible());
     QCOMPARE(TheIndexOf(page, DocumentPanel::Documents)->currentItem()->text(1), QString::fromStdString(kCrj));
+}
+
+void DocumentsPageTest::TheIndexRunsToTheEdgeOfThePageLikeEveryOtherList()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1450, 760);
+    page.show();
+    f.viewModel.ReadTheLibrary();
+
+    const QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    const QSplitter* split = page.findChild<QSplitter*>();
+
+    QVERIFY(index != nullptr);
+    QVERIFY(split != nullptr);
+    QCOMPARE(index->mapTo(&page, QPoint(0, 0)).x(), 0);
+    QCOMPARE(split->mapTo(&page, QPoint(0, split->height())).y(), page.height());
+    QVERIFY2(!index->header()->stretchLastSection(),
+             "the last column stretching is what keeps the count from reaching the scrollbar");
 }
 
 void DocumentsPageTest::TheIndexKeepsTheWidthTheFormWasMeasuredAt()

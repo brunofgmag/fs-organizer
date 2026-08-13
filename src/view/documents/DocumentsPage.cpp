@@ -117,15 +117,11 @@ DocumentsPage::DocumentsPage(DocumentsViewModel& viewModel, QWidget* parent) : Q
     body_->addWidget(split_);
     body_->addWidget(nothingIndexed_);
 
-    auto* body = new QHBoxLayout;
-    body->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    body->addWidget(body_);
-
     auto* column = new QVBoxLayout(this);
     column->setContentsMargins(0, 0, 0, 0);
     column->setSpacing(0);
     column->addWidget(TheBar());
-    column->addLayout(body, 1);
+    column->addWidget(body_, 1);
 
     ConnectTheBar();
     ConnectTheIndex();
@@ -184,6 +180,7 @@ QTreeWidget* DocumentsPage::AnIndex(const QString& named)
     index->header()->setSectionResizeMode(kGlyphColumn, QHeaderView::ResizeToContents);
     index->header()->setSectionResizeMode(kNameColumn, QHeaderView::Stretch);
     index->header()->setSectionResizeMode(kDetailColumn, QHeaderView::ResizeToContents);
+    index->header()->setStretchLastSection(false);
     index->viewport()->installEventFilter(this);
 
     return index;

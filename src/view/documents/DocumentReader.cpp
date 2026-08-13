@@ -131,7 +131,7 @@ DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
     pages->addWidget(view_, 1);
 
     auto* row = new QHBoxLayout(this);
-    row->setContentsMargins(kPageGutter, 0, 0, 0);
+    row->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     row->setSpacing(12);
     row->addLayout(pages, 1);
     row->addWidget(outlinePane_);
