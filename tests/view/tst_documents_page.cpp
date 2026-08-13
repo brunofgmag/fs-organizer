@@ -1,10 +1,14 @@
 #include <QtTest/QtTest>
 
+#include <QtCore/QTemporaryDir>
+#include <QtGui/QWheelEvent>
+#include <QtPdfWidgets/QPdfView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTreeWidget>
 
 #include <cstddef>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -29,8 +33,10 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/StartupOverFakes.h"
+#include "tests/support/APdf.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "view/documents/DocumentReader.h"
 #include "view/documents/DocumentsPage.h"
 #include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/SessionNotifier.h"
@@ -51,6 +57,7 @@ namespace
         static void TheAddonAsksForThePanelThatCarriesIt();
         static void TheIndexKeepsTheWidthTheFormWasMeasuredAt();
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
+        static void TheWheelZoomsAChartAndScrollsADocument();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -398,6 +405,45 @@ void DocumentsPageTest::TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds(
     f.runner.Finish();
 
     QVERIFY(!ItSaysItIsReading(page));
+}
+
+void DocumentsPageTest::TheWheelZoomsAChartAndScrollsADocument()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path chart = std::filesystem::path(folder.path().toStdWString()) / L"53117.pdf";
+
+    std::ofstream written(chart, std::ios::binary);
+    const std::string bytes = APdfWhoseInfoSays("/Title(CV-1)");
+    written.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+    written.close();
+
+    DocumentReader reader;
+    reader.resize(600, 400);
+    reader.show();
+
+    QPdfView* pages = reader.findChild<QPdfView*>();
+    QVERIFY(pages != nullptr);
+
+    const auto roll = [pages]
+    {
+        QWheelEvent turned(QPointF(100, 100), pages->viewport()->mapToGlobal(QPointF(100, 100)), {}, QPoint(0, 120),
+                           Qt::NoButton, {}, Qt::NoScrollPhase, false);
+
+        QCoreApplication::sendEvent(pages->viewport(), &turned);
+    };
+
+    reader.Read(chart, 0, DocumentKind::Document);
+    roll();
+
+    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::FitToWidth);
+
+    reader.Read(chart, 0, DocumentKind::Chart);
+    const qreal before = pages->zoomFactor();
+    roll();
+
+    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::Custom);
+    QVERIFY2(pages->zoomFactor() > before,
+             "a chart is read by getting closer to it, and the wheel is the gesture that does that");
 }
 
 QTEST_MAIN(DocumentsPageTest)

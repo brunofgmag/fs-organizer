@@ -1373,9 +1373,10 @@ fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/doubles/StartupOverFakes.h
+        tests/support/APdf.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h)
-target_link_libraries(fsorg-documents-page-tests PRIVATE fsorg-view)
+target_link_libraries(fsorg-documents-page-tests PRIVATE fsorg-view Qt6::PdfWidgets)
 configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
 
 fsorg_add_qt_test(fsorg-coverage-dialog-tests coverage-dialog
