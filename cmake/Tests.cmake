@@ -143,6 +143,10 @@ fsorg_add_qt_test(fsorg-chart-revisions-tests chart-revisions
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-chart-revisions-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-document-bookmarks-tests document-bookmarks
+        tests/domain/documents/tst_document_bookmarks.cpp)
+target_link_libraries(fsorg-document-bookmarks-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-document-classification-tests document-classification
         tests/domain/documents/tst_document_classification.cpp
         tests/support/EnumPrinting.h
