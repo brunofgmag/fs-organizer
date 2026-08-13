@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.37.0](https://github.com/brunofgmag/fs-organizer/compare/v0.36.0...v0.37.0) (2026-08-13)
+
+
+### Features
+
+* **documents:** bookmark a page and say which section the reading is in ([#103](https://github.com/brunofgmag/fs-organizer/issues/103)) ([2f89fb1](https://github.com/brunofgmag/fs-organizer/commit/2f89fb14c461f3bd292b2655811c7d673788af14))
+
 ## [0.36.0](https://github.com/brunofgmag/fs-organizer/compare/v0.35.0...v0.36.0) (2026-08-13)
 
 
