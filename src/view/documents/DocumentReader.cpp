@@ -33,8 +33,8 @@ namespace
 {
     constexpr int kOutlineWidth = 210;
     constexpr int kPageSpacing = 8;
-    constexpr int kSearchWidth = 160;
-    constexpr int kStepWidth = 28;
+    constexpr int kSearchWidth = 240;
+    constexpr int kStepWidth = 38;
     constexpr qreal kOneNotchCloser = 1.1;
     constexpr int kNotch = 120;
     constexpr int kTheOnlyColumn = 0;
@@ -46,6 +46,10 @@ namespace
     const QString kDisc = QString::fromUtf8("●");
     const QString kBack = QString::fromUtf8("‹");
     const QString kForth = QString::fromUtf8("›");
+    const QString kUp = QString::fromUtf8("↑");
+    const QString kDown = QString::fromUtf8("↓");
+    const QString kCloser = QString::fromUtf8("＋");
+    const QString kFurther = QString::fromUtf8("－");
 
     [[nodiscard]] bool ItIsABookmark(const QTreeWidgetItem& item)
     {
@@ -266,8 +270,10 @@ void DocumentReader::changeEvent(QEvent* event)
 
 void DocumentReader::Retranslate() const
 {
-    previous_->setText(tr("Previous page"));
-    next_->setText(tr("Next page"));
+    previous_->setToolTip(tr("Previous page"));
+    next_->setToolTip(tr("Next page"));
+    closer_->setToolTip(tr("Zoom in"));
+    further_->setToolTip(tr("Zoom out"));
     fitWidth_->setText(tr("Fit width"));
     bookmark_->setText(tr("Bookmark"));
     detach_->setText(detached_ ? tr("Bring it back") : tr("Detach"));
@@ -614,8 +620,8 @@ void DocumentReader::BuildTheOutlinePane()
 
 QLayout* DocumentReader::TheBar()
 {
-    previous_ = new QPushButton(this);
-    next_ = new QPushButton(this);
+    previous_ = new QPushButton(kBack, this);
+    next_ = new QPushButton(kForth, this);
     next_->setObjectName(QStringLiteral("NextPage"));
     position_ = new QLabel(this);
     wanted_ = new QLineEdit(this);
@@ -623,12 +629,16 @@ QLayout* DocumentReader::TheBar()
     wanted_->setMinimumWidth(kSearchWidth);
     found_ = new QLabel(this);
     found_->setObjectName(QStringLiteral("PanelPromise"));
-    previousResult_ = new QPushButton(kBack, this);
+    previousResult_ = new QPushButton(kUp, this);
     previousResult_->setObjectName(QStringLiteral("PreviousMatch"));
-    nextResult_ = new QPushButton(kForth, this);
+    nextResult_ = new QPushButton(kDown, this);
     nextResult_->setObjectName(QStringLiteral("NextMatch"));
+    closer_ = new QPushButton(kCloser, this);
+    closer_->setObjectName(QStringLiteral("ZoomIn"));
+    further_ = new QPushButton(kFurther, this);
+    further_->setObjectName(QStringLiteral("ZoomOut"));
 
-    for (QPushButton* step : {previousResult_, nextResult_})
+    for (QPushButton* step : {previous_, next_, previousResult_, nextResult_, closer_, further_})
     {
         step->setFixedWidth(kStepWidth);
     }
@@ -646,8 +656,8 @@ QLayout* DocumentReader::TheBar()
     detach_ = new QPushButton(this);
     openFolder_ = new QPushButton(this);
 
-    for (QPushButton* button :
-         {previous_, next_, previousResult_, nextResult_, fitWidth_, bookmark_, detach_, openFolder_})
+    for (QPushButton* button : {previous_, next_, previousResult_, nextResult_, closer_, further_, fitWidth_, bookmark_,
+                                detach_, openFolder_})
     {
         button->setAutoDefault(false);
         button->setDefault(false);
@@ -664,6 +674,9 @@ QLayout* DocumentReader::TheBar()
     bar->addWidget(found_);
     bar->addWidget(previousResult_);
     bar->addWidget(nextResult_);
+    bar->addSpacing(12);
+    bar->addWidget(further_);
+    bar->addWidget(closer_);
     bar->addWidget(fitWidth_);
     bar->addWidget(bookmark_);
     bar->addWidget(detach_);
@@ -712,6 +725,16 @@ void DocumentReader::ConnectTheBar()
             [this]
             {
                 StepThroughTheResults(1);
+            });
+    connect(closer_, &QPushButton::clicked, this,
+            [this]
+            {
+                ZoomBy(1);
+            });
+    connect(further_, &QPushButton::clicked, this,
+            [this]
+            {
+                ZoomBy(-1);
             });
 }
 

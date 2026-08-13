@@ -75,6 +75,7 @@ namespace
         static void ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark();
         static void TheMenuAnswersOnAMarkAndOnNothingElse();
         static void TheSearchStepsForwardAndBackThroughWhatItFound();
+        static void TheLensesTakeTheReadingCloserAndFurtherAway();
         static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
         static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
@@ -729,6 +730,41 @@ void DocumentsPageTest::TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt()
     QVERIFY2(!menu->isVisible(),
              "the empty space under the last line carries no mark, and the menu of whichever line happened to be "
              "chosen is not the menu of that space");
+}
+
+void DocumentsPageTest::TheLensesTakeTheReadingCloserAndFurtherAway()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(4, {}));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* shown = reader.findChild<QPdfView*>();
+    auto* closer = reader.findChild<QPushButton*>(QStringLiteral("ZoomIn"));
+    auto* further = reader.findChild<QPushButton*>(QStringLiteral("ZoomOut"));
+
+    QVERIFY(shown != nullptr);
+    QVERIFY(closer != nullptr);
+    QVERIFY(further != nullptr);
+
+    const qreal fitted = shown->zoomFactor();
+
+    closer->click();
+
+    QCOMPARE(shown->zoomMode(), QPdfView::ZoomMode::Custom);
+    QVERIFY2(shown->zoomFactor() > fitted, "the lens carrying the plus takes the reading closer");
+
+    const qreal nearer = shown->zoomFactor();
+
+    further->click();
+
+    QVERIFY2(shown->zoomFactor() < nearer,
+             "and the one carrying the minus takes it back, which on a document no gesture could do, because the "
+             "wheel only zooms a chart");
 }
 
 void DocumentsPageTest::TheSearchStepsForwardAndBackThroughWhatItFound()

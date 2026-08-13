@@ -125,6 +125,8 @@ private:
     QPushButton* previous_ = nullptr;
     QPushButton* previousResult_ = nullptr;
     QPushButton* nextResult_ = nullptr;
+    QPushButton* closer_ = nullptr;
+    QPushButton* further_ = nullptr;
     QPushButton* next_ = nullptr;
     QPushButton* fitWidth_ = nullptr;
     QPushButton* bookmark_ = nullptr;
