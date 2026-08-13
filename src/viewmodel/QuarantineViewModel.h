@@ -48,6 +48,8 @@ signals:
     void Discarded(const std::vector<FileOperationResult>& results);
 
 private:
+    [[nodiscard]] std::vector<QuarantinedItem> ListWhatIsHeld();
+
     void Describe(const std::vector<QuarantinedItem>& items);
 
     void Weigh(const std::vector<QuarantinedItem>& items);

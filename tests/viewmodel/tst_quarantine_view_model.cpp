@@ -32,7 +32,7 @@ namespace
         static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
         static void TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards();
         static void AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain();
-        static void NothingIsReadFromTheQuarantineUntilTheScreenIsShown();
+        static void TheQuarantineIsCountedWhenTheScanLandsAndOnlyWeighedWhenTheScreenIsShown();
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
         static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
@@ -193,13 +193,21 @@ void QuarantineViewModelTest::AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain()
     QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
 }
 
-void QuarantineViewModelTest::NothingIsReadFromTheQuarantineUntilTheScreenIsShown()
+void QuarantineViewModelTest::TheQuarantineIsCountedWhenTheScanLandsAndOnlyWeighedWhenTheScreenIsShown()
 {
     Fixture f;
     f.ScanLands();
 
-    QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{0});
-    QVERIFY(!f.filesystemProbe.WasEnumerated("E:/Sim/_fsorganizer-quarantine"));
+    QVERIFY2(f.model.rowCount({}) > 0,
+             "the tab carries its number from the moment the scan lands, like the Library and the Destinations do");
+    QVERIFY(f.filesystemProbe.WasEnumerated("E:/Sim/_fsorganizer-quarantine"));
+    QVERIFY2(f.filesystemProbe.TimesWalked(kQuarantined) == std::size_t{0},
+             "listing what is held is one directory read, and the recursive walk that weighs it is the price the "
+             "count must not pay");
+
+    f.viewModel.Show();
+
+    QCOMPARE(f.filesystemProbe.TimesWalked(kQuarantined), std::size_t{1});
 }
 
 namespace
