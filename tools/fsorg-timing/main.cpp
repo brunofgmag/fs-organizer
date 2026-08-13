@@ -56,7 +56,7 @@
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
-#include "viewmodel/DocumentsViewModel.h"
+#include "viewmodel/AddonDocumentsViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -243,10 +243,10 @@ int main(int argc, char* argv[])
         const JsonChartCatalogueParser catalogueParser;
         const QtPdfChartVersions chartVersions;
         const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
-        DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner);
+        AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
 
         auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
-                                           documentsViewModel, treeModel, notifier);
+                                           addonDocumentsViewModel, treeModel, notifier);
 
         CommunityModel communityModel;
         CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);

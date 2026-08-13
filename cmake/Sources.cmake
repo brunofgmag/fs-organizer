@@ -55,6 +55,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonChartCatalogueParser.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
+        src/infrastructure/documents/JsonDocumentIndexCache.cpp
         src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
@@ -99,6 +100,7 @@ set(PDF_INFRASTRUCTURE_SOURCES
 )
 
 set(VIEWMODEL_SOURCES
+        src/viewmodel/AddonDocumentsViewModel.cpp
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
@@ -136,7 +138,7 @@ set(VIEW_SOURCES
         src/view/library/DeleteDialog.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
         src/view/documents/DocumentReader.cpp
-        src/view/documents/DocumentsWindow.cpp
+        src/view/documents/DocumentsPage.cpp
         src/view/diagnostics/LoadPanel.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp

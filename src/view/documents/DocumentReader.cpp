@@ -1,6 +1,8 @@
 #include "view/documents/DocumentReader.h"
 
 #include <QtCore/QEvent>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QWheelEvent>
 #include <QtPdf/QPdfBookmarkModel>
 #include <QtPdf/QPdfDocument>
 #include <QtPdf/QPdfLink>
@@ -11,6 +13,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QVBoxLayout>
 
@@ -22,6 +25,8 @@ namespace
     constexpr int kOutlineWidth = 210;
     constexpr int kPageSpacing = 8;
     constexpr int kSearchWidth = 240;
+    constexpr qreal kOneNotchCloser = 1.1;
+    constexpr int kNotch = 120;
 }
 
 DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
@@ -45,10 +50,14 @@ DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
 
     BuildTheOutlinePane();
 
+    caption_ = new QLabel(this);
+    caption_->setObjectName(QStringLiteral("ReadingCaption"));
+
     auto* pages = new QVBoxLayout;
     pages->setContentsMargins(0, 0, 0, 0);
     pages->setSpacing(8);
     pages->addLayout(TheBar());
+    pages->addWidget(caption_);
     pages->addWidget(view_, 1);
 
     auto* row = new QHBoxLayout(this);
@@ -59,19 +68,101 @@ DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
 
     ConnectTheParts();
 
+    view_->viewport()->installEventFilter(this);
+
     Retranslate();
     ShowTheOutlineOnlyWhenThereIsOne();
 }
 
-void DocumentReader::Read(const std::filesystem::path& document, const int page)
+void DocumentReader::Read(const std::filesystem::path& document, const int page, const DocumentKind kind)
 {
+    kind_ = kind;
     wanted_->clear();
+    view_->viewport()->setCursor(kind == DocumentKind::Chart ? Qt::OpenHandCursor : Qt::ArrowCursor);
     document_->load(AsText(document));
 
     view_->pageNavigator()->jump(page, {});
 
     ShowTheOutlineOnlyWhenThereIsOne();
     SayWhereTheReadingIs();
+}
+
+void DocumentReader::SayItIsShowing(const QString& caption)
+{
+    caption_->setText(caption);
+}
+
+void DocumentReader::SayItIsDetached(const bool detached)
+{
+    detached_ = detached;
+
+    Retranslate();
+}
+
+void DocumentReader::ZoomBy(const int notches)
+{
+    fitWidth_->setChecked(false);
+
+    const qreal closer = notches > 0 ? kOneNotchCloser : 1 / kOneNotchCloser;
+
+    view_->setZoomMode(QPdfView::ZoomMode::Custom);
+    view_->setZoomFactor(view_->zoomFactor() * closer);
+}
+
+bool DocumentReader::TheChartAnswersThe(QEvent* event)
+{
+    if (event->type() == QEvent::Wheel)
+    {
+        ZoomBy(static_cast<QWheelEvent*>(event)->angleDelta().y());
+
+        return true;
+    }
+
+    if (event->type() == QEvent::MouseButtonPress)
+    {
+        grabbing_ = true;
+        grabbedAt_ = static_cast<QMouseEvent*>(event)->pos();
+        view_->viewport()->setCursor(Qt::ClosedHandCursor);
+
+        return true;
+    }
+
+    if (event->type() == QEvent::MouseButtonRelease)
+    {
+        grabbing_ = false;
+        view_->viewport()->setCursor(Qt::OpenHandCursor);
+
+        return true;
+    }
+
+    if (event->type() != QEvent::MouseMove || !grabbing_)
+    {
+        return false;
+    }
+
+    const QPoint now = static_cast<QMouseEvent*>(event)->pos();
+    const QPoint dragged = now - grabbedAt_;
+    grabbedAt_ = now;
+
+    view_->horizontalScrollBar()->setValue(view_->horizontalScrollBar()->value() - dragged.x());
+    view_->verticalScrollBar()->setValue(view_->verticalScrollBar()->value() - dragged.y());
+
+    return true;
+}
+
+bool DocumentReader::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched != view_->viewport() || kind_ != DocumentKind::Chart)
+    {
+        return QWidget::eventFilter(watched, event);
+    }
+
+    if (TheChartAnswersThe(event))
+    {
+        return true;
+    }
+
+    return QWidget::eventFilter(watched, event);
 }
 
 void DocumentReader::changeEvent(QEvent* event)
@@ -90,6 +181,7 @@ void DocumentReader::Retranslate() const
     previous_->setText(tr("Previous page"));
     next_->setText(tr("Next page"));
     fitWidth_->setText(tr("Fit width"));
+    detach_->setText(detached_ ? tr("Bring it back") : tr("Detach"));
     openFolder_->setText(tr("Open folder"));
     outlineHeading_->setText(tr("Outline"));
     wanted_->setPlaceholderText(tr("Search in this document"));
@@ -190,9 +282,10 @@ QLayout* DocumentReader::TheBar()
     fitWidth_ = new QPushButton(this);
     fitWidth_->setCheckable(true);
     fitWidth_->setChecked(true);
+    detach_ = new QPushButton(this);
     openFolder_ = new QPushButton(this);
 
-    for (QPushButton* button : {previous_, next_, fitWidth_, openFolder_})
+    for (QPushButton* button : {previous_, next_, fitWidth_, detach_, openFolder_})
     {
         button->setAutoDefault(false);
         button->setDefault(false);
@@ -208,6 +301,7 @@ QLayout* DocumentReader::TheBar()
     bar->addWidget(wanted_, 1);
     bar->addWidget(found_);
     bar->addWidget(fitWidth_);
+    bar->addWidget(detach_);
     bar->addWidget(openFolder_);
 
     return bar;
@@ -226,6 +320,7 @@ void DocumentReader::ConnectTheParts()
                 view_->pageNavigator()->jump(view_->pageNavigator()->currentPage() + 1, {});
             });
     connect(openFolder_, &QPushButton::clicked, this, &DocumentReader::TheFolderWasAskedFor);
+    connect(detach_, &QPushButton::clicked, this, &DocumentReader::TheDetachWasAskedFor);
     connect(fitWidth_, &QPushButton::toggled, this,
             [this](const bool fit)
             {
@@ -251,7 +346,7 @@ void DocumentReader::ConnectTheParts()
 
                 emit ThePageChanged(page);
             });
-    connect(outlineView_, &QTreeView::activated, this,
+    connect(outlineView_, &QTreeView::clicked, this,
             [this](const QModelIndex& entry)
             {
                 view_->pageNavigator()->jump(entry.data(static_cast<int>(QPdfBookmarkModel::Role::Page)).toInt(),

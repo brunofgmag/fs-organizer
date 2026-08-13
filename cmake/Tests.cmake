@@ -713,6 +713,30 @@ fsorg_add_qt_test(fsorg-community-view-model-tests community-view-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-documents-view-model-tests documents-view-model
+        tests/viewmodel/tst_documents_view_model.cpp
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeChartCatalogueParser.h
+        tests/doubles/FakeChartVersions.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeDocumentIndexCache.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSceneryCache.h
+        tests/doubles/FakeSceneryParser.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSidecarStore.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-documents-view-model-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-diagnostics-view-model-tests diagnostics-view-model
         tests/viewmodel/tst_diagnostics_view_model.cpp
         tests/doubles/StartupOverFakes.h
@@ -940,6 +964,12 @@ if (WIN32)
             ${PDF_INFRASTRUCTURE_SOURCES}
             src/support/PathText.h)
     target_link_libraries(fsorg-chart-versions-on-real-disk-tests PRIVATE fsorg-domain Qt6::Pdf)
+
+    fsorg_add_qt_test(fsorg-document-index-cache-on-real-disk-tests document-index-cache-on-real-disk
+            tests/infrastructure/documents/tst_document_index_cache_on_real_disk.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-document-index-cache-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-documents-on-real-disk-tests documents-on-real-disk
             tests/application/tst_documents_on_real_disk.cpp
@@ -1321,6 +1351,32 @@ fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-addon-tree-page-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
+
+fsorg_add_qt_test(fsorg-documents-page-tests documents-page
+        tests/view/tst_documents_page.cpp
+        assets/resources.qrc
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeChartCatalogueParser.h
+        tests/doubles/FakeChartVersions.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeDocumentIndexCache.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSceneryCache.h
+        tests/doubles/FakeSceneryParser.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSidecarStore.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-documents-page-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
 
 fsorg_add_qt_test(fsorg-coverage-dialog-tests coverage-dialog
         tests/view/tst_coverage_dialog.cpp

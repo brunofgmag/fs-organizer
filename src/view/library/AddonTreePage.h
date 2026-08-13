@@ -12,12 +12,11 @@
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
-#include "viewmodel/DocumentsViewModel.h"
+#include "viewmodel/AddonDocumentsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 
 class ContextPanel;
-class DocumentsWindow;
 class DependencySection;
 class EmptyState;
 class QCheckBox;
@@ -37,7 +36,7 @@ public:
                   DeletionViewModel& deletion,
                   ImportViewModel& importViewModel,
                   CoverageViewModel& coverage,
-                  DocumentsViewModel& documents,
+                  AddonDocumentsViewModel& documents,
                   AddonTreeModel& model,
                   const SessionNotifier& notifier,
                   QWidget* parent = nullptr);
@@ -52,6 +51,8 @@ signals:
     void MeterChanged(int filled, int outOf);
 
     void ConflictChosen(const CopyConflict& conflict);
+
+    void DocumentationRequested(const std::string& addon);
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -80,8 +81,6 @@ private:
     void MoveTheSelectedAddon();
 
     void OpenTheSelectedFolder() const;
-
-    void ReadTheDocumentationOfTheSelection();
 
     void ShowWhatTheDocumentationHolds() const;
 
@@ -158,7 +157,7 @@ private:
     DeletionViewModel& deletion_;
     ImportViewModel& importViewModel_;
     CoverageViewModel& coverage_;
-    DocumentsViewModel& documents_;
+    AddonDocumentsViewModel& documents_;
     AddonTreeModel& model_;
     QStackedWidget* pages_ = nullptr;
     QTreeView* tree_ = nullptr;
@@ -170,7 +169,6 @@ private:
     QPushButton* openFolder_ = nullptr;
     QPushButton* delete_ = nullptr;
     QPushButton* documentation_ = nullptr;
-    DocumentsWindow* reader_ = nullptr;
     AddonTreeFilterModel* filter_ = nullptr;
     QPushButton* undo_ = nullptr;
     QPushButton* enable_ = nullptr;

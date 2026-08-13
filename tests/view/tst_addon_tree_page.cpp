@@ -204,7 +204,7 @@ namespace
         FakeChartCatalogueParser catalogueParser;
         FakeChartVersions chartVersions;
         DocumentService documentService{catalog, filesystemProbe, catalogueParser, chartVersions};
-        DocumentsViewModel documents{documentService, sceneryService, session, runner};
+        AddonDocumentsViewModel documents{documentService, sceneryService, session, runner};
     };
 
     const TreeNode* NodeUnder(const QTreeView& tree, const QModelIndex& position)
