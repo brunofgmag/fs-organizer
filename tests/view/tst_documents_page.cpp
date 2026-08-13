@@ -1,14 +1,18 @@
 #include <QtTest/QtTest>
 
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QTimer>
+#include <QtGui/QAction>
 #include <QtGui/QWheelEvent>
 #include <QtPdfWidgets/QPdfView>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTreeWidget>
 
 #include <cstddef>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -58,6 +62,15 @@ namespace
         static void TheIndexKeepsTheWidthTheFormWasMeasuredAt();
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
         static void TheWheelZoomsAChartAndScrollsADocument();
+        static void ThePaneMarksTheSectionThatHoldsThePageTheReadingIsOn();
+        static void AMarkHangsUnderItsSectionOnABranchBornOpenAndLightsTheButton();
+        static void TheButtonSaysWhichPageIsBeingMarkedAndWhichWayItWent();
+        static void ADerivedMarkIsNamedByItsPageAndANameTheUserGaveWins();
+        static void ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark();
+        static void TheMenuAnswersOnAMarkAndOnNothingElse();
+        static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
+        static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
+        static void AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -217,6 +230,68 @@ namespace
     void ClickAt(QTreeWidget& index, const QPoint& where)
     {
         QTest::mouseClick(index.viewport(), Qt::LeftButton, {}, where);
+    }
+
+    [[nodiscard]] bool WhatTheMenuAsks(const QMessageBox::StandardButton answer, QAction& action)
+    {
+        bool asked = false;
+
+        QTimer::singleShot(0,
+                           [&asked, answer]
+                           {
+                               auto* question = qobject_cast<QMessageBox*>(QApplication::activeModalWidget());
+
+                               if (question == nullptr)
+                               {
+                                   return;
+                               }
+
+                               asked = true;
+                               question->button(answer)->click();
+                           });
+
+        action.trigger();
+
+        return asked;
+    }
+
+    const std::vector<ASectionOfAManual> kChapters = {{.title = "Introduction", .page = 0},
+                                                      {.title = "Systems", .page = 10},
+                                                      {.title = "Hydraulics", .page = 12},
+                                                      {.title = "Limitations", .page = 20}};
+
+    [[nodiscard]] std::filesystem::path
+    WrittenInto(const QTemporaryDir& folder, const std::wstring& named, const std::string& bytes)
+    {
+        const std::filesystem::path file = std::filesystem::path(folder.path().toStdWString()) / named;
+
+        std::ofstream written(file, std::ios::binary);
+        written.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+
+        return file;
+    }
+
+    [[nodiscard]] QTreeWidget* ThePaneOf(const DocumentReader& reader)
+    {
+        return reader.findChild<QTreeWidget*>(QStringLiteral("ReadingOutline"));
+    }
+
+    [[nodiscard]] QPushButton* TheMarkButtonOf(const DocumentReader& reader)
+    {
+        return reader.findChild<QPushButton*>(QStringLiteral("BookmarkThePage"));
+    }
+
+    [[nodiscard]] QTreeWidgetItem* SectionNamed(const QTreeWidget& pane, const QString& name)
+    {
+        for (int top = 0; top < pane.topLevelItemCount(); ++top)
+        {
+            if (pane.topLevelItem(top)->text(0) == name)
+            {
+                return pane.topLevelItem(top);
+            }
+        }
+
+        return nullptr;
     }
 }
 
@@ -432,18 +507,253 @@ void DocumentsPageTest::TheWheelZoomsAChartAndScrollsADocument()
         QCoreApplication::sendEvent(pages->viewport(), &turned);
     };
 
-    reader.Read(chart, 0, DocumentKind::Document);
+    reader.Read(chart, 0, DocumentKind::Document, {});
     roll();
 
     QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::FitToWidth);
 
-    reader.Read(chart, 0, DocumentKind::Chart);
+    reader.Read(chart, 0, DocumentKind::Chart, {});
     const qreal before = pages->zoomFactor();
     roll();
 
     QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::Custom);
     QVERIFY2(pages->zoomFactor() > before,
              "a chart is read by getting closer to it, and the wheel is the gesture that does that");
+}
+
+void DocumentsPageTest::ThePaneMarksTheSectionThatHoldsThePageTheReadingIsOn()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+
+    reader.Read(manual, 13, DocumentKind::Document, {});
+
+    QTreeWidget* pane = ThePaneOf(reader);
+
+    QVERIFY(pane != nullptr);
+    QCOMPARE(pane->topLevelItemCount(), 4);
+    QVERIFY2(SectionNamed(*pane, QStringLiteral("Hydraulics"))->font(0).bold(),
+             "the reading is on page 14 of a manual whose Hydraulics starts on 13, and the panel is what says so "
+             "without the reader counting pages");
+    QVERIFY2(!SectionNamed(*pane, QStringLiteral("Systems"))->font(0).bold(), "only one section holds the page");
+    QVERIFY2(pane->currentItem() == nullptr,
+             "where the reading is and what the context menu will act on are two things, and giving both to the "
+             "selection makes each one destroy the other");
+}
+
+void DocumentsPageTest::AMarkHangsUnderItsSectionOnABranchBornOpenAndLightsTheButton()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+
+    reader.Read(manual, 13, DocumentKind::Document, {});
+
+    QVERIFY(!TheMarkButtonOf(reader)->isChecked());
+
+    reader.ShowTheBookmarks({{.page = 13, .name = {}}});
+
+    QTreeWidgetItem* hydraulics = SectionNamed(*ThePaneOf(reader), QStringLiteral("Hydraulics"));
+
+    QVERIFY(hydraulics != nullptr);
+    QCOMPARE(hydraulics->childCount(), 1);
+    QVERIFY2(hydraulics->child(0)->text(0) == QString::fromUtf8("● Page 14"),
+             "the disc is what tells a mark from the star of the index, and the page is what tells it from the "
+             "heading it hangs under");
+    QVERIFY2(hydraulics->isExpanded(), "a mark inside a closed chapter is a mark nobody finds");
+    QVERIFY(TheMarkButtonOf(reader)->isChecked());
+    QVERIFY2(TheMarkButtonOf(reader)->property("toggle").toString() == QStringLiteral("true"),
+             "a checkable button carries no look of its own in this theme, and this property is what the stylesheet "
+             "rule for a toggle keys on");
+}
+
+void DocumentsPageTest::TheButtonSaysWhichPageIsBeingMarkedAndWhichWayItWent()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+
+    reader.Read(manual, 13, DocumentKind::Document, {});
+
+    QSignalSpy turned(&reader, &DocumentReader::TheMarkOfThePageWasTurned);
+
+    QTest::mouseClick(TheMarkButtonOf(reader), Qt::LeftButton);
+
+    QCOMPARE(turned.count(), 1);
+    QCOMPARE(turned.front().at(0).toInt(), 13);
+    QVERIFY(turned.front().at(1).toBool());
+
+    reader.ShowTheBookmarks({{.page = 13, .name = {}}});
+
+    QVERIFY2(TheMarkButtonOf(reader)->isChecked(),
+             "the page it lands back on carries the mark that was just made, so the button stays lit without the "
+             "press being what lit it");
+
+    QTest::mouseClick(TheMarkButtonOf(reader), Qt::LeftButton);
+
+    QCOMPARE(turned.count(), 2);
+    QVERIFY2(!turned.back().at(1).toBool(), "the button toggles, so the second press on a marked page takes it away");
+
+    reader.ShowTheBookmarks({});
+
+    QVERIFY(!TheMarkButtonOf(reader)->isChecked());
+}
+
+void DocumentsPageTest::ADerivedMarkIsNamedByItsPageAndANameTheUserGaveWins()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+
+    reader.Read(manual, 13, DocumentKind::Document,
+                {{.page = 14, .name = {}}, {.page = 13, .name = "Where I stopped"}});
+
+    QTreeWidgetItem* hydraulics = SectionNamed(*ThePaneOf(reader), QStringLiteral("Hydraulics"));
+
+    QVERIFY(hydraulics != nullptr);
+    QCOMPARE(hydraulics->childCount(), 2);
+    QVERIFY2(hydraulics->child(0)->text(0) == QString::fromUtf8("● Where I stopped"),
+             "a name the user gave is the one thing here that is written down, so it wins over anything derived");
+    QVERIFY2(hydraulics->child(1)->text(0) == QString::fromUtf8("● Page 15"),
+             "the nesting already says which section holds the mark, so the name carries the one fact it does not, "
+             "and the page is unique because two marks never share one");
+}
+
+void DocumentsPageTest::ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path volume = WrittenInto(folder, L"vol1.pdf", AManualOf(59, {}));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+
+    reader.Read(volume, 40, DocumentKind::Document, {});
+
+    QTreeWidget* pane = ThePaneOf(reader);
+
+    QVERIFY2(!pane->parentWidget()->isVisibleTo(&reader),
+             "with neither outline nor mark the panel says nothing, and the page is what the reader is for");
+
+    reader.ShowTheBookmarks({{.page = 40, .name = {}}});
+
+    QVERIFY2(pane->parentWidget()->isVisibleTo(&reader),
+             "13 of the 26 long documents of the library carry no outline, and this is the only place a mark can "
+             "live in them");
+    QCOMPARE(pane->topLevelItemCount(), 1);
+    QCOMPARE(pane->topLevelItem(0)->text(0), QString::fromUtf8("● Page 41"));
+    QCOMPARE(reader.findChild<QLabel*>(QStringLiteral("PanelSubHeading"))->text(), QStringLiteral("Bookmarks"));
+}
+
+void DocumentsPageTest::TheMenuAnswersOnAMarkAndOnNothingElse()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+
+    reader.Read(manual, 13, DocumentKind::Document, {{.page = 13, .name = {}}});
+
+    QTreeWidget* pane = ThePaneOf(reader);
+    QTreeWidgetItem* hydraulics = SectionNamed(*pane, QStringLiteral("Hydraulics"));
+
+    pane->setCurrentItem(hydraulics);
+
+    QVERIFY2(!pane->actions().front()->isEnabled(),
+             "renaming the line of a section would be renaming the section, which is what the ADR refused when it "
+             "chose a mark over a star");
+
+    pane->setCurrentItem(hydraulics->child(0));
+
+    QSignalSpy turned(&reader, &DocumentReader::TheMarkOfThePageWasTurned);
+
+    QVERIFY(pane->actions().front()->isEnabled());
+
+    const bool wentThroughTheQuestion = WhatTheMenuAsks(QMessageBox::Yes, *pane->actions().back());
+
+    QVERIFY2(wentThroughTheQuestion,
+             "removing is the one action here with no way back, and the app asks before every other one that "
+             "destroys something");
+    QCOMPARE(turned.count(), 1);
+    QCOMPARE(turned.front().at(0).toInt(), 13);
+    QVERIFY(!turned.front().at(1).toBool());
+}
+
+void DocumentsPageTest::TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+    f.viewModel.ReadTheLibrary();
+
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* crj = GroupNamed(*index, QString::fromStdString(kCrj));
+    crj->setExpanded(true);
+
+    const QRect name = index->visualItemRect(crj->child(0));
+    ClickAt(*index, QPoint(name.center().x(), name.center().y()));
+
+    auto* reader = page.findChild<DocumentReader*>();
+
+    QVERIFY(reader != nullptr);
+
+    emit reader->TheMarkOfThePageWasTurned(12, true);
+
+    QCOMPARE(f.settings.stored.documents.size(), std::size_t{1});
+    QCOMPARE(f.settings.stored.documents.front().bookmarks.size(), std::size_t{1});
+    QCOMPARE(f.settings.stored.documents.front().bookmarks.front().page, 12);
+
+    emit reader->TheBookmarkWasNamed(12, QStringLiteral("Where I stopped"));
+
+    QCOMPARE(f.settings.stored.documents.front().bookmarks.front().name, std::string{"Where I stopped"});
+}
+
+void DocumentsPageTest::SayingNoToTheQuestionLeavesTheMarkWhereItIs()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.Read(manual, 13, DocumentKind::Document, {{.page = 13, .name = "Where I stopped"}});
+
+    QTreeWidget* pane = ThePaneOf(reader);
+    pane->setCurrentItem(SectionNamed(*pane, QStringLiteral("Hydraulics"))->child(0));
+
+    const QSignalSpy turned(&reader, &DocumentReader::TheMarkOfThePageWasTurned);
+
+    QVERIFY(WhatTheMenuAsks(QMessageBox::No, *pane->actions().back()));
+    QVERIFY2(turned.isEmpty(), "a question nobody can answer no to is not a question");
+}
+
+void DocumentsPageTest::AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    auto reader = std::make_unique<DocumentReader>();
+    reader->resize(900, 600);
+    reader->Read(manual, 13, DocumentKind::Document, {{.page = 13, .name = {}}});
+
+    QVERIFY(TheMarkButtonOf(*reader)->isChecked());
+
+    const QSignalSpy turned(reader.get(), &DocumentReader::ThePageChanged);
+    const qsizetype beforeItWent = turned.count();
+
+    reader.reset();
+
+    QVERIFY2(turned.count() == beforeItWent,
+             "the view walks the pages back on its way out, and answering it there both writes a page nobody read "
+             "and lands on the parentless findChildren of QAbstractButton::setChecked");
 }
 
 QTEST_MAIN(DocumentsPageTest)

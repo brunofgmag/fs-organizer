@@ -1,6 +1,8 @@
 #include "view/documents/DocumentReader.h"
 
 #include <QtCore/QEvent>
+#include <QtGui/QAction>
+#include <QtGui/QFont>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QWheelEvent>
 #include <QtPdf/QPdfBookmarkModel>
@@ -10,12 +12,18 @@
 #include <QtPdf/QPdfSearchModel>
 #include <QtPdfWidgets/QPdfView>
 #include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMessageBox>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollBar>
-#include <QtWidgets/QTreeView>
+#include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
+
+#include <algorithm>
+#include <cstddef>
+#include <optional>
 
 #include "support/PathText.h"
 #include "view/theme/ModernistMetrics.h"
@@ -27,6 +35,57 @@ namespace
     constexpr int kSearchWidth = 240;
     constexpr qreal kOneNotchCloser = 1.1;
     constexpr int kNotch = 120;
+    constexpr int kTheOnlyColumn = 0;
+    constexpr int kPageRole = Qt::UserRole;
+    constexpr int kLocationRole = Qt::UserRole + 1;
+    constexpr int kZoomRole = Qt::UserRole + 2;
+    constexpr int kBookmarkRole = Qt::UserRole + 3;
+
+    const QString kDisc = QString::fromUtf8("●");
+
+    [[nodiscard]] bool ItIsABookmark(const QTreeWidgetItem& item)
+    {
+        return item.data(kTheOnlyColumn, kBookmarkRole).toBool();
+    }
+
+    [[nodiscard]] int PageOf(const QTreeWidgetItem& item)
+    {
+        return item.data(kTheOnlyColumn, kPageRole).toInt();
+    }
+
+    [[nodiscard]] int WhereThePageFitsUnder(const QTreeWidgetItem& under, const int page)
+    {
+        for (int within = 0; within < under.childCount(); ++within)
+        {
+            if (PageOf(*under.child(within)) > page)
+            {
+                return within;
+            }
+        }
+
+        return under.childCount();
+    }
+
+    [[nodiscard]] int WhereThePageFitsAtTheRootOf(const QTreeWidget& pane, const int page)
+    {
+        for (int top = 0; top < pane.topLevelItemCount(); ++top)
+        {
+            if (PageOf(*pane.topLevelItem(top)) > page)
+            {
+                return top;
+            }
+        }
+
+        return pane.topLevelItemCount();
+    }
+
+    void OpenTheBranchOf(const QTreeWidgetItem& item)
+    {
+        for (QTreeWidgetItem* above = item.parent(); above != nullptr; above = above->parent())
+        {
+            above->setExpanded(true);
+        }
+    }
 }
 
 DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
@@ -66,25 +125,50 @@ DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
     row->addLayout(pages, 1);
     row->addWidget(outlinePane_);
 
-    ConnectTheParts();
+    ConnectTheBar();
+    ConnectThePane();
+    ConnectTheDocument();
 
     view_->viewport()->installEventFilter(this);
 
     Retranslate();
-    ShowTheOutlineOnlyWhenThereIsOne();
+    RebuildThePane();
 }
 
-void DocumentReader::Read(const std::filesystem::path& document, const int page, const DocumentKind kind)
+DocumentReader::~DocumentReader()
+{
+    disconnect(document_, nullptr, this, nullptr);
+    disconnect(search_, nullptr, this, nullptr);
+    disconnect(view_->pageNavigator(), nullptr, this, nullptr);
+}
+
+void DocumentReader::Read(const std::filesystem::path& document,
+                          const int page,
+                          const DocumentKind kind,
+                          const std::vector<DocumentBookmark>& bookmarks)
 {
     kind_ = kind;
+    bookmarks_ = bookmarks;
     wanted_->clear();
     view_->viewport()->setCursor(kind == DocumentKind::Chart ? Qt::OpenHandCursor : Qt::ArrowCursor);
+
+    outlineView_->clear();
+    sections_.clear();
+    sectionItems_.clear();
+
     document_->load(AsText(document));
 
     view_->pageNavigator()->jump(page, {});
 
-    ShowTheOutlineOnlyWhenThereIsOne();
+    RebuildThePane();
     SayWhereTheReadingIs();
+}
+
+void DocumentReader::ShowTheBookmarks(const std::vector<DocumentBookmark>& bookmarks)
+{
+    bookmarks_ = bookmarks;
+
+    RebuildThePane();
 }
 
 void DocumentReader::SayItIsShowing(const QString& caption)
@@ -181,9 +265,12 @@ void DocumentReader::Retranslate() const
     previous_->setText(tr("Previous page"));
     next_->setText(tr("Next page"));
     fitWidth_->setText(tr("Fit width"));
+    bookmark_->setText(tr("Bookmark"));
     detach_->setText(detached_ ? tr("Bring it back") : tr("Detach"));
     openFolder_->setText(tr("Open folder"));
-    outlineHeading_->setText(tr("Outline"));
+    outlineHeading_->setText(TheHeadingOfThePane());
+    rename_->setText(tr("Rename this bookmark…"));
+    forget_->setText(tr("Remove this bookmark"));
     wanted_->setPlaceholderText(tr("Search in this document"));
 
     if (wanted_->text().isEmpty())
@@ -242,10 +329,232 @@ void DocumentReader::JumpToTheResult(const int result)
     Retranslate();
 }
 
-void DocumentReader::ShowTheOutlineOnlyWhenThereIsOne() const
+std::vector<bool> DocumentReader::WhichSectionsAreOpen() const
 {
-    outlinePane_->setVisible(outline_->rowCount() > 0);
-    outlineView_->expandToDepth(0);
+    std::vector<bool> opened;
+    opened.reserve(sectionItems_.size());
+
+    for (const QTreeWidgetItem* section : sectionItems_)
+    {
+        opened.push_back(section->isExpanded());
+    }
+
+    return opened;
+}
+
+void DocumentReader::OpenAgainWhatWasOpen(const std::vector<bool>& opened) const
+{
+    if (opened.size() != sectionItems_.size())
+    {
+        outlineView_->expandToDepth(0);
+
+        return;
+    }
+
+    for (std::size_t which = 0; which < opened.size(); ++which)
+    {
+        sectionItems_[which]->setExpanded(opened[which]);
+    }
+}
+
+void DocumentReader::RebuildThePane()
+{
+    const std::vector<bool> opened = WhichSectionsAreOpen();
+
+    outlineView_->clear();
+    sections_.clear();
+    sectionItems_.clear();
+
+    PutTheSectionsIn({}, nullptr);
+    OpenAgainWhatWasOpen(opened);
+    PutTheBookmarksIn();
+
+    outlineView_->setRootIsDecorated(!sections_.empty());
+    outlinePane_->setVisible(!sections_.empty() || !bookmarks_.empty());
+    outlineHeading_->setText(TheHeadingOfThePane());
+
+    MarkTheSectionOfThePage();
+    SayWhetherThisPageIsMarked();
+    SayWhatTheMenuCanDo();
+}
+
+void DocumentReader::PutTheSectionsIn(const QModelIndex& parent, QTreeWidgetItem* under)
+{
+    for (int row = 0; row < outline_->rowCount(parent); ++row)
+    {
+        const QModelIndex entry = outline_->index(row, 0, parent);
+        const QString title = entry.data(Qt::DisplayRole).toString();
+        const int page = entry.data(static_cast<int>(QPdfBookmarkModel::Role::Page)).toInt();
+
+        auto* item = under == nullptr ? new QTreeWidgetItem(outlineView_) : new QTreeWidgetItem(under);
+        item->setText(kTheOnlyColumn, title);
+        item->setData(kTheOnlyColumn, kPageRole, page);
+        item->setData(kTheOnlyColumn, kLocationRole, entry.data(static_cast<int>(QPdfBookmarkModel::Role::Location)));
+        item->setData(kTheOnlyColumn, kZoomRole, entry.data(static_cast<int>(QPdfBookmarkModel::Role::Zoom)));
+        item->setData(kTheOnlyColumn, kBookmarkRole, false);
+
+        sections_.push_back({.title = title.toStdString(), .page = page});
+        sectionItems_.push_back(item);
+
+        PutTheSectionsIn(entry, item);
+    }
+}
+
+void DocumentReader::PutTheBookmarksIn()
+{
+    for (const DocumentBookmark& bookmark : bookmarks_)
+    {
+        const int page = bookmark.page;
+        const std::optional<std::size_t> holder = TheSectionHolding(sections_, page);
+
+        auto* item = new QTreeWidgetItem;
+        item->setText(kTheOnlyColumn, kDisc + QStringLiteral(" ") + NameOf(bookmark));
+        item->setData(kTheOnlyColumn, kPageRole, page);
+        item->setData(kTheOnlyColumn, kBookmarkRole, true);
+
+        if (!holder.has_value())
+        {
+            outlineView_->insertTopLevelItem(WhereThePageFitsAtTheRootOf(*outlineView_, page), item);
+            continue;
+        }
+
+        QTreeWidgetItem* under = sectionItems_[*holder];
+        under->insertChild(WhereThePageFitsUnder(*under, page), item);
+
+        OpenTheBranchOf(*item);
+    }
+}
+
+const DocumentBookmark* DocumentReader::TheBookmarkOn(const int page) const
+{
+    const auto known = std::ranges::find_if(bookmarks_,
+                                            [page](const DocumentBookmark& mark)
+                                            {
+                                                return mark.page == page;
+                                            });
+
+    if (known == bookmarks_.end())
+    {
+        return nullptr;
+    }
+
+    return &*known;
+}
+
+QString DocumentReader::NameOf(const DocumentBookmark& bookmark) const
+{
+    if (!bookmark.name.empty())
+    {
+        return QString::fromStdString(bookmark.name);
+    }
+
+    return tr("Page %1").arg(bookmark.page + 1);
+}
+
+QString DocumentReader::TheHeadingOfThePane() const
+{
+    if (bookmarks_.empty())
+    {
+        return tr("Outline");
+    }
+
+    if (sections_.empty())
+    {
+        return tr("Bookmarks");
+    }
+
+    return tr("Outline and bookmarks");
+}
+
+void DocumentReader::MarkTheSectionOfThePage() const
+{
+    const std::optional<std::size_t> holding = TheSectionHolding(sections_, view_->pageNavigator()->currentPage());
+
+    for (std::size_t which = 0; which < sectionItems_.size(); ++which)
+    {
+        QFont letters = outlineView_->font();
+        letters.setBold(holding.has_value() && which == *holding);
+
+        sectionItems_[which]->setFont(kTheOnlyColumn, letters);
+    }
+
+    if (holding.has_value())
+    {
+        outlineView_->scrollToItem(sectionItems_[*holding]);
+    }
+}
+
+void DocumentReader::SayWhetherThisPageIsMarked() const
+{
+    const int page = view_->pageNavigator()->currentPage();
+
+    bookmark_->setChecked(std::ranges::any_of(bookmarks_,
+                                              [page](const DocumentBookmark& mark)
+                                              {
+                                                  return mark.page == page;
+                                              }));
+}
+
+void DocumentReader::SayWhatTheMenuCanDo() const
+{
+    const QTreeWidgetItem* chosen = outlineView_->currentItem();
+    const bool aBookmark = chosen != nullptr && ItIsABookmark(*chosen);
+
+    rename_->setEnabled(aBookmark);
+    forget_->setEnabled(aBookmark);
+}
+
+void DocumentReader::RenameWhatIsChosen()
+{
+    const QTreeWidgetItem* chosen = outlineView_->currentItem();
+
+    if (chosen == nullptr || !ItIsABookmark(*chosen))
+    {
+        return;
+    }
+
+    const int page = PageOf(*chosen);
+    const DocumentBookmark* known = TheBookmarkOn(page);
+    const QString already = known == nullptr ? QString() : QString::fromStdString(known->name);
+
+    bool said = false;
+    const QString given =
+        QInputDialog::getText(this, tr("Rename the bookmark"), tr("Name:"), QLineEdit::Normal, already, &said);
+
+    if (!said)
+    {
+        return;
+    }
+
+    emit TheBookmarkWasNamed(page, given);
+}
+
+void DocumentReader::ForgetWhatIsChosen()
+{
+    const QTreeWidgetItem* chosen = outlineView_->currentItem();
+
+    if (chosen == nullptr || !ItIsABookmark(*chosen))
+    {
+        return;
+    }
+
+    const int page = PageOf(*chosen);
+    const DocumentBookmark* known = TheBookmarkOn(page);
+
+    if (known == nullptr)
+    {
+        return;
+    }
+
+    const QMessageBox::StandardButton answer =
+        QMessageBox::question(this, tr("Remove the bookmark"), tr("Remove the bookmark \"%1\"?").arg(NameOf(*known)));
+
+    if (answer != QMessageBox::Yes)
+    {
+        return;
+    }
+
+    emit TheMarkOfThePageWasTurned(page, false);
 }
 
 void DocumentReader::BuildTheOutlinePane()
@@ -253,11 +562,16 @@ void DocumentReader::BuildTheOutlinePane()
     outlineHeading_ = new QLabel(this);
     outlineHeading_->setObjectName(QStringLiteral("PanelSubHeading"));
 
-    outlineView_ = new QTreeView(this);
-    outlineView_->setModel(outline_);
+    outlineView_ = new QTreeWidget(this);
+    outlineView_->setObjectName(QStringLiteral("ReadingOutline"));
+    outlineView_->setColumnCount(1);
     outlineView_->setHeaderHidden(true);
-    outlineView_->setRootIsDecorated(true);
-    outlineView_->expandToDepth(0);
+    outlineView_->setContextMenuPolicy(Qt::ActionsContextMenu);
+
+    rename_ = new QAction(this);
+    forget_ = new QAction(this);
+    outlineView_->addAction(rename_);
+    outlineView_->addAction(forget_);
 
     outlinePane_ = new QWidget(this);
     outlinePane_->setFixedWidth(kOutlineWidth);
@@ -273,6 +587,7 @@ QLayout* DocumentReader::TheBar()
 {
     previous_ = new QPushButton(this);
     next_ = new QPushButton(this);
+    next_->setObjectName(QStringLiteral("NextPage"));
     position_ = new QLabel(this);
     wanted_ = new QLineEdit(this);
     wanted_->setClearButtonEnabled(true);
@@ -280,12 +595,20 @@ QLayout* DocumentReader::TheBar()
     found_ = new QLabel(this);
     found_->setObjectName(QStringLiteral("PanelPromise"));
     fitWidth_ = new QPushButton(this);
-    fitWidth_->setCheckable(true);
+    bookmark_ = new QPushButton(this);
+    bookmark_->setObjectName(QStringLiteral("BookmarkThePage"));
+
+    for (QPushButton* toggle : {fitWidth_, bookmark_})
+    {
+        toggle->setCheckable(true);
+        toggle->setProperty("toggle", "true");
+    }
+
     fitWidth_->setChecked(true);
     detach_ = new QPushButton(this);
     openFolder_ = new QPushButton(this);
 
-    for (QPushButton* button : {previous_, next_, fitWidth_, detach_, openFolder_})
+    for (QPushButton* button : {previous_, next_, fitWidth_, bookmark_, detach_, openFolder_})
     {
         button->setAutoDefault(false);
         button->setDefault(false);
@@ -301,13 +624,14 @@ QLayout* DocumentReader::TheBar()
     bar->addWidget(wanted_, 1);
     bar->addWidget(found_);
     bar->addWidget(fitWidth_);
+    bar->addWidget(bookmark_);
     bar->addWidget(detach_);
     bar->addWidget(openFolder_);
 
     return bar;
 }
 
-void DocumentReader::ConnectTheParts()
+void DocumentReader::ConnectTheBar()
 {
     connect(previous_, &QPushButton::clicked, this,
             [this]
@@ -327,12 +651,38 @@ void DocumentReader::ConnectTheParts()
                 view_->setZoomMode(fit ? QPdfView::ZoomMode::FitToWidth : QPdfView::ZoomMode::Custom);
                 view_->setHorizontalScrollBarPolicy(fit ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
             });
+    connect(bookmark_, &QPushButton::clicked, this,
+            [this](const bool marked)
+            {
+                emit TheMarkOfThePageWasTurned(view_->pageNavigator()->currentPage(), marked);
+            });
     connect(wanted_, &QLineEdit::textChanged, this, &DocumentReader::SearchFor);
     connect(wanted_, &QLineEdit::returnPressed, this,
             [this]
             {
                 StepThroughTheResults(1);
             });
+}
+
+void DocumentReader::ConnectThePane()
+{
+    connect(outlineView_, &QTreeWidget::itemClicked, this,
+            [this](const QTreeWidgetItem* entry)
+            {
+                view_->pageNavigator()->jump(PageOf(*entry), entry->data(kTheOnlyColumn, kLocationRole).toPointF(),
+                                             entry->data(kTheOnlyColumn, kZoomRole).toReal());
+            });
+    connect(outlineView_, &QTreeWidget::currentItemChanged, this,
+            [this]
+            {
+                SayWhatTheMenuCanDo();
+            });
+    connect(rename_, &QAction::triggered, this, &DocumentReader::RenameWhatIsChosen);
+    connect(forget_, &QAction::triggered, this, &DocumentReader::ForgetWhatIsChosen);
+}
+
+void DocumentReader::ConnectTheDocument()
+{
     connect(search_, &QPdfSearchModel::countChanged, this,
             [this]
             {
@@ -343,20 +693,15 @@ void DocumentReader::ConnectTheParts()
             [this](const int page)
             {
                 SayWhereTheReadingIs();
+                MarkTheSectionOfThePage();
+                SayWhetherThisPageIsMarked();
 
                 emit ThePageChanged(page);
-            });
-    connect(outlineView_, &QTreeView::clicked, this,
-            [this](const QModelIndex& entry)
-            {
-                view_->pageNavigator()->jump(entry.data(static_cast<int>(QPdfBookmarkModel::Role::Page)).toInt(),
-                                             entry.data(static_cast<int>(QPdfBookmarkModel::Role::Location)).toPointF(),
-                                             entry.data(static_cast<int>(QPdfBookmarkModel::Role::Zoom)).toReal());
             });
     connect(document_, &QPdfDocument::statusChanged, this,
             [this]
             {
-                ShowTheOutlineOnlyWhenThereIsOne();
+                RebuildThePane();
                 SayWhereTheReadingIs();
             });
 }

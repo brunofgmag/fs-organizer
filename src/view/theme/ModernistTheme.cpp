@@ -171,6 +171,7 @@ QPushButton[role="destructive"] {
 }
 QPushButton[role="destructive"]:hover { background: %raised%; }
 QPushButton[role="destructive"]:disabled { border: 1px solid %divider%; color: %disabled%; }
+QPushButton[toggle="true"]:checked { background: %raised%; border: 1px solid %accent%; color: %text%; }
 QPushButton:focus { border-color: %text%; }
 QPushButton[scale="small"] { padding: 2px 9px; }
 )")
