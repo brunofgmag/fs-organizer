@@ -1924,6 +1924,16 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentReader</name>
     <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="289"/>
+        <source>The wheel zooms the chart</source>
+        <translation>A roda aproxima a carta</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="289"/>
+        <source>Dragging moves the page</source>
+        <translation>Arrastar passeia pela página</translation>
+    </message>
+    <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="263"/>
         <source>Previous page</source>
         <translation>Página anterior</translation>

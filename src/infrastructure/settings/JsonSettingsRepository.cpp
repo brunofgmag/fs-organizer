@@ -23,6 +23,8 @@ namespace
     constexpr auto kVerifyWithHash = "verifyWithHash";
     constexpr auto kManageStartupEntries = "manageStartupEntries";
     constexpr auto kManagePackageList = "managePackageList";
+    constexpr auto kWheelZooms = "wheelZooms";
+    constexpr auto kDragMovesThePage = "dragMovesThePage";
     constexpr auto kCoexistingAirports = "coexistingAirports";
     constexpr auto kOne = "one";
     constexpr auto kOther = "other";
@@ -346,6 +348,8 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
     settings.manageStartupEntries = root.value(kManageStartupEntries).toBool(true);
     settings.managePackageList = root.value(kManagePackageList).toBool(false);
+    settings.wheelZooms = root.value(kWheelZooms).toBool(true);
+    settings.dragMovesThePage = root.value(kDragMovesThePage).toBool(true);
     settings.updateMode = UpdateModeFromName(root.value(kUpdateMode));
     settings.language = root.value(kLanguage).toString().toStdString();
 
@@ -394,6 +398,8 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
     root[kVerifyWithHash] = settings.verifyWithHash;
     root[kManageStartupEntries] = settings.manageStartupEntries;
     root[kManagePackageList] = settings.managePackageList;
+    root[kWheelZooms] = settings.wheelZooms;
+    root[kDragMovesThePage] = settings.dragMovesThePage;
     root[kUpdateMode] = UpdateModeName(settings.updateMode);
     root[kLanguage] = QString::fromStdString(settings.language);
     root[kCoexistingAirports] = coexisting;

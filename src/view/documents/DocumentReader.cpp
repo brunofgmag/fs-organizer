@@ -11,6 +11,7 @@
 #include <QtPdf/QPdfPageNavigator>
 #include <QtPdf/QPdfSearchModel>
 #include <QtPdfWidgets/QPdfView>
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLabel>
@@ -33,7 +34,7 @@ namespace
 {
     constexpr int kOutlineWidth = 210;
     constexpr int kPageSpacing = 8;
-    constexpr int kSearchWidth = 240;
+    constexpr int kSearchWidth = 172;
     constexpr int kStepWidth = 38;
     constexpr qreal kOneNotchCloser = 1.1;
     constexpr int kNotch = 120;
@@ -48,6 +49,8 @@ namespace
     const QString kForth = QString::fromUtf8("›");
     const QString kUp = QString::fromUtf8("↑");
     const QString kDown = QString::fromUtf8("↓");
+    const QString kWheel = QString::fromUtf8("⊙");
+    const QString kMove = QString::fromUtf8("✥");
     const QString kCloser = QString::fromUtf8("＋");
     const QString kFurther = QString::fromUtf8("－");
 
@@ -158,7 +161,7 @@ void DocumentReader::Read(const std::filesystem::path& document,
     kind_ = kind;
     bookmarks_ = bookmarks;
     wanted_->clear();
-    view_->viewport()->setCursor(kind == DocumentKind::Chart ? Qt::OpenHandCursor : Qt::ArrowCursor);
+    RestTheCursor();
 
     outlineView_->clear();
     sections_.clear();
@@ -201,30 +204,48 @@ void DocumentReader::ZoomBy(const int notches)
     view_->setZoomFactor(view_->zoomFactor() * closer);
 }
 
-bool DocumentReader::TheChartAnswersThe(QEvent* event)
+void DocumentReader::RestTheCursor() const
+{
+    view_->viewport()->setCursor(kind_ == DocumentKind::Chart ? Qt::OpenHandCursor : Qt::ArrowCursor);
+}
+
+bool DocumentReader::TheGestureAnswersThe(QEvent* event)
 {
     if (event->type() == QEvent::Wheel)
     {
+        if (!wheelZooms_ || kind_ != DocumentKind::Chart)
+        {
+            return false;
+        }
+
         ZoomBy(static_cast<QWheelEvent*>(event)->angleDelta().y());
 
         return true;
     }
 
+    if (!dragMovesThePage_)
+    {
+        return false;
+    }
+
     if (event->type() == QEvent::MouseButtonPress)
     {
         grabbing_ = true;
+        wandered_ = false;
         grabbedAt_ = static_cast<QMouseEvent*>(event)->pos();
-        view_->viewport()->setCursor(Qt::ClosedHandCursor);
 
-        return true;
+        return false;
     }
 
     if (event->type() == QEvent::MouseButtonRelease)
     {
-        grabbing_ = false;
-        view_->viewport()->setCursor(Qt::OpenHandCursor);
+        const bool moved = wandered_;
 
-        return true;
+        grabbing_ = false;
+        wandered_ = false;
+        RestTheCursor();
+
+        return moved;
     }
 
     if (event->type() != QEvent::MouseMove || !grabbing_)
@@ -233,6 +254,18 @@ bool DocumentReader::TheChartAnswersThe(QEvent* event)
     }
 
     const QPoint now = static_cast<QMouseEvent*>(event)->pos();
+
+    if (!wandered_)
+    {
+        if ((now - grabbedAt_).manhattanLength() < QApplication::startDragDistance())
+        {
+            return false;
+        }
+
+        wandered_ = true;
+        view_->viewport()->setCursor(Qt::ClosedHandCursor);
+    }
+
     const QPoint dragged = now - grabbedAt_;
     grabbedAt_ = now;
 
@@ -242,14 +275,33 @@ bool DocumentReader::TheChartAnswersThe(QEvent* event)
     return true;
 }
 
+void DocumentReader::SayTheWheelZooms(const bool zooming)
+{
+    wheelZooms_ = zooming;
+    wheelZoom_->setChecked(zooming);
+}
+
+void DocumentReader::SayTheDragMovesThePage(const bool moving)
+{
+    dragMovesThePage_ = moving;
+    dragMoves_->setChecked(moving);
+
+    if (!moving)
+    {
+        grabbing_ = false;
+        wandered_ = false;
+        RestTheCursor();
+    }
+}
+
 bool DocumentReader::eventFilter(QObject* watched, QEvent* event)
 {
-    if (watched != view_->viewport() || kind_ != DocumentKind::Chart)
+    if (watched != view_->viewport())
     {
         return QWidget::eventFilter(watched, event);
     }
 
-    if (TheChartAnswersThe(event))
+    if (TheGestureAnswersThe(event))
     {
         return true;
     }
@@ -284,6 +336,8 @@ void DocumentReader::Retranslate() const
     wanted_->setPlaceholderText(tr("Search in this document"));
     previousResult_->setToolTip(tr("Previous match"));
     nextResult_->setToolTip(tr("Next match"));
+    wheelZoom_->setToolTip(tr("The wheel zooms the chart"));
+    dragMoves_->setToolTip(tr("Dragging moves the page"));
 
     const bool anythingToStepThrough = !wanted_->text().isEmpty() && search_->rowCount({}) > 0;
 
@@ -637,8 +691,13 @@ QLayout* DocumentReader::TheBar()
     closer_->setObjectName(QStringLiteral("ZoomIn"));
     further_ = new QPushButton(kFurther, this);
     further_->setObjectName(QStringLiteral("ZoomOut"));
+    wheelZoom_ = new QPushButton(kWheel, this);
+    wheelZoom_->setObjectName(QStringLiteral("WheelZooms"));
+    dragMoves_ = new QPushButton(kMove, this);
+    dragMoves_->setObjectName(QStringLiteral("DragMovesThePage"));
 
-    for (QPushButton* step : {previous_, next_, previousResult_, nextResult_, closer_, further_})
+    for (QPushButton* step :
+         {previous_, next_, previousResult_, nextResult_, closer_, further_, wheelZoom_, dragMoves_})
     {
         step->setFixedWidth(kStepWidth);
     }
@@ -646,18 +705,21 @@ QLayout* DocumentReader::TheBar()
     bookmark_ = new QPushButton(this);
     bookmark_->setObjectName(QStringLiteral("BookmarkThePage"));
 
-    for (QPushButton* toggle : {fitWidth_, bookmark_})
+    for (QPushButton* toggle : {fitWidth_, bookmark_, wheelZoom_, dragMoves_})
     {
         toggle->setCheckable(true);
         toggle->setProperty("toggle", "true");
     }
 
+    wheelZoom_->setChecked(wheelZooms_);
+    dragMoves_->setChecked(dragMovesThePage_);
+
     fitWidth_->setChecked(true);
     detach_ = new QPushButton(this);
     openFolder_ = new QPushButton(this);
 
-    for (QPushButton* button : {previous_, next_, previousResult_, nextResult_, closer_, further_, fitWidth_, bookmark_,
-                                detach_, openFolder_})
+    for (QPushButton* button : {previous_, next_, previousResult_, nextResult_, closer_, further_, wheelZoom_,
+                                dragMoves_, fitWidth_, bookmark_, detach_, openFolder_})
     {
         button->setAutoDefault(false);
         button->setDefault(false);
@@ -677,6 +739,8 @@ QLayout* DocumentReader::TheBar()
     bar->addSpacing(12);
     bar->addWidget(further_);
     bar->addWidget(closer_);
+    bar->addWidget(wheelZoom_);
+    bar->addWidget(dragMoves_);
     bar->addWidget(fitWidth_);
     bar->addWidget(bookmark_);
     bar->addWidget(detach_);
@@ -709,6 +773,20 @@ void DocumentReader::ConnectTheBar()
             [this](const bool marked)
             {
                 emit TheMarkOfThePageWasTurned(view_->pageNavigator()->currentPage(), marked);
+            });
+    connect(wheelZoom_, &QPushButton::clicked, this,
+            [this](const bool zooming)
+            {
+                wheelZooms_ = zooming;
+
+                emit TheWheelWasSetToZoom(zooming);
+            });
+    connect(dragMoves_, &QPushButton::clicked, this,
+            [this](const bool moving)
+            {
+                SayTheDragMovesThePage(moving);
+
+                emit TheDragWasSetToMoveThePage(moving);
             });
     connect(wanted_, &QLineEdit::textChanged, this, &DocumentReader::SearchFor);
     connect(wanted_, &QLineEdit::returnPressed, this,

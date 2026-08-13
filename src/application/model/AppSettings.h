@@ -19,6 +19,8 @@ struct AppSettings
     bool verifyWithHash = false;
     bool manageStartupEntries = true;
     bool managePackageList = false;
+    bool wheelZooms = true;
+    bool dragMovesThePage = true;
     UpdateMode updateMode = UpdateMode::Notify;
     std::string language;
     std::vector<CoexistingPair> coexistingAirports;

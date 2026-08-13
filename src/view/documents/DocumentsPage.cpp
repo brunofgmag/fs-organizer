@@ -234,6 +234,8 @@ QWidget* DocumentsPage::TheIndexSide()
 QWidget* DocumentsPage::TheReadingSide()
 {
     reader_ = new DocumentReader(this);
+    reader_->SayTheWheelZooms(viewModel_.TheWheelZooms());
+    reader_->SayTheDragMovesThePage(viewModel_.TheDragMovesThePage());
 
     nothingOpen_ = new EmptyState(this);
 
@@ -349,6 +351,16 @@ void DocumentsPage::ConnectTheReader()
 
                 viewModel_.NameTheBookmark(*open_, page, name.toStdString());
                 reader_->ShowTheBookmarks(viewModel_.BookmarksOf(*open_));
+            });
+    connect(reader_, &DocumentReader::TheWheelWasSetToZoom, this,
+            [this](const bool zooming)
+            {
+                viewModel_.MakeTheWheelZoom(zooming);
+            });
+    connect(reader_, &DocumentReader::TheDragWasSetToMoveThePage, this,
+            [this](const bool moving)
+            {
+                viewModel_.MakeTheDragMoveThePage(moving);
             });
     connect(reader_, &DocumentReader::TheFolderWasAskedFor, this,
             [this]

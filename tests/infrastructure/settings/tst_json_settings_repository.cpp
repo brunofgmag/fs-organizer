@@ -36,6 +36,8 @@ namespace
         static void TheAirportsTheUserSaidCanCoexistSurviveTheRoundTrip();
         static void TheBookmarksOfAReadDocumentSurviveTheRoundTrip();
         static void ADocumentWrittenBeforeBookmarksExistedReadsWithNone();
+        static void AFileWrittenBeforeTheReadingKeysExistedKeepsBothGesturesOn();
+        static void TheGesturesOfTheReaderSurviveTheRoundTrip();
     };
 }
 
@@ -312,6 +314,41 @@ void JsonSettingsRepositoryTest::TurningTheStartupEntriesLooseSurvivesTheRoundTr
     const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
 
     QCOMPARE(read.manageStartupEntries, false);
+}
+
+void JsonSettingsRepositoryTest::AFileWrittenBeforeTheReadingKeysExistedKeepsBothGesturesOn()
+{
+    const Storage storage;
+
+    std::filesystem::create_directories(storage.File().parent_path());
+    std::ofstream(storage.File(), std::ios::binary) << R"({"activeProfileId":"msfs2024","profiles":[]})";
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QVERIFY2(read->wheelZooms,
+             "the wheel zoomed the chart before the key existed, and a file written back then keeps that gesture");
+    QVERIFY2(read->dragMovesThePage,
+             "the drag is born on, so the reader behaves the same on a settings file that "
+             "predates the switch");
+}
+
+void JsonSettingsRepositoryTest::TheGesturesOfTheReaderSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.activeProfileId = "msfs2024";
+    written.wheelZooms = false;
+    written.dragMovesThePage = false;
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QCOMPARE(read->wheelZooms, false);
+    QCOMPARE(read->dragMovesThePage, false);
 }
 
 void JsonSettingsRepositoryTest::AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries()

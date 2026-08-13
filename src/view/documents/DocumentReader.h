@@ -44,6 +44,10 @@ public:
 
     void SayItIsDetached(bool detached);
 
+    void SayTheWheelZooms(bool zooming);
+
+    void SayTheDragMovesThePage(bool moving);
+
 signals:
     void ThePageChanged(int page);
 
@@ -54,6 +58,10 @@ signals:
     void TheFolderWasAskedFor();
 
     void TheDetachWasAskedFor();
+
+    void TheWheelWasSetToZoom(bool zooming);
+
+    void TheDragWasSetToMoveThePage(bool moving);
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -109,7 +117,9 @@ private:
 
     void ForgetWhatIsChosen();
 
-    [[nodiscard]] bool TheChartAnswersThe(QEvent* event);
+    [[nodiscard]] bool TheGestureAnswersThe(QEvent* event);
+
+    void RestTheCursor() const;
 
     void ZoomBy(int notches);
 
@@ -128,6 +138,8 @@ private:
     QPushButton* closer_ = nullptr;
     QPushButton* further_ = nullptr;
     QPushButton* next_ = nullptr;
+    QPushButton* wheelZoom_ = nullptr;
+    QPushButton* dragMoves_ = nullptr;
     QPushButton* fitWidth_ = nullptr;
     QPushButton* bookmark_ = nullptr;
     QPushButton* detach_ = nullptr;
@@ -144,6 +156,9 @@ private:
     DocumentKind kind_ = DocumentKind::Document;
     bool detached_ = false;
     bool grabbing_ = false;
+    bool wandered_ = false;
+    bool wheelZooms_ = true;
+    bool dragMovesThePage_ = true;
     int result_ = -1;
 };
 

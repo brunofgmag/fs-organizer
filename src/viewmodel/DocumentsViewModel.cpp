@@ -727,3 +727,45 @@ void DocumentsViewModel::NameTheBookmark(const DocumentLine& line, const int pag
                  }
              });
 }
+
+bool DocumentsViewModel::TheWheelZooms() const
+{
+    return session_.Settings().wheelZooms;
+}
+
+void DocumentsViewModel::MakeTheWheelZoom(const bool zooming)
+{
+    session_.Rewrite(
+        [zooming](AppSettings& settings)
+        {
+            if (settings.wheelZooms == zooming)
+            {
+                return false;
+            }
+
+            settings.wheelZooms = zooming;
+
+            return true;
+        });
+}
+
+bool DocumentsViewModel::TheDragMovesThePage() const
+{
+    return session_.Settings().dragMovesThePage;
+}
+
+void DocumentsViewModel::MakeTheDragMoveThePage(const bool moving)
+{
+    session_.Rewrite(
+        [moving](AppSettings& settings)
+        {
+            if (settings.dragMovesThePage == moving)
+            {
+                return false;
+            }
+
+            settings.dragMovesThePage = moving;
+
+            return true;
+        });
+}

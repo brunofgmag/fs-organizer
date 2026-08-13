@@ -1924,6 +1924,16 @@ It also exists in the library: %2</translation>
 <context>
     <name>DocumentReader</name>
     <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="289"/>
+        <source>The wheel zooms the chart</source>
+        <translation>The wheel zooms the chart</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="289"/>
+        <source>Dragging moves the page</source>
+        <translation>Dragging moves the page</translation>
+    </message>
+    <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="263"/>
         <source>Previous page</source>
         <translation>Previous page</translation>
