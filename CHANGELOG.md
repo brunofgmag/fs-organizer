@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.36.0](https://github.com/brunofgmag/fs-organizer/compare/v0.35.0...v0.36.0) (2026-08-13)
+
+
+### Features
+
+* **documents:** read every manual and chart of the library in a tab ([#101](https://github.com/brunofgmag/fs-organizer/issues/101)) ([8775d5c](https://github.com/brunofgmag/fs-organizer/commit/8775d5c504f8492ede0525a088a4839ba1595c6f))
+
 ## [0.35.0](https://github.com/brunofgmag/fs-organizer/compare/v0.34.0...v0.35.0) (2026-08-12)
 
 
