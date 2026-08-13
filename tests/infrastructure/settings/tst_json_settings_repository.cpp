@@ -34,6 +34,8 @@ namespace
         static void AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries();
         static void AFreshProfileIsWrittenWithThePackageListLeftAlone();
         static void TheAirportsTheUserSaidCanCoexistSurviveTheRoundTrip();
+        static void TheBookmarksOfAReadDocumentSurviveTheRoundTrip();
+        static void ADocumentWrittenBeforeBookmarksExistedReadsWithNone();
     };
 }
 
@@ -367,6 +369,45 @@ void JsonSettingsRepositoryTest::TheAirportsTheUserSaidCanCoexistSurviveTheRound
     QVERIFY2(read.coexistingAirports.front().one == written.coexistingAirports.front().one,
              "the key is the pair of addon identities, which survives renaming a category and moving an addon");
     QVERIFY(read.coexistingAirports.front().other == written.coexistingAirports.front().other);
+}
+
+void JsonSettingsRepositoryTest::TheBookmarksOfAReadDocumentSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.documents = {{.addon = "aerosoft-crj",
+                          .document = "Documentation/Vol1_Aircraft Systems.pdf",
+                          .page = 57,
+                          .favourite = true,
+                          .bookmarks = {{.page = 12, .name = {}}, {.page = 57, .name = "Where I stopped"}}}};
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.documents.size(), std::size_t{1});
+    QCOMPARE(read.documents.front().page, 57);
+    QVERIFY(read.documents.front().favourite);
+    QCOMPARE(read.documents.front().bookmarks.size(), std::size_t{2});
+    QCOMPARE(read.documents.front().bookmarks.front().page, 12);
+    QVERIFY2(read.documents.front().bookmarks.front().name.empty(),
+             "the derived name is computed from the outline every time, so writing it would freeze a name that has to "
+             "follow the other marks of its section");
+    QCOMPARE(read.documents.front().bookmarks.back().name, std::string{"Where I stopped"});
+}
+
+void JsonSettingsRepositoryTest::ADocumentWrittenBeforeBookmarksExistedReadsWithNone()
+{
+    const Storage storage;
+
+    std::ofstream(storage.File(), std::ios::binary)
+        << R"({"documents":[{"addon":"aerosoft-crj","document":"a.pdf","page":3,"favourite":false}]})";
+
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.documents.size(), std::size_t{1});
+    QCOMPARE(read.documents.front().page, 3);
+    QVERIFY(read.documents.front().bookmarks.empty());
 }
 
 QTEST_APPLESS_MAIN(JsonSettingsRepositoryTest)

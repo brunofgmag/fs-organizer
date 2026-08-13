@@ -33,6 +33,8 @@ namespace
     constexpr auto kDocument = "document";
     constexpr auto kPage = "page";
     constexpr auto kFavourite = "favourite";
+    constexpr auto kBookmarks = "bookmarks";
+    constexpr auto kName = "name";
     constexpr auto kLanguage = "language";
     constexpr auto kId = "id";
     constexpr auto kVariant = "variant";
@@ -197,23 +199,52 @@ namespace
                 .other = AddonFromJson(object.value(kOther).toObject())};
     }
 
+    QJsonObject ToJson(const DocumentBookmark& bookmark)
+    {
+        QJsonObject object;
+        object[kPage] = bookmark.page;
+        object[kName] = QString::fromStdString(bookmark.name);
+
+        return object;
+    }
+
+    DocumentBookmark BookmarkFromJson(const QJsonObject& object)
+    {
+        return {.page = object.value(kPage).toInt(), .name = object.value(kName).toString().toStdString()};
+    }
+
     QJsonObject ToJson(const ReadDocument& document)
     {
+        QJsonArray bookmarks;
+        for (const DocumentBookmark& bookmark : document.bookmarks)
+        {
+            bookmarks.append(ToJson(bookmark));
+        }
+
         QJsonObject object;
         object[kAddon] = QString::fromStdString(document.addon);
         object[kDocument] = QString::fromStdString(document.document);
         object[kPage] = document.page;
         object[kFavourite] = document.favourite;
+        object[kBookmarks] = bookmarks;
 
         return object;
     }
 
     ReadDocument ReadDocumentFromJson(const QJsonObject& object)
     {
-        return {.addon = object.value(kAddon).toString().toStdString(),
-                .document = object.value(kDocument).toString().toStdString(),
-                .page = object.value(kPage).toInt(),
-                .favourite = object.value(kFavourite).toBool()};
+        ReadDocument document{.addon = object.value(kAddon).toString().toStdString(),
+                              .document = object.value(kDocument).toString().toStdString(),
+                              .page = object.value(kPage).toInt(),
+                              .favourite = object.value(kFavourite).toBool(),
+                              .bookmarks = {}};
+
+        for (const QJsonValue bookmark : object.value(kBookmarks).toArray())
+        {
+            document.bookmarks.push_back(BookmarkFromJson(bookmark.toObject()));
+        }
+
+        return document;
     }
 
     QJsonObject ToJson(const SimulatorProfile& profile)
