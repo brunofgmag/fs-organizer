@@ -36,7 +36,6 @@
 #include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/panels/ContextPanel.h"
-#include "view/documents/DocumentsWindow.h"
 #include "view/panels/DependencySection.h"
 #include "view/panels/EmptyState.h"
 #include "view/panels/ModelRowDetail.h"
@@ -114,7 +113,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                              DeletionViewModel& deletion,
                              ImportViewModel& importViewModel,
                              CoverageViewModel& coverage,
-                             DocumentsViewModel& documents,
+                             AddonDocumentsViewModel& documents,
                              AddonTreeModel& model,
                              const SessionNotifier& notifier,
                              QWidget* parent)
@@ -379,8 +378,15 @@ QWidget* AddonTreePage::CreatePanel()
             });
     connect(moveTo_, &QPushButton::clicked, this, &AddonTreePage::MoveTheSelectedAddon);
     connect(openFolder_, &QPushButton::clicked, this, &AddonTreePage::OpenTheSelectedFolder);
-    connect(documentation_, &QPushButton::clicked, this, &AddonTreePage::ReadTheDocumentationOfTheSelection);
-    connect(&documents_, &DocumentsViewModel::Indexed, this, &AddonTreePage::ShowWhatTheDocumentationHolds);
+    connect(documentation_, &QPushButton::clicked, this,
+            [this]
+            {
+                if (const TreeNode* node = Current(); node != nullptr)
+                {
+                    emit DocumentationRequested(AsUtf8(node->path.filename()));
+                }
+            });
+    connect(&documents_, &AddonDocumentsViewModel::Indexed, this, &AddonTreePage::ShowWhatTheDocumentationHolds);
     connect(delete_, &QPushButton::clicked, this, &AddonTreePage::DeleteTheSelectedAddons);
     connect(panel_, &ContextPanel::CloseRequested, tree_->selectionModel(), &QItemSelectionModel::clearSelection);
 
@@ -655,17 +661,6 @@ void AddonTreePage::ShowWhatTheDocumentationHolds() const
     documentation_->setText(tr("Documentation · %1 · %2")
                                 .arg(tr("%n document(s)", nullptr, static_cast<int>(documents)),
                                      tr("%n chart(s)", nullptr, static_cast<int>(charts))));
-}
-
-void AddonTreePage::ReadTheDocumentationOfTheSelection()
-{
-    if (reader_ == nullptr)
-    {
-        reader_ = new DocumentsWindow(documents_, this);
-    }
-
-    reader_->show();
-    reader_->raise();
 }
 
 void AddonTreePage::OpenTheSelectedFolder() const

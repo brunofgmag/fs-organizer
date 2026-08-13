@@ -33,6 +33,7 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/JsonDocumentIndexCache.h"
 #include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -66,7 +67,7 @@
 #include "view/PresetsPage.h"
 #include "view/community/CommunityPage.h"
 #include "domain/tree/AddonTree.h"
-#include "view/documents/DocumentsWindow.h"
+#include "view/documents/DocumentsPage.h"
 #include "view/library/AddonTreePage.h"
 #include "domain/support/PathUtils.h"
 #include "view/library/LibraryRootDialog.h"
@@ -86,6 +87,7 @@
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/AddonDocumentsViewModel.h"
 #include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
@@ -145,17 +147,37 @@ namespace
         }
     }
 
+    void ClickTheRow(QTreeWidget& index, const QTreeWidgetItem* line)
+    {
+        const QPointF at = index.visualItemRect(line).center();
+        const QPointF onTheScreen = index.viewport()->mapToGlobal(at);
+
+        QMouseEvent press(QEvent::MouseButtonPress, at, onTheScreen, Qt::LeftButton, Qt::LeftButton, {});
+        QMouseEvent release(QEvent::MouseButtonRelease, at, onTheScreen, Qt::LeftButton, Qt::NoButton, {});
+
+        QApplication::sendEvent(index.viewport(), &press);
+        QApplication::sendEvent(index.viewport(), &release);
+    }
+
+    QTreeWidgetItem* TheDeepestFirstLineOf(QTreeWidgetItem* heading)
+    {
+        if (heading->childCount() == 0)
+        {
+            return heading;
+        }
+
+        heading->setExpanded(true);
+
+        return TheDeepestFirstLineOf(heading->child(0));
+    }
+
     QTreeWidgetItem* TheFirstLineUnderAGroupOf(QTreeWidget& index)
     {
         for (int group = 0; group < index.topLevelItemCount(); ++group)
         {
-            QTreeWidgetItem* heading = index.topLevelItem(group);
-
-            if (heading->childCount() > 0 && heading->text(1).contains(QString::fromUtf8("·")))
+            if (index.topLevelItem(group)->childCount() > 0)
             {
-                heading->setExpanded(true);
-
-                return heading->child(0);
+                return TheDeepestFirstLineOf(index.topLevelItem(group));
             }
         }
 
@@ -553,10 +575,13 @@ int main(int argc, char* argv[])
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
     const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
-    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner);
+    AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
+    JsonDocumentIndexCache documentIndexCache(staged->settingsFile.parent_path() / "document-index.json");
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, clock);
+    auto* documentsPage = new DocumentsPage(documentsViewModel);
 
     auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
-                                          documentsViewModel, treeModel, notifier);
+                                          addonDocumentsViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -600,6 +625,7 @@ int main(int argc, char* argv[])
     PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
     PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
+    PageTab* documentsTab = shell.AddPage(PageNames::kDocuments, documentsPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
@@ -834,50 +860,38 @@ int main(int argc, char* argv[])
     }
 
     {
-        const QString carryingCharts = QStringLiteral("aerosoft-airport-ebbr-brussels");
-        QPushButton* documentation = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDocumentationAction"));
+        documentsTab->click();
+        documentsViewModel.ReadTheLibrary();
+        LetTheLayoutSettle();
 
-        if (SelectTheAddonNamed(*libraryPage, carryingCharts) && documentation != nullptr)
+        auto* index = documentsPage->findChild<QTreeWidget*>(QStringLiteral("ChartsIndex"));
+
+        if (index != nullptr && index->topLevelItemCount() > 0)
         {
-            KeepTheEventLoopTurning(80);
-        }
+            documentsPage->Show(DocumentPanel::Charts);
 
-        if (documentation != nullptr && documentation->isVisible())
-        {
-            documentation->click();
-            LetTheLayoutSettle();
-
-            auto* reader = libraryPage->findChild<DocumentsWindow*>();
-
-            if (reader != nullptr)
+            for (int group = 0; group < index->topLevelItemCount(); ++group)
             {
-                if (auto* index = reader->findChild<QTreeWidget*>(); index != nullptr)
+                index->topLevelItem(group)->setExpanded(true);
+
+                for (int within = 0; within < index->topLevelItem(group)->childCount(); ++within)
                 {
-                    for (int group = 0; group < index->topLevelItemCount(); ++group)
-                    {
-                        index->topLevelItem(group)->setExpanded(true);
-                    }
-
-                    if (QTreeWidgetItem* line = TheFirstLineUnderAGroupOf(*index); line != nullptr)
-                    {
-                        index->setCurrentItem(line);
-                        emit index->itemActivated(line, 1);
-                        emit index->itemClicked(line, 0);
-                    }
+                    index->topLevelItem(group)->child(within)->setExpanded(true);
                 }
+            }
 
-                KeepTheEventLoopTurning(60);
-                landed = Save(*reader, folder, QStringLiteral("26-documents")) && landed;
-                reader->close();
-            }
-            else
+            if (QTreeWidgetItem* line = TheFirstLineUnderAGroupOf(*index); line != nullptr)
             {
-                Out() << "the documentation button opened no window, so there is no reader to write\n";
+                ClickTheRow(*index, line);
             }
+
+            KeepTheEventLoopTurning(160);
+
+            landed = Save(*documentsPage, folder, QStringLiteral("26-documents")) && landed;
         }
         else
         {
-            Out() << "the chosen addon carries no documentation, so there is no reader to write\n";
+            Out() << "the library carries no chart, so there is no documentation tab to write\n";
         }
     }
 

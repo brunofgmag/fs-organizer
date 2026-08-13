@@ -23,6 +23,7 @@
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/JsonDocumentIndexCache.h"
 #include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -53,6 +54,7 @@
 #include "view/library/AddonTreePage.h"
 #include "view/community/CommunityPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
+#include "view/documents/DocumentsPage.h"
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/JournalPage.h"
 #include "view/shell/LanguageSwitch.h"
@@ -72,6 +74,7 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/AddonDocumentsViewModel.h"
 #include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
@@ -285,10 +288,22 @@ int main(int argc, char* argv[])
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
     const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
-    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner);
+    AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
+    JsonDocumentIndexCache documentIndexCache(DocumentIndexFilePath());
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, clock);
 
     auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
-                                   documentsViewModel, model, notifier);
+                                   addonDocumentsViewModel, model, notifier);
+
+    documentsViewModel.ShowWhatWasKept();
+
+    auto* documentsPage = new DocumentsPage(documentsViewModel);
+
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, documentsPage,
+                     [&documentsViewModel]
+                     {
+                         documentsViewModel.ReadTheLibrary();
+                     });
 
     LongOperationProgress progress(importViewModel, &window);
 
@@ -352,6 +367,7 @@ int main(int argc, char* argv[])
     PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);
     window.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
+    PageTab* documentsButton = window.AddPage(PageNames::kDocuments, documentsPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     window.AddPage(PageNames::kJournal, journalPage);
@@ -399,6 +415,14 @@ int main(int argc, char* argv[])
                      });
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &treeViewModel, &AddonTreeViewModel::CancelScan);
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &documentsViewModel, &DocumentsViewModel::Stop);
+
+    QObject::connect(page, &AddonTreePage::DocumentationRequested, documentsPage,
+                     [documentsButton, documentsPage](const std::string& addon)
+                     {
+                         documentsButton->click();
+                         documentsPage->Reveal(addon);
+                     });
 
     QTimer::singleShot(kFirstUpdateCheckDelayMs, &updateViewModel, &UpdateViewModel::CheckQuietly);
 

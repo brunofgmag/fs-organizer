@@ -113,6 +113,7 @@ QLabel#PanelTitle { color: %text%; }
 QLabel#PanelSubHeading { color: %secondary%; font-weight: 700; }
 QLabel#PresetPlanFor { color: %text%; font-weight: 700; }
 QLabel#PanelPromise { color: %secondary%; }
+QLabel#ReadingCaption { color: %secondary%; font-weight: 700; }
 QLabel#DetailFieldName { color: %secondary%; }
 QTextEdit#UncutText {
     background: transparent; border: none;

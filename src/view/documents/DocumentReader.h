@@ -3,7 +3,10 @@
 
 #include <filesystem>
 
+#include <QtCore/QPoint>
 #include <QtWidgets/QWidget>
+
+#include "domain/documents/DocumentClassification.h"
 
 class QLabel;
 class QLayout;
@@ -22,15 +25,23 @@ class DocumentReader final : public QWidget
 public:
     explicit DocumentReader(QWidget* parent = nullptr);
 
-    void Read(const std::filesystem::path& document, int page);
+    void Read(const std::filesystem::path& document, int page, DocumentKind kind);
+
+    void SayItIsShowing(const QString& caption);
+
+    void SayItIsDetached(bool detached);
 
 signals:
     void ThePageChanged(int page);
 
     void TheFolderWasAskedFor();
 
+    void TheDetachWasAskedFor();
+
 protected:
     void changeEvent(QEvent* event) override;
+
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     void BuildTheOutlinePane();
@@ -51,6 +62,10 @@ private:
 
     void JumpToTheResult(int result);
 
+    [[nodiscard]] bool TheChartAnswersThe(QEvent* event);
+
+    void ZoomBy(int notches);
+
     QPdfDocument* document_ = nullptr;
     QPdfView* view_ = nullptr;
     QPdfSearchModel* search_ = nullptr;
@@ -63,8 +78,14 @@ private:
     QPushButton* previous_ = nullptr;
     QPushButton* next_ = nullptr;
     QPushButton* fitWidth_ = nullptr;
+    QPushButton* detach_ = nullptr;
     QPushButton* openFolder_ = nullptr;
+    QLabel* caption_ = nullptr;
     QWidget* outlinePane_ = nullptr;
+    QPoint grabbedAt_{};
+    DocumentKind kind_ = DocumentKind::Document;
+    bool detached_ = false;
+    bool grabbing_ = false;
     int result_ = -1;
 };
 

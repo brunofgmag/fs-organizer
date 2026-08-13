@@ -221,7 +221,7 @@ namespace
     {
         if (chart.revision == ChartRevision::Previous)
         {
-            return QString("(the revision it superseded)");
+            return QString("(previous edition)");
         }
 
         if (chart.name.empty())
