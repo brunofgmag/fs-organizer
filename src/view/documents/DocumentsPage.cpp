@@ -273,12 +273,8 @@ void DocumentsPage::ConnectTheBar()
 
 void DocumentsPage::ConnectTheIndex()
 {
-    connect(&viewModel_, &DocumentsViewModel::Indexed, this,
-            [this]
-            {
-                Rebuild();
-                ShowWhatIsHappening();
-            });
+    connect(&viewModel_, &DocumentsViewModel::Indexed, this, &DocumentsPage::ShowTheIndex);
+    connect(&viewModel_, &DocumentsViewModel::Arrived, this, &DocumentsPage::ShowTheIndex);
     connect(&viewModel_, &DocumentsViewModel::ReadingChanged, this,
             [this]
             {
@@ -703,6 +699,12 @@ void DocumentsPage::Rebuild()
     RebuildTheIndexOf(DocumentPanel::Charts);
 
     Retranslate();
+}
+
+void DocumentsPage::ShowTheIndex()
+{
+    Rebuild();
+    ShowWhatIsHappening();
 }
 
 void DocumentsPage::ShowWhatIsHappening()

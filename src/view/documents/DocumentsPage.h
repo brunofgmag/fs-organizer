@@ -75,6 +75,8 @@ private:
 
     void ShowWhatIsHappening();
 
+    void ShowTheIndex();
+
     void Open(const DocumentLine& line);
 
     [[nodiscard]] bool AnswerTheClickOn(DocumentPanel panel, const QPoint& where);

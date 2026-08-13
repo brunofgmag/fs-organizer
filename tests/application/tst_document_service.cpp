@@ -30,6 +30,7 @@ namespace
         static void AnAddonWithNoPdfCarriesNoDocumentationAtAll();
         static void TheSweepWalksEveryLibraryThroughTheScanAndAnswersPerAddon();
         static void TheSweepReportsProgressAndStopsWhereItIsToldTo();
+        static void TheSweepHandsOverEachAddonAsItFinishesReadingIt();
         static void AnAddonTheProbeCannotWalkSaysSoInsteadOfSayingItHasNothing();
         static void OnlyTheChartsOfAPageThatRepeatsHaveTheirVersionRead();
         static void TheInformationLineCarriesTheNewestRevisionOfEachPage();
@@ -326,18 +327,54 @@ namespace
         const DocumentService service(scanner, probe, catalogueParser, chartVersions);
 
         std::vector<std::size_t> seen;
-        const std::vector<DocumentsOfAnAddon> indexed =
-            service.IndexWhile({{.id = kLibraryId, .path = kLibrary, .label = "Sceneries"}}, {},
-                               [&seen](const std::size_t indexedSoFar, const std::size_t outOf)
-                               {
-                                   seen.push_back(outOf);
+        const std::vector<DocumentsOfAnAddon> indexed = service.IndexWhile(
+            {{.id = kLibraryId, .path = kLibrary, .label = "Sceneries"}}, {},
+            [&seen](const DocumentsOfAnAddon&, const std::size_t indexedSoFar, const std::size_t outOf)
+            {
+                seen.push_back(outOf);
 
-                                   return indexedSoFar < 2;
-                               });
+                return indexedSoFar < 2;
+            });
 
         QCOMPARE(indexed.size(), std::size_t{2});
         QCOMPARE(seen.size(), std::size_t{2});
         QCOMPARE(seen.front(), std::size_t{3});
+    }
+
+    void DocumentServiceTest::TheSweepHandsOverEachAddonAsItFinishesReadingIt()
+    {
+        InMemoryFileSystem fileSystem;
+        fileSystem.AddFile(FolderOf("one") / "a.pdf");
+        fileSystem.AddFile(FolderOf("two") / "b.pdf");
+
+        FakeCatalogScanner scanner;
+        scanner.SetTree(kLibrary, LibraryNode({AddonNode("one"), AddonNode("two")}));
+
+        const FakeFilesystemProbe probe(fileSystem);
+        const FakeChartCatalogueParser catalogueParser;
+        const FakeChartVersions chartVersions;
+        const DocumentService service(scanner, probe, catalogueParser, chartVersions);
+
+        std::vector<std::string> handedOver;
+        std::vector<std::size_t> carried;
+
+        const std::vector<DocumentsOfAnAddon> indexed =
+            service.IndexWhile({{.id = kLibraryId, .path = kLibrary, .label = "Sceneries"}}, {},
+                               [&handedOver, &carried](const DocumentsOfAnAddon& addon, std::size_t, std::size_t)
+                               {
+                                   handedOver.push_back(addon.addon.folderName);
+                                   carried.push_back(addon.documents.size());
+
+                                   return true;
+                               });
+
+        QCOMPARE(indexed.size(), std::size_t{2});
+        QCOMPARE(handedOver.size(), std::size_t{2});
+        QCOMPARE(handedOver.front(), std::string{"one"});
+        QCOMPARE(handedOver.back(), std::string{"two"});
+        QVERIFY2(carried.front() == std::size_t{1},
+                 "the addon is handed over already read, because a name with nothing behind it puts no line on the "
+                 "screen");
     }
 
     void DocumentServiceTest::AnAddonTheProbeCannotWalkSaysSoInsteadOfSayingItHasNothing()
