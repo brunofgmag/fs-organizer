@@ -5,6 +5,7 @@
 #include <QtGui/QAction>
 #include <QtGui/QWheelEvent>
 #include <QtPdfWidgets/QPdfView>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
@@ -58,6 +59,7 @@ namespace
         static void TheBarSwapsTheListAndLeavesOpenWhatWasOpen();
         static void TheNameIsCutInTheMiddleBecauseWhatTellsTwoApartIsAtTheEnd();
         static void DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft();
+        static void TheDetachedWindowShowsTheReadingAndNotAnEmptyPane();
         static void TheAddonAsksForThePanelThatCarriesIt();
         static void TheIndexKeepsTheWidthTheFormWasMeasuredAt();
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
@@ -395,6 +397,31 @@ void DocumentsPageTest::TheNameIsCutInTheMiddleBecauseWhatTellsTwoApartIsAtTheEn
 
     QCOMPARE(TheIndexOf(page, DocumentPanel::Documents)->textElideMode(), Qt::ElideMiddle);
     QCOMPARE(TheIndexOf(page, DocumentPanel::Charts)->textElideMode(), Qt::ElideMiddle);
+}
+
+void DocumentsPageTest::TheDetachedWindowShowsTheReadingAndNotAnEmptyPane()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+    page.show();
+    f.viewModel.ReadTheLibrary();
+
+    QTreeWidget* documents = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* crj = GroupNamed(*documents, QString::fromStdString(kCrj));
+    crj->setExpanded(true);
+    ClickAt(*documents, documents->visualItemRect(crj->child(0)).center());
+
+    page.DetachTheReading();
+
+    const QDialog* window = page.findChild<QDialog*>();
+    const DocumentReader* reading = page.findChild<DocumentReader*>();
+
+    QVERIFY(window != nullptr);
+    QVERIFY(reading != nullptr);
+    QCOMPARE(reading->parentWidget(), window);
+    QVERIFY2(reading->isVisible(),
+             "the stack hides whatever it removes, so a window that only reparents the reading opens on nothing");
 }
 
 void DocumentsPageTest::DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft()
