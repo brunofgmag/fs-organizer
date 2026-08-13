@@ -34,6 +34,7 @@ PresetStartupPanel::PresetStartupPanel(QWidget* parent) : QWidget(parent)
     empty_ = new QLabel(this);
     empty_->setObjectName(QStringLiteral("PanelPromise"));
     empty_->setWordWrap(true);
+    empty_->setMaximumWidth(kReadableWidth);
     empty_->setAlignment(Qt::AlignTop);
 
     body_ = new QStackedWidget(this);
