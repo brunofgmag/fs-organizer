@@ -208,6 +208,11 @@ namespace
     {
         return !addon.itWasWalked || !addon.documents.empty() || !addon.airports.empty();
     }
+
+    [[nodiscard]] bool ItPutsALineOnTheScreen(const DocumentsOfAnAddon& addon)
+    {
+        return !addon.documents.empty() || !addon.airports.empty();
+    }
 }
 
 DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
@@ -253,20 +258,39 @@ std::vector<DocumentsOfAnAddon> DocumentsViewModel::WhatEachAddonCarries(const s
                                                                              return !stop_;
                                                                          });
 
-    return documents_.IndexWhile(libraries, AirportsOfEachAddon(scenery),
-                                 [this, &stopped](const std::size_t indexed, const std::size_t outOf)
-                                 {
-                                     QMetaObject::invokeMethod(this,
-                                                               [this, indexed, outOf]
-                                                               {
-                                                                   emit Progressed(static_cast<int>(indexed),
-                                                                                   static_cast<int>(outOf));
-                                                               });
+    return documents_.IndexWhile(
+        libraries, AirportsOfEachAddon(scenery),
+        [this, &stopped](const DocumentsOfAnAddon& addon, const std::size_t indexed, const std::size_t outOf)
+        {
+            QMetaObject::invokeMethod(this,
+                                      [this, addon, indexed, outOf]
+                                      {
+                                          TakeTheAddonThatArrived(addon);
 
-                                     stopped = stop_;
+                                          emit Progressed(static_cast<int>(indexed), static_cast<int>(outOf));
+                                      });
 
-                                     return !stop_;
-                                 });
+            stopped = stop_;
+
+            return !stop_;
+        });
+}
+
+void DocumentsViewModel::TakeTheAddonThatArrived(const DocumentsOfAnAddon& addon)
+{
+    arriving_.push_back(addon);
+
+    if (!indexed_.empty() || !ItPutsALineOnTheScreen(addon))
+    {
+        return;
+    }
+
+    emit Arrived();
+}
+
+const std::vector<DocumentsOfAnAddon>& DocumentsViewModel::WhatToShow() const
+{
+    return indexed_.empty() ? arriving_ : indexed_;
 }
 
 void DocumentsViewModel::TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found, const bool stopped)
@@ -281,6 +305,7 @@ void DocumentsViewModel::TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found,
     }
 
     indexed_.clear();
+    arriving_.clear();
 
     for (DocumentsOfAnAddon& addon : found)
     {
@@ -307,6 +332,7 @@ void DocumentsViewModel::ReadTheLibrary()
 
     reading_ = true;
     stop_ = false;
+    arriving_.clear();
 
     emit ReadingChanged();
 
@@ -424,7 +450,7 @@ std::vector<DocumentGroup> DocumentsViewModel::TheDocuments() const
 {
     std::vector<DocumentGroup> groups;
 
-    for (const DocumentsOfAnAddon& addon : indexed_)
+    for (const DocumentsOfAnAddon& addon : WhatToShow())
     {
         if (addon.documents.empty())
         {
@@ -456,7 +482,7 @@ std::vector<DocumentGroup> DocumentsViewModel::TheCharts() const
     std::vector<DocumentGroup> groups;
     DocumentGroup loose{.name = tr("Charts with no airport")};
 
-    for (const DocumentsOfAnAddon& addon : indexed_)
+    for (const DocumentsOfAnAddon& addon : WhatToShow())
     {
         for (const ChartsOfAnAirport& airport : addon.airports)
         {
@@ -542,7 +568,7 @@ std::size_t DocumentsViewModel::CountOf(const DocumentPanel panel) const
 
 std::optional<DocumentPlace> DocumentsViewModel::WhereToFind(const std::string& addon) const
 {
-    for (const DocumentsOfAnAddon& indexed : indexed_)
+    for (const DocumentsOfAnAddon& indexed : WhatToShow())
     {
         if (indexed.addon.folderName != addon)
         {

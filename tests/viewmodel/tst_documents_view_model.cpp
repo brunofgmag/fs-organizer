@@ -49,6 +49,8 @@ namespace
         static void WhatWasKeptShowsWithoutWalkingAndTheReadingReplacesIt();
         static void AReadingThatWasStoppedChangesNeitherTheIndexNorWhatWasKept();
         static void TheReadingSaysHowManyAddonsItHasIndexedSoFar();
+        static void TheIndexTakesEachAddonAsItArrivesInsteadOfWaitingForTheWholeReading();
+        static void TheRereadShowsTheIndexItAlreadyHasAndNotTheOneBeingBuilt();
         static void ThePanelThatCarriesAnAddonIsTheOneWithItsDocumentation();
         static void EachLineSaysWhetherItIsAChartSoTheReaderKnowsTheGesture();
         static void AMarkedPageIsKeptWithTheDocumentThatCarriesIt();
@@ -392,6 +394,49 @@ void DocumentsViewModelTest::TheReadingSaysHowManyAddonsItHasIndexedSoFar()
     QCOMPARE(progressed.first().at(1).toInt(), 5);
     QCOMPARE(progressed.last().at(0).toInt(), 5);
     QVERIFY(f.viewModel.ItWasRead());
+}
+
+void DocumentsViewModelTest::TheIndexTakesEachAddonAsItArrivesInsteadOfWaitingForTheWholeReading()
+{
+    Fixture f;
+    std::vector<std::size_t> grew;
+
+    QObject::connect(&f.viewModel, &DocumentsViewModel::Arrived, &f.viewModel,
+                     [&f, &grew]
+                     {
+                         grew.push_back(f.viewModel.GroupsOf(DocumentPanel::Documents).size()
+                                        + f.viewModel.GroupsOf(DocumentPanel::Charts).size());
+                     });
+
+    f.viewModel.ReadTheLibrary();
+
+    QVERIFY2(grew.size() == std::size_t{4},
+             "the first reading of all shows a group the moment its addon is read, and the addon carrying nothing "
+             "shows none");
+    QCOMPARE(grew.front(), std::size_t{1});
+    QCOMPARE(grew.back(), std::size_t{4});
+}
+
+void DocumentsViewModelTest::TheRereadShowsTheIndexItAlreadyHasAndNotTheOneBeingBuilt()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const std::size_t whole = f.viewModel.GroupsOf(DocumentPanel::Documents).size();
+    const QSignalSpy arrived(&f.viewModel, &DocumentsViewModel::Arrived);
+    std::size_t duringTheReread = 0;
+
+    QObject::connect(&f.viewModel, &DocumentsViewModel::Progressed, &f.viewModel,
+                     [&f, &duringTheReread]
+                     {
+                         duringTheReread = f.viewModel.GroupsOf(DocumentPanel::Documents).size();
+                     });
+
+    f.viewModel.ReadTheLibrary();
+
+    QCOMPARE(duringTheReread, whole);
+    QVERIFY2(arrived.isEmpty(),
+             "the reread happens behind the index the user already has, so no half-built one is put on top of it");
 }
 
 void DocumentsViewModelTest::ThePanelThatCarriesAnAddonIsTheOneWithItsDocumentation()

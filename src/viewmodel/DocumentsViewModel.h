@@ -102,6 +102,8 @@ public:
 signals:
     void Indexed();
 
+    void Arrived();
+
     void ReadingChanged();
 
     void Progressed(int indexed, int outOf);
@@ -111,6 +113,10 @@ private:
     WhatEachAddonCarries(const std::vector<Library>& libraries, const std::vector<AddonToRead>& addons, bool& stopped);
 
     void TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found, bool stopped);
+
+    void TakeTheAddonThatArrived(const DocumentsOfAnAddon& addon);
+
+    [[nodiscard]] const std::vector<DocumentsOfAnAddon>& WhatToShow() const;
 
     [[nodiscard]] std::vector<DocumentGroup> TheDocuments() const;
 
@@ -140,6 +146,7 @@ private:
     const Clock& clock_;
 
     std::vector<DocumentsOfAnAddon> indexed_{};
+    std::vector<DocumentsOfAnAddon> arriving_{};
     std::optional<std::chrono::system_clock::time_point> readAt_{};
     bool itWasRead_ = false;
     bool reading_ = false;

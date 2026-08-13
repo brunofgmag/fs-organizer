@@ -199,7 +199,7 @@ std::vector<DocumentsOfAnAddon> DocumentService::IndexWhile(const std::vector<Li
 
         indexed.push_back(DocumentsOf(addon, folder, codes == nullptr ? std::vector<std::string>{} : *codes));
 
-        if (onProgress && !onProgress(indexed.size(), addons.size()))
+        if (onProgress && !onProgress(indexed.back(), indexed.size(), addons.size()))
         {
             break;
         }

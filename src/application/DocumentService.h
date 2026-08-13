@@ -16,7 +16,7 @@
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/scenery/AirportCoverage.h"
 
-using DocumentProgress = std::function<bool(std::size_t indexed, std::size_t outOf)>;
+using DocumentProgress = std::function<bool(const DocumentsOfAnAddon& addon, std::size_t indexed, std::size_t outOf)>;
 
 class DocumentService
 {

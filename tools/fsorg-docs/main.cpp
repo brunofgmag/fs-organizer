@@ -348,7 +348,7 @@ int main(int argc, char* argv[])
 
     const std::vector<DocumentsOfAnAddon> indexed =
         documents.IndexWhile(libraries, airports,
-                             [](const std::size_t indexedSoFar, const std::size_t outOf)
+                             [](const DocumentsOfAnAddon&, const std::size_t indexedSoFar, const std::size_t outOf)
                              {
                                  Out() << "\r  " << QString::number(indexedSoFar) << "/" << QString::number(outOf)
                                        << "  ";
