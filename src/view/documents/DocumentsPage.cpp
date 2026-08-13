@@ -332,6 +332,28 @@ void DocumentsPage::ConnectTheReader()
                     viewModel_.RememberThePage(*open_, page);
                 }
             });
+    connect(reader_, &DocumentReader::TheMarkOfThePageWasTurned, this,
+            [this](const int page, const bool marked)
+            {
+                if (!open_.has_value())
+                {
+                    return;
+                }
+
+                viewModel_.MarkThePage(*open_, page, marked);
+                reader_->ShowTheBookmarks(viewModel_.BookmarksOf(*open_));
+            });
+    connect(reader_, &DocumentReader::TheBookmarkWasNamed, this,
+            [this](const int page, const QString& name)
+            {
+                if (!open_.has_value())
+                {
+                    return;
+                }
+
+                viewModel_.NameTheBookmark(*open_, page, name.toStdString());
+                reader_->ShowTheBookmarks(viewModel_.BookmarksOf(*open_));
+            });
     connect(reader_, &DocumentReader::TheFolderWasAskedFor, this,
             [this]
             {
@@ -494,7 +516,7 @@ void DocumentsPage::Open(const DocumentLine& line)
 
     open_ = line;
 
-    reader_->Read(line.file, viewModel_.PageOf(line), line.kind);
+    reader_->Read(line.file, viewModel_.PageOf(line), line.kind, viewModel_.BookmarksOf(line));
     reader_->SayItIsShowing(line.caption);
 
     if (window_ != nullptr)

@@ -641,3 +641,63 @@ void DocumentsViewModel::RememberThePage(const DocumentLine& line, const int pag
                  known.page = page;
              });
 }
+
+std::vector<DocumentBookmark> DocumentsViewModel::BookmarksOf(const DocumentLine& line) const
+{
+    const ReadDocument* known = Remembered(line);
+
+    if (known == nullptr)
+    {
+        return {};
+    }
+
+    return known->bookmarks;
+}
+
+void DocumentsViewModel::MarkThePage(const DocumentLine& line, const int page, const bool marked)
+{
+    Remember(line,
+             [page, marked](ReadDocument& known)
+             {
+                 const auto where = std::ranges::find_if(known.bookmarks,
+                                                         [page](const DocumentBookmark& mark)
+                                                         {
+                                                             return mark.page == page;
+                                                         });
+
+                 if (!marked)
+                 {
+                     if (where != known.bookmarks.end())
+                     {
+                         known.bookmarks.erase(where);
+                     }
+
+                     return;
+                 }
+
+                 if (where != known.bookmarks.end())
+                 {
+                     return;
+                 }
+
+                 known.bookmarks.insert(std::ranges::upper_bound(known.bookmarks, page, {}, &DocumentBookmark::page),
+                                        DocumentBookmark{.page = page, .name = {}});
+             });
+}
+
+void DocumentsViewModel::NameTheBookmark(const DocumentLine& line, const int page, const std::string& name)
+{
+    Remember(line,
+             [page, &name](ReadDocument& known)
+             {
+                 for (DocumentBookmark& mark : known.bookmarks)
+                 {
+                     if (mark.page == page)
+                     {
+                         mark.name = name;
+
+                         return;
+                     }
+                 }
+             });
+}

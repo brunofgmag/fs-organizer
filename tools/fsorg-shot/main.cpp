@@ -171,6 +171,39 @@ namespace
         return TheDeepestFirstLineOf(heading->child(0));
     }
 
+    QList<QTreeWidgetItem*> EveryLineUnderAGroupOf(QTreeWidget& index)
+    {
+        QList<QTreeWidgetItem*> lines;
+        QList<QTreeWidgetItem*> pending;
+
+        for (int group = 0; group < index.topLevelItemCount(); ++group)
+        {
+            pending.append(index.topLevelItem(group));
+        }
+
+        while (!pending.isEmpty())
+        {
+            QTreeWidgetItem* heading = pending.takeFirst();
+
+            if (heading->childCount() > 0)
+            {
+                heading->setExpanded(true);
+            }
+
+            for (int within = 0; within < heading->childCount(); ++within)
+            {
+                pending.append(heading->child(within));
+            }
+
+            if (heading->childCount() == 0 && heading->parent() != nullptr)
+            {
+                lines.append(heading);
+            }
+        }
+
+        return lines;
+    }
+
     QTreeWidgetItem* TheFirstLineUnderAGroupOf(QTreeWidget& index)
     {
         for (int group = 0; group < index.topLevelItemCount(); ++group)
@@ -892,6 +925,101 @@ int main(int argc, char* argv[])
         else
         {
             Out() << "the library carries no chart, so there is no documentation tab to write\n";
+        }
+    }
+
+    {
+        documentsPage->Show(DocumentPanel::Documents);
+        LetTheLayoutSettle();
+
+        auto* index = documentsPage->findChild<QTreeWidget*>(QStringLiteral("DocumentsIndex"));
+
+        QTreeWidgetItem* withAnOutline = nullptr;
+        QTreeWidgetItem* withoutOne = nullptr;
+
+        if (index != nullptr)
+        {
+            for (QTreeWidgetItem* line : EveryLineUnderAGroupOf(*index))
+            {
+                if (withAnOutline != nullptr && withoutOne != nullptr)
+                {
+                    break;
+                }
+
+                ClickTheRow(*index, line);
+                KeepTheEventLoopTurning(4);
+
+                auto* pane = documentsPage->findChild<QTreeWidget*>(QStringLiteral("ReadingOutline"));
+                auto* forward = documentsPage->findChild<QPushButton*>(QStringLiteral("NextPage"));
+
+                if (pane == nullptr || forward == nullptr || !forward->isEnabled())
+                {
+                    continue;
+                }
+
+                if (pane->topLevelItemCount() > 1 && withAnOutline == nullptr)
+                {
+                    withAnOutline = line;
+                    continue;
+                }
+
+                if (pane->topLevelItemCount() == 0 && withoutOne == nullptr)
+                {
+                    withoutOne = line;
+                }
+            }
+        }
+
+        if (withAnOutline == nullptr)
+        {
+            Out() << "no document of this library carries an outline, so 28-documents-outline is not written\n";
+        }
+        else
+        {
+            ClickTheRow(*index, withAnOutline);
+            KeepTheEventLoopTurning(4);
+
+            auto* pane = documentsPage->findChild<QTreeWidget*>(QStringLiteral("ReadingOutline"));
+
+            ClickTheRow(*pane, pane->topLevelItem(pane->topLevelItemCount() / 2));
+            KeepTheEventLoopTurning(6);
+
+            if (auto* mark = documentsPage->findChild<QPushButton*>(QStringLiteral("BookmarkThePage")))
+            {
+                mark->click();
+            }
+
+            KeepTheEventLoopTurning(6);
+
+            landed = Save(*documentsPage, folder, QStringLiteral("28-documents-outline")) && landed;
+        }
+
+        if (withoutOne == nullptr)
+        {
+            Out() << "every document of this library carries an outline, so 29-documents-bookmark is not written\n";
+        }
+        else
+        {
+            ClickTheRow(*index, withoutOne);
+            KeepTheEventLoopTurning(4);
+
+            auto* forward = documentsPage->findChild<QPushButton*>(QStringLiteral("NextPage"));
+
+            for (int step = 0; step < 12 && forward->isEnabled(); ++step)
+            {
+                forward->click();
+            }
+
+            KeepTheEventLoopTurning(6);
+
+            if (auto* mark = documentsPage->findChild<QPushButton*>(QStringLiteral("BookmarkThePage")))
+            {
+                mark->click();
+            }
+
+            KeepTheEventLoopTurning(6);
+
+            landed = Save(*documentsPage, folder, QStringLiteral("29-documents-bookmark")) && landed;
         }
     }
 

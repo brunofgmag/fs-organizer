@@ -1924,57 +1924,107 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentReader</name>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="181"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="263"/>
         <source>Previous page</source>
         <translation>Página anterior</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="182"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="264"/>
         <source>Next page</source>
         <translation>Próxima página</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="183"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="265"/>
         <source>Fit width</source>
         <translation>Ajustar à largura</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="184"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="266"/>
+        <source>Bookmark</source>
+        <translation>Marca-página</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="267"/>
         <source>Bring it back</source>
         <translation>Trazer de volta</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="184"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="267"/>
         <source>Detach</source>
         <translation>Destacar</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="185"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="268"/>
         <source>Open folder</source>
         <translation>Abrir a pasta</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="186"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="270"/>
+        <source>Rename this bookmark…</source>
+        <translation>Renomear este marca-página…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="271"/>
+        <source>Remove this bookmark</source>
+        <translation>Remover este marca-página</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="449"/>
+        <source>Page %1</source>
+        <translation>Página %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="456"/>
         <source>Outline</source>
         <translation>Índice</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="187"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="461"/>
+        <source>Bookmarks</source>
+        <translation>Marca-páginas</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="464"/>
+        <source>Outline and bookmarks</source>
+        <translation>Índice e marca-páginas</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="520"/>
+        <source>Rename the bookmark</source>
+        <translation>Renomear o marca-página</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="520"/>
+        <source>Name:</source>
+        <translation>Nome:</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="548"/>
+        <source>Remove the bookmark</source>
+        <translation>Remover o marca-página</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="548"/>
+        <source>Remove the bookmark &quot;%1&quot;?</source>
+        <translation>Remover o marca-página &quot;%1&quot;?</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="272"/>
         <source>Search in this document</source>
         <translation>Buscar neste documento</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="198"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="283"/>
         <source>Not found</source>
         <translation>Nada encontrado</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="203"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="288"/>
         <source>%1 of %2</source>
         <translation>%1 de %2</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="208"/>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="293"/>
         <source>Page %1 of %2</source>
         <translation>Página %1 de %2</translation>
     </message>
@@ -1982,85 +2032,85 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentsPage</name>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="503"/>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="580"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="525"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="602"/>
         <source>Reading in a separate window</source>
         <translation>Leitura numa janela à parte</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="564"/>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="703"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="586"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="724"/>
         <source>Documents</source>
         <translation>Documentos</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="581"/>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="729"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="602"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="749"/>
         <source>Nothing open yet</source>
         <translation>Nada aberto ainda</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="703"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="724"/>
         <source>Charts</source>
         <translation>Cartas</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="714"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="734"/>
         <source>Read again</source>
         <translation>Ler de novo</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="715"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="735"/>
         <source>Stop</source>
         <translation>Parar</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="716"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="736"/>
         <source>Bring it back</source>
         <translation>Trazer de volta</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="717"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="737"/>
         <source>Read the library</source>
         <translation>Ler a biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="721"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="741"/>
         <source>Read on %1</source>
         <translation>Lido em %1</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="724"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="744"/>
         <source>Reading the library…</source>
         <translation>Lendo a biblioteca…</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="725"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="745"/>
         <source>Reading the library… %1 of %2</source>
         <translation>Lendo a biblioteca… %1 de %2</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="730"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="750"/>
         <source>Pick a document on the left. The one you were last reading opens where you stopped.</source>
         <translation>Escolha um documento à esquerda. O último que você estava lendo abre onde você parou.</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="734"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="754"/>
         <source>No documentation in this library</source>
         <translation>Nenhuma documentação nesta biblioteca</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="735"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="755"/>
         <source>None of the addons carries a PDF. When one does, it shows up here without you asking.</source>
         <translation>Nenhum addon traz um PDF. Quando algum trouxer, ele aparece aqui sem você pedir.</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="741"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="761"/>
         <source>The library was never read for documentation</source>
         <translation>A biblioteca nunca foi lida em busca de documentação</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentsPage.cpp" line="742"/>
+        <location filename="../src/view/documents/DocumentsPage.cpp" line="762"/>
         <source>Reading it walks every addon looking for PDFs, and what it finds is written down so the next time is instant.</source>
         <translation>Ler percorre todo addon procurando PDF, e o que ela achar fica gravado para a próxima vez ser instantânea.</translation>
     </message>
@@ -2146,12 +2196,12 @@ Também existe na biblioteca: %2</translation>
         <translation>p. %1</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="458"/>
+        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="457"/>
         <source>Charts with no airport</source>
         <translation>Cartas sem aeroporto</translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="504"/>
+        <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="503"/>
         <source>Favourites</source>
         <translation>Favoritos</translation>
     </message>
@@ -4622,12 +4672,12 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="750"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="783"/>
         <source>Restore the selected ones</source>
         <translation>Restaurar selecionados</translation>
     </message>
     <message>
-        <location filename="../tools/fsorg-shot/main.cpp" line="963"/>
+        <location filename="../tools/fsorg-shot/main.cpp" line="1092"/>
         <source>Unregister</source>
         <translation>Descadastrar</translation>
     </message>

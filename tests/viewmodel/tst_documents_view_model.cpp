@@ -51,6 +51,10 @@ namespace
         static void TheReadingSaysHowManyAddonsItHasIndexedSoFar();
         static void ThePanelThatCarriesAnAddonIsTheOneWithItsDocumentation();
         static void EachLineSaysWhetherItIsAChartSoTheReaderKnowsTheGesture();
+        static void AMarkedPageIsKeptWithTheDocumentThatCarriesIt();
+        static void TheMarksComeBackInPageOrderWhateverOrderTheyWereMadeIn();
+        static void MarkingAPageThatAlreadyCarriesOneTakesTheMarkAway();
+        static void TheNameTheUserGaveIsKeptAndTheDerivedOneIsNot();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -177,6 +181,13 @@ namespace
         }
 
         return nullptr;
+    }
+
+    [[nodiscard]] DocumentLine TheFirstDocumentOfTheCrj(const Fixture& fixture)
+    {
+        const std::vector<DocumentGroup> documents = fixture.viewModel.GroupsOf(DocumentPanel::Documents);
+
+        return GroupNamed(documents, QString::fromStdString(kCrj))->lines.front();
     }
 
 }
@@ -415,6 +426,73 @@ void DocumentsViewModelTest::EachLineSaysWhetherItIsAChartSoTheReaderKnowsTheGes
     QCOMPARE(crj->lines.front().kind, DocumentKind::Document);
     QCOMPARE(strasbourg->groups.front().lines.front().kind, DocumentKind::Chart);
     QCOMPARE(crj->lines.front().file, FolderOf(kCrj) / "Documentation" / "Vol2_Quick Reference Guide_550_700.pdf");
+}
+
+void DocumentsViewModelTest::AMarkedPageIsKeptWithTheDocumentThatCarriesIt()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+
+    QVERIFY(f.viewModel.BookmarksOf(line).empty());
+
+    f.viewModel.MarkThePage(line, 12, true);
+
+    QCOMPARE(f.viewModel.BookmarksOf(line).size(), std::size_t{1});
+    QCOMPARE(f.viewModel.BookmarksOf(line).front().page, 12);
+    QCOMPARE(f.settings.stored.documents.size(), std::size_t{1});
+    QCOMPARE(f.settings.stored.documents.front().bookmarks.size(), std::size_t{1});
+}
+
+void DocumentsViewModelTest::TheMarksComeBackInPageOrderWhateverOrderTheyWereMadeIn()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+
+    f.viewModel.MarkThePage(line, 40, true);
+    f.viewModel.MarkThePage(line, 7, true);
+
+    const std::vector<DocumentBookmark> marks = f.viewModel.BookmarksOf(line);
+
+    QCOMPARE(marks.size(), std::size_t{2});
+    QVERIFY2(marks.front().page == 7,
+             "the ordinal of a derived name counts in page order, and the panel nests them under their section in the "
+             "same order");
+    QCOMPARE(marks.back().page, 40);
+}
+
+void DocumentsViewModelTest::MarkingAPageThatAlreadyCarriesOneTakesTheMarkAway()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+
+    f.viewModel.MarkThePage(line, 12, true);
+    f.viewModel.MarkThePage(line, 40, true);
+    f.viewModel.MarkThePage(line, 12, false);
+
+    const std::vector<DocumentBookmark> marks = f.viewModel.BookmarksOf(line);
+
+    QCOMPARE(marks.size(), std::size_t{1});
+    QCOMPARE(marks.front().page, 40);
+}
+
+void DocumentsViewModelTest::TheNameTheUserGaveIsKeptAndTheDerivedOneIsNot()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+
+    f.viewModel.MarkThePage(line, 12, true);
+    f.viewModel.NameTheBookmark(line, 12, "Where I stopped");
+
+    QCOMPARE(f.viewModel.BookmarksOf(line).front().name, std::string{"Where I stopped"});
+    QCOMPARE(f.settings.stored.documents.front().bookmarks.front().name, std::string{"Where I stopped"});
 }
 
 QTEST_APPLESS_MAIN(DocumentsViewModelTest)

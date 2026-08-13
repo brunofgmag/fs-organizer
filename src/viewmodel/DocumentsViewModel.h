@@ -93,6 +93,12 @@ public:
 
     void RememberThePage(const DocumentLine& line, int page);
 
+    [[nodiscard]] std::vector<DocumentBookmark> BookmarksOf(const DocumentLine& line) const;
+
+    void MarkThePage(const DocumentLine& line, int page, bool marked);
+
+    void NameTheBookmark(const DocumentLine& line, int page, const std::string& name);
+
 signals:
     void Indexed();
 
