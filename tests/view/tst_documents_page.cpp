@@ -3,10 +3,13 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
 #include <QtGui/QAction>
+#include <QtGui/QContextMenuEvent>
 #include <QtGui/QWheelEvent>
 #include <QtPdfWidgets/QPdfView>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTreeWidget>
@@ -70,6 +73,7 @@ namespace
         static void ADerivedMarkIsNamedByItsPageAndANameTheUserGaveWins();
         static void ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark();
         static void TheMenuAnswersOnAMarkAndOnNothingElse();
+        static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
         static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
         static void AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt();
@@ -232,6 +236,13 @@ namespace
     void ClickAt(QTreeWidget& index, const QPoint& where)
     {
         QTest::mouseClick(index.viewport(), Qt::LeftButton, {}, where);
+    }
+
+    void RightClickAt(QTreeWidget& index, const QPoint& where)
+    {
+        QContextMenuEvent asked(QContextMenuEvent::Mouse, where, index.viewport()->mapToGlobal(where));
+
+        QApplication::sendEvent(index.viewport(), &asked);
     }
 
     [[nodiscard]] bool WhatTheMenuAsks(const QMessageBox::StandardButton answer, QAction& action)
@@ -678,6 +689,44 @@ void DocumentsPageTest::ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark(
     QCOMPARE(pane->topLevelItemCount(), 1);
     QCOMPARE(pane->topLevelItem(0)->text(0), QString::fromUtf8("● Page 41"));
     QCOMPARE(reader.findChild<QLabel*>(QStringLiteral("PanelSubHeading"))->text(), QStringLiteral("Bookmarks"));
+}
+
+void DocumentsPageTest::TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    reader.Read(manual, 13, DocumentKind::Document, {{.page = 13, .name = {}}});
+
+    QTreeWidget* pane = ThePaneOf(reader);
+    QTreeWidgetItem* hydraulics = SectionNamed(*pane, QStringLiteral("Hydraulics"));
+    hydraulics->setExpanded(true);
+
+    QMenu* menu = reader.findChild<QMenu*>();
+
+    QVERIFY(menu != nullptr);
+    QVERIFY(!menu->isVisible());
+
+    RightClickAt(*pane, pane->visualItemRect(hydraulics->child(0)).center());
+
+    QVERIFY2(menu->isVisible(), "the mark is what the two entries act on, so asking on the mark offers them");
+
+    menu->hide();
+    pane->setCurrentItem(hydraulics->child(0));
+
+    const QPoint below(pane->viewport()->width() / 2, pane->viewport()->height() - 4);
+
+    QVERIFY2(pane->itemAt(below) == nullptr, "the second point has to be empty for the check below to mean anything");
+
+    RightClickAt(*pane, below);
+
+    QVERIFY2(!menu->isVisible(),
+             "the empty space under the last line carries no mark, and the menu of whichever line happened to be "
+             "chosen is not the menu of that space");
 }
 
 void DocumentsPageTest::TheMenuAnswersOnAMarkAndOnNothingElse()

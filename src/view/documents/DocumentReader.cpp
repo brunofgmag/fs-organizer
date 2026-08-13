@@ -14,6 +14,7 @@
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
@@ -495,6 +496,20 @@ void DocumentReader::SayWhetherThisPageIsMarked() const
                                               }));
 }
 
+void DocumentReader::OfferTheMenuAt(const QPoint& where)
+{
+    QTreeWidgetItem* under = outlineView_->itemAt(where);
+
+    if (under == nullptr || !ItIsABookmark(*under))
+    {
+        return;
+    }
+
+    outlineView_->setCurrentItem(under);
+    SayWhatTheMenuCanDo();
+    menu_->popup(outlineView_->viewport()->mapToGlobal(where));
+}
+
 void DocumentReader::SayWhatTheMenuCanDo() const
 {
     const QTreeWidgetItem* chosen = outlineView_->currentItem();
@@ -566,12 +581,16 @@ void DocumentReader::BuildTheOutlinePane()
     outlineView_->setObjectName(QStringLiteral("ReadingOutline"));
     outlineView_->setColumnCount(1);
     outlineView_->setHeaderHidden(true);
-    outlineView_->setContextMenuPolicy(Qt::ActionsContextMenu);
+    outlineView_->setContextMenuPolicy(Qt::CustomContextMenu);
 
     rename_ = new QAction(this);
     forget_ = new QAction(this);
     outlineView_->addAction(rename_);
     outlineView_->addAction(forget_);
+
+    menu_ = new QMenu(this);
+    menu_->addAction(rename_);
+    menu_->addAction(forget_);
 
     outlinePane_ = new QWidget(this);
     outlinePane_->setFixedWidth(kOutlineWidth);
@@ -677,6 +696,7 @@ void DocumentReader::ConnectThePane()
             {
                 SayWhatTheMenuCanDo();
             });
+    connect(outlineView_, &QTreeWidget::customContextMenuRequested, this, &DocumentReader::OfferTheMenuAt);
     connect(rename_, &QAction::triggered, this, &DocumentReader::RenameWhatIsChosen);
     connect(forget_, &QAction::triggered, this, &DocumentReader::ForgetWhatIsChosen);
 }
