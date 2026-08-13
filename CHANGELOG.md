@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.38.0](https://github.com/brunofgmag/fs-organizer/compare/v0.37.0...v0.38.0) (2026-08-13)
+
+
+### Features
+
+* **documents:** show each addon in the index as the first reading finds it ([#106](https://github.com/brunofgmag/fs-organizer/issues/106)) ([cca0b02](https://github.com/brunofgmag/fs-organizer/commit/cca0b0220323006cfa51d5eaf1bab7ad82dc627d))
+* **documents:** show the detached reading, and give the reader bar its steps and lenses ([#105](https://github.com/brunofgmag/fs-organizer/issues/105)) ([3ba16f8](https://github.com/brunofgmag/fs-organizer/commit/3ba16f89672cddd88b2b186de21bf9fd3ef9bc44))
+
 ## [0.37.0](https://github.com/brunofgmag/fs-organizer/compare/v0.36.0...v0.37.0) (2026-08-13)
 
 
