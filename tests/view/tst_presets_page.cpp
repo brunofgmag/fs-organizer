@@ -28,6 +28,7 @@
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "view/panels/EmptyState.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/PresetsPage.h"
 #include "view/theme/ModernistTheme.h"
@@ -568,12 +569,17 @@ void PresetsPageTest::TheStartupExplanationKeepsAReadingMeasure()
 
     QCoreApplication::sendPostedEvents(nullptr, QEvent::LayoutRequest);
 
-    const QLabel* promise = governs->parentWidget()->findChild<QLabel*>(QStringLiteral("PanelPromise"));
+    const EmptyState* promise = governs->parentWidget()->findChild<EmptyState*>();
 
-    QVERIFY(promise != nullptr);
-    QVERIFY2(promise->width() <= kReadableWidth,
+    QVERIFY2(promise != nullptr,
+             "the explanation is the empty state the other panels use, not a label that repeats its measure");
+
+    const QLabel* said = promise->findChild<QLabel*>(QStringLiteral("EmptyBody"));
+
+    QVERIFY(said != nullptr);
+    QVERIFY2(said->width() <= kReadableWidth,
              "the sentence that explains the box is read, not scanned, so it keeps the measure the empty states use");
-    QVERIFY2(!promise->text().isEmpty(), "an explanation that is not there cannot be measured");
+    QVERIFY2(!said->text().isEmpty(), "an explanation that is not there cannot be measured");
 }
 
 void PresetsPageTest::TheStartupSectionStaysHiddenUntilThePresetGovernsStartup()

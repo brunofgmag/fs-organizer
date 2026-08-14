@@ -4,7 +4,6 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
-#include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTableWidget>
@@ -13,6 +12,7 @@
 #include "view/TableColumns.h"
 #include "view/delegates/CenteredCheckDelegate.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/panels/EmptyState.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
@@ -31,11 +31,7 @@ PresetStartupPanel::PresetStartupPanel(QWidget* parent) : QWidget(parent)
     governs_ = new QCheckBox(this);
     governs_->setObjectName(QStringLiteral("PresetGovernsStartup"));
 
-    empty_ = new QLabel(this);
-    empty_->setObjectName(QStringLiteral("PanelPromise"));
-    empty_->setWordWrap(true);
-    empty_->setMaximumWidth(kReadableWidth);
-    empty_->setAlignment(Qt::AlignTop);
+    empty_ = new EmptyState(this);
 
     body_ = new QStackedWidget(this);
     body_->addWidget(empty_);
@@ -141,9 +137,7 @@ void PresetStartupPanel::RetranslateUi()
     entries_->setHorizontalHeaderLabels({tr("Entry"), tr("Target"), tr("Enables")});
     governs_->setText(tr("This preset also governs startup entries"));
     update_->setText(tr("Update with the enabled ones"));
-    empty_->setText(tr("Check the box above to have this preset also manage the "
-                       "simulator's startup entries. "
-                       "Checking it captures the entries enabled right now. You "
-                       "can then turn each on or off "
-                       "here."));
+    empty_->Retell(tr("This preset does not govern startup entries"),
+                   tr("Check the box above and it captures the ones enabled right now. You can then turn "
+                      "each on or off here."));
 }

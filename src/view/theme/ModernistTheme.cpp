@@ -70,12 +70,12 @@ QStatusBar::item { border: none; }
 #TriageStrip { background: %chrome%; border-bottom: 1px solid %divider%; }
 #PageToolbar { border-bottom: 1px solid %divider%; }
 #PresetHalves { background: %chrome%; border-bottom: 1px solid %divider%; }
-QPushButton#PresetContentTab, QPushButton#PresetPlanTab {
+#PresetHalves QPushButton {
     background: transparent; border: none; border-right: 1px solid %divider%;
     color: %secondary%; padding: 7px 18px; text-align: center;
 }
-QPushButton#PresetContentTab:hover, QPushButton#PresetPlanTab:hover { color: %text%; }
-QPushButton#PresetContentTab:checked, QPushButton#PresetPlanTab:checked {
+#PresetHalves QPushButton:hover { color: %text%; }
+#PresetHalves QPushButton:checked {
     background: %window%; color: %text%; font-weight: 600; border-bottom: 2px solid %accent%;
     padding-bottom: 5px;
 }
