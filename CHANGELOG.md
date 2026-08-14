@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.43.0](https://github.com/brunofgmag/fs-organizer/compare/v0.42.0...v0.43.0) (2026-08-14)
+
+
+### Features
+
+* **bisection:** find the addon that brings the simulator down, from the screen ([#116](https://github.com/brunofgmag/fs-organizer/issues/116)) ([0d73984](https://github.com/brunofgmag/fs-organizer/commit/0d739841797005272a5e25850e1a71fbf9597359))
+
 ## [0.42.0](https://github.com/brunofgmag/fs-organizer/compare/v0.41.0...v0.42.0) (2026-08-14)
 
 
