@@ -405,6 +405,20 @@ fsorg_add_qt_test(fsorg-preset-plan-tests preset-plan
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-preset-plan-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-coupled-units-tests coupled-units
+        tests/domain/bisection/tst_coupled_units.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-coupled-units-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-coupling-scan-tests coupling-scan
+        tests/domain/bisection/tst_coupling_scan.cpp
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-coupling-scan-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-legacy-preset-tests legacy-preset
         tests/domain/legacy/tst_legacy_preset.cpp
         tests/support/EnumPrinting.h
