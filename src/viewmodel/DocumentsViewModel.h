@@ -99,6 +99,14 @@ public:
 
     void NameTheBookmark(const DocumentLine& line, int page, const std::string& name);
 
+    [[nodiscard]] bool TheWheelZooms() const;
+
+    void MakeTheWheelZoom(bool zooming);
+
+    [[nodiscard]] bool TheDragMovesThePage() const;
+
+    void MakeTheDragMoveThePage(bool moving);
+
 signals:
     void Indexed();
 

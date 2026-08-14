@@ -29,17 +29,28 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                 if (shown_)
                 {
                     Show();
+
+                    return;
                 }
+
+                static_cast<void>(ListWhatIsHeld());
             });
+}
+
+std::vector<QuarantinedItem> QuarantineViewModel::ListWhatIsHeld()
+{
+    std::vector<QuarantinedItem> items = service_.Quarantined(session_.Profile());
+
+    model_.ShowItems(items);
+
+    return items;
 }
 
 void QuarantineViewModel::Show()
 {
     shown_ = true;
 
-    const std::vector<QuarantinedItem> items = service_.Quarantined(session_.Profile());
-
-    model_.ShowItems(items);
+    const std::vector<QuarantinedItem> items = ListWhatIsHeld();
 
     Describe(items);
     Weigh(items);

@@ -140,4 +140,21 @@ inline const std::string kOnEveryPage = "flight manual";
     return APdfMadeOf(objects, {});
 }
 
+[[nodiscard]] inline std::string AManualWhoseFirstPageIsALinkToTheSecond()
+{
+    const std::string kStreamHead = "\nstream\n";
+    const std::string kStreamTail = "\nendstream";
+    const std::string drawn = "BT /F1 12 Tf 20 100 Td (" + kOnEveryPage + ") Tj ET";
+
+    return APdfMadeOf(
+        {"<</Type/Catalog/Pages 2 0 R>>", "<</Type/Pages/Kids[3 0 R 4 0 R]/Count 2>>",
+         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Annots[5 0 R]/Contents 6 0 R/Resources<</Font<</F1 7 0 "
+         "R>>>>>>",
+         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 6 0 R/Resources<</Font<</F1 7 0 R>>>>>>",
+         "<</Type/Annot/Subtype/Link/Rect[0 0 200 200]/Border[0 0 0]/Dest[4 0 R/XYZ null null null]>>",
+         "<</Length " + std::to_string(drawn.size()) + ">>" + kStreamHead + drawn + kStreamTail,
+         "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"},
+        {});
+}
+
 #endif // FS_ORGANIZER_TESTS_SUPPORT_A_PDF_H

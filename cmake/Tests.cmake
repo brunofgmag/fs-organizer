@@ -66,6 +66,13 @@ add_test(NAME no-em-dash
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-em-dash.cmake")
 
+add_test(NAME translations-are-current
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        "-DFSORG_LUPDATE=$<TARGET_FILE:Qt6::lupdate>"
+        "-DFSORG_SCRATCH=${CMAKE_BINARY_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-translations-are-current.cmake")
+
 add_test(NAME code-page
         COMMAND "${CMAKE_COMMAND}"
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"

@@ -8,6 +8,7 @@
 #include <QtWidgets/QWidget>
 
 inline constexpr int kPageGutter = 10;
+inline constexpr int kReadableWidth = 420;
 
 [[nodiscard]] inline int TheTallestADialogMayBe(const QWidget& dialog)
 {

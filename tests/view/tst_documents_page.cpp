@@ -4,6 +4,7 @@
 #include <QtCore/QTimer>
 #include <QtGui/QAction>
 #include <QtGui/QContextMenuEvent>
+#include <QtGui/QMouseEvent>
 #include <QtGui/QWheelEvent>
 #include <QtPdfWidgets/QPdfView>
 #include <QtWidgets/QDialog>
@@ -13,7 +14,10 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QSplitter>
 
 #include <cstddef>
 #include <fstream>
@@ -66,8 +70,14 @@ namespace
         static void TheDetachedWindowShowsTheReadingAndNotAnEmptyPane();
         static void TheAddonAsksForThePanelThatCarriesIt();
         static void TheIndexKeepsTheWidthTheFormWasMeasuredAt();
+        static void TheIndexRunsToTheEdgeOfThePageLikeEveryOtherList();
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
         static void TheWheelZoomsAChartAndScrollsADocument();
+        static void TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot();
+        static void DraggingMovesADocumentAndNotOnlyAChart();
+        static void APointerThatDoesNotWanderLeavesThePageWhereItWas();
+        static void DraggingMovesNothingWhenTheReaderIsToldItShouldNot();
+        static void ThePointerSaysWhenTheReadingCarriesALink();
         static void ThePaneMarksTheSectionThatHoldsThePageTheReadingIsOn();
         static void AMarkHangsUnderItsSectionOnABranchBornOpenAndLightsTheButton();
         static void TheButtonSaysWhichPageIsBeingMarkedAndWhichWayItWent();
@@ -491,6 +501,25 @@ void DocumentsPageTest::TheAddonAsksForThePanelThatCarriesIt()
     QCOMPARE(TheIndexOf(page, DocumentPanel::Documents)->currentItem()->text(1), QString::fromStdString(kCrj));
 }
 
+void DocumentsPageTest::TheIndexRunsToTheEdgeOfThePageLikeEveryOtherList()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1450, 760);
+    page.show();
+    f.viewModel.ReadTheLibrary();
+
+    const QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    const QSplitter* split = page.findChild<QSplitter*>();
+
+    QVERIFY(index != nullptr);
+    QVERIFY(split != nullptr);
+    QCOMPARE(index->mapTo(&page, QPoint(0, 0)).x(), 0);
+    QCOMPARE(split->mapTo(&page, QPoint(0, split->height())).y(), page.height());
+    QVERIFY2(!index->header()->stretchLastSection(),
+             "the last column stretching is what keeps the count from reaching the scrollbar");
+}
+
 void DocumentsPageTest::TheIndexKeepsTheWidthTheFormWasMeasuredAt()
 {
     Fixture f;
@@ -521,6 +550,31 @@ void DocumentsPageTest::TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds(
     f.runner.Finish();
 
     QVERIFY(!ItSaysItIsReading(page));
+}
+
+void DocumentsPageTest::ThePointerSaysWhenTheReadingCarriesALink()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path linked = WrittenInto(folder, L"linked.pdf", AManualWhoseFirstPageIsALinkToTheSecond());
+
+    DocumentReader reader;
+    reader.resize(600, 500);
+    reader.show();
+    reader.Read(linked, 0, DocumentKind::Document, {});
+
+    QPdfView* pages = reader.findChild<QPdfView*>();
+
+    QVERIFY(pages != nullptr);
+
+    const QPointF onTheLink(300, 120);
+    QMouseEvent moved(QEvent::MouseMove, onTheLink, pages->viewport()->mapToGlobal(onTheLink), Qt::NoButton, {},
+                      Qt::NoModifier);
+
+    QCoreApplication::sendEvent(pages->viewport(), &moved);
+
+    QVERIFY2(pages->cursor().shape() == Qt::PointingHandCursor,
+             "the page under the pointer is one big link, so the view itself found it");
+    QCOMPARE(pages->viewport()->cursor().shape(), Qt::PointingHandCursor);
 }
 
 void DocumentsPageTest::TheWheelZoomsAChartAndScrollsADocument()
@@ -560,6 +614,131 @@ void DocumentsPageTest::TheWheelZoomsAChartAndScrollsADocument()
     QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::Custom);
     QVERIFY2(pages->zoomFactor() > before,
              "a chart is read by getting closer to it, and the wheel is the gesture that does that");
+}
+
+namespace
+{
+    void Roll(QPdfView& pages)
+    {
+        QWheelEvent turned(QPointF(100, 100), pages.viewport()->mapToGlobal(QPointF(100, 100)), {}, QPoint(0, 120),
+                           Qt::NoButton, {}, Qt::NoScrollPhase, false);
+
+        QCoreApplication::sendEvent(pages.viewport(), &turned);
+    }
+
+    void PointerAt(QPdfView& pages, const QEvent::Type what, const QPointF& where)
+    {
+        QMouseEvent moved(what, where, pages.viewport()->mapToGlobal(where), Qt::LeftButton, Qt::LeftButton,
+                          Qt::NoModifier);
+
+        QCoreApplication::sendEvent(pages.viewport(), &moved);
+    }
+
+    [[nodiscard]] QPdfView* AManualOpenedIn(DocumentReader& reader, const std::filesystem::path& manual)
+    {
+        reader.resize(900, 600);
+        reader.show();
+        reader.Read(manual, 0, DocumentKind::Document, {});
+
+        QPdfView* pages = reader.findChild<QPdfView*>();
+
+        if (pages == nullptr)
+        {
+            return nullptr;
+        }
+
+        return pages->verticalScrollBar()->maximum() > 0 ? pages : nullptr;
+    }
+}
+
+void DocumentsPageTest::TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path chart = WrittenInto(folder, L"53117.pdf", APdfWhoseInfoSays("/Title(CV-1)"));
+
+    DocumentReader reader;
+    reader.resize(600, 400);
+    reader.show();
+    reader.SayTheWheelZooms(false);
+
+    QPdfView* pages = reader.findChild<QPdfView*>();
+
+    QVERIFY(pages != nullptr);
+
+    reader.Read(chart, 0, DocumentKind::Chart, {});
+    Roll(*pages);
+
+    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::FitToWidth);
+
+    reader.SayTheWheelZooms(true);
+    Roll(*pages);
+
+    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::Custom);
+}
+
+void DocumentsPageTest::DraggingMovesADocumentAndNotOnlyAChart()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    QPdfView* pages = AManualOpenedIn(reader, manual);
+
+    QVERIFY2(pages != nullptr, "the manual has to be taller than the reader for a drag to have anywhere to go");
+
+    const int before = pages->verticalScrollBar()->value();
+
+    PointerAt(*pages, QEvent::MouseButtonPress, QPointF(100, 300));
+    PointerAt(*pages, QEvent::MouseMove, QPointF(100, 200));
+    PointerAt(*pages, QEvent::MouseButtonRelease, QPointF(100, 200));
+
+    QVERIFY2(pages->verticalScrollBar()->value() > before,
+             "dragging the page upwards walks the reading forward, and it is a manual, not a chart");
+}
+
+void DocumentsPageTest::APointerThatDoesNotWanderLeavesThePageWhereItWas()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    QPdfView* pages = AManualOpenedIn(reader, manual);
+
+    QVERIFY(pages != nullptr);
+
+    const int before = pages->verticalScrollBar()->value();
+
+    PointerAt(*pages, QEvent::MouseButtonPress, QPointF(100, 300));
+    PointerAt(*pages, QEvent::MouseMove, QPointF(100, 300 - QApplication::startDragDistance() + 1));
+    PointerAt(*pages, QEvent::MouseButtonRelease, QPointF(100, 300 - QApplication::startDragDistance() + 1));
+
+    QCOMPARE(pages->verticalScrollBar()->value(), before);
+
+    PointerAt(*pages, QEvent::MouseMove, QPointF(100, 100));
+
+    QVERIFY2(pages->verticalScrollBar()->value() == before,
+             "the grab ended with the release, so a pointer wandering afterwards moves nothing");
+}
+
+void DocumentsPageTest::DraggingMovesNothingWhenTheReaderIsToldItShouldNot()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    QPdfView* pages = AManualOpenedIn(reader, manual);
+
+    QVERIFY(pages != nullptr);
+
+    reader.SayTheDragMovesThePage(false);
+
+    const int before = pages->verticalScrollBar()->value();
+
+    PointerAt(*pages, QEvent::MouseButtonPress, QPointF(100, 300));
+    PointerAt(*pages, QEvent::MouseMove, QPointF(100, 200));
+    PointerAt(*pages, QEvent::MouseButtonRelease, QPointF(100, 200));
+
+    QCOMPARE(pages->verticalScrollBar()->value(), before);
 }
 
 void DocumentsPageTest::ThePaneMarksTheSectionThatHoldsThePageTheReadingIsOn()

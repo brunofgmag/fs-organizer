@@ -28,6 +28,7 @@
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "view/theme/ModernistMetrics.h"
 #include "view/PresetsPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/PresetViewModel.h"
@@ -56,6 +57,7 @@ namespace
         static void TheOmittedCountAndItsButtonLeaveThePanelOutsideReplace();
         static void TheOmittedAddonsAreListedOnlyWhenAsked();
         static void TheStartupSectionStaysHiddenUntilThePresetGovernsStartup();
+        static void TheStartupExplanationKeepsAReadingMeasure();
         static void TheWayBackIsTheBatchUndoAndFallsBackToTheReturnPreset();
         static void TheTwoHalvesSwapWhatTheRightSideShows();
         static void TheContentTabCountsTheEntriesOfTheSelectedPreset();
@@ -546,6 +548,32 @@ void PresetsPageTest::TheOmittedAddonsAreListedOnlyWhenAsked()
     QVERIFY(show->isEnabled());
 
     QCOMPARE(f.viewModel.Omitted(*f.viewModel.Load(QStringLiteral("Voo de linha")), ApplyMode::Replace).size(), 1);
+}
+
+void PresetsPageTest::TheStartupExplanationKeepsAReadingMeasure()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(1450, 760);
+    page.show();
+
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    QPushButton* startup = page.findChild<QPushButton*>(QStringLiteral("PresetStartupTab"));
+    const QCheckBox* governs = page.findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup"));
+
+    QVERIFY(startup != nullptr && governs != nullptr);
+
+    startup->click();
+
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::LayoutRequest);
+
+    const QLabel* promise = governs->parentWidget()->findChild<QLabel*>(QStringLiteral("PanelPromise"));
+
+    QVERIFY(promise != nullptr);
+    QVERIFY2(promise->width() <= kReadableWidth,
+             "the sentence that explains the box is read, not scanned, so it keeps the measure the empty states use");
+    QVERIFY2(!promise->text().isEmpty(), "an explanation that is not there cannot be measured");
 }
 
 void PresetsPageTest::TheStartupSectionStaysHiddenUntilThePresetGovernsStartup()

@@ -117,15 +117,11 @@ DocumentsPage::DocumentsPage(DocumentsViewModel& viewModel, QWidget* parent) : Q
     body_->addWidget(split_);
     body_->addWidget(nothingIndexed_);
 
-    auto* body = new QHBoxLayout;
-    body->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    body->addWidget(body_);
-
     auto* column = new QVBoxLayout(this);
     column->setContentsMargins(0, 0, 0, 0);
     column->setSpacing(0);
     column->addWidget(TheBar());
-    column->addLayout(body, 1);
+    column->addWidget(body_, 1);
 
     ConnectTheBar();
     ConnectTheIndex();
@@ -184,6 +180,7 @@ QTreeWidget* DocumentsPage::AnIndex(const QString& named)
     index->header()->setSectionResizeMode(kGlyphColumn, QHeaderView::ResizeToContents);
     index->header()->setSectionResizeMode(kNameColumn, QHeaderView::Stretch);
     index->header()->setSectionResizeMode(kDetailColumn, QHeaderView::ResizeToContents);
+    index->header()->setStretchLastSection(false);
     index->viewport()->installEventFilter(this);
 
     return index;
@@ -234,6 +231,8 @@ QWidget* DocumentsPage::TheIndexSide()
 QWidget* DocumentsPage::TheReadingSide()
 {
     reader_ = new DocumentReader(this);
+    reader_->SayTheWheelZooms(viewModel_.TheWheelZooms());
+    reader_->SayTheDragMovesThePage(viewModel_.TheDragMovesThePage());
 
     nothingOpen_ = new EmptyState(this);
 
@@ -349,6 +348,16 @@ void DocumentsPage::ConnectTheReader()
 
                 viewModel_.NameTheBookmark(*open_, page, name.toStdString());
                 reader_->ShowTheBookmarks(viewModel_.BookmarksOf(*open_));
+            });
+    connect(reader_, &DocumentReader::TheWheelWasSetToZoom, this,
+            [this](const bool zooming)
+            {
+                viewModel_.MakeTheWheelZoom(zooming);
+            });
+    connect(reader_, &DocumentReader::TheDragWasSetToMoveThePage, this,
+            [this](const bool moving)
+            {
+                viewModel_.MakeTheDragMoveThePage(moving);
             });
     connect(reader_, &DocumentReader::TheFolderWasAskedFor, this,
             [this]
