@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.39.0](https://github.com/brunofgmag/fs-organizer/compare/v0.38.0...v0.39.0) (2026-08-14)
+
+
+### Features
+
+* switch the reader gestures, and fix what the manual testing found ([#108](https://github.com/brunofgmag/fs-organizer/issues/108)) ([67a1f20](https://github.com/brunofgmag/fs-organizer/commit/67a1f2088483462ea39be8f095ae7f6766e6c034))
+
 ## [0.38.0](https://github.com/brunofgmag/fs-organizer/compare/v0.37.0...v0.38.0) (2026-08-13)
 
 
