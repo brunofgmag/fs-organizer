@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.41.0](https://github.com/brunofgmag/fs-organizer/compare/v0.40.0...v0.41.0) (2026-08-14)
+
+
+### Features
+
+* **documents:** select text in a reading, and fix where the search jump lands ([#112](https://github.com/brunofgmag/fs-organizer/issues/112)) ([e53b399](https://github.com/brunofgmag/fs-organizer/commit/e53b39900ec1c0dc246655c2277acec565608f11))
+
 ## [0.40.0](https://github.com/brunofgmag/fs-organizer/compare/v0.39.0...v0.40.0) (2026-08-14)
 
 
