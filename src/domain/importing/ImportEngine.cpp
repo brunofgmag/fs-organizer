@@ -10,6 +10,29 @@
 
 namespace
 {
+    constexpr std::size_t kFilesHashedAtATime = 32;
+
+    std::vector<std::filesystem::path>
+    TheBlockStartingAt(const std::vector<FileFingerprint>& files, const std::size_t first, const std::size_t past)
+    {
+        std::vector<std::filesystem::path> block;
+        block.reserve(past - first);
+
+        for (std::size_t at = first; at < past; ++at)
+        {
+            block.push_back(files[at].relativePath);
+        }
+
+        return block;
+    }
+
+    bool TheUserAskedToStop(const std::function<bool(const CopyProgress&)>& onProgress,
+                            const std::uintmax_t read,
+                            const std::uintmax_t total)
+    {
+        return onProgress && !onProgress(CopyProgress{.copiedBytes = read, .totalBytes = total});
+    }
+
     std::uintmax_t TotalSizeOf(const std::vector<FileFingerprint>& files)
     {
         const auto sizes = files | std::views::transform(&FileFingerprint::size);
@@ -301,22 +324,35 @@ ImportOutcome ImportEngine::CompareTheContents(const std::filesystem::path& sour
     const std::uintmax_t total = TotalSizeOf(expected);
     std::uintmax_t read = 0;
 
-    for (const FileFingerprint& file : expected)
+    for (std::size_t first = 0; first < expected.size(); first += kFilesHashedAtATime)
     {
-        if (onProgress && !onProgress(CopyProgress{.copiedBytes = read, .totalBytes = total}))
+        if (TheUserAskedToStop(onProgress, read, total))
         {
             return ImportOutcome::Stopped(FileResult::Cancelled);
         }
 
-        const std::optional<std::string> here = filesystemProbe_.HashOf(PathUnder(source, file.relativePath));
-        const std::optional<std::string> landed = filesystemProbe_.HashOf(PathUnder(staging, file.relativePath));
+        const std::size_t past = std::min(first + kFilesHashedAtATime, expected.size());
+        const std::vector<std::filesystem::path> block = TheBlockStartingAt(expected, first, past);
 
-        if (!here.has_value() || !landed.has_value() || *here != *landed)
+        const std::vector<std::optional<std::string>> here = filesystemProbe_.HashesOf(source, block);
+        const std::vector<std::optional<std::string>> landed = filesystemProbe_.HashesOf(staging, block);
+
+        for (std::size_t at = 0; at < block.size(); ++at)
         {
-            return ImportOutcome::Stopped(FileResult::VerificationFailed);
-        }
+            if (!here[at].has_value() || !landed[at].has_value() || here[at] != landed[at])
+            {
+                return ImportOutcome::Stopped(FileResult::VerificationFailed);
+            }
 
-        read += file.size;
+            read += expected[first + at].size;
+
+            const bool theBlockOpeningNextReportsThisOne = at + 1 == block.size();
+
+            if (!theBlockOpeningNextReportsThisOne && TheUserAskedToStop(onProgress, read, total))
+            {
+                return ImportOutcome::Stopped(FileResult::Cancelled);
+            }
+        }
     }
 
     return ImportOutcome::Completed();

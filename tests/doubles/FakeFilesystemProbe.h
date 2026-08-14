@@ -137,7 +137,7 @@ public:
         return contents;
     }
 
-    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const override
+    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const
     {
         hashed.push_back(ComparablePath(path));
 
@@ -150,12 +150,30 @@ public:
         return std::to_string(fileSystem_.FileSize(path)) + ":" + *contents;
     }
 
+    [[nodiscard]] std::vector<std::optional<std::string>>
+    HashesOf(const std::filesystem::path& root, const std::vector<std::filesystem::path>& below) const override
+    {
+        batches.push_back(below.size());
+
+        std::vector<std::optional<std::string>> digests;
+        digests.reserve(below.size());
+
+        for (const std::filesystem::path& relative : below)
+        {
+            digests.push_back(HashOf(PathUnder(root, relative)));
+        }
+
+        return digests;
+    }
+
     [[nodiscard]] std::size_t TimesHashed(const std::filesystem::path& path) const
     {
         return static_cast<std::size_t>(std::ranges::count(hashed, ComparablePath(path)));
     }
 
     mutable std::vector<std::string> hashed;
+
+    mutable std::vector<std::size_t> batches;
 
     [[nodiscard]] std::size_t TimesItReadSomethingEndingIn(const std::string_view suffix) const
     {
