@@ -177,4 +177,86 @@ inline const std::string kOnEveryPage = "flight manual";
                       {});
 }
 
+[[nodiscard]] inline std::vector<std::string> TheLinesDrawnOn(const int page)
+{
+    const std::string mark = "p" + std::to_string(page);
+
+    return {mark + " alpha bravo", mark + " charlie delta", mark + " echo foxtrot"};
+}
+
+[[nodiscard]] inline std::string AManualWhoseLinesAreKnown(const int pages)
+{
+    const std::size_t firstPage = 3;
+    const std::size_t firstStream = firstPage + static_cast<std::size_t>(pages);
+    const std::size_t theFont = firstStream + static_cast<std::size_t>(pages);
+
+    std::string kids;
+    for (int page = 0; page < pages; ++page)
+    {
+        kids += std::to_string(firstPage + static_cast<std::size_t>(page)) + " 0 R ";
+    }
+
+    std::vector<std::string> objects = {"<</Type/Catalog/Pages 2 0 R>>",
+                                        "<</Type/Pages/Kids[" + kids + "]/Count " + std::to_string(pages) + ">>"};
+
+    for (int page = 0; page < pages; ++page)
+    {
+        objects.emplace_back("<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents "
+                             + std::to_string(firstStream + static_cast<std::size_t>(page))
+                             + " 0 R/Resources<</Font<</F1 " + std::to_string(theFont) + " 0 R>>>>>>");
+    }
+
+    for (int page = 0; page < pages; ++page)
+    {
+        const std::vector<std::string> lines = TheLinesDrawnOn(page);
+
+        std::string drawn;
+        int baseline = 160;
+
+        for (const std::string& line : lines)
+        {
+            drawn += "BT /F1 12 Tf 20 " + std::to_string(baseline) + " Td (" + line + ") Tj ET\n";
+            baseline -= 20;
+        }
+
+        objects.push_back("<</Length " + std::to_string(drawn.size()) + ">>\nstream\n" + drawn + "\nendstream");
+    }
+
+    objects.emplace_back("<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>");
+
+    return APdfMadeOf(objects, {});
+}
+
+[[nodiscard]] inline std::string AManualWhosePagesWidenHalfway(const int pages)
+{
+    const std::size_t firstPage = 3;
+    const std::size_t theInk = firstPage + static_cast<std::size_t>(pages);
+    const std::size_t theFont = theInk + 1;
+
+    std::string kids;
+    for (int page = 0; page < pages; ++page)
+    {
+        kids += std::to_string(firstPage + static_cast<std::size_t>(page)) + " 0 R ";
+    }
+
+    std::vector<std::string> objects = {"<</Type/Catalog/Pages 2 0 R>>",
+                                        "<</Type/Pages/Kids[" + kids + "]/Count " + std::to_string(pages) + ">>"};
+
+    for (int page = 0; page < pages; ++page)
+    {
+        const std::string wide = page < pages / 2 ? "200" : "400";
+
+        objects.emplace_back("<</Type/Page/Parent 2 0 R/MediaBox[0 0 " + wide + " 200]/Contents "
+                             + std::to_string(theInk) + " 0 R/Resources<</Font<</F1 " + std::to_string(theFont)
+                             + " 0 R>>>>>>");
+    }
+
+    const std::string drawn = "BT /F1 12 Tf 20 100 Td (" + kOnEveryPage + ") Tj ET";
+
+    objects.push_back("<</Length " + std::to_string(drawn.size()) + ">>\nstream\n" + drawn + "\nendstream");
+    objects.emplace_back("<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>");
+
+    return APdfMadeOf(objects, {});
+}
+
 #endif // FS_ORGANIZER_TESTS_SUPPORT_A_PDF_H

@@ -140,6 +140,7 @@ set(VIEW_SOURCES
         src/view/diagnostics/DiagnosticsPage.cpp
         src/view/documents/DocumentReader.cpp
         src/view/documents/DocumentsPage.cpp
+        src/view/documents/SelectablePages.cpp
         src/view/diagnostics/LoadPanel.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp

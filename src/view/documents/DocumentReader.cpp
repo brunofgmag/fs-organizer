@@ -103,8 +103,8 @@ DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
 {
     document_ = new QPdfDocument(this);
 
-    view_ = new QPdfView(this);
-    view_->setDocument(document_);
+    view_ = new SelectablePages(this);
+    view_->FollowTheDocument(document_);
     view_->setPageMode(QPdfView::PageMode::MultiPage);
     view_->setZoomMode(QPdfView::ZoomMode::Custom);
     view_->setPageSpacing(kPageSpacing);
@@ -224,27 +224,115 @@ void DocumentReader::RestTheCursor() const
     view_->viewport()->unsetCursor();
 }
 
-bool DocumentReader::TheGestureAnswersThe(QEvent* event)
+int DocumentReader::HowManyClicksInARow(QEvent* event)
 {
-    if (event->type() == QEvent::Wheel)
-    {
-        if (!TheGesturesInForce().wheelZooms)
-        {
-            return false;
-        }
+    const QPoint now = static_cast<QMouseEvent*>(event)->pos();
 
-        ZoomBy(static_cast<QWheelEvent*>(event)->angleDelta().y());
+    const bool soonEnough =
+        sinceTheLastClick_.isValid() && sinceTheLastClick_.elapsed() <= QApplication::doubleClickInterval();
+    const bool closeEnough = (now - clickedAt_).manhattanLength() < QApplication::startDragDistance();
+    const bool carriedOn = soonEnough && closeEnough;
+
+    if (event->type() == QEvent::MouseButtonDblClick)
+    {
+        clicksInARow_ = 2;
+    }
+    else if (carriedOn && clicksInARow_ == 2)
+    {
+        clicksInARow_ = 3;
+    }
+    else
+    {
+        clicksInARow_ = 1;
+    }
+
+    clickedAt_ = now;
+    sinceTheLastClick_.start();
+
+    return clicksInARow_;
+}
+
+bool DocumentReader::TheClickChoseSomethingToSelect(QEvent* event)
+{
+    const int clicks = HowManyClicksInARow(event);
+
+    if (clicks == 2)
+    {
+        view_->SelectTheWordAt(clickedAt_);
 
         return true;
     }
 
-    if (!TheGesturesInForce().dragMovesThePage)
+    if (clicks == 3)
+    {
+        view_->SelectTheLineAt(clickedAt_);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool DocumentReader::TheSelectionAnswersThe(QEvent* event)
+{
+    if (event->type() == QEvent::MouseButtonPress)
+    {
+        if (TheClickChoseSomethingToSelect(event))
+        {
+            return true;
+        }
+
+        grabbing_ = true;
+        wandered_ = false;
+        grabbedAt_ = static_cast<QMouseEvent*>(event)->pos();
+        view_->StartSelectingAt(grabbedAt_);
+
+        return false;
+    }
+
+    if (event->type() == QEvent::MouseButtonRelease)
+    {
+        const bool marked = wandered_;
+
+        grabbing_ = false;
+        wandered_ = false;
+
+        return marked;
+    }
+
+    if (event->type() != QEvent::MouseMove || !grabbing_)
     {
         return false;
     }
 
+    const QPoint now = static_cast<QMouseEvent*>(event)->pos();
+
+    if (!wandered_)
+    {
+        if ((now - grabbedAt_).manhattanLength() < QApplication::startDragDistance())
+        {
+            return false;
+        }
+
+        wandered_ = true;
+    }
+
+    view_->ExtendTheSelectionTo(now);
+
+    return true;
+}
+
+bool DocumentReader::ThePanAnswersThe(QEvent* event)
+{
     if (event->type() == QEvent::MouseButtonPress)
     {
+        if (TheClickChoseSomethingToSelect(event))
+        {
+            return true;
+        }
+
+        view_->ForgetTheSelection();
+
         grabbing_ = true;
         wandered_ = false;
         grabbedAt_ = static_cast<QMouseEvent*>(event)->pos();
@@ -290,6 +378,28 @@ bool DocumentReader::TheGestureAnswersThe(QEvent* event)
     return true;
 }
 
+bool DocumentReader::TheGestureAnswersThe(QEvent* event)
+{
+    if (event->type() == QEvent::Wheel)
+    {
+        if (!TheGesturesInForce().wheelZooms)
+        {
+            return false;
+        }
+
+        ZoomBy(static_cast<QWheelEvent*>(event)->angleDelta().y());
+
+        return true;
+    }
+
+    if (event->type() == QEvent::MouseButtonDblClick)
+    {
+        return TheClickChoseSomethingToSelect(event);
+    }
+
+    return TheGesturesInForce().dragMovesThePage ? ThePanAnswersThe(event) : TheSelectionAnswersThe(event);
+}
+
 const ReadingGestures& DocumentReader::TheGesturesInForce() const
 {
     return kind_ == DocumentKind::Chart ? onCharts_ : onDocuments_;
@@ -302,6 +412,7 @@ void DocumentReader::SayTheGesturesOf(const DocumentKind kind, const ReadingGest
     if (kind == kind_)
     {
         ShowTheGesturesInForce();
+        Retranslate();
     }
 }
 
@@ -331,6 +442,13 @@ bool DocumentReader::eventFilter(QObject* watched, QEvent* event)
     if (watched != view_->viewport())
     {
         return QWidget::eventFilter(watched, event);
+    }
+
+    if (event->type() == QEvent::ContextMenu)
+    {
+        OfferTheCopyMenuAt(static_cast<QContextMenuEvent*>(event)->pos());
+
+        return true;
     }
 
     if (TheGestureAnswersThe(event))
@@ -370,7 +488,9 @@ void DocumentReader::Retranslate() const
     nextResult_->setToolTip(tr("Next match"));
     wheelZoom_->setToolTip(kind_ == DocumentKind::Chart ? tr("The wheel zooms the chart")
                                                         : tr("The wheel zooms the document"));
-    dragMoves_->setToolTip(tr("Dragging moves the page"));
+    dragMoves_->setToolTip(dragMoves_->isChecked() ? tr("Dragging moves the page. Turn it off to select text")
+                                                   : tr("Dragging selects text. Turn it on to move the page"));
+    copy_->setText(tr("Copy"));
 
     const bool anythingToStepThrough = !wanted_->text().isEmpty() && search_->rowCount({}) > 0;
 
@@ -437,30 +557,14 @@ void DocumentReader::JumpToTheResult(const int result)
 
 int DocumentReader::WhereTheResultSitsInTheScrollbar(const QPdfLink& found) const
 {
-    qreal everyPage = 0.0;
-    qreal abovePage = 0.0;
+    const WhereAPageSits sits = view_->WhereThePageSits(found.page());
 
-    for (int page = 0; page < document_->pageCount(); ++page)
-    {
-        if (page < found.page())
-        {
-            abovePage += document_->pagePointSize(page).height();
-        }
-
-        everyPage += document_->pagePointSize(page).height();
-    }
-
-    if (everyPage <= 0.0)
+    if (sits.box.isEmpty())
     {
         return -1;
     }
 
-    const QMargins margins = view_->documentMargins();
-    const qreal betweenPages = static_cast<qreal>(view_->pageSpacing());
-    const qreal drawn = view_->verticalScrollBar()->maximum() + view_->viewport()->height() - margins.top()
-        - margins.bottom() - betweenPages * (document_->pageCount() - 1);
-
-    return qRound(margins.top() + betweenPages * found.page() + (abovePage + found.location().y()) / everyPage * drawn);
+    return qRound(sits.box.y() + found.location().y() * sits.scale);
 }
 
 void DocumentReader::BringTheResultIntoView(const QPdfLink& found) const
@@ -663,6 +767,16 @@ void DocumentReader::OfferTheMenuAt(const QPoint& where)
     menu_->popup(outlineView_->viewport()->mapToGlobal(where));
 }
 
+void DocumentReader::OfferTheCopyMenuAt(const QPoint& where)
+{
+    if (!view_->CarriesASelection())
+    {
+        return;
+    }
+
+    copyMenu_->popup(view_->viewport()->mapToGlobal(where));
+}
+
 void DocumentReader::SayWhatTheMenuCanDo() const
 {
     const QTreeWidgetItem* chosen = outlineView_->currentItem();
@@ -744,6 +858,16 @@ void DocumentReader::BuildTheOutlinePane()
     menu_ = new QMenu(this);
     menu_->addAction(rename_);
     menu_->addAction(forget_);
+
+    copy_ = new QAction(this);
+    copyMenu_ = new QMenu(this);
+    copyMenu_->addAction(copy_);
+
+    connect(copy_, &QAction::triggered, this,
+            [this]
+            {
+                view_->CopyWhatIsSelected();
+            });
 
     outlinePane_ = new QWidget(this);
     outlinePane_->setFixedWidth(kOutlineWidth);
@@ -873,6 +997,8 @@ void DocumentReader::ConnectTheBar()
                 {
                     StopAnyGrabbing();
                 }
+
+                Retranslate();
 
                 emit TheDragWasSetToMoveThePage(kind_, moving);
             });
