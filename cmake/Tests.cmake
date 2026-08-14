@@ -419,6 +419,13 @@ fsorg_add_qt_test(fsorg-coupling-scan-tests coupling-scan
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-coupling-scan-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-bisection-drift-tests bisection-drift
+        tests/domain/bisection/tst_bisection_drift.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-bisection-drift-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-bisection-rounds-tests bisection-rounds
         tests/domain/bisection/tst_bisection_rounds.cpp
         tests/support/EnumPrinting.h

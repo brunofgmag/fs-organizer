@@ -7,6 +7,7 @@
 #include "application/StartupReport.h"
 #include "application/ports/PackageList.h"
 #include "application/model/RestorePlan.h"
+#include "domain/bisection/BisectionDrift.h"
 #include "domain/bisection/BisectionRounds.h"
 #include "domain/documents/ChartIndex.h"
 #include "domain/documents/DocumentClassification.h"
@@ -64,6 +65,21 @@ namespace QTest
         }
 
         return qstrdup("ProposedState(?)");
+    }
+
+    template<>
+    inline char* toString(const DriftKind& t)
+    {
+        switch (t)
+        {
+        case DriftKind::ALinkWeLeftIsGone: return qstrdup("ALinkWeLeftIsGone");
+        case DriftKind::AnEntryWeDidNotLeaveIsThere: return qstrdup("AnEntryWeDidNotLeaveIsThere");
+        case DriftKind::AnEntryPointsSomewhereElse: return qstrdup("AnEntryPointsSomewhereElse");
+        case DriftKind::AnAddonLeftTheLibrary: return qstrdup("AnAddonLeftTheLibrary");
+        case DriftKind::AnAddonJoinedTheLibrary: return qstrdup("AnAddonJoinedTheLibrary");
+        }
+
+        return qstrdup("DriftKind(?)");
     }
 
     template<>
