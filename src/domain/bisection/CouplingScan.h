@@ -14,7 +14,16 @@ public:
 
     [[nodiscard]] std::vector<CouplingFacts> FactsAbout(const std::vector<std::filesystem::path>& addonFolders) const;
 
+    [[nodiscard]] std::vector<SearchUnit> WithTheKindOfEachGroup(const std::vector<CouplingFacts>& facts,
+                                                                 std::vector<SearchUnit> units) const;
+
 private:
+    [[nodiscard]] Coupling TheKindOf(const std::vector<CouplingFacts>& facts, const SearchUnit& unit) const;
+
+    [[nodiscard]] bool SomeFileIsClaimedTwice(const SearchUnit& unit) const;
+
+    [[nodiscard]] bool EveryMemberInterleaves(const std::vector<CouplingFacts>& facts, const SearchUnit& unit) const;
+
     [[nodiscard]] CouplingFacts FactsAboutOne(const std::filesystem::path& addonFolder) const;
 
     void ReadTheLiveriesUnder(const std::filesystem::path& modelFolder, CouplingFacts& facts) const;

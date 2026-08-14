@@ -21,6 +21,12 @@ namespace
         static void WhatTheAddonWritesInsideAModelFolderComesOutRelativeToTheAddon();
         static void TheFactsOfEveryAddonComeOutInTheOrderTheyWereAsked();
         static void TheMeasuredMdElevenGroupComesOutAsOneUnit();
+        static void AUnitOfOneAddonIsAlone();
+        static void AGroupThatClaimsTheSameFileTwiceIsShadowing();
+        static void AGroupWhoseMembersInterleaveWithoutClaimingAFileIsMerge();
+        static void AGroupHeldOnlyByTheModelFolderNameSaysSo();
+        static void TheDeepWalkTouchesOnlyTheAddonsThatAreInAGroup();
+        static void ThePackageMetadataEveryAddonCarriesIsNotShadowing();
     };
 }
 
@@ -83,7 +89,12 @@ required_tags = "A343_exterior"
         void PutAModelFolder(const std::filesystem::path& addon, const std::string& model)
         {
             fileSystem.AddDirectory(addon);
-            fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8("SimObjects/Airplanes/" + model)));
+
+            for (const std::string& level :
+                 {std::string{"SimObjects"}, std::string{"SimObjects/Airplanes"}, "SimObjects/Airplanes/" + model})
+            {
+                fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8(level)));
+            }
         }
 
         void PutALivery(const std::filesystem::path& addon,
@@ -217,6 +228,135 @@ void CouplingScanTest::TheMeasuredMdElevenGroupComesOutAsOneUnit()
     QCOMPARE(units.front().addons.size(), std::size_t{2});
     QCOMPARE(units.front().base, std::optional<std::filesystem::path>{kBase});
     QCOMPARE(units.back().addons, std::vector<std::filesystem::path>{kAirport});
+}
+
+namespace
+{
+    constexpr auto kCrj = "D:/MSFS 2024/Aircrafts (2024)/aerosoft-crj";
+    constexpr auto kSoundset = "D:/MSFS 2024/Sounds/xbaw-aircraft-soundset-crj";
+    constexpr auto kOtherLivery = "D:/MSFS 2024/Liveries/tfdidesign-md11f-ces-b2171";
+    constexpr auto kCrjModel = "aerosoft_crj_common";
+
+    void PutAFile(Disk& disk, const std::filesystem::path& addon, const std::string& under)
+    {
+        disk.fileSystem.AddFile(PathUnder(addon, PathFromUtf8(under)));
+    }
+
+    void PutThePackageMetadata(Disk& disk, const std::filesystem::path& addon)
+    {
+        PutAFile(disk, addon, "manifest.json");
+        PutAFile(disk, addon, "layout.json");
+    }
+
+    [[nodiscard]] Coupling TheKindOfTheGroupIn(Disk& disk, const std::vector<std::filesystem::path>& addons)
+    {
+        const std::vector<CouplingFacts> facts = disk.scan.FactsAbout(addons);
+
+        return disk.scan.WithTheKindOfEachGroup(facts, UnitsFrom(facts)).front().coupling;
+    }
+}
+
+void CouplingScanTest::AUnitOfOneAddonIsAlone()
+{
+    Disk disk;
+    disk.fileSystem.AddDirectory(kAirport);
+
+    QCOMPARE(TheKindOfTheGroupIn(disk, {kAirport}), Coupling::Alone);
+}
+
+void CouplingScanTest::AGroupThatClaimsTheSameFileTwiceIsShadowing()
+{
+    Disk disk;
+    const std::string sound = "SimObjects/Airplanes/" + std::string(kCrjModel) + "/sound";
+
+    for (const std::filesystem::path& addon : {std::filesystem::path{kCrj}, std::filesystem::path{kSoundset}})
+    {
+        disk.PutAModelFolder(addon, kCrjModel);
+        disk.fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8(sound)));
+        PutAFile(disk, addon, sound + "/aerosoft_crj.pc.pck");
+        PutAFile(disk, addon, sound + "/sound.xml");
+    }
+
+    QCOMPARE(TheKindOfTheGroupIn(disk, {kCrj, kSoundset}), Coupling::Shadowing);
+}
+
+void CouplingScanTest::AGroupWhoseMembersInterleaveWithoutClaimingAFileIsMerge()
+{
+    Disk disk;
+
+    for (const auto& [addon, name] : {std::pair{kLivery, "ces-b2170-f"}, std::pair{kOtherLivery, "ces-b2171-f"}})
+    {
+        disk.PutAModelFolder(addon, kModel);
+        disk.PutALivery(addon, kModel, name, "livery.cfg", kMeasuredLiveryCfg);
+        PutThePackageMetadata(disk, addon);
+    }
+
+    QCOMPARE(TheKindOfTheGroupIn(disk, {kLivery, kOtherLivery}), Coupling::Merge);
+}
+
+void CouplingScanTest::AGroupHeldOnlyByTheModelFolderNameSaysSo()
+{
+    Disk disk;
+    const std::string under = "SimObjects/Airplanes/" + std::string(kModel);
+
+    disk.PutAModelFolder(kBase, kModel);
+    disk.fileSystem.AddDirectory(PathUnder(kBase, PathFromUtf8(under + "/common")));
+    PutAFile(disk, kBase, under + "/common/md11.bin");
+    PutThePackageMetadata(disk, kBase);
+
+    disk.PutAModelFolder(kLivery, kModel);
+    disk.PutALivery(kLivery, kModel, "ces-b2170-f", "livery.cfg", kMeasuredLiveryCfg);
+    PutThePackageMetadata(disk, kLivery);
+
+    QCOMPARE(TheKindOfTheGroupIn(disk, {kBase, kLivery}), Coupling::OnlyTheSharedModelFolder);
+}
+
+void CouplingScanTest::ThePackageMetadataEveryAddonCarriesIsNotShadowing()
+{
+    Disk disk;
+    const std::string under = "SimObjects/Airplanes/" + std::string(kModel);
+
+    disk.PutAModelFolder(kBase, kModel);
+    disk.fileSystem.AddDirectory(PathUnder(kBase, PathFromUtf8(under + "/common")));
+    PutAFile(disk, kBase, under + "/common/md11.bin");
+
+    disk.PutAModelFolder(kLivery, kModel);
+    disk.PutALivery(kLivery, kModel, "ces-b2170-f", "livery.cfg", kMeasuredLiveryCfg);
+
+    QCOMPARE(TheKindOfTheGroupIn(disk, {kBase, kLivery}), Coupling::OnlyTheSharedModelFolder);
+
+    PutThePackageMetadata(disk, kBase);
+    PutThePackageMetadata(disk, kLivery);
+
+    QCOMPARE(TheKindOfTheGroupIn(disk, {kBase, kLivery}), Coupling::OnlyTheSharedModelFolder);
+}
+
+void CouplingScanTest::TheDeepWalkTouchesOnlyTheAddonsThatAreInAGroup()
+{
+    Disk disk;
+    const std::string sound = "SimObjects/Airplanes/" + std::string(kCrjModel) + "/sound";
+
+    for (const std::filesystem::path& addon : {std::filesystem::path{kCrj}, std::filesystem::path{kSoundset}})
+    {
+        disk.PutAModelFolder(addon, kCrjModel);
+        disk.fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8(sound)));
+        PutAFile(disk, addon, sound + "/sound.xml");
+    }
+
+    disk.fileSystem.AddDirectory(kAirport);
+
+    const std::vector<CouplingFacts> facts = disk.scan.FactsAbout({kCrj, kSoundset, kAirport});
+    const std::vector<SearchUnit> units = disk.scan.WithTheKindOfEachGroup(facts, UnitsFrom(facts));
+
+    const auto Models = [](const std::filesystem::path& addon)
+    {
+        return PathUnder(addon, PathFromUtf8("SimObjects/Airplanes"));
+    };
+
+    QCOMPARE(units.size(), std::size_t{2});
+    QCOMPARE(disk.filesystemProbe.TimesWalked(Models(kAirport)), std::size_t{0});
+    QCOMPARE(disk.filesystemProbe.TimesWalked(Models(kCrj)), std::size_t{1});
+    QCOMPARE(disk.filesystemProbe.TimesWalked(Models(kSoundset)), std::size_t{1});
 }
 
 QTEST_APPLESS_MAIN(CouplingScanTest)
