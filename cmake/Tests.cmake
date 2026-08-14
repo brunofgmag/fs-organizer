@@ -815,6 +815,26 @@ fsorg_add_qt_test(fsorg-diagnostics-view-model-tests diagnostics-view-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-diagnostics-view-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-bisection-view-model-tests bisection-view-model
+        tests/viewmodel/tst_bisection_view_model.cpp
+        tests/doubles/StartupOverFakes.h
+        tests/doubles/FakeBisectionStore.h
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSidecarStore.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-bisection-view-model-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-startup-view-model-tests startup-view-model
         tests/viewmodel/tst_startup_view_model.cpp
         tests/doubles/StartupOverFakes.h

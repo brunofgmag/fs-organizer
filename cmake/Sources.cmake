@@ -111,6 +111,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
+        src/viewmodel/BisectionViewModel.cpp
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
