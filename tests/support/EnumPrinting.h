@@ -7,6 +7,8 @@
 #include "application/StartupReport.h"
 #include "application/ports/PackageList.h"
 #include "application/model/RestorePlan.h"
+#include "domain/bisection/BisectionDrift.h"
+#include "domain/bisection/BisectionRounds.h"
 #include "domain/documents/ChartIndex.h"
 #include "domain/documents/DocumentClassification.h"
 #include "domain/legacy/ProposedState.h"
@@ -63,6 +65,47 @@ namespace QTest
         }
 
         return qstrdup("ProposedState(?)");
+    }
+
+    template<>
+    inline char* toString(const DriftKind& t)
+    {
+        switch (t)
+        {
+        case DriftKind::ALinkWeLeftIsGone: return qstrdup("ALinkWeLeftIsGone");
+        case DriftKind::AnEntryWeDidNotLeaveIsThere: return qstrdup("AnEntryWeDidNotLeaveIsThere");
+        case DriftKind::AnEntryPointsSomewhereElse: return qstrdup("AnEntryPointsSomewhereElse");
+        case DriftKind::AnAddonLeftTheLibrary: return qstrdup("AnAddonLeftTheLibrary");
+        case DriftKind::AnAddonJoinedTheLibrary: return qstrdup("AnAddonJoinedTheLibrary");
+        }
+
+        return qstrdup("DriftKind(?)");
+    }
+
+    template<>
+    inline char* toString(const BisectionOutcome& t)
+    {
+        switch (t)
+        {
+        case BisectionOutcome::StillSearching: return qstrdup("StillSearching");
+        case BisectionOutcome::OneAddonLeft: return qstrdup("OneAddonLeft");
+        case BisectionOutcome::AnIrreducibleSet: return qstrdup("AnIrreducibleSet");
+        case BisectionOutcome::NotAmongTheManagedOnes: return qstrdup("NotAmongTheManagedOnes");
+        }
+
+        return qstrdup("BisectionOutcome(?)");
+    }
+
+    template<>
+    inline char* toString(const BisectionPass& t)
+    {
+        switch (t)
+        {
+        case BisectionPass::OverTheUnits: return qstrdup("OverTheUnits");
+        case BisectionPass::InsideTheGroup: return qstrdup("InsideTheGroup");
+        }
+
+        return qstrdup("BisectionPass(?)");
     }
 
     template<>

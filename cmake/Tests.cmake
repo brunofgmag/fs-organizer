@@ -331,6 +331,24 @@ fsorg_add_qt_test(fsorg-deletion-service-tests deletion-service
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-deletion-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-bisection-service-tests bisection-service
+        tests/application/tst_bisection_service.cpp
+        tests/doubles/FakeBisectionStore.h
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
+        tests/doubles/FakeSidecarStore.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-bisection-service-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-library-organizer-tests library-organizer
         tests/application/tst_library_organizer.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -404,6 +422,34 @@ fsorg_add_qt_test(fsorg-preset-plan-tests preset-plan
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-preset-plan-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-coupled-units-tests coupled-units
+        tests/domain/bisection/tst_coupled_units.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-coupled-units-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-coupling-scan-tests coupling-scan
+        tests/domain/bisection/tst_coupling_scan.cpp
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-coupling-scan-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-bisection-drift-tests bisection-drift
+        tests/domain/bisection/tst_bisection_drift.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-bisection-drift-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-bisection-rounds-tests bisection-rounds
+        tests/domain/bisection/tst_bisection_rounds.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-bisection-rounds-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-legacy-preset-tests legacy-preset
         tests/domain/legacy/tst_legacy_preset.cpp
@@ -969,6 +1015,16 @@ if (WIN32)
             tests/support/PathPrinting.h
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-link-plan-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-bisection-on-real-disk-tests bisection-on-real-disk
+            tests/infrastructure/bisection/tst_bisection_on_real_disk.cpp
+            tests/doubles/StartupOverFakes.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeOperationJournal.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-bisection-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-chart-versions-on-real-disk-tests chart-versions-on-real-disk
             tests/infrastructure/documents/tst_chart_versions_on_real_disk.cpp

@@ -103,6 +103,26 @@ add_custom_command(TARGET fsorg-bgl POST_BUILD
         "$<TARGET_FILE_DIR:fsorg-bgl>"
         VERBATIM)
 
+add_executable(fsorg-bisect
+        tools/fsorg-bisect/main.cpp
+)
+
+target_include_directories(fsorg-bisect PRIVATE "${CMAKE_SOURCE_DIR}/src")
+
+target_compile_definitions(fsorg-bisect PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+
+if (MSVC)
+    target_compile_options(fsorg-bisect PRIVATE /permissive- /Zc:preprocessor)
+endif ()
+
+target_link_libraries(fsorg-bisect PRIVATE fsorg-application fsorg-infrastructure Qt6::Core)
+
+add_custom_command(TARGET fsorg-bisect POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::Core>"
+        "$<TARGET_FILE_DIR:fsorg-bisect>"
+        VERBATIM)
+
 add_executable(fsorg-size
         tools/fsorg-size/main.cpp
 )
