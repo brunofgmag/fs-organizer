@@ -9,6 +9,7 @@
 
 #include "application/CoverageService.h"
 #include "application/DeletionService.h"
+#include "application/BisectionService.h"
 #include "application/ImportService.h"
 #include "application/LegacyConfigImporter.h"
 #include "application/LibraryOrganizer.h"
@@ -20,6 +21,7 @@
 #include "application/DocumentService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
+#include "infrastructure/bisection/JsonBisectionStore.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -76,6 +78,7 @@
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/AddonDocumentsViewModel.h"
 #include "viewmodel/DocumentsViewModel.h"
+#include "viewmodel/BisectionViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -322,7 +325,13 @@ int main(int argc, char* argv[])
 
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
                                               runner);
-    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
+
+    const CouplingScan coupling(filesystemProbe);
+    JsonBisectionStore bisectionStore(BisectionFolderPath());
+    BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore);
+    BisectionViewModel bisectionViewModel(bisectionService, session);
+
+    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel, bisectionViewModel);
 
     StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
@@ -595,6 +604,7 @@ int main(int argc, char* argv[])
                          quarantineButton->click();
                      });
     QObject::connect(diagnosticsPage, &DiagnosticsPage::RepairRequested, &window, &MainWindow::RepairRequested);
+    QObject::connect(diagnosticsPage, &DiagnosticsPage::ImportRequested, &window, &MainWindow::ImportRequested);
 
     QObject::connect(startupPage, &StartupPage::SummaryChanged, simulatorPage,
                      [simulatorPage, startupPage](const QString& summary)
@@ -695,6 +705,7 @@ int main(int argc, char* argv[])
                          OfferToDropTheOverridesThatPointNowhere(session, &window);
                          OfferToPutBackWhatALostSwapRenamed(importViewModel, &window);
                          OfferWhatALostImportLeftBehind(importViewModel, &window);
+                         OfferToCarryOnTheSearchThatWasLeftHalfway(bisectionViewModel, &window);
 
                          if (setupJustRan)
                          {

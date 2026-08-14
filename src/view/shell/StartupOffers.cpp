@@ -7,8 +7,45 @@
 #include "support/PathText.h"
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/setup/StagingLeftoverDialog.h"
+#include "viewmodel/BisectionViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/LegacyImportViewModel.h"
+
+void OfferToCarryOnTheSearchThatWasLeftHalfway(BisectionViewModel& bisectionViewModel, QWidget* parent)
+{
+    if (!bisectionViewModel.AProcedureWasInterrupted())
+    {
+        return;
+    }
+
+    QMessageBox question(
+        QMessageBox::Question, QObject::tr("A search for the culprit was left halfway"),
+        QObject::tr("The addons of this profile are as the last round of it left them, and not as they were before it "
+                    "started. Nothing was decided yet."),
+        QMessageBox::NoButton, parent);
+
+    const QPushButton* carryOn = question.addButton(QObject::tr("Carry on from that round"), QMessageBox::AcceptRole);
+    const QPushButton* putBack =
+        question.addButton(QObject::tr("Put back what was on before it started"), QMessageBox::DestructiveRole);
+    const QPushButton* forget =
+        question.addButton(QObject::tr("Forget it and leave the addons as they are"), QMessageBox::DestructiveRole);
+    question.exec();
+
+    if (question.clickedButton() == carryOn)
+    {
+        bisectionViewModel.Resume(ResumeChoice::CarryOnFromWhereItStopped);
+    }
+
+    if (question.clickedButton() == putBack)
+    {
+        bisectionViewModel.Resume(ResumeChoice::PutBackTheStartingConfiguration);
+    }
+
+    if (question.clickedButton() == forget)
+    {
+        bisectionViewModel.Resume(ResumeChoice::ForgetItAndLeaveTheDiskAsItIs);
+    }
+}
 
 void OfferToDropTheOverridesThatPointNowhere(Session& session, QWidget* parent)
 {

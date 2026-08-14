@@ -144,6 +144,7 @@ set(VIEW_SOURCES
         src/view/community/ConflictDialog.cpp
         src/view/library/CoverageDialog.cpp
         src/view/library/DeleteDialog.cpp
+        src/view/diagnostics/BisectionPanel.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
         src/view/documents/DocumentReader.cpp
         src/view/documents/DocumentsPage.cpp

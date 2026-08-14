@@ -1168,6 +1168,7 @@ if (WIN32)
     fsorg_add_qt_test(fsorg-diagnostics-page-tests diagnostics-page
             tests/view/tst_diagnostics_page.cpp
             tests/doubles/StartupOverFakes.h
+            tests/doubles/FakeBisectionStore.h
             assets/resources.qrc
             tests/doubles/FakeCatalogScanner.h
             tests/doubles/FakeClock.h

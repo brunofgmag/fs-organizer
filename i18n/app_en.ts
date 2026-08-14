@@ -1920,6 +1920,16 @@ It also exists in the library: %2</translation>
         <source>stopped %1, and these numbers are incomplete</source>
         <translation>stopped %1, and these numbers are incomplete</translation>
     </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/DiagnosticsPage.cpp" line="747"/>
+        <source>Find the culprit</source>
+        <translation>Find the culprit</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/DiagnosticsPage.cpp" line="752"/>
+        <source>Find the culprit · %1 / %2</source>
+        <translation>Find the culprit · %1 / %2</translation>
+    </message>
 </context>
 <context>
     <name>DocumentReader</name>
@@ -4846,6 +4856,71 @@ Size %2</translation>
         <source>your library</source>
         <translation>your library</translation>
     </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/shell/StartupOffers.cpp" line="24"/>
+        <source>A search for the culprit was left halfway</source>
+        <translation>A search for the culprit was left halfway</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/shell/StartupOffers.cpp" line="25"/>
+        <source>The addons of this profile are as the last round of it left them, and not as they were before it started. Nothing was decided yet.</source>
+        <translation>The addons of this profile are as the last round of it left them, and not as they were before it started. Nothing was decided yet.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/shell/StartupOffers.cpp" line="29"/>
+        <source>Carry on from that round</source>
+        <translation>Carry on from that round</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/shell/StartupOffers.cpp" line="31"/>
+        <source>Put back what was on before it started</source>
+        <translation>Put back what was on before it started</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/shell/StartupOffers.cpp" line="33"/>
+        <source>Forget it and leave the addons as they are</source>
+        <translation>Forget it and leave the addons as they are</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="68"/>
+        <source>they share a model folder and no file twice</source>
+        <translation>they share a model folder and no file twice</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="70"/>
+        <source>one of them writes over a file of another</source>
+        <translation>one of them writes over a file of another</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="72"/>
+        <source>held together only by the shared model folder name</source>
+        <translation>held together only by the shared model folder name</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="86"/>
+        <source>a link this program had put is gone</source>
+        <translation>a link this program had put is gone</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="88"/>
+        <source>an entry this program did not put is there</source>
+        <translation>an entry this program did not put is there</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="90"/>
+        <source>an entry points somewhere else now</source>
+        <translation>an entry points somewhere else now</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="92"/>
+        <source>an addon left the library</source>
+        <translation>an addon left the library</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="94"/>
+        <source>an addon joined the library</source>
+        <translation>an addon joined the library</translation>
+    </message>
 </context>
 <context>
     <name>QuarantineModel</name>
@@ -5940,6 +6015,188 @@ Size %2</translation>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="144"/>
         <source>The updater could not be started.</source>
         <translation>The updater could not be started.</translation>
+    </message>
+</context>
+<context>
+    <name>BisectionPanel</name>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="272"/>
+        <source>Find the addon that brings the simulator down</source>
+        <translation>Find the addon that brings the simulator down</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="273"/>
+        <source>Start the search</source>
+        <translation>Start the search</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="274"/>
+        <source>It came down</source>
+        <translation>It came down</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="275"/>
+        <source>It ran fine</source>
+        <translation>It ran fine</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="276"/>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="278"/>
+        <source>Stop and put everything back</source>
+        <translation>Stop and put everything back</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="277"/>
+        <source>Start over from what is on the disk now</source>
+        <translation>Start over from what is on the disk now</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="279"/>
+        <source>Split this group</source>
+        <translation>Split this group</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="280"/>
+        <source>Bring them into the library</source>
+        <translation>Bring them into the library</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="281"/>
+        <source>Put everything back and finish</source>
+        <translation>Put everything back and finish</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="282"/>
+        <source>What this program can say is that the change is not in its journal. Who made it, it has no way of knowing.</source>
+        <translation>What this program can say is that the change is not in its journal. Who made it, it has no way of knowing.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="284"/>
+        <source>This method assumes one culprit. Two addons that only bring the simulator down when both are on would converge on an innocent one.</source>
+        <translation>This method assumes one culprit. Two addons that only bring the simulator down when both are on would converge on an innocent one.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="286"/>
+        <source>Your setup is written down before the first round and goes back when this ends, however it ends. If the program is closed halfway, the next opening offers to put it back.</source>
+        <translation>Your setup is written down before the first round and goes back when this ends, however it ends. If the program is closed halfway, the next opening offers to put it back.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="289"/>
+        <source>Addon</source>
+        <translation>Addon</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="289"/>
+        <source>Addons</source>
+        <translation>Addons</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="289"/>
+        <source>Why they move together</source>
+        <translation>Why they move together</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="294"/>
+        <source>What moved</source>
+        <translation>What moved</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="294"/>
+        <source>Where</source>
+        <translation>Where</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="337"/>
+        <source>Nothing of this profile is turned on, so there is nothing to search. Turn the addons you fly with back on and open this again.</source>
+        <translation>Nothing of this profile is turned on, so there is nothing to search. Turn the addons you fly with back on and open this again.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="347"/>
+        <source>%n unit will be searched, and that takes about %1 rounds. A unit is one addon, or a group that has to move together.</source>
+        <translation>
+            <numerusform>%n unit will be searched, and that takes about %1 rounds. A unit is one addon, or a group that has to move together.</numerusform>
+            <numerusform>%n units will be searched, and that takes about %1 rounds. A unit is one addon, or a group that has to move together.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="352"/>
+        <source>%n entry in the destinations carries on outside the reach of this search, and stays on through every round.</source>
+        <translation>
+            <numerusform>%n entry in the destinations carries on outside the reach of this search, and stays on through every round.</numerusform>
+            <numerusform>%n entries in the destinations carry on outside the reach of this search, and stay on through every round.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="363"/>
+        <source>Round %1, and %n at most left after it.</source>
+        <translation>
+            <numerusform>Round %1, and %n at most left after it.</numerusform>
+            <numerusform>Round %1, and %n at most left after it.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="371"/>
+        <source>Nothing of yours is on. Launch the simulator now: this first round is what separates a cause among your addons from one outside them.</source>
+        <translation>Nothing of yours is on. Launch the simulator now: this first round is what separates a cause among your addons from one outside them.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="376"/>
+        <source>%n addon is on now. Launch the simulator and come back with what happened.</source>
+        <translation>
+            <numerusform>%n addon is on now. Launch the simulator and come back with what happened.</numerusform>
+            <numerusform>%n addons are on now. Launch the simulator and come back with what happened.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="380"/>
+        <source>Nothing else is written until you answer. %n unit is still under suspicion.</source>
+        <translation>
+            <numerusform>Nothing else is written until you answer. %n unit is still under suspicion.</numerusform>
+            <numerusform>Nothing else is written until you answer. %n units are still under suspicion.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="390"/>
+        <source>The disk moved between one round and the next, so the split this search had made is about another set of addons than the one that is there now.</source>
+        <translation>The disk moved between one round and the next, so the split this search had made is about another set of addons than the one that is there now.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="410"/>
+        <source>With nothing of yours on, the simulator still came down. The cause is not among the addons this program manages.</source>
+        <translation>With nothing of yours on, the simulator still came down. The cause is not among the addons this program manages.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="412"/>
+        <source>%n entry carries on outside the reach of this search. Bringing them into the library is what puts them under it.</source>
+        <translation>
+            <numerusform>%n entry carries on outside the reach of this search. Bringing it into the library is what puts it under the search.</numerusform>
+            <numerusform>%n entries carry on outside the reach of this search. Bringing them into the library is what puts them under it.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="418"/>
+        <source>What the search was left with is this one.</source>
+        <translation>What the search was left with is this one.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="423"/>
+        <source>The answers stopped separating, and this is the whole set the search was left with.</source>
+        <translation>The answers stopped separating, and this is the whole set the search was left with.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="426"/>
+        <source>Splitting the group runs more rounds than the number announced at the start, which counted units and not the addons inside them.</source>
+        <translation>Splitting the group runs more rounds than the number announced at the start, which counted units and not the addons inside them.</translation>
+    </message>
+    <message>
+        <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="428"/>
+        <source>This group has no aircraft that the others extend, so splitting it would leave a state nobody knows how to read. It is not offered.</source>
+        <translation>This group has no aircraft that the others extend, so splitting it would leave a state nobody knows how to read. It is not offered.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="303"/>
+        <source>The first round turns every one of them off, which is what separates a cause among your addons from one outside them. Your setup is written down before that and goes back when this ends, however it ends, including when you stop it halfway.</source>
+        <translation>The first round turns every one of them off, which is what separates a cause among your addons from one outside them. Your setup is written down before that and goes back when this ends, however it ends, including when you stop it halfway.</translation>
     </message>
 </context>
 </TS>

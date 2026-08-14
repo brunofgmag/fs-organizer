@@ -113,6 +113,7 @@ QLabel#PanelTitle { color: %text%; }
 QLabel#PanelSubHeading { color: %secondary%; font-weight: 700; }
 QLabel#PresetPlanFor { color: %text%; font-weight: 700; }
 QLabel#PanelPromise { color: %secondary%; }
+QLabel#SectionHeadline { color: %text%; font-weight: 700; }
 QLabel#ReadingCaption { color: %secondary%; font-weight: 700; }
 QLabel#DetailFieldName { color: %secondary%; }
 QTextEdit#UncutText {
@@ -129,6 +130,7 @@ QListWidget#SectionRail::item:selected, QListWidget#SectionRail::item:selected:a
     background: %raised%; color: %text%; font-weight: 600; border-left: 3px solid %accent%;
 }
 QListWidget#SectionRail::item:disabled { color: %disabled%; }
+QFrame#RailSeparator { background: %divider%; }
 QFrame#OptionsBox { background: %window%; border: 1px solid %divider%; }
 #OptionsRow[follows="true"] { border-top: 1px solid %raised%; }
 #OptionsChoice[follows="true"] { border-top: 1px solid %divider%; }
