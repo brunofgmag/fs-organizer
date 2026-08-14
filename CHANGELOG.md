@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.45.0](https://github.com/brunofgmag/fs-organizer/compare/v0.44.0...v0.45.0) (2026-08-14)
+
+
+### Features
+
+* **import:** ligar a verificacao por hash na tela de opcoes ([#120](https://github.com/brunofgmag/fs-organizer/issues/120)) ([075bb8a](https://github.com/brunofgmag/fs-organizer/commit/075bb8af880479973fbaa7471514b308b05e6ff6))
+
 ## [0.44.0](https://github.com/brunofgmag/fs-organizer/compare/v0.43.0...v0.44.0) (2026-08-14)
 
 
