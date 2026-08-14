@@ -1934,6 +1934,26 @@ It also exists in the library: %2</translation>
         <translation>Dragging moves the page</translation>
     </message>
     <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="275"/>
+        <source>Zoom in</source>
+        <translation>Zoom in</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="275"/>
+        <source>Zoom out</source>
+        <translation>Zoom out</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="275"/>
+        <source>Previous match</source>
+        <translation>Previous match</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="275"/>
+        <source>Next match</source>
+        <translation>Next match</translation>
+    </message>
+    <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="263"/>
         <source>Previous page</source>
         <translation>Previous page</translation>
