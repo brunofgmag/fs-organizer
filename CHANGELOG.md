@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.44.0](https://github.com/brunofgmag/fs-organizer/compare/v0.43.0...v0.44.0) (2026-08-14)
+
+
+### Features
+
+* **bisection:** guardar o historico das rodadas e deixar a deriva de biblioteca seguir ([#118](https://github.com/brunofgmag/fs-organizer/issues/118)) ([19c13ac](https://github.com/brunofgmag/fs-organizer/commit/19c13ac513ccc81d0146c0cc8c6e971eb6db52b4))
+
 ## [0.43.0](https://github.com/brunofgmag/fs-organizer/compare/v0.42.0...v0.43.0) (2026-08-14)
 
 
