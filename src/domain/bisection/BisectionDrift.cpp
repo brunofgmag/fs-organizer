@@ -34,6 +34,20 @@ namespace
         return keys;
     }
 
+    [[nodiscard]] bool ItLoaded(const DriftKind kind)
+    {
+        switch (kind)
+        {
+        case DriftKind::ALinkWeLeftIsGone:
+        case DriftKind::AnEntryWeDidNotLeaveIsThere:
+        case DriftKind::AnEntryPointsSomewhereElse:
+        case DriftKind::AnAddonLeftTheLibrary: return true;
+        case DriftKind::AnAddonJoinedTheLibrary: break;
+        }
+
+        return false;
+    }
+
     void CollectTheEntriesThatChanged(const DiskAsItWas& before, const DiskAsItWas& now, std::vector<Divergence>& drift)
     {
         const std::map<std::string, const DestinationEntry*> then = EntriesByPath(before.entries);
@@ -86,6 +100,15 @@ namespace
             }
         }
     }
+}
+
+bool NothingThatLoadedMoved(const std::vector<Divergence>& drift)
+{
+    return std::ranges::all_of(drift,
+                               [](const Divergence& divergence)
+                               {
+                                   return !ItLoaded(divergence.kind);
+                               });
 }
 
 std::vector<Divergence> DriftBetween(const DiskAsItWas& before, const DiskAsItWas& now)

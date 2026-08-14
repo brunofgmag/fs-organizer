@@ -30,6 +30,17 @@ enum class BisectionOutcome : int
     NotAmongTheManagedOnes = 3,
 };
 
+struct AnsweredRound
+{
+    std::size_t number = 0;
+    BisectionPass pass = BisectionPass::OverTheUnits;
+    std::size_t unitsOn = 0;
+    BisectionAnswer answer = BisectionAnswer::ItRanFine;
+    std::size_t unitsCleared = 0;
+    std::size_t unitsLeft = 0;
+    std::chrono::system_clock::time_point at{};
+};
+
 struct BisectionRun
 {
     std::string profileId{};
@@ -42,6 +53,7 @@ struct BisectionRun
     bool theReferenceRoundCrashed = false;
     std::vector<PresetEntry> startingConfiguration{};
     std::chrono::system_clock::time_point startedAt{};
+    std::vector<AnsweredRound> story{};
 };
 
 struct BisectionRound
@@ -55,13 +67,18 @@ struct BisectionRound
 
 [[nodiscard]] BisectionRound TheRound(const BisectionRun& run);
 
-[[nodiscard]] BisectionRun AfterAnswering(const BisectionRun& run, BisectionAnswer answer);
+[[nodiscard]] BisectionRun
+AfterAnswering(const BisectionRun& run, BisectionAnswer answer, std::chrono::system_clock::time_point at);
 
 [[nodiscard]] BisectionOutcome OutcomeOf(const BisectionRun& run);
 
 [[nodiscard]] std::vector<std::filesystem::path> WhatIsLeft(const BisectionRun& run);
 
 [[nodiscard]] std::size_t RoundsInTheWorstCase(std::size_t units);
+
+[[nodiscard]] bool ItIsTheReferenceRound(const AnsweredRound& answered);
+
+[[nodiscard]] std::size_t LaunchesBehind(const BisectionRun& run);
 
 [[nodiscard]] bool ASecondPassIsPossible(const BisectionRun& run);
 

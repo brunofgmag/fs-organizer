@@ -20,12 +20,46 @@ void BisectionViewModel::Begin()
 
 void BisectionViewModel::Answer(const BisectionAnswer answer)
 {
+    heldAnswer_ = answer;
+    aSplitWasHeld_ = false;
+
     Take(bisection_.Answer(session_.Profile(), answer));
 }
 
 void BisectionViewModel::Refine()
 {
+    heldAnswer_.reset();
+    aSplitWasHeld_ = true;
+
     Take(bisection_.Refine(session_.Profile()));
+}
+
+void BisectionViewModel::CarryOn()
+{
+    const BisectionReport accepted = bisection_.AcceptWhatJoinedTheLibrary(session_.Profile());
+
+    if (accepted.refusal != BisectionRefusal::None)
+    {
+        Take(accepted);
+
+        return;
+    }
+
+    if (heldAnswer_.has_value())
+    {
+        Answer(*heldAnswer_);
+
+        return;
+    }
+
+    if (aSplitWasHeld_)
+    {
+        Refine();
+
+        return;
+    }
+
+    Take(accepted);
 }
 
 void BisectionViewModel::Stop()
@@ -66,7 +100,11 @@ void BisectionViewModel::Take(const BisectionReport& report)
 {
     report_ = report;
 
-    if (!report.drift.empty())
+    if (report.refusal == BisectionRefusal::TheLibraryGainedAnAddon)
+    {
+        stage_ = BisectionStage::TheLibraryGainedAnAddon;
+    }
+    else if (!report.drift.empty())
     {
         stage_ = BisectionStage::ItDrifted;
     }
@@ -81,6 +119,12 @@ void BisectionViewModel::Take(const BisectionReport& report)
     else
     {
         stage_ = BisectionStage::NotStarted;
+    }
+
+    if (stage_ != BisectionStage::TheLibraryGainedAnAddon)
+    {
+        heldAnswer_.reset();
+        aSplitWasHeld_ = false;
     }
 
     emit Changed();
@@ -103,7 +147,13 @@ bool BisectionViewModel::AProcedureWasInterrupted() const
 
 bool BisectionViewModel::ItIsRunning() const
 {
-    return stage_ == BisectionStage::Asking || stage_ == BisectionStage::ItDrifted;
+    return stage_ == BisectionStage::Asking || stage_ == BisectionStage::ItDrifted
+        || stage_ == BisectionStage::TheLibraryGainedAnAddon;
+}
+
+std::size_t BisectionViewModel::LaunchesAlreadyMade() const
+{
+    return report_.launchesBehind;
 }
 
 std::size_t BisectionViewModel::RoundsLeftInTheWorstCase() const

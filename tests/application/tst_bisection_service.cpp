@@ -45,6 +45,14 @@ namespace
         static void TheProcedureOfOneProfileIsNotOfferedInAnother();
         static void TheSecondPassKeepsTheBaseOnInEveryRound();
         static void WhatCarriesOnOutOfReachCountsManifestsAndNotBareFolders();
+        static void AnAddonThatOnlyJoinedTheLibraryStopsTheRoundWithItsOwnAnswer();
+        static void AJoinedAddonNextToSomethingThatLoadedIsStillTheDriftThatStops();
+        static void AcceptingWhatJoinedLetsTheVeryNextRoundThroughWithoutStartingOver();
+        static void AcceptingRefusesWhenSomethingThatLoadedMovedAsWell();
+        static void TheStoryOfEveryAnsweredRoundComesBackInTheReport();
+        static void TheProcedureRecordsTheInstantItStarted();
+        static void ReReadingWhereItStandsStillSaysWhichAddonsAreOn();
+        static void ASecondPassEntryOfTheStoryReachesTheFileAsTheSecondPass();
     };
 }
 
@@ -114,6 +122,14 @@ base_container = "..\TFDi_Design_MD-11F_PW"
     [[nodiscard]] std::filesystem::path LinkFor(const std::filesystem::path& addon)
     {
         return PathUnder(kCommunity, addon.filename());
+    }
+
+    TreeNode ALibraryTreeWithOneMore()
+    {
+        TreeNode library = LibraryTree();
+        library.children.front().children.push_back(AddonNode("D:/MSFS 2024/Aircrafts/pmdg-aircraft-738"));
+
+        return library;
     }
 
     struct Fixture
@@ -206,7 +222,7 @@ base_container = "..\TFDi_Design_MD-11F_PW"
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
         FakePresetRepository presets;
-        BisectionService service{profiles, coupling, filesystemProbe, store};
+        BisectionService service{profiles, coupling, filesystemProbe, store, clock};
     };
 
     [[nodiscard]] bool Holds(const std::vector<std::filesystem::path>& where, const std::filesystem::path& what)
@@ -472,7 +488,7 @@ void BisectionServiceTest::AProcedureLeftHalfwayIsOfferedAgainWithTheThreeWaysOu
     QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
     QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).refusal, BisectionRefusal::None);
 
-    BisectionService reopened{f.profiles, f.coupling, f.filesystemProbe, f.store};
+    BisectionService reopened{f.profiles, f.coupling, f.filesystemProbe, f.store, f.clock};
 
     QVERIFY(reopened.WhatWasInterrupted(kProfileId).has_value());
     QCOMPARE(reopened.Resume(profile, ResumeChoice::PutBackTheStartingConfiguration).refusal, BisectionRefusal::None);
@@ -537,6 +553,176 @@ void BisectionServiceTest::WhatCarriesOnOutOfReachCountsManifestsAndNotBareFolde
     const SimulatorProfile profile = Profile();
 
     QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).outOfReach, std::size_t{1});
+}
+
+void BisectionServiceTest::AnAddonThatOnlyJoinedTheLibraryStopsTheRoundWithItsOwnAnswer()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+
+    f.catalog.SetTree(kLibrary, ALibraryTreeWithOneMore());
+
+    const std::size_t saves = f.store.saves;
+    const BisectionReport report = f.service.Answer(profile, BisectionAnswer::ItRanFine);
+
+    QCOMPARE(report.refusal, BisectionRefusal::TheLibraryGainedAnAddon);
+    QCOMPARE(report.drift.size(), std::size_t{1});
+    QCOMPARE(report.drift.front().kind, DriftKind::AnAddonJoinedTheLibrary);
+    QCOMPARE(f.store.saves, saves);
+}
+
+void BisectionServiceTest::AJoinedAddonNextToSomethingThatLoadedIsStillTheDriftThatStops()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).addonsTurnedOn.size(), std::size_t{1});
+
+    f.catalog.SetTree(kLibrary, ALibraryTreeWithOneMore());
+    QVERIFY(f.fileSystem.RemoveTree(LinkFor(kCrj)));
+
+    const BisectionReport report = f.service.Answer(profile, BisectionAnswer::ItCrashed);
+
+    QCOMPARE(report.refusal, BisectionRefusal::TheDiskMovedSinceTheLastRound);
+    QCOMPARE(report.drift.size(), std::size_t{2});
+}
+
+void BisectionServiceTest::AcceptingWhatJoinedLetsTheVeryNextRoundThroughWithoutStartingOver()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+
+    f.catalog.SetTree(kLibrary, ALibraryTreeWithOneMore());
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).refusal, BisectionRefusal::TheLibraryGainedAnAddon);
+
+    QCOMPARE(f.service.AcceptWhatJoinedTheLibrary(profile).refusal, BisectionRefusal::None);
+
+    const BisectionReport carried = f.service.Answer(profile, BisectionAnswer::ItRanFine);
+
+    QCOMPARE(carried.refusal, BisectionRefusal::None);
+    QCOMPARE(carried.round, std::size_t{1});
+    QVERIFY(carried.drift.empty());
+
+    const std::optional<BisectionRun> run = f.store.Load(kProfileId);
+
+    QVERIFY(run.has_value());
+    QCOMPARE(run->units.size(), std::size_t{3});
+    QCOMPARE(run->story.size(), std::size_t{1});
+}
+
+void BisectionServiceTest::AcceptingRefusesWhenSomethingThatLoadedMovedAsWell()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).addonsTurnedOn.size(), std::size_t{1});
+
+    QVERIFY(f.fileSystem.RemoveTree(LinkFor(kCrj)));
+
+    QCOMPARE(f.service.AcceptWhatJoinedTheLibrary(profile).refusal, BisectionRefusal::TheDiskMovedSinceTheLastRound);
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItCrashed).refusal,
+             BisectionRefusal::TheDiskMovedSinceTheLastRound);
+}
+
+void BisectionServiceTest::TheStoryOfEveryAnsweredRoundComesBackInTheReport()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    const std::chrono::system_clock::time_point started = f.clock.now;
+
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+    QVERIFY(f.service.WhereItStands(profile).story.empty());
+
+    f.clock.now += std::chrono::minutes{9};
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).refusal, BisectionRefusal::None);
+
+    f.clock.now += std::chrono::minutes{8};
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItCrashed).refusal, BisectionRefusal::None);
+
+    const BisectionReport standing = f.service.WhereItStands(profile);
+
+    QCOMPARE(standing.story.size(), std::size_t{2});
+    QCOMPARE(standing.story.front().number, std::size_t{0});
+    QCOMPARE(standing.story.front().answer, BisectionAnswer::ItRanFine);
+    QCOMPARE(standing.story.front().at, started + std::chrono::minutes{9});
+    QCOMPARE(standing.story.back().at, started + std::chrono::minutes{17});
+    QVERIFY2(standing.story.front().at != standing.story.back().at,
+             "every entry carries one instant, so the stamp is not the round's own");
+}
+
+void BisectionServiceTest::TheProcedureRecordsTheInstantItStarted()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+
+    const std::optional<BisectionRun> run = f.store.Load(kProfileId);
+
+    QVERIFY(run.has_value());
+    QCOMPARE(run->startedAt, f.clock.now);
+
+    f.clock.now += std::chrono::hours{2};
+
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).refusal, BisectionRefusal::None);
+    QCOMPARE(f.store.Load(kProfileId)->startedAt, run->startedAt);
+}
+
+void BisectionServiceTest::ReReadingWhereItStandsStillSaysWhichAddonsAreOn()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+
+    const BisectionReport applied = f.service.Answer(profile, BisectionAnswer::ItRanFine);
+
+    QCOMPARE(applied.addonsTurnedOn.size(), std::size_t{1});
+
+    const BisectionReport reread = f.service.WhereItStands(profile);
+
+    QCOMPARE(reread.addonsTurnedOn, applied.addonsTurnedOn);
+    QCOMPARE(reread.unitsTurnedOn.size(), applied.unitsTurnedOn.size());
+}
+
+void BisectionServiceTest::ASecondPassEntryOfTheStoryReachesTheFileAsTheSecondPass()
+{
+    Fixture f;
+    f.Enable({kMd11, kLivery, kLiveryTwo, kCrj});
+
+    const SimulatorProfile profile = Profile();
+    BisectionReport report = f.service.Begin(profile, f.Snapshot(profile));
+    report = f.service.Answer(profile, BisectionAnswer::ItRanFine);
+
+    while (report.outcome == BisectionOutcome::StillSearching)
+    {
+        report = f.service.Answer(profile, BisectionAnswer::ItRanFine);
+    }
+
+    QCOMPARE(report.outcome, BisectionOutcome::AnIrreducibleSet);
+    QCOMPARE(f.service.Refine(profile).refusal, BisectionRefusal::None);
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItCrashed).refusal, BisectionRefusal::None);
+
+    const std::optional<BisectionRun> run = f.store.Load(kProfileId);
+
+    QVERIFY(run.has_value());
+    QVERIFY(run->story.size() >= 3);
+    QCOMPARE(run->story.front().pass, BisectionPass::OverTheUnits);
+    QCOMPARE(run->story.back().pass, BisectionPass::InsideTheGroup);
 }
 
 QTEST_APPLESS_MAIN(BisectionServiceTest)

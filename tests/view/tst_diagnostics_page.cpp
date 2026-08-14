@@ -143,7 +143,7 @@ namespace
         DiagnosticsViewModel viewModel{imports, sizes, scenery, session, loading, clock, runner};
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
-        BisectionService bisection{service, coupling, filesystemProbe, store};
+        BisectionService bisection{service, coupling, filesystemProbe, store, clock};
         BisectionViewModel bisectionViewModel{bisection, session};
     };
 

@@ -1,6 +1,7 @@
 #include "domain/bisection/BisectionRounds.h"
 
 #include <algorithm>
+#include <numeric>
 
 #include "domain/support/PathUtils.h"
 
@@ -32,24 +33,27 @@ namespace
         return left;
     }
 
-    [[nodiscard]] BisectionRun AfterTheReferenceRound(const BisectionRun& run, const BisectionAnswer answer)
+    [[nodiscard]] BisectionRun AfterTheReferenceRound(const BisectionRun& run,
+                                                      const BisectionAnswer answer,
+                                                      const std::chrono::system_clock::time_point at)
     {
         BisectionRun next = run;
         next.theReferenceRoundCrashed = answer == BisectionAnswer::ItCrashed;
 
-        if (next.theReferenceRoundCrashed)
+        if (!next.theReferenceRoundCrashed)
         {
-            return next;
+            next.suspects.resize(run.units.size());
+            std::iota(next.suspects.begin(), next.suspects.end(), std::size_t{0});
+            next.round = 1;
         }
 
-        next.suspects.resize(run.units.size());
-
-        for (std::size_t unit = 0; unit < run.units.size(); ++unit)
-        {
-            next.suspects[unit] = unit;
-        }
-
-        next.round = 1;
+        next.story.push_back(AnsweredRound{.number = run.round,
+                                           .pass = run.pass,
+                                           .unitsOn = 0,
+                                           .answer = answer,
+                                           .unitsCleared = 0,
+                                           .unitsLeft = next.suspects.size(),
+                                           .at = at});
 
         return next;
     }
@@ -97,7 +101,8 @@ BisectionRound TheRound(const BisectionRun& run)
     return round;
 }
 
-BisectionRun AfterAnswering(const BisectionRun& run, const BisectionAnswer answer)
+BisectionRun
+AfterAnswering(const BisectionRun& run, const BisectionAnswer answer, const std::chrono::system_clock::time_point at)
 {
     if (OutcomeOf(run) != BisectionOutcome::StillSearching)
     {
@@ -106,7 +111,7 @@ BisectionRun AfterAnswering(const BisectionRun& run, const BisectionAnswer answe
 
     if (TheReferenceRoundIsStillPending(run))
     {
-        return AfterTheReferenceRound(run, answer);
+        return AfterTheReferenceRound(run, answer, at);
     }
 
     BisectionRun next = run;
@@ -125,6 +130,14 @@ BisectionRun AfterAnswering(const BisectionRun& run, const BisectionAnswer answe
     }
 
     ++next.round;
+
+    next.story.push_back(AnsweredRound{.number = run.round,
+                                       .pass = run.pass,
+                                       .unitsOn = turnedOn.size(),
+                                       .answer = answer,
+                                       .unitsCleared = run.suspects.size() - next.suspects.size(),
+                                       .unitsLeft = next.suspects.size(),
+                                       .at = at});
 
     return next;
 }
@@ -182,6 +195,18 @@ std::size_t RoundsInTheWorstCase(const std::size_t units)
     return rounds;
 }
 
+bool ItIsTheReferenceRound(const AnsweredRound& answered)
+{
+    return answered.number == 0;
+}
+
+std::size_t LaunchesBehind(const BisectionRun& run)
+{
+    const bool oneIsWaitingForAnAnswer = OutcomeOf(run) == BisectionOutcome::StillSearching;
+
+    return run.story.size() + (oneIsWaitingForAnAnswer ? 1 : 0);
+}
+
 bool ASecondPassIsPossible(const BisectionRun& run)
 {
     if (run.pass != BisectionPass::OverTheUnits || OutcomeOf(run) != BisectionOutcome::AnIrreducibleSet)
@@ -209,6 +234,7 @@ BisectionRun IntoTheSecondPass(const BisectionRun& run)
     second.round = run.round;
     second.startingConfiguration = run.startingConfiguration;
     second.startedAt = run.startedAt;
+    second.story = run.story;
 
     for (const std::filesystem::path& member : group.addons)
     {

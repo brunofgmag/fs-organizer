@@ -29,4 +29,6 @@ struct DiskAsItWas
 
 [[nodiscard]] std::vector<Divergence> DriftBetween(const DiskAsItWas& before, const DiskAsItWas& now);
 
+[[nodiscard]] bool NothingThatLoadedMoved(const std::vector<Divergence>& drift);
+
 #endif // FS_ORGANIZER_DOMAIN_BISECTION_BISECTION_DRIFT_H

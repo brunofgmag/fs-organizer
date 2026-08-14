@@ -158,6 +158,7 @@ namespace
         case BisectionRefusal::TheDiskMovedSinceTheLastRound: return "the disk moved since the last round";
         case BisectionRefusal::NoProcedureIsRunning: return "no procedure is running";
         case BisectionRefusal::ThisUnitDoesNotSplit: return "this unit does not split";
+        case BisectionRefusal::TheLibraryGainedAnAddon: return "an addon joined the library";
         }
 
         return "unknown";
@@ -315,7 +316,7 @@ namespace
                                 log,     identities,      startup,  LinkType::Junction};
         CouplingScan coupling{filesystemProbe};
         JsonBisectionStore store{BisectionFolderPath()};
-        BisectionService service{profiles, coupling, filesystemProbe, store};
+        BisectionService service{profiles, coupling, filesystemProbe, store, clock};
     };
 }
 
@@ -425,7 +426,7 @@ int main(int argc, char* argv[])
             const BisectionAnswer answer =
                 arguments.command == Command::Crashed ? BisectionAnswer::ItCrashed : BisectionAnswer::ItRanFine;
 
-            ReportRun(AfterAnswering(*running, answer));
+            ReportRun(AfterAnswering(*running, answer, SystemClock{}.Now()));
             Out().flush();
 
             return 0;

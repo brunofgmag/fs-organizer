@@ -14,6 +14,7 @@
 #include "domain/bisection/BisectionRounds.h"
 #include "domain/bisection/CouplingScan.h"
 #include "domain/model/SimulatorProfile.h"
+#include "domain/ports/Clock.h"
 #include "domain/ports/FilesystemProbe.h"
 
 enum class BisectionRefusal : int
@@ -24,6 +25,7 @@ enum class BisectionRefusal : int
     TheDiskMovedSinceTheLastRound = 3,
     NoProcedureIsRunning = 4,
     ThisUnitDoesNotSplit = 5,
+    TheLibraryGainedAnAddon = 6,
 };
 
 enum class ResumeChoice : int
@@ -42,11 +44,13 @@ struct BisectionReport
     std::vector<std::filesystem::path> whatIsLeft{};
     std::vector<SearchUnit> unitsUnderSuspicion{};
     std::vector<SearchUnit> unitsTurnedOn{};
+    std::vector<AnsweredRound> story{};
     BisectionOutcome outcome = BisectionOutcome::StillSearching;
     std::size_t round = 0;
     std::size_t units = 0;
     std::size_t roundsInTheWorstCase = 0;
     std::size_t outOfReach = 0;
+    std::size_t launchesBehind = 0;
     bool aSecondPassIsPossible = false;
 };
 
@@ -56,7 +60,8 @@ public:
     BisectionService(ProfileService& profiles,
                      const CouplingScan& coupling,
                      const FilesystemProbe& filesystemProbe,
-                     BisectionStore& store);
+                     BisectionStore& store,
+                     const Clock& clock);
 
     [[nodiscard]] BisectionReport WhatWouldBeSearched(const SimulatorProfile& profile,
                                                       const ProfileSnapshot& shown) const;
@@ -70,6 +75,8 @@ public:
     [[nodiscard]] BisectionReport Answer(const SimulatorProfile& profile, BisectionAnswer answer);
 
     [[nodiscard]] BisectionReport Refine(const SimulatorProfile& profile);
+
+    [[nodiscard]] BisectionReport AcceptWhatJoinedTheLibrary(const SimulatorProfile& profile);
 
     [[nodiscard]] BisectionReport Stop(const SimulatorProfile& profile);
 
@@ -112,12 +119,16 @@ private:
 
     [[nodiscard]] std::vector<Divergence> WhatMovedSince(const DiskAsItWas& now) const;
 
+    [[nodiscard]] BisectionReport
+    RefusingTheDriftOf(const BisectionRun& run, const Reading& reading, const std::vector<Divergence>& drift) const;
+
     void AdoptAsTheBaseline(const DiskAsItWas& disk);
 
     ProfileService& profiles_;
     const CouplingScan& coupling_;
     const FilesystemProbe& filesystemProbe_;
     BisectionStore& store_;
+    const Clock& clock_;
     DiskAsItWas leftBehind_;
     bool weLeftARound_ = false;
 };

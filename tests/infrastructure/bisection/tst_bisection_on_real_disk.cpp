@@ -35,6 +35,7 @@ namespace
         static void TheFileStopsExistingWhenTheProcedureEnds();
         static void ADriftMadeWhileTheAppWasDownDoesNotStopTheResume();
         static void AFreshProcessAnsweringWithoutABaselineDoesNotCallTheWholeDiskADrift();
+        static void TheStorySurvivesTheRoundTripThroughTheFile();
     };
 }
 
@@ -131,7 +132,7 @@ namespace
                                 log,     identities,      startup.service, LinkType::Junction};
         CouplingScan coupling{filesystemProbe};
         JsonBisectionStore store;
-        BisectionService service{profiles, coupling, filesystemProbe, store};
+        BisectionService service{profiles, coupling, filesystemProbe, store, clock};
     };
 
     SimulatorProfile ProfileOn(const Disk& disk)
@@ -167,7 +168,7 @@ namespace
     {
         const std::optional<BisectionRun> run = world.store.Load(profile.id);
 
-        const BisectionRun next = AfterAnswering(*run, BisectionAnswer::ItRanFine);
+        const BisectionRun next = AfterAnswering(*run, BisectionAnswer::ItRanFine, world.clock.Now());
 
         return next;
     }
@@ -208,6 +209,52 @@ void BisectionOnRealDiskTest::AJudgementSurvivesTheRoundTripThroughTheFile()
     QCOMPARE(written->startingConfiguration.size(), kAddons.size());
     QCOMPARE(written->pass, BisectionPass::OverTheUnits);
     QVERIFY(!written->theReferenceRoundCrashed);
+    QVERIFY(written->startedAt.time_since_epoch().count() != 0);
+}
+
+void BisectionOnRealDiskTest::TheStorySurvivesTheRoundTripThroughTheFile()
+{
+    const Disk disk;
+    World world(disk);
+    const SimulatorProfile profile = ProfileOn(disk);
+    TurnEverythingOn(disk, world, profile);
+
+    QCOMPARE(world.service.Begin(profile, world.profiles.Scan(profile)).refusal, BisectionRefusal::None);
+
+    world.clock.now += std::chrono::minutes{11};
+    QCOMPARE(world.service.Answer(profile, BisectionAnswer::ItRanFine).refusal, BisectionRefusal::None);
+
+    world.clock.now += std::chrono::minutes{6};
+    QCOMPARE(world.service.Answer(profile, BisectionAnswer::ItCrashed).refusal, BisectionRefusal::None);
+
+    const std::optional<BisectionRun> inMemory = world.store.Load(kProfileId);
+
+    QVERIFY2(inMemory->story.front().at != inMemory->story.back().at,
+             "the file kept one instant for every round, so it is not the round's own");
+
+    QVERIFY(inMemory.has_value());
+    QCOMPARE(inMemory->story.size(), std::size_t{2});
+
+    World reopened(disk);
+    const std::optional<BisectionRun> reread = reopened.store.Load(kProfileId);
+
+    QVERIFY(reread.has_value());
+    QCOMPARE(reread->story.size(), inMemory->story.size());
+
+    for (std::size_t entry = 0; entry < reread->story.size(); ++entry)
+    {
+        QCOMPARE(reread->story[entry].number, inMemory->story[entry].number);
+        QCOMPARE(reread->story[entry].pass, inMemory->story[entry].pass);
+        QCOMPARE(reread->story[entry].unitsOn, inMemory->story[entry].unitsOn);
+        QCOMPARE(reread->story[entry].answer, inMemory->story[entry].answer);
+        QCOMPARE(reread->story[entry].unitsCleared, inMemory->story[entry].unitsCleared);
+        QCOMPARE(reread->story[entry].unitsLeft, inMemory->story[entry].unitsLeft);
+        QCOMPARE(reread->story[entry].at, inMemory->story[entry].at);
+    }
+
+    QCOMPARE(reread->story.front().number, std::size_t{0});
+    QCOMPARE(reread->story.front().answer, BisectionAnswer::ItRanFine);
+    QCOMPARE(reread->story.back().answer, BisectionAnswer::ItCrashed);
 }
 
 void BisectionOnRealDiskTest::KilledBetweenTheStateAndTheLinksCarryingOnPutsTheDiskWhereTheFileSaysItIs()

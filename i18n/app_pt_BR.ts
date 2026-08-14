@@ -4111,6 +4111,52 @@ Aplicar o preset &quot;%2&quot;?</translation>
 <context>
     <name>QObject</name>
     <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="93"/>
+        <source>Reference</source>
+        <translation>Referência</translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="98"/>
+        <source>Round %1, inside the group</source>
+        <translation>Rodada %1, dentro do grupo</translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="101"/>
+        <source>Round %1</source>
+        <translation>Rodada %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="109"/>
+        <source>Nothing of yours was on, and it came down.</source>
+        <translation>Nada seu estava ligado, e caiu.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="110"/>
+        <source>Nothing of yours was on, and it ran fine.</source>
+        <translation>Nada seu estava ligado, e rodou bem.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="114"/>
+        <source>%n unit on, it came down.</source>
+        <translation>
+            <numerusform>%n unidade ligada, e caiu.</numerusform>
+            <numerusform>%n unidades ligadas, e caiu.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="115"/>
+        <source>%n unit on, it ran fine.</source>
+        <translation>
+            <numerusform>%n unidade ligada, e rodou bem.</numerusform>
+            <numerusform>%n unidades ligadas, e rodou bem.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="117"/>
+        <source>%1 %2 ruled out, %3 left.</source>
+        <translation>%1 Descartadas: %2. Restando: %3.</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="12"/>
         <source>there is already a real folder with that name in the destination</source>
         <translation>já existe uma pasta de verdade com esse nome no destino</translation>
@@ -6023,6 +6069,37 @@ Tamanho %2</translation>
 </context>
 <context>
     <name>BisectionPanel</name>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="379"/>
+        <source>Carry on with the search</source>
+        <translation>Seguir com a busca</translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="381"/>
+        <source>What happened so far</source>
+        <translation>O que aconteceu até aqui</translation>
+    </message>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="509"/>
+        <source>%1 at %2</source>
+        <translation>%1 às %2</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="529"/>
+        <source>Starting over throws away the %n simulator launch you have already made, the reference round counted in, and the search begins again over every unit.</source>
+        <translation>
+            <numerusform>Recomeçar joga fora a %n subida de simulador que você já fez, contando a rodada de referência, e a busca recomeça sobre todas as unidades.</numerusform>
+            <numerusform>Recomeçar joga fora as %n subidas de simulador que você já fez, contando a rodada de referência, e a busca recomeça sobre todas as unidades.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="538"/>
+        <source>%n addon joined the library while the search was running. It is not linked into the simulator, so no round has loaded it and no answer you gave is about it. The search carries on, and it stays out of it.</source>
+        <translation>
+            <numerusform>%n addon entrou na biblioteca enquanto a busca corria. Ele não está linkado no simulador, então rodada nenhuma o carregou e resposta nenhuma que você deu é sobre ele. A busca segue, e ele fica de fora dela.</numerusform>
+            <numerusform>%n addons entraram na biblioteca enquanto a busca corria. Eles não estão linkados no simulador, então rodada nenhuma os carregou e resposta nenhuma que você deu é sobre eles. A busca segue, e eles ficam de fora dela.</numerusform>
+        </translation>
+    </message>
     <message>
         <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="272"/>
         <source>Find the addon that brings the simulator down</source>

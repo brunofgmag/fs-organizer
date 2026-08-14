@@ -5,10 +5,13 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollBar>
+#include <QtWidgets/QScrollArea>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 
+#include "support/MomentText.h"
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/theme/ModernistMetrics.h"
@@ -17,11 +20,27 @@
 
 namespace
 {
+    constexpr int kHistoryWidth = 250;
+    constexpr int kBetweenEntries = 11;
+    constexpr int kUnderTheTitle = 4;
+
     [[nodiscard]] QLabel* Quiet(QWidget* parent)
     {
         auto* label = new QLabel(parent);
         label->setObjectName(QStringLiteral("PanelPromise"));
         label->setWordWrap(true);
+
+        return label;
+    }
+
+    [[nodiscard]] QLabel* Stressed(QWidget* parent)
+    {
+        auto* label = new QLabel(parent);
+        label->setWordWrap(true);
+
+        QFont bold = label->font();
+        bold.setWeight(QFont::DemiBold);
+        label->setFont(bold);
 
         return label;
     }
@@ -47,6 +66,7 @@ namespace
         tree->header()->setSectionResizeMode(2, QHeaderView::Stretch);
         DressTheHeaderOf(tree->header());
         tree->setItemDelegate(new RowDelegate(tree));
+        tree->setTextElideMode(Qt::ElideMiddle);
 
         return tree;
     }
@@ -75,6 +95,42 @@ namespace
         return QString();
     }
 
+    [[nodiscard]] QString AtWhatTime(const std::chrono::system_clock::time_point at)
+    {
+        return AsLocalTime(at).toString(QLatin1String("HH:mm:ss"));
+    }
+
+    [[nodiscard]] QString TheNameOf(const AnsweredRound& answered)
+    {
+        if (ItIsTheReferenceRound(answered))
+        {
+            return QObject::tr("Reference");
+        }
+
+        if (answered.pass == BisectionPass::InsideTheGroup)
+        {
+            return QObject::tr("Round %1, inside the group").arg(answered.number);
+        }
+
+        return QObject::tr("Round %1").arg(answered.number);
+    }
+
+    [[nodiscard]] QString WhatItSettled(const AnsweredRound& answered)
+    {
+        if (ItIsTheReferenceRound(answered))
+        {
+            return answered.answer == BisectionAnswer::ItCrashed
+                ? QObject::tr("Nothing of yours was on, and it came down.")
+                : QObject::tr("Nothing of yours was on, and it ran fine.");
+        }
+
+        const QString told = answered.answer == BisectionAnswer::ItCrashed
+            ? QObject::tr("%n unit on, it came down.", nullptr, static_cast<int>(answered.unitsOn))
+            : QObject::tr("%n unit on, it ran fine.", nullptr, static_cast<int>(answered.unitsOn));
+
+        return QObject::tr("%1 %2 ruled out, %3 left.").arg(told).arg(answered.unitsCleared).arg(answered.unitsLeft);
+    }
+
     [[nodiscard]] QString WhatMoved(const DriftKind kind)
     {
         switch (kind)
@@ -100,12 +156,19 @@ BisectionPanel::BisectionPanel(BisectionViewModel& viewModel, QWidget* parent) :
     body_->addWidget(CreateTheRound());
     body_->addWidget(CreateTheDrift());
     body_->addWidget(CreateTheOutcome());
+    body_->addWidget(CreateWhatJoinedTheLibrary());
+
+    auto* split = new QHBoxLayout;
+    split->setContentsMargins(0, 0, 0, 0);
+    split->setSpacing(0);
+    split->addWidget(body_, 1);
+    split->addWidget(CreateWhatHappenedSoFar());
 
     auto* column = new QVBoxLayout(this);
     column->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, 0);
     column->setSpacing(8);
     column->addWidget(headline_);
-    column->addWidget(body_, 1);
+    column->addLayout(split, 1);
 
     connect(start_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Begin);
     connect(crashed_, &QPushButton::clicked, this,
@@ -120,6 +183,8 @@ BisectionPanel::BisectionPanel(BisectionViewModel& viewModel, QWidget* parent) :
             });
     connect(stop_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Stop);
     connect(giveUp_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Stop);
+    connect(giveUpInstead_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Stop);
+    connect(carryOn_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::CarryOn);
     connect(finish_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Stop);
     connect(refine_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Refine);
     connect(startOver_, &QPushButton::clicked, this,
@@ -201,11 +266,42 @@ QWidget* BisectionPanel::CreateTheRound()
     return pane;
 }
 
+QWidget* BisectionPanel::CreateWhatHappenedSoFar()
+{
+    aside_ = new QWidget(this);
+    aside_->setFixedWidth(kHistoryWidth);
+
+    soFar_ = Quiet(aside_);
+    story_ = new QWidget(aside_);
+
+    auto* entries = new QVBoxLayout(story_);
+    entries->setContentsMargins(0, 0, 0, 0);
+    entries->setSpacing(kBetweenEntries);
+
+    scrolled_ = new QScrollArea(aside_);
+    scrolled_->setObjectName(QStringLiteral("BisectionStory"));
+    scrolled_->setWidget(story_);
+    scrolled_->setWidgetResizable(true);
+    scrolled_->setFrameShape(QFrame::NoFrame);
+    scrolled_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrolled_->setFocusPolicy(Qt::NoFocus);
+    story_->setAutoFillBackground(false);
+    scrolled_->viewport()->setAutoFillBackground(false);
+
+    QVBoxLayout* beside = AColumnInside(aside_);
+    beside->addWidget(soFar_);
+    beside->addSpacing(kUnderTheTitle);
+    beside->addWidget(scrolled_, 1);
+
+    return aside_;
+}
+
 QWidget* BisectionPanel::CreateTheDrift()
 {
     auto* pane = new QWidget(this);
 
     drifted_ = Loud(pane);
+    whatStartingOverCosts_ = Loud(pane);
     notInTheJournal_ = Quiet(pane);
     divergences_ = UnitTable(QStringLiteral("BisectionDrift"), pane);
     startOver_ = new QPushButton(pane);
@@ -221,9 +317,39 @@ QWidget* BisectionPanel::CreateTheDrift()
 
     QVBoxLayout* column = AColumnInside(pane);
     column->addWidget(drifted_);
+    column->addWidget(whatStartingOverCosts_);
     column->addWidget(notInTheJournal_);
     column->addLayout(buttons);
     column->addWidget(divergences_, 1);
+
+    return pane;
+}
+
+QWidget* BisectionPanel::CreateWhatJoinedTheLibrary()
+{
+    auto* pane = new QWidget(this);
+
+    joined_ = Loud(pane);
+    notInTheJournalEither_ = Quiet(pane);
+    whatJoined_ = UnitTable(QStringLiteral("BisectionJoined"), pane);
+    whatJoined_->setColumnHidden(0, true);
+    whatJoined_->setColumnHidden(1, true);
+    carryOn_ = new QPushButton(pane);
+    carryOn_->setObjectName(QStringLiteral("PrimaryButton"));
+    giveUpInstead_ = new QPushButton(pane);
+
+    auto* buttons = new QHBoxLayout;
+    buttons->setContentsMargins(0, 0, 0, 0);
+    buttons->setSpacing(6);
+    buttons->addWidget(carryOn_);
+    buttons->addWidget(giveUpInstead_);
+    buttons->addStretch();
+
+    QVBoxLayout* column = AColumnInside(pane);
+    column->addWidget(joined_);
+    column->addWidget(notInTheJournalEither_);
+    column->addLayout(buttons);
+    column->addWidget(whatJoined_, 1);
 
     return pane;
 }
@@ -268,11 +394,15 @@ void BisectionPanel::RetranslateUi()
     stop_->setText(tr("Stop and put everything back"));
     startOver_->setText(tr("Start over from what is on the disk now"));
     giveUp_->setText(tr("Stop and put everything back"));
+    carryOn_->setText(tr("Carry on with the search"));
+    giveUpInstead_->setText(tr("Stop and put everything back"));
+    soFar_->setText(tr("What happened so far"));
     refine_->setText(tr("Split this group"));
     bringThemIn_->setText(tr("Bring them into the library"));
     finish_->setText(tr("Put everything back and finish"));
     notInTheJournal_->setText(tr("What this program can say is that the change is not in its journal. Who made it, it "
                                  "has no way of knowing."));
+    notInTheJournalEither_->setText(notInTheJournal_->text());
     singleCulprit_->setText(tr("This method assumes one culprit. Two addons that only bring the simulator down when "
                                "both are on would converge on an innocent one."));
     promise_->setText(tr("The first round turns every one of them off, which is what separates a cause among your "
@@ -284,18 +414,30 @@ void BisectionPanel::RetranslateUi()
     toBeSearched_->setHeaderLabels(unitColumns);
     turnedOn_->setHeaderLabels(unitColumns);
     whatIsLeft_->setHeaderLabels(unitColumns);
-    divergences_->setHeaderLabels({tr("What moved"), QString(), tr("Where")});
+
+    const QStringList driftColumns{tr("What moved"), QString(), tr("Where")};
+
+    divergences_->setHeaderLabels(driftColumns);
+    whatJoined_->setHeaderLabels(driftColumns);
 
     ShowWhereItStands();
 }
 
 void BisectionPanel::ShowWhereItStands()
 {
+    ListWhatHappenedSoFar();
+    aside_->setVisible(!viewModel_.Report().story.empty());
+
     switch (viewModel_.Stage())
     {
     case BisectionStage::ItDrifted:
         body_->setCurrentIndex(ItDrifted);
         ShowWhatMoved();
+
+        return;
+    case BisectionStage::TheLibraryGainedAnAddon:
+        body_->setCurrentIndex(TheLibraryGainedAnAddon);
+        ShowWhatJoinedTheLibrary();
 
         return;
     case BisectionStage::Finished:
@@ -370,18 +512,81 @@ void BisectionPanel::ShowTheRound() const
     ListTheUnitsOf(turnedOn_, on);
 }
 
+void BisectionPanel::ListWhatHappenedSoFar() const
+{
+    auto* entries = qobject_cast<QVBoxLayout*>(story_->layout());
+    const bool wasAtTheEnd = ItIsShowingTheEndOfTheStory();
+
+    while (QLayoutItem* old = entries->takeAt(0))
+    {
+        delete old->widget();
+        delete old;
+    }
+
+    for (const AnsweredRound& answered : viewModel_.Report().story)
+    {
+        auto* head = Stressed(story_);
+        head->setText(tr("%1 at %2").arg(TheNameOf(answered), AtWhatTime(answered.at)));
+
+        auto* said = Quiet(story_);
+        said->setText(WhatItSettled(answered));
+
+        entries->addWidget(head);
+        entries->addWidget(said);
+    }
+
+    entries->addStretch();
+
+    if (wasAtTheEnd)
+    {
+        KeepShowingTheEndOfTheStory();
+    }
+}
+
+bool BisectionPanel::ItIsShowingTheEndOfTheStory() const
+{
+    const QScrollBar* bar = scrolled_->verticalScrollBar();
+
+    return bar->maximum() == 0 || bar->value() == bar->maximum();
+}
+
+void BisectionPanel::KeepShowingTheEndOfTheStory() const
+{
+    story_->adjustSize();
+
+    QScrollBar* bar = scrolled_->verticalScrollBar();
+    bar->setValue(bar->maximum());
+}
+
 void BisectionPanel::ShowWhatMoved() const
 {
-    const BisectionReport& report = viewModel_.Report();
-
     drifted_->setText(tr("The disk moved between one round and the next, so the split this search had made is about "
                          "another set of addons than the one that is there now."));
 
-    divergences_->clear();
+    whatStartingOverCosts_->setText(tr("Starting over throws away the %n simulator launch you have already made, the "
+                                       "reference round counted in, and the search begins again over every unit.",
+                                       nullptr, static_cast<int>(viewModel_.LaunchesAlreadyMade())));
 
-    for (const Divergence& divergence : report.drift)
+    ListTheDriftIn(divergences_);
+}
+
+void BisectionPanel::ShowWhatJoinedTheLibrary() const
+{
+    joined_->setText(tr("%n addon joined the library while the search was running. It is not linked into the "
+                        "simulator, so no round has loaded it and no answer you gave is about it. The search carries "
+                        "on, and it stays out of it.",
+                        nullptr, static_cast<int>(viewModel_.Report().drift.size())));
+
+    ListTheDriftIn(whatJoined_);
+}
+
+void BisectionPanel::ListTheDriftIn(QTreeWidget* tree) const
+{
+    tree->clear();
+
+    for (const Divergence& divergence : viewModel_.Report().drift)
     {
-        auto* row = new QTreeWidgetItem(divergences_);
+        auto* row = new QTreeWidgetItem(tree);
         row->setText(0, WhatMoved(divergence.kind));
         row->setText(2, AsText(divergence.path));
         row->setData(2, QuietRole, true);

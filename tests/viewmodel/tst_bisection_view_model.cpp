@@ -40,6 +40,10 @@ namespace
         static void TheThirdOutcomeSaysHowManyEntriesCarryOnOutOfReach();
         static void AProcedureLeftHalfwayIsOfferedOnTheNextOpening();
         static void AGroupSaysHowManyAddonsItCarriesAndOfWhatKind();
+        static void AnAddonJoiningTheLibraryTakesTheScreenToItsOwnStageAndNotToTheDrift();
+        static void CarryingOnAppliesTheAnswerThatWasHeldBackInsteadOfLosingIt();
+        static void TheHeldAnswerIsForgottenOnceTheScreenLeavesThatStage();
+        static void TheLaunchesAlreadyMadeCountTheReferenceRound();
     };
 }
 
@@ -86,6 +90,14 @@ namespace
         library.children = {CategoryNode("D:/MSFS 2024/Aircrafts",
                                          {AddonNode(kCrj), AddonNode(kFenix), AddonNode(kMd11), AddonNode(kPmdg)}),
                             CategoryNode("D:/MSFS 2024/Liveries", {AddonNode(kLivery)})};
+
+        return library;
+    }
+
+    TreeNode ALibraryTreeWithOneMore()
+    {
+        TreeNode library = LibraryTree();
+        library.children.front().children.push_back(AddonNode("D:/MSFS 2024/Aircrafts/pmdg-aircraft-738"));
 
         return library;
     }
@@ -175,7 +187,7 @@ namespace
         mutable Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
-        BisectionService bisection{service, coupling, filesystemProbe, store};
+        BisectionService bisection{service, coupling, filesystemProbe, store, clock};
         BisectionViewModel viewModel{bisection, session};
     };
 }
@@ -378,6 +390,98 @@ void BisectionViewModelTest::AGroupSaysHowManyAddonsItCarriesAndOfWhatKind()
     QCOMPARE(group->addons, std::size_t{2});
     QVERIFY(group->coupling != Coupling::NotYetMeasured);
     QVERIFY(group->coupling != Coupling::Alone);
+}
+
+void BisectionViewModelTest::AnAddonJoiningTheLibraryTakesTheScreenToItsOwnStageAndNotToTheDrift()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.viewModel.Begin();
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Asking);
+
+    f.catalog.SetTree(kLibrary, ALibraryTreeWithOneMore());
+    f.viewModel.Answer(BisectionAnswer::ItRanFine);
+
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::TheLibraryGainedAnAddon);
+    QCOMPARE(f.viewModel.Report().refusal, BisectionRefusal::TheLibraryGainedAnAddon);
+    QVERIFY(f.viewModel.ItIsRunning());
+}
+
+void BisectionViewModelTest::CarryingOnAppliesTheAnswerThatWasHeldBackInsteadOfLosingIt()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.viewModel.Begin();
+
+    f.catalog.SetTree(kLibrary, ALibraryTreeWithOneMore());
+    f.viewModel.Answer(BisectionAnswer::ItRanFine);
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::TheLibraryGainedAnAddon);
+
+    f.viewModel.CarryOn();
+
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Asking);
+    QCOMPARE(f.viewModel.Report().refusal, BisectionRefusal::None);
+    QCOMPARE(f.viewModel.Report().round, std::size_t{1});
+    QCOMPARE(f.viewModel.Report().story.size(), std::size_t{1});
+    QCOMPARE(f.viewModel.Report().story.front().answer, BisectionAnswer::ItRanFine);
+    QCOMPARE(f.viewModel.Report().units, std::size_t{3});
+}
+
+void BisectionViewModelTest::TheHeldAnswerIsForgottenOnceTheScreenLeavesThatStage()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.viewModel.Begin();
+
+    f.catalog.SetTree(kLibrary, ALibraryTreeWithOneMore());
+    f.viewModel.Answer(BisectionAnswer::ItCrashed);
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::TheLibraryGainedAnAddon);
+
+    f.viewModel.CarryOn();
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Finished);
+
+    f.viewModel.CarryOn();
+
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Finished);
+    QCOMPARE(f.viewModel.Report().story.size(), std::size_t{1});
+}
+
+void BisectionViewModelTest::TheLaunchesAlreadyMadeCountTheReferenceRound()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.viewModel.Begin();
+
+    QCOMPARE(f.viewModel.Report().round, std::size_t{0});
+    QCOMPARE(f.viewModel.LaunchesAlreadyMade(), std::size_t{1});
+
+    f.viewModel.Answer(BisectionAnswer::ItRanFine);
+
+    QCOMPARE(f.viewModel.Report().round, std::size_t{1});
+    QCOMPARE(f.viewModel.LaunchesAlreadyMade(), std::size_t{2});
+
+    f.viewModel.Answer(BisectionAnswer::ItCrashed);
+
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Finished);
+    QCOMPARE(f.viewModel.Report().round, std::size_t{2});
+    QCOMPARE(f.viewModel.Report().story.size(), std::size_t{2});
+    QCOMPARE(f.viewModel.LaunchesAlreadyMade(), std::size_t{2});
 }
 
 QTEST_MAIN(BisectionViewModelTest)

@@ -26,11 +26,20 @@ namespace
         static void TheSecondPassSplitsTheSatellitesAndKeepsTheBaseOnInEveryRound();
         static void TheSecondPassIsNotPossibleWithoutAnIdentifiableBase();
         static void AFirstPassOverTwentyUnitsConvergesInFiveRounds();
+        static void TheReferenceRoundIsTheFirstEntryOfTheStory();
+        static void EveryAnsweredRoundLeavesAnEntryWithWhatItSettled();
+        static void TheSecondPassKeepsTheStoryOfTheFirstAndSaysWhichPassEachEntryIs();
+        static void AnAnswerThatChangesNothingLeavesNoEntry();
     };
 }
 
 namespace
 {
+    [[nodiscard]] std::chrono::system_clock::time_point AnInstant(const std::size_t round)
+    {
+        return std::chrono::system_clock::time_point(std::chrono::minutes(round * 8));
+    }
+
     std::filesystem::path AddonNumber(const std::size_t number)
     {
         return PathFromUtf8("D:/MSFS 2024/Aircrafts/addon-" + std::to_string(number));
@@ -65,7 +74,7 @@ namespace
 
     [[nodiscard]] BisectionRun PastTheReferenceRound(const std::vector<SearchUnit>& units)
     {
-        return AfterAnswering(RunOver(units), BisectionAnswer::ItRanFine);
+        return AfterAnswering(RunOver(units), BisectionAnswer::ItRanFine, AnInstant(0));
     }
 }
 
@@ -82,7 +91,7 @@ void BisectionRoundsTest::TheFirstApplicationIsTheReferenceRoundWithNothingOn()
 
 void BisectionRoundsTest::AReferenceRoundThatCrashesPutsTheCauseOutsideWhatTheAppManages()
 {
-    const BisectionRun answered = AfterAnswering(RunOver(LonelyUnits(8)), BisectionAnswer::ItCrashed);
+    const BisectionRun answered = AfterAnswering(RunOver(LonelyUnits(8)), BisectionAnswer::ItCrashed, AnInstant(0));
 
     QCOMPARE(OutcomeOf(answered), BisectionOutcome::NotAmongTheManagedOnes);
     QVERIFY(WhatIsLeft(answered).empty());
@@ -119,7 +128,7 @@ void BisectionRoundsTest::NoRoundEverTurnsOnEverySuspect()
                      qPrintable(QString("a round turned on every one of the %1 suspects").arg(run.suspects.size())));
             QVERIFY(!round.unitsOn.empty());
 
-            run = AfterAnswering(run, BisectionAnswer::ItCrashed);
+            run = AfterAnswering(run, BisectionAnswer::ItCrashed, AnInstant(run.round));
         }
     }
 }
@@ -128,7 +137,7 @@ void BisectionRoundsTest::AnswerCrashedKeepsTheHalfThatWasOn()
 {
     const BisectionRun run = PastTheReferenceRound(LonelyUnits(8));
     const BisectionRound round = TheRound(run);
-    const BisectionRun narrowed = AfterAnswering(run, BisectionAnswer::ItCrashed);
+    const BisectionRun narrowed = AfterAnswering(run, BisectionAnswer::ItCrashed, AnInstant(run.round));
 
     QCOMPARE(narrowed.suspects, round.unitsOn);
     QCOMPARE(narrowed.cleared.size(), std::size_t{4});
@@ -139,7 +148,7 @@ void BisectionRoundsTest::AnswerRanFineKeepsTheHalfThatWasOff()
 {
     const BisectionRun run = PastTheReferenceRound(LonelyUnits(8));
     const BisectionRound round = TheRound(run);
-    const BisectionRun narrowed = AfterAnswering(run, BisectionAnswer::ItRanFine);
+    const BisectionRun narrowed = AfterAnswering(run, BisectionAnswer::ItRanFine, AnInstant(run.round));
 
     QCOMPARE(narrowed.suspects.size(), std::size_t{4});
     QCOMPARE(narrowed.cleared, round.unitsOn);
@@ -181,7 +190,7 @@ void BisectionRoundsTest::NoRoundOfTheFirstPassTurnsOnPartOfAGroup()
 
             QCOMPARE(round.addonsOn.size(), membersOfTheUnitsOn);
 
-            run = AfterAnswering(run, answer);
+            run = AfterAnswering(run, answer, AnInstant(run.round));
         }
     }
 }
@@ -189,7 +198,7 @@ void BisectionRoundsTest::NoRoundOfTheFirstPassTurnsOnPartOfAGroup()
 void BisectionRoundsTest::TheSearchStopsInsteadOfRunningARoundOverOneUnit()
 {
     BisectionRun run = PastTheReferenceRound(LonelyUnits(2));
-    run = AfterAnswering(run, BisectionAnswer::ItCrashed);
+    run = AfterAnswering(run, BisectionAnswer::ItCrashed, AnInstant(run.round));
 
     QCOMPARE(run.suspects.size(), std::size_t{1});
     QVERIFY(OutcomeOf(run) != BisectionOutcome::StillSearching);
@@ -198,7 +207,7 @@ void BisectionRoundsTest::TheSearchStopsInsteadOfRunningARoundOverOneUnit()
 void BisectionRoundsTest::AUnitOfOneAddonIsTheFirstOutcome()
 {
     BisectionRun run = PastTheReferenceRound(LonelyUnits(2));
-    run = AfterAnswering(run, BisectionAnswer::ItCrashed);
+    run = AfterAnswering(run, BisectionAnswer::ItCrashed, AnInstant(run.round));
 
     QCOMPARE(OutcomeOf(run), BisectionOutcome::OneAddonLeft);
     QCOMPARE(WhatIsLeft(run), std::vector<std::filesystem::path>{AddonNumber(0)});
@@ -208,7 +217,7 @@ void BisectionRoundsTest::AUnitOfSeveralAddonsIsTheIrreducibleSet()
 {
     const std::vector<SearchUnit> units = {AGroupOf(2), SearchUnit{.addons = {AddonNumber(9)}}};
     BisectionRun run = PastTheReferenceRound(units);
-    run = AfterAnswering(run, BisectionAnswer::ItCrashed);
+    run = AfterAnswering(run, BisectionAnswer::ItCrashed, AnInstant(run.round));
 
     QCOMPARE(OutcomeOf(run), BisectionOutcome::AnIrreducibleSet);
     QCOMPARE(WhatIsLeft(run).size(), std::size_t{3});
@@ -228,7 +237,7 @@ void BisectionRoundsTest::TheWorstCaseIsTheCeilingOfTheLogarithm()
 void BisectionRoundsTest::TheSecondPassSplitsTheSatellitesAndKeepsTheBaseOnInEveryRound()
 {
     const std::vector<SearchUnit> units = {AGroupOf(4), SearchUnit{.addons = {AddonNumber(9)}}};
-    BisectionRun run = AfterAnswering(PastTheReferenceRound(units), BisectionAnswer::ItCrashed);
+    BisectionRun run = AfterAnswering(PastTheReferenceRound(units), BisectionAnswer::ItCrashed, AnInstant(1));
 
     QCOMPARE(OutcomeOf(run), BisectionOutcome::AnIrreducibleSet);
     QVERIFY(ASecondPassIsPossible(run));
@@ -248,7 +257,7 @@ void BisectionRoundsTest::TheSecondPassSplitsTheSatellitesAndKeepsTheBaseOnInEve
         QVERIFY2(std::ranges::find(round.addonsOn, base) != round.addonsOn.end(),
                  "a round of the second pass ran without the base");
 
-        second = AfterAnswering(second, BisectionAnswer::ItCrashed);
+        second = AfterAnswering(second, BisectionAnswer::ItCrashed, AnInstant(second.round));
     }
 
     QCOMPARE(OutcomeOf(second), BisectionOutcome::OneAddonLeft);
@@ -261,7 +270,7 @@ void BisectionRoundsTest::TheSecondPassIsNotPossibleWithoutAnIdentifiableBase()
     shadowing.addons = {AddonNumber(1), AddonNumber(2)};
 
     BisectionRun run = AfterAnswering(PastTheReferenceRound({shadowing, SearchUnit{.addons = {AddonNumber(9)}}}),
-                                      BisectionAnswer::ItCrashed);
+                                      BisectionAnswer::ItCrashed, AnInstant(1));
 
     QCOMPARE(OutcomeOf(run), BisectionOutcome::AnIrreducibleSet);
     QVERIFY(!ASecondPassIsPossible(run));
@@ -275,11 +284,89 @@ void BisectionRoundsTest::AFirstPassOverTwentyUnitsConvergesInFiveRounds()
     while (OutcomeOf(run) == BisectionOutcome::StillSearching)
     {
         ++rounds;
-        run = AfterAnswering(run, BisectionAnswer::ItRanFine);
+        run = AfterAnswering(run, BisectionAnswer::ItRanFine, AnInstant(run.round));
     }
 
     QCOMPARE(rounds, RoundsInTheWorstCase(20));
     QCOMPARE(OutcomeOf(run), BisectionOutcome::OneAddonLeft);
+}
+
+void BisectionRoundsTest::TheReferenceRoundIsTheFirstEntryOfTheStory()
+{
+    const BisectionRun run = AfterAnswering(RunOver(LonelyUnits(20)), BisectionAnswer::ItRanFine, AnInstant(0));
+
+    QCOMPARE(run.story.size(), std::size_t{1});
+    QCOMPARE(run.story.front().number, std::size_t{0});
+    QCOMPARE(run.story.front().unitsOn, std::size_t{0});
+    QCOMPARE(run.story.front().answer, BisectionAnswer::ItRanFine);
+    QCOMPARE(run.story.front().unitsCleared, std::size_t{0});
+    QCOMPARE(run.story.front().unitsLeft, std::size_t{20});
+    QCOMPARE(run.story.front().at, AnInstant(0));
+}
+
+void BisectionRoundsTest::EveryAnsweredRoundLeavesAnEntryWithWhatItSettled()
+{
+    BisectionRun run = PastTheReferenceRound(LonelyUnits(20));
+    std::size_t entries = 1;
+
+    while (OutcomeOf(run) == BisectionOutcome::StillSearching)
+    {
+        ++entries;
+        const std::size_t number = run.round;
+        const std::size_t on = TheRound(run).unitsOn.size();
+        const std::size_t suspectsBefore = run.suspects.size();
+
+        run = AfterAnswering(run, BisectionAnswer::ItCrashed, AnInstant(number));
+
+        const AnsweredRound& answered = run.story.back();
+
+        QCOMPARE(answered.number, number);
+        QCOMPARE(answered.pass, BisectionPass::OverTheUnits);
+        QCOMPARE(answered.unitsOn, on);
+        QCOMPARE(answered.answer, BisectionAnswer::ItCrashed);
+        QCOMPARE(answered.unitsLeft, run.suspects.size());
+        QCOMPARE(answered.unitsCleared, suspectsBefore - run.suspects.size());
+        QCOMPARE(answered.at, AnInstant(number));
+    }
+
+    QCOMPARE(run.story.size(), entries);
+    QCOMPARE(run.story.front().number, std::size_t{0});
+    QCOMPARE(run.story.back().unitsLeft, std::size_t{1});
+}
+
+void BisectionRoundsTest::TheSecondPassKeepsTheStoryOfTheFirstAndSaysWhichPassEachEntryIs()
+{
+    const std::vector<SearchUnit> units = {AGroupOf(4), SearchUnit{.addons = {AddonNumber(9)}}};
+    const BisectionRun run = AfterAnswering(PastTheReferenceRound(units), BisectionAnswer::ItCrashed, AnInstant(1));
+
+    QVERIFY(ASecondPassIsPossible(run));
+
+    BisectionRun second = IntoTheSecondPass(run);
+
+    QCOMPARE(second.story.size(), run.story.size());
+    QCOMPARE(second.story.front().number, run.story.front().number);
+    QCOMPARE(second.story.front().at, run.story.front().at);
+    QCOMPARE(second.story.back().unitsLeft, run.story.back().unitsLeft);
+
+    const std::size_t carried = second.story.size();
+
+    second = AfterAnswering(second, BisectionAnswer::ItCrashed, AnInstant(9));
+
+    QCOMPARE(second.story.size(), carried + 1);
+    QCOMPARE(second.story.back().pass, BisectionPass::InsideTheGroup);
+    QCOMPARE(second.story.front().pass, BisectionPass::OverTheUnits);
+}
+
+void BisectionRoundsTest::AnAnswerThatChangesNothingLeavesNoEntry()
+{
+    const BisectionRun settled =
+        AfterAnswering(PastTheReferenceRound(LonelyUnits(2)), BisectionAnswer::ItCrashed, AnInstant(1));
+
+    QVERIFY(OutcomeOf(settled) != BisectionOutcome::StillSearching);
+
+    const BisectionRun again = AfterAnswering(settled, BisectionAnswer::ItRanFine, AnInstant(2));
+
+    QCOMPARE(again.story.size(), settled.story.size());
 }
 
 QTEST_APPLESS_MAIN(BisectionRoundsTest)

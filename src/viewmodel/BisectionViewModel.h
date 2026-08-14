@@ -17,6 +17,7 @@ enum class BisectionStage : int
     Asking = 1,
     ItDrifted = 2,
     Finished = 3,
+    TheLibraryGainedAnAddon = 4,
 };
 
 struct UnitOnScreen
@@ -41,6 +42,8 @@ public:
 
     void Refine();
 
+    void CarryOn();
+
     void Stop();
 
     void Resume(ResumeChoice choice);
@@ -54,6 +57,8 @@ public:
     [[nodiscard]] bool ItIsRunning() const;
 
     [[nodiscard]] std::size_t RoundsLeftInTheWorstCase() const;
+
+    [[nodiscard]] std::size_t LaunchesAlreadyMade() const;
 
     [[nodiscard]] std::vector<UnitOnScreen> WhatIsLeft() const;
 
@@ -71,6 +76,8 @@ private:
     Session& session_;
     BisectionReport report_{};
     BisectionStage stage_ = BisectionStage::NotStarted;
+    std::optional<BisectionAnswer> heldAnswer_{};
+    bool aSplitWasHeld_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_BISECTION_VIEW_MODEL_H
