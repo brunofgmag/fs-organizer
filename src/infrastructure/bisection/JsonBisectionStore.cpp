@@ -22,6 +22,7 @@ namespace
     constexpr auto kUnits = "units";
     constexpr auto kAddons = "addons";
     constexpr auto kBase = "base";
+    constexpr auto kCoupling = "coupling";
     constexpr auto kSuspects = "suspects";
     constexpr auto kCleared = "cleared";
     constexpr auto kAlwaysOn = "alwaysOn";
@@ -88,6 +89,7 @@ namespace
     {
         QJsonObject object;
         object[kAddons] = PathsToJson(unit.addons);
+        object[kCoupling] = static_cast<int>(unit.coupling);
 
         if (unit.base.has_value())
         {
@@ -101,6 +103,8 @@ namespace
     {
         SearchUnit unit;
         unit.addons = PathsFromJson(object.value(kAddons).toArray());
+        unit.coupling =
+            static_cast<Coupling>(object.value(kCoupling).toInt(static_cast<int>(Coupling::NotYetMeasured)));
 
         if (object.contains(kBase))
         {

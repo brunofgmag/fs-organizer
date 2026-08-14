@@ -192,6 +192,20 @@ namespace
             }
         }
 
+        const auto TheKind = [](const Coupling coupling)
+        {
+            switch (coupling)
+            {
+            case Coupling::Merge: return QString("merge, no file claimed twice");
+            case Coupling::Shadowing: return QString("shadowing, a file is claimed twice");
+            case Coupling::OnlyTheSharedModelFolder: return QString("held only by the shared model folder name");
+            case Coupling::Alone:
+            case Coupling::NotYetMeasured: break;
+            }
+
+            return QString("kind not measured");
+        };
+
         Out() << units.size() << " units over " << addons << " enabled addons, " << groups
               << " of them coupled groups\n";
         Out() << "worst case: " << RoundsInTheWorstCase(units.size()) << " rounds after the reference one\n\n";
@@ -208,7 +222,8 @@ namespace
             const QString base =
                 unit.base.has_value() ? AsText(unit.base->filename()) : QString("no base that can be told apart");
 
-            Out() << "  a group of " << unit.addons.size() << ", base " << base << "\n";
+            Out() << "  a group of " << unit.addons.size() << ", " << TheKind(unit.coupling) << ", base " << base
+                  << "\n";
 
             for (const std::filesystem::path& member : unit.addons)
             {
@@ -347,7 +362,9 @@ int main(int argc, char* argv[])
         const std::vector<std::filesystem::path> enabled = EnabledAddonFolders(snapshot.entries);
 
         const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
-        const std::vector<SearchUnit> units = UnitsFrom(world.coupling.FactsAbout(enabled));
+        const std::vector<CouplingFacts> facts = world.coupling.FactsAbout(enabled);
+        const std::chrono::steady_clock::time_point grouped = std::chrono::steady_clock::now();
+        const std::vector<SearchUnit> units = world.coupling.WithTheKindOfEachGroup(facts, UnitsFrom(facts));
         const std::chrono::steady_clock::time_point ended = std::chrono::steady_clock::now();
 
         ReportUnits(units);
@@ -386,7 +403,9 @@ int main(int argc, char* argv[])
             const ProfileSnapshot snapshot = world.profiles.Scan(profile);
             const std::vector<std::filesystem::path> enabled = EnabledAddonFolders(snapshot.entries);
 
-            ReportUnits(UnitsFrom(world.coupling.FactsAbout(enabled)));
+            const std::vector<CouplingFacts> facts = world.coupling.FactsAbout(enabled);
+
+            ReportUnits(world.coupling.WithTheKindOfEachGroup(facts, UnitsFrom(facts)));
             Out() << "\nthe reference round turns everything off, and it is the first thing applied\n";
             Out().flush();
 

@@ -42,20 +42,47 @@ BisectionService::BisectionService(ProfileService& profiles,
 {
 }
 
-BisectionReport BisectionService::Begin(const SimulatorProfile& profile, const ProfileSnapshot& shown)
+BisectionReport BisectionService::WhatWouldBeSearched(const SimulatorProfile& profile,
+                                                      const ProfileSnapshot& shown) const
 {
-    const std::vector<std::filesystem::path> enabled = EnabledAddonFolders(shown.entries);
-
-    if (enabled.empty())
+    if (EnabledAddonFolders(shown.entries).empty())
     {
         return BisectionReport{.refusal = BisectionRefusal::NothingIsEnabledToSearch};
     }
 
-    BisectionRun run;
-    run.profileId = profile.id;
-    run.units = UnitsFrom(coupling_.FactsAbout(enabled));
-    run.startingConfiguration = EntriesForWhatIsEnabled(profile, shown.libraries, shown.enabled);
+    const BisectionRun run = RunFor(profile, shown);
 
+    BisectionReport report = TellAbout(run, ReadingOf(shown));
+    report.unitsUnderSuspicion = run.units;
+
+    return report;
+}
+
+BisectionReport BisectionService::WhatWouldBeSearchedNow(const SimulatorProfile& profile) const
+{
+    return WhatWouldBeSearched(profile, ReadTheDisk(profile).snapshot);
+}
+
+BisectionReport BisectionService::WhereItStands(const SimulatorProfile& profile) const
+{
+    const std::optional<BisectionRun> run = store_.Load(profile.id);
+
+    if (!run.has_value())
+    {
+        return BisectionReport{.refusal = BisectionRefusal::NoProcedureIsRunning};
+    }
+
+    return TellAbout(*run, ReadTheDisk(profile));
+}
+
+BisectionReport BisectionService::Begin(const SimulatorProfile& profile, const ProfileSnapshot& shown)
+{
+    if (EnabledAddonFolders(shown.entries).empty())
+    {
+        return BisectionReport{.refusal = BisectionRefusal::NothingIsEnabledToSearch};
+    }
+
+    const BisectionRun run = RunFor(profile, shown);
     const Reading reading = ReadTheDisk(profile);
 
     return TakeTheNextRound(profile, run, run, reading);
@@ -168,14 +195,31 @@ BisectionReport BisectionService::Resume(const SimulatorProfile& profile, const 
     return ApplyTheRound(profile, *run, ReadTheDisk(profile));
 }
 
-BisectionService::Reading BisectionService::ReadTheDisk(const SimulatorProfile& profile) const
+BisectionService::Reading BisectionService::ReadingOf(ProfileSnapshot snapshot)
 {
     Reading reading;
-    reading.snapshot = profiles_.Scan(profile);
-    reading.disk.entries = reading.snapshot.entries;
-    reading.disk.libraryAddons = AddonFoldersOf(reading.snapshot.libraries);
+    reading.disk.entries = snapshot.entries;
+    reading.disk.libraryAddons = AddonFoldersOf(snapshot.libraries);
+    reading.snapshot = std::move(snapshot);
 
     return reading;
+}
+
+BisectionService::Reading BisectionService::ReadTheDisk(const SimulatorProfile& profile) const
+{
+    return ReadingOf(profiles_.Scan(profile));
+}
+
+BisectionRun BisectionService::RunFor(const SimulatorProfile& profile, const ProfileSnapshot& shown) const
+{
+    const std::vector<CouplingFacts> facts = coupling_.FactsAbout(EnabledAddonFolders(shown.entries));
+
+    BisectionRun run;
+    run.profileId = profile.id;
+    run.units = coupling_.WithTheKindOfEachGroup(facts, UnitsFrom(facts));
+    run.startingConfiguration = EntriesForWhatIsEnabled(profile, shown.libraries, shown.enabled);
+
+    return run;
 }
 
 std::size_t BisectionService::WhatCarriesOnOutOfReach(const std::vector<DestinationEntry>& entries) const
@@ -245,6 +289,16 @@ BisectionReport BisectionService::TellAbout(const BisectionRun& run, const Readi
     report.roundsInTheWorstCase = RoundsInTheWorstCase(run.units.size());
     report.outOfReach = WhatCarriesOnOutOfReach(reading.disk.entries);
     report.aSecondPassIsPossible = ASecondPassIsPossible(run);
+
+    for (const std::size_t suspect : run.suspects)
+    {
+        report.unitsUnderSuspicion.push_back(run.units[suspect]);
+    }
+
+    for (const std::size_t on : TheRound(run).unitsOn)
+    {
+        report.unitsTurnedOn.push_back(run.units[on]);
+    }
 
     return report;
 }
