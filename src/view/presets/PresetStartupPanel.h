@@ -5,8 +5,8 @@
 
 #include "viewmodel/PresetViewModel.h"
 
+class EmptyState;
 class QCheckBox;
-class QLabel;
 class QPushButton;
 class QStackedWidget;
 class QTableWidget;
@@ -48,7 +48,7 @@ private:
 
     QCheckBox* governs_ = nullptr;
     QStackedWidget* body_ = nullptr;
-    QLabel* empty_ = nullptr;
+    EmptyState* empty_ = nullptr;
     QTableWidget* entries_ = nullptr;
     QPushButton* update_ = nullptr;
     bool populating_ = false;

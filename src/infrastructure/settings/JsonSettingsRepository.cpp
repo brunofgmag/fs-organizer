@@ -23,8 +23,12 @@ namespace
     constexpr auto kVerifyWithHash = "verifyWithHash";
     constexpr auto kManageStartupEntries = "manageStartupEntries";
     constexpr auto kManagePackageList = "managePackageList";
-    constexpr auto kWheelZooms = "wheelZooms";
-    constexpr auto kDragMovesThePage = "dragMovesThePage";
+    constexpr auto kWheelZoomsCharts = "wheelZoomsCharts";
+    constexpr auto kWheelZoomsDocuments = "wheelZoomsDocuments";
+    constexpr auto kDragMovesCharts = "dragMovesCharts";
+    constexpr auto kDragMovesDocuments = "dragMovesDocuments";
+    constexpr auto kWheelZoomsBothKinds = "wheelZooms";
+    constexpr auto kDragMovesBothKinds = "dragMovesThePage";
     constexpr auto kCoexistingAirports = "coexistingAirports";
     constexpr auto kOne = "one";
     constexpr auto kOther = "other";
@@ -348,8 +352,15 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
     settings.manageStartupEntries = root.value(kManageStartupEntries).toBool(true);
     settings.managePackageList = root.value(kManagePackageList).toBool(false);
-    settings.wheelZooms = root.value(kWheelZooms).toBool(true);
-    settings.dragMovesThePage = root.value(kDragMovesThePage).toBool(true);
+    const bool wheelUsedToZoomTheChart = root.value(kWheelZoomsBothKinds).toBool(kGesturesAChartIsBornWith.wheelZooms);
+    const bool dragUsedToMoveTheChart =
+        root.value(kDragMovesBothKinds).toBool(kGesturesAChartIsBornWith.dragMovesThePage);
+
+    settings.onCharts.wheelZooms = root.value(kWheelZoomsCharts).toBool(wheelUsedToZoomTheChart);
+    settings.onCharts.dragMovesThePage = root.value(kDragMovesCharts).toBool(dragUsedToMoveTheChart);
+    settings.onDocuments.wheelZooms = root.value(kWheelZoomsDocuments).toBool(kGesturesADocumentIsBornWith.wheelZooms);
+    settings.onDocuments.dragMovesThePage =
+        root.value(kDragMovesDocuments).toBool(kGesturesADocumentIsBornWith.dragMovesThePage);
     settings.updateMode = UpdateModeFromName(root.value(kUpdateMode));
     settings.language = root.value(kLanguage).toString().toStdString();
 
@@ -398,8 +409,10 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
     root[kVerifyWithHash] = settings.verifyWithHash;
     root[kManageStartupEntries] = settings.manageStartupEntries;
     root[kManagePackageList] = settings.managePackageList;
-    root[kWheelZooms] = settings.wheelZooms;
-    root[kDragMovesThePage] = settings.dragMovesThePage;
+    root[kWheelZoomsCharts] = settings.onCharts.wheelZooms;
+    root[kWheelZoomsDocuments] = settings.onDocuments.wheelZooms;
+    root[kDragMovesCharts] = settings.onCharts.dragMovesThePage;
+    root[kDragMovesDocuments] = settings.onDocuments.dragMovesThePage;
     root[kUpdateMode] = UpdateModeName(settings.updateMode);
     root[kLanguage] = QString::fromStdString(settings.language);
     root[kCoexistingAirports] = coexisting;

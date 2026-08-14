@@ -7,6 +7,7 @@
 #include <QtCore/QPoint>
 #include <QtWidgets/QWidget>
 
+#include "application/model/ReadingGestures.h"
 #include "domain/documents/DocumentBookmarks.h"
 #include "domain/documents/DocumentClassification.h"
 
@@ -18,6 +19,7 @@ class QMenu;
 class QModelIndex;
 class QPdfBookmarkModel;
 class QPdfDocument;
+class QPdfLink;
 class QPdfSearchModel;
 class QPdfView;
 class QPushButton;
@@ -44,9 +46,7 @@ public:
 
     void SayItIsDetached(bool detached);
 
-    void SayTheWheelZooms(bool zooming);
-
-    void SayTheDragMovesThePage(bool moving);
+    void SayTheGesturesOf(DocumentKind kind, ReadingGestures gestures);
 
 signals:
     void ThePageChanged(int page);
@@ -59,9 +59,9 @@ signals:
 
     void TheDetachWasAskedFor();
 
-    void TheWheelWasSetToZoom(bool zooming);
+    void TheWheelWasSetToZoom(DocumentKind kind, bool zooming);
 
-    void TheDragWasSetToMoveThePage(bool moving);
+    void TheDragWasSetToMoveThePage(DocumentKind kind, bool moving);
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -88,6 +88,16 @@ private:
     void StepThroughTheResults(int by);
 
     void JumpToTheResult(int result);
+
+    [[nodiscard]] int WhereTheResultSitsInTheScrollbar(const QPdfLink& found) const;
+
+    void BringTheResultIntoView(const QPdfLink& found) const;
+
+    [[nodiscard]] const ReadingGestures& TheGesturesInForce() const;
+
+    void ShowTheGesturesInForce();
+
+    void StopAnyGrabbing();
 
     [[nodiscard]] std::vector<bool> WhichSectionsAreOpen() const;
 
@@ -157,8 +167,8 @@ private:
     bool detached_ = false;
     bool grabbing_ = false;
     bool wandered_ = false;
-    bool wheelZooms_ = true;
-    bool dragMovesThePage_ = true;
+    ReadingGestures onCharts_ = kGesturesAChartIsBornWith;
+    ReadingGestures onDocuments_ = kGesturesADocumentIsBornWith;
     int result_ = -1;
 };
 

@@ -72,8 +72,10 @@ namespace
         static void TheIndexKeepsTheWidthTheFormWasMeasuredAt();
         static void TheIndexRunsToTheEdgeOfThePageLikeEveryOtherList();
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
-        static void TheWheelZoomsAChartAndScrollsADocument();
+        static void TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked();
         static void TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot();
+        static void TheWheelSwitchSaysWhichOfTheTwoKindsItIsAbout();
+        static void EachKindCarriesItsOwnPairOfSwitches();
         static void DraggingMovesADocumentAndNotOnlyAChart();
         static void APointerThatDoesNotWanderLeavesThePageWhereItWas();
         static void DraggingMovesNothingWhenTheReaderIsToldItShouldNot();
@@ -85,6 +87,7 @@ namespace
         static void ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark();
         static void TheMenuAnswersOnAMarkAndOnNothingElse();
         static void TheSearchStepsForwardAndBackThroughWhatItFound();
+        static void SteppingToAMatchFurtherDownTheSamePageScrollsToIt();
         static void TheLensesTakeTheReadingCloserAndFurtherAway();
         static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
@@ -563,8 +566,14 @@ void DocumentsPageTest::ThePointerSaysWhenTheReadingCarriesALink()
     reader.Read(linked, 0, DocumentKind::Document, {});
 
     QPdfView* pages = reader.findChild<QPdfView*>();
+    auto* fitWidth = reader.findChild<QPushButton*>(QStringLiteral("FitTheWidth"));
 
     QVERIFY(pages != nullptr);
+    QVERIFY(fitWidth != nullptr);
+
+    fitWidth->setChecked(true);
+
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::LayoutRequest);
 
     const QPointF onTheLink(300, 120);
     QMouseEvent moved(QEvent::MouseMove, onTheLink, pages->viewport()->mapToGlobal(onTheLink), Qt::NoButton, {},
@@ -577,7 +586,7 @@ void DocumentsPageTest::ThePointerSaysWhenTheReadingCarriesALink()
     QCOMPARE(pages->viewport()->cursor().shape(), Qt::PointingHandCursor);
 }
 
-void DocumentsPageTest::TheWheelZoomsAChartAndScrollsADocument()
+void DocumentsPageTest::TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked()
 {
     const QTemporaryDir folder;
     const std::filesystem::path chart = std::filesystem::path(folder.path().toStdWString()) / L"53117.pdf";
@@ -603,17 +612,27 @@ void DocumentsPageTest::TheWheelZoomsAChartAndScrollsADocument()
     };
 
     reader.Read(chart, 0, DocumentKind::Document, {});
+    const qreal overTheManual = pages->zoomFactor();
     roll();
 
-    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::FitToWidth);
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), overTheManual),
+             "a manual is read going down, so the wheel is born scrolling it and the roll changes no zoom");
 
     reader.Read(chart, 0, DocumentKind::Chart, {});
-    const qreal before = pages->zoomFactor();
+    const qreal overTheChart = pages->zoomFactor();
     roll();
 
-    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::Custom);
-    QVERIFY2(pages->zoomFactor() > before,
-             "a chart is read by getting closer to it, and the wheel is the gesture that does that");
+    QVERIFY2(pages->zoomFactor() > overTheChart,
+             "a chart is read by getting closer to it, so there the wheel is born zooming");
+
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = true, .dragMovesThePage = false});
+    reader.Read(chart, 0, DocumentKind::Document, {});
+
+    const qreal onceAsked = pages->zoomFactor();
+    roll();
+
+    QVERIFY2(pages->zoomFactor() > onceAsked,
+             "and asking for it over a manual works, which is what the switch was doing nothing about");
 }
 
 namespace
@@ -659,21 +678,93 @@ void DocumentsPageTest::TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot()
     DocumentReader reader;
     reader.resize(600, 400);
     reader.show();
-    reader.SayTheWheelZooms(false);
+    reader.SayTheGesturesOf(DocumentKind::Chart, {.wheelZooms = false, .dragMovesThePage = true});
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = true});
 
     QPdfView* pages = reader.findChild<QPdfView*>();
 
     QVERIFY(pages != nullptr);
 
     reader.Read(chart, 0, DocumentKind::Chart, {});
+
+    const qreal told = pages->zoomFactor();
+
     Roll(*pages);
 
-    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::FitToWidth);
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), told), "told not to, the wheel leaves the chart where it was");
 
-    reader.SayTheWheelZooms(true);
+    reader.SayTheGesturesOf(DocumentKind::Chart, {.wheelZooms = true, .dragMovesThePage = true});
     Roll(*pages);
 
-    QCOMPARE(pages->zoomMode(), QPdfView::ZoomMode::Custom);
+    QVERIFY2(pages->zoomFactor() > told, "and told to, it takes the same chart closer");
+}
+
+void DocumentsPageTest::TheWheelSwitchSaysWhichOfTheTwoKindsItIsAbout()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path both = WrittenInto(folder, L"53117.pdf", APdfWhoseInfoSays("/Title(CV-1)"));
+
+    DocumentReader reader;
+    reader.resize(600, 400);
+    reader.show();
+
+    const QPushButton* wheel = reader.findChild<QPushButton*>(QStringLiteral("WheelZooms"));
+
+    QVERIFY(wheel != nullptr);
+
+    reader.Read(both, 0, DocumentKind::Chart, {});
+
+    const QString overAChart = wheel->toolTip();
+
+    reader.Read(both, 0, DocumentKind::Document, {});
+
+    QVERIFY2(wheel->toolTip() != overAChart,
+             "the switch is the same button on both panels, so a tip that never changes calls a manual a chart");
+}
+
+void DocumentsPageTest::EachKindCarriesItsOwnPairOfSwitches()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path both = WrittenInto(folder, L"53117.pdf", APdfWhoseInfoSays("/Title(CV-1)"));
+
+    DocumentReader reader;
+    reader.resize(600, 400);
+    reader.show();
+
+    reader.SayTheGesturesOf(DocumentKind::Chart, {.wheelZooms = true, .dragMovesThePage = false});
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = true});
+
+    auto* wheel = reader.findChild<QPushButton*>(QStringLiteral("WheelZooms"));
+    auto* drag = reader.findChild<QPushButton*>(QStringLiteral("DragMovesThePage"));
+
+    QVERIFY(wheel != nullptr);
+    QVERIFY(drag != nullptr);
+
+    reader.Read(both, 0, DocumentKind::Chart, {});
+
+    QVERIFY2(wheel->isChecked() && !drag->isChecked(), "the chart shows the pair that belongs to the chart");
+
+    reader.Read(both, 0, DocumentKind::Document, {});
+
+    QVERIFY2(!wheel->isChecked() && drag->isChecked(),
+             "and opening a manual swaps both switches, because the answer the chart gave is not an answer about "
+             "the manual");
+
+    wheel->click();
+
+    reader.Read(both, 0, DocumentKind::Chart, {});
+
+    QVERIFY2(wheel->isChecked(),
+             "turning it on over a manual left the chart where it was, which is the whole point of the two pairs");
+
+    QSignalSpy asked(&reader, &DocumentReader::TheWheelWasSetToZoom);
+
+    wheel->click();
+
+    QCOMPARE(asked.count(), 1);
+    QVERIFY2(asked.first().at(0).value<DocumentKind>() == DocumentKind::Chart,
+             "the switch says which kind it answered for, and Document is the zero of the enum, so only asking for "
+             "the chart tells a carried value apart from a conversion that gave up");
 }
 
 void DocumentsPageTest::DraggingMovesADocumentAndNotOnlyAChart()
@@ -686,14 +777,23 @@ void DocumentsPageTest::DraggingMovesADocumentAndNotOnlyAChart()
 
     QVERIFY2(pages != nullptr, "the manual has to be taller than the reader for a drag to have anywhere to go");
 
-    const int before = pages->verticalScrollBar()->value();
+    const int born = pages->verticalScrollBar()->value();
 
     PointerAt(*pages, QEvent::MouseButtonPress, QPointF(100, 300));
     PointerAt(*pages, QEvent::MouseMove, QPointF(100, 200));
     PointerAt(*pages, QEvent::MouseButtonRelease, QPointF(100, 200));
 
-    QVERIFY2(pages->verticalScrollBar()->value() > before,
-             "dragging the page upwards walks the reading forward, and it is a manual, not a chart");
+    QVERIFY2(pages->verticalScrollBar()->value() == born,
+             "a manual is born without the drag, because the gesture that reads it is the scroll");
+
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = true});
+
+    PointerAt(*pages, QEvent::MouseButtonPress, QPointF(100, 300));
+    PointerAt(*pages, QEvent::MouseMove, QPointF(100, 200));
+    PointerAt(*pages, QEvent::MouseButtonRelease, QPointF(100, 200));
+
+    QVERIFY2(pages->verticalScrollBar()->value() > born,
+             "and asked for, dragging the page upwards walks the reading forward on a manual too");
 }
 
 void DocumentsPageTest::APointerThatDoesNotWanderLeavesThePageWhereItWas()
@@ -730,7 +830,8 @@ void DocumentsPageTest::DraggingMovesNothingWhenTheReaderIsToldItShouldNot()
 
     QVERIFY(pages != nullptr);
 
-    reader.SayTheDragMovesThePage(false);
+    reader.SayTheGesturesOf(DocumentKind::Chart, {.wheelZooms = false, .dragMovesThePage = false});
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = false});
 
     const int before = pages->verticalScrollBar()->value();
 
@@ -942,8 +1043,8 @@ void DocumentsPageTest::TheLensesTakeTheReadingCloserAndFurtherAway()
     further->click();
 
     QVERIFY2(shown->zoomFactor() < nearer,
-             "and the one carrying the minus takes it back, which on a document no gesture could do, because the "
-             "wheel only zooms a chart");
+             "and the one carrying the minus takes it back, which is the only way in until someone turns the wheel "
+             "switch on");
 }
 
 void DocumentsPageTest::TheSearchStepsForwardAndBackThroughWhatItFound()
@@ -984,6 +1085,62 @@ void DocumentsPageTest::TheSearchStepsForwardAndBackThroughWhatItFound()
     QVERIFY2(found->text() == QStringLiteral("24 of 24"),
              "the only way back was the wrap, because until now the one gesture the search had was the Enter key and "
              "it only ever went forward");
+}
+
+void DocumentsPageTest::SteppingToAMatchFurtherDownTheSamePageScrollsToIt()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"tall.pdf", ATallPageWhereTheTermRepeats(6));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* found = reader.findChild<QLabel*>(QStringLiteral("PanelPromise"));
+    auto* forth = reader.findChild<QPushButton*>(QStringLiteral("NextMatch"));
+    auto* back = reader.findChild<QPushButton*>(QStringLiteral("PreviousMatch"));
+    auto* pages = reader.findChild<QPdfView*>();
+
+    QVERIFY(found != nullptr);
+    QVERIFY(forth != nullptr);
+    QVERIFY(back != nullptr);
+    QVERIFY(pages != nullptr);
+
+    reader.findChild<QLineEdit*>()->setText(QString::fromStdString(kOnEveryPage));
+
+    QTRY_COMPARE(found->text(), QStringLiteral("1 of 6"));
+    QVERIFY2(pages->verticalScrollBar()->maximum() > 0, "a page that fits needs no scrolling and proves nothing");
+
+    const int atTheFirst = pages->verticalScrollBar()->value();
+
+    QVERIFY2(atTheFirst < pages->verticalScrollBar()->maximum() / 4,
+             "the first match is near the top of the page, so the reading starts there");
+
+    forth->click();
+    forth->click();
+    forth->click();
+
+    QCOMPARE(found->text(), QStringLiteral("4 of 6"));
+
+    const int atTheFourth = pages->verticalScrollBar()->value();
+
+    QVERIFY2(atTheFourth > atTheFirst,
+             "every match here is on the same page, and a step that only recolours it leaves the reader looking at "
+             "the one it left behind");
+
+    forth->click();
+    forth->click();
+
+    QVERIFY2(pages->verticalScrollBar()->value() > atTheFourth
+                 && pages->verticalScrollBar()->value() > pages->verticalScrollBar()->maximum() / 2,
+             "the last matches are near the foot of the page, so the reading has to have travelled most of it");
+
+    back->click();
+
+    QVERIFY2(pages->verticalScrollBar()->value() < pages->verticalScrollBar()->maximum(),
+             "and stepping back walks the page up again instead of parking at the end");
 }
 
 void DocumentsPageTest::TheMenuAnswersOnAMarkAndOnNothingElse()

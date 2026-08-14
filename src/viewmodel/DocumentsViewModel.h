@@ -17,6 +17,7 @@
 #include "application/Session.h"
 #include "application/ports/BackgroundRunner.h"
 #include "application/ports/DocumentIndexCache.h"
+#include "application/model/ReadingGestures.h"
 #include "domain/documents/DocumentClassification.h"
 #include "domain/ports/Clock.h"
 
@@ -99,13 +100,11 @@ public:
 
     void NameTheBookmark(const DocumentLine& line, int page, const std::string& name);
 
-    [[nodiscard]] bool TheWheelZooms() const;
+    [[nodiscard]] ReadingGestures TheGesturesOf(DocumentKind kind) const;
 
-    void MakeTheWheelZoom(bool zooming);
+    void MakeTheWheelZoom(DocumentKind kind, bool zooming);
 
-    [[nodiscard]] bool TheDragMovesThePage() const;
-
-    void MakeTheDragMoveThePage(bool moving);
+    void MakeTheDragMoveThePage(DocumentKind kind, bool moving);
 
 signals:
     void Indexed();

@@ -36,7 +36,7 @@ namespace
         static void TheAirportsTheUserSaidCanCoexistSurviveTheRoundTrip();
         static void TheBookmarksOfAReadDocumentSurviveTheRoundTrip();
         static void ADocumentWrittenBeforeBookmarksExistedReadsWithNone();
-        static void AFileWrittenBeforeTheReadingKeysExistedKeepsBothGesturesOn();
+        static void TheOldFlatKeysSeedTheChartAndTheManualTakesTheFactoryDefault();
         static void TheGesturesOfTheReaderSurviveTheRoundTrip();
     };
 }
@@ -316,21 +316,34 @@ void JsonSettingsRepositoryTest::TurningTheStartupEntriesLooseSurvivesTheRoundTr
     QCOMPARE(read.manageStartupEntries, false);
 }
 
-void JsonSettingsRepositoryTest::AFileWrittenBeforeTheReadingKeysExistedKeepsBothGesturesOn()
+void JsonSettingsRepositoryTest::TheOldFlatKeysSeedTheChartAndTheManualTakesTheFactoryDefault()
 {
     const Storage storage;
 
     std::filesystem::create_directories(storage.File().parent_path());
-    std::ofstream(storage.File(), std::ios::binary) << R"({"activeProfileId":"msfs2024","profiles":[]})";
+    std::ofstream(storage.File(), std::ios::binary)
+        << R"({"activeProfileId":"msfs2024","profiles":[],"wheelZooms":false,"dragMovesThePage":false})";
 
     const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
 
     QVERIFY(read.has_value());
-    QVERIFY2(read->wheelZooms,
-             "the wheel zoomed the chart before the key existed, and a file written back then keeps that gesture");
-    QVERIFY2(read->dragMovesThePage,
-             "the drag is born on, so the reader behaves the same on a settings file that "
-             "predates the switch");
+    QVERIFY2(!read->onCharts.wheelZooms && !read->onCharts.dragMovesThePage,
+             "the two flat keys meant the chart when they were written, because the wheel only ever zoomed a chart, "
+             "so it is the chart that inherits what they say");
+    QVERIFY2(!read->onDocuments.wheelZooms && !read->onDocuments.dragMovesThePage,
+             "and the manual takes the factory default, which is both gestures off");
+
+    const Storage fresh;
+
+    std::filesystem::create_directories(fresh.File().parent_path());
+    std::ofstream(fresh.File(), std::ios::binary) << R"({"activeProfileId":"msfs2024","profiles":[]})";
+
+    const std::optional<AppSettings> born = JsonSettingsRepository(fresh.File()).Load();
+
+    QVERIFY(born.has_value());
+    QVERIFY2(born->onCharts.wheelZooms && born->onCharts.dragMovesThePage,
+             "a file with neither the old keys nor the new ones is a fresh install, and there the chart is born "
+             "with both gestures on, which is what tells this apart from the file above");
 }
 
 void JsonSettingsRepositoryTest::TheGesturesOfTheReaderSurviveTheRoundTrip()
@@ -339,16 +352,19 @@ void JsonSettingsRepositoryTest::TheGesturesOfTheReaderSurviveTheRoundTrip()
 
     AppSettings written;
     written.activeProfileId = "msfs2024";
-    written.wheelZooms = false;
-    written.dragMovesThePage = false;
+    written.onCharts = {.wheelZooms = true, .dragMovesThePage = false};
+    written.onDocuments = {.wheelZooms = false, .dragMovesThePage = true};
 
     QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
 
     const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
 
     QVERIFY(read.has_value());
-    QCOMPARE(read->wheelZooms, false);
-    QCOMPARE(read->dragMovesThePage, false);
+    QCOMPARE(read->onCharts.wheelZooms, true);
+    QCOMPARE(read->onCharts.dragMovesThePage, false);
+    QVERIFY2(!read->onDocuments.wheelZooms && read->onDocuments.dragMovesThePage,
+             "the two kinds carry their own pair, so a round trip that mixed them would read the chart's answer on "
+             "the manual");
 }
 
 void JsonSettingsRepositoryTest::AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries()

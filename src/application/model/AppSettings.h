@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "application/model/ReadDocument.h"
+#include "application/model/ReadingGestures.h"
 #include "application/model/UpdateMode.h"
 #include "domain/model/LinkType.h"
 #include "domain/model/SimulatorProfile.h"
@@ -19,8 +20,8 @@ struct AppSettings
     bool verifyWithHash = false;
     bool manageStartupEntries = true;
     bool managePackageList = false;
-    bool wheelZooms = true;
-    bool dragMovesThePage = true;
+    ReadingGestures onCharts = kGesturesAChartIsBornWith;
+    ReadingGestures onDocuments = kGesturesADocumentIsBornWith;
     UpdateMode updateMode = UpdateMode::Notify;
     std::string language;
     std::vector<CoexistingPair> coexistingAirports;
