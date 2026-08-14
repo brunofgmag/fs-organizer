@@ -36,6 +36,35 @@ namespace
     constexpr auto kAction = "action";
     constexpr auto kInsideTheGroup = "insideTheGroup";
     constexpr auto kOverTheUnits = "overTheUnits";
+    constexpr auto kStory = "story";
+    constexpr auto kNumber = "number";
+    constexpr auto kUnitsOn = "unitsOn";
+    constexpr auto kAnswer = "answer";
+    constexpr auto kUnitsCleared = "unitsCleared";
+    constexpr auto kUnitsLeft = "unitsLeft";
+    constexpr auto kAt = "at";
+    constexpr auto kItCrashed = "itCrashed";
+    constexpr auto kItRanFine = "itRanFine";
+
+    [[nodiscard]] qint64 MillisecondsOf(const std::chrono::system_clock::time_point moment)
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(moment.time_since_epoch()).count();
+    }
+
+    [[nodiscard]] std::chrono::system_clock::time_point MomentOf(const qint64 milliseconds)
+    {
+        return std::chrono::system_clock::time_point{std::chrono::milliseconds{milliseconds}};
+    }
+
+    [[nodiscard]] QString PassToJson(const BisectionPass pass)
+    {
+        return pass == BisectionPass::InsideTheGroup ? kInsideTheGroup : kOverTheUnits;
+    }
+
+    [[nodiscard]] BisectionPass PassFromJson(const QJsonValue& value)
+    {
+        return value.toString() == kInsideTheGroup ? BisectionPass::InsideTheGroup : BisectionPass::OverTheUnits;
+    }
 
     QJsonArray PathsToJson(const std::vector<std::filesystem::path>& paths)
     {
@@ -112,6 +141,38 @@ namespace
         }
 
         return unit;
+    }
+
+    QJsonObject ToJson(const AnsweredRound& answered)
+    {
+        QJsonObject object;
+        object[kNumber] = static_cast<qint64>(answered.number);
+        object[kPass] = PassToJson(answered.pass);
+        object[kUnitsOn] = static_cast<qint64>(answered.unitsOn);
+        object[kAnswer] = answered.answer == BisectionAnswer::ItCrashed ? kItCrashed : kItRanFine;
+        object[kUnitsCleared] = static_cast<qint64>(answered.unitsCleared);
+        object[kUnitsLeft] = static_cast<qint64>(answered.unitsLeft);
+        object[kAt] = MillisecondsOf(answered.at);
+
+        return object;
+    }
+
+    AnsweredRound AnsweredRoundFromJson(const QJsonObject& object)
+    {
+        AnsweredRound answered;
+        answered.number = static_cast<std::size_t>(object.value(kNumber).toInteger());
+        answered.unitsOn = static_cast<std::size_t>(object.value(kUnitsOn).toInteger());
+        answered.unitsCleared = static_cast<std::size_t>(object.value(kUnitsCleared).toInteger());
+        answered.unitsLeft = static_cast<std::size_t>(object.value(kUnitsLeft).toInteger());
+        answered.at = MomentOf(object.value(kAt).toInteger());
+        answered.pass = PassFromJson(object.value(kPass));
+
+        if (object.value(kAnswer).toString() == kItCrashed)
+        {
+            answered.answer = BisectionAnswer::ItCrashed;
+        }
+
+        return answered;
     }
 
     QJsonArray ToJson(const std::vector<PresetEntry>& entries)
@@ -197,17 +258,17 @@ std::optional<BisectionRun> JsonBisectionStore::Load(const std::string& profileI
     run.round = static_cast<std::size_t>(root.value(kRound).toInteger());
     run.theReferenceRoundCrashed = root.value(kTheReferenceRoundCrashed).toBool();
     run.startingConfiguration = EntriesFromJson(root.value(kStartingConfiguration).toArray());
-    run.startedAt =
-        std::chrono::system_clock::time_point(std::chrono::milliseconds(root.value(kStartedAt).toInteger()));
-
-    if (root.value(kPass).toString() == kInsideTheGroup)
-    {
-        run.pass = BisectionPass::InsideTheGroup;
-    }
+    run.startedAt = MomentOf(root.value(kStartedAt).toInteger());
+    run.pass = PassFromJson(root.value(kPass));
 
     for (const QJsonValue unit : root.value(kUnits).toArray())
     {
         run.units.push_back(UnitFromJson(unit.toObject()));
+    }
+
+    for (const QJsonValue answered : root.value(kStory).toArray())
+    {
+        run.story.push_back(AnsweredRoundFromJson(answered.toObject()));
     }
 
     return run;
@@ -229,6 +290,13 @@ bool JsonBisectionStore::Save(const std::string& profileId, const BisectionRun& 
         units.append(ToJson(unit));
     }
 
+    QJsonArray story;
+
+    for (const AnsweredRound& answered : run.story)
+    {
+        story.append(ToJson(answered));
+    }
+
     QJsonObject root;
     root[kProfileId] = QString::fromStdString(run.profileId);
     root[kUnits] = units;
@@ -236,11 +304,11 @@ bool JsonBisectionStore::Save(const std::string& profileId, const BisectionRun& 
     root[kCleared] = NumbersToJson(run.cleared);
     root[kAlwaysOn] = PathsToJson(run.alwaysOn);
     root[kRound] = static_cast<qint64>(run.round);
-    root[kPass] = run.pass == BisectionPass::InsideTheGroup ? kInsideTheGroup : kOverTheUnits;
+    root[kPass] = PassToJson(run.pass);
     root[kTheReferenceRoundCrashed] = run.theReferenceRoundCrashed;
     root[kStartingConfiguration] = ToJson(run.startingConfiguration);
-    root[kStartedAt] = static_cast<qint64>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(run.startedAt.time_since_epoch()).count());
+    root[kStartedAt] = MillisecondsOf(run.startedAt);
+    root[kStory] = story;
 
     std::error_code error;
     std::filesystem::create_directories(file->parent_path(), error);

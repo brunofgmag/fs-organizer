@@ -328,7 +328,7 @@ int main(int argc, char* argv[])
 
     const CouplingScan coupling(filesystemProbe);
     JsonBisectionStore bisectionStore(BisectionFolderPath());
-    BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore);
+    BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore, clock);
     BisectionViewModel bisectionViewModel(bisectionService, session);
 
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel, bisectionViewModel);

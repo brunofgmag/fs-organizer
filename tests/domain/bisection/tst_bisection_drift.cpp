@@ -20,6 +20,9 @@ namespace
         static void AnAddonThatJoinedTheLibraryIsADivergence();
         static void AJunctionDeletedAndPutBackIdenticalReadsAsNoChange();
         static void TheDivergencesComeOutInAStableOrder();
+        static void AnAddonThatOnlyJoinedTheLibraryLoadedNothing();
+        static void AnythingOtherThanAJoinedAddonMeansSomethingThatLoadedMoved();
+        static void AJoinedAddonAlongsideAnotherKindDoesNotCountAsHarmless();
     };
 }
 
@@ -137,6 +140,49 @@ void BisectionDriftTest::TheDivergencesComeOutInAStableOrder()
     QCOMPARE(drift[0].kind, DriftKind::ALinkWeLeftIsGone);
     QCOMPARE(drift[1].kind, DriftKind::AnEntryWeDidNotLeaveIsThere);
     QCOMPARE(drift[2].kind, DriftKind::AnAddonLeftTheLibrary);
+}
+
+void BisectionDriftTest::AnAddonThatOnlyJoinedTheLibraryLoadedNothing()
+{
+    DiskAsItWas now = TheDiskWithBothLinks();
+    now.libraryAddons.push_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
+
+    QVERIFY(NothingThatLoadedMoved(DriftBetween(TheDiskWithBothLinks(), now)));
+}
+
+void BisectionDriftTest::AnythingOtherThanAJoinedAddonMeansSomethingThatLoadedMoved()
+{
+    DiskAsItWas withoutALink = TheDiskWithBothLinks();
+    withoutALink.entries.pop_back();
+
+    DiskAsItWas withAStranger = TheDiskWithBothLinks();
+    withAStranger.entries.push_back(APhysicalFolder(kStranger));
+
+    DiskAsItWas withoutAnAddon = TheDiskWithBothLinks();
+    withoutAnAddon.libraryAddons.pop_back();
+
+    DiskAsItWas pointingElsewhere = TheDiskWithBothLinks();
+    pointingElsewhere.entries.back().target = kBrussels;
+
+    for (const DiskAsItWas& now : {withoutALink, withAStranger, withoutAnAddon, pointingElsewhere})
+    {
+        const std::vector<Divergence> drift = DriftBetween(TheDiskWithBothLinks(), now);
+
+        QVERIFY(!drift.empty());
+        QVERIFY(!NothingThatLoadedMoved(drift));
+    }
+}
+
+void BisectionDriftTest::AJoinedAddonAlongsideAnotherKindDoesNotCountAsHarmless()
+{
+    DiskAsItWas now = TheDiskWithBothLinks();
+    now.libraryAddons.push_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
+    now.entries.pop_back();
+
+    const std::vector<Divergence> drift = DriftBetween(TheDiskWithBothLinks(), now);
+
+    QCOMPARE(drift.size(), std::size_t{2});
+    QVERIFY(!NothingThatLoadedMoved(drift));
 }
 
 QTEST_APPLESS_MAIN(BisectionDriftTest)

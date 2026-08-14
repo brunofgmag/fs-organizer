@@ -7,6 +7,7 @@
 
 class QLabel;
 class QPushButton;
+class QScrollArea;
 class QStackedWidget;
 class QTreeWidget;
 
@@ -32,13 +33,18 @@ private:
         Asking = 1,
         ItDrifted = 2,
         Finished = 3,
+        TheLibraryGainedAnAddon = 4,
     };
 
     [[nodiscard]] QWidget* CreateTheOpening();
 
     [[nodiscard]] QWidget* CreateTheRound();
 
+    [[nodiscard]] QWidget* CreateWhatHappenedSoFar();
+
     [[nodiscard]] QWidget* CreateTheDrift();
+
+    [[nodiscard]] QWidget* CreateWhatJoinedTheLibrary();
 
     [[nodiscard]] QWidget* CreateTheOutcome();
 
@@ -52,9 +58,19 @@ private:
 
     void ShowWhatMoved() const;
 
+    void ShowWhatJoinedTheLibrary() const;
+
     void ShowTheOutcome() const;
 
     void ListTheUnitsOf(QTreeWidget* tree, const std::vector<UnitOnScreen>& units) const;
+
+    void ListTheDriftIn(QTreeWidget* tree) const;
+
+    void ListWhatHappenedSoFar() const;
+
+    [[nodiscard]] bool ItIsShowingTheEndOfTheStory() const;
+
+    void KeepShowingTheEndOfTheStory() const;
 
     BisectionViewModel& viewModel_;
     QStackedWidget* body_ = nullptr;
@@ -71,11 +87,21 @@ private:
     QPushButton* ranFine_ = nullptr;
     QPushButton* stop_ = nullptr;
     QTreeWidget* turnedOn_ = nullptr;
+    QWidget* aside_ = nullptr;
+    QLabel* soFar_ = nullptr;
+    QWidget* story_ = nullptr;
+    QScrollArea* scrolled_ = nullptr;
     QLabel* drifted_ = nullptr;
+    QLabel* whatStartingOverCosts_ = nullptr;
     QLabel* notInTheJournal_ = nullptr;
     QTreeWidget* divergences_ = nullptr;
     QPushButton* startOver_ = nullptr;
     QPushButton* giveUp_ = nullptr;
+    QLabel* joined_ = nullptr;
+    QLabel* notInTheJournalEither_ = nullptr;
+    QTreeWidget* whatJoined_ = nullptr;
+    QPushButton* carryOn_ = nullptr;
+    QPushButton* giveUpInstead_ = nullptr;
     QLabel* outcome_ = nullptr;
     QLabel* singleCulprit_ = nullptr;
     QLabel* aboutTheSecondPass_ = nullptr;

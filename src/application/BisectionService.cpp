@@ -37,8 +37,9 @@ namespace
 BisectionService::BisectionService(ProfileService& profiles,
                                    const CouplingScan& coupling,
                                    const FilesystemProbe& filesystemProbe,
-                                   BisectionStore& store)
-    : profiles_(profiles), coupling_(coupling), filesystemProbe_(filesystemProbe), store_(store)
+                                   BisectionStore& store,
+                                   const Clock& clock)
+    : profiles_(profiles), coupling_(coupling), filesystemProbe_(filesystemProbe), store_(store), clock_(clock)
 {
 }
 
@@ -102,10 +103,7 @@ BisectionReport BisectionService::Answer(const SimulatorProfile& profile, const 
 
     if (!drift.empty())
     {
-        BisectionReport refused = Refusing(*run, reading, BisectionRefusal::TheDiskMovedSinceTheLastRound);
-        refused.drift = drift;
-
-        return refused;
+        return RefusingTheDriftOf(*run, reading, drift);
     }
 
     if (OutcomeOf(*run) != BisectionOutcome::StillSearching)
@@ -113,7 +111,7 @@ BisectionReport BisectionService::Answer(const SimulatorProfile& profile, const 
         return TellAbout(*run, reading);
     }
 
-    return TakeTheNextRound(profile, *run, AfterAnswering(*run, answer), reading);
+    return TakeTheNextRound(profile, *run, AfterAnswering(*run, answer, clock_.Now()), reading);
 }
 
 BisectionReport BisectionService::Refine(const SimulatorProfile& profile)
@@ -136,13 +134,37 @@ BisectionReport BisectionService::Refine(const SimulatorProfile& profile)
 
     if (!drift.empty())
     {
-        BisectionReport refused = Refusing(*run, reading, BisectionRefusal::TheDiskMovedSinceTheLastRound);
-        refused.drift = drift;
-
-        return refused;
+        return RefusingTheDriftOf(*run, reading, drift);
     }
 
     return TakeTheNextRound(profile, *run, IntoTheSecondPass(*run), reading);
+}
+
+BisectionReport BisectionService::AcceptWhatJoinedTheLibrary(const SimulatorProfile& profile)
+{
+    const std::optional<BisectionRun> run = store_.Load(profile.id);
+
+    if (!run.has_value())
+    {
+        return BisectionReport{.refusal = BisectionRefusal::NoProcedureIsRunning};
+    }
+
+    const Reading reading = ReadTheDisk(profile);
+    const std::vector<Divergence> drift = WhatMovedSince(reading.disk);
+
+    if (drift.empty())
+    {
+        return TellAbout(*run, reading);
+    }
+
+    if (!NothingThatLoadedMoved(drift))
+    {
+        return RefusingTheDriftOf(*run, reading, drift);
+    }
+
+    AdoptAsTheBaseline(reading.disk);
+
+    return TellAbout(*run, reading);
 }
 
 BisectionReport BisectionService::Stop(const SimulatorProfile& profile)
@@ -218,6 +240,7 @@ BisectionRun BisectionService::RunFor(const SimulatorProfile& profile, const Pro
     run.profileId = profile.id;
     run.units = coupling_.WithTheKindOfEachGroup(facts, UnitsFrom(facts));
     run.startingConfiguration = EntriesForWhatIsEnabled(profile, shown.libraries, shown.enabled);
+    run.startedAt = clock_.Now();
 
     return run;
 }
@@ -272,7 +295,6 @@ BisectionService::ApplyTheRound(const SimulatorProfile& profile, const Bisection
 
     BisectionReport report = TellAbout(run, reading);
     report.results = applied.results;
-    report.addonsTurnedOn = round.addonsOn;
 
     AdoptAsTheBaseline(ReadTheDisk(profile).disk);
 
@@ -289,16 +311,22 @@ BisectionReport BisectionService::TellAbout(const BisectionRun& run, const Readi
     report.roundsInTheWorstCase = RoundsInTheWorstCase(run.units.size());
     report.outOfReach = WhatCarriesOnOutOfReach(reading.disk.entries);
     report.aSecondPassIsPossible = ASecondPassIsPossible(run);
+    report.story = run.story;
+    report.launchesBehind = LaunchesBehind(run);
 
     for (const std::size_t suspect : run.suspects)
     {
         report.unitsUnderSuspicion.push_back(run.units[suspect]);
     }
 
-    for (const std::size_t on : TheRound(run).unitsOn)
+    const BisectionRound round = TheRound(run);
+
+    for (const std::size_t on : round.unitsOn)
     {
         report.unitsTurnedOn.push_back(run.units[on]);
     }
+
+    report.addonsTurnedOn = round.addonsOn;
 
     return report;
 }
@@ -323,6 +351,19 @@ BisectionService::Refusing(const BisectionRun& run, const Reading& reading, cons
 {
     BisectionReport refused = TellAbout(run, reading);
     refused.refusal = refusal;
+
+    return refused;
+}
+
+BisectionReport BisectionService::RefusingTheDriftOf(const BisectionRun& run,
+                                                     const Reading& reading,
+                                                     const std::vector<Divergence>& drift) const
+{
+    const BisectionRefusal refusal = NothingThatLoadedMoved(drift) ? BisectionRefusal::TheLibraryGainedAnAddon
+                                                                   : BisectionRefusal::TheDiskMovedSinceTheLastRound;
+
+    BisectionReport refused = Refusing(run, reading, refusal);
+    refused.drift = drift;
 
     return refused;
 }
