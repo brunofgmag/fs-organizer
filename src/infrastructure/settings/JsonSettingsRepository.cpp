@@ -88,6 +88,11 @@ namespace
         return "junction";
     }
 
+    Verification VerificationFromTheFlag(const QJsonValue& value)
+    {
+        return value.toBool(false) ? Verification::ByHash : Verification::ByStructure;
+    }
+
     LinkType LinkTypeFromName(const QJsonValue& value)
     {
         return value.toString() == "symbolic" ? LinkType::Symbolic : LinkType::Junction;
@@ -349,7 +354,7 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     AppSettings settings;
     settings.activeProfileId = root.value(kActiveProfileId).toString().toStdString();
     settings.linkType = LinkTypeFromName(root.value(kLinkType));
-    settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
+    settings.verification = VerificationFromTheFlag(root.value(kVerifyWithHash));
     settings.manageStartupEntries = root.value(kManageStartupEntries).toBool(true);
     settings.managePackageList = root.value(kManagePackageList).toBool(false);
     const bool wheelUsedToZoomTheChart = root.value(kWheelZoomsBothKinds).toBool(kGesturesAChartIsBornWith.wheelZooms);
@@ -406,7 +411,7 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
     root[kActiveProfileId] = QString::fromStdString(settings.activeProfileId);
     root[kProfiles] = profiles;
     root[kLinkType] = LinkTypeName(settings.linkType);
-    root[kVerifyWithHash] = settings.verifyWithHash;
+    root[kVerifyWithHash] = settings.verification == Verification::ByHash;
     root[kManageStartupEntries] = settings.manageStartupEntries;
     root[kManagePackageList] = settings.managePackageList;
     root[kWheelZoomsCharts] = settings.onCharts.wheelZooms;

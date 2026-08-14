@@ -97,6 +97,7 @@ private:
     QPushButton* addLibrary_ = nullptr;
     QPushButton* importLegacy_ = nullptr;
     QButtonGroup* linkTypes_ = nullptr;
+    QButtonGroup* verifications_ = nullptr;
     QButtonGroup* profileChoices_ = nullptr;
     QButtonGroup* updateModes_ = nullptr;
     QButtonGroup* languages_ = nullptr;

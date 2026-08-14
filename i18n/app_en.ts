@@ -3118,9 +3118,8 @@ It also exists in the library: %2</translation>
         <translation>Checks the count and the size of every file. It is what runs today.</translation>
     </message>
     <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="387"/>
         <source>Phase 2</source>
-        <translation>Phase 2</translation>
+        <translation type="vanished">Phase 2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="390"/>
@@ -3128,9 +3127,23 @@ It also exists in the library: %2</translation>
         <translation>By hash</translation>
     </message>
     <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="391"/>
         <source>Reads both sides in full and compares them. Correct and expensive: a 400 MB import ends up reading 800 MB.</source>
-        <translation>Reads both sides in full and compares them. Correct and expensive: a 400 MB import ends up reading 800 MB.</translation>
+        <translation type="vanished">Reads both sides in full and compares them. Correct and expensive: a 400 MB import ends up reading 800 MB.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="387"/>
+        <source>Reads both sides in full and compares the bytes, which catches a change the size hides. Makes an import several times slower, and the number of files weighs more than their size.</source>
+        <translation>Reads both sides in full and compares the bytes, which catches a change the size hides. Makes an import several times slower, and the number of files weighs more than their size.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="398"/>
+        <source>Imports now read both sides in full before removing the folder they copied.</source>
+        <translation>Imports now read both sides in full before removing the folder they copied.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="400"/>
+        <source>Imports now check the count and the size of every file.</source>
+        <translation>Imports now check the count and the size of every file.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="423"/>

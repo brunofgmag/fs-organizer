@@ -128,7 +128,8 @@ namespace
         FakeProcessProbe processProbe;
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        ImportEngine importEngine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine importEngine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                                  Verification::ByStructure};
         ImportService imports{importEngine, processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking,      log,          LinkType::Junction};
         FakeSettingsRepository settings{SettingsWith(Profile())};

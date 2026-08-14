@@ -26,6 +26,11 @@ public:
         copyDropsAFile_ = true;
     }
 
+    void MakeTheCopyGarble(const std::filesystem::path& file)
+    {
+        garbled_.push_back(ComparablePath(file));
+    }
+
     void MakeTheMoveFail()
     {
         moveFails_ = true;
@@ -88,7 +93,8 @@ public:
             const std::uintmax_t size = fileSystem_.FileSize(file);
             if (!copyDropsAFile_ || file != files.back())
             {
-                fileSystem_.AddFile(landing, size);
+                fileSystem_.CopyFile(file, landing);
+                GarbleWhatWasAskedFor(file, landing);
             }
 
             copied += size;
@@ -153,6 +159,23 @@ public:
     }
 
 private:
+    void GarbleWhatWasAskedFor(const std::filesystem::path& source, const std::filesystem::path& landing) const
+    {
+        if (std::ranges::find(garbled_, ComparablePath(source)) == garbled_.end())
+        {
+            return;
+        }
+
+        std::string bytes = fileSystem_.ContentsOf(landing).value_or(std::string());
+        if (bytes.empty())
+        {
+            return;
+        }
+
+        bytes.front() = static_cast<char>(bytes.front() ^ 0xFF);
+        fileSystem_.AddFileWithContents(landing, std::move(bytes));
+    }
+
     [[nodiscard]] bool TheRemovalIsAllowed(const std::filesystem::path& path) const
     {
         return !removalFails_ && std::ranges::find(unremovable_, ComparablePath(path)) == unremovable_.end();
@@ -160,6 +183,7 @@ private:
 
     InMemoryFileSystem& fileSystem_;
     std::vector<std::string> unremovable_;
+    std::vector<std::string> garbled_;
     std::optional<int> movesLeft_;
     bool copyFailsPartWayThrough_ = false;
     bool copyDropsAFile_ = false;

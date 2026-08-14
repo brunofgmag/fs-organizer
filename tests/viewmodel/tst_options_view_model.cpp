@@ -39,6 +39,7 @@ namespace
         static void TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLands();
         static void TheChosenTypeOfLinkIsWrittenWhereTheNextStartupReadsIt();
         static void TheChosenTypeOfLinkReachesTheNextLinkWithoutReopeningTheApp();
+        static void TheChosenCheckIsWrittenDownAndAnnouncedToWhoeverImportsNext();
     };
 }
 
@@ -297,7 +298,7 @@ void OptionsViewModelTest::TheChosenTypeOfLinkIsWrittenWhereTheNextStartupReadsI
 
     QCOMPARE(f.settings.stored.linkType, LinkType::Symbolic);
     QCOMPARE(f.viewModel.TypeOfLink(), LinkType::Symbolic);
-    QCOMPARE(f.viewModel.VerifiesWithHash(), false);
+    QCOMPARE(f.viewModel.VerificationUsed(), Verification::ByStructure);
 }
 
 void OptionsViewModelTest::TheChosenTypeOfLinkReachesTheNextLinkWithoutReopeningTheApp()
@@ -319,6 +320,27 @@ void OptionsViewModelTest::TheChosenTypeOfLinkReachesTheNextLinkWithoutReopening
     static_cast<void>(f.service.SetEnabled(f.session.Profile(), f.session.Snapshot(), {other}, true));
 
     QCOMPARE(f.linkService.lastLinkType, LinkType::Symbolic);
+}
+
+void OptionsViewModelTest::TheChosenCheckIsWrittenDownAndAnnouncedToWhoeverImportsNext()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.viewModel.VerificationUsed(), Verification::ByStructure);
+
+    const QSignalSpy announced(&f.viewModel, &OptionsViewModel::VerificationChosen);
+
+    f.viewModel.ChooseVerification(Verification::ByHash);
+
+    QCOMPARE(f.settings.stored.verification, Verification::ByHash);
+    QCOMPARE(f.viewModel.VerificationUsed(), Verification::ByHash);
+    QCOMPARE(announced.count(), 1);
+    QCOMPARE(announced.front().front().value<Verification>(), Verification::ByHash);
+
+    f.viewModel.ChooseVerification(Verification::ByHash);
+
+    QCOMPARE(announced.count(), 1);
 }
 
 QTEST_MAIN(OptionsViewModelTest)

@@ -151,7 +151,8 @@ namespace
         std::filesystem::path journalFile{};
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
     };
 }
 
@@ -252,7 +253,8 @@ void ExternalImportOnRealDiskTest::AnInterruptedImportPutsTheOtherProgramsFolder
     SystemClock clock;
     JsonlOperationJournal journal{disk.Root() / "journal" / "operations.jsonl"};
     const OperationLog log{journal, clock};
-    const ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+    const ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                              Verification::ByStructure};
 
     QCOMPARE(engine.Import(disk.Profile(), RequestFor(disk), {}).Result(), FileResult::CouldNotCreateLink);
 

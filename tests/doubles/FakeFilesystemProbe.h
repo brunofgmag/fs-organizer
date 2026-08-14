@@ -137,6 +137,26 @@ public:
         return contents;
     }
 
+    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const override
+    {
+        hashed.push_back(ComparablePath(path));
+
+        const std::optional<std::string> contents = fileSystem_.ContentsOf(path);
+        if (!contents.has_value())
+        {
+            return std::nullopt;
+        }
+
+        return std::to_string(fileSystem_.FileSize(path)) + ":" + *contents;
+    }
+
+    [[nodiscard]] std::size_t TimesHashed(const std::filesystem::path& path) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(hashed, ComparablePath(path)));
+    }
+
+    mutable std::vector<std::string> hashed;
+
     [[nodiscard]] std::size_t TimesItReadSomethingEndingIn(const std::string_view suffix) const
     {
         return static_cast<std::size_t>(std::ranges::count_if(read,

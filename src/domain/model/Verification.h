@@ -1,0 +1,10 @@
+#ifndef FS_ORGANIZER_DOMAIN_MODEL_VERIFICATION_H
+#define FS_ORGANIZER_DOMAIN_MODEL_VERIFICATION_H
+
+enum class Verification : int
+{
+    ByStructure = 0,
+    ByHash = 1,
+};
+
+#endif // FS_ORGANIZER_DOMAIN_MODEL_VERIFICATION_H

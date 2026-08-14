@@ -194,7 +194,8 @@ int main(int argc, char* argv[])
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, LinkType::Junction);
 
-    const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction);
+    const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction,
+                                    Verification::ByStructure);
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking,
                                       log, LinkType::Junction);
     const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,

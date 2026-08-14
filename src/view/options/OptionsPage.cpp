@@ -199,6 +199,7 @@ void OptionsPage::RetranslateUi()
     }
 
     delete linkTypes_;
+    delete verifications_;
     delete updateModes_;
     delete languages_;
 
@@ -369,29 +370,35 @@ QWidget* OptionsPage::CreateLinks()
     verification->setSpacing(kInsideGroup);
     verification->addWidget(Heading(tr("Check after copying"), pane));
 
+    verifications_ = new QButtonGroup(this);
+
     auto* structure = new QRadioButton(pane);
-    structure->setChecked(true);
-    structure->setEnabled(false);
-    verification->addWidget(Choice(tr("By structure"),
-                                   tr("Checks the count and the size of every file. It is what runs today."), structure,
-                                   false));
+    structure->setObjectName(QStringLiteral("StructureChoice"));
+    verifications_->addButton(structure, static_cast<int>(Verification::ByStructure));
 
     auto* hashed = new QRadioButton(pane);
     hashed->setObjectName(QStringLiteral("HashChoice"));
-    hashed->setEnabled(false);
+    verifications_->addButton(hashed, static_cast<int>(Verification::ByHash));
 
-    auto* waiting = new QWidget(pane);
-    auto* waitingLayout = new QHBoxLayout(waiting);
-    waitingLayout->setContentsMargins(0, 0, 0, 0);
-    waitingLayout->setSpacing(8);
-    waitingLayout->addWidget(Tag(tr("Phase 2"), "muted", waiting));
-    waitingLayout->addWidget(hashed);
-
+    verification->addWidget(Choice(tr("By structure"),
+                                   tr("Checks the count and the size of every file. It is what runs today."), structure,
+                                   false));
     verification->addWidget(Choice(tr("By hash"),
-                                   tr("Reads both sides in full and compares them. Correct and expensive: a 400 MB "
-                                      "import ends up reading 800 MB."),
-                                   waiting, true));
+                                   tr("Reads both sides in full and compares the bytes, which catches a change the "
+                                      "size hides. Makes an import several times slower, and the number of files "
+                                      "weighs more than their size."),
+                                   hashed, true));
     layout->addLayout(verification);
+
+    connect(verifications_, &QButtonGroup::idClicked, this,
+            [this](const int chosen)
+            {
+                viewModel_.ChooseVerification(static_cast<Verification>(chosen));
+                emit StatusChanged(chosen == static_cast<int>(Verification::ByHash)
+                                       ? tr("Imports now read both sides in full before removing the folder they "
+                                            "copied.")
+                                       : tr("Imports now check the count and the size of every file."));
+            });
     layout->addStretch();
 
     return pane;
@@ -610,6 +617,12 @@ void OptionsPage::Reload()
     ReloadLanguage();
 
     if (QAbstractButton* chosen = linkTypes_->button(static_cast<int>(viewModel_.TypeOfLink())); chosen != nullptr)
+    {
+        chosen->setChecked(true);
+    }
+
+    if (QAbstractButton* chosen = verifications_->button(static_cast<int>(viewModel_.VerificationUsed()));
+        chosen != nullptr)
     {
         chosen->setChecked(true);
     }

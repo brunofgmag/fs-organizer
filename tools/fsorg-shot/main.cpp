@@ -569,7 +569,7 @@ int main(int argc, char* argv[])
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, stored->linkType);
-    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, stored->linkType);
+    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, stored->linkType, stored->verification);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 stored->linkType);
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,

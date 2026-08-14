@@ -10,6 +10,7 @@
 #include "application/model/UpdateMode.h"
 #include "domain/model/LinkType.h"
 #include "domain/model/SimulatorProfile.h"
+#include "domain/model/Verification.h"
 #include "domain/scenery/AirportCoverage.h"
 
 struct AppSettings
@@ -17,7 +18,7 @@ struct AppSettings
     std::vector<SimulatorProfile> profiles;
     std::string activeProfileId;
     LinkType linkType = LinkType::Junction;
-    bool verifyWithHash = false;
+    Verification verification = Verification::ByStructure;
     bool manageStartupEntries = true;
     bool managePackageList = false;
     ReadingGestures onCharts = kGesturesAChartIsBornWith;

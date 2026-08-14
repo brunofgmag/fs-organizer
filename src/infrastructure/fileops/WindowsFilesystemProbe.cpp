@@ -15,11 +15,16 @@
 #include <string>
 #include <system_error>
 
+#include <QtCore/QByteArrayView>
+#include <QtCore/QCryptographicHash>
+
 #include "infrastructure/fileops/ExtendedPaths.h"
 #include "support/FileClock.h"
 
 namespace
 {
+    constexpr std::size_t kBytesReadAtATime = 1024 * 1024;
+
     std::wstring NativePath(const std::filesystem::path& path)
     {
         return WithExtendedPrefix(path).wstring();
@@ -266,6 +271,25 @@ std::optional<std::string> WindowsFilesystemProbe::FirstBytesOf(const std::files
     bytes.resize(static_cast<std::size_t>(file.gcount()));
 
     return bytes;
+}
+
+std::optional<std::string> WindowsFilesystemProbe::HashOf(const std::filesystem::path& path) const
+{
+    std::ifstream file(WithExtendedPrefix(path), std::ios::binary);
+    if (!file.is_open())
+    {
+        return std::nullopt;
+    }
+
+    QCryptographicHash digest(QCryptographicHash::Sha256);
+
+    std::string block(kBytesReadAtATime, '\0');
+    while (file.read(block.data(), static_cast<std::streamsize>(block.size())) || file.gcount() > 0)
+    {
+        digest.addData(QByteArrayView(block.data(), static_cast<qsizetype>(file.gcount())));
+    }
+
+    return file.bad() ? std::nullopt : std::optional(digest.result().toHex().toStdString());
 }
 
 std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const

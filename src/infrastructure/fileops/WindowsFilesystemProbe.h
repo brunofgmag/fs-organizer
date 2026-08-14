@@ -31,6 +31,8 @@ public:
     [[nodiscard]] std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,
                                                           std::size_t most) const override;
 
+    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const override;
+
     [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override;
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>

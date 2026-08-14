@@ -58,19 +58,26 @@ ImportEngine::ImportEngine(const FilesystemProbe& filesystemProbe,
                            SidecarStore& sidecars,
                            const LinkingEngine& linking,
                            const OperationLog& log,
-                           const LinkType linkType)
+                           const LinkType linkType,
+                           const Verification verification)
     : filesystemProbe_(filesystemProbe),
       files_(files),
       sidecars_(sidecars),
       linking_(linking),
       log_(log),
-      linkType_(linkType)
+      linkType_(linkType),
+      verification_(verification)
 {
 }
 
 void ImportEngine::UseLinkType(const LinkType linkType)
 {
     linkType_ = linkType;
+}
+
+void ImportEngine::UseVerification(const Verification verification)
+{
+    verification_ = verification;
 }
 
 ImportOutcome ImportEngine::Import(const SimulatorProfile& profile,
@@ -256,12 +263,63 @@ ImportOutcome ImportEngine::CopyAndVerify(const AddonId& addon,
     }
 
     Announce(onStep, OperationKind::ImportVerifyStaging);
-    const std::optional<TreeFingerprint> copied = filesystemProbe_.FingerprintTree(staging);
-    const bool verified = copied.has_value() && FingerprintsMatch(expected, copied->files);
-    RecordStep(addon, OperationKind::ImportVerifyStaging, staging, target,
-               verified ? FileResult::Completed : FileResult::VerificationFailed);
+    const ImportOutcome verified = CheckTheStaging(source, staging, expected, onProgress);
+    RecordStep(addon, OperationKind::ImportVerifyStaging, staging, target, verified.Result());
 
-    return verified ? ImportOutcome::Completed() : ImportOutcome::Stopped(FileResult::VerificationFailed);
+    if (verified.Result() == FileResult::Cancelled)
+    {
+        static_cast<void>(files_.RemoveTree(staging));
+    }
+
+    return verified;
+}
+
+ImportOutcome ImportEngine::CheckTheStaging(const std::filesystem::path& source,
+                                            const std::filesystem::path& staging,
+                                            const std::vector<FileFingerprint>& expected,
+                                            const std::function<bool(const CopyProgress&)>& onProgress) const
+{
+    const std::optional<TreeFingerprint> copied = filesystemProbe_.FingerprintTree(staging);
+    if (!copied.has_value() || !FingerprintsMatch(expected, copied->files))
+    {
+        return ImportOutcome::Stopped(FileResult::VerificationFailed);
+    }
+
+    if (verification_ == Verification::ByStructure)
+    {
+        return ImportOutcome::Completed();
+    }
+
+    return CompareTheContents(source, staging, expected, onProgress);
+}
+
+ImportOutcome ImportEngine::CompareTheContents(const std::filesystem::path& source,
+                                               const std::filesystem::path& staging,
+                                               const std::vector<FileFingerprint>& expected,
+                                               const std::function<bool(const CopyProgress&)>& onProgress) const
+{
+    const std::uintmax_t total = TotalSizeOf(expected);
+    std::uintmax_t read = 0;
+
+    for (const FileFingerprint& file : expected)
+    {
+        if (onProgress && !onProgress(CopyProgress{.copiedBytes = read, .totalBytes = total}))
+        {
+            return ImportOutcome::Stopped(FileResult::Cancelled);
+        }
+
+        const std::optional<std::string> here = filesystemProbe_.HashOf(PathUnder(source, file.relativePath));
+        const std::optional<std::string> landed = filesystemProbe_.HashOf(PathUnder(staging, file.relativePath));
+
+        if (!here.has_value() || !landed.has_value() || *here != *landed)
+        {
+            return ImportOutcome::Stopped(FileResult::VerificationFailed);
+        }
+
+        read += file.size;
+    }
+
+    return ImportOutcome::Completed();
 }
 
 ImportOutcome ImportEngine::PutIntoPlace(const AddonId& addon,

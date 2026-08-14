@@ -42,6 +42,8 @@ namespace
         static void TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands();
         static void TheLinksTabOpensOnTheTypeThatIsStored();
         static void ChoosingSymlinkWritesItAndSaysWhatChanges();
+        static void BothChecksAreOfferedAndTheTabOpensOnTheOneThatIsStored();
+        static void ChoosingTheHashWritesItAndSaysWhatEveryImportWillDo();
         static void EachLibraryGetsARowNamingWhatIsInsideIt();
         static void TheFooterNamesTheFileEveryChangeLands();
         static void OnlyOneProfileCanBeMarkedAtATime();
@@ -305,7 +307,7 @@ void OptionsPageTest::TheLinksTabOpensOnTheTypeThatIsStored()
     QVERIFY(symbolic != nullptr);
     QVERIFY(symbolic->isChecked());
     QVERIFY(!junction->isChecked());
-    QVERIFY(!hashed->isEnabled());
+    QVERIFY(hashed != nullptr);
 }
 
 void OptionsPageTest::ChoosingSymlinkWritesItAndSaysWhatChanges()
@@ -320,6 +322,48 @@ void OptionsPageTest::ChoosingSymlinkWritesItAndSaysWhatChanges()
     QCOMPARE(f.settings.stored.linkType, LinkType::Symbolic);
     QCOMPARE(said.count(), 1);
     QVERIFY(said.front().front().toString().contains(QStringLiteral("stay directory junctions")));
+}
+
+void OptionsPageTest::BothChecksAreOfferedAndTheTabOpensOnTheOneThatIsStored()
+{
+    Fixture f;
+
+    const auto* structure = f.page.findChild<QRadioButton*>(QStringLiteral("StructureChoice"));
+    const auto* hashed = f.page.findChild<QRadioButton*>(QStringLiteral("HashChoice"));
+
+    QVERIFY(structure != nullptr);
+    QVERIFY(hashed != nullptr);
+    QVERIFY2(structure->isEnabled() && hashed->isEnabled(), "both were dead until this slice, and neither is now");
+    QVERIFY(structure->isChecked());
+    QVERIFY(!hashed->isChecked());
+
+    f.Seed(
+        [](AppSettings& settings)
+        {
+            settings.verification = Verification::ByHash;
+        });
+    f.page.Reload();
+
+    QVERIFY(f.page.findChild<QRadioButton*>(QStringLiteral("HashChoice"))->isChecked());
+    QVERIFY(!f.page.findChild<QRadioButton*>(QStringLiteral("StructureChoice"))->isChecked());
+}
+
+void OptionsPageTest::ChoosingTheHashWritesItAndSaysWhatEveryImportWillDo()
+{
+    const Fixture f;
+
+    QSignalSpy said(&f.page, &OptionsPage::StatusChanged);
+
+    f.page.findChild<QRadioButton*>(QStringLiteral("HashChoice"))->click();
+
+    QCOMPARE(f.settings.stored.verification, Verification::ByHash);
+    QCOMPARE(said.count(), 1);
+    QVERIFY(said.front().front().toString().contains(QStringLiteral("read both sides in full")));
+
+    f.page.findChild<QRadioButton*>(QStringLiteral("StructureChoice"))->click();
+
+    QCOMPARE(f.settings.stored.verification, Verification::ByStructure);
+    QCOMPARE(said.count(), 2);
 }
 
 void OptionsPageTest::EachLibraryGetsARowNamingWhatIsInsideIt()
