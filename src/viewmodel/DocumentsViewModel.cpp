@@ -728,43 +728,42 @@ void DocumentsViewModel::NameTheBookmark(const DocumentLine& line, const int pag
              });
 }
 
-bool DocumentsViewModel::TheWheelZooms() const
+ReadingGestures DocumentsViewModel::TheGesturesOf(const DocumentKind kind) const
 {
-    return session_.Settings().wheelZooms;
+    return kind == DocumentKind::Chart ? session_.Settings().onCharts : session_.Settings().onDocuments;
 }
 
-void DocumentsViewModel::MakeTheWheelZoom(const bool zooming)
+void DocumentsViewModel::MakeTheWheelZoom(const DocumentKind kind, const bool zooming)
 {
     session_.Rewrite(
-        [zooming](AppSettings& settings)
+        [kind, zooming](AppSettings& settings)
         {
-            if (settings.wheelZooms == zooming)
+            ReadingGestures& gestures = kind == DocumentKind::Chart ? settings.onCharts : settings.onDocuments;
+
+            if (gestures.wheelZooms == zooming)
             {
                 return false;
             }
 
-            settings.wheelZooms = zooming;
+            gestures.wheelZooms = zooming;
 
             return true;
         });
 }
 
-bool DocumentsViewModel::TheDragMovesThePage() const
-{
-    return session_.Settings().dragMovesThePage;
-}
-
-void DocumentsViewModel::MakeTheDragMoveThePage(const bool moving)
+void DocumentsViewModel::MakeTheDragMoveThePage(const DocumentKind kind, const bool moving)
 {
     session_.Rewrite(
-        [moving](AppSettings& settings)
+        [kind, moving](AppSettings& settings)
         {
-            if (settings.dragMovesThePage == moving)
+            ReadingGestures& gestures = kind == DocumentKind::Chart ? settings.onCharts : settings.onDocuments;
+
+            if (gestures.dragMovesThePage == moving)
             {
                 return false;
             }
 
-            settings.dragMovesThePage = moving;
+            gestures.dragMovesThePage = moving;
 
             return true;
         });

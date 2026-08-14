@@ -231,8 +231,8 @@ QWidget* DocumentsPage::TheIndexSide()
 QWidget* DocumentsPage::TheReadingSide()
 {
     reader_ = new DocumentReader(this);
-    reader_->SayTheWheelZooms(viewModel_.TheWheelZooms());
-    reader_->SayTheDragMovesThePage(viewModel_.TheDragMovesThePage());
+    reader_->SayTheGesturesOf(DocumentKind::Chart, viewModel_.TheGesturesOf(DocumentKind::Chart));
+    reader_->SayTheGesturesOf(DocumentKind::Document, viewModel_.TheGesturesOf(DocumentKind::Document));
 
     nothingOpen_ = new EmptyState(this);
 
@@ -350,14 +350,14 @@ void DocumentsPage::ConnectTheReader()
                 reader_->ShowTheBookmarks(viewModel_.BookmarksOf(*open_));
             });
     connect(reader_, &DocumentReader::TheWheelWasSetToZoom, this,
-            [this](const bool zooming)
+            [this](const DocumentKind kind, const bool zooming)
             {
-                viewModel_.MakeTheWheelZoom(zooming);
+                viewModel_.MakeTheWheelZoom(kind, zooming);
             });
     connect(reader_, &DocumentReader::TheDragWasSetToMoveThePage, this,
-            [this](const bool moving)
+            [this](const DocumentKind kind, const bool moving)
             {
-                viewModel_.MakeTheDragMoveThePage(moving);
+                viewModel_.MakeTheDragMoveThePage(kind, moving);
             });
     connect(reader_, &DocumentReader::TheFolderWasAskedFor, this,
             [this]
@@ -592,7 +592,7 @@ void DocumentsPage::DetachTheReading()
     window_->setAttribute(Qt::WA_DeleteOnClose, false);
 
     auto* alone = new QVBoxLayout(window_);
-    alone->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+    alone->setContentsMargins(0, 0, 0, 0);
 
     readingSide_->removeWidget(reader_);
     alone->addWidget(reader_);

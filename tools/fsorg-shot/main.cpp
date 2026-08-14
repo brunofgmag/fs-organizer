@@ -15,6 +15,7 @@
 #include <QtGui/QPixmap>
 #include <QtGui/QStyleHints>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
@@ -1020,6 +1021,30 @@ int main(int argc, char* argv[])
             KeepTheEventLoopTurning(6);
 
             landed = Save(*documentsPage, folder, QStringLiteral("29-documents-bookmark")) && landed;
+
+            if (auto* detach = documentsPage->findChild<QPushButton*>(QStringLiteral("DetachTheReading")))
+            {
+                detach->click();
+
+                KeepTheEventLoopTurning(160);
+
+                for (QWidget* top : QApplication::topLevelWidgets())
+                {
+                    auto* alone = qobject_cast<QDialog*>(top);
+
+                    if (alone == nullptr || !alone->isVisible())
+                    {
+                        continue;
+                    }
+
+                    landed = Save(*alone, folder, QStringLiteral("30-documents-detached")) && landed;
+                    alone->close();
+
+                    KeepTheEventLoopTurning(80);
+
+                    break;
+                }
+            }
         }
     }
 

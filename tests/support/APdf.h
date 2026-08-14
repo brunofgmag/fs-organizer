@@ -157,4 +157,24 @@ inline const std::string kOnEveryPage = "flight manual";
         {});
 }
 
+[[nodiscard]] inline std::string ATallPageWhereTheTermRepeats(const int times)
+{
+    const int kTall = 4000;
+    const int kApart = 400;
+
+    std::string drawn;
+    for (int which = 0; which < times; ++which)
+    {
+        drawn +=
+            "BT /F1 12 Tf 20 " + std::to_string(kTall - kApart * (which + 1)) + " Td (" + kOnEveryPage + ") Tj ET\n";
+    }
+
+    return APdfMadeOf({"<</Type/Catalog/Pages 2 0 R>>", "<</Type/Pages/Kids[3 0 R]/Count 1>>",
+                       "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 " + std::to_string(kTall)
+                           + "]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>",
+                       "<</Length " + std::to_string(drawn.size()) + ">>\nstream\n" + drawn + "\nendstream",
+                       "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"},
+                      {});
+}
+
 #endif // FS_ORGANIZER_TESTS_SUPPORT_A_PDF_H
