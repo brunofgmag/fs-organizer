@@ -1,4 +1,5 @@
 set(DOMAIN_SOURCES
+        src/domain/bisection/BisectionRounds.cpp
         src/domain/bisection/CoupledUnits.cpp
         src/domain/bisection/CouplingScan.cpp
         src/domain/documents/ChartFileNaming.cpp
