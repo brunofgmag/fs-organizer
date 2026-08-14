@@ -2860,26 +2860,29 @@ It also exists in the library: %2</translation>
     </message>
 </context>
 <context>
-    <name>LongOperationProgress</name>
+    <name>ImportProgressDialog</name>
     <message>
-        <location filename="../src/view/shell/LongOperationProgress.cpp" line="23"/>
+        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>Cancel</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/LongOperationProgress.cpp" line="42"/>
-        <source>%1 · %2 · %3 of %4</source>
-        <translation>%1 · %2 · %3 of %4</translation>
-    </message>
-    <message>
-        <location filename="../src/view/shell/LongOperationProgress.cpp" line="43"/>
+        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="61"/>
         <source>Folder %1 of %2</source>
         <translation>Folder %1 of %2</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/LongOperationProgress.cpp" line="60"/>
+        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="112"/>
+        <source>%1 of %2</source>
+        <translation>%1 of %2</translation>
+    </message>
+    <message vanished="true">
+        <source>%1 · %2 · %3 of %4</source>
+        <translation type="vanished">%1 · %2 · %3 of %4</translation>
+    </message>
+    <message vanished="true">
         <source>Folder %1 of %2 · %3</source>
-        <translation>Folder %1 of %2 · %3</translation>
+        <translation type="vanished">Folder %1 of %2 · %3</translation>
     </message>
 </context>
 <context>

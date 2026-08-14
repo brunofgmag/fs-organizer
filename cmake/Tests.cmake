@@ -1339,6 +1339,11 @@ if (WIN32)
     target_link_libraries(fsorg-startup-entry-dialog-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-startup-entry-dialog-tests startup-entry-dialog)
 
+    fsorg_add_qt_test(fsorg-import-progress-dialog-tests import-progress-dialog
+            tests/view/tst_import_progress_dialog.cpp)
+    target_link_libraries(fsorg-import-progress-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-import-progress-dialog-tests import-progress-dialog)
+
     fsorg_add_qt_test(fsorg-omitted-dialog-tests omitted-dialog
             tests/view/tst_omitted_dialog.cpp)
     target_link_libraries(fsorg-omitted-dialog-tests PRIVATE fsorg-view)

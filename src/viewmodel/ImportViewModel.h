@@ -65,9 +65,9 @@ public:
 signals:
     void Started(int folders);
 
-    void Progressed(qulonglong copiedBytes, qulonglong totalBytes, int folder);
+    void Progressed(qulonglong copiedBytes, qulonglong totalBytes, int folder, OperationKind step);
 
-    void StepChanged(const QString& step);
+    void StepChanged(OperationKind kind);
 
     void Idle();
 
@@ -94,6 +94,7 @@ private:
     Session& session_;
     BackgroundRunner& runner_;
     bool running_ = false;
+    OperationKind step_ = OperationKind::ImportCopyToStaging;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};
 };

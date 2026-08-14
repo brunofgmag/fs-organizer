@@ -1,9 +1,7 @@
 #include "view/shell/LongOperationProgress.h"
 
-#include <QtWidgets/QProgressDialog>
-
+#include "view/shell/ImportProgressDialog.h"
 #include "viewmodel/FailureText.h"
-#include "viewmodel/SizeSummary.h"
 
 LongOperationProgress::LongOperationProgress(ImportViewModel& viewModel, QWidget* over)
     : QObject(over), viewModel_(viewModel), over_(over)
@@ -16,53 +14,34 @@ LongOperationProgress::LongOperationProgress(ImportViewModel& viewModel, QWidget
 
 void LongOperationProgress::Open(const int folders)
 {
-    folders_ = folders;
-    folder_ = 0;
-    step_ = NameOfImportStep(OperationKind::ImportCopyToStaging);
+    progress_ = new ImportProgressDialog(folders, over_);
 
-    progress_ = new QProgressDialog(step_, tr("Cancel"), 0, 100, over_);
-    progress_->setWindowModality(Qt::ApplicationModal);
-    progress_->setMinimumDuration(0);
-    progress_->setAutoClose(false);
-    progress_->setAutoReset(false);
-    progress_->setValue(0);
+    connect(progress_, &ImportProgressDialog::Cancelled, &viewModel_, &ImportViewModel::Cancel);
 
-    connect(progress_, &QProgressDialog::canceled, &viewModel_, &ImportViewModel::Cancel);
+    progress_->show();
 }
 
-void LongOperationProgress::ShowTheBytes(const qulonglong copiedBytes, const qulonglong totalBytes, const int folder)
+void LongOperationProgress::ShowTheBytes(const qulonglong copiedBytes,
+                                         const qulonglong totalBytes,
+                                         const int folder,
+                                         const OperationKind step)
 {
     if (progress_ == nullptr)
     {
         return;
     }
 
-    progress_->setRange(0, 100);
-    progress_->setLabelText(
-        tr("%1 · %2 · %3 of %4")
-            .arg(tr("Folder %1 of %2").arg(folder).arg(folders_), step_, AsSize(copiedBytes), AsSize(totalBytes)));
-
-    progress_->setValue(totalBytes == 0 ? 0 : static_cast<int>(copiedBytes * 100 / totalBytes));
+    progress_->ShowTheBytes(copiedBytes, totalBytes, folder, step);
 }
 
-void LongOperationProgress::ShowTheStep(const QString& step)
+void LongOperationProgress::ShowTheStep(const OperationKind kind)
 {
-    const bool copying = step == NameOfImportStep(OperationKind::ImportCopyToStaging);
-
-    step_ = step;
-    folder_ += copying ? 1 : 0;
-
     if (progress_ == nullptr)
     {
         return;
     }
 
-    progress_->setLabelText(tr("Folder %1 of %2 · %3").arg(folder_).arg(folders_).arg(step_));
-
-    if (!copying)
-    {
-        progress_->setRange(0, 0);
-    }
+    progress_->ShowTheStep(kind, NameOfImportStep(kind));
 }
 
 void LongOperationProgress::Close()
