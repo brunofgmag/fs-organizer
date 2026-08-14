@@ -331,6 +331,24 @@ fsorg_add_qt_test(fsorg-deletion-service-tests deletion-service
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-deletion-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-bisection-service-tests bisection-service
+        tests/application/tst_bisection_service.cpp
+        tests/doubles/FakeBisectionStore.h
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
+        tests/doubles/FakeSidecarStore.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-bisection-service-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-library-organizer-tests library-organizer
         tests/application/tst_library_organizer.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -997,6 +1015,16 @@ if (WIN32)
             tests/support/PathPrinting.h
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-link-plan-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-bisection-on-real-disk-tests bisection-on-real-disk
+            tests/infrastructure/bisection/tst_bisection_on_real_disk.cpp
+            tests/doubles/StartupOverFakes.h
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeLibraryIdGenerator.h
+            tests/doubles/FakeOperationJournal.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-bisection-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-chart-versions-on-real-disk-tests chart-versions-on-real-disk
             tests/infrastructure/documents/tst_chart_versions_on_real_disk.cpp

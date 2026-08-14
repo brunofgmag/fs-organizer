@@ -36,6 +36,7 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/BisectionService.cpp
         src/application/CoverageService.cpp
         src/application/DeletionService.cpp
         src/application/DependencyReport.cpp
@@ -57,6 +58,7 @@ set(APPLICATION_SOURCES
 )
 
 set(INFRASTRUCTURE_SOURCES
+        src/infrastructure/bisection/JsonBisectionStore.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonChartCatalogueParser.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
