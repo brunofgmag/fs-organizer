@@ -43,6 +43,19 @@ public:
                                  .contents = std::move(contents)};
     }
 
+    void CopyFile(const std::filesystem::path& from, const std::filesystem::path& to)
+    {
+        const auto node = nodes_.find(Key(from));
+        if (node == nodes_.end())
+        {
+            return;
+        }
+
+        AddTheFoldersAbove(to);
+
+        nodes_[Key(to)] = node->second;
+    }
+
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const
     {
         const auto node = nodes_.find(Key(path));

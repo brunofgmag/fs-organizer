@@ -23,6 +23,7 @@
 #include "domain/model/Preset.h"
 #include "domain/model/QuarantineOrigin.h"
 #include "domain/model/SceneryCodes.h"
+#include "domain/model/Verification.h"
 #include "domain/model/WriteAccess.h"
 #include "domain/scenery/AirportCoverage.h"
 
@@ -181,6 +182,18 @@ namespace QTest
         }
 
         return qstrdup("LinkType(?)");
+    }
+
+    template<>
+    inline char* toString(const Verification& t)
+    {
+        switch (t)
+        {
+        case Verification::ByStructure: return qstrdup("ByStructure");
+        case Verification::ByHash: return qstrdup("ByHash");
+        }
+
+        return qstrdup("Verification(?)");
     }
 
     template<>

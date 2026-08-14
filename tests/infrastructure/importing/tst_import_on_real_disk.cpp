@@ -1,3 +1,4 @@
+#include <QtCore/QCryptographicHash>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
@@ -50,6 +51,8 @@ namespace
         static void TheRecordBesideTheItemIsNeverEnumeratedAsAnItem();
         static void AnAccentedOriginComesBackByteForByteFromTheRealFile();
         static void TheSwapReallyExchangesTheOccupantAndTheItemOnDisk();
+        static void TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart();
+        static void AnImportCheckedByTheHashReachesAsFarPastTheCeilingAsTheRestOfTheProbe();
     };
 }
 
@@ -113,7 +116,8 @@ namespace
         std::filesystem::path journalFile{};
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
     };
 
     struct Service
@@ -661,6 +665,59 @@ void ImportOnRealDiskTest::TheSwapReallyExchangesTheOccupantAndTheItemOnDisk()
 
     QVERIFY(recorded.has_value());
     QCOMPARE(recorded->origin, place);
+}
+
+void ImportOnRealDiskTest::TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart()
+{
+    const Disk disk;
+
+    const std::string many(2 * 1024 * 1024 + 517, 'a');
+    disk.AddFile("bytes/long.bin", many);
+    disk.AddFile("bytes/twin.bin", many);
+    disk.AddFile("bytes/nearly.bin", many.substr(0, many.size() - 1) + "b");
+
+    const WindowsFilesystemProbe probe;
+
+    const std::optional<std::string> read = probe.HashOf(disk.Root() / "bytes" / "long.bin");
+    const std::optional<std::string> twin = probe.HashOf(disk.Root() / "bytes" / "twin.bin");
+    const std::optional<std::string> nearly = probe.HashOf(disk.Root() / "bytes" / "nearly.bin");
+
+    QVERIFY(read.has_value());
+    QCOMPARE(*read,
+             QCryptographicHash::hash(QByteArrayView(many.data(), static_cast<qsizetype>(many.size())),
+                                      QCryptographicHash::Sha256)
+                 .toHex()
+                 .toStdString());
+
+    QCOMPARE(*read, *twin);
+    QCOMPARE(std::filesystem::file_size(disk.Root() / "bytes" / "nearly.bin"), std::uintmax_t{many.size()});
+    QVERIFY2(*read != *nearly, "one byte apart at the same size is the whole reason this check exists");
+
+    QVERIFY(!probe.HashOf(disk.Root() / "bytes" / "never-written.bin").has_value());
+}
+
+void ImportOnRealDiskTest::AnImportCheckedByTheHashReachesAsFarPastTheCeilingAsTheRestOfTheProbe()
+{
+    const Disk disk;
+    const std::filesystem::path library = FolderPastTheCeiling(disk.Root(), "Library");
+    const std::filesystem::path category = FolderPastTheCeiling(library, "Utils");
+    disk.AddFile("Sim/Community/tfdidesign-aircraft-md11/manifest.json", R"({"title": "MD-11"})");
+    disk.AddFile("Sim/Community/tfdidesign-aircraft-md11/aircraft.cfg", std::string(4096, 'z'));
+
+    const std::filesystem::path target = category / "tfdidesign-aircraft-md11";
+    QVERIFY(StagingPathFor(target).wstring().size() > kOldPathCeiling);
+
+    Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+    engine.engine.UseVerification(Verification::ByHash);
+
+    const SimulatorProfile profile = ProfileWithTheLibraryAt(disk, library);
+    const ImportRequest request{.source = disk.Destination() / "tfdidesign-aircraft-md11", .category = category};
+
+    QCOMPARE(engine.engine.Import(profile, request, {}).Result(), FileResult::Completed);
+
+    QVERIFY(ExistsPastTheCeiling(target / "aircraft.cfg"));
+    QVERIFY(!ExistsPastTheCeiling(StagingPathFor(target)));
+    QCOMPARE(NormalizeReparseTarget(engine.linkService.ReadLinkTarget(request.source).value()), target);
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)

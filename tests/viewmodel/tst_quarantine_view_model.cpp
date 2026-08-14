@@ -94,7 +94,8 @@ namespace
         FakeLibraryIdGenerator identities;
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
         ImportService service{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking, log,          LinkType::Junction};
         StartupOverFakes startup{filesystemProbe};

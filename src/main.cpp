@@ -240,6 +240,7 @@ int main(int argc, char* argv[])
     const OperationLog log(journal, clock);
 
     const LinkType storedLinkType = stored.linkType;
+    const Verification storedVerification = stored.verification;
 
     const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries{{}};
@@ -258,7 +259,7 @@ int main(int argc, char* argv[])
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, storedLinkType);
 
-    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType);
+    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType, storedVerification);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 storedLinkType);
 
@@ -391,6 +392,12 @@ int main(int argc, char* argv[])
                          importEngine.UseLinkType(linkType);
                          importService.UseLinkType(linkType);
                          organizer.UseLinkType(linkType);
+                     });
+
+    QObject::connect(&optionsViewModel, &OptionsViewModel::VerificationChosen, &window,
+                     [&importEngine](const Verification verification)
+                     {
+                         importEngine.UseVerification(verification);
                      });
 
     QObject::connect(&optionsViewModel, &OptionsViewModel::LanguageChosen, &window,

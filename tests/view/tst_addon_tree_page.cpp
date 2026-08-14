@@ -191,7 +191,8 @@ namespace
         DeletionService deletionService{filesystemProbe, files,        sidecars, linking,
                                         classifier,      processProbe, log,      sizes};
         DeletionViewModel deletion{session, service, deletionService, sizes};
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
         ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                                     linking, log,          LinkType::Junction};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};

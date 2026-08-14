@@ -208,9 +208,9 @@ LinkType OptionsViewModel::TypeOfLink() const
     return session_.Settings().linkType;
 }
 
-bool OptionsViewModel::VerifiesWithHash() const
+Verification OptionsViewModel::VerificationUsed() const
 {
-    return session_.Settings().verifyWithHash;
+    return session_.Settings().verification;
 }
 
 void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
@@ -235,6 +235,29 @@ void OptionsViewModel::ChooseTypeOfLink(const LinkType linkType)
     service_.UseLinkType(linkType);
 
     emit LinkTypeChosen(linkType);
+    emit Changed();
+}
+
+void OptionsViewModel::ChooseVerification(const Verification verification)
+{
+    if (session_.Settings().verification == verification)
+    {
+        return;
+    }
+
+    if (!Rewrite(
+            [verification](AppSettings& settings)
+            {
+                settings.verification = verification;
+
+                return true;
+            }))
+    {
+        emit Changed();
+        return;
+    }
+
+    emit VerificationChosen(verification);
     emit Changed();
 }
 

@@ -132,7 +132,8 @@ namespace
 
         ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
                                 log,     identities,      startup.service, LinkType::Junction};
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
         ImportService imports{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking, log,          LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,

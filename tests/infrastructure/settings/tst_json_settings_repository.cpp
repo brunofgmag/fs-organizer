@@ -203,13 +203,13 @@ void JsonSettingsRepositoryTest::TheLinkTypeAndTheHashCheckSurviveTheRoundTrip()
 
     AppSettings written;
     written.linkType = LinkType::Symbolic;
-    written.verifyWithHash = true;
+    written.verification = Verification::ByHash;
 
     QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
     const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
 
     QCOMPARE(read.linkType, LinkType::Symbolic);
-    QCOMPARE(read.verifyWithHash, true);
+    QCOMPARE(read.verification, Verification::ByHash);
 }
 
 void JsonSettingsRepositoryTest::AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck()
@@ -224,7 +224,7 @@ void JsonSettingsRepositoryTest::AFileWrittenBeforeTheseKeysExistedReadsAsJuncti
     QVERIFY(read.has_value());
     QCOMPARE(read->activeProfileId, std::string("msfs2024"));
     QCOMPARE(read->linkType, LinkType::Junction);
-    QCOMPARE(read->verifyWithHash, false);
+    QCOMPARE(read->verification, Verification::ByStructure);
     QCOMPARE(read->updateMode, UpdateMode::Notify);
     QVERIFY(read->language.empty());
 }
@@ -377,7 +377,7 @@ void JsonSettingsRepositoryTest::AFileWrittenBeforeTheStartupKeyExistedStillMana
     const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
 
     QVERIFY(read.has_value());
-    QCOMPARE(read->verifyWithHash, true);
+    QCOMPARE(read->verification, Verification::ByHash);
     QCOMPARE(read->manageStartupEntries, true);
     QVERIFY2(!read->managePackageList,
              "this one is born off, and a file written before the key existed adopts the default instead of being "

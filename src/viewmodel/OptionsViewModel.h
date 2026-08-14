@@ -16,6 +16,7 @@
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/LibraryId.h"
 #include "domain/model/LinkType.h"
+#include "domain/model/Verification.h"
 #include "viewmodel/SessionNotifier.h"
 
 struct ProfileLine
@@ -74,9 +75,11 @@ public:
 
     [[nodiscard]] LinkType TypeOfLink() const;
 
-    [[nodiscard]] bool VerifiesWithHash() const;
+    [[nodiscard]] Verification VerificationUsed() const;
 
     void ChooseTypeOfLink(LinkType linkType);
+
+    void ChooseVerification(Verification verification);
 
     void ChooseUpdateMode(UpdateMode mode);
 
@@ -94,6 +97,8 @@ signals:
     void Changed();
 
     void LinkTypeChosen(LinkType linkType);
+
+    void VerificationChosen(Verification verification);
 
     void LanguageChosen(const QString& language);
 
