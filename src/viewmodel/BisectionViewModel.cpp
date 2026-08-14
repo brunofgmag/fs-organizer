@@ -1,0 +1,145 @@
+#include "viewmodel/BisectionViewModel.h"
+
+#include "support/PathText.h"
+
+BisectionViewModel::BisectionViewModel(BisectionService& bisection, Session& session, QObject* parent)
+    : QObject(parent), bisection_(bisection), session_(session)
+{
+}
+
+void BisectionViewModel::Show()
+{
+    Take(AProcedureWasInterrupted() ? bisection_.WhereItStands(session_.Profile())
+                                    : bisection_.WhatWouldBeSearched(session_.Profile(), session_.Snapshot()));
+}
+
+void BisectionViewModel::Begin()
+{
+    Take(bisection_.Begin(session_.Profile(), session_.Snapshot()));
+}
+
+void BisectionViewModel::Answer(const BisectionAnswer answer)
+{
+    Take(bisection_.Answer(session_.Profile(), answer));
+}
+
+void BisectionViewModel::Refine()
+{
+    Take(bisection_.Refine(session_.Profile()));
+}
+
+void BisectionViewModel::Stop()
+{
+    TakeTheEndOf(bisection_.Stop(session_.Profile()));
+}
+
+void BisectionViewModel::Resume(const ResumeChoice choice)
+{
+    const BisectionReport answered = bisection_.Resume(session_.Profile(), choice);
+
+    if (choice == ResumeChoice::CarryOnFromWhereItStopped)
+    {
+        Take(answered);
+
+        return;
+    }
+
+    TakeTheEndOf(answered);
+}
+
+void BisectionViewModel::TakeTheEndOf(const BisectionReport& ended)
+{
+    if (ended.refusal != BisectionRefusal::None)
+    {
+        Take(ended);
+
+        return;
+    }
+
+    BisectionReport announced = bisection_.WhatWouldBeSearchedNow(session_.Profile());
+    announced.results = ended.results;
+
+    Take(announced);
+}
+
+void BisectionViewModel::Take(const BisectionReport& report)
+{
+    report_ = report;
+
+    if (!report.drift.empty())
+    {
+        stage_ = BisectionStage::ItDrifted;
+    }
+    else if (report.outcome != BisectionOutcome::StillSearching)
+    {
+        stage_ = BisectionStage::Finished;
+    }
+    else if (AProcedureWasInterrupted())
+    {
+        stage_ = BisectionStage::Asking;
+    }
+    else
+    {
+        stage_ = BisectionStage::NotStarted;
+    }
+
+    emit Changed();
+}
+
+BisectionStage BisectionViewModel::Stage() const
+{
+    return stage_;
+}
+
+const BisectionReport& BisectionViewModel::Report() const
+{
+    return report_;
+}
+
+bool BisectionViewModel::AProcedureWasInterrupted() const
+{
+    return bisection_.WhatWasInterrupted(session_.Profile().id).has_value();
+}
+
+bool BisectionViewModel::ItIsRunning() const
+{
+    return stage_ == BisectionStage::Asking || stage_ == BisectionStage::ItDrifted;
+}
+
+std::size_t BisectionViewModel::RoundsLeftInTheWorstCase() const
+{
+    if (report_.roundsInTheWorstCase <= report_.round)
+    {
+        return 0;
+    }
+
+    return report_.roundsInTheWorstCase - report_.round;
+}
+
+std::vector<UnitOnScreen> BisectionViewModel::WhatIsLeft() const
+{
+    std::vector<UnitOnScreen> shown;
+    shown.reserve(report_.unitsUnderSuspicion.size());
+
+    for (const SearchUnit& unit : report_.unitsUnderSuspicion)
+    {
+        shown.push_back(UnitOnScreen{
+            .name = AsText(unit.addons.front().filename()), .addons = unit.addons.size(), .coupling = unit.coupling});
+    }
+
+    return shown;
+}
+
+std::vector<UnitOnScreen> BisectionViewModel::WhatToTurnOn() const
+{
+    std::vector<UnitOnScreen> shown;
+    shown.reserve(report_.unitsTurnedOn.size());
+
+    for (const SearchUnit& unit : report_.unitsTurnedOn)
+    {
+        shown.push_back(UnitOnScreen{
+            .name = AsText(unit.addons.front().filename()), .addons = unit.addons.size(), .coupling = unit.coupling});
+    }
+
+    return shown;
+}

@@ -29,6 +29,7 @@
 #include "application/SizeService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/PresetService.h"
+#include "application/BisectionService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
@@ -76,6 +77,7 @@
 #include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
+#include "infrastructure/bisection/JsonBisectionStore.h"
 #include "view/diagnostics/DiagnosticsPage.h"
 #include "view/simulator/PackageListPage.h"
 #include "view/simulator/SimulatorPage.h"
@@ -95,6 +97,7 @@
 #include "viewmodel/JournalViewModel.h"
 #include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/PresetViewModel.h"
+#include "viewmodel/BisectionViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
@@ -641,7 +644,12 @@ int main(int argc, char* argv[])
 
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
                                               runner);
-    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
+    const CouplingScan coupling(filesystemProbe);
+    JsonBisectionStore bisectionStore(staged->settingsFile.parent_path() / "bisection");
+    BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore);
+    BisectionViewModel bisectionViewModel(bisectionService, session);
+
+    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel, bisectionViewModel);
 
     StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
@@ -1049,15 +1057,25 @@ int main(int argc, char* argv[])
     }
 
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
-    const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"),    QStringLiteral("07-diagnostics-broken"),
-                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size"),
-                                  QStringLiteral("24-diagnostics-scenery"),    QStringLiteral("25-diagnostics-load")};
+    const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"),
+                                  QStringLiteral("07-diagnostics-broken"),
+                                  QStringLiteral("08-diagnostics-quarantine"),
+                                  QStringLiteral("09-diagnostics-size"),
+                                  QStringLiteral("24-diagnostics-scenery"),
+                                  QStringLiteral("25-diagnostics-load"),
+                                  QString(),
+                                  QStringLiteral("31-diagnostics-bisection")};
 
     diagnosticsTab->click();
     diagnosticsViewModel.Show();
 
     for (int section = 0; section < diagnostics.size(); ++section)
     {
+        if (diagnostics[section].isEmpty())
+        {
+            continue;
+        }
+
         if (!ClickingReaches(*sections, section))
         {
             Out() << "the section " << diagnostics[section] << " does not select on click, so no user reaches it\n";

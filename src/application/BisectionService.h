@@ -40,6 +40,8 @@ struct BisectionReport
     std::vector<LinkOperationResult> results{};
     std::vector<std::filesystem::path> addonsTurnedOn{};
     std::vector<std::filesystem::path> whatIsLeft{};
+    std::vector<SearchUnit> unitsUnderSuspicion{};
+    std::vector<SearchUnit> unitsTurnedOn{};
     BisectionOutcome outcome = BisectionOutcome::StillSearching;
     std::size_t round = 0;
     std::size_t units = 0;
@@ -55,6 +57,13 @@ public:
                      const CouplingScan& coupling,
                      const FilesystemProbe& filesystemProbe,
                      BisectionStore& store);
+
+    [[nodiscard]] BisectionReport WhatWouldBeSearched(const SimulatorProfile& profile,
+                                                      const ProfileSnapshot& shown) const;
+
+    [[nodiscard]] BisectionReport WhatWouldBeSearchedNow(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] BisectionReport WhereItStands(const SimulatorProfile& profile) const;
 
     [[nodiscard]] BisectionReport Begin(const SimulatorProfile& profile, const ProfileSnapshot& shown);
 
@@ -75,7 +84,11 @@ private:
         DiskAsItWas disk{};
     };
 
+    [[nodiscard]] static Reading ReadingOf(ProfileSnapshot snapshot);
+
     [[nodiscard]] Reading ReadTheDisk(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] BisectionRun RunFor(const SimulatorProfile& profile, const ProfileSnapshot& shown) const;
 
     [[nodiscard]] std::size_t WhatCarriesOnOutOfReach(const std::vector<DestinationEntry>& entries) const;
 

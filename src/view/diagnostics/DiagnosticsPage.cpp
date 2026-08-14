@@ -1,6 +1,8 @@
 #include "view/diagnostics/DiagnosticsPage.h"
 
 #include <QtCore/QEvent>
+#include <QtCore/QSize>
+#include <QtWidgets/QFrame>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -24,7 +26,10 @@
 namespace
 {
     constexpr int kRailWidth = 210;
+    constexpr int kRailSeparatorRow = 19;
+    constexpr int kRailSeparatorInset = 13;
     constexpr int kBytesRole = Qt::UserRole + 1;
+    constexpr int kSectionRole = Qt::UserRole + 2;
 
     class MeasuredRow final : public QTreeWidgetItem
     {
@@ -127,8 +132,10 @@ namespace
     }
 }
 
-DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* parent)
-    : QWidget(parent), viewModel_(viewModel)
+DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel,
+                                 BisectionViewModel& bisectionViewModel,
+                                 QWidget* parent)
+    : QWidget(parent), viewModel_(viewModel), bisectionViewModel_(bisectionViewModel)
 {
     panes_ = new QStackedWidget(this);
     panes_->addWidget(CreateCountsPane());
@@ -139,6 +146,9 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
 
     load_ = new LoadPanel(this);
     panes_->addWidget(load_);
+
+    bisection_ = new BisectionPanel(bisectionViewModel_, this);
+    panes_->addWidget(bisection_);
 
     auto* body = new QHBoxLayout;
     body->setContentsMargins(0, 0, 0, 0);
@@ -186,6 +196,9 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
     connect(&viewModel_, &DiagnosticsViewModel::SceneryRead, this, &DiagnosticsPage::ShowWhatTheSceneryCarries);
     connect(&viewModel_, &DiagnosticsViewModel::SceneryProgressed, this, &DiagnosticsPage::ShowSceneryProgress);
     connect(&viewModel_, &DiagnosticsViewModel::LoadRead, this, &DiagnosticsPage::ShowWhatTheSimulatorLoaded);
+    connect(bisection_, &BisectionPanel::StatusChanged, this, &DiagnosticsPage::StatusChanged);
+    connect(bisection_, &BisectionPanel::ImportRequested, this, &DiagnosticsPage::ImportRequested);
+    connect(&bisectionViewModel_, &BisectionViewModel::Changed, this, &DiagnosticsPage::DressTheRail);
 
     RetranslateUi();
     rail_->setCurrentRow(DestinationEntries);
@@ -234,10 +247,39 @@ QWidget* DiagnosticsPage::CreateRail()
 
     for (int section = DestinationEntries; section <= WhatTheSimulatorLoaded; ++section)
     {
-        rail_->addItem(QString());
+        AddToTheRail(static_cast<Section>(section));
     }
 
+    AddTheRailSeparator();
+    AddToTheRail(FindTheCulprit);
+
     return rail_;
+}
+
+void DiagnosticsPage::AddToTheRail(const Section section)
+{
+    auto* item = new QListWidgetItem(rail_);
+    item->setData(kSectionRole, static_cast<int>(section));
+
+    railItems_.push_back(item);
+}
+
+void DiagnosticsPage::AddTheRailSeparator()
+{
+    auto* item = new QListWidgetItem(rail_);
+    item->setFlags(Qt::NoItemFlags);
+    item->setSizeHint(QSize(kRailWidth, kRailSeparatorRow));
+
+    auto* holder = new QWidget(rail_);
+    auto* line = new QFrame(holder);
+    line->setObjectName(QStringLiteral("RailSeparator"));
+    line->setFixedHeight(1);
+
+    auto* around = new QVBoxLayout(holder);
+    around->setContentsMargins(kRailSeparatorInset, 0, kRailSeparatorInset, 0);
+    around->addWidget(line);
+
+    rail_->setItemWidget(item, holder);
 }
 
 QWidget* DiagnosticsPage::CreateCountsPane()
@@ -436,9 +478,23 @@ void DiagnosticsPage::RetranslateUi() const
     DressTheRail();
 }
 
-void DiagnosticsPage::OpenSection(const int section) const
+void DiagnosticsPage::OpenSection(const int row) const
 {
+    QListWidgetItem* chosen = rail_->item(row);
+
+    if (chosen == nullptr)
+    {
+        return;
+    }
+
+    const int section = chosen->data(kSectionRole).toInt();
+
     panes_->setCurrentIndex(section);
+
+    if (section == FindTheCulprit)
+    {
+        bisectionViewModel_.Show();
+    }
 
     if (section == SizeOnDisk)
     {
@@ -665,23 +721,36 @@ void DiagnosticsPage::DressTheRail() const
         bytes += library.bytes;
     }
 
-    rail_->item(DestinationEntries)->setText(tr("Destination entries · %1").arg(entries));
-    rail_->item(BrokenAndUnavailable)->setText(tr("Broken, unavailable · %1").arg(troubled));
-    rail_->item(Quarantine)->setText(tr("Quarantine · %1").arg(AsSize(weight.bytes)));
-    rail_->item(SizeOnDisk)
-        ->setText(measured.has_value() ? tr("Size on disk · %1").arg(AsSize(bytes)) : tr("Size on disk"));
+    railItems_[DestinationEntries]->setText(tr("Destination entries · %1").arg(entries));
+    railItems_[BrokenAndUnavailable]->setText(tr("Broken, unavailable · %1").arg(troubled));
+    railItems_[Quarantine]->setText(tr("Quarantine · %1").arg(AsSize(weight.bytes)));
+    railItems_[SizeOnDisk]->setText(measured.has_value() ? tr("Size on disk · %1").arg(AsSize(bytes))
+                                                         : tr("Size on disk"));
 
     const SceneryCensus& census = viewModel_.Scenery();
 
-    rail_->item(AirportsInTheScenery)
-        ->setText(viewModel_.SceneryReadAt().has_value()
-                      ? tr("Airports in the scenery · %1").arg(census.carryingACode.size())
-                      : tr("Airports in the scenery"));
+    railItems_[AirportsInTheScenery]->setText(viewModel_.SceneryReadAt().has_value()
+                                                  ? tr("Airports in the scenery · %1").arg(census.carryingACode.size())
+                                                  : tr("Airports in the scenery"));
 
     const LoadDiagnostics& load = viewModel_.Load();
 
-    rail_->item(WhatTheSimulatorLoaded)
-        ->setText(load.reportWasRead ? tr("Modules loaded · %1").arg(load.modules.size()) : tr("Modules loaded"));
+    railItems_[WhatTheSimulatorLoaded]->setText(load.reportWasRead ? tr("Modules loaded · %1").arg(load.modules.size())
+                                                                   : tr("Modules loaded"));
+
+    railItems_[FindTheCulprit]->setText(TheRailTextForTheSearch());
+}
+
+QString DiagnosticsPage::TheRailTextForTheSearch() const
+{
+    if (!bisectionViewModel_.ItIsRunning())
+    {
+        return tr("Find the culprit");
+    }
+
+    const BisectionReport& report = bisectionViewModel_.Report();
+
+    return tr("Find the culprit · %1 / %2").arg(report.round).arg(report.roundsInTheWorstCase);
 }
 
 void DiagnosticsPage::ShowWhatTheSimulatorLoaded() const
