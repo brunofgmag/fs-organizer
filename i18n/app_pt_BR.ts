@@ -1929,9 +1929,19 @@ Também existe na biblioteca: %2</translation>
         <translation>A roda aproxima a carta</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="355"/>
-        <source>Dragging moves the page</source>
-        <translation>Arrastar passeia pela página</translation>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="491"/>
+        <source>Dragging moves the page. Turn it off to select text</source>
+        <translation>Arrastar passeia a página. Desligue para selecionar texto</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="492"/>
+        <source>Dragging selects text. Turn it on to move the page</source>
+        <translation>Arrastar seleciona texto. Ligue para passear a página</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="493"/>
+        <source>Copy</source>
+        <translation>Copiar</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="341"/>

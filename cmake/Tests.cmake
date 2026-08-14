@@ -1390,6 +1390,14 @@ fsorg_add_qt_test(fsorg-documents-page-tests documents-page
 target_link_libraries(fsorg-documents-page-tests PRIVATE fsorg-view Qt6::PdfWidgets)
 configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
 
+fsorg_add_qt_test(fsorg-reader-selection-tests reader-selection
+        tests/view/tst_reader_selection.cpp
+        assets/resources.qrc
+        tests/support/APdf.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-reader-selection-tests PRIVATE fsorg-view Qt6::PdfWidgets)
+configure_fsorg_gui_test(fsorg-reader-selection-tests reader-selection)
+
 fsorg_add_qt_test(fsorg-coverage-dialog-tests coverage-dialog
         tests/view/tst_coverage_dialog.cpp
         assets/resources.qrc)

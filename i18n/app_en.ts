@@ -1929,9 +1929,19 @@ It also exists in the library: %2</translation>
         <translation>The wheel zooms the chart</translation>
     </message>
     <message>
-        <location filename="../src/view/documents/DocumentReader.cpp" line="355"/>
-        <source>Dragging moves the page</source>
-        <translation>Dragging moves the page</translation>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="491"/>
+        <source>Dragging moves the page. Turn it off to select text</source>
+        <translation>Dragging moves the page. Turn it off to select text</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="492"/>
+        <source>Dragging selects text. Turn it on to move the page</source>
+        <translation>Dragging selects text. Turn it on to move the page</translation>
+    </message>
+    <message>
+        <location filename="../src/view/documents/DocumentReader.cpp" line="493"/>
+        <source>Copy</source>
+        <translation>Copy</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="341"/>

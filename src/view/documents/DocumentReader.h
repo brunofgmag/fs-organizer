@@ -4,12 +4,14 @@
 #include <filesystem>
 #include <vector>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QPoint>
 #include <QtWidgets/QWidget>
 
 #include "application/model/ReadingGestures.h"
 #include "domain/documents/DocumentBookmarks.h"
 #include "domain/documents/DocumentClassification.h"
+#include "view/documents/SelectablePages.h"
 
 class QAction;
 class QLabel;
@@ -21,7 +23,6 @@ class QPdfBookmarkModel;
 class QPdfDocument;
 class QPdfLink;
 class QPdfSearchModel;
-class QPdfView;
 class QPushButton;
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -129,12 +130,22 @@ private:
 
     [[nodiscard]] bool TheGestureAnswersThe(QEvent* event);
 
+    [[nodiscard]] bool ThePanAnswersThe(QEvent* event);
+
+    [[nodiscard]] bool TheSelectionAnswersThe(QEvent* event);
+
+    [[nodiscard]] bool TheClickChoseSomethingToSelect(QEvent* event);
+
+    [[nodiscard]] int HowManyClicksInARow(QEvent* event);
+
+    void OfferTheCopyMenuAt(const QPoint& where);
+
     void RestTheCursor() const;
 
     void ZoomBy(int notches);
 
     QPdfDocument* document_ = nullptr;
-    QPdfView* view_ = nullptr;
+    SelectablePages* view_ = nullptr;
     QPdfSearchModel* search_ = nullptr;
     QPdfBookmarkModel* outline_ = nullptr;
     QTreeWidget* outlineView_ = nullptr;
@@ -157,16 +168,21 @@ private:
     QLabel* caption_ = nullptr;
     QWidget* outlinePane_ = nullptr;
     QMenu* menu_ = nullptr;
+    QMenu* copyMenu_ = nullptr;
     QAction* rename_ = nullptr;
     QAction* forget_ = nullptr;
+    QAction* copy_ = nullptr;
     std::vector<DocumentSection> sections_{};
     std::vector<QTreeWidgetItem*> sectionItems_{};
     std::vector<DocumentBookmark> bookmarks_{};
     QPoint grabbedAt_{};
+    QPoint clickedAt_{};
+    QElapsedTimer sinceTheLastClick_{};
     DocumentKind kind_ = DocumentKind::Document;
     bool detached_ = false;
     bool grabbing_ = false;
     bool wandered_ = false;
+    int clicksInARow_ = 0;
     ReadingGestures onCharts_ = kGesturesAChartIsBornWith;
     ReadingGestures onDocuments_ = kGesturesADocumentIsBornWith;
     int result_ = -1;

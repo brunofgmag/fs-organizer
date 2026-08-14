@@ -67,6 +67,16 @@ ModernistTones TonesOf(const Qt::ColorScheme scheme)
     return scheme == Qt::ColorScheme::Dark ? DarkTones() : LightTones();
 }
 
+QColor TheMarkThatSitsOnPaper()
+{
+    constexpr float kHowStrongTheMarkIs = 0.40F;
+
+    QColor mark("#a8a29e");
+    mark.setAlphaF(kHowStrongTheMarkIs);
+
+    return mark;
+}
+
 Qt::ColorScheme CurrentColorScheme()
 {
     const Qt::ColorScheme scheme = QGuiApplication::styleHints()->colorScheme();
