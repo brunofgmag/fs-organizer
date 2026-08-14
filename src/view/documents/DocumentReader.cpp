@@ -206,7 +206,14 @@ void DocumentReader::ZoomBy(const int notches)
 
 void DocumentReader::RestTheCursor() const
 {
-    view_->viewport()->setCursor(kind_ == DocumentKind::Chart ? Qt::OpenHandCursor : Qt::ArrowCursor);
+    if (kind_ == DocumentKind::Chart)
+    {
+        view_->viewport()->setCursor(Qt::OpenHandCursor);
+
+        return;
+    }
+
+    view_->viewport()->unsetCursor();
 }
 
 bool DocumentReader::TheGestureAnswersThe(QEvent* event)

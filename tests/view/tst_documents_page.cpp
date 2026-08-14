@@ -77,6 +77,7 @@ namespace
         static void DraggingMovesADocumentAndNotOnlyAChart();
         static void APointerThatDoesNotWanderLeavesThePageWhereItWas();
         static void DraggingMovesNothingWhenTheReaderIsToldItShouldNot();
+        static void ThePointerSaysWhenTheReadingCarriesALink();
         static void ThePaneMarksTheSectionThatHoldsThePageTheReadingIsOn();
         static void AMarkHangsUnderItsSectionOnABranchBornOpenAndLightsTheButton();
         static void TheButtonSaysWhichPageIsBeingMarkedAndWhichWayItWent();
@@ -549,6 +550,31 @@ void DocumentsPageTest::TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds(
     f.runner.Finish();
 
     QVERIFY(!ItSaysItIsReading(page));
+}
+
+void DocumentsPageTest::ThePointerSaysWhenTheReadingCarriesALink()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path linked = WrittenInto(folder, L"linked.pdf", AManualWhoseFirstPageIsALinkToTheSecond());
+
+    DocumentReader reader;
+    reader.resize(600, 500);
+    reader.show();
+    reader.Read(linked, 0, DocumentKind::Document, {});
+
+    QPdfView* pages = reader.findChild<QPdfView*>();
+
+    QVERIFY(pages != nullptr);
+
+    const QPointF onTheLink(300, 120);
+    QMouseEvent moved(QEvent::MouseMove, onTheLink, pages->viewport()->mapToGlobal(onTheLink), Qt::NoButton, {},
+                      Qt::NoModifier);
+
+    QCoreApplication::sendEvent(pages->viewport(), &moved);
+
+    QVERIFY2(pages->cursor().shape() == Qt::PointingHandCursor,
+             "the page under the pointer is one big link, so the view itself found it");
+    QCOMPARE(pages->viewport()->cursor().shape(), Qt::PointingHandCursor);
 }
 
 void DocumentsPageTest::TheWheelZoomsAChartAndScrollsADocument()
