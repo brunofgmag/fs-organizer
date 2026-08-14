@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.0](https://github.com/brunofgmag/fs-organizer/compare/v0.39.0...v0.40.0) (2026-08-14)
+
+
+### Features
+
+* separate the reading gestures by kind, and fix what the manual testing found ([#110](https://github.com/brunofgmag/fs-organizer/issues/110)) ([343f9c9](https://github.com/brunofgmag/fs-organizer/commit/343f9c92e5143a75c698dd9eca32f0183639796e))
+
 ## [0.39.0](https://github.com/brunofgmag/fs-organizer/compare/v0.38.0...v0.39.0) (2026-08-14)
 
 
