@@ -1,0 +1,201 @@
+#Requires -Version 5.1
+<#
+.SYNOPSIS
+Builds the two user manuals into docs/ and checks that they still say the same things.
+
+.DESCRIPTION
+The sources, the figures and everything LaTeX leaves behind live here, in
+manual/. What comes out of them goes to docs/, which holds the two PDFs and
+nothing else: that is the folder a reader of the repository opens.
+
+The CI never installs a TeX distribution, so the PDF is built here and
+committed. The price of that is a PDF that can drift from its source, and this
+script is the antidote: run it at the close of every release, and commit
+whatever it rewrites.
+
+It also compares the heading structure of the two languages. The manuals are two
+independent sources on purpose, and nothing but this check stops one of them
+from growing a section the other never got.
+
+.PARAMETER Check
+Builds nothing. Compares the heading structure of the two sources, checks the
+version printed on the covers, and reports whether each PDF in docs/ is older
+than the .tex that makes it.
+#>
+[CmdletBinding()]
+param(
+    [switch]$Check
+)
+
+$ErrorActionPreference = 'Stop'
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$published = Join-Path (Split-Path -Parent $here) 'docs'
+
+$languages = @(
+    [pscustomobject]@{ Name = 'pt_BR'; Source = 'fs-organizer-pt_BR.tex' }
+    [pscustomobject]@{ Name = 'en'; Source = 'fs-organizer-en.tex' }
+)
+
+function Get-Headings([string]$path) {
+    $shape = New-Object System.Collections.Generic.List[string]
+
+    foreach ($line in (Get-Content -LiteralPath $path -Encoding UTF8)) {
+        if ($line -match '^\\(sub)?section\{') {
+            $shape.Add($(if ($Matches[1]) { 'subsection' } else { 'section' }))
+        }
+    }
+
+    return $shape
+}
+
+function Get-PublishedPdf([string]$source) {
+    return Join-Path $published ([IO.Path]::ChangeExtension($source, '.pdf'))
+}
+
+function Test-SameShape {
+    $shapes = @{}
+
+    foreach ($language in $languages) {
+        $shapes[$language.Name] = Get-Headings (Join-Path $here $language.Source)
+    }
+
+    $pt = $shapes['pt_BR']
+    $en = $shapes['en']
+
+    if ($pt.Count -ne $en.Count) {
+        Write-Host "The two manuals do not have the same number of headings: pt_BR has $($pt.Count), en has $($en.Count)." -ForegroundColor Red
+        return $false
+    }
+
+    for ($at = 0; $at -lt $pt.Count; $at++) {
+        if ($pt[$at] -ne $en[$at]) {
+            Write-Host "Heading $($at + 1) is a $($pt[$at]) in pt_BR and a $($en[$at]) in en." -ForegroundColor Red
+            return $false
+        }
+    }
+
+    Write-Host "Both manuals carry the same $($pt.Count) headings, in the same order." -ForegroundColor Green
+    return $true
+}
+
+function Test-SameVersion {
+    $declared = (Get-Content -LiteralPath (Join-Path $here '..\VERSION.txt') -Raw).Trim()
+    $agreed = $true
+
+    foreach ($language in $languages) {
+        $source = Join-Path $here $language.Source
+        $printed = (Select-String -LiteralPath $source -Pattern '\{(?:Version|Versão) ([0-9][^}]*)\}').Matches.Groups[1].Value
+
+        if ($printed -ne $declared) {
+            Write-Host "$($language.Source) prints version $printed on its cover, and VERSION.txt says $declared." -ForegroundColor Red
+            $agreed = $false
+        }
+    }
+
+    if ($agreed) {
+        Write-Host "Both covers print version $declared, the one in VERSION.txt." -ForegroundColor Green
+    }
+
+    return $agreed
+}
+
+function Test-SameFigures {
+    $agreed = $true
+
+    foreach ($language in $languages) {
+        $source = Join-Path $here $language.Source
+        $wanted = (Select-String -LiteralPath $source -Pattern '\\(?:shot|fsorgtitle)?\{?([0-9][0-9a-z-]*\.png)\}' -AllMatches).Matches | ForEach-Object { $_.Groups[1].Value }
+
+        foreach ($figure in ($wanted | Select-Object -Unique)) {
+            if (-not (Test-Path -LiteralPath (Join-Path $here "figures\$($language.Name)\$figure"))) {
+                Write-Host "$($language.Source) asks for figures\$($language.Name)\$figure, which is not there." -ForegroundColor Red
+                $agreed = $false
+            }
+        }
+    }
+
+    if ($agreed) {
+        Write-Host 'Every figure the two sources ask for is on disk.' -ForegroundColor Green
+    }
+
+    return $agreed
+}
+
+function Test-PdfIsCurrent {
+    $current = $true
+
+    foreach ($language in $languages) {
+        $source = Join-Path $here $language.Source
+        $pdf = Get-PublishedPdf $language.Source
+
+        if (-not (Test-Path -LiteralPath $pdf)) {
+            Write-Host "docs\$([IO.Path]::GetFileName($pdf)) does not exist." -ForegroundColor Red
+            $current = $false
+            continue
+        }
+
+        if ((Get-Item -LiteralPath $pdf).LastWriteTimeUtc -lt (Get-Item -LiteralPath $source).LastWriteTimeUtc) {
+            Write-Host "docs\$([IO.Path]::GetFileName($pdf)) is older than its source." -ForegroundColor Red
+            $current = $false
+            continue
+        }
+
+        Write-Host "docs\$([IO.Path]::GetFileName($pdf)) is newer than its source." -ForegroundColor Green
+    }
+
+    return $current
+}
+
+if ($Check) {
+    $shaped = Test-SameShape
+    $versioned = Test-SameVersion
+    $figured = Test-SameFigures
+    $fresh = Test-PdfIsCurrent
+
+    if (-not ($shaped -and $versioned -and $figured -and $fresh)) { exit 1 }
+    exit 0
+}
+
+if (-not (Test-SameVersion)) { exit 1 }
+if (-not (Test-SameFigures)) { exit 1 }
+
+if (-not (Get-Command lualatex -ErrorAction SilentlyContinue)) {
+    Write-Host 'lualatex is not on the PATH. Install a TeX distribution, or add the one you have:' -ForegroundColor Red
+    Write-Host '  $env:PATH = "$env:USERPROFILE\scoop\apps\latex\current\texmfs\install\miktex\bin\x64;$env:PATH"'
+    exit 1
+}
+
+New-Item -ItemType Directory -Force $published | Out-Null
+
+Push-Location $here
+
+try {
+    foreach ($language in $languages) {
+        Write-Host "==> Building $($language.Source)..."
+
+        # Twice, because the table of contents is written on the first pass and typeset on the second.
+        foreach ($pass in 1, 2) {
+            & lualatex -interaction=nonstopmode $language.Source | Out-Null
+
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "lualatex failed on pass $pass. Read $([IO.Path]::ChangeExtension($language.Source, '.log'))." -ForegroundColor Red
+                exit 1
+            }
+        }
+
+        Move-Item -Force ([IO.Path]::ChangeExtension($language.Source, '.pdf')) (Get-PublishedPdf $language.Source)
+    }
+}
+finally {
+    Pop-Location
+}
+
+Get-ChildItem -LiteralPath $here -Include *.aux, *.out, *.toc, *.log -File -Recurse | Remove-Item -Force
+
+foreach ($language in $languages) {
+    $pdf = Get-PublishedPdf $language.Source
+    $size = '{0:N0}' -f (Get-Item -LiteralPath $pdf).Length
+    Write-Host "docs\$([IO.Path]::GetFileName($pdf))  $size bytes"
+}
+
+if (-not (Test-SameShape)) { exit 1 }

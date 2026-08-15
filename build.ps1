@@ -92,7 +92,7 @@ if ($RunTests) {
         throw 'CTest was not found next to the selected CMake executable.'
     }
 
-    & $ctest --test-dir $buildDir -C $Config --output-on-failure
+    & $ctest --test-dir $buildDir -C $Config --output-on-failure -j ([Environment]::ProcessorCount)
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 

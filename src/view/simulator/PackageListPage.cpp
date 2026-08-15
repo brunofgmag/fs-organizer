@@ -83,7 +83,7 @@ PackageListPage::PackageListPage(CoverageViewModel& viewModel, QWidget* parent) 
     connect(&viewModel_, &CoverageViewModel::SettingsCouldNotBeSaved, this,
             [this]
             {
-                emit StatusChanged(tr("The choice could not be written down, so it stays as it was."));
+                emit StatusChanged(tr("The app could not write the choice down, so it stays as it was."));
             });
 
     RetranslateUi();

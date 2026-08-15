@@ -12,6 +12,7 @@
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeLoadingReportSource.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSceneryCache.h"
@@ -131,7 +132,8 @@ namespace
 
         ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
                                 log,     identities,      startup.service, LinkType::Junction};
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
         ImportService imports{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking, log,          LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
@@ -155,7 +157,8 @@ namespace
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
-        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, clock, runner};
+        FakeLoadingReportSource loading;
+        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, loading, clock, runner};
     };
 
     SelectionSize LastSize(const QSignalSpy& measured)

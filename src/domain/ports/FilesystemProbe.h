@@ -44,6 +44,9 @@ public:
     [[nodiscard]] virtual std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,
                                                                   std::size_t most) const = 0;
 
+    [[nodiscard]] virtual std::vector<std::optional<std::string>>
+    HashesOf(const std::filesystem::path& root, const std::vector<std::filesystem::path>& below) const = 0;
+
     [[nodiscard]] virtual std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const = 0;
 
     [[nodiscard]] virtual std::optional<std::chrono::system_clock::time_point>

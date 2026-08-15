@@ -23,11 +23,24 @@ namespace
     constexpr auto kVerifyWithHash = "verifyWithHash";
     constexpr auto kManageStartupEntries = "manageStartupEntries";
     constexpr auto kManagePackageList = "managePackageList";
+    constexpr auto kWheelZoomsCharts = "wheelZoomsCharts";
+    constexpr auto kWheelZoomsDocuments = "wheelZoomsDocuments";
+    constexpr auto kDragMovesCharts = "dragMovesCharts";
+    constexpr auto kDragMovesDocuments = "dragMovesDocuments";
+    constexpr auto kWheelZoomsBothKinds = "wheelZooms";
+    constexpr auto kDragMovesBothKinds = "dragMovesThePage";
     constexpr auto kCoexistingAirports = "coexistingAirports";
     constexpr auto kOne = "one";
     constexpr auto kOther = "other";
     constexpr auto kFolderName = "folderName";
     constexpr auto kUpdateMode = "updateMode";
+    constexpr auto kDocuments = "documents";
+    constexpr auto kAddon = "addon";
+    constexpr auto kDocument = "document";
+    constexpr auto kPage = "page";
+    constexpr auto kFavourite = "favourite";
+    constexpr auto kBookmarks = "bookmarks";
+    constexpr auto kName = "name";
     constexpr auto kLanguage = "language";
     constexpr auto kId = "id";
     constexpr auto kVariant = "variant";
@@ -73,6 +86,11 @@ namespace
         }
 
         return "junction";
+    }
+
+    Verification VerificationFromTheFlag(const QJsonValue& value)
+    {
+        return value.toBool(false) ? Verification::ByHash : Verification::ByStructure;
     }
 
     LinkType LinkTypeFromName(const QJsonValue& value)
@@ -192,6 +210,54 @@ namespace
                 .other = AddonFromJson(object.value(kOther).toObject())};
     }
 
+    QJsonObject ToJson(const DocumentBookmark& bookmark)
+    {
+        QJsonObject object;
+        object[kPage] = bookmark.page;
+        object[kName] = QString::fromStdString(bookmark.name);
+
+        return object;
+    }
+
+    DocumentBookmark BookmarkFromJson(const QJsonObject& object)
+    {
+        return {.page = object.value(kPage).toInt(), .name = object.value(kName).toString().toStdString()};
+    }
+
+    QJsonObject ToJson(const ReadDocument& document)
+    {
+        QJsonArray bookmarks;
+        for (const DocumentBookmark& bookmark : document.bookmarks)
+        {
+            bookmarks.append(ToJson(bookmark));
+        }
+
+        QJsonObject object;
+        object[kAddon] = QString::fromStdString(document.addon);
+        object[kDocument] = QString::fromStdString(document.document);
+        object[kPage] = document.page;
+        object[kFavourite] = document.favourite;
+        object[kBookmarks] = bookmarks;
+
+        return object;
+    }
+
+    ReadDocument ReadDocumentFromJson(const QJsonObject& object)
+    {
+        ReadDocument document{.addon = object.value(kAddon).toString().toStdString(),
+                              .document = object.value(kDocument).toString().toStdString(),
+                              .page = object.value(kPage).toInt(),
+                              .favourite = object.value(kFavourite).toBool(),
+                              .bookmarks = {}};
+
+        for (const QJsonValue bookmark : object.value(kBookmarks).toArray())
+        {
+            document.bookmarks.push_back(BookmarkFromJson(bookmark.toObject()));
+        }
+
+        return document;
+    }
+
     QJsonObject ToJson(const SimulatorProfile& profile)
     {
         QJsonArray destinations;
@@ -288,9 +354,18 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     AppSettings settings;
     settings.activeProfileId = root.value(kActiveProfileId).toString().toStdString();
     settings.linkType = LinkTypeFromName(root.value(kLinkType));
-    settings.verifyWithHash = root.value(kVerifyWithHash).toBool(false);
+    settings.verification = VerificationFromTheFlag(root.value(kVerifyWithHash));
     settings.manageStartupEntries = root.value(kManageStartupEntries).toBool(true);
     settings.managePackageList = root.value(kManagePackageList).toBool(false);
+    const bool wheelUsedToZoomTheChart = root.value(kWheelZoomsBothKinds).toBool(kGesturesAChartIsBornWith.wheelZooms);
+    const bool dragUsedToMoveTheChart =
+        root.value(kDragMovesBothKinds).toBool(kGesturesAChartIsBornWith.dragMovesThePage);
+
+    settings.onCharts.wheelZooms = root.value(kWheelZoomsCharts).toBool(wheelUsedToZoomTheChart);
+    settings.onCharts.dragMovesThePage = root.value(kDragMovesCharts).toBool(dragUsedToMoveTheChart);
+    settings.onDocuments.wheelZooms = root.value(kWheelZoomsDocuments).toBool(kGesturesADocumentIsBornWith.wheelZooms);
+    settings.onDocuments.dragMovesThePage =
+        root.value(kDragMovesDocuments).toBool(kGesturesADocumentIsBornWith.dragMovesThePage);
     settings.updateMode = UpdateModeFromName(root.value(kUpdateMode));
     settings.language = root.value(kLanguage).toString().toStdString();
 
@@ -302,6 +377,11 @@ std::optional<AppSettings> JsonSettingsRepository::Load() const
     for (const QJsonValue pair : root.value(kCoexistingAirports).toArray())
     {
         settings.coexistingAirports.push_back(CoexistingPairFromJson(pair.toObject()));
+    }
+
+    for (const QJsonValue read : root.value(kDocuments).toArray())
+    {
+        settings.documents.push_back(ReadDocumentFromJson(read.toObject()));
     }
 
     return settings;
@@ -321,16 +401,27 @@ bool JsonSettingsRepository::Save(const AppSettings& settings)
         coexisting.append(ToJson(pair));
     }
 
+    QJsonArray documents;
+    for (const ReadDocument& document : settings.documents)
+    {
+        documents.append(ToJson(document));
+    }
+
     QJsonObject root;
     root[kActiveProfileId] = QString::fromStdString(settings.activeProfileId);
     root[kProfiles] = profiles;
     root[kLinkType] = LinkTypeName(settings.linkType);
-    root[kVerifyWithHash] = settings.verifyWithHash;
+    root[kVerifyWithHash] = settings.verification == Verification::ByHash;
     root[kManageStartupEntries] = settings.manageStartupEntries;
     root[kManagePackageList] = settings.managePackageList;
+    root[kWheelZoomsCharts] = settings.onCharts.wheelZooms;
+    root[kWheelZoomsDocuments] = settings.onDocuments.wheelZooms;
+    root[kDragMovesCharts] = settings.onCharts.dragMovesThePage;
+    root[kDragMovesDocuments] = settings.onDocuments.dragMovesThePage;
     root[kUpdateMode] = UpdateModeName(settings.updateMode);
     root[kLanguage] = QString::fromStdString(settings.language);
     root[kCoexistingAirports] = coexisting;
+    root[kDocuments] = documents;
 
     std::error_code error;
     std::filesystem::create_directories(file_.parent_path(), error);

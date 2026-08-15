@@ -3,10 +3,14 @@
 #include <QtGui/QPainter>
 #include <QtTest/QtTest>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyleOption>
+#include <QtWidgets/QVBoxLayout>
 
+#include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "view/theme/ModernistStyle.h"
 #include "view/theme/ModernistTheme.h"
@@ -30,6 +34,9 @@ namespace
         static void TheFocusRingTakesTheBorderOfAButtonAndTheBoxOfAnItem();
         static void AButtonWearingTheStyleSheetStillShowsWhereTheKeyboardIs();
         static void TheDefaultButtonKeepsItsHoverTone();
+        static void ADialogNeverGrowsTallerThanTheWindowThatOpenedIt();
+        static void ADialogWithNoWindowBehindItFallsBackToTheScreen();
+        static void ContentThatCanShrinkIsCappedWithoutLettingGoOfTheLayoutMinimum();
     };
 
     QImage Painted(QWidget& widget)
@@ -260,6 +267,76 @@ void ModernistThemeTest::TheDefaultButtonKeepsItsHoverTone()
 
     QVERIFY2(hover > plain,
              "with the same specificity the later rule wins, so the default button loses its hover to the rule above");
+}
+
+void ModernistThemeTest::ADialogNeverGrowsTallerThanTheWindowThatOpenedIt()
+{
+    QWidget window;
+    window.resize(900, 400);
+
+    QDialog dialog(&window);
+    auto* column = new QVBoxLayout(&dialog);
+
+    for (int filler = 0; filler < 40; ++filler)
+    {
+        column->addWidget(new QLabel(QStringLiteral("a line that pushes the dialog past the window"), &dialog));
+    }
+
+    auto* footer = new QPushButton(QStringLiteral("Confirm"), &dialog);
+    column->addWidget(footer);
+
+    SizeToTheContent(dialog, 600);
+
+    QVERIFY2(dialog.layout()->minimumSize().height() > window.height(),
+             "the fixture only proves anything if the content really wants to be taller than the window");
+    QVERIFY2(dialog.height() <= window.height(),
+             qPrintable(QStringLiteral("dialog %1, window %2").arg(dialog.height()).arg(window.height())));
+
+    dialog.layout()->activate();
+
+    QVERIFY2(footer->geometry().bottom() <= dialog.height(),
+             qPrintable(QStringLiteral("the footer is what must survive the squeeze: bottom %1, dialog %2")
+                            .arg(footer->geometry().bottom())
+                            .arg(dialog.height())));
+}
+
+void ModernistThemeTest::ADialogWithNoWindowBehindItFallsBackToTheScreen()
+{
+    QDialog orphan;
+    auto* column = new QVBoxLayout(&orphan);
+    column->addWidget(new QLabel(QStringLiteral("the first run wizard has no window behind it"), &orphan));
+
+    SizeToTheContent(orphan, 600);
+
+    const QScreen* screen = orphan.screen();
+    QVERIFY(screen != nullptr);
+    QVERIFY2(orphan.height() <= screen->availableGeometry().height() * 4 / 5,
+             "with no parent the screen is still the ceiling, which is the wizard's case");
+    QVERIFY2(orphan.height() > 0, "falling back to the screen must not collapse the dialog");
+}
+
+void ModernistThemeTest::ContentThatCanShrinkIsCappedWithoutLettingGoOfTheLayoutMinimum()
+{
+    QWidget window;
+    window.resize(900, 400);
+
+    QDialog dialog(&window);
+    auto* column = new QVBoxLayout(&dialog);
+
+    auto* wrapping = new QLabel(
+        QStringLiteral("a paragraph long enough to wrap many times over a narrow dialog, ").repeated(30), &dialog);
+    wrapping->setWordWrap(true);
+    column->addWidget(wrapping);
+
+    SizeToTheContent(dialog, 200);
+
+    QVERIFY2(column->minimumSize().height() <= window.height(),
+             "the fixture only proves anything if the layout minimum already fits under the ceiling");
+    QVERIFY2(column->totalHeightForWidth(200) > window.height(),
+             "and only if the content still wants to be taller than the ceiling at that width");
+    QVERIFY2(dialog.height() <= window.height(),
+             qPrintable(QStringLiteral("dialog %1, window %2").arg(dialog.height()).arg(window.height())));
+    QCOMPARE(column->sizeConstraint(), QLayout::SetDefaultConstraint);
 }
 
 QTEST_MAIN(ModernistThemeTest)

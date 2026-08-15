@@ -1,5 +1,139 @@
 # Changelog
 
+## [0.48.0](https://github.com/brunofgmag/fs-organizer/compare/v0.47.0...v0.48.0) (2026-08-15)
+
+
+### Features
+
+* **manual:** the user manual in both languages, with the progress dialog swept and a guard over it ([#126](https://github.com/brunofgmag/fs-organizer/issues/126)) ([00ab139](https://github.com/brunofgmag/fs-organizer/commit/00ab1394b9454b42f75ae56b5878f68ee23c3a71))
+
+## [0.47.0](https://github.com/brunofgmag/fs-organizer/compare/v0.46.0...v0.47.0) (2026-08-15)
+
+
+### Features
+
+* **bisection:** open a coupled group into its members and say what holds each ([#124](https://github.com/brunofgmag/fs-organizer/issues/124)) ([851d92b](https://github.com/brunofgmag/fs-organizer/commit/851d92b296d5cf8d9cf2629402d60151314115c6))
+
+## [0.46.0](https://github.com/brunofgmag/fs-organizer/compare/v0.45.0...v0.46.0) (2026-08-15)
+
+
+### Features
+
+* **import:** read the hash verification in batches, with its own bar ([#122](https://github.com/brunofgmag/fs-organizer/issues/122)) ([5cc46aa](https://github.com/brunofgmag/fs-organizer/commit/5cc46aa17e547a6d049a14013513a12196e6381b))
+
+## [0.45.0](https://github.com/brunofgmag/fs-organizer/compare/v0.44.0...v0.45.0) (2026-08-14)
+
+
+### Features
+
+* **import:** ligar a verificacao por hash na tela de opcoes ([#120](https://github.com/brunofgmag/fs-organizer/issues/120)) ([075bb8a](https://github.com/brunofgmag/fs-organizer/commit/075bb8af880479973fbaa7471514b308b05e6ff6))
+
+## [0.44.0](https://github.com/brunofgmag/fs-organizer/compare/v0.43.0...v0.44.0) (2026-08-14)
+
+
+### Features
+
+* **bisection:** guardar o historico das rodadas e deixar a deriva de biblioteca seguir ([#118](https://github.com/brunofgmag/fs-organizer/issues/118)) ([19c13ac](https://github.com/brunofgmag/fs-organizer/commit/19c13ac513ccc81d0146c0cc8c6e971eb6db52b4))
+
+## [0.43.0](https://github.com/brunofgmag/fs-organizer/compare/v0.42.0...v0.43.0) (2026-08-14)
+
+
+### Features
+
+* **bisection:** find the addon that brings the simulator down, from the screen ([#116](https://github.com/brunofgmag/fs-organizer/issues/116)) ([0d73984](https://github.com/brunofgmag/fs-organizer/commit/0d739841797005272a5e25850e1a71fbf9597359))
+
+## [0.42.0](https://github.com/brunofgmag/fs-organizer/compare/v0.41.0...v0.42.0) (2026-08-14)
+
+
+### Features
+
+* **bisection:** find the addon that brings the simulator down, without a screen ([#114](https://github.com/brunofgmag/fs-organizer/issues/114)) ([02e12ec](https://github.com/brunofgmag/fs-organizer/commit/02e12ecb4489b31001fdf614c406d442261a0aee))
+
+## [0.41.0](https://github.com/brunofgmag/fs-organizer/compare/v0.40.0...v0.41.0) (2026-08-14)
+
+
+### Features
+
+* **documents:** select text in a reading, and fix where the search jump lands ([#112](https://github.com/brunofgmag/fs-organizer/issues/112)) ([e53b399](https://github.com/brunofgmag/fs-organizer/commit/e53b39900ec1c0dc246655c2277acec565608f11))
+
+## [0.40.0](https://github.com/brunofgmag/fs-organizer/compare/v0.39.0...v0.40.0) (2026-08-14)
+
+
+### Features
+
+* separate the reading gestures by kind, and fix what the manual testing found ([#110](https://github.com/brunofgmag/fs-organizer/issues/110)) ([343f9c9](https://github.com/brunofgmag/fs-organizer/commit/343f9c92e5143a75c698dd9eca32f0183639796e))
+
+## [0.39.0](https://github.com/brunofgmag/fs-organizer/compare/v0.38.0...v0.39.0) (2026-08-14)
+
+
+### Features
+
+* switch the reader gestures, and fix what the manual testing found ([#108](https://github.com/brunofgmag/fs-organizer/issues/108)) ([67a1f20](https://github.com/brunofgmag/fs-organizer/commit/67a1f2088483462ea39be8f095ae7f6766e6c034))
+
+## [0.38.0](https://github.com/brunofgmag/fs-organizer/compare/v0.37.0...v0.38.0) (2026-08-13)
+
+
+### Features
+
+* **documents:** show each addon in the index as the first reading finds it ([#106](https://github.com/brunofgmag/fs-organizer/issues/106)) ([cca0b02](https://github.com/brunofgmag/fs-organizer/commit/cca0b0220323006cfa51d5eaf1bab7ad82dc627d))
+* **documents:** show the detached reading, and give the reader bar its steps and lenses ([#105](https://github.com/brunofgmag/fs-organizer/issues/105)) ([3ba16f8](https://github.com/brunofgmag/fs-organizer/commit/3ba16f89672cddd88b2b186de21bf9fd3ef9bc44))
+
+## [0.37.0](https://github.com/brunofgmag/fs-organizer/compare/v0.36.0...v0.37.0) (2026-08-13)
+
+
+### Features
+
+* **documents:** bookmark a page and say which section the reading is in ([#103](https://github.com/brunofgmag/fs-organizer/issues/103)) ([2f89fb1](https://github.com/brunofgmag/fs-organizer/commit/2f89fb14c461f3bd292b2655811c7d673788af14))
+
+## [0.36.0](https://github.com/brunofgmag/fs-organizer/compare/v0.35.0...v0.36.0) (2026-08-13)
+
+
+### Features
+
+* **documents:** read every manual and chart of the library in a tab ([#101](https://github.com/brunofgmag/fs-organizer/issues/101)) ([8775d5c](https://github.com/brunofgmag/fs-organizer/commit/8775d5c504f8492ede0525a088a4839ba1595c6f))
+
+## [0.35.0](https://github.com/brunofgmag/fs-organizer/compare/v0.34.0...v0.35.0) (2026-08-12)
+
+
+### Features
+
+* warn before adopting another program's addon, and keep dialogs inside the window ([#99](https://github.com/brunofgmag/fs-organizer/issues/99)) ([92ebfcc](https://github.com/brunofgmag/fs-organizer/commit/92ebfccfaeb1f0370f33f0e6be74d3f303bde196))
+
+## [0.34.0](https://github.com/brunofgmag/fs-organizer/compare/v0.33.0...v0.34.0) (2026-08-12)
+
+
+### Features
+
+* **documents:** read a chart or a manual inside the app ([#97](https://github.com/brunofgmag/fs-organizer/issues/97)) ([3b4c0fb](https://github.com/brunofgmag/fs-organizer/commit/3b4c0fbab52c79559ca995b9080842365733957f))
+
+## [0.33.0](https://github.com/brunofgmag/fs-organizer/compare/v0.32.0...v0.33.0) (2026-08-12)
+
+
+### Features
+
+* read the chart type and the airport code out of the chart file name ([#95](https://github.com/brunofgmag/fs-organizer/issues/95)) ([7bd475a](https://github.com/brunofgmag/fs-organizer/commit/7bd475a0157de01c889ee5c06f8e8e7a27127ea2))
+
+## [0.32.0](https://github.com/brunofgmag/fs-organizer/compare/v0.31.0...v0.32.0) (2026-08-12)
+
+
+### Features
+
+* index the PDFs of each addon and separate chart from document ([#93](https://github.com/brunofgmag/fs-organizer/issues/93)) ([eabc767](https://github.com/brunofgmag/fs-organizer/commit/eabc767e2f770cb53d9c6dd3ff6bd96d56fc6381))
+
+## [0.31.0](https://github.com/brunofgmag/fs-organizer/compare/v0.30.1...v0.31.0) (2026-08-12)
+
+
+### Features
+
+* read the simulator's loading report, and guard unfinished translations ([#91](https://github.com/brunofgmag/fs-organizer/issues/91)) ([4fb34ae](https://github.com/brunofgmag/fs-organizer/commit/4fb34ae1a71a59acd2d8c432f70c84142cf84e1d))
+
+## [0.30.1](https://github.com/brunofgmag/fs-organizer/compare/v0.30.0...v0.30.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* run the diagnostics tables edge to edge, and correct the build the README documents ([#88](https://github.com/brunofgmag/fs-organizer/issues/88)) ([3fdc26b](https://github.com/brunofgmag/fs-organizer/commit/3fdc26b4601a7920e34dc85b74cc58911142a3b8))
+
 ## [0.30.0](https://github.com/brunofgmag/fs-organizer/compare/v0.29.0...v0.30.0) (2026-08-11)
 
 

@@ -6,7 +6,11 @@
 #include <iterator>
 #include <system_error>
 
+#include <QtCore/QByteArrayView>
+#include <QtCore/QCryptographicHash>
+
 #include "domain/ports/FilesystemProbe.h"
+#include "domain/support/PathUtils.h"
 #include "support/FileClock.h"
 
 #include "infrastructure/fileops/ExtendedPaths.h"
@@ -163,6 +167,41 @@ public:
         bytes.resize(static_cast<std::size_t>(file.gcount()));
 
         return bytes;
+    }
+
+    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const
+    {
+        std::ifstream file(AsFarAsTheProductionProbeReaches(path), std::ios::binary);
+        if (!file.is_open())
+        {
+            return std::nullopt;
+        }
+
+        constexpr std::size_t kBytesReadAtATime = 1024 * 1024;
+
+        QCryptographicHash digest(QCryptographicHash::Sha256);
+
+        std::string block(kBytesReadAtATime, '\0');
+        while (file.read(block.data(), static_cast<std::streamsize>(block.size())) || file.gcount() > 0)
+        {
+            digest.addData(QByteArrayView(block.data(), static_cast<qsizetype>(file.gcount())));
+        }
+
+        return digest.result().toHex().toStdString();
+    }
+
+    [[nodiscard]] std::vector<std::optional<std::string>>
+    HashesOf(const std::filesystem::path& root, const std::vector<std::filesystem::path>& below) const override
+    {
+        std::vector<std::optional<std::string>> digests;
+        digests.reserve(below.size());
+
+        for (const std::filesystem::path& relative : below)
+        {
+            digests.push_back(HashOf(PathUnder(root, relative)));
+        }
+
+        return digests;
     }
 
     [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override

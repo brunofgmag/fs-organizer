@@ -12,6 +12,7 @@
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeLoadingReportSource.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSceneryCache.h"
@@ -138,7 +139,8 @@ namespace
         FakeProcessProbe processProbe;
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        ImportEngine importEngine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine importEngine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                                  Verification::ByStructure};
         ImportService imports{importEngine, processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking,      log,          LinkType::Junction};
         FakeSettingsRepository settings;
@@ -149,7 +151,8 @@ namespace
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
-        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, clock, runner};
+        FakeLoadingReportSource loading;
+        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, loading, clock, runner};
     };
 }
 

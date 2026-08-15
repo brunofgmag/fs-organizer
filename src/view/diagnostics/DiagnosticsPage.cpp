@@ -1,6 +1,8 @@
 #include "view/diagnostics/DiagnosticsPage.h"
 
 #include <QtCore/QEvent>
+#include <QtCore/QSize>
+#include <QtWidgets/QFrame>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -24,8 +26,10 @@
 namespace
 {
     constexpr int kRailWidth = 210;
-    constexpr int kCategoryColumnWidth = 420;
+    constexpr int kRailSeparatorRow = 19;
+    constexpr int kRailSeparatorInset = 13;
     constexpr int kBytesRole = Qt::UserRole + 1;
+    constexpr int kSectionRole = Qt::UserRole + 2;
 
     class MeasuredRow final : public QTreeWidgetItem
     {
@@ -108,10 +112,30 @@ namespace
     {
         tree->setItemDelegate(new RowDelegate(tree));
     }
+
+    QVBoxLayout* InsetLikeAToolbar()
+    {
+        auto* inset = new QVBoxLayout;
+        inset->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+        inset->setSpacing(8);
+
+        return inset;
+    }
+
+    QVBoxLayout* AroundTheTableOf(QWidget* pane)
+    {
+        auto* layout = new QVBoxLayout(pane);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(0);
+
+        return layout;
+    }
 }
 
-DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* parent)
-    : QWidget(parent), viewModel_(viewModel)
+DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel,
+                                 BisectionViewModel& bisectionViewModel,
+                                 QWidget* parent)
+    : QWidget(parent), viewModel_(viewModel), bisectionViewModel_(bisectionViewModel)
 {
     panes_ = new QStackedWidget(this);
     panes_->addWidget(CreateCountsPane());
@@ -119,6 +143,12 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
     panes_->addWidget(CreateQuarantinePane());
     panes_->addWidget(CreateSizePane());
     panes_->addWidget(CreateSceneryPane());
+
+    load_ = new LoadPanel(this);
+    panes_->addWidget(load_);
+
+    bisection_ = new BisectionPanel(bisectionViewModel_, this);
+    panes_->addWidget(bisection_);
 
     auto* body = new QHBoxLayout;
     body->setContentsMargins(0, 0, 0, 0);
@@ -144,7 +174,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
             [this]
             {
                 viewModel_.CancelSize();
-                emit StatusChanged(tr("Stopping the measurement after the addon being walked now."));
+                emit StatusChanged(tr("Stopping after the addon it is measuring now."));
             });
     connect(openQuarantine_, &QPushButton::clicked, this, &DiagnosticsPage::QuarantineRequested);
     connect(repair_, &QPushButton::clicked, this, &DiagnosticsPage::RepairRequested);
@@ -161,10 +191,14 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* paren
             [this]
             {
                 viewModel_.CancelScenery();
-                emit StatusChanged(tr("Stopping the reading after the addon being read now."));
+                emit StatusChanged(tr("Stopping after the addon it is reading now."));
             });
     connect(&viewModel_, &DiagnosticsViewModel::SceneryRead, this, &DiagnosticsPage::ShowWhatTheSceneryCarries);
     connect(&viewModel_, &DiagnosticsViewModel::SceneryProgressed, this, &DiagnosticsPage::ShowSceneryProgress);
+    connect(&viewModel_, &DiagnosticsViewModel::LoadRead, this, &DiagnosticsPage::ShowWhatTheSimulatorLoaded);
+    connect(bisection_, &BisectionPanel::StatusChanged, this, &DiagnosticsPage::StatusChanged);
+    connect(bisection_, &BisectionPanel::ImportRequested, this, &DiagnosticsPage::ImportRequested);
+    connect(&bisectionViewModel_, &BisectionViewModel::Changed, this, &DiagnosticsPage::DressTheRail);
 
     RetranslateUi();
     rail_->setCurrentRow(DestinationEntries);
@@ -211,12 +245,41 @@ QWidget* DiagnosticsPage::CreateRail()
     rail_->setFrameShape(QFrame::NoFrame);
     rail_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    for (int section = DestinationEntries; section <= AirportsInTheScenery; ++section)
+    for (int section = DestinationEntries; section <= WhatTheSimulatorLoaded; ++section)
     {
-        rail_->addItem(QString());
+        AddToTheRail(static_cast<Section>(section));
     }
 
+    AddTheRailSeparator();
+    AddToTheRail(FindTheCulprit);
+
     return rail_;
+}
+
+void DiagnosticsPage::AddToTheRail(const Section section)
+{
+    auto* item = new QListWidgetItem(rail_);
+    item->setData(kSectionRole, static_cast<int>(section));
+
+    railItems_.push_back(item);
+}
+
+void DiagnosticsPage::AddTheRailSeparator()
+{
+    auto* item = new QListWidgetItem(rail_);
+    item->setFlags(Qt::NoItemFlags);
+    item->setSizeHint(QSize(kRailWidth, kRailSeparatorRow));
+
+    auto* holder = new QWidget(rail_);
+    auto* line = new QFrame(holder);
+    line->setObjectName(QStringLiteral("RailSeparator"));
+    line->setFixedHeight(1);
+
+    auto* around = new QVBoxLayout(holder);
+    around->setContentsMargins(kRailSeparatorInset, 0, kRailSeparatorInset, 0);
+    around->addWidget(line);
+
+    rail_->setItemWidget(item, holder);
 }
 
 QWidget* DiagnosticsPage::CreateCountsPane()
@@ -232,10 +295,7 @@ QWidget* DiagnosticsPage::CreateCountsPane()
     DressTheHeaderOf(counts_->header());
     DressTheRowsOf(counts_);
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
-    layout->addWidget(counts_, 1);
+    AroundTheTableOf(pane)->addWidget(counts_, 1);
 
     return pane;
 }
@@ -260,12 +320,13 @@ QWidget* DiagnosticsPage::CreateBrokenPane()
     actions->addWidget(repair_);
     actions->addStretch();
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
+    auto* below = InsetLikeAToolbar();
+    below->addLayout(actions);
+    below->addWidget(troubledPromise_);
+
+    auto* layout = AroundTheTableOf(pane);
     layout->addWidget(troubled_, 1);
-    layout->addLayout(actions);
-    layout->addWidget(troubledPromise_);
+    layout->addLayout(below);
 
     return pane;
 }
@@ -318,9 +379,9 @@ QWidget* DiagnosticsPage::CreateSizePane()
 
     auto* progress = new QHBoxLayout;
     progress->setContentsMargins(0, 0, 0, 0);
+    progress->addWidget(cancel_);
     progress->addWidget(sizeMeter_);
     progress->addWidget(sizeProgress_, 1);
-    progress->addWidget(cancel_);
 
     sizes_ = new QTreeWidget(pane);
     sizes_->setObjectName(QStringLiteral("DiagnosticsSizes"));
@@ -329,22 +390,25 @@ QWidget* DiagnosticsPage::CreateSizePane()
     sizes_->setSortingEnabled(true);
     sizes_->sortByColumn(2, Qt::DescendingOrder);
     sizes_->header()->setStretchLastSection(false);
-    sizes_->header()->setSectionResizeMode(0, QHeaderView::Interactive);
+    sizes_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     sizes_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    sizes_->header()->resizeSection(0, kCategoryColumnWidth);
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
 
     longestPaths_ = Quiet({}, pane);
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
-    layout->addLayout(header);
-    layout->addLayout(progress);
+    auto* above = InsetLikeAToolbar();
+    above->addLayout(header);
+    above->addLayout(progress);
+
+    auto* below = InsetLikeAToolbar();
+    below->addWidget(longestPaths_);
+
+    auto* layout = AroundTheTableOf(pane);
+    layout->addLayout(above);
     layout->addWidget(sizes_, 1);
-    layout->addWidget(longestPaths_);
+    layout->addLayout(below);
 
     return pane;
 }
@@ -372,9 +436,9 @@ QWidget* DiagnosticsPage::CreateSceneryPane()
 
     auto* progress = new QHBoxLayout;
     progress->setContentsMargins(0, 0, 0, 0);
+    progress->addWidget(stopScenery_);
     progress->addWidget(sceneryMeter_);
     progress->addWidget(sceneryProgress_, 1);
-    progress->addWidget(stopScenery_);
 
     scenery_ = new QTreeWidget(pane);
     scenery_->setUniformRowHeights(true);
@@ -383,11 +447,12 @@ QWidget* DiagnosticsPage::CreateSceneryPane()
     DressTheHeaderOf(scenery_->header());
     DressTheRowsOf(scenery_);
 
-    auto* layout = new QVBoxLayout(pane);
-    layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
-    layout->addLayout(header);
-    layout->addLayout(progress);
+    auto* above = InsetLikeAToolbar();
+    above->addLayout(header);
+    above->addLayout(progress);
+
+    auto* layout = AroundTheTableOf(pane);
+    layout->addLayout(above);
     layout->addWidget(scenery_, 1);
 
     return pane;
@@ -413,9 +478,23 @@ void DiagnosticsPage::RetranslateUi() const
     DressTheRail();
 }
 
-void DiagnosticsPage::OpenSection(const int section) const
+void DiagnosticsPage::OpenSection(const int row) const
 {
+    QListWidgetItem* chosen = rail_->item(row);
+
+    if (chosen == nullptr)
+    {
+        return;
+    }
+
+    const int section = chosen->data(kSectionRole).toInt();
+
     panes_->setCurrentIndex(section);
+
+    if (section == FindTheCulprit)
+    {
+        bisectionViewModel_.Show();
+    }
 
     if (section == SizeOnDisk)
     {
@@ -427,6 +506,11 @@ void DiagnosticsPage::OpenSection(const int section) const
     {
         viewModel_.ShowScenery();
         DressTheSceneryToolbar();
+    }
+
+    if (section == WhatTheSimulatorLoaded)
+    {
+        viewModel_.ShowTheLoad();
     }
 }
 
@@ -637,18 +721,43 @@ void DiagnosticsPage::DressTheRail() const
         bytes += library.bytes;
     }
 
-    rail_->item(DestinationEntries)->setText(tr("Destination entries · %1").arg(entries));
-    rail_->item(BrokenAndUnavailable)->setText(tr("Broken, unavailable · %1").arg(troubled));
-    rail_->item(Quarantine)->setText(tr("Quarantine · %1").arg(AsSize(weight.bytes)));
-    rail_->item(SizeOnDisk)
-        ->setText(measured.has_value() ? tr("Size on disk · %1").arg(AsSize(bytes)) : tr("Size on disk"));
+    railItems_[DestinationEntries]->setText(tr("Destination entries · %1").arg(entries));
+    railItems_[BrokenAndUnavailable]->setText(tr("Broken, unavailable · %1").arg(troubled));
+    railItems_[Quarantine]->setText(tr("Quarantine · %1").arg(AsSize(weight.bytes)));
+    railItems_[SizeOnDisk]->setText(measured.has_value() ? tr("Size on disk · %1").arg(AsSize(bytes))
+                                                         : tr("Size on disk"));
 
     const SceneryCensus& census = viewModel_.Scenery();
 
-    rail_->item(AirportsInTheScenery)
-        ->setText(viewModel_.SceneryReadAt().has_value()
-                      ? tr("Airports in the scenery · %1").arg(census.carryingACode.size())
-                      : tr("Airports in the scenery"));
+    railItems_[AirportsInTheScenery]->setText(viewModel_.SceneryReadAt().has_value()
+                                                  ? tr("Airports in the scenery · %1").arg(census.carryingACode.size())
+                                                  : tr("Airports in the scenery"));
+
+    const LoadDiagnostics& load = viewModel_.Load();
+
+    railItems_[WhatTheSimulatorLoaded]->setText(load.reportWasRead ? tr("Modules loaded · %1").arg(load.modules.size())
+                                                                   : tr("Modules loaded"));
+
+    railItems_[FindTheCulprit]->setText(TheRailTextForTheSearch());
+}
+
+QString DiagnosticsPage::TheRailTextForTheSearch() const
+{
+    if (!bisectionViewModel_.ItIsRunning())
+    {
+        return tr("Find the culprit");
+    }
+
+    const BisectionReport& report = bisectionViewModel_.Report();
+
+    return tr("Find the culprit · %1 / %2").arg(report.round).arg(report.roundsInTheWorstCase);
+}
+
+void DiagnosticsPage::ShowWhatTheSimulatorLoaded() const
+{
+    load_->Show(viewModel_.Load());
+
+    DressTheRail();
 }
 
 void DiagnosticsPage::DressTheSizeToolbar() const

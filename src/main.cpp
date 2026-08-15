@@ -9,6 +9,7 @@
 
 #include "application/CoverageService.h"
 #include "application/DeletionService.h"
+#include "application/BisectionService.h"
 #include "application/ImportService.h"
 #include "application/LegacyConfigImporter.h"
 #include "application/LibraryOrganizer.h"
@@ -17,10 +18,15 @@
 #include "application/Session.h"
 #include "application/SceneryService.h"
 #include "application/SetupService.h"
+#include "application/DocumentService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
+#include "infrastructure/bisection/JsonBisectionStore.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
+#include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/JsonDocumentIndexCache.h"
+#include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
@@ -38,6 +44,8 @@
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ContentXmlPackageList.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
+#include "infrastructure/sim/LoadingReportLocations.h"
+#include "infrastructure/sim/ProfileLoadingReport.h"
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
@@ -48,6 +56,7 @@
 #include "view/library/AddonTreePage.h"
 #include "view/community/CommunityPage.h"
 #include "view/diagnostics/DiagnosticsPage.h"
+#include "view/documents/DocumentsPage.h"
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/JournalPage.h"
 #include "view/shell/LanguageSwitch.h"
@@ -67,6 +76,9 @@
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/AddonDocumentsViewModel.h"
+#include "viewmodel/DocumentsViewModel.h"
+#include "viewmodel/BisectionViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -228,10 +240,14 @@ int main(int argc, char* argv[])
     const OperationLog log(journal, clock);
 
     const LinkType storedLinkType = stored.linkType;
+    const Verification storedVerification = stored.verification;
 
     const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries{{}};
     StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
+
+    const std::vector<LoadingReportLocation> loadingReports = LoadingReportLocations(userCfgLocations, filesystemProbe);
+    ProfileLoadingReport loadingReport(filesystemProbe, {});
 
     const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
     ContentXmlPackageList packageList{{}};
@@ -243,7 +259,7 @@ int main(int argc, char* argv[])
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, storedLinkType);
 
-    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType);
+    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, storedLinkType, storedVerification);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 storedLinkType);
 
@@ -273,8 +289,25 @@ int main(int argc, char* argv[])
                      });
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-    auto* page =
-        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, model, notifier);
+    const JsonChartCatalogueParser catalogueParser;
+    const QtPdfChartVersions chartVersions;
+    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
+    JsonDocumentIndexCache documentIndexCache(DocumentIndexFilePath());
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, clock);
+
+    auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
+                                   addonDocumentsViewModel, model, notifier);
+
+    documentsViewModel.ShowWhatWasKept();
+
+    auto* documentsPage = new DocumentsPage(documentsViewModel);
+
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, documentsPage,
+                     [&documentsViewModel]
+                     {
+                         documentsViewModel.ReadTheLibrary();
+                     });
 
     LongOperationProgress progress(importViewModel, &window);
 
@@ -291,26 +324,35 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, clock, runner);
-    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
+                                              runner);
+
+    const CouplingScan coupling(filesystemProbe);
+    JsonBisectionStore bisectionStore(BisectionFolderPath());
+    BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore, clock);
+    BisectionViewModel bisectionViewModel(bisectionService, session);
+
+    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel, bisectionViewModel);
 
     StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
     auto* packageListPage = new PackageListPage(coverageViewModel);
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    QObject::connect(
-        &notifier, &SessionNotifier::ScanFinished, startupPage,
-        [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists, &coverageViewModel]
-        {
-            startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
-            startupViewModel.Show();
-            session.RefreshStartupEntries();
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
+                     [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists,
+                      &coverageViewModel, &loadingReport, &loadingReports]
+                     {
+                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                         loadingReport.Use(LoadingReportOf(loadingReports, session.Profile().variant));
+                         startupViewModel.Show();
+                         session.RefreshStartupEntries();
 
-            const std::optional<ChosenContentList> chosen = ChooseContentList(contentLists, session.Profile().variant);
-            packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
-            coverageViewModel.Show();
-        });
+                         const std::optional<ChosenContentList> chosen =
+                             ChooseContentList(contentLists, session.Profile().variant);
+                         packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+                         coverageViewModel.Show();
+                     });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService, startupService);
@@ -335,6 +377,7 @@ int main(int argc, char* argv[])
     PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);
     window.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsButton = window.AddPage(PageNames::kPresets, presetsPage);
+    PageTab* documentsButton = window.AddPage(PageNames::kDocuments, documentsPage);
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     window.AddPage(PageNames::kJournal, journalPage);
@@ -349,6 +392,12 @@ int main(int argc, char* argv[])
                          importEngine.UseLinkType(linkType);
                          importService.UseLinkType(linkType);
                          organizer.UseLinkType(linkType);
+                     });
+
+    QObject::connect(&optionsViewModel, &OptionsViewModel::VerificationChosen, &window,
+                     [&importEngine](const Verification verification)
+                     {
+                         importEngine.UseVerification(verification);
                      });
 
     QObject::connect(&optionsViewModel, &OptionsViewModel::LanguageChosen, &window,
@@ -382,6 +431,14 @@ int main(int argc, char* argv[])
                      });
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &treeViewModel, &AddonTreeViewModel::CancelScan);
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &documentsViewModel, &DocumentsViewModel::Stop);
+
+    QObject::connect(page, &AddonTreePage::DocumentationRequested, documentsPage,
+                     [documentsButton, documentsPage](const std::string& addon)
+                     {
+                         documentsButton->click();
+                         documentsPage->Reveal(addon);
+                     });
 
     QTimer::singleShot(kFirstUpdateCheckDelayMs, &updateViewModel, &UpdateViewModel::CheckQuietly);
 
@@ -554,6 +611,7 @@ int main(int argc, char* argv[])
                          quarantineButton->click();
                      });
     QObject::connect(diagnosticsPage, &DiagnosticsPage::RepairRequested, &window, &MainWindow::RepairRequested);
+    QObject::connect(diagnosticsPage, &DiagnosticsPage::ImportRequested, &window, &MainWindow::ImportRequested);
 
     QObject::connect(startupPage, &StartupPage::SummaryChanged, simulatorPage,
                      [simulatorPage, startupPage](const QString& summary)
@@ -654,6 +712,7 @@ int main(int argc, char* argv[])
                          OfferToDropTheOverridesThatPointNowhere(session, &window);
                          OfferToPutBackWhatALostSwapRenamed(importViewModel, &window);
                          OfferWhatALostImportLeftBehind(importViewModel, &window);
+                         OfferToCarryOnTheSearchThatWasLeftHalfway(bisectionViewModel, &window);
 
                          if (setupJustRan)
                          {

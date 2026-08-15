@@ -29,7 +29,6 @@ namespace
 {
     constexpr int kStatusLingersFor = 6000;
     constexpr int kMeterWidth = 132;
-    constexpr int kMeterHeight = 4;
     constexpr int kStatusBarAlreadyInsetsTheFirstWidgetBy = 2;
     constexpr int kGearGlyph = 14;
     constexpr QSize kWindowStartsAt(1140, 760);

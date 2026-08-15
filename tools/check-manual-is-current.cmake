@@ -1,0 +1,100 @@
+if (NOT DEFINED FSORG_SOURCE_DIR)
+    message(FATAL_ERROR "FSORG_SOURCE_DIR must be defined.")
+endif ()
+
+# The manual is two independent sources on purpose, and the PDF beside them is
+# built by hand because no CI job installs TeX. This reads text and nothing
+# else: it never runs lualatex, and it never looks at the PDF, whose age says
+# nothing after a clone, because git stamps every file with the checkout time.
+
+set(MANUAL_DIRECTORY "${FSORG_SOURCE_DIR}/manual")
+
+set(MANUAL_SOURCES
+        "fs-organizer-pt_BR.tex"
+        "fs-organizer-en.tex"
+)
+
+file(READ "${FSORG_SOURCE_DIR}/VERSION.txt" DECLARED_VERSION)
+string(STRIP "${DECLARED_VERSION}" DECLARED_VERSION)
+
+set(OFFENCES "")
+set(FIRST_SHAPE "")
+set(FIRST_SOURCE "")
+
+foreach (MANUAL_SOURCE IN LISTS MANUAL_SOURCES)
+    set(SOURCE_PATH "${MANUAL_DIRECTORY}/${MANUAL_SOURCE}")
+
+    if (NOT EXISTS "${SOURCE_PATH}")
+        list(APPEND OFFENCES "  ${MANUAL_SOURCE} is not there")
+        continue ()
+    endif ()
+
+    file(STRINGS "${SOURCE_PATH}" LINES ENCODING UTF-8)
+
+    set(SHAPE "")
+    set(PRINTED_VERSION "")
+    set(FIGURE_DIRECTORY "")
+    set(WANTED_FIGURES "")
+
+    foreach (LINE IN LISTS LINES)
+        if (LINE MATCHES "^\\\\subsection\\{")
+            list(APPEND SHAPE "subsection")
+        elseif (LINE MATCHES "^\\\\section\\{")
+            list(APPEND SHAPE "section")
+        endif ()
+
+        if (LINE MATCHES "^ *\\{Vers[^ ]* ([0-9][^}]*)\\}")
+            set(PRINTED_VERSION "${CMAKE_MATCH_1}")
+        endif ()
+
+        if (LINE MATCHES "\\\\graphicspath\\{\\{([^}]+)\\}\\}")
+            set(FIGURE_DIRECTORY "${CMAKE_MATCH_1}")
+        endif ()
+
+        if (LINE MATCHES "\\\\shot\\{([^}]+)\\}")
+            list(APPEND WANTED_FIGURES "${CMAKE_MATCH_1}")
+        endif ()
+    endforeach ()
+
+    if (NOT PRINTED_VERSION STREQUAL DECLARED_VERSION)
+        list(APPEND OFFENCES
+                "  ${MANUAL_SOURCE} prints version ${PRINTED_VERSION} on its cover, and VERSION.txt says ${DECLARED_VERSION}")
+    endif ()
+
+    if (FIGURE_DIRECTORY STREQUAL "")
+        list(APPEND OFFENCES "  ${MANUAL_SOURCE} names no graphicspath, so no figure of it can be found")
+    else ()
+        foreach (FIGURE IN LISTS WANTED_FIGURES)
+            if (NOT EXISTS "${MANUAL_DIRECTORY}/${FIGURE_DIRECTORY}${FIGURE}")
+                list(APPEND OFFENCES
+                        "  ${MANUAL_SOURCE} asks for manual/${FIGURE_DIRECTORY}${FIGURE}, which is not on disk")
+            endif ()
+        endforeach ()
+    endif ()
+
+    if (FIRST_SOURCE STREQUAL "")
+        set(FIRST_SHAPE "${SHAPE}")
+        set(FIRST_SOURCE "${MANUAL_SOURCE}")
+    elseif (NOT SHAPE STREQUAL FIRST_SHAPE)
+        list(LENGTH SHAPE HOW_MANY)
+        list(LENGTH FIRST_SHAPE HOW_MANY_FIRST)
+        list(APPEND OFFENCES
+                "  ${FIRST_SOURCE} and ${MANUAL_SOURCE} do not carry the same headings in the same order: "
+                "${HOW_MANY_FIRST} against ${HOW_MANY}")
+    endif ()
+endforeach ()
+
+if (OFFENCES)
+    string(REPLACE ";" "\n" REPORT "${OFFENCES}")
+    message(FATAL_ERROR
+            "The two user manuals have drifted.\n"
+            "They are two independent sources covering the same subjects, and the PDF beside them is built by hand "
+            "with manual/build.ps1, which is the only thing that rebuilds it.\n"
+            "${REPORT}")
+endif ()
+
+list(LENGTH FIRST_SHAPE HEADINGS)
+
+message(STATUS
+        "Both user manuals carry the same ${HEADINGS} headings, print version ${DECLARED_VERSION}, "
+        "and every figure they ask for is on disk.")

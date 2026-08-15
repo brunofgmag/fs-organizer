@@ -67,7 +67,7 @@ CoverageDialog::CoverageDialog(const std::vector<CoverageLine>& covered, QWidget
 
     auto* promise = new QLabel(
         tr("Turning the simulator's one off writes one value in the package list. Nothing is added, removed or "
-           "reordered, and a copy of the file is kept. Leaving both on turns your addon on all the same."),
+           "reordered, and the app keeps a copy of the file. Leaving both on turns your addon on all the same."),
         this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);

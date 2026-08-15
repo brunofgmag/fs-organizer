@@ -23,6 +23,8 @@ struct ModernistTones
 
 [[nodiscard]] ModernistTones TonesOf(Qt::ColorScheme scheme);
 
+[[nodiscard]] QColor TheMarkThatSitsOnPaper();
+
 [[nodiscard]] Qt::ColorScheme CurrentColorScheme();
 
 #endif // FS_ORGANIZER_VIEW_THEME_MODERNIST_TONES_H

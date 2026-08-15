@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QTableView>
 
 #include "application/LibraryOrganizer.h"
@@ -19,6 +20,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "view/community/CommunityPage.h"
+#include "view/community/ImportDialog.h"
 #include "view/panels/ContextPanel.h"
 #include "viewmodel/SessionNotifier.h"
 
@@ -38,6 +40,8 @@ namespace
         static void ARescanThatEmptiesTheTableAlsoEmptiesThePanel();
         static void AFilterThatRanOutHandsTheTableBackInsteadOfLeavingItBlank();
         static void TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePortrait();
+        static void AdoptingAFolderAnotherProgramOwnsSaysTheUpdateCanBreakIt();
+        static void AFolderNoProgramOwnsGetsNoSuchWarning();
     };
 }
 
@@ -111,7 +115,8 @@ namespace
         FakeFileOperations files{fileSystem};
         FakeSidecarStore sidecars{fileSystem};
         FakeProcessProbe processProbe;
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
         ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                                     linking, log,          LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
@@ -329,6 +334,65 @@ void CommunityPageTest::TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePort
     reread->click();
 
     QCOMPARE(f.model.rowCount({}), before + 1);
+}
+
+namespace
+{
+    [[nodiscard]] QStringList TheParagraphsOf(const ImportDialog& dialog)
+    {
+        QStringList said;
+
+        for (const QLabel* line : dialog.findChildren<QLabel*>())
+        {
+            said.append(line->text());
+        }
+
+        return said;
+    }
+
+    [[nodiscard]] bool AnyOfThemWarnsAboutTheOtherProgram(const QStringList& said)
+    {
+        for (const QString& line : said)
+        {
+            if (line.contains(QStringLiteral("does not know about the link")))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+void CommunityPageTest::AdoptingAFolderAnotherProgramOwnsSaysTheUpdateCanBreakIt()
+{
+    SimulatorProfile profile;
+    profile.libraries.push_back({.path = "D:/Library", .label = "Library"});
+
+    ImportRequest owned;
+    owned.source = "C:/Community/fsdreamteam-gsx-pro";
+    owned.externalSource = "C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro";
+
+    const std::vector<TreeNode> libraries;
+    ImportDialog dialog({owned}, libraries, profile, 1024);
+
+    QVERIFY2(AnyOfThemWarnsAboutTheOtherProgram(TheParagraphsOf(dialog)),
+             "adopting a folder another program installed has to say the next update can break it");
+}
+
+void CommunityPageTest::AFolderNoProgramOwnsGetsNoSuchWarning()
+{
+    SimulatorProfile profile;
+    profile.libraries.push_back({.path = "D:/Library", .label = "Library"});
+
+    ImportRequest loose;
+    loose.source = "C:/Community/some-loose-addon";
+
+    const std::vector<TreeNode> libraries;
+    ImportDialog dialog({loose}, libraries, profile, 1024);
+
+    QVERIFY2(!AnyOfThemWarnsAboutTheOtherProgram(TheParagraphsOf(dialog)),
+             "a folder no other program installed cannot be broken by that program, so the warning would be a lie");
 }
 
 QTEST_MAIN(CommunityPageTest)

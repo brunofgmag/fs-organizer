@@ -9,17 +9,26 @@
 
 #include <windows.h>
 
+#include <algorithm>
 #include <cwchar>
+#include <execution>
 #include <fstream>
 #include <iterator>
+#include <numeric>
 #include <string>
 #include <system_error>
 
+#include <QtCore/QByteArrayView>
+#include <QtCore/QCryptographicHash>
+
+#include "domain/support/PathUtils.h"
 #include "infrastructure/fileops/ExtendedPaths.h"
 #include "support/FileClock.h"
 
 namespace
 {
+    constexpr std::size_t kBytesReadAtATime = 1024 * 1024;
+
     std::wstring NativePath(const std::filesystem::path& path)
     {
         return WithExtendedPrefix(path).wstring();
@@ -266,6 +275,43 @@ std::optional<std::string> WindowsFilesystemProbe::FirstBytesOf(const std::files
     bytes.resize(static_cast<std::size_t>(file.gcount()));
 
     return bytes;
+}
+
+std::optional<std::string> WindowsFilesystemProbe::HashOf(const std::filesystem::path& path) const
+{
+    std::ifstream file(WithExtendedPrefix(path), std::ios::binary);
+    if (!file.is_open())
+    {
+        return std::nullopt;
+    }
+
+    QCryptographicHash digest(QCryptographicHash::Sha256);
+
+    std::string block(kBytesReadAtATime, '\0');
+    while (file.read(block.data(), static_cast<std::streamsize>(block.size())) || file.gcount() > 0)
+    {
+        digest.addData(QByteArrayView(block.data(), static_cast<qsizetype>(file.gcount())));
+    }
+
+    return file.bad() ? std::nullopt : std::optional(digest.result().toHex().toStdString());
+}
+
+std::vector<std::optional<std::string>>
+WindowsFilesystemProbe::HashesOf(const std::filesystem::path& root,
+                                 const std::vector<std::filesystem::path>& below) const
+{
+    std::vector<std::optional<std::string>> digests(below.size());
+
+    std::vector<std::size_t> places(below.size());
+    std::iota(places.begin(), places.end(), std::size_t{0});
+
+    std::for_each(std::execution::par, places.begin(), places.end(),
+                  [this, &root, &below, &digests](const std::size_t place)
+                  {
+                      digests[place] = HashOf(PathUnder(root, below[place]));
+                  });
+
+    return digests;
 }
 
 std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std::filesystem::path& root) const

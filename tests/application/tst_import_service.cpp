@@ -136,7 +136,8 @@ namespace
         FakeClock clock;
         OperationLog log{journal, clock};
         FakeCatalogScanner catalog;
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
         ImportService service{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
                               linking, log,          LinkType::Junction};
 

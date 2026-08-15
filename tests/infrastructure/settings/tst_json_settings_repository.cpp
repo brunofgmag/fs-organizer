@@ -34,6 +34,10 @@ namespace
         static void AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries();
         static void AFreshProfileIsWrittenWithThePackageListLeftAlone();
         static void TheAirportsTheUserSaidCanCoexistSurviveTheRoundTrip();
+        static void TheBookmarksOfAReadDocumentSurviveTheRoundTrip();
+        static void ADocumentWrittenBeforeBookmarksExistedReadsWithNone();
+        static void TheOldFlatKeysSeedTheChartAndTheManualTakesTheFactoryDefault();
+        static void TheGesturesOfTheReaderSurviveTheRoundTrip();
     };
 }
 
@@ -199,13 +203,13 @@ void JsonSettingsRepositoryTest::TheLinkTypeAndTheHashCheckSurviveTheRoundTrip()
 
     AppSettings written;
     written.linkType = LinkType::Symbolic;
-    written.verifyWithHash = true;
+    written.verification = Verification::ByHash;
 
     QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
     const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
 
     QCOMPARE(read.linkType, LinkType::Symbolic);
-    QCOMPARE(read.verifyWithHash, true);
+    QCOMPARE(read.verification, Verification::ByHash);
 }
 
 void JsonSettingsRepositoryTest::AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck()
@@ -220,7 +224,7 @@ void JsonSettingsRepositoryTest::AFileWrittenBeforeTheseKeysExistedReadsAsJuncti
     QVERIFY(read.has_value());
     QCOMPARE(read->activeProfileId, std::string("msfs2024"));
     QCOMPARE(read->linkType, LinkType::Junction);
-    QCOMPARE(read->verifyWithHash, false);
+    QCOMPARE(read->verification, Verification::ByStructure);
     QCOMPARE(read->updateMode, UpdateMode::Notify);
     QVERIFY(read->language.empty());
 }
@@ -312,6 +316,57 @@ void JsonSettingsRepositoryTest::TurningTheStartupEntriesLooseSurvivesTheRoundTr
     QCOMPARE(read.manageStartupEntries, false);
 }
 
+void JsonSettingsRepositoryTest::TheOldFlatKeysSeedTheChartAndTheManualTakesTheFactoryDefault()
+{
+    const Storage storage;
+
+    std::filesystem::create_directories(storage.File().parent_path());
+    std::ofstream(storage.File(), std::ios::binary)
+        << R"({"activeProfileId":"msfs2024","profiles":[],"wheelZooms":false,"dragMovesThePage":false})";
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QVERIFY2(!read->onCharts.wheelZooms && !read->onCharts.dragMovesThePage,
+             "the two flat keys meant the chart when they were written, because the wheel only ever zoomed a chart, "
+             "so it is the chart that inherits what they say");
+    QVERIFY2(!read->onDocuments.wheelZooms && !read->onDocuments.dragMovesThePage,
+             "and the manual takes the factory default, which is both gestures off");
+
+    const Storage fresh;
+
+    std::filesystem::create_directories(fresh.File().parent_path());
+    std::ofstream(fresh.File(), std::ios::binary) << R"({"activeProfileId":"msfs2024","profiles":[]})";
+
+    const std::optional<AppSettings> born = JsonSettingsRepository(fresh.File()).Load();
+
+    QVERIFY(born.has_value());
+    QVERIFY2(born->onCharts.wheelZooms && born->onCharts.dragMovesThePage,
+             "a file with neither the old keys nor the new ones is a fresh install, and there the chart is born "
+             "with both gestures on, which is what tells this apart from the file above");
+}
+
+void JsonSettingsRepositoryTest::TheGesturesOfTheReaderSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.activeProfileId = "msfs2024";
+    written.onCharts = {.wheelZooms = true, .dragMovesThePage = false};
+    written.onDocuments = {.wheelZooms = false, .dragMovesThePage = true};
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QCOMPARE(read->onCharts.wheelZooms, true);
+    QCOMPARE(read->onCharts.dragMovesThePage, false);
+    QVERIFY2(!read->onDocuments.wheelZooms && read->onDocuments.dragMovesThePage,
+             "the two kinds carry their own pair, so a round trip that mixed them would read the chart's answer on "
+             "the manual");
+}
+
 void JsonSettingsRepositoryTest::AFileWrittenBeforeTheStartupKeyExistedStillManagesTheStartupEntries()
 {
     const Storage storage;
@@ -322,7 +377,7 @@ void JsonSettingsRepositoryTest::AFileWrittenBeforeTheStartupKeyExistedStillMana
     const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
 
     QVERIFY(read.has_value());
-    QCOMPARE(read->verifyWithHash, true);
+    QCOMPARE(read->verification, Verification::ByHash);
     QCOMPARE(read->manageStartupEntries, true);
     QVERIFY2(!read->managePackageList,
              "this one is born off, and a file written before the key existed adopts the default instead of being "
@@ -367,6 +422,45 @@ void JsonSettingsRepositoryTest::TheAirportsTheUserSaidCanCoexistSurviveTheRound
     QVERIFY2(read.coexistingAirports.front().one == written.coexistingAirports.front().one,
              "the key is the pair of addon identities, which survives renaming a category and moving an addon");
     QVERIFY(read.coexistingAirports.front().other == written.coexistingAirports.front().other);
+}
+
+void JsonSettingsRepositoryTest::TheBookmarksOfAReadDocumentSurviveTheRoundTrip()
+{
+    const Storage storage;
+
+    AppSettings written;
+    written.documents = {{.addon = "aerosoft-crj",
+                          .document = "Documentation/Vol1_Aircraft Systems.pdf",
+                          .page = 57,
+                          .favourite = true,
+                          .bookmarks = {{.page = 12, .name = {}}, {.page = 57, .name = "Where I stopped"}}}};
+
+    QVERIFY(JsonSettingsRepository(storage.File()).Save(written));
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.documents.size(), std::size_t{1});
+    QCOMPARE(read.documents.front().page, 57);
+    QVERIFY(read.documents.front().favourite);
+    QCOMPARE(read.documents.front().bookmarks.size(), std::size_t{2});
+    QCOMPARE(read.documents.front().bookmarks.front().page, 12);
+    QVERIFY2(read.documents.front().bookmarks.front().name.empty(),
+             "the derived name is computed from the outline every time, so writing it would freeze a name that has to "
+             "follow the other marks of its section");
+    QCOMPARE(read.documents.front().bookmarks.back().name, std::string{"Where I stopped"});
+}
+
+void JsonSettingsRepositoryTest::ADocumentWrittenBeforeBookmarksExistedReadsWithNone()
+{
+    const Storage storage;
+
+    std::ofstream(storage.File(), std::ios::binary)
+        << R"({"documents":[{"addon":"aerosoft-crj","document":"a.pdf","page":3,"favourite":false}]})";
+
+    const AppSettings read = JsonSettingsRepository(storage.File()).Load().value_or(AppSettings{});
+
+    QCOMPARE(read.documents.size(), std::size_t{1});
+    QCOMPARE(read.documents.front().page, 3);
+    QVERIFY(read.documents.front().bookmarks.empty());
 }
 
 QTEST_APPLESS_MAIN(JsonSettingsRepositoryTest)

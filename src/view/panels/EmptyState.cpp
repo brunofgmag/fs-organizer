@@ -8,12 +8,8 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 
+#include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistTheme.h"
-
-namespace
-{
-    constexpr int kReadableWidth = 420;
-}
 
 EmptyState::EmptyState(QWidget* parent) : QWidget(parent)
 {

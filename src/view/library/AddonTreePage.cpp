@@ -113,6 +113,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                              DeletionViewModel& deletion,
                              ImportViewModel& importViewModel,
                              CoverageViewModel& coverage,
+                             AddonDocumentsViewModel& documents,
                              AddonTreeModel& model,
                              const SessionNotifier& notifier,
                              QWidget* parent)
@@ -121,6 +122,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
       deletion_(deletion),
       importViewModel_(importViewModel),
       coverage_(coverage),
+      documents_(documents),
       model_(model)
 {
     tree_ = new QTreeView(this);
@@ -272,6 +274,7 @@ void AddonTreePage::RetranslateUi() const
     relink_->setText(tr("Repoint to the library"));
     moveTo_->setText(tr("Move to…"));
     openFolder_->setText(tr("Open the folder"));
+    ShowWhatTheDocumentationHolds();
     delete_->setText(tr("Delete…"));
     panel_->RenameTheFallback(tr("Addon selected"));
     invite_->Retell(tr("This profile has no library yet."),
@@ -353,11 +356,15 @@ QWidget* AddonTreePage::CreatePanel()
     openFolder_ = new QPushButton(panel_);
     delete_ = new QPushButton(panel_);
     delete_->setObjectName(QStringLiteral("PanelDeleteAction"));
+    documentation_ = new QPushButton(panel_);
+    documentation_->setObjectName(QStringLiteral("PanelDocumentationAction"));
+    documentation_->hide();
 
     panel_->Add(detail_);
     panel_->Add(dependencies_);
     panel_->Add(relink_);
     panel_->Add(moveTo_);
+    panel_->Add(documentation_);
     panel_->Add(openFolder_);
     panel_->Add(delete_);
 
@@ -371,6 +378,15 @@ QWidget* AddonTreePage::CreatePanel()
             });
     connect(moveTo_, &QPushButton::clicked, this, &AddonTreePage::MoveTheSelectedAddon);
     connect(openFolder_, &QPushButton::clicked, this, &AddonTreePage::OpenTheSelectedFolder);
+    connect(documentation_, &QPushButton::clicked, this,
+            [this]
+            {
+                if (const TreeNode* node = Current(); node != nullptr)
+                {
+                    emit DocumentationRequested(AsUtf8(node->path.filename()));
+                }
+            });
+    connect(&documents_, &AddonDocumentsViewModel::Indexed, this, &AddonTreePage::ShowWhatTheDocumentationHolds);
     connect(delete_, &QPushButton::clicked, this, &AddonTreePage::DeleteTheSelectedAddons);
     connect(panel_, &ContextPanel::CloseRequested, tree_->selectionModel(), &QItemSelectionModel::clearSelection);
 
@@ -433,6 +449,13 @@ void AddonTreePage::ShowTheSelectedAddon()
     panel_->ShowTitle(AsText(node->path.filename()), model_.data(source, AlarmingRole).toBool());
     ShowTheFields({});
     dependencies_->Show(viewModel_.DependenciesOf(node));
+
+    documentation_->hide();
+
+    if (addon)
+    {
+        documents_.Read(node->path);
+    }
 
     viewModel_.MeasureTheSelection(model_.TallyOf({node}).addons);
 }
@@ -627,6 +650,17 @@ void AddonTreePage::MoveTheSelectedAddon()
     {
         where.exec(moveTo_->mapToGlobal(QPoint(0, moveTo_->height())));
     }
+}
+
+void AddonTreePage::ShowWhatTheDocumentationHolds() const
+{
+    const std::size_t documents = documents_.Documents();
+    const std::size_t charts = documents_.Charts();
+
+    documentation_->setVisible(documents + charts > 0);
+    documentation_->setText(tr("Documentation · %1 · %2")
+                                .arg(tr("%n document(s)", nullptr, static_cast<int>(documents)),
+                                     tr("%n chart(s)", nullptr, static_cast<int>(charts))));
 }
 
 void AddonTreePage::OpenTheSelectedFolder() const

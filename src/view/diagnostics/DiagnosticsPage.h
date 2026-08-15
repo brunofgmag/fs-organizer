@@ -1,12 +1,17 @@
 #ifndef FS_ORGANIZER_VIEW_DIAGNOSTICS_DIAGNOSTICS_PAGE_H
 #define FS_ORGANIZER_VIEW_DIAGNOSTICS_DIAGNOSTICS_PAGE_H
 
+#include <vector>
+
 #include <QtWidgets/QWidget>
 
+#include "view/diagnostics/BisectionPanel.h"
+#include "view/diagnostics/LoadPanel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 
 class QLabel;
 class QListWidget;
+class QListWidgetItem;
 class QProgressBar;
 class QPushButton;
 class QStackedWidget;
@@ -17,7 +22,7 @@ class DiagnosticsPage final : public QWidget
     Q_OBJECT
 
 public:
-    explicit DiagnosticsPage(DiagnosticsViewModel& viewModel, QWidget* parent = nullptr);
+    DiagnosticsPage(DiagnosticsViewModel& viewModel, BisectionViewModel& bisectionViewModel, QWidget* parent = nullptr);
 
 signals:
     void SummaryChanged(const QString& summary);
@@ -27,6 +32,8 @@ signals:
     void QuarantineRequested();
 
     void RepairRequested();
+
+    void ImportRequested();
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -39,11 +46,17 @@ private:
         Quarantine = 2,
         SizeOnDisk = 3,
         AirportsInTheScenery = 4,
+        WhatTheSimulatorLoaded = 5,
+        FindTheCulprit = 6,
     };
 
     [[nodiscard]] QWidget* CreateToolbar();
 
     [[nodiscard]] QWidget* CreateRail();
+
+    void AddToTheRail(Section section);
+
+    void AddTheRailSeparator();
 
     [[nodiscard]] QWidget* CreateCountsPane();
 
@@ -57,7 +70,9 @@ private:
 
     void RetranslateUi() const;
 
-    void OpenSection(int section) const;
+    void OpenSection(int row) const;
+
+    [[nodiscard]] QString TheRailTextForTheSearch() const;
 
     void ShowWhatWasCounted();
 
@@ -81,10 +96,14 @@ private:
 
     void ShowSceneryProgress(int read, int total) const;
 
+    void ShowWhatTheSimulatorLoaded() const;
+
     void DressTheSceneryToolbar() const;
 
     DiagnosticsViewModel& viewModel_;
+    BisectionViewModel& bisectionViewModel_;
     QListWidget* rail_ = nullptr;
+    std::vector<QListWidgetItem*> railItems_{};
     QStackedWidget* panes_ = nullptr;
     QPushButton* refresh_ = nullptr;
     QLabel* refreshedAt_ = nullptr;
@@ -110,6 +129,8 @@ private:
     QProgressBar* sceneryMeter_ = nullptr;
     QPushButton* readSceneryAgain_ = nullptr;
     QPushButton* stopScenery_ = nullptr;
+    LoadPanel* load_ = nullptr;
+    BisectionPanel* bisection_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_DIAGNOSTICS_DIAGNOSTICS_PAGE_H

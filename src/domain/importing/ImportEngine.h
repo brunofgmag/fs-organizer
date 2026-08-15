@@ -13,6 +13,7 @@
 #include "domain/model/ImportRequest.h"
 #include "domain/model/LinkType.h"
 #include "domain/model/SimulatorProfile.h"
+#include "domain/model/Verification.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/FilesystemProbe.h"
@@ -57,9 +58,12 @@ public:
                  SidecarStore& sidecars,
                  const LinkingEngine& linking,
                  const OperationLog& log,
-                 LinkType linkType);
+                 LinkType linkType,
+                 Verification verification);
 
     void UseLinkType(LinkType linkType);
+
+    void UseVerification(Verification verification);
 
     [[nodiscard]] ImportOutcome Import(const SimulatorProfile& profile,
                                        const ImportRequest& request,
@@ -85,6 +89,16 @@ private:
                                               const std::vector<FileFingerprint>& expected,
                                               const std::function<bool(const CopyProgress&)>& onProgress,
                                               const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] ImportOutcome CheckTheStaging(const std::filesystem::path& source,
+                                                const std::filesystem::path& staging,
+                                                const std::vector<FileFingerprint>& expected,
+                                                const std::function<bool(const CopyProgress&)>& onProgress) const;
+
+    [[nodiscard]] ImportOutcome CompareTheContents(const std::filesystem::path& source,
+                                                   const std::filesystem::path& staging,
+                                                   const std::vector<FileFingerprint>& expected,
+                                                   const std::function<bool(const CopyProgress&)>& onProgress) const;
 
     [[nodiscard]] ImportOutcome PutIntoPlace(const AddonId& addon,
                                              const std::filesystem::path& target,
@@ -128,6 +142,7 @@ private:
     const LinkingEngine& linking_;
     const OperationLog& log_;
     LinkType linkType_;
+    Verification verification_;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_IMPORTING_IMPORT_ENGINE_H

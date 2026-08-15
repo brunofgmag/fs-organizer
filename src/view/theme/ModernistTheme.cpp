@@ -70,12 +70,12 @@ QStatusBar::item { border: none; }
 #TriageStrip { background: %chrome%; border-bottom: 1px solid %divider%; }
 #PageToolbar { border-bottom: 1px solid %divider%; }
 #PresetHalves { background: %chrome%; border-bottom: 1px solid %divider%; }
-QPushButton#PresetContentTab, QPushButton#PresetPlanTab {
+#PresetHalves QPushButton {
     background: transparent; border: none; border-right: 1px solid %divider%;
     color: %secondary%; padding: 7px 18px; text-align: center;
 }
-QPushButton#PresetContentTab:hover, QPushButton#PresetPlanTab:hover { color: %text%; }
-QPushButton#PresetContentTab:checked, QPushButton#PresetPlanTab:checked {
+#PresetHalves QPushButton:hover { color: %text%; }
+#PresetHalves QPushButton:checked {
     background: %window%; color: %text%; font-weight: 600; border-bottom: 2px solid %accent%;
     padding-bottom: 5px;
 }
@@ -100,8 +100,9 @@ QFrame#TriageSeparator { background: %divider%; }
 QLabel#FooterRestart { color: %accentInk%; font-weight: 600; }
 QLabel#FooterSummary { color: %secondary%; }
 QLabel#FooterAside { color: %secondary%; }
-QProgressBar#FooterMeter { background: %raised%; border: none; }
-QProgressBar#FooterMeter::chunk { background: %accent%; }
+QProgressBar#FooterMeter, QProgressBar#ImportMeter { background: %raised%; border: none; }
+QProgressBar#FooterMeter::chunk, QProgressBar#ImportMeter::chunk { background: %accent%; }
+QLabel#ImportQuiet { color: %secondary%; }
 #PanelHeader { background: %chrome%; border-left: 1px solid %divider%; border-bottom: 1px solid %divider%; }
 #PanelBody { background: %chrome%; border-left: 1px solid %divider%; }
 #PanelRail { background: %chrome%; border-left: 1px solid %divider%; }
@@ -113,6 +114,8 @@ QLabel#PanelTitle { color: %text%; }
 QLabel#PanelSubHeading { color: %secondary%; font-weight: 700; }
 QLabel#PresetPlanFor { color: %text%; font-weight: 700; }
 QLabel#PanelPromise { color: %secondary%; }
+QLabel#SectionHeadline { color: %text%; font-weight: 700; }
+QLabel#ReadingCaption { color: %secondary%; font-weight: 700; }
 QLabel#DetailFieldName { color: %secondary%; }
 QTextEdit#UncutText {
     background: transparent; border: none;
@@ -128,6 +131,7 @@ QListWidget#SectionRail::item:selected, QListWidget#SectionRail::item:selected:a
     background: %raised%; color: %text%; font-weight: 600; border-left: 3px solid %accent%;
 }
 QListWidget#SectionRail::item:disabled { color: %disabled%; }
+QFrame#RailSeparator { background: %divider%; }
 QFrame#OptionsBox { background: %window%; border: 1px solid %divider%; }
 #OptionsRow[follows="true"] { border-top: 1px solid %raised%; }
 #OptionsChoice[follows="true"] { border-top: 1px solid %divider%; }
@@ -170,6 +174,7 @@ QPushButton[role="destructive"] {
 }
 QPushButton[role="destructive"]:hover { background: %raised%; }
 QPushButton[role="destructive"]:disabled { border: 1px solid %divider%; color: %disabled%; }
+QPushButton[toggle="true"]:checked { background: %raised%; border: 1px solid %accent%; color: %text%; }
 QPushButton:focus { border-color: %text%; }
 QPushButton[scale="small"] { padding: 2px 9px; }
 )")

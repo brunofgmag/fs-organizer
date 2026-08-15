@@ -1,4 +1,13 @@
 set(DOMAIN_SOURCES
+        src/domain/bisection/BisectionDrift.cpp
+        src/domain/bisection/BisectionRounds.cpp
+        src/domain/bisection/CoupledUnits.cpp
+        src/domain/bisection/CouplingScan.cpp
+        src/domain/documents/ChartFileNaming.cpp
+        src/domain/documents/ChartIndex.cpp
+        src/domain/documents/ChartRevisions.cpp
+        src/domain/documents/DocumentBookmarks.cpp
+        src/domain/documents/DocumentClassification.cpp
         src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ExternalSidecar.cpp
         src/domain/importing/ImportEngine.cpp
@@ -27,13 +36,16 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/BisectionService.cpp
         src/application/CoverageService.cpp
         src/application/DeletionService.cpp
         src/application/DependencyReport.cpp
+        src/application/DocumentService.cpp
         src/application/ImportService.cpp
         src/application/model/DeletionPlan.cpp
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
+        src/application/LoadReport.cpp
         src/application/preset/PresetStartupPlan.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
@@ -46,8 +58,11 @@ set(APPLICATION_SOURCES
 )
 
 set(INFRASTRUCTURE_SOURCES
+        src/infrastructure/bisection/JsonBisectionStore.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
+        src/infrastructure/catalog/JsonChartCatalogueParser.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
+        src/infrastructure/documents/JsonDocumentIndexCache.cpp
         src/infrastructure/fileops/ExtendedPaths.cpp
         src/infrastructure/fileops/WindowsFileOperations.cpp
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
@@ -70,7 +85,10 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/ContentXmlPackages.cpp
         src/infrastructure/sim/ExeXmlDocument.cpp
         src/infrastructure/sim/ExeXmlStartupEntries.cpp
+        src/infrastructure/sim/LoadingReportLocations.cpp
+        src/infrastructure/sim/LoadingReportText.cpp
         src/infrastructure/sim/PackageNaming.cpp
+        src/infrastructure/sim/ProfileLoadingReport.cpp
         src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/StartupFileLocations.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
@@ -84,10 +102,16 @@ set(NETWORK_INFRASTRUCTURE_SOURCES
         src/infrastructure/update/GithubUpdateService.cpp
 )
 
+set(PDF_INFRASTRUCTURE_SOURCES
+        src/infrastructure/documents/QtPdfChartVersions.cpp
+)
+
 set(VIEWMODEL_SOURCES
+        src/viewmodel/AddonDocumentsViewModel.cpp
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
+        src/viewmodel/BisectionViewModel.cpp
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
         src/viewmodel/CommunityViewModel.cpp
@@ -95,6 +119,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/DeletionViewModel.cpp
         src/viewmodel/DependencyText.cpp
         src/viewmodel/DiagnosticsViewModel.cpp
+        src/viewmodel/DocumentsViewModel.cpp
         src/viewmodel/FailureText.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
@@ -119,18 +144,26 @@ set(VIEW_SOURCES
         src/view/community/ConflictDialog.cpp
         src/view/library/CoverageDialog.cpp
         src/view/library/DeleteDialog.cpp
+        src/view/diagnostics/BisectionPanel.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
+        src/view/documents/DocumentReader.cpp
+        src/view/documents/DocumentsPage.cpp
+        src/view/documents/SelectablePages.cpp
+        src/view/diagnostics/LoadPanel.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
         src/view/shell/LanguageSwitch.cpp
         src/view/legacy/LegacyImportDialog.cpp
         src/view/library/LibraryRootDialog.cpp
+        src/view/shell/ImportProgressDialog.cpp
         src/view/shell/LongOperationProgress.cpp
         src/view/options/OptionsPage.cpp
+        src/view/delegates/CenteredCheckDelegate.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
         src/view/presets/OmittedDialog.cpp
         src/view/presets/PresetPlanPanel.cpp
+        src/view/presets/PresetStartupPanel.cpp
         src/view/PresetsPage.cpp
         src/view/quarantine/CollisionDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
@@ -171,6 +204,7 @@ set(WINDOWS_SHELL_SOURCES
 set(APP_SOURCES
         src/main.cpp
         ${NETWORK_INFRASTRUCTURE_SOURCES}
+        ${PDF_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}
 )
 

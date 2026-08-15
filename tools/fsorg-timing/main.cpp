@@ -16,7 +16,9 @@
 #include "application/StartupService.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
+#include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
@@ -40,6 +42,7 @@
 #include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/CommunityModel.h"
 #include "application/CoverageService.h"
+#include "application/DocumentService.h"
 #include "application/SceneryService.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
 #include "infrastructure/scenery/JsonSceneryCache.h"
@@ -53,6 +56,7 @@
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/AddonDocumentsViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
@@ -190,7 +194,8 @@ int main(int argc, char* argv[])
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, LinkType::Junction);
 
-    const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction);
+    const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction,
+                                    Verification::ByStructure);
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking,
                                       log, LinkType::Junction);
     const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
@@ -236,8 +241,13 @@ int main(int argc, char* argv[])
         SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
         CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
 
+        const JsonChartCatalogueParser catalogueParser;
+        const QtPdfChartVersions chartVersions;
+        const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+        AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
+
         auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
-                                           treeModel, notifier);
+                                           addonDocumentsViewModel, treeModel, notifier);
 
         CommunityModel communityModel;
         CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);

@@ -186,7 +186,7 @@ std::function<bool(const CopyProgress&)> ImportViewModel::OnProgressOfFolder(con
 {
     return [this, folder](const CopyProgress& progress)
     {
-        emit Progressed(progress.copiedBytes, progress.totalBytes, folder);
+        emit Progressed(progress.copiedBytes, progress.totalBytes, folder, step_);
 
         return !cancelled_;
     };
@@ -196,10 +196,14 @@ std::function<void(OperationKind)> ImportViewModel::OnStep()
 {
     return [this](const OperationKind kind)
     {
-        if (const QString step = NameOfImportStep(kind); !step.isEmpty())
+        if (NameOfImportStep(kind).isEmpty())
         {
-            emit StepChanged(step);
+            return;
         }
+
+        step_ = kind;
+
+        emit StepChanged(kind);
     };
 }
 

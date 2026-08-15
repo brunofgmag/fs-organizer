@@ -1,0 +1,39 @@
+[Engine]
+ReportVersion=10
+ExitApp=false
+TimeUTC=2026-08-08T18:41:21Z
+BuildVersion="1.7.35.0"
+[Renderer]
+DeviceName="a card the reader must skip"
+[Wasm_Modules]
+Format="Handle,DebugName,PackageName,MemorySize,Status,DirtyFrame,DirtyErrorCode,DirtyJob,CurrentStep,LastStateUpdate"
+0=[51539607565,"gsx-integrator-commbus.wasm","gsx-integrator-commbus",131072,"Ready","-","-","-","Idle",11528]
+1=[47244640268,"fcr_embedded_system.wasm","fcr-embedded",589824,"Ready","-","-","-","Idle",11529]
+2=[42949672971,"charts_igp_datastore.wasm","navigraph-ingamepanels-charts",1114112,"Ready","-","-","-","Idle",11529]
+3=[38654705674,"fsdt-msfs-bridge.wasm","fsdreamteam-gsx-pro",327680,"Ready","-","-","-","Idle",11528]
+4=[34359738377,"GFX.wasm","zgfx-fxlib",268763136,"Ready","-","-","-","Idle",11529]
+5=[30064771080,"aerosoft-data-exchange.wasm","aerosoft-data-exchange",131072,"Ready","-","-","-","Idle",11528]
+6=[25769803783,"flowmodule.wasm","p42-util-flow-pro",327680,"Ready","-","-","-","Idle",11528]
+7=[21474836486,"MobiFlightWasmModule.wasm","mobiflight-event-module",268566528,"Ready","-","-","-","Idle",11529]
+8=[17179869189,"chaseplanemodule.wasm","p42-util-chaseplane",458752,"Ready","-","-","-","Idle",11528]
+9=[12884901892,"simbrief_efb_datastore.wasm","navigraph-efb-simbriefapp",1114112,"Ready","-","-","-","Idle",11529]
+10=[8589934595,"charts_efb_datastore.wasm","navigraph-efb-chartsapp",1114112,"Ready","-","-","-","Idle",11529]
+11=[4294967298,"LorbyLVarHookWASM24.wasm","lorbysi-content-hooks",327680,"Ready","-","-","-","Idle",11529]
+12=[1,"noolaero-vdgs.wasm","noolaero-module-vdgs",14352384,"Ready","-","-","-","Idle",11529]
+[MemoryTrace]
+Peak=0
+[FlightSimulator_Packages]
+microsoft-airport-jp0052-hokkaido=["manifest=002.000.002.000 cds=002.000.002.003","Market"]
+microsoft-airport-kjac-jackson-hole=["manifest=002.000.001.000 cds=002.000.001.001","Market"]
+microsoft-airport-rjer-rishiri=["manifest=002.000.005.000 cds=002.000.005.003","Market"]
+microsoft-airport-rjfr-kitakyushu=["manifest=002.000.003.000 cds=002.000.003.003","Market"]
+microsoft-airport-rjsd-sado=["manifest=002.000.004.000 cds=002.000.004.003","Market"]
+microsoft-airport-rjx7-satsumaiojima=["manifest=002.000.002.000 cds=002.000.002.003","Market"]
+microsoft-airport-ybhi-brokenhill=["manifest=002.000.001.000 cds=002.000.001.002","Market"]
+microsoft-airport-ybrm-broome=["manifest=002.000.000.000 cds=002.000.000.001","Market"]
+microsoft-airport-ybth-bathurst=["manifest=002.000.000.000 cds=002.000.000.001","Market"]
+microsoft-airport-ycbp-cooberpedy=["manifest=002.000.000.000 cds=002.000.000.001","Market"]
+microsoft-airport-ylhi-lordhowe=["manifest=002.000.000.000 cds=002.000.000.001","Market"]
+microsoft-airport-yptn-katherine=["manifest=002.000.002.000 cds=002.000.002.001","Market"]
+[FlightSimulator_PublishingGroups]
+cu07="1/1"

@@ -6,6 +6,8 @@
 
 [[nodiscard]] bool ItIsContentTheSimulatorShips(std::string_view packageName);
 
+[[nodiscard]] std::string WithoutTheGenerationPrefix(std::string_view packageName);
+
 [[nodiscard]] std::string AirportCodeInAPackageName(std::string_view packageName);
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_SIM_PACKAGE_NAMING_H

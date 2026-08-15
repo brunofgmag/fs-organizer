@@ -9,10 +9,10 @@
 #include <QtCore/QLatin1StringView>
 #include <QtCore/QXmlStreamReader>
 
+#include "infrastructure/sim/PackageNaming.h"
+
 namespace
 {
-    constexpr std::string_view kGenerationPrefixes[] = {"communityfs24-", "communityfs20-", "fs24-", "fs20-"};
-
     [[nodiscard]] std::string Lowered(std::string text)
     {
         std::ranges::transform(text, text.begin(),
@@ -22,19 +22,6 @@ namespace
                                });
 
         return text;
-    }
-
-    [[nodiscard]] std::string WithoutGenerationPrefix(const std::string& name)
-    {
-        for (const std::string_view prefix : kGenerationPrefixes)
-        {
-            if (name.size() > prefix.size() && name.compare(0, prefix.size(), prefix) == 0)
-            {
-                return name.substr(prefix.size());
-            }
-        }
-
-        return name;
     }
 }
 
@@ -73,7 +60,7 @@ void ContentXmlPackages::ReadAgain(std::filesystem::path listPath)
         }
 
         const std::string name = reader.attributes().value(QLatin1StringView("name")).toString().toStdString();
-        names_.insert(WithoutGenerationPrefix(Lowered(name)));
+        names_.insert(WithoutTheGenerationPrefix(Lowered(name)));
         ++entries_;
     }
 

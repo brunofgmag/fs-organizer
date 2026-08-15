@@ -7,6 +7,7 @@
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QDir>
 #include <QtCore/QTextStream>
+#include <QtCore/QThread>
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
@@ -14,9 +15,11 @@
 #include <QtGui/QPixmap>
 #include <QtGui/QStyleHints>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QTreeView>
@@ -26,10 +29,14 @@
 #include "application/SizeService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/PresetService.h"
+#include "application/BisectionService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
+#include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/documents/JsonDocumentIndexCache.h"
+#include "infrastructure/documents/QtPdfChartVersions.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
@@ -41,6 +48,7 @@
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "application/CoverageService.h"
+#include "application/DocumentService.h"
 #include "application/SceneryService.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
 #include "infrastructure/scenery/JsonSceneryCache.h"
@@ -48,6 +56,8 @@
 #include "infrastructure/sim/ContentXmlPackageList.h"
 #include "viewmodel/CoverageViewModel.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
+#include "infrastructure/sim/LoadingReportLocations.h"
+#include "infrastructure/sim/ProfileLoadingReport.h"
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
@@ -59,29 +69,37 @@
 #include "view/PresetsPage.h"
 #include "view/community/CommunityPage.h"
 #include "domain/tree/AddonTree.h"
+#include "view/documents/DocumentsPage.h"
 #include "view/library/AddonTreePage.h"
 #include "domain/support/PathUtils.h"
 #include "view/library/LibraryRootDialog.h"
+#include "view/community/ImportDialog.h"
 #include "view/library/StartupEntryDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
+#include "infrastructure/bisection/JsonBisectionStore.h"
 #include "view/diagnostics/DiagnosticsPage.h"
 #include "view/simulator/PackageListPage.h"
 #include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
 #include "view/quarantine/QuarantinePage.h"
+#include "view/shell/ImportProgressDialog.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/FailureText.h"
 #include "viewmodel/DeletionViewModel.h"
+#include "viewmodel/AddonDocumentsViewModel.h"
+#include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/JournalViewModel.h"
 #include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/PresetViewModel.h"
+#include "viewmodel/BisectionViewModel.h"
 #include "viewmodel/DiagnosticsViewModel.h"
 #include "viewmodel/QuarantineViewModel.h"
 #include "viewmodel/SessionNotifier.h"
@@ -124,6 +142,85 @@ namespace
         }
 
         return page.findChild<QTableView*>();
+    }
+
+    void KeepTheEventLoopTurning(const int passes)
+    {
+        for (int pass = 0; pass < passes; ++pass)
+        {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 25);
+            QThread::msleep(20);
+        }
+    }
+
+    void ClickTheRow(QTreeWidget& index, const QTreeWidgetItem* line)
+    {
+        const QPointF at = index.visualItemRect(line).center();
+        const QPointF onTheScreen = index.viewport()->mapToGlobal(at);
+
+        QMouseEvent press(QEvent::MouseButtonPress, at, onTheScreen, Qt::LeftButton, Qt::LeftButton, {});
+        QMouseEvent release(QEvent::MouseButtonRelease, at, onTheScreen, Qt::LeftButton, Qt::NoButton, {});
+
+        QApplication::sendEvent(index.viewport(), &press);
+        QApplication::sendEvent(index.viewport(), &release);
+    }
+
+    QTreeWidgetItem* TheDeepestFirstLineOf(QTreeWidgetItem* heading)
+    {
+        if (heading->childCount() == 0)
+        {
+            return heading;
+        }
+
+        heading->setExpanded(true);
+
+        return TheDeepestFirstLineOf(heading->child(0));
+    }
+
+    QList<QTreeWidgetItem*> EveryLineUnderAGroupOf(QTreeWidget& index)
+    {
+        QList<QTreeWidgetItem*> lines;
+        QList<QTreeWidgetItem*> pending;
+
+        for (int group = 0; group < index.topLevelItemCount(); ++group)
+        {
+            pending.append(index.topLevelItem(group));
+        }
+
+        while (!pending.isEmpty())
+        {
+            QTreeWidgetItem* heading = pending.takeFirst();
+
+            if (heading->childCount() > 0)
+            {
+                heading->setExpanded(true);
+            }
+
+            for (int within = 0; within < heading->childCount(); ++within)
+            {
+                pending.append(heading->child(within));
+            }
+
+            if (heading->childCount() == 0 && heading->parent() != nullptr)
+            {
+                lines.append(heading);
+            }
+        }
+
+        return lines;
+    }
+
+    QTreeWidgetItem* TheFirstLineUnderAGroupOf(QTreeWidget& index)
+    {
+        for (int group = 0; group < index.topLevelItemCount(); ++group)
+        {
+            if (index.topLevelItem(group)->childCount() > 0)
+            {
+                return TheDeepestFirstLineOf(index.topLevelItem(group));
+            }
+        }
+
+        return nullptr;
     }
 
     bool SelectTheAddonNamed(const QWidget& page, const QString& folderName)
@@ -474,7 +571,7 @@ int main(int argc, char* argv[])
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, stored->linkType);
-    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, stored->linkType);
+    ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, stored->linkType, stored->verification);
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 stored->linkType);
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
@@ -514,8 +611,16 @@ int main(int argc, char* argv[])
     SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
     CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
 
-    auto* libraryPage =
-        new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel, treeModel, notifier);
+    const JsonChartCatalogueParser catalogueParser;
+    const QtPdfChartVersions chartVersions;
+    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
+    JsonDocumentIndexCache documentIndexCache(staged->settingsFile.parent_path() / "document-index.json");
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, clock);
+    auto* documentsPage = new DocumentsPage(documentsViewModel);
+
+    auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
+                                          addonDocumentsViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
@@ -535,8 +640,18 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService, profileService);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, clock, runner);
-    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel);
+    ProfileLoadingReport loadingReport(
+        filesystemProbe,
+        LoadingReportOf(LoadingReportLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant));
+
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
+                                              runner);
+    const CouplingScan coupling(filesystemProbe);
+    JsonBisectionStore bisectionStore(staged->settingsFile.parent_path() / "bisection");
+    BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore, clock);
+    BisectionViewModel bisectionViewModel(bisectionService, session);
+
+    auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel, bisectionViewModel);
 
     StartupViewModel startupViewModel(startupService, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
@@ -554,6 +669,7 @@ int main(int argc, char* argv[])
     PageTab* communityTab = shell.AddPage(PageNames::kDestinations, communityPage);
     PageTab* simulatorTab = shell.AddPage(PageNames::kSimulator, simulatorPage);
     PageTab* presetsTab = shell.AddPage(PageNames::kPresets, presetsPage);
+    PageTab* documentsTab = shell.AddPage(PageNames::kDocuments, documentsPage);
     PageTab* quarantineTab = shell.AddPage(PageNames::kQuarantine, quarantinePage);
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
@@ -757,6 +873,23 @@ int main(int argc, char* argv[])
     }
 
     {
+        ImportRequest owned;
+        owned.source = PathFromUtf8("C:/Users/bruno/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
+                                    "fsdreamteam-gsx-pro");
+        owned.externalSource = PathFromUtf8("C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro");
+
+        ImportDialog importDialog({owned}, session.Snapshot().libraries, session.Profile(), 2147483648ULL, &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&importDialog]
+                     {
+                         static_cast<void>(importDialog.exec());
+                     },
+                     folder, QStringLiteral("27-community-import"))
+            && landed;
+    }
+
+    {
         const std::filesystem::path deepRoot =
             PathFromUtf8("C:/Users/bruno/Documents/Flight Simulator Addons/MSFS 2024 Library");
         LibraryRootDialog rootDialog(deepRoot, MeasureTheRoot(deepRoot), &shell);
@@ -770,16 +903,202 @@ int main(int argc, char* argv[])
             && landed;
     }
 
+    {
+        constexpr qulonglong kFolderSize = 2147483648ULL;
+
+        ImportProgressDialog progress(3, &shell);
+        progress.ShowTheStep(OperationKind::ImportCopyToStaging, NameOfImportStep(OperationKind::ImportCopyToStaging));
+        progress.ShowTheBytes(1503238553ULL, kFolderSize, 2, OperationKind::ImportCopyToStaging);
+        progress.show();
+        LetTheLayoutSettle();
+
+        landed = Save(progress, folder, QStringLiteral("32-import-progress-copying")) && landed;
+
+        progress.ShowTheBytes(kFolderSize, kFolderSize, 2, OperationKind::ImportCopyToStaging);
+        progress.ShowTheStep(OperationKind::ImportVerifyStaging, NameOfImportStep(OperationKind::ImportVerifyStaging));
+        progress.ShowTheBytes(268435456ULL, kFolderSize, 2, OperationKind::ImportVerifyStaging);
+        LetTheLayoutSettle();
+
+        landed = Save(progress, folder, QStringLiteral("33-import-progress-checking")) && landed;
+
+        progress.close();
+    }
+
+    {
+        documentsTab->click();
+        documentsViewModel.ReadTheLibrary();
+        LetTheLayoutSettle();
+
+        auto* index = documentsPage->findChild<QTreeWidget*>(QStringLiteral("ChartsIndex"));
+
+        if (index != nullptr && index->topLevelItemCount() > 0)
+        {
+            documentsPage->Show(DocumentPanel::Charts);
+
+            for (int group = 0; group < index->topLevelItemCount(); ++group)
+            {
+                index->topLevelItem(group)->setExpanded(true);
+
+                for (int within = 0; within < index->topLevelItem(group)->childCount(); ++within)
+                {
+                    index->topLevelItem(group)->child(within)->setExpanded(true);
+                }
+            }
+
+            if (QTreeWidgetItem* line = TheFirstLineUnderAGroupOf(*index); line != nullptr)
+            {
+                ClickTheRow(*index, line);
+            }
+
+            KeepTheEventLoopTurning(160);
+
+            landed = Save(*documentsPage, folder, QStringLiteral("26-documents")) && landed;
+        }
+        else
+        {
+            Out() << "the library carries no chart, so there is no documentation tab to write\n";
+        }
+    }
+
+    {
+        documentsPage->Show(DocumentPanel::Documents);
+        LetTheLayoutSettle();
+
+        auto* index = documentsPage->findChild<QTreeWidget*>(QStringLiteral("DocumentsIndex"));
+
+        QTreeWidgetItem* withAnOutline = nullptr;
+        QTreeWidgetItem* withoutOne = nullptr;
+
+        if (index != nullptr)
+        {
+            for (QTreeWidgetItem* line : EveryLineUnderAGroupOf(*index))
+            {
+                if (withAnOutline != nullptr && withoutOne != nullptr)
+                {
+                    break;
+                }
+
+                ClickTheRow(*index, line);
+                KeepTheEventLoopTurning(4);
+
+                auto* pane = documentsPage->findChild<QTreeWidget*>(QStringLiteral("ReadingOutline"));
+                auto* forward = documentsPage->findChild<QPushButton*>(QStringLiteral("NextPage"));
+
+                if (pane == nullptr || forward == nullptr || !forward->isEnabled())
+                {
+                    continue;
+                }
+
+                if (pane->topLevelItemCount() > 1 && withAnOutline == nullptr)
+                {
+                    withAnOutline = line;
+                    continue;
+                }
+
+                if (pane->topLevelItemCount() == 0 && withoutOne == nullptr)
+                {
+                    withoutOne = line;
+                }
+            }
+        }
+
+        if (withAnOutline == nullptr)
+        {
+            Out() << "no document of this library carries an outline, so 28-documents-outline is not written\n";
+        }
+        else
+        {
+            ClickTheRow(*index, withAnOutline);
+            KeepTheEventLoopTurning(4);
+
+            auto* pane = documentsPage->findChild<QTreeWidget*>(QStringLiteral("ReadingOutline"));
+
+            ClickTheRow(*pane, pane->topLevelItem(pane->topLevelItemCount() / 2));
+            KeepTheEventLoopTurning(6);
+
+            if (auto* mark = documentsPage->findChild<QPushButton*>(QStringLiteral("BookmarkThePage")))
+            {
+                mark->click();
+            }
+
+            KeepTheEventLoopTurning(6);
+
+            landed = Save(*documentsPage, folder, QStringLiteral("28-documents-outline")) && landed;
+        }
+
+        if (withoutOne == nullptr)
+        {
+            Out() << "every document of this library carries an outline, so 29-documents-bookmark is not written\n";
+        }
+        else
+        {
+            ClickTheRow(*index, withoutOne);
+            KeepTheEventLoopTurning(4);
+
+            auto* forward = documentsPage->findChild<QPushButton*>(QStringLiteral("NextPage"));
+
+            for (int step = 0; step < 12 && forward->isEnabled(); ++step)
+            {
+                forward->click();
+            }
+
+            KeepTheEventLoopTurning(6);
+
+            if (auto* mark = documentsPage->findChild<QPushButton*>(QStringLiteral("BookmarkThePage")))
+            {
+                mark->click();
+            }
+
+            KeepTheEventLoopTurning(6);
+
+            landed = Save(*documentsPage, folder, QStringLiteral("29-documents-bookmark")) && landed;
+
+            if (auto* detach = documentsPage->findChild<QPushButton*>(QStringLiteral("DetachTheReading")))
+            {
+                detach->click();
+
+                KeepTheEventLoopTurning(160);
+
+                for (QWidget* top : QApplication::topLevelWidgets())
+                {
+                    auto* alone = qobject_cast<QDialog*>(top);
+
+                    if (alone == nullptr || !alone->isVisible())
+                    {
+                        continue;
+                    }
+
+                    landed = Save(*alone, folder, QStringLiteral("30-documents-detached")) && landed;
+                    alone->close();
+
+                    KeepTheEventLoopTurning(80);
+
+                    break;
+                }
+            }
+        }
+    }
+
     auto* sections = diagnosticsPage->findChild<QListWidget*>(QStringLiteral("SectionRail"));
-    const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"), QStringLiteral("07-diagnostics-broken"),
-                                  QStringLiteral("08-diagnostics-quarantine"), QStringLiteral("09-diagnostics-size"),
-                                  QStringLiteral("24-diagnostics-scenery")};
+    const QStringList diagnostics{QStringLiteral("06-diagnostics-entries"),
+                                  QStringLiteral("07-diagnostics-broken"),
+                                  QStringLiteral("08-diagnostics-quarantine"),
+                                  QStringLiteral("09-diagnostics-size"),
+                                  QStringLiteral("24-diagnostics-scenery"),
+                                  QStringLiteral("25-diagnostics-load"),
+                                  QString(),
+                                  QStringLiteral("31-diagnostics-bisection")};
 
     diagnosticsTab->click();
     diagnosticsViewModel.Show();
 
     for (int section = 0; section < diagnostics.size(); ++section)
     {
+        if (diagnostics[section].isEmpty())
+        {
+            continue;
+        }
+
         if (!ClickingReaches(*sections, section))
         {
             Out() << "the section " << diagnostics[section] << " does not select on click, so no user reaches it\n";

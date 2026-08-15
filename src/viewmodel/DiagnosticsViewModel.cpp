@@ -63,6 +63,7 @@ DiagnosticsViewModel::DiagnosticsViewModel(const ImportService& imports,
                                            SizeService& sizes,
                                            SceneryService& scenery,
                                            Session& session,
+                                           const LoadingReportSource& loading,
                                            const Clock& clock,
                                            BackgroundRunner& runner,
                                            QObject* parent)
@@ -71,6 +72,7 @@ DiagnosticsViewModel::DiagnosticsViewModel(const ImportService& imports,
       sizes_(sizes),
       scenery_(scenery),
       session_(session),
+      loading_(loading),
       clock_(clock),
       runner_(runner),
       caller_(sizes.NewCaller())
@@ -103,6 +105,13 @@ void DiagnosticsViewModel::CancelSize()
     cancelling_ = true;
 }
 
+void DiagnosticsViewModel::ShowTheLoad()
+{
+    load_ = ReportTheLoad(loading_.LastReport(), session_.Snapshot());
+
+    emit LoadRead();
+}
+
 void DiagnosticsViewModel::ShowScenery()
 {
     if (sceneryReadAt_.has_value() || reading_)
@@ -126,6 +135,11 @@ void DiagnosticsViewModel::ReadTheSceneryAgain()
 void DiagnosticsViewModel::CancelScenery()
 {
     stopReading_ = true;
+}
+
+const LoadDiagnostics& DiagnosticsViewModel::Load() const
+{
+    return load_;
 }
 
 const SceneryCensus& DiagnosticsViewModel::Scenery() const

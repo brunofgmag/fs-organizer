@@ -62,6 +62,12 @@ namespace
         static void AGiveBackWhoseCopyFailsLeavesBothSidesExactlyAsTheyWere();
         static void AGiveBackIsRefusedWhenTheOtherProgramsFolderIsNoLongerOurLink();
         static void AGiveBackResumesWhenTheOtherProgramsFolderIsAlreadyGone();
+        static void TheSameSizeWithOtherBytesPassesTheStructureAndIsCaughtByTheHash();
+        static void TheStructureReadsNoFileAndTheHashReadsBothSidesOfEveryOne();
+        static void TheReadingOfTheHashAnswersTheCancelWithTheProgressStillMoving();
+        static void TheHashAsksTheProbeOncePerBlockAndNotOncePerFile();
+        static void TheChoiceMadeDuringTheSessionIsTheOneTheNextImportObeys();
+        static void AHashRefusalIsWrittenAsTheSameRefusalTheStructureWouldHaveWritten();
     };
 }
 
@@ -85,7 +91,8 @@ namespace
         FakeOperationJournal journal;
         FakeClock clock;
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, LinkType::Junction};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
+                            Verification::ByStructure};
 
         SimulatorProfile profile{.destinations = {"E:/Sim/Community"},
                                  .defaultDestination = "E:/Sim/Community",
@@ -100,6 +107,16 @@ namespace
             fileSystem.AddFile(kSource / "manifest.json", 2 * kMegabyte);
             fileSystem.AddDirectory(kSource / "dist");
             fileSystem.AddFile(kSource / "dist/simbridge.exe", 400 * kMegabyte);
+            fileSystem.AddDirectory("D:/Library/Utils");
+        }
+
+        void AddSimBridgeWithTheBytesItReallyHas()
+        {
+            fileSystem.AddDirectory("E:/Sim/Community");
+            fileSystem.AddDirectory(kSource);
+            fileSystem.AddFileWithContents(kSource / "manifest.json", R"({"title":"SimBridge"})");
+            fileSystem.AddDirectory(kSource / "dist");
+            fileSystem.AddFileWithContents(kSource / "dist/simbridge.exe", "MZ the bytes that decide the flight");
             fileSystem.AddDirectory("D:/Library/Utils");
         }
 
@@ -710,6 +727,145 @@ void ImportEngineTest::AGiveBackRefusedByTheFolderCarriesTheImpedimentToo()
 
     QCOMPARE(outcome.Result(), FileResult::CannotWriteInTheOtherProgramsFolder);
     QCOMPARE(outcome.Access(), WriteAccess::PermissionIsDenied);
+}
+
+void ImportEngineTest::TheSameSizeWithOtherBytesPassesTheStructureAndIsCaughtByTheHash()
+{
+    const std::filesystem::path executable = kSource / "dist/simbridge.exe";
+
+    Fixture byStructure;
+    byStructure.AddSimBridgeWithTheBytesItReallyHas();
+    byStructure.files.MakeTheCopyGarble(executable);
+
+    const std::string asItWas = byStructure.fileSystem.ContentsOf(executable).value_or(std::string());
+
+    QCOMPARE(byStructure.engine.Import(byStructure.profile, byStructure.request, {}).Result(), FileResult::Completed);
+
+    const std::optional<std::string> landed = byStructure.fileSystem.ContentsOf(kTarget / "dist/simbridge.exe");
+    QVERIFY(landed.has_value());
+    QCOMPARE(landed->size(), asItWas.size());
+    QVERIFY2(*landed != asItWas, "the structure only ever knew the size, so the changed bytes went through it");
+    QVERIFY2(!byStructure.fileSystem.Exists(executable), "and the source it no longer matches was removed");
+
+    Fixture byHash;
+    byHash.AddSimBridgeWithTheBytesItReallyHas();
+    byHash.files.MakeTheCopyGarble(executable);
+    byHash.engine.UseVerification(Verification::ByHash);
+
+    QCOMPARE(byHash.engine.Import(byHash.profile, byHash.request, {}).Result(), FileResult::VerificationFailed);
+    QVERIFY(!byHash.fileSystem.Exists(kTarget));
+    byHash.VerifySimBridgeIsStillWhereItWas();
+}
+
+void ImportEngineTest::TheStructureReadsNoFileAndTheHashReadsBothSidesOfEveryOne()
+{
+    const std::filesystem::path manifest = kSource / "manifest.json";
+    const std::filesystem::path executable = kSource / "dist/simbridge.exe";
+
+    Fixture byStructure;
+    byStructure.AddSimBridgeWithTheBytesItReallyHas();
+
+    QCOMPARE(byStructure.engine.Import(byStructure.profile, byStructure.request, {}).Result(), FileResult::Completed);
+    QCOMPARE(byStructure.filesystemProbe.hashed.size(), std::size_t{0});
+
+    Fixture byHash;
+    byHash.AddSimBridgeWithTheBytesItReallyHas();
+    byHash.engine.UseVerification(Verification::ByHash);
+
+    QCOMPARE(byHash.engine.Import(byHash.profile, byHash.request, {}).Result(), FileResult::Completed);
+
+    QCOMPARE(byHash.filesystemProbe.TimesHashed(manifest), std::size_t{1});
+    QCOMPARE(byHash.filesystemProbe.TimesHashed(executable), std::size_t{1});
+    QCOMPARE(byHash.filesystemProbe.TimesHashed(kStaging / "manifest.json"), std::size_t{1});
+    QCOMPARE(byHash.filesystemProbe.TimesHashed(kStaging / "dist/simbridge.exe"), std::size_t{1});
+    QCOMPARE(byHash.filesystemProbe.hashed.size(), std::size_t{4});
+}
+
+void ImportEngineTest::TheReadingOfTheHashAnswersTheCancelWithTheProgressStillMoving()
+{
+    Fixture f;
+    f.AddSimBridgeWithTheBytesItReallyHas();
+    f.engine.UseVerification(Verification::ByHash);
+
+    bool checking = false;
+    std::vector<std::uintmax_t> whileChecking;
+
+    const ImportOutcome outcome = f.engine.Import(
+        f.profile, f.request,
+        [&checking, &whileChecking](const CopyProgress& progress)
+        {
+            if (!checking)
+            {
+                return true;
+            }
+
+            whileChecking.push_back(progress.copiedBytes);
+
+            return whileChecking.size() < 2;
+        },
+        [&checking](const OperationKind kind)
+        {
+            checking = kind == OperationKind::ImportVerifyStaging;
+        });
+
+    QCOMPARE(outcome.Result(), FileResult::Cancelled);
+    QCOMPARE(whileChecking.size(), std::size_t{2});
+    QVERIFY2(whileChecking[1] > whileChecking[0], "the bar kept moving while the second reading ran");
+    QVERIFY(!f.fileSystem.Exists(kStaging));
+    QVERIFY(!f.fileSystem.Exists(kTarget));
+    f.VerifySimBridgeIsStillWhereItWas();
+}
+
+void ImportEngineTest::TheHashAsksTheProbeOncePerBlockAndNotOncePerFile()
+{
+    Fixture f;
+    f.AddSimBridgeWithTheBytesItReallyHas();
+    f.engine.UseVerification(Verification::ByHash);
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QCOMPARE(f.filesystemProbe.hashed.size(), std::size_t{4});
+    QCOMPARE(f.filesystemProbe.batches.size(), std::size_t{2});
+    QCOMPARE(f.filesystemProbe.batches[0], std::size_t{2});
+    QCOMPARE(f.filesystemProbe.batches[1], std::size_t{2});
+}
+
+void ImportEngineTest::TheChoiceMadeDuringTheSessionIsTheOneTheNextImportObeys()
+{
+    const std::filesystem::path second = "E:/Sim/Community/flybywire-aircraft-a320-neo";
+    const std::filesystem::path secondManifest = second / "manifest.json";
+
+    Fixture f;
+    f.AddSimBridgeWithTheBytesItReallyHas();
+    f.fileSystem.AddFileWithContents(secondManifest, R"({"title":"A320neo"})");
+    f.files.MakeTheCopyGarble(kSource / "dist/simbridge.exe");
+    f.files.MakeTheCopyGarble(secondManifest);
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    f.engine.UseVerification(Verification::ByHash);
+
+    const ImportRequest again{.source = second, .category = kCategory};
+
+    QCOMPARE(f.engine.Import(f.profile, again, {}).Result(), FileResult::VerificationFailed);
+    QVERIFY(!f.fileSystem.Exists("D:/Library/Utils/flybywire-aircraft-a320-neo"));
+    QVERIFY(f.fileSystem.Exists(secondManifest));
+}
+
+void ImportEngineTest::AHashRefusalIsWrittenAsTheSameRefusalTheStructureWouldHaveWritten()
+{
+    Fixture f;
+    f.AddSimBridgeWithTheBytesItReallyHas();
+    f.files.MakeTheCopyGarble(kSource / "dist/simbridge.exe");
+    f.engine.UseVerification(Verification::ByHash);
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::VerificationFailed);
+
+    QCOMPARE(f.journal.appended.size(), std::size_t{2});
+    QCOMPARE(f.journal.appended[1].kind, OperationKind::ImportVerifyStaging);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[1].outcome), FileResult::VerificationFailed);
+    QCOMPARE(f.journal.appended[1].source, kStaging);
+    QCOMPARE(f.journal.appended[1].target, kTarget);
 }
 
 QTEST_APPLESS_MAIN(ImportEngineTest)
