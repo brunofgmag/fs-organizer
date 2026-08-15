@@ -1,14 +1,5 @@
 name: Rebuild Manual
 
-# The covers read VERSION.txt at composition time, so the two PDFs in docs/ go
-# stale the moment release-please bumps that file. This rebuilds them inside the
-# release pull request, from the same commit that carries the new version, and
-# pushes them onto the same branch: what lands on develop is the version, the
-# changelog and the two manuals that version produced.
-#
-# Installing TeX Live on a clean runner was measured at 104s, and the four
-# passes at 7s, before this job was written.
-
 on:
   push:
     branches: [ 'release-please--branches--develop--components--fs-organizer' ]
@@ -23,69 +14,84 @@ concurrency:
 
 jobs:
   rebuild:
-    name: Rebuild both manuals from the version this release carries
+    name: Rebuild manuals
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      !contains(github.event.head_commit.message, 'rebuild the two manuals')
+      !contains(github.event.head_commit.message, 'rebuild the manuals')
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
-      - name: Checkout the branch, not the commit
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
 
-      - name: Install a TeX distribution
+      - name: Install TeX
         run: |
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             texlive-luatex texlive-latex-extra texlive-fonts-recommended \
             texlive-lang-portuguese texlive-lang-english poppler-utils
 
-      - name: Build both manuals
+      - name: Build manuals
         run: |
-          # LuaTeX stamps /CreationDate and /ID with the clock unless both of
-          # these are set, and then two runs of the same commit differ.
           SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
           export SOURCE_DATE_EPOCH
           export FORCE_SOURCE_DATE=1
 
           cd manual
-          for language in pt_BR en; do
-            # Twice, because the table of contents is written on the first pass
-            # and typeset on the second.
+          shopt -s nullglob
+          sources=(fs-organizer-*.tex)
+
+          if [ ${#sources[@]} -eq 0 ]; then
+            echo "manual/ carries no fs-organizer-*.tex to build." >&2
+            exit 1
+          fi
+
+          for source in "${sources[@]}"; do
             for pass in 1 2; do
-              lualatex -interaction=nonstopmode "fs-organizer-$language.tex" > /dev/null \
-                || { tail -40 "fs-organizer-$language.log"; exit 1; }
+              lualatex -interaction=nonstopmode "$source" > /dev/null \
+                || { tail -40 "${source%.tex}.log"; exit 1; }
             done
-            mv "fs-organizer-$language.pdf" "../docs/fs-organizer-$language.pdf"
+            mv "${source%.tex}.pdf" "../docs/${source%.tex}.pdf"
           done
 
-      - name: Read the version off the covers that came out
+          echo "Built ${#sources[@]}: ${sources[*]}"
+
+      - name: Read version
         run: |
           declared=$(tr -d '\r\n' < VERSION.txt)
 
-          for language in pt_BR en; do
-            printed=$(pdftotext -f 1 -l 1 "docs/fs-organizer-$language.pdf" - | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+          shopt -s nullglob
+          built=(docs/fs-organizer-*.pdf)
+          sources=(manual/fs-organizer-*.tex)
+
+          if [ ${#built[@]} -ne ${#sources[@]} ]; then
+            echo "manual/ has ${#sources[@]} sources and docs/ has ${#built[@]} manuals." >&2
+            exit 1
+          fi
+
+          for pdf in "${built[@]}"; do
+            printed=$(pdftotext -f 1 -l 1 "$pdf" - | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
 
             if [ "$printed" != "$declared" ]; then
-              echo "docs/fs-organizer-$language.pdf prints version ${printed:-none} on its cover, and VERSION.txt says $declared." >&2
+              echo "$pdf prints version ${printed:-none} on its cover, and VERSION.txt says $declared." >&2
               exit 1
             fi
           done
 
-          echo "Both covers print version $declared."
+          echo "All ${#built[@]} covers print version $declared."
 
-      - name: Push them onto the release branch
+      - name: Push to release branch
         run: |
           if git diff --quiet -- docs; then
-            echo "The two manuals already say what this commit says."
+            echo "The manuals already say what this commit says."
             exit 0
           fi
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs
-          git commit -m "docs(manual): rebuild the two manuals for version $(tr -d '\r\n' < VERSION.txt)"
+          git commit -m "docs(manual): rebuild the manuals for version $(tr -d '\r\n' < VERSION.txt)"
           git push

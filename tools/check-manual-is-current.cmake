@@ -14,10 +14,16 @@ endif ()
 
 set(MANUAL_DIRECTORY "${FSORG_SOURCE_DIR}/manual")
 
-set(MANUAL_SOURCES
-        "fs-organizer-pt_BR.tex"
-        "fs-organizer-en.tex"
-)
+file(GLOB MANUAL_SOURCES RELATIVE "${MANUAL_DIRECTORY}" "${MANUAL_DIRECTORY}/fs-organizer-*.tex")
+list(SORT MANUAL_SOURCES)
+list(LENGTH MANUAL_SOURCES HOW_MANY_SOURCES)
+
+# One language cannot disagree with itself, so the heading comparison would pass
+# by having nothing to compare. A manual deleted has to fail here, not go quiet.
+if (HOW_MANY_SOURCES LESS 2)
+    message(FATAL_ERROR
+            "manual/ carries ${HOW_MANY_SOURCES} of fs-organizer-*.tex, and this guard needs at least two to compare.")
+endif ()
 
 file(READ "${FSORG_SOURCE_DIR}/VERSION.txt" DECLARED_VERSION)
 string(STRIP "${DECLARED_VERSION}" DECLARED_VERSION)
@@ -28,11 +34,6 @@ set(FIRST_SOURCE "")
 
 foreach (MANUAL_SOURCE IN LISTS MANUAL_SOURCES)
     set(SOURCE_PATH "${MANUAL_DIRECTORY}/${MANUAL_SOURCE}")
-
-    if (NOT EXISTS "${SOURCE_PATH}")
-        list(APPEND OFFENCES "  ${MANUAL_SOURCE} is not there")
-        continue ()
-    endif ()
 
     file(STRINGS "${SOURCE_PATH}" LINES ENCODING UTF-8)
 
@@ -98,8 +99,8 @@ endforeach ()
 if (OFFENCES)
     string(REPLACE ";" "\n" REPORT "${OFFENCES}")
     message(FATAL_ERROR
-            "The two user manuals have drifted.\n"
-            "They are two independent sources covering the same subjects, and the PDF beside them is rebuilt by the "
+            "The user manuals have drifted.\n"
+            "They are independent sources covering the same subjects, and the PDF beside them is rebuilt by the "
             "Rebuild Manual job inside the release pull request, or by hand with manual/build.ps1.\n"
             "${REPORT}")
 endif ()
@@ -107,5 +108,5 @@ endif ()
 list(LENGTH FIRST_SHAPE HEADINGS)
 
 message(STATUS
-        "Both user manuals carry the same ${HEADINGS} headings, read version ${DECLARED_VERSION} off VERSION.txt, "
-        "and every figure they ask for is on disk.")
+        "The ${HOW_MANY_SOURCES} user manuals carry the same ${HEADINGS} headings, read version ${DECLARED_VERSION} "
+        "off VERSION.txt, and every figure they ask for is on disk.")
