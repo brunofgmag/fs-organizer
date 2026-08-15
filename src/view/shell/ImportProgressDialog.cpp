@@ -7,6 +7,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 
+#include "view/theme/ModernistMetrics.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/SizeSummary.h"
 
@@ -15,25 +16,39 @@ namespace
     QProgressBar* ABarThatStartsEmpty(QWidget* on)
     {
         auto* bar = new QProgressBar(on);
+        bar->setObjectName(QStringLiteral("ImportMeter"));
         bar->setRange(0, 100);
         bar->setValue(0);
+        bar->setTextVisible(false);
+        bar->setFixedHeight(kMeterHeight);
 
         return bar;
+    }
+
+    QLabel* ALineThatSitsBehindTheStep(QWidget* on)
+    {
+        auto* line = new QLabel(on);
+        line->setObjectName(QStringLiteral("ImportQuiet"));
+
+        return line;
     }
 }
 
 ImportProgressDialog::ImportProgressDialog(const int folders, QWidget* over) : QDialog(over), folders_(folders)
 {
+    setWindowTitle(tr("Importing into the library"));
     setWindowModality(Qt::ApplicationModal);
     setSizeGripEnabled(false);
 
-    folderLine_ = new QLabel(this);
+    folderLine_ = ALineThatSitsBehindTheStep(this);
     copyLine_ = new QLabel(NameOfImportStep(OperationKind::ImportCopyToStaging), this);
     copyBar_ = ABarThatStartsEmpty(this);
     checkLine_ = new QLabel(NameOfImportStep(OperationKind::ImportVerifyStaging), this);
     checkBar_ = ABarThatStartsEmpty(this);
-    bytesLine_ = new QLabel(this);
+    bytesLine_ = ALineThatSitsBehindTheStep(this);
     cancel_ = new QPushButton(tr("Cancel"), this);
+    cancel_->setAutoDefault(false);
+    cancel_->setDefault(false);
 
     checkLine_->hide();
     checkBar_->hide();

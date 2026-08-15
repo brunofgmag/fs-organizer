@@ -2862,17 +2862,22 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>ImportProgressDialog</name>
     <message>
-        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="41"/>
+        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="39"/>
+        <source>Importing into the library</source>
+        <translation>Importando para a biblioteca</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="49"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="61"/>
+        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="79"/>
         <source>Folder %1 of %2</source>
         <translation>Pasta %1 de %2</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="112"/>
+        <location filename="../src/view/shell/ImportProgressDialog.cpp" line="130"/>
         <source>%1 of %2</source>
         <translation>%1 de %2</translation>
     </message>

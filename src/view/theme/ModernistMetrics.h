@@ -9,6 +9,7 @@
 
 inline constexpr int kPageGutter = 10;
 inline constexpr int kReadableWidth = 420;
+inline constexpr int kMeterHeight = 4;
 
 [[nodiscard]] inline int TheTallestADialogMayBe(const QWidget& dialog)
 {

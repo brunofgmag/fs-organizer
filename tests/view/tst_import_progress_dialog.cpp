@@ -1,8 +1,10 @@
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressBar>
+#include <QtWidgets/QPushButton>
 
 #include "view/shell/ImportProgressDialog.h"
+#include "view/theme/ModernistTheme.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/SizeSummary.h"
 
@@ -17,7 +19,20 @@ namespace
         static void EachStepFillsItsOwnBarAndTheCopyOneKeepsWhatItReached();
         static void TheDialogKeepsItsWidthWhenTheStepChanges();
         static void TheBytesLineSpeaksTheSameSizesTheRestOfTheAppDoes();
+        static void TheWindowCarriesANameLikeEveryOtherDialogOfTheApp();
+        static void CancellingIsNotPaintedAsTheThingToDo();
+        static void TheBarsWearTheMeterOfTheAppAndSayTheirNumberOnlyOnce();
     };
+
+    QImage Painted(QWidget& widget)
+    {
+        QImage surface(widget.size(), QImage::Format_ARGB32_Premultiplied);
+        surface.fill(Qt::magenta);
+
+        widget.render(&surface);
+
+        return surface;
+    }
 }
 
 namespace
@@ -116,6 +131,54 @@ void ImportProgressDialogTest::TheBytesLineSpeaksTheSameSizesTheRestOfTheAppDoes
                                      return label->text() == wanted;
                                  }),
              "the byte line mirrors AsSize instead of retyping a format");
+}
+
+void ImportProgressDialogTest::TheWindowCarriesANameLikeEveryOtherDialogOfTheApp()
+{
+    const ImportProgressDialog dialog(1, nullptr);
+
+    QVERIFY2(!dialog.windowTitle().isEmpty(),
+             "every other dialog of the app names its window, and this one is modal over a long import");
+}
+
+void ImportProgressDialogTest::CancellingIsNotPaintedAsTheThingToDo()
+{
+    ImportProgressDialog dialog(1, nullptr);
+    dialog.setStyleSheet(ModernistStyleSheet(Qt::ColorScheme::Dark));
+    dialog.show();
+
+    QPushButton* cancel = dialog.findChild<QPushButton*>();
+    QVERIFY(cancel != nullptr);
+
+    cancel->resize(160, 30);
+
+    const QColor accent = ModernistPalette(Qt::ColorScheme::Dark).color(QPalette::Accent);
+    const QPoint ground(8, cancel->height() / 2);
+
+    QVERIFY2(Painted(*cancel).pixelColor(ground) != accent,
+             "the accent fill is what the affirmative button of every other dialog wears");
+}
+
+void ImportProgressDialogTest::TheBarsWearTheMeterOfTheAppAndSayTheirNumberOnlyOnce()
+{
+    ImportProgressDialog dialog(1, nullptr);
+    dialog.setStyleSheet(ModernistStyleSheet(Qt::ColorScheme::Dark));
+    dialog.show();
+
+    dialog.ShowTheStep(OperationKind::ImportVerifyStaging, NameOfImportStep(OperationKind::ImportVerifyStaging));
+    dialog.ShowTheBytes(kTotal, kTotal, 1, OperationKind::ImportCopyToStaging);
+    dialog.ShowTheBytes(kTotal, kTotal, 1, OperationKind::ImportVerifyStaging);
+
+    const QColor accent = ModernistPalette(Qt::ColorScheme::Dark).color(QPalette::Accent);
+
+    for (QProgressBar* bar : dialog.findChildren<QProgressBar*>())
+    {
+        QVERIFY2(!bar->isTextVisible(), "the byte line below already says how far it got, in the sizes of the app");
+
+        bar->resize(200, 14);
+
+        QCOMPARE(Painted(*bar).pixelColor(QPoint(8, bar->height() / 2)), accent);
+    }
 }
 
 QTEST_MAIN(ImportProgressDialogTest)
