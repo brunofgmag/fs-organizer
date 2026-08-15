@@ -227,6 +227,43 @@ inline const std::string kOnEveryPage = "flight manual";
     return APdfMadeOf(objects, {});
 }
 
+inline const std::string kCodesTheEngineCannotMap = "<00040005000600070008>";
+inline const std::string kAFewCodesTheEngineCannotMap = "<000400050006>";
+
+[[nodiscard]] inline std::string AManualWhoseFirstPageTheEngineCannotMap()
+{
+    std::string unmappable;
+    std::string readable;
+    int baseline = 160;
+
+    for (const std::string& line : TheLinesDrawnOn(1))
+    {
+        unmappable += "BT /F2 12 Tf 20 " + std::to_string(baseline) + " Td " + kCodesTheEngineCannotMap + " Tj ET\n";
+        readable += "BT /F1 12 Tf 20 " + std::to_string(baseline) + " Td (" + line + ") Tj ET\n";
+        baseline -= 20;
+    }
+
+    const std::string mostlyReadable =
+        readable + "BT /F2 12 Tf 20 " + std::to_string(baseline) + " Td " + kAFewCodesTheEngineCannotMap + " Tj ET\n";
+
+    return APdfMadeOf(
+        {"<</Type/Catalog/Pages 2 0 R>>", "<</Type/Pages/Kids[3 0 R 4 0 R 5 0 R]/Count 3>>",
+         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 6 0 R/Resources<</Font<</F2 10 0 R>>>>>>",
+         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 7 0 R/Resources<</Font<</F1 9 0 R>>>>>>",
+         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 8 0 R/Resources<</Font<</F1 9 0 R/F2 10 0 "
+         "R>>>>>>",
+         "<</Length " + std::to_string(unmappable.size()) + ">>\nstream\n" + unmappable + "\nendstream",
+         "<</Length " + std::to_string(readable.size()) + ">>\nstream\n" + readable + "\nendstream",
+         "<</Length " + std::to_string(mostlyReadable.size()) + ">>\nstream\n" + mostlyReadable + "\nendstream",
+         "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>",
+         "<</Type/Font/Subtype/Type0/BaseFont/Nothing/Encoding/Identity-H/DescendantFonts[11 0 R]>>",
+         "<</Type/Font/Subtype/CIDFontType2/BaseFont/Nothing/CIDSystemInfo<</Registry(Adobe)/Ordering(Identity)"
+         "/Supplement 0>>/FontDescriptor 12 0 R/DW 500>>",
+         "<</Type/FontDescriptor/FontName/Nothing/Flags 4/FontBBox[0 -200 1000 800]/ItalicAngle 0/Ascent 800"
+         "/Descent -200/CapHeight 700/StemV 80>>"},
+        {});
+}
+
 [[nodiscard]] inline std::string AManualWhosePagesWidenHalfway(const int pages)
 {
     const std::size_t firstPage = 3;
