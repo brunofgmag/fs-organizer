@@ -214,7 +214,7 @@ void DocumentReader::ZoomBy(const int notches)
 
 void DocumentReader::RestTheCursor() const
 {
-    if (kind_ == DocumentKind::Chart)
+    if (TheGesturesInForce().dragMovesThePage)
     {
         view_->viewport()->setCursor(Qt::OpenHandCursor);
 
@@ -426,7 +426,11 @@ void DocumentReader::ShowTheGesturesInForce()
     if (!gestures.dragMovesThePage)
     {
         StopAnyGrabbing();
+
+        return;
     }
+
+    RestTheCursor();
 }
 
 void DocumentReader::StopAnyGrabbing()

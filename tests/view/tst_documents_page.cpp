@@ -79,6 +79,7 @@ namespace
         static void DraggingMovesADocumentAndNotOnlyAChart();
         static void APointerThatDoesNotWanderLeavesThePageWhereItWas();
         static void DraggingMovesNothingWhenTheReaderIsToldItShouldNot();
+        static void ThePointerSaysWhichOfTheTwoOfficesTheLeftButtonIsOn();
         static void ThePointerSaysWhenTheReadingCarriesALink();
         static void ThePaneMarksTheSectionThatHoldsThePageTheReadingIsOn();
         static void AMarkHangsUnderItsSectionOnABranchBornOpenAndLightsTheButton();
@@ -840,6 +841,31 @@ void DocumentsPageTest::DraggingMovesNothingWhenTheReaderIsToldItShouldNot()
     PointerAt(*pages, QEvent::MouseButtonRelease, QPointF(100, 200));
 
     QCOMPARE(pages->verticalScrollBar()->value(), before);
+}
+
+void DocumentsPageTest::ThePointerSaysWhichOfTheTwoOfficesTheLeftButtonIsOn()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    QPdfView* pages = AManualOpenedIn(reader, manual);
+
+    QVERIFY(pages != nullptr);
+
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = true});
+
+    QCOMPARE(pages->viewport()->cursor().shape(), Qt::OpenHandCursor);
+
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = false});
+
+    QVERIFY2(pages->viewport()->cursor().shape() != Qt::OpenHandCursor,
+             "the hand is what says the drag walks the page, so it cannot stay on when the drag marks text instead");
+
+    reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = true});
+
+    QVERIFY2(pages->viewport()->cursor().shape() == Qt::OpenHandCursor,
+             "turning it back on has to repaint the pointer, and the path that only stopped the grabbing did not");
 }
 
 void DocumentsPageTest::ThePaneMarksTheSectionThatHoldsThePageTheReadingIsOn()
