@@ -1,14 +1,5 @@
 name: Rebuild Manual
 
-# The covers read VERSION.txt at composition time, so the two PDFs in docs/ go
-# stale the moment release-please bumps that file. This rebuilds them inside the
-# release pull request, from the same commit that carries the new version, and
-# pushes them onto the same branch: what lands on develop is the version, the
-# changelog and the two manuals that version produced.
-#
-# Installing TeX Live on a clean runner was measured at 104s, and the four
-# passes at 7s, before this job was written.
-
 on:
   push:
     branches: [ 'release-please--branches--develop--components--fs-organizer' ]
@@ -31,30 +22,26 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - name: Checkout the branch, not the commit
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
 
-      - name: Install a TeX distribution
+      - name: Install TeX
         run: |
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             texlive-luatex texlive-latex-extra texlive-fonts-recommended \
             texlive-lang-portuguese texlive-lang-english poppler-utils
 
-      - name: Build both manuals
+      - name: Build manuals
         run: |
-          # LuaTeX stamps /CreationDate and /ID with the clock unless both of
-          # these are set, and then two runs of the same commit differ.
           SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
           export SOURCE_DATE_EPOCH
           export FORCE_SOURCE_DATE=1
 
           cd manual
           for language in pt_BR en; do
-            # Twice, because the table of contents is written on the first pass
-            # and typeset on the second.
             for pass in 1 2; do
               lualatex -interaction=nonstopmode "fs-organizer-$language.tex" > /dev/null \
                 || { tail -40 "fs-organizer-$language.log"; exit 1; }
@@ -62,7 +49,7 @@ jobs:
             mv "fs-organizer-$language.pdf" "../docs/fs-organizer-$language.pdf"
           done
 
-      - name: Read the version off the covers that came out
+      - name: Read version
         run: |
           declared=$(tr -d '\r\n' < VERSION.txt)
 
@@ -77,7 +64,7 @@ jobs:
 
           echo "Both covers print version $declared."
 
-      - name: Push them onto the release branch
+      - name: Push to release branch
         run: |
           if git diff --quiet -- docs; then
             echo "The two manuals already say what this commit says."
