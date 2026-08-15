@@ -63,6 +63,14 @@ executable.
 The specification, the architecture decisions and the development plan are kept
 outside this repository.
 
+## Manual
+
+The user manual is in [`docs/`](docs/), in
+[English](docs/fs-organizer-en.pdf) and
+[Brazilian Portuguese](docs/fs-organizer-pt_BR.pdf). Presets come first in both,
+because that is the part of the program nobody gets right by trial. The LaTeX it
+is built from lives in [`manual/`](manual/).
+
 ## Contributing
 
 Building it, running the suite, the tools under `tools/` and the packaging

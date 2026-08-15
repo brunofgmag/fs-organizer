@@ -1,0 +1,567 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{polyglossia}
+\setmainlanguage{brazil}
+
+\usepackage{fsorg-manual}
+
+\graphicspath{{figures/pt_BR/}}
+
+\hypersetup{
+  pdftitle={FS Organizer · Manual do usuário},
+  pdflang={pt-BR}}
+
+\fsorgrunningheadis{FS Organizer · Manual do usuário}
+
+\begin{document}
+
+\frenchspacing
+
+\fsorgtitle
+  {Manual do usuário}
+  {Versão 0.47.0}
+  {Distribuído sob a GNU General Public License versão 2.}
+  {A tipografia é a Archivo, de Omnibus-Type, sob a SIL Open Font License 1.1.}
+
+\thispagestyle{empty}
+\tableofcontents
+
+\section{O que este programa faz}
+
+O FS Organizer liga e desliga addons do Microsoft Flight Simulator sem mover
+arquivo nenhum.
+
+Os seus addons moram numa pasta sua, fora do simulador, que o programa chama de
+\ui{biblioteca}. As subpastas dela viram \ui{categorias}. Habilitar um addon cria
+um link dentro de uma pasta que o simulador lê, que o programa chama de
+\ui{destino}; desabilitar remove esse link e mais nada. Os arquivos de verdade
+nunca saem da biblioteca, e é por isso que trocar dezenas de gigabytes de
+conteúdo é instantâneo.
+
+O link é uma junção de diretório do NTFS. Para o simulador, ele é a pasta; para
+você, é uma entrada que o FS Organizer cria e apaga.
+
+\subsection{O que o programa não guarda}
+
+Se um addon está habilitado ou não \textbf{não é gravado em lugar nenhum}. A cada
+varredura, o programa lê os destinos do disco e responde pelo que encontrou lá.
+Isso tem uma consequência prática: mexer nas pastas por fora, com o Explorer ou
+com o instalador de outro programa, nunca deixa o app dizendo uma coisa e o
+simulador fazendo outra. Basta reler.
+
+\subsection{Perfil}
+
+Um \ui{perfil} é uma instalação do simulador com os destinos e as bibliotecas
+dela. Quem tem o Flight Simulator 2020 e o 2024 na mesma máquina tem dois
+perfis, e o programa só mexe no que está em uso: marcar outro como ativo é o
+que troca o alvo de tudo.
+
+\subsection{Tipo de link}
+
+Em \ui{Opções}, na aba \ui{Links}, o programa oferece dois tipos.
+
+\begin{description}
+  \item[Junção de diretório] Não exige administrador e cruza volumes locais. É o
+    padrão, e é o único caminho testado.
+  \item[Link simbólico] Só serve para biblioteca em caminho de rede, onde a
+    junção não chega. Exige privilégio do Windows; sem ele o programa explica a
+    recusa em vez de falhar calado.
+\end{description}
+
+Trocar o tipo muda apenas os links novos. Os que já existem continuam como
+estão.
+
+\section{Presets}
+
+Este é o primeiro assunto do manual porque é o que ninguém acerta por tentativa.
+Um preset parece uma lista de addons e não é: ele é uma lista de addons
+\textbf{mais um modo de aplicação}, e o mesmo preset produz três resultados
+diferentes conforme o modo escolhido.
+
+\subsection{O que um preset guarda}
+
+Um preset guarda quais addons ficam ligados. Você habilita o que quer voar e
+guarda essa combinação com um nome, em \ui{Novo a partir dos habilitados}.
+
+A coluna \ui{Conteúdo} da tabela diz quantos addons ele cita e em quantas
+categorias eles estão. A coluna \ui{Atualizado} diz quando ele foi gravado pela
+última vez.
+
+Um preset pode também governar as entradas de inicialização do simulador, e a
+seção~\ref{sec:presets-inicializacao} trata disso.
+
+\subsection{Preset satisfeito}
+
+A coluna \ui{Mudaria} responde quantos addons mudariam de estado se você
+aplicasse aquele preset agora. Quando esse número é zero, a tabela diz
+\ui{Satisfeito}.
+
+\textbf{Satisfeito é medido sempre como Substituir}, mesmo que você pretenda
+aplicar de outro jeito. Um preset que cita três addons, todos ligados, aparece
+como satisfeito só se \textbf{nada além deles} estiver ligado. Se você tem um
+quarto addon ligado que o preset não cita, aquele preset não está satisfeito,
+porque aplicá-lo como Substituir desligaria o quarto.
+
+Isso é deliberado: a pergunta que a coluna responde é ``a minha instalação está
+como este preset descreve?'', e a única leitura em que um preset descreve a
+instalação inteira é a de Substituir.
+
+\subsection{Os três modos de aplicação}
+
+O seletor \ui{Aplicar como} escolhe entre três leituras do mesmo preset.
+
+\begin{description}
+  \item[Substituir] Deixa só o que o preset liga. Aplica o que ele cita e
+    desliga todo addon habilitado que ele não cita.
+  \item[Acumular] Liga o do preset, sem mexer no resto. Aplica o que ele cita e
+    não toca em mais nada.
+  \item[Desabilitar] Desliga o que o preset liga. É o inverso da lista: os
+    addons que o preset ligaria ficam desligados, e as entradas que ele já pedia
+    para desligar são ignoradas.
+\end{description}
+
+Antes de aplicar, o painel \ui{Plano} mostra o que vai acontecer, em cinco
+grupos que somam a conta inteira:
+
+\begin{itemize}
+  \item \ui{Ligar}: addons que o preset cita e que estão desligados agora.
+  \item \ui{Desligar}: addons que vão sair, seja porque o preset pede, seja
+    porque Substituir os omite.
+  \item \ui{Já como o preset pede}: nada acontece com eles.
+  \item \ui{Citados, sem addon encontrado}: o preset nomeia um addon que não
+    está mais na biblioteca. O programa não inventa nada e não falha por causa
+    disso; ele lista quais são.
+  \item \ui{Pedidos, e não aplicados}: entradas de inicialização que o preset
+    pede e que não puderam ser trocadas.
+\end{itemize}
+
+\shot{03b-presets-plan.png}{O plano do preset ``Voo curto'', lido como
+Substituir. Os cinco grupos somam a conta inteira, e a frase abaixo deles diz
+que os 4 omitidos estão dentro dos 4 que serão desligados.}
+
+\subsection{O que cai por omissão em Substituir}
+
+Ao aplicar como Substituir, o programa desliga os addons que estão habilitados
+agora e que o preset não cita. Eles aparecem sob o rótulo \ui{Desligados porque
+Substituir os omite}, e o botão \ui{Ver quais} abre a lista deles.
+
+O app diz, ao lado dessa lista, que \textbf{eles fazem parte do que o plano já
+conta como desligado, e não são uma pilha em cima disso}. Se o plano diz
+``desliga 12'' e a lista dos omitidos tem 5 nomes, o total continua sendo 12,
+com 5 deles entrando por omissão e 7 porque o preset pediu. Somar os dois
+números dá 17 e é errado.
+
+\subsection{O preset de retorno}
+
+Antes de aplicar qualquer preset, o programa \textbf{anota o que está habilitado
+naquele instante} e grava isso como preset de retorno do perfil. O botão
+\ui{Voltar ao conjunto anterior} aplica essa anotação.
+
+Se essa anotação não puder ser gravada, por a pasta de presets estar cheia ou
+protegida, \textbf{nada é aplicado}. O programa prefere não fazer a mudança a
+fazê-la sem deixar caminho de volta.
+
+O retorno é diferente do \ui{Desfazer último lote}, e a diferença importa:
+
+\begin{description}
+  \item[Desfazer último lote] Desfaz exatamente o lote que você acabou de
+    aplicar. Uma importação ou uma operação de quarentena feita depois disso
+    consome o desfazer, e ele deixa de estar disponível.
+  \item[Voltar ao conjunto anterior] Aplica o preset de retorno, que é um preset
+    como qualquer outro. Ele continua lá depois de uma importação ou de uma
+    quarentena, porque não depende do diário.
+\end{description}
+
+Aplicar um preset é um lote só: o \ui{Desfazer último lote} volta tudo de uma
+vez, e não addon por addon.
+
+\subsection{Presets e entradas de inicialização}
+\label{sec:presets-inicializacao}
+
+Na aba \ui{Inicialização} do preset, uma caixa faz aquele preset também
+gerenciar os programas que o simulador abre junto consigo. Marcá-la captura as
+entradas habilitadas naquele momento, e depois você liga ou desliga cada uma ali.
+
+Se o gerenciamento de inicialização estiver desligado em \ui{Opções}, as
+entradas que o preset pede \textbf{não são aplicadas}, e o programa diz quantas
+foram. O resto do preset é aplicado normalmente.
+
+Se uma entrada que o preset cita não estiver mais no arquivo do simulador, ela é
+listada em vez de ser recriada. O programa nunca acrescenta entrada de
+inicialização.
+
+\section{A primeira configuração}
+
+Na primeira abertura, o programa procura as instalações do simulador na máquina
+e pede duas coisas.
+
+\begin{description}
+  \item[O simulador] Escolha a instalação que este perfil vai gerenciar, na
+    lista encontrada, ou aponte a pasta manualmente. Se a pasta apontada não se
+    parecer com um destino do simulador, que costuma se chamar
+    \where|Community|, o programa avisa e usa assim mesmo.
+  \item[A biblioteca] Escolha a pasta raiz onde os seus addons ficam guardados,
+    fora do simulador. As subpastas dela viram categorias.
+\end{description}
+
+Ao cadastrar uma biblioteca muito funda, o programa mostra quantos caracteres
+aquela raiz consome e quantos sobram para o addon, comparando com uma raiz
+curta. Nada é bloqueado: addons que passarem do limite do Windows avisam quando
+isso importar, e os \ui{Diagnósticos} guardam o caminho mais longo de cada
+biblioteca.
+
+Quem vem do MSFS Addons Linker pode trazer a configuração dele em \ui{Opções},
+por \ui{Importar do MSFS Addons Linker}. Nada é movido nem apagado: importar
+cadastra a biblioteca, as categorias e os presets que ainda não existem aqui.
+
+\section{Biblioteca}
+
+A aba \ui{Biblioteca} é a árvore dos seus addons, agrupados pelas categorias que
+são as subpastas da raiz. A caixa de cada linha liga e desliga.
+
+\shot{01-library.png}{A biblioteca, com as categorias abertas e o painel do addon
+selecionado à direita.}
+
+\subsection{As colunas}
+
+\begin{description}
+  \item[Addon] O nome da pasta.
+  \item[Versão] O que o \where|manifest.json| do addon declara.
+  \item[Habilitado] Se existe link para ele num destino agora.
+  \item[Destino] Em que destino ele está ligado, e se o destino é fixado.
+  \item[Alvo existe] Se o link acha a pasta. Um "não" aqui é um link quebrado.
+\end{description}
+
+Três marcas aparecem na linha quando algo está fora do lugar: \ui{Sem alvo},
+\ui{Em conflito} e \ui{Duas cópias}. Cada uma tem uma seção neste manual.
+
+\subsection{Ligar e desligar em massa}
+
+Selecionar várias linhas e usar \ui{Marcar selecionados} ou \ui{Desmarcar
+selecionados} faz tudo num lote só. Acima de um certo número, o programa
+pergunta antes.
+
+Se o lugar de um addon estiver ocupado por outro addon seu, o programa não
+recusa: ele oferece a \textbf{troca}, que sai e entra numa operação só, com uma
+linha só no diário e um desfazer só.
+
+\subsection{Categorias}
+
+O menu de contexto da árvore cria, renomeia e apaga categorias, e move addons
+entre elas. Só categoria vazia pode ser apagada.
+
+\ui{Sugerir categorias} lê regras sobre o nome da pasta e sobre o
+\where|manifest.json| e propõe mover o que estiver fora do lugar. As regras que
+acertam sozinhas já vêm marcadas; a regra de livery vem desmarcada porque erra
+com frequência, então confira antes de aplicar.
+
+\subsection{Fixar o destino}
+
+Por padrão, um addon é ligado no destino padrão do perfil. \ui{Fixar o destino}
+prende um addon ou uma categoria inteira a um destino específico. Quando a
+fixação aponta para uma pasta que deixou de ser destino do perfil, o programa
+avisa e usa o destino padrão enquanto for assim, sem apagar a fixação da
+configuração.
+
+\subsection{Reapontar}
+
+Quando um link existe mas aponta para o lugar errado, ou para uma pasta que
+sumiu, \ui{Reapontar para a biblioteca} o conserta. Reparar nunca toca os
+arquivos reais: só o nó de reparse é reescrito.
+
+\section{Destinos}
+
+A aba \ui{Destinos} mostra tudo que está dentro das pastas que o simulador lê,
+inclusive o que não é seu. Cada entrada recebe uma classificação.
+
+\shot{02-community.png}{Os destinos, com o filtro de classificação no topo e a
+contagem de cada tipo no rodapé.}
+
+\begin{description}
+  \item[Gerenciada] O simulador carrega da sua biblioteca. É o estado normal.
+  \item[Externa] Pasta física, ainda fora de uma biblioteca. Outro programa a
+    instalou ali.
+  \item[Divergente] O outro programa retomou a pasta dele, então existem duas
+    cópias.
+  \item[Sumida] A cópia da biblioteca sumiu, levada pelo outro programa. Não há
+    o que reparar: o conteúdo não existe mais nesta máquina.
+  \item[Quebrada] O alvo do link não existe.
+  \item[Indisponível] O volume não está presente agora. Pode voltar, e por isso
+    o programa não oferece limpeza.
+  \item[Não gerenciada] Pasta física que ninguém adotou.
+  \item[Duplicada] Ligada em mais de um destino.
+\end{description}
+
+O filtro no topo reduz a lista por classificação, e \ui{Selecionar tudo que o
+filtro mostra} marca exatamente o que está visível.
+
+\subsection{Adotar uma pasta de outro programa}
+
+\ui{Importar esta pasta} move a pasta para a sua biblioteca e deixa um link no
+lugar dela. A partir daí ela vira um addon seu como qualquer outro.
+
+O programa é explícito sobre o risco: \textbf{o outro programa não sabe do
+link}. A próxima atualização dele pode escrever dentro do
+link, ou substituí-lo por uma pasta de verdade e deixar você com duas cópias.
+Nada no FS Organizer consegue impedir isso. Quando acontecer, a entrada aparece
+como \ui{Divergente} e o programa oferece escolher qual cópia fica.
+
+Você pode devolver o addon ao programa que o instalou depois, pelo
+\ui{Excluir da biblioteca}.
+
+\section{Importar}
+
+Importar copia uma pasta física para a biblioteca e deixa um link no lugar dela.
+A pasta original só é removida depois da verificação.
+
+A operação tem cinco passos, e o diário registra cada um:
+
+\shot{27-community-import.png}{O diálogo de importação, que diz quanto vai ser
+copiado, para qual biblioteca e categoria, e em que caminho o addon vai ficar.}
+
+\begin{enumerate}
+  \item Copiar para a área de staging.
+  \item Verificar a cópia.
+  \item Pôr a cópia no lugar definitivo.
+  \item Remover a pasta de origem.
+  \item Criar o link no destino.
+\end{enumerate}
+
+Enquanto a cópia corre, uma janela mostra em que pasta está, quanto já foi e o
+botão \ui{Cancelar}. Cancelar não apaga nada: o que já foi copiado fica onde
+está, para a retomada.
+
+\subsection{Verificação depois de copiar}
+
+Em \ui{Opções}, na aba \ui{Links}, a verificação tem duas formas.
+
+\begin{description}
+  \item[Por estrutura] Confere contagem e tamanho de cada arquivo. É o padrão.
+  \item[Por hash] Lê os dois lados inteiros e compara os bytes, o que pega uma
+    mudança que o tamanho esconde. Deixa a importação várias vezes mais lenta, e
+    a quantidade de arquivos pesa mais do que o tamanho deles.
+\end{description}
+
+Se a cópia não conferir, nada é removido.
+
+\subsection{Importações pela metade}
+
+Se uma importação for interrompida, a abertura seguinte oferece três saídas:
+retomar, descartar a cópia pela metade, ou deixar como está. Os arquivos
+originais continuam onde estavam, e nada foi removido do destino.
+
+Quando a metade parada é uma resolução de conflito, só o descarte é oferecido,
+porque as duas cópias continuam onde estavam.
+
+\section{Quarentena}
+
+Quando duas cópias do mesmo addon disputam o mesmo nome, a perdedora vai para a
+quarentena em vez de ser apagada. \textbf{Nada sai da quarentena sem você
+mandar}, e nada é apagado ao entrar.
+
+Ao lado de cada item, o programa grava de onde ele veio. Esse registro é
+independente do diário, e é o que permite restaurar um item mesmo depois de o
+diário ser apagado. A tabela mostra as duas fontes, \ui{O registro diz} e
+\ui{O Diário diz}, e avisa quando elas discordam.
+
+\shot{05-quarantine.png}{A quarentena, com a origem de cada item e o aviso quando o
+registro e o diário discordam.}
+
+\ui{Restaurar} devolve cada pasta para o lugar de onde veio. Nada é sobrescrito:
+o que colidiria é listado com as duas versões, e substituir põe o ocupante na
+quarentena com a origem dele gravada. \ui{Descartar} apaga do disco de vez, e
+pergunta antes.
+
+\section{Excluir addon da biblioteca}
+
+\ui{Excluir} oferece três rotas, e diz de antemão quando uma delas não vai
+funcionar.
+
+\begin{description}
+  \item[Mover para a Lixeira] Você pode devolvê-lo pelo próprio Windows. O
+    programa recusa a rota quando a seleção não cabe na Lixeira daquele volume,
+    ou quando o addon tem caminho acima dos 260 caracteres em que a Lixeira
+    para. O Windows pode descartar em silêncio itens mais antigos da Lixeira
+    para abrir espaço, e o programa não tem como impedir.
+  \item[Excluir definitivamente] Não tem volta, nem pela Lixeira.
+  \item[Devolver ao outro programa] Só aparece para addon que veio de outro
+    programa. Os bytes voltam para a pasta que aquele programa administra, e a
+    cópia da biblioteca vai embora junto com a importação que a criou.
+\end{description}
+
+Desabilitar faz parte da exclusão e acontece porque você pediu: o link some
+junto com o addon.
+
+\section{Simulador}
+
+A aba \ui{Simulador} tem dois painéis, e os dois mexem em arquivos do próprio
+simulador. Em ambos, o programa mantém uma cópia de segurança do arquivo ao lado
+dele, e nenhum dos dois escreve enquanto o simulador está rodando.
+
+\subsection{Entradas de inicialização}
+
+O simulador tem um arquivo que decide o que abre junto com ele. O painel
+\ui{Entradas de inicialização} lista esses programas e liga ou desliga cada um,
+sem você editar XML.
+
+O programa \textbf{grava uma coisa só ali: o interruptor de uma entrada que já
+existe}. Ele nunca acrescenta, remove nem reordena.
+
+\shot{19-simulator-startup.png}{As entradas de inicialização, com o programa que
+cada uma lança e o interruptor dela.}
+
+Esse gerenciamento vem desligado. Enquanto estiver assim, o programa não lê nem
+grava aquele arquivo.
+
+Desabilitar um addon que carrega uma entrada de inicialização viva faz o
+programa avisar antes: deixar a entrada ligada faria o simulador seguir tentando
+lançar um programa que não vai estar lá. Desligar os dois é uma operação só, uma
+linha só no diário, desfeita de uma vez.
+
+\subsection{Lista de pacotes}
+
+O simulador traz aeroportos próprios. Quando um aeroporto seu cobre o mesmo
+lugar que um deles, o painel \ui{Lista de pacotes} mostra o par e deixa você
+desligar o do simulador.
+
+Desligar grava \textbf{um valor} na lista de pacotes. O programa não acrescenta,
+não remove e não reordena nada, e recusa uma entrada que não traga o atributo em
+vez de acrescentá-lo, porque XML inválido faz o simulador zerar a lista toda.
+
+Entre dois addons \textbf{seus}, o programa só mostra o par e não desliga nada:
+desligar um é habilitar e desabilitar, coisa que você já faz na aba
+\ui{Biblioteca}.
+
+Este painel também vem desligado, e enquanto estiver assim o arquivo não é lido
+nem gravado.
+
+\section{Documentos}
+
+A aba \ui{Documentos} acha os PDFs que os seus addons trazem e os abre dentro do
+programa. Ler a biblioteca percorre todo addon procurando PDF, e o que ela achar
+fica gravado para a próxima vez ser instantânea.
+
+O que ela encontra é separado em dois: \ui{Cartas} e \ui{Manuais}. Um addon pode
+trazer um manual e cento e cinquenta cartas, e por isso a contagem aparece antes
+da lista. As cartas são agrupadas por aeroporto e por tipo, quando o addon traz
+um catálogo que as descreve.
+
+O leitor tem índice, busca no documento, ajuste à largura e marca-páginas. O
+marca-página que você não nomear recebe o número da página. O botão
+\ui{Destacar} tira o leitor para uma janela à parte.
+
+\shot{26-documents.png}{A aba de documentos: as cartas agrupadas por aeroporto à
+esquerda, o leitor no meio e o índice do documento à direita.}
+
+Carta e manual nascem com gestos diferentes: na carta, a roda aproxima e
+arrastar passeia a página; no manual, os dois começam desligados. Os dois
+alternadores da barra dizem o que fazem.
+
+\section{Diagnósticos}
+
+A aba \ui{Diagnósticos} responde pelo que a varredura achou. Cada número traz a
+hora em que foi medido, e medir de novo é sempre um botão.
+
+\shot{09-diagnostics-size.png}{A seção de tamanho em disco, com o total por
+categoria e por addon, e a hora da medição.}
+
+\begin{description}
+  \item[Entradas dos destinos] Quantas entradas existem, contadas pelo que cada
+    uma é, e o caminho mais longo de cada biblioteca.
+  \item[Quebradas, indisponíveis] O que está quebrado e o que está parado num
+    volume ausente, com o reparo dos quebrados ali mesmo.
+  \item[Quarentena] Quanto está retido, sem esvaziar nada daqui.
+  \item[Tamanho em disco] Quanto cada categoria e cada addon ocupam. Varre a
+    árvore inteira, e isso leva segundos: o botão \ui{Parar} para depois do
+    addon que está sendo medido agora.
+  \item[Aeroportos no cenário] Lê o cenário de cada addon e separa três casos:
+    com código de aeroporto, com registro que não decodificou, e sem registro de
+    aeroporto.
+  \item[Módulos que o simulador carregou] Lê o relatório que o simulador escreve
+    quando um carregamento demora. Ele não atribui tempo a pacote nenhum, então
+    esta tela não mostra tempo por addon; o que ele atribui é o módulo que cada
+    pacote carregou e a memória que esse módulo segura.
+\end{description}
+
+\subsection{Achar o culpado}
+
+Quando o simulador cai e você não sabe qual addon derruba, o painel \ui{Achar o
+culpado} conduz uma busca por metades. Ele desliga metade dos seus addons, você
+sobe o simulador e responde \ui{Ele caiu} ou \ui{Rodou bem}, e a busca elimina
+metade das suspeitas a cada rodada.
+
+Três coisas a saber antes de começar:
+
+\shot{31-diagnostics-bisection.png}{A busca pelo culpado, com a rodada corrente, o
+que já foi descartado e as duas respostas que o usuário dá.}
+
+\begin{itemize}
+  \item A unidade da busca não é o addon, é a \textbf{unidade}: um addon
+    sozinho, ou um grupo que tem de andar junto porque compartilha pasta de
+    modelo. O painel diz por que os membros de um grupo andam juntos, e oferece
+    partir o grupo quando isso deixa um estado que dá para interpretar.
+  \item A primeira rodada desliga \textbf{tudo} que é seu. É ela que separa uma
+    causa entre os seus addons de uma causa fora deles.
+  \item A sua configuração é gravada antes da primeira rodada e volta quando
+    isto encerrar, seja como for que encerre, inclusive quando você parar no
+    meio. Se o programa for fechado durante a busca, a abertura seguinte oferece
+    repor.
+\end{itemize}
+
+O método supõe um culpado único. Dois addons que só derrubam o simulador com os
+dois ligados convergiriam num inocente, e o painel diz isso.
+
+\section{Diário}
+
+Toda operação que escreve no disco vira uma linha no \ui{Diário}. Ele é
+append-only, nada na tela dele escreve no disco, e \textbf{o programa nunca o
+apaga}.
+
+Cada linha traz quando, qual operação, qual addon, qual biblioteca, origem,
+destino e resultado. O filtro \ui{Só o que falhou} reduz a lista ao que deu
+errado, e a busca cobre addon, caminho e operação.
+
+O \ui{Desfazer último lote} vive aqui e na aba \ui{Biblioteca}: ele volta o
+último lote inteiro, e não uma operação dentro dele.
+
+\section{Opções}
+
+A engrenagem no cabeçalho abre as opções, em cinco abas.
+
+\shot{10-options-profiles.png}{A aba de perfis e bibliotecas das opções.}
+
+\begin{description}
+  \item[Perfis e bibliotecas] Adiciona e remove perfis, troca destinos, cadastra
+    e descadastra bibliotecas. Descadastrar remove a biblioteca da configuração
+    e não apaga arquivo nenhum: os links que apontavam para ela continuam
+    funcionando no simulador, mas passam a aparecer como links de terceiros, que
+    o programa não toca.
+  \item[Links] O tipo de link e a verificação depois de copiar.
+  \item[Atualizações] Automática, avisar ou manual. A automática baixa a versão
+    nova sozinha e a aplica quando você fecha o programa.
+  \item[Idioma] Inglês e português do Brasil. A troca vale na hora, sem
+    reiniciar.
+  \item[Sobre] A versão, a licença e os créditos.
+\end{description}
+
+\section{Onde ficam as coisas}
+
+Toda a configuração do programa mora sob \where|%LOCALAPPDATA%\fs-organizer|,
+assim:
+
+\where|settings.json| guarda os perfis, as bibliotecas, os destinos e as suas
+escolhas.
+
+\where|journal\operations.jsonl| é o diário.
+
+\where|presets| guarda os presets, um arquivo por preset, mais o preset de
+retorno de cada perfil.
+
+\where|bisection| guarda o estado de uma busca pelo culpado em andamento. Ele
+deixa de existir quando a busca encerra.
+
+Nenhum arquivo seu de addon mora aí. Apagar essa pasta apaga a configuração e os
+presets, e não toca em addon nenhum: o programa reconstrói o que sabe relendo os
+destinos e as bibliotecas.
+
+\end{document}

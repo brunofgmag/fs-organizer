@@ -66,6 +66,11 @@ add_test(NAME no-em-dash
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-no-em-dash.cmake")
 
+add_test(NAME manual-is-current
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-manual-is-current.cmake")
+
 add_test(NAME translations-are-current
         COMMAND "${CMAKE_COMMAND}"
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"

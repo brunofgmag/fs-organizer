@@ -1,0 +1,4 @@
+# What LaTeX leaves behind. build.ps1 removes these, a hand-run does not.
+*.aux
+*.out
+*.toc

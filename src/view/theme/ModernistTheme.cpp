@@ -100,8 +100,9 @@ QFrame#TriageSeparator { background: %divider%; }
 QLabel#FooterRestart { color: %accentInk%; font-weight: 600; }
 QLabel#FooterSummary { color: %secondary%; }
 QLabel#FooterAside { color: %secondary%; }
-QProgressBar#FooterMeter { background: %raised%; border: none; }
-QProgressBar#FooterMeter::chunk { background: %accent%; }
+QProgressBar#FooterMeter, QProgressBar#ImportMeter { background: %raised%; border: none; }
+QProgressBar#FooterMeter::chunk, QProgressBar#ImportMeter::chunk { background: %accent%; }
+QLabel#ImportQuiet { color: %secondary%; }
 #PanelHeader { background: %chrome%; border-left: 1px solid %divider%; border-bottom: 1px solid %divider%; }
 #PanelBody { background: %chrome%; border-left: 1px solid %divider%; }
 #PanelRail { background: %chrome%; border-left: 1px solid %divider%; }
