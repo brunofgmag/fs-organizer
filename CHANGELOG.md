@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.48.0](https://github.com/brunofgmag/fs-organizer/compare/v0.47.0...v0.48.0) (2026-08-15)
+
+
+### Features
+
+* **manual:** the user manual in both languages, with the progress dialog swept and a guard over it ([#126](https://github.com/brunofgmag/fs-organizer/issues/126)) ([00ab139](https://github.com/brunofgmag/fs-organizer/commit/00ab1394b9454b42f75ae56b5878f68ee23c3a71))
+
 ## [0.47.0](https://github.com/brunofgmag/fs-organizer/compare/v0.46.0...v0.47.0) (2026-08-15)
 
 
