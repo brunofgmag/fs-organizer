@@ -130,6 +130,58 @@ through the same application service the documentation panel uses. It measures t
 many files no entry names. The last line says how long it took to read the chart
 version out of each PDF title.
 
+## The manual
+
+`docs/` holds the user manual as two PDFs, English and Brazilian Portuguese, and
+nothing else: it is the folder a reader of this repository opens. Everything
+they are built from lives in `manual/`: two independent `.tex` sources with the
+same section structure, a shared `fsorg-manual.sty` carrying the shape, the
+figures under `manual/figures/<language>/`, and whatever LaTeX leaves behind.
+
+```powershell
+./manual/build.ps1
+```
+
+That needs `lualatex` on the `PATH` and a TeX distribution that installs
+packages on demand. MiKTeX works:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\scoop\apps\latex\current\texmfs\install\miktex\bin\x64;$env:PATH"
+```
+
+No CI job installs TeX, on purpose: a TeX distribution is a large dependency for
+a document that changes a few times a year. The price is a PDF that can drift
+from the source that made it, and the way that price is paid is rebuilding both
+at the close of every release and committing whatever changes. `-Check` reports
+the drift without building anything:
+
+```powershell
+./manual/build.ps1 -Check
+```
+
+It compares the heading structure of the two languages and refuses if they have
+diverged, checks that both covers print the version in `VERSION.txt`, checks
+that every figure the sources ask for is on disk, and flags a PDF that is older
+than its `.tex`. No release goes out with the manual in one language only, or
+printing last release's number.
+
+The figures are screens of the app, taken with `fsorg-shot` in the dark theme
+and in the language of each manual, then trimmed of the dead ground under their
+content:
+
+```powershell
+./build/release/Release/fsorg-shot.exe --out manual/figures/pt_BR --theme dark --lang pt_BR
+python manual/trim-figures.py manual/figures
+```
+
+The cover carries the mark, the wordmark and nothing else. The cover and the
+running head draw that mark in TikZ, from the same coordinates as
+`assets/branding/logo-light.svg`, so nothing under `manual/` carries a second
+copy of the logo.
+
+The manual lives in this repository and not with the specification because it is
+part of the product: a user who downloads a release has to be able to read it.
+
 ## Packaging
 
 `build.ps1` deploys the Qt runtime, prunes what the app does not load, copies the

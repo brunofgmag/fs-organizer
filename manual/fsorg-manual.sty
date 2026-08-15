@@ -1,0 +1,133 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{fsorg-manual}[2026/08/15 Shared shape for the FS Organizer user manual]
+
+% headheight carries the mark, which is taller than a line of text; without the
+% room it asks for, fancyhdr rules the first line of the body through.
+\RequirePackage[a4paper,margin=3cm,top=2.4cm,headheight=20pt,headsep=16pt,bottom=2.6cm]{geometry}
+\RequirePackage{fontspec}
+\RequirePackage{xcolor}
+\RequirePackage{graphicx}
+\RequirePackage{tikz}
+\RequirePackage{etoolbox}
+\RequirePackage{titlesec}
+\RequirePackage{fancyhdr}
+\RequirePackage{enumitem}
+\RequirePackage{booktabs}
+\RequirePackage{tabularx}
+\RequirePackage[obeyspaces]{url}
+\RequirePackage{microtype}
+\RequirePackage{hyperref}
+
+% The tones the app itself paints with, from src/view/theme/ModernistTones.cpp.
+\definecolor{fsorgaccent}{HTML}{CC2C11}
+\definecolor{fsorgink}{HTML}{201E1D}
+\definecolor{fsorgquiet}{HTML}{504D4D}
+\definecolor{fsorgedge}{HTML}{BAB6B6}
+
+\setmainfont{Archivo}[
+  Path = ../assets/fonts/ ,
+  Extension = .ttf ,
+  UprightFont = *-Regular ,
+  BoldFont = *-SemiBold ,
+  ItalicFont = *-Regular ,
+  BoldItalicFont = *-SemiBold ,
+  Numbers = Tabular ]
+
+\newfontfamily\fsorgheavy{Archivo}[
+  Path = ../assets/fonts/ ,
+  Extension = .ttf ,
+  UprightFont = *-ExtraBold ]
+
+\setmonofont{Latin Modern Mono}[Scale=MatchLowercase]
+
+% The mark of the app, drawn from the same coordinates as assets/branding/logo-light.svg.
+% The argument is the size of one of the 48 units the mark is laid out in.
+\newcommand{\fsorgmark}[1]{%
+  \begin{tikzpicture}[x=#1,y=-#1,baseline=0pt]
+    \fill[fsorgaccent] (0,0) rectangle (48,48);
+    \fill[white] (8,12) -- (20,12) -- (23,16) -- (40,16) -- (40,36) -- (8,36) -- cycle;
+    \fill[fsorgaccent] (33,21.5) -- (14,28) -- (20.5,30) -- (21,35) -- (24,31.2) -- (29.5,32.8) -- cycle;
+  \end{tikzpicture}}
+
+% The wordmark, set the way the header of the app sets it: ExtraBold, with the
+% second word carried by the accent.
+\newcommand{\fsorgwordmark}[1]{%
+  {\fsorgheavy\fontsize{#1}{#1}\selectfont FS\,\textcolor{fsorgaccent}{Organizer}}}
+
+\titleformat{\section}{\color{fsorgaccent}\fsorgheavy\LARGE}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\bfseries\large}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{0pt}{1.1em}
+\titlespacing*{\subsection}{0pt}{1.7em}{0.5em}
+
+% Every section opens a page, the way the manuals that ship with addons do it.
+\pretocmd{\section}{\clearpage}{}{}
+
+\setlist[itemize]{leftmargin=1.2em,itemsep=0.3em,topsep=0.4em}
+\setlist[description]{leftmargin=0pt,itemsep=0.6em,topsep=0.6em,style=nextline,font=\bfseries}
+
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\color{fsorgquiet}\small\fsorgrunninghead}
+% The mark hangs below its own baseline, so it is raised by its full height to
+% sit on the line the running head sits on, above the rule.
+\fancyhead[R]{\raisebox{\dimexpr 48\dimexpr 0.115mm\relax\relax}{\fsorgmark{0.115mm}}}
+\fancyfoot[C]{\color{fsorgquiet}\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\color{fsorgedge}\hrule height \headrulewidth}
+
+\newcommand{\fsorgrunninghead}{}
+\newcommand{\fsorgrunningheadis}[1]{\renewcommand{\fsorgrunninghead}{#1}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=fsorgaccent,
+  urlcolor=fsorgaccent,
+  pdfborder={0 0 0}}
+
+\DeclareUrlCommand\where{\ttfamily\small}
+
+\newcommand{\ui}[1]{\textbf{#1}}
+
+% A screen of the app, at the width of the text, with the caption under it. It
+% does not float: every one of them illustrates the paragraph right above.
+\newcommand{\shot}[2]{%
+  \par\medskip
+  \noindent
+  \setlength{\fboxsep}{0pt}%
+  \setlength{\fboxrule}{0.4pt}%
+  \fcolorbox{fsorgedge}{white}{\includegraphics[width=\dimexpr\linewidth-0.8pt\relax]{#1}}%
+  \par\nobreak\smallskip
+  {\small\color{fsorgquiet}#2\par}
+  \medskip}
+
+% The table of contents wants tighter leading than the prose, and it is the one
+% place where a coloured link would read as a mistake instead of as a link.
+\let\fsorgcontents\tableofcontents
+\renewcommand{\tableofcontents}{%
+  \begingroup
+  \setlength{\parskip}{0pt}%
+  \hypersetup{linkcolor=fsorgink}%
+  \fsorgcontents
+  \endgroup}
+
+\newcommand{\fsorgtitle}[4]{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \raggedright
+    \vspace*{5.5cm}
+    \fsorgmark{0.55mm}
+    \par\vspace{1.1cm}
+    \fsorgwordmark{40}
+    \par\vspace{0.35cm}
+    {\fontsize{18}{22}\selectfont\color{fsorgink}#1\par}
+    \vspace{0.4cm}
+    {\color{fsorgquiet}#2\par}
+    \vfill
+    {\color{fsorgquiet}\small #3\par}
+    {\color{fsorgquiet}\small #4\par}
+  \end{titlepage}}
+
+\endinput
