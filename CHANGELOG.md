@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.46.0](https://github.com/brunofgmag/fs-organizer/compare/v0.45.0...v0.46.0) (2026-08-15)
+
+
+### Features
+
+* **import:** read the hash verification in batches, with its own bar ([#122](https://github.com/brunofgmag/fs-organizer/issues/122)) ([5cc46aa](https://github.com/brunofgmag/fs-organizer/commit/5cc46aa17e547a6d049a14013513a12196e6381b))
+
 ## [0.45.0](https://github.com/brunofgmag/fs-organizer/compare/v0.44.0...v0.45.0) (2026-08-14)
 
 
