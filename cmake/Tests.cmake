@@ -1344,6 +1344,16 @@ if (WIN32)
     target_link_libraries(fsorg-import-progress-dialog-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-import-progress-dialog-tests import-progress-dialog)
 
+    fsorg_add_qt_test(fsorg-bisection-panel-tests bisection-panel
+            tests/view/tst_bisection_panel.cpp
+            tests/doubles/FakeBisectionStore.h
+            tests/doubles/InMemoryFileSystem.h
+            tests/doubles/InlineBackgroundRunner.h
+            tests/doubles/StartupOverFakes.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-bisection-panel-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-bisection-panel-tests bisection-panel)
+
     fsorg_add_qt_test(fsorg-omitted-dialog-tests omitted-dialog
             tests/view/tst_omitted_dialog.cpp)
     target_link_libraries(fsorg-omitted-dialog-tests PRIVATE fsorg-view)
