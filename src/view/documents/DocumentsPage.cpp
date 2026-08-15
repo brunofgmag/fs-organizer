@@ -211,7 +211,7 @@ QWidget* DocumentsPage::TheIndexSide()
     progress_ = new QWidget(this);
 
     auto* below = new QVBoxLayout(progress_);
-    below->setContentsMargins(0, 8, 0, 0);
+    below->setContentsMargins(kPageGutter, 8, kPageGutter, kPageGutter);
     below->setSpacing(6);
     below->addWidget(howFar_);
     below->addWidget(meter_);
