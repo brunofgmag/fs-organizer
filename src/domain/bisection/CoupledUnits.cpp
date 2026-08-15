@@ -55,6 +55,49 @@ namespace
         }
     }
 
+    void SplitByWhatTheyWrite(const std::vector<CouplingFacts>& facts,
+                              Merger& writers,
+                              const std::vector<std::size_t>& members,
+                              SearchUnit& unit)
+    {
+        if (members.size() < 2)
+        {
+            return;
+        }
+
+        std::map<std::size_t, std::vector<std::filesystem::path>> sharing;
+
+        for (const std::size_t member : members)
+        {
+            sharing[writers.OwnerOf(member)].push_back(facts[member].folder);
+        }
+
+        for (auto& [owner, folders] : sharing)
+        {
+            if (folders.size() < 2)
+            {
+                unit.writingApart.push_back(folders.front());
+
+                continue;
+            }
+
+            unit.writingTogether.push_back(std::move(folders));
+        }
+
+        std::ranges::sort(
+            unit.writingTogether,
+            [](const std::vector<std::filesystem::path>& one, const std::vector<std::filesystem::path>& other)
+            {
+                return ComparablePath(one.front()) < ComparablePath(other.front());
+            });
+
+        std::ranges::sort(unit.writingApart,
+                          [](const std::filesystem::path& one, const std::filesystem::path& other)
+                          {
+                              return ComparablePath(one) < ComparablePath(other);
+                          });
+    }
+
     [[nodiscard]] std::optional<std::filesystem::path> BaseOf(const std::vector<CouplingFacts>& facts,
                                                               const std::vector<std::size_t>& members)
     {
@@ -106,6 +149,9 @@ std::vector<SearchUnit> UnitsFrom(const std::vector<CouplingFacts>& facts)
         }
     }
 
+    Merger writers(facts.size());
+    JoinEveryoneSharing(writers, byWrittenPath);
+
     JoinEveryoneSharing(merger, byModelFolder);
     JoinEveryoneSharing(merger, byWrittenPath);
 
@@ -142,6 +188,7 @@ std::vector<SearchUnit> UnitsFrom(const std::vector<CouplingFacts>& facts)
 
         SearchUnit unit;
         unit.base = BaseOf(facts, members);
+        SplitByWhatTheyWrite(facts, writers, members, unit);
         unit.addons.reserve(members.size());
 
         for (const std::size_t member : members)

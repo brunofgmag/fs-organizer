@@ -23,6 +23,8 @@ namespace
     constexpr auto kAddons = "addons";
     constexpr auto kBase = "base";
     constexpr auto kCoupling = "coupling";
+    constexpr auto kWritingTogether = "writingTogether";
+    constexpr auto kWritingApart = "writingApart";
     constexpr auto kSuspects = "suspects";
     constexpr auto kCleared = "cleared";
     constexpr auto kAlwaysOn = "alwaysOn";
@@ -114,11 +116,37 @@ namespace
         return numbers;
     }
 
+    QJsonArray GroupsToJson(const std::vector<std::vector<std::filesystem::path>>& groups)
+    {
+        QJsonArray array;
+
+        for (const std::vector<std::filesystem::path>& folders : groups)
+        {
+            array.append(PathsToJson(folders));
+        }
+
+        return array;
+    }
+
+    std::vector<std::vector<std::filesystem::path>> GroupsFromJson(const QJsonArray& array)
+    {
+        std::vector<std::vector<std::filesystem::path>> groups;
+
+        for (const QJsonValue folders : array)
+        {
+            groups.push_back(PathsFromJson(folders.toArray()));
+        }
+
+        return groups;
+    }
+
     QJsonObject ToJson(const SearchUnit& unit)
     {
         QJsonObject object;
         object[kAddons] = PathsToJson(unit.addons);
         object[kCoupling] = static_cast<int>(unit.coupling);
+        object[kWritingTogether] = GroupsToJson(unit.writingTogether);
+        object[kWritingApart] = PathsToJson(unit.writingApart);
 
         if (unit.base.has_value())
         {
@@ -134,6 +162,8 @@ namespace
         unit.addons = PathsFromJson(object.value(kAddons).toArray());
         unit.coupling =
             static_cast<Coupling>(object.value(kCoupling).toInt(static_cast<int>(Coupling::NotYetMeasured)));
+        unit.writingTogether = GroupsFromJson(object.value(kWritingTogether).toArray());
+        unit.writingApart = PathsFromJson(object.value(kWritingApart).toArray());
 
         if (object.contains(kBase))
         {

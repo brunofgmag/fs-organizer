@@ -226,9 +226,20 @@ namespace
             Out() << "  a group of " << unit.addons.size() << ", " << TheKind(unit.coupling) << ", base " << base
                   << "\n";
 
-            for (const std::filesystem::path& member : unit.addons)
+            for (const std::vector<std::filesystem::path>& sharing : unit.writingTogether)
             {
-                Out() << "      " << AsText(member.filename()) << "\n";
+                const std::size_t others = sharing.size() - 1;
+                const char* counted = others == 1 ? " other)\n" : " others)\n";
+
+                for (const std::filesystem::path& member : sharing)
+                {
+                    Out() << "      " << AsText(member.filename()) << "  (shares a folder with " << others << counted;
+                }
+            }
+
+            for (const std::filesystem::path& member : unit.writingApart)
+            {
+                Out() << "      " << AsText(member.filename()) << "  (only the shared model folder name)\n";
             }
         }
     }
@@ -365,7 +376,7 @@ int main(int argc, char* argv[])
         const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
         const std::vector<CouplingFacts> facts = world.coupling.FactsAbout(enabled);
         const std::chrono::steady_clock::time_point grouped = std::chrono::steady_clock::now();
-        const std::vector<SearchUnit> units = world.coupling.WithTheKindOfEachGroup(facts, UnitsFrom(facts));
+        const std::vector<SearchUnit> units = world.coupling.WithTheKindOfEachGroup(UnitsFrom(facts));
         const std::chrono::steady_clock::time_point ended = std::chrono::steady_clock::now();
 
         ReportUnits(units);
@@ -406,7 +417,7 @@ int main(int argc, char* argv[])
 
             const std::vector<CouplingFacts> facts = world.coupling.FactsAbout(enabled);
 
-            ReportUnits(world.coupling.WithTheKindOfEachGroup(facts, UnitsFrom(facts)));
+            ReportUnits(world.coupling.WithTheKindOfEachGroup(UnitsFrom(facts)));
             Out() << "\nthe reference round turns everything off, and it is the first thing applied\n";
             Out().flush();
 

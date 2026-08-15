@@ -1,5 +1,7 @@
 #include "view/diagnostics/BisectionPanel.h"
 
+#include <algorithm>
+
 #include <QtCore/QEvent>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
@@ -71,6 +73,13 @@ namespace
         return tree;
     }
 
+    [[nodiscard]] QTreeWidget* ThatOpensIntoItsMembers(QTreeWidget* tree)
+    {
+        tree->setRootIsDecorated(true);
+
+        return tree;
+    }
+
     [[nodiscard]] QVBoxLayout* AColumnInside(QWidget* pane)
     {
         auto* column = new QVBoxLayout(pane);
@@ -80,19 +89,53 @@ namespace
         return column;
     }
 
-    [[nodiscard]] QString HowTheyAreCoupled(const Coupling coupling)
+    [[nodiscard]] std::size_t WritingApartIn(const UnitOnScreen& unit)
     {
-        switch (coupling)
+        return static_cast<std::size_t>(std::ranges::count_if(unit.members,
+                                                              [](const MemberOnScreen& member)
+                                                              {
+                                                                  return member.writesWith == 0;
+                                                              }));
+    }
+
+    [[nodiscard]] QString HeldByTheModelFolderName(const UnitOnScreen& unit)
+    {
+        const std::size_t apart = WritingApartIn(unit);
+
+        if (apart == 0 || apart == unit.members.size())
+        {
+            return QObject::tr("held together only by the shared model folder name");
+        }
+
+        return QObject::tr("%n of them held only by the shared model folder name, and the other %1 share a folder "
+                           "inside the model",
+                           nullptr, static_cast<int>(apart))
+            .arg(unit.members.size() - apart);
+    }
+
+    [[nodiscard]] QString HowTheyAreCoupled(const UnitOnScreen& unit)
+    {
+        switch (unit.coupling)
         {
         case Coupling::Merge: return QObject::tr("they share a model folder and no file twice");
         case Coupling::Shadowing: return QObject::tr("one of them writes over a file of another");
-        case Coupling::OnlyTheSharedModelFolder:
-            return QObject::tr("held together only by the shared model folder name");
+        case Coupling::OnlyTheSharedModelFolder: return HeldByTheModelFolderName(unit);
         case Coupling::Alone:
         case Coupling::NotYetMeasured: break;
         }
 
         return QString();
+    }
+
+    [[nodiscard]] QString HowItIsHeld(const MemberOnScreen& member)
+    {
+        if (member.writesWith == 0)
+        {
+            return QObject::tr("only the shared model folder name in common");
+        }
+
+        return QObject::tr("shares a folder inside the model with %n other", nullptr,
+                           static_cast<int>(member.writesWith));
     }
 
     [[nodiscard]] QString AtWhatTime(const std::chrono::system_clock::time_point at)
@@ -216,7 +259,7 @@ QWidget* BisectionPanel::CreateTheOpening()
     announced_ = Loud(pane);
     outOfReach_ = Quiet(pane);
     promise_ = Quiet(pane);
-    toBeSearched_ = UnitTable(QStringLiteral("BisectionUnits"), pane);
+    toBeSearched_ = ThatOpensIntoItsMembers(UnitTable(QStringLiteral("BisectionUnits"), pane));
     start_ = new QPushButton(pane);
     start_->setObjectName(QStringLiteral("PrimaryButton"));
 
@@ -242,7 +285,7 @@ QWidget* BisectionPanel::CreateTheRound()
     standing_ = Quiet(pane);
     ask_ = Loud(pane);
     hint_ = Quiet(pane);
-    turnedOn_ = UnitTable(QStringLiteral("BisectionTurnedOn"), pane);
+    turnedOn_ = ThatOpensIntoItsMembers(UnitTable(QStringLiteral("BisectionTurnedOn"), pane));
     crashed_ = new QPushButton(pane);
     crashed_->setObjectName(QStringLiteral("PrimaryButton"));
     ranFine_ = new QPushButton(pane);
@@ -361,7 +404,7 @@ QWidget* BisectionPanel::CreateTheOutcome()
     outcome_ = Loud(pane);
     aboutTheSecondPass_ = Quiet(pane);
     singleCulprit_ = Quiet(pane);
-    whatIsLeft_ = UnitTable(QStringLiteral("BisectionWhatIsLeft"), pane);
+    whatIsLeft_ = ThatOpensIntoItsMembers(UnitTable(QStringLiteral("BisectionWhatIsLeft"), pane));
     refine_ = new QPushButton(pane);
     refine_->setObjectName(QStringLiteral("PrimaryButton"));
     bringThemIn_ = new QPushButton(pane);
@@ -637,9 +680,18 @@ void BisectionPanel::ListTheUnitsOf(QTreeWidget* tree, const std::vector<UnitOnS
         auto* row = new QTreeWidgetItem(tree);
         row->setText(0, unit.name);
         row->setText(1, unit.addons > 1 ? QString::number(unit.addons) : QString());
-        row->setText(2, HowTheyAreCoupled(unit.coupling));
+        row->setText(2, HowTheyAreCoupled(unit));
         row->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         row->setData(1, QuietRole, true);
         row->setData(2, QuietRole, true);
+
+        for (const MemberOnScreen& member : unit.members)
+        {
+            auto* inside = new QTreeWidgetItem(row);
+            inside->setText(0, member.name);
+            inside->setText(2, HowItIsHeld(member));
+            inside->setData(0, QuietRole, true);
+            inside->setData(2, QuietRole, true);
+        }
     }
 }

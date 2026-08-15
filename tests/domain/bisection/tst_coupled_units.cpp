@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "domain/bisection/CoupledUnits.h"
+#include "domain/support/PathUtils.h"
 #include "tests/support/PathPrinting.h"
 
 namespace
@@ -20,6 +21,9 @@ namespace
         static void AUnitWithTwoMembersDeclaringNoBaseHasNoBase();
         static void UnitsComeOutInAStableOrder();
         static void TheEighteenOfTheMd11ComeTogetherOnTheNameAloneAndNothingElseHoldsThem();
+        static void TheMd11SaysTheSeventeenLiveriesWriteTogetherAndTheBaseStandsApart();
+        static void AGroupWhoseMembersAllWriteInTheSameFolderLeavesNobodyApart();
+        static void AUnitOfOneAddonCarriesNoPartition();
     };
 }
 
@@ -53,6 +57,13 @@ namespace
     std::vector<std::filesystem::path> AddonsOf(const SearchUnit& unit)
     {
         return unit.addons;
+    }
+
+    CouplingFacts Writing(CouplingFacts facts, const std::string& under)
+    {
+        facts.writesInside.push_back(PathFromUtf8("SimObjects/Airplanes/" + std::string(kMd11Model) + "/" + under));
+
+        return facts;
     }
 }
 
@@ -188,6 +199,48 @@ void CoupledUnitsTest::TheEighteenOfTheMd11ComeTogetherOnTheNameAloneAndNothingE
     }
 
     QCOMPARE(UnitsFrom(withoutTheNameEdge).size(), std::size_t{18});
+}
+
+void CoupledUnitsTest::TheMd11SaysTheSeventeenLiveriesWriteTogetherAndTheBaseStandsApart()
+{
+    std::vector<CouplingFacts> library;
+    library.push_back(Writing(Providing(kMd11Base, kMd11Model), "common"));
+
+    for (int at = 0; at < 17; ++at)
+    {
+        library.push_back(Writing(
+            Satellite("D:/MSFS 2024/Liveries/tfdidesign-md11-livery-" + std::to_string(at), kMd11Model), "liveries"));
+    }
+
+    const std::vector<SearchUnit> units = UnitsFrom(library);
+
+    QCOMPARE(units.size(), std::size_t{1});
+    QCOMPARE(units.front().addons.size(), std::size_t{18});
+    QCOMPARE(units.front().writingTogether.size(), std::size_t{1});
+    QCOMPARE(units.front().writingTogether.front().size(), std::size_t{17});
+    QCOMPARE(units.front().writingApart, std::vector<std::filesystem::path>{kMd11Base});
+}
+
+void CoupledUnitsTest::AGroupWhoseMembersAllWriteInTheSameFolderLeavesNobodyApart()
+{
+    const std::vector<CouplingFacts> library = {Writing(Providing(kMd11LiveryOne, kMd11Model), "liveries"),
+                                                Writing(Satellite(kMd11LiveryTwo, kMd11Model), "liveries")};
+
+    const std::vector<SearchUnit> units = UnitsFrom(library);
+
+    QCOMPARE(units.size(), std::size_t{1});
+    QVERIFY(units.front().writingApart.empty());
+    QCOMPARE(units.front().writingTogether.size(), std::size_t{1});
+    QCOMPARE(units.front().writingTogether.front().size(), std::size_t{2});
+}
+
+void CoupledUnitsTest::AUnitOfOneAddonCarriesNoPartition()
+{
+    const std::vector<SearchUnit> units = UnitsFrom({Writing(Providing(kMd11Base, kMd11Model), "common")});
+
+    QCOMPARE(units.size(), std::size_t{1});
+    QVERIFY(units.front().writingTogether.empty());
+    QVERIFY(units.front().writingApart.empty());
 }
 
 QTEST_APPLESS_MAIN(CoupledUnitsTest)

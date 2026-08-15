@@ -4958,6 +4958,24 @@ Tamanho %2</translation>
         <source>held together only by the shared model folder name</source>
         <translation>presos só pelo nome da pasta de modelo compartilhada</translation>
     </message>
+    <message numerus="yes">
+        <source>%n of them held only by the shared model folder name, and the other %1 share a folder inside the model</source>
+        <translation>
+            <numerusform>%n deles preso só pelo nome da pasta de modelo compartilhada, e os outros %1 dividem uma pasta dentro do modelo</numerusform>
+            <numerusform>%n deles presos só pelo nome da pasta de modelo compartilhada, e os outros %1 dividem uma pasta dentro do modelo</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>shares a folder inside the model with %n other</source>
+        <translation>
+            <numerusform>divide uma pasta dentro do modelo com mais %n</numerusform>
+            <numerusform>divide uma pasta dentro do modelo com mais %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>only the shared model folder name in common</source>
+        <translation>só o nome da pasta de modelo compartilhada em comum</translation>
+    </message>
     <message>
         <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="86"/>
         <source>a link this program had put is gone</source>

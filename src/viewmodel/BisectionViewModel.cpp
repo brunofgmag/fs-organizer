@@ -2,6 +2,45 @@
 
 #include "support/PathText.h"
 
+namespace
+{
+    [[nodiscard]] std::vector<MemberOnScreen> MembersOf(const SearchUnit& unit)
+    {
+        std::vector<MemberOnScreen> members;
+
+        for (const std::filesystem::path& folder : unit.writingApart)
+        {
+            members.push_back(MemberOnScreen{.name = AsText(folder.filename()), .writesWith = 0});
+        }
+
+        for (const std::vector<std::filesystem::path>& sharing : unit.writingTogether)
+        {
+            for (const std::filesystem::path& folder : sharing)
+            {
+                members.push_back(MemberOnScreen{.name = AsText(folder.filename()), .writesWith = sharing.size() - 1});
+            }
+        }
+
+        return members;
+    }
+
+    [[nodiscard]] std::vector<UnitOnScreen> Showing(const std::vector<SearchUnit>& units)
+    {
+        std::vector<UnitOnScreen> shown;
+        shown.reserve(units.size());
+
+        for (const SearchUnit& unit : units)
+        {
+            shown.push_back(UnitOnScreen{.name = AsText(unit.addons.front().filename()),
+                                         .addons = unit.addons.size(),
+                                         .coupling = unit.coupling,
+                                         .members = MembersOf(unit)});
+        }
+
+        return shown;
+    }
+}
+
 BisectionViewModel::BisectionViewModel(BisectionService& bisection, Session& session, QObject* parent)
     : QObject(parent), bisection_(bisection), session_(session)
 {
@@ -168,28 +207,10 @@ std::size_t BisectionViewModel::RoundsLeftInTheWorstCase() const
 
 std::vector<UnitOnScreen> BisectionViewModel::WhatIsLeft() const
 {
-    std::vector<UnitOnScreen> shown;
-    shown.reserve(report_.unitsUnderSuspicion.size());
-
-    for (const SearchUnit& unit : report_.unitsUnderSuspicion)
-    {
-        shown.push_back(UnitOnScreen{
-            .name = AsText(unit.addons.front().filename()), .addons = unit.addons.size(), .coupling = unit.coupling});
-    }
-
-    return shown;
+    return Showing(report_.unitsUnderSuspicion);
 }
 
 std::vector<UnitOnScreen> BisectionViewModel::WhatToTurnOn() const
 {
-    std::vector<UnitOnScreen> shown;
-    shown.reserve(report_.unitsTurnedOn.size());
-
-    for (const SearchUnit& unit : report_.unitsTurnedOn)
-    {
-        shown.push_back(UnitOnScreen{
-            .name = AsText(unit.addons.front().filename()), .addons = unit.addons.size(), .coupling = unit.coupling});
-    }
-
-    return shown;
+    return Showing(report_.unitsTurnedOn);
 }

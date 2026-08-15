@@ -29,6 +29,8 @@ struct SearchUnit
     std::vector<std::filesystem::path> addons{};
     std::optional<std::filesystem::path> base{};
     Coupling coupling = Coupling::NotYetMeasured;
+    std::vector<std::vector<std::filesystem::path>> writingTogether{};
+    std::vector<std::filesystem::path> writingApart{};
 };
 
 [[nodiscard]] std::vector<SearchUnit> UnitsFrom(const std::vector<CouplingFacts>& facts);
