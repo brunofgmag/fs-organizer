@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.47.0](https://github.com/brunofgmag/fs-organizer/compare/v0.46.0...v0.47.0) (2026-08-15)
+
+
+### Features
+
+* **bisection:** open a coupled group into its members and say what holds each ([#124](https://github.com/brunofgmag/fs-organizer/issues/124)) ([851d92b](https://github.com/brunofgmag/fs-organizer/commit/851d92b296d5cf8d9cf2629402d60151314115c6))
+
 ## [0.46.0](https://github.com/brunofgmag/fs-organizer/compare/v0.45.0...v0.46.0) (2026-08-15)
 
 
