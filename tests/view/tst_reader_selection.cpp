@@ -38,6 +38,7 @@ namespace
         static void TheMarkCarriesOnPastThePageBreak();
         static void TheMenuOverThePageOffersTheCopyOnlyWhenThereIsSomething();
         static void APointerThatDoesNotWanderLeavesTheReadingAlone();
+        static void APageTheEngineCannotMapMarksNothingAndTheNextPageStillMarks();
     };
 
     [[nodiscard]] std::filesystem::path
@@ -365,6 +366,97 @@ void ReaderSelectionTest::APointerThatDoesNotWanderLeavesTheReadingAlone()
 
     QVERIFY2(!pages->CarriesASelection(),
              "a click that goes nowhere clears the mark, which is also what lets the click reach a link");
+}
+
+void ReaderSelectionTest::APageTheEngineCannotMapMarksNothingAndTheNextPageStillMarks()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual =
+        WrittenInto(folder, L"unmappable.pdf", AManualWhoseFirstPageTheEngineCannotMap());
+
+    DocumentReader reader;
+    SelectablePages* pages = AManualOpenedIn(reader, manual, {.wheelZooms = false, .dragMovesThePage = false});
+
+    QVERIFY(pages != nullptr);
+
+    QPdfDocument* document = TheDocumentOf(reader);
+
+    QVERIFY(document != nullptr);
+    QCOMPARE(document->pageCount(), 3);
+
+    const QString unmappable = document->getAllText(0).text();
+
+    QVERIFY2(!unmappable.isEmpty() && unmappable.at(0).unicode() < u' ',
+             qPrintable(QStringLiteral("the fixture only says anything if the engine really hands back glyph codes, "
+                                       "and it handed back [%1] characters starting at U+%2")
+                            .arg(unmappable.size())
+                            .arg(unmappable.isEmpty() ? 0 : unmappable.at(0).unicode(), 4, 16, QChar(u'0'))));
+
+    QGuiApplication::clipboard()->setText(QStringLiteral("what was there before"));
+
+    DragBetween(*pages, OverTheLine(*pages, *document, 0, 1, 0.02), OverTheLine(*pages, *document, 0, 1, 0.98));
+
+    QVERIFY2(!pages->CarriesASelection(),
+             "a page the engine could not map behaves like a page with no text at all, so nothing marks");
+
+    pages->CopyWhatIsSelected();
+
+    QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("what was there before"));
+
+    pages->pageNavigator()->jump(1, {});
+
+    DragBetween(*pages, OverTheLine(*pages, *document, 1, 1, 0.02), OverTheLine(*pages, *document, 1, 1, 0.98));
+
+    QVERIFY2(pages->CarriesASelection(), "and the sound page of the same document still marks");
+
+    pages->CopyWhatIsSelected();
+
+    const std::vector<std::string> drawn = TheLinesDrawnOn(1);
+
+    QVERIFY2(QGuiApplication::clipboard()->text().contains(QString::fromStdString(drawn.at(1))),
+             qPrintable(QStringLiteral("the clipboard carries the line that was dragged over, and it carries [%1]")
+                            .arg(QGuiApplication::clipboard()->text())));
+
+    const QString mostlyReadable = document->getAllText(2).text();
+
+    int unmapped = 0;
+    int counted = 0;
+
+    for (const QChar letter : mostlyReadable)
+    {
+        if (letter == QChar(u' ') || letter == QChar(u'\t') || letter == QChar(u'\r') || letter == QChar(u'\n'))
+        {
+            continue;
+        }
+
+        ++counted;
+
+        if (letter.unicode() < u' ')
+        {
+            ++unmapped;
+        }
+    }
+
+    QVERIFY2(unmapped > 0 && unmapped * 100 < counted * 25,
+             qPrintable(QStringLiteral("the third page only pins the ruler from below if it carries some unmapped "
+                                       "letters and still sits under the ruler, and it carries %1 of %2")
+                            .arg(unmapped)
+                            .arg(counted)));
+
+    pages->pageNavigator()->jump(2, {});
+    QGuiApplication::clipboard()->setText(QStringLiteral("what was there before"));
+
+    DragBetween(*pages, OverTheLine(*pages, *document, 2, 1, 0.02), OverTheLine(*pages, *document, 2, 1, 0.98));
+
+    QVERIFY2(pages->CarriesASelection(),
+             "a page carrying a few letters the engine could not map is not a page the engine could not map, and "
+             "tightening the ruler until it is would take the text off real chart pages");
+
+    pages->CopyWhatIsSelected();
+
+    QVERIFY2(QGuiApplication::clipboard()->text().contains(QString::fromStdString(drawn.at(1))),
+             qPrintable(QStringLiteral("and its readable line still reaches the clipboard, which carries [%1]")
+                            .arg(QGuiApplication::clipboard()->text())));
 }
 
 QTEST_MAIN(ReaderSelectionTest)
