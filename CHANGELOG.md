@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.48.2](https://github.com/brunofgmag/fs-organizer/compare/v0.48.1...v0.48.2) (2026-08-15)
+
+
+### Bug Fixes
+
+* **reader:** stop copying glyph codes from a page the engine cannot map ([#135](https://github.com/brunofgmag/fs-organizer/issues/135)) ([bf123cf](https://github.com/brunofgmag/fs-organizer/commit/bf123cfad8eee54177095eca476c92293e7fc3e3))
+
 ## [0.48.1](https://github.com/brunofgmag/fs-organizer/compare/v0.48.0...v0.48.1) (2026-08-15)
 
 
