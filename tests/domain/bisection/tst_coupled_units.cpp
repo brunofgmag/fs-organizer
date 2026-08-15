@@ -19,6 +19,7 @@ namespace
         static void AUnitWhoseMembersAllDeclareABaseHasNoBase();
         static void AUnitWithTwoMembersDeclaringNoBaseHasNoBase();
         static void UnitsComeOutInAStableOrder();
+        static void TheEighteenOfTheMd11ComeTogetherOnTheNameAloneAndNothingElseHoldsThem();
     };
 }
 
@@ -155,6 +156,38 @@ void CoupledUnitsTest::UnitsComeOutInAStableOrder()
     {
         QCOMPARE(AddonsOf(UnitsFrom(shuffled)[index]), AddonsOf(units[index]));
     }
+}
+
+void CoupledUnitsTest::TheEighteenOfTheMd11ComeTogetherOnTheNameAloneAndNothingElseHoldsThem()
+{
+    std::vector<CouplingFacts> library;
+    library.push_back(Providing(kMd11Base, kMd11Model));
+
+    for (int at = 0; at < 17; ++at)
+    {
+        library.push_back(Satellite("D:/MSFS 2024/Liveries/tfdidesign-md11-livery-" + std::to_string(at), kMd11Model));
+    }
+
+    const std::vector<SearchUnit> units = UnitsFrom(library);
+
+    const std::vector<std::filesystem::path> together = AddonsOf(units.front());
+
+    QCOMPARE(units.size(), std::size_t{1});
+    QCOMPARE(together.size(), std::size_t{18});
+
+    for (const CouplingFacts& member : library)
+    {
+        QVERIFY2(std::ranges::find(together, member.folder) != together.end(),
+                 "every member of the shape the real library has lands in the one unit");
+    }
+
+    std::vector<CouplingFacts> withoutTheNameEdge = library;
+    for (CouplingFacts& member : withoutTheNameEdge)
+    {
+        member.modelFolders.clear();
+    }
+
+    QCOMPARE(UnitsFrom(withoutTheNameEdge).size(), std::size_t{18});
 }
 
 QTEST_APPLESS_MAIN(CoupledUnitsTest)
