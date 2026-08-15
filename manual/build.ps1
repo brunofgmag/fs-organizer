@@ -30,10 +30,16 @@ $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $published = Join-Path (Split-Path -Parent $here) 'docs'
 
-$languages = @(
-    [pscustomobject]@{ Name = 'pt_BR'; Source = 'fs-organizer-pt_BR.tex' }
-    [pscustomobject]@{ Name = 'en'; Source = 'fs-organizer-en.tex' }
-)
+$languages = Get-ChildItem -LiteralPath $here -Filter 'fs-organizer-*.tex' | Sort-Object Name | ForEach-Object {
+    [pscustomobject]@{ Name = $_.BaseName -replace '^fs-organizer-', ''; Source = $_.Name }
+}
+
+# One language cannot disagree with itself, so the heading comparison would pass
+# by having nothing to compare. A manual deleted has to fail here, not go quiet.
+if ($languages.Count -lt 2) {
+    Write-Host "manual\ carries $($languages.Count) of fs-organizer-*.tex, and the heading comparison needs at least two." -ForegroundColor Red
+    exit 1
+}
 
 function Get-Headings([string]$path) {
     $shape = New-Object System.Collections.Generic.List[string]
@@ -52,28 +58,26 @@ function Get-PublishedPdf([string]$source) {
 }
 
 function Test-SameShape {
-    $shapes = @{}
+    $first = $languages[0]
+    $shape = Get-Headings (Join-Path $here $first.Source)
 
-    foreach ($language in $languages) {
-        $shapes[$language.Name] = Get-Headings (Join-Path $here $language.Source)
-    }
+    foreach ($language in ($languages | Select-Object -Skip 1)) {
+        $other = Get-Headings (Join-Path $here $language.Source)
 
-    $pt = $shapes['pt_BR']
-    $en = $shapes['en']
-
-    if ($pt.Count -ne $en.Count) {
-        Write-Host "The two manuals do not have the same number of headings: pt_BR has $($pt.Count), en has $($en.Count)." -ForegroundColor Red
-        return $false
-    }
-
-    for ($at = 0; $at -lt $pt.Count; $at++) {
-        if ($pt[$at] -ne $en[$at]) {
-            Write-Host "Heading $($at + 1) is a $($pt[$at]) in pt_BR and a $($en[$at]) in en." -ForegroundColor Red
+        if ($other.Count -ne $shape.Count) {
+            Write-Host "The manuals do not have the same number of headings: $($first.Name) has $($shape.Count), $($language.Name) has $($other.Count)." -ForegroundColor Red
             return $false
+        }
+
+        for ($at = 0; $at -lt $shape.Count; $at++) {
+            if ($shape[$at] -ne $other[$at]) {
+                Write-Host "Heading $($at + 1) is a $($shape[$at]) in $($first.Name) and a $($other[$at]) in $($language.Name)." -ForegroundColor Red
+                return $false
+            }
         }
     }
 
-    Write-Host "Both manuals carry the same $($pt.Count) headings, in the same order." -ForegroundColor Green
+    Write-Host "All $($languages.Count) manuals carry the same $($shape.Count) headings, in the same order." -ForegroundColor Green
     return $true
 }
 
@@ -97,7 +101,7 @@ function Test-SameVersion {
     }
 
     if ($agreed) {
-        Write-Host "Both covers read version $declared off VERSION.txt." -ForegroundColor Green
+        Write-Host "All $($languages.Count) covers read version $declared off VERSION.txt." -ForegroundColor Green
     }
 
     return $agreed
@@ -119,7 +123,7 @@ function Test-SameFigures {
     }
 
     if ($agreed) {
-        Write-Host 'Every figure the two sources ask for is on disk.' -ForegroundColor Green
+        Write-Host 'Every figure the sources ask for is on disk.' -ForegroundColor Green
     }
 
     return $agreed
