@@ -83,12 +83,14 @@
 #include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
 #include "view/quarantine/QuarantinePage.h"
+#include "view/shell/ImportProgressDialog.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/FailureText.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/AddonDocumentsViewModel.h"
 #include "viewmodel/DocumentsViewModel.h"
@@ -899,6 +901,27 @@ int main(int argc, char* argv[])
                      },
                      folder, QStringLiteral("21-library-deep-root"))
             && landed;
+    }
+
+    {
+        constexpr qulonglong kFolderSize = 2147483648ULL;
+
+        ImportProgressDialog progress(3, &shell);
+        progress.ShowTheStep(OperationKind::ImportCopyToStaging, NameOfImportStep(OperationKind::ImportCopyToStaging));
+        progress.ShowTheBytes(1503238553ULL, kFolderSize, 2, OperationKind::ImportCopyToStaging);
+        progress.show();
+        LetTheLayoutSettle();
+
+        landed = Save(progress, folder, QStringLiteral("32-import-progress-copying")) && landed;
+
+        progress.ShowTheBytes(kFolderSize, kFolderSize, 2, OperationKind::ImportCopyToStaging);
+        progress.ShowTheStep(OperationKind::ImportVerifyStaging, NameOfImportStep(OperationKind::ImportVerifyStaging));
+        progress.ShowTheBytes(268435456ULL, kFolderSize, 2, OperationKind::ImportVerifyStaging);
+        LetTheLayoutSettle();
+
+        landed = Save(progress, folder, QStringLiteral("33-import-progress-checking")) && landed;
+
+        progress.close();
     }
 
     {
