@@ -83,10 +83,20 @@ namespace
     [[nodiscard]] QVBoxLayout* AColumnInside(QWidget* pane)
     {
         auto* column = new QVBoxLayout(pane);
-        column->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-        column->setSpacing(8);
+        column->setContentsMargins(0, 0, 0, 0);
+        column->setSpacing(0);
 
         return column;
+    }
+
+    [[nodiscard]] QVBoxLayout* TheProseAtTheTopOf(QVBoxLayout* column)
+    {
+        auto* prose = new QVBoxLayout;
+        prose->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+        prose->setSpacing(8);
+        column->addLayout(prose);
+
+        return prose;
     }
 
     [[nodiscard]] std::size_t WritingApartIn(const UnitOnScreen& unit)
@@ -207,10 +217,14 @@ BisectionPanel::BisectionPanel(BisectionViewModel& viewModel, QWidget* parent) :
     split->addWidget(body_, 1);
     split->addWidget(CreateWhatHappenedSoFar());
 
+    auto* title = new QVBoxLayout;
+    title->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, 0);
+    title->addWidget(headline_);
+
     auto* column = new QVBoxLayout(this);
-    column->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, 0);
-    column->setSpacing(8);
-    column->addWidget(headline_);
+    column->setContentsMargins(0, 0, 0, 0);
+    column->setSpacing(0);
+    column->addLayout(title);
     column->addLayout(split, 1);
 
     connect(start_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Begin);
@@ -269,10 +283,11 @@ QWidget* BisectionPanel::CreateTheOpening()
     buttons->addStretch();
 
     QVBoxLayout* column = AColumnInside(pane);
-    column->addWidget(announced_);
-    column->addWidget(outOfReach_);
-    column->addWidget(promise_);
-    column->addLayout(buttons);
+    QVBoxLayout* prose = TheProseAtTheTopOf(column);
+    prose->addWidget(announced_);
+    prose->addWidget(outOfReach_);
+    prose->addWidget(promise_);
+    prose->addLayout(buttons);
     column->addWidget(toBeSearched_, 1);
 
     return pane;
@@ -300,10 +315,11 @@ QWidget* BisectionPanel::CreateTheRound()
     buttons->addStretch();
 
     QVBoxLayout* column = AColumnInside(pane);
-    column->addWidget(standing_);
-    column->addWidget(ask_);
-    column->addWidget(hint_);
-    column->addLayout(buttons);
+    QVBoxLayout* prose = TheProseAtTheTopOf(column);
+    prose->addWidget(standing_);
+    prose->addWidget(ask_);
+    prose->addWidget(hint_);
+    prose->addLayout(buttons);
     column->addWidget(turnedOn_, 1);
 
     return pane;
@@ -331,7 +347,9 @@ QWidget* BisectionPanel::CreateWhatHappenedSoFar()
     story_->setAutoFillBackground(false);
     scrolled_->viewport()->setAutoFillBackground(false);
 
-    QVBoxLayout* beside = AColumnInside(aside_);
+    auto* beside = new QVBoxLayout(aside_);
+    beside->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+    beside->setSpacing(8);
     beside->addWidget(soFar_);
     beside->addSpacing(kUnderTheTitle);
     beside->addWidget(scrolled_, 1);
@@ -359,10 +377,11 @@ QWidget* BisectionPanel::CreateTheDrift()
     buttons->addStretch();
 
     QVBoxLayout* column = AColumnInside(pane);
-    column->addWidget(drifted_);
-    column->addWidget(whatStartingOverCosts_);
-    column->addWidget(notInTheJournal_);
-    column->addLayout(buttons);
+    QVBoxLayout* prose = TheProseAtTheTopOf(column);
+    prose->addWidget(drifted_);
+    prose->addWidget(whatStartingOverCosts_);
+    prose->addWidget(notInTheJournal_);
+    prose->addLayout(buttons);
     column->addWidget(divergences_, 1);
 
     return pane;
@@ -389,9 +408,10 @@ QWidget* BisectionPanel::CreateWhatJoinedTheLibrary()
     buttons->addStretch();
 
     QVBoxLayout* column = AColumnInside(pane);
-    column->addWidget(joined_);
-    column->addWidget(notInTheJournalEither_);
-    column->addLayout(buttons);
+    QVBoxLayout* prose = TheProseAtTheTopOf(column);
+    prose->addWidget(joined_);
+    prose->addWidget(notInTheJournalEither_);
+    prose->addLayout(buttons);
     column->addWidget(whatJoined_, 1);
 
     return pane;
@@ -419,10 +439,11 @@ QWidget* BisectionPanel::CreateTheOutcome()
     buttons->addStretch();
 
     QVBoxLayout* column = AColumnInside(pane);
-    column->addWidget(outcome_);
-    column->addWidget(aboutTheSecondPass_);
-    column->addWidget(singleCulprit_);
-    column->addLayout(buttons);
+    QVBoxLayout* prose = TheProseAtTheTopOf(column);
+    prose->addWidget(outcome_);
+    prose->addWidget(aboutTheSecondPass_);
+    prose->addWidget(singleCulprit_);
+    prose->addLayout(buttons);
     column->addWidget(whatIsLeft_, 1);
 
     return pane;

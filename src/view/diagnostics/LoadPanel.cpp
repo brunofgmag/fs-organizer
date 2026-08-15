@@ -36,6 +36,7 @@ LoadPanel::LoadPanel(QWidget* parent) : QWidget(parent)
     registered_ = Quiet(this);
     empty_ = Quiet(this);
     empty_->setAlignment(Qt::AlignTop);
+    empty_->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
 
     modules_ = new QTreeWidget(this);
     modules_->setObjectName(QStringLiteral("DiagnosticsModules"));
@@ -54,11 +55,16 @@ LoadPanel::LoadPanel(QWidget* parent) : QWidget(parent)
     body_->addWidget(empty_);
     body_->addWidget(modules_);
 
+    auto* prose = new QVBoxLayout;
+    prose->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
+    prose->setSpacing(8);
+    prose->addWidget(refusal_);
+    prose->addWidget(registered_);
+
     auto* column = new QVBoxLayout(this);
-    column->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    column->setSpacing(8);
-    column->addWidget(refusal_);
-    column->addWidget(registered_);
+    column->setContentsMargins(0, 0, 0, 0);
+    column->setSpacing(0);
+    column->addLayout(prose);
     column->addWidget(body_, 1);
 
     RetranslateUi();
