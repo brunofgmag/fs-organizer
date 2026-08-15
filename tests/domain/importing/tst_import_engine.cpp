@@ -65,6 +65,7 @@ namespace
         static void TheSameSizeWithOtherBytesPassesTheStructureAndIsCaughtByTheHash();
         static void TheStructureReadsNoFileAndTheHashReadsBothSidesOfEveryOne();
         static void TheReadingOfTheHashAnswersTheCancelWithTheProgressStillMoving();
+        static void TheHashAsksTheProbeOncePerBlockAndNotOncePerFile();
         static void TheChoiceMadeDuringTheSessionIsTheOneTheNextImportObeys();
         static void AHashRefusalIsWrittenAsTheSameRefusalTheStructureWouldHaveWritten();
     };
@@ -813,6 +814,20 @@ void ImportEngineTest::TheReadingOfTheHashAnswersTheCancelWithTheProgressStillMo
     QVERIFY(!f.fileSystem.Exists(kStaging));
     QVERIFY(!f.fileSystem.Exists(kTarget));
     f.VerifySimBridgeIsStillWhereItWas();
+}
+
+void ImportEngineTest::TheHashAsksTheProbeOncePerBlockAndNotOncePerFile()
+{
+    Fixture f;
+    f.AddSimBridgeWithTheBytesItReallyHas();
+    f.engine.UseVerification(Verification::ByHash);
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
+
+    QCOMPARE(f.filesystemProbe.hashed.size(), std::size_t{4});
+    QCOMPARE(f.filesystemProbe.batches.size(), std::size_t{2});
+    QCOMPARE(f.filesystemProbe.batches[0], std::size_t{2});
+    QCOMPARE(f.filesystemProbe.batches[1], std::size_t{2});
 }
 
 void ImportEngineTest::TheChoiceMadeDuringTheSessionIsTheOneTheNextImportObeys()

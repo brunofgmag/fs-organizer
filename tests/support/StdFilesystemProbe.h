@@ -10,6 +10,7 @@
 #include <QtCore/QCryptographicHash>
 
 #include "domain/ports/FilesystemProbe.h"
+#include "domain/support/PathUtils.h"
 #include "support/FileClock.h"
 
 #include "infrastructure/fileops/ExtendedPaths.h"
@@ -168,7 +169,7 @@ public:
         return bytes;
     }
 
-    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const override
+    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const
     {
         std::ifstream file(AsFarAsTheProductionProbeReaches(path), std::ios::binary);
         if (!file.is_open())
@@ -187,6 +188,20 @@ public:
         }
 
         return digest.result().toHex().toStdString();
+    }
+
+    [[nodiscard]] std::vector<std::optional<std::string>>
+    HashesOf(const std::filesystem::path& root, const std::vector<std::filesystem::path>& below) const override
+    {
+        std::vector<std::optional<std::string>> digests;
+        digests.reserve(below.size());
+
+        for (const std::filesystem::path& relative : below)
+        {
+            digests.push_back(HashOf(PathUnder(root, relative)));
+        }
+
+        return digests;
     }
 
     [[nodiscard]] std::optional<TreeFingerprint> FingerprintTree(const std::filesystem::path& root) const override

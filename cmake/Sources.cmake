@@ -155,6 +155,7 @@ set(VIEW_SOURCES
         src/view/shell/LanguageSwitch.cpp
         src/view/legacy/LegacyImportDialog.cpp
         src/view/library/LibraryRootDialog.cpp
+        src/view/shell/ImportProgressDialog.cpp
         src/view/shell/LongOperationProgress.cpp
         src/view/options/OptionsPage.cpp
         src/view/delegates/CenteredCheckDelegate.cpp
