@@ -1,0 +1,97 @@
+name: Rebuild Manual
+
+on:
+  push:
+    branches: [ 'release-please--branches--develop--components--fs-organizer' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebuild-manual
+  cancel-in-progress: true
+
+jobs:
+  rebuild:
+    name: Rebuild manuals
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      !contains(github.event.head_commit.message, 'rebuild the manuals')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Install TeX
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            texlive-luatex texlive-latex-extra texlive-fonts-recommended \
+            texlive-lang-portuguese texlive-lang-english poppler-utils
+
+      - name: Build manuals
+        run: |
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          export SOURCE_DATE_EPOCH
+          export FORCE_SOURCE_DATE=1
+
+          cd manual
+          shopt -s nullglob
+          sources=(fs-organizer-*.tex)
+
+          if [ ${#sources[@]} -eq 0 ]; then
+            echo "manual/ carries no fs-organizer-*.tex to build." >&2
+            exit 1
+          fi
+
+          for source in "${sources[@]}"; do
+            for pass in 1 2; do
+              lualatex -interaction=nonstopmode "$source" > /dev/null \
+                || { tail -40 "${source%.tex}.log"; exit 1; }
+            done
+            mv "${source%.tex}.pdf" "../docs/${source%.tex}.pdf"
+          done
+
+          echo "Built ${#sources[@]}: ${sources[*]}"
+
+      - name: Read version
+        run: |
+          declared=$(tr -d '\r\n' < VERSION.txt)
+
+          shopt -s nullglob
+          built=(docs/fs-organizer-*.pdf)
+          sources=(manual/fs-organizer-*.tex)
+
+          if [ ${#built[@]} -ne ${#sources[@]} ]; then
+            echo "manual/ has ${#sources[@]} sources and docs/ has ${#built[@]} manuals." >&2
+            exit 1
+          fi
+
+          for pdf in "${built[@]}"; do
+            printed=$(pdftotext -f 1 -l 1 "$pdf" - | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+
+            if [ "$printed" != "$declared" ]; then
+              echo "$pdf prints version ${printed:-none} on its cover, and VERSION.txt says $declared." >&2
+              exit 1
+            fi
+          done
+
+          echo "All ${#built[@]} covers print version $declared."
+
+      - name: Push to release branch
+        run: |
+          if git diff --quiet -- docs; then
+            echo "The manuals already say what this commit says."
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs
+          git commit -m "docs(manual): rebuild the manuals for version $(tr -d '\r\n' < VERSION.txt)"
+          git push
