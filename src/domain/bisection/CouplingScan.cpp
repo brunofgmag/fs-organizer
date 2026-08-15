@@ -1,7 +1,5 @@
 #include "domain/bisection/CouplingScan.h"
 
-#include <algorithm>
-#include <map>
 #include <set>
 
 #include "domain/support/PathUtils.h"
@@ -71,18 +69,17 @@ std::vector<CouplingFacts> CouplingScan::FactsAbout(const std::vector<std::files
     return facts;
 }
 
-std::vector<SearchUnit> CouplingScan::WithTheKindOfEachGroup(const std::vector<CouplingFacts>& facts,
-                                                             std::vector<SearchUnit> units) const
+std::vector<SearchUnit> CouplingScan::WithTheKindOfEachGroup(std::vector<SearchUnit> units) const
 {
     for (SearchUnit& unit : units)
     {
-        unit.coupling = TheKindOf(facts, unit);
+        unit.coupling = TheKindOf(unit);
     }
 
     return units;
 }
 
-Coupling CouplingScan::TheKindOf(const std::vector<CouplingFacts>& facts, const SearchUnit& unit) const
+Coupling CouplingScan::TheKindOf(const SearchUnit& unit) const
 {
     if (unit.addons.size() < 2)
     {
@@ -94,7 +91,7 @@ Coupling CouplingScan::TheKindOf(const std::vector<CouplingFacts>& facts, const 
         return Coupling::Shadowing;
     }
 
-    return EveryMemberInterleaves(facts, unit) ? Coupling::Merge : Coupling::OnlyTheSharedModelFolder;
+    return unit.writingApart.empty() ? Coupling::Merge : Coupling::OnlyTheSharedModelFolder;
 }
 
 bool CouplingScan::SomeFileIsClaimedTwice(const SearchUnit& unit) const
@@ -127,51 +124,6 @@ bool CouplingScan::SomeFileIsClaimedTwice(const SearchUnit& unit) const
     }
 
     return false;
-}
-
-bool CouplingScan::EveryMemberInterleaves(const std::vector<CouplingFacts>& facts, const SearchUnit& unit) const
-{
-    std::map<std::string, std::size_t> members;
-
-    for (const CouplingFacts& about : facts)
-    {
-        if (std::ranges::find(unit.addons, about.folder) == unit.addons.end())
-        {
-            continue;
-        }
-
-        std::set<std::string> mine;
-        for (const std::filesystem::path& written : about.writesInside)
-        {
-            mine.insert(ComparablePath(written));
-        }
-
-        for (const std::string& path : mine)
-        {
-            ++members[path];
-        }
-    }
-
-    for (const CouplingFacts& about : facts)
-    {
-        if (std::ranges::find(unit.addons, about.folder) == unit.addons.end())
-        {
-            continue;
-        }
-
-        const bool sharesSomething = std::ranges::any_of(about.writesInside,
-                                                         [&members](const std::filesystem::path& written)
-                                                         {
-                                                             return members.at(ComparablePath(written)) > 1;
-                                                         });
-
-        if (!sharesSomething)
-        {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 CouplingFacts CouplingScan::FactsAboutOne(const std::filesystem::path& addonFolder) const

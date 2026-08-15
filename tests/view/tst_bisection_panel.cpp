@@ -3,8 +3,11 @@
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTreeWidget>
 
+#include <algorithm>
 #include <filesystem>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "domain/importing/ImportPaths.h"
@@ -37,6 +40,7 @@ namespace
         static void BeginningPutsTheReferenceRoundOnTheScreenWithNothingTurnedOn();
         static void TheHistoryStaysHiddenUntilARoundHasBeenAnswered();
         static void EveryPageOfThePanelHasAWidgetBehindIt();
+        static void AGroupOpensIntoItsMembersAndSaysWhichOneOnlyBringsTheName();
     };
 }
 
@@ -146,6 +150,17 @@ namespace
         BisectionViewModel viewModel{bisection, session};
     };
 
+    void PutTheModelFolderIn(const Fixture& f, const std::filesystem::path& addon, const std::string& written)
+    {
+        const std::string model = "SimObjects/Airplanes/Shared_Model";
+
+        for (const std::string& level :
+             {std::string("SimObjects"), std::string("SimObjects/Airplanes"), model, model + "/" + written})
+        {
+            f.fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8(level)));
+        }
+    }
+
     [[nodiscard]] QStackedWidget* PagesOf(const BisectionPanel& panel)
     {
         return panel.findChild<QStackedWidget*>();
@@ -221,6 +236,46 @@ void BisectionPanelTest::EveryPageOfThePanelHasAWidgetBehindIt()
         QVERIFY2(pages->currentWidget() != nullptr, "a page with no widget behind it renders nothing");
         QVERIFY(!pages->currentWidget()->findChildren<QLabel*>().isEmpty());
     }
+}
+
+void BisectionPanelTest::AGroupOpensIntoItsMembersAndSaysWhichOneOnlyBringsTheName()
+{
+    Fixture f;
+    PutTheModelFolderIn(f, kCrj, "liveries");
+    PutTheModelFolderIn(f, kFenix, "liveries");
+    PutTheModelFolderIn(f, kPmdg, "common");
+
+    BisectionPanel panel(f.viewModel);
+    panel.show();
+
+    f.viewModel.Show();
+
+    auto* units = panel.findChild<QTreeWidget*>(QStringLiteral("BisectionUnits"));
+
+    QVERIFY(units != nullptr);
+    QVERIFY2(units->rootIsDecorated(), "a group with members behind it and no handle to open cannot be opened");
+    QCOMPARE(units->topLevelItemCount(), 1);
+
+    QTreeWidgetItem* group = units->topLevelItem(0);
+
+    QCOMPARE(group->childCount(), 3);
+
+    std::map<QString, int> saidOfEachMember;
+
+    for (int at = 0; at < group->childCount(); ++at)
+    {
+        QVERIFY2(!group->child(at)->text(0).isEmpty(), "a member row with no name says nothing");
+        ++saidOfEachMember[group->child(at)->text(2)];
+    }
+
+    QCOMPARE(saidOfEachMember.size(), std::size_t{2});
+    QCOMPARE(saidOfEachMember.begin()->second + std::next(saidOfEachMember.begin())->second, 3);
+    QVERIFY2(std::ranges::any_of(saidOfEachMember,
+                                 [](const std::pair<const QString, int>& said)
+                                 {
+                                     return said.second == 1;
+                                 }),
+             "one member is held differently from the other two, and the screen has to say so");
 }
 
 QTEST_MAIN(BisectionPanelTest)

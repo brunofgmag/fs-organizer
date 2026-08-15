@@ -40,6 +40,7 @@ namespace
         static void TheThirdOutcomeSaysHowManyEntriesCarryOnOutOfReach();
         static void AProcedureLeftHalfwayIsOfferedOnTheNextOpening();
         static void AGroupSaysHowManyAddonsItCarriesAndOfWhatKind();
+        static void AGroupCarriesEveryMemberAndSaysWhichOneOnlyBringsTheName();
         static void AnAddonJoiningTheLibraryTakesTheScreenToItsOwnStageAndNotToTheDrift();
         static void CarryingOnAppliesTheAnswerThatWasHeldBackInsteadOfLosingIt();
         static void TheHeldAnswerIsForgottenOnceTheScreenLeavesThatStage();
@@ -59,6 +60,7 @@ namespace
     constexpr auto kMd11 = "D:/MSFS 2024/Aircrafts/md11-base";
     constexpr auto kPmdg = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
     constexpr auto kLivery = "D:/MSFS 2024/Liveries/md11-livery";
+    constexpr auto kOtherLivery = "D:/MSFS 2024/Liveries/md11-livery-two";
 
     constexpr auto kModel = "TFDi_Design_MD-11";
 
@@ -89,7 +91,7 @@ namespace
         library.path = kLibrary;
         library.children = {CategoryNode("D:/MSFS 2024/Aircrafts",
                                          {AddonNode(kCrj), AddonNode(kFenix), AddonNode(kMd11), AddonNode(kPmdg)}),
-                            CategoryNode("D:/MSFS 2024/Liveries", {AddonNode(kLivery)})};
+                            CategoryNode("D:/MSFS 2024/Liveries", {AddonNode(kLivery), AddonNode(kOtherLivery)})};
 
         return library;
     }
@@ -120,7 +122,7 @@ namespace
         {
             fileSystem.AddDirectory(kCommunity);
 
-            for (const std::filesystem::path& addon : {kCrj, kFenix, kMd11, kPmdg, kLivery})
+            for (const std::filesystem::path& addon : {kCrj, kFenix, kMd11, kPmdg, kLivery, kOtherLivery})
             {
                 fileSystem.AddDirectory(addon);
                 fileSystem.AddFileWithContents(ManifestPathIn(addon), "{}");
@@ -128,6 +130,7 @@ namespace
 
             PutTheModelFolderIn(kMd11);
             PutTheModelFolderIn(kLivery);
+            PutTheModelFolderIn(kOtherLivery);
 
             catalog.SetTree(kLibrary, LibraryTree());
         }
@@ -390,6 +393,45 @@ void BisectionViewModelTest::AGroupSaysHowManyAddonsItCarriesAndOfWhatKind()
     QCOMPARE(group->addons, std::size_t{2});
     QVERIFY(group->coupling != Coupling::NotYetMeasured);
     QVERIFY(group->coupling != Coupling::Alone);
+}
+
+void BisectionViewModelTest::AGroupCarriesEveryMemberAndSaysWhichOneOnlyBringsTheName()
+{
+    Fixture f;
+    const std::string under = "SimObjects/Airplanes/" + std::string(kModel);
+
+    f.fileSystem.AddDirectory(PathUnder(kMd11, PathFromUtf8(under + "/common")));
+    f.fileSystem.AddDirectory(PathUnder(kLivery, PathFromUtf8(under + "/liveries")));
+    f.fileSystem.AddDirectory(PathUnder(kOtherLivery, PathFromUtf8(under + "/liveries")));
+
+    f.TurnOn(kMd11);
+    f.TurnOn(kLivery);
+    f.TurnOn(kOtherLivery);
+    f.Seed();
+
+    f.viewModel.Show();
+
+    const std::vector<UnitOnScreen> shown = f.viewModel.WhatIsLeft();
+
+    QCOMPARE(shown.size(), std::size_t{1});
+    QCOMPARE(shown.front().coupling, Coupling::OnlyTheSharedModelFolder);
+    QCOMPARE(shown.front().members.size(), std::size_t{3});
+
+    const auto alone = std::ranges::find_if(shown.front().members,
+                                            [](const MemberOnScreen& member)
+                                            {
+                                                return member.writesWith == 0;
+                                            });
+
+    const auto together = std::ranges::count_if(shown.front().members,
+                                                [](const MemberOnScreen& member)
+                                                {
+                                                    return member.writesWith == 1;
+                                                });
+
+    QVERIFY(alone != shown.front().members.end());
+    QCOMPARE(alone->name, QString("md11-base"));
+    QCOMPARE(static_cast<std::size_t>(together), std::size_t{2});
 }
 
 void BisectionViewModelTest::AnAddonJoiningTheLibraryTakesTheScreenToItsOwnStageAndNotToTheDrift()

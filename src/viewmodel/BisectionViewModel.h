@@ -20,11 +20,18 @@ enum class BisectionStage : int
     TheLibraryGainedAnAddon = 4,
 };
 
+struct MemberOnScreen
+{
+    QString name{};
+    std::size_t writesWith = 0;
+};
+
 struct UnitOnScreen
 {
     QString name{};
     std::size_t addons = 0;
     Coupling coupling = Coupling::NotYetMeasured;
+    std::vector<MemberOnScreen> members{};
 };
 
 class BisectionViewModel final : public QObject

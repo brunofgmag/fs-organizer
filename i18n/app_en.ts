@@ -4958,6 +4958,24 @@ Size %2</translation>
         <source>held together only by the shared model folder name</source>
         <translation>held together only by the shared model folder name</translation>
     </message>
+    <message numerus="yes">
+        <source>%n of them held only by the shared model folder name, and the other %1 share a folder inside the model</source>
+        <translation>
+            <numerusform>%n of them held only by the shared model folder name, and the other %1 share a folder inside the model</numerusform>
+            <numerusform>%n of them held only by the shared model folder name, and the other %1 share a folder inside the model</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>shares a folder inside the model with %n other</source>
+        <translation>
+            <numerusform>shares a folder inside the model with %n other</numerusform>
+            <numerusform>shares a folder inside the model with %n others</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>only the shared model folder name in common</source>
+        <translation>only the shared model folder name in common</translation>
+    </message>
     <message>
         <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/BisectionPanel.cpp" line="86"/>
         <source>a link this program had put is gone</source>

@@ -25,6 +25,7 @@ namespace
         static void AGroupThatClaimsTheSameFileTwiceIsShadowing();
         static void AGroupWhoseMembersInterleaveWithoutClaimingAFileIsMerge();
         static void AGroupHeldOnlyByTheModelFolderNameSaysSo();
+        static void TheGroupSaysWhichMembersWriteTogetherAndWhichOneOnlyBringsTheName();
         static void TheDeepWalkTouchesOnlyTheAddonsThatAreInAGroup();
         static void ThePackageMetadataEveryAddonCarriesIsNotShadowing();
     };
@@ -252,7 +253,7 @@ namespace
     {
         const std::vector<CouplingFacts> facts = disk.scan.FactsAbout(addons);
 
-        return disk.scan.WithTheKindOfEachGroup(facts, UnitsFrom(facts)).front().coupling;
+        return disk.scan.WithTheKindOfEachGroup(UnitsFrom(facts)).front().coupling;
     }
 }
 
@@ -311,6 +312,32 @@ void CouplingScanTest::AGroupHeldOnlyByTheModelFolderNameSaysSo()
     QCOMPARE(TheKindOfTheGroupIn(disk, {kBase, kLivery}), Coupling::OnlyTheSharedModelFolder);
 }
 
+void CouplingScanTest::TheGroupSaysWhichMembersWriteTogetherAndWhichOneOnlyBringsTheName()
+{
+    Disk disk;
+    const std::string under = "SimObjects/Airplanes/" + std::string(kModel);
+
+    disk.PutAModelFolder(kBase, kModel);
+    disk.fileSystem.AddDirectory(PathUnder(kBase, PathFromUtf8(under + "/common")));
+    PutThePackageMetadata(disk, kBase);
+
+    for (const auto& [addon, name] : {std::pair{kLivery, "ces-b2170-f"}, std::pair{kOtherLivery, "ces-b2171-f"}})
+    {
+        disk.PutAModelFolder(addon, kModel);
+        disk.PutALivery(addon, kModel, name, "livery.cfg", kMeasuredLiveryCfg);
+        PutThePackageMetadata(disk, addon);
+    }
+
+    const std::vector<CouplingFacts> facts = disk.scan.FactsAbout({kBase, kLivery, kOtherLivery});
+    const std::vector<SearchUnit> units = disk.scan.WithTheKindOfEachGroup(UnitsFrom(facts));
+
+    QCOMPARE(units.size(), std::size_t{1});
+    QCOMPARE(units.front().coupling, Coupling::OnlyTheSharedModelFolder);
+    QCOMPARE(units.front().writingTogether.size(), std::size_t{1});
+    QCOMPARE(units.front().writingTogether.front(), (std::vector<std::filesystem::path>{kLivery, kOtherLivery}));
+    QCOMPARE(units.front().writingApart, std::vector<std::filesystem::path>{kBase});
+}
+
 void CouplingScanTest::ThePackageMetadataEveryAddonCarriesIsNotShadowing()
 {
     Disk disk;
@@ -346,7 +373,7 @@ void CouplingScanTest::TheDeepWalkTouchesOnlyTheAddonsThatAreInAGroup()
     disk.fileSystem.AddDirectory(kAirport);
 
     const std::vector<CouplingFacts> facts = disk.scan.FactsAbout({kCrj, kSoundset, kAirport});
-    const std::vector<SearchUnit> units = disk.scan.WithTheKindOfEachGroup(facts, UnitsFrom(facts));
+    const std::vector<SearchUnit> units = disk.scan.WithTheKindOfEachGroup(UnitsFrom(facts));
 
     const auto Models = [](const std::filesystem::path& addon)
     {

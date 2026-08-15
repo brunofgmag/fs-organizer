@@ -1,6 +1,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -36,6 +37,7 @@ namespace
         static void ADriftMadeWhileTheAppWasDownDoesNotStopTheResume();
         static void AFreshProcessAnsweringWithoutABaselineDoesNotCallTheWholeDiskADrift();
         static void TheStorySurvivesTheRoundTripThroughTheFile();
+        static void ThePartitionOfAGroupSurvivesTheRoundTripThroughTheFile();
     };
 }
 
@@ -372,6 +374,43 @@ void BisectionOnRealDiskTest::AFreshProcessAnsweringWithoutABaselineDoesNotCallT
     QVERIFY2(report.drift.empty(), "a process that never saw a round called the disk it found a drift");
     QCOMPARE(report.refusal, BisectionRefusal::None);
     QCOMPARE(disk.WhatIsOn().size(), kAddons.size() / 2);
+}
+
+void BisectionOnRealDiskTest::ThePartitionOfAGroupSurvivesTheRoundTripThroughTheFile()
+{
+    const Disk disk;
+    const std::filesystem::path model = std::filesystem::path("SimObjects") / "Airplanes" / "Shared_Model";
+
+    for (const std::string& name : {std::string("aerosoft-crj"), std::string("fenix-a320")})
+    {
+        std::filesystem::create_directories(disk.Addon(name) / model / "liveries");
+    }
+
+    std::filesystem::create_directories(disk.Addon("pmdg-aircraft-77w") / model / "common");
+
+    World world(disk);
+    const SimulatorProfile profile = ProfileOn(disk);
+    TurnEverythingOn(disk, world, profile);
+
+    QCOMPARE(world.service.Begin(profile, world.profiles.Scan(profile)).refusal, BisectionRefusal::None);
+
+    const std::optional<BisectionRun> written = world.store.Load(kProfileId);
+
+    QVERIFY(written.has_value());
+
+    const auto group = std::ranges::find_if(written->units,
+                                            [](const SearchUnit& unit)
+                                            {
+                                                return unit.addons.size() > 1;
+                                            });
+
+    QVERIFY2(group != written->units.end(), "the three addons under one model folder did not come out as a group");
+    QCOMPARE(group->addons.size(), std::size_t{3});
+    QCOMPARE(group->coupling, Coupling::OnlyTheSharedModelFolder);
+    QCOMPARE(group->writingTogether.size(), std::size_t{1});
+    QCOMPARE(group->writingTogether.front().size(), std::size_t{2});
+    QCOMPARE(group->writingApart.size(), std::size_t{1});
+    QCOMPARE(group->writingApart.front().filename(), std::filesystem::path{"pmdg-aircraft-77w"});
 }
 
 QTEST_APPLESS_MAIN(BisectionOnRealDiskTest)

@@ -238,7 +238,7 @@ BisectionRun BisectionService::RunFor(const SimulatorProfile& profile, const Pro
 
     BisectionRun run;
     run.profileId = profile.id;
-    run.units = coupling_.WithTheKindOfEachGroup(facts, UnitsFrom(facts));
+    run.units = coupling_.WithTheKindOfEachGroup(UnitsFrom(facts));
     run.startingConfiguration = EntriesForWhatIsEnabled(profile, shown.libraries, shown.enabled);
     run.startedAt = clock_.Now();
 
