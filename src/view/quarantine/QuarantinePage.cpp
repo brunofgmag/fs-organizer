@@ -256,8 +256,7 @@ void QuarantinePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) co
     const auto held = static_cast<int>(rows.size());
 
     restoreFromPanel_->setEnabled(held > 0);
-    restoreFromPanel_->setText(held > 1 ? tr("Restore %n item to the library", nullptr, held)
-                                        : tr("Restore to the library"));
+    restoreFromPanel_->setText(held > 1 ? tr("Restore %n item", nullptr, held) : tr("Restore"));
     openFolder_->setEnabled(held == 1);
 }
 
