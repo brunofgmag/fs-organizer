@@ -18,6 +18,7 @@ struct RestoreCheck
     std::string version{};
     std::string occupantVersion{};
     bool occupantIsAnAddon = false;
+    bool theOriginHoldsALink = false;
 
     [[nodiscard]] bool CanProceed() const
     {

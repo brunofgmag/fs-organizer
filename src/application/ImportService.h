@@ -128,6 +128,8 @@ private:
                                         const std::filesystem::path& recordedFrom = {},
                                         OperationKind kind = OperationKind::RestoreFromQuarantine) const;
 
+    [[nodiscard]] FileResult PutTheItemBack(const SimulatorProfile& profile, const QuarantinedItem& item) const;
+
     [[nodiscard]] SwapResult TheItemComesBack(const SimulatorProfile& profile,
                                               const QuarantinedItem& item,
                                               SwapResult swapped,

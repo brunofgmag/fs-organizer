@@ -494,8 +494,13 @@ RestoreCheck ImportService::CheckOne(const std::vector<TreeNode>& libraries, con
     }
     else if (filesystemProbe_.EntryExistsWithoutFollowingLinks(item.origin))
     {
-        check.result = FileResult::TheOriginIsOccupied;
-        check.occupant = item.origin;
+        check.theOriginHoldsALink = filesystemProbe_.IsReparsePoint(item.origin);
+
+        if (!check.theOriginHoldsALink)
+        {
+            check.result = FileResult::TheOriginIsOccupied;
+            check.occupant = item.origin;
+        }
     }
 
     if (check.CanProceed())
@@ -568,10 +573,9 @@ FileResult ImportService::RestoreOne(const SimulatorProfile& profile,
                                      const std::filesystem::path& recordedFrom,
                                      const OperationKind kind) const
 {
-    const bool moved = files_.Move(item.path, item.origin);
-    const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotRestore;
+    const FileResult result = PutTheItemBack(profile, item);
 
-    if (moved)
+    if (Succeeded(result))
     {
         ForgetTheOriginOf(item.path);
     }
@@ -580,6 +584,21 @@ FileResult ImportService::RestoreOne(const SimulatorProfile& profile,
            item.source);
 
     return result;
+}
+
+FileResult ImportService::PutTheItemBack(const SimulatorProfile& profile, const QuarantinedItem& item) const
+{
+    if (filesystemProbe_.IsReparsePoint(item.origin))
+    {
+        const std::filesystem::path pointed = linking_.PointsAt(item.origin).value_or(item.origin);
+
+        if (!DisableEveryLink(linking_, log_, {item.origin}, IdentityOf(profile, pointed), pointed))
+        {
+            return FileResult::CouldNotRemoveTheLink;
+        }
+    }
+
+    return files_.Move(item.path, item.origin) ? FileResult::Completed : FileResult::CouldNotRestore;
 }
 
 FileResult ImportService::DiscardOne(const SimulatorProfile& profile, const QuarantinedItem& item) const
