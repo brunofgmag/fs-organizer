@@ -11,6 +11,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -109,10 +110,13 @@ int main(int argc, char* argv[])
     const WindowsFilesystemProbe filesystemProbe;
     WindowsFileOperations files;
     const JsonManifestParser manifestParser;
-    const FilesystemScanner catalog(manifestParser, filesystemProbe);
+    JsonlOperationJournal journal(JournalFilePath());
+
+    const JournalImportedFolders importedFolders(journal);
+
+    const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
-    JsonlOperationJournal journal(JournalFilePath());
 
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);

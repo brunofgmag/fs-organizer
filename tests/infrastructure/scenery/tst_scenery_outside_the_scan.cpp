@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "domain/support/PathUtils.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
@@ -8,6 +9,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class SceneryOutsideTheScanTest : public QObject
     {
         Q_OBJECT
@@ -30,7 +33,7 @@ void SceneryOutsideTheScanTest::TheScanOpensNoSceneryFile()
 
     const JsonManifestParser manifestParser;
     const FakeFilesystemProbe filesystemProbe(fileSystem);
-    const FilesystemScanner scanner(manifestParser, filesystemProbe);
+    const FilesystemScanner scanner(manifestParser, filesystemProbe, nothingWasImported);
 
     const TreeNode library = scanner.Scan(kLibrary);
 

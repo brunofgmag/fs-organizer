@@ -10,6 +10,7 @@ set(DOMAIN_SOURCES
         src/domain/documents/DocumentClassification.cpp
         src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ExternalSidecar.cpp
+        src/domain/importing/WhatTheImporterBrought.cpp
         src/domain/importing/ImportEngine.cpp
         src/domain/importing/OriginSidecar.cpp
         src/domain/importing/SidecarFile.cpp
@@ -69,6 +70,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/WindowsFilesystemProbe.cpp
         src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
+        src/infrastructure/journal/JournalImportedFolders.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/legacy/IniLegacyConfigReader.cpp
         src/infrastructure/legacy/LegacyPresetReader.cpp

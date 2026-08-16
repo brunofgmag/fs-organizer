@@ -8,6 +8,7 @@
 
 #include "application/SizeService.h"
 #include "domain/importing/ImportPaths.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -18,6 +19,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class SizeOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -84,7 +87,7 @@ namespace
     {
         JsonManifestParser manifestParser;
         WindowsFilesystemProbe filesystemProbe;
-        FilesystemScanner scanner{manifestParser, filesystemProbe};
+        FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
         FakeClock clock;
         InlineBackgroundRunner runner;
         SizeService service{scanner, filesystemProbe, clock, runner};

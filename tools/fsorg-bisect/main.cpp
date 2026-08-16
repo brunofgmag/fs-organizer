@@ -15,6 +15,7 @@
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -312,9 +313,10 @@ namespace
         WindowsFilesystemProbe filesystemProbe;
         WindowsSidecarStore sidecars;
         JsonManifestParser manifestParser;
-        FilesystemScanner catalog{manifestParser, filesystemProbe};
-        SystemClock clock;
         JsonlOperationJournal journal{JournalFilePath()};
+        JournalImportedFolders importedFolders{journal};
+        FilesystemScanner catalog{manifestParser, filesystemProbe, importedFolders};
+        SystemClock clock;
         OperationLog log{journal, clock};
         UuidLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};

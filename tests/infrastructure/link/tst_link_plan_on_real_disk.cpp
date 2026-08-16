@@ -9,6 +9,7 @@
 #include "application/ProfileService.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/journal/JournalEntries.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -24,6 +25,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class LinkPlanOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -86,7 +89,7 @@ namespace
         WindowsFilesystemProbe filesystemProbe;
         WindowsSidecarStore sidecars;
         WindowsLinkService linkService;
-        FilesystemScanner scanner{manifestParser, filesystemProbe};
+        FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
         FakeOperationJournal journal;
         FakeClock clock;
         OperationLog log{journal, clock};

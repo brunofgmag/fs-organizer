@@ -5,6 +5,7 @@
 #include <string>
 
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/importing/WhatTheImporterBrought.h"
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/profile/ExternalOrigins.h"
@@ -377,27 +378,9 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
 
 std::vector<std::filesystem::path> LibraryOrganizer::WhatTheImporterBroughtInto(const Library& library) const
 {
-    std::map<std::string, std::filesystem::path> brought;
-
-    for (const OperationRecord& record : log_.History())
-    {
-        if (!Succeeded(record.outcome))
-        {
-            continue;
-        }
-
-        if (record.kind == OperationKind::ImportMoveIntoPlace)
-        {
-            brought.insert_or_assign(ComparablePath(record.target), record.target);
-        }
-        else if (record.kind == OperationKind::MoveAddon && brought.erase(ComparablePath(record.source)) == 1)
-        {
-            brought.insert_or_assign(ComparablePath(record.target), record.target);
-        }
-    }
-
     std::vector<std::filesystem::path> inside;
-    for (const std::filesystem::path& folder : brought | std::views::values)
+
+    for (const std::filesystem::path& folder : FoldersTheImporterBrought(log_.History()))
     {
         if (PathIsInside(folder, library.path))
         {

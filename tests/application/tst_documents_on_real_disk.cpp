@@ -7,6 +7,7 @@
 
 #include "application/DocumentService.h"
 #include "domain/support/PathUtils.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -17,6 +18,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class DocumentsOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -45,7 +48,7 @@ namespace
         JsonManifestParser manifestParser;
         JsonChartCatalogueParser catalogueParser;
         WindowsFilesystemProbe filesystemProbe;
-        FilesystemScanner scanner{manifestParser, filesystemProbe};
+        FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
         QtPdfChartVersions chartVersions;
         DocumentService service{scanner, filesystemProbe, catalogueParser, chartVersions};
     };

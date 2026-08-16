@@ -2,6 +2,7 @@
 #include <QtTest/QtTest>
 
 #include "domain/model/CategoryMarker.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -11,6 +12,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class CatalogOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -38,7 +41,7 @@ namespace
     {
         JsonManifestParser manifestParser;
         WindowsFilesystemProbe filesystemProbe;
-        FilesystemScanner scanner{manifestParser, filesystemProbe};
+        FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
     };
 
     [[nodiscard]] const TreeNode* Only(const TreeNode& parent)
