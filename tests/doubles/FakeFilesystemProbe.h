@@ -216,6 +216,20 @@ public:
         unreadable_.push_back(ComparablePath(root));
     }
 
+    void LetAnotherProgramHold(const std::filesystem::path& path)
+    {
+        held_.push_back(path);
+    }
+
+    [[nodiscard]] bool SomethingIsHoldingItOpen(const std::filesystem::path& path) const override
+    {
+        return std::ranges::any_of(held_,
+                                   [&path](const std::filesystem::path& holder)
+                                   {
+                                       return PathIsInside(holder, path);
+                                   });
+    }
+
     [[nodiscard]] std::size_t TimesWalked(const std::filesystem::path& root) const
     {
         return static_cast<std::size_t>(std::ranges::count(walked, root));
@@ -226,6 +240,7 @@ public:
 private:
     InMemoryFileSystem& fileSystem_;
     std::vector<std::string> unreadable_;
+    std::vector<std::filesystem::path> held_;
     mutable std::size_t recycleBinAsked = 0;
 };
 
