@@ -34,6 +34,7 @@
 #include "view/simulator/StartupPage.h"
 #include "viewmodel/SessionNotifier.h"
 #include "viewmodel/StartupViewModel.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -42,6 +43,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void TurnedOffTheScreenSaysSoAndSaysWhereToTurnItOn();
         static void AnInstallationWhereNobodyTurnedAnythingOffOpensWithAnEmptyHalf();
         static void ThePairOfTwoAddonsOffersNoWayToTurnEitherOff();
@@ -299,6 +301,14 @@ void PackageListPageTest::TheTwoButtonsOfTheTabSwapThePanelInsteadOfScrollingIt(
     ButtonSaying(page, QStringLiteral("Startup entries"))->click();
     QVERIFY2(panels->currentWidget() == startup,
              "the two features that write into a file of the simulator live in one tab, and the bar swaps the panel");
+}
+
+void PackageListPageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+    PackageListPage page(f.viewModel);
+
+    ItFitsTheNarrowestWindow(page, "The packages half of the simulator page");
 }
 
 QTEST_MAIN(PackageListPageTest)

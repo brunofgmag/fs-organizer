@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.0](https://github.com/brunofgmag/fs-organizer/compare/v0.48.2...v0.49.0) (2026-08-16)
+
+
+### Features
+
+* fit the window on a 1080 px screen and offer updates from the header ([#139](https://github.com/brunofgmag/fs-organizer/issues/139)) ([08399a2](https://github.com/brunofgmag/fs-organizer/commit/08399a2a39a973ce9b1ffeff04ace1906dc4b93c))
+
 ## [0.48.2](https://github.com/brunofgmag/fs-organizer/compare/v0.48.1...v0.48.2) (2026-08-15)
 
 

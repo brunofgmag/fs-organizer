@@ -28,6 +28,7 @@
 namespace
 {
     constexpr int kNavigationWidth = 190;
+    constexpr int kUpdatesPane = 2;
     constexpr int kBetweenGroups = 22;
     constexpr int kInsideGroup = 10;
     constexpr int kBodyMarginX = 22;
@@ -207,6 +208,11 @@ void OptionsPage::RetranslateUi()
     panes_->setCurrentIndex(shown);
 
     Reload();
+}
+
+void OptionsPage::ShowTheUpdates() const
+{
+    navigation_->setCurrentRow(kUpdatesPane);
 }
 
 QStringList OptionsPage::PaneNames() const

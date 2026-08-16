@@ -41,6 +41,7 @@
 #include "view/panels/ModelRowDetail.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
+#include "view/WrappingRow.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
@@ -288,6 +289,10 @@ QWidget* AddonTreePage::CreateActions()
     auto* bar = new QWidget(this);
     bar->setObjectName(QStringLiteral("PageToolbar"));
 
+    QSizePolicy roomForASecondRow(QSizePolicy::Preferred, QSizePolicy::Minimum);
+    roomForASecondRow.setHeightForWidth(true);
+    bar->setSizePolicy(roomForASecondRow);
+
     enable_ = new QPushButton(bar);
     disable_ = new QPushButton(bar);
     undo_ = new QPushButton(bar);
@@ -296,7 +301,7 @@ QWidget* AddonTreePage::CreateActions()
 
     search_ = new QLineEdit(bar);
     search_->setClearButtonEnabled(true);
-    search_->setMinimumWidth(180);
+    search_->setMinimumWidth(120);
     search_->setMaximumWidth(220);
 
     hideEmpty_ = new QCheckBox(bar);
@@ -318,14 +323,14 @@ QWidget* AddonTreePage::CreateActions()
     connect(search_, &QLineEdit::textChanged, filter_, &AddonTreeFilterModel::Search);
     connect(hideEmpty_, &QCheckBox::toggled, filter_, &AddonTreeFilterModel::HideEmptyCategories);
 
-    auto* layout = new QHBoxLayout(bar);
+    auto* layout = new WrappingRow(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->setSpacing(8);
     layout->addWidget(rescan_);
     layout->addWidget(enable_);
     layout->addWidget(disable_);
     layout->addWidget(undo_);
-    layout->addStretch();
+    layout->AddSpring();
     layout->addWidget(hideEmpty_);
     layout->addWidget(search_);
 

@@ -35,6 +35,8 @@
 #include "view/library/AddonTreePage.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/ImportViewModel.h"
+#include "tests/support/PageFloor.h"
+#include "view/panels/ContextPanel.h"
 
 namespace
 {
@@ -43,6 +45,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void ARescanPutsTheSelectionAndTheScrollBackWhereTheyWere();
         static void ARescanKeepsTheCurrentRowOfASelectionThatSpansSeveralAddons();
         static void AnAddonThatMovedRowIsFoundAgainBecauseItIsRememberedByPath();
@@ -436,6 +439,22 @@ void AddonTreePageTest::ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectio
 
     QCOMPARE(LastStatusOf(status),
              QString{"Nothing was applied: 1 addon was not the way the screen showed it. The list is up to date now."});
+}
+
+void AddonTreePageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+    Screen screen(f);
+
+    const QModelIndex chosen = IndexOf(*screen.tree, kChosen, {});
+    QVERIFY(chosen.isValid());
+    screen.tree->setCurrentIndex(chosen);
+    QCoreApplication::processEvents();
+
+    QVERIFY2(screen.page.findChild<ContextPanel*>()->isVisible(),
+             "the guard measured the library without the panel it is meant to fit");
+
+    ItFitsTheNarrowestWindow(screen.page, "The library page with an addon selected");
 }
 
 QTEST_MAIN(AddonTreePageTest)

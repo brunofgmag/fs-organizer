@@ -30,6 +30,7 @@
 #include "view/options/OptionsPage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -38,6 +39,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void TheLanguageTabOffersBothAndOpensOnTheStoredOne();
         static void TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands();
         static void TheLinksTabOpensOnTheTypeThatIsStored();
@@ -539,6 +541,13 @@ void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsS
     QVERIFY2(asked.opened, "the remove question did not open, so nothing was looked at");
     QVERIFY2(asked.offeredToDisable,
              "removing the profile in use with another profile on screen counted zero enabled addons");
+}
+
+void OptionsPageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+
+    ItFitsTheNarrowestWindow(f.page, "The options page");
 }
 
 QTEST_MAIN(OptionsPageTest)

@@ -183,6 +183,7 @@ set(VIEW_SOURCES
         src/view/TableColumns.cpp
         src/view/TextThatIsNeverCut.cpp
         src/view/WheelGuard.cpp
+        src/view/WrappingRow.cpp
         src/view/panels/ContextPanel.cpp
         src/view/panels/DependencySection.cpp
         src/view/panels/EmptyState.cpp

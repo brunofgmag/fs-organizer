@@ -23,6 +23,7 @@
 #include "view/community/ImportDialog.h"
 #include "view/panels/ContextPanel.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -31,6 +32,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void TheTriageConflictActionLeavesEveryConflictedRowSelected();
         static void TheTriageImportActionLeavesEveryUnmanagedFolderSelected();
         static void TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow();
@@ -393,6 +395,14 @@ void CommunityPageTest::AFolderNoProgramOwnsGetsNoSuchWarning()
 
     QVERIFY2(!AnyOfThemWarnsAboutTheOtherProgram(TheParagraphsOf(dialog)),
              "a folder no other program installed cannot be broken by that program, so the warning would be a lie");
+}
+
+void CommunityPageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+
+    ItFitsTheNarrowestWindow(page, "The destinations page");
 }
 
 QTEST_MAIN(CommunityPageTest)
