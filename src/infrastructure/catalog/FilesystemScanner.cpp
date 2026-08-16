@@ -6,6 +6,7 @@
 #include "domain/importing/ImportPaths.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/model/Manifest.h"
+#include "domain/tree/AddonTree.h"
 
 FilesystemScanner::FilesystemScanner(const ManifestParser& manifestParser, const FilesystemProbe& filesystemProbe)
     : manifestParser_(manifestParser), filesystemProbe_(filesystemProbe)
@@ -16,6 +17,11 @@ TreeNode FilesystemScanner::ScanWhile(const std::filesystem::path& libraryRoot, 
 {
     TreeNode root = ScanFolder(libraryRoot, gate);
     root.kind = TreeNodeKind::Library;
+
+    if (gate.StillWanted())
+    {
+        AFolderThatGroupsNothingBecomesAnAddon(root);
+    }
 
     return root;
 }

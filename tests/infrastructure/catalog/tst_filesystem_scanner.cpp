@@ -21,8 +21,10 @@ namespace
     private slots:
         static void ScanningStopsAtTheFirstManifest();
         static void AnAddonCarriesTheMetadataFromItsManifest();
-        static void AnEmptyFolderIsAnEmptyCategory();
-        static void TheMarkerTellsADeclaredCategoryApartFromALeftoverFolder();
+        static void AFolderWithoutAManifestThatGroupsNoAddonIsItselfAnAddon();
+        static void AFolderThatStillGroupsAnAddonStaysACategory();
+        static void AnEmptyFolderIsAnAddonUnlessTheMarkerDeclaresIt();
+        static void ACategoryTheAppDeclaredSurvivesLosingItsLastAddon();
         static void AFolderWithAnUnreadableManifestIsStillAnAddon();
         static void WhatTheImporterCreatedIsNotPartOfTheLibrary();
         static void AGateThatClosesStopsTheWalkWhereItWasInsteadOfFinishing();
@@ -118,6 +120,7 @@ void FilesystemScannerTest::AGateThatClosesStopsTheWalkWhereItWasInsteadOfFinish
     QCOMPARE(whole.children.size(), std::size_t{3});
     QCOMPARE(stopped.children.size(), std::size_t{1});
     QVERIFY2(stopped.children.front().children.empty(), "the walk kept descending after the gate had closed");
+    QCOMPARE(stopped.children.front().kind, TreeNodeKind::Category);
 }
 
 void FilesystemScannerTest::AnAddonCarriesTheMetadataFromItsManifest()
@@ -142,41 +145,88 @@ void FilesystemScannerTest::AnAddonCarriesTheMetadataFromItsManifest()
     QCOMPARE(addon.addon->manifest.packageVersion, std::string("1.2.0"));
 }
 
-void FilesystemScannerTest::AnEmptyFolderIsAnEmptyCategory()
+void FilesystemScannerTest::AFolderWithoutAManifestThatGroupsNoAddonIsItselfAnAddon()
+{
+    const Library library;
+    library.AddManifest("Aircrafts/fsl-a32x", R"({"title": "A32X"})");
+    library.AddFolder("Aircrafts/fsl-a32x_CVT_/EFFECTS/TEXTURE");
+
+    const FilesystemScanner scanner(parser, probe);
+    const TreeNode root = scanner.Scan(library.Root());
+
+    const TreeNode* aircrafts = ChildNamed(root, "Aircrafts");
+    QVERIFY(aircrafts != nullptr);
+    QCOMPARE(aircrafts->kind, TreeNodeKind::Category);
+    QCOMPARE(aircrafts->children.size(), std::size_t{2});
+
+    const TreeNode* converted = ChildNamed(*aircrafts, "fsl-a32x_CVT_");
+    QVERIFY(converted != nullptr);
+    QCOMPARE(converted->kind, TreeNodeKind::Addon);
+    QVERIFY(converted->addon.has_value());
+    QCOMPARE(converted->addon->folderPath, library.Root() / "Aircrafts" / "fsl-a32x_CVT_");
+    QVERIFY2(converted->children.empty(), "the walk kept exposing what is inside a folder it had already adopted");
+}
+
+void FilesystemScannerTest::AFolderThatStillGroupsAnAddonStaysACategory()
+{
+    const Library library;
+    library.AddManifest("Utils/flybywire-current-install-804/restore", R"({"title": "A380X"})");
+
+    const FilesystemScanner scanner(parser, probe);
+    const TreeNode root = scanner.Scan(library.Root());
+
+    const TreeNode* utils = ChildNamed(root, "Utils");
+    QVERIFY(utils != nullptr);
+
+    const TreeNode* installer = ChildNamed(*utils, "flybywire-current-install-804");
+    QVERIFY(installer != nullptr);
+    QCOMPARE(installer->kind, TreeNodeKind::Category);
+    QCOMPARE(installer->children.size(), std::size_t{1});
+    QCOMPARE(installer->children.front().kind, TreeNodeKind::Addon);
+}
+
+void FilesystemScannerTest::AnEmptyFolderIsAnAddonUnlessTheMarkerDeclaresIt()
 {
     const Library library;
     library.AddFolder("Liveries");
+    library.Declare("Categoria Vazia");
     library.AddManifest("Sceneries/tlc-bgjn", R"({"title": "Ilulissat"})");
 
     const FilesystemScanner scanner(parser, probe);
     const TreeNode root = scanner.Scan(library.Root());
 
-    QCOMPARE(root.children.size(), std::size_t{2});
+    QCOMPARE(root.children.size(), std::size_t{3});
 
     const TreeNode* liveries = ChildNamed(root, "Liveries");
     QVERIFY(liveries != nullptr);
-    QCOMPARE(liveries->kind, TreeNodeKind::Category);
-    QCOMPARE(liveries->children.size(), std::size_t{0});
-    QVERIFY(!liveries->addon.has_value());
+    QCOMPARE(liveries->kind, TreeNodeKind::Addon);
+    QVERIFY(liveries->addon.has_value());
+    QCOMPARE(liveries->addon->manifest.title, std::string());
+
+    const TreeNode* declared = ChildNamed(root, "Categoria Vazia");
+    QVERIFY(declared != nullptr);
+    QCOMPARE(declared->kind, TreeNodeKind::Category);
+    QVERIFY(!declared->addon.has_value());
 }
 
-void FilesystemScannerTest::TheMarkerTellsADeclaredCategoryApartFromALeftoverFolder()
+void FilesystemScannerTest::ACategoryTheAppDeclaredSurvivesLosingItsLastAddon()
 {
     const Library library;
+    library.Declare("Utils");
     library.AddFolder("Utils/navigraph-efb-chartsapp");
-    library.Declare("Categoria Teste");
 
     const FilesystemScanner scanner(parser, probe);
     const TreeNode root = scanner.Scan(library.Root());
 
-    const TreeNode* declared = ChildNamed(root, "Categoria Teste");
-    QVERIFY(declared != nullptr);
-    QVERIFY(declared->declaredAsCategory);
-
     const TreeNode* utils = ChildNamed(root, "Utils");
     QVERIFY(utils != nullptr);
-    QVERIFY(!utils->declaredAsCategory);
-    QVERIFY(!ChildNamed(*utils, "navigraph-efb-chartsapp")->declaredAsCategory);
+    QCOMPARE(utils->kind, TreeNodeKind::Category);
+    QVERIFY(utils->declaredAsCategory);
+
+    const TreeNode* leftover = ChildNamed(*utils, "navigraph-efb-chartsapp");
+    QVERIFY(leftover != nullptr);
+    QCOMPARE(leftover->kind, TreeNodeKind::Addon);
+    QVERIFY(!leftover->declaredAsCategory);
 }
 
 void FilesystemScannerTest::AFolderWithAnUnreadableManifestIsStillAnAddon()

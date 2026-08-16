@@ -79,6 +79,28 @@ bool HoldsAddonsOrWasDeclared(const TreeNode& node)
     return node.declaredAsCategory || CountAddons(node) > 0;
 }
 
+void AFolderThatGroupsNothingBecomesAnAddon(TreeNode& node)
+{
+    if (node.kind == TreeNodeKind::Addon)
+    {
+        return;
+    }
+
+    if (node.kind == TreeNodeKind::Category && !HoldsAddonsOrWasDeclared(node))
+    {
+        node.kind = TreeNodeKind::Addon;
+        node.children.clear();
+        node.addon = Addon{.folderPath = node.path};
+
+        return;
+    }
+
+    for (TreeNode& child : node.children)
+    {
+        AFolderThatGroupsNothingBecomesAnAddon(child);
+    }
+}
+
 std::vector<const TreeNode*> CategoriesOfferedIn(const TreeNode& tree, const bool offerTheRoot)
 {
     std::vector<const TreeNode*> offered;

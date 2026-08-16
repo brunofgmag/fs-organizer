@@ -92,8 +92,10 @@ void CatalogOnRealDiskTest::ACategoryMarkerPastTheOldCeilingIsRead()
 
     for (const TreeNode& child : root.children)
     {
-        QCOMPARE(child.kind, TreeNodeKind::Category);
-        QCOMPARE(child.declaredAsCategory, child.path == declared);
+        const bool itIsTheDeclaredOne = child.path == declared;
+
+        QCOMPARE(child.declaredAsCategory, itIsTheDeclaredOne);
+        QCOMPARE(child.kind, itIsTheDeclaredOne ? TreeNodeKind::Category : TreeNodeKind::Addon);
     }
 }
 
