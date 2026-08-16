@@ -109,7 +109,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     connect(&viewModel_, &QuarantineViewModel::Restored, this,
             [this](const std::vector<FileOperationResult>& results)
             {
-                Report(tr("Restore"), results);
+                Report(tr("Restore", "the title of a report"), results);
             });
     connect(&viewModel_, &QuarantineViewModel::Swapped, this, &QuarantinePage::ReportTheSwaps);
     connect(&viewModel_, &QuarantineViewModel::Discarded, this,

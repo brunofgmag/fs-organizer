@@ -485,7 +485,7 @@ void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows)
 
     if (tally.broken > 0)
     {
-        fields_.append({tr("Broken"), QString::number(tally.broken)});
+        fields_.append({tr("Broken", "several addons"), QString::number(tally.broken)});
     }
 
     if (tally.strayed > 0)
