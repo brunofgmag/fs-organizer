@@ -334,9 +334,9 @@ FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine
 {
     if (filesystemProbe_.EntryExistsWithoutFollowingLinks(quarantine))
     {
-        log_.RecordImport(kind, addon, loser, quarantine, FileResult::CouldNotQuarantine);
+        log_.RecordImport(kind, addon, loser, quarantine, FileResult::TheQuarantineIsOccupied);
 
-        return FileResult::CouldNotQuarantine;
+        return FileResult::TheQuarantineIsOccupied;
     }
 
     const std::filesystem::path sidecar = SidecarPathFor(quarantine);

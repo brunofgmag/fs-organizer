@@ -224,9 +224,12 @@ ImportOutcome ImportEngine::Quarantine(const QuarantineRequest& request,
 
     if (OnTheSameVolume(request.loser, request.quarantine))
     {
-        return conclude(files_.Move(request.loser, request.quarantine)
-                            ? ImportOutcome::Completed()
-                            : ImportOutcome::Stopped(FileResult::CouldNotQuarantine));
+        if (files_.Move(request.loser, request.quarantine))
+        {
+            return conclude(ImportOutcome::Completed());
+        }
+
+        return conclude(ImportOutcome::Stopped(WhatStoppedIt(request.loser, FileResult::CouldNotQuarantine)));
     }
 
     const MeasuredSource source = MeasureTheSource(request.loser, request.quarantine.parent_path());
@@ -249,10 +252,16 @@ ImportOutcome ImportEngine::Quarantine(const QuarantineRequest& request,
 
     Announce(onStep, OperationKind::ImportRemoveSource);
     const bool removed = files_.RemoveTree(request.loser);
-    RecordStep(request.addon, OperationKind::ImportRemoveSource, request.loser, request.quarantine,
-               removed ? FileResult::Completed : FileResult::CouldNotRemoveSource);
+    const FileResult emptied =
+        removed ? FileResult::Completed : WhatStoppedIt(request.loser, FileResult::CouldNotRemoveSource);
+    RecordStep(request.addon, OperationKind::ImportRemoveSource, request.loser, request.quarantine, emptied);
 
-    return conclude(removed ? ImportOutcome::Completed() : ImportOutcome::Stopped(FileResult::CouldNotRemoveSource));
+    return conclude(Succeeded(emptied) ? ImportOutcome::Completed() : ImportOutcome::Stopped(emptied));
+}
+
+FileResult ImportEngine::WhatStoppedIt(const std::filesystem::path& folder, const FileResult otherwise) const
+{
+    return filesystemProbe_.SomethingIsHoldingItOpen(folder) ? FileResult::AnotherProgramIsHoldingIt : otherwise;
 }
 
 MeasuredSource ImportEngine::MeasureTheSource(const std::filesystem::path& source,

@@ -240,6 +240,8 @@ namespace QTest
         case FileResult::CouldNotReadThePackageList: return qstrdup("CouldNotReadThePackageList");
         case FileResult::CouldNotWriteThePackageList: return qstrdup("CouldNotWriteThePackageList");
         case FileResult::ThePackageListIsLeftLoose: return qstrdup("ThePackageListIsLeftLoose");
+        case FileResult::AnotherProgramIsHoldingIt: return qstrdup("AnotherProgramIsHoldingIt");
+        case FileResult::TheQuarantineIsOccupied: return qstrdup("TheQuarantineIsOccupied");
         }
 
         return qstrdup("FileResult(?)");
