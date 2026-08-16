@@ -30,6 +30,7 @@
 #include "view/options/OptionsPage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/ButtonLookup.h"
 #include "tests/support/PageFloor.h"
 
 namespace
@@ -92,18 +93,6 @@ namespace
         bool checkboxIsLaidOut = false;
     };
 
-    QPushButton* ButtonLabelled(const QWidget& page, const QString& text)
-    {
-        const auto buttons = page.findChildren<QPushButton*>();
-        const auto found = std::ranges::find_if(buttons,
-                                                [&text](const QPushButton* button)
-                                                {
-                                                    return button->text() == text;
-                                                });
-
-        return found == buttons.end() ? nullptr : *found;
-    }
-
     QPushButton* LastButtonLabelled(const QWidget& page, const QString& text)
     {
         QPushButton* last = nullptr;
@@ -154,7 +143,7 @@ namespace
 
     Question WhatUnregisteringAsks(const OptionsPage& page)
     {
-        return WhatClickingAsks(ButtonLabelled(page, QStringLiteral("Unregister")));
+        return WhatClickingAsks(ButtonSaying(page, QStringLiteral("Unregister")));
     }
 
     SimulatorProfile SecondProfile()
@@ -509,17 +498,17 @@ void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
 
     LastButtonLabelled(f.page, QStringLiteral("View…"))->click();
 
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Add library…"))->isEnabled());
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Import from MSFS Addons Linker…"))->isEnabled());
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Unregister"))->isEnabled());
+    QVERIFY(!ButtonSaying(f.page, QStringLiteral("Add library…"))->isEnabled());
+    QVERIFY(!ButtonSaying(f.page, QStringLiteral("Import from MSFS Addons Linker…"))->isEnabled());
+    QVERIFY(!ButtonSaying(f.page, QStringLiteral("Unregister"))->isEnabled());
 }
 
 void OptionsPageTest::TheOnlyProfileCannotBeRemoved()
 {
     const Fixture f;
 
-    QVERIFY(ButtonLabelled(f.page, QStringLiteral("Remove")) != nullptr);
-    QVERIFY(!ButtonLabelled(f.page, QStringLiteral("Remove"))->isEnabled());
+    QVERIFY(ButtonSaying(f.page, QStringLiteral("Remove")) != nullptr);
+    QVERIFY(!ButtonSaying(f.page, QStringLiteral("Remove"))->isEnabled());
 }
 
 void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown()
@@ -536,7 +525,7 @@ void OptionsPageTest::RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsS
 
     LastButtonLabelled(f.page, QStringLiteral("View…"))->click();
 
-    const Question asked = WhatClickingAsks(ButtonLabelled(f.page, QStringLiteral("Remove")));
+    const Question asked = WhatClickingAsks(ButtonSaying(f.page, QStringLiteral("Remove")));
 
     QVERIFY2(asked.opened, "the remove question did not open, so nothing was looked at");
     QVERIFY2(asked.offeredToDisable,

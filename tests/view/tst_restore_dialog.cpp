@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "application/model/RestorePlan.h"
+#include "support/PathText.h"
 #include "tests/support/PathPrinting.h"
 #include "view/quarantine/RestoreDialog.h"
 #include "view/theme/ModernistTheme.h"
@@ -25,6 +26,7 @@ namespace
         static void ACollisionWithAnAddonOccupantIsOfferedTheSwapAndNobodyIsPreselected();
         static void AnOccupantWithoutAManifestIsListedAsRefusedWithNoOfferAtAll();
         static void TheCountedLineSeparatesWhatGoesBackFromWhatReplaces();
+        static void ARowWhoseOriginWearsALinkSaysTheLinkGoesAwayWithIt();
         static void ARowThatNeedsAPlaceIsStillAskedInsteadOfBeingOfferedASwap();
         static void ARefusedComparisonLeavesTheRowAsItWas();
         static void TheTotalCountsTheReplacementsItSaysAreAmongThem();
@@ -52,6 +54,13 @@ namespace
             .check = RestoreCheck{.item = QuarantinedItem{.path = "D:/Library/_fsorganizer-quarantine/fenix-a320",
                                                           .origin = "D:/Library/Aircraft/fenix-a320"},
                                   .target = "D:/Library/Aircraft/fenix-a320"}};
+    }
+
+    QString ThePromiseIn(const RestoreDialog& dialog)
+    {
+        const QLabel* promise = dialog.findChild<QLabel*>(QStringLiteral("PanelPromise"));
+
+        return promise == nullptr ? QString{} : promise->text();
     }
 
     QPushButton* TheOfferIn(const RestoreDialog& dialog)
@@ -138,6 +147,23 @@ void RestoreDialogTest::AnOccupantWithoutAManifestIsListedAsRefusedWithNoOfferAt
     QVERIFY(TheOfferIn(dialog) == nullptr);
     QVERIFY(dialog.Restorable().empty());
     QVERIFY(dialog.TheOnesReplacingWhatIsThere().empty());
+}
+
+void RestoreDialogTest::ARowWhoseOriginWearsALinkSaysTheLinkGoesAwayWithIt()
+{
+    RestoreOffer wearing = ASettledRestore();
+    wearing.check.theOriginHoldsALink = true;
+
+    const RestoreDialog withTheLink({wearing}, AlwaysAgrees());
+    const RestoreDialog plain({ASettledRestore()}, AlwaysAgrees());
+
+    const QString place = AsText(wearing.check.target.parent_path());
+
+    QVERIFY(!ThePromiseIn(plain).isEmpty());
+    QVERIFY(ThePromiseIn(plain).contains(place));
+    QVERIFY(ThePromiseIn(withTheLink) != ThePromiseIn(plain));
+    QVERIFY(ThePromiseIn(withTheLink).contains(place));
+    QCOMPARE(withTheLink.Restorable().size(), std::size_t{1});
 }
 
 void RestoreDialogTest::TheCountedLineSeparatesWhatGoesBackFromWhatReplaces()

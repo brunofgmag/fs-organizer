@@ -4,6 +4,7 @@
 #include <functional>
 #include <vector>
 
+#include <QtCore/QString>
 #include <QtWidgets/QDialog>
 
 #include "application/model/RestorePlan.h"
@@ -42,6 +43,8 @@ private:
         QLabel* chosen = nullptr;
         bool agreed = false;
     };
+
+    [[nodiscard]] static QString WhatGoingBackMeansFor(const RestoreCheck& check);
 
     void AddTheSettledRow(QGridLayout& grid, const RestoreOffer& offer, int row);
 

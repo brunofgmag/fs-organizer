@@ -39,6 +39,9 @@ namespace
         static void TheQuarantineIsListedFromTheDiskAndItsOriginComesFromTheJournal();
         static void RestoringPutsTheFolderBackWhereItCameFromAndSaysSoInTheJournal();
         static void RestoringIsRefusedWhenSomethingElseAlreadyOccupiesTheOrigin();
+        static void AnOriginWearingOnlyALinkIsNotACollision();
+        static void TheLinkStandingAtTheOriginComesOffSoTheItemCanGoBack();
+        static void NothingGoesBackWhenTheLinkAtTheOriginCannotComeOff();
         static void AnItemWhoseOriginTheJournalNeverSawIsNotRestored();
         static void EmptyingTheQuarantineNeverReachesAnythingOutsideIt();
         static void NoQuarantineIsTouchedWhileTheSimulatorIsRunning();
@@ -394,6 +397,72 @@ void ImportServiceTest::RestoringIsRefusedWhenSomethingElseAlreadyOccupiesTheOri
     QCOMPARE(f.fileSystem.FileSize(kInLibrary / "manifest.json"), 3 * kMegabyte);
     QVERIFY(f.fileSystem.Exists("D:/Library/_fsorganizer-quarantine/simbridge/manifest.json"));
     QCOMPARE(f.journal.appended.back().kind, OperationKind::QuarantineFromLibrary);
+}
+
+void ImportServiceTest::AnOriginWearingOnlyALinkIsNotACollision()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
+    QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy),
+             FileResult::Completed);
+    QVERIFY(f.fileSystem.IsLink(kInDestination));
+
+    const std::vector<RestoreCheck> checks = f.service.CheckRestore(f.profile, f.service.Quarantined(f.profile));
+
+    QCOMPARE(checks.size(), std::size_t{1});
+    QCOMPARE(checks.front().result, FileResult::Completed);
+    QVERIFY(checks.front().theOriginHoldsALink);
+    QVERIFY(checks.front().occupant.empty());
+}
+
+void ImportServiceTest::TheLinkStandingAtTheOriginComesOffSoTheItemCanGoBack()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
+    QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy),
+             FileResult::Completed);
+
+    const std::vector<FileOperationResult> restored = f.service.Restore(f.profile, f.service.Quarantined(f.profile));
+
+    QCOMPARE(restored.size(), std::size_t{1});
+    QCOMPARE(restored.front().result, FileResult::Completed);
+    QVERIFY(!f.fileSystem.IsLink(kInDestination));
+    QCOMPARE(f.fileSystem.FileSize(kInDestination / "manifest.json"), 2 * kMegabyte);
+    QVERIFY(!f.fileSystem.Exists("E:/Sim/_fsorganizer-quarantine/simbridge"));
+    QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
+    QVERIFY(f.service.Quarantined(f.profile).empty());
+
+    const OperationRecord& disabled = f.journal.appended[f.journal.appended.size() - 2];
+    QCOMPARE(disabled.kind, OperationKind::DisableAddon);
+    QCOMPARE(disabled.addonId.libraryId, LibraryId{"lib-1"});
+    QCOMPARE(disabled.source, kInLibrary);
+    QCOMPARE(disabled.target, kInDestination);
+    QCOMPARE(f.journal.appended.back().kind, OperationKind::RestoreFromQuarantine);
+    QCOMPARE(std::get<FileResult>(f.journal.appended.back().outcome), FileResult::Completed);
+}
+
+void ImportServiceTest::NothingGoesBackWhenTheLinkAtTheOriginCannotComeOff()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
+    QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy),
+             FileResult::Completed);
+
+    f.linkService.MakeLinkRemovalFail();
+
+    const std::vector<FileOperationResult> restored = f.service.Restore(f.profile, f.service.Quarantined(f.profile));
+
+    QCOMPARE(restored.front().result, FileResult::CouldNotRemoveTheLink);
+    QVERIFY(f.fileSystem.IsLink(kInDestination));
+    QVERIFY(f.fileSystem.Exists("E:/Sim/_fsorganizer-quarantine/simbridge/manifest.json"));
+    QCOMPARE(f.journal.appended.back().kind, OperationKind::RestoreFromQuarantine);
+    QCOMPARE(std::get<FileResult>(f.journal.appended.back().outcome), FileResult::CouldNotRemoveTheLink);
 }
 
 void ImportServiceTest::AnItemWhoseOriginTheJournalNeverSawIsNotRestored()

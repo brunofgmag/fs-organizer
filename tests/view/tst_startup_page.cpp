@@ -25,6 +25,7 @@
 #include "tests/doubles/FakeStartupEntries.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
+#include "tests/support/ButtonLookup.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "view/simulator/StartupPage.h"
@@ -159,19 +160,6 @@ namespace
     QTreeWidget* TableOf(const StartupPage& page)
     {
         return page.findChild<QTreeWidget*>();
-    }
-
-    QPushButton* ButtonSaying(const StartupPage& page, const QString& text)
-    {
-        for (QPushButton* button : page.findChildren<QPushButton*>())
-        {
-            if (button->text() == text)
-            {
-                return button;
-            }
-        }
-
-        return nullptr;
     }
 }
 

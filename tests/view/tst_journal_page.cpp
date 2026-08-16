@@ -27,6 +27,7 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/StartupOverFakes.h"
+#include "tests/support/ButtonLookup.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PageFloor.h"
 #include "tests/support/PathPrinting.h"
@@ -182,19 +183,6 @@ namespace
     QString PanelTitleOf(const JournalPage& page)
     {
         return PanelOf(page)->findChild<QLabel*>(QStringLiteral("PanelTitle"))->text();
-    }
-
-    QPushButton* ButtonSaying(const JournalPage& page, const QString& text)
-    {
-        for (QPushButton* button : page.findChildren<QPushButton*>())
-        {
-            if (button->text() == text)
-            {
-                return button;
-            }
-        }
-
-        return nullptr;
     }
 
     QString TheNewestOperationIsCalled(const JournalModel& model)
