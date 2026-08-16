@@ -32,6 +32,7 @@ set(DOMAIN_SOURCES
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp
         src/domain/tree/LibraryTrees.cpp
+        src/domain/tree/StructureAdoption.cpp
         src/domain/tree/ToggleDirection.cpp
 )
 

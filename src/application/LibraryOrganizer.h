@@ -12,6 +12,7 @@
 #include "domain/linking/LinkingEngine.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/ports/CatalogScanner.h"
+#include "domain/tree/StructureAdoption.h"
 #include "domain/ports/Clock.h"
 #include "domain/ports/FileOperations.h"
 #include "domain/ports/FilesystemProbe.h"
@@ -46,7 +47,17 @@ public:
     [[nodiscard]] std::vector<FileOperationResult> Move(SimulatorProfile& profile,
                                                         const std::vector<AddonMove>& moves) const;
 
+    [[nodiscard]] LibraryGrouping HowItIsGrouped(const Library& library) const;
+
+    [[nodiscard]] std::vector<FileOperationResult> AdoptTheStructure(const SimulatorProfile& profile,
+                                                                     const Library& library) const;
+
+    [[nodiscard]] std::vector<FileOperationResult> TakeBackEveryMarkerItWrote(const SimulatorProfile& profile,
+                                                                              const Library& library) const;
+
 private:
+    [[nodiscard]] std::vector<std::filesystem::path> WhatTheImporterBroughtInto(const Library& library) const;
+
     [[nodiscard]] FileOperationResult
     MoveOne(SimulatorProfile& profile, const std::vector<TreeNode>& libraries, const AddonMove& move) const;
 

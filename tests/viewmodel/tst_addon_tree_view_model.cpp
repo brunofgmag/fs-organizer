@@ -174,6 +174,8 @@ namespace
             catalog.SetTree(kSpare, std::move(spare));
 
             QVERIFY(session.RegisterLibrary(kSpare).Accepted());
+
+            journal.appended.clear();
         }
 
         [[nodiscard]] const TreeNode* SpareCategory() const

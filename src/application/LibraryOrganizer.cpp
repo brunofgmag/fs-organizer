@@ -1,5 +1,9 @@
 #include "application/LibraryOrganizer.h"
 
+#include <map>
+#include <ranges>
+#include <string>
+
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/CategoryMarker.h"
@@ -369,6 +373,78 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
     return FileOperationResult{.path = target,
                                .result = Relink(profile, addon, target) ? FileResult::Completed
                                                                         : FileResult::CouldNotCreateLink};
+}
+
+std::vector<std::filesystem::path> LibraryOrganizer::WhatTheImporterBroughtInto(const Library& library) const
+{
+    std::map<std::string, std::filesystem::path> brought;
+
+    for (const OperationRecord& record : log_.History())
+    {
+        if (!Succeeded(record.outcome))
+        {
+            continue;
+        }
+
+        if (record.kind == OperationKind::ImportMoveIntoPlace)
+        {
+            brought.insert_or_assign(ComparablePath(record.target), record.target);
+        }
+        else if (record.kind == OperationKind::MoveAddon && brought.erase(ComparablePath(record.source)) == 1)
+        {
+            brought.insert_or_assign(ComparablePath(record.target), record.target);
+        }
+    }
+
+    std::vector<std::filesystem::path> inside;
+    for (const std::filesystem::path& folder : brought | std::views::values)
+    {
+        if (PathIsInside(folder, library.path))
+        {
+            inside.push_back(folder);
+        }
+    }
+
+    return inside;
+}
+
+LibraryGrouping LibraryOrganizer::HowItIsGrouped(const Library& library) const
+{
+    return HowTheLibraryIsGrouped(filesystemProbe_, library.path, WhatTheImporterBroughtInto(library));
+}
+
+std::vector<FileOperationResult> LibraryOrganizer::AdoptTheStructure(const SimulatorProfile& profile,
+                                                                     const Library& library) const
+{
+    std::vector<FileOperationResult> results;
+
+    for (const std::filesystem::path& folder : HowItIsGrouped(library).notYetDeclared)
+    {
+        const bool declared = files_.WriteHiddenFile(CategoryMarkerPathIn(folder));
+        const FileResult result = declared ? FileResult::Completed : FileResult::CouldNotCreateTheCategory;
+
+        Record(OperationKind::CreateCategory, IdentityOf(profile, folder), {}, folder, result);
+        results.push_back(FileOperationResult{.path = folder, .result = result});
+    }
+
+    return results;
+}
+
+std::vector<FileOperationResult> LibraryOrganizer::TakeBackEveryMarkerItWrote(const SimulatorProfile& profile,
+                                                                              const Library& library) const
+{
+    std::vector<FileOperationResult> results;
+
+    for (const std::filesystem::path& folder : HowItIsGrouped(library).alreadyDeclared)
+    {
+        const bool taken = files_.RemoveTree(CategoryMarkerPathIn(folder));
+        const FileResult result = taken ? FileResult::Completed : FileResult::CouldNotRemoveTheCategory;
+
+        Record(OperationKind::TakeBackTheCategoryMarker, IdentityOf(profile, folder), folder, {}, result);
+        results.push_back(FileOperationResult{.path = folder, .result = result});
+    }
+
+    return results;
 }
 
 std::vector<FileOperationResult> LibraryOrganizer::Move(SimulatorProfile& profile,

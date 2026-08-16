@@ -4,6 +4,7 @@
 #include <iterator>
 
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/model/CategoryMarker.h"
 #include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
@@ -14,6 +15,21 @@ namespace
     {
         return route == DeletionRoute::RecycleBin ? OperationKind::RecycleFromLibrary
                                                   : OperationKind::DeleteFromLibrary;
+    }
+
+    std::vector<std::filesystem::path> EveryLibraryRootIn(const std::vector<SimulatorProfile>& everyProfile)
+    {
+        std::vector<std::filesystem::path> roots;
+
+        for (const SimulatorProfile& profile : everyProfile)
+        {
+            for (const Library& library : profile.libraries)
+            {
+                roots.push_back(library.path);
+            }
+        }
+
+        return roots;
     }
 
     std::vector<std::filesystem::path> LibraryRootsOf(const SimulatorProfile& profile)
@@ -160,8 +176,30 @@ DeletionService::TheRouteRefuses(const DeletionPlan& plan, const AddonToDelete& 
     return route == DeletionRoute::Permanently ? FileResult::Completed : WhatTheRecycleBinRefuses(plan, addon);
 }
 
+void DeletionService::DeclareTheCategoryItLeaves(const std::filesystem::path& folder,
+                                                 const std::vector<std::filesystem::path>& libraryRoots) const
+{
+    const auto itIsThisRoot = [&folder](const std::filesystem::path& root)
+    {
+        return ComparablePath(root) == ComparablePath(folder);
+    };
+
+    const auto itIsUnderThisRoot = [&folder](const std::filesystem::path& root)
+    {
+        return PathIsInside(folder, root);
+    };
+
+    if (std::ranges::any_of(libraryRoots, itIsThisRoot) || !std::ranges::any_of(libraryRoots, itIsUnderThisRoot))
+    {
+        return;
+    }
+
+    static_cast<void>(files_.WriteHiddenFile(CategoryMarkerPathIn(folder)));
+}
+
 DeletionResult DeletionService::DeleteOne(const AddonToDelete& addon,
                                           const std::vector<LinksNow>& seen,
+                                          const std::vector<std::filesystem::path>& libraryRoots,
                                           const DeletionRoute route) const
 {
     DeletionResult result{.folder = addon.folder};
@@ -188,6 +226,7 @@ DeletionResult DeletionService::DeleteOne(const AddonToDelete& addon,
     if (gone)
     {
         static_cast<void>(sidecars_.Forget(ExternalSidecarPathFor(addon.folder)));
+        DeclareTheCategoryItLeaves(addon.folder.parent_path(), libraryRoots);
     }
 
     result.result = gone ? FileResult::Completed : FileResult::CouldNotDelete;
@@ -220,6 +259,7 @@ std::vector<DeletionResult> DeletionService::Delete(const std::vector<SimulatorP
     }
 
     const std::vector<LinksNow> seen = ReadLinksNow(everyProfile);
+    const std::vector<std::filesystem::path> libraryRoots = EveryLibraryRootIn(everyProfile);
 
     for (const AddonToDelete& addon : plan.addons)
     {
@@ -231,7 +271,7 @@ std::vector<DeletionResult> DeletionService::Delete(const std::vector<SimulatorP
             continue;
         }
 
-        results.push_back(DeleteOne(addon, seen, route));
+        results.push_back(DeleteOne(addon, seen, libraryRoots, route));
     }
 
     return results;

@@ -2508,6 +2508,11 @@ It also exists in the library: %2</translation>
         <translation>Turn the startup entry back on</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
+        <source>Take back the category marker</source>
+        <translation>Take back the category marker</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
         <source>(library removed)</source>
         <translation>(library removed)</translation>
@@ -3347,6 +3352,31 @@ It also exists in the library: %2</translation>
         <location filename="../src/view/options/OptionsPage.cpp" line="737"/>
         <source>Open</source>
         <translation>Open</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Categories</source>
+        <translation>Categories</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Categories of %1</source>
+        <translation>Categories of %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>FS Organizer marks the folders you built, so that a category keeps counting as one even after it loses its last addon. It never marks what it imported, and it never looks inside an addon.&#xa;&#xa;Folders that already carry the marker: %1&#xa;Folders that would receive it now: %2</source>
+        <translation>FS Organizer marks the folders you built, so that a category keeps counting as one even after it loses its last addon. It never marks what it imported, and it never looks inside an addon.&#xa;&#xa;Folders that already carry the marker: %1&#xa;Folders that would receive it now: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Mark them</source>
+        <translation>Mark them</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Take every marker back</source>
+        <translation>Take every marker back</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
