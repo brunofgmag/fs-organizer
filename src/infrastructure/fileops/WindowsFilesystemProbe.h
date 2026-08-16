@@ -22,6 +22,8 @@ public:
 
     [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] bool SomethingIsHoldingItOpen(const std::filesystem::path& path) const override;
+
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override;
 
     [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override;

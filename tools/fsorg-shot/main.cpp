@@ -348,17 +348,15 @@ namespace
         return navigation.currentRow() == row;
     }
 
-    QPushButton* ButtonLabelled(const QWidget& page, const QString& text)
+    QPushButton* ButtonNamed(const QWidget& page, const QString& objectName)
     {
-        for (QPushButton* button : page.findChildren<QPushButton*>())
+        QPushButton* button = page.findChild<QPushButton*>(objectName);
+        if (button == nullptr)
         {
-            if (button->text() == text)
-            {
-                return button;
-            }
+            Out() << "no button called " << objectName << " on this page, so the shot it opens is missing\n";
         }
 
-        return nullptr;
+        return button;
     }
 
     QString TheFirstAddonOf(const ProfileSnapshot& snapshot)
@@ -791,17 +789,16 @@ int main(int argc, char* argv[])
 
     if (SelectTheFirstRows(*quarantinePage, 4))
     {
-        if (QPushButton* restore = ButtonLabelled(*quarantinePage, QObject::tr("Restore the selected ones"));
-            restore != nullptr)
-        {
-            landed = SaveTheDialogOpenedBy(
-                         [restore]
-                         {
-                             restore->click();
-                         },
-                         folder, QStringLiteral("16-quarantine-restore"))
-                && landed;
-        }
+        QPushButton* restore = ButtonNamed(*quarantinePage, QStringLiteral("RestoreChosen"));
+
+        landed = restore != nullptr
+            && SaveTheDialogOpenedBy(
+                     [restore]
+                     {
+                         restore->click();
+                     },
+                     folder, QStringLiteral("16-quarantine-restore"))
+            && landed;
     }
     else
     {
@@ -1154,7 +1151,8 @@ int main(int argc, char* argv[])
     static_cast<void>(ClickingReaches(*navigation, 0));
     LetTheLayoutSettle();
 
-    if (QPushButton* unregister = ButtonLabelled(*optionsPage, QObject::tr("Unregister")); unregister != nullptr)
+    if (QPushButton* unregister = optionsPage->findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"));
+        unregister != nullptr)
     {
         landed = SaveTheDialogOpenedBy(
                      [unregister]

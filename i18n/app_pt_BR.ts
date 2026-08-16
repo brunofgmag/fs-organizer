@@ -4380,6 +4380,21 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>a lista de pacotes do simulador não é gerenciada, então o app não lê nem grava esse arquivo</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="138"/>
+        <source>another program is holding that folder open, and Windows refuses to move it until that program lets go</source>
+        <translation>outro programa está com essa pasta aberta, e o Windows recusa movê-la enquanto esse programa não soltar</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="141"/>
+        <source>something with that name is already in the quarantine</source>
+        <translation>algo com esse nome já está na quarentena</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="143"/>
+        <source>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</source>
+        <translation>esta cópia não está dentro de um destino nem de uma biblioteca do perfil, então não há quarentena para ela</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">o diário não sabe de onde isto veio</translation>
     </message>

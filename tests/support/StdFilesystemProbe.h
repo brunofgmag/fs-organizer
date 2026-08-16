@@ -119,6 +119,11 @@ public:
         return TargetDirectoryExists(path) ? WriteAccess::ItAccepts : WriteAccess::TheFolderIsNotThere;
     }
 
+    [[nodiscard]] bool SomethingIsHoldingItOpen(const std::filesystem::path&) const override
+    {
+        return false;
+    }
+
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override
     {
         std::error_code error;

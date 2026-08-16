@@ -41,6 +41,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     DressTheHeaderOf(table_->horizontalHeader());
 
     restore_ = new QPushButton(this);
+    restore_->setObjectName(QStringLiteral("RestoreChosen"));
     discard_ = new QPushButton(this);
     empty_ = new QPushButton(this);
     empty_->setProperty("role", "destructive");

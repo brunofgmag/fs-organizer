@@ -50,6 +50,20 @@ namespace
         }
     }
 
+    bool NobodyElseWouldLetItGo(const std::filesystem::path& path)
+    {
+        const HANDLE asked = CreateFileW(NativePath(path).c_str(), DELETE, 0, nullptr, OPEN_EXISTING,
+                                         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+        if (asked != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(asked);
+
+            return false;
+        }
+
+        return GetLastError() == ERROR_SHARING_VIOLATION;
+    }
+
     template<typename Wanted>
     std::vector<std::filesystem::path> ChildrenWhoseAttributesPass(const std::filesystem::path& path,
                                                                    const Wanted& wanted)
@@ -204,6 +218,40 @@ WriteAccess WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& p
     CloseHandle(probe);
 
     return WriteAccess::ItAccepts;
+}
+
+bool WindowsFilesystemProbe::SomethingIsHoldingItOpen(const std::filesystem::path& path) const
+{
+    if (NobodyElseWouldLetItGo(path))
+    {
+        return true;
+    }
+
+    std::error_code error;
+    std::filesystem::recursive_directory_iterator entry(
+        WithExtendedPrefix(path), std::filesystem::directory_options::skip_permission_denied, error);
+    if (error)
+    {
+        return false;
+    }
+
+    const std::filesystem::recursive_directory_iterator end;
+
+    while (entry != end)
+    {
+        if (NobodyElseWouldLetItGo(entry->path()))
+        {
+            return true;
+        }
+
+        entry.increment(error);
+        if (error)
+        {
+            return false;
+        }
+    }
+
+    return false;
 }
 
 std::optional<std::uintmax_t> WindowsFilesystemProbe::FreeSpaceOn(const std::filesystem::path& path) const

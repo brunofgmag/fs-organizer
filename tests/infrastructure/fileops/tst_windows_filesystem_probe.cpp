@@ -29,6 +29,7 @@ namespace
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
         static void AFolderThatIsNotThereIsNotTheSameAsOneThatRefusesTheWrite();
         static void AFolderThatWillNotTakeAFileSaysPermissionIsWhatStoppedIt();
+        static void TheProbeCallsAFolderHeldExactlyWhenTheRenameIsRefused();
         static void AFolderReportsWhenItWasLastWrittenTo();
         static void TheStandardLibraryDoubleAnswersAJunctionTheSameWayThisProbeDoes();
         static void EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable();
@@ -283,6 +284,32 @@ void WindowsFilesystemProbeTest::AFolderThatWillNotTakeAFileSaysPermissionIsWhat
 
     QVERIFY2(filesystemProbe.TargetDirectoryExists(folder), "a denial of writes is not a folder that went away");
     QCOMPARE(filesystemProbe.ProbeWritable(folder), WriteAccess::PermissionIsDenied);
+}
+
+void WindowsFilesystemProbeTest::TheProbeCallsAFolderHeldExactlyWhenTheRenameIsRefused()
+{
+    const Disk disk;
+    const std::filesystem::path addon = disk.AddFolder("Community/rkapps-fsrealistic");
+    const std::filesystem::path service = disk.AddFolder("Community/rkapps-fsrealistic/service");
+    const std::filesystem::path quarantine = disk.AddFolder("_fsorganizer-quarantine");
+    const std::filesystem::path landing = quarantine / "rkapps-fsrealistic";
+
+    const WindowsFilesystemProbe filesystemProbe;
+    QVERIFY(!filesystemProbe.SomethingIsHoldingItOpen(addon));
+
+    const HANDLE viewer =
+        CreateFileW(service.wstring().c_str(), FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                    OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+    QVERIFY2(viewer != INVALID_HANDLE_VALUE, "the subfolder could not be held the way a folder view holds it");
+
+    QVERIFY(filesystemProbe.SomethingIsHoldingItOpen(addon));
+    QVERIFY2(MoveFileExW(addon.wstring().c_str(), landing.wstring().c_str(), 0) == FALSE,
+             "a handle below it is what the probe is answering about, so the rename has to be refused");
+
+    CloseHandle(viewer);
+
+    QVERIFY(!filesystemProbe.SomethingIsHoldingItOpen(addon));
+    QVERIFY(MoveFileExW(addon.wstring().c_str(), landing.wstring().c_str(), 0) != FALSE);
 }
 
 void WindowsFilesystemProbeTest::AFolderReportsWhenItWasLastWrittenTo()

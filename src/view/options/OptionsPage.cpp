@@ -757,6 +757,7 @@ void OptionsPage::ReloadLibraries()
         layout->addWidget(open);
 
         auto* unregister = new QPushButton(tr("Unregister"), row);
+        unregister->setObjectName(QStringLiteral("UnregisterLibrary"));
         unregister->setEnabled(library.counted);
         layout->addWidget(unregister);
 

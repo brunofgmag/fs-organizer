@@ -4380,6 +4380,21 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>the package list of the simulator is not managed, so the app does not read or write that file</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="138"/>
+        <source>another program is holding that folder open, and Windows refuses to move it until that program lets go</source>
+        <translation>another program is holding that folder open, and Windows refuses to move it until that program lets go</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="141"/>
+        <source>something with that name is already in the quarantine</source>
+        <translation>something with that name is already in the quarantine</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="143"/>
+        <source>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</source>
+        <translation>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">the journal does not know where this came from</translation>
     </message>
