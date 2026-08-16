@@ -242,6 +242,7 @@ namespace QTest
         case FileResult::ThePackageListIsLeftLoose: return qstrdup("ThePackageListIsLeftLoose");
         case FileResult::AnotherProgramIsHoldingIt: return qstrdup("AnotherProgramIsHoldingIt");
         case FileResult::TheQuarantineIsOccupied: return qstrdup("TheQuarantineIsOccupied");
+        case FileResult::ThereIsNowhereToQuarantineIt: return qstrdup("ThereIsNowhereToQuarantineIt");
         }
 
         return qstrdup("FileResult(?)");

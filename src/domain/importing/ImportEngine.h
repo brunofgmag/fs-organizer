@@ -104,8 +104,6 @@ private:
                                              const std::filesystem::path& target,
                                              const std::function<void(OperationKind)>& onStep) const;
 
-    [[nodiscard]] FileResult WhatStoppedIt(const std::filesystem::path& folder, FileResult otherwise) const;
-
     [[nodiscard]] ImportOutcome CheckTheSource(const SimulatorProfile& profile, const ImportRequest& request) const;
 
     [[nodiscard]] ImportOutcome CheckTheFolderWeAreGivingBack(const GiveBackRequest& request) const;

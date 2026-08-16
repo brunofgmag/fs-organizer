@@ -4390,6 +4390,11 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>something with that name is already in the quarantine</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="143"/>
+        <source>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</source>
+        <translation>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">the journal does not know where this came from</translation>
     </message>

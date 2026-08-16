@@ -44,6 +44,7 @@ namespace
         static void ACopyThatFailsIsTheLastThingTheJournalHears();
         static void AMoveThatFailsIsRecordedAndTheSourceSurvives();
         static void ARemovalThatFailsIsRecordedAndTheSourceSurvives();
+        static void ARemovalStoppedByAnotherProgramNamesItInsteadOfTheSource();
         static void ALinkThatFailsIsRecordedAgainstTheAddonItWouldHaveEnabled();
         static void AnAddonAnotherProgramInstalledIsCopiedFromThatProgramsFolder();
         static void TheOtherProgramKeepsFindingItsFolderNowAsALinkIntoTheLibrary();
@@ -442,6 +443,21 @@ void ImportEngineTest::ARemovalThatFailsIsRecordedAndTheSourceSurvives()
     QCOMPARE(f.journal.appended.size(), std::size_t{4});
     QCOMPARE(f.journal.appended[3].kind, OperationKind::ImportRemoveSource);
     QCOMPARE(std::get<FileResult>(f.journal.appended[3].outcome), FileResult::CouldNotRemoveSource);
+    f.VerifySimBridgeIsStillWhereItWas();
+}
+
+void ImportEngineTest::ARemovalStoppedByAnotherProgramNamesItInsteadOfTheSource()
+{
+    Fixture f;
+    f.AddSimBridgeToTheDestination();
+    f.files.MakeTheRemovalFail();
+    f.filesystemProbe.LetAnotherProgramHold(kSource / "dist");
+
+    QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::AnotherProgramIsHoldingIt);
+
+    QCOMPARE(f.journal.appended.size(), std::size_t{4});
+    QCOMPARE(f.journal.appended[3].kind, OperationKind::ImportRemoveSource);
+    QCOMPARE(std::get<FileResult>(f.journal.appended[3].outcome), FileResult::AnotherProgramIsHoldingIt);
     f.VerifySimBridgeIsStillWhereItWas();
 }
 

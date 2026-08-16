@@ -4390,6 +4390,11 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>algo com esse nome já está na quarentena</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="143"/>
+        <source>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</source>
+        <translation>esta cópia não está dentro de um destino nem de uma biblioteca do perfil, então não há quarentena para ela</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">o diário não sabe de onde isto veio</translation>
     </message>

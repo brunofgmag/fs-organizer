@@ -139,6 +139,9 @@ QString Explain(const FileResult result)
                            "that program lets go");
     case FileResult::TheQuarantineIsOccupied:
         return QObject::tr("something with that name is already in the quarantine");
+    case FileResult::ThereIsNowhereToQuarantineIt:
+        return QObject::tr("this copy is not inside a destination or a library of the profile, so there is no "
+                           "quarantine for it");
     }
 
     return {};

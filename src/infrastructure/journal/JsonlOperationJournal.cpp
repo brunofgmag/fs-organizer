@@ -140,6 +140,7 @@ namespace
         case FileResult::ThePackageListIsLeftLoose: return "thePackageListIsLeftLoose";
         case FileResult::AnotherProgramIsHoldingIt: return "anotherProgramIsHoldingIt";
         case FileResult::TheQuarantineIsOccupied: return "theQuarantineIsOccupied";
+        case FileResult::ThereIsNowhereToQuarantineIt: return "thereIsNowhereToQuarantineIt";
         }
 
         return "unknown";

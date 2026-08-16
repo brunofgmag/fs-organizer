@@ -9,6 +9,7 @@
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/importing/OriginSidecar.h"
+#include "domain/importing/WhatStoppedIt.h"
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/LandingPath.h"
 #include "domain/model/Manifest.h"
@@ -232,13 +233,15 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
     }
 
     const Resolution resolution = ResolutionFor(profile, conflict, choice);
+    const AddonId addon = IdentityOf(profile, conflict.libraryPath);
 
     if (resolution.quarantine.empty())
     {
-        return FileResult::CouldNotQuarantine;
-    }
+        log_.RecordImport(resolution.kind, addon, resolution.loser, resolution.quarantine,
+                          FileResult::ThereIsNowhereToQuarantineIt);
 
-    const AddonId addon = IdentityOf(profile, conflict.libraryPath);
+        return FileResult::ThereIsNowhereToQuarantineIt;
+    }
     const std::vector<std::filesystem::path> pointedAtTheLoser = LinksPointingAt(entries, resolution.loser);
 
     if (!DisableEveryLink(linking_, log_, pointedAtTheLoser, addon, resolution.loser))
@@ -685,14 +688,15 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
 
     const Resolution goes = WhereTheOccupantGoes(profile, check.occupant);
 
+    const AddonId occupant = IdentityOf(profile, check.occupant);
+
     if (goes.quarantine.empty())
     {
-        swapped.result = FileResult::CouldNotQuarantine;
+        log_.RecordImport(goes.kind, occupant, goes.loser, goes.quarantine, FileResult::ThereIsNowhereToQuarantineIt);
+        swapped.result = FileResult::ThereIsNowhereToQuarantineIt;
 
         return swapped;
     }
-
-    const AddonId occupant = IdentityOf(profile, check.occupant);
 
     if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, check.occupant), occupant, check.occupant))
     {
@@ -709,7 +713,7 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
 
         if (!files_.Move(item.path, waiting.path))
         {
-            swapped.result = FileResult::CouldNotQuarantine;
+            swapped.result = WhatStoppedIt(filesystemProbe_, item.path, FileResult::CouldNotQuarantine);
 
             return swapped;
         }
