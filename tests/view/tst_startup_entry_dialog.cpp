@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "support/PathText.h"
+#include "tests/support/ButtonLookup.h"
 #include "tests/support/PathPrinting.h"
 #include "view/library/StartupEntryDialog.h"
 
@@ -44,19 +45,6 @@ namespace
         }
 
         return said;
-    }
-
-    QPushButton* ButtonSaying(const QDialog& dialog, const QString& text)
-    {
-        for (QPushButton* button : dialog.findChildren<QPushButton*>())
-        {
-            if (button->text().remove(QLatin1Char('&')) == text)
-            {
-                return button;
-            }
-        }
-
-        return nullptr;
     }
 }
 

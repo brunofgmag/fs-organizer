@@ -23,6 +23,7 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/RecordingSessionObserver.h"
+#include "tests/support/ButtonLookup.h"
 #include "view/legacy/LegacyImportDialog.h"
 
 namespace
@@ -142,17 +143,6 @@ namespace
         return *dialog.findChild<QTreeWidget*>(QStringLiteral("LegacyProposal"));
     }
 
-    QPushButton* ButtonLabelled(const QWidget& widget, const QString& text)
-    {
-        const auto buttons = widget.findChildren<QPushButton*>();
-        const auto found = std::ranges::find_if(buttons,
-                                                [&text](const QPushButton* button)
-                                                {
-                                                    return button->text() == text;
-                                                });
-
-        return found == buttons.end() ? nullptr : *found;
-    }
 }
 
 void LegacyImportDialogTest::EachInstallationBecomesALineWithItsLibrariesUnderIt()
@@ -192,7 +182,7 @@ void LegacyImportDialogTest::ALibraryWhoseRootIsGoneIsListedAndOffersNothing()
     QVERIFY(!library->flags().testFlag(Qt::ItemIsUserCheckable));
     QCOMPARE(library->childCount(), 2);
     QVERIFY(!library->child(0)->flags().testFlag(Qt::ItemIsUserCheckable));
-    QVERIFY(!ButtonLabelled(dialog, QStringLiteral("Import"))->isEnabled());
+    QVERIFY(!ButtonSaying(dialog, QStringLiteral("Import"))->isEnabled());
 }
 
 void LegacyImportDialogTest::AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing()
@@ -215,8 +205,8 @@ void LegacyImportDialogTest::ImportingWhatIsCheckedRegistersTheLibraryAndSaysWha
     LegacyImportDialog dialog(f.viewModel);
     const QSignalSpy said(&dialog, &LegacyImportDialog::StatusChanged);
 
-    QVERIFY(ButtonLabelled(dialog, QStringLiteral("Import"))->isEnabled());
-    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
+    QVERIFY(ButtonSaying(dialog, QStringLiteral("Import"))->isEnabled());
+    ButtonSaying(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(dialog.result(), static_cast<int>(QDialog::Accepted));
     QCOMPARE(said.count(), 1);
@@ -238,7 +228,7 @@ void LegacyImportDialogTest::APresetOfTheOldProgramIsOfferedAndLandsInTheProfile
 
     LegacyImportDialog dialog(f.viewModel);
 
-    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
+    ButtonSaying(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(f.presets.List("msfs2024").size(), std::size_t{1});
     QCOMPARE(f.presets.Load("msfs2024", "Voo curto")->entries.size(), std::size_t{1});
@@ -259,7 +249,7 @@ void LegacyImportDialogTest::ANameThePresetCitesAndNoLibraryHasIsReportedInstead
     LegacyImportDialog dialog(f.viewModel);
     const QSignalSpy said(&dialog, &LegacyImportDialog::StatusChanged);
 
-    ButtonLabelled(dialog, QStringLiteral("Import"))->click();
+    ButtonSaying(dialog, QStringLiteral("Import"))->click();
 
     QCOMPARE(said.count(), 1);
     QVERIFY(said.front().front().toString().contains(QStringLiteral("was not found in any library")));

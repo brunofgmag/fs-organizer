@@ -5,6 +5,7 @@
 
 #include <vector>
 
+#include "tests/support/ButtonLookup.h"
 #include "view/library/CoverageDialog.h"
 
 namespace
@@ -41,19 +42,6 @@ namespace
         }
 
         return said;
-    }
-
-    [[nodiscard]] QPushButton* ButtonSaying(const QDialog& dialog, const QString& text)
-    {
-        for (QPushButton* button : dialog.findChildren<QPushButton*>())
-        {
-            if (button->text().remove(QLatin1Char('&')) == text)
-            {
-                return button;
-            }
-        }
-
-        return nullptr;
     }
 }
 

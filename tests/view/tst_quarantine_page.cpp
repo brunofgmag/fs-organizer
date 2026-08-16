@@ -23,6 +23,7 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/StartupOverFakes.h"
+#include "tests/support/ButtonLookup.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PageFloor.h"
 #include "tests/support/PathPrinting.h"
@@ -159,19 +160,6 @@ namespace
     QString NameOfRow(const QuarantineModel& model, const int row)
     {
         return model.index(row, QuarantineModel::NameColumn, {}).data(Qt::DisplayRole).toString();
-    }
-
-    QPushButton* ButtonSaying(const QuarantinePage& page, const QString& text)
-    {
-        for (QPushButton* button : page.findChildren<QPushButton*>())
-        {
-            if (button->text() == text)
-            {
-                return button;
-            }
-        }
-
-        return nullptr;
     }
 
     void Pick(const QuarantinePage& page, const int firstRow, const int lastRow)
