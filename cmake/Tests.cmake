@@ -1156,6 +1156,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-startup-page-tests startup-page
             tests/view/tst_startup_page.cpp
+            tests/support/ButtonLookup.h
         tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             assets/resources.qrc
@@ -1228,6 +1229,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-options-page-tests options-page
             tests/view/tst_options_page.cpp
+            tests/support/ButtonLookup.h
         tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             assets/resources.qrc
@@ -1248,6 +1250,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-legacy-import-dialog-tests legacy-import-dialog
             tests/view/tst_legacy_import_dialog.cpp
+            tests/support/ButtonLookup.h
             tests/doubles/StartupOverFakes.h
             tests/doubles/FakeCatalogScanner.h
             tests/doubles/FakeClock.h
@@ -1274,6 +1277,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-conflict-dialog-tests conflict-dialog
             tests/view/tst_conflict_dialog.cpp
+            tests/support/ButtonLookup.h
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-conflict-dialog-tests PRIVATE fsorg-view)
@@ -1350,6 +1354,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-startup-entry-dialog-tests startup-entry-dialog
             tests/view/tst_startup_entry_dialog.cpp
+            tests/support/ButtonLookup.h
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-startup-entry-dialog-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-startup-entry-dialog-tests startup-entry-dialog)
@@ -1474,6 +1479,7 @@ configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
 
 fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/view/tst_documents_page.cpp
+        tests/support/ButtonLookup.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1502,6 +1508,7 @@ configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
 
 fsorg_add_qt_test(fsorg-quarantine-page-tests quarantine-page
         tests/view/tst_quarantine_page.cpp
+        tests/support/ButtonLookup.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1524,6 +1531,7 @@ configure_fsorg_gui_test(fsorg-quarantine-page-tests quarantine-page)
 
 fsorg_add_qt_test(fsorg-journal-page-tests journal-page
         tests/view/tst_journal_page.cpp
+        tests/support/ButtonLookup.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1554,12 +1562,14 @@ configure_fsorg_gui_test(fsorg-reader-selection-tests reader-selection)
 
 fsorg_add_qt_test(fsorg-coverage-dialog-tests coverage-dialog
         tests/view/tst_coverage_dialog.cpp
+        tests/support/ButtonLookup.h
         assets/resources.qrc)
 target_link_libraries(fsorg-coverage-dialog-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-coverage-dialog-tests coverage-dialog)
 
 fsorg_add_qt_test(fsorg-package-list-page-tests package-list-page
         tests/view/tst_package_list_page.cpp
+        tests/support/ButtonLookup.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h

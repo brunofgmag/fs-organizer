@@ -46,6 +46,7 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/StartupOverFakes.h"
+#include "tests/support/ButtonLookup.h"
 #include "tests/support/APdf.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -219,19 +220,6 @@ namespace
         return nullptr;
     }
 
-    [[nodiscard]] QPushButton* ButtonSaying(const QWidget& page, const QString& text)
-    {
-        for (QPushButton* button : page.findChildren<QPushButton*>())
-        {
-            if (button->text().startsWith(text))
-            {
-                return button;
-            }
-        }
-
-        return nullptr;
-    }
-
     [[nodiscard]] bool SomethingSays(const QWidget& page, const QString& text)
     {
         for (const QLabel* said : page.findChildren<QLabel*>(QStringLiteral("EmptyBody")))
@@ -247,7 +235,7 @@ namespace
 
     [[nodiscard]] bool ItSaysItIsReading(const DocumentsPage& page)
     {
-        const QPushButton* stop = ButtonSaying(page, QStringLiteral("Stop"));
+        const QPushButton* stop = ButtonStartingWith(page, QStringLiteral("Stop"));
 
         return stop != nullptr && stop->isVisible();
     }
@@ -472,11 +460,11 @@ void DocumentsPageTest::DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft()
 
     page.DetachTheReading();
 
-    QVERIFY2(ButtonSaying(page, QStringLiteral("Documents")) != nullptr,
+    QVERIFY2(ButtonStartingWith(page, QStringLiteral("Documents")) != nullptr,
              "the bar that swaps the panels stays, so nobody comes back to a screen they did not leave");
     QCOMPARE(documents->width(), wide);
 
-    QPushButton* back = ButtonSaying(page, QStringLiteral("Bring it back"));
+    QPushButton* back = ButtonStartingWith(page, QStringLiteral("Bring it back"));
 
     QVERIFY2(back != nullptr, "a card marks the place the reading left, and it is the way back");
     QVERIFY(SomethingSays(page, reading));
@@ -484,7 +472,7 @@ void DocumentsPageTest::DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft()
     back->click();
 
     QCOMPARE(WhatIsOpen(page), reading);
-    QVERIFY2(!ButtonSaying(page, QStringLiteral("Bring it back"))->isVisible(),
+    QVERIFY2(!ButtonStartingWith(page, QStringLiteral("Bring it back"))->isVisible(),
              "bringing it back gives the place to the reading it marked");
 }
 

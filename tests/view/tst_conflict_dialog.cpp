@@ -8,6 +8,7 @@
 #include <filesystem>
 
 #include "application/model/ConflictDetails.h"
+#include "tests/support/ButtonLookup.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "view/community/ConflictDialog.h"
@@ -72,19 +73,6 @@ namespace
     {
         return EverythingWritten(dialog).join(QStringLiteral("\n"));
     }
-
-    QAbstractButton* ButtonSaying(const ConflictDialog& dialog, const QString& wanted)
-    {
-        for (QAbstractButton* button : dialog.findChildren<QAbstractButton*>())
-        {
-            if (button->text().contains(wanted))
-            {
-                return button;
-            }
-        }
-
-        return nullptr;
-    }
 }
 
 void ConflictDialogTest::AConflictWithTheOtherProgramNeverCallsItTheDestination()
@@ -127,13 +115,13 @@ void ConflictDialogTest::TheWarningAboutTheLinksFollowsTheSameWording()
 void ConflictDialogTest::KeepingTheProvenanceCopyAnswersTheSameChoiceInBothWordings()
 {
     ConflictDialog fromAnotherProgram(AConflictFromAnotherProgram());
-    QAbstractButton* keepTheirs = ButtonSaying(fromAnotherProgram, QStringLiteral("other program's one"));
+    QPushButton* keepTheirs = ButtonContaining(fromAnotherProgram, QStringLiteral("other program's one"));
     QVERIFY(keepTheirs != nullptr);
     keepTheirs->click();
     QCOMPARE(fromAnotherProgram.Choice(), ConflictChoice::KeepTheProvenanceCopy);
 
     ConflictDialog ordinary(AnOrdinaryConflict());
-    QAbstractButton* keepDestination = ButtonSaying(ordinary, QStringLiteral("destination one"));
+    QPushButton* keepDestination = ButtonContaining(ordinary, QStringLiteral("destination one"));
     QVERIFY(keepDestination != nullptr);
     keepDestination->click();
     QCOMPARE(ordinary.Choice(), ConflictChoice::KeepTheProvenanceCopy);
