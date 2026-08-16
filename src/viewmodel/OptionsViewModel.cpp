@@ -328,6 +328,25 @@ void OptionsViewModel::RepointDestination(const std::filesystem::path& from, con
     session_.RepointDestination(from, to);
 }
 
+LibraryGrouping OptionsViewModel::GroupingOf(const LibraryId& libraryId) const
+{
+    return session_.HowTheLibraryIsGrouped(libraryId);
+}
+
+void OptionsViewModel::DeclareTheCategoriesOf(const LibraryId& libraryId)
+{
+    static_cast<void>(session_.AdoptTheStructureOf(libraryId));
+
+    emit Changed();
+}
+
+void OptionsViewModel::TakeBackTheMarkersOf(const LibraryId& libraryId)
+{
+    static_cast<void>(session_.TakeBackTheMarkersOf(libraryId));
+
+    emit Changed();
+}
+
 LibraryReport OptionsViewModel::RegisterLibrary(const std::filesystem::path& path) const
 {
     return session_.RegisterLibrary(path);

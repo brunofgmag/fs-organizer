@@ -83,6 +83,8 @@ private:
 
     void Unregister(const LibraryLine& library);
 
+    void DeclareCategories(const LibraryLine& library);
+
     void Remove(const ProfileLine& profile);
 
     OptionsViewModel& viewModel_;

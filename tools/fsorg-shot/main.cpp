@@ -1167,6 +1167,18 @@ int main(int argc, char* argv[])
         Out() << "no library registered, so there is no unregister dialog to write\n";
     }
 
+    if (QPushButton* categories = optionsPage->findChild<QPushButton*>(QStringLiteral("DeclareCategories"));
+        categories != nullptr)
+    {
+        landed = SaveTheDialogOpenedBy(
+                     [categories]
+                     {
+                         categories->click();
+                     },
+                     folder, QStringLiteral("15b-options-categories"))
+            && landed;
+    }
+
     PageTab* back = nullptr;
     for (PageTab* tab : shell.findChildren<PageTab*>())
     {
