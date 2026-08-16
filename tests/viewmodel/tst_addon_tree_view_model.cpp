@@ -571,7 +571,7 @@ void AddonTreeViewModelTest::TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndU
     Fixture f;
     const TreeNode aircrafts = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kTrafficAddon)});
 
-    TreeNode tree = CategoryNode(kLibrary, {aircrafts, CategoryNode(kTraffic, {})});
+    TreeNode tree = CategoryNode(kLibrary, {aircrafts, DeclaredCategoryNode(kTraffic)});
     tree.kind = TreeNodeKind::Library;
     f.catalog.SetTree(kLibrary, tree);
     f.session.ShowActiveProfile();

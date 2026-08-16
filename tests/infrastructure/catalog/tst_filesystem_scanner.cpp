@@ -7,6 +7,7 @@
 #include <string>
 
 #include "domain/model/CategoryMarker.h"
+#include "domain/tree/AddonTree.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "tests/support/PathPrinting.h"
@@ -25,6 +26,7 @@ namespace
         static void AFolderThatStillGroupsAnAddonStaysACategory();
         static void AnEmptyFolderIsAnAddonUnlessTheMarkerDeclaresIt();
         static void ACategoryTheAppDeclaredSurvivesLosingItsLastAddon();
+        static void EveryCategoryTheScanReturnsHoldsAddonsOrWasDeclared();
         static void AFolderWithAnUnreadableManifestIsStillAnAddon();
         static void WhatTheImporterCreatedIsNotPartOfTheLibrary();
         static void AGateThatClosesStopsTheWalkWhereItWasInsteadOfFinishing();
@@ -227,6 +229,44 @@ void FilesystemScannerTest::ACategoryTheAppDeclaredSurvivesLosingItsLastAddon()
     QVERIFY(leftover != nullptr);
     QCOMPARE(leftover->kind, TreeNodeKind::Addon);
     QVERIFY(!leftover->declaredAsCategory);
+}
+
+void FilesystemScannerTest::EveryCategoryTheScanReturnsHoldsAddonsOrWasDeclared()
+{
+    const Library library;
+    library.AddManifest("Aircrafts/pmdg-aircraft-738", R"({"title": "PMDG 737"})");
+    library.AddManifest("Sceneries/Brazil/tlc-sbgl", R"({"title": "Galeao"})");
+    library.AddFolder("Liveries");
+    library.AddFolder("Utils/ModelLib/CH47");
+    library.Declare("Sounds");
+
+    const FilesystemScanner scanner(parser, probe);
+    const TreeNode root = scanner.Scan(library.Root());
+
+    std::vector<const TreeNode*> pending{&root};
+    std::size_t categories = 0;
+
+    while (!pending.empty())
+    {
+        const TreeNode* node = pending.back();
+        pending.pop_back();
+
+        if (node->kind == TreeNodeKind::Category)
+        {
+            ++categories;
+            QVERIFY2(HoldsAddonsOrWasDeclared(*node),
+                     qPrintable(QStringLiteral("the scan returned a category that groups nothing and nobody "
+                                               "declared: %1")
+                                    .arg(QString::fromStdString(node->path.string()))));
+        }
+
+        for (const TreeNode& child : node->children)
+        {
+            pending.push_back(&child);
+        }
+    }
+
+    QCOMPARE(categories, std::size_t{4});
 }
 
 void FilesystemScannerTest::AFolderWithAnUnreadableManifestIsStillAnAddon()
