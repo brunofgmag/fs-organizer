@@ -11,6 +11,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QProgressBar>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QToolButton>
@@ -31,6 +32,7 @@ namespace
     constexpr int kMeterWidth = 132;
     constexpr int kStatusBarAlreadyInsetsTheFirstWidgetBy = 2;
     constexpr int kGearGlyph = 14;
+    const QString kDownwards = QString::fromUtf8("↓");
     constexpr QSize kWindowStartsAt(1140, 760);
 
 }
@@ -92,6 +94,15 @@ QWidget* MainWindow::CreateHeader()
 
     connect(profiles_, &QComboBox::activated, this, &MainWindow::OnProfileActivated);
 
+    update_ = new QPushButton(header);
+    update_->setObjectName(QStringLiteral("UpdateOffer"));
+    update_->setProperty("role", "primary");
+    update_->setCursor(Qt::PointingHandCursor);
+    update_->setFixedHeight(profiles_->sizeHint().height());
+    update_->setVisible(false);
+
+    connect(update_, &QPushButton::clicked, this, &MainWindow::UpdateOfferChosen);
+
     gear_ = new QToolButton(header);
     gear_->setObjectName(QStringLiteral("Gear"));
     gear_->setIcon(GearIcon(kGearGlyph));
@@ -107,6 +118,7 @@ QWidget* MainWindow::CreateHeader()
     layout->addWidget(logo);
     layout->addWidget(brand);
     layout->addStretch();
+    layout->addWidget(update_);
     layout->addWidget(profiles_);
     layout->addWidget(gear_);
 
@@ -291,6 +303,24 @@ void MainWindow::ShowRestartPending(const bool pending)
     restart_->setVisible(pending);
 }
 
+void MainWindow::ShowUpdateOffer(const UpdateOffer offer, const QString& version)
+{
+    offer_ = offer;
+    offeredVersion_ = version;
+
+    update_->setVisible(offer != UpdateOffer::None);
+
+    if (offer == UpdateOffer::None)
+    {
+        return;
+    }
+
+    const bool staged = offer == UpdateOffer::Staged;
+
+    update_->setText(staged ? tr("Restart to update") : QStringLiteral("%1 v%2").arg(kDownwards, version));
+    update_->setToolTip(staged ? tr("Apply the update and restart now") : tr("Update available"));
+}
+
 void MainWindow::WarnTheSimulatorIsOpen()
 {
     QMessageBox::information(this, tr("Simulator open"),
@@ -329,6 +359,7 @@ void MainWindow::RetranslateUi()
     }
 
     ShowRestartPending(restartPending_);
+    ShowUpdateOffer(offer_, offeredVersion_);
     ShowProfiles(settings_);
 }
 

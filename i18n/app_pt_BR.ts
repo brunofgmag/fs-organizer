@@ -2893,6 +2893,21 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../src/view/shell/MainWindow.cpp" line="319"/>
+        <source>Restart to update</source>
+        <translation>Reiniciar para atualizar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/MainWindow.cpp" line="320"/>
+        <source>Apply the update and restart now</source>
+        <translation>Aplicar a atualização e reiniciar agora</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/MainWindow.cpp" line="320"/>
+        <source>Update available</source>
+        <translation>Atualização disponível</translation>
+    </message>
+    <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="320"/>
         <source>Options</source>
         <translation>Opções</translation>

@@ -15,10 +15,18 @@ class QComboBox;
 class QHBoxLayout;
 class QLabel;
 class QProgressBar;
+class QPushButton;
 class QToolButton;
 class QStackedWidget;
 class QTimer;
 class TriageStrip;
+
+enum class UpdateOffer
+{
+    None,
+    Available,
+    Staged
+};
 
 class MainWindow final : public QMainWindow
 {
@@ -47,6 +55,8 @@ public:
 
     void ShowRestartPending(bool pending);
 
+    void ShowUpdateOffer(UpdateOffer offer, const QString& version);
+
     void WarnTheSimulatorIsOpen();
 
     void ShowSummary(const QWidget* page, const QString& summary);
@@ -57,6 +67,8 @@ public:
 
 signals:
     void OptionsRequested();
+
+    void UpdateOfferChosen();
 
     void OptionsLeft();
 
@@ -107,6 +119,7 @@ private:
     QStackedWidget* pages_ = nullptr;
     QHBoxLayout* tabs_ = nullptr;
     QToolButton* gear_ = nullptr;
+    QPushButton* update_ = nullptr;
     PageTab* back_ = nullptr;
     QWidget* options_ = nullptr;
     QWidget* behindTheOptions_ = nullptr;
@@ -122,6 +135,8 @@ private:
     QHash<const QWidget*, bool> triaged_;
     QHash<const QWidget*, PageTab*> tabsByPage_;
     bool restartPending_ = false;
+    UpdateOffer offer_ = UpdateOffer::None;
+    QString offeredVersion_;
 };
 
 #endif // FS_ORGANIZER_VIEW_SHELL_MAIN_WINDOW_H

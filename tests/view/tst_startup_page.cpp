@@ -31,6 +31,7 @@
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -39,6 +40,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void EachEntryLandsOnItsOwnRowWithTheSwitchItCarriesOnDisk();
         static void TheRowOfAnAlarmingEntryIsMarkedAlarmingInEveryColumn();
@@ -310,6 +312,13 @@ void StartupPageTest::ALanguageChangeReachesTheToolbarAndTheLooseState()
     QVERIFY(ButtonSaying(fixture.page, "Manage these") != nullptr);
     QCOMPARE(fixture.page.findChild<QStackedWidget*>()->currentIndex(), 2);
     QCOMPARE(fixture.entries.reads, std::size_t{0});
+}
+
+void StartupPageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+
+    ItFitsTheNarrowestWindow(f.page, "The startup half of the simulator page");
 }
 
 QTEST_MAIN(StartupPageTest)

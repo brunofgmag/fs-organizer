@@ -53,6 +53,7 @@
 #include "view/documents/DocumentsPage.h"
 #include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -61,6 +62,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void OneClickOnTheLineOpensIt();
         static void TheStarTurnsTheFavouriteWithoutOpeningAnything();
         static void OnlyTheGlyphOfTheArrowOpensAndClosesTheGroup();
@@ -1270,6 +1272,14 @@ void DocumentsPageTest::AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt
     QVERIFY2(turned.count() == beforeItWent,
              "the view walks the pages back on its way out, and answering it there both writes a page nobody read "
              "and lands on the parentless findChildren of QAbstractButton::setChecked");
+}
+
+void DocumentsPageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+
+    ItFitsTheNarrowestWindow(page, "The documents page");
 }
 
 QTEST_MAIN(DocumentsPageTest)
