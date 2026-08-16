@@ -34,6 +34,7 @@
 #include "viewmodel/BisectionViewModel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -42,6 +43,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void WhatSupportsTheNameIsQuietInTheThreeTables();
         static void TheThreeTablesKeepTheShippedRowHeight();
@@ -391,6 +393,14 @@ void DiagnosticsPageTest::TheSearchAnnouncesTheUnitsAndTheRoundsWithoutWritingAn
     QCOMPARE(f.bisectionViewModel.Report().units, std::size_t{1});
     QVERIFY(f.journal.appended.empty());
     QVERIFY(RailOf(page)->item(kSearchRow)->text().contains(QStringLiteral("/")) == false);
+}
+
+void DiagnosticsPageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+
+    ItFitsTheNarrowestWindow(page, "The diagnostics page");
 }
 
 QTEST_MAIN(DiagnosticsPageTest)

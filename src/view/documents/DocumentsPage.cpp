@@ -31,7 +31,7 @@
 namespace
 {
     constexpr int kIndexWidth = 340;
-    constexpr int kNarrowestIndex = 300;
+    constexpr int kNarrowestIndex = 260;
     constexpr int kPageWidth = 1120;
     constexpr int kGlyphColumn = 0;
     constexpr int kNameColumn = 1;

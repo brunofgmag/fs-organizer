@@ -35,6 +35,7 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -43,6 +44,7 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void SelectingAPresetFillsThePanelPreview();
         static void ApplyingFromThePanelGoesThroughTheViewModel();
@@ -729,6 +731,14 @@ void PresetsPageTest::TheStartupTabEditsTheStartupEntriesOfAGoverningPreset()
     QVERIFY(saved.has_value());
     QCOMPARE(saved->startupEntries.size(), std::size_t{1});
     QVERIFY(saved->startupEntries.front().action == PresetAction::Disable);
+}
+
+void PresetsPageTest::ThePageFitsTheNarrowestWindow()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    ItFitsTheNarrowestWindow(page, "The presets page");
 }
 
 QTEST_MAIN(PresetsPageTest)

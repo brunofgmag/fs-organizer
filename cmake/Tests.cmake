@@ -1141,6 +1141,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-main-window-tests main-window
             tests/view/tst_main_window.cpp
+        tests/support/PageFloor.h
             assets/resources.qrc
             ${WINDOWS_SHELL_SOURCES})
     target_link_libraries(fsorg-main-window-tests PRIVATE fsorg-view fsorg-infrastructure)
@@ -1150,6 +1151,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-startup-page-tests startup-page
             tests/view/tst_startup_page.cpp
+        tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             assets/resources.qrc
             tests/doubles/FakeCatalogScanner.h
@@ -1172,6 +1174,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-diagnostics-page-tests diagnostics-page
             tests/view/tst_diagnostics_page.cpp
+        tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             tests/doubles/FakeBisectionStore.h
             assets/resources.qrc
@@ -1197,6 +1200,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-presets-page-tests presets-page
             tests/view/tst_presets_page.cpp
+        tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             assets/resources.qrc
             tests/doubles/FakeCatalogScanner.h
@@ -1219,6 +1223,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-options-page-tests options-page
             tests/view/tst_options_page.cpp
+        tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             assets/resources.qrc
             tests/doubles/FakeCatalogScanner.h
@@ -1366,6 +1371,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-community-page-tests community-page
             tests/view/tst_community_page.cpp
+        tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             tests/doubles/FakeCatalogScanner.h
             tests/doubles/FakeClock.h
@@ -1437,6 +1443,7 @@ configure_fsorg_gui_test(fsorg-paint-timing-tests paint-timing)
 
 fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/view/tst_addon_tree_page.cpp
+        tests/support/PageFloor.h
         tests/doubles/StartupOverFakes.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1462,6 +1469,7 @@ configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
 
 fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/view/tst_documents_page.cpp
+        tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeChartCatalogueParser.h
@@ -1503,6 +1511,7 @@ configure_fsorg_gui_test(fsorg-coverage-dialog-tests coverage-dialog)
 
 fsorg_add_qt_test(fsorg-package-list-page-tests package-list-page
         tests/view/tst_package_list_page.cpp
+        tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeChartCatalogueParser.h

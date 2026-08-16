@@ -37,7 +37,7 @@ namespace
     constexpr int kContentColumn = 1;
     constexpr int kUpdatedColumn = 2;
     constexpr int kChangesColumn = 3;
-    constexpr int kNameTableWidth = 440;
+    constexpr int kNameTableWidth = 420;
 
     QString TheWayBackIsCalled()
     {
@@ -78,7 +78,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
 
     filter_ = new QLineEdit(this);
     filter_->setClearButtonEnabled(true);
-    filter_->setMinimumWidth(220);
+    filter_->setMinimumWidth(140);
     filter_->setMaximumWidth(280);
 
     auto* bar = new QHBoxLayout(toolbar);
@@ -90,7 +90,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     bar->addWidget(remove_);
     bar->addWidget(goBack_);
     bar->addStretch();
-    bar->addWidget(filter_);
+    bar->addWidget(filter_, 1);
 
     entries_ = new QTableWidget(this);
     entries_->setObjectName(QStringLiteral("PresetEntries"));
