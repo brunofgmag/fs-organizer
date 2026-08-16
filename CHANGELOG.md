@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.51.0](https://github.com/brunofgmag/fs-organizer/compare/v0.50.0...v0.51.0) (2026-08-16)
+
+
+### Features
+
+* adopt the folders that group nothing and name the categories ([#151](https://github.com/brunofgmag/fs-organizer/issues/151)) ([f875f20](https://github.com/brunofgmag/fs-organizer/commit/f875f20e57c8b7b5029ba86ad0f4af2a9515a9f7))
+
+## [0.50.0](https://github.com/brunofgmag/fs-organizer/compare/v0.49.2...v0.50.0) (2026-08-16)
+
+
+### Features
+
+* name what stopped the move, and name the buttons the shot clicks ([#149](https://github.com/brunofgmag/fs-organizer/issues/149)) ([4e95e42](https://github.com/brunofgmag/fs-organizer/commit/4e95e42152186ac584addb8d3be696c77cdde43c))
+
 ## [0.49.2](https://github.com/brunofgmag/fs-organizer/compare/v0.49.1...v0.49.2) (2026-08-16)
 
 

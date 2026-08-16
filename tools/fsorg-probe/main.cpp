@@ -9,6 +9,9 @@
 #include "domain/linking/EntryClassifier.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JsonlOperationJournal.h"
+#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -247,7 +250,9 @@ int main(int argc, char* argv[])
     const WindowsLinkService linkService;
     const WindowsFilesystemProbe filesystemProbe;
     const JsonManifestParser manifestParser;
-    const FilesystemScanner scanner(manifestParser, filesystemProbe);
+    const JsonlOperationJournal journal(JournalFilePath());
+    const JournalImportedFolders importedFolders(journal);
+    const FilesystemScanner scanner(manifestParser, filesystemProbe, importedFolders);
     const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const EntryClassifier classifier(linkService, filesystemProbe);

@@ -71,6 +71,7 @@ namespace
         case OperationKind::RestoreOverTheOccupant: return "restoreOverTheOccupant";
         case OperationKind::TurnOffTheStartupEntry: return "turnOffTheStartupEntry";
         case OperationKind::TurnOnTheStartupEntry: return "turnOnTheStartupEntry";
+        case OperationKind::TakeBackTheCategoryMarker: return "takeBackTheCategoryMarker";
         }
 
         return "unknown";
@@ -138,6 +139,9 @@ namespace
         case FileResult::CouldNotReadThePackageList: return "couldNotReadThePackageList";
         case FileResult::CouldNotWriteThePackageList: return "couldNotWriteThePackageList";
         case FileResult::ThePackageListIsLeftLoose: return "thePackageListIsLeftLoose";
+        case FileResult::AnotherProgramIsHoldingIt: return "anotherProgramIsHoldingIt";
+        case FileResult::TheQuarantineIsOccupied: return "theQuarantineIsOccupied";
+        case FileResult::ThereIsNowhereToQuarantineIt: return "thereIsNowhereToQuarantineIt";
         }
 
         return "unknown";

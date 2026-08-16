@@ -10,6 +10,7 @@
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
 #include "domain/preset/PresetPlan.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -25,6 +26,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class PresetOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -98,7 +101,7 @@ namespace
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
         JsonManifestParser manifestParser{};
-        FilesystemScanner catalog{manifestParser, filesystemProbe};
+        FilesystemScanner catalog{manifestParser, filesystemProbe, nothingWasImported};
         EntryClassifier classifier{linkService, filesystemProbe};
         FakeLibraryIdGenerator identities{};
         StartupOverFakes startup{filesystemProbe};

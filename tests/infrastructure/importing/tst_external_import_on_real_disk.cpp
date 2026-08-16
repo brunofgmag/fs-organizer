@@ -9,6 +9,7 @@
 #include "domain/importing/ImportPaths.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/profile/ExternalOrigins.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -25,6 +26,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class ExternalImportOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -224,7 +227,7 @@ void ExternalImportOnRealDiskTest::TheRecordBesideTheAddonIsOnDiskAndBringsTheLi
 
     WindowsProcessProbe processProbe{std::vector<std::string>{}};
     JsonManifestParser manifestParser;
-    FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
+    FilesystemScanner catalog{manifestParser, engine.filesystemProbe, nothingWasImported};
     EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
     FakeLibraryIdGenerator identities;
     StartupOverFakes startup{engine.filesystemProbe};

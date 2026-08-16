@@ -31,6 +31,7 @@
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
 #include "infrastructure/link/WindowsLinkService.h"
@@ -219,14 +220,17 @@ int main(int argc, char* argv[])
     WindowsSidecarStore sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
-    const FilesystemScanner catalog(manifestParser, filesystemProbe);
+    JsonlOperationJournal journal(JournalFilePath());
+
+    const JournalImportedFolders importedFolders(journal);
+
+    const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
     const WindowsSimulatorLocator locator(userCfgLocations);
     ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe));
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
     JsonSettingsRepository settings(SettingsFilePath());
-    JsonlOperationJournal journal(JournalFilePath());
 
     const std::optional<AppSettings> loaded = settings.Load();
     if (!loaded.has_value())

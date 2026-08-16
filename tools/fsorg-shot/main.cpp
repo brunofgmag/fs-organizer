@@ -41,6 +41,7 @@
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -348,17 +349,15 @@ namespace
         return navigation.currentRow() == row;
     }
 
-    QPushButton* ButtonLabelled(const QWidget& page, const QString& text)
+    QPushButton* ButtonNamed(const QWidget& page, const QString& objectName)
     {
-        for (QPushButton* button : page.findChildren<QPushButton*>())
+        QPushButton* button = page.findChild<QPushButton*>(objectName);
+        if (button == nullptr)
         {
-            if (button->text() == text)
-            {
-                return button;
-            }
+            Out() << "no button called " << objectName << " on this page, so the shot it opens is missing\n";
         }
 
-        return nullptr;
+        return button;
     }
 
     QString TheFirstAddonOf(const ProfileSnapshot& snapshot)
@@ -555,10 +554,13 @@ int main(int argc, char* argv[])
     WindowsSidecarStore sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
-    const FilesystemScanner catalog(manifestParser, filesystemProbe);
+    JsonlOperationJournal journal(staged->journalFile);
+
+    const JournalImportedFolders importedFolders(journal);
+
+    const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
-    JsonlOperationJournal journal(staged->journalFile);
 
     const LinkingEngine linking(linkService, filesystemProbe);
     const EntryClassifier classifier(linkService, filesystemProbe);
@@ -791,17 +793,16 @@ int main(int argc, char* argv[])
 
     if (SelectTheFirstRows(*quarantinePage, 4))
     {
-        if (QPushButton* restore = ButtonLabelled(*quarantinePage, QObject::tr("Restore the selected ones"));
-            restore != nullptr)
-        {
-            landed = SaveTheDialogOpenedBy(
-                         [restore]
-                         {
-                             restore->click();
-                         },
-                         folder, QStringLiteral("16-quarantine-restore"))
-                && landed;
-        }
+        QPushButton* restore = ButtonNamed(*quarantinePage, QStringLiteral("RestoreChosen"));
+
+        landed = restore != nullptr
+            && SaveTheDialogOpenedBy(
+                     [restore]
+                     {
+                         restore->click();
+                     },
+                     folder, QStringLiteral("16-quarantine-restore"))
+            && landed;
     }
     else
     {
@@ -1154,7 +1155,8 @@ int main(int argc, char* argv[])
     static_cast<void>(ClickingReaches(*navigation, 0));
     LetTheLayoutSettle();
 
-    if (QPushButton* unregister = ButtonLabelled(*optionsPage, QObject::tr("Unregister")); unregister != nullptr)
+    if (QPushButton* unregister = optionsPage->findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"));
+        unregister != nullptr)
     {
         landed = SaveTheDialogOpenedBy(
                      [unregister]
@@ -1167,6 +1169,18 @@ int main(int argc, char* argv[])
     else
     {
         Out() << "no library registered, so there is no unregister dialog to write\n";
+    }
+
+    if (QPushButton* categories = optionsPage->findChild<QPushButton*>(QStringLiteral("DeclareCategories"));
+        categories != nullptr)
+    {
+        landed = SaveTheDialogOpenedBy(
+                     [categories]
+                     {
+                         categories->click();
+                     },
+                     folder, QStringLiteral("15b-options-categories"))
+            && landed;
     }
 
     PageTab* back = nullptr;

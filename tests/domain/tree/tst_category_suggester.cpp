@@ -52,6 +52,14 @@ namespace
         return node;
     }
 
+    TreeNode DeclaredCategoryNode(const std::filesystem::path& path)
+    {
+        TreeNode node = CategoryNode(path, {});
+        node.declaredAsCategory = true;
+
+        return node;
+    }
+
     TreeNode Library(std::vector<TreeNode> categories)
     {
         TreeNode node = CategoryNode("D:/Library", std::move(categories));
@@ -62,9 +70,9 @@ namespace
 
     TreeNode ReferenceLibrary()
     {
-        return Library({CategoryNode("D:/Library/Sceneries", {}), CategoryNode("D:/Library/Sounds", {}),
-                        CategoryNode("D:/Library/Traffic", {}), CategoryNode("D:/Library/Liveries", {}),
-                        CategoryNode("D:/Library/Aircrafts", {})});
+        return Library({DeclaredCategoryNode("D:/Library/Sceneries"), DeclaredCategoryNode("D:/Library/Sounds"),
+                        DeclaredCategoryNode("D:/Library/Traffic"), DeclaredCategoryNode("D:/Library/Liveries"),
+                        DeclaredCategoryNode("D:/Library/Aircrafts")});
     }
 
     CategorySuggestion SuggestOne(const TreeNode& library, const TreeNode& addon)
@@ -140,7 +148,7 @@ void CategorySuggesterTest::AnAddonNoRuleRecognisesIsLeftWhereItIs()
 void CategorySuggesterTest::ARuleThatNamesACategoryTheLibraryDoesNotHaveSuggestsNothing()
 {
     const TreeNode addon = AddonNode("D:/Library/Aircrafts/orbx-ybbn", "SCENERY");
-    const TreeNode library = Library({CategoryNode("D:/Library/Aircrafts", {})});
+    const TreeNode library = Library({DeclaredCategoryNode("D:/Library/Aircrafts")});
 
     const CategorySuggestion suggestion = SuggestOne(library, addon);
 

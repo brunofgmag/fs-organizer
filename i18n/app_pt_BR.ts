@@ -2508,6 +2508,11 @@ Também existe na biblioteca: %2</translation>
         <translation>Religar a entrada de inicialização</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
+        <source>Take back the category marker</source>
+        <translation>Retirar o marcador de categoria</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
         <source>(library removed)</source>
         <translation>(biblioteca removida)</translation>
@@ -3347,6 +3352,31 @@ Também existe na biblioteca: %2</translation>
         <location filename="../src/view/options/OptionsPage.cpp" line="737"/>
         <source>Open</source>
         <translation>Abrir</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Categories</source>
+        <translation>Categorias</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Categories of %1</source>
+        <translation>Categorias de %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>FS Organizer marks the folders you built, so that a category keeps counting as one even after it loses its last addon. It never marks what it imported, and it never looks inside an addon.&#xa;&#xa;Folders that already carry the marker: %1&#xa;Folders that would receive it now: %2</source>
+        <translation>O FS Organizer marca as pastas que você construiu, para que uma categoria continue contando como categoria mesmo depois de perder o último addon. Ele nunca marca o que importou, e nunca olha dentro de um addon.&#xa;&#xa;Pastas que já carregam o marcador: %1&#xa;Pastas que receberiam agora: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Mark them</source>
+        <translation>Marcar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
+        <source>Take every marker back</source>
+        <translation>Retirar todos os marcadores</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
@@ -4378,6 +4408,21 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <location filename="../src/viewmodel/FailureText.cpp" line="135"/>
         <source>the package list of the simulator is not managed, so the app does not read or write that file</source>
         <translation>a lista de pacotes do simulador não é gerenciada, então o app não lê nem grava esse arquivo</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="138"/>
+        <source>another program is holding that folder open, and Windows refuses to move it until that program lets go</source>
+        <translation>outro programa está com essa pasta aberta, e o Windows recusa movê-la enquanto esse programa não soltar</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="141"/>
+        <source>something with that name is already in the quarantine</source>
+        <translation>algo com esse nome já está na quarentena</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="143"/>
+        <source>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</source>
+        <translation>esta cópia não está dentro de um destino nem de uma biblioteca do perfil, então não há quarentena para ela</translation>
     </message>
     <message>
         <source>the journal does not know where this came from</source>

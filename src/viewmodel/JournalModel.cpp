@@ -95,6 +95,7 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::RestoreOverTheOccupant: return tr("Restore over the addon that held the place");
     case OperationKind::TurnOffTheStartupEntry: return tr("Turn off the startup entry it carries");
     case OperationKind::TurnOnTheStartupEntry: return tr("Turn the startup entry back on");
+    case OperationKind::TakeBackTheCategoryMarker: return tr("Take back the category marker");
     }
 
     return {};

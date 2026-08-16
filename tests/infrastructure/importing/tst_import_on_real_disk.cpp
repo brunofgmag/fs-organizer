@@ -13,6 +13,7 @@
 #include "domain/importing/ImportPaths.h"
 #include "domain/importing/OriginSidecar.h"
 #include "domain/journal/OperationLog.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -28,6 +29,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class ImportOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -125,7 +128,7 @@ namespace
         Engine engine{};
         WindowsProcessProbe processProbe{std::vector<std::string>{}};
         JsonManifestParser manifestParser{};
-        FilesystemScanner catalog{manifestParser, engine.filesystemProbe};
+        FilesystemScanner catalog{manifestParser, engine.filesystemProbe, nothingWasImported};
         ImportService service{engine.engine,  processProbe, engine.filesystemProbe,
                               catalog,        engine.files, engine.sidecars,
                               engine.linking, engine.log,   LinkType::Junction};

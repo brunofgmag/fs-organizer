@@ -756,7 +756,13 @@ void OptionsPage::ReloadLibraries()
         auto* open = new QPushButton(tr("Open"), row);
         layout->addWidget(open);
 
+        auto* categories = new QPushButton(tr("Categories"), row);
+        categories->setObjectName(QStringLiteral("DeclareCategories"));
+        categories->setEnabled(library.counted);
+        layout->addWidget(categories);
+
         auto* unregister = new QPushButton(tr("Unregister"), row);
+        unregister->setObjectName(QStringLiteral("UnregisterLibrary"));
         unregister->setEnabled(library.counted);
         layout->addWidget(unregister);
 
@@ -768,6 +774,12 @@ void OptionsPage::ReloadLibraries()
                 });
 
         const LibraryLine line = library;
+        connect(categories, &QPushButton::clicked, this,
+                [this, line]
+                {
+                    DeclareCategories(line);
+                });
+
         connect(unregister, &QPushButton::clicked, this,
                 [this, line]
                 {
@@ -775,6 +787,38 @@ void OptionsPage::ReloadLibraries()
                 });
 
         libraries_->addWidget(row);
+    }
+}
+
+void OptionsPage::DeclareCategories(const LibraryLine& library)
+{
+    const LibraryGrouping grouping = viewModel_.GroupingOf(library.id);
+
+    QMessageBox question(QMessageBox::Question, tr("Categories of %1").arg(library.label),
+                         tr("FS Organizer marks the folders you built, so that a category keeps counting as one even "
+                            "after it loses its last addon. It never marks what it imported, and it never looks inside "
+                            "an addon.\n\nFolders that already carry the marker: %1\nFolders that would receive it "
+                            "now: %2")
+                             .arg(grouping.alreadyDeclared.size())
+                             .arg(grouping.notYetDeclared.size()),
+                         QMessageBox::NoButton, this);
+
+    QPushButton* declare = question.addButton(tr("Mark them"), QMessageBox::AcceptRole);
+    QPushButton* takeBack = question.addButton(tr("Take every marker back"), QMessageBox::DestructiveRole);
+    question.addButton(QMessageBox::Cancel);
+
+    declare->setEnabled(!grouping.notYetDeclared.empty());
+    takeBack->setEnabled(!grouping.alreadyDeclared.empty());
+
+    question.exec();
+
+    if (question.clickedButton() == declare)
+    {
+        viewModel_.DeclareTheCategoriesOf(library.id);
+    }
+    else if (question.clickedButton() == takeBack)
+    {
+        viewModel_.TakeBackTheMarkersOf(library.id);
     }
 }
 

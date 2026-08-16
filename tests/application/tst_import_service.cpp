@@ -35,6 +35,12 @@ namespace
         static void KeepingTheDestinationCopySendsTheLibraryCopyToItsOwnQuarantine();
         static void QuarantiningTheDestinationCopyIsJournalledAlongWithTheLinkThatReplacesIt();
         static void QuarantiningTheLibraryCopyIsJournalledOnItsOwn();
+        static void ALoserAnotherProgramHoldsOpenIsNamedAsSuchAndNotAsAQuarantineThatFailed();
+        static void AMoveNobodyIsBlockingStillFailsAsTheQuarantineItWas();
+        static void AQuarantineThatAlreadyHoldsThatNameSaysSoAndTouchesNothing();
+        static void AConflictWithNowhereToPutTheLoserSaysSoAndReachesTheJournal();
+        static void AnOccupantWithNowhereToGoStopsTheSwapAndReachesTheJournal();
+        static void ASwapStoppedByAnotherProgramNamesItInsteadOfTheQuarantine();
         static void ARefusedBatchLeavesNothingInTheJournal();
         static void TheQuarantineIsListedFromTheDiskAndItsOriginComesFromTheJournal();
         static void RestoringPutsTheFolderBackWhereItCameFromAndSaysSoInTheJournal();
@@ -315,6 +321,115 @@ void ImportServiceTest::QuarantiningTheLibraryCopyIsJournalledOnItsOwn()
     QCOMPARE(std::get<FileResult>(f.journal.appended[0].outcome), FileResult::Completed);
     QCOMPARE(f.journal.appended[0].source, kInLibrary);
     QCOMPARE(f.journal.appended[0].target, std::filesystem::path{"D:/Library/_fsorganizer-quarantine/simbridge"});
+}
+
+void ImportServiceTest::ALoserAnotherProgramHoldsOpenIsNamedAsSuchAndNotAsAQuarantineThatFailed()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.files.MakeTheMoveFail();
+    f.filesystemProbe.LetAnotherProgramHold(kInDestination / "service");
+
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy);
+
+    QCOMPARE(result, FileResult::AnotherProgramIsHoldingIt);
+    QCOMPARE(std::get<FileResult>(f.journal.appended.back().outcome), FileResult::AnotherProgramIsHoldingIt);
+    QVERIFY2(f.fileSystem.IsDirectory(kInDestination), "the losing copy stays where it is");
+    QVERIFY2(!f.fileSystem.Exists(SidecarPathFor("E:/Sim/_fsorganizer-quarantine/simbridge")),
+             "the record of the origin goes away with the move that never happened");
+}
+
+void ImportServiceTest::AMoveNobodyIsBlockingStillFailsAsTheQuarantineItWas()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.files.MakeTheMoveFail();
+
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy);
+
+    QCOMPARE(result, FileResult::CouldNotQuarantine);
+    QCOMPARE(std::get<FileResult>(f.journal.appended.back().outcome), FileResult::CouldNotQuarantine);
+}
+
+void ImportServiceTest::AQuarantineThatAlreadyHoldsThatNameSaysSoAndTouchesNothing()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine");
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine/simbridge");
+    f.fileSystem.AddFile("E:/Sim/_fsorganizer-quarantine/simbridge/manifest.json", kMegabyte);
+
+    const CopyConflict conflict{.provenancePath = kInDestination, .libraryPath = kInLibrary};
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy);
+
+    QCOMPARE(result, FileResult::TheQuarantineIsOccupied);
+    QCOMPARE(std::get<FileResult>(f.journal.appended.back().outcome), FileResult::TheQuarantineIsOccupied);
+    QCOMPARE(f.fileSystem.FileSize("E:/Sim/_fsorganizer-quarantine/simbridge/manifest.json"), kMegabyte);
+    QVERIFY2(f.fileSystem.Exists(kInDestination / "manifest.json"), "the losing copy stays where it is");
+}
+
+void ImportServiceTest::AConflictWithNowhereToPutTheLoserSaysSoAndReachesTheJournal()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    const std::filesystem::path outside = "F:/Elsewhere/simbridge";
+    f.fileSystem.AddDirectory("F:/Elsewhere");
+    f.fileSystem.AddDirectory(outside);
+    f.fileSystem.AddFile(outside / "manifest.json", kMegabyte);
+
+    const CopyConflict conflict{.provenancePath = outside, .libraryPath = kInLibrary};
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheLibraryCopy);
+
+    QCOMPARE(result, FileResult::ThereIsNowhereToQuarantineIt);
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
+    QCOMPARE(std::get<FileResult>(f.journal.appended.back().outcome), FileResult::ThereIsNowhereToQuarantineIt);
+    QCOMPARE(f.journal.appended.back().source, outside);
+    QVERIFY2(f.fileSystem.Exists(outside / "manifest.json"), "the copy with nowhere to go stays where it is");
+}
+
+void ImportServiceTest::AnOccupantWithNowhereToGoStopsTheSwapAndReachesTheJournal()
+{
+    Fixture f;
+
+    const std::filesystem::path outside = "F:/Elsewhere/simbridge";
+    f.QuarantineHolds(kHeldInLibrary, outside, outside);
+    f.fileSystem.AddDirectory("F:/Elsewhere");
+    f.fileSystem.AddDirectory(outside);
+    f.fileSystem.AddFile(outside / "manifest.json", 3 * kMegabyte);
+    f.catalog.SetTree(outside, AddonNodeDeclaring(outside, "2.0.0"));
+
+    const QuarantinedItem item = f.service.Quarantined(f.profile).front();
+    const SwapResult swapped = f.service.Swap(f.profile, f.Entries(), item);
+
+    QCOMPARE(swapped.result, FileResult::ThereIsNowhereToQuarantineIt);
+    QCOMPARE(std::get<FileResult>(f.journal.appended.back().outcome), FileResult::ThereIsNowhereToQuarantineIt);
+    QVERIFY2(f.fileSystem.Exists(kHeldInLibrary / "manifest.json"), "the quarantined item never moved");
+    QVERIFY2(f.fileSystem.Exists(outside / "manifest.json"), "neither did the occupant");
+}
+
+void ImportServiceTest::ASwapStoppedByAnotherProgramNamesItInsteadOfTheQuarantine()
+{
+    Fixture f;
+    f.QuarantineHolds(kHeldInLibrary, kInLibrary, kInLibrary);
+    f.fileSystem.AddDirectory(kInLibrary);
+    f.fileSystem.AddFile(kInLibrary / "manifest.json", 3 * kMegabyte);
+    f.TheLibraryHolds({kInLibrary});
+    f.catalog.SetTree(kInLibrary, AddonNodeDeclaring(kInLibrary, "2.0.0"));
+    f.files.MakeTheMoveFail();
+    f.filesystemProbe.LetAnotherProgramHold(kHeldInLibrary);
+
+    const QuarantinedItem item = f.service.Quarantined(f.profile).front();
+    const SwapResult swapped = f.service.Swap(f.profile, f.Entries(), item);
+
+    QCOMPARE(swapped.result, FileResult::AnotherProgramIsHoldingIt);
+    QVERIFY2(f.fileSystem.Exists(kHeldInLibrary / "manifest.json"), "the item stays in the quarantine");
 }
 
 void ImportServiceTest::ARefusedBatchLeavesNothingInTheJournal()
@@ -1484,7 +1599,7 @@ void ImportServiceTest::ASecondHomonymFailsToQuarantineWithoutTouchingTheRecordO
     const FileResult refused = f.service.ResolveConflict(f.profile, f.Entries(), CopyConflict{kInDestination, second},
                                                          ConflictChoice::KeepTheProvenanceCopy);
 
-    QVERIFY(!Succeeded(refused));
+    QCOMPARE(refused, FileResult::TheQuarantineIsOccupied);
     QVERIFY(f.fileSystem.Exists(second / "manifest.json"));
 
     const std::optional<std::string> written = f.fileSystem.ContentsOf(SidecarPathFor(kHeldInLibrary));

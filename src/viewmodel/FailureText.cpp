@@ -134,6 +134,14 @@ QString Explain(const FileResult result)
     case FileResult::ThePackageListIsLeftLoose:
         return QObject::tr("the package list of the simulator is not managed, so the app does not read or write that "
                            "file");
+    case FileResult::AnotherProgramIsHoldingIt:
+        return QObject::tr("another program is holding that folder open, and Windows refuses to move it until "
+                           "that program lets go");
+    case FileResult::TheQuarantineIsOccupied:
+        return QObject::tr("something with that name is already in the quarantine");
+    case FileResult::ThereIsNowhereToQuarantineIt:
+        return QObject::tr("this copy is not inside a destination or a library of the profile, so there is no "
+                           "quarantine for it");
     }
 
     return {};

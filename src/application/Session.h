@@ -60,6 +60,12 @@ public:
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
 
+    [[nodiscard]] LibraryGrouping HowTheLibraryIsGrouped(const LibraryId& libraryId) const;
+
+    [[nodiscard]] std::vector<FileOperationResult> AdoptTheStructureOf(const LibraryId& libraryId);
+
+    [[nodiscard]] std::vector<FileOperationResult> TakeBackTheMarkersOf(const LibraryId& libraryId);
+
     void RememberWhatCameFromAnotherProgram(const std::vector<ImportOperationResult>& results);
 
     void ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem::path>& addonFolders);
@@ -85,6 +91,8 @@ public:
     [[nodiscard]] std::vector<FileOperationResult> MoveAddons(const std::vector<AddonMove>& moves);
 
 private:
+    [[nodiscard]] const Library* LibraryNamed(const LibraryId& libraryId) const;
+
     [[nodiscard]] bool RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination);
 
     void Scan(SimulatorProfile profile);

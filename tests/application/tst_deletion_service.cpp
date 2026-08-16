@@ -2,6 +2,7 @@
 
 #include "application/DeletionService.h"
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/model/CategoryMarker.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
@@ -45,6 +46,7 @@ namespace
         static void DeletingAManagedExternalAddonTakesTheRecordOfWhereItCameFromWithIt();
         static void TheRecycleBinRouteTakesTheRecordOfWhereItCameFromToo();
         static void AFailedDeletionLeavesTheRecordOfWhereItCameFromAlone();
+        static void TheCategoryThatLosesItsLastAddonIsDeclaredAndTheLibraryRootIsNot();
     };
 }
 
@@ -443,6 +445,32 @@ void DeletionServiceTest::AFailedDeletionLeavesTheRecordOfWhereItCameFromAlone()
     QCOMPARE(results.front().result, FileResult::CouldNotDelete);
     QVERIFY(f.fileSystem.Exists(kCrj));
     QVERIFY(f.fileSystem.Exists(ExternalSidecarPathFor(kCrj)));
+}
+
+void DeletionServiceTest::TheCategoryThatLosesItsLastAddonIsDeclaredAndTheLibraryRootIsNot()
+{
+    const std::filesystem::path airbus = kAircrafts / "Airbus";
+    const std::filesystem::path fenix = airbus / "fenix-a320";
+
+    Fixture f;
+    f.fileSystem.AddDirectory(airbus);
+    f.fileSystem.AddDirectory(fenix);
+    f.fileSystem.AddFile(fenix / "manifest.json", kMegabyte);
+
+    TreeNode category;
+    category.kind = TreeNodeKind::Category;
+    category.path = airbus;
+    category.children = {AddonNode(fenix)};
+    f.TheLibraryHolds({std::move(category)});
+
+    f.Measure({fenix});
+
+    const std::vector<DeletionResult> results = f.Run({f.Node(fenix)}, DeletionRoute::Permanently);
+
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY2(f.fileSystem.Exists(CategoryMarkerPathIn(airbus)),
+             "the emptied category was left to read as an addon on the next scan");
+    QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(kLibrary)));
 }
 
 QTEST_MAIN(DeletionServiceTest)

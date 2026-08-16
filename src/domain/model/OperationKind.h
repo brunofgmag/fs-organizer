@@ -32,6 +32,7 @@ enum class OperationKind : int
     RestoreOverTheOccupant = 23,
     TurnOffTheStartupEntry = 24,
     TurnOnTheStartupEntry = 25,
+    TakeBackTheCategoryMarker = 26,
 };
 
 inline constexpr std::array kAllOperationKinds{
@@ -61,9 +62,10 @@ inline constexpr std::array kAllOperationKinds{
     OperationKind::RestoreOverTheOccupant,
     OperationKind::TurnOffTheStartupEntry,
     OperationKind::TurnOnTheStartupEntry,
+    OperationKind::TakeBackTheCategoryMarker,
 };
 
-static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::TurnOnTheStartupEntry) + 1,
+static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::TakeBackTheCategoryMarker) + 1,
               "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool CarriesAFileReason(const OperationKind kind)
@@ -90,6 +92,7 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::UndoTheInterruptedSwap:
     case OperationKind::TurnOffTheStartupEntry:
     case OperationKind::TurnOnTheStartupEntry:
+    case OperationKind::TakeBackTheCategoryMarker:
     case OperationKind::DeleteFromLibrary: return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:
@@ -130,6 +133,7 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::UndoTheInterruptedSwap:
     case OperationKind::TurnOffTheStartupEntry:
     case OperationKind::TurnOnTheStartupEntry:
+    case OperationKind::TakeBackTheCategoryMarker:
     case OperationKind::DeleteFromLibrary: return false;
     }
 
