@@ -9,12 +9,17 @@
 
 An addon manager for Microsoft Flight Simulator on Windows. Your addons live in a
 folder of your own, outside the simulator, and turning one on or off creates or
-removes an NTFS junction. No files move during normal use, so swapping tens of
-gigabytes of content is instant.
+removes an NTFS junction. No files move during normal use, so switching tens of
+gigabytes of content takes a moment.
 
 Built for MSFS 2024, and works with 2020 through the same mechanism.
 
-Early development. There is no usable release yet.
+## Download
+
+Take the latest zip from
+[Releases](https://github.com/brunofgmag/fs-organizer/releases), unpack it
+anywhere and run `fs-organizer.exe`. There is no installer and nothing else to
+install. The app can watch for new versions and apply one on its way out.
 
 ## How it works
 
@@ -24,58 +29,55 @@ destination folders pointing at the library; disabling removes that link and
 nothing else. Whether an addon is enabled is never stored anywhere: it is read
 back from disk on every scan, so the app and the simulator cannot disagree.
 
-## Project status
+If you already use MSFS Addons Linker, its configuration can be read and
+proposed as libraries and categories for you to confirm, and its `.preset` files
+come across with it.
 
-The core works end to end: the addon tree turns addons on and off through real
-junctions, the Community screen classifies and repairs entries, importing moves
-physical folders into the library, and presets capture and apply named sets. The
-interface has its own visual identity, following the Windows light or dark theme.
-An options screen behind the header gear covers profiles, destinations and
-libraries without reopening the first-run wizard, and chooses between directory
-junction and symbolic link. A configuration saved by MSFS Addons Linker can be
-read and proposed as libraries and categories for you to confirm, and its
-`.preset` files come across with it. The app checks GitHub Releases in three
-modes and applies an update on the way out, only a single copy of it runs at a
-time, and `build.ps1` produces a verified package that runs without Qt
-installed.
+## What it does
 
-Past that first release the app learned to answer for what is on disk and to
-touch it. A diagnostics screen reports what the scan found, sums the disk each
-category and each addon occupies, and reads the declared dependencies of a
-manifest against the packages the simulator actually has. Addons can be deleted
-from the library by the Recycle Bin or for good, with the route refused up front
-and with a reason when it will not work. An addon another program installed can
-be taken over into the library and given back to that program later, and when
-the two copies disagree the loser goes to a quarantine you can restore from.
-Every operation that writes lands in a journal that can undo the batch it wrote.
+**Library** is where you spend the time. Your addons appear by category, a tick
+turns one on and clearing it turns the addon off, you can drag them between
+categories, and the ones you no longer want go to the Recycle Bin or straight
+out.
 
-The app also reads and writes the `EXE.xml` of the simulator, which is the file
-that decides what starts with it. The Simulator tab lists those entries and
-turns them on and off, disabling an addon that carries a live entry warns before
-it does both as one operation, and a preset says whether it is already satisfied
-and what it would change before you apply it. It writes a return preset first
-and refuses the whole application if it cannot.
+**Destinations** shows the simulator's own folders and says where each entry came
+from: what the app manages, what some other program left there, and what points
+nowhere. Loose folders can be imported into the library, and dead links
+repaired.
 
-The interface speaks English and Brazilian Portuguese, and the Language tab
-switches between them without a restart. Both catalogues ship inside the
-executable.
+**Simulator** lists what starts along with the simulator, from its `EXE.xml`, and
+the packages it already carries.
 
-The specification, the architecture decisions and the development plan are kept
-outside this repository.
+**Presets** are named sets of addons. Before you apply one it says what it would
+turn on, what it would turn off, and what is already as it asks.
+
+**Documents** collects the PDFs your addons ship. Manuals stay apart from charts,
+and each one reopens on the page you stopped at.
+
+**Quarantine** keeps the copy that lost a conflict until you are sure, so it can
+still go back.
+
+**Diagnostics** answers for the disk. How much space each category and each addon
+takes, what the last scan ran into, which dependencies a manifest declares, which
+airports more than one scenery covers, and a guided search for the addon that
+brings the simulator down.
+
+**Journal** records everything that wrote, and undoes the batch it wrote.
+
+The interface speaks English and Brazilian Portuguese, follows the Windows light
+or dark theme, and changes language without a restart.
 
 ## Manual
 
 The user manual is in [`docs/`](docs/), in
 [English](docs/fs-organizer-en.pdf) and
 [Brazilian Portuguese](docs/fs-organizer-pt_BR.pdf). Presets come first in both,
-because that is the part of the program nobody gets right by trial. The LaTeX it
-is built from lives in [`manual/`](manual/).
+because that is the part of the program nobody gets right by trial.
 
 ## Contributing
 
-Building it, running the suite, the tools under `tools/` and the packaging
-are all in [CONTRIBUTING.md](CONTRIBUTING.md). Commits follow Conventional
-Commits, and a hook rejects anything else.
+Building it, running the suite and the packaging are all in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
