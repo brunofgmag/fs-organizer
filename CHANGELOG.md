@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.2](https://github.com/brunofgmag/fs-organizer/compare/v0.49.1...v0.49.2) (2026-08-16)
+
+
+### Bug Fixes
+
+* **quarantine:** take the link off the origin instead of quarantining it ([#146](https://github.com/brunofgmag/fs-organizer/issues/146)) ([11e85c6](https://github.com/brunofgmag/fs-organizer/commit/11e85c6f0140ef3ec833218f061e182573c672fe))
+
 ## [0.49.1](https://github.com/brunofgmag/fs-organizer/compare/v0.49.0...v0.49.1) (2026-08-16)
 
 
