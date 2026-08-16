@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.50.0](https://github.com/brunofgmag/fs-organizer/compare/v0.49.2...v0.50.0) (2026-08-16)
+
+
+### Features
+
+* name what stopped the move, and name the buttons the shot clicks ([#149](https://github.com/brunofgmag/fs-organizer/issues/149)) ([4e95e42](https://github.com/brunofgmag/fs-organizer/commit/4e95e42152186ac584addb8d3be696c77cdde43c))
+
 ## [0.49.2](https://github.com/brunofgmag/fs-organizer/compare/v0.49.1...v0.49.2) (2026-08-16)
 
 
