@@ -28,6 +28,8 @@ public:
 
     void Reload();
 
+    void ShowTheUpdates() const;
+
 signals:
     void StatusChanged(const QString& message);
 

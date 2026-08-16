@@ -97,6 +97,21 @@ namespace
     constexpr auto kDefaultUpdateFeed = "https://api.github.com/repos/brunofgmag/fs-organizer/releases/latest";
     constexpr int kFirstUpdateCheckDelayMs = 3000;
 
+    UpdateOffer WhatToOffer(const UpdateState state)
+    {
+        if (state == UpdateState::ReadyToApply)
+        {
+            return UpdateOffer::Staged;
+        }
+
+        if (state == UpdateState::Available || state == UpdateState::Downloading)
+        {
+            return UpdateOffer::Available;
+        }
+
+        return UpdateOffer::None;
+    }
+
     bool UpdatesAreOn()
     {
         if (qEnvironmentVariableIsSet("FSORG_NO_UPDATES"))
@@ -441,6 +456,28 @@ int main(int argc, char* argv[])
                      });
 
     QTimer::singleShot(kFirstUpdateCheckDelayMs, &updateViewModel, &UpdateViewModel::CheckQuietly);
+
+    const auto sayWhatTheUpdateIs = [&window, &updateViewModel]
+    {
+        window.ShowUpdateOffer(WhatToOffer(updateViewModel.State()), updateViewModel.OfferedVersion());
+    };
+
+    QObject::connect(&updateViewModel, &UpdateViewModel::Changed, &window, sayWhatTheUpdateIs);
+    sayWhatTheUpdateIs();
+
+    QObject::connect(&window, &MainWindow::UpdateOfferChosen, &window,
+                     [&window, &updateViewModel, optionsPage]
+                     {
+                         if (updateViewModel.State() == UpdateState::ReadyToApply)
+                         {
+                             updateViewModel.ApplyAndRestart();
+                             return;
+                         }
+
+                         optionsPage->Reload();
+                         optionsPage->ShowTheUpdates();
+                         window.ShowOptions();
+                     });
 
     QObject::connect(&window, &MainWindow::OptionsRequested, optionsPage, &OptionsPage::Reload);
     QObject::connect(optionsPage, &OptionsPage::StatusChanged, &window, &MainWindow::ShowStatus);

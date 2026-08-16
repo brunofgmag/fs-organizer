@@ -4,6 +4,7 @@
 
 #include <QtCore/QPointer>
 #include <QtTest/QSignalSpy>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QToolButton>
 #include <QtTest/QtTest>
 #include <QtWidgets/QComboBox>
@@ -17,6 +18,7 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/shell/TriageStrip.h"
 #include "view/theme/PageTab.h"
+#include "tests/support/PageFloor.h"
 
 namespace
 {
@@ -25,6 +27,9 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void TheChromeFitsTheNarrowestWindow();
+        static void NothingOffersAnUpdateUntilOneIsOffered();
+        static void TheOfferNamesTheVersionAndTurnsIntoARestartWhenItIsStaged();
         static void EveryWidgetItBuildsDiesWithTheWindow();
         static void BuildingAndDestroyingTheWindowLeavesTheHeapWhereItWas();
         static void ACleanInstallShowsNoTriageStrip();
@@ -413,6 +418,47 @@ void MainWindowTest::ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked()
 
     QVERIFY(!window.ShowingOptions());
     QVERIFY2(communityTab->isChecked(), "coming back from the options left the tab strip with none checked");
+}
+
+void MainWindowTest::TheChromeFitsTheNarrowestWindow()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    ItFitsTheNarrowestWindow(window, "The window chrome");
+}
+
+void MainWindowTest::NothingOffersAnUpdateUntilOneIsOffered()
+{
+    const MainWindow window(SettingsWithOneProfile());
+
+    auto* offer = window.findChild<QPushButton*>(QStringLiteral("UpdateOffer"));
+    QVERIFY(offer != nullptr);
+    QVERIFY2(offer->isHidden(), "the window offered an update before anyone said there was one");
+}
+
+void MainWindowTest::TheOfferNamesTheVersionAndTurnsIntoARestartWhenItIsStaged()
+{
+    MainWindow window(SettingsWithOneProfile());
+    auto* offer = window.findChild<QPushButton*>(QStringLiteral("UpdateOffer"));
+    QSignalSpy chosen(&window, &MainWindow::UpdateOfferChosen);
+
+    window.ShowUpdateOffer(UpdateOffer::Available, QStringLiteral("0.49.0"));
+
+    QVERIFY(!offer->isHidden());
+    QVERIFY2(offer->text().contains(QStringLiteral("0.49.0")), "the offer did not say which version it was offering");
+
+    const QString offering = offer->text();
+
+    window.ShowUpdateOffer(UpdateOffer::Staged, QStringLiteral("0.49.0"));
+
+    QVERIFY2(offer->text() != offering, "a staged update reads the same as one that still has to be downloaded");
+
+    offer->click();
+    QCOMPARE(chosen.count(), 1);
+
+    window.ShowUpdateOffer(UpdateOffer::None, {});
+
+    QVERIFY(offer->isHidden());
 }
 
 QTEST_MAIN(MainWindowTest)

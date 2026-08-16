@@ -2893,6 +2893,21 @@ It also exists in the library: %2</translation>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../src/view/shell/MainWindow.cpp" line="319"/>
+        <source>Restart to update</source>
+        <translation>Restart to update</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/MainWindow.cpp" line="320"/>
+        <source>Apply the update and restart now</source>
+        <translation>Apply the update and restart now</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/MainWindow.cpp" line="320"/>
+        <source>Update available</source>
+        <translation>Update available</translation>
+    </message>
+    <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="320"/>
         <source>Options</source>
         <translation>Options</translation>
