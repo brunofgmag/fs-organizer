@@ -118,6 +118,11 @@ add_test(NAME translations-are-finished
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-translations-are-finished.cmake")
 
+add_test(NAME translations-agree
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-translations-agree.cmake")
+
 if (WIN32)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"
