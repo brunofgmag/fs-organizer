@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.1](https://github.com/brunofgmag/fs-organizer/compare/v0.49.0...v0.49.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* **i18n:** say each phrase one way, and guard against saying it twice ([#142](https://github.com/brunofgmag/fs-organizer/issues/142)) ([166b3de](https://github.com/brunofgmag/fs-organizer/commit/166b3de437dacc344d00919e20cab44cebd8b43a))
+
 ## [0.49.0](https://github.com/brunofgmag/fs-organizer/compare/v0.48.2...v0.49.0) (2026-08-16)
 
 

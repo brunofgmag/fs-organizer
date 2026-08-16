@@ -118,6 +118,11 @@ add_test(NAME translations-are-finished
         "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
         -P "${CMAKE_SOURCE_DIR}/tools/check-translations-are-finished.cmake")
 
+add_test(NAME translations-agree
+        COMMAND "${CMAKE_COMMAND}"
+        "-DFSORG_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/tools/check-translations-agree.cmake")
+
 if (WIN32)
     add_test(NAME long-path-aware
             COMMAND "${CMAKE_COMMAND}"
@@ -1494,6 +1499,50 @@ fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-documents-page-tests PRIVATE fsorg-view Qt6::PdfWidgets)
 configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
+
+fsorg_add_qt_test(fsorg-quarantine-page-tests quarantine-page
+        tests/view/tst_quarantine_page.cpp
+        tests/support/PageFloor.h
+        assets/resources.qrc
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSidecarStore.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-quarantine-page-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-quarantine-page-tests quarantine-page)
+
+fsorg_add_qt_test(fsorg-journal-page-tests journal-page
+        tests/view/tst_journal_page.cpp
+        tests/support/PageFloor.h
+        assets/resources.qrc
+        tests/doubles/FakeCatalogScanner.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFileOperations.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeLinkService.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeSettingsRepository.h
+        tests/doubles/FakeSidecarStore.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-journal-page-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-journal-page-tests journal-page)
 
 fsorg_add_qt_test(fsorg-reader-selection-tests reader-selection
         tests/view/tst_reader_selection.cpp
