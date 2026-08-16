@@ -256,6 +256,16 @@ addons between them. Only an empty category can be deleted.
 that get it right on their own come checked; the livery rule comes unchecked
 because it is often wrong, so check it before applying.
 
+A folder counts as a category while it groups addons, and the program writes a
+hidden \where|.fsorg-category| inside the ones it knows about so that a category
+which loses its last addon keeps being one. It marks them when it registers the
+library, and \ui{Categories} in the options marks them again later.
+
+A folder that groups no addon and carries no \where|manifest.json| of its own is
+treated as an addon, so it can be enabled, moved and deleted like any other. That
+is what a converted package the simulator writes beside yours looks like, and
+what a scenery object library that ships without a manifest looks like too.
+
 \subsection{Pinning the destination}
 
 By default an addon is linked in the profile's default destination. \ui{Pin the
@@ -539,7 +549,9 @@ The gear in the header opens the options, in five tabs.
     destinations, registers and unregisters libraries. Unregistering takes the
     library out of the configuration and deletes no file at all: the links that
     pointed at it keep working in the simulator, but start showing up as third
-    party links, which the program does not touch.
+    party links, which the program does not touch. \ui{Categories} says how many
+    folders of that library already carry the category marker and how many would
+    receive it, and marks them or takes every marker back.
   \item[Links] The link type and the check after copying.
   \item[Updates] Automatic, notify or manual. The automatic one downloads the new
     version on its own and applies it when you close the program.
@@ -567,5 +579,10 @@ It stops existing when the search ends.
 None of your addon files live there. Deleting that folder deletes the
 configuration and the presets, and touches no addon: the program rebuilds what
 it knows by reading the destinations and the libraries again.
+
+One thing the program writes outside that folder: the hidden
+\where|.fsorg-category| it leaves in the folders of your library that group
+addons. It holds nothing, and its whole job is to keep a category counting as one
+after it empties. \ui{Categories} in the options takes every one of them back.
 
 \end{document}

@@ -71,6 +71,7 @@ namespace
         case OperationKind::RestoreOverTheOccupant: return "restoreOverTheOccupant";
         case OperationKind::TurnOffTheStartupEntry: return "turnOffTheStartupEntry";
         case OperationKind::TurnOnTheStartupEntry: return "turnOnTheStartupEntry";
+        case OperationKind::TakeBackTheCategoryMarker: return "takeBackTheCategoryMarker";
         }
 
         return "unknown";

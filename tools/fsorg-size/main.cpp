@@ -16,6 +16,9 @@
 #include <vector>
 
 #include "application/SizeService.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JsonlOperationJournal.h"
+#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -158,7 +161,9 @@ int main(int argc, char* argv[])
 
     const JsonManifestParser manifestParser;
     const WindowsFilesystemProbe filesystemProbe;
-    const FilesystemScanner scanner(manifestParser, filesystemProbe);
+    const JsonlOperationJournal journal(JournalFilePath());
+    const JournalImportedFolders importedFolders(journal);
+    const FilesystemScanner scanner(manifestParser, filesystemProbe, importedFolders);
     const SystemClock clock;
     RunHereAndNow runner;
     SizeService service(scanner, filesystemProbe, clock, runner);

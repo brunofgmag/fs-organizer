@@ -203,11 +203,70 @@ LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
 
     if (report.Accepted())
     {
+        const auto registered = std::ranges::find_if(next.libraries,
+                                                     [&path](const Library& library)
+                                                     {
+                                                         return ComparablePath(library.path) == ComparablePath(path);
+                                                     });
+
+        if (registered != next.libraries.end())
+        {
+            static_cast<void>(organizer_.AdoptTheStructure(next, *registered));
+        }
+
         Save(next);
         Scan(std::move(next));
     }
 
     return report;
+}
+
+const Library* Session::LibraryNamed(const LibraryId& libraryId) const
+{
+    for (const Library& library : profile_.libraries)
+    {
+        if (library.id == libraryId)
+        {
+            return &library;
+        }
+    }
+
+    return nullptr;
+}
+
+LibraryGrouping Session::HowTheLibraryIsGrouped(const LibraryId& libraryId) const
+{
+    const Library* library = LibraryNamed(libraryId);
+
+    return library == nullptr ? LibraryGrouping{} : organizer_.HowItIsGrouped(*library);
+}
+
+std::vector<FileOperationResult> Session::AdoptTheStructureOf(const LibraryId& libraryId)
+{
+    const Library* library = LibraryNamed(libraryId);
+    if (library == nullptr)
+    {
+        return {};
+    }
+
+    std::vector<FileOperationResult> results = organizer_.AdoptTheStructure(profile_, *library);
+    Scan(profile_);
+
+    return results;
+}
+
+std::vector<FileOperationResult> Session::TakeBackTheMarkersOf(const LibraryId& libraryId)
+{
+    const Library* library = LibraryNamed(libraryId);
+    if (library == nullptr)
+    {
+        return {};
+    }
+
+    std::vector<FileOperationResult> results = organizer_.TakeBackEveryMarkerItWrote(profile_, *library);
+    Scan(profile_);
+
+    return results;
 }
 
 void Session::RememberWhatCameFromAnotherProgram(const std::vector<ImportOperationResult>& results)

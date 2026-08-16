@@ -4,6 +4,7 @@
 #include "application/Session.h"
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/journal/OperationLog.h"
+#include "domain/model/CategoryMarker.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -69,6 +70,7 @@ namespace
         static void UnregisteringALibraryForgetsWhereItsAddonsCameFrom();
         static void GivingAnAddonBackForgetsWhereItCameFromAndScansAgain();
         static void ForgettingNothingNeitherSavesNorScans();
+        static void RegisteringALibraryDeclaresTheStructureTheUserAlreadyBuilt();
     };
 }
 
@@ -915,6 +917,22 @@ void SessionTest::ForgettingNothingNeitherSavesNorScans()
 
     QCOMPARE(f.settings.stored.profiles.front().externalOrigins.size(), std::size_t{1});
     QCOMPARE(f.observer.started, 1);
+}
+
+void SessionTest::RegisteringALibraryDeclaresTheStructureTheUserAlreadyBuilt()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(kExtraLibrary);
+    f.fileSystem.AddDirectory(std::filesystem::path(kExtraLibrary) / "Sceneries");
+    f.fileSystem.AddDirectory(std::filesystem::path(kExtraLibrary) / "Sceneries" / "Brazil");
+    f.catalog.SetTree(kExtraLibrary, TreeNode{});
+
+    QVERIFY(f.session.RegisterLibrary(kExtraLibrary).Accepted());
+
+    QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary) / "Sceneries")));
+    QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary) / "Sceneries" / "Brazil")));
+    QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary))));
 }
 
 QTEST_MAIN(SessionTest)

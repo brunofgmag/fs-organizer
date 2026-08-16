@@ -52,8 +52,13 @@ private:
     [[nodiscard]] static FileResult
     TheRouteRefuses(const DeletionPlan& plan, const AddonToDelete& addon, DeletionRoute route);
 
-    [[nodiscard]] DeletionResult
-    DeleteOne(const AddonToDelete& addon, const std::vector<LinksNow>& seen, DeletionRoute route) const;
+    [[nodiscard]] DeletionResult DeleteOne(const AddonToDelete& addon,
+                                           const std::vector<LinksNow>& seen,
+                                           const std::vector<std::filesystem::path>& libraryRoots,
+                                           DeletionRoute route) const;
+
+    void DeclareTheCategoryItLeaves(const std::filesystem::path& folder,
+                                    const std::vector<std::filesystem::path>& libraryRoots) const;
 
     const FilesystemProbe& filesystemProbe_;
     FileOperations& files_;

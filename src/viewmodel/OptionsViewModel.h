@@ -15,6 +15,7 @@
 #include "application/model/UpdateMode.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/LibraryId.h"
+#include "domain/tree/StructureAdoption.h"
 #include "domain/model/LinkType.h"
 #include "domain/model/Verification.h"
 #include "viewmodel/SessionNotifier.h"
@@ -92,6 +93,12 @@ public:
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path) const;
 
     void UnregisterLibrary(const LibraryId& libraryId, bool disablingWhatItLeftBehind);
+
+    [[nodiscard]] LibraryGrouping GroupingOf(const LibraryId& libraryId) const;
+
+    void DeclareTheCategoriesOf(const LibraryId& libraryId);
+
+    void TakeBackTheMarkersOf(const LibraryId& libraryId);
 
 signals:
     void Changed();

@@ -48,6 +48,8 @@ std::vector<const TreeNode*> CategoriesUnder(TreeNode&& node) = delete;
 
 [[nodiscard]] bool HoldsAddonsOrWasDeclared(const TreeNode& node);
 
+void AFolderThatGroupsNothingBecomesAnAddon(TreeNode& node);
+
 [[nodiscard]] std::vector<const TreeNode*> CategoriesOfferedIn(const TreeNode& tree, bool offerTheRoot);
 
 std::vector<const TreeNode*> CategoriesOfferedIn(TreeNode&& tree, bool offerTheRoot) = delete;

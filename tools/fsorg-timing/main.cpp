@@ -23,6 +23,7 @@
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -180,7 +181,8 @@ int main(int argc, char* argv[])
     WindowsSidecarStore sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
-    const FilesystemScanner catalog(manifestParser, filesystemProbe);
+    const JournalImportedFolders importedFolders(journal);
+    const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
 

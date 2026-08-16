@@ -83,6 +83,27 @@ add_custom_command(TARGET fsorg-delete POST_BUILD
         "$<TARGET_FILE_DIR:fsorg-delete>"
         VERBATIM)
 
+add_executable(fsorg-adopt
+        tools/fsorg-adopt/main.cpp
+        src/viewmodel/FailureText.cpp
+)
+
+target_include_directories(fsorg-adopt PRIVATE "${CMAKE_SOURCE_DIR}/src")
+
+target_compile_definitions(fsorg-adopt PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+
+if (MSVC)
+    target_compile_options(fsorg-adopt PRIVATE /permissive- /Zc:preprocessor)
+endif ()
+
+target_link_libraries(fsorg-adopt PRIVATE fsorg-application fsorg-infrastructure Qt6::Core)
+
+add_custom_command(TARGET fsorg-adopt POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "$<TARGET_FILE:Qt6::Core>"
+        "$<TARGET_FILE_DIR:fsorg-adopt>"
+        VERBATIM)
+
 add_executable(fsorg-bgl
         tools/fsorg-bgl/main.cpp
 )

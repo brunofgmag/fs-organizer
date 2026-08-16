@@ -255,6 +255,16 @@ entre elas. Só categoria vazia pode ser apagada.
 acertam sozinhas já vêm marcadas; a regra de livery vem desmarcada porque erra
 com frequência, então confira antes de aplicar.
 
+Uma pasta conta como categoria enquanto agrupa addons, e o programa escreve um
+\where|.fsorg-category| oculto dentro das que ele conhece para que a categoria
+que perde o último addon continue sendo categoria. Ele as marca ao registrar a
+biblioteca, e \ui{Categorias} nas opções as marca de novo depois.
+
+Pasta que não agrupa addon nenhum e não tem \where|manifest.json| próprio é
+tratada como addon, então dá para habilitar, mover e excluir como qualquer
+outro. É essa a cara do pacote convertido que o simulador escreve ao lado do
+seu, e também a da biblioteca de objetos de cenário que vem sem manifesto.
+
 \subsection{Fixar o destino}
 
 Por padrão, um addon é ligado no destino padrão do perfil. \ui{Fixar o destino}
@@ -535,7 +545,9 @@ A engrenagem no cabeçalho abre as opções, em cinco abas.
     e descadastra bibliotecas. Descadastrar remove a biblioteca da configuração
     e não apaga arquivo nenhum: os links que apontavam para ela continuam
     funcionando no simulador, mas passam a aparecer como links de terceiros, que
-    o programa não toca.
+    o programa não toca. \ui{Categorias} diz quantas pastas daquela biblioteca já
+    carregam o marcador de categoria e quantas receberiam, e marca todas ou
+    retira todos os marcadores.
   \item[Links] O tipo de link e a verificação depois de copiar.
   \item[Atualizações] Automática, avisar ou manual. A automática baixa a versão
     nova sozinha e a aplica quando você fecha o programa.
@@ -563,5 +575,10 @@ deixa de existir quando a busca encerra.
 Nenhum arquivo seu de addon mora aí. Apagar essa pasta apaga a configuração e os
 presets, e não toca em addon nenhum: o programa reconstrói o que sabe relendo os
 destinos e as bibliotecas.
+
+Uma coisa o programa escreve fora dessa pasta: o \where|.fsorg-category| oculto
+que ele deixa nas pastas da sua biblioteca que agrupam addons. Ele não guarda
+nada, e a função dele inteira é a categoria continuar contando como categoria
+depois de esvaziar. \ui{Categorias} nas opções retira todos eles.
 
 \end{document}

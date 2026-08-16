@@ -408,6 +408,14 @@ fsorg_add_qt_test(fsorg-addon-tree-tests addon-tree
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-addon-tree-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-structure-adoption-tests structure-adoption
+        tests/domain/tree/tst_structure_adoption.cpp
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-structure-adoption-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-category-suggester-tests category-suggester
         tests/domain/tree/tst_category_suggester.cpp
         tests/support/EnumPrinting.h

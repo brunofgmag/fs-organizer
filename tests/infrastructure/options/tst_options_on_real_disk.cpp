@@ -9,6 +9,7 @@
 #include "domain/journal/OperationLog.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
+#include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFileOperations.h"
@@ -28,6 +29,8 @@
 
 namespace
 {
+    const NothingWasImported nothingWasImported;
+
     class OptionsOnRealDiskTest : public QObject
     {
         Q_OBJECT
@@ -137,7 +140,7 @@ namespace
         OperationLog log{journal, clock};
         UuidLibraryIdGenerator identities;
         JsonManifestParser manifestParser;
-        FilesystemScanner catalog{manifestParser, filesystemProbe};
+        FilesystemScanner catalog{manifestParser, filesystemProbe, nothingWasImported};
         WindowsProcessProbe processProbe{std::vector<std::string>{}};
         std::filesystem::path settingsFile;
         JsonSettingsRepository settings;

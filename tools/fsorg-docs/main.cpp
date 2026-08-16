@@ -12,6 +12,9 @@
 #include "application/SceneryService.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
+#include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JsonlOperationJournal.h"
+#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -316,7 +319,9 @@ int main(int argc, char* argv[])
     const JsonManifestParser manifestParser;
     const JsonChartCatalogueParser catalogueParser;
     const WindowsFilesystemProbe filesystemProbe;
-    const FilesystemScanner scanner(manifestParser, filesystemProbe);
+    const JsonlOperationJournal journal(JournalFilePath());
+    const JournalImportedFolders importedFolders(journal);
+    const FilesystemScanner scanner(manifestParser, filesystemProbe, importedFolders);
     const BglSceneryParser sceneryParser;
     const SystemClock clock;
     RememberNothing cache;

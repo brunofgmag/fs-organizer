@@ -304,6 +304,7 @@ namespace QTest
         case OperationKind::RestoreOverTheOccupant: return qstrdup("RestoreOverTheOccupant");
         case OperationKind::TurnOffTheStartupEntry: return qstrdup("TurnOffTheStartupEntry");
         case OperationKind::TurnOnTheStartupEntry: return qstrdup("TurnOnTheStartupEntry");
+        case OperationKind::TakeBackTheCategoryMarker: return qstrdup("TakeBackTheCategoryMarker");
         }
 
         return qstrdup("OperationKind(?)");

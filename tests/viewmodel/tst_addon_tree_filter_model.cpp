@@ -39,13 +39,21 @@ namespace
         return node;
     }
 
+    TreeNode DeclaredCategoryNode(const std::filesystem::path& path)
+    {
+        TreeNode node = CategoryNode(path, {});
+        node.declaredAsCategory = true;
+
+        return node;
+    }
+
     ProfileSnapshot Snapshot()
     {
         TreeNode library = CategoryNode("D:/MSFS 2024",
                                         {CategoryNode("D:/MSFS 2024/Aircrafts",
                                                       {AddonNode("D:/MSFS 2024/Aircrafts/aerosoft-crj"),
                                                        AddonNode("D:/MSFS 2024/Aircrafts/fenix-a320")}),
-                                         CategoryNode("D:/MSFS 2024/Vazia", {})});
+                                         DeclaredCategoryNode("D:/MSFS 2024/Vazia")});
         library.kind = TreeNodeKind::Library;
 
         ProfileSnapshot snapshot;

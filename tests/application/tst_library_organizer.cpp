@@ -87,6 +87,14 @@ namespace
         return node;
     }
 
+    TreeNode DeclaredCategoryNode(const std::filesystem::path& path)
+    {
+        TreeNode node = CategoryNode(path, {});
+        node.declaredAsCategory = true;
+
+        return node;
+    }
+
     struct Fixture
     {
         InMemoryFileSystem fileSystem;
@@ -381,7 +389,7 @@ void LibraryOrganizerTest::ACategoryIsNotCreatedOutsideALibrary()
 void LibraryOrganizerTest::AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverride()
 {
     Fixture f;
-    f.TheLibraryIsMadeOf({CategoryNode(kAircrafts, {AddonNode(kAddon)}), CategoryNode(kAircrafts2024, {})});
+    f.TheLibraryIsMadeOf({CategoryNode(kAircrafts, {AddonNode(kAddon)}), DeclaredCategoryNode(kAircrafts2024)});
     f.fileSystem.AddFile(CategoryMarkerPathIn(kAircrafts2024));
     f.profile.destinationOverrides.push_back(
         {.libraryId = "lib-1", .relativePath = "Aircrafts (2024)", .destination = kOtherDestination});
@@ -398,7 +406,7 @@ void LibraryOrganizerTest::AnEmptyCategoryIsRemovedAlongWithItsMarkerAndItsOverr
 void LibraryOrganizerTest::AStaleOverrideBelowTheRemovedCategoryIsForgottenToo()
 {
     Fixture f;
-    f.TheLibraryIsMadeOf({CategoryNode(kAircrafts, {AddonNode(kAddon)}), CategoryNode(kAircrafts2024, {})});
+    f.TheLibraryIsMadeOf({CategoryNode(kAircrafts, {AddonNode(kAddon)}), DeclaredCategoryNode(kAircrafts2024)});
     f.fileSystem.AddFile(CategoryMarkerPathIn(kAircrafts2024));
     f.profile.destinationOverrides.push_back(
         {.libraryId = "lib-1", .relativePath = "Aircrafts (2024)/gone-from-disk", .destination = kOtherDestination});
@@ -448,7 +456,7 @@ void LibraryOrganizerTest::TheLibraryRootIsNeverRemovedAsIfItWereACategory()
 void LibraryOrganizerTest::NoCategoryIsRemovedWhileTheSimulatorIsRunning()
 {
     Fixture f;
-    f.TheLibraryIsMadeOf({CategoryNode(kAircrafts2024, {})});
+    f.TheLibraryIsMadeOf({DeclaredCategoryNode(kAircrafts2024)});
     f.processProbe.ReportTheSimulatorAsRunning();
 
     QCOMPARE(f.organizer.RemoveCategory(f.profile, kAircrafts2024).result, FileResult::TheSimulatorIsRunning);
