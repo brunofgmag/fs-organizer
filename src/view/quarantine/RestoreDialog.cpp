@@ -147,17 +147,26 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
     SizeToTheContent(*this, kDialogWidth);
 }
 
+QString RestoreDialog::WhatGoingBackMeansFor(const RestoreCheck& check)
+{
+    if (!check.CanProceed())
+    {
+        return WhyItIsRefused(check);
+    }
+
+    const QString place = AsText(check.target.parent_path());
+
+    return check.theOriginHoldsALink ? tr("goes back to %1, and the link that is there goes away").arg(place)
+                                     : tr("goes back to %1").arg(place);
+}
+
 void RestoreDialog::AddTheSettledRow(QGridLayout& grid, const RestoreOffer& offer, const int row)
 {
     auto* name = new QLabel(AsText(offer.check.item.path.filename()), grid.parentWidget());
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
     grid.addWidget(name, row, 0, Qt::AlignTop);
 
-    const bool proceeds = offer.check.CanProceed();
-
-    auto* detail = new QLabel(proceeds ? tr("goes back to %1").arg(AsText(offer.check.target.parent_path()))
-                                       : WhyItIsRefused(offer.check),
-                              grid.parentWidget());
+    auto* detail = new QLabel(WhatGoingBackMeansFor(offer.check), grid.parentWidget());
     detail->setObjectName(QStringLiteral("PanelPromise"));
     detail->setWordWrap(true);
     detail->setTextInteractionFlags(Qt::TextSelectableByMouse);
