@@ -3,7 +3,8 @@ if (NOT DEFINED FSORG_SOURCE_DIR)
 endif ()
 
 # The manual is two independent sources on purpose, and the PDF beside them is
-# rebuilt by the Rebuild Manual job inside the release pull request. This reads
+# rebuilt by the Rebuild Manual job on the push to develop that changes
+# VERSION.txt, once the release has landed. This reads
 # text and nothing else: it never runs lualatex, and it never looks at the PDF,
 # whose age says nothing after a clone, because git stamps every file with the
 # checkout time.
@@ -101,7 +102,7 @@ if (OFFENCES)
     message(FATAL_ERROR
             "The user manuals have drifted.\n"
             "They are independent sources covering the same subjects, and the PDF beside them is rebuilt by the "
-            "Rebuild Manual job inside the release pull request, or by hand with manual/build.ps1.\n"
+            "Rebuild Manual job once the release lands on develop, or by hand with manual/build.ps1.\n"
             "${REPORT}")
 endif ()
 

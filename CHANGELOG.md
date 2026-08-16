@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.48.2](https://github.com/brunofgmag/fs-organizer/compare/v0.48.1...v0.48.2) (2026-08-15)
+
+
+### Bug Fixes
+
+* **reader:** stop copying glyph codes from a page the engine cannot map ([#135](https://github.com/brunofgmag/fs-organizer/issues/135)) ([bf123cf](https://github.com/brunofgmag/fs-organizer/commit/bf123cfad8eee54177095eca476c92293e7fc3e3))
+
+## [0.48.1](https://github.com/brunofgmag/fs-organizer/compare/v0.48.0...v0.48.1) (2026-08-15)
+
+
+### Bug Fixes
+
+* make panel edges follow the app's gutter standard ([#133](https://github.com/brunofgmag/fs-organizer/issues/133)) ([e3c77ba](https://github.com/brunofgmag/fs-organizer/commit/e3c77ba9642b14dd8944a60dd5babdb45505c02d))
+
 ## [0.48.0](https://github.com/brunofgmag/fs-organizer/compare/v0.47.0...v0.48.0) (2026-08-15)
 
 

@@ -8,9 +8,10 @@ The sources, the figures and everything LaTeX leaves behind live here, in
 manual/. What comes out of them goes to docs/, which holds the two PDFs and
 nothing else: that is the folder a reader of the repository opens.
 
-What ships in docs/ is rebuilt by the Rebuild Manual job, inside the pull
-request release-please opens, from the commit that carries the new version. Run
-this one while you are writing the manual, to see what you are writing.
+What ships in docs/ is rebuilt by the Rebuild Manual job, which wakes on the
+push to develop that changes VERSION.txt, so it runs once the release has
+landed. Run this one while you are writing the manual, to see what you are
+writing.
 
 It also compares the heading structure of the two languages. The manuals are two
 independent sources on purpose, and nothing but this check stops one of them

@@ -20,6 +20,9 @@ namespace
 {
     constexpr qreal kPointsPerInch = 72.0;
     constexpr qreal kTooNarrowToAimInside = 2.0;
+    constexpr char16_t kFirstLetterAPageCanShow = u' ';
+    constexpr int kUnmappedHundredthsAPageMayCarry = 25;
+    constexpr int kEveryHundredth = 100;
 
     [[nodiscard]] qreal AimedInside(const qreal wanted, const qreal from, const qreal to)
     {
@@ -56,6 +59,34 @@ namespace
     [[nodiscard]] bool ItBreaksTheLine(const QChar letter)
     {
         return letter == QChar(u'\r') || letter == QChar(u'\n');
+    }
+
+    [[nodiscard]] bool ItSeparatesLetters(const QChar letter)
+    {
+        return letter == QChar(u' ') || letter == QChar(u'\t') || ItBreaksTheLine(letter);
+    }
+
+    [[nodiscard]] bool TheEngineCouldNotMapThePage(const QString& text)
+    {
+        int unmapped = 0;
+        int counted = 0;
+
+        for (const QChar letter : text)
+        {
+            if (ItSeparatesLetters(letter))
+            {
+                continue;
+            }
+
+            ++counted;
+
+            if (letter.unicode() < kFirstLetterAPageCanShow)
+            {
+                ++unmapped;
+            }
+        }
+
+        return counted > 0 && unmapped * kEveryHundredth > counted * kUnmappedHundredthsAPageMayCarry;
     }
 
     [[nodiscard]] APieceOfTheSelection AsAPiece(const int page, const QPdfSelection& marked)
@@ -261,7 +292,14 @@ const QPdfSelection& SelectablePages::TheWholeOf(const int page) const
         return remembered.value();
     }
 
-    return *wholePages_.insert(page, document_->getAllText(page));
+    const QPdfSelection whole = document_->getAllText(page);
+
+    if (TheEngineCouldNotMapThePage(whole.text()))
+    {
+        return *wholePages_.insert(page, document_->getSelectionAtIndex(page, 0, 0));
+    }
+
+    return *wholePages_.insert(page, whole);
 }
 
 APlaceInTheText SelectablePages::ThePlaceUnder(const QPoint& where) const
