@@ -323,6 +323,7 @@
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="483"/>
         <source>Broken</source>
+        <comment>several addons</comment>
         <translation>Broken</translation>
     </message>
     <message>
@@ -5119,6 +5120,7 @@ Size %2</translation>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="112"/>
         <source>Restore</source>
+        <comment>the title of a report</comment>
         <translation>Restore</translation>
     </message>
     <message>

@@ -323,6 +323,7 @@
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="483"/>
         <source>Broken</source>
+        <comment>several addons</comment>
         <translation>Quebrados</translation>
     </message>
     <message>
@@ -1040,7 +1041,7 @@ Também existe na biblioteca: %2</translation>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="337"/>
         <source>Read again from the disk</source>
-        <translation>Ler de novo do disco</translation>
+        <translation>Reler do disco</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="338"/>
@@ -3608,12 +3609,12 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="362"/>
         <source>Close %1 and check again.</source>
-        <translation>Feche %1 e confira de novo.</translation>
+        <translation>Feche %1 e verifique de novo.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="364"/>
         <source>Check again</source>
-        <translation>Conferir de novo</translation>
+        <translation>Verificar de novo</translation>
     </message>
 </context>
 <context>
@@ -5089,7 +5090,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="253"/>
         <source>Source</source>
-        <translation>Fonte</translation>
+        <translation>Origem</translation>
     </message>
     <message>
         <source>Size on disk</source>
@@ -5119,6 +5120,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="112"/>
         <source>Restore</source>
+        <comment>the title of a report</comment>
         <translation>Restauração</translation>
     </message>
     <message>
