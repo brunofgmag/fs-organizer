@@ -23,6 +23,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QVBoxLayout>
 
+#include <array>
 #include <algorithm>
 #include <cstddef>
 #include <optional>
@@ -34,7 +35,7 @@ namespace
 {
     constexpr int kOutlineWidth = 210;
     constexpr int kPageSpacing = 8;
-    constexpr int kSearchWidth = 172;
+    constexpr int kSearchWidth = 120;
     constexpr int kStepWidth = 38;
     constexpr qreal kOneNotchCloser = 1.1;
     constexpr int kNotch = 120;
@@ -53,6 +54,10 @@ namespace
     const QString kMove = QString::fromUtf8("✥");
     const QString kCloser = QString::fromUtf8("＋");
     const QString kFurther = QString::fromUtf8("－");
+    const QString kAcross = QString::fromUtf8("↔");
+    const QString kOutOfTheTab = QString::fromUtf8("❐");
+    const QString kBackIntoTheTab = QString::fromUtf8("❏");
+    const QString kOutward = QString::fromUtf8("🗀");
 
     [[nodiscard]] bool ItIsABookmark(const QTreeWidgetItem& item)
     {
@@ -480,10 +485,11 @@ void DocumentReader::Retranslate() const
     next_->setToolTip(tr("Next page"));
     closer_->setToolTip(tr("Zoom in"));
     further_->setToolTip(tr("Zoom out"));
-    fitWidth_->setText(tr("Fit width"));
-    bookmark_->setText(tr("Bookmark"));
-    detach_->setText(detached_ ? tr("Bring it back") : tr("Detach"));
-    openFolder_->setText(tr("Open folder"));
+    fitWidth_->setToolTip(tr("Fit width"));
+    bookmark_->setToolTip(tr("Bookmark"));
+    detach_->setText(detached_ ? kBackIntoTheTab : kOutOfTheTab);
+    detach_->setToolTip(detached_ ? tr("Bring it back") : tr("Detach"));
+    openFolder_->setToolTip(tr("Open folder"));
     outlineHeading_->setText(TheHeadingOfThePane());
     rename_->setText(tr("Rename this bookmark…"));
     forget_->setText(tr("Remove this bookmark"));
@@ -907,14 +913,9 @@ QLayout* DocumentReader::TheBar()
     dragMoves_ = new QPushButton(kMove, this);
     dragMoves_->setObjectName(QStringLiteral("DragMovesThePage"));
 
-    for (QPushButton* step :
-         {previous_, next_, previousResult_, nextResult_, closer_, further_, wheelZoom_, dragMoves_})
-    {
-        step->setFixedWidth(kStepWidth);
-    }
-    fitWidth_ = new QPushButton(this);
+    fitWidth_ = new QPushButton(kAcross, this);
     fitWidth_->setObjectName(QStringLiteral("FitTheWidth"));
-    bookmark_ = new QPushButton(this);
+    bookmark_ = new QPushButton(kDisc, this);
     bookmark_->setObjectName(QStringLiteral("BookmarkThePage"));
 
     for (QPushButton* toggle : {fitWidth_, bookmark_, wheelZoom_, dragMoves_})
@@ -925,15 +926,25 @@ QLayout* DocumentReader::TheBar()
 
     ShowTheGesturesInForce();
 
-    detach_ = new QPushButton(this);
+    detach_ = new QPushButton(kOutOfTheTab, this);
     detach_->setObjectName(QStringLiteral("DetachTheReading"));
-    openFolder_ = new QPushButton(this);
+    openFolder_ = new QPushButton(kOutward, this);
+    openFolder_->setObjectName(QStringLiteral("OpenTheFolder"));
 
-    for (QPushButton* button : {previous_, next_, previousResult_, nextResult_, closer_, further_, wheelZoom_,
-                                dragMoves_, fitWidth_, bookmark_, detach_, openFolder_})
+    const std::array everyStep{previous_,  next_,      previousResult_, nextResult_, closer_, further_,
+                               wheelZoom_, dragMoves_, fitWidth_,       bookmark_,   detach_, openFolder_};
+
+    int tallest = wanted_->sizeHint().height();
+    for (const QPushButton* button : everyStep)
+    {
+        tallest = std::max(tallest, button->sizeHint().height());
+    }
+
+    for (QPushButton* button : everyStep)
     {
         button->setAutoDefault(false);
         button->setDefault(false);
+        button->setFixedSize(kStepWidth, tallest);
     }
 
     auto* bar = new QHBoxLayout;
