@@ -104,6 +104,8 @@ private:
 
     void TurnOffWhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes, bool enable);
 
+    void SayWhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes, bool enable);
+
     [[nodiscard]] std::vector<StartupLine> StartupEntriesTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,
                                                                          bool enable);
 
