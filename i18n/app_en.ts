@@ -128,6 +128,11 @@
 <context>
     <name>AddonTreePage</name>
     <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="256"/>
+        <source>Reading the scenery of what you turned on: %1 of %2</source>
+        <translation>Reading the scenery of what you turned on: %1 of %2</translation>
+    </message>
+    <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="231"/>
         <source>Reading the library…</source>
         <translation>Reading the library…</translation>

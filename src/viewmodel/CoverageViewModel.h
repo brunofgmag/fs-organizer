@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_VIEWMODEL_COVERAGE_VIEW_MODEL_H
 #define FS_ORGANIZER_VIEWMODEL_COVERAGE_VIEW_MODEL_H
 
+#include <atomic>
 #include <chrono>
 #include <optional>
 #include <string>
@@ -11,6 +12,7 @@
 #include <QtCore/QStringList>
 
 #include "application/CoverageService.h"
+#include "application/ports/BackgroundRunner.h"
 #include "application/SceneryService.h"
 #include "application/Session.h"
 #include "domain/model/TreeNode.h"
@@ -42,6 +44,14 @@ struct TurnedOffLine
     QString code{};
 };
 
+struct WhatTurningThemOnFound
+{
+    std::vector<CoverageLine> alsoCovered{};
+    std::vector<SharedAirportsLine> shared{};
+};
+
+Q_DECLARE_METATYPE(WhatTurningThemOnFound)
+
 class CoverageViewModel final : public QObject
 {
     Q_OBJECT
@@ -51,14 +61,16 @@ public:
                       SceneryService& scenery,
                       Session& session,
                       const Clock& clock,
+                      BackgroundRunner& runner,
                       QObject* parent = nullptr);
 
     void Show();
 
-    [[nodiscard]] std::vector<CoverageLine> WhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes);
+    void CheckWhatWasTurnedOn(const std::vector<const TreeNode*>& nodes);
 
-    [[nodiscard]] std::vector<SharedAirportsLine>
-    WhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes);
+    void StopChecking();
+
+    [[nodiscard]] bool Checking() const;
 
     [[nodiscard]] bool Managing() const;
 
@@ -87,13 +99,27 @@ signals:
 
     void SettingsCouldNotBeSaved();
 
+    void CheckProgressed(int read, int outOf);
+
+    void TurningThemOnWasChecked(const WhatTurningThemOnFound& found);
+
 private:
     void Read();
+
+    void Check(const std::vector<AddonToRead>& turningOn);
+
+    [[nodiscard]] SceneryProgress TellingHowFarItGot();
+
+    void TheAnswerCameBack(const WhatTurningThemOnFound& found);
 
     CoverageService& service_;
     SceneryService& scenery_;
     Session& session_;
     const Clock& clock_;
+    BackgroundRunner& runner_;
+    bool checking_ = false;
+    std::atomic<bool> stopChecking_ = false;
+    std::vector<AddonToRead> waiting_;
     std::vector<CoverageLine> conflicts_;
     std::vector<TurnedOffLine> turnedOff_;
     std::size_t read_ = 0;

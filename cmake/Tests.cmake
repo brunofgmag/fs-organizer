@@ -636,6 +636,12 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-setup-view-model-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-coverage-view-model-tests coverage-view-model
+        tests/viewmodel/tst_coverage_view_model.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-coverage-view-model-tests PRIVATE fsorg-viewmodel fsorg-application fsorg-domain)
+
 fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         tests/viewmodel/tst_addon_tree_model.cpp
         tests/support/PathPrinting.h)

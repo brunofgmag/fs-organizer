@@ -611,7 +611,7 @@ int main(int argc, char* argv[])
     const BglSceneryParser sceneryParser;
     JsonSceneryCache sceneryCache(staged->settingsFile.parent_path() / "scenery-cache.json");
     SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
-    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock, runner);
 
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;

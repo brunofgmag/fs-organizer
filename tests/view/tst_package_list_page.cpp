@@ -135,7 +135,7 @@ namespace
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
-        CoverageViewModel viewModel{coverageService, scenery, session, clock};
+        CoverageViewModel viewModel{coverageService, scenery, session, clock, runner};
 
         void ReadEverySceneryFolder()
         {

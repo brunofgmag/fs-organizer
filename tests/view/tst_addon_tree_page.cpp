@@ -46,7 +46,6 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
-        static void TheAirportsAlreadyOnAreMetByWhatIsTurningOnWithoutThePackageList();
         static void ARescanPutsTheSelectionAndTheScrollBackWhereTheyWere();
         static void ARescanKeepsTheCurrentRowOfASelectionThatSpansSeveralAddons();
         static void AnAddonThatMovedRowIsFoundAgainBecauseItIsRememberedByPath();
@@ -205,7 +204,7 @@ namespace
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService sceneryService{filesystemProbe, sceneryParser, clock, sceneryCache};
-        CoverageViewModel coverage{coverageService, sceneryService, session, clock};
+        CoverageViewModel coverage{coverageService, sceneryService, session, clock, runner};
         FakeChartCatalogueParser catalogueParser;
         FakeChartVersions chartVersions;
         DocumentService documentService{catalog, filesystemProbe, catalogueParser, chartVersions};
@@ -440,45 +439,6 @@ void AddonTreePageTest::ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectio
 
     QCOMPARE(LastStatusOf(status),
              QString{"Nothing was applied: 1 addon was not the way the screen showed it. The list is up to date now."});
-}
-
-void AddonTreePageTest::TheAirportsAlreadyOnAreMetByWhatIsTurningOnWithoutThePackageList()
-{
-    Fixture f;
-    QVERIFY2(!f.coverageService.Managing(),
-             "the pair between two addons of the library is read out of the scenery, so it owes nothing to the "
-             "package list of the simulator and shows with that option off");
-
-    const std::filesystem::path first = AddonPath(Categories().at(1), 0);
-    const std::filesystem::path second = AddonPath(Categories().at(1), 1);
-
-    for (const std::filesystem::path& folder : {first, second})
-    {
-        f.fileSystem.AddFileWithContents(folder / "scenery" / "APX.bgl", FakeSceneryParser::Carrying({"EHAM"}));
-    }
-
-    const Screen screen(f);
-
-    QVERIFY2(f.coverage.WhatTheLibraryAlreadyCovers({AddonOf(screen, second)}).empty(),
-             "nothing of the library is on, so the addon turning on meets nobody");
-
-    f.viewModel.Toggle({AddonOf(screen, first)}, true);
-
-    QVERIFY2(f.coverage.WhatTheLibraryAlreadyCovers({AddonOf(screen, first)}).empty(),
-             "the first one on meets nobody, and it is this gesture that reads its scenery and remembers it: what "
-             "the app compares against later is what it has read");
-
-    const std::vector<SharedAirportsLine> shared = f.coverage.WhatTheLibraryAlreadyCovers({AddonOf(screen, second)});
-
-    QCOMPARE(shared.size(), std::size_t{1});
-    QCOMPARE(shared.front().turningOn, QStringLiteral("addon-01"));
-    QCOMPARE(shared.front().alreadyOn, QStringLiteral("addon-00"));
-    QCOMPARE(shared.front().codes, QStringList{QStringLiteral("EHAM")});
-
-    f.viewModel.Toggle({AddonOf(screen, first)}, false);
-
-    QVERIFY2(f.coverage.WhatTheLibraryAlreadyCovers({AddonOf(screen, second)}).empty(),
-             "an addon that is installed and off covers nothing, and the question of this gesture is what is on");
 }
 
 void AddonTreePageTest::ThePageFitsTheNarrowestWindow()

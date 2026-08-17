@@ -236,12 +236,17 @@ int main(int argc, char* argv[])
         DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
+        const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
+        const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
+        const std::optional<ChosenContentList> chosen = ChooseContentList(contentLists, profile.variant);
+
         ContentXmlPackageList packageList{{}};
-        CoverageService coverageService(packageList, processProbe, false);
+        packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+        CoverageService coverageService(packageList, processProbe, loaded.managePackageList);
         const BglSceneryParser sceneryParser;
         JsonSceneryCache sceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
         SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
-        CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+        CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock, runner);
 
         const JsonChartCatalogueParser catalogueParser;
         const QtPdfChartVersions chartVersions;

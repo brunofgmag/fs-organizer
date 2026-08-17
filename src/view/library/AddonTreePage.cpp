@@ -229,6 +229,8 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&notifier, &SessionNotifier::ScanStarted, this,
             [this]
             {
+                coverage_.StopChecking();
+
                 emit StatusChanged(tr("Reading the library…"));
             });
 
@@ -247,6 +249,14 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&deletion_, &DeletionViewModel::Planned, this, &AddonTreePage::OfferToDelete);
     connect(&deletion_, &DeletionViewModel::Deleted, this, &AddonTreePage::OnDeleted);
     connect(&importViewModel_, &ImportViewModel::GaveBack, this, &AddonTreePage::OnGaveBack);
+
+    connect(&coverage_, &CoverageViewModel::CheckProgressed, this,
+            [this](const int read, const int outOf)
+            {
+                emit StatusChanged(tr("Reading the scenery of what you turned on: %1 of %2").arg(read).arg(outOf));
+            });
+
+    connect(&coverage_, &CoverageViewModel::TurningThemOnWasChecked, this, &AddonTreePage::OnTurningThemOnWasChecked);
 
     RetranslateUi();
 }
@@ -724,18 +734,20 @@ void AddonTreePage::Apply(const std::vector<const TreeNode*>& nodes, const bool 
 
     viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable), StartupEntriesTheUserAgreedTo(nodes, enable));
 
-    TurnOffWhatTheSimulatorAlsoCovers(nodes, enable);
-    SayWhatTheLibraryAlreadyCovers(nodes, enable);
+    if (enable)
+    {
+        coverage_.CheckWhatWasTurnedOn(AddonsAmong(nodes));
+    }
 }
 
-void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes, const bool enable)
+void AddonTreePage::OnTurningThemOnWasChecked(const WhatTurningThemOnFound& found)
 {
-    if (!enable)
-    {
-        return;
-    }
+    TurnOffWhatTheSimulatorAlsoCovers(found.alsoCovered);
+    SayWhatTheLibraryAlreadyCovers(found.shared);
+}
 
-    const std::vector<SharedAirportsLine> shared = coverage_.WhatTheLibraryAlreadyCovers(AddonsAmong(nodes));
+void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirportsLine>& shared)
+{
     if (shared.empty())
     {
         return;
@@ -763,14 +775,8 @@ void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<const TreeN
     emit StatusChanged(tr("%n pair will not be brought up again.", nullptr, static_cast<int>(shared.size())));
 }
 
-void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes, const bool enable)
+void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<CoverageLine>& covered)
 {
-    if (!enable)
-    {
-        return;
-    }
-
-    const std::vector<CoverageLine> covered = coverage_.WhatTheSimulatorAlsoCovers(AddonsAmong(nodes));
     if (covered.empty())
     {
         return;
