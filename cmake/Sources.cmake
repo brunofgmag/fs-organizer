@@ -169,6 +169,7 @@ set(VIEW_SOURCES
         src/view/presets/PresetStartupPanel.cpp
         src/view/PresetsPage.cpp
         src/view/quarantine/CollisionDialog.cpp
+        src/view/quarantine/DiscardProgressDialog.cpp
         src/view/quarantine/QuarantinePage.cpp
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp
