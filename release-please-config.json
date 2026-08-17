@@ -4,7 +4,6 @@
     ".": {
       "release-type": "simple",
       "package-name": "fs-organizer",
-      "skip-github-release": true,
       "include-component-in-tag": false,
       "include-v-in-tag": true,
       "version-file": "VERSION.txt"

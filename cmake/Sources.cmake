@@ -29,6 +29,7 @@ set(DOMAIN_SOURCES
         src/domain/scenery/AirportCoverage.cpp
         src/domain/tree/AddonTree.cpp
         src/domain/tree/CategorySuggester.cpp
+        src/domain/tree/AddonDestinations.cpp
         src/domain/tree/DestinationDivergence.cpp
         src/domain/tree/EffectiveDestination.cpp
         src/domain/tree/LibraryLookup.cpp

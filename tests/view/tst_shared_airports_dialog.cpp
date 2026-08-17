@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 
@@ -18,14 +19,34 @@ namespace
         static void BothAddonsAreNamedAndTheAirportRidesAlongTheLine();
         static void AThousandCodesOfOnePairStayOneLine();
         static void NeitherAnswerIsADeadEndAndOnlyOneOfThemWrites();
-        static void TheButtonCountsThePairsInsteadOfAlwaysSayingOne();
+        static void NothingIsRememberedUntilAPairIsChecked();
+        static void OnlyTheCheckedPairsComeBack();
         static void NeitherSideOfTheOverlapIsCalledAProblem();
         static void TheWarningSaysTheCodeWasReadFromTheScenery();
     };
 
     [[nodiscard]] SharedAirportsLine Sharing(const QString& turningOn, const QString& alreadyOn, QStringList codes)
     {
-        return {.turningOn = turningOn, .alreadyOn = alreadyOn, .codes = std::move(codes), .one = {}, .other = {}};
+        return {.turningOn = turningOn,
+                .alreadyOn = alreadyOn,
+                .codes = std::move(codes),
+                .one = {.libraryId = "library-1", .folderName = turningOn.toStdString()},
+                .other = {.libraryId = "library-1", .folderName = alreadyOn.toStdString()}};
+    }
+
+    [[nodiscard]] std::vector<QCheckBox*> PairBoxesOf(const QDialog& dialog)
+    {
+        std::vector<QCheckBox*> boxes;
+
+        for (QCheckBox* box : dialog.findChildren<QCheckBox*>())
+        {
+            if (box->text().isEmpty())
+            {
+                boxes.push_back(box);
+            }
+        }
+
+        return boxes;
     }
 
     [[nodiscard]] QStringList TextsOf(const QDialog& dialog)
@@ -79,7 +100,8 @@ void SharedAirportsDialogTest::NeitherAnswerIsADeadEndAndOnlyOneOfThemWrites()
     SharedAirportsDialog agreeing(
         {Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")})});
     QSignalSpy accepted(&agreeing, &QDialog::accepted);
-    ButtonSaying(agreeing, QStringLiteral("They can coexist"))->click();
+    PairBoxesOf(agreeing).front()->setChecked(true);
+    ButtonSaying(agreeing, QStringLiteral("Remember the checked ones"))->click();
     QCOMPARE(accepted.count(), 1);
 
     SharedAirportsDialog refusing(
@@ -88,19 +110,38 @@ void SharedAirportsDialogTest::NeitherAnswerIsADeadEndAndOnlyOneOfThemWrites()
     ButtonSaying(refusing, QStringLiteral("Leave them both on"))->click();
     QCOMPARE(rejected.count(), 1);
     QCOMPARE(refusing.result(), static_cast<int>(QDialog::Rejected));
+    QVERIFY2(refusing.Chosen().empty(), "refusing writes nothing, which is what it promises");
 }
 
-void SharedAirportsDialogTest::TheButtonCountsThePairsInsteadOfAlwaysSayingOne()
+void SharedAirportsDialogTest::NothingIsRememberedUntilAPairIsChecked()
 {
-    const SharedAirportsDialog alone(
-        {Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")})});
-    QVERIFY(ButtonSaying(alone, QStringLiteral("They can coexist")) != nullptr);
+    SharedAirportsDialog dialog({Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")})});
 
-    const SharedAirportsDialog several(
-        {Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")}),
-         Sharing(QStringLiteral("other"), QStringLiteral("hers"), {QStringLiteral("LPMA")})});
-    QVERIFY2(ButtonSaying(several, QStringLiteral("They can all coexist")) != nullptr,
-             "enabling a category raises many pairs at once, and one answer settles the ones on the screen");
+    QVERIFY2(!ButtonSaying(dialog, QStringLiteral("Remember the checked ones"))->isEnabled(),
+             "the pairs come unchecked, so the answer that writes has nothing to write yet");
+    QVERIFY(dialog.Chosen().empty());
+
+    PairBoxesOf(dialog).front()->setChecked(true);
+
+    QVERIFY(ButtonSaying(dialog, QStringLiteral("Remember the checked ones"))->isEnabled());
+}
+
+void SharedAirportsDialogTest::OnlyTheCheckedPairsComeBack()
+{
+    SharedAirportsDialog dialog({Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")}),
+                                 Sharing(QStringLiteral("other"), QStringLiteral("hers"), {QStringLiteral("LPMA")}),
+                                 Sharing(QStringLiteral("third"), QStringLiteral("yours"), {QStringLiteral("LEBL")})});
+
+    const std::vector<QCheckBox*> boxes = PairBoxesOf(dialog);
+    QCOMPARE(boxes.size(), std::size_t{3});
+
+    boxes.at(1)->setChecked(true);
+
+    const std::vector<CoexistingPair> chosen = dialog.Chosen();
+
+    QCOMPARE(chosen.size(), std::size_t{1});
+    QVERIFY2(chosen.front().one.folderName == "other" && chosen.front().other.folderName == "hers",
+             "enabling a category raises many pairs at once, and the user settles them one by one");
 }
 
 void SharedAirportsDialogTest::NeitherSideOfTheOverlapIsCalledAProblem()

@@ -2,6 +2,11 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <memory>
+#include <set>
+#include <string>
+
+#include <QtCore/QMetaObject>
 
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
@@ -18,16 +23,13 @@ namespace
 
     [[nodiscard]] std::vector<AddonToRead> WhatIsAlreadyOn(const SimulatorProfile& profile,
                                                            const ProfileSnapshot& snapshot,
-                                                           const std::vector<const TreeNode*>& except)
+                                                           const std::vector<AddonToRead>& except)
     {
-        const auto ItIsOneOfThem = [&except](const std::filesystem::path& folder)
+        std::set<std::string> theseOnes;
+        for (const AddonToRead& addon : except)
         {
-            return std::ranges::any_of(except,
-                                       [&folder](const TreeNode* node)
-                                       {
-                                           return ComparablePath(node->path) == ComparablePath(folder);
-                                       });
-        };
+            theseOnes.insert(ComparablePath(addon.folder));
+        }
 
         std::vector<AddonToRead> on;
 
@@ -35,7 +37,7 @@ namespace
         {
             for (const TreeNode* addon : AddonsUnder(library))
             {
-                if (snapshot.enabled.Contains(addon->path) && !ItIsOneOfThem(addon->path))
+                if (snapshot.enabled.Contains(addon->path) && !theseOnes.contains(ComparablePath(addon->path)))
                 {
                     on.push_back(ToRead(profile, *addon));
                 }
@@ -87,9 +89,120 @@ CoverageViewModel::CoverageViewModel(CoverageService& service,
                                      SceneryService& scenery,
                                      Session& session,
                                      const Clock& clock,
+                                     BackgroundRunner& runner,
                                      QObject* parent)
-    : QObject(parent), service_(service), scenery_(scenery), session_(session), clock_(clock)
+    : QObject(parent), service_(service), scenery_(scenery), session_(session), clock_(clock), runner_(runner)
 {
+}
+
+void CoverageViewModel::CheckWhatWasTurnedOn(const std::vector<const TreeNode*>& nodes)
+{
+    if (nodes.empty())
+    {
+        return;
+    }
+
+    const SimulatorProfile& profile = session_.Profile();
+
+    std::vector<AddonToRead> turningOn;
+    turningOn.reserve(nodes.size());
+
+    for (const TreeNode* node : nodes)
+    {
+        turningOn.push_back(ToRead(profile, *node));
+    }
+
+    Check(turningOn);
+}
+
+void CoverageViewModel::Check(const std::vector<AddonToRead>& turningOn)
+{
+    if (checking_)
+    {
+        waiting_.insert(waiting_.end(), turningOn.begin(), turningOn.end());
+        return;
+    }
+
+    const std::vector<AddonToRead> alreadyOn = WhatIsAlreadyOn(session_.Profile(), session_.Snapshot(), turningOn);
+    const std::vector<CoexistingPair> coexisting = session_.Settings().coexistingAirports;
+    const bool managing = service_.Managing();
+
+    checking_ = true;
+    stopChecking_ = false;
+
+    auto found = std::make_shared<WhatTurningThemOnFound>();
+
+    runner_.Run(
+        [this, turningOn, alreadyOn, coexisting, managing, found]
+        {
+            const std::vector<SceneryOfAnAddon> read = scenery_.SceneryOfEach(turningOn, TellingHowFarItGot());
+
+            if (stopChecking_)
+            {
+                return;
+            }
+
+            const std::vector<AirportsOfAnAddon> airports = AirportsOfEachAddon(read);
+
+            if (managing)
+            {
+                for (const AirportTheSimulatorAlsoCovers& covered : service_.WhatTheSimulatorAlsoCovers(airports))
+                {
+                    found->alsoCovered.push_back(LineOf(covered));
+                }
+            }
+
+            for (const SharedAirports& shared : PairsWithWhatIsAlreadyOn(
+                     airports, AirportsOfEachAddon(scenery_.WhatIsAlreadyKnown(alreadyOn)), coexisting))
+            {
+                found->shared.push_back(LineOf(shared));
+            }
+        },
+        [this, found]
+        {
+            TheAnswerCameBack(*found);
+        });
+}
+
+SceneryProgress CoverageViewModel::TellingHowFarItGot()
+{
+    return [this](const std::size_t done, const std::size_t outOf)
+    {
+        QMetaObject::invokeMethod(this,
+                                  [this, done, outOf]
+                                  {
+                                      emit CheckProgressed(static_cast<int>(done), static_cast<int>(outOf));
+                                  });
+
+        return !stopChecking_;
+    };
+}
+
+void CoverageViewModel::TheAnswerCameBack(const WhatTurningThemOnFound& found)
+{
+    checking_ = false;
+
+    emit TurningThemOnWasChecked(found);
+
+    if (waiting_.empty())
+    {
+        return;
+    }
+
+    const std::vector<AddonToRead> next = std::move(waiting_);
+    waiting_.clear();
+
+    Check(next);
+}
+
+void CoverageViewModel::StopChecking()
+{
+    stopChecking_ = true;
+}
+
+bool CoverageViewModel::Checking() const
+{
+    return checking_;
 }
 
 void CoverageViewModel::Show()
@@ -97,61 +210,6 @@ void CoverageViewModel::Show()
     Read();
 
     emit Changed();
-}
-
-std::vector<CoverageLine> CoverageViewModel::WhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes)
-{
-    if (!service_.Managing())
-    {
-        return {};
-    }
-
-    const SimulatorProfile& profile = session_.Profile();
-
-    std::vector<SceneryOfAnAddon> scenery;
-    scenery.reserve(nodes.size());
-
-    for (const TreeNode* node : nodes)
-    {
-        scenery.push_back(scenery_.SceneryOf(ToRead(profile, *node)));
-    }
-
-    std::vector<CoverageLine> lines;
-
-    for (const AirportTheSimulatorAlsoCovers& covered :
-         service_.WhatTheSimulatorAlsoCovers(AirportsOfEachAddon(scenery)))
-    {
-        lines.push_back(LineOf(covered));
-    }
-
-    return lines;
-}
-
-std::vector<SharedAirportsLine>
-CoverageViewModel::WhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes)
-{
-    const SimulatorProfile& profile = session_.Profile();
-    const ProfileSnapshot& snapshot = session_.Snapshot();
-
-    std::vector<SceneryOfAnAddon> turningOn;
-    turningOn.reserve(nodes.size());
-
-    for (const TreeNode* node : nodes)
-    {
-        turningOn.push_back(scenery_.SceneryOf(ToRead(profile, *node)));
-    }
-
-    std::vector<SharedAirportsLine> lines;
-
-    for (const SharedAirports& shared : PairsWithWhatIsAlreadyOn(
-             AirportsOfEachAddon(turningOn),
-             AirportsOfEachAddon(scenery_.WhatIsAlreadyKnown(WhatIsAlreadyOn(profile, snapshot, nodes))),
-             session_.Settings().coexistingAirports))
-    {
-        lines.push_back(LineOf(shared));
-    }
-
-    return lines;
 }
 
 bool CoverageViewModel::Managing() const

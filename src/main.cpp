@@ -292,7 +292,7 @@ int main(int argc, char* argv[])
     SizeService sizes(catalog, filesystemProbe, clock, runner);
     SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
 
-    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+    CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock, runner);
 
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
