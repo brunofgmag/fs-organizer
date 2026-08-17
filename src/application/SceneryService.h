@@ -21,6 +21,7 @@ struct AddonToRead
 {
     AddonId addon{};
     std::filesystem::path folder{};
+    bool itIsNavigationData = false;
 };
 
 using SceneryProgress = std::function<bool(std::size_t read, std::size_t outOf)>;

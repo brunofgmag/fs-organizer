@@ -749,6 +749,22 @@ Continuar?</translation>
         <source>%1 · %2, %3</source>
         <translation>%1 · %2, %3</translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/view/library/AddonTreePage.cpp" line="748"/>
+        <source>%n addon of yours covers a place another one of yours covers too.</source>
+        <translation>
+            <numerusform>%n addon seu cobre um lugar que outro addon seu também cobre.</numerusform>
+            <numerusform>%n addons seus cobrem lugares que outros addons seus também cobrem.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/library/AddonTreePage.cpp" line="764"/>
+        <source>%n pair will not be brought up again.</source>
+        <translation>
+            <numerusform>%n par não será trazido de novo.</numerusform>
+            <numerusform>%n pares não serão trazidos de novo.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>AddonTreeViewModel</name>
@@ -1747,6 +1763,11 @@ Também existe na biblioteca: %2</translation>
         <translation>Com registro que não decodificou · %1</translation>
     </message>
     <message>
+        <location filename="../src/view/diagnostics/DiagnosticsPage.cpp" line="541"/>
+        <source>Carrying navigation data instead of scenery · %1</source>
+        <translation>Carregando dados de navegação em vez de cenário · %1</translation>
+    </message>
+    <message>
         <location filename="../src/view/diagnostics/DiagnosticsPage.cpp" line="485"/>
         <source>Carrying no airport record · %1</source>
         <translation>Sem registro de aeroporto · %1</translation>
@@ -1930,6 +1951,22 @@ Também existe na biblioteca: %2</translation>
         <location filename="../../../../../../../../Projetos/fs-organizer/src/view/diagnostics/DiagnosticsPage.cpp" line="752"/>
         <source>Find the culprit · %1 / %2</source>
         <translation>Achar o culpado · %1 / %2</translation>
+    </message>
+</context>
+<context>
+    <name>DiscardProgressDialog</name>
+    <message>
+        <location filename="../src/view/quarantine/DiscardProgressDialog.cpp" line="16"/>
+        <source>Emptying the quarantine</source>
+        <translation>Esvaziando a quarentena</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/quarantine/DiscardProgressDialog.cpp" line="42"/>
+        <source>Deleting %1 of %n item</source>
+        <translation>
+            <numerusform>Apagando %1 de %n item</numerusform>
+            <numerusform>Apagando %1 de %n itens</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -5067,6 +5104,14 @@ Tamanho %2</translation>
         <source>an addon joined the library</source>
         <translation>um addon entrou na biblioteca</translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="24"/>
+        <source>%1 and %n more</source>
+        <translation>
+            <numerusform>%1 e mais %n</numerusform>
+            <numerusform>%1 e mais %n</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>QuarantineModel</name>
@@ -5654,6 +5699,57 @@ Tamanho %2</translation>
             <numerusform>%n addon</numerusform>
             <numerusform>%n addons</numerusform>
         </translation>
+    </message>
+</context>
+<context>
+    <name>SharedAirportsDialog</name>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="32"/>
+        <source>Two addons for the same place</source>
+        <translation>Dois addons para o mesmo lugar</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="35"/>
+        <source>%n addon you just turned on covers a place another addon of yours already covers. The codes are read from inside the scenery files, and the app compares against the addons whose scenery it has read so far.</source>
+        <translation>
+            <numerusform>%n addon que você acabou de ligar cobre um lugar que outro addon seu já cobre. Os códigos são lidos de dentro dos arquivos de cenário, e o app compara com os addons cujo cenário ele já leu.</numerusform>
+            <numerusform>%n addons que você acabou de ligar cobrem lugares que outros addons seus já cobrem. Os códigos são lidos de dentro dos arquivos de cenário, e o app compara com os addons cujo cenário ele já leu.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="50"/>
+        <source>You turned on</source>
+        <translation>Você ligou</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="50"/>
+        <source>Already on</source>
+        <translation>Já estava ligado</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="50"/>
+        <source>Airports</source>
+        <translation>Aeroportos</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="83"/>
+        <source>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Saying they can coexist keeps the app quiet about this pair from now on.</source>
+        <translation>Nada foi desfeito e os dois seguem ligados: qual deles o simulador carrega quem decide é ele, e desligar um é o interruptor que você já usa. Dizer que eles podem coexistir mantém o app calado sobre esse par daqui em diante.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="91"/>
+        <source>Leave them both on</source>
+        <translation>Deixar os dois ligados</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="94"/>
+        <source>They can coexist</source>
+        <translation>Eles podem coexistir</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="94"/>
+        <source>They can all coexist</source>
+        <translation>Todos eles podem coexistir</translation>
     </message>
 </context>
 <context>
