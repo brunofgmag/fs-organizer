@@ -2,17 +2,22 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <string_view>
 #include <unordered_map>
 
 #include "domain/support/PathUtils.h"
+#include "domain/support/StringUtils.h"
 
 namespace
 {
+    constexpr auto kNavigationData = "NAVDATA";
+
     struct Gathering
     {
         AddonId addon{};
         std::vector<std::string> codes{};
         bool somethingWasNotRead = false;
+        bool itIsNavigationData = false;
     };
 
     void GatherFrom(Gathering& into, const SceneryCodes& file)
@@ -31,8 +36,38 @@ namespace
         }
     }
 
+    [[nodiscard]] bool
+    TheUserSaidTheyCanCoexist(const std::vector<CoexistingPair>& coexisting, const AddonId& one, const AddonId& other)
+    {
+        return std::ranges::any_of(coexisting,
+                                   [&one, &other](const CoexistingPair& marked)
+                                   {
+                                       return ItIsTheSamePair(marked, {.one = one, .other = other});
+                                   });
+    }
+
+    [[nodiscard]] std::vector<std::string> CodesBothCarry(const AirportsOfAnAddon& one, const AirportsOfAnAddon& other)
+    {
+        std::vector<std::string> both;
+
+        for (const std::string& code : one.codes)
+        {
+            if (std::ranges::find(other.codes, code) != other.codes.end())
+            {
+                both.push_back(code);
+            }
+        }
+
+        return both;
+    }
+
     [[nodiscard]] AirportEvidence EvidenceOf(const Gathering& gathered)
     {
+        if (gathered.itIsNavigationData)
+        {
+            return AirportEvidence::ItIsNavigationData;
+        }
+
         if (!gathered.codes.empty())
         {
             return AirportEvidence::TheCodeWasRead;
@@ -41,6 +76,21 @@ namespace
         return gathered.somethingWasNotRead ? AirportEvidence::ARecordWasNotRead
                                             : AirportEvidence::ItCarriesNoAirportRecord;
     }
+}
+
+bool ItDeclaresNavigationData(const Manifest& manifest)
+{
+    const std::string& hint = manifest.packageOrderHint;
+
+    for (std::size_t at = 0; at + std::string_view(kNavigationData).size() <= hint.size(); ++at)
+    {
+        if (EqualsIgnoringCase(hint.substr(at, std::string_view(kNavigationData).size()), kNavigationData))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::vector<AirportsOfAnAddon> AirportsOfEachAddon(const std::vector<SceneryOfAnAddon>& scenery)
@@ -58,6 +108,7 @@ std::vector<AirportsOfAnAddon> AirportsOfEachAddon(const std::vector<SceneryOfAn
         }
 
         Gathering& into = gathered[reached->second];
+        into.itIsNavigationData = into.itIsNavigationData || addon.itIsNavigationData;
 
         for (const SceneryCodes& file : addon.files)
         {
@@ -70,7 +121,9 @@ std::vector<AirportsOfAnAddon> AirportsOfEachAddon(const std::vector<SceneryOfAn
 
     for (const Gathering& one : gathered)
     {
-        airports.push_back({.addon = one.addon, .evidence = EvidenceOf(one), .codes = one.codes});
+        airports.push_back({.addon = one.addon,
+                            .evidence = EvidenceOf(one),
+                            .codes = one.itIsNavigationData ? std::vector<std::string>{} : one.codes});
     }
 
     return airports;
@@ -120,15 +173,6 @@ bool ItIsTheSamePair(const CoexistingPair& left, const CoexistingPair& right)
 std::vector<AirportPair> PairsOfTheSameAirport(const std::vector<AirportsOfAnAddon>& addons,
                                                const std::vector<CoexistingPair>& coexisting)
 {
-    const auto theUserSaidTheyCanCoexist = [&coexisting](const AddonId& one, const AddonId& other)
-    {
-        return std::ranges::any_of(coexisting,
-                                   [&one, &other](const CoexistingPair& marked)
-                                   {
-                                       return ItIsTheSamePair(marked, {.one = one, .other = other});
-                                   });
-    };
-
     std::vector<AirportPair> pairs;
 
     for (const AirportGroup& group : GroupsOfTheSameAirport(addons))
@@ -137,7 +181,7 @@ std::vector<AirportPair> PairsOfTheSameAirport(const std::vector<AirportsOfAnAdd
         {
             for (std::size_t other = one + 1; other < group.addons.size(); ++other)
             {
-                if (theUserSaidTheyCanCoexist(group.addons[one], group.addons[other]))
+                if (TheUserSaidTheyCanCoexist(coexisting, group.addons[one], group.addons[other]))
                 {
                     continue;
                 }
@@ -148,6 +192,44 @@ std::vector<AirportPair> PairsOfTheSameAirport(const std::vector<AirportsOfAnAdd
     }
 
     return pairs;
+}
+
+std::vector<SharedAirports> PairsWithWhatIsAlreadyOn(const std::vector<AirportsOfAnAddon>& turningOn,
+                                                     const std::vector<AirportsOfAnAddon>& alreadyOn,
+                                                     const std::vector<CoexistingPair>& coexisting)
+{
+    std::vector<SharedAirports> shared;
+
+    const auto Meet = [&shared, &coexisting](const AirportsOfAnAddon& one, const AirportsOfAnAddon& other)
+    {
+        if (one.addon == other.addon || TheUserSaidTheyCanCoexist(coexisting, one.addon, other.addon))
+        {
+            return;
+        }
+
+        std::vector<std::string> codes = CodesBothCarry(one, other);
+        if (codes.empty())
+        {
+            return;
+        }
+
+        shared.push_back({.turningOn = one.addon, .alreadyOn = other.addon, .codes = std::move(codes)});
+    };
+
+    for (std::size_t at = 0; at < turningOn.size(); ++at)
+    {
+        for (std::size_t other = at + 1; other < turningOn.size(); ++other)
+        {
+            Meet(turningOn[at], turningOn[other]);
+        }
+
+        for (const AirportsOfAnAddon& on : alreadyOn)
+        {
+            Meet(turningOn[at], on);
+        }
+    }
+
+    return shared;
 }
 
 std::vector<AirportTheSimulatorAlsoCovers>

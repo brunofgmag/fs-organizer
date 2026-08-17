@@ -748,7 +748,8 @@ SwapResult ImportService::TheItemComesBack(const SimulatorProfile& profile,
 }
 
 std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& profile,
-                                                        const std::vector<QuarantinedItem>& items) const
+                                                        const std::vector<QuarantinedItem>& items,
+                                                        const DiscardProgress& onProgress) const
 {
     const bool blocked = processProbe_.SimulatorIsRunning();
 
@@ -757,6 +758,11 @@ std::vector<FileOperationResult> ImportService::Discard(const SimulatorProfile& 
 
     for (const QuarantinedItem& item : items)
     {
+        if (onProgress)
+        {
+            onProgress(results.size(), items.size());
+        }
+
         results.push_back(FileOperationResult{
             .path = item.path, .result = blocked ? FileResult::TheSimulatorIsRunning : DiscardOne(profile, item)});
     }

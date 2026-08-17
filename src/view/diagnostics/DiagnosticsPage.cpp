@@ -538,6 +538,8 @@ void DiagnosticsPage::ShowWhatTheSceneryCarries() const
     group(tr("Carrying an airport code · %1").arg(census.carryingACode.size()), census.carryingACode);
     group(tr("Carrying a record that did not decode · %1").arg(census.whoseRecordWasNotRead.size()),
           census.whoseRecordWasNotRead);
+    group(tr("Carrying navigation data instead of scenery · %1").arg(census.carryingNavigationData.size()),
+          census.carryingNavigationData);
     group(tr("Carrying no airport record · %1").arg(census.carryingNoAirportRecord), {});
 
     DressTheSceneryToolbar();

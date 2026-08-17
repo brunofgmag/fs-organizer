@@ -8,6 +8,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 
 #include "application/CoverageService.h"
 #include "application/SceneryService.h"
@@ -22,6 +23,15 @@ struct CoverageLine
     QString andBy{};
     bool againstTheSimulator = false;
     std::string packageName{};
+    AddonId one{};
+    AddonId other{};
+};
+
+struct SharedAirportsLine
+{
+    QString turningOn{};
+    QString alreadyOn{};
+    QStringList codes{};
     AddonId one{};
     AddonId other{};
 };
@@ -47,6 +57,9 @@ public:
 
     [[nodiscard]] std::vector<CoverageLine> WhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes);
 
+    [[nodiscard]] std::vector<SharedAirportsLine>
+    WhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes);
+
     [[nodiscard]] bool Managing() const;
 
     void Manage(bool managing);
@@ -66,6 +79,8 @@ public:
     [[nodiscard]] FileResult Switch(const std::string& packageName, bool activated);
 
     void TheyCanCoexist(const AddonId& one, const AddonId& other);
+
+    void TheyCanAllCoexist(const std::vector<CoexistingPair>& pairs);
 
 signals:
     void Changed();

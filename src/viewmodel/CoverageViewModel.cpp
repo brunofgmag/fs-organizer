@@ -1,11 +1,50 @@
 #include "viewmodel/CoverageViewModel.h"
 
 #include <algorithm>
+#include <filesystem>
 
+#include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryLookup.h"
 
 namespace
 {
+    [[nodiscard]] AddonToRead ToRead(const SimulatorProfile& profile, const TreeNode& node)
+    {
+        return {.addon = IdentityOf(profile, node.path),
+                .folder = node.path,
+                .itIsNavigationData = node.addon.has_value() && ItDeclaresNavigationData(node.addon->manifest)};
+    }
+
+    [[nodiscard]] std::vector<AddonToRead> WhatIsAlreadyOn(const SimulatorProfile& profile,
+                                                           const ProfileSnapshot& snapshot,
+                                                           const std::vector<const TreeNode*>& except)
+    {
+        const auto ItIsOneOfThem = [&except](const std::filesystem::path& folder)
+        {
+            return std::ranges::any_of(except,
+                                       [&folder](const TreeNode* node)
+                                       {
+                                           return ComparablePath(node->path) == ComparablePath(folder);
+                                       });
+        };
+
+        std::vector<AddonToRead> on;
+
+        for (const TreeNode& library : snapshot.libraries)
+        {
+            for (const TreeNode* addon : AddonsUnder(library))
+            {
+                if (snapshot.enabled.Contains(addon->path) && !ItIsOneOfThem(addon->path))
+                {
+                    on.push_back(ToRead(profile, *addon));
+                }
+            }
+        }
+
+        return on;
+    }
+
     [[nodiscard]] CoverageLine LineOf(const AirportPair& pair)
     {
         return {.code = QString::fromStdString(pair.code),
@@ -15,6 +54,21 @@ namespace
                 .packageName = {},
                 .one = pair.one,
                 .other = pair.other};
+    }
+
+    [[nodiscard]] SharedAirportsLine LineOf(const SharedAirports& shared)
+    {
+        QStringList codes;
+        for (const std::string& code : shared.codes)
+        {
+            codes << QString::fromStdString(code);
+        }
+
+        return {.turningOn = QString::fromStdString(shared.turningOn.folderName),
+                .alreadyOn = QString::fromStdString(shared.alreadyOn.folderName),
+                .codes = codes,
+                .one = shared.turningOn,
+                .other = shared.alreadyOn};
     }
 
     [[nodiscard]] CoverageLine LineOf(const AirportTheSimulatorAlsoCovers& covered)
@@ -59,7 +113,7 @@ std::vector<CoverageLine> CoverageViewModel::WhatTheSimulatorAlsoCovers(const st
 
     for (const TreeNode* node : nodes)
     {
-        scenery.push_back(scenery_.SceneryOf({.addon = IdentityOf(profile, node->path), .folder = node->path}));
+        scenery.push_back(scenery_.SceneryOf(ToRead(profile, *node)));
     }
 
     std::vector<CoverageLine> lines;
@@ -68,6 +122,33 @@ std::vector<CoverageLine> CoverageViewModel::WhatTheSimulatorAlsoCovers(const st
          service_.WhatTheSimulatorAlsoCovers(AirportsOfEachAddon(scenery)))
     {
         lines.push_back(LineOf(covered));
+    }
+
+    return lines;
+}
+
+std::vector<SharedAirportsLine>
+CoverageViewModel::WhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes)
+{
+    const SimulatorProfile& profile = session_.Profile();
+    const ProfileSnapshot& snapshot = session_.Snapshot();
+
+    std::vector<SceneryOfAnAddon> turningOn;
+    turningOn.reserve(nodes.size());
+
+    for (const TreeNode* node : nodes)
+    {
+        turningOn.push_back(scenery_.SceneryOf(ToRead(profile, *node)));
+    }
+
+    std::vector<SharedAirportsLine> lines;
+
+    for (const SharedAirports& shared : PairsWithWhatIsAlreadyOn(
+             AirportsOfEachAddon(turningOn),
+             AirportsOfEachAddon(scenery_.WhatIsAlreadyKnown(WhatIsAlreadyOn(profile, snapshot, nodes))),
+             session_.Settings().coexistingAirports))
+    {
+        lines.push_back(LineOf(shared));
     }
 
     return lines;
@@ -152,20 +233,26 @@ FileResult CoverageViewModel::Switch(const std::string& packageName, const bool 
 
 void CoverageViewModel::TheyCanCoexist(const AddonId& one, const AddonId& other)
 {
-    const CoexistingPair marked{.one = one, .other = other};
+    TheyCanAllCoexist({{.one = one, .other = other}});
+}
 
+void CoverageViewModel::TheyCanAllCoexist(const std::vector<CoexistingPair>& pairs)
+{
     const bool written = session_.Rewrite(
-        [&marked](AppSettings& settings)
+        [&pairs](AppSettings& settings)
         {
-            const bool known = std::ranges::any_of(settings.coexistingAirports,
-                                                   [&marked](const CoexistingPair& candidate)
-                                                   {
-                                                       return ItIsTheSamePair(candidate, marked);
-                                                   });
-
-            if (!known)
+            for (const CoexistingPair& marked : pairs)
             {
-                settings.coexistingAirports.push_back(marked);
+                const bool known = std::ranges::any_of(settings.coexistingAirports,
+                                                       [&marked](const CoexistingPair& candidate)
+                                                       {
+                                                           return ItIsTheSamePair(candidate, marked);
+                                                       });
+
+                if (!known)
+                {
+                    settings.coexistingAirports.push_back(marked);
+                }
             }
 
             return true;

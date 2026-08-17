@@ -9,6 +9,7 @@
 #include "viewmodel/QuarantineViewModel.h"
 
 class ContextPanel;
+class DiscardProgressDialog;
 class EmptyState;
 class QLabel;
 class QPushButton;
@@ -57,6 +58,10 @@ private:
 
     void EmptyTheQuarantine();
 
+    void OpenTheProgress(int items);
+
+    void CloseTheProgress();
+
     void Report(const QString& title, const std::vector<FileOperationResult>& results);
 
     [[nodiscard]] bool AskAboutTheCollision(const RestoreCheck& check);
@@ -77,6 +82,7 @@ private:
     QPushButton* restoreFromPanel_ = nullptr;
     QPushButton* openFolder_ = nullptr;
     EmptyState* nothingHeld_ = nullptr;
+    DiscardProgressDialog* progress_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_QUARANTINE_QUARANTINE_PAGE_H

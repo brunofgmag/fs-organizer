@@ -36,6 +36,7 @@ namespace
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
         static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
+        static void EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsWayThrough();
     };
 }
 
@@ -278,6 +279,44 @@ void QuarantineViewModelTest::TheCollisionWeighsBothSidesAgainInsteadOfTrustingT
 
     QVERIFY2(f.filesystemProbe.TimesWalked(occupied) > std::size_t{1},
              "the collision exists because somebody put a folder there by hand, which is what the cache missed");
+}
+
+void QuarantineViewModelTest::EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsWayThrough()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.viewModel.Show();
+
+    const QuarantinedItem* held = f.model.ItemAt(f.model.index(0, QuarantineModel::NameColumn, {}));
+    QVERIFY(held != nullptr);
+
+    QSignalSpy started(&f.viewModel, &QuarantineViewModel::DiscardStarted);
+    QSignalSpy progressed(&f.viewModel, &QuarantineViewModel::DiscardProgressed);
+    QSignalSpy discarded(&f.viewModel, &QuarantineViewModel::Discarded);
+
+    f.runner.defer = true;
+    f.viewModel.Discard({*held});
+
+    QCOMPARE(started.count(), 1);
+    QCOMPARE(started.first().first().toInt(), 1);
+    QVERIFY2(discarded.isEmpty() && f.fileSystem.Exists(kQuarantined),
+             "deleting a quarantine of many folders froze the window, so the work belongs to the runner and nothing "
+             "of it happens on the thread that asked");
+
+    const std::size_t pending = f.runner.HowManyPending();
+    f.viewModel.Discard({*held});
+
+    QCOMPARE(started.count(), 1);
+    QVERIFY2(f.runner.HowManyPending() == pending,
+             "the screen is behind a modal while this runs, but a second ask must not queue a second deletion of the "
+             "same folders");
+
+    f.runner.Finish();
+
+    QCOMPARE(discarded.count(), 1);
+    QCOMPARE(progressed.count(), 1);
+    QCOMPARE(progressed.first().at(1).toInt(), 1);
+    QVERIFY(!f.fileSystem.Exists(kQuarantined));
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

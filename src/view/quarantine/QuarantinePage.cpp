@@ -14,6 +14,7 @@
 
 #include "support/PathText.h"
 #include "view/quarantine/CollisionDialog.h"
+#include "view/quarantine/DiscardProgressDialog.h"
 #include "view/quarantine/RestoreDialog.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/TableColumns.h"
@@ -113,9 +114,19 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
                 Report(tr("Restore", "the title of a report"), results);
             });
     connect(&viewModel_, &QuarantineViewModel::Swapped, this, &QuarantinePage::ReportTheSwaps);
+    connect(&viewModel_, &QuarantineViewModel::DiscardStarted, this, &QuarantinePage::OpenTheProgress);
+    connect(&viewModel_, &QuarantineViewModel::DiscardProgressed, this,
+            [this](const int discarded, const int outOf)
+            {
+                if (progress_ != nullptr)
+                {
+                    progress_->ShowTheItem(discarded, outOf);
+                }
+            });
     connect(&viewModel_, &QuarantineViewModel::Discarded, this,
             [this](const std::vector<FileOperationResult>& results)
             {
+                CloseTheProgress();
                 Report(tr("Discard"), results);
             });
 
@@ -357,6 +368,26 @@ void QuarantinePage::EmptyTheQuarantine()
     {
         viewModel_.Discard(items);
     }
+}
+
+void QuarantinePage::OpenTheProgress(const int items)
+{
+    CloseTheProgress();
+
+    progress_ = new DiscardProgressDialog(items, this);
+    progress_->show();
+}
+
+void QuarantinePage::CloseTheProgress()
+{
+    if (progress_ == nullptr)
+    {
+        return;
+    }
+
+    progress_->close();
+    progress_->deleteLater();
+    progress_ = nullptr;
 }
 
 void QuarantinePage::Report(const QString& title, const std::vector<FileOperationResult>& results)

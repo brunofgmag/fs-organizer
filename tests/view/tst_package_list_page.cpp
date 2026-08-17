@@ -46,6 +46,7 @@ namespace
     private slots:
         static void ThePageFitsTheNarrowestWindow();
         static void TurnedOffTheScreenSaysSoAndSaysWhereToTurnItOn();
+        static void TurnedOffThePairBetweenTwoAddonsStaysOnTheScreenAndStaysSilenceable();
         static void AnInstallationWhereNobodyTurnedAnythingOffOpensWithAnEmptyHalf();
         static void ThePairOfTwoAddonsOffersNoWayToTurnEitherOff();
         static void ThePackageTheSimulatorShipsIsTheOnlyOneTheScreenOffersToTurnOff();
@@ -178,6 +179,49 @@ void PackageListPageTest::TurnedOffTheScreenSaysSoAndSaysWhereToTurnItOn()
 
     QVERIFY(f.viewModel.Managing());
     QVERIFY(f.settings.stored.managePackageList);
+}
+
+void PackageListPageTest::TurnedOffThePairBetweenTwoAddonsStaysOnTheScreenAndStaysSilenceable()
+{
+    Fixture f;
+    f.ReadEverySceneryFolder();
+    f.coverageService.Manage(false);
+
+    PackageListPage page(f.viewModel);
+    page.resize(900, 400);
+    f.viewModel.Show();
+
+    QTreeWidget* conflicts = Conflicts(page);
+
+    QTreeWidgetItem* pair = nullptr;
+    for (int row = 0; row < conflicts->topLevelItemCount(); ++row)
+    {
+        if (conflicts->topLevelItem(row)->text(0) == QStringLiteral("EHAM"))
+        {
+            pair = conflicts->topLevelItem(row);
+        }
+    }
+
+    QVERIFY2(pair != nullptr,
+             "the pair between two addons of the library does not depend on the package list, so "
+             "turning the management off never takes it off the screen");
+    QVERIFY2(conflicts->isVisibleTo(&page), "the half that is left alone is the packages one, and only it");
+
+    conflicts->setCurrentItem(pair);
+
+    QPushButton* coexist = ButtonSaying(page, QStringLiteral("They can coexist"));
+    QVERIFY2(coexist->isVisibleTo(&page) && coexist->isEnabled(),
+             "silencing the pair is the only action the app offers here, and it writes into the settings and never "
+             "into the package list");
+
+    coexist->click();
+
+    QCOMPARE(f.settings.stored.coexistingAirports.size(), std::size_t{1});
+    QVERIFY(f.packageList.switched.empty());
+
+    QVERIFY2(!ButtonSaying(page, QStringLiteral("Turn the simulator's one off"))->isVisibleTo(&page),
+             "the buttons that write into the package list have nothing to act on, and a button that can never be "
+             "pressed is noise");
 }
 
 void PackageListPageTest::AnInstallationWhereNobodyTurnedAnythingOffOpensWithAnEmptyHalf()

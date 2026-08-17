@@ -38,8 +38,11 @@ namespace
 
     SceneryCensus CensusOf(const std::vector<SceneryOfAnAddon>& walked, const std::size_t addons)
     {
-        SceneryCensus census{
-            .carryingACode = {}, .whoseRecordWasNotRead = {}, .carryingNoAirportRecord = 0, .addons = addons};
+        SceneryCensus census{.carryingACode = {},
+                             .whoseRecordWasNotRead = {},
+                             .carryingNavigationData = {},
+                             .carryingNoAirportRecord = 0,
+                             .addons = addons};
 
         for (const AirportsOfAnAddon& addon : AirportsOfEachAddon(walked))
         {
@@ -50,6 +53,9 @@ namespace
                 break;
             case AirportEvidence::ARecordWasNotRead:
                 census.whoseRecordWasNotRead.push_back(QString::fromStdString(addon.addon.folderName));
+                break;
+            case AirportEvidence::ItIsNavigationData:
+                census.carryingNavigationData.push_back(QString::fromStdString(addon.addon.folderName));
                 break;
             case AirportEvidence::ItCarriesNoAirportRecord: ++census.carryingNoAirportRecord; break;
             }

@@ -74,8 +74,11 @@ public:
                                   const std::vector<DestinationEntry>& entries,
                                   const QuarantinedItem& item) const;
 
+    using DiscardProgress = std::function<void(std::size_t discarded, std::size_t outOf)>;
+
     [[nodiscard]] std::vector<FileOperationResult> Discard(const SimulatorProfile& profile,
-                                                           const std::vector<QuarantinedItem>& items) const;
+                                                           const std::vector<QuarantinedItem>& items,
+                                                           const DiscardProgress& onProgress = {}) const;
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers(const SimulatorProfile& profile) const;
 

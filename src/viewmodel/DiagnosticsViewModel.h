@@ -37,6 +37,7 @@ struct SceneryCensus
 {
     std::vector<QString> carryingACode{};
     std::vector<QString> whoseRecordWasNotRead{};
+    std::vector<QString> carryingNavigationData{};
     std::size_t carryingNoAirportRecord = 0;
     std::size_t addons = 0;
 };
