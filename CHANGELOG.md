@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.52.0](https://github.com/brunofgmag/fs-organizer/compare/v0.51.0...v0.52.0) (2026-08-17)
+
+
+### Features
+
+* **library:** warn when two addons cover the same airport ([#154](https://github.com/brunofgmag/fs-organizer/issues/154)) ([4701979](https://github.com/brunofgmag/fs-organizer/commit/4701979edea7e846e8500574ba3af573d2c85325))
+
 ## [0.51.0](https://github.com/brunofgmag/fs-organizer/compare/v0.50.0...v0.51.0) (2026-08-16)
 
 
