@@ -96,6 +96,7 @@ namespace
         case AirportEvidence::ItCarriesNoAirportRecord: return "no airport record";
         case AirportEvidence::ARecordWasNotRead: return "record not read";
         case AirportEvidence::TheCodeWasRead: return "read";
+        case AirportEvidence::ItIsNavigationData: return "navigation data";
         }
 
         return "?";
@@ -215,7 +216,10 @@ namespace
     SceneryOf(const SceneryParser& parser, const TreeNode& addon, const std::filesystem::path& library, Tally& tally)
     {
         SceneryOfAnAddon read{.addon = {.libraryId = AsUtf8(library), .folderName = AsUtf8(addon.path.filename())},
-                              .resolvedPath = Resolved(addon.path)};
+                              .resolvedPath = Resolved(addon.path),
+                              .files = {},
+                              .itIsNavigationData =
+                                  addon.addon.has_value() && ItDeclaresNavigationData(addon.addon->manifest)};
 
         for (const std::filesystem::path& file : BglsOfTheAddon(addon.path))
         {
@@ -308,11 +312,13 @@ namespace
     {
         int carrying = 0;
         int notRead = 0;
+        int navigationData = 0;
 
         for (const AirportsOfAnAddon& addon : airports)
         {
             carrying += addon.evidence == AirportEvidence::TheCodeWasRead ? 1 : 0;
             notRead += addon.evidence == AirportEvidence::ARecordWasNotRead ? 1 : 0;
+            navigationData += addon.evidence == AirportEvidence::ItIsNavigationData ? 1 : 0;
 
             if (addon.evidence == AirportEvidence::ItCarriesNoAirportRecord)
             {
@@ -324,9 +330,9 @@ namespace
         }
 
         Out() << "\naddons " << QString::number(airports.size()) << ", carrying a code " << QString::number(carrying)
-              << ", carrying a record that did not decode " << QString::number(notRead)
-              << ", carrying no airport record "
-              << QString::number(static_cast<int>(airports.size()) - carrying - notRead) << "\n";
+              << ", carrying a record that did not decode " << QString::number(notRead) << ", carrying navigation data "
+              << QString::number(navigationData) << ", carrying no airport record "
+              << QString::number(static_cast<int>(airports.size()) - carrying - notRead - navigationData) << "\n";
     }
 }
 

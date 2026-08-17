@@ -128,7 +128,10 @@ std::vector<AddonToRead> SceneryService::AddonsOf(const SimulatorProfile& profil
     {
         for (const TreeNode* addon : AddonsUnder(library))
         {
-            addons.push_back({.addon = IdentityOf(profile, addon->path), .folder = addon->path});
+            addons.push_back(
+                {.addon = IdentityOf(profile, addon->path),
+                 .folder = addon->path,
+                 .itIsNavigationData = addon->addon.has_value() && ItDeclaresNavigationData(addon->addon->manifest)});
         }
     }
 
@@ -145,7 +148,10 @@ std::vector<SceneryOfAnAddon> SceneryService::WhatIsAlreadyKnown(const std::vect
 
         if (remembered.has_value())
         {
-            known.push_back({.addon = addon.addon, .resolvedPath = addon.folder, .files = remembered->files});
+            known.push_back({.addon = addon.addon,
+                             .resolvedPath = addon.folder,
+                             .files = remembered->files,
+                             .itIsNavigationData = addon.itIsNavigationData});
         }
     }
 
@@ -160,13 +166,19 @@ SceneryOfAnAddon SceneryService::SceneryOf(const AddonToRead& addon, const Scene
 
     if (remembered.has_value() && changed.has_value() && *changed <= remembered->readAt)
     {
-        return {.addon = addon.addon, .resolvedPath = addon.folder, .files = remembered->files};
+        return {.addon = addon.addon,
+                .resolvedPath = addon.folder,
+                .files = remembered->files,
+                .itIsNavigationData = addon.itIsNavigationData};
     }
 
     const RememberedScenery read{.readAt = clock_.Now(), .files = ReadTheFilesOf(addon.folder)};
     cache_.Keep(addon.folder, read);
 
-    return {.addon = addon.addon, .resolvedPath = addon.folder, .files = read.files};
+    return {.addon = addon.addon,
+            .resolvedPath = addon.folder,
+            .files = read.files,
+            .itIsNavigationData = addon.itIsNavigationData};
 }
 
 std::vector<SceneryOfAnAddon> SceneryService::SceneryOfEach(const std::vector<AddonToRead>& addons,

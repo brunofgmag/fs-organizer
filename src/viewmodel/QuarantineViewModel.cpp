@@ -180,9 +180,34 @@ void QuarantineViewModel::Swap(const std::vector<QuarantinedItem>& items)
 
 void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
 {
-    const std::vector<FileOperationResult> results = service_.Discard(session_.Profile(), items);
+    if (discarding_ || items.empty())
+    {
+        return;
+    }
 
-    Show();
+    discarding_ = true;
 
-    emit Discarded(results);
+    const SimulatorProfile profile = session_.Profile();
+    const auto results = std::make_shared<std::vector<FileOperationResult>>();
+
+    emit DiscardStarted(static_cast<int>(items.size()));
+
+    runner_.Run(
+        [this, profile, items, results]
+        {
+            *results =
+                service_.Discard(profile, items,
+                                 [this](const std::size_t discarded, const std::size_t outOf)
+                                 {
+                                     emit DiscardProgressed(static_cast<int>(discarded), static_cast<int>(outOf));
+                                 });
+        },
+        [this, results]
+        {
+            discarding_ = false;
+
+            Show();
+
+            emit Discarded(*results);
+        });
 }

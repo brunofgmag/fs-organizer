@@ -29,6 +29,7 @@
 #include "tests/support/PathPrinting.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/PanelRail.h"
+#include "view/quarantine/DiscardProgressDialog.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/SessionNotifier.h"
 
@@ -46,6 +47,7 @@ namespace
         static void SelectingSeveralItemsTitlesThePanelAfterHowManyWerePicked();
         static void TheActionsOnlyLightUpWhenSomethingIsSelected();
         static void EmptyingIsOfferedWhileAnythingIsHeldAndNeverWhenNothingIs();
+        static void EmptyingPutsAProgressDialogUpAndTakesItDownWhenTheRunnerLands();
         static void ClosingThePanelLetsGoOfTheSelectionThatSummonedIt();
         static void ALanguageChangeKeepsTheToolbarAndTheEmptyState();
     };
@@ -253,6 +255,26 @@ void QuarantinePageTest::EmptyingIsOfferedWhileAnythingIsHeldAndNeverWhenNothing
     empty.Open();
 
     QVERIFY(!ButtonSaying(empty.page, QStringLiteral("Empty the quarantine"))->isEnabled());
+}
+
+void QuarantinePageTest::EmptyingPutsAProgressDialogUpAndTakesItDownWhenTheRunnerLands()
+{
+    Fixture f;
+    f.Open();
+
+    const QuarantinedItem* held = f.model.ItemAt(f.model.index(0, QuarantineModel::NameColumn, {}));
+    QVERIFY(held != nullptr);
+
+    f.runner.defer = true;
+    f.viewModel.Discard({*held});
+
+    auto* progress = f.page.findChild<DiscardProgressDialog*>();
+    QVERIFY2(progress != nullptr && progress->isVisible(),
+             "the deletion runs on the runner now, so the screen owes the user a sign that it is working");
+
+    f.runner.Finish();
+
+    QVERIFY2(!progress->isVisible(), "the sign goes away with the work that summoned it");
 }
 
 void QuarantinePageTest::ClosingThePanelLetsGoOfTheSelectionThatSummonedIt()

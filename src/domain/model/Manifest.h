@@ -24,6 +24,7 @@ struct Manifest
     std::string creator{};
     std::string manufacturer{};
     std::string contentType{};
+    std::string packageOrderHint{};
     std::string packageVersion{};
     std::string minimumGameVersion{};
     std::vector<DeclaredDependency> dependencies{};

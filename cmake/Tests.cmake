@@ -1575,6 +1575,13 @@ fsorg_add_qt_test(fsorg-coverage-dialog-tests coverage-dialog
 target_link_libraries(fsorg-coverage-dialog-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-coverage-dialog-tests coverage-dialog)
 
+fsorg_add_qt_test(fsorg-shared-airports-dialog-tests shared-airports-dialog
+        tests/view/tst_shared_airports_dialog.cpp
+        tests/support/ButtonLookup.h
+        assets/resources.qrc)
+target_link_libraries(fsorg-shared-airports-dialog-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-shared-airports-dialog-tests shared-airports-dialog)
+
 fsorg_add_qt_test(fsorg-package-list-page-tests package-list-page
         tests/view/tst_package_list_page.cpp
         tests/support/ButtonLookup.h

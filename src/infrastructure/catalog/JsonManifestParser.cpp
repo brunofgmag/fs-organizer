@@ -52,6 +52,7 @@ std::optional<Manifest> JsonManifestParser::Parse(const std::string_view content
     manifest.creator = TextField(object, "creator");
     manifest.manufacturer = TextField(object, "manufacturer");
     manifest.contentType = TextField(object, "content_type");
+    manifest.packageOrderHint = TextField(object, "package_order_hint");
     manifest.packageVersion = TextField(object, "package_version");
     manifest.minimumGameVersion = TextField(object, "minimum_game_version");
     manifest.dependencies = DeclaredDependenciesIn(object);

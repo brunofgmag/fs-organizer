@@ -396,6 +396,7 @@ namespace QTest
         case AirportEvidence::ItCarriesNoAirportRecord: return qstrdup("ItCarriesNoAirportRecord");
         case AirportEvidence::ARecordWasNotRead: return qstrdup("ARecordWasNotRead");
         case AirportEvidence::TheCodeWasRead: return qstrdup("TheCodeWasRead");
+        case AirportEvidence::ItIsNavigationData: return qstrdup("ItIsNavigationData");
         }
 
         return qstrdup("AirportEvidence(?)");

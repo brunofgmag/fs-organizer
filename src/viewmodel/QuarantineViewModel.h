@@ -43,6 +43,10 @@ public:
 signals:
     void Restored(const std::vector<FileOperationResult>& results);
 
+    void DiscardStarted(int items);
+
+    void DiscardProgressed(int discarded, int outOf);
+
     void Swapped(const std::vector<SwapResult>& results);
 
     void Discarded(const std::vector<FileOperationResult>& results);
@@ -62,6 +66,7 @@ private:
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
     int listed_ = 0;
+    bool discarding_ = false;
     bool shown_ = false;
 };
 

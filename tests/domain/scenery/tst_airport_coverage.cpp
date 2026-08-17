@@ -22,11 +22,15 @@ namespace
         static void TheSameAddonReachedByTheLibraryAndByTheLinkCountsOnce();
         static void TwoAddonsOfTheSameAirportMakeAGroup();
         static void AnAddonWithoutACodeNeverJoinsAGroup();
+        static void APackageThatDeclaresItselfNavigationDataCarriesNoCoverage();
         static void TheSceneryFolderIsRecognisedWhateverTheCaseAndNothingElseIs();
         static void TwoAddonsOfTheSameAirportMakeAPair();
         static void APairTheUserSaidCanCoexistLeavesTheThirdAddonStillWarning();
         static void TheOrderTheUserMarkedThePairInDoesNotDecideWhetherItIsSilenced();
         static void AnAddonReachedTwiceOrCarryingNoCodeMakesNoPair();
+        static void WhatIsTurningOnMeetsWhatIsAlreadyOnAndTheCodesRideAlongTheAddonPair();
+        static void TwoAddonsTurningOnTogetherMeetEachOther();
+        static void WhatIsAlreadyOnNeverMeetsItselfAndTheMarkedPairNeverMeetsAtAll();
         static void ThePackageTheSimulatorShipsMeetsTheAddonByCode();
         static void ThePackageTheSimulatorKeepsTurnedOffCoversNothing();
     };
@@ -43,6 +47,14 @@ namespace
         return {.addon = {.libraryId = kLibrary, .folderName = folderName},
                 .resolvedPath = PathFromUtf8("D:/Library/Sceneries/" + folderName),
                 .files = std::move(files)};
+    }
+
+    [[nodiscard]] SceneryOfAnAddon NavigationDataAt(const std::string& folderName, std::vector<SceneryCodes> files)
+    {
+        SceneryOfAnAddon addon = AddonAt(folderName, std::move(files));
+        addon.itIsNavigationData = true;
+
+        return addon;
     }
 
     [[nodiscard]] SceneryCodes Carrying(std::vector<std::string> codes)
@@ -144,6 +156,34 @@ void AirportCoverageTest::AnAddonWithoutACodeNeverJoinsAGroup()
              "an empty code never matches, and the two states that produce no code are both empty here");
 }
 
+void AirportCoverageTest::APackageThatDeclaresItselfNavigationDataCarriesNoCoverage()
+{
+    QVERIFY(ItDeclaresNavigationData({.packageOrderHint = "CUSTOM_NAVDATA"}));
+    QVERIFY(ItDeclaresNavigationData({.packageOrderHint = "custom_navdata_patch"}));
+    QVERIFY(!ItDeclaresNavigationData({.packageOrderHint = "CUSTOM_AIRPORT"}));
+    QVERIFY2(!ItDeclaresNavigationData({}),
+             "354 of the 501 packages measured declare no hint at all, and a package "
+             "that says nothing is not navigation data");
+
+    const std::vector<AirportsOfAnAddon> airports =
+        AirportsOfEachAddon({NavigationDataAt("navigraph-nav-jepp", {Carrying({"EHAM", "LPMA"})}),
+                             AddonAt("payware-eham", {Carrying({"EHAM"})})});
+
+    QCOMPARE(airports.size(), std::size_t{2});
+    QCOMPARE(airports.front().evidence, AirportEvidence::ItIsNavigationData);
+    QVERIFY2(airports.front().codes.empty(),
+             "the airport records of a navigation data package describe every airport in the world, and describing "
+             "is not covering: it never was scenery of a place");
+
+    QVERIFY2(GroupsOfTheSameAirport(airports).empty(),
+             "the two Navigraph packages carry 1259 and 15574 codes against a maximum of 6 anywhere else, and every "
+             "one of the 1403 repeated groups of the reference library was one of them");
+    QVERIFY(PairsWithWhatIsAlreadyOn(
+                AirportsOfEachAddon({AddonAt("payware-eham", {Carrying({"EHAM"})})}),
+                AirportsOfEachAddon({NavigationDataAt("navigraph-nav-jepp", {Carrying({"EHAM"})})}), {})
+                .empty());
+}
+
 void AirportCoverageTest::TheSceneryFolderIsRecognisedWhateverTheCaseAndNothingElseIs()
 {
     QVERIFY(ItIsTheSceneryFolderOfAnAddon(PathFromUtf8("D:/Library/Sceneries/someone-airport/scenery")));
@@ -216,6 +256,52 @@ void AirportCoverageTest::AnAddonReachedTwiceOrCarryingNoCodeMakesNoPair()
                                                        AddonAt("no-record", {CarryingNoRecord()})}),
                                   {})
                 .empty());
+}
+
+void AirportCoverageTest::WhatIsTurningOnMeetsWhatIsAlreadyOnAndTheCodesRideAlongTheAddonPair()
+{
+    const std::vector<SharedAirports> shared = PairsWithWhatIsAlreadyOn(
+        AirportsOfEachAddon({AddonAt("turning-on", {Carrying({"EHAM", "LPMA", "SBGR"})})}),
+        AirportsOfEachAddon({AddonAt("already-on", {Carrying({"LPMA", "EHAM"})}),
+                             AddonAt("elsewhere", {Carrying({"KJFK"})}), AddonAt("no-record", {CarryingNoRecord()})}),
+        {});
+
+    QCOMPARE(shared.size(), std::size_t{1});
+    QVERIFY(shared.front().turningOn == Named("turning-on"));
+    QVERIFY(shared.front().alreadyOn == Named("already-on"));
+    QVERIFY2(Listed(shared.front().codes) == QStringList({QStringLiteral("EHAM"), QStringLiteral("LPMA")}),
+             "the unit is the pair of addons and the codes are its detail, because one pair of data packages shares "
+             "over a thousand codes and a line per code is a list nobody reads");
+}
+
+void AirportCoverageTest::TwoAddonsTurningOnTogetherMeetEachOther()
+{
+    const std::vector<SharedAirports> shared = PairsWithWhatIsAlreadyOn(
+        AirportsOfEachAddon({AddonAt("one-eham", {Carrying({"EHAM"})}), AddonAt("another-eham", {Carrying({"EHAM"})})}),
+        {}, {});
+
+    QCOMPARE(shared.size(), std::size_t{1});
+    QVERIFY2(shared.front().turningOn == Named("one-eham") && shared.front().alreadyOn == Named("another-eham"),
+             "enabling a category turns many addons on at once, and two of them covering the same place is the same "
+             "warning as meeting one that was already on");
+}
+
+void AirportCoverageTest::WhatIsAlreadyOnNeverMeetsItselfAndTheMarkedPairNeverMeetsAtAll()
+{
+    const std::vector<AirportsOfAnAddon> on =
+        AirportsOfEachAddon({AddonAt("one-eham", {Carrying({"EHAM"})}), AddonAt("another-eham", {Carrying({"EHAM"})})});
+
+    QVERIFY2(PairsWithWhatIsAlreadyOn({}, on, {}).empty(),
+             "a pair between two addons that were already on is not news of this gesture, and the panel already "
+             "carries it");
+
+    const std::vector<AirportsOfAnAddon> turningOn = AirportsOfEachAddon({AddonAt("one-eham", {Carrying({"EHAM"})})});
+
+    QVERIFY2(PairsWithWhatIsAlreadyOn(turningOn, on, {}).size() == std::size_t{1},
+             "the addon being turned on is on both lists once the link is made, and it never pairs with itself");
+
+    QVERIFY(
+        PairsWithWhatIsAlreadyOn(turningOn, on, {{.one = Named("ANOTHER-EHAM"), .other = Named("One-Eham")}}).empty());
 }
 
 void AirportCoverageTest::ThePackageTheSimulatorShipsMeetsTheAddonByCode()
