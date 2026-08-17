@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.53.0](https://github.com/brunofgmag/fs-organizer/compare/v0.52.0...v0.53.0) (2026-08-17)
+
+
+### Features
+
+* **library:** keep the tree responsive and settle shared airports pair by pair ([#157](https://github.com/brunofgmag/fs-organizer/issues/157)) ([d6b2bb7](https://github.com/brunofgmag/fs-organizer/commit/d6b2bb7acad34d3c7a1b51ef8354a2e73e4a02b8))
+
 ## [0.52.0](https://github.com/brunofgmag/fs-organizer/compare/v0.51.0...v0.52.0) (2026-08-17)
 
 
