@@ -242,6 +242,7 @@ add_executable(fsorg-timing
         ${PDF_INFRASTRUCTURE_SOURCES}
         tools/fsorg-timing/JournalScroll.cpp
         tools/fsorg-timing/AppScroll.cpp
+        tools/fsorg-timing/LibraryScroll.cpp
         tools/shared/DisposableState.h
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}

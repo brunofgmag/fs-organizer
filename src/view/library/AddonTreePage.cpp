@@ -44,7 +44,6 @@
 #include "view/theme/ModernistPaint.h"
 #include "view/WrappingRow.h"
 #include "viewmodel/FailureText.h"
-#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SizeSummary.h"
 
@@ -230,6 +229,8 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&notifier, &SessionNotifier::ScanStarted, this,
             [this]
             {
+                coverage_.StopChecking();
+
                 emit StatusChanged(tr("Reading the library…"));
             });
 
@@ -249,6 +250,14 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&deletion_, &DeletionViewModel::Deleted, this, &AddonTreePage::OnDeleted);
     connect(&importViewModel_, &ImportViewModel::GaveBack, this, &AddonTreePage::OnGaveBack);
 
+    connect(&coverage_, &CoverageViewModel::CheckProgressed, this,
+            [this](const int read, const int outOf)
+            {
+                emit StatusChanged(tr("Reading the scenery of what you turned on: %1 of %2").arg(read).arg(outOf));
+            });
+
+    connect(&coverage_, &CoverageViewModel::TurningThemOnWasChecked, this, &AddonTreePage::OnTurningThemOnWasChecked);
+
     RetranslateUi();
 }
 
@@ -257,7 +266,7 @@ void AddonTreePage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        SayTheModelWasRetranslated(model_);
+        model_.Retranslate();
         ShowTheSelectedAddon();
         PublishSummary();
     }
@@ -725,25 +734,30 @@ void AddonTreePage::Apply(const std::vector<const TreeNode*>& nodes, const bool 
 
     viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable), StartupEntriesTheUserAgreedTo(nodes, enable));
 
-    TurnOffWhatTheSimulatorAlsoCovers(nodes, enable);
-    SayWhatTheLibraryAlreadyCovers(nodes, enable);
+    if (enable)
+    {
+        coverage_.CheckWhatWasTurnedOn(AddonsAmong(nodes));
+    }
 }
 
-void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes, const bool enable)
+void AddonTreePage::OnTurningThemOnWasChecked(const WhatTurningThemOnFound& found)
 {
-    if (!enable)
-    {
-        return;
-    }
+    TurnOffWhatTheSimulatorAlsoCovers(found.alsoCovered);
+    SayWhatTheLibraryAlreadyCovers(found.shared);
+}
 
-    const std::vector<SharedAirportsLine> shared = coverage_.WhatTheLibraryAlreadyCovers(AddonsAmong(nodes));
+void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirportsLine>& shared)
+{
     if (shared.empty())
     {
         return;
     }
 
     SharedAirportsDialog dialog(shared, this);
-    if (dialog.exec() != QDialog::Accepted)
+    const std::vector<CoexistingPair> marked =
+        dialog.exec() == QDialog::Accepted ? dialog.Chosen() : std::vector<CoexistingPair>{};
+
+    if (marked.empty())
     {
         emit StatusChanged(tr("%n addon of yours covers a place another one of yours covers too.", nullptr,
                               static_cast<int>(shared.size())));
@@ -751,27 +765,13 @@ void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<const TreeN
         return;
     }
 
-    std::vector<CoexistingPair> marked;
-    marked.reserve(shared.size());
-
-    for (const SharedAirportsLine& line : shared)
-    {
-        marked.push_back({.one = line.one, .other = line.other});
-    }
-
     coverage_.TheyCanAllCoexist(marked);
 
-    emit StatusChanged(tr("%n pair will not be brought up again.", nullptr, static_cast<int>(shared.size())));
+    emit StatusChanged(tr("%n pair will not be brought up again.", nullptr, static_cast<int>(marked.size())));
 }
 
-void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes, const bool enable)
+void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<CoverageLine>& covered)
 {
-    if (!enable)
-    {
-        return;
-    }
-
-    const std::vector<CoverageLine> covered = coverage_.WhatTheSimulatorAlsoCovers(AddonsAmong(nodes));
     if (covered.empty())
     {
         return;

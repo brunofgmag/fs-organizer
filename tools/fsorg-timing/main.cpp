@@ -37,6 +37,7 @@
 #include "support/PathText.h"
 
 #include "AppScroll.h"
+#include "LibraryScroll.h"
 #include "JournalScroll.h"
 #include "SessionForMeasuring.h"
 #include "application/Session.h"
@@ -54,6 +55,7 @@
 #include "view/JournalPage.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
+#include "view/theme/PageTab.h"
 #include "view/quarantine/QuarantinePage.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
@@ -218,7 +220,10 @@ int main(int argc, char* argv[])
         return MeasureTheJournalScroll(journal, session);
     }
 
-    if (QCoreApplication::arguments().contains(QStringLiteral("--app-journal")))
+    const bool measuringTheJournal = QCoreApplication::arguments().contains(QStringLiteral("--app-journal"));
+    const bool measuringTheLibrary = QCoreApplication::arguments().contains(QStringLiteral("--app-library"));
+
+    if (measuringTheJournal || measuringTheLibrary)
     {
         MainWindow window(loaded);
         QtBackgroundRunner runner;
@@ -236,12 +241,17 @@ int main(int argc, char* argv[])
         DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
+        const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
+        const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
+        const std::optional<ChosenContentList> chosen = ChooseContentList(contentLists, profile.variant);
+
         ContentXmlPackageList packageList{{}};
-        CoverageService coverageService(packageList, processProbe, false);
+        packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+        CoverageService coverageService(packageList, processProbe, loaded.managePackageList);
         const BglSceneryParser sceneryParser;
         JsonSceneryCache sceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
         SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
-        CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock);
+        CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock, runner);
 
         const JsonChartCatalogueParser catalogueParser;
         const QtPdfChartVersions chartVersions;
@@ -264,7 +274,7 @@ int main(int argc, char* argv[])
         JournalViewModel journalViewModel(journal, session, journalModel);
         auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-        window.AddPage(PageNames::kLibrary, treePage);
+        PageTab* libraryTab = window.AddPage(PageNames::kLibrary, treePage);
         window.AddPage(PageNames::kDestinations, communityPage);
         window.AddPage(PageNames::kQuarantine, quarantinePage);
         window.AddPage(PageNames::kJournal, journalPage);
@@ -274,6 +284,13 @@ int main(int argc, char* argv[])
         {
             QApplication::processEvents();
             QThread::msleep(5);
+        }
+
+        if (measuringTheLibrary)
+        {
+            libraryTab->click();
+
+            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, sceneryService, session);
         }
 
         return MeasureTheAppJournal(window, *journalPage, journalViewModel, journalModel);

@@ -102,9 +102,11 @@ private:
 
     void Apply(const std::vector<const TreeNode*>& nodes, bool enable);
 
-    void TurnOffWhatTheSimulatorAlsoCovers(const std::vector<const TreeNode*>& nodes, bool enable);
+    void TurnOffWhatTheSimulatorAlsoCovers(const std::vector<CoverageLine>& covered);
 
-    void SayWhatTheLibraryAlreadyCovers(const std::vector<const TreeNode*>& nodes, bool enable);
+    void SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirportsLine>& shared);
+
+    void OnTurningThemOnWasChecked(const WhatTurningThemOnFound& found);
 
     [[nodiscard]] std::vector<StartupLine> StartupEntriesTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,
                                                                          bool enable);

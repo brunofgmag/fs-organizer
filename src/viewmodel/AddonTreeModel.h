@@ -4,12 +4,14 @@
 #include <cstddef>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include <QtCore/QAbstractItemModel>
 
 #include "application/model/ProfileSnapshot.h"
 #include "domain/model/SimulatorProfile.h"
+#include "domain/tree/AddonDestinations.h"
 
 Q_DECLARE_METATYPE(CopyConflict)
 
@@ -50,6 +52,8 @@ public:
 
     void Show(const ProfileSnapshot& snapshot, const SimulatorProfile& profile);
 
+    void Retranslate();
+
     void Refresh(const ProfileSnapshot& snapshot, const SimulatorProfile& profile);
 
     [[nodiscard]] static const TreeNode* NodeAt(const QModelIndex& position);
@@ -80,33 +84,48 @@ signals:
     void ToggleRequested(const TreeNode* node);
 
 private:
+    struct Reading
+    {
+        QString name{};
+        const CopyConflict* conflict = nullptr;
+        std::filesystem::path destination{};
+        std::filesystem::path strayedTo{};
+        std::size_t addons = 0;
+        std::size_t categories = 0;
+        Qt::CheckState checked = Qt::Unchecked;
+        bool enabled = false;
+        bool broken = false;
+        bool pinned = false;
+    };
+
     struct Item
     {
         const TreeNode* node = nullptr;
         Item* parent = nullptr;
         int row = 0;
         std::vector<Item*> children;
+        Reading reading{};
     };
 
     void Rebuild();
 
     Item* AddItem(const TreeNode& node, Item* parent);
 
+    void ReadEveryRow();
+
+    [[nodiscard]] Reading ReadingOf(const TreeNode& node) const;
+
     void AnnounceValues(const QModelIndex& parent);
+
+    [[nodiscard]] static const Item* ItemAt(const QModelIndex& position);
 
     [[nodiscard]] QString NameOf(const TreeNode& node) const;
 
-    [[nodiscard]] static QString CountedSuffixOf(const TreeNode& node);
+    [[nodiscard]] static QString CountedSuffixOf(const TreeNode& node, const Reading& reading);
 
-    [[nodiscard]] QString DisplayTextOf(const TreeNode& node, int column) const;
+    [[nodiscard]] QString DisplayTextOf(const TreeNode& node, const Reading& reading, int column) const;
 
-    [[nodiscard]] QString ToolTipOf(const TreeNode& node, const CopyConflict* conflict) const;
-
-    [[nodiscard]] std::filesystem::path WhereItIsLinked(const TreeNode& node) const;
-
-    [[nodiscard]] bool WandersFromTheDefault(const TreeNode& node) const;
-
-    [[nodiscard]] bool LinksNowhere(const TreeNode& node) const;
+    [[nodiscard]] QString ToolTipOf(const Reading& reading) const;
 
     [[nodiscard]] const std::vector<Item*>& ChildrenOf(const QModelIndex& parent) const;
 
@@ -115,6 +134,7 @@ private:
     EnabledAddons enabled_;
     CopyConflicts conflicts_;
     SimulatorProfile profile_;
+    std::optional<AddonDestinations> destinations_;
     std::vector<std::unique_ptr<Item>> items_;
     std::vector<Item*> roots_;
 };

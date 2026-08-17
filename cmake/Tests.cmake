@@ -423,6 +423,12 @@ fsorg_add_qt_test(fsorg-category-suggester-tests category-suggester
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-category-suggester-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-addon-destinations-tests addon-destinations
+        tests/domain/tree/tst_addon_destinations.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-addon-destinations-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-effective-destination-tests effective-destination
         tests/domain/tree/tst_effective_destination.cpp
         tests/support/PathPrinting.h
@@ -629,6 +635,12 @@ fsorg_add_qt_test(fsorg-setup-view-model-tests setup-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-setup-view-model-tests PRIVATE fsorg-viewmodel)
+
+fsorg_add_qt_test(fsorg-coverage-view-model-tests coverage-view-model
+        tests/viewmodel/tst_coverage_view_model.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-coverage-view-model-tests PRIVATE fsorg-viewmodel fsorg-application fsorg-domain)
 
 fsorg_add_qt_test(fsorg-addon-tree-model-tests addon-tree-model
         tests/viewmodel/tst_addon_tree_model.cpp
