@@ -1,5 +1,8 @@
 #include "view/library/SharedAirportsDialog.h"
 
+#include <algorithm>
+
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
@@ -11,7 +14,7 @@
 
 namespace
 {
-    constexpr int kDialogWidth = 620;
+    constexpr int kDialogWidth = 700;
     constexpr int kAtMostSpelledOut = 4;
 
     [[nodiscard]] QString AsAirports(const QStringList& codes)
@@ -42,33 +45,41 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
     auto* listed = new QWidget(this);
     auto* grid = new QGridLayout(listed);
     grid->setContentsMargins(0, 0, 0, 0);
-    grid->setColumnStretch(2, 1);
+    grid->setColumnStretch(3, 1);
     grid->setHorizontalSpacing(12);
     grid->setVerticalSpacing(6);
 
-    for (const auto& [column, heading] :
-         {std::pair{0, tr("You turned on")}, std::pair{1, tr("Already on")}, std::pair{2, tr("Airports")}})
+    for (const auto& [column, heading] : {std::pair{0, tr("Can coexist")}, std::pair{1, tr("You turned on")},
+                                          std::pair{2, tr("Already on")}, std::pair{3, tr("Airports")}})
     {
         auto* label = new QLabel(heading, listed);
         label->setObjectName(QStringLiteral("PanelSubHeading"));
         grid->addWidget(label, 0, column);
     }
 
+    rows_.reserve(shared.size());
+
     int row = 1;
     for (const SharedAirportsLine& line : shared)
     {
+        auto* box = new QCheckBox(listed);
+        box->setAccessibleName(tr("%1 and %2 can coexist").arg(line.turningOn, line.alreadyOn));
+        grid->addWidget(box, row, 0, Qt::AlignTop);
+
+        rows_.push_back({.box = box, .pair = {.one = line.one, .other = line.other}});
+
         auto* yours = new QLabel(line.turningOn, listed);
         yours->setWordWrap(true);
-        grid->addWidget(yours, row, 0, Qt::AlignTop);
+        grid->addWidget(yours, row, 1, Qt::AlignTop);
 
         auto* theirs = new QLabel(line.alreadyOn, listed);
         theirs->setWordWrap(true);
-        grid->addWidget(theirs, row, 1, Qt::AlignTop);
+        grid->addWidget(theirs, row, 2, Qt::AlignTop);
 
         auto* airports = new QLabel(AsAirports(line.codes), listed);
         airports->setObjectName(QStringLiteral("PanelPromise"));
         airports->setWordWrap(true);
-        grid->addWidget(airports, row, 2, Qt::AlignTop);
+        grid->addWidget(airports, row, 3, Qt::AlignTop);
 
         ++row;
     }
@@ -81,8 +92,8 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
     scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
 
     auto* promise = new QLabel(tr("Nothing was undone and both stay on: which one the simulator loads is its own to "
-                                  "decide, and turning one off is the switch you already use. Saying they can "
-                                  "coexist keeps the app quiet about this pair from now on."),
+                                  "decide, and turning one off is the switch you already use. Checking a pair keeps "
+                                  "the app quiet about that pair from now on, and leaves the others alone."),
                                this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
@@ -91,8 +102,31 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
     QPushButton* leave = buttons->addButton(tr("Leave them both on"), QDialogButtonBox::RejectRole);
     leave->setProperty("role", "primary");
     leave->setDefault(true);
-    buttons->addButton(shared.size() == 1 ? tr("They can coexist") : tr("They can all coexist"),
-                       QDialogButtonBox::AcceptRole);
+
+    QPushButton* remember = buttons->addButton(tr("Remember the checked ones"), QDialogButtonBox::AcceptRole);
+    remember->setEnabled(false);
+
+    const auto SayHowManyAreChecked = [this, remember]
+    {
+        remember->setEnabled(!Chosen().empty());
+    };
+
+    for (const Row& each : rows_)
+    {
+        connect(each.box, &QCheckBox::toggled, this, SayHowManyAreChecked);
+    }
+
+    auto* all = new QCheckBox(tr("Check all"), this);
+    all->setVisible(shared.size() > 1);
+
+    connect(all, &QCheckBox::clicked, this,
+            [this](const bool checked)
+            {
+                for (const Row& each : rows_)
+                {
+                    each.box->setChecked(checked);
+                }
+            });
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -100,9 +134,25 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
+    layout->addWidget(all);
     layout->addWidget(scroll, 1);
     layout->addWidget(promise);
     layout->addWidget(buttons);
 
     SizeToTheContent(*this, kDialogWidth);
+}
+
+std::vector<CoexistingPair> SharedAirportsDialog::Chosen() const
+{
+    std::vector<CoexistingPair> chosen;
+
+    for (const Row& each : rows_)
+    {
+        if (each.box->isChecked())
+        {
+            chosen.push_back(each.pair);
+        }
+    }
+
+    return chosen;
 }

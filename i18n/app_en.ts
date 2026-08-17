@@ -128,7 +128,7 @@
 <context>
     <name>AddonTreePage</name>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="256"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="254"/>
         <source>Reading the scenery of what you turned on: %1 of %2</source>
         <translation>Reading the scenery of what you turned on: %1 of %2</translation>
     </message>
@@ -3538,6 +3538,11 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 <context>
     <name>PackageListPage</name>
     <message>
+        <location filename="../src/view/simulator/PackageListPage.cpp" line="193"/>
+        <source>They can coexist</source>
+        <translation>They can coexist</translation>
+    </message>
+    <message>
         <source>The choice could not be written down, so it stays as it was.</source>
         <translation type="obsolete">The choice could not be written down, so it stays as it was.</translation>
     </message>
@@ -3550,11 +3555,6 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <location filename="../src/view/simulator/PackageListPage.cpp" line="187"/>
         <source>Turn the simulator&apos;s one off</source>
         <translation>Turn the simulator&apos;s one off</translation>
-    </message>
-    <message>
-        <location filename="../src/view/simulator/PackageListPage.cpp" line="188"/>
-        <source>They can coexist</source>
-        <translation>They can coexist</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="189"/>
@@ -5738,23 +5738,33 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="83"/>
-        <source>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Saying they can coexist keeps the app quiet about this pair from now on.</source>
-        <translation>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Saying they can coexist keeps the app quiet about this pair from now on.</translation>
+        <source>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Checking a pair keeps the app quiet about that pair from now on, and leaves the others alone.</source>
+        <translation>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Checking a pair keeps the app quiet about that pair from now on, and leaves the others alone.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="52"/>
+        <source>Can coexist</source>
+        <translation>Can coexist</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="66"/>
+        <source>%1 and %2 can coexist</source>
+        <translation>%1 and %2 can coexist</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="106"/>
+        <source>Remember the checked ones</source>
+        <translation>Remember the checked ones</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="119"/>
+        <source>Check all</source>
+        <translation>Check all</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="91"/>
         <source>Leave them both on</source>
         <translation>Leave them both on</translation>
-    </message>
-    <message>
-        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="94"/>
-        <source>They can coexist</source>
-        <translation>They can coexist</translation>
-    </message>
-    <message>
-        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="94"/>
-        <source>They can all coexist</source>
-        <translation>They can all coexist</translation>
     </message>
 </context>
 <context>

@@ -76,6 +76,7 @@
 #include "view/library/LibraryRootDialog.h"
 #include "view/community/ImportDialog.h"
 #include "view/library/StartupEntryDialog.h"
+#include "view/library/SharedAirportsDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
 #include "infrastructure/bisection/JsonBisectionStore.h"
@@ -829,6 +830,38 @@ int main(int argc, char* argv[])
 
         libraryTab->click();
         LetTheLayoutSettle();
+
+        {
+            SharedAirportsDialog sharedDialog(
+                {{.turningOn = QStringLiteral("flytampa-airport-eham-amsterdam"),
+                  .alreadyOn = QStringLiteral("asobo-airport-eham-amsterdam"),
+                  .codes = {QStringLiteral("EHAM")},
+                  .one = {.libraryId = "library-1", .folderName = "flytampa-airport-eham-amsterdam"},
+                  .other = {.libraryId = "library-1", .folderName = "asobo-airport-eham-amsterdam"}},
+                 {.turningOn = QStringLiteral("stalex-airport-lfpg-charlesdegaulle"),
+                  .alreadyOn = QStringLiteral("fs24-asobo-airport-lfpg-paris-charles-de-gaulle"),
+                  .codes = {QStringLiteral("LFPG")},
+                  .one = {.libraryId = "library-1", .folderName = "stalex-airport-lfpg-charlesdegaulle"},
+                  .other = {.libraryId = "library-1", .folderName = "fs24-asobo-airport-lfpg-paris-charles-de-gaulle"}},
+                 {.turningOn = QStringLiteral("navigraph-nav-jepp"),
+                  .alreadyOn = QStringLiteral("navigraph-nav-base"),
+                  .codes = {QStringLiteral("EHAM"), QStringLiteral("LFPG"), QStringLiteral("LEBL"),
+                            QStringLiteral("SBGL"), QStringLiteral("KJFK"), QStringLiteral("EGLL")},
+                  .one = {.libraryId = "library-1", .folderName = "navigraph-nav-jepp"},
+                  .other = {.libraryId = "library-1", .folderName = "navigraph-nav-base"}}},
+                &shell);
+
+            landed = SaveTheDialogOpenedBy(
+                         [&sharedDialog]
+                         {
+                             static_cast<void>(sharedDialog.exec());
+                         },
+                         folder, QStringLiteral("30-library-shared-airports"))
+                && landed;
+
+            libraryTab->click();
+            LetTheLayoutSettle();
+        }
 
         if (const std::vector<StartupLine> carried = AStartupEntryWorthShowing(startupViewModel); !carried.empty())
         {

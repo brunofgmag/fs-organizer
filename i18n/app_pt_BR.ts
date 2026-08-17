@@ -128,7 +128,7 @@
 <context>
     <name>AddonTreePage</name>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="256"/>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="254"/>
         <source>Reading the scenery of what you turned on: %1 of %2</source>
         <translation>Lendo o cenário do que você ligou: %1 de %2</translation>
     </message>
@@ -3538,6 +3538,11 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
 <context>
     <name>PackageListPage</name>
     <message>
+        <location filename="../src/view/simulator/PackageListPage.cpp" line="193"/>
+        <source>They can coexist</source>
+        <translation>Eles podem coexistir</translation>
+    </message>
+    <message>
         <source>The choice could not be written down, so it stays as it was.</source>
         <translation type="obsolete">A escolha não pôde ser registrada, então ela fica como estava.</translation>
     </message>
@@ -3550,11 +3555,6 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
         <location filename="../src/view/simulator/PackageListPage.cpp" line="187"/>
         <source>Turn the simulator&apos;s one off</source>
         <translation>Desligar o do simulador</translation>
-    </message>
-    <message>
-        <location filename="../src/view/simulator/PackageListPage.cpp" line="188"/>
-        <source>They can coexist</source>
-        <translation>Eles podem coexistir</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="189"/>
@@ -5738,23 +5738,33 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="83"/>
-        <source>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Saying they can coexist keeps the app quiet about this pair from now on.</source>
+        <source>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Checking a pair keeps the app quiet about that pair from now on, and leaves the others alone.</source>
         <translation>Nada foi desfeito e os dois seguem ligados: qual deles o simulador carrega quem decide é ele, e desligar um é o interruptor que você já usa. Dizer que eles podem coexistir mantém o app calado sobre esse par daqui em diante.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="52"/>
+        <source>Can coexist</source>
+        <translation>Podem coexistir</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="66"/>
+        <source>%1 and %2 can coexist</source>
+        <translation>%1 e %2 podem coexistir</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="106"/>
+        <source>Remember the checked ones</source>
+        <translation>Lembrar os marcados</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="119"/>
+        <source>Check all</source>
+        <translation>Marcar todos</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="91"/>
         <source>Leave them both on</source>
         <translation>Deixar os dois ligados</translation>
-    </message>
-    <message>
-        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="94"/>
-        <source>They can coexist</source>
-        <translation>Eles podem coexistir</translation>
-    </message>
-    <message>
-        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="94"/>
-        <source>They can all coexist</source>
-        <translation>Todos eles podem coexistir</translation>
     </message>
 </context>
 <context>

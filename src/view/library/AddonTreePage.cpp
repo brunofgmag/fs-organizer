@@ -754,7 +754,10 @@ void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirpo
     }
 
     SharedAirportsDialog dialog(shared, this);
-    if (dialog.exec() != QDialog::Accepted)
+    const std::vector<CoexistingPair> marked =
+        dialog.exec() == QDialog::Accepted ? dialog.Chosen() : std::vector<CoexistingPair>{};
+
+    if (marked.empty())
     {
         emit StatusChanged(tr("%n addon of yours covers a place another one of yours covers too.", nullptr,
                               static_cast<int>(shared.size())));
@@ -762,17 +765,9 @@ void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirpo
         return;
     }
 
-    std::vector<CoexistingPair> marked;
-    marked.reserve(shared.size());
-
-    for (const SharedAirportsLine& line : shared)
-    {
-        marked.push_back({.one = line.one, .other = line.other});
-    }
-
     coverage_.TheyCanAllCoexist(marked);
 
-    emit StatusChanged(tr("%n pair will not be brought up again.", nullptr, static_cast<int>(shared.size())));
+    emit StatusChanged(tr("%n pair will not be brought up again.", nullptr, static_cast<int>(marked.size())));
 }
 
 void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<CoverageLine>& covered)
