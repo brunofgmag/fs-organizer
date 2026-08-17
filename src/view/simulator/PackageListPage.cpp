@@ -54,15 +54,11 @@ PackageListPage::PackageListPage(CoverageViewModel& viewModel, QWidget* parent) 
     leftAlone_ = new EmptyState(this);
     turnOn_ = leftAlone_->OfferTheOnlyAction();
 
-    panes_ = new QStackedWidget(this);
-    panes_->addWidget(CreateHalves());
-    panes_->addWidget(leftAlone_);
-
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(CreateToolbar());
-    layout->addWidget(panes_, 1);
+    layout->addWidget(CreateHalves(), 1);
 
     connect(turnOn_, &QPushButton::clicked, this,
             [this]
@@ -104,7 +100,6 @@ void PackageListPage::changeEvent(QEvent* event)
 QWidget* PackageListPage::CreateToolbar()
 {
     auto* toolbar = new QWidget(this);
-    toolbar_ = toolbar;
     toolbar->setObjectName(QStringLiteral("PageToolbar"));
 
     turnOff_ = new QPushButton(toolbar);
@@ -170,14 +165,24 @@ QWidget* PackageListPage::CreateHalves()
         return row;
     };
 
+    auto* packages = new QWidget(pane);
+    auto* half = new QVBoxLayout(packages);
+    half->setContentsMargins(0, 0, 0, 0);
+    half->setSpacing(0);
+    half->addLayout(insetLikeAToolbar(turnedOffHeading_));
+    half->addWidget(turnedOff_, 1);
+
+    secondHalf_ = new QStackedWidget(pane);
+    secondHalf_->addWidget(packages);
+    secondHalf_->addWidget(leftAlone_);
+
     auto* layout = new QVBoxLayout(pane);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addLayout(insetLikeAToolbar(conflictsHeading_));
     layout->addWidget(conflicts_, 1);
     layout->addLayout(insetLikeAToolbar(conflictsPromise_));
-    layout->addLayout(insetLikeAToolbar(turnedOffHeading_));
-    layout->addWidget(turnedOff_, 1);
+    layout->addWidget(secondHalf_, 1);
 
     return pane;
 }
@@ -207,17 +212,18 @@ void PackageListPage::ShowWhatTheListSays()
     DressTheToolbar();
     DressTheActions();
 
-    if (!viewModel_.Managing())
+    secondHalf_->setCurrentIndex(viewModel_.Managing() ? ThePackagesYouTurnedOff : LeftAlone);
+
+    const QString covered = tr("%n airport covered twice.", nullptr, static_cast<int>(viewModel_.Conflicts().size()));
+
+    if (viewModel_.Managing())
     {
-        panes_->setCurrentIndex(LeftAlone);
-        emit SummaryChanged(tr("The package list of the simulator is not managed."));
+        emit SummaryChanged(covered);
 
         return;
     }
 
-    panes_->setCurrentIndex(TheHalves);
-
-    emit SummaryChanged(tr("%n airport covered twice.", nullptr, static_cast<int>(viewModel_.Conflicts().size())));
+    emit SummaryChanged(covered + QLatin1Char(' ') + tr("The package list of the simulator is not managed."));
 }
 
 void PackageListPage::FillTheConflicts() const
@@ -266,7 +272,11 @@ void PackageListPage::DressTheToolbar() const
 
     readAt_->setText(read.has_value() ? tr("package list · read %1").arg(AsMoment(*read))
                                       : tr("package list · not read"));
-    toolbar_->setVisible(viewModel_.Managing());
+
+    for (QPushButton* onlyForTheSimulator : {turnOff_, turnBackOn_, leaveAlone_})
+    {
+        onlyForTheSimulator->setVisible(viewModel_.Managing());
+    }
 }
 
 const CoverageLine* PackageListPage::TheChosenConflict() const

@@ -29,9 +29,9 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
-    enum Pane : int
+    enum SecondHalf : int
     {
-        TheHalves = 0,
+        ThePackagesYouTurnedOff = 0,
         LeftAlone = 1,
     };
 
@@ -64,8 +64,7 @@ private:
     void Report(FileResult result, const QString& done);
 
     CoverageViewModel& viewModel_;
-    QWidget* toolbar_ = nullptr;
-    QStackedWidget* panes_ = nullptr;
+    QStackedWidget* secondHalf_ = nullptr;
     QTreeWidget* conflicts_ = nullptr;
     QTreeWidget* turnedOff_ = nullptr;
     QLabel* conflictsHeading_ = nullptr;
