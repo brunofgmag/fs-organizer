@@ -423,6 +423,12 @@ fsorg_add_qt_test(fsorg-category-suggester-tests category-suggester
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-category-suggester-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-addon-destinations-tests addon-destinations
+        tests/domain/tree/tst_addon_destinations.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-addon-destinations-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-effective-destination-tests effective-destination
         tests/domain/tree/tst_effective_destination.cpp
         tests/support/PathPrinting.h

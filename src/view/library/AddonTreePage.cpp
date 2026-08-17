@@ -44,7 +44,6 @@
 #include "view/theme/ModernistPaint.h"
 #include "view/WrappingRow.h"
 #include "viewmodel/FailureText.h"
-#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SizeSummary.h"
 
@@ -257,7 +256,7 @@ void AddonTreePage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        SayTheModelWasRetranslated(model_);
+        model_.Retranslate();
         ShowTheSelectedAddon();
         PublishSummary();
     }
