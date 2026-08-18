@@ -637,6 +637,21 @@ if (WIN32)
             VERBATIM)
 endif ()
 
+fsorg_add_qt_test(fsorg-github-manual-tests github-manual
+        tests/infrastructure/manual/tst_github_manual.cpp
+        src/infrastructure/manual/GithubManual.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-github-manual-tests PRIVATE fsorg-infrastructure Qt6::Network)
+
+if (WIN32)
+    add_custom_command(TARGET fsorg-github-manual-tests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "$<TARGET_FILE:Qt6::Network>"
+            "$<TARGET_FILE_DIR:fsorg-github-manual-tests>"
+            VERBATIM)
+endif ()
+
 fsorg_add_qt_test(fsorg-update-view-model-tests update-view-model
         tests/viewmodel/tst_update_view_model.cpp
         tests/doubles/FakeUpdateService.h)

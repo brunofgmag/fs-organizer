@@ -13,6 +13,9 @@
 
 class QNetworkReply;
 
+[[nodiscard]] std::vector<std::filesystem::path> ManualCopiesToForget(const std::filesystem::path& folder,
+                                                                      const std::filesystem::path& kept);
+
 class GithubManual final : public QObject, public ManualSource
 {
     Q_OBJECT
