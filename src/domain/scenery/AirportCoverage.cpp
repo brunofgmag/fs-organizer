@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "domain/support/PathUtils.h"
 #include "domain/support/StringUtils.h"
@@ -16,6 +17,7 @@ namespace
     {
         AddonId addon{};
         std::vector<std::string> codes{};
+        std::unordered_set<std::string> codesAlreadyGathered{};
         bool somethingWasNotRead = false;
         bool itIsNavigationData = false;
     };
@@ -29,7 +31,7 @@ namespace
 
         for (const std::string& code : file.codes)
         {
-            if (std::ranges::find(into.codes, code) == into.codes.end())
+            if (into.codesAlreadyGathered.insert(code).second)
             {
                 into.codes.push_back(code);
             }
