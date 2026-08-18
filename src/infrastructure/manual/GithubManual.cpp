@@ -1,6 +1,7 @@
 #include "infrastructure/manual/GithubManual.h"
 
 #include <utility>
+#include <vector>
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -99,18 +100,29 @@ void GithubManual::OnFetchFinished()
     SayItArrived(true, file, {});
 }
 
+std::vector<std::filesystem::path> ManualCopiesToForget(const std::filesystem::path& folder,
+                                                        const std::filesystem::path& kept)
+{
+    const QString keeping = AsText(kept.filename());
+
+    std::vector<std::filesystem::path> forgotten;
+
+    for (const QFileInfo& older : QDir(AsText(folder)).entryInfoList(QDir::Files))
+    {
+        if (older.fileName() != keeping && ItIsAManualCopy(AsPath(older.fileName())))
+        {
+            forgotten.push_back(AsPath(older.absoluteFilePath()));
+        }
+    }
+
+    return forgotten;
+}
+
 void GithubManual::ForgetTheOlderCopies(const std::filesystem::path& kept) const
 {
-    const QString keeping = AsText(kept);
-
-    QDir folder(AsText(folder_));
-
-    for (const QFileInfo& older : folder.entryInfoList(QDir::Files))
+    for (const std::filesystem::path& older : ManualCopiesToForget(folder_, kept))
     {
-        if (older.absoluteFilePath() != keeping && ItIsAManualCopy(AsPath(older.absoluteFilePath())))
-        {
-            static_cast<void>(QFile::remove(older.absoluteFilePath()));
-        }
+        static_cast<void>(QFile::remove(AsText(older)));
     }
 }
 
