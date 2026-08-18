@@ -19,6 +19,7 @@
 #include "domain/model/LinkType.h"
 #include "domain/model/OperationKind.h"
 #include "domain/model/OperationRecord.h"
+#include "domain/model/PackageVersion.h"
 #include "domain/model/PackagePresence.h"
 #include "domain/model/Preset.h"
 #include "domain/model/QuarantineOrigin.h"
@@ -147,9 +148,24 @@ namespace QTest
         case EntryClassification::Unavailable: return qstrdup("Unavailable");
         case EntryClassification::Unmanaged: return qstrdup("Unmanaged");
         case EntryClassification::Duplicated: return qstrdup("Duplicated");
+        case EntryClassification::Substituted: return qstrdup("Substituted");
         }
 
         return qstrdup("EntryClassification(?)");
+    }
+
+    template<>
+    inline char* toString(const VersionOrder& t)
+    {
+        switch (t)
+        {
+        case VersionOrder::Older: return qstrdup("Older");
+        case VersionOrder::TheSame: return qstrdup("TheSame");
+        case VersionOrder::Newer: return qstrdup("Newer");
+        case VersionOrder::NoOneCanTell: return qstrdup("NoOneCanTell");
+        }
+
+        return qstrdup("VersionOrder(?)");
     }
 
     template<>

@@ -232,6 +232,11 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
         return FileResult::TheSimulatorIsRunning;
     }
 
+    if (conflict.ourLinkWasReplaced && choice == ConflictChoice::KeepTheProvenanceCopy)
+    {
+        return TakeBackWhatWasReplaced(profile, entries, conflict, onProgress, onStep);
+    }
+
     const Resolution resolution = ResolutionFor(profile, conflict, choice);
     const AddonId addon = IdentityOf(profile, conflict.libraryPath);
 
@@ -291,6 +296,45 @@ FileResult ImportService::TheWinnerTakesTheirPlaces(const AddonId& addon,
     return FileResult::Completed;
 }
 
+FileResult ImportService::TakeBackWhatWasReplaced(const SimulatorProfile& profile,
+                                                  const std::vector<DestinationEntry>& entries,
+                                                  const CopyConflict& conflict,
+                                                  const std::function<bool(const CopyProgress&)>& onProgress,
+                                                  const std::function<void(OperationKind)>& onStep) const
+{
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return FileResult::TheSimulatorIsRunning;
+    }
+
+    const AddonId addon = IdentityOf(profile, conflict.libraryPath);
+    const std::filesystem::path quarantine = QuarantineInsideTheLibrary(profile, conflict.libraryPath);
+
+    if (quarantine.empty())
+    {
+        log_.RecordImport(OperationKind::QuarantineFromLibrary, addon, conflict.libraryPath, quarantine,
+                          FileResult::ThereIsNowhereToQuarantineIt);
+
+        return FileResult::ThereIsNowhereToQuarantineIt;
+    }
+
+    if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, conflict.libraryPath), addon, conflict.libraryPath))
+    {
+        return FileResult::CouldNotRemoveTheLink;
+    }
+
+    if (const FileResult put = QuarantineInto(quarantine, conflict.libraryPath, addon,
+                                              OperationKind::QuarantineFromLibrary, onProgress, onStep);
+        !Succeeded(put))
+    {
+        return put;
+    }
+
+    const ImportRequest request{.source = conflict.provenancePath, .category = conflict.libraryPath.parent_path()};
+
+    return engine_.Import(profile, request, onProgress, onStep).Result();
+}
+
 ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
 {
     const TreeFingerprint walked = filesystemProbe_.FingerprintTree(folder).value_or(TreeFingerprint{});
@@ -310,7 +354,8 @@ ConflictDetails ImportService::DetailsOf(const std::vector<DestinationEntry>& en
     return ConflictDetails{.provenance = SideOf(conflict.provenancePath),
                            .library = SideOf(conflict.libraryPath),
                            .linksToTheLibraryCopy = LinksPointingAt(entries, conflict.libraryPath),
-                           .theProvenanceIsAnotherProgram = conflict.theProvenanceIsAnotherProgram};
+                           .theProvenanceIsAnotherProgram = conflict.theProvenanceIsAnotherProgram,
+                           .ourLinkWasReplaced = conflict.ourLinkWasReplaced};
 }
 
 std::uintmax_t ImportService::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const

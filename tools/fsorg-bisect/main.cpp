@@ -16,6 +16,7 @@
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -315,12 +316,13 @@ namespace
         JsonManifestParser manifestParser;
         JsonlOperationJournal journal{JournalFilePath()};
         JournalImportedFolders importedFolders{journal};
+        JournalLinkedFolders theAppLinked{journal};
         FilesystemScanner catalog{manifestParser, filesystemProbe, importedFolders};
         SystemClock clock;
         OperationLog log{journal, clock};
         UuidLibraryIdGenerator identities;
         LinkingEngine linking{linkService, filesystemProbe};
-        EntryClassifier classifier{linkService, filesystemProbe};
+        EntryClassifier classifier{linkService, filesystemProbe, theAppLinked};
         ExeXmlStartupEntries startupEntries{{}};
         WindowsProcessProbe processProbe{{"FlightSimulator.exe", "FlightSimulator2024.exe"}};
         StartupService startup{startupEntries, processProbe, filesystemProbe, false};

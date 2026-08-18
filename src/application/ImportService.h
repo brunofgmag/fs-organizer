@@ -103,6 +103,12 @@ public:
                                                const std::function<void(OperationKind)>& onStep = {}) const;
 
 private:
+    [[nodiscard]] FileResult TakeBackWhatWasReplaced(const SimulatorProfile& profile,
+                                                     const std::vector<DestinationEntry>& entries,
+                                                     const CopyConflict& conflict,
+                                                     const std::function<bool(const CopyProgress&)>& onProgress,
+                                                     const std::function<void(OperationKind)>& onStep) const;
+
     [[nodiscard]] ConflictSide SideOf(const std::filesystem::path& folder) const;
 
     [[nodiscard]] std::string VersionIn(const std::filesystem::path& folder) const;

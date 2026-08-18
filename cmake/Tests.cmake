@@ -160,6 +160,17 @@ fsorg_add_qt_test(fsorg-chart-revisions-tests chart-revisions
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-chart-revisions-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-package-version-tests package-version
+        tests/domain/model/tst_package_version.cpp
+        tests/support/EnumPrinting.h)
+target_link_libraries(fsorg-package-version-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-links-the-app-made-tests links-the-app-made
+        tests/domain/journal/tst_links_the_app_made.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-links-the-app-made-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-document-bookmarks-tests document-bookmarks
         tests/domain/documents/tst_document_bookmarks.cpp)
 target_link_libraries(fsorg-document-bookmarks-tests PRIVATE fsorg-domain)
@@ -272,6 +283,11 @@ fsorg_add_qt_test(fsorg-coverage-service-tests coverage-service
         tests/support/EnumPrinting.h)
 target_link_libraries(fsorg-coverage-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-manual-copy-tests manual-copy
+        tests/application/tst_manual_copy.cpp
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-manual-copy-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-document-service-tests document-service
         tests/application/tst_document_service.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -383,6 +399,7 @@ target_link_libraries(fsorg-linking-engine-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         tests/domain/linking/tst_entry_classifier.cpp
+        tests/doubles/FakeLinkedFolders.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h
@@ -802,6 +819,7 @@ target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-documents-view-model-tests documents-view-model
         tests/viewmodel/tst_documents_view_model.cpp
+        tests/doubles/FakeManualSource.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeChartCatalogueParser.h
         tests/doubles/FakeChartVersions.h
@@ -1499,6 +1517,7 @@ configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
 
 fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/view/tst_documents_page.cpp
+        tests/doubles/FakeManualSource.h
         tests/support/ButtonLookup.h
         tests/support/PageFloor.h
         assets/resources.qrc

@@ -19,6 +19,8 @@ namespace
         static void AVanishedEntryIsNotAConflictBecauseOnlyOneCopyIsLeft();
         static void ADuplicatedEntryStillCarriesItsDivergenceIntoTheConflict();
         static void AnEntryPointedBackAtItsVendorStillPutsTheLibraryCopyOnTheOtherSide();
+        static void ASubstitutedEntryTakesTheLibraryCopyTheJournalNamesAndNotOneGuessedByName();
+        static void ASubstitutedConflictSaysTheLinkWasReplacedSoTheScreenCanOfferTheTakeBack();
     };
 }
 
@@ -210,6 +212,50 @@ void CopyConflictsTest::AnEntryPointedBackAtItsVendorStillPutsTheLibraryCopyOnTh
     QCOMPARE(found->libraryPath, libraryCopy);
     QVERIFY2(conflicts.OverTheLibraryAddon(libraryCopy) == found,
              "the library copy is still the addon the tree has to mark, even when no entry points at it");
+}
+
+void CopyConflictsTest::ASubstitutedEntryTakesTheLibraryCopyTheJournalNamesAndNotOneGuessedByName()
+{
+    const std::filesystem::path adrift = kLibrary / "Navdata/airac-base";
+
+    const std::vector<TreeNode> libraries{LibraryWith({Category(kLibrary / "Navdata", {AddonNode(adrift)})})};
+
+    const DestinationEntry substituted{.path = kCommunity / "navigraph-nav-base",
+                                       .target = {},
+                                       .classification = EntryClassification::Substituted,
+                                       .externalOrigin = {},
+                                       .libraryCopy = adrift};
+
+    const CopyConflicts conflicts = FindCopyConflicts({substituted}, libraries);
+
+    QCOMPARE(conflicts.Count(), std::size_t{1});
+
+    const CopyConflict* found = conflicts.OverTheProvenance(kCommunity / "navigraph-nav-base");
+
+    QVERIFY(found != nullptr);
+    QVERIFY2(found->libraryPath == adrift,
+             "the journal knows which folder the link pointed at, and a name that no longer matches does not");
+}
+
+void CopyConflictsTest::ASubstitutedConflictSaysTheLinkWasReplacedSoTheScreenCanOfferTheTakeBack()
+{
+    const std::filesystem::path adrift = kLibrary / "Utils/gsx-pro";
+
+    const std::vector<TreeNode> libraries{LibraryWith({Category(kLibrary / "Utils", {AddonNode(adrift)})})};
+
+    const DestinationEntry substituted{.path = kCommunity / "gsx-pro",
+                                       .target = {},
+                                       .classification = EntryClassification::Substituted,
+                                       .externalOrigin = {},
+                                       .libraryCopy = adrift};
+
+    const CopyConflicts conflicts = FindCopyConflicts({substituted}, libraries);
+    const CopyConflict* found = conflicts.OverTheProvenance(kCommunity / "gsx-pro");
+
+    QVERIFY(found != nullptr);
+    QVERIFY(found->ourLinkWasReplaced);
+    QVERIFY2(!found->theProvenanceIsAnotherProgram,
+             "nobody handed this folder over: it was ours until something wrote over it");
 }
 
 QTEST_APPLESS_MAIN(CopyConflictsTest)

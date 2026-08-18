@@ -27,6 +27,8 @@ namespace
             return QCoreApplication::translate("SizeSummary", "%n unmanaged not measured", nullptr, many);
         case EntryClassification::Duplicated:
             return QCoreApplication::translate("SizeSummary", "%n duplicated not measured", nullptr, many);
+        case EntryClassification::Substituted:
+            return QCoreApplication::translate("SizeSummary", "%n substituted not measured", nullptr, many);
         }
 
         return {};

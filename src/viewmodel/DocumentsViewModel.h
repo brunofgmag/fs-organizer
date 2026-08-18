@@ -17,6 +17,7 @@
 #include "application/Session.h"
 #include "application/ports/BackgroundRunner.h"
 #include "application/ports/DocumentIndexCache.h"
+#include "application/ports/ManualSource.h"
 #include "application/model/ReadingGestures.h"
 #include "domain/documents/DocumentClassification.h"
 #include "domain/ports/Clock.h"
@@ -25,6 +26,14 @@ enum class DocumentPanel : int
 {
     Documents = 0,
     Charts = 1,
+};
+
+enum class ManualState : int
+{
+    NotHere = 0,
+    Fetching = 1,
+    Here = 2,
+    Failed = 3,
 };
 
 struct DocumentLine
@@ -55,7 +64,7 @@ struct DocumentPlace
     QString group{};
 };
 
-class DocumentsViewModel final : public QObject
+class DocumentsViewModel final : public QObject, public ManualSourceObserver
 {
     Q_OBJECT
 
@@ -65,8 +74,11 @@ public:
                        Session& session,
                        BackgroundRunner& runner,
                        DocumentIndexCache& cache,
+                       ManualSource& manual,
                        const Clock& clock,
                        QObject* parent = nullptr);
+
+    ~DocumentsViewModel() override;
 
     void ShowWhatWasKept();
 
@@ -106,6 +118,20 @@ public:
 
     void MakeTheDragMoveThePage(DocumentKind kind, bool moving);
 
+    void TheInterfaceSpeaks(const std::string& language);
+
+    [[nodiscard]] ManualState TheManualIs() const;
+
+    [[nodiscard]] DocumentLine TheManualLine() const;
+
+    [[nodiscard]] bool ItIsTheManual(const DocumentLine& line) const;
+
+    [[nodiscard]] QString WhatHappenedToTheManual() const;
+
+    void FetchTheManual();
+
+    void OnManualFetched(bool ok, const std::filesystem::path& file, const std::string& error) override;
+
 signals:
     void Indexed();
 
@@ -114,6 +140,8 @@ signals:
     void ReadingChanged();
 
     void Progressed(int indexed, int outOf);
+
+    void TheManualChanged();
 
 private:
     [[nodiscard]] std::vector<DocumentsOfAnAddon>
@@ -126,6 +154,8 @@ private:
     [[nodiscard]] const std::vector<DocumentsOfAnAddon>& WhatToShow() const;
 
     [[nodiscard]] std::vector<DocumentGroup> TheDocuments() const;
+
+    [[nodiscard]] DocumentGroup TheManualGroup() const;
 
     [[nodiscard]] std::vector<DocumentGroup> TheCharts() const;
 
@@ -150,6 +180,7 @@ private:
     Session& session_;
     BackgroundRunner& runner_;
     DocumentIndexCache& cache_;
+    ManualSource& manual_;
     const Clock& clock_;
 
     std::vector<DocumentsOfAnAddon> indexed_{};
@@ -158,6 +189,9 @@ private:
     bool itWasRead_ = false;
     bool reading_ = false;
     bool stop_ = false;
+    std::string language_{};
+    ManualState manualState_ = ManualState::NotHere;
+    QString manualFailure_{};
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_DOCUMENTS_VIEW_MODEL_H

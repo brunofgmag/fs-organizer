@@ -867,6 +867,14 @@ Continuar?</translation>
 <context>
     <name>CommunityModel</name>
     <message>
+        <source>something replaced our link, and the library copy is adrift</source>
+        <translation>alguma coisa substituiu o nosso link, e a cópia da biblioteca ficou à deriva</translation>
+    </message>
+    <message>
+        <source>Substituted</source>
+        <translation>Substituída</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="45"/>
         <source>the simulator loads it from your library</source>
         <translation>o simulador carrega da sua biblioteca</translation>
@@ -985,6 +993,14 @@ Também existe na biblioteca: %2</translation>
 </context>
 <context>
     <name>CommunityPage</name>
+    <message>
+        <source>Substituted</source>
+        <translation>Substituída</translation>
+    </message>
+    <message>
+        <source>Something wrote a real folder over the link this program made, so the simulator loads that folder and the copy in your library is adrift: it answers no switch, enters no preset and joins no bisection. Nothing here could have stopped that write, and what is left to choose is which of the two copies stays.</source>
+        <translation>Alguma coisa gravou uma pasta de verdade por cima do link que este programa fez, então o simulador carrega aquela pasta e a cópia da sua biblioteca ficou à deriva: ela não responde a interruptor nenhum, não entra em preset e não participa de bissecção. Nada aqui poderia ter impedido essa gravação, e o que resta escolher é qual das duas cópias fica.</translation>
+    </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="115"/>
         <source>The folder of the other program is a real folder again, so there are two copies. The simulator loads the one in your library, and whatever that program updates from here on lands in the copy the simulator does not read.</source>
@@ -1418,6 +1434,14 @@ Também existe na biblioteca: %2</translation>
 </context>
 <context>
     <name>ConflictDialog</name>
+    <message>
+        <source>Something replaced the link</source>
+        <translation>Alguma coisa substituiu o link</translation>
+    </message>
+    <message>
+        <source>Put the link back over the library copy</source>
+        <translation>Repor o link sobre a cópia da biblioteca</translation>
+    </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="89"/>
         <source>Two copies of the same addon</source>
@@ -2130,6 +2154,38 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentsPage</name>
     <message>
+        <source>Get the manual</source>
+        <translation>Baixar o manual</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Tentar de novo</translation>
+    </message>
+    <message>
+        <source>Getting the manual</source>
+        <translation>Baixando o manual</translation>
+    </message>
+    <message>
+        <source>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
+        <translation>Ele está baixando do GitHub. Fica nesta máquina, então abrir de novo não pede nada da rede.</translation>
+    </message>
+    <message>
+        <source>The manual did not come down</source>
+        <translation>O manual não baixou</translation>
+    </message>
+    <message>
+        <source>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</source>
+        <translation>%1. O manual desta versão também mora em %2, e lê-lo por lá custa só um navegador.</translation>
+    </message>
+    <message>
+        <source>The manual is not on this machine yet</source>
+        <translation>O manual ainda não está nesta máquina</translation>
+    </message>
+    <message>
+        <source>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</source>
+        <translation>Ele não vem no pacote, porque pesa mais que todo o resto que você baixa para atualizar. Baixar uma vez deixa ele aqui para sempre.</translation>
+    </message>
+    <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="530"/>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="608"/>
         <source>Reading in a separate window</source>
@@ -2215,6 +2271,27 @@ Também existe na biblioteca: %2</translation>
 </context>
 <context>
     <name>DocumentsViewModel</name>
+    <message>
+        <source>Manual</source>
+        <comment>the user manual</comment>
+        <translation>Manual</translation>
+    </message>
+    <message>
+        <source>FS Organizer manual</source>
+        <translation>Manual do FS Organizer</translation>
+    </message>
+    <message>
+        <source>not downloaded</source>
+        <translation>não baixado</translation>
+    </message>
+    <message>
+        <source>downloading…</source>
+        <translation>baixando…</translation>
+    </message>
+    <message>
+        <source>download failed</source>
+        <translation>não baixou</translation>
+    </message>
     <message>
         <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="21"/>
         <source>Terminal area, frequencies</source>
@@ -2309,6 +2386,13 @@ Também existe na biblioteca: %2</translation>
     <message>
         <source>Documents · %1</source>
         <translation type="vanished">Documentos · %1</translation>
+    </message>
+</context>
+<context>
+    <name>GithubManual</name>
+    <message>
+        <source>The manual came down but could not be written to %1.</source>
+        <translation>O manual baixou mas não pôde ser gravado em %1.</translation>
     </message>
 </context>
 <context>
@@ -4220,6 +4304,30 @@ Aplicar o preset &quot;%2&quot;?</translation>
 <context>
     <name>QObject</name>
     <message>
+        <source>Both copies declare the same version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
+        <translation>As duas cópias declaram a mesma versão, então nada aqui diz qual é a mais nova. Se alguma coisa mudou, mudou dentro da pasta.</translation>
+    </message>
+    <message>
+        <source>The manifests do not both name a version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
+        <translation>Os manifestos não nomeiam versão nos dois lados, então nada aqui diz qual é a mais nova. Se alguma coisa mudou, mudou dentro da pasta.</translation>
+    </message>
+    <message>
+        <source>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</source>
+        <translation>Esta pasta era um link para a sua biblioteca, e alguma outra coisa gravou uma pasta de verdade por cima dele. O simulador agora carrega aquela pasta, e a cópia da biblioteca ficou à deriva: ela não responde a interruptor nenhum, não entra em preset e não participa de bissecção.</translation>
+    </message>
+    <message>
+        <source>Folder that stands where the link was</source>
+        <translation>Pasta que está onde o link estava</translation>
+    </message>
+    <message>
+        <source>Take it into the library and link it back</source>
+        <translation>Trazer para a biblioteca e repor o link</translation>
+    </message>
+    <message>
+        <source>The library copy is enabled in %1. Taking the destination one back moves the old copy to the quarantine first.</source>
+        <translation>A cópia da biblioteca está habilitada em %1. Trazer a do destino de volta manda a cópia antiga para a quarentena antes.</translation>
+    </message>
+    <message>
         <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="93"/>
         <source>Reference</source>
         <translation>Referência</translation>
@@ -5796,6 +5904,12 @@ Tamanho %2</translation>
 <context>
     <name>SizeSummary</name>
     <message numerus="yes">
+        <source>%n substituted not measured</source>
+        <translation>
+            <numerusform>%n substituída não medida</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <location filename="../src/viewmodel/SizeSummary.cpp" line="15"/>
         <source>%n managed not measured</source>
         <translation>
@@ -6286,6 +6400,11 @@ Tamanho %2</translation>
 </context>
 <context>
     <name>BisectionPanel</name>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="530"/>
+        <source>Reading what is turned on, and what of it has to move together…</source>
+        <translation>Lendo o que está ligado, e o que disso tem de andar junto…</translation>
+    </message>
     <message>
         <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="379"/>
         <source>Carry on with the search</source>

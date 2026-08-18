@@ -17,12 +17,13 @@ enum class EntryClassification : int
     Unavailable = 5,
     Unmanaged = 6,
     Duplicated = 7,
+    Substituted = 8,
 };
 
-inline constexpr std::array kEveryClassification = {EntryClassification::Managed,   EntryClassification::External,
-                                                    EntryClassification::Divergent, EntryClassification::Vanished,
-                                                    EntryClassification::Broken,    EntryClassification::Unavailable,
-                                                    EntryClassification::Unmanaged, EntryClassification::Duplicated};
+inline constexpr std::array kEveryClassification = {
+    EntryClassification::Managed,   EntryClassification::External,   EntryClassification::Divergent,
+    EntryClassification::Vanished,  EntryClassification::Broken,     EntryClassification::Unavailable,
+    EntryClassification::Unmanaged, EntryClassification::Duplicated, EntryClassification::Substituted};
 
 [[nodiscard]] constexpr std::size_t OrderOf(const EntryClassification classification)
 {
@@ -36,6 +37,7 @@ inline constexpr std::array kEveryClassification = {EntryClassification::Managed
     case EntryClassification::Unavailable: return 5;
     case EntryClassification::Unmanaged: return 6;
     case EntryClassification::Duplicated: return 7;
+    case EntryClassification::Substituted: return 8;
     }
 
     return kEveryClassification.size();

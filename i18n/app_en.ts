@@ -867,6 +867,14 @@ Continue?</translation>
 <context>
     <name>CommunityModel</name>
     <message>
+        <source>something replaced our link, and the library copy is adrift</source>
+        <translation>something replaced our link, and the library copy is adrift</translation>
+    </message>
+    <message>
+        <source>Substituted</source>
+        <translation>Substituted</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="45"/>
         <source>the simulator loads it from your library</source>
         <translation>the simulator loads it from your library</translation>
@@ -985,6 +993,14 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>CommunityPage</name>
+    <message>
+        <source>Substituted</source>
+        <translation>Substituted</translation>
+    </message>
+    <message>
+        <source>Something wrote a real folder over the link this program made, so the simulator loads that folder and the copy in your library is adrift: it answers no switch, enters no preset and joins no bisection. Nothing here could have stopped that write, and what is left to choose is which of the two copies stays.</source>
+        <translation>Something wrote a real folder over the link this program made, so the simulator loads that folder and the copy in your library is adrift: it answers no switch, enters no preset and joins no bisection. Nothing here could have stopped that write, and what is left to choose is which of the two copies stays.</translation>
+    </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="115"/>
         <source>The folder of the other program is a real folder again, so there are two copies. The simulator loads the one in your library, and whatever that program updates from here on lands in the copy the simulator does not read.</source>
@@ -1418,6 +1434,14 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>ConflictDialog</name>
+    <message>
+        <source>Something replaced the link</source>
+        <translation>Something replaced the link</translation>
+    </message>
+    <message>
+        <source>Put the link back over the library copy</source>
+        <translation>Put the link back over the library copy</translation>
+    </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="89"/>
         <source>Two copies of the same addon</source>
@@ -2130,6 +2154,38 @@ It also exists in the library: %2</translation>
 <context>
     <name>DocumentsPage</name>
     <message>
+        <source>Get the manual</source>
+        <translation>Get the manual</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Try again</translation>
+    </message>
+    <message>
+        <source>Getting the manual</source>
+        <translation>Getting the manual</translation>
+    </message>
+    <message>
+        <source>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
+        <translation>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</translation>
+    </message>
+    <message>
+        <source>The manual did not come down</source>
+        <translation>The manual did not come down</translation>
+    </message>
+    <message>
+        <source>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</source>
+        <translation>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</translation>
+    </message>
+    <message>
+        <source>The manual is not on this machine yet</source>
+        <translation>The manual is not on this machine yet</translation>
+    </message>
+    <message>
+        <source>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</source>
+        <translation>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</translation>
+    </message>
+    <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="530"/>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="608"/>
         <source>Reading in a separate window</source>
@@ -2215,6 +2271,27 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>DocumentsViewModel</name>
+    <message>
+        <source>Manual</source>
+        <comment>the user manual</comment>
+        <translation>Manual</translation>
+    </message>
+    <message>
+        <source>FS Organizer manual</source>
+        <translation>FS Organizer manual</translation>
+    </message>
+    <message>
+        <source>not downloaded</source>
+        <translation>not downloaded</translation>
+    </message>
+    <message>
+        <source>downloading…</source>
+        <translation>downloading…</translation>
+    </message>
+    <message>
+        <source>download failed</source>
+        <translation>download failed</translation>
+    </message>
     <message>
         <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="21"/>
         <source>Terminal area, frequencies</source>
@@ -2309,6 +2386,13 @@ It also exists in the library: %2</translation>
     <message>
         <source>Documents · %1</source>
         <translation type="vanished">Documents · %1</translation>
+    </message>
+</context>
+<context>
+    <name>GithubManual</name>
+    <message>
+        <source>The manual came down but could not be written to %1.</source>
+        <translation>The manual came down but could not be written to %1.</translation>
     </message>
 </context>
 <context>
@@ -4220,6 +4304,30 @@ Apply the preset &quot;%2&quot;?</translation>
 <context>
     <name>QObject</name>
     <message>
+        <source>Both copies declare the same version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
+        <translation>Both copies declare the same version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</translation>
+    </message>
+    <message>
+        <source>The manifests do not both name a version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
+        <translation>The manifests do not both name a version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</translation>
+    </message>
+    <message>
+        <source>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</source>
+        <translation>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</translation>
+    </message>
+    <message>
+        <source>Folder that stands where the link was</source>
+        <translation>Folder that stands where the link was</translation>
+    </message>
+    <message>
+        <source>Take it into the library and link it back</source>
+        <translation>Take it into the library and link it back</translation>
+    </message>
+    <message>
+        <source>The library copy is enabled in %1. Taking the destination one back moves the old copy to the quarantine first.</source>
+        <translation>The library copy is enabled in %1. Taking the destination one back moves the old copy to the quarantine first.</translation>
+    </message>
+    <message>
         <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="93"/>
         <source>Reference</source>
         <translation>Reference</translation>
@@ -5796,6 +5904,12 @@ Size %2</translation>
 <context>
     <name>SizeSummary</name>
     <message numerus="yes">
+        <source>%n substituted not measured</source>
+        <translation>
+            <numerusform>%n substituted not measured</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <location filename="../src/viewmodel/SizeSummary.cpp" line="15"/>
         <source>%n managed not measured</source>
         <translation>
@@ -6282,6 +6396,11 @@ Size %2</translation>
 </context>
 <context>
     <name>BisectionPanel</name>
+    <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="530"/>
+        <source>Reading what is turned on, and what of it has to move together…</source>
+        <translation>Reading what is turned on, and what of it has to move together…</translation>
+    </message>
     <message>
         <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="379"/>
         <source>Carry on with the search</source>

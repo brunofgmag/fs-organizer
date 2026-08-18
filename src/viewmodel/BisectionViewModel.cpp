@@ -1,5 +1,9 @@
 #include "viewmodel/BisectionViewModel.h"
 
+#include <memory>
+#include <utility>
+
+#include "domain/linking/EntryClassifier.h"
 #include "support/PathText.h"
 
 namespace
@@ -41,15 +45,52 @@ namespace
     }
 }
 
-BisectionViewModel::BisectionViewModel(BisectionService& bisection, Session& session, QObject* parent)
-    : QObject(parent), bisection_(bisection), session_(session)
+BisectionViewModel::BisectionViewModel(BisectionService& bisection,
+                                       Session& session,
+                                       BackgroundRunner& runner,
+                                       QObject* parent)
+    : QObject(parent), bisection_(bisection), session_(session), runner_(runner)
 {
 }
 
 void BisectionViewModel::Show()
 {
-    Take(AProcedureWasInterrupted() ? bisection_.WhereItStands(session_.Profile())
-                                    : bisection_.WhatWouldBeSearched(session_.Profile(), session_.Snapshot()));
+    if (reading_)
+    {
+        return;
+    }
+
+    const ProfileSnapshot snapshot = session_.Snapshot();
+    std::vector<std::filesystem::path> enabled = EnabledAddonFolders(snapshot.entries);
+
+    if (stage_ == BisectionStage::NotStarted && readFor_ == enabled)
+    {
+        emit Changed();
+
+        return;
+    }
+
+    const SimulatorProfile profile = session_.Profile();
+    const auto found = std::make_shared<BisectionReport>();
+
+    reading_ = true;
+
+    emit Changed();
+
+    runner_.Run(
+        [this, profile, snapshot, found]
+        {
+            *found = bisection_.WhatWasInterrupted(profile.id).has_value()
+                ? bisection_.WhereItStands(profile)
+                : bisection_.WhatWouldBeSearched(profile, snapshot);
+        },
+        [this, found, read = std::move(enabled)]
+        {
+            reading_ = false;
+            readFor_ = read;
+
+            Take(*found);
+        });
 }
 
 void BisectionViewModel::Begin()
@@ -182,6 +223,11 @@ const BisectionReport& BisectionViewModel::Report() const
 bool BisectionViewModel::AProcedureWasInterrupted() const
 {
     return bisection_.WhatWasInterrupted(session_.Profile().id).has_value();
+}
+
+bool BisectionViewModel::ReadingWhatIsOn() const
+{
+    return reading_;
 }
 
 bool BisectionViewModel::ItIsRunning() const

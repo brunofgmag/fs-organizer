@@ -21,4 +21,6 @@
 
 [[nodiscard]] std::filesystem::path DocumentIndexFilePath();
 
+[[nodiscard]] std::filesystem::path ManualFolderPath();
+
 #endif // FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_WINDOWS_KNOWN_FOLDERS_H

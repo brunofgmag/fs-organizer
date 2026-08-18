@@ -19,6 +19,7 @@
 #include <QtWidgets/QStyle>
 #include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QTreeWidgetItemIterator>
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/MomentText.h"
@@ -108,20 +109,13 @@ DocumentsPage::DocumentsPage(DocumentsViewModel& viewModel, QWidget* parent) : Q
     split_->setStretchFactor(1, 1);
     split_->setSizes({kIndexWidth, kPageWidth - kIndexWidth});
 
-    nothingIndexed_ = new EmptyState(this);
-    readTheLibrary_ = nothingIndexed_->OfferTheOnlyAction();
-
     split_->installEventFilter(this);
-
-    body_ = new QStackedWidget(this);
-    body_->addWidget(split_);
-    body_->addWidget(nothingIndexed_);
 
     auto* column = new QVBoxLayout(this);
     column->setContentsMargins(0, 0, 0, 0);
     column->setSpacing(0);
     column->addWidget(TheBar());
-    column->addWidget(body_, 1);
+    column->addWidget(split_, 1);
 
     ConnectTheBar();
     ConnectTheIndex();
@@ -236,12 +230,20 @@ QWidget* DocumentsPage::TheReadingSide()
 
     nothingOpen_ = new EmptyState(this);
 
+    nothingIndexed_ = new EmptyState(this);
+    readTheLibrary_ = nothingIndexed_->OfferTheOnlyAction();
+
+    manual_ = new EmptyState(this);
+    getTheManual_ = manual_->OfferTheOnlyAction();
+
     elsewhere_ = new EmptyState(this);
     bringItBack_ = elsewhere_->OfferTheOnlyAction();
 
     readingSide_ = new QStackedWidget(this);
     readingSide_->addWidget(reader_);
     readingSide_->addWidget(nothingOpen_);
+    readingSide_->addWidget(nothingIndexed_);
+    readingSide_->addWidget(manual_);
     readingSide_->addWidget(elsewhere_);
     readingSide_->setCurrentWidget(nothingOpen_);
 
@@ -268,12 +270,27 @@ void DocumentsPage::ConnectTheBar()
 
     connect(stop_, &QPushButton::clicked, &viewModel_, &DocumentsViewModel::Stop);
     connect(bringItBack_, &QPushButton::clicked, this, &DocumentsPage::BringTheReadingBack);
+    connect(getTheManual_, &QPushButton::clicked, &viewModel_, &DocumentsViewModel::FetchTheManual);
 }
 
 void DocumentsPage::ConnectTheIndex()
 {
     connect(&viewModel_, &DocumentsViewModel::Indexed, this, &DocumentsPage::ShowTheIndex);
     connect(&viewModel_, &DocumentsViewModel::Arrived, this, &DocumentsPage::ShowTheIndex);
+    connect(&viewModel_, &DocumentsViewModel::TheManualChanged, this,
+            [this]
+            {
+                RetellTheManualRow();
+
+                if (askedForTheManual_ && viewModel_.TheManualIs() == ManualState::Here)
+                {
+                    Open(viewModel_.TheManualLine());
+
+                    return;
+                }
+
+                ShowWhatIsHappening();
+            });
     connect(&viewModel_, &DocumentsViewModel::ReadingChanged, this,
             [this]
             {
@@ -514,11 +531,22 @@ void DocumentsPage::TurnTheStarOf(const DocumentPanel panel, const DocumentLine&
 
 void DocumentsPage::Open(const DocumentLine& line)
 {
+    if (viewModel_.ItIsTheManual(line) && viewModel_.TheManualIs() != ManualState::Here)
+    {
+        askedForTheManual_ = true;
+
+        viewModel_.FetchTheManual();
+        ShowWhatIsHappening();
+
+        return;
+    }
+
     if (open_.has_value() && open_->file == line.file)
     {
         return;
     }
 
+    askedForTheManual_ = viewModel_.ItIsTheManual(line);
     open_ = line;
 
     reader_->Read(line.file, viewModel_.PageOf(line), line.kind, viewModel_.BookmarksOf(line));
@@ -533,6 +561,92 @@ void DocumentsPage::Open(const DocumentLine& line)
     }
 
     readingSide_->setCurrentWidget(reader_);
+}
+
+void DocumentsPage::RetellTheManual()
+{
+    const ManualState state = viewModel_.TheManualIs();
+
+    getTheManual_->setEnabled(state != ManualState::Fetching);
+    getTheManual_->setText(state == ManualState::Failed ? tr("Try again") : tr("Get the manual"));
+
+    if (state == ManualState::Fetching)
+    {
+        manual_->Retell(tr("Getting the manual"),
+                        tr("It is downloading from GitHub. It stays on this machine, so "
+                           "opening it again asks nothing of the network."));
+
+        return;
+    }
+
+    if (state == ManualState::Failed)
+    {
+        manual_->Retell(tr("The manual did not come down"),
+                        tr("%1. The manual for this version also lives at %2, and reading it there costs nothing "
+                           "but a browser.")
+                            .arg(viewModel_.WhatHappenedToTheManual(),
+                                 QStringLiteral("github.com/brunofgmag/"
+                                                "fs-organizer")));
+
+        return;
+    }
+
+    manual_->Retell(tr("The manual is not on this machine yet"),
+                    tr("It is not in the package, because it weighs more than everything else you download to "
+                       "update. Getting it once leaves it here for good."));
+}
+
+void DocumentsPage::RetellTheManualRow()
+{
+    PanelOfTheTab& built = panels_[Which(DocumentPanel::Documents)];
+    const DocumentLine fresh = viewModel_.TheManualLine();
+
+    for (DocumentLine& shown : built.lines)
+    {
+        if (viewModel_.ItIsTheManual(shown))
+        {
+            shown = fresh;
+        }
+    }
+
+    for (QTreeWidgetItemIterator row(built.index); *row != nullptr; ++row)
+    {
+        const DocumentLine* line = LineOf(DocumentPanel::Documents, *row);
+
+        if (line != nullptr && viewModel_.ItIsTheManual(*line))
+        {
+            (*row)->setText(kGlyphColumn, StarOf(line->favourite));
+            (*row)->setText(kDetailColumn, fresh.detail);
+        }
+    }
+}
+
+void DocumentsPage::ShowTheReadingSide()
+{
+    if (window_ != nullptr)
+    {
+        readingSide_->setCurrentWidget(elsewhere_);
+
+        return;
+    }
+
+    if (askedForTheManual_ && viewModel_.TheManualIs() != ManualState::Here)
+    {
+        readingSide_->setCurrentWidget(manual_);
+
+        return;
+    }
+
+    if (open_.has_value())
+    {
+        readingSide_->setCurrentWidget(reader_);
+
+        return;
+    }
+
+    const bool anything = viewModel_.CountOf(DocumentPanel::Documents) + viewModel_.CountOf(DocumentPanel::Charts) > 0;
+
+    readingSide_->setCurrentWidget(anything || viewModel_.Reading() ? nothingOpen_ : nothingIndexed_);
 }
 
 void DocumentsPage::Show(const DocumentPanel panel)
@@ -624,7 +738,8 @@ void DocumentsPage::BringTheReadingBack()
     reader_->setParent(nullptr);
     reader_->SayItIsDetached(false);
     readingSide_->insertWidget(0, reader_);
-    readingSide_->setCurrentWidget(open_.has_value() ? static_cast<QWidget*>(reader_) : nothingOpen_);
+
+    ShowTheReadingSide();
 
     leaving->close();
     leaving->deleteLater();
@@ -720,13 +835,12 @@ void DocumentsPage::ShowTheIndex()
 void DocumentsPage::ShowWhatIsHappening()
 {
     const bool reading = viewModel_.Reading();
-    const bool anything = viewModel_.CountOf(DocumentPanel::Documents) + viewModel_.CountOf(DocumentPanel::Charts) > 0;
 
     progress_->setVisible(reading);
     readAgain_->setEnabled(!reading);
     readAt_->setVisible(viewModel_.ReadAt().has_value());
 
-    body_->setCurrentWidget(anything || reading ? static_cast<QWidget*>(split_) : nothingIndexed_);
+    ShowTheReadingSide();
 
     Retranslate();
 }
@@ -747,6 +861,8 @@ void DocumentsPage::Retranslate()
     stop_->setText(tr("Stop"));
     bringItBack_->setText(tr("Bring it back"));
     readTheLibrary_->setText(tr("Read the library"));
+
+    RetellTheManual();
 
     if (const std::optional<std::chrono::system_clock::time_point> read = viewModel_.ReadAt(); read.has_value())
     {

@@ -75,6 +75,12 @@ private:
 
     void ShowWhatIsHappening();
 
+    void RetellTheManual();
+
+    void RetellTheManualRow();
+
+    void ShowTheReadingSide();
+
     void ShowTheIndex();
 
     void Open(const DocumentLine& line);
@@ -100,12 +106,13 @@ private:
     DocumentPanel showing_ = DocumentPanel::Documents;
     QSplitter* split_ = nullptr;
     QStackedWidget* lists_ = nullptr;
-    QStackedWidget* body_ = nullptr;
     QStackedWidget* readingSide_ = nullptr;
     DocumentReader* reader_ = nullptr;
     EmptyState* nothingIndexed_ = nullptr;
     EmptyState* nothingOpen_ = nullptr;
     EmptyState* elsewhere_ = nullptr;
+    EmptyState* manual_ = nullptr;
+    QPushButton* getTheManual_ = nullptr;
     QPushButton* readAgain_ = nullptr;
     QPushButton* stop_ = nullptr;
     QPushButton* bringItBack_ = nullptr;
@@ -117,6 +124,7 @@ private:
     QDialog* window_ = nullptr;
     std::optional<DocumentLine> open_{};
     bool settled_ = false;
+    bool askedForTheManual_ = false;
     std::size_t indexed_ = 0;
     std::size_t outOf_ = 0;
 };
