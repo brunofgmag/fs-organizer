@@ -12,7 +12,8 @@ namespace
 {
     TagTone ToneOf(const EntryClassification classification, const bool conflicted)
     {
-        if (classification == EntryClassification::Broken || classification == EntryClassification::Vanished)
+        if (classification == EntryClassification::Broken || classification == EntryClassification::Vanished
+            || classification == EntryClassification::Substituted)
         {
             return TagTone::Filled;
         }
@@ -24,6 +25,7 @@ namespace
 
         switch (classification)
         {
+        case EntryClassification::Substituted:
         case EntryClassification::Divergent:
         case EntryClassification::Duplicated:
         case EntryClassification::Unmanaged: return TagTone::Outlined;
@@ -56,6 +58,9 @@ namespace
             return QCoreApplication::translate("CommunityModel", "a real folder, not in a library yet");
         case EntryClassification::Duplicated:
             return QCoreApplication::translate("CommunityModel", "linked in more than one destination");
+        case EntryClassification::Substituted:
+            return QCoreApplication::translate("CommunityModel",
+                                               "something replaced our link, and the library copy is adrift");
         }
 
         return {};
@@ -78,6 +83,7 @@ QString CommunityModel::ClassificationName(const EntryClassification classificat
     case EntryClassification::Unavailable: return tr("Unavailable");
     case EntryClassification::Unmanaged: return tr("Unmanaged");
     case EntryClassification::Duplicated: return tr("Duplicated");
+    case EntryClassification::Substituted: return tr("Substituted");
     }
 
     return {};
@@ -150,6 +156,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     {
         return conflict != nullptr || entry->classification == EntryClassification::Broken
             || entry->classification == EntryClassification::Duplicated
+            || entry->classification == EntryClassification::Substituted
             || entry->classification == EntryClassification::Vanished;
     }
 
@@ -201,7 +208,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     case NameColumn: return AsText(entry->path.filename());
     case DestinationColumn: return AsText(entry->path.parent_path().filename());
     case ClassificationColumn:
-        return conflict == nullptr || conflict->theProvenanceIsAnotherProgram
+        return conflict == nullptr || conflict->theProvenanceIsAnotherProgram || conflict->ourLinkWasReplaced
             ? ClassificationName(entry->classification)
             : tr("%1 · in conflict").arg(ClassificationName(entry->classification));
     case TargetColumn: return WhatTheStateMeans(entry->classification);

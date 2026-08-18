@@ -160,6 +160,17 @@ fsorg_add_qt_test(fsorg-chart-revisions-tests chart-revisions
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-chart-revisions-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-package-version-tests package-version
+        tests/domain/model/tst_package_version.cpp
+        tests/support/EnumPrinting.h)
+target_link_libraries(fsorg-package-version-tests PRIVATE fsorg-domain)
+
+fsorg_add_qt_test(fsorg-links-the-app-made-tests links-the-app-made
+        tests/domain/journal/tst_links_the_app_made.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-links-the-app-made-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-document-bookmarks-tests document-bookmarks
         tests/domain/documents/tst_document_bookmarks.cpp)
 target_link_libraries(fsorg-document-bookmarks-tests PRIVATE fsorg-domain)
@@ -388,6 +399,7 @@ target_link_libraries(fsorg-linking-engine-tests PRIVATE fsorg-domain)
 
 fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         tests/domain/linking/tst_entry_classifier.cpp
+        tests/doubles/FakeLinkedFolders.h
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeLinkService.h
         tests/doubles/InMemoryFileSystem.h

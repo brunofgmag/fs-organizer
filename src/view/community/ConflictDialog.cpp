@@ -12,6 +12,7 @@
 
 #include <QtCore/QStringList>
 
+#include "domain/model/PackageVersion.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "view/TextThatIsNeverCut.h"
@@ -36,17 +37,38 @@ namespace
 
     struct Wording
     {
+        QString title{};
         QString explanation{};
         QString provenanceSide{};
         QString keepTheProvenanceOne{};
         QString warning{};
     };
 
-    Wording WordingFor(const bool theProvenanceIsAnotherProgram)
+    Wording WordingWhenOurLinkWasReplaced()
     {
-        if (theProvenanceIsAnotherProgram)
+        return Wording{
+            .title = ConflictDialog::tr("Something replaced the link"),
+            .explanation =
+                QObject::tr("This folder used to be a link into your library, and something else wrote a real folder "
+                            "over it. The simulator now loads that folder, and the copy in the library is adrift: it "
+                            "answers no switch, enters no preset and joins no bisection."),
+            .provenanceSide = QObject::tr("Folder that stands where the link was"),
+            .keepTheProvenanceOne = QObject::tr("Take it into the library and link it back"),
+            .warning = QObject::tr("The library copy is enabled in %1. Taking the destination one back moves the old "
+                                   "copy to the quarantine first.")};
+    }
+
+    Wording WordingFor(const ConflictDetails& details)
+    {
+        if (details.ourLinkWasReplaced)
+        {
+            return WordingWhenOurLinkWasReplaced();
+        }
+
+        if (details.theProvenanceIsAnotherProgram)
         {
             return Wording{
+                .title = ConflictDialog::tr("Two copies of the same addon"),
                 .explanation =
                     QObject::tr("The other program put a real folder back where it installs this addon, and your copy "
                                 "is still in the library. Choose which one stays: the other goes to the quarantine."),
@@ -57,6 +79,7 @@ namespace
         }
 
         return Wording{
+            .title = ConflictDialog::tr("Two copies of the same addon"),
             .explanation =
                 QObject::tr("There is a real folder in the destination and an addon with the same name in the library. "
                             "Choose which one stays: the other goes to the quarantine."),
@@ -86,9 +109,9 @@ namespace
 
 ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Two copies of the same addon"));
+    const Wording wording = WordingFor(details);
 
-    const Wording wording = WordingFor(details.theProvenanceIsAnotherProgram);
+    setWindowTitle(wording.title);
 
     auto* explanation = new QLabel(wording.explanation, this);
     explanation->setWordWrap(true);
@@ -103,8 +126,16 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
 
-    const QPushButton* keepDestination = buttons->addButton(wording.keepTheProvenanceOne, QDialogButtonBox::AcceptRole);
-    QPushButton* keepLibrary = buttons->addButton(tr("Keep the library one"), QDialogButtonBox::AcceptRole);
+    const bool theTakeBackIsOffered = !details.ourLinkWasReplaced
+        || TakingItBackIsWorthOffering(details.provenance.manifest.packageVersion,
+                                       details.library.manifest.packageVersion);
+
+    QPushButton* keepDestination = buttons->addButton(wording.keepTheProvenanceOne, QDialogButtonBox::AcceptRole);
+    keepDestination->setVisible(theTakeBackIsOffered);
+
+    QPushButton* keepLibrary = buttons->addButton(
+        details.ourLinkWasReplaced ? tr("Put the link back over the library copy") : tr("Keep the library one"),
+        QDialogButtonBox::AcceptRole);
     keepLibrary->setDefault(true);
 
     connect(keepLibrary, &QPushButton::clicked, this,

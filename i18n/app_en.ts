@@ -862,6 +862,14 @@ Continue?</translation>
 <context>
     <name>CommunityModel</name>
     <message>
+        <source>something replaced our link, and the library copy is adrift</source>
+        <translation>something replaced our link, and the library copy is adrift</translation>
+    </message>
+    <message>
+        <source>Substituted</source>
+        <translation>Substituted</translation>
+    </message>
+    <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="45"/>
         <source>the simulator loads it from your library</source>
         <translation>the simulator loads it from your library</translation>
@@ -980,6 +988,14 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>CommunityPage</name>
+    <message>
+        <source>Substituted</source>
+        <translation>Substituted</translation>
+    </message>
+    <message>
+        <source>Something wrote a real folder over the link this program made, so the simulator loads that folder and the copy in your library is adrift: it answers no switch, enters no preset and joins no bisection. Nothing here could have stopped that write, and what is left to choose is which of the two copies stays.</source>
+        <translation>Something wrote a real folder over the link this program made, so the simulator loads that folder and the copy in your library is adrift: it answers no switch, enters no preset and joins no bisection. Nothing here could have stopped that write, and what is left to choose is which of the two copies stays.</translation>
+    </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="115"/>
         <source>The folder of the other program is a real folder again, so there are two copies. The simulator loads the one in your library, and whatever that program updates from here on lands in the copy the simulator does not read.</source>
@@ -1413,6 +1429,14 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>ConflictDialog</name>
+    <message>
+        <source>Something replaced the link</source>
+        <translation>Something replaced the link</translation>
+    </message>
+    <message>
+        <source>Put the link back over the library copy</source>
+        <translation>Put the link back over the library copy</translation>
+    </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="89"/>
         <source>Two copies of the same addon</source>
@@ -4275,6 +4299,22 @@ Apply the preset &quot;%2&quot;?</translation>
 <context>
     <name>QObject</name>
     <message>
+        <source>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</source>
+        <translation>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</translation>
+    </message>
+    <message>
+        <source>Folder that stands where the link was</source>
+        <translation>Folder that stands where the link was</translation>
+    </message>
+    <message>
+        <source>Take it into the library and link it back</source>
+        <translation>Take it into the library and link it back</translation>
+    </message>
+    <message>
+        <source>The library copy is enabled in %1. Taking the destination one back moves the old copy to the quarantine first.</source>
+        <translation>The library copy is enabled in %1. Taking the destination one back moves the old copy to the quarantine first.</translation>
+    </message>
+    <message>
         <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="93"/>
         <source>Reference</source>
         <translation>Reference</translation>
@@ -5840,6 +5880,12 @@ Size %2</translation>
 </context>
 <context>
     <name>SizeSummary</name>
+    <message numerus="yes">
+        <source>%n substituted not measured</source>
+        <translation>
+            <numerusform>%n substituted not measured</numerusform>
+        </translation>
+    </message>
     <message numerus="yes">
         <location filename="../src/viewmodel/SizeSummary.cpp" line="15"/>
         <source>%n managed not measured</source>

@@ -23,6 +23,7 @@ struct ConflictDetails
     ConflictSide library{};
     std::vector<std::filesystem::path> linksToTheLibraryCopy{};
     bool theProvenanceIsAnotherProgram = false;
+    bool ourLinkWasReplaced = false;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_CONFLICT_DETAILS_H

@@ -15,6 +15,7 @@ set(DOMAIN_SOURCES
         src/domain/importing/OriginSidecar.cpp
         src/domain/importing/SidecarFile.cpp
         src/domain/journal/JournalEntries.cpp
+        src/domain/journal/LinksTheAppMade.cpp
         src/domain/journal/OperationLog.cpp
         src/domain/legacy/LegacyPreset.cpp
         src/domain/legacy/LegacyProposal.cpp
@@ -22,6 +23,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
+        src/domain/model/PackageVersion.cpp
         src/domain/preset/PresetPlan.cpp
         src/domain/profile/ExternalOrigins.cpp
         src/domain/profile/OrphanOverrides.cpp
@@ -72,6 +74,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JournalImportedFolders.cpp
+        src/infrastructure/journal/JournalLinkedFolders.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/legacy/IniLegacyConfigReader.cpp
         src/infrastructure/legacy/LegacyPresetReader.cpp

@@ -135,6 +135,13 @@ namespace
                 "The other program does not know about the link that taking it over leaves behind, so its next "
                 "update can write inside the link, or replace it with a real folder and give you two copies. "
                 "Nothing here can stop that.");
+        case EntryClassification::Substituted:
+            return QCoreApplication::translate(
+                "CommunityPage",
+                "Something wrote a real folder over the link this program made, so the simulator loads that folder "
+                "and the copy in your library is adrift: it answers no switch, enters no preset and joins no "
+                "bisection. Nothing here could have stopped that write, and what is left to choose is which of the "
+                "two copies stays.");
         case EntryClassification::Managed:
         case EntryClassification::Broken:
         case EntryClassification::Unavailable:
@@ -303,6 +310,7 @@ QList<CommunityPage::FilterChip> CommunityPage::FiltersOffered()
         {.label = tr("Unmanaged"), .filter = static_cast<int>(EntryClassification::Unmanaged)},
         {.label = tr("Unavailable"), .filter = static_cast<int>(EntryClassification::Unavailable)},
         {.label = tr("Duplicated"), .filter = static_cast<int>(EntryClassification::Duplicated)},
+        {.label = tr("Substituted"), .filter = static_cast<int>(EntryClassification::Substituted)},
         {.label = tr("In conflict"), .filter = kConflictFilter},
     };
 }

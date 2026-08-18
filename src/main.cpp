@@ -32,6 +32,7 @@
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/manual/GithubManual.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
@@ -224,6 +225,7 @@ int main(int argc, char* argv[])
     JsonlOperationJournal journal(JournalFilePath());
 
     const JournalImportedFolders importedFolders(journal);
+    const JournalLinkedFolders theAppLinked(journal);
 
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
@@ -256,7 +258,7 @@ int main(int argc, char* argv[])
     }
 
     const LinkingEngine linking(linkService, filesystemProbe);
-    const EntryClassifier classifier(linkService, filesystemProbe);
+    const EntryClassifier classifier(linkService, filesystemProbe, theAppLinked);
     const OperationLog log(journal, clock);
 
     const LinkType storedLinkType = stored.linkType;

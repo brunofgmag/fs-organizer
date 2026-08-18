@@ -25,6 +25,9 @@ namespace
         static void TheWarningAboutTheLinksFollowsTheSameWording();
         static void KeepingTheProvenanceCopyAnswersTheSameChoiceInBothWordings();
         static void ADeepPathOnOneSideLeavesTheTwoSidesTheSameWidth();
+        static void AReplacedLinkIsToldApartFromTwoCopiesThatMerelyShareAName();
+        static void TheTakeBackIsOfferedWhenTheVersionsDoNotTellTheCopiesApart();
+        static void AnOlderCopyInTheDestinationIsNotOfferedForTakingBack();
     };
 
     const std::filesystem::path kOtherProgramsFolder = "C:/Addon Manager/Aircraft/aerosoft-crj";
@@ -37,6 +40,17 @@ namespace
                                .library = ConflictSide{.path = kInTheLibrary},
                                .linksToTheLibraryCopy = {},
                                .theProvenanceIsAnotherProgram = true};
+    }
+
+    ConflictDetails ALinkSomethingReplaced(const std::string& atTheDestination, const std::string& inTheLibrary)
+    {
+        return ConflictDetails{
+            .provenance =
+                ConflictSide{.path = kInTheDestination, .manifest = Manifest{.packageVersion = atTheDestination}},
+            .library = ConflictSide{.path = kInTheLibrary, .manifest = Manifest{.packageVersion = inTheLibrary}},
+            .linksToTheLibraryCopy = {},
+            .theProvenanceIsAnotherProgram = false,
+            .ourLinkWasReplaced = true};
     }
 
     ConflictDetails AnOrdinaryConflict()
@@ -141,6 +155,41 @@ void ConflictDialogTest::ADeepPathOnOneSideLeavesTheTwoSidesTheSameWidth()
     QCOMPARE(sides.size(), 2);
     QVERIFY2(sides.first()->width() == sides.last()->width(),
              "the deeper path pushed its own column, so a dialog whose job is to compare shows two unequal halves");
+}
+
+void ConflictDialogTest::AReplacedLinkIsToldApartFromTwoCopiesThatMerelyShareAName()
+{
+    const ConflictDialog dialog(ALinkSomethingReplaced("0.1.0", "0.1.0"));
+
+    const QString said = AllOfIt(dialog);
+
+    QVERIFY2(said.contains(QStringLiteral("link")),
+             qPrintable(QStringLiteral("nothing said the link was what got replaced: %1").arg(said)));
+    QVERIFY2(!said.contains(QStringLiteral("other program")),
+             qPrintable(QStringLiteral("no other program handed this folder over: %1").arg(said)));
+}
+
+void ConflictDialogTest::TheTakeBackIsOfferedWhenTheVersionsDoNotTellTheCopiesApart()
+{
+    const ConflictDialog dialog(ALinkSomethingReplaced("0.1.0", "0.1.0"));
+
+    QPushButton* takeItBack = ButtonContaining(dialog, QStringLiteral("into the library"));
+
+    QVERIFY(takeItBack != nullptr);
+    QVERIFY2(!takeItBack->isHidden(),
+             "a package rewritten every cycle under a fixed version would never be offered the way back");
+}
+
+void ConflictDialogTest::AnOlderCopyInTheDestinationIsNotOfferedForTakingBack()
+{
+    const ConflictDialog dialog(ALinkSomethingReplaced("2.9.1", "2.26.16"));
+
+    QPushButton* takeItBack = ButtonContaining(dialog, QStringLiteral("into the library"));
+
+    QVERIFY(takeItBack != nullptr);
+    QVERIFY2(takeItBack->isHidden(), "carrying an older copy over a newer one is not a gesture worth offering");
+    QVERIFY2(ButtonContaining(dialog, QStringLiteral("Put the link back")) != nullptr,
+             "with the take back gone there has to be a way out that is not the close button");
 }
 
 QTEST_MAIN(ConflictDialogTest)

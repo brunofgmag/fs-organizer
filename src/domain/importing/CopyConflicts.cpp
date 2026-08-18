@@ -60,6 +60,13 @@ CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, co
             continue;
         }
 
+        if (entry.classification == EntryClassification::Substituted)
+        {
+            found.push_back(CopyConflict{
+                .provenancePath = entry.path, .libraryPath = entry.libraryCopy, .ourLinkWasReplaced = true});
+            continue;
+        }
+
         if (entry.classification != EntryClassification::Unmanaged)
         {
             continue;
