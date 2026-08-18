@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.1](https://github.com/brunofgmag/fs-organizer/compare/v0.54.0...v0.54.1) (2026-08-18)
+
+
+### Performance Improvements
+
+* cut the airport index cost and replace the flaky heap test ([#163](https://github.com/brunofgmag/fs-organizer/issues/163)) ([fda3868](https://github.com/brunofgmag/fs-organizer/commit/fda3868a7567d1e78c63781feae3ab84b3289d14))
+
 ## [0.54.0](https://github.com/brunofgmag/fs-organizer/compare/v0.53.0...v0.54.0) (2026-08-18)
 
 
