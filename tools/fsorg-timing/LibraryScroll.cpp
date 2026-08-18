@@ -1,6 +1,8 @@
 #include "LibraryScroll.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -258,6 +260,53 @@ namespace
         Out().flush();
     }
 
+    std::string AnAirportCodeNumbered(const int number)
+    {
+        return std::string("A") + static_cast<char>('A' + number % 26) + static_cast<char>('A' + number / 26 % 26)
+            + static_cast<char>('A' + number / 676 % 26);
+    }
+
+    std::vector<SceneryOfAnAddon> ANavigationDataAddonNobodyHasToInstall()
+    {
+        constexpr int kFiles = 1572;
+        constexpr int kCodesInAFile = 10;
+
+        std::vector<SceneryCodes> files;
+        files.reserve(kFiles);
+
+        for (int file = 0; file < kFiles; ++file)
+        {
+            std::vector<std::string> codes;
+            codes.reserve(kCodesInAFile);
+
+            for (int code = 0; code < kCodesInAFile; ++code)
+            {
+                codes.push_back(AnAirportCodeNumbered(file * kCodesInAFile + code));
+            }
+
+            files.push_back({.reading = SceneryReading::Read, .codes = std::move(codes)});
+        }
+
+        return {{.addon = {.libraryId = "measurement", .folderName = "navigation-data"},
+                 .resolvedPath = PathFromUtf8("D:/measurement/navigation-data"),
+                 .files = std::move(files)}};
+    }
+
+    std::size_t HowManyCodesItCarries(const std::vector<SceneryOfAnAddon>& scenery)
+    {
+        std::size_t codes = 0;
+
+        for (const SceneryOfAnAddon& addon : scenery)
+        {
+            for (const SceneryCodes& file : addon.files)
+            {
+                codes += file.codes.size();
+            }
+        }
+
+        return codes;
+    }
+
     template<typename Work>
     double Milliseconds(Work&& work)
     {
@@ -464,6 +513,15 @@ int MeasureTheAppLibrary(MainWindow& window,
                }));
 
     const std::vector<AirportsOfAnAddon> airports = AirportsOfEachAddon(read);
+
+    const std::vector<SceneryOfAnAddon> navigationData = ANavigationDataAddonNobodyHasToInstall();
+
+    Report(QStringLiteral("AirportsOfEachAddon over %1 codes in one addon").arg(HowManyCodesItCarries(navigationData)),
+           Milliseconds(
+               [&navigationData]
+               {
+                   static_cast<void>(AirportsOfEachAddon(navigationData));
+               }));
 
     Report("PairsWithWhatIsAlreadyOn, 1 against the rest",
            Milliseconds(
