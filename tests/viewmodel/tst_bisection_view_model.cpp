@@ -45,6 +45,9 @@ namespace
         static void CarryingOnAppliesTheAnswerThatWasHeldBackInsteadOfLosingIt();
         static void TheHeldAnswerIsForgottenOnceTheScreenLeavesThatStage();
         static void TheLaunchesAlreadyMadeCountTheReferenceRound();
+        static void OpeningTheScreenReadsTheCouplingThroughTheRunnerAndNotOnTheSpot();
+        static void ComingBackToTheScreenShowsWhatWasReadWithoutReadingAgain();
+        static void TurningAnAddonOnMakesTheNextOpeningReadTheCouplingAgain();
     };
 }
 
@@ -63,6 +66,11 @@ namespace
     constexpr auto kOtherLivery = "D:/MSFS 2024/Liveries/md11-livery-two";
 
     constexpr auto kModel = "TFDi_Design_MD-11";
+
+    [[nodiscard]] std::filesystem::path TheModelsOf(const std::filesystem::path& addon)
+    {
+        return PathUnder(addon, PathFromUtf8("SimObjects/Airplanes"));
+    }
 
     TreeNode AddonNode(const std::filesystem::path& path)
     {
@@ -191,7 +199,7 @@ namespace
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
         BisectionService bisection{service, coupling, filesystemProbe, store, clock};
-        BisectionViewModel viewModel{bisection, session};
+        BisectionViewModel viewModel{bisection, session, runner};
     };
 }
 
@@ -249,7 +257,7 @@ void BisectionViewModelTest::ReopeningTheScreenMidProcedureShowsTheRoundItIsOn()
     QVERIFY(round > 0);
     QVERIFY(turnedOn > 0);
 
-    BisectionViewModel opened{f.bisection, f.session};
+    BisectionViewModel opened{f.bisection, f.session, f.runner};
     opened.Show();
 
     QCOMPARE(opened.Stage(), BisectionStage::Asking);
@@ -358,7 +366,7 @@ void BisectionViewModelTest::AProcedureLeftHalfwayIsOfferedOnTheNextOpening()
 
     QVERIFY(f.viewModel.AProcedureWasInterrupted());
 
-    BisectionViewModel opened{f.bisection, f.session};
+    BisectionViewModel opened{f.bisection, f.session, f.runner};
     opened.Show();
 
     QVERIFY(opened.AProcedureWasInterrupted());
@@ -524,6 +532,69 @@ void BisectionViewModelTest::TheLaunchesAlreadyMadeCountTheReferenceRound()
     QCOMPARE(f.viewModel.Report().round, std::size_t{2});
     QCOMPARE(f.viewModel.Report().story.size(), std::size_t{2});
     QCOMPARE(f.viewModel.LaunchesAlreadyMade(), std::size_t{2});
+}
+
+void BisectionViewModelTest::OpeningTheScreenReadsTheCouplingThroughTheRunnerAndNotOnTheSpot()
+{
+    Fixture f;
+    f.TurnOn(kMd11);
+    f.TurnOn(kCrj);
+    f.Seed();
+
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+
+    QVERIFY(f.viewModel.ReadingWhatIsOn());
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(TheModelsOf(kMd11)), std::size_t{0});
+    QCOMPARE(f.viewModel.Report().units, std::size_t{0});
+
+    f.runner.Finish();
+
+    QVERIFY(!f.viewModel.ReadingWhatIsOn());
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(TheModelsOf(kMd11)), std::size_t{1});
+    QCOMPARE(f.viewModel.Report().units, std::size_t{2});
+}
+
+void BisectionViewModelTest::ComingBackToTheScreenShowsWhatWasReadWithoutReadingAgain()
+{
+    Fixture f;
+    f.TurnOn(kMd11);
+    f.TurnOn(kCrj);
+    f.Seed();
+
+    f.viewModel.Show();
+
+    const std::size_t units = f.viewModel.Report().units;
+    const int runsSoFar = f.runner.runs;
+
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(TheModelsOf(kMd11)), std::size_t{1});
+
+    f.viewModel.Show();
+
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(TheModelsOf(kMd11)), std::size_t{1});
+    QCOMPARE(f.runner.runs, runsSoFar);
+    QCOMPARE(f.viewModel.Report().units, units);
+}
+
+void BisectionViewModelTest::TurningAnAddonOnMakesTheNextOpeningReadTheCouplingAgain()
+{
+    Fixture f;
+    f.TurnOn(kMd11);
+    f.TurnOn(kCrj);
+    f.Seed();
+
+    f.viewModel.Show();
+
+    QCOMPARE(f.viewModel.Report().units, std::size_t{2});
+
+    f.TurnOn(kPmdg);
+    f.session.ShowActiveProfile();
+
+    f.viewModel.Show();
+
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(TheModelsOf(kMd11)), std::size_t{2});
+    QCOMPARE(f.viewModel.Report().units, std::size_t{3});
 }
 
 QTEST_MAIN(BisectionViewModelTest)

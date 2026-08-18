@@ -147,7 +147,7 @@ namespace
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
         BisectionService bisection{service, coupling, filesystemProbe, store, clock};
-        BisectionViewModel bisectionViewModel{bisection, session};
+        BisectionViewModel bisectionViewModel{bisection, session, runner};
     };
 
     constexpr int kUsableHeight = 621;

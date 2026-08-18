@@ -6272,6 +6272,11 @@ Tamanho %2</translation>
 <context>
     <name>BisectionPanel</name>
     <message>
+        <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="530"/>
+        <source>Reading what is turned on, and what of it has to move together…</source>
+        <translation>Lendo o que está ligado, e o que disso tem de andar junto…</translation>
+    </message>
+    <message>
         <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="379"/>
         <source>Carry on with the search</source>
         <translation>Seguir com a busca</translation>

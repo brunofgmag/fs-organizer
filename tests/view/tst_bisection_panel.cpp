@@ -147,7 +147,7 @@ namespace
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
         BisectionService bisection{service, coupling, filesystemProbe, store, clock};
-        BisectionViewModel viewModel{bisection, session};
+        BisectionViewModel viewModel{bisection, session, runner};
     };
 
     void PutTheModelFolderIn(const Fixture& f, const std::filesystem::path& addon, const std::string& written)

@@ -525,6 +525,16 @@ void BisectionPanel::ShowWhatWillBeSearched() const
 {
     const BisectionReport& report = viewModel_.Report();
 
+    if (viewModel_.ReadingWhatIsOn())
+    {
+        announced_->setText(tr("Reading what is turned on, and what of it has to move together…"));
+        outOfReach_->clear();
+        toBeSearched_->clear();
+        start_->setEnabled(false);
+
+        return;
+    }
+
     if (report.refusal == BisectionRefusal::NothingIsEnabledToSearch)
     {
         announced_->setText(tr("Nothing of this profile is turned on, so there is nothing to search. Turn the addons "
