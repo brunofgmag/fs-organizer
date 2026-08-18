@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.0](https://github.com/brunofgmag/fs-organizer/compare/v0.53.0...v0.54.0) (2026-08-18)
+
+
+### Features
+
+* bring the manual into the app and name the link an installer replaced ([#160](https://github.com/brunofgmag/fs-organizer/issues/160)) ([ea25d80](https://github.com/brunofgmag/fs-organizer/commit/ea25d80d1fd7531f7a32a1b0ff8d9728a39bf4d5))
+
 ## [0.53.0](https://github.com/brunofgmag/fs-organizer/compare/v0.52.0...v0.53.0) (2026-08-17)
 
 
