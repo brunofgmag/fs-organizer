@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.2](https://github.com/brunofgmag/fs-organizer/compare/v0.54.1...v0.54.2) (2026-08-18)
+
+
+### Bug Fixes
+
+* keep the downloaded manual so it opens instead of a black page ([#167](https://github.com/brunofgmag/fs-organizer/issues/167)) ([2528570](https://github.com/brunofgmag/fs-organizer/commit/2528570f4ac3d5afdc62e15d74637c1144af3aaf))
+
 ## [0.54.1](https://github.com/brunofgmag/fs-organizer/compare/v0.54.0...v0.54.1) (2026-08-18)
 
 
