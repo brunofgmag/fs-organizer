@@ -2161,8 +2161,8 @@ It also exists in the library: %2</translation>
         <translation>Getting the manual</translation>
     </message>
     <message>
-        <source>It is coming down from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
-        <translation>It is coming down from GitHub. It stays on this machine, so opening it again asks nothing of the network.</translation>
+        <source>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
+        <translation>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</translation>
     </message>
     <message>
         <source>The manual did not come down</source>
@@ -2276,16 +2276,16 @@ It also exists in the library: %2</translation>
         <translation>FS Organizer manual</translation>
     </message>
     <message>
-        <source>not on this machine yet</source>
-        <translation>not on this machine yet</translation>
+        <source>not downloaded</source>
+        <translation>not downloaded</translation>
     </message>
     <message>
-        <source>coming down…</source>
-        <translation>coming down…</translation>
+        <source>downloading…</source>
+        <translation>downloading…</translation>
     </message>
     <message>
-        <source>it did not come down</source>
-        <translation>it did not come down</translation>
+        <source>download failed</source>
+        <translation>download failed</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="21"/>
@@ -4298,6 +4298,14 @@ Apply the preset &quot;%2&quot;?</translation>
 </context>
 <context>
     <name>QObject</name>
+    <message>
+        <source>Both copies declare the same version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
+        <translation>Both copies declare the same version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</translation>
+    </message>
+    <message>
+        <source>The manifests do not both name a version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
+        <translation>The manifests do not both name a version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</translation>
+    </message>
     <message>
         <source>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</source>
         <translation>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</translation>

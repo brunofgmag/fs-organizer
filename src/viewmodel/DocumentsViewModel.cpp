@@ -21,9 +21,9 @@ namespace
     {
         switch (state)
         {
-        case ManualState::NotHere: return DocumentsViewModel::tr("not on this machine yet");
-        case ManualState::Fetching: return DocumentsViewModel::tr("coming down…");
-        case ManualState::Failed: return DocumentsViewModel::tr("it did not come down");
+        case ManualState::NotHere: return DocumentsViewModel::tr("not downloaded");
+        case ManualState::Fetching: return DocumentsViewModel::tr("downloading…");
+        case ManualState::Failed: return DocumentsViewModel::tr("download failed");
         case ManualState::Here: break;
         }
 

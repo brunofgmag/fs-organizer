@@ -1,12 +1,8 @@
 #ifndef FS_ORGANIZER_APPLICATION_MANUAL_COPY_H
 #define FS_ORGANIZER_APPLICATION_MANUAL_COPY_H
 
-#include <array>
 #include <filesystem>
 #include <string>
-#include <string_view>
-
-inline constexpr std::array kLanguagesTheManualIsWrittenIn = {std::string_view("en"), std::string_view("pt_BR")};
 
 [[nodiscard]] std::string ManualLanguageFor(const std::string& interfaceLanguage);
 

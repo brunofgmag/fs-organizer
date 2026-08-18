@@ -77,6 +77,8 @@ private:
 
     void RetellTheManual();
 
+    void RetellTheManualRow();
+
     void ShowTheReadingSide();
 
     void ShowTheIndex();

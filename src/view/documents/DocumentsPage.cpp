@@ -19,6 +19,7 @@
 #include <QtWidgets/QStyle>
 #include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QTreeWidgetItemIterator>
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/MomentText.h"
@@ -279,7 +280,7 @@ void DocumentsPage::ConnectTheIndex()
     connect(&viewModel_, &DocumentsViewModel::TheManualChanged, this,
             [this]
             {
-                RebuildTheIndexOf(DocumentPanel::Documents);
+                RetellTheManualRow();
 
                 if (askedForTheManual_ && viewModel_.TheManualIs() == ManualState::Here)
                 {
@@ -572,7 +573,7 @@ void DocumentsPage::RetellTheManual()
     if (state == ManualState::Fetching)
     {
         manual_->Retell(tr("Getting the manual"),
-                        tr("It is coming down from GitHub. It stays on this machine, so "
+                        tr("It is downloading from GitHub. It stays on this machine, so "
                            "opening it again asks nothing of the network."));
 
         return;
@@ -593,6 +594,31 @@ void DocumentsPage::RetellTheManual()
     manual_->Retell(tr("The manual is not on this machine yet"),
                     tr("It is not in the package, because it weighs more than everything else you download to "
                        "update. Getting it once leaves it here for good."));
+}
+
+void DocumentsPage::RetellTheManualRow()
+{
+    PanelOfTheTab& built = panels_[Which(DocumentPanel::Documents)];
+    const DocumentLine fresh = viewModel_.TheManualLine();
+
+    for (DocumentLine& shown : built.lines)
+    {
+        if (viewModel_.ItIsTheManual(shown))
+        {
+            shown = fresh;
+        }
+    }
+
+    for (QTreeWidgetItemIterator row(built.index); *row != nullptr; ++row)
+    {
+        const DocumentLine* line = LineOf(DocumentPanel::Documents, *row);
+
+        if (line != nullptr && viewModel_.ItIsTheManual(*line))
+        {
+            (*row)->setText(kGlyphColumn, StarOf(line->favourite));
+            (*row)->setText(kDetailColumn, fresh.detail);
+        }
+    }
 }
 
 void DocumentsPage::ShowTheReadingSide()

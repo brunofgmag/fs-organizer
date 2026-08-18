@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "domain/ports/LinkedFolders.h"
+#include "domain/support/PathUtils.h"
 
 class FakeLinkedFolders final : public LinkedFolders
 {
@@ -16,6 +17,12 @@ public:
 
     void Remember(const std::filesystem::path& place, const std::filesystem::path& libraryCopy)
     {
+        std::erase_if(made,
+                      [&place](const LinkTheAppMade& known)
+                      {
+                          return ComparablePath(known.place) == ComparablePath(place);
+                      });
+
         made.push_back(LinkTheAppMade{.place = place, .libraryCopy = libraryCopy});
     }
 

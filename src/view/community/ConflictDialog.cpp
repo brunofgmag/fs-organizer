@@ -100,6 +100,29 @@ namespace
         return sentence.arg(destinations.join(QStringLiteral(", ")));
     }
 
+    QString WhatTheVersionsSettle(const ConflictDetails& details)
+    {
+        if (!details.ourLinkWasReplaced)
+        {
+            return {};
+        }
+
+        switch (
+            HowTheVersionCompares(details.provenance.manifest.packageVersion, details.library.manifest.packageVersion))
+        {
+        case VersionOrder::TheSame:
+            return QObject::tr("Both copies declare the same version, so nothing here says which one is newer. If "
+                               "anything changed, it changed inside the folder.");
+        case VersionOrder::NoOneCanTell:
+            return QObject::tr("The manifests do not both name a version, so nothing here says which one is newer. "
+                               "If anything changed, it changed inside the folder.");
+        case VersionOrder::Newer:
+        case VersionOrder::Older: break;
+        }
+
+        return {};
+    }
+
     QString Version(const Manifest& manifest)
     {
         return manifest.packageVersion.empty() ? QObject::tr("(no version in the manifest)")
@@ -115,6 +138,12 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
 
     auto* explanation = new QLabel(wording.explanation, this);
     explanation->setWordWrap(true);
+
+    const QString settled = WhatTheVersionsSettle(details);
+
+    auto* versions = new QLabel(settled, this);
+    versions->setWordWrap(true);
+    versions->setVisible(!settled.isEmpty());
 
     auto* sides = new QHBoxLayout;
     sides->addWidget(CreateSide(wording.provenanceSide, details.provenance));
@@ -155,6 +184,7 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
+    layout->addWidget(versions);
     layout->addLayout(sides, 1);
     layout->addWidget(warning);
     layout->addWidget(buttons);

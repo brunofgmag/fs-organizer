@@ -1,11 +1,14 @@
 #include "application/ManualCopy.h"
 
 #include <algorithm>
+#include <array>
+#include <string_view>
 
 #include "domain/support/PathUtils.h"
 
 namespace
 {
+    constexpr std::array kLanguagesTheManualIsWrittenIn = {std::string_view("en"), std::string_view("pt_BR")};
     constexpr auto kFallbackLanguage = "en";
     constexpr auto kTagPrefix = "https://raw.githubusercontent.com/brunofgmag/fs-organizer/v";
     constexpr auto kFolderInTheRepository = "/docs/";

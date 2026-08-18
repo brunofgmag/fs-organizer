@@ -178,6 +178,9 @@ void ConflictDialogTest::TheTakeBackIsOfferedWhenTheVersionsDoNotTellTheCopiesAp
     QVERIFY(takeItBack != nullptr);
     QVERIFY2(!takeItBack->isHidden(),
              "a package rewritten every cycle under a fixed version would never be offered the way back");
+    QVERIFY2(AllOfIt(dialog).contains(QStringLiteral("same version")),
+             "offering the gesture without saying the versions settle nothing lets the user read the offer as a "
+             "verdict on which copy is newer");
 }
 
 void ConflictDialogTest::AnOlderCopyInTheDestinationIsNotOfferedForTakingBack()
