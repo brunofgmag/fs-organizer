@@ -5,6 +5,7 @@
 #include "domain/linking/EntryClassifier.h"
 #include "tests/support/PathPrinting.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
+#include "tests/doubles/FakeLinkedFolders.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 
@@ -41,6 +42,10 @@ namespace
         static void AnEntryPointedBackWhileTheLibraryVolumeIsAwayIsNotADivergence();
         static void AnEntryPointedAtAVendorFolderThatIsStillALinkIsNotADivergence();
         static void AnEntryPointedBackAtAVendorFolderThatThenWentAwayIsBrokenAndNotVanished();
+        static void AFolderStandingWhereTheAppLinkedIsSubstitutedAndNamesTheCopyLeftAdrift();
+        static void AFolderTheAppNeverLinkedIsStillUnmanaged();
+        static void AFolderStandingWhereTheAppLinkedIsUnmanagedOnceTheLibraryCopyIsGone();
+        static void ASubstitutedEntryIsNotEnabledSoTheLibraryStopsCountingIt();
     };
 
     constexpr auto kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
@@ -55,6 +60,15 @@ namespace
         FakeLinkService linkService{fileSystem};
         FakeFilesystemProbe filesystemProbe{fileSystem};
         EntryClassifier classifier{linkService, filesystemProbe};
+    };
+
+    struct FixtureWithAJournal
+    {
+        InMemoryFileSystem fileSystem;
+        FakeLinkService linkService{fileSystem};
+        FakeFilesystemProbe filesystemProbe{fileSystem};
+        FakeLinkedFolders theAppLinked;
+        EntryClassifier classifier{linkService, filesystemProbe, theAppLinked};
     };
 }
 
@@ -478,6 +492,63 @@ void EntryClassifierTest::AnEntryPointedBackAtAVendorFolderThatThenWentAwayIsBro
         f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, TheOneWeImported());
 
     QCOMPARE(entries.front().classification, EntryClassification::Broken);
+}
+
+void EntryClassifierTest::AFolderStandingWhereTheAppLinkedIsSubstitutedAndNamesTheCopyLeftAdrift()
+{
+    FixtureWithAJournal f;
+    f.fileSystem.AddDirectory(kLibraryCopy);
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory("E:/Sim/Community/gsx-pro");
+    f.theAppLinked.Remember("E:/Sim/Community/gsx-pro", kLibraryCopy);
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().classification, EntryClassification::Substituted);
+    QCOMPARE(entries.front().libraryCopy, std::filesystem::path(kLibraryCopy));
+    QVERIFY2(entries.front().target.empty(), "there is no link any more, so the entry points at nothing");
+}
+
+void EntryClassifierTest::AFolderTheAppNeverLinkedIsStillUnmanaged()
+{
+    FixtureWithAJournal f;
+    f.fileSystem.AddDirectory(kLibraryCopy);
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory("E:/Sim/Community/gsx-pro");
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().classification, EntryClassification::Unmanaged);
+}
+
+void EntryClassifierTest::AFolderStandingWhereTheAppLinkedIsUnmanagedOnceTheLibraryCopyIsGone()
+{
+    FixtureWithAJournal f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory("E:/Sim/Community/gsx-pro");
+    f.theAppLinked.Remember("E:/Sim/Community/gsx-pro", kLibraryCopy);
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QVERIFY2(entries.front().classification == EntryClassification::Unmanaged,
+             "with no copy left in the library there is nothing adrift and nothing to take back");
+}
+
+void EntryClassifierTest::ASubstitutedEntryIsNotEnabledSoTheLibraryStopsCountingIt()
+{
+    FixtureWithAJournal f;
+    f.fileSystem.AddDirectory(kLibraryCopy);
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory("E:/Sim/Community/gsx-pro");
+    f.theAppLinked.Remember("E:/Sim/Community/gsx-pro", kLibraryCopy);
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+
+    QVERIFY(EnabledAddonFolders(entries).empty());
+    QVERIFY(LinksPointingAt(entries, kLibraryCopy).empty());
 }
 
 QTEST_APPLESS_MAIN(EntryClassifierTest)

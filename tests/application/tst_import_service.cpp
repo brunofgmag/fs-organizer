@@ -104,6 +104,8 @@ namespace
         static void CancellingTheCopyLeavesBothCopiesWhereTheyWere();
         static void AHalfCopiedResolutionIsFoundInsideTheQuarantineAndOnlyOfferedTheDiscard();
         static void AHalfCopiedResolutionIsNeverListedAsAQuarantinedAddon();
+        static void TakingBackWhatReplacedTheLinkPutsTheDestinationCopyInTheLibraryAndLinksItAgain();
+        static void TakingItBackLeavesTheOldLibraryCopyInQuarantineInsteadOfDeletingIt();
     };
 }
 
@@ -1711,6 +1713,39 @@ void ImportServiceTest::AHalfCopiedResolutionIsNeverListedAsAQuarantinedAddon()
 
     QCOMPARE(items.size(), std::size_t{1});
     QCOMPARE(items.front().path, kHeldInLibrary);
+}
+
+void ImportServiceTest::TakingBackWhatReplacedTheLinkPutsTheDestinationCopyInTheLibraryAndLinksItAgain()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    const CopyConflict conflict{
+        .provenancePath = kInDestination, .libraryPath = kInLibrary, .ourLinkWasReplaced = true};
+
+    const FileResult result =
+        f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheProvenanceCopy);
+
+    QCOMPARE(result, FileResult::Completed);
+    QVERIFY2(f.fileSystem.IsLink(kInDestination), "the link the installer wrote over is back where it was");
+    QCOMPARE(f.fileSystem.LinkTarget(kInDestination).value(), kInLibrary);
+    QCOMPARE(f.fileSystem.FileSize(kInLibrary / "manifest.json"), 2 * kMegabyte);
+}
+
+void ImportServiceTest::TakingItBackLeavesTheOldLibraryCopyInQuarantineInsteadOfDeletingIt()
+{
+    Fixture f;
+    f.AddBothCopies();
+
+    const CopyConflict conflict{
+        .provenancePath = kInDestination, .libraryPath = kInLibrary, .ourLinkWasReplaced = true};
+
+    QCOMPARE(f.service.ResolveConflict(f.profile, f.Entries(), conflict, ConflictChoice::KeepTheProvenanceCopy),
+             FileResult::Completed);
+
+    QCOMPARE(f.fileSystem.FileSize(kHeldInLibrary / "manifest.json"), 1 * kMegabyte);
+    QVERIFY2(f.fileSystem.FileSize(kInLibrary / "manifest.json") == 2 * kMegabyte,
+             "the copy that took the place is the one from the destination, and the old one is only set aside");
 }
 
 QTEST_APPLESS_MAIN(ImportServiceTest)

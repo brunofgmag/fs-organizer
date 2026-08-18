@@ -8,6 +8,7 @@ struct CopyConflict
     std::filesystem::path provenancePath{};
     std::filesystem::path libraryPath{};
     bool theProvenanceIsAnotherProgram = false;
+    bool ourLinkWasReplaced = false;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_COPY_CONFLICT_H

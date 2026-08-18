@@ -15,6 +15,7 @@ set(DOMAIN_SOURCES
         src/domain/importing/OriginSidecar.cpp
         src/domain/importing/SidecarFile.cpp
         src/domain/journal/JournalEntries.cpp
+        src/domain/journal/LinksTheAppMade.cpp
         src/domain/journal/OperationLog.cpp
         src/domain/legacy/LegacyPreset.cpp
         src/domain/legacy/LegacyProposal.cpp
@@ -22,6 +23,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
         src/domain/linking/RepairPlan.cpp
+        src/domain/model/PackageVersion.cpp
         src/domain/preset/PresetPlan.cpp
         src/domain/profile/ExternalOrigins.cpp
         src/domain/profile/OrphanOverrides.cpp
@@ -49,6 +51,7 @@ set(APPLICATION_SOURCES
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
         src/application/LoadReport.cpp
+        src/application/ManualCopy.cpp
         src/application/preset/PresetStartupPlan.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
@@ -72,6 +75,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JournalImportedFolders.cpp
+        src/infrastructure/journal/JournalLinkedFolders.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/legacy/IniLegacyConfigReader.cpp
         src/infrastructure/legacy/LegacyPresetReader.cpp
@@ -103,6 +107,7 @@ set(INFRASTRUCTURE_SOURCES
 )
 
 set(NETWORK_INFRASTRUCTURE_SOURCES
+        src/infrastructure/manual/GithubManual.cpp
         src/infrastructure/update/GithubUpdateService.cpp
 )
 

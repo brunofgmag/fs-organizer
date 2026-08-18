@@ -10,6 +10,7 @@
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
@@ -252,10 +253,11 @@ int main(int argc, char* argv[])
     const JsonManifestParser manifestParser;
     const JsonlOperationJournal journal(JournalFilePath());
     const JournalImportedFolders importedFolders(journal);
+    const JournalLinkedFolders theAppLinked(journal);
     const FilesystemScanner scanner(manifestParser, filesystemProbe, importedFolders);
     const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
-    const EntryClassifier classifier(linkService, filesystemProbe);
+    const EntryClassifier classifier(linkService, filesystemProbe, theAppLinked);
 
     Out() << "Simulator running: " << (processProbe.SimulatorIsRunning() ? "yes" : "no") << "\n";
 

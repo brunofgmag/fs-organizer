@@ -92,8 +92,10 @@ std::vector<std::filesystem::path> LinksPointingAt(const std::vector<Destination
     return links;
 }
 
-EntryClassifier::EntryClassifier(const LinkService& linkService, const FilesystemProbe& filesystemProbe)
-    : linkService_(linkService), filesystemProbe_(filesystemProbe)
+EntryClassifier::EntryClassifier(const LinkService& linkService,
+                                 const FilesystemProbe& filesystemProbe,
+                                 const LinkedFolders& linkedFolders)
+    : linkService_(linkService), filesystemProbe_(filesystemProbe), linkedFolders_(linkedFolders)
 {
 }
 
@@ -103,11 +105,17 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::fi
 {
     std::vector<DestinationEntry> entries;
 
+    std::map<std::string, LinkTheAppMade> theAppLinked;
+    for (const LinkTheAppMade& link : linkedFolders_.WhatTheAppLinked())
+    {
+        theAppLinked.emplace(ComparablePath(link.place), link);
+    }
+
     for (const std::filesystem::path& root : destinationRoots)
     {
         for (const std::filesystem::path& child : filesystemProbe_.ChildDirectories(root))
         {
-            entries.push_back(ClassifyEntry(child, libraryRoots, externals));
+            entries.push_back(ClassifyEntry(child, libraryRoots, externals, theAppLinked));
         }
     }
 
@@ -116,9 +124,30 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::fi
     return entries;
 }
 
+DestinationEntry
+EntryClassifier::WhatStandsWhereALinkWas(const std::filesystem::path& entryPath,
+                                         const std::map<std::string, LinkTheAppMade>& theAppLinked) const
+{
+    DestinationEntry entry;
+    entry.path = entryPath;
+    entry.classification = EntryClassification::Unmanaged;
+
+    const auto ours = theAppLinked.find(ComparablePath(entryPath));
+    if (ours == theAppLinked.end() || !APhysicalFolderIsThere(ours->second.libraryCopy))
+    {
+        return entry;
+    }
+
+    entry.libraryCopy = ours->second.libraryCopy;
+    entry.classification = EntryClassification::Substituted;
+
+    return entry;
+}
+
 DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& entryPath,
                                                 const std::vector<std::filesystem::path>& libraryRoots,
-                                                const std::vector<ExternalAddon>& externals) const
+                                                const std::vector<ExternalAddon>& externals,
+                                                const std::map<std::string, LinkTheAppMade>& theAppLinked) const
 {
     DestinationEntry entry;
     entry.path = entryPath;
@@ -126,8 +155,7 @@ DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& ent
     const std::optional<std::filesystem::path> target = linkService_.ReadLinkTarget(entryPath);
     if (!target.has_value())
     {
-        entry.classification = EntryClassification::Unmanaged;
-        return entry;
+        return WhatStandsWhereALinkWas(entryPath, theAppLinked);
     }
 
     entry.target = NormalizeReparseTarget(*target);

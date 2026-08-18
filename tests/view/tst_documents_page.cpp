@@ -37,6 +37,7 @@
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeManualSource.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSceneryCache.h"
@@ -97,6 +98,8 @@ namespace
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
         static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
         static void AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt();
+        static void TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick();
+        static void AManualThatDidNotComeDownSaysSoAndKeepsTheWayToAskAgain();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -191,7 +194,8 @@ namespace
         FakeChartVersions chartVersions;
         DocumentService documents{catalog, filesystemProbe, catalogueParser, chartVersions};
         FakeDocumentIndexCache cache;
-        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, clock};
+        FakeManualSource theManual;
+        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, theManual, clock};
     };
 
     [[nodiscard]] QTreeWidget* TheIndexOf(const DocumentsPage& page, const DocumentPanel panel)
@@ -1268,6 +1272,66 @@ void DocumentsPageTest::ThePageFitsTheNarrowestWindow()
     DocumentsPage page(f.viewModel);
 
     ItFitsTheNarrowestWindow(page, "The documents page");
+}
+
+void DocumentsPageTest::TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick()
+{
+    Fixture f;
+    f.viewModel.TheInterfaceSpeaks("en");
+
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* ours = GroupNamed(*index, QStringLiteral("FS Organizer"));
+
+    QVERIFY2(ours != nullptr, "the manual is reachable on a library nobody ever read for documentation");
+    ours->setExpanded(true);
+
+    const QRect name = index->visualItemRect(ours->child(0));
+
+    QVERIFY2(!ours->child(0)->text(2).isEmpty(),
+             "the line says it is not here yet, so the click is not mistaken for a document that opens");
+
+    ClickAt(*index, QPoint(name.center().x(), name.center().y()));
+
+    QCOMPARE(f.theManual.asked, std::vector<std::string>{"en"});
+    QVERIFY2(WhatIsOpen(page).isEmpty(), "nothing opens while the file is not on this machine");
+    QVERIFY(SomethingSays(page, QStringLiteral("downloading")));
+
+    f.theManual.AnswerWithTheManual();
+
+    QVERIFY2(WhatIsOpen(page).contains(QStringLiteral("manual")),
+             "the reading starts the moment the file lands, without a second click");
+}
+
+void DocumentsPageTest::AManualThatDidNotComeDownSaysSoAndKeepsTheWayToAskAgain()
+{
+    Fixture f;
+    f.viewModel.TheInterfaceSpeaks("en");
+
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* ours = GroupNamed(*index, QStringLiteral("FS Organizer"));
+    ours->setExpanded(true);
+
+    const QRect name = index->visualItemRect(ours->child(0));
+
+    ClickAt(*index, QPoint(name.center().x(), name.center().y()));
+
+    f.theManual.AnswerWithAFailure("HTTP 404");
+
+    QVERIFY(SomethingSays(page, QStringLiteral("HTTP 404")));
+
+    QPushButton* again = ButtonStartingWith(page, QStringLiteral("Try again"));
+
+    QVERIFY2(again != nullptr && again->isEnabled(), "a failure that offers no second attempt is a dead end");
+
+    again->click();
+
+    QCOMPARE(f.theManual.asked.size(), std::size_t{2});
 }
 
 QTEST_MAIN(DocumentsPageTest)

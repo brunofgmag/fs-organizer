@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_VIEWMODEL_BISECTION_VIEW_MODEL_H
 
 #include <cstddef>
+#include <filesystem>
 #include <optional>
 #include <vector>
 
@@ -10,6 +11,7 @@
 
 #include "application/BisectionService.h"
 #include "application/Session.h"
+#include "application/ports/BackgroundRunner.h"
 
 enum class BisectionStage : int
 {
@@ -39,7 +41,10 @@ class BisectionViewModel final : public QObject
     Q_OBJECT
 
 public:
-    BisectionViewModel(BisectionService& bisection, Session& session, QObject* parent = nullptr);
+    BisectionViewModel(BisectionService& bisection,
+                       Session& session,
+                       BackgroundRunner& runner,
+                       QObject* parent = nullptr);
 
     void Show();
 
@@ -63,6 +68,8 @@ public:
 
     [[nodiscard]] bool ItIsRunning() const;
 
+    [[nodiscard]] bool ReadingWhatIsOn() const;
+
     [[nodiscard]] std::size_t RoundsLeftInTheWorstCase() const;
 
     [[nodiscard]] std::size_t LaunchesAlreadyMade() const;
@@ -81,10 +88,13 @@ private:
 
     BisectionService& bisection_;
     Session& session_;
+    BackgroundRunner& runner_;
     BisectionReport report_{};
     BisectionStage stage_ = BisectionStage::NotStarted;
     std::optional<BisectionAnswer> heldAnswer_{};
+    std::optional<std::vector<std::filesystem::path>> readFor_{};
     bool aSplitWasHeld_ = false;
+    bool reading_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_BISECTION_VIEW_MODEL_H
