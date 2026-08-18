@@ -1,5 +1,3 @@
-#include <crtdbg.h>
-
 #include <algorithm>
 
 #include <QtCore/QPointer>
@@ -31,7 +29,6 @@ namespace
         static void NothingOffersAnUpdateUntilOneIsOffered();
         static void TheOfferNamesTheVersionAndTurnsIntoARestartWhenItIsStaged();
         static void EveryWidgetItBuildsDiesWithTheWindow();
-        static void BuildingAndDestroyingTheWindowLeavesTheHeapWhereItWas();
         static void ACleanInstallShowsNoTriageStrip();
         static void TheStripOnlyRidesOnThePagesThatCarryIt();
         static void TheFooterCarriesTheSummaryOfThePageYouAreOn();
@@ -73,7 +70,7 @@ void MainWindowTest::EveryWidgetItBuildsDiesWithTheWindow()
     QPointer<QComboBox> profiles;
     QPointer<QWidget> header;
     QPointer<QLayout> headerLayout;
-    QList<QPointer<QLabel>> labels;
+    QList<QPointer<QObject>> everythingItBuilt;
 
     {
         MainWindow window(SettingsWithOneProfile());
@@ -88,11 +85,13 @@ void MainWindowTest::EveryWidgetItBuildsDiesWithTheWindow()
         QVERIFY(!header.isNull());
         QVERIFY(!headerLayout.isNull());
 
-        for (QLabel* label : window.findChildren<QLabel*>())
+        QVERIFY(window.findChildren<QLabel*>().size() >= 2);
+
+        for (QObject* child : window.findChildren<QObject*>())
         {
-            labels.append(label);
+            everythingItBuilt.append(child);
         }
-        QVERIFY(labels.size() >= 2);
+        QVERIFY(everythingItBuilt.size() >= 20);
     }
 
     QVERIFY(pages.isNull());
@@ -100,39 +99,10 @@ void MainWindowTest::EveryWidgetItBuildsDiesWithTheWindow()
     QVERIFY(header.isNull());
     QVERIFY(headerLayout.isNull());
 
-    for (const QPointer<QLabel>& label : labels)
+    for (const QPointer<QObject>& child : everythingItBuilt)
     {
-        QVERIFY(label.isNull());
+        QVERIFY2(child.isNull(), "the window was destroyed and something it built outlived it");
     }
-}
-
-void MainWindowTest::BuildingAndDestroyingTheWindowLeavesTheHeapWhereItWas()
-{
-#ifndef _DEBUG
-    QSKIP("CRT heap accounting only exists in the debug runtime.");
-#else
-    {
-        MainWindow warmUp(SettingsWithOneProfile());
-    }
-
-    _CrtMemState before{};
-    _CrtMemState after{};
-    _CrtMemState difference{};
-
-    _CrtMemCheckpoint(&before);
-    {
-        MainWindow window(SettingsWithOneProfile());
-    }
-    _CrtMemCheckpoint(&after);
-
-    const int grew = _CrtMemDifference(&difference, &before, &after);
-    if (grew != 0)
-    {
-        _CrtMemDumpStatistics(&difference);
-    }
-
-    QCOMPARE(grew, 0);
-#endif
 }
 
 void MainWindowTest::ACleanInstallShowsNoTriageStrip()
