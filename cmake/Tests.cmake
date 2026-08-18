@@ -272,6 +272,11 @@ fsorg_add_qt_test(fsorg-coverage-service-tests coverage-service
         tests/support/EnumPrinting.h)
 target_link_libraries(fsorg-coverage-service-tests PRIVATE fsorg-application)
 
+fsorg_add_qt_test(fsorg-manual-copy-tests manual-copy
+        tests/application/tst_manual_copy.cpp
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-manual-copy-tests PRIVATE fsorg-application)
+
 fsorg_add_qt_test(fsorg-document-service-tests document-service
         tests/application/tst_document_service.cpp
         tests/doubles/FakeCatalogScanner.h
@@ -790,6 +795,7 @@ target_link_libraries(fsorg-community-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-documents-view-model-tests documents-view-model
         tests/viewmodel/tst_documents_view_model.cpp
+        tests/doubles/FakeManualSource.h
         tests/doubles/FakeCatalogScanner.h
         tests/doubles/FakeChartCatalogueParser.h
         tests/doubles/FakeChartVersions.h
@@ -1487,6 +1493,7 @@ configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
 
 fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/view/tst_documents_page.cpp
+        tests/doubles/FakeManualSource.h
         tests/support/ButtonLookup.h
         tests/support/PageFloor.h
         assets/resources.qrc

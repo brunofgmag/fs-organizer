@@ -48,6 +48,7 @@ set(APPLICATION_SOURCES
         src/application/LegacyConfigImporter.cpp
         src/application/LibraryOrganizer.cpp
         src/application/LoadReport.cpp
+        src/application/ManualCopy.cpp
         src/application/preset/PresetStartupPlan.cpp
         src/application/PresetService.cpp
         src/application/ProfileService.cpp
@@ -102,6 +103,7 @@ set(INFRASTRUCTURE_SOURCES
 )
 
 set(NETWORK_INFRASTRUCTURE_SOURCES
+        src/infrastructure/manual/GithubManual.cpp
         src/infrastructure/update/GithubUpdateService.cpp
 )
 

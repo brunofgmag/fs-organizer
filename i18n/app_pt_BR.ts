@@ -2125,6 +2125,38 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>DocumentsPage</name>
     <message>
+        <source>Get the manual</source>
+        <translation>Baixar o manual</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Tentar de novo</translation>
+    </message>
+    <message>
+        <source>Getting the manual</source>
+        <translation>Baixando o manual</translation>
+    </message>
+    <message>
+        <source>It is coming down from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
+        <translation>Ele está vindo do GitHub. Fica nesta máquina, então abrir de novo não pede nada da rede.</translation>
+    </message>
+    <message>
+        <source>The manual did not come down</source>
+        <translation>O manual não baixou</translation>
+    </message>
+    <message>
+        <source>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</source>
+        <translation>%1. O manual desta versão também mora em %2, e lê-lo por lá custa só um navegador.</translation>
+    </message>
+    <message>
+        <source>The manual is not on this machine yet</source>
+        <translation>O manual ainda não está nesta máquina</translation>
+    </message>
+    <message>
+        <source>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</source>
+        <translation>Ele não vem no pacote, porque pesa mais que todo o resto que você baixa para atualizar. Baixar uma vez deixa ele aqui para sempre.</translation>
+    </message>
+    <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="530"/>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="608"/>
         <source>Reading in a separate window</source>
@@ -2210,6 +2242,27 @@ Também existe na biblioteca: %2</translation>
 </context>
 <context>
     <name>DocumentsViewModel</name>
+    <message>
+        <source>Manual</source>
+        <comment>the user manual</comment>
+        <translation>Manual</translation>
+    </message>
+    <message>
+        <source>FS Organizer manual</source>
+        <translation>Manual do FS Organizer</translation>
+    </message>
+    <message>
+        <source>not on this machine yet</source>
+        <translation>ainda não está nesta máquina</translation>
+    </message>
+    <message>
+        <source>coming down…</source>
+        <translation>baixando…</translation>
+    </message>
+    <message>
+        <source>it did not come down</source>
+        <translation>não baixou</translation>
+    </message>
     <message>
         <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="21"/>
         <source>Terminal area, frequencies</source>
@@ -2304,6 +2357,13 @@ Também existe na biblioteca: %2</translation>
     <message>
         <source>Documents · %1</source>
         <translation type="vanished">Documentos · %1</translation>
+    </message>
+</context>
+<context>
+    <name>GithubManual</name>
+    <message>
+        <source>The manual came down but could not be written to %1.</source>
+        <translation>O manual baixou mas não pôde ser gravado em %1.</translation>
     </message>
 </context>
 <context>

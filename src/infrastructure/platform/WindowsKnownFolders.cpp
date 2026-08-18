@@ -20,6 +20,7 @@ namespace
     constexpr auto kBisectionFolderName = "bisection";
     constexpr auto kDocumentIndexFileName = "document-index.json";
     constexpr auto kSceneryCacheFileName = "scenery-cache.json";
+    constexpr auto kManualFolderName = "manual";
 
     std::filesystem::path KnownFolder(const KNOWNFOLDERID& folderId)
     {
@@ -80,4 +81,9 @@ std::filesystem::path SceneryCacheFilePath()
 std::filesystem::path DocumentIndexFilePath()
 {
     return LocalAppDataFolder() / kApplicationFolderName / kDocumentIndexFileName;
+}
+
+std::filesystem::path ManualFolderPath()
+{
+    return LocalAppDataFolder() / kApplicationFolderName / kManualFolderName;
 }

@@ -17,6 +17,7 @@
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
+#include "tests/doubles/FakeManualSource.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSceneryCache.h"
@@ -57,6 +58,12 @@ namespace
         static void TheMarksComeBackInPageOrderWhateverOrderTheyWereMadeIn();
         static void MarkingAPageThatAlreadyCarriesOneTakesTheMarkAway();
         static void TheNameTheUserGaveIsKeptAndTheDerivedOneIsNot();
+        static void TheManualIsOfferedBeforeAnythingWasReadAndSaysItIsNotHereYet();
+        static void TheManualIsNotCountedAmongWhatTheLibraryCarries();
+        static void AskingForTheManualFetchesTheLanguageTheInterfaceSpeaks();
+        static void AnInterfaceLanguageTheManualWasNeverWrittenInAsksForTheEnglishOne();
+        static void TheManualThatIsAlreadyHereIsNotFetchedASecondTime();
+        static void AManualThatDidNotComeDownSaysWhyAndCanBeAskedAgain();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -169,8 +176,21 @@ namespace
         FakeChartVersions chartVersions;
         DocumentService documents{catalog, filesystemProbe, catalogueParser, chartVersions};
         FakeDocumentIndexCache cache;
-        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, clock};
+        FakeManualSource theManual;
+        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, theManual, clock};
     };
+
+    [[nodiscard]] std::vector<DocumentGroup> TheAddonsAmong(const DocumentsViewModel& viewModel,
+                                                            std::vector<DocumentGroup> groups)
+    {
+        std::erase_if(groups,
+                      [&viewModel](const DocumentGroup& group)
+                      {
+                          return group.lines.size() == 1 && viewModel.ItIsTheManual(group.lines.front());
+                      });
+
+        return groups;
+    }
 
     [[nodiscard]] const DocumentGroup* GroupNamed(const std::vector<DocumentGroup>& groups, const QString& name)
     {
@@ -199,7 +219,8 @@ void DocumentsViewModelTest::DocumentsGroupsByAddonAndChartsGroupsByAirport()
     Fixture f;
     f.viewModel.ReadTheLibrary();
 
-    const std::vector<DocumentGroup> documents = f.viewModel.GroupsOf(DocumentPanel::Documents);
+    const std::vector<DocumentGroup> documents =
+        TheAddonsAmong(f.viewModel, f.viewModel.GroupsOf(DocumentPanel::Documents));
     const std::vector<DocumentGroup> charts = f.viewModel.GroupsOf(DocumentPanel::Charts);
 
     QCOMPARE(documents.size(), std::size_t{2});
@@ -346,12 +367,13 @@ void DocumentsViewModelTest::WhatWasKeptShowsWithoutWalkingAndTheReadingReplaces
     f.viewModel.ShowWhatWasKept();
 
     QVERIFY2(f.filesystemProbe.walked.empty(), "what was kept shows without walking a single addon folder");
-    QCOMPARE(f.viewModel.GroupsOf(DocumentPanel::Documents).size(), std::size_t{1});
-    QCOMPARE(f.viewModel.GroupsOf(DocumentPanel::Documents).front().name, QStringLiteral("an-addon-that-was-deleted"));
+    QCOMPARE(TheAddonsAmong(f.viewModel, f.viewModel.GroupsOf(DocumentPanel::Documents)).size(), std::size_t{1});
+    QCOMPARE(TheAddonsAmong(f.viewModel, f.viewModel.GroupsOf(DocumentPanel::Documents)).front().name,
+             QStringLiteral("an-addon-that-was-deleted"));
 
     f.viewModel.ReadTheLibrary();
 
-    QCOMPARE(f.viewModel.GroupsOf(DocumentPanel::Documents).size(), std::size_t{2});
+    QCOMPARE(TheAddonsAmong(f.viewModel, f.viewModel.GroupsOf(DocumentPanel::Documents)).size(), std::size_t{2});
     QVERIFY2(GroupNamed(f.viewModel.GroupsOf(DocumentPanel::Documents), QStringLiteral("an-addon-that-was-deleted"))
                  == nullptr,
              "the reading replaces the index instead of adding to it, so what the user deleted stops being shown");
@@ -404,8 +426,9 @@ void DocumentsViewModelTest::TheIndexTakesEachAddonAsItArrivesInsteadOfWaitingFo
     QObject::connect(&f.viewModel, &DocumentsViewModel::Arrived, &f.viewModel,
                      [&f, &grew]
                      {
-                         grew.push_back(f.viewModel.GroupsOf(DocumentPanel::Documents).size()
-                                        + f.viewModel.GroupsOf(DocumentPanel::Charts).size());
+                         grew.push_back(
+                             TheAddonsAmong(f.viewModel, f.viewModel.GroupsOf(DocumentPanel::Documents)).size()
+                             + f.viewModel.GroupsOf(DocumentPanel::Charts).size());
                      });
 
     f.viewModel.ReadTheLibrary();
@@ -538,6 +561,101 @@ void DocumentsViewModelTest::TheNameTheUserGaveIsKeptAndTheDerivedOneIsNot()
 
     QCOMPARE(f.viewModel.BookmarksOf(line).front().name, std::string{"Where I stopped"});
     QCOMPARE(f.settings.stored.documents.front().bookmarks.front().name, std::string{"Where I stopped"});
+}
+
+void DocumentsViewModelTest::TheManualIsOfferedBeforeAnythingWasReadAndSaysItIsNotHereYet()
+{
+    Fixture f;
+    f.viewModel.TheInterfaceSpeaks("pt_BR");
+
+    const std::vector<DocumentGroup> documents = f.viewModel.GroupsOf(DocumentPanel::Documents);
+
+    QVERIFY2(!documents.empty(), "the manual is there to be found before the library was ever read");
+    QCOMPARE(documents.front().lines.size(), std::size_t{1});
+    QVERIFY(f.viewModel.ItIsTheManual(documents.front().lines.front()));
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::NotHere);
+    QVERIFY2(!documents.front().lines.front().detail.isEmpty(),
+             "the line says it is not here yet instead of looking like a document that opens");
+}
+
+void DocumentsViewModelTest::TheManualIsNotCountedAmongWhatTheLibraryCarries()
+{
+    Fixture f;
+    f.viewModel.TheInterfaceSpeaks("pt_BR");
+    f.viewModel.ReadTheLibrary();
+
+    const std::size_t lines = f.viewModel.CountOf(DocumentPanel::Documents);
+
+    f.theManual.here.insert("pt_BR");
+    f.viewModel.TheInterfaceSpeaks("pt_BR");
+
+    QCOMPARE(f.viewModel.CountOf(DocumentPanel::Documents), lines);
+}
+
+void DocumentsViewModelTest::AskingForTheManualFetchesTheLanguageTheInterfaceSpeaks()
+{
+    Fixture f;
+    f.viewModel.TheInterfaceSpeaks("pt_BR");
+
+    int said = 0;
+    QObject::connect(&f.viewModel, &DocumentsViewModel::TheManualChanged, &f.viewModel,
+                     [&said]
+                     {
+                         ++said;
+                     });
+
+    f.viewModel.FetchTheManual();
+
+    QCOMPARE(f.theManual.asked, std::vector<std::string>{"pt_BR"});
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::Fetching);
+
+    f.theManual.AnswerWithTheManual();
+
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::Here);
+    QCOMPARE(said, 2);
+    QCOMPARE(f.viewModel.TheManualLine().file, f.theManual.WhereTheManualWouldBe("pt_BR"));
+}
+
+void DocumentsViewModelTest::AnInterfaceLanguageTheManualWasNeverWrittenInAsksForTheEnglishOne()
+{
+    Fixture f;
+    f.viewModel.TheInterfaceSpeaks("de");
+
+    f.viewModel.FetchTheManual();
+
+    QCOMPARE(f.theManual.asked, std::vector<std::string>{"en"});
+}
+
+void DocumentsViewModelTest::TheManualThatIsAlreadyHereIsNotFetchedASecondTime()
+{
+    Fixture f;
+    f.theManual.here.insert("pt_BR");
+    f.viewModel.TheInterfaceSpeaks("pt_BR");
+
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::Here);
+
+    f.viewModel.FetchTheManual();
+
+    QVERIFY2(f.theManual.asked.empty(), "what is already on disk opens from disk and asks nothing of the network");
+}
+
+void DocumentsViewModelTest::AManualThatDidNotComeDownSaysWhyAndCanBeAskedAgain()
+{
+    Fixture f;
+    f.viewModel.TheInterfaceSpeaks("en");
+
+    f.viewModel.FetchTheManual();
+    f.theManual.AnswerWithAFailure("HTTP 404");
+
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::Failed);
+    QCOMPARE(f.viewModel.WhatHappenedToTheManual(), QStringLiteral("HTTP 404"));
+
+    f.viewModel.FetchTheManual();
+
+    QCOMPARE(f.theManual.asked.size(), std::size_t{2});
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::Fetching);
+    QVERIFY2(f.viewModel.WhatHappenedToTheManual().isEmpty(),
+             "asking again clears the reason, so the screen does not show a stale failure while it tries");
 }
 
 QTEST_APPLESS_MAIN(DocumentsViewModelTest)

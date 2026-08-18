@@ -2125,6 +2125,38 @@ It also exists in the library: %2</translation>
 <context>
     <name>DocumentsPage</name>
     <message>
+        <source>Get the manual</source>
+        <translation>Get the manual</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Try again</translation>
+    </message>
+    <message>
+        <source>Getting the manual</source>
+        <translation>Getting the manual</translation>
+    </message>
+    <message>
+        <source>It is coming down from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
+        <translation>It is coming down from GitHub. It stays on this machine, so opening it again asks nothing of the network.</translation>
+    </message>
+    <message>
+        <source>The manual did not come down</source>
+        <translation>The manual did not come down</translation>
+    </message>
+    <message>
+        <source>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</source>
+        <translation>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</translation>
+    </message>
+    <message>
+        <source>The manual is not on this machine yet</source>
+        <translation>The manual is not on this machine yet</translation>
+    </message>
+    <message>
+        <source>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</source>
+        <translation>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</translation>
+    </message>
+    <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="530"/>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="608"/>
         <source>Reading in a separate window</source>
@@ -2210,6 +2242,27 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>DocumentsViewModel</name>
+    <message>
+        <source>Manual</source>
+        <comment>the user manual</comment>
+        <translation>Manual</translation>
+    </message>
+    <message>
+        <source>FS Organizer manual</source>
+        <translation>FS Organizer manual</translation>
+    </message>
+    <message>
+        <source>not on this machine yet</source>
+        <translation>not on this machine yet</translation>
+    </message>
+    <message>
+        <source>coming down…</source>
+        <translation>coming down…</translation>
+    </message>
+    <message>
+        <source>it did not come down</source>
+        <translation>it did not come down</translation>
+    </message>
     <message>
         <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="21"/>
         <source>Terminal area, frequencies</source>
@@ -2304,6 +2357,13 @@ It also exists in the library: %2</translation>
     <message>
         <source>Documents · %1</source>
         <translation type="vanished">Documents · %1</translation>
+    </message>
+</context>
+<context>
+    <name>GithubManual</name>
+    <message>
+        <source>The manual came down but could not be written to %1.</source>
+        <translation>The manual came down but could not be written to %1.</translation>
     </message>
 </context>
 <context>

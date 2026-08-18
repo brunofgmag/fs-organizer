@@ -32,6 +32,7 @@
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/manual/GithubManual.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
 #include "infrastructure/link/WindowsLinkService.h"
@@ -313,7 +314,12 @@ int main(int argc, char* argv[])
     const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(DocumentIndexFilePath());
-    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, clock);
+    GithubManual manual(QCoreApplication::applicationVersion().toStdString(), ManualFolderPath());
+
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, manual,
+                                          clock);
+
+    documentsViewModel.TheInterfaceSpeaks(language.InUse().toStdString());
 
     auto* page = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
                                    addonDocumentsViewModel, model, notifier);
@@ -420,9 +426,13 @@ int main(int argc, char* argv[])
                      });
 
     QObject::connect(&optionsViewModel, &OptionsViewModel::LanguageChosen, &window,
-                     [&language, &window](const QString& chosen)
+                     [&language, &window, &documentsViewModel](const QString& chosen)
                      {
-                         if (!language.Use(chosen))
+                         const bool applied = language.Use(chosen);
+
+                         documentsViewModel.TheInterfaceSpeaks(language.InUse().toStdString());
+
+                         if (!applied)
                          {
                              QMessageBox::warning(&window, QObject::tr("Language not applied"),
                                                   QObject::tr("The translation for %1 did not load, so the interface "

@@ -618,7 +618,10 @@ int main(int argc, char* argv[])
     const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(staged->settingsFile.parent_path() / "document-index.json");
-    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, clock);
+    NoManualToFetch manual;
+
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, manual,
+                                          clock);
     auto* documentsPage = new DocumentsPage(documentsViewModel);
 
     auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,

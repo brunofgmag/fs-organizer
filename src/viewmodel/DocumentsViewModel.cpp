@@ -6,13 +6,29 @@
 
 #include <QtCore/QStringList>
 
+#include "application/ManualCopy.h"
 #include "domain/support/CaseFolding.h"
 #include "domain/support/PathUtils.h"
 
 namespace
 {
     constexpr auto kInformation = "AOI";
+    constexpr auto kTheProgramItself = "fs-organizer";
+    constexpr auto kTheManual = "manual";
     const QString kSeparator = QString::fromUtf8(" · ");
+
+    [[nodiscard]] QString WhatTheManualStateMeans(const ManualState state)
+    {
+        switch (state)
+        {
+        case ManualState::NotHere: return DocumentsViewModel::tr("not on this machine yet");
+        case ManualState::Fetching: return DocumentsViewModel::tr("coming down…");
+        case ManualState::Failed: return DocumentsViewModel::tr("it did not come down");
+        case ManualState::Here: break;
+        }
+
+        return {};
+    }
 
     [[nodiscard]] QString WhatTheTypeMeans(const std::string& type)
     {
@@ -220,6 +236,7 @@ DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
                                        Session& session,
                                        BackgroundRunner& runner,
                                        DocumentIndexCache& cache,
+                                       ManualSource& manual,
                                        const Clock& clock,
                                        QObject* parent)
     : QObject(parent),
@@ -228,8 +245,101 @@ DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
       session_(session),
       runner_(runner),
       cache_(cache),
+      manual_(manual),
       clock_(clock)
 {
+    manual_.AddObserver(this);
+}
+
+DocumentsViewModel::~DocumentsViewModel()
+{
+    manual_.RemoveObserver(this);
+}
+
+void DocumentsViewModel::TheInterfaceSpeaks(const std::string& language)
+{
+    language_ = ManualLanguageFor(language);
+
+    if (manualState_ != ManualState::Fetching)
+    {
+        manualState_ = manual_.TheManualIsHere(language_) ? ManualState::Here : ManualState::NotHere;
+        manualFailure_.clear();
+    }
+
+    emit TheManualChanged();
+}
+
+ManualState DocumentsViewModel::TheManualIs() const
+{
+    return manualState_;
+}
+
+QString DocumentsViewModel::WhatHappenedToTheManual() const
+{
+    return manualFailure_;
+}
+
+void DocumentsViewModel::FetchTheManual()
+{
+    if (manualState_ == ManualState::Fetching)
+    {
+        return;
+    }
+
+    if (manual_.TheManualIsHere(language_))
+    {
+        manualState_ = ManualState::Here;
+        manualFailure_.clear();
+
+        emit TheManualChanged();
+
+        return;
+    }
+
+    manualState_ = ManualState::Fetching;
+    manualFailure_.clear();
+
+    emit TheManualChanged();
+
+    manual_.FetchTheManual(language_);
+}
+
+void DocumentsViewModel::OnManualFetched(const bool ok, const std::filesystem::path& file, const std::string& error)
+{
+    static_cast<void>(file);
+
+    manualState_ = ok ? ManualState::Here : ManualState::Failed;
+    manualFailure_ = ok ? QString() : QString::fromStdString(error);
+
+    emit TheManualChanged();
+}
+
+bool DocumentsViewModel::ItIsTheManual(const DocumentLine& line) const
+{
+    return line.addon == kTheProgramItself && AsUtf8(line.document) == kTheManual;
+}
+
+DocumentLine DocumentsViewModel::TheManualLine() const
+{
+    DocumentLine line{.name = tr("Manual", "the user manual"),
+                      .detail = WhatTheManualStateMeans(manualState_),
+                      .caption = tr("FS Organizer manual"),
+                      .addon = kTheProgramItself,
+                      .document = PathFromUtf8(kTheManual),
+                      .file = manual_.WhereTheManualWouldBe(language_),
+                      .kind = DocumentKind::Document};
+
+    line.favourite = ItIsAFavourite(line);
+
+    return line;
+}
+
+DocumentGroup DocumentsViewModel::TheManualGroup() const
+{
+    DocumentGroup group{.name = QStringLiteral("FS Organizer")};
+    group.lines.push_back(TheManualLine());
+
+    return group;
 }
 
 void DocumentsViewModel::ShowWhatWasKept()
@@ -541,6 +651,11 @@ DocumentGroup DocumentsViewModel::TheFavouritesAmong(const std::vector<DocumentG
 std::vector<DocumentGroup> DocumentsViewModel::GroupsOf(const DocumentPanel panel) const
 {
     std::vector<DocumentGroup> groups = panel == DocumentPanel::Documents ? TheDocuments() : TheCharts();
+
+    if (panel == DocumentPanel::Documents)
+    {
+        groups.insert(groups.begin(), TheManualGroup());
+    }
 
     DocumentGroup favourites = TheFavouritesAmong(groups);
 
