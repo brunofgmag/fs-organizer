@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.54.3](https://github.com/brunofgmag/fs-organizer/compare/v0.54.2...v0.54.3) (2026-08-21)
+
+
+* publish the release from main with its assets ([#170](https://github.com/brunofgmag/fs-organizer/issues/170)) ([f9b6ff6](https://github.com/brunofgmag/fs-organizer/commit/f9b6ff6acf34ecf7b0c4c6365273d66a0790f086))
+
 ## [0.54.2](https://github.com/brunofgmag/fs-organizer/compare/v0.54.1...v0.54.2) (2026-08-18)
 
 
