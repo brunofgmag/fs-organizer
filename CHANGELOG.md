@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.54.4](https://github.com/brunofgmag/fs-organizer/compare/v0.54.3...v0.54.4) (2026-08-29)
+
+
+* take deletion off the UI thread and settle the conflict default ([#174](https://github.com/brunofgmag/fs-organizer/issues/174)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+
+
+### Bug Fixes
+
+* **view:** default the conflict dialog to the newer side ([9d23801](https://github.com/brunofgmag/fs-organizer/commit/9d23801bda82811a38cceccc0edb9211806d729c)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+* **viewmodel:** run the deletion off the UI thread ([fa57224](https://github.com/brunofgmag/fs-organizer/commit/fa572245262cb6463b327e5d51ab6b6837a4d586)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+* **view:** reword the disabling notice in the delete dialog ([a25e850](https://github.com/brunofgmag/fs-organizer/commit/a25e850d5532eac43a9128c3c7de8a4ea805315b)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+
 ## [0.54.3](https://github.com/brunofgmag/fs-organizer/compare/v0.54.2...v0.54.3) (2026-08-21)
 
 
