@@ -128,6 +128,20 @@ namespace
         return manifest.packageVersion.empty() ? QObject::tr("(no version in the manifest)")
                                                : QString::fromStdString(manifest.packageVersion);
     }
+
+    QPushButton* TheNewerSideAmong(QPushButton* provenance, QPushButton* library, const ConflictDetails& details)
+    {
+        switch (
+            HowTheVersionCompares(details.provenance.manifest.packageVersion, details.library.manifest.packageVersion))
+        {
+        case VersionOrder::Newer: return provenance;
+        case VersionOrder::Older: return library;
+        case VersionOrder::TheSame:
+        case VersionOrder::NoOneCanTell: break;
+        }
+
+        return nullptr;
+    }
 }
 
 ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) : QDialog(parent)
@@ -165,7 +179,19 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     QPushButton* keepLibrary = buttons->addButton(
         details.ourLinkWasReplaced ? tr("Put the link back over the library copy") : tr("Keep the library one"),
         QDialogButtonBox::AcceptRole);
-    keepLibrary->setDefault(true);
+
+    QPushButton* cancel = buttons->button(QDialogButtonBox::Cancel);
+    for (QPushButton* button : {cancel, keepDestination, keepLibrary})
+    {
+        button->setAutoDefault(false);
+    }
+
+    QPushButton* answersTheEnterKey = TheNewerSideAmong(keepDestination, keepLibrary, details);
+    if (answersTheEnterKey == nullptr)
+    {
+        answersTheEnterKey = cancel;
+    }
+    answersTheEnterKey->setDefault(true);
 
     connect(keepLibrary, &QPushButton::clicked, this,
             [this]

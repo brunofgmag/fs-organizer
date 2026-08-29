@@ -161,6 +161,10 @@
         <translation>Medindo o que você selecionou…</translation>
     </message>
     <message>
+        <source>Deleting what you selected…</source>
+        <translation>Excluindo o que você selecionou…</translation>
+    </message>
+    <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="268"/>
         <source>Check the selected ones</source>
         <translation>Marcar selecionados</translation>
@@ -1649,8 +1653,8 @@ Também existe na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="211"/>
-        <source>Turning it off is part of this, and it happens because you asked for the deletion:</source>
-        <translation>Desabilitar faz parte disto, e acontece porque você pediu a exclusão:</translation>
+        <source>The following addons will be deleted and disabled:</source>
+        <translation>Os seguintes addons serão excluídos e desabilitados:</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="219"/>

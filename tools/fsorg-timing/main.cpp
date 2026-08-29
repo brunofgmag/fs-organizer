@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
         const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                               sizes);
-        DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
+        DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
         const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();

@@ -302,7 +302,7 @@ int main(int argc, char* argv[])
 
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                           sizes);
-    DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes);
+    DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
                      [&packages, &session]

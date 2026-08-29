@@ -193,7 +193,7 @@ namespace
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
         DeletionService deletionService{filesystemProbe, files,        sidecars, linking,
                                         classifier,      processProbe, log,      sizes};
-        DeletionViewModel deletion{session, service, deletionService, sizes};
+        DeletionViewModel deletion{session, service, deletionService, sizes, runner};
         ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
                             Verification::ByStructure};
         ImportService importService{engine,  processProbe, filesystemProbe,   catalog, files, sidecars,
