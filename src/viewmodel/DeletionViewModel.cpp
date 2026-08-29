@@ -1,6 +1,7 @@
 #include "viewmodel/DeletionViewModel.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "domain/tree/AddonTree.h"
 #include "viewmodel/SimulatorText.h"
@@ -9,12 +10,14 @@ DeletionViewModel::DeletionViewModel(Session& session,
                                      ProfileService& profileService,
                                      const DeletionService& service,
                                      SizeService& sizes,
+                                     BackgroundRunner& runner,
                                      QObject* parent)
     : QObject(parent),
       session_(session),
       profileService_(profileService),
       service_(service),
       sizes_(sizes),
+      runner_(runner),
       caller_(sizes.NewCaller())
 {
 }
@@ -75,18 +78,38 @@ void DeletionViewModel::PlanToDelete(const std::vector<const TreeNode*>& nodes)
 
 void DeletionViewModel::Delete(const DeletionPlan& plan, const DeletionRoute route)
 {
-    const std::vector<DeletionResult> results = service_.Delete(EveryProfile(), plan, route);
-
-    if (std::ranges::any_of(results,
-                            [](const DeletionResult& result)
-                            {
-                                return Succeeded(result.result);
-                            }))
+    if (deleting_)
     {
-        profileService_.ForgetUndo();
+        return;
     }
 
-    emit Deleted(results, route);
+    deleting_ = true;
+
+    emit Deleting();
+
+    const std::vector<SimulatorProfile> everyProfile = EveryProfile();
+    const auto results = std::make_shared<std::vector<DeletionResult>>();
+
+    runner_.Run(
+        [this, everyProfile, plan, route, results]
+        {
+            *results = service_.Delete(everyProfile, plan, route);
+        },
+        [this, route, results]
+        {
+            deleting_ = false;
+
+            if (std::ranges::any_of(*results,
+                                    [](const DeletionResult& result)
+                                    {
+                                        return Succeeded(result.result);
+                                    }))
+            {
+                profileService_.ForgetUndo();
+            }
+
+            emit Deleted(*results, route);
+        });
 }
 
 QString DeletionViewModel::LabelOfProfile(const std::string& profileId) const

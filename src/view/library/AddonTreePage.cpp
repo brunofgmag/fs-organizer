@@ -246,6 +246,12 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                 emit StatusChanged(tr("Measuring what you selected…"));
             });
 
+    connect(&deletion_, &DeletionViewModel::Deleting, this,
+            [this]
+            {
+                emit StatusChanged(tr("Deleting what you selected…"));
+            });
+
     connect(&deletion_, &DeletionViewModel::Planned, this, &AddonTreePage::OfferToDelete);
     connect(&deletion_, &DeletionViewModel::Deleted, this, &AddonTreePage::OnDeleted);
     connect(&importViewModel_, &ImportViewModel::GaveBack, this, &AddonTreePage::OnGaveBack);

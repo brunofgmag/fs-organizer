@@ -157,7 +157,7 @@ namespace
         Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
-        DeletionViewModel viewModel{session, profiles, service, sizes};
+        DeletionViewModel viewModel{session, profiles, service, sizes, runner};
     };
 
     void BuryAFileUnder(InMemoryFileSystem& fileSystem, const std::filesystem::path& folder, const std::size_t reach)

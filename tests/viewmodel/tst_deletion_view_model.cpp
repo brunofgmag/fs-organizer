@@ -45,6 +45,7 @@ namespace
         static void ADeletionThatTookNothingAwayLeavesTheUndoWhereItWas();
         static void ACategoryInTheSelectionIsCountedApartAndTakesNoAddonWithIt();
         static void AnAddonEnabledInAProfileThatIsNotTheActiveOneReachesTheScreen();
+        static void TheDeletionLeavesTheAskingThreadFreeWhileItRuns();
     };
 }
 
@@ -189,7 +190,7 @@ namespace
         Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
-        DeletionViewModel viewModel{session, profiles, service, sizes};
+        DeletionViewModel viewModel{session, profiles, service, sizes, runner};
     };
 
     DeletionPlan LastPlan(const QSignalSpy& spy)
@@ -358,6 +359,33 @@ void DeletionViewModelTest::AnAddonEnabledInAProfileThatIsNotTheActiveOneReaches
 
     QCOMPARE(plan.addons.front().enabled.size(), std::size_t{1});
     QCOMPARE(plan.addons.front().enabled.front().profileId, std::string{"msfs2020"});
+}
+
+void DeletionViewModelTest::TheDeletionLeavesTheAskingThreadFreeWhileItRuns()
+{
+    Fixture f;
+
+    const DeletionPlan plan = PlanFor(f.viewModel, {f.Node(kCrj)});
+    f.runner.defer = true;
+
+    const QSignalSpy deleting(&f.viewModel, &DeletionViewModel::Deleting);
+    const QSignalSpy deleted(&f.viewModel, &DeletionViewModel::Deleted);
+
+    f.viewModel.Delete(plan, DeletionRoute::Permanently);
+
+    QVERIFY2(f.runner.Pending(), "the deletion ran on the thread that asked, which in the app is the UI thread");
+    QCOMPARE(deleting.size(), 1);
+    QVERIFY(deleted.isEmpty());
+    QVERIFY(f.fileSystem.Exists(kCrj));
+
+    f.viewModel.Delete(plan, DeletionRoute::Permanently);
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(deleted.size(), 1);
+    QVERIFY(!f.fileSystem.Exists(kCrj));
 }
 
 QTEST_MAIN(DeletionViewModelTest)
