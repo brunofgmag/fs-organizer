@@ -28,6 +28,8 @@ namespace
         static void AReplacedLinkIsToldApartFromTwoCopiesThatMerelyShareAName();
         static void TheTakeBackIsOfferedWhenTheVersionsDoNotTellTheCopiesApart();
         static void AnOlderCopyInTheDestinationIsNotOfferedForTakingBack();
+        static void TheNewerSideAnswersTheEnterKey();
+        static void CancelAnswersTheEnterKeyWhenTheVersionsDoNotTellTheSidesApart();
     };
 
     const std::filesystem::path kOtherProgramsFolder = "C:/Addon Manager/Aircraft/aerosoft-crj";
@@ -193,6 +195,38 @@ void ConflictDialogTest::AnOlderCopyInTheDestinationIsNotOfferedForTakingBack()
     QVERIFY2(takeItBack->isHidden(), "carrying an older copy over a newer one is not a gesture worth offering");
     QVERIFY2(ButtonContaining(dialog, QStringLiteral("Put the link back")) != nullptr,
              "with the take back gone there has to be a way out that is not the close button");
+}
+
+void ConflictDialogTest::TheNewerSideAnswersTheEnterKey()
+{
+    const ConflictDialog newerOutside(ALinkSomethingReplaced("2.0.0", "1.0.0"));
+    QPushButton* takeItBack = ButtonContaining(newerOutside, QStringLiteral("into the library"));
+    QVERIFY(takeItBack != nullptr);
+    QVERIFY2(takeItBack->isDefault(), "the destination copy is newer, so Enter has to land on bringing it in");
+
+    const ConflictDialog newerInside(ALinkSomethingReplaced("1.0.0", "2.0.0"));
+    QPushButton* putTheLinkBack = ButtonContaining(newerInside, QStringLiteral("Put the link back"));
+    QVERIFY(putTheLinkBack != nullptr);
+    QVERIFY2(putTheLinkBack->isDefault(), "the library copy is newer, so Enter has to land on putting the link back");
+}
+
+void ConflictDialogTest::CancelAnswersTheEnterKeyWhenTheVersionsDoNotTellTheSidesApart()
+{
+    ConflictDialog dialog(ALinkSomethingReplaced("1.0.0", "1.0.0"));
+    dialog.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+
+    QPushButton* takeItBack = ButtonContaining(dialog, QStringLiteral("into the library"));
+    QPushButton* putTheLinkBack = ButtonContaining(dialog, QStringLiteral("Put the link back"));
+    QVERIFY(takeItBack != nullptr && putTheLinkBack != nullptr);
+    QVERIFY2(!takeItBack->isDefault() && !putTheLinkBack->isDefault(),
+             "with nothing saying which side is newer, Enter picking a side quarantines a copy the user never chose "
+             "to lose");
+    QPushButton* cancel = ButtonContaining(dialog, QStringLiteral("Cancel"));
+    QVERIFY(cancel != nullptr);
+    QVERIFY2(cancel->isDefault(),
+             "the button box elects the first accept-role button on show unless something else is the default, so "
+             "leaving no default hands Enter right back to a destructive side");
 }
 
 QTEST_MAIN(ConflictDialogTest)
