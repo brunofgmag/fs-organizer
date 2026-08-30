@@ -13,6 +13,7 @@
 #include "application/SizeService.h"
 #include "application/model/DeletionPlan.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "domain/model/TreeNode.h"
 
 Q_DECLARE_METATYPE(DeletionPlan)
@@ -64,8 +65,8 @@ private:
     const DeletionService& service_;
     SizeService& sizes_;
     BackgroundRunner& runner_;
+    GuardedRunner deleting_;
     MeasurementCaller caller_;
-    bool deleting_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_DELETION_VIEW_MODEL_H

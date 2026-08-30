@@ -708,6 +708,11 @@ fsorg_add_qt_test(fsorg-failure-text-tests failure-text
         tests/viewmodel/tst_failure_text.cpp)
 target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-guarded-runner-tests guarded-runner
+        tests/viewmodel/tst_guarded_runner.cpp
+        tests/doubles/InlineBackgroundRunner.h)
+target_link_libraries(fsorg-guarded-runner-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-size-across-screens-tests size-across-screens
         tests/viewmodel/tst_size_across_screens.cpp
         tests/doubles/StartupOverFakes.h

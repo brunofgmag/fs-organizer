@@ -18,6 +18,7 @@ DeletionViewModel::DeletionViewModel(Session& session,
       service_(service),
       sizes_(sizes),
       runner_(runner),
+      deleting_(runner),
       caller_(sizes.NewCaller())
 {
 }
@@ -101,27 +102,20 @@ void DeletionViewModel::PlanToDelete(const std::vector<const TreeNode*>& nodes)
 
 void DeletionViewModel::Delete(const DeletionPlan& plan, const DeletionRoute route)
 {
-    if (deleting_)
-    {
-        return;
-    }
-
-    deleting_ = true;
-
-    emit Deleting();
-
     const std::vector<SimulatorProfile> everyProfile = EveryProfile();
     const auto results = std::make_shared<std::vector<DeletionResult>>();
 
-    runner_.Run(
+    deleting_.Run(
+        [this]
+        {
+            emit Deleting();
+        },
         [this, everyProfile, plan, route, results]
         {
             *results = service_.Delete(everyProfile, plan, route);
         },
         [this, route, results]
         {
-            deleting_ = false;
-
             if (std::ranges::any_of(*results,
                                     [](const DeletionResult& result)
                                     {

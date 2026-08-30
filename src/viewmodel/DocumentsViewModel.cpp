@@ -243,10 +243,10 @@ DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
       documents_(documents),
       scenery_(scenery),
       session_(session),
-      runner_(runner),
       cache_(cache),
       manual_(manual),
-      clock_(clock)
+      clock_(clock),
+      reading_(runner)
 {
     manual_.AddObserver(this);
 }
@@ -405,8 +405,6 @@ const std::vector<DocumentsOfAnAddon>& DocumentsViewModel::WhatToShow() const
 
 void DocumentsViewModel::TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found, const bool stopped)
 {
-    reading_ = false;
-
     emit ReadingChanged();
 
     if (stopped)
@@ -435,16 +433,10 @@ void DocumentsViewModel::TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found,
 
 void DocumentsViewModel::ReadTheLibrary()
 {
-    if (reading_)
+    if (reading_.Busy())
     {
         return;
     }
-
-    reading_ = true;
-    stop_ = false;
-    arriving_.clear();
-
-    emit ReadingChanged();
 
     const std::vector<Library> libraries = session_.Profile().libraries;
     const std::vector<AddonToRead> addons = SceneryService::AddonsOf(session_.Profile(), session_.Snapshot());
@@ -452,7 +444,14 @@ void DocumentsViewModel::ReadTheLibrary()
     auto found = std::make_shared<std::vector<DocumentsOfAnAddon>>();
     auto stopped = std::make_shared<bool>(false);
 
-    runner_.Run(
+    reading_.Run(
+        [this]
+        {
+            stop_ = false;
+            arriving_.clear();
+
+            emit ReadingChanged();
+        },
         [this, libraries, addons, found, stopped]
         {
             *found = WhatEachAddonCarries(libraries, addons, *stopped);
@@ -470,7 +469,7 @@ void DocumentsViewModel::Stop()
 
 bool DocumentsViewModel::Reading() const
 {
-    return reading_;
+    return reading_.Busy();
 }
 
 bool DocumentsViewModel::ItWasRead() const

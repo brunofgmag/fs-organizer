@@ -49,13 +49,13 @@ BisectionViewModel::BisectionViewModel(BisectionService& bisection,
                                        Session& session,
                                        BackgroundRunner& runner,
                                        QObject* parent)
-    : QObject(parent), bisection_(bisection), session_(session), runner_(runner)
+    : QObject(parent), bisection_(bisection), session_(session), reading_(runner), mutating_(runner)
 {
 }
 
 void BisectionViewModel::Show()
 {
-    if (reading_ || mutating_)
+    if (Working())
     {
         return;
     }
@@ -73,11 +73,9 @@ void BisectionViewModel::Show()
     const SimulatorProfile profile = session_.Profile();
     const auto found = std::make_shared<BisectionReport>();
 
-    reading_ = true;
-
     emit Changed();
 
-    runner_.Run(
+    reading_.Run(
         [this, profile, snapshot, found]
         {
             *found = bisection_.WhatWasInterrupted(profile.id).has_value()
@@ -86,7 +84,6 @@ void BisectionViewModel::Show()
         },
         [this, found, read = std::move(enabled)]
         {
-            reading_ = false;
             readFor_ = read;
 
             Take(*found);
@@ -95,24 +92,20 @@ void BisectionViewModel::Show()
 
 void BisectionViewModel::RunTheProcedure(std::function<BisectionReport()> work)
 {
-    if (reading_ || mutating_)
+    if (Working())
     {
         return;
     }
 
-    mutating_ = true;
-
     const auto found = std::make_shared<BisectionReport>();
 
-    runner_.Run(
+    mutating_.Run(
         [work = std::move(work), found]
         {
             *found = work();
         },
         [this, found]
         {
-            mutating_ = false;
-
             Take(*found);
         });
 }
@@ -128,7 +121,7 @@ void BisectionViewModel::Begin()
 
 void BisectionViewModel::Answer(const BisectionAnswer answer)
 {
-    if (reading_ || mutating_)
+    if (Working())
     {
         return;
     }
@@ -145,7 +138,7 @@ void BisectionViewModel::Answer(const BisectionAnswer answer)
 
 void BisectionViewModel::Refine()
 {
-    if (reading_ || mutating_)
+    if (Working())
     {
         return;
     }
@@ -273,9 +266,14 @@ bool BisectionViewModel::AProcedureWasInterrupted() const
     return bisection_.WhatWasInterrupted(session_.Profile().id).has_value();
 }
 
+bool BisectionViewModel::Working() const
+{
+    return reading_.Busy() || mutating_.Busy();
+}
+
 bool BisectionViewModel::ReadingWhatIsOn() const
 {
-    return reading_;
+    return reading_.Busy();
 }
 
 bool BisectionViewModel::ItIsRunning() const

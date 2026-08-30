@@ -15,7 +15,7 @@ OptionsViewModel::OptionsViewModel(Session& session,
                                    BackgroundRunner& runner,
                                    const SessionNotifier& notifier,
                                    QObject* parent)
-    : QObject(parent), session_(session), service_(service), runner_(runner)
+    : QObject(parent), session_(session), service_(service), registering_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &OptionsViewModel::Changed);
 }
@@ -356,25 +356,16 @@ bool OptionsViewModel::WouldAcceptLibrary(const std::filesystem::path& path) con
 
 void OptionsViewModel::RegisterLibrary(const std::filesystem::path& path)
 {
-    if (registering_)
-    {
-        return;
-    }
-
-    registering_ = true;
-
     auto registration = std::make_shared<Session::LibraryRegistration>();
     registration->profile = session_.Profile();
 
-    runner_.Run(
+    registering_.Run(
         [this, registration, path]
         {
             *registration = session_.RegisterLibraryOn(std::move(registration->profile), path);
         },
         [this, registration, path]
         {
-            registering_ = false;
-
             const LibraryReport report = registration->report;
 
             session_.AdoptTheRegistration(std::move(*registration));

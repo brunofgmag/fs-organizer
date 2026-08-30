@@ -13,6 +13,7 @@
 
 #include "application/CoverageService.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "application/SceneryService.h"
 #include "application/Session.h"
 #include "domain/model/TreeNode.h"
@@ -118,8 +119,7 @@ private:
     SceneryService& scenery_;
     Session& session_;
     const Clock& clock_;
-    BackgroundRunner& runner_;
-    bool checking_ = false;
+    GuardedRunner checking_;
     std::atomic<bool> stopChecking_ = false;
     std::vector<AddonToRead> waiting_;
     std::vector<CoverageLine> conflicts_;

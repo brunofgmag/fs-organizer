@@ -14,6 +14,7 @@
 #include "application/Session.h"
 #include "application/model/UpdateMode.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/LibraryId.h"
 #include "domain/tree/StructureAdoption.h"
@@ -125,9 +126,8 @@ private:
 
     Session& session_;
     ProfileService& service_;
-    BackgroundRunner& runner_;
+    GuardedRunner registering_;
     std::string shown_;
-    bool registering_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_OPTIONS_VIEW_MODEL_H

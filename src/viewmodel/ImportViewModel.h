@@ -11,6 +11,7 @@
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 
 class QThread;
 
@@ -97,9 +98,8 @@ private:
     ProfileService& profileService_;
     const ProcessProbe& probe_;
     Session& session_;
-    BackgroundRunner& runner_;
-    bool running_ = false;
-    bool preparingDetails_ = false;
+    GuardedRunner running_;
+    GuardedRunner preparingDetails_;
     OperationKind step_ = OperationKind::ImportCopyToStaging;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};
