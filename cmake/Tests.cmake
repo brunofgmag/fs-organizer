@@ -779,8 +779,7 @@ fsorg_add_qt_test(fsorg-legacy-import-view-model-tests legacy-import-view-model
         tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
         tests/doubles/InMemoryFileSystem.h
-        tests/doubles/InlineBackgroundRunner.h
-        tests/doubles/RecordingSessionObserver.h)
+        tests/doubles/InlineBackgroundRunner.h)
 target_link_libraries(fsorg-legacy-import-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
@@ -1324,8 +1323,7 @@ if (WIN32)
             tests/doubles/FakeProcessProbe.h
             tests/doubles/FakeSettingsRepository.h
             tests/doubles/InMemoryFileSystem.h
-            tests/doubles/InlineBackgroundRunner.h
-            tests/doubles/RecordingSessionObserver.h)
+            tests/doubles/InlineBackgroundRunner.h)
     target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
 
