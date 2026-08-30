@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.54.6](https://github.com/brunofgmag/fs-organizer/compare/v0.54.5...v0.54.6) (2026-08-30)
+
+
+* read the package list again, and finish taking the gestures off the UI thread ([#178](https://github.com/brunofgmag/fs-organizer/issues/178)) ([46e5c32](https://github.com/brunofgmag/fs-organizer/commit/46e5c329068879a75d4dc33b9db930865b2eb08d))
+
+
+### Bug Fixes
+
+* **sim:** read the package list again instead of trusting its timestamp ([bcdaa3c](https://github.com/brunofgmag/fs-organizer/commit/bcdaa3c3b9039404ab610a8b7f042b958b2c09fe)) ([46e5c32](https://github.com/brunofgmag/fs-organizer/commit/46e5c329068879a75d4dc33b9db930865b2eb08d))
+
+
+### Performance Improvements
+
+* **legacy:** import from the old program in a worker ([620fd0f](https://github.com/brunofgmag/fs-organizer/commit/620fd0f4becbe0f69635d294ae163cf661dfeb61)) ([46e5c32](https://github.com/brunofgmag/fs-organizer/commit/46e5c329068879a75d4dc33b9db930865b2eb08d))
+
 ## [0.54.5](https://github.com/brunofgmag/fs-organizer/compare/v0.54.4...v0.54.5) (2026-08-30)
 
 
