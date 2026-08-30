@@ -708,6 +708,11 @@ fsorg_add_qt_test(fsorg-failure-text-tests failure-text
         tests/viewmodel/tst_failure_text.cpp)
 target_link_libraries(fsorg-failure-text-tests PRIVATE fsorg-viewmodel)
 
+fsorg_add_qt_test(fsorg-guarded-runner-tests guarded-runner
+        tests/viewmodel/tst_guarded_runner.cpp
+        tests/doubles/InlineBackgroundRunner.h)
+target_link_libraries(fsorg-guarded-runner-tests PRIVATE fsorg-viewmodel)
+
 fsorg_add_qt_test(fsorg-size-across-screens-tests size-across-screens
         tests/viewmodel/tst_size_across_screens.cpp
         tests/doubles/StartupOverFakes.h
@@ -774,8 +779,7 @@ fsorg_add_qt_test(fsorg-legacy-import-view-model-tests legacy-import-view-model
         tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
         tests/doubles/InMemoryFileSystem.h
-        tests/doubles/InlineBackgroundRunner.h
-        tests/doubles/RecordingSessionObserver.h)
+        tests/doubles/InlineBackgroundRunner.h)
 target_link_libraries(fsorg-legacy-import-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-options-view-model-tests options-view-model
@@ -985,7 +989,9 @@ target_link_libraries(fsorg-content-list-locations-tests PRIVATE fsorg-infrastru
 
 fsorg_add_qt_test(fsorg-content-xml-packages-tests content-xml-packages
         tests/infrastructure/sim/tst_content_xml_packages.cpp
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeSimulatorPackages.h
+        tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/StdFilesystemProbe.h
         tests/support/TempFiles.h)
@@ -1317,8 +1323,7 @@ if (WIN32)
             tests/doubles/FakeProcessProbe.h
             tests/doubles/FakeSettingsRepository.h
             tests/doubles/InMemoryFileSystem.h
-            tests/doubles/InlineBackgroundRunner.h
-            tests/doubles/RecordingSessionObserver.h)
+            tests/doubles/InlineBackgroundRunner.h)
     target_link_libraries(fsorg-legacy-import-dialog-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-legacy-import-dialog-tests legacy-import-dialog)
 

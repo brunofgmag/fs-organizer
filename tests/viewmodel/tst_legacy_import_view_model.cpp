@@ -20,7 +20,6 @@
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
-#include "tests/doubles/RecordingSessionObserver.h"
 #include "viewmodel/LegacyImportViewModel.h"
 
 namespace
@@ -122,13 +121,13 @@ namespace
                                    classifier, processProbe,    log,   LinkType::Junction};
         FakeSettingsRepository settings{SettingsWith(Profile())};
         InlineBackgroundRunner runner;
-        RecordingSessionObserver observer;
-        Session session{service, organizer, settings, settings.stored, processProbe, runner, observer};
+        SessionNotifier notifier;
+        Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakeLegacyConfigSource legacy;
         LegacyConfigImporter importer{legacy, filesystemProbe};
         FakePresetRepository presetRepository;
         PresetService presets{presetRepository, service, startup.service};
-        LegacyImportViewModel viewModel{session, importer, presets};
+        LegacyImportViewModel viewModel{session, notifier, importer, presets, runner};
     };
 }
 

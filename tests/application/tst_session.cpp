@@ -61,7 +61,7 @@ namespace
         static void RemovingAProfileThatIsNotInUseLeavesTheDiskAlone();
         static void TheLastProfileIsNeverRemovedAndNothingIsWritten();
         static void ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped();
-        static void ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain();
+        static void ImportingALegacyLibraryScansInAWorkerAndTheTreeLandsWithIt();
         static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
         static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
         static void AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgain();
@@ -83,6 +83,16 @@ namespace
     constexpr auto kAircrafts = "D:/MSFS 2024/Aircrafts";
     constexpr auto kSceneries = "D:/MSFS 2024/Sceneries";
     constexpr auto kAddon = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+
+    LegacyImportReport ImportLegacy(Session& session, const LegacyImportRequest& request)
+    {
+        Session::LegacyImport imported = session.ImportLegacyOn(session.Profile(), request);
+        const LegacyImportReport report = imported.report;
+
+        session.AdoptTheLegacyImport(std::move(imported));
+
+        return report;
+    }
 
     TreeNode AddonNode(const std::filesystem::path& path)
     {
@@ -640,7 +650,7 @@ void SessionTest::ImportingALegacyLibraryRegistersItSavesTheProfileAndReadsTheDi
     f.catalog.SetTree(kExtraLibrary, TreeNode{});
 
     const LegacyImportReport report =
-        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
+        ImportLegacy(f.session, LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
 
     QCOMPARE(report.librariesRegistered, std::size_t{1});
     QVERIFY(report.refused.empty());
@@ -657,7 +667,7 @@ void SessionTest::ImportingALegacyCategoryDeclaresTheFolderThatIsAlreadyThere()
     const std::vector<std::string> before = DescribeTheDisk(f.fileSystem);
 
     const LegacyImportReport report =
-        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {}, .categories = {kSceneries}});
+        ImportLegacy(f.session, LegacyImportRequest{.libraryRoots = {}, .categories = {kSceneries}});
 
     QCOMPARE(report.categoriesDeclared, std::size_t{1});
     QVERIFY(f.fileSystem.IsFile(std::filesystem::path(kSceneries) / ".fsorg-category"));
@@ -671,7 +681,7 @@ void SessionTest::ALegacyLibraryInsideOneAlreadyRegisteredIsRefusedAndReported()
     f.session.ShowActiveProfile();
 
     const LegacyImportReport report =
-        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {kAircrafts}, .categories = {}});
+        ImportLegacy(f.session, LegacyImportRequest{.libraryRoots = {kAircrafts}, .categories = {}});
 
     QCOMPARE(report.librariesRegistered, std::size_t{0});
     QCOMPARE(report.refused.size(), std::size_t{1});
@@ -684,7 +694,7 @@ void SessionTest::ImportingNothingSavesNothingAndScansNothing()
     Fixture f;
     f.session.ShowActiveProfile();
 
-    const LegacyImportReport report = f.session.ImportLegacy({});
+    const LegacyImportReport report = ImportLegacy(f.session, {});
 
     QCOMPARE(report.librariesRegistered, std::size_t{0});
     QCOMPARE(report.categoriesDeclared, std::size_t{0});
@@ -723,14 +733,14 @@ void SessionTest::ALegacyCategoryThatIsRefusedIsReportedInsteadOfSilentlyDropped
     f.session.ShowActiveProfile();
 
     const LegacyImportReport report =
-        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {}, .categories = {kCommunity}});
+        ImportLegacy(f.session, LegacyImportRequest{.libraryRoots = {}, .categories = {kCommunity}});
 
     QCOMPARE(report.categoriesDeclared, std::size_t{0});
     QCOMPARE(report.refused.size(), std::size_t{1});
     QCOMPARE(ComparablePath(report.refused.front()), ComparablePath(kCommunity));
 }
 
-void SessionTest::ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsksAgain()
+void SessionTest::ImportingALegacyLibraryScansInAWorkerAndTheTreeLandsWithIt()
 {
     Fixture f;
     f.session.ShowActiveProfile();
@@ -738,11 +748,19 @@ void SessionTest::ImportingALegacyLibraryLeavesItsTreeReadableBeforeTheCallerAsk
     f.catalog.SetTree(kExtraLibrary, TreeNode{});
     f.runner.defer = true;
 
-    const LegacyImportReport report =
-        f.session.ImportLegacy(LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
+    Session::LegacyImport imported = f.session.ImportLegacyOn(
+        f.session.Profile(), LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
 
-    QCOMPARE(report.librariesRegistered, std::size_t{1});
-    QVERIFY2(!f.runner.Pending(), "the import left the scan hanging on the runner");
+    QCOMPARE(imported.report.librariesRegistered, std::size_t{1});
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+
+    f.session.AdoptTheLegacyImport(std::move(imported));
+
+    QVERIFY2(f.runner.Pending(), "the legacy import scanned on the calling thread instead of the worker");
+    QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
+
+    f.runner.Finish();
+
     QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{2});
 }
 

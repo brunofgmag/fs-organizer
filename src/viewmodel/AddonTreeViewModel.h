@@ -13,6 +13,7 @@
 #include "application/DependencyReport.h"
 #include "application/ProfileService.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "application/Session.h"
 #include "application/SizeService.h"
 #include "domain/ports/SimulatorPackages.h"
@@ -160,8 +161,6 @@ private:
 
     void ApplyResults(const LinkBatchReport& report);
 
-    void RunGuarded(std::function<void()> work, std::function<void()> done);
-
     void RunTheBatch(std::shared_ptr<ToggleWork> work);
 
     Session& session_;
@@ -169,9 +168,8 @@ private:
     AddonTreeModel& model_;
     const SimulatorPackages& packages_;
     SizeService& sizes_;
-    BackgroundRunner& runner_;
     MeasurementCaller caller_;
-    bool toggling_ = false;
+    GuardedRunner toggling_;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H

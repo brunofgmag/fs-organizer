@@ -14,7 +14,7 @@ PresetViewModel::PresetViewModel(Session& session,
                                  ProfileService& profiles,
                                  BackgroundRunner& runner,
                                  QObject* parent)
-    : QObject(parent), session_(session), service_(service), profiles_(profiles), runner_(runner)
+    : QObject(parent), session_(session), service_(service), profiles_(profiles), applying_(runner)
 {
 }
 
@@ -282,26 +282,19 @@ bool PresetViewModel::CanUndo() const
 
 void PresetViewModel::UndoLastBatch()
 {
-    if (applying_)
-    {
-        return;
-    }
-
-    applying_ = true;
-
-    emit ApplyStarted();
-
     const auto results = std::make_shared<std::vector<LinkOperationResult>>();
 
-    runner_.Run(
+    applying_.Run(
+        [this]
+        {
+            emit ApplyStarted();
+        },
         [this, results]
         {
             *results = profiles_.UndoLastBatch();
         },
         [this, results]
         {
-            applying_ = false;
-
             session_.RefreshEntries();
 
             session_.NoteLinkResults(*results);
@@ -330,29 +323,22 @@ void PresetViewModel::ApplyReturn(const Preset& preset)
 
 void PresetViewModel::RunTheApply(const Preset& preset, std::function<PresetApplyReport(const ApplyWork&)> apply)
 {
-    if (applying_)
-    {
-        return;
-    }
-
-    applying_ = true;
-
-    emit ApplyStarted();
-
     auto work = std::make_shared<ApplyWork>();
     work->profile = session_.Profile();
     work->snapshot = session_.Snapshot();
     work->preset = preset;
 
-    runner_.Run(
+    applying_.Run(
+        [this]
+        {
+            emit ApplyStarted();
+        },
         [work, apply = std::move(apply)]
         {
             work->report = apply(*work);
         },
         [this, work]
         {
-            applying_ = false;
-
             NoteApplied(work->report);
         });
 }

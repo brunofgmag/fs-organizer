@@ -83,7 +83,15 @@ public:
 
     void ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem::path>& addonFolders);
 
-    [[nodiscard]] LegacyImportReport ImportLegacy(const LegacyImportRequest& request);
+    struct LegacyImport
+    {
+        SimulatorProfile profile{};
+        LegacyImportReport report{};
+    };
+
+    [[nodiscard]] LegacyImport ImportLegacyOn(SimulatorProfile profile, const LegacyImportRequest& request) const;
+
+    void AdoptTheLegacyImport(LegacyImport imported);
 
     void UnregisterLibrary(const LibraryId& libraryId);
 
@@ -128,8 +136,6 @@ private:
     [[nodiscard]] bool RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination);
 
     void Scan(SimulatorProfile profile);
-
-    void ScanBeforeReturning(SimulatorProfile profile);
 
     void Adopt();
 

@@ -21,6 +21,7 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
       model_(model),
       sizes_(sizes),
       runner_(runner),
+      working_(runner),
       caller_(sizes.NewCaller())
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this,
@@ -141,17 +142,15 @@ std::vector<RestoreOffer> QuarantineViewModel::WhatRestoringWouldDo(const std::v
 
 void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& items)
 {
-    if (working_ || items.empty())
+    if (items.empty())
     {
         return;
     }
 
-    working_ = true;
-
     const SimulatorProfile profile = session_.Profile();
     const auto offers = std::make_shared<std::vector<RestoreOffer>>();
 
-    runner_.Run(
+    working_.Run(
         [this, profile, items, offers]
         {
             std::vector<RestoreCheck> checks = service_.CheckRestore(profile, items);
@@ -168,8 +167,6 @@ void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& ite
         },
         [this, offers]
         {
-            working_ = false;
-
             emit RestoreOffersReady(*offers);
         });
 }
@@ -198,19 +195,17 @@ void QuarantineViewModel::Swap(const std::vector<QuarantinedItem>& items)
 void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
                                   const std::vector<QuarantinedItem>& replacing)
 {
-    if (working_ || (going.empty() && replacing.empty()))
+    if (going.empty() && replacing.empty())
     {
         return;
     }
-
-    working_ = true;
 
     const SimulatorProfile profile = session_.Profile();
     const std::vector<DestinationEntry> entries = session_.Snapshot().entries;
     const auto restored = std::make_shared<std::vector<FileOperationResult>>();
     const auto swapped = std::make_shared<std::vector<SwapResult>>();
 
-    runner_.Run(
+    working_.Run(
         [this, profile, entries, going, replacing, restored, swapped]
         {
             if (!going.empty())
@@ -227,8 +222,6 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
         },
         [this, going, replacing, restored, swapped]
         {
-            working_ = false;
-
             Show();
 
             const bool anythingCameBack = std::ranges::any_of(*restored,
@@ -261,19 +254,19 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
 
 void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
 {
-    if (working_ || items.empty())
+    if (items.empty())
     {
         return;
     }
 
-    working_ = true;
-
     const SimulatorProfile profile = session_.Profile();
     const auto results = std::make_shared<std::vector<FileOperationResult>>();
 
-    emit DiscardStarted(static_cast<int>(items.size()));
-
-    runner_.Run(
+    working_.Run(
+        [this, count = static_cast<int>(items.size())]
+        {
+            emit DiscardStarted(count);
+        },
         [this, profile, items, results]
         {
             *results =
@@ -285,8 +278,6 @@ void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
         },
         [this, results]
         {
-            working_ = false;
-
             Show();
 
             emit Discarded(*results);

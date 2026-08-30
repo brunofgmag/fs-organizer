@@ -350,14 +350,13 @@ void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem
     Scan(std::move(next));
 }
 
-LegacyImportReport Session::ImportLegacy(const LegacyImportRequest& request)
+Session::LegacyImport Session::ImportLegacyOn(SimulatorProfile profile, const LegacyImportRequest& request) const
 {
-    SimulatorProfile next = profile_;
     LegacyImportReport report;
 
     for (const std::filesystem::path& root : request.libraryRoots)
     {
-        if (service_.RegisterLibrary(next, root).Accepted())
+        if (service_.RegisterLibrary(profile, root).Accepted())
         {
             ++report.librariesRegistered;
             continue;
@@ -368,7 +367,7 @@ LegacyImportReport Session::ImportLegacy(const LegacyImportRequest& request)
 
     for (const std::filesystem::path& category : request.categories)
     {
-        if (Succeeded(organizer_.DeclareCategory(next, category).result))
+        if (Succeeded(organizer_.DeclareCategory(profile, category).result))
         {
             ++report.categoriesDeclared;
             continue;
@@ -377,16 +376,19 @@ LegacyImportReport Session::ImportLegacy(const LegacyImportRequest& request)
         report.refused.push_back(category);
     }
 
-    if (report.librariesRegistered == 0 && report.categoriesDeclared == 0)
+    return {.profile = std::move(profile), .report = std::move(report)};
+}
+
+void Session::AdoptTheLegacyImport(LegacyImport imported)
+{
+    if (imported.report.librariesRegistered == 0 && imported.report.categoriesDeclared == 0)
     {
-        return report;
+        return;
     }
 
     service_.ForgetUndo();
-    Save(next);
-    ScanBeforeReturning(std::move(next));
-
-    return report;
+    Save(imported.profile);
+    Scan(std::move(imported.profile));
 }
 
 void Session::UnregisterLibrary(const LibraryId& libraryId)
@@ -608,24 +610,6 @@ void Session::Scan(SimulatorProfile profile)
         {
             Adopt();
         });
-}
-
-void Session::ScanBeforeReturning(SimulatorProfile profile)
-{
-    if (running_)
-    {
-        Scan(std::move(profile));
-        return;
-    }
-
-    running_ = true;
-    scanning_ = std::move(profile);
-
-    observer_.OnScanStarted();
-
-    scanned_ = service_.Scan(scanning_);
-
-    Adopt();
 }
 
 void Session::Adopt()

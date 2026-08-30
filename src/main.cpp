@@ -408,7 +408,7 @@ int main(int argc, char* argv[])
 
     const WindowsLegacyConfigSource legacyConfig(ProgramDataFolder());
     const LegacyConfigImporter legacyImporter(legacyConfig, filesystemProbe);
-    LegacyImportViewModel legacyViewModel(session, legacyImporter, presetService);
+    LegacyImportViewModel legacyViewModel(session, notifier, legacyImporter, presetService, runner);
 
     PageTab* libraryButton = window.AddPage(PageNames::kLibrary, page);
     PageTab* communityButton = window.AddPage(PageNames::kDestinations, communityPage);

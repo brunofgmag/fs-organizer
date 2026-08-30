@@ -15,6 +15,7 @@
 #include "application/PresetService.h"
 #include "application/Session.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 
 struct PresetRow
 {
@@ -142,8 +143,7 @@ private:
     Session& session_;
     PresetService& service_;
     ProfileService& profiles_;
-    BackgroundRunner& runner_;
-    bool applying_ = false;
+    GuardedRunner applying_;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_PRESET_VIEW_MODEL_H

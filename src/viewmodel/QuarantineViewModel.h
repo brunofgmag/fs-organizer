@@ -11,6 +11,7 @@
 #include "application/Session.h"
 #include "application/SizeService.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "viewmodel/QuarantineModel.h"
 #include "viewmodel/SessionNotifier.h"
 
@@ -72,7 +73,7 @@ private:
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
     int listed_ = 0;
-    bool working_ = false;
+    GuardedRunner working_;
     bool shown_ = false;
 };
 

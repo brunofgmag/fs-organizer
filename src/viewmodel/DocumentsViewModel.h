@@ -16,6 +16,7 @@
 #include "application/SceneryService.h"
 #include "application/Session.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "application/ports/DocumentIndexCache.h"
 #include "application/ports/ManualSource.h"
 #include "application/model/ReadingGestures.h"
@@ -178,7 +179,6 @@ private:
     const DocumentService& documents_;
     SceneryService& scenery_;
     Session& session_;
-    BackgroundRunner& runner_;
     DocumentIndexCache& cache_;
     ManualSource& manual_;
     const Clock& clock_;
@@ -187,7 +187,7 @@ private:
     std::vector<DocumentsOfAnAddon> arriving_{};
     std::optional<std::chrono::system_clock::time_point> readAt_{};
     bool itWasRead_ = false;
-    bool reading_ = false;
+    GuardedRunner reading_;
     bool stop_ = false;
     std::string language_{};
     ManualState manualState_ = ManualState::NotHere;

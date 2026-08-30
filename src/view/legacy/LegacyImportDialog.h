@@ -30,6 +30,8 @@ private:
 
     void Import();
 
+    void Land(const LegacyImportReport& report, const LegacyPresetReport& presets);
+
     [[nodiscard]] LegacyImportRequest WhatWasChecked() const;
 
     [[nodiscard]] std::vector<std::filesystem::path> PresetFoldersChecked() const;

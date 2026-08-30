@@ -93,6 +93,7 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
 
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(import_, &QPushButton::clicked, this, &LegacyImportDialog::Import);
+    connect(&viewModel_, &LegacyImportViewModel::Imported, this, &LegacyImportDialog::Land);
     connect(tree_, &QTreeWidget::itemChanged, this,
             [this]
             {
@@ -220,17 +221,13 @@ void LegacyImportDialog::RefreshTheImportButton() const
 
 void LegacyImportDialog::Import()
 {
-    const LegacyImportReport report = viewModel_.Import(WhatWasChecked());
+    import_->setEnabled(false);
 
-    LegacyPresetReport presets;
-    for (const std::filesystem::path& folder : PresetFoldersChecked())
-    {
-        const LegacyPresetReport one = viewModel_.ImportPresets(folder);
-        presets.imported += one.imported;
-        presets.nameAlreadyTaken += one.nameAlreadyTaken;
-        presets.entriesNotFound += one.entriesNotFound;
-    }
+    viewModel_.Import(WhatWasChecked(), PresetFoldersChecked());
+}
 
+void LegacyImportDialog::Land(const LegacyImportReport& report, const LegacyPresetReport& presets)
+{
     QString said = tr("%1 and %2 imported.")
                        .arg(tr("%n library", nullptr, static_cast<int>(report.librariesRegistered)),
                             tr("%n category", nullptr, static_cast<int>(report.categoriesDeclared)));
