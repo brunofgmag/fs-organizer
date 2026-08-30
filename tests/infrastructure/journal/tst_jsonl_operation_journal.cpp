@@ -22,6 +22,8 @@ namespace
         static void AnOutcomeThisVersionCannotReadIsNotASuccess();
         static void AnAbsentJournalReadsAsNoHistoryAtAll();
         static void TheLabelOfAStartupEntrySurvivesTheRoundTrip();
+        static void ASecondReadComesFromMemoryAndNotFromTheFile();
+        static void AppendingAfterAReadKeepsTheMemoryCurrent();
     };
 }
 
@@ -235,6 +237,40 @@ void JsonlOperationJournalTest::TheLabelOfAStartupEntrySurvivesTheRoundTrip()
     const std::vector<OperationRecord> read = journal.Read();
     QCOMPARE(read.size(), std::size_t{1});
     QCOMPARE(read.front().label, std::string("Other launcher"));
+}
+
+void JsonlOperationJournalTest::ASecondReadComesFromMemoryAndNotFromTheFile()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+
+    QCOMPARE(journal.Read().size(), std::size_t{1});
+
+    std::ofstream stream(storage.File(), std::ios::binary | std::ios::app);
+    stream << R"({"kind":"disable","addon":"pmdg-aircraft-77w","failure":"none"})" << '\n';
+    stream.close();
+
+    QCOMPARE(journal.Read().size(), std::size_t{1});
+    QCOMPARE(JsonlOperationJournal(storage.File()).Read().size(), std::size_t{2});
+}
+
+void JsonlOperationJournalTest::AppendingAfterAReadKeepsTheMemoryCurrent()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+
+    QCOMPARE(journal.Read().size(), std::size_t{1});
+
+    journal.Append(Record(OperationKind::DisableAddon, LinkFailure::None));
+
+    const std::vector<OperationRecord> read = journal.Read();
+    QCOMPARE(read.size(), std::size_t{2});
+    QCOMPARE(read.back().kind, OperationKind::DisableAddon);
+    QCOMPARE(LinesOf(storage.File()).size(), 2);
 }
 
 QTEST_APPLESS_MAIN(JsonlOperationJournalTest)

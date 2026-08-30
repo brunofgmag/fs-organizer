@@ -252,9 +252,28 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
     stream_.write(line.constData(), line.size());
     stream_.put('\n');
     stream_.flush();
+
+    const std::lock_guard lock(guard_);
+
+    if (known_.has_value())
+    {
+        known_->push_back(record);
+    }
 }
 
 std::vector<OperationRecord> JsonlOperationJournal::Read() const
+{
+    const std::lock_guard lock(guard_);
+
+    if (!known_.has_value())
+    {
+        known_ = WhatTheFileHolds();
+    }
+
+    return *known_;
+}
+
+std::vector<OperationRecord> JsonlOperationJournal::WhatTheFileHolds() const
 {
     std::vector<OperationRecord> records;
 

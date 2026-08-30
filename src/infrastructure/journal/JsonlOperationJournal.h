@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <mutex>
+#include <optional>
 
 #include "domain/ports/OperationJournal.h"
 
@@ -16,8 +18,12 @@ public:
     [[nodiscard]] std::vector<OperationRecord> Read() const override;
 
 private:
+    [[nodiscard]] std::vector<OperationRecord> WhatTheFileHolds() const;
+
     std::filesystem::path file_;
     std::ofstream stream_;
+    mutable std::mutex guard_;
+    mutable std::optional<std::vector<OperationRecord>> known_;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_JOURNAL_JSONL_OPERATION_JOURNAL_H
