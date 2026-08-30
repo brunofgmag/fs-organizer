@@ -245,6 +245,7 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
             });
     connect(&importViewModel_, &ImportViewModel::Finished, this, &CommunityPage::OnImportFinished);
     connect(&importViewModel_, &ImportViewModel::ConflictsResolved, this, &CommunityPage::OnConflictsResolved);
+    connect(&importViewModel_, &ImportViewModel::ConflictDetailsReady, this, &CommunityPage::OfferTheResolutions);
 
     RetranslateUi();
     UpdateSummary();
@@ -669,8 +670,13 @@ void CommunityPage::StartImport()
         return;
     }
 
-    ImportDialog dialog(chosen.requests, viewModel_.Snapshot().libraries, importViewModel_.Profile(),
-                        importViewModel_.TotalSizeOf(chosen.WhereTheBytesAre()), this);
+    ImportDialog dialog(chosen.requests, viewModel_.Snapshot().libraries, importViewModel_.Profile(), 0, this);
+
+    viewModel_.WeighTheFolders(chosen.WhereTheBytesAre(),
+                               [&dialog](const std::uintmax_t bytes)
+                               {
+                                   dialog.ShowTheTotal(bytes);
+                               });
 
     if (dialog.exec() != QDialog::Accepted)
     {
@@ -718,25 +724,19 @@ void CommunityPage::ResolveConflict(const CopyConflict& conflict)
 
 void CommunityPage::ResolveThem(const std::vector<CopyConflict>& conflicts)
 {
-    const std::vector<ConflictToResolve> chosen = WhatTheUserChoseFor(conflicts);
+    emit StatusChanged(tr("Reading both sides of the conflict…"));
 
-    everyConflictWasAsked_ = chosen.size() == conflicts.size();
-
-    if (chosen.empty())
-    {
-        return;
-    }
-
-    importViewModel_.ResolveConflicts(chosen);
+    importViewModel_.PrepareConflictDetails(conflicts);
 }
 
-std::vector<ConflictToResolve> CommunityPage::WhatTheUserChoseFor(const std::vector<CopyConflict>& conflicts)
+void CommunityPage::OfferTheResolutions(const std::vector<CopyConflict>& conflicts,
+                                        const std::vector<ConflictDetails>& details)
 {
     std::vector<ConflictToResolve> chosen;
 
-    for (const CopyConflict& conflict : conflicts)
+    for (std::size_t at = 0; at < conflicts.size() && at < details.size(); ++at)
     {
-        ConflictDialog dialog(importViewModel_.DetailsOf(conflict), this);
+        ConflictDialog dialog(details[at], this);
         if (conflicts.size() > 1)
         {
             dialog.setWindowTitle(
@@ -748,10 +748,17 @@ std::vector<ConflictToResolve> CommunityPage::WhatTheUserChoseFor(const std::vec
             break;
         }
 
-        chosen.push_back(ConflictToResolve{.conflict = conflict, .choice = dialog.Choice()});
+        chosen.push_back(ConflictToResolve{.conflict = conflicts[at], .choice = dialog.Choice()});
     }
 
-    return chosen;
+    everyConflictWasAsked_ = chosen.size() == conflicts.size();
+
+    if (chosen.empty())
+    {
+        return;
+    }
+
+    importViewModel_.ResolveConflicts(chosen);
 }
 
 void CommunityPage::OnConflictsResolved(const std::vector<FileOperationResult>& results)

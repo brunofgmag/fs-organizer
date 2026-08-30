@@ -28,8 +28,14 @@ public:
         known.insert_or_assign(ComparablePath(addonFolder), scenery);
     }
 
+    void WriteWhatIsKept() override
+    {
+        ++wroteDown;
+    }
+
     std::map<std::string, RememberedScenery, std::less<>> known;
     std::size_t kept = 0;
+    std::size_t wroteDown = 0;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_SCENERY_CACHE_H

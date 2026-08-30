@@ -90,6 +90,8 @@ public:
 
     [[nodiscard]] FileResult Switch(const std::string& packageName, bool activated);
 
+    [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, bool activated);
+
     void TheyCanCoexist(const AddonId& one, const AddonId& other);
 
     void TheyCanAllCoexist(const std::vector<CoexistingPair>& pairs);

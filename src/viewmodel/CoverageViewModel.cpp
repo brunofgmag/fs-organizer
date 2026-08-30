@@ -289,6 +289,21 @@ FileResult CoverageViewModel::Switch(const std::string& packageName, const bool 
     return result;
 }
 
+FileResult CoverageViewModel::SwitchAll(const std::vector<std::string>& packageNames, const bool activated)
+{
+    const FileResult result = service_.SwitchAll(packageNames, activated);
+    if (!Succeeded(result))
+    {
+        return result;
+    }
+
+    Read();
+
+    emit Changed();
+
+    return result;
+}
+
 void CoverageViewModel::TheyCanCoexist(const AddonId& one, const AddonId& other)
 {
     TheyCanAllCoexist({{.one = one, .other = other}});

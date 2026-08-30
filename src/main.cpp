@@ -298,16 +298,20 @@ int main(int argc, char* argv[])
     CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock, runner);
 
     AddonTreeModel model;
-    AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, notifier);
+    AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, runner, notifier);
 
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                           sizes);
     DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
-                     [&packages, &session]
+                     [&packages, &session, &window]
                      {
-                         packages.Reload(session.Profile().variant);
+                         QTimer::singleShot(0, &window,
+                                            [&packages, &session]
+                                            {
+                                                packages.Reload(session.Profile().variant);
+                                            });
                      });
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -367,23 +371,29 @@ int main(int argc, char* argv[])
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
-                     [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists,
-                      &coverageViewModel, &loadingReport, &loadingReports]
+                     [startupPage, &session, &startupEntries, &startupFiles, &startupViewModel, &packageList,
+                      &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
                      {
-                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
-                         loadingReport.Use(LoadingReportOf(loadingReports, session.Profile().variant));
-                         startupViewModel.Show();
-                         session.RefreshStartupEntries();
+                         QTimer::singleShot(
+                             0, startupPage,
+                             [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists,
+                              &coverageViewModel, &loadingReport, &loadingReports]
+                             {
+                                 startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                                 loadingReport.Use(LoadingReportOf(loadingReports, session.Profile().variant));
+                                 startupViewModel.Show();
+                                 session.RefreshStartupEntries();
 
-                         const std::optional<ChosenContentList> chosen =
-                             ChooseContentList(contentLists, session.Profile().variant);
-                         packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
-                         coverageViewModel.Show();
+                                 const std::optional<ChosenContentList> chosen =
+                                     ChooseContentList(contentLists, session.Profile().variant);
+                                 packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+                                 coverageViewModel.Show();
+                             });
                      });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService, startupService);
-    PresetViewModel presetViewModel(session, presetService, profileService);
+    PresetViewModel presetViewModel(session, presetService, profileService, runner);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
     GithubUpdateService updateService(
@@ -393,7 +403,7 @@ int main(int argc, char* argv[])
 
     UpdateViewModel updateViewModel(updateService, stored.updateMode, UpdatesAreOn());
 
-    OptionsViewModel optionsViewModel(session, profileService, notifier);
+    OptionsViewModel optionsViewModel(session, profileService, runner, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
 
     const WindowsLegacyConfigSource legacyConfig(ProgramDataFolder());

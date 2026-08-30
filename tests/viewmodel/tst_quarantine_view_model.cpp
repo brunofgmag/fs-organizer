@@ -37,6 +37,7 @@ namespace
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
         static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
         static void EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsWayThrough();
+        static void RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallingThread();
     };
 }
 
@@ -317,6 +318,35 @@ void QuarantineViewModelTest::EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsW
     QCOMPARE(progressed.count(), 1);
     QCOMPARE(progressed.first().at(1).toInt(), 1);
     QVERIFY(!f.fileSystem.Exists(kQuarantined));
+}
+
+void QuarantineViewModelTest::RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallingThread()
+{
+    Fixture f;
+    const std::filesystem::path origin = kDestination / "simbridge";
+    f.ScanLands();
+
+    const QSignalSpy restored(&f.viewModel, &QuarantineViewModel::Restored);
+
+    f.runner.defer = true;
+
+    f.viewModel.Restore({QuarantinedItem{.path = kQuarantined, .origin = origin}}, {});
+
+    QVERIFY2(f.runner.Pending(), "the restore goes through the runner instead of holding the calling thread");
+    QCOMPARE(restored.count(), 0);
+    QVERIFY(!f.fileSystem.Exists(origin));
+
+    f.viewModel.Restore({QuarantinedItem{.path = kQuarantined, .origin = origin}}, {});
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(restored.count(), 1);
+    QVERIFY(f.fileSystem.Exists(origin));
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

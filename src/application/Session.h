@@ -60,6 +60,19 @@ public:
 
     [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
 
+    struct LibraryRegistration
+    {
+        SimulatorProfile profile{};
+        LibraryReport report{};
+    };
+
+    [[nodiscard]] bool WouldAcceptLibrary(const std::filesystem::path& path) const;
+
+    [[nodiscard]] LibraryRegistration RegisterLibraryOn(SimulatorProfile profile,
+                                                        const std::filesystem::path& path) const;
+
+    void AdoptTheRegistration(LibraryRegistration registered);
+
     [[nodiscard]] LibraryGrouping HowTheLibraryIsGrouped(const LibraryId& libraryId) const;
 
     [[nodiscard]] std::vector<FileOperationResult> AdoptTheStructureOf(const LibraryId& libraryId);
@@ -89,6 +102,25 @@ public:
     [[nodiscard]] FileOperationResult RenameCategory(const std::filesystem::path& category, const std::string& name);
 
     [[nodiscard]] std::vector<FileOperationResult> MoveAddons(const std::vector<AddonMove>& moves);
+
+    struct ReorganizedLibrary
+    {
+        SimulatorProfile profile{};
+        std::vector<FileOperationResult> results{};
+    };
+
+    [[nodiscard]] FileOperationResult CheckRenameCategory(const std::filesystem::path& category,
+                                                          const std::string& name) const;
+
+    [[nodiscard]] ReorganizedLibrary MoveAddonsOn(SimulatorProfile profile, const std::vector<AddonMove>& moves) const;
+
+    [[nodiscard]] ReorganizedLibrary
+    RenameCategoryOn(SimulatorProfile profile, const std::filesystem::path& category, const std::string& name) const;
+
+    [[nodiscard]] ReorganizedLibrary RemoveCategoryOn(SimulatorProfile profile,
+                                                      const std::filesystem::path& category) const;
+
+    void AdoptTheReorganization(SimulatorProfile next, bool landed);
 
 private:
     [[nodiscard]] const Library* LibraryNamed(const LibraryId& libraryId) const;

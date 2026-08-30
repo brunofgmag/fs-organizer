@@ -128,6 +128,10 @@
 <context>
     <name>AddonTreePage</name>
     <message>
+        <source>Reading the library folder…</source>
+        <translation>Lendo a pasta da biblioteca…</translation>
+    </message>
+    <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="254"/>
         <source>Reading the scenery of what you turned on: %1 of %2</source>
         <translation>Lendo o cenário do que você ligou: %1 de %2</translation>
@@ -997,6 +1001,10 @@ Também existe na biblioteca: %2</translation>
 </context>
 <context>
     <name>CommunityPage</name>
+    <message>
+        <source>Reading both sides of the conflict…</source>
+        <translation>Lendo os dois lados do conflito…</translation>
+    </message>
     <message>
         <source>Substituted</source>
         <translation>Substituída</translation>
@@ -2440,6 +2448,10 @@ Também existe na biblioteca: %2</translation>
 <context>
     <name>ImportDialog</name>
     <message>
+        <source>Measuring the selection…</source>
+        <translation>Medindo a seleção…</translation>
+    </message>
+    <message>
         <location filename="../src/view/community/ImportDialog.cpp" line="27"/>
         <source>Import into the library</source>
         <translation>Importar para a biblioteca</translation>
@@ -3164,6 +3176,10 @@ Também existe na biblioteca: %2</translation>
         <location filename="../src/view/options/OptionsPage.cpp" line="213"/>
         <source>Profiles and libraries</source>
         <translation>Perfis e bibliotecas</translation>
+    </message>
+    <message>
+        <source>Reading the library folder…</source>
+        <translation>Lendo a pasta da biblioteca…</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="213"/>
@@ -4011,6 +4027,14 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
 </context>
 <context>
     <name>PresetsPage</name>
+    <message>
+        <source>Applying the preset…</source>
+        <translation>Aplicando o preset…</translation>
+    </message>
+    <message>
+        <source>The preset was applied.</source>
+        <translation>O preset foi aplicado.</translation>
+    </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="98"/>
         <location filename="../src/view/PresetsPage.cpp" line="230"/>
@@ -5318,6 +5342,10 @@ Tamanho %2</translation>
 </context>
 <context>
     <name>QuarantinePage</name>
+    <message>
+        <source>Checking what restoring would touch…</source>
+        <translation>Conferindo o que a restauração vai tocar…</translation>
+    </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="59"/>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="144"/>

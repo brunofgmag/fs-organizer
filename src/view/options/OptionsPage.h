@@ -81,6 +81,8 @@ private:
 
     void AddLibrary();
 
+    void SayTheLibraryWasRegistered(const std::filesystem::path& path, const LibraryReport& report);
+
     void Unregister(const LibraryLine& library);
 
     void DeclareCategories(const LibraryLine& library);

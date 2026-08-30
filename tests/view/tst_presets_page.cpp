@@ -171,7 +171,7 @@ namespace
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakePresetRepository presets;
         PresetService presetService{presets, service, startup.service};
-        PresetViewModel viewModel{session, presetService, service};
+        PresetViewModel viewModel{session, presetService, service, runner};
     };
 }
 

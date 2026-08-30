@@ -54,6 +54,8 @@ private:
 
     void RestoreSelected();
 
+    void OfferTheRestore(const std::vector<RestoreOffer>& offers);
+
     void DiscardSelected();
 
     void EmptyTheQuarantine();

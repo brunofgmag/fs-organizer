@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -11,6 +12,7 @@
 
 #include "application/DependencyReport.h"
 #include "application/ProfileService.h"
+#include "application/ports/BackgroundRunner.h"
 #include "application/Session.h"
 #include "application/SizeService.h"
 #include "domain/ports/SimulatorPackages.h"
@@ -26,6 +28,12 @@ struct WeighedSwap
     MeasuredFolder goesOn{};
 };
 
+struct TogglePlan
+{
+    ProfileService::LinksOnDisk onDisk{};
+    std::vector<TakenPlace> swapsNeeded{};
+};
+
 class AddonTreeViewModel final : public QObject
 {
     Q_OBJECT
@@ -36,6 +44,7 @@ public:
                        AddonTreeModel& model,
                        const SimulatorPackages& packages,
                        SizeService& sizes,
+                       BackgroundRunner& runner,
                        const SessionNotifier& notifier,
                        QObject* parent = nullptr);
 
@@ -60,6 +69,14 @@ public:
                 bool enable,
                 const std::vector<TakenPlace>& agreedSwaps,
                 const std::vector<StartupLine>& agreedEntries);
+
+    void Toggle(const std::vector<const TreeNode*>& nodes,
+                bool enable,
+                TogglePlan plan,
+                const std::vector<TakenPlace>& agreedSwaps,
+                const std::vector<StartupLine>& agreedEntries);
+
+    [[nodiscard]] TogglePlan PlanToggle(const std::vector<const TreeNode*>& nodes, bool enable) const;
 
     [[nodiscard]] std::vector<TakenPlace> SwapsNeededTo(const std::vector<const TreeNode*>& nodes) const;
 
@@ -99,7 +116,9 @@ public:
 
     [[nodiscard]] DependencyReport DependenciesOf(const TreeNode* node) const;
 
-    [[nodiscard]] LibraryReport AddLibrary(const std::filesystem::path& path) const;
+    [[nodiscard]] bool WouldAcceptLibrary(const std::filesystem::path& path) const;
+
+    void AddLibrary(const std::filesystem::path& path);
 
     [[nodiscard]] bool CanUndo() const;
 
@@ -110,6 +129,8 @@ signals:
 
     void BatchFinished(const LinkBatchReport& report);
 
+    void LibraryRegistered(const std::filesystem::path& path, const LibraryReport& report);
+
     void Refused(const QString& explanation);
 
     void SizeMeasuring();
@@ -117,6 +138,18 @@ signals:
     void SizeMeasured(const SelectionSize& size);
 
 private:
+    struct ToggleWork
+    {
+        SimulatorProfile profile{};
+        ProfileSnapshot shown{};
+        ProfileService::LinksOnDisk onDisk{};
+        std::vector<TreeNode> toDisable{};
+        std::vector<TreeNode> toEnable{};
+        std::vector<StartupLine> startupEntriesToTurnOff{};
+        std::size_t leftAlone = 0;
+        LinkBatchReport report{};
+    };
+
     [[nodiscard]] const TreeNode* LibraryTreeHolding(const TreeNode& node) const;
 
     [[nodiscard]] std::vector<const TreeNode*> StrayedUnder(const std::vector<const TreeNode*>& nodes) const;
@@ -127,12 +160,18 @@ private:
 
     void ApplyResults(const LinkBatchReport& report);
 
+    void RunGuarded(std::function<void()> work, std::function<void()> done);
+
+    void RunTheBatch(std::shared_ptr<ToggleWork> work);
+
     Session& session_;
     ProfileService& service_;
     AddonTreeModel& model_;
     const SimulatorPackages& packages_;
     SizeService& sizes_;
+    BackgroundRunner& runner_;
     MeasurementCaller caller_;
+    bool toggling_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H

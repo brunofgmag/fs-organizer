@@ -54,10 +54,13 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
     landing_ = new QLabel(this);
     landing_->setWordWrap(true);
 
-    auto* total = new QLabel(tr("%1 in %2 will be copied to the library and replaced by links.")
-                                 .arg(AsSize(totalBytes), tr("%n folder", nullptr, static_cast<int>(chosen_.size()))),
-                             this);
-    total->setWordWrap(true);
+    total_ = new QLabel(tr("Measuring the selection…"), this);
+    total_->setWordWrap(true);
+
+    if (totalBytes > 0)
+    {
+        ShowTheTotal(totalBytes);
+    }
 
     auto* form = new QFormLayout;
     form->addRow(tr("Library:"), library_);
@@ -82,7 +85,7 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(new QLabel(tr("Selected folders:"), this));
     layout->addWidget(picked, 1);
-    layout->addWidget(total);
+    layout->addWidget(total_);
     layout->addLayout(form);
 
     const auto owned = static_cast<int>(std::count_if(chosen_.begin(), chosen_.end(),
@@ -127,6 +130,12 @@ void ImportDialog::ShowCategoriesOfTheChosenLibrary() const
 
         category_->addItem(folder == tree ? tr("(library root)") : AsText(relative), AsText(folder->path));
     }
+}
+
+void ImportDialog::ShowTheTotal(const std::uintmax_t totalBytes)
+{
+    total_->setText(tr("%1 in %2 will be copied to the library and replaced by links.")
+                        .arg(AsSize(totalBytes), tr("%n folder", nullptr, static_cast<int>(chosen_.size()))));
 }
 
 std::vector<ImportRequest> ImportDialog::ChosenRequests() const

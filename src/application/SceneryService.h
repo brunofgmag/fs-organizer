@@ -54,6 +54,8 @@ public:
     [[nodiscard]] std::vector<SceneryOfAnAddon> WhatIsAlreadyKnown(const std::vector<AddonToRead>& addons) const;
 
 private:
+    [[nodiscard]] SceneryOfAnAddon ReadOne(const AddonToRead& addon, SceneryFreshness freshness);
+
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder) const;
 

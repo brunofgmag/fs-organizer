@@ -192,7 +192,13 @@ std::size_t ProfileService::AddonsThatDrifted(const std::vector<const TreeNode*>
 std::vector<TakenPlace> ProfileService::PlacesTaken(const SimulatorProfile& profile,
                                                     const std::vector<const TreeNode*>& nodes) const
 {
-    const LinksOnDisk onDisk = ReadLinksNow(profile);
+    return PlacesTaken(profile, nodes, ReadLinksNow(profile));
+}
+
+std::vector<TakenPlace> ProfileService::PlacesTaken(const SimulatorProfile& profile,
+                                                    const std::vector<const TreeNode*>& nodes,
+                                                    const LinksOnDisk& onDisk) const
+{
     const std::map<std::string, const DestinationEntry*> held = LinksHeldByPath(onDisk.entries);
 
     std::vector<TakenPlace> taken;
@@ -393,6 +399,8 @@ LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
 
 std::vector<LinkOperationResult> ProfileService::RunAsOneBatch(const std::vector<Step>& steps)
 {
+    const std::lock_guard lock(guard_);
+
     std::vector<LinkOperationResult> results;
     std::vector<Step> undo;
 
@@ -502,6 +510,8 @@ std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile
 std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& profile,
                                                         const std::vector<RepairRequest>& requests)
 {
+    const std::lock_guard lock(guard_);
+
     std::vector<LinkOperationResult> results;
     std::vector<Step> undo;
 
@@ -534,16 +544,22 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
 
 bool ProfileService::CanUndo() const
 {
+    const std::lock_guard lock(guard_);
+
     return !undo_.empty();
 }
 
 void ProfileService::ForgetUndo()
 {
+    const std::lock_guard lock(guard_);
+
     undo_.clear();
 }
 
 std::vector<LinkOperationResult> ProfileService::UndoLastBatch()
 {
+    const std::lock_guard lock(guard_);
+
     const std::vector<Step> steps = std::exchange(undo_, {});
 
     std::vector<LinkOperationResult> results;

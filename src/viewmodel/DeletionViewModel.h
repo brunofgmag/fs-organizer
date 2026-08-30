@@ -47,6 +47,14 @@ signals:
     void Deleted(const std::vector<DeletionResult>& results, DeletionRoute route);
 
 private:
+    struct PlanWork
+    {
+        SimulatorProfile profile{};
+        std::vector<SimulatorProfile> profiles{};
+        std::vector<TreeNode> nodes{};
+        DeletionPlan plan{};
+    };
+
     [[nodiscard]] std::vector<SimulatorProfile> EveryProfile() const;
 
     [[nodiscard]] std::vector<const TreeNode*> NodesStillThere(const std::vector<std::filesystem::path>& chosen) const;

@@ -217,7 +217,7 @@ namespace
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
-        OptionsViewModel viewModel{session, service, notifier};
+        OptionsViewModel viewModel{session, service, runner, notifier};
         FakeUpdateService updateService;
         UpdateViewModel updates{updateService, UpdateMode::Notify, true};
         OptionsPage page{viewModel, updates, kSettingsFile};

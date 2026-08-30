@@ -128,6 +128,10 @@
 <context>
     <name>AddonTreePage</name>
     <message>
+        <source>Reading the library folder…</source>
+        <translation>Reading the library folder…</translation>
+    </message>
+    <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="254"/>
         <source>Reading the scenery of what you turned on: %1 of %2</source>
         <translation>Reading the scenery of what you turned on: %1 of %2</translation>
@@ -997,6 +1001,10 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>CommunityPage</name>
+    <message>
+        <source>Reading both sides of the conflict…</source>
+        <translation>Reading both sides of the conflict…</translation>
+    </message>
     <message>
         <source>Substituted</source>
         <translation>Substituted</translation>
@@ -2440,6 +2448,10 @@ It also exists in the library: %2</translation>
 <context>
     <name>ImportDialog</name>
     <message>
+        <source>Measuring the selection…</source>
+        <translation>Measuring the selection…</translation>
+    </message>
+    <message>
         <location filename="../src/view/community/ImportDialog.cpp" line="27"/>
         <source>Import into the library</source>
         <translation>Import into the library</translation>
@@ -3160,6 +3172,10 @@ It also exists in the library: %2</translation>
 </context>
 <context>
     <name>OptionsPage</name>
+    <message>
+        <source>Reading the library folder…</source>
+        <translation>Reading the library folder…</translation>
+    </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="213"/>
         <source>Profiles and libraries</source>
@@ -4011,6 +4027,14 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
 </context>
 <context>
     <name>PresetsPage</name>
+    <message>
+        <source>Applying the preset…</source>
+        <translation>Applying the preset…</translation>
+    </message>
+    <message>
+        <source>The preset was applied.</source>
+        <translation>The preset was applied.</translation>
+    </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="98"/>
         <location filename="../src/view/PresetsPage.cpp" line="230"/>
@@ -5318,6 +5342,10 @@ Size %2</translation>
 </context>
 <context>
     <name>QuarantinePage</name>
+    <message>
+        <source>Checking what restoring would touch…</source>
+        <translation>Checking what restoring would touch…</translation>
+    </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="59"/>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="144"/>

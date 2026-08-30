@@ -37,6 +37,7 @@ namespace
         static void StoppingGoesBackToTheScreenThatAnnouncesWhatWouldBeSearched();
         static void TurningOneMoreAddonOnBeforeStartingChangesTheAnnouncedNumber();
         static void NothingIsWrittenWhileTheQuestionIsStillOnTheScreen();
+        static void AMutatingClickRunsInAWorkerAndASecondClickWaitsItsTurn();
         static void TheThirdOutcomeSaysHowManyEntriesCarryOnOutOfReach();
         static void AProcedureLeftHalfwayIsOfferedOnTheNextOpening();
         static void AGroupSaysHowManyAddonsItCarriesAndOfWhatKind();
@@ -595,6 +596,34 @@ void BisectionViewModelTest::TurningAnAddonOnMakesTheNextOpeningReadTheCouplingA
 
     QCOMPARE(f.filesystemProbe.TimesEnumerated(TheModelsOf(kMd11)), std::size_t{2});
     QCOMPARE(f.viewModel.Report().units, std::size_t{3});
+}
+
+void BisectionViewModelTest::AMutatingClickRunsInAWorkerAndASecondClickWaitsItsTurn()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.runner.defer = true;
+
+    f.viewModel.Begin();
+
+    QVERIFY2(f.runner.Pending(), "the round goes through the runner instead of holding the calling thread");
+    QCOMPARE(f.viewModel.Report().units, std::size_t{0});
+
+    f.viewModel.Begin();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(f.viewModel.Report().units, std::size_t{3});
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Asking);
 }
 
 QTEST_MAIN(BisectionViewModelTest)

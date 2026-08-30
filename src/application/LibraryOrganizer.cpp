@@ -253,9 +253,9 @@ FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
     return FileOperationResult{.path = category, .result = result};
 }
 
-FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
-                                                     const std::filesystem::path& category,
-                                                     const std::string& name) const
+FileOperationResult LibraryOrganizer::CheckRenameCategory(const SimulatorProfile& profile,
+                                                          const std::filesystem::path& category,
+                                                          const std::string& name) const
 {
     const std::filesystem::path landing = category.parent_path() / PathFromUtf8(name);
 
@@ -264,8 +264,7 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
         return FileOperationResult{.path = landing, .result = FileResult::TheSimulatorIsRunning};
     }
 
-    const Library* library = LibraryContaining(profile, category);
-    if (library == nullptr)
+    if (LibraryContaining(profile, category) == nullptr)
     {
         return FileOperationResult{.path = landing, .result = FileResult::TheTargetIsNotInALibrary};
     }
@@ -274,6 +273,22 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
     {
         return FileOperationResult{.path = landing, .result = FileResult::CouldNotMoveIntoPlace, .occupant = landing};
     }
+
+    return FileOperationResult{.path = landing, .result = FileResult::Completed};
+}
+
+FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
+                                                     const std::filesystem::path& category,
+                                                     const std::string& name) const
+{
+    const FileOperationResult check = CheckRenameCategory(profile, category, name);
+    if (!Succeeded(check.result))
+    {
+        return check;
+    }
+
+    const std::filesystem::path& landing = check.path;
+    const Library* library = LibraryContaining(profile, category);
 
     const std::vector<DestinationEntry> entries = classifier_.Resolve(profile.destinations, {library->path});
 
@@ -326,9 +341,11 @@ bool LibraryOrganizer::Relink(const SimulatorProfile& profile,
     return outcome.Succeeded();
 }
 
-FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
-                                              const std::vector<TreeNode>& libraries,
-                                              const AddonMove& move) const
+FileOperationResult
+LibraryOrganizer::MoveOne(SimulatorProfile& profile,
+                          const std::vector<TreeNode>& libraries,
+                          const AddonMove& move,
+                          std::map<std::string, std::vector<DestinationEntry>>& entriesByLibrary) const
 {
     const std::filesystem::path target = move.Target();
 
@@ -345,7 +362,16 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
     }
 
     const AddonId addon = IdentityOf(profile, move.addonFolder);
-    const std::vector<DestinationEntry> entries = classifier_.Resolve(profile.destinations, {library->path});
+
+    auto known = entriesByLibrary.find(ComparablePath(library->path));
+    if (known == entriesByLibrary.end())
+    {
+        known = entriesByLibrary
+                    .emplace(ComparablePath(library->path), classifier_.Resolve(profile.destinations, {library->path}))
+                    .first;
+    }
+
+    const std::vector<DestinationEntry>& entries = known->second;
     const std::vector<std::filesystem::path> links = LinksPointingAt(entries, move.addonFolder);
 
     if (!DisableEveryLink(linking_, log_, links, addon, move.addonFolder))
@@ -449,9 +475,11 @@ std::vector<FileOperationResult> LibraryOrganizer::Move(SimulatorProfile& profil
 
     const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
 
+    std::map<std::string, std::vector<DestinationEntry>> entriesByLibrary;
+
     for (const AddonMove& move : moves)
     {
-        results.push_back(MoveOne(profile, libraries, move));
+        results.push_back(MoveOne(profile, libraries, move, entriesByLibrary));
     }
 
     return results;

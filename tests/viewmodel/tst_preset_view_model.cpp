@@ -55,6 +55,7 @@ namespace
         static void GoingBackDoesNotOverwriteTheReturnPreset();
         static void AGoverningPresetRowIsNotSatisfiedWhenTheStartupFileDisagrees();
         static void TheStartupRowsCarryTheLabelFromTheFileAndSettingAnActionIsStored();
+        static void ApplyRunsInAWorkerAndASecondGestureWaitsItsTurn();
     };
 }
 
@@ -149,7 +150,7 @@ namespace
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakePresetRepository repository;
         PresetService presets{repository, service, startup.service};
-        PresetViewModel viewModel{session, presets, service};
+        PresetViewModel viewModel{session, presets, service, runner};
     };
 }
 
@@ -645,6 +646,37 @@ void PresetViewModelTest::TheStartupRowsCarryTheLabelFromTheFileAndSettingAnActi
 
     QVERIFY(saved.has_value());
     QVERIFY(saved->startupEntries.front().action == PresetAction::Disable);
+}
+
+void PresetViewModelTest::ApplyRunsInAWorkerAndASecondGestureWaitsItsTurn()
+{
+    Fixture f;
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    const QSignalSpy applied(&f.viewModel, &PresetViewModel::Applied);
+    const QSignalSpy started(&f.viewModel, &PresetViewModel::ApplyStarted);
+
+    f.runner.defer = true;
+
+    f.viewModel.Apply(preset, ApplyMode::Cumulative);
+
+    QVERIFY2(f.runner.Pending(), "the apply goes through the runner instead of holding the calling thread");
+    QCOMPARE(started.count(), 1);
+    QCOMPARE(applied.count(), 0);
+    QVERIFY(f.journal.appended.empty());
+
+    f.viewModel.Apply(preset, ApplyMode::Cumulative);
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(applied.count(), 1);
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
 }
 
 QTEST_MAIN(PresetViewModelTest)

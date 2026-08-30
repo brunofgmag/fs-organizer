@@ -62,6 +62,10 @@ namespace
         void Keep(const std::filesystem::path&, const RememberedScenery&) override
         {
         }
+
+        void WriteWhatIsKept() override
+        {
+        }
     };
 
     class VersionsItCounts final : public ChartVersions

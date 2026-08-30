@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_APPLICATION_LIBRARY_ORGANIZER_H
 #define FS_ORGANIZER_APPLICATION_LIBRARY_ORGANIZER_H
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,10 @@ public:
     [[nodiscard]] FileOperationResult DeclareCategory(const SimulatorProfile& profile,
                                                       const std::filesystem::path& folder) const;
 
+    [[nodiscard]] FileOperationResult CheckRenameCategory(const SimulatorProfile& profile,
+                                                          const std::filesystem::path& category,
+                                                          const std::string& name) const;
+
     [[nodiscard]] FileOperationResult
     RenameCategory(SimulatorProfile& profile, const std::filesystem::path& category, const std::string& name) const;
 
@@ -59,7 +64,10 @@ private:
     [[nodiscard]] std::vector<std::filesystem::path> WhatTheImporterBroughtInto(const Library& library) const;
 
     [[nodiscard]] FileOperationResult
-    MoveOne(SimulatorProfile& profile, const std::vector<TreeNode>& libraries, const AddonMove& move) const;
+    MoveOne(SimulatorProfile& profile,
+            const std::vector<TreeNode>& libraries,
+            const AddonMove& move,
+            std::map<std::string, std::vector<DestinationEntry>>& entriesByLibrary) const;
 
     [[nodiscard]] bool
     Relink(const SimulatorProfile& profile, const AddonId& addon, const std::filesystem::path& folder) const;
