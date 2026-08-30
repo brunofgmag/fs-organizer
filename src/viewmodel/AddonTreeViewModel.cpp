@@ -260,11 +260,6 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
                                 const std::vector<TakenPlace>& agreedSwaps,
                                 const std::vector<StartupLine>& agreedEntries)
 {
-    if (toggling_)
-    {
-        return;
-    }
-
     auto work = std::make_shared<ToggleWork>();
     work->profile = session_.Profile();
     work->shown.enabled = session_.Snapshot().enabled;
@@ -317,11 +312,27 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
     RunTheBatch(std::move(work));
 }
 
-void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
+void AddonTreeViewModel::RunGuarded(std::function<void()> work, std::function<void()> done)
 {
+    if (toggling_)
+    {
+        return;
+    }
+
     toggling_ = true;
 
-    runner_.Run(
+    runner_.Run(std::move(work),
+                [this, done = std::move(done)]
+                {
+                    toggling_ = false;
+
+                    done();
+                });
+}
+
+void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
+{
+    RunGuarded(
         [this, work]
         {
             LinkBatch batch;
@@ -342,32 +353,21 @@ void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
         },
         [this, work]
         {
-            toggling_ = false;
-
             ApplyResults(work->report);
         });
 }
 
 void AddonTreeViewModel::UndoLastBatch()
 {
-    if (toggling_)
-    {
-        return;
-    }
-
-    toggling_ = true;
-
     const auto results = std::make_shared<std::vector<LinkOperationResult>>();
 
-    runner_.Run(
+    RunGuarded(
         [this, results]
         {
             *results = service_.UndoLastBatch();
         },
         [this, results]
         {
-            toggling_ = false;
-
             ApplyResults({.results = *results, .drifted = 0});
         });
 }
@@ -432,20 +432,16 @@ std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, c
         return {};
     }
 
-    toggling_ = true;
-
     auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
     reorganized->profile = session_.Profile();
 
-    runner_.Run(
+    RunGuarded(
         [this, reorganized, category = node->path, chosen = wanted.toStdString()]
         {
             *reorganized = session_.RenameCategoryOn(std::move(reorganized->profile), category, chosen);
         },
         [this, reorganized]
         {
-            toggling_ = false;
-
             const FileOperationResult& result = reorganized->results.front();
 
             session_.AdoptTheReorganization(std::move(reorganized->profile), TheFolderLanded(result.result));
@@ -466,25 +462,16 @@ bool AddonTreeViewModel::CanRemoveCategory(const TreeNode* node)
 
 void AddonTreeViewModel::RemoveCategory(const TreeNode* node)
 {
-    if (toggling_)
-    {
-        return;
-    }
-
-    toggling_ = true;
-
     auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
     reorganized->profile = session_.Profile();
 
-    runner_.Run(
+    RunGuarded(
         [this, reorganized, category = node->path]
         {
             *reorganized = session_.RemoveCategoryOn(std::move(reorganized->profile), category);
         },
         [this, reorganized]
         {
-            toggling_ = false;
-
             const FileOperationResult& result = reorganized->results.front();
 
             session_.AdoptTheReorganization(std::move(reorganized->profile), Succeeded(result.result));
@@ -534,25 +521,16 @@ void AddonTreeViewModel::ApplySuggestions(const std::vector<CategorySuggestion>&
 
 void AddonTreeViewModel::Perform(const std::vector<AddonMove>& moves)
 {
-    if (toggling_)
-    {
-        return;
-    }
-
-    toggling_ = true;
-
     auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
     reorganized->profile = session_.Profile();
 
-    runner_.Run(
+    RunGuarded(
         [this, reorganized, moves]
         {
             *reorganized = session_.MoveAddonsOn(std::move(reorganized->profile), moves);
         },
         [this, reorganized]
         {
-            toggling_ = false;
-
             const bool landed = std::ranges::any_of(reorganized->results,
                                                     [](const FileOperationResult& result)
                                                     {
@@ -639,8 +617,6 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         return;
     }
 
-    toggling_ = true;
-
     auto work = std::make_shared<ToggleWork>();
     work->profile = session_.Profile();
     work->shown.enabled = session_.Snapshot().enabled;
@@ -650,7 +626,7 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         work->toDisable.push_back(*addon);
     }
 
-    runner_.Run(
+    RunGuarded(
         [this, work]
         {
             std::vector<const TreeNode*> relinking;
@@ -665,8 +641,6 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         },
         [this, work]
         {
-            toggling_ = false;
-
             ApplyResults(work->report);
         });
 }
@@ -725,25 +699,16 @@ bool AddonTreeViewModel::WouldAcceptLibrary(const std::filesystem::path& path) c
 
 void AddonTreeViewModel::AddLibrary(const std::filesystem::path& path)
 {
-    if (toggling_)
-    {
-        return;
-    }
-
-    toggling_ = true;
-
     auto registration = std::make_shared<Session::LibraryRegistration>();
     registration->profile = session_.Profile();
 
-    runner_.Run(
+    RunGuarded(
         [this, registration, path]
         {
             *registration = session_.RegisterLibraryOn(std::move(registration->profile), path);
         },
         [this, registration, path]
         {
-            toggling_ = false;
-
             const LibraryReport report = registration->report;
 
             session_.AdoptTheRegistration(std::move(*registration));

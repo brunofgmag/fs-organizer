@@ -160,6 +160,8 @@ private:
 
     void ApplyResults(const LinkBatchReport& report);
 
+    void RunGuarded(std::function<void()> work, std::function<void()> done);
+
     void RunTheBatch(std::shared_ptr<ToggleWork> work);
 
     Session& session_;
