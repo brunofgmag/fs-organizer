@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_PACKAGE_LIST_H
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -57,7 +58,23 @@ public:
         return answer;
     }
 
+    [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, const bool activated) override
+    {
+        ++batches;
+
+        for (const std::string& packageName : packageNames)
+        {
+            if (const FileResult result = Switch(packageName, activated); !Succeeded(result))
+            {
+                return result;
+            }
+        }
+
+        return answer;
+    }
+
     std::vector<std::pair<std::string, bool>> switched;
+    std::size_t batches = 0;
     FileResult answer = FileResult::Completed;
 
 private:

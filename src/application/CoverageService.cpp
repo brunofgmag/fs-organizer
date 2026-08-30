@@ -73,3 +73,18 @@ FileResult CoverageService::Switch(const std::string_view packageName, const boo
 
     return packages_.Switch(packageName, activated);
 }
+
+FileResult CoverageService::SwitchAll(const std::vector<std::string>& packageNames, const bool activated)
+{
+    if (!managing_)
+    {
+        return FileResult::ThePackageListIsLeftLoose;
+    }
+
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return FileResult::TheSimulatorIsRunning;
+    }
+
+    return packages_.SwitchAll(packageNames, activated);
+}

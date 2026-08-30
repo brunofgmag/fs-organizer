@@ -42,6 +42,11 @@ void ContentXmlPackages::Forget(std::filesystem::path listPath)
 
 void ContentXmlPackages::ReadAgain(std::filesystem::path listPath)
 {
+    if (listWasRead_ && listPath == listPath_ && filesystemProbe_.LastWriteTime(listPath) == takenAt_)
+    {
+        return;
+    }
+
     Forget(std::move(listPath));
 
     const std::optional<std::string> contents = filesystemProbe_.ContentsOf(listPath_);

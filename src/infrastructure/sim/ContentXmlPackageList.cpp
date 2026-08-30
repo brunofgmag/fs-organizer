@@ -40,14 +40,39 @@ ContentXmlPackageList::ContentXmlPackageList(std::filesystem::path listPath) : l
 
 void ContentXmlPackageList::Use(std::filesystem::path listPath)
 {
+    const std::lock_guard lock(guard_);
+
     listPath_ = std::move(listPath);
+    parsedAt_.reset();
+    parsed_.clear();
 }
 
 std::vector<PackageEntry> ContentXmlPackageList::Entries() const
 {
+    const std::lock_guard lock(guard_);
+
+    std::error_code failed;
+    const std::filesystem::file_time_type writtenAt = std::filesystem::last_write_time(listPath_, failed);
+
+    if (failed)
+    {
+        parsedAt_.reset();
+        parsed_.clear();
+
+        return {};
+    }
+
+    if (parsedAt_.has_value() && *parsedAt_ == writtenAt)
+    {
+        return parsed_;
+    }
+
     const std::optional<std::string> document = BytesOf(listPath_);
 
-    return document.has_value() ? PackageEntriesIn(*document) : std::vector<PackageEntry>{};
+    parsed_ = document.has_value() ? PackageEntriesIn(*document) : std::vector<PackageEntry>{};
+    parsedAt_ = writtenAt;
+
+    return parsed_;
 }
 
 std::vector<SimulatorAirport> ContentXmlPackageList::AirportsTheSimulatorShips() const
@@ -77,19 +102,31 @@ std::vector<SimulatorAirport> ContentXmlPackageList::AirportsTheSimulatorShips()
 
 FileResult ContentXmlPackageList::Switch(const std::string_view packageName, const bool activated)
 {
+    return SwitchAll({std::string(packageName)}, activated);
+}
+
+FileResult ContentXmlPackageList::SwitchAll(const std::vector<std::string>& packageNames, const bool activated)
+{
     const std::optional<std::string> before = BytesOf(listPath_);
     if (!before.has_value())
     {
         return FileResult::CouldNotReadThePackageList;
     }
 
-    const std::optional<std::string> after = WithPackageSwitched(*before, packageName, activated);
-    if (!after.has_value())
+    std::string after = *before;
+
+    for (const std::string& packageName : packageNames)
     {
-        return FileResult::TheDiskDisagreesWithTheScan;
+        std::optional<std::string> switched = WithPackageSwitched(after, packageName, activated);
+        if (!switched.has_value())
+        {
+            return FileResult::TheDiskDisagreesWithTheScan;
+        }
+
+        after = std::move(*switched);
     }
 
-    if (*after == *before)
+    if (after == *before)
     {
         return FileResult::Completed;
     }
@@ -99,5 +136,5 @@ FileResult ContentXmlPackageList::Switch(const std::string_view packageName, con
         return FileResult::CouldNotWriteThePackageList;
     }
 
-    return WriteFileReplacing(listPath_, *after) ? FileResult::Completed : FileResult::CouldNotWriteThePackageList;
+    return WriteFileReplacing(listPath_, after) ? FileResult::Completed : FileResult::CouldNotWriteThePackageList;
 }

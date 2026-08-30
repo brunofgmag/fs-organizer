@@ -30,6 +30,7 @@ namespace
         static void SwitchingAnEntryToTheValueItAlreadyHasWritesNothing();
         static void TheFileIsRereadAtTheInstantOfWriting();
         static void PointingItAtAnotherProfilesFileReadsAndWritesThatOne();
+        static void ABatchOfSwitchesWritesTheFileOnceAndTheBackupIsTheVersionBeforeTheBatch();
     };
 
     constexpr auto kLpma = "fs24-asobo-airport-lpma-madeira";
@@ -197,6 +198,23 @@ void PackageListOnRealDiskTest::PointingItAtAnotherProfilesFileReadsAndWritesTha
     QCOMPARE(list.Switch(kLpma, false), FileResult::Completed);
     QCOMPARE(FirstDifference(BytesOf(other / "Content.xml"), Fixture("simulator-content.xml")), std::string::npos);
     QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{1});
+}
+
+void PackageListOnRealDiskTest::ABatchOfSwitchesWritesTheFileOnceAndTheBackupIsTheVersionBeforeTheBatch()
+{
+    const TempFiles files;
+    const std::filesystem::path file = ListIn(files, "simulator-content-lpma-activated.xml");
+    const std::filesystem::path backup = BackupOfPackageList(file);
+    ContentXmlPackageList list(file);
+
+    QCOMPARE(list.SwitchAll({kLpma, kAnimals}, false), FileResult::Completed);
+
+    QVERIFY2(FirstDifference(BytesOf(backup), Fixture("simulator-content-lpma-activated.xml")) == std::string::npos,
+             "the copy holds the file as it stood before the whole batch, not before its last package, which is what "
+             "one write instead of one per package leaves behind");
+    QCOMPARE(ActivationOf(list.Entries(), kLpma), PackageActivation::UserDisabled);
+    QCOMPARE(ActivationOf(list.Entries(), kAnimals), PackageActivation::UserDisabled);
+    QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{2});
 }
 
 QTEST_APPLESS_MAIN(PackageListOnRealDiskTest)

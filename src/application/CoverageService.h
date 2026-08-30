@@ -35,6 +35,8 @@ public:
 
     [[nodiscard]] FileResult Switch(std::string_view packageName, bool activated);
 
+    [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, bool activated);
+
 private:
     PackageList& packages_;
     const ProcessProbe& processProbe_;
