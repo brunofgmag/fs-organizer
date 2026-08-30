@@ -20,8 +20,6 @@ public:
 
     [[nodiscard]] std::vector<SimulatorAirport> AirportsTheSimulatorShips() const override;
 
-    [[nodiscard]] FileResult Switch(std::string_view packageName, bool activated) override;
-
     [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, bool activated) override;
 
 private:

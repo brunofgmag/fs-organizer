@@ -100,11 +100,6 @@ std::vector<SimulatorAirport> ContentXmlPackageList::AirportsTheSimulatorShips()
     return airports;
 }
 
-FileResult ContentXmlPackageList::Switch(const std::string_view packageName, const bool activated)
-{
-    return SwitchAll({std::string(packageName)}, activated);
-}
-
 FileResult ContentXmlPackageList::SwitchAll(const std::vector<std::string>& packageNames, const bool activated)
 {
     const std::optional<std::string> before = BytesOf(listPath_);

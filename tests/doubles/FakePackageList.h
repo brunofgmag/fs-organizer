@@ -43,31 +43,21 @@ public:
         return shipped;
     }
 
-    [[nodiscard]] FileResult Switch(const std::string_view packageName, const bool activated) override
-    {
-        switched.emplace_back(std::string(packageName), activated);
-
-        const auto entry = std::ranges::find(entries_, packageName, &PackageEntry::name);
-        if (entry == entries_.end())
-        {
-            return FileResult::TheDiskDisagreesWithTheScan;
-        }
-
-        entry->activation = activated ? PackageActivation::Activated : PackageActivation::UserDisabled;
-
-        return answer;
-    }
-
     [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, const bool activated) override
     {
         ++batches;
 
         for (const std::string& packageName : packageNames)
         {
-            if (const FileResult result = Switch(packageName, activated); !Succeeded(result))
+            switched.emplace_back(packageName, activated);
+
+            const auto entry = std::ranges::find(entries_, packageName, &PackageEntry::name);
+            if (entry == entries_.end())
             {
-                return result;
+                return FileResult::TheDiskDisagreesWithTheScan;
             }
+
+            entry->activation = activated ? PackageActivation::Activated : PackageActivation::UserDisabled;
         }
 
         return answer;

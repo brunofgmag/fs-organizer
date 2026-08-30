@@ -31,9 +31,12 @@ public:
 
     [[nodiscard]] virtual std::vector<SimulatorAirport> AirportsTheSimulatorShips() const = 0;
 
-    [[nodiscard]] virtual FileResult Switch(std::string_view packageName, bool activated) = 0;
-
     [[nodiscard]] virtual FileResult SwitchAll(const std::vector<std::string>& packageNames, bool activated) = 0;
+
+    [[nodiscard]] FileResult Switch(const std::string_view packageName, const bool activated)
+    {
+        return SwitchAll({std::string(packageName)}, activated);
+    }
 };
 
 #endif // FS_ORGANIZER_APPLICATION_PORTS_PACKAGE_LIST_H
