@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -125,6 +126,8 @@ private:
         Preset preset{};
         PresetApplyReport report{};
     };
+
+    void RunTheApply(const Preset& preset, std::function<PresetApplyReport(const ApplyWork&)> apply);
 
     void NoteApplied(const PresetApplyReport& report);
 

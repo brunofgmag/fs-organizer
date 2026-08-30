@@ -312,34 +312,23 @@ void PresetViewModel::UndoLastBatch()
 
 void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)
 {
-    if (applying_)
-    {
-        return;
-    }
-
-    applying_ = true;
-
-    emit ApplyStarted();
-
-    auto work = std::make_shared<ApplyWork>();
-    work->profile = session_.Profile();
-    work->snapshot = session_.Snapshot();
-    work->preset = preset;
-
-    runner_.Run(
-        [this, work, mode]
-        {
-            work->report = service_.Apply(work->profile, work->snapshot, work->preset, mode);
-        },
-        [this, work]
-        {
-            applying_ = false;
-
-            NoteApplied(work->report);
-        });
+    RunTheApply(preset,
+                [this, mode](const ApplyWork& work)
+                {
+                    return service_.Apply(work.profile, work.snapshot, work.preset, mode);
+                });
 }
 
 void PresetViewModel::ApplyReturn(const Preset& preset)
+{
+    RunTheApply(preset,
+                [this](const ApplyWork& work)
+                {
+                    return service_.ApplyTheReturn(work.profile, work.snapshot, work.preset);
+                });
+}
+
+void PresetViewModel::RunTheApply(const Preset& preset, std::function<PresetApplyReport(const ApplyWork&)> apply)
 {
     if (applying_)
     {
@@ -356,9 +345,9 @@ void PresetViewModel::ApplyReturn(const Preset& preset)
     work->preset = preset;
 
     runner_.Run(
-        [this, work]
+        [work, apply = std::move(apply)]
         {
-            work->report = service_.ApplyTheReturn(work->profile, work->snapshot, work->preset);
+            work->report = apply(*work);
         },
         [this, work]
         {
