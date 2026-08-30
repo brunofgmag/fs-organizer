@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.54.5](https://github.com/brunofgmag/fs-organizer/compare/v0.54.4...v0.54.5) (2026-08-30)
+
+
+* move the heavy gestures off the UI thread ([#176](https://github.com/brunofgmag/fs-organizer/issues/176)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+
+
+### Performance Improvements
+
+* **journal:** cache the read journal in memory ([f8434f1](https://github.com/brunofgmag/fs-organizer/commit/f8434f11a3a0f98ff758dab3be71c32ad6969939)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+* move the heavy gestures off the UI thread ([cd7f57c](https://github.com/brunofgmag/fs-organizer/commit/cd7f57c7256e6b0ed1dfaa821d341170a8b916f1)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+* **scenery:** write the scenery cache once per sweep ([8e3d7aa](https://github.com/brunofgmag/fs-organizer/commit/8e3d7aa4c61023acb131b625a6482543ed1690e5)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+* **sim:** batch the package switches and cache the parsed lists ([2419561](https://github.com/brunofgmag/fs-organizer/commit/241956105239272aec30e1236902350ac73f9192)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+
 ## [0.54.4](https://github.com/brunofgmag/fs-organizer/compare/v0.54.3...v0.54.4) (2026-08-29)
 
 
