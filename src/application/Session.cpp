@@ -221,6 +221,44 @@ LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
     return report;
 }
 
+bool Session::WouldAcceptLibrary(const std::filesystem::path& path) const
+{
+    return LibraryContaining(profile_, path) == nullptr;
+}
+
+Session::LibraryRegistration Session::RegisterLibraryOn(SimulatorProfile profile,
+                                                        const std::filesystem::path& path) const
+{
+    const LibraryReport report = service_.RegisterLibrary(profile, path);
+
+    if (report.Accepted())
+    {
+        const auto registered = std::ranges::find_if(profile.libraries,
+                                                     [&path](const Library& library)
+                                                     {
+                                                         return ComparablePath(library.path) == ComparablePath(path);
+                                                     });
+
+        if (registered != profile.libraries.end())
+        {
+            static_cast<void>(organizer_.AdoptTheStructure(profile, *registered));
+        }
+    }
+
+    return {.profile = std::move(profile), .report = report};
+}
+
+void Session::AdoptTheRegistration(LibraryRegistration registered)
+{
+    if (!registered.report.Accepted())
+    {
+        return;
+    }
+
+    Save(registered.profile);
+    Scan(std::move(registered.profile));
+}
+
 const Library* Session::LibraryNamed(const LibraryId& libraryId) const
 {
     for (const Library& library : profile_.libraries)
@@ -497,6 +535,47 @@ std::vector<FileOperationResult> Session::MoveAddons(const std::vector<AddonMove
     }
 
     return results;
+}
+
+FileOperationResult Session::CheckRenameCategory(const std::filesystem::path& category, const std::string& name) const
+{
+    return organizer_.CheckRenameCategory(profile_, category, name);
+}
+
+Session::ReorganizedLibrary Session::MoveAddonsOn(SimulatorProfile profile, const std::vector<AddonMove>& moves) const
+{
+    std::vector<FileOperationResult> results = organizer_.Move(profile, moves);
+
+    return {.profile = std::move(profile), .results = std::move(results)};
+}
+
+Session::ReorganizedLibrary Session::RenameCategoryOn(SimulatorProfile profile,
+                                                      const std::filesystem::path& category,
+                                                      const std::string& name) const
+{
+    FileOperationResult result = organizer_.RenameCategory(profile, category, name);
+
+    return {.profile = std::move(profile), .results = {std::move(result)}};
+}
+
+Session::ReorganizedLibrary Session::RemoveCategoryOn(SimulatorProfile profile,
+                                                      const std::filesystem::path& category) const
+{
+    FileOperationResult result = organizer_.RemoveCategory(profile, category);
+
+    return {.profile = std::move(profile), .results = {std::move(result)}};
+}
+
+void Session::AdoptTheReorganization(SimulatorProfile next, const bool landed)
+{
+    if (!landed)
+    {
+        return;
+    }
+
+    service_.ForgetUndo();
+    Save(next);
+    Scan(std::move(next));
 }
 
 void Session::Scan(SimulatorProfile profile)

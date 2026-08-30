@@ -70,9 +70,32 @@ void DeletionViewModel::PlanToDelete(const std::vector<const TreeNode*>& nodes)
     sizes_.MeasureFolders(addonFolders, caller_, Freshness::MeasureAgain, {},
                           [this, chosen](const FolderSizeReport&)
                           {
-                              const std::vector<const TreeNode*> stillThere = NodesStillThere(chosen);
+                              auto work = std::make_shared<PlanWork>();
+                              work->profile = session_.Profile();
+                              work->profiles = EveryProfile();
 
-                              emit Planned(service_.Plan(session_.Profile(), EveryProfile(), stillThere));
+                              for (const TreeNode* node : NodesStillThere(chosen))
+                              {
+                                  work->nodes.push_back(*node);
+                              }
+
+                              runner_.Run(
+                                  [this, work]
+                                  {
+                                      std::vector<const TreeNode*> stillThere;
+                                      stillThere.reserve(work->nodes.size());
+
+                                      for (const TreeNode& node : work->nodes)
+                                      {
+                                          stillThere.push_back(&node);
+                                      }
+
+                                      work->plan = service_.Plan(work->profile, work->profiles, stillThere);
+                                  },
+                                  [this, work]
+                                  {
+                                      emit Planned(work->plan);
+                                  });
                           });
 }
 

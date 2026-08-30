@@ -142,7 +142,7 @@ namespace
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
-        OptionsViewModel viewModel{session, service, notifier};
+        OptionsViewModel viewModel{session, service, runner, notifier};
     };
 
     void AddProfile(Fixture& f, const SimulatorProfile& profile)

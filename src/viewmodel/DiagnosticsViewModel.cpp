@@ -301,7 +301,18 @@ void DiagnosticsViewModel::WeighTheQuarantine()
         }
     }
 
-    quarantine_.bytes = imports_.TotalSizeOf(folders);
+    if (folders.empty())
+    {
+        return;
+    }
+
+    sizes_.MeasureFolders(folders, caller_, Freshness::ReuseWhatIsKnown, {},
+                          [this](const FolderSizeReport& report)
+                          {
+                              quarantine_.bytes = report.bytes;
+
+                              emit Counted();
+                          });
 }
 
 void DiagnosticsViewModel::Ask(const Freshness freshness)

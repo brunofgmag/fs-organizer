@@ -1,6 +1,7 @@
 #include "viewmodel/PresetViewModel.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
@@ -8,8 +9,12 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 
-PresetViewModel::PresetViewModel(Session& session, PresetService& service, ProfileService& profiles, QObject* parent)
-    : QObject(parent), session_(session), service_(service), profiles_(profiles)
+PresetViewModel::PresetViewModel(Session& session,
+                                 PresetService& service,
+                                 ProfileService& profiles,
+                                 BackgroundRunner& runner,
+                                 QObject* parent)
+    : QObject(parent), session_(session), service_(service), profiles_(profiles), runner_(runner)
 {
 }
 
@@ -277,23 +282,90 @@ bool PresetViewModel::CanUndo() const
 
 void PresetViewModel::UndoLastBatch()
 {
-    const std::vector<LinkOperationResult> results = profiles_.UndoLastBatch();
+    if (applying_)
+    {
+        return;
+    }
 
-    session_.RefreshEntries();
+    applying_ = true;
 
-    session_.NoteLinkResults(results);
+    emit ApplyStarted();
 
-    emit Changed();
+    const auto results = std::make_shared<std::vector<LinkOperationResult>>();
+
+    runner_.Run(
+        [this, results]
+        {
+            *results = profiles_.UndoLastBatch();
+        },
+        [this, results]
+        {
+            applying_ = false;
+
+            session_.RefreshEntries();
+
+            session_.NoteLinkResults(*results);
+
+            emit Changed();
+        });
 }
 
 void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)
 {
-    NoteApplied(service_.Apply(session_.Profile(), session_.Snapshot(), preset, mode));
+    if (applying_)
+    {
+        return;
+    }
+
+    applying_ = true;
+
+    emit ApplyStarted();
+
+    auto work = std::make_shared<ApplyWork>();
+    work->profile = session_.Profile();
+    work->snapshot = session_.Snapshot();
+    work->preset = preset;
+
+    runner_.Run(
+        [this, work, mode]
+        {
+            work->report = service_.Apply(work->profile, work->snapshot, work->preset, mode);
+        },
+        [this, work]
+        {
+            applying_ = false;
+
+            NoteApplied(work->report);
+        });
 }
 
 void PresetViewModel::ApplyReturn(const Preset& preset)
 {
-    NoteApplied(service_.ApplyTheReturn(session_.Profile(), session_.Snapshot(), preset));
+    if (applying_)
+    {
+        return;
+    }
+
+    applying_ = true;
+
+    emit ApplyStarted();
+
+    auto work = std::make_shared<ApplyWork>();
+    work->profile = session_.Profile();
+    work->snapshot = session_.Snapshot();
+    work->preset = preset;
+
+    runner_.Run(
+        [this, work]
+        {
+            work->report = service_.ApplyTheReturn(work->profile, work->snapshot, work->preset);
+        },
+        [this, work]
+        {
+            applying_ = false;
+
+            NoteApplied(work->report);
+        });
 }
 
 void PresetViewModel::NoteApplied(const PresetApplyReport& report)

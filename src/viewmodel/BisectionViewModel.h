@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <vector>
 
@@ -84,7 +85,9 @@ signals:
 private:
     void Take(const BisectionReport& report);
 
-    void TakeTheEndOf(const BisectionReport& ended);
+    void RunTheProcedure(std::function<BisectionReport()> work);
+
+    [[nodiscard]] BisectionReport EndedReport(BisectionReport ended, const SimulatorProfile& profile) const;
 
     BisectionService& bisection_;
     Session& session_;
@@ -95,6 +98,7 @@ private:
     std::optional<std::vector<std::filesystem::path>> readFor_{};
     bool aSplitWasHeld_ = false;
     bool reading_ = false;
+    bool mutating_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_BISECTION_VIEW_MODEL_H

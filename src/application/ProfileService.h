@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_APPLICATION_PROFILE_SERVICE_H
 
 #include <map>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -84,6 +85,10 @@ public:
     [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
                                                       const std::vector<const TreeNode*>& nodes) const;
 
+    [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
+                                                      const std::vector<const TreeNode*>& nodes,
+                                                      const LinksOnDisk& onDisk) const;
+
     [[nodiscard]] LinkBatchReport SetEnabled(const SimulatorProfile& profile,
                                              const ProfileSnapshot& shown,
                                              const std::vector<const TreeNode*>& nodes,
@@ -160,6 +165,7 @@ private:
     const LibraryIdGenerator& identities_;
     StartupService& startup_;
     LinkType linkType_;
+    mutable std::mutex guard_;
     std::vector<Step> undo_;
 };
 

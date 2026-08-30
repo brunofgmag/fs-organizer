@@ -44,17 +44,20 @@ public:
 
     [[nodiscard]] ConflictDetails DetailsOf(const CopyConflict& conflict) const;
 
+    void PrepareConflictDetails(const std::vector<CopyConflict>& conflicts);
+
     [[nodiscard]] std::uintmax_t TotalSizeOf(const std::vector<std::filesystem::path>& folders) const;
 
     [[nodiscard]] std::vector<StagingLeftover> Leftovers() const;
 
     [[nodiscard]] std::vector<InterruptedSwap> InterruptedSwaps() const;
 
-    [[nodiscard]] std::vector<FileOperationResult>
-    UndoInterruptedSwaps(const std::vector<InterruptedSwap>& swaps) const;
+    void UndoInterruptedSwaps(const std::vector<InterruptedSwap>& swaps);
 
-    [[nodiscard]] std::vector<FileOperationResult>
-    DiscardLeftovers(const std::vector<StagingLeftover>& leftovers) const;
+    void DiscardLeftovers(const std::vector<StagingLeftover>& leftovers);
+
+    void SettleTheLeftovers(const std::vector<StagingLeftover>& toDiscard,
+                            const std::vector<StagingLeftover>& toResume);
 
     [[nodiscard]] bool SimulatorIsRunning() const;
 
@@ -75,6 +78,8 @@ signals:
 
     void ConflictsResolved(const std::vector<FileOperationResult>& results);
 
+    void ConflictDetailsReady(const std::vector<CopyConflict>& conflicts, const std::vector<ConflictDetails>& details);
+
     void GaveBack(const std::vector<FileOperationResult>& results);
 
 private:
@@ -94,6 +99,7 @@ private:
     Session& session_;
     BackgroundRunner& runner_;
     bool running_ = false;
+    bool preparingDetails_ = false;
     OperationKind step_ = OperationKind::ImportCopyToStaging;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};

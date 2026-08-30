@@ -140,7 +140,7 @@ void OfferToPutBackWhatALostSwapRenamed(ImportViewModel& importViewModel, QWidge
 
     if (question.clickedButton() == putBack)
     {
-        static_cast<void>(importViewModel.UndoInterruptedSwaps(swaps));
+        importViewModel.UndoInterruptedSwaps(swaps);
     }
 }
 
@@ -158,10 +158,5 @@ void OfferWhatALostImportLeftBehind(ImportViewModel& importViewModel, QWidget* p
         return;
     }
 
-    static_cast<void>(importViewModel.DiscardLeftovers(dialog.ToDiscard()));
-
-    if (const std::vector<StagingLeftover> resumed = dialog.ToResume(); !resumed.empty())
-    {
-        importViewModel.Resume(resumed);
-    }
+    importViewModel.SettleTheLeftovers(dialog.ToDiscard(), dialog.ToResume());
 }

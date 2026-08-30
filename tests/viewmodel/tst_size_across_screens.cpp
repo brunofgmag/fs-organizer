@@ -146,7 +146,7 @@ namespace
 
         AddonTreeModel treeModel;
         FakeSimulatorPackages packages;
-        AddonTreeViewModel tree{session, profiles, treeModel, packages, sizes, notifier};
+        AddonTreeViewModel tree{session, profiles, treeModel, packages, sizes, runner, notifier};
 
         CommunityModel communityModel;
         CommunityViewModel community{profiles, session, notifier, communityModel, sizes};

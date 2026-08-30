@@ -597,7 +597,7 @@ int main(int argc, char* argv[])
     AddonTreeModel treeModel;
     ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
     packages.Reload(session.Profile().variant);
-    AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
+    AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                           sizes);
     DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
@@ -643,7 +643,7 @@ int main(int argc, char* argv[])
 
     FilePresetRepository presetRepository(staged->presetsFolder);
     PresetService presetService(presetRepository, profileService, startupService);
-    PresetViewModel presetViewModel(session, presetService, profileService);
+    PresetViewModel presetViewModel(session, presetService, profileService, runner);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
     ProfileLoadingReport loadingReport(
@@ -668,7 +668,7 @@ int main(int argc, char* argv[])
                                       QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
     UpdateViewModel updateViewModel(updateService, UpdateMode::Notify, false);
 
-    OptionsViewModel optionsViewModel(session, profileService, notifier);
+    OptionsViewModel optionsViewModel(session, profileService, runner, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);

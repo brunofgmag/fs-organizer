@@ -190,7 +190,7 @@ namespace
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         AddonTreeModel model;
         FakeSimulatorPackages packages;
-        AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
+        AddonTreeViewModel viewModel{session, service, model, packages, sizes, runner, notifier};
         DeletionService deletionService{filesystemProbe, files,        sidecars, linking,
                                         classifier,      processProbe, log,      sizes};
         DeletionViewModel deletion{session, service, deletionService, sizes, runner};

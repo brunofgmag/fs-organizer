@@ -98,7 +98,7 @@ private:
 
     [[nodiscard]] bool TheUserMeantIt(const std::vector<const TreeNode*>& nodes, bool enable);
 
-    [[nodiscard]] std::vector<TakenPlace> SwapsTheUserAgreedTo(const std::vector<const TreeNode*>& nodes, bool enable);
+    [[nodiscard]] std::vector<TakenPlace> SwapsTheUserAgreedTo(const std::vector<TakenPlace>& swaps);
 
     void Apply(const std::vector<const TreeNode*>& nodes, bool enable);
 
@@ -154,6 +154,8 @@ private:
     void ShowSuggestions(const TreeNode* node);
 
     void BrowseForLibrary();
+
+    void SayTheLibraryWasRegistered(const std::filesystem::path& path, const LibraryReport& report);
 
     [[nodiscard]] bool TheRootIsWorthKeeping(const std::filesystem::path& root);
 

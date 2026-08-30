@@ -1,6 +1,7 @@
 #include "viewmodel/OptionsViewModel.h"
 
 #include <algorithm>
+#include <memory>
 #include <optional>
 
 #include <QtCore/QCoreApplication>
@@ -11,9 +12,10 @@
 
 OptionsViewModel::OptionsViewModel(Session& session,
                                    ProfileService& service,
+                                   BackgroundRunner& runner,
                                    const SessionNotifier& notifier,
                                    QObject* parent)
-    : QObject(parent), session_(session), service_(service)
+    : QObject(parent), session_(session), service_(service), runner_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &OptionsViewModel::Changed);
 }
@@ -347,9 +349,38 @@ void OptionsViewModel::TakeBackTheMarkersOf(const LibraryId& libraryId)
     emit Changed();
 }
 
-LibraryReport OptionsViewModel::RegisterLibrary(const std::filesystem::path& path) const
+bool OptionsViewModel::WouldAcceptLibrary(const std::filesystem::path& path) const
 {
-    return session_.RegisterLibrary(path);
+    return session_.WouldAcceptLibrary(path);
+}
+
+void OptionsViewModel::RegisterLibrary(const std::filesystem::path& path)
+{
+    if (registering_)
+    {
+        return;
+    }
+
+    registering_ = true;
+
+    auto registration = std::make_shared<Session::LibraryRegistration>();
+    registration->profile = session_.Profile();
+
+    runner_.Run(
+        [this, registration, path]
+        {
+            *registration = session_.RegisterLibraryOn(std::move(registration->profile), path);
+        },
+        [this, registration, path]
+        {
+            registering_ = false;
+
+            const LibraryReport report = registration->report;
+
+            session_.AdoptTheRegistration(std::move(*registration));
+
+            emit LibraryRegistered(path, report);
+        });
 }
 
 void OptionsViewModel::UnregisterLibrary(const LibraryId& libraryId, const bool disablingWhatItLeftBehind)

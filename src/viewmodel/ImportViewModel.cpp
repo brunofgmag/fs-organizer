@@ -41,6 +41,36 @@ ConflictDetails ImportViewModel::DetailsOf(const CopyConflict& conflict) const
     return service_.DetailsOf(session_.Snapshot().entries, conflict);
 }
 
+void ImportViewModel::PrepareConflictDetails(const std::vector<CopyConflict>& conflicts)
+{
+    if (preparingDetails_ || conflicts.empty())
+    {
+        return;
+    }
+
+    preparingDetails_ = true;
+
+    const std::vector<DestinationEntry> entries = session_.Snapshot().entries;
+    const auto details = std::make_shared<std::vector<ConflictDetails>>();
+
+    runner_.Run(
+        [this, entries, conflicts, details]
+        {
+            details->reserve(conflicts.size());
+
+            for (const CopyConflict& conflict : conflicts)
+            {
+                details->push_back(service_.DetailsOf(entries, conflict));
+            }
+        },
+        [this, conflicts, details]
+        {
+            preparingDetails_ = false;
+
+            emit ConflictDetailsReady(conflicts, *details);
+        });
+}
+
 std::uintmax_t ImportViewModel::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const
 {
     return service_.TotalSizeOf(folders);
@@ -56,14 +86,78 @@ std::vector<InterruptedSwap> ImportViewModel::InterruptedSwaps() const
     return service_.InterruptedSwaps(Profile());
 }
 
-std::vector<FileOperationResult> ImportViewModel::UndoInterruptedSwaps(const std::vector<InterruptedSwap>& swaps) const
+void ImportViewModel::UndoInterruptedSwaps(const std::vector<InterruptedSwap>& swaps)
 {
-    return service_.UndoInterruptedSwaps(Profile(), swaps);
+    if (running_ || swaps.empty())
+    {
+        return;
+    }
+
+    running_ = true;
+
+    const SimulatorProfile profile = Profile();
+
+    runner_.Run(
+        [this, profile, swaps]
+        {
+            static_cast<void>(service_.UndoInterruptedSwaps(profile, swaps));
+        },
+        [this]
+        {
+            running_ = false;
+
+            session_.RefreshEntries();
+        });
 }
 
-std::vector<FileOperationResult> ImportViewModel::DiscardLeftovers(const std::vector<StagingLeftover>& leftovers) const
+void ImportViewModel::DiscardLeftovers(const std::vector<StagingLeftover>& leftovers)
 {
-    return service_.DiscardLeftovers(Profile(), leftovers);
+    if (running_ || leftovers.empty())
+    {
+        return;
+    }
+
+    running_ = true;
+
+    const SimulatorProfile profile = Profile();
+
+    runner_.Run(
+        [this, profile, leftovers]
+        {
+            static_cast<void>(service_.DiscardLeftovers(profile, leftovers));
+        },
+        [this]
+        {
+            running_ = false;
+        });
+}
+
+void ImportViewModel::SettleTheLeftovers(const std::vector<StagingLeftover>& toDiscard,
+                                         const std::vector<StagingLeftover>& toResume)
+{
+    if (toResume.empty())
+    {
+        DiscardLeftovers(toDiscard);
+        return;
+    }
+
+    const SimulatorProfile profile = Profile();
+    const auto landed = std::make_shared<std::vector<ImportOperationResult>>();
+
+    RunInAWorker(
+        [this, profile, toDiscard, toResume, landed]
+        {
+            static_cast<void>(service_.DiscardLeftovers(profile, toDiscard));
+
+            folder_ = 1;
+
+            *landed = service_.Resume(profile, toResume, OnProgressOfFolder(folder_), OnStep());
+        },
+        [this, landed]
+        {
+            Adopt(*landed);
+        },
+        static_cast<int>(toResume.size()));
 }
 
 void ImportViewModel::Cancel()

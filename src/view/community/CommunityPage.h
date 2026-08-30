@@ -100,7 +100,7 @@ private:
 
     void ResolveThem(const std::vector<CopyConflict>& conflicts);
 
-    [[nodiscard]] std::vector<ConflictToResolve> WhatTheUserChoseFor(const std::vector<CopyConflict>& conflicts);
+    void OfferTheResolutions(const std::vector<CopyConflict>& conflicts, const std::vector<ConflictDetails>& details);
 
     void OnConflictsResolved(const std::vector<FileOperationResult>& results);
 

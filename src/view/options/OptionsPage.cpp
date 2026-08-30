@@ -267,6 +267,7 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
 
     addLibrary_ = new QPushButton(tr("Add library…"), pane);
     connect(addLibrary_, &QPushButton::clicked, this, &OptionsPage::AddLibrary);
+    connect(&viewModel_, &OptionsViewModel::LibraryRegistered, this, &OptionsPage::SayTheLibraryWasRegistered);
 
     importLegacy_ = new QPushButton(tr("Import from MSFS Addons Linker…"), pane);
     connect(importLegacy_, &QPushButton::clicked, this, &OptionsPage::LegacyImportRequested);
@@ -867,11 +868,24 @@ void OptionsPage::AddLibrary()
         return;
     }
 
-    const LibraryReport report = viewModel_.RegisterLibrary(AsPath(chosen));
-    if (!report.Accepted())
+    if (!viewModel_.WouldAcceptLibrary(AsPath(chosen)))
     {
         QMessageBox::warning(this, tr("Library refused"),
                              tr("%1 is inside a library that is already registered.").arg(chosen));
+        return;
+    }
+
+    emit StatusChanged(tr("Reading the library folder…"));
+
+    viewModel_.RegisterLibrary(AsPath(chosen));
+}
+
+void OptionsPage::SayTheLibraryWasRegistered(const std::filesystem::path& path, const LibraryReport& report)
+{
+    if (!report.Accepted())
+    {
+        QMessageBox::warning(this, tr("Library refused"),
+                             tr("%1 is inside a library that is already registered.").arg(AsText(path)));
         return;
     }
 

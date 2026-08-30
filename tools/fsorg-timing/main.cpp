@@ -235,7 +235,7 @@ int main(int argc, char* argv[])
         AddonTreeModel treeModel;
         ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
         packages.Reload(session.Profile().variant);
-        AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, notifier);
+        AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
         const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
                                               sizes);
         DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);

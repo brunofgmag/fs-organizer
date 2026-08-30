@@ -51,6 +51,7 @@ namespace
         static void NoCategoryIsRemovedWhileTheSimulatorIsRunning();
         static void RenamingACategoryCarriesItsEnabledAddonsAlong();
         static void AnOverrideCarriedByARenameKeepsTheSpellingItWasWrittenWith();
+        static void ABatchOfMovesClassifiesTheDestinationsOncePerLibrary();
     };
 }
 
@@ -487,6 +488,29 @@ void LibraryOrganizerTest::AnOverrideCarriedByARenameKeepsTheSpellingItWasWritte
     QCOMPARE(f.organizer.RenameCategory(f.profile, kAircrafts, "Airplanes").result, FileResult::Completed);
 
     QCOMPARE(f.profile.destinationOverrides.front().relativePath, std::filesystem::path{"Airplanes/Aerosoft-CRJ"});
+}
+
+void LibraryOrganizerTest::ABatchOfMovesClassifiesTheDestinationsOncePerLibrary()
+{
+    Fixture f;
+    const std::filesystem::path other = "D:/Library/Aircrafts/fenix-a320";
+    f.fileSystem.AddDirectory(other);
+    f.fileSystem.AddFile(other / "manifest.json", kMegabyte);
+    f.TheLibraryHolds({kAddon, other});
+    f.EnableTheAddonIn(kDestination);
+
+    f.filesystemProbe.enumerated.clear();
+
+    const std::vector<FileOperationResult> results =
+        f.organizer.Move(f.profile,
+                         {AddonMove{.addonFolder = kAddon, .category = kAircrafts2024},
+                          AddonMove{.addonFolder = other, .category = kAircrafts2024}});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QCOMPARE(results.back().result, FileResult::Completed);
+    QVERIFY2(f.filesystemProbe.TimesEnumerated(kDestination) == std::size_t{1},
+             "the batch pays one destination classification per library, not one per move");
 }
 
 QTEST_APPLESS_MAIN(LibraryOrganizerTest)
