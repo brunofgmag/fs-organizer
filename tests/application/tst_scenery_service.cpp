@@ -32,6 +32,7 @@ namespace
         static void AFileChangedBelowTheFirstLevelOfTheSceneryFolderIsSeen();
         static void TheBatchToldToReadAgainReadsAgainInsteadOfAnsweringFromTheCache();
         static void ASceneryFileThatEndsEarlyIsCarriedAsARecordThatWasNotRead();
+        static void TheBatchWritesTheCacheOnceAtTheEndAndTheSingleAskStillWrites();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library/Sceneries");
@@ -291,6 +292,28 @@ void SceneryServiceTest::ASceneryFileThatEndsEarlyIsCarriedAsARecordThatWasNotRe
     QVERIFY2(AirportsOfEachAddon({scenery}).front().evidence == AirportEvidence::ARecordWasNotRead,
              "a truncated file is not an addon that carries no airport, and the diagnostics section counts the two "
              "apart, which is the whole point of the US-118.9");
+}
+
+void SceneryServiceTest::TheBatchWritesTheCacheOnceAtTheEndAndTheSingleAskStillWrites()
+{
+    Reading reading;
+
+    for (const std::string& name : {std::string("one"), std::string("two"), std::string("three")})
+    {
+        reading.fileSystem.AddFileWithContents(Addon(name).folder / "scenery" / "APX.bgl",
+                                               FakeSceneryParser::Carrying({"EHAM"}));
+    }
+
+    SceneryService service = reading.Service();
+    static_cast<void>(service.SceneryOfEach({Addon("one"), Addon("two"), Addon("three")}, {}));
+
+    QCOMPARE(reading.cache.kept, std::size_t{3});
+    QVERIFY2(reading.cache.wroteDown == std::size_t{1},
+             "a sweep of the whole library serializes the cache once, not once per addon");
+
+    static_cast<void>(service.SceneryOf(Addon("one")));
+
+    QCOMPARE(reading.cache.wroteDown, std::size_t{2});
 }
 
 QTEST_APPLESS_MAIN(SceneryServiceTest)
