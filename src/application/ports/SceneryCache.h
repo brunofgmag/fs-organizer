@@ -22,6 +22,8 @@ public:
     [[nodiscard]] virtual std::optional<RememberedScenery> Remember(const std::filesystem::path& addonFolder) const = 0;
 
     virtual void Keep(const std::filesystem::path& addonFolder, const RememberedScenery& scenery) = 0;
+
+    virtual void WriteWhatIsKept() = 0;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_PORTS_SCENERY_CACHE_H

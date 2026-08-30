@@ -21,19 +21,36 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
       model_(model),
       sizes_(sizes),
       runner_(runner),
+      working_(runner),
       caller_(sizes.NewCaller())
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this,
             [this]
             {
-                if (shown_)
-                {
-                    Show();
+                const int mine = ++listed_;
+                const SimulatorProfile profile = session_.Profile();
+                const auto items = std::make_shared<std::vector<QuarantinedItem>>();
 
-                    return;
-                }
+                runner_.Run(
+                    [this, profile, items]
+                    {
+                        *items = service_.Quarantined(profile);
+                    },
+                    [this, mine, items]
+                    {
+                        if (mine != listed_)
+                        {
+                            return;
+                        }
 
-                static_cast<void>(ListWhatIsHeld());
+                        model_.ShowItems(*items);
+
+                        if (shown_)
+                        {
+                            Describe(*items);
+                            Weigh(*items);
+                        }
+                    });
             });
 }
 
@@ -123,6 +140,37 @@ std::vector<RestoreOffer> QuarantineViewModel::WhatRestoringWouldDo(const std::v
     return offers;
 }
 
+void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& items)
+{
+    if (items.empty())
+    {
+        return;
+    }
+
+    const SimulatorProfile profile = session_.Profile();
+    const auto offers = std::make_shared<std::vector<RestoreOffer>>();
+
+    working_.Run(
+        [this, profile, items, offers]
+        {
+            std::vector<RestoreCheck> checks = service_.CheckRestore(profile, items);
+
+            offers->reserve(checks.size());
+
+            for (RestoreCheck& check : checks)
+            {
+                std::vector<RestorePlace> places =
+                    check.NeedsAPlace() ? service_.PlacesFor(profile, check.item) : std::vector<RestorePlace>{};
+
+                offers->push_back(RestoreOffer{.check = std::move(check), .places = std::move(places)});
+            }
+        },
+        [this, offers]
+        {
+            emit RestoreOffersReady(*offers);
+        });
+}
+
 void QuarantineViewModel::WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed)
 {
     sizes_.MeasureFolders(
@@ -136,63 +184,89 @@ void QuarantineViewModel::WeighBothSidesOf(const RestoreCheck& check, std::funct
 
 void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& items)
 {
-    const std::vector<FileOperationResult> results = service_.Restore(session_.Profile(), items);
-
-    Show();
-
-    if (std::ranges::any_of(results,
-                            [](const FileOperationResult& result)
-                            {
-                                return Succeeded(result.result);
-                            }))
-    {
-        profileService_.ForgetUndo();
-    }
-
-    emit Restored(results);
+    Restore(items, {});
 }
 
 void QuarantineViewModel::Swap(const std::vector<QuarantinedItem>& items)
 {
-    const std::vector<DestinationEntry> entries = session_.Snapshot().entries;
-
-    std::vector<SwapResult> results;
-    results.reserve(items.size());
-
-    for (const QuarantinedItem& item : items)
-    {
-        results.push_back(service_.Swap(session_.Profile(), entries, item));
-    }
-
-    Show();
-
-    if (std::ranges::any_of(results,
-                            [](const SwapResult& result)
-                            {
-                                return result.Succeeded();
-                            }))
-    {
-        profileService_.ForgetUndo();
-    }
-
-    emit Swapped(results);
+    Restore({}, items);
 }
 
-void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
+void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
+                                  const std::vector<QuarantinedItem>& replacing)
 {
-    if (discarding_ || items.empty())
+    if (going.empty() && replacing.empty())
     {
         return;
     }
 
-    discarding_ = true;
+    const SimulatorProfile profile = session_.Profile();
+    const std::vector<DestinationEntry> entries = session_.Snapshot().entries;
+    const auto restored = std::make_shared<std::vector<FileOperationResult>>();
+    const auto swapped = std::make_shared<std::vector<SwapResult>>();
+
+    working_.Run(
+        [this, profile, entries, going, replacing, restored, swapped]
+        {
+            if (!going.empty())
+            {
+                *restored = service_.Restore(profile, going);
+            }
+
+            swapped->reserve(replacing.size());
+
+            for (const QuarantinedItem& item : replacing)
+            {
+                swapped->push_back(service_.Swap(profile, entries, item));
+            }
+        },
+        [this, going, replacing, restored, swapped]
+        {
+            Show();
+
+            const bool anythingCameBack = std::ranges::any_of(*restored,
+                                                              [](const FileOperationResult& result)
+                                                              {
+                                                                  return Succeeded(result.result);
+                                                              })
+                || std::ranges::any_of(*swapped,
+                                       [](const SwapResult& result)
+                                       {
+                                           return result.Succeeded();
+                                       });
+
+            if (anythingCameBack)
+            {
+                profileService_.ForgetUndo();
+            }
+
+            if (!going.empty())
+            {
+                emit Restored(*restored);
+            }
+
+            if (!replacing.empty())
+            {
+                emit Swapped(*swapped);
+            }
+        });
+}
+
+void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
+{
+    if (items.empty())
+    {
+        return;
+    }
 
     const SimulatorProfile profile = session_.Profile();
     const auto results = std::make_shared<std::vector<FileOperationResult>>();
 
-    emit DiscardStarted(static_cast<int>(items.size()));
-
-    runner_.Run(
+    working_.Run(
+        [this, count = static_cast<int>(items.size())]
+        {
+            emit DiscardStarted(count);
+        },
         [this, profile, items, results]
         {
             *results =
@@ -204,8 +278,6 @@ void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
         },
         [this, results]
         {
-            discarding_ = false;
-
             Show();
 
             emit Discarded(*results);

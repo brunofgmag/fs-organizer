@@ -208,8 +208,8 @@ QString DeleteDialog::WhereTheLinksAre() const
         return {};
     }
 
-    return tr("Turning it off is part of this, and it happens because you asked for the deletion:")
-        + QStringLiteral("\n") + said.join(QStringLiteral("\n"));
+    return tr("The following addons will be deleted and disabled:") + QStringLiteral("\n")
+        + said.join(QStringLiteral("\n"));
 }
 
 void DeleteDialog::ShowTheChosenRoute() const

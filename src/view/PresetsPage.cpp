@@ -181,9 +181,16 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
                     emit StatusChanged(tr("Restart the simulator to apply the changes."));
                 }
             });
+    connect(&viewModel_, &PresetViewModel::ApplyStarted, this,
+            [this]
+            {
+                emit StatusChanged(tr("Applying the preset…"));
+            });
     connect(&viewModel_, &PresetViewModel::Applied, this,
             [this](const QStringList& unresolved, const QString& startupLeftUndone)
             {
+                emit StatusChanged(tr("The preset was applied."));
+
                 QStringList said;
 
                 if (!unresolved.isEmpty())

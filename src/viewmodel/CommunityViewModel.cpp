@@ -123,6 +123,16 @@ void CommunityViewModel::MeasureTheSelection(const std::vector<DestinationEntry>
                           });
 }
 
+void CommunityViewModel::WeighTheFolders(const std::vector<std::filesystem::path>& folders,
+                                         std::function<void(std::uintmax_t bytes)> onWeighed)
+{
+    sizes_.MeasureFolders(folders, caller_, Freshness::ReuseWhatIsKnown, {},
+                          [weighed = std::move(onWeighed)](const FolderSizeReport& report)
+                          {
+                              weighed(report.bytes);
+                          });
+}
+
 std::vector<RepairCandidate> CommunityViewModel::PlanRepairs() const
 {
     const ProfileSnapshot& snapshot = session_.Snapshot();

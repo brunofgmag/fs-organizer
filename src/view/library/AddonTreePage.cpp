@@ -206,6 +206,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
             });
 
     connect(&viewModel_, &AddonTreeViewModel::BatchFinished, this, &AddonTreePage::OnBatchFinished);
+    connect(&viewModel_, &AddonTreeViewModel::LibraryRegistered, this, &AddonTreePage::SayTheLibraryWasRegistered);
     connect(&viewModel_, &AddonTreeViewModel::Shown, this, &AddonTreePage::OnShown);
 
     connect(&viewModel_, &AddonTreeViewModel::SizeMeasuring, this,
@@ -244,6 +245,12 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
             [this]
             {
                 emit StatusChanged(tr("Measuring what you selected…"));
+            });
+
+    connect(&deletion_, &DeletionViewModel::Deleting, this,
+            [this]
+            {
+                emit StatusChanged(tr("Deleting what you selected…"));
             });
 
     connect(&deletion_, &DeletionViewModel::Planned, this, &AddonTreePage::OfferToDelete);
@@ -732,7 +739,11 @@ void AddonTreePage::Apply(const std::vector<const TreeNode*>& nodes, const bool 
         return;
     }
 
-    viewModel_.Toggle(nodes, enable, SwapsTheUserAgreedTo(nodes, enable), StartupEntriesTheUserAgreedTo(nodes, enable));
+    TogglePlan plan = viewModel_.PlanToggle(nodes, enable);
+    const std::vector<TakenPlace> agreedSwaps = SwapsTheUserAgreedTo(plan.swapsNeeded);
+    const std::vector<StartupLine> agreedEntries = StartupEntriesTheUserAgreedTo(nodes, enable);
+
+    viewModel_.Toggle(nodes, enable, std::move(plan), agreedSwaps, agreedEntries);
 
     if (enable)
     {
@@ -786,29 +797,27 @@ void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<Coverage
         return;
     }
 
+    std::vector<std::string> packageNames;
+    packageNames.reserve(covered.size());
+
     for (const CoverageLine& line : covered)
     {
-        if (const FileResult result = coverage_.Switch(line.packageName, false); !Succeeded(result))
-        {
-            emit StatusChanged(tr("The package list was not changed: %1.").arg(Explain(result)));
+        packageNames.push_back(line.packageName);
+    }
 
-            return;
-        }
+    if (const FileResult result = coverage_.SwitchAll(packageNames, false); !Succeeded(result))
+    {
+        emit StatusChanged(tr("The package list was not changed: %1.").arg(Explain(result)));
+
+        return;
     }
 
     emit StatusChanged(
         tr("%n airport of the simulator will not load any more.", nullptr, static_cast<int>(covered.size())));
 }
 
-std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<const TreeNode*>& nodes,
-                                                            const bool enable)
+std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<TakenPlace>& swaps)
 {
-    if (!enable)
-    {
-        return {};
-    }
-
-    const std::vector<TakenPlace> swaps = viewModel_.SwapsNeededTo(nodes);
     if (swaps.empty())
     {
         return {};
@@ -1373,8 +1382,21 @@ void AddonTreePage::BrowseForLibrary()
         return;
     }
 
-    const LibraryReport report = viewModel_.AddLibrary(AsPath(chosen));
+    if (!viewModel_.WouldAcceptLibrary(AsPath(chosen)))
+    {
+        QMessageBox::warning(this, tr("Repeated library"),
+                             tr("That folder is already inside a registered library. Choose the root folder where the "
+                                "addons are kept; its subfolders become categories."));
+        return;
+    }
 
+    emit StatusChanged(tr("Reading the library folder…"));
+
+    viewModel_.AddLibrary(AsPath(chosen));
+}
+
+void AddonTreePage::SayTheLibraryWasRegistered(const std::filesystem::path& path, const LibraryReport& report)
+{
     if (!report.Accepted())
     {
         QMessageBox::warning(this, tr("Repeated library"),
@@ -1385,6 +1407,6 @@ void AddonTreePage::BrowseForLibrary()
 
     QMessageBox::information(this, tr("Library registered"),
                              tr("%1 · %2, %3")
-                                 .arg(chosen, tr("%n category", nullptr, static_cast<int>(report.categories)),
+                                 .arg(AsText(path), tr("%n category", nullptr, static_cast<int>(report.categories)),
                                       tr("%n addon", nullptr, static_cast<int>(report.addons))));
 }

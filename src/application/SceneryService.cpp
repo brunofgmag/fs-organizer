@@ -160,6 +160,15 @@ std::vector<SceneryOfAnAddon> SceneryService::WhatIsAlreadyKnown(const std::vect
 
 SceneryOfAnAddon SceneryService::SceneryOf(const AddonToRead& addon, const SceneryFreshness freshness)
 {
+    SceneryOfAnAddon scenery = ReadOne(addon, freshness);
+
+    cache_.WriteWhatIsKept();
+
+    return scenery;
+}
+
+SceneryOfAnAddon SceneryService::ReadOne(const AddonToRead& addon, const SceneryFreshness freshness)
+{
     const std::optional<RememberedScenery> remembered =
         freshness == SceneryFreshness::ReadAgain ? std::nullopt : cache_.Remember(addon.folder);
     const std::optional<std::chrono::system_clock::time_point> changed = WhenTheSceneryLastChanged(addon.folder);
@@ -190,13 +199,15 @@ std::vector<SceneryOfAnAddon> SceneryService::SceneryOfEach(const std::vector<Ad
 
     for (const AddonToRead& addon : addons)
     {
-        scenery.push_back(SceneryOf(addon, freshness));
+        scenery.push_back(ReadOne(addon, freshness));
 
         if (onProgress && !onProgress(scenery.size(), addons.size()))
         {
             break;
         }
     }
+
+    cache_.WriteWhatIsKept();
 
     return scenery;
 }

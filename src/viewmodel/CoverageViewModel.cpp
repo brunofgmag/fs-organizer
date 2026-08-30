@@ -91,7 +91,7 @@ CoverageViewModel::CoverageViewModel(CoverageService& service,
                                      const Clock& clock,
                                      BackgroundRunner& runner,
                                      QObject* parent)
-    : QObject(parent), service_(service), scenery_(scenery), session_(session), clock_(clock), runner_(runner)
+    : QObject(parent), service_(service), scenery_(scenery), session_(session), clock_(clock), checking_(runner)
 {
 }
 
@@ -117,7 +117,7 @@ void CoverageViewModel::CheckWhatWasTurnedOn(const std::vector<const TreeNode*>&
 
 void CoverageViewModel::Check(const std::vector<AddonToRead>& turningOn)
 {
-    if (checking_)
+    if (checking_.Busy())
     {
         waiting_.insert(waiting_.end(), turningOn.begin(), turningOn.end());
         return;
@@ -127,12 +127,11 @@ void CoverageViewModel::Check(const std::vector<AddonToRead>& turningOn)
     const std::vector<CoexistingPair> coexisting = session_.Settings().coexistingAirports;
     const bool managing = service_.Managing();
 
-    checking_ = true;
     stopChecking_ = false;
 
     auto found = std::make_shared<WhatTurningThemOnFound>();
 
-    runner_.Run(
+    checking_.Run(
         [this, turningOn, alreadyOn, coexisting, managing, found]
         {
             const std::vector<SceneryOfAnAddon> read = scenery_.SceneryOfEach(turningOn, TellingHowFarItGot());
@@ -180,8 +179,6 @@ SceneryProgress CoverageViewModel::TellingHowFarItGot()
 
 void CoverageViewModel::TheAnswerCameBack(const WhatTurningThemOnFound& found)
 {
-    checking_ = false;
-
     emit TurningThemOnWasChecked(found);
 
     if (waiting_.empty())
@@ -202,7 +199,7 @@ void CoverageViewModel::StopChecking()
 
 bool CoverageViewModel::Checking() const
 {
-    return checking_;
+    return checking_.Busy();
 }
 
 void CoverageViewModel::Show()
@@ -277,6 +274,21 @@ std::optional<std::string> CoverageViewModel::RunningSimulator() const
 FileResult CoverageViewModel::Switch(const std::string& packageName, const bool activated)
 {
     const FileResult result = service_.Switch(packageName, activated);
+    if (!Succeeded(result))
+    {
+        return result;
+    }
+
+    Read();
+
+    emit Changed();
+
+    return result;
+}
+
+FileResult CoverageViewModel::SwitchAll(const std::vector<std::string>& packageNames, const bool activated)
+{
+    const FileResult result = service_.SwitchAll(packageNames, activated);
     if (!Succeeded(result))
     {
         return result;

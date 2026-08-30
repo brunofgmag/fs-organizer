@@ -130,6 +130,7 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/DiagnosticsViewModel.cpp
         src/viewmodel/DocumentsViewModel.cpp
         src/viewmodel/FailureText.cpp
+        src/viewmodel/GuardedRunner.cpp
         src/viewmodel/ImportViewModel.cpp
         src/viewmodel/JournalModel.cpp
         src/viewmodel/JournalViewModel.cpp

@@ -27,6 +27,8 @@ public:
 
     [[nodiscard]] std::vector<ImportRequest> ChosenRequests() const;
 
+    void ShowTheTotal(std::uintmax_t totalBytes);
+
 private:
     void ShowCategoriesOfTheChosenLibrary() const;
 
@@ -35,6 +37,7 @@ private:
     QComboBox* library_ = nullptr;
     QComboBox* category_ = nullptr;
     QLabel* landing_ = nullptr;
+    QLabel* total_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_COMMUNITY_IMPORT_DIALOG_H

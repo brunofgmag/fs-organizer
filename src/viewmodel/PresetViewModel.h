@@ -3,6 +3,8 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
+#include <memory>
 #include <optional>
 
 #include <QtCore/QList>
@@ -12,6 +14,8 @@
 
 #include "application/PresetService.h"
 #include "application/Session.h"
+#include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 
 struct PresetRow
 {
@@ -55,7 +59,11 @@ class PresetViewModel final : public QObject
     Q_OBJECT
 
 public:
-    PresetViewModel(Session& session, PresetService& service, ProfileService& profiles, QObject* parent = nullptr);
+    PresetViewModel(Session& session,
+                    PresetService& service,
+                    ProfileService& profiles,
+                    BackgroundRunner& runner,
+                    QObject* parent = nullptr);
 
     [[nodiscard]] QStringList Names() const;
 
@@ -109,7 +117,19 @@ signals:
 
     void Applied(const QStringList& unresolved, const QString& whatTheStartupHalfLeftUndone);
 
+    void ApplyStarted();
+
 private:
+    struct ApplyWork
+    {
+        SimulatorProfile profile{};
+        ProfileSnapshot snapshot{};
+        Preset preset{};
+        PresetApplyReport report{};
+    };
+
+    void RunTheApply(const Preset& preset, std::function<PresetApplyReport(const ApplyWork&)> apply);
+
     void NoteApplied(const PresetApplyReport& report);
 
     void RefuseTheWriteOf(const QString& name);
@@ -123,6 +143,7 @@ private:
     Session& session_;
     PresetService& service_;
     ProfileService& profiles_;
+    GuardedRunner applying_;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_PRESET_VIEW_MODEL_H

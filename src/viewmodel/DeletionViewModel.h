@@ -12,6 +12,8 @@
 #include "application/Session.h"
 #include "application/SizeService.h"
 #include "application/model/DeletionPlan.h"
+#include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "domain/model/TreeNode.h"
 
 Q_DECLARE_METATYPE(DeletionPlan)
@@ -27,6 +29,7 @@ public:
                       ProfileService& profileService,
                       const DeletionService& service,
                       SizeService& sizes,
+                      BackgroundRunner& runner,
                       QObject* parent = nullptr);
 
     void PlanToDelete(const std::vector<const TreeNode*>& nodes);
@@ -40,9 +43,19 @@ signals:
 
     void Planned(const DeletionPlan& plan);
 
+    void Deleting();
+
     void Deleted(const std::vector<DeletionResult>& results, DeletionRoute route);
 
 private:
+    struct PlanWork
+    {
+        SimulatorProfile profile{};
+        std::vector<SimulatorProfile> profiles{};
+        std::vector<TreeNode> nodes{};
+        DeletionPlan plan{};
+    };
+
     [[nodiscard]] std::vector<SimulatorProfile> EveryProfile() const;
 
     [[nodiscard]] std::vector<const TreeNode*> NodesStillThere(const std::vector<std::filesystem::path>& chosen) const;
@@ -51,6 +64,8 @@ private:
     ProfileService& profileService_;
     const DeletionService& service_;
     SizeService& sizes_;
+    BackgroundRunner& runner_;
+    GuardedRunner deleting_;
     MeasurementCaller caller_;
 };
 

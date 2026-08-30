@@ -1,6 +1,7 @@
 #include "viewmodel/DeletionViewModel.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "domain/tree/AddonTree.h"
 #include "viewmodel/SimulatorText.h"
@@ -9,12 +10,15 @@ DeletionViewModel::DeletionViewModel(Session& session,
                                      ProfileService& profileService,
                                      const DeletionService& service,
                                      SizeService& sizes,
+                                     BackgroundRunner& runner,
                                      QObject* parent)
     : QObject(parent),
       session_(session),
       profileService_(profileService),
       service_(service),
       sizes_(sizes),
+      runner_(runner),
+      deleting_(runner),
       caller_(sizes.NewCaller())
 {
 }
@@ -67,26 +71,62 @@ void DeletionViewModel::PlanToDelete(const std::vector<const TreeNode*>& nodes)
     sizes_.MeasureFolders(addonFolders, caller_, Freshness::MeasureAgain, {},
                           [this, chosen](const FolderSizeReport&)
                           {
-                              const std::vector<const TreeNode*> stillThere = NodesStillThere(chosen);
+                              auto work = std::make_shared<PlanWork>();
+                              work->profile = session_.Profile();
+                              work->profiles = EveryProfile();
 
-                              emit Planned(service_.Plan(session_.Profile(), EveryProfile(), stillThere));
+                              for (const TreeNode* node : NodesStillThere(chosen))
+                              {
+                                  work->nodes.push_back(*node);
+                              }
+
+                              runner_.Run(
+                                  [this, work]
+                                  {
+                                      std::vector<const TreeNode*> stillThere;
+                                      stillThere.reserve(work->nodes.size());
+
+                                      for (const TreeNode& node : work->nodes)
+                                      {
+                                          stillThere.push_back(&node);
+                                      }
+
+                                      work->plan = service_.Plan(work->profile, work->profiles, stillThere);
+                                  },
+                                  [this, work]
+                                  {
+                                      emit Planned(work->plan);
+                                  });
                           });
 }
 
 void DeletionViewModel::Delete(const DeletionPlan& plan, const DeletionRoute route)
 {
-    const std::vector<DeletionResult> results = service_.Delete(EveryProfile(), plan, route);
+    const std::vector<SimulatorProfile> everyProfile = EveryProfile();
+    const auto results = std::make_shared<std::vector<DeletionResult>>();
 
-    if (std::ranges::any_of(results,
-                            [](const DeletionResult& result)
-                            {
-                                return Succeeded(result.result);
-                            }))
-    {
-        profileService_.ForgetUndo();
-    }
+    deleting_.Run(
+        [this]
+        {
+            emit Deleting();
+        },
+        [this, everyProfile, plan, route, results]
+        {
+            *results = service_.Delete(everyProfile, plan, route);
+        },
+        [this, route, results]
+        {
+            if (std::ranges::any_of(*results,
+                                    [](const DeletionResult& result)
+                                    {
+                                        return Succeeded(result.result);
+                                    }))
+            {
+                profileService_.ForgetUndo();
+            }
 
-    emit Deleted(results, route);
+            emit Deleted(*results, route);
+        });
 }
 
 QString DeletionViewModel::LabelOfProfile(const std::string& profileId) const

@@ -108,6 +108,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
                 UpdateSummary();
             });
 
+    connect(&viewModel_, &QuarantineViewModel::RestoreOffersReady, this, &QuarantinePage::OfferTheRestore);
     connect(&viewModel_, &QuarantineViewModel::Restored, this,
             [this](const std::vector<FileOperationResult>& results)
             {
@@ -296,8 +297,15 @@ void QuarantinePage::RestoreSelected()
         return;
     }
 
+    emit StatusChanged(tr("Checking what restoring would touch…"));
+
+    viewModel_.PrepareRestore(items);
+}
+
+void QuarantinePage::OfferTheRestore(const std::vector<RestoreOffer>& offers)
+{
     RestoreDialog dialog(
-        viewModel_.WhatRestoringWouldDo(items),
+        offers,
         [this](const RestoreCheck& check)
         {
             return AskAboutTheCollision(check);
@@ -306,6 +314,7 @@ void QuarantinePage::RestoreSelected()
 
     if (dialog.exec() != QDialog::Accepted)
     {
+        emit StatusChanged(tr("Nothing was restored."));
         return;
     }
 
@@ -318,15 +327,7 @@ void QuarantinePage::RestoreSelected()
         return;
     }
 
-    if (!going.empty())
-    {
-        viewModel_.Restore(going);
-    }
-
-    if (!replacing.empty())
-    {
-        viewModel_.Swap(replacing);
-    }
+    viewModel_.Restore(going, replacing);
 }
 
 void QuarantinePage::DiscardSelected()

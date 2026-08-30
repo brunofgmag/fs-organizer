@@ -1,6 +1,9 @@
 #ifndef FS_ORGANIZER_VIEWMODEL_COMMUNITY_VIEW_MODEL_H
 #define FS_ORGANIZER_VIEWMODEL_COMMUNITY_VIEW_MODEL_H
 
+#include <cstdint>
+#include <filesystem>
+#include <functional>
 #include <vector>
 
 #include <QtCore/QObject>
@@ -30,6 +33,9 @@ public:
     void ReadTheDestinationsAgain();
 
     void MeasureTheSelection(const std::vector<DestinationEntry>& entries);
+
+    void WeighTheFolders(const std::vector<std::filesystem::path>& folders,
+                         std::function<void(std::uintmax_t bytes)> onWeighed);
 
     [[nodiscard]] std::vector<RepairCandidate> PlanRepairs() const;
 

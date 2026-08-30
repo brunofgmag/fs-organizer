@@ -13,6 +13,8 @@
 #include "application/ProfileService.h"
 #include "application/Session.h"
 #include "application/model/UpdateMode.h"
+#include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/LibraryId.h"
 #include "domain/tree/StructureAdoption.h"
@@ -53,6 +55,7 @@ class OptionsViewModel final : public QObject
 public:
     OptionsViewModel(Session& session,
                      ProfileService& service,
+                     BackgroundRunner& runner,
                      const SessionNotifier& notifier,
                      QObject* parent = nullptr);
 
@@ -90,7 +93,9 @@ public:
 
     void RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to) const;
 
-    [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path) const;
+    [[nodiscard]] bool WouldAcceptLibrary(const std::filesystem::path& path) const;
+
+    void RegisterLibrary(const std::filesystem::path& path);
 
     void UnregisterLibrary(const LibraryId& libraryId, bool disablingWhatItLeftBehind);
 
@@ -102,6 +107,8 @@ public:
 
 signals:
     void Changed();
+
+    void LibraryRegistered(const std::filesystem::path& path, const LibraryReport& report);
 
     void LinkTypeChosen(LinkType linkType);
 
@@ -119,6 +126,7 @@ private:
 
     Session& session_;
     ProfileService& service_;
+    GuardedRunner registering_;
     std::string shown_;
 };
 

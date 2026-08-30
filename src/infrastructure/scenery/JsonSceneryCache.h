@@ -18,6 +18,8 @@ public:
 
     void Keep(const std::filesystem::path& addonFolder, const RememberedScenery& scenery) override;
 
+    void WriteWhatIsKept() override;
+
 private:
     void Read();
 
@@ -25,6 +27,7 @@ private:
 
     std::filesystem::path filePath_;
     std::map<std::string, RememberedScenery, std::less<>> known_;
+    bool dirty_ = false;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_SCENERY_JSON_SCENERY_CACHE_H

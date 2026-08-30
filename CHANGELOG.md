@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.54.6](https://github.com/brunofgmag/fs-organizer/compare/v0.54.5...v0.54.6) (2026-08-30)
+
+
+* read the package list again, and finish taking the gestures off the UI thread ([#178](https://github.com/brunofgmag/fs-organizer/issues/178)) ([46e5c32](https://github.com/brunofgmag/fs-organizer/commit/46e5c329068879a75d4dc33b9db930865b2eb08d))
+
+
+### Bug Fixes
+
+* **sim:** read the package list again instead of trusting its timestamp ([bcdaa3c](https://github.com/brunofgmag/fs-organizer/commit/bcdaa3c3b9039404ab610a8b7f042b958b2c09fe)) ([46e5c32](https://github.com/brunofgmag/fs-organizer/commit/46e5c329068879a75d4dc33b9db930865b2eb08d))
+
+
+### Performance Improvements
+
+* **legacy:** import from the old program in a worker ([620fd0f](https://github.com/brunofgmag/fs-organizer/commit/620fd0f4becbe0f69635d294ae163cf661dfeb61)) ([46e5c32](https://github.com/brunofgmag/fs-organizer/commit/46e5c329068879a75d4dc33b9db930865b2eb08d))
+
+## [0.54.5](https://github.com/brunofgmag/fs-organizer/compare/v0.54.4...v0.54.5) (2026-08-30)
+
+
+* move the heavy gestures off the UI thread ([#176](https://github.com/brunofgmag/fs-organizer/issues/176)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+
+
+### Performance Improvements
+
+* **journal:** cache the read journal in memory ([f8434f1](https://github.com/brunofgmag/fs-organizer/commit/f8434f11a3a0f98ff758dab3be71c32ad6969939)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+* move the heavy gestures off the UI thread ([cd7f57c](https://github.com/brunofgmag/fs-organizer/commit/cd7f57c7256e6b0ed1dfaa821d341170a8b916f1)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+* **scenery:** write the scenery cache once per sweep ([8e3d7aa](https://github.com/brunofgmag/fs-organizer/commit/8e3d7aa4c61023acb131b625a6482543ed1690e5)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+* **sim:** batch the package switches and cache the parsed lists ([2419561](https://github.com/brunofgmag/fs-organizer/commit/241956105239272aec30e1236902350ac73f9192)) ([8a0c19e](https://github.com/brunofgmag/fs-organizer/commit/8a0c19e0400dc2907684822d5dc43d071349bd45))
+
+## [0.54.4](https://github.com/brunofgmag/fs-organizer/compare/v0.54.3...v0.54.4) (2026-08-29)
+
+
+* take deletion off the UI thread and settle the conflict default ([#174](https://github.com/brunofgmag/fs-organizer/issues/174)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+
+
+### Bug Fixes
+
+* **view:** default the conflict dialog to the newer side ([9d23801](https://github.com/brunofgmag/fs-organizer/commit/9d23801bda82811a38cceccc0edb9211806d729c)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+* **viewmodel:** run the deletion off the UI thread ([fa57224](https://github.com/brunofgmag/fs-organizer/commit/fa572245262cb6463b327e5d51ab6b6837a4d586)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+* **view:** reword the disabling notice in the delete dialog ([a25e850](https://github.com/brunofgmag/fs-organizer/commit/a25e850d5532eac43a9128c3c7de8a4ea805315b)) ([db6a795](https://github.com/brunofgmag/fs-organizer/commit/db6a795c6fe636eccb95f92fea1aaeb9c33cd982))
+
 ## [0.54.3](https://github.com/brunofgmag/fs-organizer/compare/v0.54.2...v0.54.3) (2026-08-21)
 
 

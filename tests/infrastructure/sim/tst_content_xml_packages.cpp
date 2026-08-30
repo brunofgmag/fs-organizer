@@ -5,10 +5,13 @@
 #include <fstream>
 #include <vector>
 
+#include "domain/support/PathUtils.h"
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ContentXmlPackages.h"
 #include "support/MomentText.h"
+#include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeSimulatorPackages.h"
+#include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 #include "tests/support/TempFiles.h"
@@ -33,6 +36,7 @@ namespace
         static void TheListTheDiscoveryFindsOnRealDiskIsTheListTheAdapterReads();
         static void TheDoubleAnswersUnverifiableUntilItIsGivenAList();
         static void APackageInstalledAfterTheFirstReadShowsUpOnTheNextOne();
+        static void AListRewrittenWithoutTheClockMovingIsStillReadAgain();
         static void ReadingAgainForgetsWhatThePreviousListSaid();
     };
 
@@ -69,6 +73,31 @@ void ContentXmlPackagesTest::APackageInstalledAfterTheFirstReadShowsUpOnTheNextO
 
     QCOMPARE(packages.PresenceOf("aaa-simaddons-animals"), PackagePresence::Present);
     QCOMPARE(packages.PresenceOf("asobo-activities"), PackagePresence::Present);
+}
+
+void ContentXmlPackagesTest::AListRewrittenWithoutTheClockMovingIsStillReadAgain()
+{
+    const std::filesystem::path listPath = PathFromUtf8("C:/Profiles/Bruno/Content.xml");
+    const std::chrono::system_clock::time_point frozen = std::chrono::system_clock::now();
+
+    InMemoryFileSystem fileSystem;
+    fileSystem.AddFileWithContents(
+        listPath, "<Packages>\n\t<Package name=\"fs24-flown-before\" active=\"Activated\"/>\n</Packages>\n");
+    fileSystem.SetLastWriteTime(listPath, frozen);
+
+    const FakeFilesystemProbe probe(fileSystem);
+    ContentXmlPackages packages(probe, listPath);
+
+    QCOMPARE(packages.PresenceOf("flown-since"), PackagePresence::Absent);
+
+    fileSystem.AddFileWithContents(listPath,
+                                   "<Packages>\n\t<Package name=\"fs24-flown-before\" active=\"Activated\"/>\n"
+                                   "\t<Package name=\"fs24-flown-since\" active=\"Activated\"/>\n</Packages>\n");
+    fileSystem.SetLastWriteTime(listPath, frozen);
+
+    packages.ReadAgain(listPath);
+
+    QCOMPARE(packages.PresenceOf("flown-since"), PackagePresence::Present);
 }
 
 void ContentXmlPackagesTest::ReadingAgainForgetsWhatThePreviousListSaid()

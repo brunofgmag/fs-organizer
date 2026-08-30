@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_PACKAGE_LIST_H
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -42,22 +43,28 @@ public:
         return shipped;
     }
 
-    [[nodiscard]] FileResult Switch(const std::string_view packageName, const bool activated) override
+    [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, const bool activated) override
     {
-        switched.emplace_back(std::string(packageName), activated);
+        ++batches;
 
-        const auto entry = std::ranges::find(entries_, packageName, &PackageEntry::name);
-        if (entry == entries_.end())
+        for (const std::string& packageName : packageNames)
         {
-            return FileResult::TheDiskDisagreesWithTheScan;
-        }
+            switched.emplace_back(packageName, activated);
 
-        entry->activation = activated ? PackageActivation::Activated : PackageActivation::UserDisabled;
+            const auto entry = std::ranges::find(entries_, packageName, &PackageEntry::name);
+            if (entry == entries_.end())
+            {
+                return FileResult::TheDiskDisagreesWithTheScan;
+            }
+
+            entry->activation = activated ? PackageActivation::Activated : PackageActivation::UserDisabled;
+        }
 
         return answer;
     }
 
     std::vector<std::pair<std::string, bool>> switched;
+    std::size_t batches = 0;
     FileResult answer = FileResult::Completed;
 
 private:

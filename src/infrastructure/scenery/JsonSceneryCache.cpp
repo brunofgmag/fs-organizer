@@ -171,5 +171,17 @@ void JsonSceneryCache::Keep(const std::filesystem::path& addonFolder, const Reme
 {
     known_.insert_or_assign(ComparablePath(addonFolder), scenery);
 
+    dirty_ = true;
+}
+
+void JsonSceneryCache::WriteWhatIsKept()
+{
+    if (!dirty_)
+    {
+        return;
+    }
+
     Write();
+
+    dirty_ = false;
 }

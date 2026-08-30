@@ -64,6 +64,7 @@ namespace
         static void ARefusedSwapWritesNothingAndSaysTheAddonWasLeftAsItIs();
         static void ARefusedSwapStillTurnsOnTheRestOfTheSelection();
         static void ASwapAgreedOnAPairThatChangedOnTheDiskIsNotCarriedOut();
+        static void TheToggleBatchRunsInAWorkerAndASecondGestureWaitsItsTurn();
     };
 }
 
@@ -214,7 +215,7 @@ namespace
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        AddonTreeViewModel viewModel{session, service, model, packages, sizes, notifier};
+        AddonTreeViewModel viewModel{session, service, model, packages, sizes, runner, notifier};
     };
 
     SelectionSize LastSize(const QSignalSpy& measured)
@@ -803,6 +804,34 @@ void AddonTreeViewModelTest::ASwapAgreedOnAPairThatChangedOnTheDiskIsNotCarriedO
     QCOMPARE(report.leftAlone, std::size_t{1});
     QVERIFY(f.journal.appended.empty());
     QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kOtherAddon});
+}
+
+void AddonTreeViewModelTest::TheToggleBatchRunsInAWorkerAndASecondGestureWaitsItsTurn()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.runner.defer = true;
+
+    f.viewModel.Toggle({&addon}, true);
+
+    QVERIFY2(f.runner.Pending(), "the batch goes through the runner instead of holding the calling thread");
+    QVERIFY(f.journal.appended.empty());
+    QCOMPARE(finished.size(), 0);
+
+    f.viewModel.Toggle({&addon}, true);
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(finished.size(), 1);
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
+    QCOMPARE(f.journal.appended.front().kind, OperationKind::EnableAddon);
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

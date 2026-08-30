@@ -2,6 +2,8 @@
 #define FS_ORGANIZER_INFRASTRUCTURE_SIM_CONTENT_XML_PACKAGE_LIST_H
 
 #include <filesystem>
+#include <mutex>
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -18,10 +20,13 @@ public:
 
     [[nodiscard]] std::vector<SimulatorAirport> AirportsTheSimulatorShips() const override;
 
-    [[nodiscard]] FileResult Switch(std::string_view packageName, bool activated) override;
+    [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, bool activated) override;
 
 private:
     std::filesystem::path listPath_;
+    mutable std::mutex guard_;
+    mutable std::optional<std::filesystem::file_time_type> parsedAt_;
+    mutable std::vector<PackageEntry> parsed_;
 };
 
 [[nodiscard]] std::filesystem::path BackupOfPackageList(const std::filesystem::path& listPath);

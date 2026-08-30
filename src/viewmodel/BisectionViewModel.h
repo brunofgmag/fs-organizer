@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <vector>
 
@@ -12,6 +13,7 @@
 #include "application/BisectionService.h"
 #include "application/Session.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 
 enum class BisectionStage : int
 {
@@ -84,17 +86,21 @@ signals:
 private:
     void Take(const BisectionReport& report);
 
-    void TakeTheEndOf(const BisectionReport& ended);
+    void RunTheProcedure(std::function<BisectionReport()> work);
+
+    [[nodiscard]] bool Working() const;
+
+    [[nodiscard]] BisectionReport EndedReport(BisectionReport ended, const SimulatorProfile& profile) const;
 
     BisectionService& bisection_;
     Session& session_;
-    BackgroundRunner& runner_;
     BisectionReport report_{};
     BisectionStage stage_ = BisectionStage::NotStarted;
     std::optional<BisectionAnswer> heldAnswer_{};
     std::optional<std::vector<std::filesystem::path>> readFor_{};
     bool aSplitWasHeld_ = false;
-    bool reading_ = false;
+    GuardedRunner reading_;
+    GuardedRunner mutating_;
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_BISECTION_VIEW_MODEL_H

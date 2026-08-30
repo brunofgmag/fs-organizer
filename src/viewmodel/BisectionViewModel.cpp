@@ -49,13 +49,13 @@ BisectionViewModel::BisectionViewModel(BisectionService& bisection,
                                        Session& session,
                                        BackgroundRunner& runner,
                                        QObject* parent)
-    : QObject(parent), bisection_(bisection), session_(session), runner_(runner)
+    : QObject(parent), bisection_(bisection), session_(session), reading_(runner), mutating_(runner)
 {
 }
 
 void BisectionViewModel::Show()
 {
-    if (reading_)
+    if (Working())
     {
         return;
     }
@@ -73,11 +73,9 @@ void BisectionViewModel::Show()
     const SimulatorProfile profile = session_.Profile();
     const auto found = std::make_shared<BisectionReport>();
 
-    reading_ = true;
-
     emit Changed();
 
-    runner_.Run(
+    reading_.Run(
         [this, profile, snapshot, found]
         {
             *found = bisection_.WhatWasInterrupted(profile.id).has_value()
@@ -86,94 +84,137 @@ void BisectionViewModel::Show()
         },
         [this, found, read = std::move(enabled)]
         {
-            reading_ = false;
             readFor_ = read;
 
             Take(*found);
         });
 }
 
+void BisectionViewModel::RunTheProcedure(std::function<BisectionReport()> work)
+{
+    if (Working())
+    {
+        return;
+    }
+
+    const auto found = std::make_shared<BisectionReport>();
+
+    mutating_.Run(
+        [work = std::move(work), found]
+        {
+            *found = work();
+        },
+        [this, found]
+        {
+            Take(*found);
+        });
+}
+
 void BisectionViewModel::Begin()
 {
-    Take(bisection_.Begin(session_.Profile(), session_.Snapshot()));
+    RunTheProcedure(
+        [this, profile = session_.Profile(), snapshot = session_.Snapshot()]
+        {
+            return bisection_.Begin(profile, snapshot);
+        });
 }
 
 void BisectionViewModel::Answer(const BisectionAnswer answer)
 {
+    if (Working())
+    {
+        return;
+    }
+
     heldAnswer_ = answer;
     aSplitWasHeld_ = false;
 
-    Take(bisection_.Answer(session_.Profile(), answer));
+    RunTheProcedure(
+        [this, profile = session_.Profile(), answer]
+        {
+            return bisection_.Answer(profile, answer);
+        });
 }
 
 void BisectionViewModel::Refine()
 {
+    if (Working())
+    {
+        return;
+    }
+
     heldAnswer_.reset();
     aSplitWasHeld_ = true;
 
-    Take(bisection_.Refine(session_.Profile()));
+    RunTheProcedure(
+        [this, profile = session_.Profile()]
+        {
+            return bisection_.Refine(profile);
+        });
 }
 
 void BisectionViewModel::CarryOn()
 {
-    const BisectionReport accepted = bisection_.AcceptWhatJoinedTheLibrary(session_.Profile());
+    RunTheProcedure(
+        [this, profile = session_.Profile(), held = heldAnswer_, splitWasHeld = aSplitWasHeld_]
+        {
+            const BisectionReport accepted = bisection_.AcceptWhatJoinedTheLibrary(profile);
 
-    if (accepted.refusal != BisectionRefusal::None)
-    {
-        Take(accepted);
+            if (accepted.refusal != BisectionRefusal::None)
+            {
+                return accepted;
+            }
 
-        return;
-    }
+            if (held.has_value())
+            {
+                return bisection_.Answer(profile, *held);
+            }
 
-    if (heldAnswer_.has_value())
-    {
-        Answer(*heldAnswer_);
+            if (splitWasHeld)
+            {
+                return bisection_.Refine(profile);
+            }
 
-        return;
-    }
-
-    if (aSplitWasHeld_)
-    {
-        Refine();
-
-        return;
-    }
-
-    Take(accepted);
+            return accepted;
+        });
 }
 
 void BisectionViewModel::Stop()
 {
-    TakeTheEndOf(bisection_.Stop(session_.Profile()));
+    RunTheProcedure(
+        [this, profile = session_.Profile()]
+        {
+            return EndedReport(bisection_.Stop(profile), profile);
+        });
 }
 
 void BisectionViewModel::Resume(const ResumeChoice choice)
 {
-    const BisectionReport answered = bisection_.Resume(session_.Profile(), choice);
+    RunTheProcedure(
+        [this, profile = session_.Profile(), choice]
+        {
+            BisectionReport answered = bisection_.Resume(profile, choice);
 
-    if (choice == ResumeChoice::CarryOnFromWhereItStopped)
-    {
-        Take(answered);
+            if (choice == ResumeChoice::CarryOnFromWhereItStopped)
+            {
+                return answered;
+            }
 
-        return;
-    }
-
-    TakeTheEndOf(answered);
+            return EndedReport(std::move(answered), profile);
+        });
 }
 
-void BisectionViewModel::TakeTheEndOf(const BisectionReport& ended)
+BisectionReport BisectionViewModel::EndedReport(BisectionReport ended, const SimulatorProfile& profile) const
 {
     if (ended.refusal != BisectionRefusal::None)
     {
-        Take(ended);
-
-        return;
+        return ended;
     }
 
-    BisectionReport announced = bisection_.WhatWouldBeSearchedNow(session_.Profile());
+    BisectionReport announced = bisection_.WhatWouldBeSearchedNow(profile);
     announced.results = ended.results;
 
-    Take(announced);
+    return announced;
 }
 
 void BisectionViewModel::Take(const BisectionReport& report)
@@ -225,9 +266,14 @@ bool BisectionViewModel::AProcedureWasInterrupted() const
     return bisection_.WhatWasInterrupted(session_.Profile().id).has_value();
 }
 
+bool BisectionViewModel::Working() const
+{
+    return reading_.Busy() || mutating_.Busy();
+}
+
 bool BisectionViewModel::ReadingWhatIsOn() const
 {
-    return reading_;
+    return reading_.Busy();
 }
 
 bool BisectionViewModel::ItIsRunning() const

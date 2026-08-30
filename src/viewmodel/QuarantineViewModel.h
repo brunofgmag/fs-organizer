@@ -11,6 +11,7 @@
 #include "application/Session.h"
 #include "application/SizeService.h"
 #include "application/ports/BackgroundRunner.h"
+#include "viewmodel/GuardedRunner.h"
 #include "viewmodel/QuarantineModel.h"
 #include "viewmodel/SessionNotifier.h"
 
@@ -32,15 +33,21 @@ public:
 
     [[nodiscard]] std::vector<RestoreOffer> WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const;
 
+    void PrepareRestore(const std::vector<QuarantinedItem>& items);
+
     void WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed);
 
     void Restore(const std::vector<QuarantinedItem>& items);
+
+    void Restore(const std::vector<QuarantinedItem>& going, const std::vector<QuarantinedItem>& replacing);
 
     void Swap(const std::vector<QuarantinedItem>& items);
 
     void Discard(const std::vector<QuarantinedItem>& items);
 
 signals:
+    void RestoreOffersReady(const std::vector<RestoreOffer>& offers);
+
     void Restored(const std::vector<FileOperationResult>& results);
 
     void DiscardStarted(int items);
@@ -66,7 +73,7 @@ private:
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
     int listed_ = 0;
-    bool discarding_ = false;
+    GuardedRunner working_;
     bool shown_ = false;
 };
 
