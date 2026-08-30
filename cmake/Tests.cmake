@@ -985,7 +985,9 @@ target_link_libraries(fsorg-content-list-locations-tests PRIVATE fsorg-infrastru
 
 fsorg_add_qt_test(fsorg-content-xml-packages-tests content-xml-packages
         tests/infrastructure/sim/tst_content_xml_packages.cpp
+        tests/doubles/FakeFilesystemProbe.h
         tests/doubles/FakeSimulatorPackages.h
+        tests/doubles/InMemoryFileSystem.h
         tests/support/EnumPrinting.h
         tests/support/StdFilesystemProbe.h
         tests/support/TempFiles.h)
