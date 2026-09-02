@@ -193,7 +193,6 @@ set(VIEW_SOURCES
         src/view/library/SharedAirportsDialog.cpp
         src/view/library/SwapDialog.cpp
         src/view/TableColumns.cpp
-        src/view/TreeColumns.cpp
         src/view/TextThatIsNeverCut.cpp
         src/view/WheelGuard.cpp
         src/view/WrappingRow.cpp

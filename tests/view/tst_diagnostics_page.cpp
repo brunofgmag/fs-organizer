@@ -1,9 +1,7 @@
 #include <QtTest/QtTest>
-#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QStyleOptionViewItem>
 #include <QtWidgets/QTreeWidget>
 
 #include "application/BisectionService.h"
@@ -11,7 +9,6 @@
 #include "application/LibraryOrganizer.h"
 #include "application/SizeService.h"
 #include "support/PathText.h"
-#include "support/SizeText.h"
 #include "tests/doubles/FakeBisectionStore.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -56,7 +53,6 @@ namespace
         static void TheSearchSectionIsTheLastOneAndSitsBelowASeparator();
         static void TheSearchSectionFitsTheUsableHeightWithTheTriageStripShowing();
         static void TheSearchAnnouncesTheUnitsAndTheRoundsWithoutWritingAnything();
-        static void TheSizeColumnCanBeDraggedAndOpensWideEnoughForItsWidestRow();
     };
 }
 
@@ -156,7 +152,6 @@ namespace
 
     constexpr int kUsableHeight = 621;
     constexpr int kSearchRow = 7;
-    constexpr int kSizeRow = 3;
 
     QListWidget* RailOf(const DiagnosticsPage& page)
     {
@@ -406,41 +401,6 @@ void DiagnosticsPageTest::ThePageFitsTheNarrowestWindow()
     DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
 
     ItFitsTheNarrowestWindow(page, "The diagnostics page");
-}
-
-void DiagnosticsPageTest::TheSizeColumnCanBeDraggedAndOpensWideEnoughForItsWidestRow()
-{
-    ApplyModernistTheme(*qApp);
-
-    Fixture fixture;
-    fixture.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/payload.bin", 989000000000ULL);
-
-    DiagnosticsPage page(fixture.viewModel, fixture.bisectionViewModel);
-    page.resize(1264, 880);
-    page.show();
-
-    RailOf(page)->setCurrentRow(kSizeRow);
-
-    QTreeWidget* sizes = TableNamed(page, QStringLiteral("DiagnosticsSizes"));
-    QVERIFY(sizes != nullptr);
-
-    QCOMPARE(sizes->header()->sectionResizeMode(2), QHeaderView::Interactive);
-
-    QTreeWidgetItem* top = sizes->topLevelItem(0);
-    QVERIFY(top != nullptr);
-    QCOMPARE(top->text(2), AsSize(989000000000ULL));
-
-    QStyleOptionViewItem option;
-    option.initFrom(sizes);
-    option.font = sizes->font();
-    option.fontMetrics = QFontMetrics(option.font);
-
-    const int wanted = sizes->itemDelegate()->sizeHint(option, sizes->model()->index(0, 2)).width();
-
-    QVERIFY2(sizes->header()->sectionSize(2) >= wanted,
-             qPrintable(QStringLiteral("the size column opened at %1 for a row that needs %2")
-                            .arg(sizes->header()->sectionSize(2))
-                            .arg(wanted)));
 }
 
 QTEST_MAIN(DiagnosticsPageTest)

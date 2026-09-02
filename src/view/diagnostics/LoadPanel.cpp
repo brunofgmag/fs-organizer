@@ -11,7 +11,6 @@
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "view/delegates/RowDelegate.h"
-#include "view/TreeColumns.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
@@ -48,7 +47,7 @@ LoadPanel::LoadPanel(QWidget* parent) : QWidget(parent)
     modules_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     modules_->header()->setSectionResizeMode(1, QHeaderView::Stretch);
     modules_->header()->setSectionResizeMode(2, QHeaderView::Stretch);
-    LetTheseColumnsBeDragged(modules_, {3});
+    modules_->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     DressTheHeaderOf(modules_->header());
     modules_->setItemDelegate(new RowDelegate(modules_));
 
@@ -138,6 +137,4 @@ void LoadPanel::ShowWhatTheReportAttributes() const
             row->setData(2, QuietRole, true);
         }
     }
-
-    WidenTheseColumnsToTheirRows(modules_, {3});
 }
