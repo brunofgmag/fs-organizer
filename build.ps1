@@ -107,7 +107,10 @@ $newestRegistry = ($registry | Sort-Object LastWriteTimeUtc -Descending | Select
 
 $justConfigured = [System.IO.Path]::GetFullPath($buildDir)
 
-$stale = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'build') -Directory |
+$candidates = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'build') -Directory -ErrorAction SilentlyContinue)
+$candidates += Get-ChildItem -LiteralPath $PSScriptRoot -Directory -Filter 'cmake-build-*' -ErrorAction SilentlyContinue
+
+$stale = $candidates |
     Where-Object { $_.FullName -ne $justConfigured } |
     Where-Object {
         $generated = Join-Path $_.FullName 'CMakeFiles'
@@ -117,10 +120,12 @@ $stale = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'build') -Directory
     }
 
 if ($stale) {
+    $here = [System.IO.Path]::GetFullPath($PSScriptRoot)
     Write-Warning 'These build directories were configured before the current cmake/ registry:'
-    $stale | ForEach-Object { Write-Warning "  $($_.Name)" }
-    Write-Warning 'They cannot see files added since, and "cmake --build" alone will not reconfigure them.'
-    Write-Warning 'Run "cmake -S . -B build/<name>" on each before building it, or the link fails with LNK2019.'
+    $stale | ForEach-Object { Write-Warning "  $([System.IO.Path]::GetRelativePath($here, $_.FullName))" }
+    Write-Warning 'They cannot see files added or removed since, and "cmake --build" alone will not reconfigure them.'
+    Write-Warning 'Run "cmake -S . -B <directory>" on each before building it. A file added there fails with LNK2019,'
+    Write-Warning 'and one removed fails with ninja saying it is "missing and no known rule to make it".'
 }
 
 Write-Host "Executable build ready: $exe"
