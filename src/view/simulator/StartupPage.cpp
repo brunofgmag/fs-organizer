@@ -14,6 +14,7 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/TreeColumns.h"
 #include "view/panels/EmptyState.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
@@ -156,7 +157,7 @@ QWidget* StartupPage::CreateEntriesPane()
     entries_->header()->setStretchLastSection(false);
     entries_->header()->setSectionResizeMode(kSwitch, QHeaderView::Interactive);
     entries_->header()->setSectionResizeMode(kPath, QHeaderView::Stretch);
-    entries_->header()->setSectionResizeMode(kState, QHeaderView::ResizeToContents);
+    LetTheseColumnsBeDragged(entries_, {kState});
     entries_->setColumnWidth(kSwitch, kProgramWidth);
     DressTheHeaderOf(entries_->header());
 
@@ -225,6 +226,8 @@ void StartupPage::FillTheTable() const
     {
         Dress(entries_->topLevelItem(at), lines[static_cast<std::size_t>(at)]);
     }
+
+    WidenTheseColumnsToTheirRows(entries_, {kState});
 }
 
 void StartupPage::DressTheToolbar() const

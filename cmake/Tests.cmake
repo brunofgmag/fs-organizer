@@ -1503,6 +1503,12 @@ fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
 target_link_libraries(fsorg-row-delegate-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
 
+fsorg_add_qt_test(fsorg-tree-columns-tests tree-columns
+        tests/view/tst_tree_columns.cpp
+        assets/resources.qrc)
+target_link_libraries(fsorg-tree-columns-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-tree-columns-tests tree-columns)
+
 fsorg_add_qt_test(fsorg-paint-timing-tests paint-timing
         tests/view/delegates/tst_paint_timing.cpp
         assets/resources.qrc)

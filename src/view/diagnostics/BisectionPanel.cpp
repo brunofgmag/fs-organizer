@@ -16,6 +16,7 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/TreeColumns.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
@@ -63,8 +64,7 @@ namespace
         tree->setUniformRowHeights(true);
         tree->setColumnCount(3);
         tree->header()->setStretchLastSection(false);
-        tree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-        tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+        LetTheseColumnsBeDragged(tree, {0, 1});
         tree->header()->setSectionResizeMode(2, QHeaderView::Stretch);
         DressTheHeaderOf(tree->header());
         tree->setItemDelegate(new RowDelegate(tree));
@@ -665,6 +665,8 @@ void BisectionPanel::ListTheDriftIn(QTreeWidget* tree) const
         row->setText(2, AsText(divergence.path));
         row->setData(2, QuietRole, true);
     }
+
+    WidenTheseColumnsToTheirRows(tree, {0, 1});
 }
 
 void BisectionPanel::ShowTheOutcome() const
@@ -725,4 +727,6 @@ void BisectionPanel::ListTheUnitsOf(QTreeWidget* tree, const std::vector<UnitOnS
             inside->setData(2, QuietRole, true);
         }
     }
+
+    WidenTheseColumnsToTheirRows(tree, {0, 1});
 }

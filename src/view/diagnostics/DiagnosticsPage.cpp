@@ -18,6 +18,7 @@
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/TreeColumns.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/CommunityModel.h"
@@ -391,8 +392,7 @@ QWidget* DiagnosticsPage::CreateSizePane()
     sizes_->sortByColumn(2, Qt::DescendingOrder);
     sizes_->header()->setStretchLastSection(false);
     sizes_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    sizes_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    LetTheseColumnsBeDragged(sizes_, {1, 2});
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
 
@@ -664,6 +664,8 @@ void DiagnosticsPage::ShowWhatWasMeasured() const
     }
 
     sizes_->setSortingEnabled(true);
+
+    WidenTheseColumnsToTheirRows(sizes_, {1, 2});
 
     ShowTheLongestPaths();
 
