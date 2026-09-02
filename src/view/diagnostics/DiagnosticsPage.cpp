@@ -28,6 +28,7 @@ namespace
     constexpr int kRailWidth = 210;
     constexpr int kRailSeparatorRow = 19;
     constexpr int kRailSeparatorInset = 13;
+    constexpr int kNarrowestSizeSection = 100;
     constexpr int kBytesRole = Qt::UserRole + 1;
     constexpr int kSectionRole = Qt::UserRole + 2;
 
@@ -393,6 +394,7 @@ QWidget* DiagnosticsPage::CreateSizePane()
     sizes_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     sizes_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    sizes_->header()->setMinimumSectionSize(kNarrowestSizeSection);
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
 
