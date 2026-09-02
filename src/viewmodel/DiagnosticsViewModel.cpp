@@ -93,7 +93,7 @@ void DiagnosticsViewModel::Show()
 
 void DiagnosticsViewModel::ShowSize()
 {
-    if (measuredAt_.has_value())
+    if (measuredAt_.has_value() || measuring_)
     {
         return;
     }
