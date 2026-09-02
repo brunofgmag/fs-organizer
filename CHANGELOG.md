@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.54.7](https://github.com/brunofgmag/fs-organizer/compare/v0.54.6...v0.54.7) (2026-09-02)
+
+
+* let tree columns be dragged and stop the size walk restarting ([#181](https://github.com/brunofgmag/fs-organizer/issues/181)) ([80e777c](https://github.com/brunofgmag/fs-organizer/commit/80e777c753a6c9cd41dbac98d4286f4d17cb0b0c))
+
+
+### Bug Fixes
+
+* **diagnostics:** floor the size table sections so a wide total is not cut ([2b69693](https://github.com/brunofgmag/fs-organizer/commit/2b69693a28410150b3e2e229a17a1fd6b22d7bf1)) ([80e777c](https://github.com/brunofgmag/fs-organizer/commit/80e777c753a6c9cd41dbac98d4286f4d17cb0b0c))
+* **diagnostics:** line up the headings of the columns counted to the right ([e9e6ec9](https://github.com/brunofgmag/fs-organizer/commit/e9e6ec94e9a51909443b8b98a9aa9aa27b2b51f2)) ([80e777c](https://github.com/brunofgmag/fs-organizer/commit/80e777c753a6c9cd41dbac98d4286f4d17cb0b0c))
+* **diagnostics:** stop restarting the size walk when the section is reopened ([de99cf3](https://github.com/brunofgmag/fs-organizer/commit/de99cf316ab6d11f865f1d984cf4ec64c022276b)) ([80e777c](https://github.com/brunofgmag/fs-organizer/commit/80e777c753a6c9cd41dbac98d4286f4d17cb0b0c))
+* **view:** let the machine-sized tree columns be dragged ([f4e8847](https://github.com/brunofgmag/fs-organizer/commit/f4e884792f8ea26ba937fc92fa6c86983ab6678b)) ([80e777c](https://github.com/brunofgmag/fs-organizer/commit/80e777c753a6c9cd41dbac98d4286f4d17cb0b0c))
+
+
+### Reverts
+
+* put the tree columns back under ResizeToContents ([f2a43ff](https://github.com/brunofgmag/fs-organizer/commit/f2a43ff8c82566a4dcb797f7d573916d5b3e42c8)) ([80e777c](https://github.com/brunofgmag/fs-organizer/commit/80e777c753a6c9cd41dbac98d4286f4d17cb0b0c))
+
 ## [0.54.6](https://github.com/brunofgmag/fs-organizer/compare/v0.54.5...v0.54.6) (2026-08-30)
 
 
