@@ -1,4 +1,5 @@
 #include <QtTest/QtTest>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
@@ -9,6 +10,7 @@
 #include "application/LibraryOrganizer.h"
 #include "application/SizeService.h"
 #include "support/PathText.h"
+#include "support/SizeText.h"
 #include "tests/doubles/FakeBisectionStore.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -53,6 +55,8 @@ namespace
         static void TheSearchSectionIsTheLastOneAndSitsBelowASeparator();
         static void TheSearchSectionFitsTheUsableHeightWithTheTriageStripShowing();
         static void TheSearchAnnouncesTheUnitsAndTheRoundsWithoutWritingAnything();
+        static void AColumnCountedToTheRightCarriesItsHeadingThere();
+        static void TheSizeTableFloorCoversWhatItsWidestRowAsksFor();
     };
 }
 
@@ -401,6 +405,51 @@ void DiagnosticsPageTest::ThePageFitsTheNarrowestWindow()
     DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
 
     ItFitsTheNarrowestWindow(page, "The diagnostics page");
+}
+
+void DiagnosticsPageTest::AColumnCountedToTheRightCarriesItsHeadingThere()
+{
+    Fixture fixture;
+    DiagnosticsPage page(fixture.viewModel, fixture.bisectionViewModel);
+
+    fixture.viewModel.Show();
+
+    QTreeWidget* counts = TableNamed(page, QStringLiteral("DiagnosticsCounts"));
+    QVERIFY(counts != nullptr);
+    QVERIFY(counts->topLevelItemCount() > 0);
+
+    QCOMPARE(counts->headerItem()->textAlignment(1), counts->topLevelItem(0)->textAlignment(1));
+}
+
+void DiagnosticsPageTest::TheSizeTableFloorCoversWhatItsWidestRowAsksFor()
+{
+    ApplyModernistTheme(*qApp);
+
+    Fixture fixture;
+    fixture.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/payload.bin", 989000000000ULL);
+
+    DiagnosticsPage page(fixture.viewModel, fixture.bisectionViewModel);
+    page.resize(1264, 880);
+    page.show();
+
+    RailOf(page)->setCurrentRow(3);
+
+    QTreeWidget* sizes = TableNamed(page, QStringLiteral("DiagnosticsSizes"));
+    QVERIFY(sizes != nullptr);
+    QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(989000000000ULL));
+
+    QStyleOptionViewItem option;
+    option.initFrom(sizes);
+    option.widget = sizes;
+    option.font = sizes->font();
+    option.fontMetrics = QFontMetrics(option.font);
+
+    const int asked = sizes->itemDelegate()->sizeHint(option, sizes->model()->index(0, 2)).width();
+
+    QVERIFY2(sizes->header()->minimumSectionSize() >= asked,
+             qPrintable(QStringLiteral("the size table floors its sections at %1 for a row that asks for %2")
+                            .arg(sizes->header()->minimumSectionSize())
+                            .arg(asked)));
 }
 
 QTEST_MAIN(DiagnosticsPageTest)

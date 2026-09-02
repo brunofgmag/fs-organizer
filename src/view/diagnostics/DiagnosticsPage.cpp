@@ -28,6 +28,7 @@ namespace
     constexpr int kRailWidth = 210;
     constexpr int kRailSeparatorRow = 19;
     constexpr int kRailSeparatorInset = 13;
+    constexpr int kNarrowestSizeSection = 100;
     constexpr int kBytesRole = Qt::UserRole + 1;
     constexpr int kSectionRole = Qt::UserRole + 2;
 
@@ -393,6 +394,7 @@ QWidget* DiagnosticsPage::CreateSizePane()
     sizes_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     sizes_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    sizes_->header()->setMinimumSectionSize(kNarrowestSizeSection);
     DressTheHeaderOf(sizes_->header());
     DressTheRowsOf(sizes_);
 
@@ -462,12 +464,15 @@ void DiagnosticsPage::RetranslateUi() const
 {
     refresh_->setText(tr("Measure again"));
     counts_->setHeaderLabels({tr("Entry"), tr("How many")});
+    counts_->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
     troubled_->setHeaderLabels({tr("Entry"), tr("Points at")});
     repair_->setText(tr("Repair the broken links…"));
     openQuarantine_->setText(tr("Open Quarantine"));
     measureAgain_->setText(tr("Measure again"));
     cancel_->setText(tr("Stop"));
     sizes_->setHeaderLabels({tr("Category"), tr("Addons"), tr("Size")});
+    sizes_->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+    sizes_->headerItem()->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     sizeCost_->setText(tr("walks the whole tree, and that takes seconds"));
     readSceneryAgain_->setText(tr("Read them again"));
     stopScenery_->setText(tr("Stop"));

@@ -479,6 +479,11 @@ void BisectionPanel::RetranslateUi()
     turnedOn_->setHeaderLabels(unitColumns);
     whatIsLeft_->setHeaderLabels(unitColumns);
 
+    for (QTreeWidget* tree : {toBeSearched_, turnedOn_, whatIsLeft_})
+    {
+        tree->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+    }
+
     const QStringList driftColumns{tr("What moved"), QString(), tr("Where")};
 
     divergences_->setHeaderLabels(driftColumns);
