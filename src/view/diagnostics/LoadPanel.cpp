@@ -95,6 +95,7 @@ void LoadPanel::RetranslateUi()
     empty_->setText(tr("The simulator writes this report only when a load takes long, so there may be none yet. "
                        "Everything else on this screen works without it."));
     modules_->setHeaderLabels({tr("Module"), tr("Package"), tr("Addon"), tr("Memory")});
+    modules_->headerItem()->setTextAlignment(3, Qt::AlignRight | Qt::AlignVCenter);
 
     ShowWhatTheReportAttributes();
 }

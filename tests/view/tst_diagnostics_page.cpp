@@ -53,6 +53,7 @@ namespace
         static void TheSearchSectionIsTheLastOneAndSitsBelowASeparator();
         static void TheSearchSectionFitsTheUsableHeightWithTheTriageStripShowing();
         static void TheSearchAnnouncesTheUnitsAndTheRoundsWithoutWritingAnything();
+        static void AColumnCountedToTheRightCarriesItsHeadingThere();
     };
 }
 
@@ -401,6 +402,20 @@ void DiagnosticsPageTest::ThePageFitsTheNarrowestWindow()
     DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
 
     ItFitsTheNarrowestWindow(page, "The diagnostics page");
+}
+
+void DiagnosticsPageTest::AColumnCountedToTheRightCarriesItsHeadingThere()
+{
+    Fixture fixture;
+    DiagnosticsPage page(fixture.viewModel, fixture.bisectionViewModel);
+
+    fixture.viewModel.Show();
+
+    QTreeWidget* counts = TableNamed(page, QStringLiteral("DiagnosticsCounts"));
+    QVERIFY(counts != nullptr);
+    QVERIFY(counts->topLevelItemCount() > 0);
+
+    QCOMPARE(counts->headerItem()->textAlignment(1), counts->topLevelItem(0)->textAlignment(1));
 }
 
 QTEST_MAIN(DiagnosticsPageTest)
