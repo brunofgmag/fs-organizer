@@ -45,6 +45,7 @@ namespace
         static void CancellingLeavesTheNumbersMarkedIncomplete();
         static void MeasuringAgainSupersedesTheEarlierRequestAndTheLateAnswerIsNotShown();
         static void AMeasurementInFlightSurvivesTheScreenBeingLeftAndRevisited();
+        static void ComingBackWhileItIsStillMeasuringDoesNotStartTheWalkOver();
     };
 }
 
@@ -370,6 +371,24 @@ void DiagnosticsViewModelTest::AMeasurementInFlightSurvivesTheScreenBeingLeftAnd
     QVERIFY(!f.viewModel.Measuring());
     QVERIFY(f.viewModel.Size().complete);
     QCOMPARE(f.viewModel.Size().libraries.front().bytes, std::uintmax_t{4096});
+}
+
+void DiagnosticsViewModelTest::ComingBackWhileItIsStillMeasuringDoesNotStartTheWalkOver()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/model.bin", 4096);
+    f.Seed(Profile());
+
+    f.runner.defer = true;
+    f.viewModel.ShowSize();
+
+    QVERIFY(f.viewModel.Measuring());
+
+    const int walked = f.runner.runs;
+
+    f.viewModel.ShowSize();
+
+    QCOMPARE(f.runner.runs, walked);
 }
 
 QTEST_APPLESS_MAIN(DiagnosticsViewModelTest)
