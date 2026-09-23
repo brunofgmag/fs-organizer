@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.9](https://github.com/brunofgmag/fs-organizer/compare/v0.54.8...v0.54.9) (2026-09-23)
+
+
+### Bug Fixes
+
+* **community:** rewrite the texts of the destinations screen and its dialogs ([77a3321](https://github.com/brunofgmag/fs-organizer/commit/77a33216b05d90b55a6134b32159638bf21ef648))
+
 ## [0.54.8](https://github.com/brunofgmag/fs-organizer/compare/v0.54.7...v0.54.8) (2026-09-23)
 
 
