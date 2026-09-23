@@ -3144,15 +3144,15 @@ Also in the library: %2</translation>
     <name>OmittedDialog</name>
     <message>
         <location filename="../src/view/presets/OmittedDialog.cpp" line="17"/>
-        <source>Off because Replace omits them</source>
-        <translation>Off because Replace omits them</translation>
+        <source>Disabled by Replace</source>
+        <translation>Disabled by Replace</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/presets/OmittedDialog.cpp" line="19"/>
-        <source>%n addon of yours is enabled now and this preset does not name it, so Replace turns it off. It is part of what the plan already counts as turned off, and not a pile on top of it.</source>
+        <source>%n enabled addon is not in this preset, so Replace disables it. It is already counted in the plan.</source>
         <translation>
-            <numerusform>%n addon of yours is enabled now and this preset does not name it, so Replace turns it off. It is part of what the plan already counts as turned off, and not a pile on top of it.</numerusform>
-            <numerusform>%n addon of yours is enabled now and this preset does not name it, so Replace turns it off. It is part of what the plan already counts as turned off, and not a pile on top of it.</numerusform>
+            <numerusform>%n enabled addon is not in this preset, so Replace disables it. It is already counted in the plan.</numerusform>
+            <numerusform>%n enabled addons are not in this preset, so Replace disables them. They are already counted in the plan.</numerusform>
         </translation>
     </message>
     <message>
@@ -3801,33 +3801,33 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     <name>PresetPlanPanel</name>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="260"/>
-        <source>Leaves only what the preset enables.</source>
-        <translation>Leaves only what the preset enables.</translation>
+        <source>Enables the preset&apos;s addons and disables everything else.</source>
+        <translation>Enables the preset&apos;s addons and disables everything else.</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="261"/>
-        <source>The plan, as Replace</source>
-        <translation>The plan, as Replace</translation>
+        <source>Plan: Replace</source>
+        <translation>Plan: Replace</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="264"/>
-        <source>Enables what the preset names, without touching the rest.</source>
-        <translation>Enables what the preset names, without touching the rest.</translation>
+        <source>Enables the preset&apos;s addons and leaves the rest as it is.</source>
+        <translation>Enables the preset&apos;s addons and leaves the rest as it is.</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="265"/>
-        <source>The plan, as Accumulate</source>
-        <translation>The plan, as Accumulate</translation>
+        <source>Plan: Accumulate</source>
+        <translation>Plan: Accumulate</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="268"/>
-        <source>Disables what the preset enables.</source>
-        <translation>Disables what the preset enables.</translation>
+        <source>Disables the preset&apos;s addons.</source>
+        <translation>Disables the preset&apos;s addons.</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="269"/>
-        <source>The plan, as Disable</source>
-        <translation>The plan, as Disable</translation>
+        <source>Plan: Disable</source>
+        <translation>Plan: Disable</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="278"/>
@@ -3841,8 +3841,8 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="300"/>
-        <source>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</source>
-        <translation>The %1 omitted are part of the %2 being turned off, and not a pile on top of them.</translation>
+        <source>The %1 not in the preset are included in the %2 being disabled.</source>
+        <translation>The %1 not in the preset are included in the %2 being disabled.</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="319"/>
@@ -3866,13 +3866,13 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="323"/>
-        <source>Turn on</source>
-        <translation>Turn on</translation>
+        <source>To enable</source>
+        <translation>To enable</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="324"/>
-        <source>Turn off</source>
-        <translation>Turn off</translation>
+        <source>To disable</source>
+        <translation>To disable</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="325"/>
@@ -3881,18 +3881,18 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="326"/>
-        <source>Named, but no addon found</source>
-        <translation>Named, but no addon found</translation>
+        <source>Not found in the library</source>
+        <translation>Not found in the library</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="327"/>
-        <source>Off because Replace omits them</source>
-        <translation>Off because Replace omits them</translation>
+        <source>Disabled by Replace</source>
+        <translation>Disabled by Replace</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="328"/>
-        <source>Asked for, but not applied</source>
-        <translation>Asked for, but not applied</translation>
+        <source>Requested, but not applied</source>
+        <translation>Requested, but not applied</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="329"/>
@@ -3913,13 +3913,13 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/presets/PresetStartupPanel.cpp" line="139"/>
-        <source>Update with the enabled ones</source>
-        <translation>Update with the enabled ones</translation>
+        <source>Update from enabled entries</source>
+        <translation>Update from enabled entries</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetStartupPanel.cpp" line="138"/>
-        <source>This preset also governs startup entries</source>
-        <translation>This preset also governs startup entries</translation>
+        <source>This preset also controls startup entries</source>
+        <translation>This preset also controls startup entries</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
@@ -3933,13 +3933,13 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/presets/PresetStartupPanel.cpp" line="140"/>
-        <source>This preset does not govern startup entries</source>
-        <translation>This preset does not govern startup entries</translation>
+        <source>This preset does not control startup entries</source>
+        <translation>This preset does not control startup entries</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetStartupPanel.cpp" line="141"/>
-        <source>Check the box above and it captures the ones enabled right now. You can then turn each on or off here.</source>
-        <translation>Check the box above and it captures the ones enabled right now. You can then turn each on or off here.</translation>
+        <source>Check the box above to save the entries enabled right now. You can then enable or disable each one here.</source>
+        <translation>Check the box above to save the entries enabled right now. You can then enable or disable each one here.</translation>
     </message>
     <message>
         <source>Check the box above to have this preset also manage the simulator&apos;s startup entries. Checking it captures the entries enabled right now. You can then turn each on or off here.</source>
@@ -3967,53 +3967,53 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="159"/>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="176"/>
-        <source>The change could not be written to the preset &quot;%1&quot;. It may have changed since the table was built, or the presets folder may be full or protected.</source>
-        <translation>The change could not be written to the preset &quot;%1&quot;. It may have changed since the table was built, or the presets folder may be full or protected.</translation>
+        <source>Could not save the change to the preset &quot;%1&quot;. It may have changed on the disk, or the presets folder may be full or read-only.</source>
+        <translation>Could not save the change to the preset &quot;%1&quot;. It may have changed on the disk, or the presets folder may be full or read-only.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="303"/>
-        <source>Nothing was applied. The app writes down what is enabled right now before applying a preset, so that you can come back to it, and this time it could not: the presets folder may be full or protected.</source>
-        <translation>Nothing was applied. The app writes down what is enabled right now before applying a preset, so that you can come back to it, and this time it could not: the presets folder may be full or protected.</translation>
+        <source>Nothing was applied: the addons enabled right now could not be saved to come back to later. The presets folder may be full or read-only.</source>
+        <translation>Nothing was applied: the addons enabled right now could not be saved to come back to later. The presets folder may be full or read-only.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="326"/>
-        <source>%n startup entry the preset asks for was not applied, because startup management is off in Options.</source>
+        <source>%n startup entry of the preset was not applied because startup management is off in Options.</source>
         <translation>
-            <numerusform>%n startup entry the preset asks for was not applied, because startup management is off in Options.</numerusform>
-            <numerusform>%n startup entry the preset asks for was not applied, because startup management is off in Options.</numerusform>
+            <numerusform>%n startup entry of the preset was not applied because startup management is off in Options.</numerusform>
+            <numerusform>%n startup entries of the preset were not applied because startup management is off in Options.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="342"/>
-        <source>These startup entries of the preset are no longer in the simulator file:
+        <source>These preset startup entries are no longer in the simulator&apos;s file:
 
 %1</source>
-        <translation>These startup entries of the preset are no longer in the simulator file:
+        <translation>These preset startup entries are no longer in the simulator&apos;s file:
 
 %1</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="348"/>
-        <source>The preset &quot;%1&quot; could not be written. The name may be too long for the disk, or the presets folder may be full or protected.</source>
-        <translation>The preset &quot;%1&quot; could not be written. The name may be too long for the disk, or the presets folder may be full or protected.</translation>
+        <source>Could not save the preset &quot;%1&quot;. The name may be too long, or the presets folder may be full or read-only.</source>
+        <translation>Could not save the preset &quot;%1&quot;. The name may be too long, or the presets folder may be full or read-only.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="359"/>
-        <source>Give the preset a name.</source>
-        <translation>Give the preset a name.</translation>
+        <source>Enter a name for the preset.</source>
+        <translation>Enter a name for the preset.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="365"/>
-        <source>The preset name has to fit in %n character(s).</source>
+        <source>The preset name can have at most %n character(s).</source>
         <translation>
-            <numerusform>The preset name has to fit in %n character.</numerusform>
-            <numerusform>The preset name has to fit in %n characters.</numerusform>
+            <numerusform>The preset name can have at most %n character.</numerusform>
+            <numerusform>The preset name can have at most %n characters.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="371"/>
-        <source>The preset name cannot contain %1, and cannot end with a space or a full stop.</source>
-        <translation>The preset name cannot contain %1, and cannot end with a space or a full stop.</translation>
+        <source>The preset name cannot contain %1 or end with a space or a full stop.</source>
+        <translation>The preset name cannot contain %1 or end with a space or a full stop.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="378"/>
@@ -4028,8 +4028,8 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
         <translation>Applying the preset…</translation>
     </message>
     <message>
-        <source>The preset was applied.</source>
-        <translation>The preset was applied.</translation>
+        <source>Preset applied.</source>
+        <translation>Preset applied.</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="98"/>
@@ -4077,28 +4077,28 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="191"/>
-        <source>These addons of the preset are no longer in the library:
+        <source>These preset addons are no longer in the library:
 
 %1</source>
-        <translation>These addons of the preset are no longer in the library:
+        <translation>These preset addons are no longer in the library:
 
 %1</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="203"/>
-        <source>Not everything the preset asked for happened</source>
-        <translation>Not everything the preset asked for happened</translation>
+        <source>The preset was only partly applied</source>
+        <translation>The preset was only partly applied</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="225"/>
         <location filename="../src/view/PresetsPage.cpp" line="239"/>
-        <source>New from the enabled ones…</source>
-        <translation>New from the enabled ones…</translation>
+        <source>New from enabled addons…</source>
+        <translation>New from enabled addons…</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="226"/>
-        <source>Update with the enabled ones</source>
-        <translation>Update with the enabled ones</translation>
+        <source>Update from enabled addons</source>
+        <translation>Update from enabled addons</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="227"/>
@@ -4135,13 +4135,13 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="231"/>
-        <source>Changed</source>
-        <translation>Changed</translation>
+        <source>Updated</source>
+        <translation>Updated</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="231"/>
-        <source>Would change</source>
-        <translation>Would change</translation>
+        <source>If applied</source>
+        <translation>If applied</translation>
     </message>
     <message>
         <source>Turn on</source>
@@ -4205,8 +4205,8 @@ Apply &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="235"/>
-        <source>A preset keeps which addons stay enabled. Enable what you want to fly and keep that combination under a name. Applying it later is a single batch, with a whole undo.</source>
-        <translation>A preset keeps which addons stay enabled. Enable what you want to fly and keep that combination under a name. Applying it later is a single batch, with a whole undo.</translation>
+        <source>A preset saves a set of enabled addons under a name. Enable what you want to fly with and save it. Applying it later takes one step, and so does undoing it.</source>
+        <translation>A preset saves a set of enabled addons under a name. Enable what you want to fly with and save it. Applying it later takes one step, and so does undoing it.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/PresetsPage.cpp" line="440"/>
@@ -4272,13 +4272,13 @@ Apply &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="477"/>
-        <source>Undoes the batch you just applied.</source>
-        <translation>Undoes the batch you just applied.</translation>
+        <source>Undoes what you just applied.</source>
+        <translation>Undoes what you just applied.</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="478"/>
-        <source>Applies the return preset, written down before the last application.</source>
-        <translation>Applies the return preset, written down before the last application.</translation>
+        <source>Restores the addons that were enabled before the last preset was applied.</source>
+        <translation>Restores the addons that were enabled before the last preset was applied.</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="570"/>
@@ -4883,13 +4883,13 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="80"/>
-        <source>Enables %1, disables %2. %3 already match what the preset asks, %4 were not found, and %5 destination entries stay as they are.</source>
-        <translation>Enables %1, disables %2. %3 already match what the preset asks, %4 were not found, and %5 destination entries stay as they are.</translation>
+        <source>Enables %1 and disables %2. %3 are already as the preset asks, %4 were not found, and %5 destination entries are left alone.</source>
+        <translation>Enables %1 and disables %2. %3 are already as the preset asks, %4 were not found, and %5 destination entries are left alone.</translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="90"/>
-        <source> Of the ones it disables, %1 entered the library after the preset was saved.</source>
-        <translation> Of the ones it disables, %1 entered the library after the preset was saved.</translation>
+        <source> Of those disabled, %1 were added to the library after the preset was saved.</source>
+        <translation> Of those disabled, %1 were added to the library after the preset was saved.</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="44"/>
@@ -4898,29 +4898,29 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="59"/>
-        <source>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</source>
+        <source>This preset has %n startup entry, but it will not be applied because startup management is off in Options.</source>
         <translation>
-            <numerusform>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</numerusform>
-            <numerusform>This preset asks for %n startup entry, and none will be applied, because startup management is off in Options.</numerusform>
+            <numerusform>This preset has %n startup entry, but it will not be applied because startup management is off in Options.</numerusform>
+            <numerusform>This preset has %n startup entries, but none will be applied because startup management is off in Options.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="66"/>
-        <source>This preset asks for %1 startup entries. %2 of them are no longer in the simulator file, and %3 will be switched.</source>
-        <translation>This preset asks for %1 startup entries. %2 of them are no longer in the simulator file, and %3 will be switched.</translation>
+        <source>This preset has %1 startup entries: %3 will be changed, and %2 are no longer in the simulator&apos;s file.</source>
+        <translation>This preset has %1 startup entries: %3 will be changed, and %2 are no longer in the simulator&apos;s file.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/presets/PresetPlanPanel.cpp" line="73"/>
-        <source>This preset asks for %n startup entry, and all of them will be applied.</source>
+        <source>This preset has %n startup entry, and it will be applied.</source>
         <translation>
-            <numerusform>This preset asks for %n startup entry, and all of them will be applied.</numerusform>
-            <numerusform>This preset asks for %n startup entry, and all of them will be applied.</numerusform>
+            <numerusform>This preset has %n startup entry, and it will be applied.</numerusform>
+            <numerusform>This preset has %n startup entries, and all of them will be applied.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="393"/>
-        <source>Satisfied</source>
-        <translation>Satisfied</translation>
+        <source>Already applied</source>
+        <translation>Already applied</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/PresetsPage.cpp" line="388"/>

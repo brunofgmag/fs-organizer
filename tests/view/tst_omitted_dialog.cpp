@@ -57,7 +57,7 @@ void OmittedDialogTest::TheDialogSaysTheOmittedAreNotAPileOnTopOfWhatIsTurnedOff
         said.append(label->text());
     }
 
-    QVERIFY(said.join(QStringLiteral(" ")).contains(QStringLiteral("not a pile on top of it")));
+    QVERIFY(said.join(QStringLiteral(" ")).contains(QStringLiteral("already counted in the plan")));
 }
 
 void OmittedDialogTest::TheDialogIsTallerWithMoreAddonsInsteadOfPinnedToItsMinimum()

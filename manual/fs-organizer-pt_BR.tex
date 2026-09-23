@@ -73,121 +73,113 @@ estão.
 
 \section{Presets}
 
-Este é o primeiro assunto do manual porque é o que ninguém acerta por tentativa.
-Um preset parece uma lista de addons e não é: ele é uma lista de addons
-\textbf{mais um modo de aplicação}, e o mesmo preset produz três resultados
-diferentes conforme o modo escolhido.
+Os presets vêm primeiro neste manual porque são a parte que ninguém acerta por
+tentativa. Um preset parece uma lista de addons, mas é uma lista de addons
+\textbf{mais um modo de aplicação}, e o mesmo preset dá três resultados
+diferentes conforme o modo.
 
 \subsection{O que um preset guarda}
 
-Um preset guarda quais addons ficam ligados. Você habilita o que quer voar e
-guarda essa combinação com um nome, em \ui{Novo a partir dos habilitados}.
+Um preset guarda um conjunto de addons ativados com um nome. Ative o que você
+quer usar no voo e use \ui{Novo a partir dos ativados}.
 
-A coluna \ui{Conteúdo} da tabela diz quantos addons ele cita e em quantas
-categorias eles estão. A coluna \ui{Atualizado} diz quando ele foi gravado pela
-última vez.
+A coluna \ui{Conteúdo} diz quantos addons ele cita e em quantas categorias eles
+estão. A coluna \ui{Atualizado} diz quando ele foi salvo pela última vez.
 
-Um preset pode também governar as entradas de inicialização do simulador, e a
-seção~\ref{sec:presets-inicializacao} trata disso.
+Um preset pode também controlar as entradas de inicialização do simulador,
+assunto da seção~\ref{sec:presets-inicializacao}.
 
-\subsection{Preset satisfeito}
+\subsection{Preset já aplicado}
 
-A coluna \ui{Mudaria} responde quantos addons mudariam de estado se você
-aplicasse aquele preset agora. Quando esse número é zero, a tabela diz
-\ui{Satisfeito}.
+A coluna \ui{Ao aplicar} diz quantos addons mudariam de estado se você
+aplicasse aquele preset agora. Quando o número é zero, a tabela diz
+\ui{Já aplicado}.
 
-\textbf{Satisfeito é medido sempre como Substituir}, mesmo que você pretenda
-aplicar de outro jeito. Um preset que cita três addons, todos ligados, aparece
-como satisfeito só se \textbf{nada além deles} estiver ligado. Se você tem um
-quarto addon ligado que o preset não cita, aquele preset não está satisfeito,
-porque aplicá-lo como Substituir desligaria o quarto.
+\textbf{Isso é medido sempre como Substituir}, mesmo que você pretenda aplicar
+de outro jeito. Um preset que cita três addons, todos ativados, aparece como
+aplicado só se \textbf{nada além deles} estiver ativado. Se um quarto addon que
+o preset não cita estiver ativado, o preset não está aplicado, porque Substituir
+desativaria esse quarto addon.
 
-Isso é deliberado: a pergunta que a coluna responde é ``a minha instalação está
-como este preset descreve?'', e a única leitura em que um preset descreve a
-instalação inteira é a de Substituir.
+Isso é de propósito: a coluna responde ``a minha instalação está como este
+preset descreve?'', e só Substituir lê o preset como descrição da instalação
+inteira.
 
 \subsection{Os três modos de aplicação}
 
-O seletor \ui{Aplicar como} escolhe entre três leituras do mesmo preset.
+\ui{Aplicar como} escolhe entre três leituras do mesmo preset.
 
 \begin{description}
-  \item[Substituir] Deixa só o que o preset liga. Aplica o que ele cita e
-    desliga todo addon habilitado que ele não cita.
-  \item[Acumular] Liga o do preset, sem mexer no resto. Aplica o que ele cita e
-    não toca em mais nada.
-  \item[Desabilitar] Desliga o que o preset liga. É o inverso da lista: os
-    addons que o preset ligaria ficam desligados, e as entradas que ele já pedia
-    para desligar são ignoradas.
+  \item[Substituir] Ativa os addons do preset e desativa todo o resto.
+  \item[Acumular] Ativa os addons do preset e deixa o resto como está.
+  \item[Desativar] Desativa os addons do preset. Os addons que o preset marca
+    como desativados são ignorados.
 \end{description}
 
 Antes de aplicar, o painel \ui{Plano} mostra o que vai acontecer, em cinco
 grupos que somam a conta inteira:
 
 \begin{itemize}
-  \item \ui{Ligar}: addons que o preset cita e que estão desligados agora.
-  \item \ui{Desligar}: addons que vão sair, seja porque o preset pede, seja
-    porque Substituir os omite.
-  \item \ui{Já como o preset pede}: nada acontece com eles.
-  \item \ui{Citados, sem addon encontrado}: o preset nomeia um addon que não
-    está mais na biblioteca. O programa não inventa nada e não falha por causa
-    disso; ele lista quais são.
-  \item \ui{Pedidos, e não aplicados}: entradas de inicialização que o preset
-    pede e que não puderam ser trocadas.
+  \item \ui{A ativar}: addons do preset que estão desativados agora.
+  \item \ui{A desativar}: addons que vão sair, porque o preset pede ou porque
+    Substituir os deixa de fora.
+  \item \ui{Já estão como o preset pede}: nada acontece com eles.
+  \item \ui{Não encontrados na biblioteca}: addons que o preset cita e que não
+    estão mais na biblioteca. O programa lista quais são e aplica o resto.
+  \item \ui{Pedidos, mas não aplicados}: entradas de inicialização que o preset
+    pede e que não puderam ser alteradas.
 \end{itemize}
 
 \shot{03b-presets-plan.png}{O plano do preset ``Voo curto'', lido como
 Substituir. Os cinco grupos somam a conta inteira, e a frase abaixo deles diz
-que os 4 omitidos estão dentro dos 4 que serão desligados.}
+que os 4 fora do preset estão entre os 4 que serão desativados.}
 
-\subsection{O que cai por omissão em Substituir}
+\subsection{O que Substituir desativa por omissão}
 
-Ao aplicar como Substituir, o programa desliga os addons que estão habilitados
-agora e que o preset não cita. Eles aparecem sob o rótulo \ui{Desligados porque
-Substituir os omite}, e o botão \ui{Ver quais} abre a lista deles.
+Ao aplicar como Substituir, o programa desativa os addons que estão ativados
+agora e que o preset não cita. Eles aparecem em \ui{Desativados pelo
+Substituir}, e \ui{Ver quais} abre a lista.
 
-O app diz, ao lado dessa lista, que \textbf{eles fazem parte do que o plano já
-conta como desligado, e não são uma pilha em cima disso}. Se o plano diz
-``desliga 12'' e a lista dos omitidos tem 5 nomes, o total continua sendo 12,
-com 5 deles entrando por omissão e 7 porque o preset pediu. Somar os dois
-números dá 17 e é errado.
+\textbf{Eles já estão incluídos na conta do plano.} Se o plano diz ``desativa
+12'' e a lista tem 5 nomes, o total continua 12: 5 ficaram fora do preset e 7 o
+preset pede para desativar.
 
 \subsection{O preset de retorno}
 
-Antes de aplicar qualquer preset, o programa \textbf{anota o que está habilitado
-naquele instante} e grava isso como preset de retorno do perfil. O botão
-\ui{Voltar ao conjunto anterior} aplica essa anotação.
+Antes de aplicar qualquer preset, o programa \textbf{guarda o que está ativado
+naquele instante} como preset de retorno do perfil. \ui{Voltar ao conjunto
+anterior} aplica esse preset.
 
-Se essa anotação não puder ser gravada, por a pasta de presets estar cheia ou
-protegida, \textbf{nada é aplicado}. O programa prefere não fazer a mudança a
-fazê-la sem deixar caminho de volta.
+Se ele não puder ser guardado, por a pasta de presets estar cheia ou protegida
+contra escrita, \textbf{nada é aplicado}, para que sempre haja caminho de volta.
 
-O retorno é diferente do \ui{Desfazer última alteração}, e a diferença importa:
+O retorno é diferente do \ui{Desfazer última alteração}:
 
 \begin{description}
-  \item[Desfazer última alteração] Desfaz exatamente o lote que você acabou de
-    aplicar. Uma importação ou uma operação de quarentena feita depois disso
-    consome o desfazer, e ele deixa de estar disponível.
+  \item[Desfazer última alteração] Desfaz exatamente o que você acabou de
+    aplicar. Uma importação ou uma operação de quarentena feita depois consome
+    o desfazer.
   \item[Voltar ao conjunto anterior] Aplica o preset de retorno, que é um preset
-    como qualquer outro. Ele continua lá depois de uma importação ou de uma
-    quarentena, porque não depende do diário.
+    como qualquer outro. Ele continua lá depois de importações e quarentenas,
+    porque não depende do histórico.
 \end{description}
 
-Aplicar um preset é um lote só: o \ui{Desfazer última alteração} volta tudo de uma
-vez, e não addon por addon.
+Aplicar um preset é um lote só: o \ui{Desfazer última alteração} volta tudo de
+uma vez.
 
 \subsection{Presets e entradas de inicialização}
 \label{sec:presets-inicializacao}
 
-Na aba \ui{Inicialização} do preset, uma caixa faz aquele preset também
-gerenciar os programas que o simulador abre junto consigo. Marcá-la captura as
-entradas habilitadas naquele momento, e depois você liga ou desliga cada uma ali.
+Na aba \ui{Inicialização} do preset, uma caixa faz o preset também controlar os
+programas que o simulador abre junto consigo. Marcá-la guarda as entradas
+ativadas naquele momento, e depois dá para ativar ou desativar cada uma ali.
 
-Se o gerenciamento de inicialização estiver desligado em \ui{Opções}, as
-entradas que o preset pede \textbf{não são aplicadas}, e o programa diz quantas
-foram. O resto do preset é aplicado normalmente.
+Se o gerenciamento de inicialização estiver desativado em \ui{Opções}, as
+entradas do preset \textbf{não são aplicadas}, e o programa diz quantas. O resto
+do preset é aplicado normalmente.
 
 Se uma entrada que o preset cita não estiver mais no arquivo do simulador, ela é
-listada em vez de ser recriada. O programa nunca acrescenta entrada de
+listada em vez de recriada. O programa nunca acrescenta entrada de
 inicialização.
 
 \section{A primeira configuração}

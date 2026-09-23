@@ -135,9 +135,9 @@ void PresetStartupPanel::changeEvent(QEvent* event)
 void PresetStartupPanel::RetranslateUi()
 {
     entries_->setHorizontalHeaderLabels({tr("Entry"), tr("Target"), tr("Enables")});
-    governs_->setText(tr("This preset also governs startup entries"));
-    update_->setText(tr("Update with the enabled ones"));
-    empty_->Retell(tr("This preset does not govern startup entries"),
-                   tr("Check the box above and it captures the ones enabled right now. You can then turn "
-                      "each on or off here."));
+    governs_->setText(tr("This preset also controls startup entries"));
+    update_->setText(tr("Update from enabled entries"));
+    empty_->Retell(
+        tr("This preset does not control startup entries"),
+        tr("Check the box above to save the entries enabled right now. You can then enable or disable each one here."));
 }

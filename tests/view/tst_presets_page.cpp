@@ -302,7 +302,7 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
 
     QCOMPARE(names->horizontalHeaderItem(0)->text(), QStringLiteral("Preset"));
     QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Content"));
-    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Changed"));
+    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Updated"));
 
     QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
     QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon · 1 category"));
@@ -447,10 +447,10 @@ void PresetsPageTest::TheNameTableSaysWhatEachPresetWouldChangeAndTagsTheSatisfi
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
     QCOMPARE(names->columnCount(), 4);
-    QCOMPARE(names->horizontalHeaderItem(3)->text(), QStringLiteral("Would change"));
+    QCOMPARE(names->horizontalHeaderItem(3)->text(), QStringLiteral("If applied"));
 
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Satisfied"));
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Already applied"));
 
     f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
     f.session.RefreshEntries();
@@ -622,14 +622,14 @@ void PresetsPageTest::TheWayBackIsTheBatchUndoAndFallsBackToTheReturnPreset()
 
     QVERIFY(back->isEnabled());
     QCOMPARE(back->text(), QStringLiteral("Back to the previous set"));
-    QVERIFY(back->toolTip().contains(QStringLiteral("batch")));
+    QVERIFY(back->toolTip().contains(QStringLiteral("just applied")));
 
     f.service.ForgetUndo();
     f.session.RefreshEntries();
 
     QVERIFY(back->isEnabled());
     QCOMPARE(back->text(), QStringLiteral("Back to the previous set"));
-    QVERIFY(back->toolTip().contains(QStringLiteral("return preset")));
+    QVERIFY(back->toolTip().contains(QStringLiteral("before the last preset")));
 }
 
 void PresetsPageTest::ASatisfiedPresetStillShowsWhatDisableWouldChange()
@@ -639,12 +639,12 @@ void PresetsPageTest::ASatisfiedPresetStillShowsWhatDisableWouldChange()
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Satisfied"));
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Already applied"));
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
 
     page.findChild<QRadioButton*>(QStringLiteral("ModeDisable"))->click();
 
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Satisfied"));
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Already applied"));
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
 }
 

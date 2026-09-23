@@ -189,14 +189,13 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(&viewModel_, &PresetViewModel::Applied, this,
             [this](const QStringList& unresolved, const QString& startupLeftUndone)
             {
-                emit StatusChanged(tr("The preset was applied."));
+                emit StatusChanged(tr("Preset applied."));
 
                 QStringList said;
 
                 if (!unresolved.isEmpty())
                 {
-                    said.append(tr("These addons of the preset are no longer in the "
-                                   "library:\n\n%1")
+                    said.append(tr("These preset addons are no longer in the library:\n\n%1")
                                     .arg(unresolved.join(QStringLiteral("\n"))));
                 }
 
@@ -207,7 +206,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
 
                 if (!said.isEmpty())
                 {
-                    QMessageBox::warning(this, tr("Not everything the preset asked for happened"),
+                    QMessageBox::warning(this, tr("The preset was only partly applied"),
                                          said.join(QStringLiteral("\n\n")));
                 }
             });
@@ -229,21 +228,19 @@ void PresetsPage::changeEvent(QEvent* event)
 
 void PresetsPage::RetranslateUi()
 {
-    create_->setText(tr("New from the enabled ones…"));
-    update_->setText(tr("Update with the enabled ones"));
+    create_->setText(tr("New from enabled addons…"));
+    update_->setText(tr("Update from enabled addons"));
     rename_->setText(tr("Rename…"));
     remove_->setText(tr("Delete"));
     filter_->setPlaceholderText(tr("Filter presets"));
     entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Library"), tr("Enables")});
-    names_->setHorizontalHeaderLabels({tr("Preset"), tr("Content"), tr("Changed"), tr("Would change")});
+    names_->setHorizontalHeaderLabels({tr("Preset"), tr("Content"), tr("Updated"), tr("If applied")});
     plan_->setText(tr("Plan"));
     startup_->setText(tr("Startup"));
     nothing_->Retell(tr("No preset in this profile yet."),
-                     tr("A preset keeps which addons stay enabled. Enable what "
-                        "you want to fly and keep that "
-                        "combination under a name. Applying it later is a single "
-                        "batch, with a whole undo."));
-    nothingAction_->setText(tr("New from the enabled ones…"));
+                     tr("A preset saves a set of enabled addons under a name. Enable what you want to fly with and "
+                        "save it. Applying it later takes one step, and so does undoing it."));
+    nothingAction_->setText(tr("New from enabled addons…"));
 }
 
 QTableWidget* PresetsPage::CreateNameTable()
@@ -397,7 +394,7 @@ namespace
 
         if (row.satisfied)
         {
-            item->setData(TagTextRole, QObject::tr("Satisfied"));
+            item->setData(TagTextRole, QObject::tr("Already applied"));
             item->setData(TagToneRole, static_cast<int>(TagTone::Muted));
         }
 
@@ -481,9 +478,8 @@ void PresetsPage::ShowTheWayBack()
 
     goBack_->setEnabled(undoable || back.has_value());
     goBack_->setText(TheWayBackIsCalled());
-    goBack_->setToolTip(undoable ? tr("Undoes the batch you just applied.")
-                                 : tr("Applies the return preset, written down "
-                                      "before the last application."));
+    goBack_->setToolTip(undoable ? tr("Undoes what you just applied.")
+                                 : tr("Restores the addons that were enabled before the last preset was applied."));
 }
 
 void PresetsPage::LetGoOf(QTableWidget* table)

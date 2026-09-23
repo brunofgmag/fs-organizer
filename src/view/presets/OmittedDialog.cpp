@@ -14,13 +14,12 @@
 
 OmittedDialog::OmittedDialog(const QList<OmittedAddon>& omitted, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Off because Replace omits them"));
+    setWindowTitle(tr("Disabled by Replace"));
 
-    auto* explanation = new QLabel(tr("%n addon of yours is enabled now and this preset does not name it, so Replace "
-                                      "turns it off. It is part of what the plan already counts as turned off, and "
-                                      "not a pile on top of it.",
-                                      nullptr, static_cast<int>(omitted.size())),
-                                   this);
+    auto* explanation = new QLabel(
+        tr("%n enabled addon is not in this preset, so Replace disables it. It is already counted in the plan.",
+           nullptr, static_cast<int>(omitted.size())),
+        this);
     explanation->setWordWrap(true);
 
     auto* table = new QTableWidget(this);

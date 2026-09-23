@@ -73,121 +73,112 @@ they are.
 
 \section{Presets}
 
-This is the first subject of the manual because it is the one nobody gets right
-by trial. A preset looks like a list of addons and is not: it is a list of
-addons \textbf{plus an apply mode}, and the same preset produces three different
-results depending on the mode.
+Presets come first in this manual because they are the part nobody gets right
+by trial. A preset looks like a list of addons, but it is a list of addons
+\textbf{plus an apply mode}, and the same preset gives three different results
+depending on the mode.
 
 \subsection{What a preset holds}
 
-A preset keeps which addons stay enabled. You enable what you want to fly and
-keep that combination under a name, with \ui{New from the enabled ones}.
+A preset saves a set of enabled addons under a name. Enable what you want to
+fly with and use \ui{New from enabled addons}.
 
 The \ui{Content} column says how many addons it names and how many categories
-they sit in. The \ui{Changed} column says when it was last written.
+they are in. The \ui{Updated} column says when it was last saved.
 
-A preset can also govern the startup entries of the simulator, and
-section~\ref{sec:presets-startup} covers that.
+A preset can also control the simulator's startup entries, covered in
+section~\ref{sec:presets-startup}.
 
-\subsection{A satisfied preset}
+\subsection{An applied preset}
 
-The \ui{Would change} column answers how many addons would change state if you
-applied that preset now. When that number is zero, the table says
-\ui{Satisfied}.
+The \ui{If applied} column says how many addons would change state if you
+applied that preset now. When the number is zero, the table says
+\ui{Already applied}.
 
-\textbf{Satisfied is always measured as Replace}, even when you mean to apply it
-some other way. A preset naming three addons, all of them on, shows as satisfied
-only if \textbf{nothing beyond them} is on. If you have a fourth addon enabled
-that the preset does not name, that preset is not satisfied, because applying it
-as Replace would turn the fourth one off.
+\textbf{This is always measured as Replace}, even if you mean to apply the
+preset another way. A preset naming three addons, all enabled, shows as applied
+only if \textbf{nothing else} is enabled. If a fourth addon the preset does not
+name is enabled, the preset is not applied, because Replace would disable that
+fourth addon.
 
-This is deliberate: the question the column answers is ``is my installation the
-way this preset describes it?'', and the only reading in which a preset
-describes the whole installation is Replace.
+This is deliberate: the column answers ``is my installation the way this
+preset describes it?'', and only Replace reads a preset as a description of the
+whole installation.
 
 \subsection{The three apply modes}
 
-The \ui{Apply as} selector chooses between three readings of the same preset.
+\ui{Apply as} chooses between three readings of the same preset.
 
 \begin{description}
-  \item[Replace] Leaves only what the preset enables. It applies what the preset
-    names and turns off every enabled addon it does not name.
-  \item[Accumulate] Enables what the preset names, without touching the rest. It
-    applies what the preset names and leaves everything else alone.
-  \item[Disable] Disables what the preset enables. It is the list read
-    backwards: the addons the preset would turn on end up off, and the entries
-    it already asked to turn off are ignored.
+  \item[Replace] Enables the preset's addons and disables everything else.
+  \item[Accumulate] Enables the preset's addons and leaves the rest as it is.
+  \item[Disable] Disables the preset's addons. Addons the preset lists as
+    disabled are ignored.
 \end{description}
 
-Before you apply, the \ui{Plan} panel shows what is about to happen, in five
-groups that add up to the whole count:
+Before you apply, the \ui{Plan} panel shows what will happen, in five groups
+that add up to the whole count:
 
 \begin{itemize}
-  \item \ui{Turn on}: addons the preset names that are off right now.
-  \item \ui{Turn off}: addons that are going out, whether because the preset
-    asks or because Replace omits them.
+  \item \ui{To enable}: addons in the preset that are disabled now.
+  \item \ui{To disable}: addons going off, either because the preset says so or
+    because Replace leaves them out.
   \item \ui{Already as the preset asks}: nothing happens to them.
-  \item \ui{Named, but no addon found}: the preset names an addon that is no
-    longer in the library. The program invents nothing and does not fail over
-    it; it lists which ones.
-  \item \ui{Asked for, but not applied}: startup entries the preset asks for
-    that could not be switched.
+  \item \ui{Not found in the library}: addons the preset names that are no
+    longer in the library. The program lists them and applies the rest.
+  \item \ui{Requested, but not applied}: startup entries the preset asks for
+    that could not be changed.
 \end{itemize}
 
 \shot{03b-presets-plan.png}{The plan of the ``Voo curto'' preset, read as
 Replace. The five groups add up to the whole count, and the sentence under them
-says the 4 omitted are inside the 4 about to be turned off.}
+says the 4 not in the preset are among the 4 being disabled.}
 
-\subsection{What falls off by omission in Replace}
+\subsection{What Replace disables by omission}
 
-Applying as Replace turns off the addons that are enabled right now and that the
-preset does not name. They show up under \ui{Off because Replace omits them},
-and the \ui{Show them} button opens the list.
+Applying as Replace disables the addons that are enabled now and that the
+preset does not name. They show up under \ui{Disabled by Replace}, and
+\ui{Show them} opens the list.
 
-The app says, beside that list, that \textbf{they are part of what the plan
-already counts as turned off, and not a pile on top of
-it}. If the plan says ``disables 12'' and the omitted list has 5 names, the
-total is still 12, with 5 of them entering by omission and 7 because the preset
-asked. Adding the two numbers gives 17 and is wrong.
+\textbf{They are already included in the plan's count.} If the plan says
+``disables 12'' and the list has 5 names, the total is still 12: 5 left out of
+the preset and 7 the preset asks to disable.
 
 \subsection{The return preset}
 
-Before applying any preset, the program \textbf{writes down what is enabled at
-that moment} and saves it as the profile's return preset. The \ui{Back to the
-previous set} button applies that note.
+Before applying any preset, the program \textbf{saves what is enabled at that
+moment} as the profile's return preset. \ui{Back to the previous set} applies
+it.
 
-If the note cannot be written, because the presets folder is full or protected,
-\textbf{nothing is applied}. The program would rather not make the change than
-make it with no way back.
+If it cannot be saved, because the presets folder is full or read-only,
+\textbf{nothing is applied}, so there is always a way back.
 
-The return is not the same as \ui{Undo last change}, and the difference
-matters:
+The return is not the same as \ui{Undo last change}:
 
 \begin{description}
-  \item[Undo last change] Undoes exactly the batch you just applied. An
-    import or a quarantine operation done afterwards consumes the undo, and it
-    stops being available.
+  \item[Undo last change] Undoes exactly what you just applied. An import or a
+    quarantine operation done afterwards uses up the undo.
   \item[Back to the previous set] Applies the return preset, which is a preset
-    like any other. It is still there after an import or a quarantine, because
-    it does not depend on the journal.
+    like any other. It survives imports and quarantine operations, because it
+    does not depend on the journal.
 \end{description}
 
-Applying a preset is a single batch: \ui{Undo last change} takes it all back
-at once, not addon by addon.
+Applying a preset is a single batch: \ui{Undo last change} takes all of it
+back at once.
 
 \subsection{Presets and startup entries}
 \label{sec:presets-startup}
 
-On the preset's \ui{Startup} tab, a checkbox makes that preset also manage the
-programs the simulator opens with itself. Checking it captures the entries
-enabled at that moment, and from then on you turn each one on or off there.
+On the preset's \ui{Startup} tab, a checkbox makes the preset also control the
+programs the simulator launches with itself. Checking it saves the entries
+enabled at that moment, and you can then enable or disable each one there.
 
-If startup management is off in \ui{Options}, the entries the preset asks for
-\textbf{are not applied}, and the program says how many. The rest of the preset
-is applied normally.
+If startup management is off in \ui{Options}, the preset's entries \textbf{are
+not applied}, and the program says how many. The rest of the preset is applied
+normally.
 
 If an entry the preset names is no longer in the simulator's file, it is listed
-instead of being recreated. The program never adds a startup entry.
+instead of recreated. The program never adds a startup entry.
 
 \section{First setup}
 
