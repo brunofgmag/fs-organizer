@@ -334,14 +334,14 @@ void DeleteDialogTest::OnlyASelectionThatCameFromAnotherProgramIsOfferedTheWayBa
     Fixture ordinary;
     const DeleteDialog withoutIt(ordinary.PlanFor({ordinary.Node(kCrj)}), ordinary.viewModel);
 
-    QCOMPARE(RouteLabelled(withoutIt, QStringLiteral("Give it back to the other program")), nullptr);
+    QCOMPARE(RouteLabelled(withoutIt, QStringLiteral("Give it back to the program that installed it")), nullptr);
 
     Fixture managed;
     TheCrjCameFromAnotherProgram(managed);
 
     const DeleteDialog mixed(managed.PlanFor({managed.Node(kCrj), managed.Node(kAtr)}), managed.viewModel);
 
-    QVERIFY2(RouteLabelled(mixed, QStringLiteral("Give it back to the other program")) == nullptr,
+    QVERIFY2(RouteLabelled(mixed, QStringLiteral("Give it back to the program that installed it")) == nullptr,
              "the route runs over the whole selection, so one addon that never came from outside takes it away");
 }
 
@@ -354,7 +354,7 @@ void DeleteDialogTest::TheWayBackNamesTheFolderAndAsksForTheGiveBackInsteadOfADe
     const QSignalSpy asked(&dialog, &DeleteDialog::GiveBackRequested);
     const QSignalSpy deleted(&f.viewModel, &DeletionViewModel::Deleted);
 
-    QRadioButton* back = RouteLabelled(dialog, QStringLiteral("Give it back to the other program"));
+    QRadioButton* back = RouteLabelled(dialog, QStringLiteral("Give it back to the program that installed it"));
     QVERIFY(back != nullptr);
     QVERIFY(EverythingItSays(dialog).contains(QStringLiteral("Addon Manager")));
 

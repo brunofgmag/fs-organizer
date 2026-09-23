@@ -32,14 +32,12 @@ namespace
 SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>& shared, QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(tr("Two addons for the same place"));
+    setWindowTitle(tr("Two addons for the same airport"));
 
-    auto* explanation = new QLabel(
-        tr("%n addon you just turned on covers a place another addon of yours already covers. The codes are read "
-           "from inside the scenery files, and the app compares against the addons whose scenery it has read so "
-           "far.",
-           nullptr, static_cast<int>(shared.size())),
-        this);
+    auto* explanation = new QLabel(tr("%n addon you just enabled covers the same airport as another enabled addon. "
+                                      "Only addons whose scenery has already been scanned are compared.",
+                                      nullptr, static_cast<int>(shared.size())),
+                                   this);
     explanation->setWordWrap(true);
 
     auto* listed = new QWidget(this);
@@ -49,8 +47,8 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
     grid->setHorizontalSpacing(12);
     grid->setVerticalSpacing(6);
 
-    for (const auto& [column, heading] : {std::pair{0, tr("Can coexist")}, std::pair{1, tr("You turned on")},
-                                          std::pair{2, tr("Already on")}, std::pair{3, tr("Airports")}})
+    for (const auto& [column, heading] : {std::pair{0, tr("Can coexist")}, std::pair{1, tr("You enabled")},
+                                          std::pair{2, tr("Already enabled")}, std::pair{3, tr("Airports")}})
     {
         auto* label = new QLabel(heading, listed);
         label->setObjectName(QStringLiteral("PanelSubHeading"));
@@ -91,19 +89,18 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
     scroll->setWidgetResizable(true);
     scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
 
-    auto* promise = new QLabel(tr("Nothing was undone and both stay on: which one the simulator loads is its own to "
-                                  "decide, and turning one off is the switch you already use. Checking a pair keeps "
-                                  "the app quiet about that pair from now on, and leaves the others alone."),
-                               this);
+    auto* promise = new QLabel(
+        tr("Both stay enabled, and the simulator decides which one loads. Check a pair to stop the warnings about it."),
+        this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
 
     auto* buttons = new QDialogButtonBox(this);
-    QPushButton* leave = buttons->addButton(tr("Leave them both on"), QDialogButtonBox::RejectRole);
+    QPushButton* leave = buttons->addButton(tr("Keep both enabled"), QDialogButtonBox::RejectRole);
     leave->setProperty("role", "primary");
     leave->setDefault(true);
 
-    QPushButton* remember = buttons->addButton(tr("Remember the checked ones"), QDialogButtonBox::AcceptRole);
+    QPushButton* remember = buttons->addButton(tr("Stop warning about the checked ones"), QDialogButtonBox::AcceptRole);
     remember->setEnabled(false);
 
     const auto SayHowManyAreChecked = [this, remember]

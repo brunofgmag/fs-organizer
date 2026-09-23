@@ -323,7 +323,7 @@ void AddonTreeModelTest::ABrokenLinkWearsTheTagAndAlarmsTheRow()
     const QModelIndex broken = AddonAt(model, 0).siblingAtColumn(AddonTreeModel::AddonColumn);
 
     QVERIFY(model.data(broken, AddonTreeModel::BrokenRole).toBool());
-    QCOMPARE(model.data(broken, TagTextRole).toString(), QStringLiteral("No target"));
+    QCOMPARE(model.data(broken, TagTextRole).toString(), QStringLiteral("Broken link"));
     QCOMPARE(model.data(broken, TagToneRole).toInt(), static_cast<int>(TagTone::Filled));
     QVERIFY(model.data(broken, AlarmingRole).toBool());
 

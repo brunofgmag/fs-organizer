@@ -374,7 +374,7 @@ void AddonTreeViewModel::CreateCategory(const TreeNode* node, const QString& nam
     const QString wanted = name.trimmed();
     if (wanted.isEmpty())
     {
-        emit Refused(tr("Give the category a name."));
+        emit Refused(tr("Enter a name for the category."));
         return;
     }
 
@@ -391,7 +391,7 @@ std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, c
     const QString wanted = name.trimmed();
     if (wanted.isEmpty())
     {
-        emit Refused(tr("Give the category a name."));
+        emit Refused(tr("Enter a name for the category."));
         return {};
     }
 
@@ -544,14 +544,14 @@ void AddonTreeViewModel::AdoptDestination(const TreeNode* category)
 
     if (!agreement.unanimous)
     {
-        emit Refused(tr("The enabled addons of this category are linked in different destinations. Choose a "
-                        "destination for the category instead of adopting what is on the disk."));
+        emit Refused(tr("The enabled addons of this category are linked in different destinations. Choose one "
+                        "destination for the category instead."));
         return;
     }
 
     if (agreement.destination.empty())
     {
-        emit Refused(tr("No addon of this category is enabled, so there is no destination to adopt."));
+        emit Refused(tr("No addon of this category is enabled, so there is no destination to keep."));
         return;
     }
 
@@ -595,7 +595,7 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
 
     if (strayed.empty())
     {
-        emit Refused(tr("No addon from here is linked away from the destination the profile says to use."));
+        emit Refused(tr("Every addon here is already linked in the profile destination."));
         return;
     }
 

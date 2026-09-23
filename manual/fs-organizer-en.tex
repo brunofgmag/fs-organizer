@@ -160,11 +160,11 @@ If the note cannot be written, because the presets folder is full or protected,
 \textbf{nothing is applied}. The program would rather not make the change than
 make it with no way back.
 
-The return is not the same as \ui{Undo the last batch}, and the difference
+The return is not the same as \ui{Undo last change}, and the difference
 matters:
 
 \begin{description}
-  \item[Undo the last batch] Undoes exactly the batch you just applied. An
+  \item[Undo last change] Undoes exactly the batch you just applied. An
     import or a quarantine operation done afterwards consumes the undo, and it
     stops being available.
   \item[Back to the previous set] Applies the return preset, which is a preset
@@ -172,7 +172,7 @@ matters:
     it does not depend on the journal.
 \end{description}
 
-Applying a preset is a single batch: \ui{Undo the last batch} takes it all back
+Applying a preset is a single batch: \ui{Undo last change} takes it all back
 at once, not addon by addon.
 
 \subsection{Presets and startup entries}
@@ -229,17 +229,17 @@ selected addon on the right.}
   \item[Enabled] Whether a link to it exists in a destination right now.
   \item[Destination] Which destination it is linked in, and whether that
     destination is pinned.
-  \item[Target exists] Whether the link finds the folder. A ``no'' here is a
-    broken link.
+  \item[Link] Whether the link finds the folder. When it does not, the link is
+    broken.
 \end{description}
 
-Three marks appear on a row when something is out of place: \ui{No target},
+Three marks appear on a row when something is out of place: \ui{Broken link},
 \ui{In conflict} and \ui{Two copies}. Each one has a section in this manual.
 
 \subsection{Enabling and disabling in bulk}
 
-Selecting several rows and using \ui{Check the selected ones} or \ui{Uncheck the
-selected ones} does it all in one batch. Past a certain number, the program asks
+Selecting several rows and using \ui{Enable selected} or \ui{Disable selected}
+does it all in one batch. Past a certain number, the program asks
 first.
 
 If an addon's spot is taken by another addon of yours, the program does not
@@ -253,8 +253,8 @@ addons between them. Only an empty category can be deleted.
 
 \ui{Suggest categories} reads rules about the folder name and about the
 \where|manifest.json| and proposes moving whatever is out of place. The rules
-that get it right on their own come checked; the livery rule comes unchecked
-because it is often wrong, so check it before applying.
+that are reliable come checked; the livery rule is often wrong, so it comes
+unchecked: review it before applying.
 
 A folder counts as a category while it groups addons, and the program writes a
 hidden \where|.fsorg-category| inside the ones it knows about so that a category
@@ -268,8 +268,8 @@ what a scenery object library that ships without a manifest looks like too.
 
 \subsection{Pinning the destination}
 
-By default an addon is linked in the profile's default destination. \ui{Pin the
-destination} ties an addon or a whole category to a specific one. When a pinning
+By default an addon is linked in the profile's default destination. \ui{Always
+use}, followed by a destination, ties an addon or a whole category to it. When a pinning
 names a folder that has stopped being a destination of the profile, the program
 says so and uses the default destination while that is true, without deleting
 the pinning from the configuration.
@@ -391,16 +391,15 @@ from the disk for good, and asks first.
 work.
 
 \begin{description}
-  \item[Move to the Recycle Bin] You can put it back through Windows itself. The
+  \item[Move to the Recycle Bin] You can restore it from the Recycle Bin. The
     program refuses this route when the selection does not fit in the Recycle Bin
     of that volume, or when the addon holds a path past the 260 characters the
-    Recycle Bin stops at. Windows may quietly evict older items from the Bin to
-    make room, and the program cannot prevent that.
-  \item[Delete permanently] It does not come back. Not through the Recycle Bin
-    either.
-  \item[Give it back to the other program] Only offered for an addon that came
-    from another program. The bytes move back to the folder that program
-    manages, and the library copy goes away with the import that made it.
+    Recycle Bin stops at. Windows may remove older items from the Bin to make
+    room.
+  \item[Delete permanently] This cannot be undone.
+  \item[Give it back to the program that installed it] Only offered for an
+    addon that came from another program. The files move back to the folder
+    that program keeps them in, and leave the library.
 \end{description}
 
 Turning the addon off is part of the deletion and happens because you asked for
@@ -535,8 +534,8 @@ Each line carries when, which operation, which addon, which library, source,
 destination and result. The \ui{Only what failed} filter narrows the list to
 what went wrong, and the search covers addon, path and operation.
 
-\ui{Undo the last batch} lives here and on the \ui{Library} tab: it takes back
-the whole last batch, not one operation inside it.
+\ui{Undo last change}, on the \ui{Library} tab, takes back the whole last
+batch, not one operation inside it.
 
 \section{Options}
 

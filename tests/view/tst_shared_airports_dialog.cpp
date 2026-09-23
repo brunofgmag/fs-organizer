@@ -101,13 +101,13 @@ void SharedAirportsDialogTest::NeitherAnswerIsADeadEndAndOnlyOneOfThemWrites()
         {Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")})});
     QSignalSpy accepted(&agreeing, &QDialog::accepted);
     PairBoxesOf(agreeing).front()->setChecked(true);
-    ButtonSaying(agreeing, QStringLiteral("Remember the checked ones"))->click();
+    ButtonSaying(agreeing, QStringLiteral("Stop warning about the checked ones"))->click();
     QCOMPARE(accepted.count(), 1);
 
     SharedAirportsDialog refusing(
         {Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")})});
     QSignalSpy rejected(&refusing, &QDialog::rejected);
-    ButtonSaying(refusing, QStringLiteral("Leave them both on"))->click();
+    ButtonSaying(refusing, QStringLiteral("Keep both enabled"))->click();
     QCOMPARE(rejected.count(), 1);
     QCOMPARE(refusing.result(), static_cast<int>(QDialog::Rejected));
     QVERIFY2(refusing.Chosen().empty(), "refusing writes nothing, which is what it promises");
@@ -117,13 +117,13 @@ void SharedAirportsDialogTest::NothingIsRememberedUntilAPairIsChecked()
 {
     SharedAirportsDialog dialog({Sharing(QStringLiteral("mine"), QStringLiteral("theirs"), {QStringLiteral("EHAM")})});
 
-    QVERIFY2(!ButtonSaying(dialog, QStringLiteral("Remember the checked ones"))->isEnabled(),
+    QVERIFY2(!ButtonSaying(dialog, QStringLiteral("Stop warning about the checked ones"))->isEnabled(),
              "the pairs come unchecked, so the answer that writes has nothing to write yet");
     QVERIFY(dialog.Chosen().empty());
 
     PairBoxesOf(dialog).front()->setChecked(true);
 
-    QVERIFY(ButtonSaying(dialog, QStringLiteral("Remember the checked ones"))->isEnabled());
+    QVERIFY(ButtonSaying(dialog, QStringLiteral("Stop warning about the checked ones"))->isEnabled());
 }
 
 void SharedAirportsDialogTest::OnlyTheCheckedPairsComeBack()
@@ -170,7 +170,7 @@ void SharedAirportsDialogTest::TheWarningSaysTheCodeWasReadFromTheScenery()
 
     const QString said = TextsOf(dialog).join(QLatin1Char(' '));
 
-    QVERIFY2(said.contains(QStringLiteral("scenery files")) && said.contains(QStringLiteral("read so far")),
+    QVERIFY2(said.contains(QStringLiteral("scenery")) && said.contains(QStringLiteral("already been scanned")),
              "the claim and where it came from travel together, and here the second half is also the limit: the app "
              "compares against the scenery it has read and not against the whole library");
 }

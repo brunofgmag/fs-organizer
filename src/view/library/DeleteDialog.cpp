@@ -61,20 +61,18 @@ DeleteDialog::DeleteDialog(DeletionPlan plan, DeletionViewModel& viewModel, QWid
     const std::size_t refused = AddonsTheRecycleBinRefuses(plan_);
     const bool anyGoes = refused < plan_.addons.size();
 
-    recycle_ =
-        AddRoute(*column, tr("Move to the Recycle Bin"),
-                 refused == 0 ? tr("You can put it back from Windows. Windows may quietly evict older items from the "
-                                   "Bin to make room for these %1, and the app cannot prevent that.")
-                                    .arg(SizeOfTheSelection(WhatItWeighs(plan_)))
-                              : WhatTheRecycleBinWillNotTake());
+    recycle_ = AddRoute(*column, tr("Move to the Recycle Bin"),
+                        refused == 0 ? tr("You can restore it from the Recycle Bin. Windows may remove older items "
+                                          "from the Bin to make room for these %1.")
+                                           .arg(SizeOfTheSelection(WhatItWeighs(plan_)))
+                                     : WhatTheRecycleBinWillNotTake());
     recycle_->setEnabled(anyGoes);
 
-    forGood_ =
-        AddRoute(*column, tr("Delete permanently"), tr("It does not come back. Not through the Recycle Bin either."));
+    forGood_ = AddRoute(*column, tr("Delete permanently"), tr("This cannot be undone."));
 
     if (EveryAddonCameFromAnotherProgram(plan_))
     {
-        giveBack_ = AddRoute(*column, tr("Give it back to the other program"), WhereItGoesBackTo());
+        giveBack_ = AddRoute(*column, tr("Give it back to the program that installed it"), WhereItGoesBackTo());
         connect(giveBack_, &QRadioButton::toggled, this, &DeleteDialog::ShowTheChosenRoute);
     }
 
@@ -95,7 +93,7 @@ DeleteDialog::DeleteDialog(DeletionPlan plan, DeletionViewModel& viewModel, QWid
 
     if (plan_.nodesThatAreNotAddons > 0)
     {
-        auto* aside = new QLabel(tr("%n selected item is not an addon and stays where it is.", nullptr,
+        auto* aside = new QLabel(tr("%n selected item is not an addon and will be kept.", nullptr,
                                     static_cast<int>(plan_.nodesThatAreNotAddons)),
                                  this);
         aside->setObjectName(QStringLiteral("PanelPromise"));
@@ -149,13 +147,11 @@ QString DeleteDialog::WhereItGoesBackTo() const
 {
     if (plan_.addons.size() == 1)
     {
-        return tr("The bytes move back to %1, the folder the other program manages, and the library copy goes away "
-                  "with the import that made it.")
+        return tr("The files move back to %1, where the other program keeps them, and leave the library.")
             .arg(AsText(plan_.addons.front().cameFrom));
     }
 
-    return tr("The bytes move back to the folders the other programs manage, and each library copy goes away with the "
-              "import that made it.");
+    return tr("The files move back to the folders the other programs keep them in, and leave the library.");
 }
 
 QString DeleteDialog::WhatWasSelected() const
@@ -184,8 +180,7 @@ QString DeleteDialog::WhatTheRecycleBinWillNotTake() const
         }
     }
 
-    return tr("%n of the selected addons cannot go there, and this route leaves them in the library:", nullptr,
-              refused.size())
+    return tr("%n selected addon cannot go to the Recycle Bin and will stay in the library:", nullptr, refused.size())
         + QStringLiteral("\n") + refused.join(QStringLiteral("\n"));
 }
 
@@ -197,7 +192,7 @@ QString DeleteDialog::WhereTheLinksAre() const
     {
         for (const EnabledSomewhere& link : addon.enabled)
         {
-            said.append(tr("%1: the link in %2 goes away with it · %3")
+            said.append(tr("%1: its link in %2 is removed too · %3")
                             .arg(AsText(addon.folder.filename()), AsText(link.linkPath.parent_path().filename()),
                                  viewModel_.LabelOfProfile(link.profileId)));
         }
@@ -208,7 +203,7 @@ QString DeleteDialog::WhereTheLinksAre() const
         return {};
     }
 
-    return tr("The following addons will be deleted and disabled:") + QStringLiteral("\n")
+    return tr("These addons are enabled and will be disabled first:") + QStringLiteral("\n")
         + said.join(QStringLiteral("\n"));
 }
 

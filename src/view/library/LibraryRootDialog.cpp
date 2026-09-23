@@ -46,12 +46,13 @@ LibraryRootDialog::LibraryRootDialog(const std::filesystem::path& root, const Ro
     name->setWordWrap(true);
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    auto* explanation = new QLabel(tr("This folder is %1 deep. Addons routinely nest %2 characters below their own "
-                                      "folder, and Windows stops at %3 for some operations, including the Recycle Bin.")
-                                       .arg(tr("%n character", nullptr, static_cast<int>(depth.characters)))
-                                       .arg(kAddonsRoutinelyNest)
-                                       .arg(kTheRecycleBinStopsAt),
-                                   this);
+    auto* explanation =
+        new QLabel(tr("The path of this folder already takes %1. Addons often add another %2 characters below their "
+                      "own folder, and some Windows operations, including the Recycle Bin, fail past %3.")
+                       .arg(tr("%n character", nullptr, static_cast<int>(depth.characters)))
+                       .arg(kAddonsRoutinelyNest)
+                       .arg(kTheRecycleBinStopsAt),
+                   this);
     explanation->setWordWrap(true);
 
     auto* compared = new QWidget(this);
@@ -63,12 +64,12 @@ LibraryRootDialog::LibraryRootDialog(const std::filesystem::path& root, const Ro
     grid->setColumnStretch(1, 1);
 
     AddTheSide(*grid, 0, tr("This folder"), HowMuchItLeaves(depth));
-    AddTheSide(*grid, 1, tr("A short root, for comparison"), TheShortRootForComparison());
+    AddTheSide(*grid, 1, tr("A short path, for comparison"), TheShortRootForComparison());
 
     auto* buttons = new QDialogButtonBox(this);
-    QPushButton* another = buttons->addButton(tr("Pick another folder"), QDialogButtonBox::RejectRole);
+    QPushButton* another = buttons->addButton(tr("Choose another folder"), QDialogButtonBox::RejectRole);
     another->setObjectName(QStringLiteral("PickAnotherFolder"));
-    QPushButton* keep = buttons->addButton(tr("Use this one"), QDialogButtonBox::AcceptRole);
+    QPushButton* keep = buttons->addButton(tr("Use this folder"), QDialogButtonBox::AcceptRole);
     keep->setObjectName(QStringLiteral("UseThisRoot"));
     GiveItTheRole(keep, QStringLiteral("primary"));
 

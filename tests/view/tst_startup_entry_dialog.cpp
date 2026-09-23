@@ -64,13 +64,13 @@ void StartupEntryDialogTest::TurningBothOffAcceptsAndTurningOnlyTheAddonOffRejec
 {
     StartupEntryDialog agreeing({Line("PMDG Operations Center", kLoader)});
     QSignalSpy accepted(&agreeing, &QDialog::accepted);
-    ButtonSaying(agreeing, QStringLiteral("Turn the addon and the entry off"))->click();
+    ButtonSaying(agreeing, QStringLiteral("Disable the addon and the entry"))->click();
     QCOMPARE(accepted.count(), 1);
     QCOMPARE(agreeing.result(), static_cast<int>(QDialog::Accepted));
 
     StartupEntryDialog refusing({Line("PMDG Operations Center", kLoader)});
     QSignalSpy rejected(&refusing, &QDialog::rejected);
-    ButtonSaying(refusing, QStringLiteral("Only turn the addon off"))->click();
+    ButtonSaying(refusing, QStringLiteral("Disable only the addon"))->click();
     QCOMPARE(rejected.count(), 1);
     QCOMPARE(refusing.result(), static_cast<int>(QDialog::Rejected));
 }
@@ -78,10 +78,10 @@ void StartupEntryDialogTest::TurningBothOffAcceptsAndTurningOnlyTheAddonOffRejec
 void StartupEntryDialogTest::TheButtonCountsTheEntriesInsteadOfAlwaysSayingTwo()
 {
     const StartupEntryDialog alone({Line("PMDG Operations Center", kLoader)});
-    QVERIFY(ButtonSaying(alone, QStringLiteral("Turn the addon and the entry off")) != nullptr);
+    QVERIFY(ButtonSaying(alone, QStringLiteral("Disable the addon and the entry")) != nullptr);
 
     const StartupEntryDialog several({Line("PMDG Operations Center", kLoader), Line("PMDG Updater", kUpdater)});
-    QVERIFY(ButtonSaying(several, QStringLiteral("Turn the addon and the entries off")) != nullptr);
+    QVERIFY(ButtonSaying(several, QStringLiteral("Disable the addon and the entries")) != nullptr);
 }
 
 QTEST_MAIN(StartupEntryDialogTest)
