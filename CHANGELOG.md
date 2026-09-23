@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.8](https://github.com/brunofgmag/fs-organizer/compare/v0.54.7...v0.54.8) (2026-09-23)
+
+
+### Bug Fixes
+
+* **library:** rewrite the texts of the library screen and its dialogs ([6ca8f67](https://github.com/brunofgmag/fs-organizer/commit/6ca8f67f0db25a7dd413545c485bd8399e4e52e3))
+
 ## [0.54.7](https://github.com/brunofgmag/fs-organizer/compare/v0.54.6...v0.54.7) (2026-09-02)
 
 
