@@ -462,57 +462,54 @@ alternadores da barra dizem o que fazem.
 
 \section{Diagnósticos}
 
-A aba \ui{Diagnósticos} responde pelo que a varredura achou. Cada número traz a
-hora em que foi medido, e medir de novo é sempre um botão.
+A aba \ui{Diagnósticos} mostra o que a varredura encontrou. Cada número diz
+quando foi medido, e dá para medir de novo a qualquer momento.
 
 \shot{09-diagnostics-size.png}{A seção de tamanho em disco, com o total por
 categoria e por addon, e a hora da medição.}
 
 \begin{description}
-  \item[Entradas dos destinos] Quantas entradas existem, contadas pelo que cada
-    uma é, e o caminho mais longo de cada biblioteca.
-  \item[Quebradas, indisponíveis] O que está quebrado e o que está parado num
-    volume ausente, com o reparo dos quebrados ali mesmo.
-  \item[Quarentena] Quanto está retido, sem esvaziar nada daqui.
-  \item[Tamanho em disco] Quanto cada categoria e cada addon ocupam. Varre a
-    árvore inteira, e isso leva segundos: o botão \ui{Parar} para depois do
-    addon que está sendo medido agora.
-  \item[Aeroportos no cenário] Lê o cenário de cada addon e separa três casos:
-    com código de aeroporto, com registro que não decodificou, e sem registro de
+  \item[Entradas dos destinos] Quantas entradas existem de cada tipo, e o
+    caminho mais longo de cada biblioteca.
+  \item[Quebradas ou indisponíveis] O que está quebrado e o que está num disco
+    desconectado, com um botão para reparar os links quebrados.
+  \item[Quarentena] Quanto espaço a quarentena ocupa. Nada é esvaziado daqui.
+  \item[Tamanho em disco] Quanto cada categoria e cada addon ocupam. Pode levar
+    alguns segundos; \ui{Parar} para depois do addon que está sendo medido.
+  \item[Aeroportos no cenário] Analisa o cenário de cada addon e separa os que
+    têm código de aeroporto, os que têm registro de aeroporto ilegível, os que
+    têm dados de navegação em vez de cenário e os que não têm registro de
     aeroporto.
-  \item[Módulos que o simulador carregou] Lê o relatório que o simulador escreve
-    quando um carregamento demora. Ele não atribui tempo a pacote nenhum, então
-    esta tela não mostra tempo por addon; o que ele atribui é o módulo que cada
-    pacote carregou e a memória que esse módulo segura.
+  \item[Módulos carregados] Lê o relatório que o simulador grava depois de um
+    carregamento demorado. O simulador não informa o tempo por pacote, então
+    aqui aparece o módulo que cada pacote carregou e quanta memória ele ocupa.
 \end{description}
 
-\subsection{Achar o culpado}
+\subsection{Encontrar o culpado}
 
-Quando o simulador cai e você não sabe qual addon derruba, o painel \ui{Achar o
-culpado} conduz uma busca por metades. Ele desliga metade dos seus addons, você
-sobe o simulador e responde \ui{Ele caiu} ou \ui{Rodou bem}, e a busca elimina
-metade das suspeitas a cada rodada.
+Quando o simulador trava e você não sabe qual addon causa isso,
+\ui{Encontrar o culpado} faz uma busca por metades. Ele desativa metade dos
+seus addons, você abre o simulador e responde \ui{Travou} ou \ui{Funcionou}, e
+cada rodada descarta metade dos suspeitos.
 
-Três coisas a saber antes de começar:
+Antes de começar:
 
-\shot{31-diagnostics-bisection.png}{A busca pelo culpado, com a rodada corrente, o
+\shot{31-diagnostics-bisection.png}{A busca pelo culpado, com a rodada atual, o
 que já foi descartado e as duas respostas que o usuário dá.}
 
 \begin{itemize}
-  \item A unidade da busca não é o addon, é a \textbf{unidade}: um addon
-    sozinho, ou um grupo que tem de andar junto porque compartilha pasta de
-    modelo. O painel diz por que os membros de um grupo andam juntos, e oferece
-    partir o grupo quando isso deixa um estado que dá para interpretar.
-  \item A primeira rodada desliga \textbf{tudo} que é seu. É ela que separa uma
-    causa entre os seus addons de uma causa fora deles.
-  \item A sua configuração é gravada antes da primeira rodada e volta quando
-    isto encerrar, seja como for que encerre, inclusive quando você parar no
-    meio. Se o programa for fechado durante a busca, a abertura seguinte oferece
-    repor.
+  \item A busca trabalha com \textbf{unidades}: um addon, ou um grupo de addons
+    que precisam ficar juntos porque dividem uma pasta de modelo. O painel diz
+    por que um grupo está junto, e oferece dividi-lo quando isso é seguro.
+  \item A primeira rodada desativa \textbf{todos} os seus addons, para saber se
+    a causa está mesmo entre eles.
+  \item A sua configuração é guardada antes da primeira rodada e restaurada
+    quando a busca terminar, do jeito que terminar. Se o programa for fechado
+    durante a busca, ele oferece restaurá-la na próxima vez que abrir.
 \end{itemize}
 
-O método supõe um culpado único. Dois addons que só derrubam o simulador com os
-dois ligados convergiriam num inocente, e o painel diz isso.
+A busca supõe um único culpado. Se a falha só acontece com dois addons ativados
+juntos, o resultado pode apontar o errado, e o painel avisa isso.
 
 \section{Diário}
 

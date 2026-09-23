@@ -175,7 +175,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel,
             [this]
             {
                 viewModel_.CancelSize();
-                emit StatusChanged(tr("Stopping after the addon it is measuring now."));
+                emit StatusChanged(tr("Stopping after the addon being measured…"));
             });
     connect(openQuarantine_, &QPushButton::clicked, this, &DiagnosticsPage::QuarantineRequested);
     connect(repair_, &QPushButton::clicked, this, &DiagnosticsPage::RepairRequested);
@@ -192,7 +192,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel,
             [this]
             {
                 viewModel_.CancelScenery();
-                emit StatusChanged(tr("Stopping after the addon it is reading now."));
+                emit StatusChanged(tr("Stopping after the addon being scanned…"));
             });
     connect(&viewModel_, &DiagnosticsViewModel::SceneryRead, this, &DiagnosticsPage::ShowWhatTheSceneryCarries);
     connect(&viewModel_, &DiagnosticsViewModel::SceneryProgressed, this, &DiagnosticsPage::ShowSceneryProgress);
@@ -466,17 +466,17 @@ void DiagnosticsPage::RetranslateUi() const
     counts_->setHeaderLabels({tr("Entry"), tr("How many")});
     counts_->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
     troubled_->setHeaderLabels({tr("Entry"), tr("Points at")});
-    repair_->setText(tr("Repair the broken links…"));
+    repair_->setText(tr("Repair broken links…"));
     openQuarantine_->setText(tr("Open Quarantine"));
     measureAgain_->setText(tr("Measure again"));
     cancel_->setText(tr("Stop"));
     sizes_->setHeaderLabels({tr("Category"), tr("Addons"), tr("Size")});
     sizes_->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
     sizes_->headerItem()->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
-    sizeCost_->setText(tr("walks the whole tree, and that takes seconds"));
-    readSceneryAgain_->setText(tr("Read them again"));
+    sizeCost_->setText(tr("may take a few seconds"));
+    readSceneryAgain_->setText(tr("Scan again"));
     stopScenery_->setText(tr("Stop"));
-    sceneryCost_->setText(tr("opens the scenery folder of every addon, and that takes a moment"));
+    sceneryCost_->setText(tr("may take a moment"));
     scenery_->setHeaderLabels({tr("Addon")});
 
     ShowTheLongestPaths();
@@ -540,12 +540,12 @@ void DiagnosticsPage::ShowWhatTheSceneryCarries() const
         parent->setExpanded(!addons.empty());
     };
 
-    group(tr("Carrying an airport code · %1").arg(census.carryingACode.size()), census.carryingACode);
-    group(tr("Carrying a record that did not decode · %1").arg(census.whoseRecordWasNotRead.size()),
+    group(tr("With an airport code · %1").arg(census.carryingACode.size()), census.carryingACode);
+    group(tr("With an unreadable airport record · %1").arg(census.whoseRecordWasNotRead.size()),
           census.whoseRecordWasNotRead);
-    group(tr("Carrying navigation data instead of scenery · %1").arg(census.carryingNavigationData.size()),
+    group(tr("With navigation data, not scenery · %1").arg(census.carryingNavigationData.size()),
           census.carryingNavigationData);
-    group(tr("Carrying no airport record · %1").arg(census.carryingNoAirportRecord), {});
+    group(tr("Without an airport record · %1").arg(census.carryingNoAirportRecord), {});
 
     DressTheSceneryToolbar();
     DressTheRail();
@@ -555,7 +555,7 @@ void DiagnosticsPage::ShowSceneryProgress(const int read, const int total) const
 {
     sceneryMeter_->setRange(0, total);
     sceneryMeter_->setValue(read);
-    sceneryProgress_->setText(tr("reading %1 of %2").arg(read).arg(total));
+    sceneryProgress_->setText(tr("scanning %1 of %2").arg(read).arg(total));
 }
 
 void DiagnosticsPage::DressTheSceneryToolbar() const
@@ -571,11 +571,11 @@ void DiagnosticsPage::DressTheSceneryToolbar() const
 
     if (read.has_value())
     {
-        sceneryReadAt_->setText(tr("read %1").arg(AsMoment(*read)));
+        sceneryReadAt_->setText(tr("scanned %1").arg(AsMoment(*read)));
         return;
     }
 
-    sceneryReadAt_->setText(reading ? tr("reading now") : tr("not read yet"));
+    sceneryReadAt_->setText(reading ? tr("scanning now") : tr("not scanned yet"));
 }
 
 void DiagnosticsPage::ShowWhatWasCounted()
@@ -585,8 +585,7 @@ void DiagnosticsPage::ShowWhatWasCounted()
     ShowWhatTheQuarantineHolds();
 
     const std::optional<std::chrono::system_clock::time_point> counted = viewModel_.CountedAt();
-    refreshedAt_->setText(counted.has_value() ? tr("everything under a second · %1").arg(AsMoment(*counted))
-                                              : tr("not counted yet"));
+    refreshedAt_->setText(counted.has_value() ? tr("counted %1").arg(AsMoment(*counted)) : tr("not counted yet"));
 
     DressTheRail();
 
@@ -641,17 +640,17 @@ void DiagnosticsPage::ShowWhatIsTroubled() const
     repair_->setEnabled(!broken.empty());
     troubledPromise_->setText(
         broken.empty() && unavailable.empty()
-            ? tr("No entry in any destination is broken or parked on a volume that is not here.")
-            : tr("An unavailable entry is not offered for cleanup: the volume can come back. Repairing points a broken "
-                 "link at the addon again, and it is the same repair the Destinations screen runs."));
+            ? tr("No entry is broken or on a disconnected drive.")
+            : tr("Unavailable entries are left alone, since the drive may come back. Repairing points broken links at "
+                 "the addon again, the same as on the Destinations screen."));
 }
 
 void DiagnosticsPage::ShowWhatTheQuarantineHolds() const
 {
     const QuarantineWeight weight = viewModel_.Quarantine();
 
-    quarantineWeight_->setText(tr("%1 held in quarantine").arg(AsSize(weight.bytes)));
-    quarantinePlaces_->setText(tr("%1 beside a destination, %2 inside a library")
+    quarantineWeight_->setText(tr("%1 in quarantine").arg(AsSize(weight.bytes)));
+    quarantinePlaces_->setText(tr("%1 next to a destination, %2 in a library")
                                    .arg(static_cast<qulonglong>(weight.besideDestinations))
                                    .arg(static_cast<qulonglong>(weight.insideLibraries)));
 }
@@ -693,7 +692,7 @@ void DiagnosticsPage::ShowTheLongestPaths() const
 
         said << (TheRecycleBinReaches(library.longestEntry)
                      ? measured
-                     : tr("%1, past the %2 the Recycle Bin stops at").arg(measured).arg(kTheRecycleBinStopsAt));
+                     : tr("%1, over the Recycle Bin limit of %2").arg(measured).arg(kTheRecycleBinStopsAt));
     }
 
     longestPaths_->setText(said.join(QStringLiteral("\n")));
@@ -729,7 +728,7 @@ void DiagnosticsPage::DressTheRail() const
     }
 
     railItems_[DestinationEntries]->setText(tr("Destination entries · %1").arg(entries));
-    railItems_[BrokenAndUnavailable]->setText(tr("Broken, unavailable · %1").arg(troubled));
+    railItems_[BrokenAndUnavailable]->setText(tr("Broken or unavailable · %1").arg(troubled));
     railItems_[Quarantine]->setText(tr("Quarantine · %1").arg(AsSize(weight.bytes)));
     railItems_[SizeOnDisk]->setText(measured.has_value() ? tr("Size on disk · %1").arg(AsSize(bytes))
                                                          : tr("Size on disk"));
@@ -785,5 +784,5 @@ void DiagnosticsPage::DressTheSizeToolbar() const
 
     sizeMeasuredAt_->setText(viewModel_.Size().complete
                                  ? tr("measured %1").arg(AsMoment(*measured))
-                                 : tr("stopped %1, and these numbers are incomplete").arg(AsMoment(*measured)));
+                                 : tr("stopped %1, numbers incomplete").arg(AsMoment(*measured)));
 }

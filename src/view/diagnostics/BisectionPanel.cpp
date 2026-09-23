@@ -114,12 +114,12 @@ namespace
 
         if (apart == 0 || apart == unit.members.size())
         {
-            return QObject::tr("held together only by the shared model folder name");
+            return QObject::tr("grouped only by a shared model folder name");
         }
 
-        return QObject::tr("%n of them held only by the shared model folder name, and the other %1 share a folder "
-                           "inside the model",
-                           nullptr, static_cast<int>(apart))
+        return QObject::tr(
+                   "%n of them grouped only by the model folder name, the other %1 by a shared folder inside the model",
+                   nullptr, static_cast<int>(apart))
             .arg(unit.members.size() - apart);
     }
 
@@ -127,8 +127,8 @@ namespace
     {
         switch (unit.coupling)
         {
-        case Coupling::Merge: return QObject::tr("they share a model folder and no file twice");
-        case Coupling::Shadowing: return QObject::tr("one of them writes over a file of another");
+        case Coupling::Merge: return QObject::tr("they share a model folder without overlapping files");
+        case Coupling::Shadowing: return QObject::tr("one of them overwrites a file of another");
         case Coupling::OnlyTheSharedModelFolder: return HeldByTheModelFolderName(unit);
         case Coupling::Alone:
         case Coupling::NotYetMeasured: break;
@@ -141,7 +141,7 @@ namespace
     {
         if (member.writesWith == 0)
         {
-            return QObject::tr("only the shared model folder name in common");
+            return QObject::tr("only the model folder name in common");
         }
 
         return QObject::tr("shares a folder inside the model with %n other", nullptr,
@@ -172,14 +172,13 @@ namespace
     {
         if (ItIsTheReferenceRound(answered))
         {
-            return answered.answer == BisectionAnswer::ItCrashed
-                ? QObject::tr("Nothing of yours was on, and it came down.")
-                : QObject::tr("Nothing of yours was on, and it ran fine.");
+            return answered.answer == BisectionAnswer::ItCrashed ? QObject::tr("No addons enabled: it crashed.")
+                                                                 : QObject::tr("No addons enabled: it worked.");
         }
 
         const QString told = answered.answer == BisectionAnswer::ItCrashed
-            ? QObject::tr("%n unit on, it came down.", nullptr, static_cast<int>(answered.unitsOn))
-            : QObject::tr("%n unit on, it ran fine.", nullptr, static_cast<int>(answered.unitsOn));
+            ? QObject::tr("%n unit enabled: it crashed.", nullptr, static_cast<int>(answered.unitsOn))
+            : QObject::tr("%n unit enabled: it worked.", nullptr, static_cast<int>(answered.unitsOn));
 
         return QObject::tr("%1 %2 ruled out, %3 left.").arg(told).arg(answered.unitsCleared).arg(answered.unitsLeft);
     }
@@ -188,11 +187,11 @@ namespace
     {
         switch (kind)
         {
-        case DriftKind::ALinkWeLeftIsGone: return QObject::tr("a link this program had put is gone");
-        case DriftKind::AnEntryWeDidNotLeaveIsThere: return QObject::tr("an entry this program did not put is there");
+        case DriftKind::ALinkWeLeftIsGone: return QObject::tr("a link made by this app is gone");
+        case DriftKind::AnEntryWeDidNotLeaveIsThere: return QObject::tr("an entry this app did not make appeared");
         case DriftKind::AnEntryPointsSomewhereElse: return QObject::tr("an entry points somewhere else now");
-        case DriftKind::AnAddonLeftTheLibrary: return QObject::tr("an addon left the library");
-        case DriftKind::AnAddonJoinedTheLibrary: return QObject::tr("an addon joined the library");
+        case DriftKind::AnAddonLeftTheLibrary: return QObject::tr("an addon was removed from the library");
+        case DriftKind::AnAddonJoinedTheLibrary: return QObject::tr("an addon was added to the library");
         }
 
         return QString();
@@ -451,29 +450,27 @@ QWidget* BisectionPanel::CreateTheOutcome()
 
 void BisectionPanel::RetranslateUi()
 {
-    headline_->setText(tr("Find the addon that brings the simulator down"));
+    headline_->setText(tr("Find the addon that crashes the simulator"));
     start_->setText(tr("Start the search"));
-    crashed_->setText(tr("It came down"));
-    ranFine_->setText(tr("It ran fine"));
-    stop_->setText(tr("Stop and put everything back"));
-    startOver_->setText(tr("Start over from what is on the disk now"));
-    giveUp_->setText(tr("Stop and put everything back"));
-    carryOn_->setText(tr("Carry on with the search"));
-    giveUpInstead_->setText(tr("Stop and put everything back"));
-    soFar_->setText(tr("What happened so far"));
+    crashed_->setText(tr("It crashed"));
+    ranFine_->setText(tr("It worked"));
+    stop_->setText(tr("Stop and restore the setup"));
+    startOver_->setText(tr("Start over with the current setup"));
+    giveUp_->setText(tr("Stop and restore the setup"));
+    carryOn_->setText(tr("Continue the search"));
+    giveUpInstead_->setText(tr("Stop and restore the setup"));
+    soFar_->setText(tr("Rounds so far"));
     refine_->setText(tr("Split this group"));
-    bringThemIn_->setText(tr("Bring them into the library"));
-    finish_->setText(tr("Put everything back and finish"));
-    notInTheJournal_->setText(tr("What this program can say is that the change is not in its journal. Who made it, it "
-                                 "has no way of knowing."));
+    bringThemIn_->setText(tr("Import them into the library"));
+    finish_->setText(tr("Restore the setup and finish"));
+    notInTheJournal_->setText(tr("This change was not made by FS Organizer."));
     notInTheJournalEither_->setText(notInTheJournal_->text());
-    singleCulprit_->setText(tr("This method assumes one culprit. Two addons that only bring the simulator down when "
-                               "both are on would converge on an innocent one."));
-    promise_->setText(tr("The first round turns every one of them off, which is what separates a cause among your "
-                         "addons from one outside them. Your setup is written down before that and goes back when "
-                         "this ends, however it ends, including when you stop it halfway."));
+    singleCulprit_->setText(tr("The search assumes a single culprit. If the crash only happens with two addons enabled "
+                               "together, the result may point to the wrong one."));
+    promise_->setText(tr("The first round disables all of them, to tell whether the cause is among your addons at all. "
+                         "Your setup is saved first and restored when the search ends, however it ends."));
 
-    const QStringList unitColumns{tr("Addon"), tr("Addons"), tr("Why they move together")};
+    const QStringList unitColumns{tr("Addon"), tr("Addons"), tr("Why they are grouped")};
 
     toBeSearched_->setHeaderLabels(unitColumns);
     turnedOn_->setHeaderLabels(unitColumns);
@@ -484,7 +481,7 @@ void BisectionPanel::RetranslateUi()
         tree->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
     }
 
-    const QStringList driftColumns{tr("What moved"), QString(), tr("Where")};
+    const QStringList driftColumns{tr("What changed"), QString(), tr("Where")};
 
     divergences_->setHeaderLabels(driftColumns);
     whatJoined_->setHeaderLabels(driftColumns);
@@ -532,7 +529,7 @@ void BisectionPanel::ShowWhatWillBeSearched() const
 
     if (viewModel_.ReadingWhatIsOn())
     {
-        announced_->setText(tr("Reading what is turned on, and what of it has to move together…"));
+        announced_->setText(tr("Reading the enabled addons and how they group…"));
         outOfReach_->clear();
         toBeSearched_->clear();
         start_->setEnabled(false);
@@ -542,8 +539,8 @@ void BisectionPanel::ShowWhatWillBeSearched() const
 
     if (report.refusal == BisectionRefusal::NothingIsEnabledToSearch)
     {
-        announced_->setText(tr("Nothing of this profile is turned on, so there is nothing to search. Turn the addons "
-                               "you fly with back on and open this again."));
+        announced_->setText(tr("No addon of this profile is enabled, so there is nothing to search. Enable the addons "
+                               "you fly with and try again."));
         outOfReach_->clear();
         toBeSearched_->clear();
         start_->setEnabled(false);
@@ -552,14 +549,13 @@ void BisectionPanel::ShowWhatWillBeSearched() const
     }
 
     start_->setEnabled(true);
-    announced_->setText(tr("%n unit will be searched, and that takes about %1 rounds. A unit is one addon, or a group "
-                           "that has to move together.",
-                           nullptr, static_cast<int>(report.units))
-                            .arg(report.roundsInTheWorstCase));
+    announced_->setText(
+        tr("%n unit to search, in about %1 rounds. A unit is one addon, or a group of addons that must stay together.",
+           nullptr, static_cast<int>(report.units))
+            .arg(report.roundsInTheWorstCase));
 
-    outOfReach_->setText(tr("%n entry in the destinations carries on outside the reach of this search, and stays on "
-                            "through every round.",
-                            nullptr, static_cast<int>(report.outOfReach)));
+    outOfReach_->setText(tr("%n destination entry is outside this search and stays enabled in every round.", nullptr,
+                            static_cast<int>(report.outOfReach)));
 
     ListTheUnitsOf(toBeSearched_, viewModel_.WhatIsLeft());
 }
@@ -569,23 +565,23 @@ void BisectionPanel::ShowTheRound() const
     const BisectionReport& report = viewModel_.Report();
 
     standing_->setText(
-        tr("Round %1, and %n at most left after it.", nullptr, static_cast<int>(viewModel_.RoundsLeftInTheWorstCase()))
+        tr("Round %1 · at most %n more", nullptr, static_cast<int>(viewModel_.RoundsLeftInTheWorstCase()))
             .arg(report.round));
 
     const std::vector<UnitOnScreen> on = viewModel_.WhatToTurnOn();
 
     if (report.round == 0)
     {
-        ask_->setText(tr("Nothing of yours is on. Launch the simulator now: this first round is what separates a cause "
-                         "among your addons from one outside them."));
+        ask_->setText(tr("All your addons are disabled. Launch the simulator now: this round tells whether the cause "
+                         "is among your addons at all."));
     }
     else
     {
-        ask_->setText(tr("%n addon is on now. Launch the simulator and come back with what happened.", nullptr,
-                         static_cast<int>(report.addonsTurnedOn.size())));
+        ask_->setText(tr("%n addon is enabled now. Launch the simulator, then come back and say what happened.",
+                         nullptr, static_cast<int>(report.addonsTurnedOn.size())));
     }
 
-    hint_->setText(tr("Nothing else is written until you answer. %n unit is still under suspicion.", nullptr,
+    hint_->setText(tr("Nothing changes until you answer. %n unit is still a suspect.", nullptr,
                       static_cast<int>(report.unitsUnderSuspicion.size())));
 
     ListTheUnitsOf(turnedOn_, on);
@@ -639,11 +635,11 @@ void BisectionPanel::KeepShowingTheEndOfTheStory() const
 
 void BisectionPanel::ShowWhatMoved() const
 {
-    drifted_->setText(tr("The disk moved between one round and the next, so the split this search had made is about "
-                         "another set of addons than the one that is there now."));
+    drifted_->setText(
+        tr("Your addons changed on the disk between rounds, so the search no longer matches what is installed."));
 
-    whatStartingOverCosts_->setText(tr("Starting over throws away the %n simulator launch you have already made, the "
-                                       "reference round counted in, and the search begins again over every unit.",
+    whatStartingOverCosts_->setText(tr("Starting over discards the %n round you have already run, including the "
+                                       "reference round, and searches every unit again.",
                                        nullptr, static_cast<int>(viewModel_.LaunchesAlreadyMade())));
 
     ListTheDriftIn(divergences_);
@@ -651,10 +647,9 @@ void BisectionPanel::ShowWhatMoved() const
 
 void BisectionPanel::ShowWhatJoinedTheLibrary() const
 {
-    joined_->setText(tr("%n addon joined the library while the search was running. It is not linked into the "
-                        "simulator, so no round has loaded it and no answer you gave is about it. The search carries "
-                        "on, and it stays out of it.",
-                        nullptr, static_cast<int>(viewModel_.Report().drift.size())));
+    joined_->setText(
+        tr("%n addon was added to the library during the search. No round loaded it, so it stays out of this search.",
+           nullptr, static_cast<int>(viewModel_.Report().drift.size())));
 
     ListTheDriftIn(whatJoined_);
 }
@@ -678,26 +673,24 @@ void BisectionPanel::ShowTheOutcome() const
 
     if (report.outcome == BisectionOutcome::NotAmongTheManagedOnes)
     {
-        outcome_->setText(tr("With nothing of yours on, the simulator still came down. The cause is not among the "
-                             "addons this program manages."));
-        aboutTheSecondPass_->setText(tr("%n entry carries on outside the reach of this search. Bringing them into the "
-                                        "library is what puts them under it.",
+        outcome_->setText(tr("The simulator crashed with all your addons disabled. The cause is not among the addons "
+                             "this app manages."));
+        aboutTheSecondPass_->setText(tr("%n entry was outside this search. Import it into the library to include it.",
                                         nullptr, static_cast<int>(report.outOfReach)));
     }
     else if (report.outcome == BisectionOutcome::OneAddonLeft)
     {
-        outcome_->setText(tr("What the search was left with is this one."));
+        outcome_->setText(tr("The search points to this addon."));
         aboutTheSecondPass_->clear();
     }
     else
     {
-        outcome_->setText(tr("The answers stopped separating, and this is the whole set the search was left with."));
+        outcome_->setText(tr("The search could not narrow it down beyond this group."));
         aboutTheSecondPass_->setText(
             report.aSecondPassIsPossible
-                ? tr("Splitting the group runs more rounds than the number announced at the start, which counted "
-                     "units and not the addons inside them.")
-                : tr("This group has no aircraft that the others extend, so splitting it would leave a state nobody "
-                     "knows how to read. It is not offered."));
+                ? tr("Splitting the group takes more rounds than estimated at the start, which counted units, not the "
+                     "addons inside them.")
+                : tr("This group cannot be split: it has no base aircraft that the others extend."));
     }
 
     refine_->setVisible(report.aSecondPassIsPossible);
