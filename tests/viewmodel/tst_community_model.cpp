@@ -122,7 +122,7 @@ void CommunityModelTest::TheTableShowsOneRowPerEntry()
     QCOMPARE(model.data(model.index(0, CommunityModel::TargetColumn), Qt::DisplayRole).toString(),
              QStringLiteral("the simulator loads it from your library"));
     QCOMPARE(model.data(model.index(4, CommunityModel::TargetColumn), Qt::DisplayRole).toString(),
-             QStringLiteral("a real folder, not in a library yet"));
+             QStringLiteral("a regular folder, not in a library yet"));
     QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), SecondLineRole).toString(),
              QDir::toNativeSeparators(QStringLiteral("D:/MSFS 2024/Sceneries/managed")));
 }

@@ -107,16 +107,14 @@ namespace
         {
             return QCoreApplication::translate(
                 "CommunityPage",
-                "The other program put a real folder back where it installs this addon and pointed this entry at it, "
-                "so there are two copies and the simulator now loads the other program's one. The copy in your "
-                "library is the one nothing reads any more.");
+                "The other program put a regular folder back where it installs this addon and pointed this entry at "
+                "it. The simulator now loads that copy, and the one in your library is no longer used.");
         }
 
         return QCoreApplication::translate(
             "CommunityPage",
-            "The folder of the other program is a real folder again, so there are two copies. The simulator "
-            "loads the one in your library, and whatever that program updates from here on lands in the copy "
-            "the simulator does not read.");
+            "The other program's folder is a regular folder again, so there are two copies. The simulator loads the "
+            "one in your library, and updates from that program will go to the copy the simulator does not use.");
     }
 
     QString WhatTheStateCosts(const DestinationEntry& entry)
@@ -125,23 +123,19 @@ namespace
         {
         case EntryClassification::Divergent: return WhatTheDivergenceCosts(ItPointsAtTheOtherProgramsFolder(entry));
         case EntryClassification::Vanished:
-            return QCoreApplication::translate(
-                "CommunityPage",
-                "The copy in your library is gone, taken by the other program. Nothing can be repaired here: the "
-                "content no longer exists on this machine.");
+            return QCoreApplication::translate("CommunityPage",
+                                               "The copy in your library is gone, removed by the other program. There "
+                                               "is nothing to repair: the files no longer exist on this computer.");
         case EntryClassification::External:
             return QCoreApplication::translate(
                 "CommunityPage",
-                "The other program does not know about the link that taking it over leaves behind, so its next "
-                "update can write inside the link, or replace it with a real folder and give you two copies. "
-                "Nothing here can stop that.");
+                "The other program will not know about the link left in its place. Its next update may write into the "
+                "link, or replace it with a regular folder and leave you with two copies.");
         case EntryClassification::Substituted:
             return QCoreApplication::translate(
                 "CommunityPage",
-                "Something wrote a real folder over the link this program made, so the simulator loads that folder "
-                "and the copy in your library is adrift: it answers no switch, enters no preset and joins no "
-                "bisection. Nothing here could have stopped that write, and what is left to choose is which of the "
-                "two copies stays.");
+                "Something wrote a regular folder over the link this app made. The simulator now loads that folder and "
+                "ignores your library copy. Choose which copy to keep.");
         case EntryClassification::Managed:
         case EntryClassification::Broken:
         case EntryClassification::Unavailable:
@@ -342,12 +336,12 @@ void CommunityPage::RetranslateUi()
         }
     }
 
-    selectAll_->setText(tr("Select everything the filter shows"));
-    reread_->setText(tr("Read again from the disk"));
+    selectAll_->setText(tr("Select all shown"));
+    reread_->setText(tr("Refresh"));
     search_->setPlaceholderText(tr("Filter entries"));
-    openFolder_->setText(tr("Open the folder"));
-    promise_->setText(tr("Importing copies into the library and leaves a link in its place. The original folder is "
-                         "only removed after the check."));
+    openFolder_->setText(tr("Open folder"));
+    promise_->setText(tr("Importing copies the folder into the library and leaves a link in its place. The original is "
+                         "removed only after the copy is verified."));
     panel_->RenameTheFallback(tr("Entry selected"));
 }
 
@@ -452,7 +446,8 @@ void CommunityPage::ShowTheSelectedEntry()
     fields.append({tr("Classification"), CommunityModel::ClassificationName(entry->classification)});
     fields.append({tr("Destination"), AsText(entry->path.parent_path().filename())});
     fields.append({tr("Path"), AsText(entry->path)});
-    fields.append({tr("Link?"), entry->target.empty() ? tr("no, a physical folder") : AsText(entry->target)});
+    fields.append(
+        {tr("Points to"), entry->target.empty() ? tr("nothing, it is a regular folder") : AsText(entry->target)});
 
     if (!entry->externalOrigin.empty() && !ItPointsAtTheOtherProgramsFolder(*entry))
     {
@@ -559,17 +554,17 @@ void CommunityPage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
     const int blocked = chosen.conflicted;
 
     importOne_->setEnabled(importable > 0);
-    importOne_->setText(importable > 1 ? tr("Import the %n folder…", nullptr, importable) : tr("Import this folder…"));
+    importOne_->setText(importable > 1 ? tr("Import %n folder…", nullptr, importable) : tr("Import this folder…"));
 
     resolveChosen_->setVisible(blocked > 0);
 
     if (EveryConflictCameFromAnotherProgram(*table_, *filter_, model_))
     {
-        resolveChosen_->setText(tr("Choose which copy stays…"));
+        resolveChosen_->setText(tr("Choose which copy to keep…"));
     }
     else
     {
-        resolveChosen_->setText(blocked > 1 ? tr("Resolve the %n conflict…", nullptr, blocked)
+        resolveChosen_->setText(blocked > 1 ? tr("Resolve %n conflict…", nullptr, blocked)
                                             : tr("Resolve the conflict…"));
     }
 
@@ -637,7 +632,7 @@ bool CommunityPage::TheSimulatorIsInTheWay()
     while (const std::optional<std::string> running = importViewModel_.RunningSimulator())
     {
         QMessageBox blocked(QMessageBox::Warning, tr("Simulator open"),
-                            tr("File operations stay blocked while the simulator runs."), QMessageBox::Cancel, this);
+                            tr("Files cannot be changed while the simulator is running."), QMessageBox::Cancel, this);
         blocked.setInformativeText(tr("Close %1 and check again.").arg(QString::fromStdString(*running)));
 
         const QPushButton* again = blocked.addButton(tr("Check again"), QMessageBox::AcceptRole);
@@ -660,7 +655,7 @@ void CommunityPage::StartImport()
     {
         emit StatusChanged(
             chosen.conflicted > 0
-                ? tr("Resolve the conflict before importing: the library already has an addon with that name.")
+                ? tr("The library already has an addon with this name. Resolve the conflict before importing.")
                 : tr("Select at least one unmanaged or external entry."));
         return;
     }
@@ -700,7 +695,7 @@ void CommunityPage::ResolveTheSelectedConflict()
 
     if (conflicts.empty())
     {
-        emit StatusChanged(tr("Select an entry marked as in conflict."));
+        emit StatusChanged(tr("Select an entry in conflict."));
         return;
     }
 
@@ -724,7 +719,7 @@ void CommunityPage::ResolveConflict(const CopyConflict& conflict)
 
 void CommunityPage::ResolveThem(const std::vector<CopyConflict>& conflicts)
 {
-    emit StatusChanged(tr("Reading both sides of the conflict…"));
+    emit StatusChanged(tr("Comparing the two copies…"));
 
     importViewModel_.PrepareConflictDetails(conflicts);
 }
@@ -778,8 +773,8 @@ void CommunityPage::OnConflictsResolved(const std::vector<FileOperationResult>& 
     if (!failed.isEmpty())
     {
         QMessageBox report(
-            QMessageBox::Warning, tr("The conflict is still there"),
-            tr("%n conflict was left as it was, and nothing was deleted.", nullptr, static_cast<int>(failed.size())),
+            QMessageBox::Warning, tr("Conflict not resolved"),
+            tr("%n conflict was not resolved. Nothing was deleted.", nullptr, static_cast<int>(failed.size())),
             QMessageBox::Ok, this);
         report.setDetailedText(failed.join('\n'));
         report.exec();
@@ -789,7 +784,7 @@ void CommunityPage::OnConflictsResolved(const std::vector<FileOperationResult>& 
 
     emit StatusChanged(everyConflictWasAsked_
                            ? tr("%n conflict resolved.", nullptr, resolved)
-                           : tr("%n conflict resolved, and the others are still open.", nullptr, resolved));
+                           : tr("%n conflict resolved. The others are still open.", nullptr, resolved));
 }
 
 void CommunityPage::StartRepair()
@@ -826,10 +821,10 @@ void CommunityPage::OnImportFinished(const std::vector<ImportOperationResult>& r
 
     if (!failed.isEmpty())
     {
-        QMessageBox report(QMessageBox::Warning, tr("Not everything was imported"),
-                           tr("%n import did not finish.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
+        QMessageBox report(QMessageBox::Warning, tr("Some imports did not complete"),
+                           tr("%n import did not complete.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
                            this);
-        report.setInformativeText(tr("%n addon now lives in the library.", nullptr, done));
+        report.setInformativeText(tr("%n addon is now in the library.", nullptr, done));
         report.setDetailedText(failed.join('\n'));
         report.exec();
     }
@@ -852,18 +847,19 @@ void CommunityPage::OnRepairFinished(const std::vector<LinkOperationResult>& res
 
     if (failed.isEmpty())
     {
-        emit StatusChanged(tr("%n repair finished.", nullptr, done));
+        emit StatusChanged(tr("%n link repaired.", nullptr, done));
         return;
     }
 
-    QMessageBox report(QMessageBox::Warning, tr("Not everything was repaired"),
-                       tr("%n repair failed.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok, this);
-    report.setInformativeText(tr("%n repair finished.", nullptr, done));
+    QMessageBox report(QMessageBox::Warning, tr("Some links were not repaired"),
+                       tr("%n link could not be repaired.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
+                       this);
+    report.setInformativeText(tr("%n link repaired.", nullptr, done));
     report.setDetailedText(failed.join('\n'));
     report.exec();
 
-    emit StatusChanged(tr("%1 · %2").arg(tr("%n repair finished", nullptr, done),
-                                         tr("%n failed", nullptr, static_cast<int>(failed.size()))));
+    emit StatusChanged(
+        tr("%1 · %2").arg(tr("%n repaired", nullptr, done), tr("%n failed", nullptr, static_cast<int>(failed.size()))));
 }
 
 void CommunityPage::FitTheChips()
@@ -908,7 +904,7 @@ void CommunityPage::LeaveAFilterThatRanOut(const QHash<int, int>& counted)
     chips_.front()->setChecked(true);
     ApplyFilter(kEveryFilter);
 
-    emit StatusChanged(tr("Nothing is %1 any more, so every entry is showing again.").arg(ran.toLower()));
+    emit StatusChanged(tr("No entry is %1 now, so the filter was cleared.").arg(ran.toLower()));
 }
 
 void CommunityPage::UpdateSummary()

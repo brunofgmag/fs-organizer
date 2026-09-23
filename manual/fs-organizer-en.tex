@@ -291,40 +291,41 @@ and the count of each kind in the footer.}
 \begin{description}
   \item[Managed] The simulator loads it from your library. This is the normal
     state.
-  \item[External] A real folder, not in a library yet. Another program installed
-    it there.
-  \item[Divergent] The other program took its folder back, so there are two
+  \item[External] A regular folder another program installed, not in a library
+    yet.
+  \item[Divergent] The other program put its own copy back, so there are two
     copies.
-  \item[Vanished] The library copy is gone, taken by the other program. There is
-    nothing to repair: the content no longer exists on this machine.
-  \item[Broken] The target of the link does not exist.
-  \item[Unavailable] The volume is not there right now. It can come back, which
-    is why the program offers no cleanup.
-  \item[Unmanaged] A real folder nobody has taken over.
+  \item[Vanished] The library copy is gone, removed by the other program. There
+    is nothing to repair: the files no longer exist on this computer.
+  \item[Broken] The link points to a folder that does not exist.
+  \item[Unavailable] The drive is not connected right now. It can come back, so
+    the program offers no cleanup.
+  \item[Unmanaged] A regular folder, not in a library yet.
   \item[Duplicated] Linked in more than one destination.
+  \item[Substituted] Something wrote a regular folder over a link this program
+    made. The simulator loads that folder and ignores the library copy.
 \end{description}
 
-The filter at the top narrows the list by classification, and \ui{Select
-everything the filter shows} marks exactly what is visible.
+The filter at the top narrows the list by classification, and \ui{Select all
+shown} selects exactly what is visible.
 
 \subsection{Taking over another program's folder}
 
 \ui{Import this folder} moves the folder into your library and leaves a link in
 its place. From then on it is an addon of yours like any other.
 
-The program is explicit about the risk: \textbf{the other program does not know
-about the link}. Its next update can
-write inside the link, or replace it with a real folder and give you two copies.
-Nothing in FS Organizer can stop that. When it happens, the entry shows up as
-\ui{Divergent} and the program offers you the choice of which copy stays.
+The risk is that \textbf{the other program will not know about the link}. Its
+next update may write into the link, or replace it with a regular folder and
+leave you with two copies. When that happens, the entry shows up as
+\ui{Divergent} and the program asks which copy to keep.
 
 You can give the addon back to the program that installed it later, through
 \ui{Delete from the library}.
 
 \section{Importing}
 
-Importing copies a real folder into the library and leaves a link in its place.
-The original folder is only removed after the check.
+Importing copies a regular folder into the library and leaves a link in its
+place. The original is removed only after the copy is verified.
 
 The operation has five steps, and the journal records each one:
 

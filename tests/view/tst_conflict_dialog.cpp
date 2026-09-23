@@ -124,20 +124,20 @@ void ConflictDialogTest::TheWarningAboutTheLinksFollowsTheSameWording()
 
     const QString said = AllOfIt(dialog);
 
-    QVERIFY2(said.contains(QStringLiteral("Keeping the other program's one")),
+    QVERIFY2(said.contains(QStringLiteral("Keeping the other program's copy")),
              qPrintable(QStringLiteral("the warning kept the destination wording:\n%1").arg(said)));
 }
 
 void ConflictDialogTest::KeepingTheProvenanceCopyAnswersTheSameChoiceInBothWordings()
 {
     ConflictDialog fromAnotherProgram(AConflictFromAnotherProgram());
-    QPushButton* keepTheirs = ButtonContaining(fromAnotherProgram, QStringLiteral("other program's one"));
+    QPushButton* keepTheirs = ButtonContaining(fromAnotherProgram, QStringLiteral("other program's copy"));
     QVERIFY(keepTheirs != nullptr);
     keepTheirs->click();
     QCOMPARE(fromAnotherProgram.Choice(), ConflictChoice::KeepTheProvenanceCopy);
 
     ConflictDialog ordinary(AnOrdinaryConflict());
-    QPushButton* keepDestination = ButtonContaining(ordinary, QStringLiteral("destination one"));
+    QPushButton* keepDestination = ButtonContaining(ordinary, QStringLiteral("destination copy"));
     QVERIFY(keepDestination != nullptr);
     keepDestination->click();
     QCOMPARE(ordinary.Choice(), ConflictChoice::KeepTheProvenanceCopy);
@@ -193,7 +193,7 @@ void ConflictDialogTest::AnOlderCopyInTheDestinationIsNotOfferedForTakingBack()
 
     QVERIFY(takeItBack != nullptr);
     QVERIFY2(takeItBack->isHidden(), "carrying an older copy over a newer one is not a gesture worth offering");
-    QVERIFY2(ButtonContaining(dialog, QStringLiteral("Put the link back")) != nullptr,
+    QVERIFY2(ButtonContaining(dialog, QStringLiteral("restore the link")) != nullptr,
              "with the take back gone there has to be a way out that is not the close button");
 }
 
@@ -205,7 +205,7 @@ void ConflictDialogTest::TheNewerSideAnswersTheEnterKey()
     QVERIFY2(takeItBack->isDefault(), "the destination copy is newer, so Enter has to land on bringing it in");
 
     const ConflictDialog newerInside(ALinkSomethingReplaced("1.0.0", "2.0.0"));
-    QPushButton* putTheLinkBack = ButtonContaining(newerInside, QStringLiteral("Put the link back"));
+    QPushButton* putTheLinkBack = ButtonContaining(newerInside, QStringLiteral("restore the link"));
     QVERIFY(putTheLinkBack != nullptr);
     QVERIFY2(putTheLinkBack->isDefault(), "the library copy is newer, so Enter has to land on putting the link back");
 }
@@ -217,7 +217,7 @@ void ConflictDialogTest::CancelAnswersTheEnterKeyWhenTheVersionsDoNotTellTheSide
     QVERIFY(QTest::qWaitForWindowExposed(&dialog));
 
     QPushButton* takeItBack = ButtonContaining(dialog, QStringLiteral("into the library"));
-    QPushButton* putTheLinkBack = ButtonContaining(dialog, QStringLiteral("Put the link back"));
+    QPushButton* putTheLinkBack = ButtonContaining(dialog, QStringLiteral("restore the link"));
     QVERIFY(takeItBack != nullptr && putTheLinkBack != nullptr);
     QVERIFY2(!takeItBack->isDefault() && !putTheLinkBack->isDefault(),
              "with nothing saying which side is newer, Enter picking a side quarantines a copy the user never chose "

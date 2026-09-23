@@ -65,7 +65,7 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
     auto* form = new QFormLayout;
     form->addRow(tr("Library:"), library_);
     form->addRow(tr("Category:"), category_);
-    form->addRow(tr("Will become:"), landing_);
+    form->addRow(tr("Will be at:"), landing_);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
     QPushButton* confirm = buttons->addButton(tr("Import"), QDialogButtonBox::AcceptRole);
@@ -97,9 +97,9 @@ ImportDialog::ImportDialog(std::vector<ImportRequest> chosen,
     if (owned > 0)
     {
         auto* caveat =
-            new QLabel(tr("%n folder above is installed by another program, and that program does not know about the "
-                          "link this leaves behind: its next update can write inside the link, or replace it and give "
-                          "you two copies. You can give it back later, from Delete in the library.",
+            new QLabel(tr("%n folder above was installed by another program, which will not know about the link left "
+                          "in its place. Its next update may write into the link, or replace it and leave you with two "
+                          "copies. You can give it back later with Delete in the Library.",
                           nullptr, owned),
                        this);
         caveat->setWordWrap(true);
