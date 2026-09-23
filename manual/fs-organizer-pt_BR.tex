@@ -289,40 +289,42 @@ contagem de cada tipo no rodapé.}
 
 \begin{description}
   \item[Gerenciada] O simulador carrega da sua biblioteca. É o estado normal.
-  \item[Externa] Pasta física, ainda fora de uma biblioteca. Outro programa a
-    instalou ali.
-  \item[Divergente] O outro programa retomou a pasta dele, então existem duas
-    cópias.
-  \item[Sumida] A cópia da biblioteca sumiu, levada pelo outro programa. Não há
-    o que reparar: o conteúdo não existe mais nesta máquina.
-  \item[Quebrada] O alvo do link não existe.
-  \item[Indisponível] O volume não está presente agora. Pode voltar, e por isso
-    o programa não oferece limpeza.
-  \item[Não gerenciada] Pasta física que ninguém adotou.
-  \item[Duplicada] Ligada em mais de um destino.
+  \item[Externa] Pasta comum que outro programa instalou, ainda fora de uma
+    biblioteca.
+  \item[Divergente] O outro programa recolocou a própria cópia, então existem
+    duas cópias.
+  \item[Sumida] A cópia da biblioteca sumiu, removida pelo outro programa. Não
+    há o que reparar: os arquivos não existem mais neste computador.
+  \item[Quebrada] O link aponta para uma pasta que não existe.
+  \item[Indisponível] O disco não está conectado agora. Pode voltar, então o
+    programa não oferece limpeza.
+  \item[Não gerenciada] Pasta comum, ainda fora de uma biblioteca.
+  \item[Duplicada] Com link em mais de um destino.
+  \item[Substituída] Algo gravou uma pasta comum por cima de um link que este
+    programa criou. O simulador carrega essa pasta e ignora a cópia da
+    biblioteca.
 \end{description}
 
-O filtro no topo reduz a lista por classificação, e \ui{Selecionar tudo que o
-filtro mostra} marca exatamente o que está visível.
+O filtro no topo reduz a lista por classificação, e \ui{Selecionar tudo o que
+aparece} seleciona exatamente o que está visível.
 
 \subsection{Adotar uma pasta de outro programa}
 
 \ui{Importar esta pasta} move a pasta para a sua biblioteca e deixa um link no
 lugar dela. A partir daí ela vira um addon seu como qualquer outro.
 
-O programa é explícito sobre o risco: \textbf{o outro programa não sabe do
-link}. A próxima atualização dele pode escrever dentro do
-link, ou substituí-lo por uma pasta de verdade e deixar você com duas cópias.
-Nada no FS Organizer consegue impedir isso. Quando acontecer, a entrada aparece
-como \ui{Divergente} e o programa oferece escolher qual cópia fica.
+O risco é que \textbf{o outro programa não vai saber do link}. A próxima
+atualização dele pode gravar dentro do link, ou trocá-lo por uma pasta comum e
+deixar você com duas cópias. Quando isso acontecer, a entrada aparece como
+\ui{Divergente} e o programa pergunta qual cópia manter.
 
 Você pode devolver o addon ao programa que o instalou depois, pelo
 \ui{Excluir da biblioteca}.
 
 \section{Importar}
 
-Importar copia uma pasta física para a biblioteca e deixa um link no lugar dela.
-A pasta original só é removida depois da verificação.
+Importar copia uma pasta comum para a biblioteca e deixa um link no lugar dela.
+A original só é removida depois que a cópia é conferida.
 
 A operação tem cinco passos, e o diário registra cada um:
 

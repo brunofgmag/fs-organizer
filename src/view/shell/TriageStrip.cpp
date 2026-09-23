@@ -83,12 +83,12 @@ void TriageStrip::ShowBreakdown(const AttentionBreakdown& breakdown)
 
 void TriageStrip::RetranslateUi()
 {
-    broken_.action->setText(tr("Repair the broken ones…"));
+    broken_.action->setText(tr("Repair broken links…"));
     conflicts_.action->setText(tr("Resolve conflicts…"));
-    duplicated_.action->setText(tr("See the duplicated ones…"));
-    unmanaged_.action->setText(tr("Import the ones outside the library…"));
+    duplicated_.action->setText(tr("Show duplicated…"));
+    unmanaged_.action->setText(tr("Import into the library…"));
 
-    broken_.label->setText(tr("%n with no target", nullptr, static_cast<int>(shown_.broken)));
+    broken_.label->setText(tr("%n broken link", nullptr, static_cast<int>(shown_.broken)));
     conflicts_.label->setText(tr("%n conflict", nullptr, static_cast<int>(shown_.conflicts)));
     duplicated_.label->setText(tr("%n duplicated", nullptr, static_cast<int>(shown_.duplicated)));
     unmanaged_.label->setText(tr("%n folder outside the library", nullptr, static_cast<int>(shown_.unmanaged)));

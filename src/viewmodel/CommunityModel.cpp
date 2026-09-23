@@ -46,21 +46,20 @@ namespace
         case EntryClassification::Managed:
             return QCoreApplication::translate("CommunityModel", "the simulator loads it from your library");
         case EntryClassification::External:
-            return QCoreApplication::translate("CommunityModel", "another program owns this folder");
+            return QCoreApplication::translate("CommunityModel", "installed by another program");
         case EntryClassification::Divergent: return QCoreApplication::translate("CommunityModel", "two copies exist");
         case EntryClassification::Vanished:
             return QCoreApplication::translate("CommunityModel", "the library copy is gone");
         case EntryClassification::Broken:
-            return QCoreApplication::translate("CommunityModel", "the target does not exist");
+            return QCoreApplication::translate("CommunityModel", "the link points to a folder that does not exist");
         case EntryClassification::Unavailable:
-            return QCoreApplication::translate("CommunityModel", "the volume is not there right now");
+            return QCoreApplication::translate("CommunityModel", "the drive is not connected right now");
         case EntryClassification::Unmanaged:
-            return QCoreApplication::translate("CommunityModel", "a real folder, not in a library yet");
+            return QCoreApplication::translate("CommunityModel", "a regular folder, not in a library yet");
         case EntryClassification::Duplicated:
             return QCoreApplication::translate("CommunityModel", "linked in more than one destination");
         case EntryClassification::Substituted:
-            return QCoreApplication::translate("CommunityModel",
-                                               "something replaced our link, and the library copy is adrift");
+            return QCoreApplication::translate("CommunityModel", "the link was replaced by a regular folder");
         }
 
         return {};
@@ -194,7 +193,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
             return {};
         }
 
-        return tr("%1\nIt also exists in the library: %2")
+        return tr("%1\nAlso in the library: %2")
             .arg(data(position, Qt::DisplayRole).toString(), AsText(conflict->libraryPath));
     }
 

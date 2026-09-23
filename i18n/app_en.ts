@@ -871,8 +871,8 @@
 <context>
     <name>CommunityModel</name>
     <message>
-        <source>something replaced our link, and the library copy is adrift</source>
-        <translation>something replaced our link, and the library copy is adrift</translation>
+        <source>the link was replaced by a regular folder</source>
+        <translation>the link was replaced by a regular folder</translation>
     </message>
     <message>
         <source>Substituted</source>
@@ -885,8 +885,8 @@
     </message>
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="47"/>
-        <source>another program owns this folder</source>
-        <translation>another program owns this folder</translation>
+        <source>installed by another program</source>
+        <translation>installed by another program</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="48"/>
@@ -900,18 +900,18 @@
     </message>
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="52"/>
-        <source>the target does not exist</source>
-        <translation>the target does not exist</translation>
+        <source>the link points to a folder that does not exist</source>
+        <translation>the link points to a folder that does not exist</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="54"/>
-        <source>the volume is not there right now</source>
-        <translation>the volume is not there right now</translation>
+        <source>the drive is not connected right now</source>
+        <translation>the drive is not connected right now</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="56"/>
-        <source>a real folder, not in a library yet</source>
-        <translation>a real folder, not in a library yet</translation>
+        <source>a regular folder, not in a library yet</source>
+        <translation>a regular folder, not in a library yet</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="58"/>
@@ -961,9 +961,9 @@
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="190"/>
         <source>%1
-It also exists in the library: %2</source>
+Also in the library: %2</source>
         <translation>%1
-It also exists in the library: %2</translation>
+Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/CommunityModel.cpp" line="206"/>
@@ -998,26 +998,26 @@ It also exists in the library: %2</translation>
 <context>
     <name>CommunityPage</name>
     <message>
-        <source>Reading both sides of the conflict…</source>
-        <translation>Reading both sides of the conflict…</translation>
+        <source>Comparing the two copies…</source>
+        <translation>Comparing the two copies…</translation>
     </message>
     <message>
         <source>Substituted</source>
         <translation>Substituted</translation>
     </message>
     <message>
-        <source>Something wrote a real folder over the link this program made, so the simulator loads that folder and the copy in your library is adrift: it answers no switch, enters no preset and joins no bisection. Nothing here could have stopped that write, and what is left to choose is which of the two copies stays.</source>
-        <translation>Something wrote a real folder over the link this program made, so the simulator loads that folder and the copy in your library is adrift: it answers no switch, enters no preset and joins no bisection. Nothing here could have stopped that write, and what is left to choose is which of the two copies stays.</translation>
+        <source>Something wrote a regular folder over the link this app made. The simulator now loads that folder and ignores your library copy. Choose which copy to keep.</source>
+        <translation>Something wrote a regular folder over the link this app made. The simulator now loads that folder and ignores your library copy. Choose which copy to keep.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="115"/>
-        <source>The folder of the other program is a real folder again, so there are two copies. The simulator loads the one in your library, and whatever that program updates from here on lands in the copy the simulator does not read.</source>
-        <translation>The folder of the other program is a real folder again, so there are two copies. The simulator loads the one in your library, and whatever that program updates from here on lands in the copy the simulator does not read.</translation>
+        <source>The other program&apos;s folder is a regular folder again, so there are two copies. The simulator loads the one in your library, and updates from that program will go to the copy the simulator does not use.</source>
+        <translation>The other program&apos;s folder is a regular folder again, so there are two copies. The simulator loads the one in your library, and updates from that program will go to the copy the simulator does not use.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="128"/>
-        <source>The copy in your library is gone, taken by the other program. Nothing can be repaired here: the content no longer exists on this machine.</source>
-        <translation>The copy in your library is gone, taken by the other program. Nothing can be repaired here: the content no longer exists on this machine.</translation>
+        <source>The copy in your library is gone, removed by the other program. There is nothing to repair: the files no longer exist on this computer.</source>
+        <translation>The copy in your library is gone, removed by the other program. There is nothing to repair: the files no longer exist on this computer.</translation>
     </message>
     <message>
         <source>Taking it over moves the folder into your library and leaves a link where it was. The other program does not know that, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop it.</source>
@@ -1080,13 +1080,13 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="336"/>
-        <source>Select everything the filter shows</source>
-        <translation>Select everything the filter shows</translation>
+        <source>Select all shown</source>
+        <translation>Select all shown</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="337"/>
-        <source>Read again from the disk</source>
-        <translation>Read again from the disk</translation>
+        <source>Refresh</source>
+        <translation>Refresh</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="338"/>
@@ -1095,13 +1095,13 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="339"/>
-        <source>Open the folder</source>
-        <translation>Open the folder</translation>
+        <source>Open folder</source>
+        <translation>Open folder</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="340"/>
-        <source>Importing copies into the library and leaves a link in its place. The original folder is only removed after the check.</source>
-        <translation>Importing copies into the library and leaves a link in its place. The original folder is only removed after the check.</translation>
+        <source>Importing copies the folder into the library and leaves a link in its place. The original is removed only after the copy is verified.</source>
+        <translation>Importing copies the folder into the library and leaves a link in its place. The original is removed only after the copy is verified.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="342"/>
@@ -1138,13 +1138,13 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="446"/>
-        <source>Link?</source>
-        <translation>Link?</translation>
+        <source>Points to</source>
+        <translation>Points to</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="446"/>
-        <source>no, a physical folder</source>
-        <translation>no, a physical folder</translation>
+        <source>nothing, it is a regular folder</source>
+        <translation>nothing, it is a regular folder</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="450"/>
@@ -1181,23 +1181,23 @@ It also exists in the library: %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="553"/>
-        <source>Import the %n folder…</source>
+        <source>Import %n folder…</source>
         <translation>
-            <numerusform>Import the %n folder…</numerusform>
-            <numerusform>Import the %n folders…</numerusform>
+            <numerusform>Import %n folder…</numerusform>
+            <numerusform>Import %n folders…</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="559"/>
-        <source>Choose which copy stays…</source>
-        <translation>Choose which copy stays…</translation>
+        <source>Choose which copy to keep…</source>
+        <translation>Choose which copy to keep…</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="563"/>
-        <source>Resolve the %n conflict…</source>
+        <source>Resolve %n conflict…</source>
         <translation>
-            <numerusform>Resolve the %n conflict…</numerusform>
-            <numerusform>Resolve the %n conflicts…</numerusform>
+            <numerusform>Resolve %n conflict…</numerusform>
+            <numerusform>Resolve %n conflicts…</numerusform>
         </translation>
     </message>
     <message>
@@ -1207,8 +1207,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="631"/>
-        <source>File operations stay blocked while the simulator runs.</source>
-        <translation>File operations stay blocked while the simulator runs.</translation>
+        <source>Files cannot be changed while the simulator is running.</source>
+        <translation>Files cannot be changed while the simulator is running.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="632"/>
@@ -1222,8 +1222,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="654"/>
-        <source>Resolve the conflict before importing: the library already has an addon with that name.</source>
-        <translation>Resolve the conflict before importing: the library already has an addon with that name.</translation>
+        <source>The library already has an addon with this name. Resolve the conflict before importing.</source>
+        <translation>The library already has an addon with this name. Resolve the conflict before importing.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="655"/>
@@ -1236,8 +1236,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="689"/>
-        <source>Select an entry marked as in conflict.</source>
-        <translation>Select an entry marked as in conflict.</translation>
+        <source>Select an entry in conflict.</source>
+        <translation>Select an entry in conflict.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="757"/>
@@ -1246,10 +1246,10 @@ It also exists in the library: %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="767"/>
-        <source>%n conflict was left as it was, and nothing was deleted.</source>
+        <source>%n conflict was not resolved. Nothing was deleted.</source>
         <translation>
-            <numerusform>%n conflict was left as it was, and nothing was deleted.</numerusform>
-            <numerusform>%n conflicts were left as they were, and nothing was deleted.</numerusform>
+            <numerusform>%n conflict was not resolved. Nothing was deleted.</numerusform>
+            <numerusform>%n conflicts were not resolved. Nothing was deleted.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1262,10 +1262,10 @@ It also exists in the library: %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="777"/>
-        <source>%n conflict resolved, and the others are still open.</source>
+        <source>%n conflict resolved. The others are still open.</source>
         <translation>
-            <numerusform>%n conflict resolved, and the others are still open.</numerusform>
-            <numerusform>%n conflicts resolved, and the others are still open.</numerusform>
+            <numerusform>%n conflict resolved. The others are still open.</numerusform>
+            <numerusform>%n conflicts resolved. The others are still open.</numerusform>
         </translation>
     </message>
     <message>
@@ -1275,18 +1275,18 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="108"/>
-        <source>The other program put a real folder back where it installs this addon and pointed this entry at it, so there are two copies and the simulator now loads the other program&apos;s one. The copy in your library is the one nothing reads any more.</source>
-        <translation>The other program put a real folder back where it installs this addon and pointed this entry at it, so there are two copies and the simulator now loads the other program&apos;s one. The copy in your library is the one nothing reads any more.</translation>
+        <source>The other program put a regular folder back where it installs this addon and pointed this entry at it. The simulator now loads that copy, and the one in your library is no longer used.</source>
+        <translation>The other program put a regular folder back where it installs this addon and pointed this entry at it. The simulator now loads that copy, and the one in your library is no longer used.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="133"/>
-        <source>The other program does not know about the link that taking it over leaves behind, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop that.</source>
-        <translation>The other program does not know about the link that taking it over leaves behind, so its next update can write inside the link, or replace it with a real folder and give you two copies. Nothing here can stop that.</translation>
+        <source>The other program will not know about the link left in its place. Its next update may write into the link, or replace it with a regular folder and leave you with two copies.</source>
+        <translation>The other program will not know about the link left in its place. Its next update may write into the link, or replace it with a regular folder and leave you with two copies.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="766"/>
-        <source>The conflict is still there</source>
-        <translation>The conflict is still there</translation>
+        <source>Conflict not resolved</source>
+        <translation>Conflict not resolved</translation>
     </message>
     <message>
         <source>No folder was moved: %1.</source>
@@ -1319,23 +1319,23 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="814"/>
-        <source>Not everything was imported</source>
-        <translation>Not everything was imported</translation>
+        <source>Some imports did not complete</source>
+        <translation>Some imports did not complete</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="815"/>
-        <source>%n import did not finish.</source>
+        <source>%n import did not complete.</source>
         <translation>
-            <numerusform>%n import did not finish.</numerusform>
-            <numerusform>%n imports did not finish.</numerusform>
+            <numerusform>%n import did not complete.</numerusform>
+            <numerusform>%n imports did not complete.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="817"/>
-        <source>%n addon now lives in the library.</source>
+        <source>%n addon is now in the library.</source>
         <translation>
-            <numerusform>%n addon now lives in the library.</numerusform>
-            <numerusform>%n addons now live in the library.</numerusform>
+            <numerusform>%n addon is now in the library.</numerusform>
+            <numerusform>%n addons are now in the library.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1349,23 +1349,23 @@ It also exists in the library: %2</translation>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="840"/>
         <location filename="../src/view/community/CommunityPage.cpp" line="846"/>
-        <source>%n repair finished.</source>
+        <source>%n link repaired.</source>
         <translation>
-            <numerusform>%n repair finished.</numerusform>
-            <numerusform>%n repairs finished.</numerusform>
+            <numerusform>%n link repaired.</numerusform>
+            <numerusform>%n links repaired.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="844"/>
-        <source>Not everything was repaired</source>
-        <translation>Not everything was repaired</translation>
+        <source>Some links were not repaired</source>
+        <translation>Some links were not repaired</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="845"/>
-        <source>%n repair failed.</source>
+        <source>%n link could not be repaired.</source>
         <translation>
-            <numerusform>%n repair failed.</numerusform>
-            <numerusform>%n repairs failed.</numerusform>
+            <numerusform>%n link could not be repaired.</numerusform>
+            <numerusform>%n links could not be repaired.</numerusform>
         </translation>
     </message>
     <message>
@@ -1375,10 +1375,10 @@ It also exists in the library: %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/CommunityPage.cpp" line="850"/>
-        <source>%n repair finished</source>
+        <source>%n repaired</source>
         <translation>
-            <numerusform>%n repair finished</numerusform>
-            <numerusform>%n repairs finished</numerusform>
+            <numerusform>%n repaired</numerusform>
+            <numerusform>%n repaired</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1391,8 +1391,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="896"/>
-        <source>Nothing is %1 any more, so every entry is showing again.</source>
-        <translation>Nothing is %1 any more, so every entry is showing again.</translation>
+        <source>No entry is %1 now, so the filter was cleared.</source>
+        <translation>No entry is %1 now, so the filter was cleared.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="931"/>
@@ -1443,12 +1443,12 @@ It also exists in the library: %2</translation>
 <context>
     <name>ConflictDialog</name>
     <message>
-        <source>Something replaced the link</source>
-        <translation>Something replaced the link</translation>
+        <source>The link was replaced</source>
+        <translation>The link was replaced</translation>
     </message>
     <message>
-        <source>Put the link back over the library copy</source>
-        <translation>Put the link back over the library copy</translation>
+        <source>Keep the library copy and restore the link</source>
+        <translation>Keep the library copy and restore the link</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="89"/>
@@ -1478,8 +1478,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="107"/>
-        <source>Keep the library one</source>
-        <translation>Keep the library one</translation>
+        <source>Keep the library copy</source>
+        <translation>Keep the library copy</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="141"/>
@@ -2486,8 +2486,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/ImportDialog.cpp" line="65"/>
-        <source>Will become:</source>
-        <translation>Will become:</translation>
+        <source>Will be at:</source>
+        <translation>Will be at:</translation>
     </message>
     <message>
         <location filename="../src/view/community/ImportDialog.cpp" line="68"/>
@@ -2501,10 +2501,10 @@ It also exists in the library: %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/community/ImportDialog.cpp" line="97"/>
-        <source>%n folder above is installed by another program, and that program does not know about the link this leaves behind: its next update can write inside the link, or replace it and give you two copies. You can give it back later, from Delete in the library.</source>
+        <source>%n folder above was installed by another program, which will not know about the link left in its place. Its next update may write into the link, or replace it and leave you with two copies. You can give it back later with Delete in the Library.</source>
         <translation>
-            <numerusform>%n folder above is installed by another program, and that program does not know about the link this leaves behind: its next update can write inside the link, or replace it and give you two copies. You can give it back later, from Delete in the library.</numerusform>
-            <numerusform>%n folders above are installed by another program, and that program does not know about the link this leaves behind: its next update can write inside the link, or replace it and give you two copies. You can give them back later, from Delete in the library.</numerusform>
+            <numerusform>%n folder above was installed by another program, which will not know about the link left in its place. Its next update may write into the link, or replace it and leave you with two copies. You can give it back later with Delete in the Library.</numerusform>
+            <numerusform>%n folders above were installed by another program, which will not know about the links left in their place. Its next update may write into a link, or replace it and leave you with two copies. You can give them back later with Delete in the Library.</numerusform>
         </translation>
     </message>
     <message>
@@ -4328,28 +4328,28 @@ Apply the preset &quot;%2&quot;?</translation>
 <context>
     <name>QObject</name>
     <message>
-        <source>Both copies declare the same version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
-        <translation>Both copies declare the same version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</translation>
+        <source>Both copies declare the same version, so there is no telling which one is newer.</source>
+        <translation>Both copies declare the same version, so there is no telling which one is newer.</translation>
     </message>
     <message>
-        <source>The manifests do not both name a version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</source>
-        <translation>The manifests do not both name a version, so nothing here says which one is newer. If anything changed, it changed inside the folder.</translation>
+        <source>At least one copy declares no version, so there is no telling which one is newer.</source>
+        <translation>At least one copy declares no version, so there is no telling which one is newer.</translation>
     </message>
     <message>
-        <source>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</source>
-        <translation>This folder used to be a link into your library, and something else wrote a real folder over it. The simulator now loads that folder, and the copy in the library is adrift: it answers no switch, enters no preset and joins no bisection.</translation>
+        <source>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder and ignores your library copy.</source>
+        <translation>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder and ignores your library copy.</translation>
     </message>
     <message>
-        <source>Folder that stands where the link was</source>
-        <translation>Folder that stands where the link was</translation>
+        <source>Folder in place of the link</source>
+        <translation>Folder in place of the link</translation>
     </message>
     <message>
-        <source>Take it into the library and link it back</source>
-        <translation>Take it into the library and link it back</translation>
+        <source>Move this folder into the library</source>
+        <translation>Move this folder into the library</translation>
     </message>
     <message>
-        <source>The library copy is enabled in %1. Taking the destination one back moves the old copy to the quarantine first.</source>
-        <translation>The library copy is enabled in %1. Taking the destination one back moves the old copy to the quarantine first.</translation>
+        <source>The library copy is enabled in %1. It is moved to the quarantine first.</source>
+        <translation>The library copy is enabled in %1. It is moved to the quarantine first.</translation>
     </message>
     <message>
         <location filename="../src/view/diagnostics/BisectionPanel.cpp" line="93"/>
@@ -4839,13 +4839,13 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="54"/>
-        <source>Keep the other program&apos;s one</source>
-        <translation>Keep the other program&apos;s one</translation>
+        <source>Keep the other program&apos;s copy</source>
+        <translation>Keep the other program&apos;s copy</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="55"/>
-        <source>The library copy is enabled in %1. Keeping the other program&apos;s one removes those links before sending it to the quarantine.</source>
-        <translation>The library copy is enabled in %1. Keeping the other program&apos;s one removes those links before sending it to the quarantine.</translation>
+        <source>The library copy is enabled in %1. Keeping the other program&apos;s copy removes those links and moves the library copy to the quarantine.</source>
+        <translation>The library copy is enabled in %1. Keeping the other program&apos;s copy removes those links and moves the library copy to the quarantine.</translation>
     </message>
     <message>
         <source>There is a real folder in the destination and an addon with the same name in the library. Choose which one stays: the other goes to the quarantine, and nothing is deleted.</source>
@@ -4853,13 +4853,13 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="51"/>
-        <source>The other program put a real folder back where it installs this addon, and your copy is still in the library. Choose which one stays: the other goes to the quarantine.</source>
-        <translation>The other program put a real folder back where it installs this addon, and your copy is still in the library. Choose which one stays: the other goes to the quarantine.</translation>
+        <source>The program that installed this addon put its own copy back, and yours is still in the library. Choose which one to keep; the other goes to the quarantine.</source>
+        <translation>The program that installed this addon put its own copy back, and yours is still in the library. Choose which one to keep; the other goes to the quarantine.</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="61"/>
-        <source>There is a real folder in the destination and an addon with the same name in the library. Choose which one stays: the other goes to the quarantine.</source>
-        <translation>There is a real folder in the destination and an addon with the same name in the library. Choose which one stays: the other goes to the quarantine.</translation>
+        <source>The destination has a regular folder with the same name as an addon in your library. Choose which one to keep; the other goes to the quarantine.</source>
+        <translation>The destination has a regular folder with the same name as an addon in your library. Choose which one to keep; the other goes to the quarantine.</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="63"/>
@@ -4868,13 +4868,13 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="64"/>
-        <source>Keep the destination one</source>
-        <translation>Keep the destination one</translation>
+        <source>Keep the destination copy</source>
+        <translation>Keep the destination copy</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="65"/>
-        <source>The library copy is enabled in %1. Keeping the destination one removes those links before sending it to the quarantine.</source>
-        <translation>The library copy is enabled in %1. Keeping the destination one removes those links before sending it to the quarantine.</translation>
+        <source>The library copy is enabled in %1. Keeping the destination copy removes those links and moves the library copy to the quarantine.</source>
+        <translation>The library copy is enabled in %1. Keeping the destination copy removes those links and moves the library copy to the quarantine.</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="82"/>
@@ -5613,13 +5613,13 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/RepairDialog.cpp" line="51"/>
-        <source>Repair the selected ones</source>
-        <translation>Repair the selected ones</translation>
+        <source>Repair selected</source>
+        <translation>Repair selected</translation>
     </message>
     <message>
         <location filename="../src/view/community/RepairDialog.cpp" line="84"/>
-        <source>Remove the dead node</source>
-        <translation>Remove the dead node</translation>
+        <source>Remove the broken link</source>
+        <translation>Remove the broken link</translation>
     </message>
     <message>
         <location filename="../src/view/community/RepairDialog.cpp" line="87"/>
@@ -6328,8 +6328,8 @@ Size %2</translation>
     <name>TriageStrip</name>
     <message>
         <location filename="../src/view/shell/TriageStrip.cpp" line="86"/>
-        <source>Repair the broken ones…</source>
-        <translation>Repair the broken ones…</translation>
+        <source>Repair broken links…</source>
+        <translation>Repair broken links…</translation>
     </message>
     <message>
         <location filename="../src/view/shell/TriageStrip.cpp" line="87"/>
@@ -6338,20 +6338,20 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/shell/TriageStrip.cpp" line="88"/>
-        <source>See the duplicated ones…</source>
-        <translation>See the duplicated ones…</translation>
+        <source>Show duplicated…</source>
+        <translation>Show duplicated…</translation>
     </message>
     <message>
         <location filename="../src/view/shell/TriageStrip.cpp" line="89"/>
-        <source>Import the ones outside the library…</source>
-        <translation>Import the ones outside the library…</translation>
+        <source>Import into the library…</source>
+        <translation>Import into the library…</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/shell/TriageStrip.cpp" line="91"/>
-        <source>%n with no target</source>
+        <source>%n broken link</source>
         <translation>
-            <numerusform>%n with no target</numerusform>
-            <numerusform>%n with no target</numerusform>
+            <numerusform>%n broken link</numerusform>
+            <numerusform>%n broken links</numerusform>
         </translation>
     </message>
     <message numerus="yes">
