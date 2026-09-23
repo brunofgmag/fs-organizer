@@ -465,56 +465,54 @@ say what they do.
 
 \section{Diagnostics}
 
-The \ui{Diagnostics} tab answers for what the scan found. Every number carries
-the time it was measured, and measuring again is always one button away.
+The \ui{Diagnostics} tab reports what the scan found. Every number shows when it
+was measured, and you can measure again at any time.
 
 \shot{09-diagnostics-size.png}{The size on disk section, with the total per category
 and per addon, and the time of the measurement.}
 
 \begin{description}
-  \item[Destination entries] How many entries there are, counted by what each
-    one is, and the longest path of each library.
-  \item[Broken, unavailable] What is broken and what is parked on a volume that
-    is not here, with the repair for the broken ones right there.
-  \item[Quarantine] How much is held, without emptying anything from here.
-  \item[Size on disk] How much each category and each addon takes. It walks the
-    whole tree, and that takes seconds: the \ui{Stop} button stops after the
-    addon being measured now.
-  \item[Airports in the scenery] Reads the scenery of every addon and separates
-    three cases: carrying an airport code, carrying a record that did not
-    decode, and carrying no airport record.
-  \item[Modules the simulator loaded] Reads the report the simulator writes when
-    a load takes long. It attributes no loading time to any package, so this
-    screen shows none; what it does attribute is the module each package loaded
-    and the memory that module holds.
+  \item[Destination entries] How many entries there are of each kind, and the
+    longest path in each library.
+  \item[Broken or unavailable] What is broken and what is on a disconnected
+    drive, with a button to repair the broken links.
+  \item[Quarantine] How much space the quarantine takes. Nothing is emptied from
+    here.
+  \item[Size on disk] How much each category and each addon takes. It may take a
+    few seconds; \ui{Stop} stops after the addon being measured.
+  \item[Airports in the scenery] Scans the scenery of every addon and sorts it
+    into addons with an airport code, with an unreadable airport record, with
+    navigation data instead of scenery, and without an airport record.
+  \item[Modules loaded] Reads the report the simulator writes after a slow load.
+    The simulator does not report loading time per package, so this shows which
+    module each package loaded and how much memory it holds.
 \end{description}
 
 \subsection{Finding the culprit}
 
-When the simulator comes down and you do not know which addon brings it there,
-the \ui{Find the culprit} panel runs a search by halves. It turns half of your
-addons off, you launch the simulator and answer \ui{It came down} or \ui{It ran
-fine}, and the search rules out half of the suspects each round.
+When the simulator crashes and you do not know which addon causes it,
+\ui{Find the culprit} searches by halves. It disables half of your addons, you
+launch the simulator and answer \ui{It crashed} or \ui{It worked}, and each
+round rules out half of the suspects.
 
-Three things to know before starting:
+Before you start:
 
 \shot{31-diagnostics-bisection.png}{The search for the culprit, with the current
 round, what has been ruled out and the two answers the user gives.}
 
 \begin{itemize}
-  \item The unit of the search is not the addon, it is the \textbf{unit}: one
-    addon, or a group that has to move together because it shares a model
-    folder. The panel says why the members of a group move together, and offers
-    to split the group when doing so leaves a state anyone can read.
-  \item The first round turns \textbf{everything} of yours off. That round is
-    what separates a cause among your addons from a cause outside them.
-  \item Your setup is written down before the first round and goes back when this
-    ends, however it ends, including when you stop it halfway. If the program is
-    closed during the search, the next run offers to put it back.
+  \item The search works on \textbf{units}: one addon, or a group of addons that
+    must stay together because they share a model folder. The panel says why a
+    group is together, and offers to split it when that is safe.
+  \item The first round disables \textbf{all} your addons, to tell whether the
+    cause is among them at all.
+  \item Your setup is saved before the first round and restored when the search
+    ends, however it ends. If the program is closed during the search, it offers
+    to restore it the next time it opens.
 \end{itemize}
 
-The method assumes a single culprit. Two addons that only bring the simulator
-down when both are on would converge on an innocent one, and the panel says so.
+The search assumes a single culprit. If the crash only happens with two addons
+enabled together, the result may point to the wrong one, and the panel says so.
 
 \section{Journal}
 

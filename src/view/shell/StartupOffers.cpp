@@ -19,16 +19,15 @@ void OfferToCarryOnTheSearchThatWasLeftHalfway(BisectionViewModel& bisectionView
     }
 
     QMessageBox question(
-        QMessageBox::Question, QObject::tr("A search for the culprit was left halfway"),
-        QObject::tr("The addons of this profile are as the last round of it left them, and not as they were before it "
-                    "started. Nothing was decided yet."),
+        QMessageBox::Question, QObject::tr("A culprit search was interrupted"),
+        QObject::tr("Your addons are still as the last round left them, not as they were before the search."),
         QMessageBox::NoButton, parent);
 
-    const QPushButton* carryOn = question.addButton(QObject::tr("Carry on from that round"), QMessageBox::AcceptRole);
+    const QPushButton* carryOn = question.addButton(QObject::tr("Continue the search"), QMessageBox::AcceptRole);
     const QPushButton* putBack =
-        question.addButton(QObject::tr("Put back what was on before it started"), QMessageBox::DestructiveRole);
-    const QPushButton* forget =
-        question.addButton(QObject::tr("Forget it and leave the addons as they are"), QMessageBox::DestructiveRole);
+        question.addButton(QObject::tr("Restore the previous setup"), QMessageBox::DestructiveRole);
+    const QPushButton* forget = question.addButton(QObject::tr("Discard the search and keep the addons as they are"),
+                                                   QMessageBox::DestructiveRole);
     question.exec();
 
     if (question.clickedButton() == carryOn)
