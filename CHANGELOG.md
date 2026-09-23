@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.11](https://github.com/brunofgmag/fs-organizer/compare/v0.54.10...v0.54.11) (2026-09-23)
+
+
+### Bug Fixes
+
+* **diagnostics:** rewrite the texts of the diagnostics screen and the culprit search ([f2cf867](https://github.com/brunofgmag/fs-organizer/commit/f2cf867a2f2aacc456c022bb396bc7d385b4a42f))
+
 ## [0.54.10](https://github.com/brunofgmag/fs-organizer/compare/v0.54.9...v0.54.10) (2026-09-23)
 
 
