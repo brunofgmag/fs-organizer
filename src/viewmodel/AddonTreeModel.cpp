@@ -342,7 +342,7 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
 
         if (reading.broken)
         {
-            return tr("No target");
+            return tr("Broken link");
         }
 
         if (reading.conflict == nullptr)
@@ -441,9 +441,9 @@ QString AddonTreeModel::ToolTipOf(const Reading& reading) const
     if (reading.conflict != nullptr)
     {
         return reading.conflict->theProvenanceIsAnotherProgram
-            ? tr("The other program took its folder back, so a second copy of this addon lives in: %1")
+            ? tr("The program that installed this addon put its own copy back in: %1")
                   .arg(AsText(reading.conflict->provenancePath))
-            : tr("There is already a real folder with that name in the destination: %1")
+            : tr("A folder with this name already exists in the destination: %1")
                   .arg(AsText(reading.conflict->provenancePath));
     }
 
@@ -452,7 +452,7 @@ QString AddonTreeModel::ToolTipOf(const Reading& reading) const
         return {};
     }
 
-    return tr("This addon is linked in %1, not in the destination the profile says to use, which is %2.")
+    return tr("Linked in %1, but the profile destination is %2.")
         .arg(AsText(reading.strayedTo), AsText(reading.destination));
 }
 

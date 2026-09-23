@@ -16,14 +16,13 @@ namespace
 
 CoverageDialog::CoverageDialog(const std::vector<CoverageLine>& covered, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Two airports for the same place"));
+    setWindowTitle(tr("The simulator has this airport too"));
 
-    auto* explanation = new QLabel(
-        tr("The simulator ships an airport of its own for %n of the places you are turning on. Its code comes from "
-           "the package name, because that content is an archive the app cannot open, and it is the same code yours "
-           "carries. Which one wins is the simulator's to decide.",
-           nullptr, static_cast<int>(covered.size())),
-        this);
+    auto* explanation =
+        new QLabel(tr("The simulator ships its own version of %n airport you are enabling. If both stay enabled, the "
+                      "simulator decides which one loads. The match is made by the package name.",
+                      nullptr, static_cast<int>(covered.size())),
+                   this);
     explanation->setWordWrap(true);
 
     auto* listed = new QWidget(this);
@@ -65,20 +64,19 @@ CoverageDialog::CoverageDialog(const std::vector<CoverageLine>& covered, QWidget
     scroll->setWidgetResizable(true);
     scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
 
-    auto* promise = new QLabel(
-        tr("Turning the simulator's one off writes one value in the package list. Nothing is added, removed or "
-           "reordered, and the app keeps a copy of the file. Leaving both on turns your addon on all the same."),
-        this);
+    auto* promise = new QLabel(tr("Disabling the simulator's airport changes only its entry in the package list, and a "
+                                  "backup of the file is kept. Your addon is enabled either way."),
+                               this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
 
     auto* buttons = new QDialogButtonBox(this);
-    QPushButton* turnOff = buttons->addButton(covered.size() == 1 ? tr("Turn the simulator's one off")
-                                                                  : tr("Turn the simulator's ones off"),
+    QPushButton* turnOff = buttons->addButton(covered.size() == 1 ? tr("Disable the simulator's airport")
+                                                                  : tr("Disable the simulator's airports"),
                                               QDialogButtonBox::AcceptRole);
     turnOff->setProperty("role", "primary");
     turnOff->setDefault(true);
-    buttons->addButton(tr("Leave both on"), QDialogButtonBox::RejectRole);
+    buttons->addButton(tr("Keep both enabled"), QDialogButtonBox::RejectRole);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);

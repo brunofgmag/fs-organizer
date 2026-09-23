@@ -76,8 +76,8 @@
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="303"/>
-        <source>No target</source>
-        <translation>No target</translation>
+        <source>Broken link</source>
+        <translation>Broken link</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="311"/>
@@ -111,18 +111,18 @@
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="405"/>
-        <source>The other program took its folder back, so a second copy of this addon lives in: %1</source>
-        <translation>The other program took its folder back, so a second copy of this addon lives in: %1</translation>
+        <source>The program that installed this addon put its own copy back in: %1</source>
+        <translation>The program that installed this addon put its own copy back in: %1</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="407"/>
-        <source>There is already a real folder with that name in the destination: %1</source>
-        <translation>There is already a real folder with that name in the destination: %1</translation>
+        <source>A folder with this name already exists in the destination: %1</source>
+        <translation>A folder with this name already exists in the destination: %1</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="417"/>
-        <source>This addon is linked in %1, not in the destination the profile says to use, which is %2.</source>
-        <translation>This addon is linked in %1, not in the destination the profile says to use, which is %2.</translation>
+        <source>Linked in %1, but the profile destination is %2.</source>
+        <translation>Linked in %1, but the profile destination is %2.</translation>
     </message>
 </context>
 <context>
@@ -133,8 +133,8 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="254"/>
-        <source>Reading the scenery of what you turned on: %1 of %2</source>
-        <translation>Reading the scenery of what you turned on: %1 of %2</translation>
+        <source>Checking the airports of what you enabled: %1 of %2</source>
+        <translation>Checking the airports of what you enabled: %1 of %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="231"/>
@@ -161,37 +161,37 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="243"/>
-        <source>Measuring what you selected…</source>
-        <translation>Measuring what you selected…</translation>
+        <source>Measuring the selection…</source>
+        <translation>Measuring the selection…</translation>
     </message>
     <message>
-        <source>Deleting what you selected…</source>
-        <translation>Deleting what you selected…</translation>
+        <source>Deleting the selection…</source>
+        <translation>Deleting the selection…</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="268"/>
-        <source>Check the selected ones</source>
-        <translation>Check the selected ones</translation>
+        <source>Enable selected</source>
+        <translation>Enable selected</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="269"/>
-        <source>Uncheck the selected ones</source>
-        <translation>Uncheck the selected ones</translation>
+        <source>Disable selected</source>
+        <translation>Disable selected</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="270"/>
-        <source>Undo the last batch</source>
-        <translation>Undo the last batch</translation>
+        <source>Undo last change</source>
+        <translation>Undo last change</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="271"/>
-        <source>Read again from the disk</source>
-        <translation>Read again from the disk</translation>
+        <source>Refresh</source>
+        <translation>Refresh</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="272"/>
-        <source>Search addon…</source>
-        <translation>Search addon…</translation>
+        <source>Search addons…</source>
+        <translation>Search addons…</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="273"/>
@@ -213,8 +213,8 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="276"/>
-        <source>Open the folder</source>
-        <translation>Open the folder</translation>
+        <source>Open folder</source>
+        <translation>Open folder</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="278"/>
@@ -243,8 +243,8 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="283"/>
-        <source>Register library…</source>
-        <translation>Register library…</translation>
+        <source>Add library…</source>
+        <translation>Add library…</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="426"/>
@@ -263,13 +263,17 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="432"/>
-        <source>Target exists</source>
-        <translation>Target exists</translation>
+        <source>Link</source>
+        <translation>Link</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="432"/>
-        <source>no, the link cannot find the folder</source>
-        <translation>no, the link cannot find the folder</translation>
+        <source>broken, the target folder is missing</source>
+        <translation>broken, the target folder is missing</translation>
+    </message>
+    <message>
+        <source>working</source>
+        <translation>working</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="432"/>
@@ -341,8 +345,8 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="488"/>
-        <source>Away from the destination</source>
-        <translation>Away from the destination</translation>
+        <source>In another destination</source>
+        <translation>In another destination</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="491"/>
@@ -397,8 +401,8 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="558"/>
-        <source>Nothing to delete: the selection has no addon in it.</source>
-        <translation>Nothing to delete: the selection has no addon in it.</translation>
+        <source>Nothing to delete: the selection has no addons.</source>
+        <translation>Nothing to delete: the selection has no addons.</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="576"/>
@@ -411,28 +415,28 @@
         <source>%n addon went back to the program that installed it.</source>
         <translation>
             <numerusform>%n addon went back to the program that installed it.</numerusform>
-            <numerusform>%n addons went back to the program that installed it.</numerusform>
+            <numerusform>%n addons went back to the programs that installed them.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="589"/>
-        <source>Not everything went back</source>
-        <translation>Not everything went back</translation>
+        <source>Some addons were not given back</source>
+        <translation>Some addons were not given back</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="590"/>
-        <source>%n addon is still in the library, and nothing was deleted.</source>
+        <source>%n addon is still in the library. Nothing was deleted.</source>
         <translation>
-            <numerusform>%n addon is still in the library, and nothing was deleted.</numerusform>
-            <numerusform>%n addons are still in the library, and nothing was deleted.</numerusform>
+            <numerusform>%n addon is still in the library. Nothing was deleted.</numerusform>
+            <numerusform>%n addons are still in the library. Nothing was deleted.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="597"/>
-        <source>%n addon went back</source>
+        <source>%n given back</source>
         <translation>
-            <numerusform>%n addon went back</numerusform>
-            <numerusform>%n addons went back</numerusform>
+            <numerusform>%n given back</numerusform>
+            <numerusform>%n given back</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -446,15 +450,15 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="619"/>
-        <source>Not everything was deleted</source>
-        <translation>Not everything was deleted</translation>
+        <source>Some addons were not deleted</source>
+        <translation>Some addons were not deleted</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="620"/>
-        <source>%n addon was not deleted, and is still in the library.</source>
+        <source>%n addon could not be deleted and is still in the library.</source>
         <translation>
-            <numerusform>%n addon was not deleted, and is still in the library.</numerusform>
-            <numerusform>%n addons were not deleted, and are still in the library.</numerusform>
+            <numerusform>%n addon could not be deleted and is still in the library.</numerusform>
+            <numerusform>%n addons could not be deleted and are still in the library.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -468,10 +472,10 @@
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="597"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="627"/>
-        <source>%n left in the library</source>
+        <source>%n still in the library</source>
         <translation>
-            <numerusform>%n left in the library</numerusform>
-            <numerusform>%n left in the library</numerusform>
+            <numerusform>%n still in the library</numerusform>
+            <numerusform>%n still in the library</numerusform>
         </translation>
     </message>
     <message>
@@ -481,81 +485,73 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="815"/>
-        <source>Enable in bulk</source>
-        <translation>Enable in bulk</translation>
+        <source>Enable addons</source>
+        <translation>Enable addons</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="815"/>
-        <source>Disable in bulk</source>
-        <translation>Disable in bulk</translation>
+        <source>Disable addons</source>
+        <translation>Disable addons</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="816"/>
-        <source>This will enable %1 addons at once.
-
-Continue?</source>
-        <translation>This will enable %1 addons at once.
-
-Continue?</translation>
+        <source>Enable %1 addons?</source>
+        <translation>Enable %1 addons?</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="817"/>
-        <source>This will disable %1 addons at once.
-
-Continue?</source>
-        <translation>This will disable %1 addons at once.
-
-Continue?</translation>
+        <source>Disable %1 addons?</source>
+        <translation>Disable %1 addons?</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="831"/>
-        <source>Nothing was applied: %n addon was left as it is, because the place it goes is taken.</source>
+        <source>Nothing changed: %n addon was skipped because its place in the destination is taken.</source>
         <translation>
-            <numerusform>Nothing was applied: %n addon was left as it is, because the place it goes is taken.</numerusform>
-            <numerusform>Nothing was applied: %n addon was left as it is, because the place it goes is taken.</numerusform>
+            <numerusform>Nothing changed: %n addon was skipped because its place in the destination is taken.</numerusform>
+            <numerusform>Nothing changed: %n addons were skipped because their place in the destination is taken.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="837"/>
-        <source>Nothing to do: the selection was already the way you asked.</source>
-        <translation>Nothing to do: the selection was already the way you asked.</translation>
+        <source>Nothing to do: the selection is already that way.</source>
+        <translation>Nothing to do: the selection is already that way.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="840"/>
-        <source>Nothing was applied: %n addon was not the way the screen showed it. The list is up to date now.</source>
+        <source>Nothing changed: %n addon had changed on the disk. The list has been refreshed.</source>
         <translation>
-            <numerusform>Nothing was applied: %n addon was not the way the screen showed it. The list is up to date now.</numerusform>
-            <numerusform>Nothing was applied: %n addons were not the way the screen showed them. The list is up to date now.</numerusform>
+            <numerusform>Nothing changed: %n addon had changed on the disk. The list has been refreshed.</numerusform>
+            <numerusform>Nothing changed: %n addons had changed on the disk. The list has been refreshed.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="866"/>
-        <source>%n addon left as it is, because the place it goes is taken</source>
+        <source>%n skipped because the place is taken</source>
         <translation>
-            <numerusform>%n addon left as it is, because the place it goes is taken</numerusform>
-            <numerusform>%n addon left as it is, because the place it goes is taken</numerusform>
+            <numerusform>%n skipped because the place is taken</numerusform>
+            <numerusform>%n skipped because the place is taken</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="873"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="886"/>
-        <source>%n operation finished.</source>
+        <source>%n change applied.</source>
         <translation>
-            <numerusform>%n operation finished.</numerusform>
-            <numerusform>%n operations finished.</numerusform>
+            <numerusform>%n change applied.</numerusform>
+            <numerusform>%n changes applied.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="883"/>
-        <source>Not everything was applied</source>
-        <translation>Not everything was applied</translation>
+        <source>Some changes failed</source>
+        <translation>Some changes failed</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="884"/>
-        <source>%n operation failed. Nothing was deleted.</source>
+        <source>%n change failed. No file was deleted.</source>
         <translation>
-            <numerusform>%n operation failed. Nothing was deleted.</numerusform>
-            <numerusform>%n operations failed. Nothing was deleted.</numerusform>
+            <numerusform>%n change failed. No file was deleted.</numerusform>
+            <numerusform>%n changes failed. No file was deleted.</numerusform>
         </translation>
     </message>
     <message>
@@ -569,8 +565,8 @@ Continue?</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="281"/>
-        <source>A library is the folder where your addons live, outside the simulator. Enabling an addon creates a link from the simulator to there.</source>
-        <translation>A library is the folder where your addons live, outside the simulator. Enabling an addon creates a link from the simulator to there.</translation>
+        <source>A library is a folder outside the simulator where you keep your addons. Enabling an addon links it into the simulator.</source>
+        <translation>A library is a folder outside the simulator where you keep your addons. Enabling an addon links it into the simulator.</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="661"/>
@@ -595,10 +591,10 @@ Continue?</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="741"/>
-        <source>%n airport of the simulator was left on, and yours is on too.</source>
+        <source>%n simulator airport stays enabled alongside yours.</source>
         <translation>
-            <numerusform>%n airport of the simulator was left on, and yours is on too.</numerusform>
-            <numerusform>%n airports of the simulator were left on, and yours are on too.</numerusform>
+            <numerusform>%n simulator airport stays enabled alongside yours.</numerusform>
+            <numerusform>%n simulator airports stay enabled alongside yours.</numerusform>
         </translation>
     </message>
     <message>
@@ -608,19 +604,19 @@ Continue?</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="758"/>
-        <source>%n airport of the simulator will not load any more.</source>
+        <source>%n simulator airport disabled.</source>
         <translation>
-            <numerusform>%n airport of the simulator will not load any more.</numerusform>
-            <numerusform>%n airports of the simulator will not load any more.</numerusform>
+            <numerusform>%n simulator airport disabled.</numerusform>
+            <numerusform>%n simulator airports disabled.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="865"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="890"/>
-        <source>%n operation finished</source>
+        <source>%n applied</source>
         <translation>
-            <numerusform>%n operation finished</numerusform>
-            <numerusform>%n operations finished</numerusform>
+            <numerusform>%n applied</numerusform>
+            <numerusform>%n applied</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -633,8 +629,8 @@ Continue?</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="898"/>
-        <source>Register a library to get started.</source>
-        <translation>Register a library to get started.</translation>
+        <source>Add a library to get started.</source>
+        <translation>Add a library to get started.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="906"/>
@@ -646,13 +642,13 @@ Continue?</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1128"/>
-        <source>Choose which copy stays…</source>
-        <translation>Choose which copy stays…</translation>
+        <source>Choose which copy to keep…</source>
+        <translation>Choose which copy to keep…</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1128"/>
-        <source>Resolve the copy conflict…</source>
-        <translation>Resolve the copy conflict…</translation>
+        <source>Resolve the conflict…</source>
+        <translation>Resolve the conflict…</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1165"/>
@@ -691,28 +687,28 @@ Continue?</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1217"/>
-        <source>No addon from here is in a category other than the one the rules suggest.</source>
-        <translation>No addon from here is in a category other than the one the rules suggest.</translation>
+        <source>Every addon here is already in the suggested category.</source>
+        <translation>Every addon here is already in the suggested category.</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1234"/>
-        <source>Link again in the profile destination</source>
-        <translation>Link again in the profile destination</translation>
+        <source>Relink in the profile destination</source>
+        <translation>Relink in the profile destination</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1242"/>
-        <source>Adopt the destination the addons are already in</source>
-        <translation>Adopt the destination the addons are already in</translation>
+        <source>Keep the destination they are linked in</source>
+        <translation>Keep the destination they are linked in</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1264"/>
-        <source>Inherit the destination from above</source>
-        <translation>Inherit the destination from above</translation>
+        <source>Use the parent category&apos;s destination</source>
+        <translation>Use the parent category&apos;s destination</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1273"/>
-        <source>Pin the destination to %1</source>
-        <translation>Pin the destination to %1</translation>
+        <source>Always use %1</source>
+        <translation>Always use %1</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1283"/>
@@ -721,21 +717,21 @@ Continue?</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="1284"/>
-        <source>%n addon from here is still linked away from the destination the profile now says to use.</source>
+        <source>%n addon here is still linked in the previous destination.</source>
         <translation>
-            <numerusform>%n addon from here is still linked away from the destination the profile now says to use.</numerusform>
-            <numerusform>%n addons from here are still linked away from the destination the profile now says to use.</numerusform>
+            <numerusform>%n addon here is still linked in the previous destination.</numerusform>
+            <numerusform>%n addons here are still linked in the previous destination.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1288"/>
-        <source>Link again now</source>
-        <translation>Link again now</translation>
+        <source>Relink now</source>
+        <translation>Relink now</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1289"/>
-        <source>Leave it as it is</source>
-        <translation>Leave it as it is</translation>
+        <source>Leave as is</source>
+        <translation>Leave as is</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1323"/>
@@ -744,18 +740,18 @@ Continue?</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1338"/>
-        <source>Repeated library</source>
-        <translation>Repeated library</translation>
+        <source>Already in a library</source>
+        <translation>Already in a library</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1339"/>
-        <source>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</source>
-        <translation>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</translation>
+        <source>That folder is inside a library you already added. Choose the top folder where you keep your addons; its subfolders become categories.</source>
+        <translation>That folder is inside a library you already added. Choose the top folder where you keep your addons; its subfolders become categories.</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1344"/>
-        <source>Library registered</source>
-        <translation>Library registered</translation>
+        <source>Library added</source>
+        <translation>Library added</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1345"/>
@@ -764,18 +760,18 @@ Continue?</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="748"/>
-        <source>%n addon of yours covers a place another one of yours covers too.</source>
+        <source>%n addon covers the same airport as another of your addons.</source>
         <translation>
-            <numerusform>%n addon of yours covers a place another one of yours covers too.</numerusform>
-            <numerusform>%n addons of yours cover places others of yours cover too.</numerusform>
+            <numerusform>%n addon covers the same airport as another of your addons.</numerusform>
+            <numerusform>%n addons cover the same airports as other addons of yours.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="764"/>
-        <source>%n pair will not be brought up again.</source>
+        <source>No more warnings about %n pair.</source>
         <translation>
-            <numerusform>%n pair will not be brought up again.</numerusform>
-            <numerusform>%n pairs will not be brought up again.</numerusform>
+            <numerusform>No more warnings about %n pair.</numerusform>
+            <numerusform>No more warnings about %n pairs.</numerusform>
         </translation>
     </message>
 </context>
@@ -784,8 +780,8 @@ Continue?</translation>
     <message>
         <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="287"/>
         <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="304"/>
-        <source>Give the category a name.</source>
-        <translation>Give the category a name.</translation>
+        <source>Enter a name for the category.</source>
+        <translation>Enter a name for the category.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="351"/>
@@ -794,18 +790,18 @@ Continue?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="398"/>
-        <source>The enabled addons of this category are linked in different destinations. Choose a destination for the category instead of adopting what is on the disk.</source>
-        <translation>The enabled addons of this category are linked in different destinations. Choose a destination for the category instead of adopting what is on the disk.</translation>
+        <source>The enabled addons of this category are linked in different destinations. Choose one destination for the category instead.</source>
+        <translation>The enabled addons of this category are linked in different destinations. Choose one destination for the category instead.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="405"/>
-        <source>No addon of this category is enabled, so there is no destination to adopt.</source>
-        <translation>No addon of this category is enabled, so there is no destination to adopt.</translation>
+        <source>No addon of this category is enabled, so there is no destination to keep.</source>
+        <translation>No addon of this category is enabled, so there is no destination to keep.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="444"/>
-        <source>No addon from here is linked away from the destination the profile says to use.</source>
-        <translation>No addon from here is linked away from the destination the profile says to use.</translation>
+        <source>Every addon here is already linked in the profile destination.</source>
+        <translation>Every addon here is already linked in the profile destination.</translation>
     </message>
 </context>
 <context>
@@ -1523,15 +1519,15 @@ It also exists in the library: %2</translation>
     <name>CoverageDialog</name>
     <message>
         <location filename="../src/view/library/CoverageDialog.cpp" line="19"/>
-        <source>Two airports for the same place</source>
-        <translation>Two airports for the same place</translation>
+        <source>The simulator has this airport too</source>
+        <translation>The simulator has this airport too</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/CoverageDialog.cpp" line="22"/>
-        <source>The simulator ships an airport of its own for %n of the places you are turning on. Its code comes from the package name, because that content is an archive the app cannot open, and it is the same code yours carries. Which one wins is the simulator&apos;s to decide.</source>
+        <source>The simulator ships its own version of %n airport you are enabling. If both stay enabled, the simulator decides which one loads. The match is made by the package name.</source>
         <translation>
-            <numerusform>The simulator ships an airport of its own for %n of the places you are turning on. Its code comes from the package name, because that content is an archive the app cannot open, and it is the same code yours carries. Which one wins is the simulator&apos;s to decide.</numerusform>
-            <numerusform>The simulator ships an airport of its own for %n of the places you are turning on. Their codes come from the package names, because that content is an archive the app cannot open, and they are the same codes yours carry. Which one wins is the simulator&apos;s to decide.</numerusform>
+            <numerusform>The simulator ships its own version of %n airport you are enabling. If both stay enabled, the simulator decides which one loads. The match is made by the package name.</numerusform>
+            <numerusform>The simulator ships its own version of %n airports you are enabling. If both stay enabled, the simulator decides which one loads. The match is made by the package name.</numerusform>
         </translation>
     </message>
     <message>
@@ -1551,23 +1547,23 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/CoverageDialog.cpp" line="69"/>
-        <source>Turning the simulator&apos;s one off writes one value in the package list. Nothing is added, removed or reordered, and the app keeps a copy of the file. Leaving both on turns your addon on all the same.</source>
-        <translation>Turning the simulator&apos;s one off writes one value in the package list. Nothing is added, removed or reordered, and the app keeps a copy of the file. Leaving both on turns your addon on all the same.</translation>
+        <source>Disabling the simulator&apos;s airport changes only its entry in the package list, and a backup of the file is kept. Your addon is enabled either way.</source>
+        <translation>Disabling the simulator&apos;s airport changes only its entry in the package list, and a backup of the file is kept. Your addon is enabled either way.</translation>
     </message>
     <message>
         <location filename="../src/view/library/CoverageDialog.cpp" line="76"/>
-        <source>Turn the simulator&apos;s one off</source>
-        <translation>Turn the simulator&apos;s one off</translation>
+        <source>Disable the simulator&apos;s airport</source>
+        <translation>Disable the simulator&apos;s airport</translation>
     </message>
     <message>
         <location filename="../src/view/library/CoverageDialog.cpp" line="77"/>
-        <source>Turn the simulator&apos;s ones off</source>
-        <translation>Turn the simulator&apos;s ones off</translation>
+        <source>Disable the simulator&apos;s airports</source>
+        <translation>Disable the simulator&apos;s airports</translation>
     </message>
     <message>
         <location filename="../src/view/library/CoverageDialog.cpp" line="81"/>
-        <source>Leave both on</source>
-        <translation>Leave both on</translation>
+        <source>Keep both enabled</source>
+        <translation>Keep both enabled</translation>
     </message>
 </context>
 <context>
@@ -1585,8 +1581,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="66"/>
-        <source>You can put it back from Windows. Windows may quietly evict older items from the Bin to make room for these %1, and the app cannot prevent that.</source>
-        <translation>You can put it back from Windows. Windows may quietly evict older items from the Bin to make room for these %1, and the app cannot prevent that.</translation>
+        <source>You can restore it from the Recycle Bin. Windows may remove older items from the Bin to make room for these %1.</source>
+        <translation>You can restore it from the Recycle Bin. Windows may remove older items from the Bin to make room for these %1.</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="73"/>
@@ -1597,20 +1593,20 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="73"/>
-        <source>It does not come back. Not through the Recycle Bin either.</source>
-        <translation>It does not come back. Not through the Recycle Bin either.</translation>
+        <source>This cannot be undone.</source>
+        <translation>This cannot be undone.</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="77"/>
-        <source>Give it back to the other program</source>
-        <translation>Give it back to the other program</translation>
+        <source>Give it back to the program that installed it</source>
+        <translation>Give it back to the program that installed it</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/DeleteDialog.cpp" line="98"/>
-        <source>%n selected item is not an addon and stays where it is.</source>
+        <source>%n selected item is not an addon and will be kept.</source>
         <translation>
-            <numerusform>%n selected item is not an addon and stays where it is.</numerusform>
-            <numerusform>%n selected items are not addons and stay where they are.</numerusform>
+            <numerusform>%n selected item is not an addon and will be kept.</numerusform>
+            <numerusform>%n selected items are not addons and will be kept.</numerusform>
         </translation>
     </message>
     <message>
@@ -1619,13 +1615,13 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="152"/>
-        <source>The bytes move back to %1, the folder the other program manages, and the library copy goes away with the import that made it.</source>
-        <translation>The bytes move back to %1, the folder the other program manages, and the library copy goes away with the import that made it.</translation>
+        <source>The files move back to %1, where the other program keeps them, and leave the library.</source>
+        <translation>The files move back to %1, where the other program keeps them, and leave the library.</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="157"/>
-        <source>The bytes move back to the folders the other programs manage, and each library copy goes away with the import that made it.</source>
-        <translation>The bytes move back to the folders the other programs manage, and each library copy goes away with the import that made it.</translation>
+        <source>The files move back to the folders the other programs keep them in, and leave the library.</source>
+        <translation>The files move back to the folders the other programs keep them in, and leave the library.</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="167"/>
@@ -1648,21 +1644,21 @@ It also exists in the library: %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/DeleteDialog.cpp" line="187"/>
-        <source>%n of the selected addons cannot go there, and this route leaves them in the library:</source>
+        <source>%n selected addon cannot go to the Recycle Bin and will stay in the library:</source>
         <translation>
-            <numerusform>%n of the selected addons cannot go there, and this route leaves it in the library:</numerusform>
-            <numerusform>%n of the selected addons cannot go there, and this route leaves them in the library:</numerusform>
+            <numerusform>%n selected addon cannot go to the Recycle Bin and will stay in the library:</numerusform>
+            <numerusform>%n selected addons cannot go to the Recycle Bin and will stay in the library:</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="200"/>
-        <source>%1: the link in %2 goes away with it · %3</source>
-        <translation>%1: the link in %2 goes away with it · %3</translation>
+        <source>%1: its link in %2 is removed too · %3</source>
+        <translation>%1: its link in %2 is removed too · %3</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="211"/>
-        <source>The following addons will be deleted and disabled:</source>
-        <translation>The following addons will be deleted and disabled:</translation>
+        <source>These addons are enabled and will be disabled first:</source>
+        <translation>These addons are enabled and will be disabled first:</translation>
     </message>
     <message>
         <location filename="../src/view/library/DeleteDialog.cpp" line="219"/>
@@ -2915,8 +2911,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/LibraryRootDialog.cpp" line="49"/>
-        <source>This folder is %1 deep. Addons routinely nest %2 characters below their own folder, and Windows stops at %3 for some operations, including the Recycle Bin.</source>
-        <translation>This folder is %1 deep. Addons routinely nest %2 characters below their own folder, and Windows stops at %3 for some operations, including the Recycle Bin.</translation>
+        <source>The path of this folder already takes %1. Addons often add another %2 characters below their own folder, and some Windows operations, including the Recycle Bin, fail past %3.</source>
+        <translation>The path of this folder already takes %1. Addons often add another %2 characters below their own folder, and some Windows operations, including the Recycle Bin, fail past %3.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/LibraryRootDialog.cpp" line="51"/>
@@ -2933,8 +2929,8 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/LibraryRootDialog.cpp" line="66"/>
-        <source>A short root, for comparison</source>
-        <translation>A short root, for comparison</translation>
+        <source>A short path, for comparison</source>
+        <translation>A short path, for comparison</translation>
     </message>
     <message>
         <source>Nothing is blocked. Addons that go past the limit will say so when it matters, and Diagnostics keeps the longest path of each library.</source>
@@ -2942,13 +2938,13 @@ It also exists in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/LibraryRootDialog.cpp" line="69"/>
-        <source>Pick another folder</source>
-        <translation>Pick another folder</translation>
+        <source>Choose another folder</source>
+        <translation>Choose another folder</translation>
     </message>
     <message>
         <location filename="../src/view/library/LibraryRootDialog.cpp" line="71"/>
-        <source>Use this one</source>
-        <translation>Use this one</translation>
+        <source>Use this folder</source>
+        <translation>Use this folder</translation>
     </message>
 </context>
 <context>
@@ -5850,26 +5846,26 @@ Size %2</translation>
     <name>SharedAirportsDialog</name>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="32"/>
-        <source>Two addons for the same place</source>
-        <translation>Two addons for the same place</translation>
+        <source>Two addons for the same airport</source>
+        <translation>Two addons for the same airport</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="35"/>
-        <source>%n addon you just turned on covers a place another addon of yours already covers. The codes are read from inside the scenery files, and the app compares against the addons whose scenery it has read so far.</source>
+        <source>%n addon you just enabled covers the same airport as another enabled addon. Only addons whose scenery has already been scanned are compared.</source>
         <translation>
-            <numerusform>%n addon you just turned on covers a place another addon of yours already covers. The codes are read from inside the scenery files, and the app compares against the addons whose scenery it has read so far.</numerusform>
-            <numerusform>%n addons you just turned on cover places other addons of yours already cover. The codes are read from inside the scenery files, and the app compares against the addons whose scenery it has read so far.</numerusform>
+            <numerusform>%n addon you just enabled covers the same airport as another enabled addon. Only addons whose scenery has already been scanned are compared.</numerusform>
+            <numerusform>%n addons you just enabled cover the same airports as other enabled addons. Only addons whose scenery has already been scanned are compared.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="50"/>
-        <source>You turned on</source>
-        <translation>You turned on</translation>
+        <source>You enabled</source>
+        <translation>You enabled</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="50"/>
-        <source>Already on</source>
-        <translation>Already on</translation>
+        <source>Already enabled</source>
+        <translation>Already enabled</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="50"/>
@@ -5878,8 +5874,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="83"/>
-        <source>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Checking a pair keeps the app quiet about that pair from now on, and leaves the others alone.</source>
-        <translation>Nothing was undone and both stay on: which one the simulator loads is its own to decide, and turning one off is the switch you already use. Checking a pair keeps the app quiet about that pair from now on, and leaves the others alone.</translation>
+        <source>Both stay enabled, and the simulator decides which one loads. Check a pair to stop the warnings about it.</source>
+        <translation>Both stay enabled, and the simulator decides which one loads. Check a pair to stop the warnings about it.</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="52"/>
@@ -5893,8 +5889,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="106"/>
-        <source>Remember the checked ones</source>
-        <translation>Remember the checked ones</translation>
+        <source>Stop warning about the checked ones</source>
+        <translation>Stop warning about the checked ones</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="119"/>
@@ -5903,8 +5899,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SharedAirportsDialog.cpp" line="91"/>
-        <source>Leave them both on</source>
-        <translation>Leave them both on</translation>
+        <source>Keep both enabled</source>
+        <translation>Keep both enabled</translation>
     </message>
 </context>
 <context>
@@ -6070,15 +6066,15 @@ Size %2</translation>
     <name>StartupEntryDialog</name>
     <message>
         <location filename="../src/view/library/StartupEntryDialog.cpp" line="15"/>
-        <source>The simulator launches this from inside the addon</source>
-        <translation>The simulator launches this from inside the addon</translation>
+        <source>Startup program inside the addon</source>
+        <translation>Startup program inside the addon</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/StartupEntryDialog.cpp" line="18"/>
-        <source>%n startup entry of the simulator points inside what you are turning off. Leave it on and the simulator keeps trying to launch a program that will not be there.</source>
+        <source>%n simulator startup entry points inside what you are disabling. If it stays enabled, the simulator will keep trying to launch a program that is no longer there.</source>
         <translation>
-            <numerusform>%n startup entry of the simulator points inside what you are turning off. Leave it on and the simulator keeps trying to launch a program that will not be there.</numerusform>
-            <numerusform>%n startup entry of the simulator points inside what you are turning off. Leave it on and the simulator keeps trying to launch a program that will not be there.</numerusform>
+            <numerusform>%n simulator startup entry points inside what you are disabling. If it stays enabled, the simulator will keep trying to launch a program that is no longer there.</numerusform>
+            <numerusform>%n simulator startup entries point inside what you are disabling. If they stay enabled, the simulator will keep trying to launch programs that are no longer there.</numerusform>
         </translation>
     </message>
     <message>
@@ -6097,18 +6093,18 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/StartupEntryDialog.cpp" line="62"/>
-        <source>Turn the addon and the entry off</source>
-        <translation>Turn the addon and the entry off</translation>
+        <source>Disable the addon and the entry</source>
+        <translation>Disable the addon and the entry</translation>
     </message>
     <message>
         <location filename="../src/view/library/StartupEntryDialog.cpp" line="62"/>
-        <source>Turn the addon and the entries off</source>
-        <translation>Turn the addon and the entries off</translation>
+        <source>Disable the addon and the entries</source>
+        <translation>Disable the addon and the entries</translation>
     </message>
     <message>
         <location filename="../src/view/library/StartupEntryDialog.cpp" line="68"/>
-        <source>Only turn the addon off</source>
-        <translation>Only turn the addon off</translation>
+        <source>Disable only the addon</source>
+        <translation>Disable only the addon</translation>
     </message>
 </context>
 <context>
@@ -6264,8 +6260,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SuggestionDialog.cpp" line="22"/>
-        <source>The rules that get it right on their own come checked. The livery rule comes unchecked because it is often wrong: check it before applying.</source>
-        <translation>The rules that get it right on their own come checked. The livery rule comes unchecked because it is often wrong: check it before applying.</translation>
+        <source>Reliable rules come checked. The livery rule is often wrong, so it comes unchecked: review it before applying.</source>
+        <translation>Reliable rules come checked. The livery rule is often wrong, so it comes unchecked: review it before applying.</translation>
     </message>
     <message>
         <location filename="../src/view/library/SuggestionDialog.cpp" line="35"/>
@@ -6274,34 +6270,34 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SuggestionDialog.cpp" line="52"/>
-        <source>Move the checked ones</source>
-        <translation>Move the checked ones</translation>
+        <source>Move checked</source>
+        <translation>Move checked</translation>
     </message>
 </context>
 <context>
     <name>SwapDialog</name>
     <message>
         <location filename="../src/view/library/SwapDialog.cpp" line="23"/>
-        <source>That spot is taken</source>
-        <translation>That spot is taken</translation>
+        <source>Folder name already in use</source>
+        <translation>Folder name already in use</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/SwapDialog.cpp" line="26"/>
-        <source>%n addon of yours is using the place where the one you asked for goes. Both sides are addons of yours, so the app can swap them.</source>
+        <source>%n addon you are enabling has the same folder name as another enabled addon of yours. Swapping disables that one and enables the one you chose.</source>
         <translation>
-            <numerusform>%n addon of yours is using the place where the one you asked for goes. Both sides are addons of yours, so the app can swap them.</numerusform>
-            <numerusform>%n addon of yours is using the place where the one you asked for goes. Both sides are addons of yours, so the app can swap them.</numerusform>
+            <numerusform>%n addon you are enabling has the same folder name as another enabled addon of yours. Swapping disables that one and enables the one you chose.</numerusform>
+            <numerusform>%n addons you are enabling have the same folder names as other enabled addons of yours. Swapping disables those and enables the ones you chose.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/library/SwapDialog.cpp" line="39"/>
-        <source>Goes off</source>
-        <translation>Goes off</translation>
+        <source>Will be disabled</source>
+        <translation>Will be disabled</translation>
     </message>
     <message>
         <location filename="../src/view/library/SwapDialog.cpp" line="41"/>
-        <source>Goes on</source>
-        <translation>Goes on</translation>
+        <source>Will be enabled</source>
+        <translation>Will be enabled</translation>
     </message>
     <message>
         <location filename="../src/view/library/SwapDialog.cpp" line="43"/>
@@ -6318,8 +6314,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/library/SwapDialog.cpp" line="72"/>
-        <source>Swap them</source>
-        <translation>Swap them</translation>
+        <source>Swap</source>
+        <translation>Swap</translation>
     </message>
     <message>
         <location filename="../src/view/library/SwapDialog.cpp" line="114"/>

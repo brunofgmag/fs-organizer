@@ -244,13 +244,13 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&deletion_, &DeletionViewModel::Weighing, this,
             [this]
             {
-                emit StatusChanged(tr("Measuring what you selected…"));
+                emit StatusChanged(tr("Measuring the selection…"));
             });
 
     connect(&deletion_, &DeletionViewModel::Deleting, this,
             [this]
             {
-                emit StatusChanged(tr("Deleting what you selected…"));
+                emit StatusChanged(tr("Deleting the selection…"));
             });
 
     connect(&deletion_, &DeletionViewModel::Planned, this, &AddonTreePage::OfferToDelete);
@@ -260,7 +260,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&coverage_, &CoverageViewModel::CheckProgressed, this,
             [this](const int read, const int outOf)
             {
-                emit StatusChanged(tr("Reading the scenery of what you turned on: %1 of %2").arg(read).arg(outOf));
+                emit StatusChanged(tr("Checking the airports of what you enabled: %1 of %2").arg(read).arg(outOf));
             });
 
     connect(&coverage_, &CoverageViewModel::TurningThemOnWasChecked, this, &AddonTreePage::OnTurningThemOnWasChecked);
@@ -283,22 +283,22 @@ void AddonTreePage::changeEvent(QEvent* event)
 
 void AddonTreePage::RetranslateUi() const
 {
-    enable_->setText(tr("Check the selected ones"));
-    disable_->setText(tr("Uncheck the selected ones"));
-    undo_->setText(tr("Undo the last batch"));
-    rescan_->setText(tr("Read again from the disk"));
-    search_->setPlaceholderText(tr("Search addon…"));
+    enable_->setText(tr("Enable selected"));
+    disable_->setText(tr("Disable selected"));
+    undo_->setText(tr("Undo last change"));
+    rescan_->setText(tr("Refresh"));
+    search_->setPlaceholderText(tr("Search addons…"));
     hideEmpty_->setText(tr("Hide empty categories"));
     relink_->setText(tr("Repoint to the library"));
     moveTo_->setText(tr("Move to…"));
-    openFolder_->setText(tr("Open the folder"));
+    openFolder_->setText(tr("Open folder"));
     ShowWhatTheDocumentationHolds();
     delete_->setText(tr("Delete…"));
     panel_->RenameTheFallback(tr("Addon selected"));
     invite_->Retell(tr("This profile has no library yet."),
-                    tr("A library is the folder where your addons live, outside the simulator. Enabling an addon "
-                       "creates a link from the simulator to there."));
-    inviteAction_->setText(tr("Register library…"));
+                    tr("A library is a folder outside the simulator where you keep your addons. Enabling an addon "
+                       "links it into the simulator."));
+    inviteAction_->setText(tr("Add library…"));
 }
 
 QWidget* AddonTreePage::CreateActions()
@@ -451,7 +451,7 @@ void AddonTreePage::ShowTheSelectedAddon()
     if (addon)
     {
         fields_.append({tr("Linked in"), AsText(destination / node->path.filename())});
-        fields_.append({tr("Target exists"), broken ? tr("no, the link cannot find the folder") : tr("yes")});
+        fields_.append({tr("Link"), broken ? tr("broken, the target folder is missing") : tr("working")});
         fields_.append(
             {tr("Enabled"), model_.data(source, AddonTreeModel::EnabledRole).toBool() ? tr("yes") : tr("no")});
 
@@ -507,7 +507,7 @@ void AddonTreePage::ShowTheSelectedBatch(const QModelIndexList& rows)
 
     if (tally.strayed > 0)
     {
-        fields_.append({tr("Away from the destination"), QString::number(tally.strayed)});
+        fields_.append({tr("In another destination"), QString::number(tally.strayed)});
     }
 
     fields_.append({tr("Spread across"), tr("%n category", nullptr, static_cast<int>(tally.categoriesCrossed))});
@@ -577,7 +577,7 @@ void AddonTreePage::OfferToDelete(const DeletionPlan& plan)
 {
     if (plan.addons.empty())
     {
-        emit StatusChanged(tr("Nothing to delete: the selection has no addon in it."));
+        emit StatusChanged(tr("Nothing to delete: the selection has no addons."));
         return;
     }
 
@@ -608,15 +608,15 @@ void AddonTreePage::OnGaveBack(const std::vector<FileOperationResult>& results)
         return;
     }
 
-    QMessageBox dialog(QMessageBox::Warning, tr("Not everything went back"),
-                       tr("%n addon is still in the library, and nothing was deleted.", nullptr, failed),
-                       QMessageBox::Ok, this);
+    QMessageBox dialog(QMessageBox::Warning, tr("Some addons were not given back"),
+                       tr("%n addon is still in the library. Nothing was deleted.", nullptr, failed), QMessageBox::Ok,
+                       this);
     dialog.setInformativeText(tr("%n addon went back to the program that installed it.", nullptr, done));
     dialog.setDetailedText(lines.join('\n'));
     dialog.exec();
 
     emit StatusChanged(
-        tr("%1 · %2").arg(tr("%n addon went back", nullptr, done), tr("%n left in the library", nullptr, failed)));
+        tr("%1 · %2").arg(tr("%n given back", nullptr, done), tr("%n still in the library", nullptr, failed)));
 }
 
 void AddonTreePage::OnDeleted(const std::vector<DeletionResult>& results, const DeletionRoute route)
@@ -638,15 +638,15 @@ void AddonTreePage::OnDeleted(const std::vector<DeletionResult>& results, const 
         return;
     }
 
-    QMessageBox dialog(QMessageBox::Warning, tr("Not everything was deleted"),
-                       tr("%n addon was not deleted, and is still in the library.", nullptr, failed), QMessageBox::Ok,
-                       this);
+    QMessageBox dialog(QMessageBox::Warning, tr("Some addons were not deleted"),
+                       tr("%n addon could not be deleted and is still in the library.", nullptr, failed),
+                       QMessageBox::Ok, this);
     dialog.setInformativeText(tr("%n addon deleted.", nullptr, done));
     dialog.setDetailedText(lines.join('\n'));
     dialog.exec();
 
     emit StatusChanged(
-        tr("%1 · %2").arg(tr("%n addon deleted", nullptr, done), tr("%n left in the library", nullptr, failed)));
+        tr("%1 · %2").arg(tr("%n addon deleted", nullptr, done), tr("%n still in the library", nullptr, failed)));
 }
 
 void AddonTreePage::MoveTheSelectedAddon()
@@ -770,7 +770,7 @@ void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirpo
 
     if (marked.empty())
     {
-        emit StatusChanged(tr("%n addon of yours covers a place another one of yours covers too.", nullptr,
+        emit StatusChanged(tr("%n addon covers the same airport as another of your addons.", nullptr,
                               static_cast<int>(shared.size())));
 
         return;
@@ -778,7 +778,7 @@ void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirpo
 
     coverage_.TheyCanAllCoexist(marked);
 
-    emit StatusChanged(tr("%n pair will not be brought up again.", nullptr, static_cast<int>(marked.size())));
+    emit StatusChanged(tr("No more warnings about %n pair.", nullptr, static_cast<int>(marked.size())));
 }
 
 void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<CoverageLine>& covered)
@@ -791,8 +791,8 @@ void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<Coverage
     CoverageDialog dialog(covered, this);
     if (dialog.exec() != QDialog::Accepted)
     {
-        emit StatusChanged(tr("%n airport of the simulator was left on, and yours is on too.", nullptr,
-                              static_cast<int>(covered.size())));
+        emit StatusChanged(
+            tr("%n simulator airport stays enabled alongside yours.", nullptr, static_cast<int>(covered.size())));
 
         return;
     }
@@ -812,8 +812,7 @@ void AddonTreePage::TurnOffWhatTheSimulatorAlsoCovers(const std::vector<Coverage
         return;
     }
 
-    emit StatusChanged(
-        tr("%n airport of the simulator will not load any more.", nullptr, static_cast<int>(covered.size())));
+    emit StatusChanged(tr("%n simulator airport disabled.", nullptr, static_cast<int>(covered.size())));
 }
 
 std::vector<TakenPlace> AddonTreePage::SwapsTheUserAgreedTo(const std::vector<TakenPlace>& swaps)
@@ -863,9 +862,8 @@ bool AddonTreePage::TheUserMeantIt(const std::vector<const TreeNode*>& nodes, co
     }
 
     const QMessageBox::StandardButton answer =
-        QMessageBox::question(this, enable ? tr("Enable in bulk") : tr("Disable in bulk"),
-                              enable ? tr("This will enable %1 addons at once.\n\nContinue?").arg(many)
-                                     : tr("This will disable %1 addons at once.\n\nContinue?").arg(many));
+        QMessageBox::question(this, enable ? tr("Enable addons") : tr("Disable addons"),
+                              enable ? tr("Enable %1 addons?").arg(many) : tr("Disable %1 addons?").arg(many));
 
     return answer == QMessageBox::Yes;
 }
@@ -879,17 +877,17 @@ QString AddonTreePage::NothingChangedBecause(const LinkBatchReport& report) cons
 {
     if (report.leftAlone > 0)
     {
-        return tr("Nothing was applied: %n addon was left as it is, because the place it goes is taken.", nullptr,
+        return tr("Nothing changed: %n addon was skipped because its place in the destination is taken.", nullptr,
                   static_cast<int>(report.leftAlone));
     }
 
     if (report.drifted == 0)
     {
-        return tr("Nothing to do: the selection was already the way you asked.");
+        return tr("Nothing to do: the selection is already that way.");
     }
 
-    return tr("Nothing was applied: %n addon was not the way the screen showed it. The list is up to date now.",
-              nullptr, static_cast<int>(report.drifted));
+    return tr("Nothing changed: %n addon had changed on the disk. The list has been refreshed.", nullptr,
+              static_cast<int>(report.drifted));
 }
 
 void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
@@ -913,15 +911,15 @@ void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
 
     if (failed.empty() && report.leftAlone > 0)
     {
-        emit StatusChanged(tr("%1 · %2").arg(tr("%n operation finished", nullptr, done),
-                                             tr("%n addon left as it is, because the place it goes is taken", nullptr,
-                                                static_cast<int>(report.leftAlone))));
+        emit StatusChanged(tr("%1 · %2").arg(
+            tr("%n applied", nullptr, done),
+            tr("%n skipped because the place is taken", nullptr, static_cast<int>(report.leftAlone))));
         return;
     }
 
     if (failed.empty())
     {
-        emit StatusChanged(tr("%n operation finished.", nullptr, done));
+        emit StatusChanged(tr("%n change applied.", nullptr, done));
         return;
     }
 
@@ -931,22 +929,22 @@ void AddonTreePage::OnBatchFinished(const LinkBatchReport& report)
         lines.append(Describe(result));
     }
 
-    QMessageBox dialog(QMessageBox::Warning, tr("Not everything was applied"),
-                       tr("%n operation failed. Nothing was deleted.", nullptr, static_cast<int>(failed.size())),
+    QMessageBox dialog(QMessageBox::Warning, tr("Some changes failed"),
+                       tr("%n change failed. No file was deleted.", nullptr, static_cast<int>(failed.size())),
                        QMessageBox::Ok, this);
-    dialog.setInformativeText(tr("%n operation finished.", nullptr, done));
+    dialog.setInformativeText(tr("%n change applied.", nullptr, done));
     dialog.setDetailedText(lines.join('\n'));
     dialog.exec();
 
-    emit StatusChanged(tr("%1 · %2").arg(tr("%n operation finished", nullptr, done),
-                                         tr("%n failed", nullptr, static_cast<int>(failed.size()))));
+    emit StatusChanged(
+        tr("%1 · %2").arg(tr("%n applied", nullptr, done), tr("%n failed", nullptr, static_cast<int>(failed.size()))));
 }
 
 void AddonTreePage::PublishSummary()
 {
     if (viewModel_.Profile().libraries.empty())
     {
-        emit SummaryChanged(tr("Register a library to get started."));
+        emit SummaryChanged(tr("Add a library to get started."));
         emit MeterChanged(0, 0);
         return;
     }
@@ -1176,7 +1174,7 @@ void AddonTreePage::AddConflictAction(QMenu& menu, const QModelIndex& position)
 
     const auto chosen = conflict.value<CopyConflict>();
     menu.addAction(
-        chosen.theProvenanceIsAnotherProgram ? tr("Choose which copy stays…") : tr("Resolve the copy conflict…"), this,
+        chosen.theProvenanceIsAnotherProgram ? tr("Choose which copy to keep…") : tr("Resolve the conflict…"), this,
         [this, chosen]
         {
             emit ConflictChosen(chosen);
@@ -1265,7 +1263,7 @@ void AddonTreePage::ShowSuggestions(const TreeNode* node)
     if (!dialog.HasAnythingToShow())
     {
         QMessageBox::information(this, tr("Category suggestions"),
-                                 tr("No addon from here is in a category other than the one the rules suggest."));
+                                 tr("Every addon here is already in the suggested category."));
         return;
     }
 
@@ -1282,7 +1280,7 @@ void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
         return;
     }
 
-    menu.addAction(tr("Link again in the profile destination"), this,
+    menu.addAction(tr("Relink in the profile destination"), this,
                    [this, node]
                    {
                        viewModel_.RelinkToTheProfileDestination(Chosen(node));
@@ -1290,7 +1288,7 @@ void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
 
     if (node->kind == TreeNodeKind::Category)
     {
-        menu.addAction(tr("Adopt the destination the addons are already in"), this,
+        menu.addAction(tr("Keep the destination they are linked in"), this,
                        [this, node]
                        {
                            viewModel_.AdoptDestination(node);
@@ -1312,7 +1310,7 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
 
     AddStrayActions(menu, node);
 
-    menu.addAction(tr("Inherit the destination from above"), this,
+    menu.addAction(tr("Use the parent category's destination"), this,
                    [this, node]
                    {
                        ChooseDestination(Chosen(node), {});
@@ -1321,7 +1319,7 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
 
     for (const std::filesystem::path& destination : profile.destinations)
     {
-        menu.addAction(tr("Pin the destination to %1").arg(AsText(destination.filename())), this,
+        menu.addAction(tr("Always use %1").arg(AsText(destination.filename())), this,
                        [this, node, destination]
                        {
                            ChooseDestination(Chosen(node), destination);
@@ -1331,13 +1329,13 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
 
 bool AddonTreePage::AskWhetherToRelink(const std::size_t strayed)
 {
-    QMessageBox question(QMessageBox::Question, tr("Destination changed"),
-                         tr("%n addon from here is still linked away from the destination the profile now says to use.",
-                            nullptr, static_cast<int>(strayed)),
-                         QMessageBox::NoButton, this);
+    QMessageBox question(
+        QMessageBox::Question, tr("Destination changed"),
+        tr("%n addon here is still linked in the previous destination.", nullptr, static_cast<int>(strayed)),
+        QMessageBox::NoButton, this);
 
-    const QPushButton* relink = question.addButton(tr("Link again now"), QMessageBox::AcceptRole);
-    question.addButton(tr("Leave it as it is"), QMessageBox::RejectRole);
+    const QPushButton* relink = question.addButton(tr("Relink now"), QMessageBox::AcceptRole);
+    question.addButton(tr("Leave as is"), QMessageBox::RejectRole);
     question.exec();
 
     return question.clickedButton() == relink;
@@ -1384,9 +1382,9 @@ void AddonTreePage::BrowseForLibrary()
 
     if (!viewModel_.WouldAcceptLibrary(AsPath(chosen)))
     {
-        QMessageBox::warning(this, tr("Repeated library"),
-                             tr("That folder is already inside a registered library. Choose the root folder where the "
-                                "addons are kept; its subfolders become categories."));
+        QMessageBox::warning(this, tr("Already in a library"),
+                             tr("That folder is inside a library you already added. Choose the top folder where you "
+                                "keep your addons; its subfolders become categories."));
         return;
     }
 
@@ -1399,13 +1397,13 @@ void AddonTreePage::SayTheLibraryWasRegistered(const std::filesystem::path& path
 {
     if (!report.Accepted())
     {
-        QMessageBox::warning(this, tr("Repeated library"),
-                             tr("That folder is already inside a registered library. Choose the root folder where the "
-                                "addons are kept; its subfolders become categories."));
+        QMessageBox::warning(this, tr("Already in a library"),
+                             tr("That folder is inside a library you already added. Choose the top folder where you "
+                                "keep your addons; its subfolders become categories."));
         return;
     }
 
-    QMessageBox::information(this, tr("Library registered"),
+    QMessageBox::information(this, tr("Library added"),
                              tr("%1 · %2, %3")
                                  .arg(AsText(path), tr("%n category", nullptr, static_cast<int>(report.categories)),
                                       tr("%n addon", nullptr, static_cast<int>(report.addons))));

@@ -20,13 +20,12 @@ namespace
 SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeViewModel& viewModel, QWidget* parent)
     : QDialog(parent), viewModel_(viewModel)
 {
-    setWindowTitle(tr("That spot is taken"));
+    setWindowTitle(tr("Folder name already in use"));
 
-    auto* explanation = new QLabel(
-        tr("%n addon of yours is using the place where the one you asked for goes. Both sides are addons of yours, so "
-           "the app can swap them.",
-           nullptr, static_cast<int>(swaps.size())),
-        this);
+    auto* explanation = new QLabel(tr("%n addon you are enabling has the same folder name as another enabled addon of "
+                                      "yours. Swapping disables that one and enables the one you chose.",
+                                      nullptr, static_cast<int>(swaps.size())),
+                                   this);
     explanation->setWordWrap(true);
 
     auto* listed = new QWidget(this);
@@ -36,9 +35,9 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     grid->setHorizontalSpacing(12);
     grid->setVerticalSpacing(6);
 
-    auto* goesOff = new QLabel(tr("Goes off"), listed);
+    auto* goesOff = new QLabel(tr("Will be disabled"), listed);
     goesOff->setObjectName(QStringLiteral("PanelSubHeading"));
-    auto* goesOn = new QLabel(tr("Goes on"), listed);
+    auto* goesOn = new QLabel(tr("Will be enabled"), listed);
     goesOn->setObjectName(QStringLiteral("PanelSubHeading"));
     auto* where = new QLabel(tr("In"), listed);
     where->setObjectName(QStringLiteral("PanelSubHeading"));
@@ -69,7 +68,7 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    QPushButton* swap = buttons->addButton(tr("Swap them"), QDialogButtonBox::AcceptRole);
+    QPushButton* swap = buttons->addButton(tr("Swap"), QDialogButtonBox::AcceptRole);
     swap->setProperty("role", "primary");
     swap->setDefault(true);
 
