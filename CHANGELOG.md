@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.10](https://github.com/brunofgmag/fs-organizer/compare/v0.54.9...v0.54.10) (2026-09-23)
+
+
+### Bug Fixes
+
+* **presets:** rewrite the texts of the presets screen and its panels ([339fe54](https://github.com/brunofgmag/fs-organizer/commit/339fe545086902209b848e745498ea9734696281))
+
 ## [0.54.9](https://github.com/brunofgmag/fs-organizer/compare/v0.54.8...v0.54.9) (2026-09-23)
 
 
