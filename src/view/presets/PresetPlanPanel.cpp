@@ -175,6 +175,7 @@ QWidget* PresetPlanPanel::CreateTheModeRow()
 
     modeExplained_ = new QLabel(row);
     modeExplained_->setObjectName(QStringLiteral("ModeExplained"));
+    modeExplained_->setWordWrap(true);
 
     auto* line = new QHBoxLayout(row);
     line->setContentsMargins(0, 0, 0, 0);
@@ -184,8 +185,7 @@ QWidget* PresetPlanPanel::CreateTheModeRow()
     line->addWidget(cumulative);
     line->addWidget(disable);
     line->addSpacing(6);
-    line->addWidget(modeExplained_);
-    line->addStretch();
+    line->addWidget(modeExplained_, 1);
 
     return row;
 }
