@@ -73,29 +73,29 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::DisableAddon: return tr("Disable addon");
     case OperationKind::RemoveBrokenLink: return tr("Remove broken link");
     case OperationKind::RepointLink: return tr("Repoint link");
-    case OperationKind::ImportCopyToStaging: return tr("Copy to the staging area");
+    case OperationKind::ImportCopyToStaging: return tr("Copy to a temporary folder");
     case OperationKind::ImportVerifyStaging: return tr("Check the copy");
     case OperationKind::ImportMoveIntoPlace: return tr("Put the copy in place");
     case OperationKind::ImportRemoveSource: return tr("Remove the source folder");
-    case OperationKind::QuarantineFromDestination: return tr("Quarantine the destination copy");
-    case OperationKind::QuarantineFromLibrary: return tr("Quarantine the library copy");
+    case OperationKind::QuarantineFromDestination: return tr("Move the destination copy to the quarantine");
+    case OperationKind::QuarantineFromLibrary: return tr("Move the library copy to the quarantine");
     case OperationKind::RestoreFromQuarantine: return tr("Restore from the quarantine");
     case OperationKind::DiscardFromQuarantine: return tr("Discard from the quarantine");
     case OperationKind::MoveAddon: return tr("Move addon to another category");
     case OperationKind::CreateCategory: return tr("Create category");
     case OperationKind::RenameCategory: return tr("Rename category");
     case OperationKind::RemoveCategory: return tr("Delete category");
-    case OperationKind::DiscardStaging: return tr("Discard a half finished import");
-    case OperationKind::RecycleFromLibrary: return tr("Delete addon to the Recycle Bin");
+    case OperationKind::DiscardStaging: return tr("Discard an unfinished import");
+    case OperationKind::RecycleFromLibrary: return tr("Move addon to the Recycle Bin");
     case OperationKind::DeleteFromLibrary: return tr("Delete addon permanently");
-    case OperationKind::LinkTheOtherProgramsFolder: return tr("Link the other program's folder into the library");
-    case OperationKind::ImportFromAnotherProgram: return tr("Start taking over another program's folder");
+    case OperationKind::LinkTheOtherProgramsFolder: return tr("Link another program's folder to the library");
+    case OperationKind::ImportFromAnotherProgram: return tr("Start importing another program's folder");
     case OperationKind::GiveBackToAnotherProgram: return tr("Give the folder back to the other program");
-    case OperationKind::UndoTheInterruptedSwap: return tr("Put back the folder a lost swap left renamed");
-    case OperationKind::RestoreOverTheOccupant: return tr("Restore over the addon that held the place");
-    case OperationKind::TurnOffTheStartupEntry: return tr("Turn off the startup entry it carries");
-    case OperationKind::TurnOnTheStartupEntry: return tr("Turn the startup entry back on");
-    case OperationKind::TakeBackTheCategoryMarker: return tr("Take back the category marker");
+    case OperationKind::UndoTheInterruptedSwap: return tr("Restore a folder left renamed by an interrupted swap");
+    case OperationKind::RestoreOverTheOccupant: return tr("Restore, replacing the addon in its place");
+    case OperationKind::TurnOffTheStartupEntry: return tr("Disable its startup entry");
+    case OperationKind::TurnOnTheStartupEntry: return tr("Enable the startup entry again");
+    case OperationKind::TakeBackTheCategoryMarker: return tr("Remove the category marker");
     }
 
     return {};
@@ -215,8 +215,7 @@ QString JournalModel::NameOfTheGroup(const JournalEntry& entry)
                                                        return step.kind == OperationKind::DisableAddon;
                                                    });
 
-        return disabling ? tr("Disable addon and the startup entry it carries")
-                         : tr("Enable addon and the startup entry it carries");
+        return disabling ? tr("Disable addon and its startup entry") : tr("Enable addon and its startup entry");
     }
 
     return tr("Import (%n step)", nullptr, static_cast<int>(entry.steps.size()));

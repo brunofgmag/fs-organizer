@@ -2537,8 +2537,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="76"/>
-        <source>Copy to the staging area</source>
-        <translation>Copy to the staging area</translation>
+        <source>Copy to a temporary folder</source>
+        <translation>Copy to a temporary folder</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="77"/>
@@ -2557,13 +2557,13 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="80"/>
-        <source>Quarantine the destination copy</source>
-        <translation>Quarantine the destination copy</translation>
+        <source>Move the destination copy to the quarantine</source>
+        <translation>Move the destination copy to the quarantine</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="81"/>
-        <source>Quarantine the library copy</source>
-        <translation>Quarantine the library copy</translation>
+        <source>Move the library copy to the quarantine</source>
+        <translation>Move the library copy to the quarantine</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="82"/>
@@ -2597,13 +2597,13 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="88"/>
-        <source>Discard a half finished import</source>
-        <translation>Discard a half finished import</translation>
+        <source>Discard an unfinished import</source>
+        <translation>Discard an unfinished import</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="89"/>
-        <source>Delete addon to the Recycle Bin</source>
-        <translation>Delete addon to the Recycle Bin</translation>
+        <source>Move addon to the Recycle Bin</source>
+        <translation>Move addon to the Recycle Bin</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="90"/>
@@ -2612,13 +2612,13 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="91"/>
-        <source>Link the other program&apos;s folder into the library</source>
-        <translation>Link the other program&apos;s folder into the library</translation>
+        <source>Link another program&apos;s folder to the library</source>
+        <translation>Link another program&apos;s folder to the library</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="92"/>
-        <source>Start taking over another program&apos;s folder</source>
-        <translation>Start taking over another program&apos;s folder</translation>
+        <source>Start importing another program&apos;s folder</source>
+        <translation>Start importing another program&apos;s folder</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="93"/>
@@ -2627,28 +2627,28 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="94"/>
-        <source>Put back the folder a lost swap left renamed</source>
-        <translation>Put back the folder a lost swap left renamed</translation>
+        <source>Restore a folder left renamed by an interrupted swap</source>
+        <translation>Restore a folder left renamed by an interrupted swap</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="95"/>
-        <source>Restore over the addon that held the place</source>
-        <translation>Restore over the addon that held the place</translation>
+        <source>Restore, replacing the addon in its place</source>
+        <translation>Restore, replacing the addon in its place</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="96"/>
-        <source>Turn off the startup entry it carries</source>
-        <translation>Turn off the startup entry it carries</translation>
+        <source>Disable its startup entry</source>
+        <translation>Disable its startup entry</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="97"/>
-        <source>Turn the startup entry back on</source>
-        <translation>Turn the startup entry back on</translation>
+        <source>Enable the startup entry again</source>
+        <translation>Enable the startup entry again</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
-        <source>Take back the category marker</source>
-        <translation>Take back the category marker</translation>
+        <source>Remove the category marker</source>
+        <translation>Remove the category marker</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
@@ -2662,13 +2662,13 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="217"/>
-        <source>Disable addon and the startup entry it carries</source>
-        <translation>Disable addon and the startup entry it carries</translation>
+        <source>Disable addon and its startup entry</source>
+        <translation>Disable addon and its startup entry</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="218"/>
-        <source>Enable addon and the startup entry it carries</source>
-        <translation>Enable addon and the startup entry it carries</translation>
+        <source>Enable addon and its startup entry</source>
+        <translation>Enable addon and its startup entry</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/viewmodel/JournalModel.cpp" line="221"/>
@@ -2739,13 +2739,13 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="102"/>
-        <source>Only what failed</source>
-        <translation>Only what failed</translation>
+        <source>Failures only</source>
+        <translation>Failures only</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="103"/>
-        <source>Read the journal again</source>
-        <translation>Read the journal again</translation>
+        <source>Refresh</source>
+        <translation>Refresh</translation>
     </message>
     <message>
         <source>The journal is append-only. Nothing on this screen writes to the disk.</source>
@@ -2753,15 +2753,15 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="127"/>
-        <source>The journal has not recorded any change on the disk yet.</source>
-        <translation>The journal has not recorded any change on the disk yet.</translation>
+        <source>No changes recorded yet.</source>
+        <translation>No changes recorded yet.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/JournalPage.cpp" line="128"/>
-        <source>%n operation recorded, from the newest to the oldest.</source>
+        <source>%n operation recorded, newest first.</source>
         <translation>
-            <numerusform>%n operation recorded, from the newest to the oldest.</numerusform>
-            <numerusform>%n operations recorded, from the newest to the oldest.</numerusform>
+            <numerusform>%n operation recorded, newest first.</numerusform>
+            <numerusform>%n operations recorded, newest first.</numerusform>
         </translation>
     </message>
     <message>

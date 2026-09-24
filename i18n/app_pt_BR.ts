@@ -2518,12 +2518,12 @@ Também na biblioteca: %2</translation>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="72"/>
         <source>Enable addon</source>
-        <translation>Habilitar addon</translation>
+        <translation>Ativar addon</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="73"/>
         <source>Disable addon</source>
-        <translation>Desabilitar addon</translation>
+        <translation>Desativar addon</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="74"/>
@@ -2537,8 +2537,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="76"/>
-        <source>Copy to the staging area</source>
-        <translation>Copiar para a área de staging</translation>
+        <source>Copy to a temporary folder</source>
+        <translation>Copiar para uma pasta temporária</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="77"/>
@@ -2557,13 +2557,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="80"/>
-        <source>Quarantine the destination copy</source>
-        <translation>Quarentenar a cópia do destino</translation>
+        <source>Move the destination copy to the quarantine</source>
+        <translation>Mover a cópia do destino para a quarentena</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="81"/>
-        <source>Quarantine the library copy</source>
-        <translation>Quarentenar a cópia da biblioteca</translation>
+        <source>Move the library copy to the quarantine</source>
+        <translation>Mover a cópia da biblioteca para a quarentena</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="82"/>
@@ -2597,13 +2597,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="88"/>
-        <source>Discard a half finished import</source>
-        <translation>Descartar uma importação pela metade</translation>
+        <source>Discard an unfinished import</source>
+        <translation>Descartar uma importação incompleta</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="89"/>
-        <source>Delete addon to the Recycle Bin</source>
-        <translation>Excluir addon para a Lixeira</translation>
+        <source>Move addon to the Recycle Bin</source>
+        <translation>Mover addon para a Lixeira</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="90"/>
@@ -2612,13 +2612,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="91"/>
-        <source>Link the other program&apos;s folder into the library</source>
-        <translation>Ligar a pasta do outro programa à biblioteca</translation>
+        <source>Link another program&apos;s folder to the library</source>
+        <translation>Criar link da pasta de outro programa na biblioteca</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="92"/>
-        <source>Start taking over another program&apos;s folder</source>
-        <translation>Começar a assumir a pasta de outro programa</translation>
+        <source>Start importing another program&apos;s folder</source>
+        <translation>Começar a importar a pasta de outro programa</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="93"/>
@@ -2627,28 +2627,28 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="94"/>
-        <source>Put back the folder a lost swap left renamed</source>
-        <translation>Repor a pasta que uma troca perdida deixou renomeada</translation>
+        <source>Restore a folder left renamed by an interrupted swap</source>
+        <translation>Restaurar uma pasta que uma troca interrompida deixou renomeada</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="95"/>
-        <source>Restore over the addon that held the place</source>
-        <translation>Repor por cima do addon que ocupava o lugar</translation>
+        <source>Restore, replacing the addon in its place</source>
+        <translation>Restaurar no lugar do addon que estava lá</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="96"/>
-        <source>Turn off the startup entry it carries</source>
-        <translation>Desligar a entrada de inicialização que ele carrega</translation>
+        <source>Disable its startup entry</source>
+        <translation>Desativar a entrada de inicialização dele</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="97"/>
-        <source>Turn the startup entry back on</source>
-        <translation>Religar a entrada de inicialização</translation>
+        <source>Enable the startup entry again</source>
+        <translation>Ativar a entrada de inicialização de novo</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
-        <source>Take back the category marker</source>
-        <translation>Retirar o marcador de categoria</translation>
+        <source>Remove the category marker</source>
+        <translation>Remover o marcador de categoria</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
@@ -2662,13 +2662,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="217"/>
-        <source>Disable addon and the startup entry it carries</source>
-        <translation>Desabilitar o addon e a entrada de inicialização que ele carrega</translation>
+        <source>Disable addon and its startup entry</source>
+        <translation>Desativar o addon e a entrada de inicialização dele</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="218"/>
-        <source>Enable addon and the startup entry it carries</source>
-        <translation>Habilitar o addon e a entrada de inicialização que ele carrega</translation>
+        <source>Enable addon and its startup entry</source>
+        <translation>Ativar o addon e a entrada de inicialização dele</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/viewmodel/JournalModel.cpp" line="221"/>
@@ -2739,13 +2739,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="102"/>
-        <source>Only what failed</source>
-        <translation>Só o que falhou</translation>
+        <source>Failures only</source>
+        <translation>Só falhas</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="103"/>
-        <source>Read the journal again</source>
-        <translation>Reler o diário</translation>
+        <source>Refresh</source>
+        <translation>Atualizar</translation>
     </message>
     <message>
         <source>The journal is append-only. Nothing on this screen writes to the disk.</source>
@@ -2753,15 +2753,15 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="127"/>
-        <source>The journal has not recorded any change on the disk yet.</source>
-        <translation>O diário ainda não registrou nenhuma mudança no disco.</translation>
+        <source>No changes recorded yet.</source>
+        <translation>Nenhuma alteração registrada ainda.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/JournalPage.cpp" line="128"/>
-        <source>%n operation recorded, from the newest to the oldest.</source>
+        <source>%n operation recorded, newest first.</source>
         <translation>
-            <numerusform>%n operação registrada, da mais recente para a mais antiga.</numerusform>
-            <numerusform>%n operações registradas, da mais recente para a mais antiga.</numerusform>
+            <numerusform>%n operação registrada, mais recentes primeiro.</numerusform>
+            <numerusform>%n operações registradas, mais recentes primeiro.</numerusform>
         </translation>
     </message>
     <message>
@@ -3114,7 +3114,7 @@ Também na biblioteca: %2</translation>
     <message>
         <location filename="../src/view/shell/PageNames.cpp" line="11"/>
         <source>Journal</source>
-        <translation>Diário</translation>
+        <translation>Histórico</translation>
     </message>
     <message>
         <location filename="../src/view/shell/PageNames.cpp" line="12"/>
@@ -4441,7 +4441,7 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <location filename="../src/viewmodel/FailureText.cpp" line="26"/>
         <location filename="../src/viewmodel/FailureText.cpp" line="103"/>
         <source>the journal records this operation, but does not say how it ended</source>
-        <translation>o diário registra esta operação, mas não diz como ela terminou</translation>
+        <translation>o histórico registra esta operação, mas não diz como ela terminou</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="37"/>
@@ -4551,7 +4551,7 @@ Aplicar o preset &quot;%2&quot;?</translation>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="88"/>
         <source>neither the record beside it nor the journal says where this came from</source>
-        <translation>nem o registro ao lado dele nem o diário dizem de onde isto veio</translation>
+        <translation>nem o registro ao lado dele nem o histórico dizem de onde isto veio</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="123"/>
@@ -5272,7 +5272,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="123"/>
         <source>the record and the Journal agree</source>
-        <translation>o registro e o Diário concordam</translation>
+        <translation>o registro e o Histórico concordam</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="128"/>
@@ -5282,7 +5282,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="129"/>
         <source>the Journal only</source>
-        <translation>só o Diário</translation>
+        <translation>só o Histórico</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="130"/>
@@ -5418,7 +5418,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="207"/>
         <source>The Journal says</source>
-        <translation>O Diário diz</translation>
+        <translation>O Histórico diz</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="218"/>
@@ -6054,7 +6054,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="30"/>
         <source>the journal does not know where this came from, so only discarding is offered</source>
-        <translation>o diário não sabe de onde isto veio, então só o descarte é oferecido</translation>
+        <translation>o histórico não sabe de onde isto veio, então só o descarte é oferecido</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="74"/>

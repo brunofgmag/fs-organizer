@@ -513,13 +513,13 @@ enabled together, the result may point to the wrong one, and the panel says so.
 
 \section{Journal}
 
-Every operation that writes to the disk becomes a line in the \ui{Journal}. It
-is append-only, nothing on its screen writes to the disk, and \textbf{the program
-never deletes it}.
+Every operation that writes to the disk becomes a line in the \ui{Journal}. Lines
+are only ever added, nothing on this screen writes to the disk, and \textbf{the
+program never deletes it}.
 
-Each line carries when, which operation, which addon, which library, source,
-destination and result. The \ui{Only what failed} filter narrows the list to
-what went wrong, and the search covers addon, path and operation.
+Each line shows when, which operation, which addon, which library, source,
+destination and result. \ui{Failures only} narrows the list to what went wrong,
+and the search covers addon, path and operation.
 
 \ui{Undo last change}, on the \ui{Library} tab, takes back the whole last
 batch, not one operation inside it.

@@ -235,7 +235,7 @@ pergunta antes.
 
 Se o lugar de um addon estiver ocupado por outro addon seu, o programa não
 recusa: ele oferece a \textbf{troca}, que sai e entra numa operação só, com uma
-linha só no diário e um desfazer só.
+linha só no histórico e um desfazer só.
 
 \subsection{Categorias}
 
@@ -318,7 +318,7 @@ Você pode devolver o addon ao programa que o instalou depois, pelo
 Importar copia uma pasta comum para a biblioteca e deixa um link no lugar dela.
 A original só é removida depois que a cópia é conferida.
 
-A operação tem cinco passos, e o diário registra cada um:
+A operação tem cinco passos, e o histórico registra cada um:
 
 \shot{27-community-import.png}{O diálogo de importação, que diz quanto vai ser
 copiado, para qual biblioteca e categoria, e em que caminho o addon vai ficar.}
@@ -366,7 +366,7 @@ quarentena sem você pedir}, e nada é excluído ao entrar.
 Ao lado de cada item, o programa grava de onde ele veio. Esse registro não
 depende do histórico, então dá para restaurar um item mesmo que o histórico
 tenha sido apagado. A tabela mostra as duas fontes, \ui{O registro diz} e
-\ui{O Diário diz}, e avisa quando elas discordam.
+\ui{O Histórico diz}, e avisa quando elas discordam.
 
 \shot{05-quarantine.png}{A quarentena, com a origem de cada item e o aviso quando o
 registro e o histórico discordam.}
@@ -509,15 +509,15 @@ que já foi descartado e as duas respostas que o usuário dá.}
 A busca supõe um único culpado. Se a falha só acontece com dois addons ativados
 juntos, o resultado pode apontar o errado, e o painel avisa isso.
 
-\section{Diário}
+\section{Histórico}
 
-Toda operação que escreve no disco vira uma linha no \ui{Diário}. Ele é
-append-only, nada na tela dele escreve no disco, e \textbf{o programa nunca o
+Toda operação que escreve no disco vira uma linha no \ui{Histórico}. As linhas só
+são acrescentadas, nada nesta tela escreve no disco, e \textbf{o programa nunca o
 apaga}.
 
-Cada linha traz quando, qual operação, qual addon, qual biblioteca, origem,
-destino e resultado. O filtro \ui{Só o que falhou} reduz a lista ao que deu
-errado, e a busca cobre addon, caminho e operação.
+Cada linha mostra quando, qual operação, qual addon, qual biblioteca, origem,
+destino e resultado. \ui{Só falhas} reduz a lista ao que deu errado, e a busca
+cobre addon, caminho e operação.
 
 O \ui{Desfazer última alteração}, na aba \ui{Biblioteca}, volta o último lote
 inteiro, e não uma operação dentro dele.
@@ -552,7 +552,7 @@ assim:
 \where|settings.json| guarda os perfis, as bibliotecas, os destinos e as suas
 escolhas.
 
-\where|journal\operations.jsonl| é o diário.
+\where|journal\operations.jsonl| é o histórico.
 
 \where|presets| guarda os presets, um arquivo por preset, mais o preset de
 retorno de cada perfil.
