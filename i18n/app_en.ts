@@ -4389,23 +4389,23 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="12"/>
-        <source>there is already a real folder with that name in the destination</source>
-        <translation>there is already a real folder with that name in the destination</translation>
+        <source>a folder with that name already exists in the destination</source>
+        <translation>a folder with that name already exists in the destination</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="14"/>
-        <source>the destination already holds a live link from another program</source>
-        <translation>the destination already holds a live link from another program</translation>
+        <source>the destination already has a working link from another program</source>
+        <translation>the destination already has a working link from another program</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="16"/>
-        <source>the target of the link holding the destination could not be read</source>
-        <translation>the target of the link holding the destination could not be read</translation>
+        <source>the link already in the destination could not be read</source>
+        <translation>the link already in the destination could not be read</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="18"/>
-        <source>the dead link holding the destination could not be removed</source>
-        <translation>the dead link holding the destination could not be removed</translation>
+        <source>the broken link already in the destination could not be removed</source>
+        <translation>the broken link already in the destination could not be removed</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="19"/>
@@ -4430,8 +4430,8 @@ Apply the preset &quot;%2&quot;?</translation>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="26"/>
         <location filename="../src/viewmodel/FailureText.cpp" line="103"/>
-        <source>the journal records this operation, but does not say how it ended</source>
-        <translation>the journal records this operation, but does not say how it ended</translation>
+        <source>the journal does not say how this operation ended</source>
+        <translation>the journal does not say how this operation ended</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="37"/>
@@ -4465,18 +4465,18 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="54"/>
-        <source>Windows denied permission there, so running the app as administrator may get past it</source>
-        <translation>Windows denied permission there, so running the app as administrator may get past it</translation>
+        <source>Windows denied access; running the app as administrator may help</source>
+        <translation>Windows denied access; running the app as administrator may help</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="56"/>
-        <source>that volume is read-only, and no privilege gets past that</source>
-        <translation>that volume is read-only, and no privilege gets past that</translation>
+        <source>that drive is read-only</source>
+        <translation>that drive is read-only</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="58"/>
-        <source>Windows refused for a reason that is neither permission nor a read-only volume</source>
-        <translation>Windows refused for a reason that is neither permission nor a read-only volume</translation>
+        <source>Windows refused the operation</source>
+        <translation>Windows refused the operation</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="70"/>
@@ -4490,8 +4490,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="72"/>
-        <source>the losing copy could not be moved to the quarantine</source>
-        <translation>the losing copy could not be moved to the quarantine</translation>
+        <source>the copy you did not keep could not be moved to the quarantine</source>
+        <translation>the copy you did not keep could not be moved to the quarantine</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="74"/>
@@ -4505,8 +4505,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="77"/>
-        <source>the free space of the destination volume could not be read</source>
-        <translation>the free space of the destination volume could not be read</translation>
+        <source>the free space on the destination drive could not be checked</source>
+        <translation>the free space on the destination drive could not be checked</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="78"/>
@@ -4515,8 +4515,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="80"/>
-        <source>the copy failed, and what was already copied stays where it is for the resume</source>
-        <translation>the copy failed, and what was already copied stays where it is for the resume</translation>
+        <source>the copy failed; what was already copied is kept so the import can resume</source>
+        <translation>the copy failed; what was already copied is kept so the import can resume</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="82"/>
@@ -4540,23 +4540,23 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="88"/>
-        <source>neither the record beside it nor the journal says where this came from</source>
-        <translation>neither the record beside it nor the journal says where this came from</translation>
+        <source>its origin is unknown</source>
+        <translation>its origin is unknown</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="123"/>
-        <source>the startup entries of the simulator are not managed, so the app does not read or write that file</source>
-        <translation>the startup entries of the simulator are not managed, so the app does not read or write that file</translation>
+        <source>startup entries are not managed, so that file is not read or changed</source>
+        <translation>startup entries are not managed, so that file is not read or changed</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="126"/>
-        <source>nobody measured this addon, so there is no telling whether the Recycle Bin of that volume takes it</source>
-        <translation>nobody measured this addon, so there is no telling whether the Recycle Bin of that volume takes it</translation>
+        <source>this addon was not measured, so it is unknown whether it fits in the Recycle Bin</source>
+        <translation>this addon was not measured, so it is unknown whether it fits in the Recycle Bin</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="129"/>
-        <source>the name is longer than a folder name can be, so the disk would refuse it</source>
-        <translation>the name is longer than a folder name can be, so the disk would refuse it</translation>
+        <source>the name is too long for a folder name</source>
+        <translation>the name is too long for a folder name</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="131"/>
@@ -4570,13 +4570,13 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="135"/>
-        <source>the package list of the simulator is not managed, so the app does not read or write that file</source>
-        <translation>the package list of the simulator is not managed, so the app does not read or write that file</translation>
+        <source>the package list is not managed, so that file is not read or changed</source>
+        <translation>the package list is not managed, so that file is not read or changed</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="138"/>
-        <source>another program is holding that folder open, and Windows refuses to move it until that program lets go</source>
-        <translation>another program is holding that folder open, and Windows refuses to move it until that program lets go</translation>
+        <source>another program has that folder open; close it and try again</source>
+        <translation>another program has that folder open; close it and try again</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="141"/>
@@ -4585,8 +4585,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="143"/>
-        <source>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</source>
-        <translation>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</translation>
+        <source>this copy is outside the profile&apos;s destinations and libraries, so it cannot go to the quarantine</source>
+        <translation>this copy is outside the profile&apos;s destinations and libraries, so it cannot go to the quarantine</translation>
     </message>
     <message>
         <source>the journal does not know where this came from</source>
@@ -4623,8 +4623,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="97"/>
-        <source>the target of the operation is not inside a library of the profile</source>
-        <translation>the target of the operation is not inside a library of the profile</translation>
+        <source>the target is not inside a library of this profile</source>
+        <translation>the target is not inside a library of this profile</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="98"/>
@@ -4633,8 +4633,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="100"/>
-        <source>this category still holds addons, and only an empty category can be deleted</source>
-        <translation>this category still holds addons, and only an empty category can be deleted</translation>
+        <source>only empty categories can be deleted</source>
+        <translation>only empty categories can be deleted</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="101"/>
@@ -4643,8 +4643,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="105"/>
-        <source>the source folder could not be walked, so nothing was copied</source>
-        <translation>the source folder could not be walked, so nothing was copied</translation>
+        <source>the source folder could not be read, so nothing was copied</source>
+        <translation>the source folder could not be read, so nothing was copied</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="107"/>
@@ -4653,8 +4653,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="109"/>
-        <source>the Recycle Bin stops at 260 characters, and this addon holds a longer path</source>
-        <translation>the Recycle Bin stops at 260 characters, and this addon holds a longer path</translation>
+        <source>this addon has a path longer than the 260 characters the Recycle Bin accepts</source>
+        <translation>this addon has a path longer than the 260 characters the Recycle Bin accepts</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="110"/>
@@ -4663,18 +4663,18 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="112"/>
-        <source>the record that says where this came from could not be written, so nothing was moved</source>
-        <translation>the record that says where this came from could not be written, so nothing was moved</translation>
+        <source>the origin record could not be saved, so nothing was moved</source>
+        <translation>the origin record could not be saved, so nothing was moved</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="114"/>
-        <source>the folder of the other program does not accept writes from you, so nothing was taken away from it</source>
-        <translation>the folder of the other program does not accept writes from you, so nothing was taken away from it</translation>
+        <source>you cannot write to the other program&apos;s folder, so nothing was moved from it</source>
+        <translation>you cannot write to the other program&apos;s folder, so nothing was moved from it</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="117"/>
-        <source>the entry no longer points where the last scan saw it point, so nothing was touched</source>
-        <translation>the entry no longer points where the last scan saw it point, so nothing was touched</translation>
+        <source>the entry changed since the last scan, so nothing was changed</source>
+        <translation>the entry changed since the last scan, so nothing was changed</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="119"/>
@@ -4729,8 +4729,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="211"/>
-        <source>%1: it is back, and %2 is in the quarantine with its origin recorded.</source>
-        <translation>%1: it is back, and %2 is in the quarantine with its origin recorded.</translation>
+        <source>%1: restored, and %2 moved to the quarantine.</source>
+        <translation>%1: restored, and %2 moved to the quarantine.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="216"/>
@@ -4768,8 +4768,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="232"/>
-        <source>deleted for good</source>
-        <translation>deleted for good</translation>
+        <source>deleted permanently</source>
+        <translation>deleted permanently</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="241"/>
@@ -4785,13 +4785,13 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="265"/>
-        <source>Checking whether the copy matches the source…</source>
-        <translation>Checking whether the copy matches the source…</translation>
+        <source>Verifying the copy…</source>
+        <translation>Verifying the copy…</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="266"/>
-        <source>Putting the copy in its final place…</source>
-        <translation>Putting the copy in its final place…</translation>
+        <source>Moving the copy into place…</source>
+        <translation>Moving the copy into place…</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="267"/>

@@ -9,21 +9,19 @@ QString Explain(const LinkFailure failure)
     switch (failure)
     {
     case LinkFailure::DestinationHoldsRealFolder:
-        return QObject::tr("there is already a real folder with that name in the destination");
+        return QObject::tr("a folder with that name already exists in the destination");
     case LinkFailure::DestinationHoldsLiveLink:
-        return QObject::tr("the destination already holds a live link from another program");
-    case LinkFailure::UnreadableLinkTarget:
-        return QObject::tr("the target of the link holding the destination could not be read");
+        return QObject::tr("the destination already has a working link from another program");
+    case LinkFailure::UnreadableLinkTarget: return QObject::tr("the link already in the destination could not be read");
     case LinkFailure::CouldNotReplaceStaleLink:
-        return QObject::tr("the dead link holding the destination could not be removed");
+        return QObject::tr("the broken link already in the destination could not be removed");
     case LinkFailure::CouldNotCreateLink: return QObject::tr("the link could not be created");
     case LinkFailure::PrivilegeNotHeld:
         return QObject::tr("Windows needs privilege to create a symbolic link: turn on Developer Mode, or set the link "
                            "type back to directory junction in Options");
     case LinkFailure::PathIsNotAReparsePoint: return QObject::tr("the path is not a link, so nothing was removed");
     case LinkFailure::CouldNotRemoveLink: return QObject::tr("the link could not be removed");
-    case LinkFailure::TheOutcomeIsUnknown:
-        return QObject::tr("the journal records this operation, but does not say how it ended");
+    case LinkFailure::TheOutcomeIsUnknown: return QObject::tr("the journal does not say how this operation ended");
     case LinkFailure::None: break;
     }
 
@@ -51,11 +49,9 @@ QString Explain(const WriteAccess access)
     {
     case WriteAccess::TheFolderIsNotThere: return QObject::tr("that folder is no longer there");
     case WriteAccess::PermissionIsDenied:
-        return QObject::tr("Windows denied permission there, so running the app as administrator may get past it");
-    case WriteAccess::TheVolumeIsReadOnly:
-        return QObject::tr("that volume is read-only, and no privilege gets past that");
-    case WriteAccess::ItRefusedForAnotherReason:
-        return QObject::tr("Windows refused for a reason that is neither permission nor a read-only volume");
+        return QObject::tr("Windows denied access; running the app as administrator may help");
+    case WriteAccess::TheVolumeIsReadOnly: return QObject::tr("that drive is read-only");
+    case WriteAccess::ItRefusedForAnotherReason: return QObject::tr("Windows refused the operation");
     case WriteAccess::ItAccepts: break;
     }
 
@@ -69,23 +65,23 @@ QString Explain(const FileResult result)
     case FileResult::Completed: return {};
     case FileResult::Cancelled: return QObject::tr("cancelled by you");
     case FileResult::TheSimulatorIsRunning: return QObject::tr("the simulator is running");
-    case FileResult::CouldNotQuarantine: return QObject::tr("the losing copy could not be moved to the quarantine");
+    case FileResult::CouldNotQuarantine:
+        return QObject::tr("the copy you did not keep could not be moved to the quarantine");
     case FileResult::SourceIsNotUnderADestination:
         return QObject::tr("the folder is not inside a destination of the profile");
     case FileResult::SourceIsAReparsePoint: return QObject::tr("the entry is a link, not a real folder");
     case FileResult::CouldNotCheckFreeSpace:
-        return QObject::tr("the free space of the destination volume could not be read");
+        return QObject::tr("the free space on the destination drive could not be checked");
     case FileResult::NotEnoughFreeSpace: return QObject::tr("there is not enough free space in the library");
     case FileResult::CouldNotCopy:
-        return QObject::tr("the copy failed, and what was already copied stays where it is for the resume");
+        return QObject::tr("the copy failed; what was already copied is kept so the import can resume");
     case FileResult::VerificationFailed:
         return QObject::tr("the copy does not match the source, so nothing was removed");
     case FileResult::CouldNotMoveIntoPlace: return QObject::tr("the copy could not be put in its final place");
     case FileResult::CouldNotRemoveSource: return QObject::tr("the source folder could not be removed");
     case FileResult::CouldNotCreateLink:
         return QObject::tr("the files are already in the library, but the link could not be created");
-    case FileResult::TheOriginIsUnknown:
-        return QObject::tr("neither the record beside it nor the journal says where this came from");
+    case FileResult::TheOriginIsUnknown: return QObject::tr("its origin is unknown");
     case FileResult::CouldNotRestore: return QObject::tr("the folder could not be moved back");
     case FileResult::TheOriginIsOccupied:
         return QObject::tr("something with that name is already in the place this came from");
@@ -93,55 +89,46 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotRemoveTheLink:
         return QObject::tr("one of the links pointing at the library copy could not be removed");
     case FileResult::TheIdentityIsTaken: return QObject::tr("this library already has an addon with that folder name");
-    case FileResult::TheTargetIsNotInALibrary:
-        return QObject::tr("the target of the operation is not inside a library of the profile");
+    case FileResult::TheTargetIsNotInALibrary: return QObject::tr("the target is not inside a library of this profile");
     case FileResult::CouldNotCreateTheCategory: return QObject::tr("the category could not be created");
-    case FileResult::TheCategoryStillHoldsAddons:
-        return QObject::tr("this category still holds addons, and only an empty category can be deleted");
+    case FileResult::TheCategoryStillHoldsAddons: return QObject::tr("only empty categories can be deleted");
     case FileResult::CouldNotRemoveTheCategory: return QObject::tr("the category could not be deleted");
-    case FileResult::TheOutcomeIsUnknown:
-        return QObject::tr("the journal records this operation, but does not say how it ended");
+    case FileResult::TheOutcomeIsUnknown: return QObject::tr("the journal does not say how this operation ended");
     case FileResult::CouldNotReadTheSource:
-        return QObject::tr("the source folder could not be walked, so nothing was copied");
+        return QObject::tr("the source folder could not be read, so nothing was copied");
     case FileResult::TheRecycleBinIsTooSmall:
         return QObject::tr("the selection does not fit in the Recycle Bin of that volume");
     case FileResult::TheRecycleBinCannotReachIt:
-        return QObject::tr("the Recycle Bin stops at 260 characters, and this addon holds a longer path");
+        return QObject::tr("this addon has a path longer than the 260 characters the Recycle Bin accepts");
     case FileResult::CouldNotDelete: return QObject::tr("the folder could not be deleted");
     case FileResult::CouldNotRecordTheOrigin:
-        return QObject::tr("the record that says where this came from could not be written, so nothing was moved");
+        return QObject::tr("the origin record could not be saved, so nothing was moved");
     case FileResult::CannotWriteInTheOtherProgramsFolder:
-        return QObject::tr("the folder of the other program does not accept writes from you, so nothing was taken "
-                           "away from it");
+        return QObject::tr("you cannot write to the other program's folder, so nothing was moved from it");
     case FileResult::TheDiskDisagreesWithTheScan:
-        return QObject::tr("the entry no longer points where the last scan saw it point, so nothing was touched");
+        return QObject::tr("the entry changed since the last scan, so nothing was changed");
     case FileResult::CouldNotReadTheStartupFile:
         return QObject::tr("the startup file of the simulator could not be read");
     case FileResult::CouldNotWriteTheStartupFile:
         return QObject::tr("the startup file of the simulator could not be written, so nothing changed");
     case FileResult::TheStartupEntriesAreLeftLoose:
-        return QObject::tr("the startup entries of the simulator are not managed, so the app does not read or write "
-                           "that file");
+        return QObject::tr("startup entries are not managed, so that file is not read or changed");
     case FileResult::TheAddonWasNeverMeasured:
-        return QObject::tr("nobody measured this addon, so there is no telling whether the Recycle Bin of that volume "
-                           "takes it");
-    case FileResult::ThePathIsTooLong:
-        return QObject::tr("the name is longer than a folder name can be, so the disk would refuse it");
+        return QObject::tr("this addon was not measured, so it is unknown whether it fits in the Recycle Bin");
+    case FileResult::ThePathIsTooLong: return QObject::tr("the name is too long for a folder name");
     case FileResult::CouldNotReadThePackageList:
         return QObject::tr("the package list of the simulator could not be read");
     case FileResult::CouldNotWriteThePackageList:
         return QObject::tr("the package list of the simulator could not be written, so nothing changed");
     case FileResult::ThePackageListIsLeftLoose:
-        return QObject::tr("the package list of the simulator is not managed, so the app does not read or write that "
-                           "file");
+        return QObject::tr("the package list is not managed, so that file is not read or changed");
     case FileResult::AnotherProgramIsHoldingIt:
-        return QObject::tr("another program is holding that folder open, and Windows refuses to move it until "
-                           "that program lets go");
+        return QObject::tr("another program has that folder open; close it and try again");
     case FileResult::TheQuarantineIsOccupied:
         return QObject::tr("something with that name is already in the quarantine");
     case FileResult::ThereIsNowhereToQuarantineIt:
-        return QObject::tr("this copy is not inside a destination or a library of the profile, so there is no "
-                           "quarantine for it");
+        return QObject::tr(
+            "this copy is outside the profile's destinations and libraries, so it cannot go to the quarantine");
     }
 
     return {};
@@ -216,7 +203,7 @@ QString Describe(const SwapResult& result)
 {
     if (result.Succeeded())
     {
-        return QObject::tr("%1: it is back, and %2 is in the quarantine with its origin recorded.")
+        return QObject::tr("%1: restored, and %2 moved to the quarantine.")
             .arg(AsText(result.item.filename()), AsText(result.occupant.filename()));
     }
 
@@ -237,7 +224,7 @@ namespace
     QString WhatTheRouteDid(const DeletionRoute route)
     {
         return route == DeletionRoute::RecycleBin ? QObject::tr("moved to the Recycle Bin")
-                                                  : QObject::tr("deleted for good");
+                                                  : QObject::tr("deleted permanently");
     }
 
     QString WhichLinksWentAway(const std::vector<std::filesystem::path>& links)
@@ -270,8 +257,8 @@ QString NameOfImportStep(const OperationKind kind)
     switch (kind)
     {
     case OperationKind::ImportCopyToStaging: return QObject::tr("Copying to the library…");
-    case OperationKind::ImportVerifyStaging: return QObject::tr("Checking whether the copy matches the source…");
-    case OperationKind::ImportMoveIntoPlace: return QObject::tr("Putting the copy in its final place…");
+    case OperationKind::ImportVerifyStaging: return QObject::tr("Verifying the copy…");
+    case OperationKind::ImportMoveIntoPlace: return QObject::tr("Moving the copy into place…");
     case OperationKind::ImportRemoveSource: return QObject::tr("Removing the source folder…");
     case OperationKind::EnableAddon: return QObject::tr("Creating the link in the destination…");
     default: return {};
