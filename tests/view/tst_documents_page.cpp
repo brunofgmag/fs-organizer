@@ -468,7 +468,7 @@ void DocumentsPageTest::DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft()
              "the bar that swaps the panels stays, so nobody comes back to a screen they did not leave");
     QCOMPARE(documents->width(), wide);
 
-    QPushButton* back = ButtonStartingWith(page, QStringLiteral("Bring it back"));
+    QPushButton* back = ButtonStartingWith(page, QStringLiteral("Back into the tab"));
 
     QVERIFY2(back != nullptr, "a card marks the place the reading left, and it is the way back");
     QVERIFY(SomethingSays(page, reading));
@@ -476,7 +476,7 @@ void DocumentsPageTest::DetachingLeavesTheTabAsItWasAndMarksThePlaceItLeft()
     back->click();
 
     QCOMPARE(WhatIsOpen(page), reading);
-    QVERIFY2(!ButtonStartingWith(page, QStringLiteral("Bring it back"))->isVisible(),
+    QVERIFY2(!ButtonStartingWith(page, QStringLiteral("Back into the tab"))->isVisible(),
              "bringing it back gives the place to the reading it marked");
 }
 

@@ -90,7 +90,7 @@ void GithubManual::OnFetchFinished()
 
     if (!QDir().mkpath(AsText(folder_)) || !WriteTheDownload(reply, AsText(file)))
     {
-        SayItArrived(false, {}, tr("The manual came down but could not be written to %1.").arg(AsText(file)));
+        SayItArrived(false, {}, tr("The manual was downloaded but could not be saved to %1.").arg(AsText(file)));
 
         return;
     }

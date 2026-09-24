@@ -2010,18 +2010,18 @@ Also in the library: %2</translation>
     <name>DocumentReader</name>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="353"/>
-        <source>The wheel zooms the chart</source>
-        <translation>The wheel zooms the chart</translation>
+        <source>The mouse wheel zooms the chart</source>
+        <translation>The mouse wheel zooms the chart</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="491"/>
-        <source>Dragging moves the page. Turn it off to select text</source>
-        <translation>Dragging moves the page. Turn it off to select text</translation>
+        <source>Dragging moves the page. Click to select text instead</source>
+        <translation>Dragging moves the page. Click to select text instead</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="492"/>
-        <source>Dragging selects text. Turn it on to move the page</source>
-        <translation>Dragging selects text. Turn it on to move the page</translation>
+        <source>Dragging selects text. Click to move the page instead</source>
+        <translation>Dragging selects text. Click to move the page instead</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="493"/>
@@ -2070,13 +2070,13 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="345"/>
-        <source>Bring it back</source>
-        <translation>Bring it back</translation>
+        <source>Back into the tab</source>
+        <translation>Back into the tab</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="345"/>
-        <source>Detach</source>
-        <translation>Detach</translation>
+        <source>Open in a separate window</source>
+        <translation>Open in a separate window</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="346"/>
@@ -2095,8 +2095,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="354"/>
-        <source>The wheel zooms the document</source>
-        <translation>The wheel zooms the document</translation>
+        <source>The mouse wheel zooms the document</source>
+        <translation>The mouse wheel zooms the document</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="537"/>
@@ -2170,28 +2170,28 @@ Also in the library: %2</translation>
         <translation>Try again</translation>
     </message>
     <message>
-        <source>Getting the manual</source>
-        <translation>Getting the manual</translation>
+        <source>Downloading the manual</source>
+        <translation>Downloading the manual</translation>
     </message>
     <message>
-        <source>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
-        <translation>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</translation>
+        <source>Downloading from GitHub. After this, it opens without an internet connection.</source>
+        <translation>Downloading from GitHub. After this, it opens without an internet connection.</translation>
     </message>
     <message>
-        <source>The manual did not come down</source>
-        <translation>The manual did not come down</translation>
+        <source>The manual could not be downloaded</source>
+        <translation>The manual could not be downloaded</translation>
     </message>
     <message>
-        <source>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</source>
-        <translation>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</translation>
+        <source>%1. You can also read it online at %2.</source>
+        <translation>%1. You can also read it online at %2.</translation>
     </message>
     <message>
-        <source>The manual is not on this machine yet</source>
-        <translation>The manual is not on this machine yet</translation>
+        <source>The manual is not downloaded yet</source>
+        <translation>The manual is not downloaded yet</translation>
     </message>
     <message>
-        <source>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</source>
-        <translation>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</translation>
+        <source>It is downloaded separately to keep updates small. You only need to do this once.</source>
+        <translation>It is downloaded separately to keep updates small. You only need to do this once.</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="530"/>
@@ -2218,8 +2218,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="746"/>
-        <source>Read again</source>
-        <translation>Read again</translation>
+        <source>Scan again</source>
+        <translation>Scan again</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="747"/>
@@ -2228,33 +2228,33 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="748"/>
-        <source>Bring it back</source>
-        <translation>Bring it back</translation>
+        <source>Back into the tab</source>
+        <translation>Back into the tab</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="749"/>
-        <source>Read the library</source>
-        <translation>Read the library</translation>
+        <source>Scan the library</source>
+        <translation>Scan the library</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="753"/>
-        <source>Read on %1</source>
-        <translation>Read on %1</translation>
+        <source>Scanned on %1</source>
+        <translation>Scanned on %1</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="756"/>
-        <source>Reading the library…</source>
-        <translation>Reading the library…</translation>
+        <source>Scanning the library…</source>
+        <translation>Scanning the library…</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="757"/>
-        <source>Reading the library… %1 of %2</source>
-        <translation>Reading the library… %1 of %2</translation>
+        <source>Scanning the library… %1 of %2</source>
+        <translation>Scanning the library… %1 of %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="762"/>
-        <source>Pick a document on the left. The one you were last reading opens where you stopped.</source>
-        <translation>Pick a document on the left. The one you were last reading opens where you stopped.</translation>
+        <source>Choose a document on the left. Documents reopen on the page where you stopped.</source>
+        <translation>Choose a document on the left. Documents reopen on the page where you stopped.</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="766"/>
@@ -2263,18 +2263,18 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="767"/>
-        <source>None of the addons carries a PDF. When one does, it shows up here without you asking.</source>
-        <translation>None of the addons carries a PDF. When one does, it shows up here without you asking.</translation>
+        <source>No addon includes a PDF. When one does, it shows up here automatically.</source>
+        <translation>No addon includes a PDF. When one does, it shows up here automatically.</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="773"/>
-        <source>The library was never read for documentation</source>
-        <translation>The library was never read for documentation</translation>
+        <source>The library has not been scanned for documents yet</source>
+        <translation>The library has not been scanned for documents yet</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="774"/>
-        <source>Reading it walks every addon looking for PDFs, and what it finds is written down so the next time is instant.</source>
-        <translation>Reading it walks every addon looking for PDFs, and what it finds is written down so the next time is instant.</translation>
+        <source>Scanning looks for PDFs in every addon. The result is saved, so later scans are quick.</source>
+        <translation>Scanning looks for PDFs in every addon. The result is saved, so later scans are quick.</translation>
     </message>
 </context>
 <context>
@@ -2399,8 +2399,8 @@ Also in the library: %2</translation>
 <context>
     <name>GithubManual</name>
     <message>
-        <source>The manual came down but could not be written to %1.</source>
-        <translation>The manual came down but could not be written to %1.</translation>
+        <source>The manual was downloaded but could not be saved to %1.</source>
+        <translation>The manual was downloaded but could not be saved to %1.</translation>
     </message>
 </context>
 <context>

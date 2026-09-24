@@ -572,18 +572,16 @@ void DocumentsPage::RetellTheManual()
 
     if (state == ManualState::Fetching)
     {
-        manual_->Retell(tr("Getting the manual"),
-                        tr("It is downloading from GitHub. It stays on this machine, so "
-                           "opening it again asks nothing of the network."));
+        manual_->Retell(tr("Downloading the manual"),
+                        tr("Downloading from GitHub. After this, it opens without an internet connection."));
 
         return;
     }
 
     if (state == ManualState::Failed)
     {
-        manual_->Retell(tr("The manual did not come down"),
-                        tr("%1. The manual for this version also lives at %2, and reading it there costs nothing "
-                           "but a browser.")
+        manual_->Retell(tr("The manual could not be downloaded"),
+                        tr("%1. You can also read it online at %2.")
                             .arg(viewModel_.WhatHappenedToTheManual(),
                                  QStringLiteral("github.com/brunofgmag/"
                                                 "fs-organizer")));
@@ -591,9 +589,8 @@ void DocumentsPage::RetellTheManual()
         return;
     }
 
-    manual_->Retell(tr("The manual is not on this machine yet"),
-                    tr("It is not in the package, because it weighs more than everything else you download to "
-                       "update. Getting it once leaves it here for good."));
+    manual_->Retell(tr("The manual is not downloaded yet"),
+                    tr("It is downloaded separately to keep updates small. You only need to do this once."));
 }
 
 void DocumentsPage::RetellTheManualRow()
@@ -857,36 +854,35 @@ void DocumentsPage::Retranslate()
             viewModel_.ItWasRead() && lines > 0 ? named[panel] + kSeparator + QString::number(lines) : named[panel]);
     }
 
-    readAgain_->setText(tr("Read again"));
+    readAgain_->setText(tr("Scan again"));
     stop_->setText(tr("Stop"));
-    bringItBack_->setText(tr("Bring it back"));
-    readTheLibrary_->setText(tr("Read the library"));
+    bringItBack_->setText(tr("Back into the tab"));
+    readTheLibrary_->setText(tr("Scan the library"));
 
     RetellTheManual();
 
     if (const std::optional<std::chrono::system_clock::time_point> read = viewModel_.ReadAt(); read.has_value())
     {
-        readAt_->setText(tr("Read on %1").arg(AsMoment(*read)));
+        readAt_->setText(tr("Scanned on %1").arg(AsMoment(*read)));
     }
 
-    howFar_->setText(outOf_ == 0 ? tr("Reading the library…")
-                                 : tr("Reading the library… %1 of %2").arg(indexed_).arg(outOf_));
+    howFar_->setText(outOf_ == 0 ? tr("Scanning the library…")
+                                 : tr("Scanning the library… %1 of %2").arg(indexed_).arg(outOf_));
     meter_->setRange(0, static_cast<int>(outOf_));
     meter_->setValue(static_cast<int>(indexed_));
 
     nothingOpen_->Retell(tr("Nothing open yet"),
-                         tr("Pick a document on the left. The one you were last reading opens where you stopped."));
+                         tr("Choose a document on the left. Documents reopen on the page where you stopped."));
 
     if (viewModel_.ItWasRead())
     {
         nothingIndexed_->Retell(tr("No documentation in this library"),
-                                tr("None of the addons carries a PDF. When one does, it shows up here without you "
-                                   "asking."));
+                                tr("No addon includes a PDF. When one does, it shows up here automatically."));
 
         return;
     }
 
-    nothingIndexed_->Retell(tr("The library was never read for documentation"),
-                            tr("Reading it walks every addon looking for PDFs, and what it finds is written down so "
-                               "the next time is instant."));
+    nothingIndexed_->Retell(
+        tr("The library has not been scanned for documents yet"),
+        tr("Scanning looks for PDFs in every addon. The result is saved, so later scans are quick."));
 }
