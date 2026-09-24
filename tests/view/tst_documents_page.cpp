@@ -1297,7 +1297,7 @@ void DocumentsPageTest::TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTh
 
     QCOMPARE(f.theManual.asked, std::vector<std::string>{"en"});
     QVERIFY2(WhatIsOpen(page).isEmpty(), "nothing opens while the file is not on this machine");
-    QVERIFY(SomethingSays(page, QStringLiteral("downloading")));
+    QVERIFY(SomethingSays(page, QStringLiteral("Downloading from GitHub")));
 
     f.theManual.AnswerWithTheManual();
 
