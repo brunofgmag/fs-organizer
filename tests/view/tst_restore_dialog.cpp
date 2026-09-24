@@ -178,11 +178,11 @@ void RestoreDialogTest::TheCountedLineSeparatesWhatGoesBackFromWhatReplaces()
                                               });
 
     QVERIFY(counted != labels.end());
-    QVERIFY(!(*counted)->text().contains(QStringLiteral("occupant")));
+    QVERIFY(!(*counted)->text().contains(QStringLiteral("what is there")));
 
     TheOfferIn(dialog)->click();
 
-    QVERIFY((*counted)->text().contains(QStringLiteral("occupant")));
+    QVERIFY((*counted)->text().contains(QStringLiteral("what is there")));
     QCOMPARE(dialog.Restorable().size(), std::size_t{1});
     QCOMPARE(dialog.TheOnesReplacingWhatIsThere().size(), std::size_t{1});
 }

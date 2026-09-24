@@ -359,22 +359,21 @@ porque as duas cópias continuam onde estavam.
 
 \section{Quarentena}
 
-Quando duas cópias do mesmo addon disputam o mesmo nome, a perdedora vai para a
-quarentena em vez de ser apagada. \textbf{Nada sai da quarentena sem você
-mandar}, e nada é apagado ao entrar.
+Quando você resolve um conflito entre duas cópias de um addon, a cópia que você
+não mantém vai para a quarentena em vez de ser excluída. \textbf{Nada sai da
+quarentena sem você pedir}, e nada é excluído ao entrar.
 
-Ao lado de cada item, o programa grava de onde ele veio. Esse registro é
-independente do diário, e é o que permite restaurar um item mesmo depois de o
-diário ser apagado. A tabela mostra as duas fontes, \ui{O registro diz} e
+Ao lado de cada item, o programa grava de onde ele veio. Esse registro não
+depende do histórico, então dá para restaurar um item mesmo que o histórico
+tenha sido apagado. A tabela mostra as duas fontes, \ui{O registro diz} e
 \ui{O Diário diz}, e avisa quando elas discordam.
 
 \shot{05-quarantine.png}{A quarentena, com a origem de cada item e o aviso quando o
-registro e o diário discordam.}
+registro e o histórico discordam.}
 
 \ui{Restaurar} devolve cada pasta para o lugar de onde veio. Nada é sobrescrito:
-o que colidiria é listado com as duas versões, e substituir põe o ocupante na
-quarentena com a origem dele gravada. \ui{Descartar} apaga do disco de vez, e
-pergunta antes.
+os conflitos aparecem com as duas versões, e substituir move o que está lá para
+a quarentena. \ui{Descartar} exclui definitivamente, e pergunta antes.
 
 \section{Excluir addon da biblioteca}
 

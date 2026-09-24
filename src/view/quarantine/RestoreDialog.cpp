@@ -44,7 +44,7 @@ namespace
 
         if (!check.occupant.empty())
         {
-            lines.append(QObject::tr("it is in %1").arg(AsText(check.occupant)));
+            lines.append(QObject::tr("at %1").arg(AsText(check.occupant)));
         }
 
         const QString versions = VersionsOf(check);
@@ -64,10 +64,9 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
 {
     setWindowTitle(tr("Restore from the quarantine"));
 
-    auto* explanation =
-        new QLabel(tr("Each folder goes back to where it came from. What would collide is listed here with both "
-                      "versions, and replacing puts the occupant in the quarantine with its own origin recorded."),
-                   this);
+    auto* explanation = new QLabel(tr("Each folder goes back to where it came from. Conflicts are listed with both "
+                                      "versions; replacing moves what is there to the quarantine."),
+                                   this);
     explanation->setWordWrap(true);
 
     auto* listed = new QWidget(this);
@@ -156,7 +155,7 @@ QString RestoreDialog::WhatGoingBackMeansFor(const RestoreCheck& check)
 
     const QString place = AsText(check.target.parent_path());
 
-    return check.theOriginHoldsALink ? tr("goes back to %1, and the link that is there goes away").arg(place)
+    return check.theOriginHoldsALink ? tr("goes back to %1, replacing the link there").arg(place)
                                      : tr("goes back to %1").arg(place);
 }
 
@@ -179,7 +178,7 @@ void RestoreDialog::AddTheQuestionRow(QGridLayout& grid, const Choice& choice, c
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
     grid.addWidget(name, row, 0, Qt::AlignTop);
 
-    choice.places->addItem(tr("Choose where this goes back to"));
+    choice.places->addItem(tr("Choose where it goes back"));
 
     for (const RestorePlace& place : choice.offer.places)
     {
@@ -238,7 +237,7 @@ void RestoreDialog::ShowHowManyWillGoBack() const
 
     counted_->setText(replacing == 0 ? restored
                                      : restored + QStringLiteral(" ")
-                              + tr("%n of them puts the occupant in the quarantine first.", nullptr, replacing));
+                              + tr("%n of them moves what is there to the quarantine first.", nullptr, replacing));
 }
 
 std::vector<QuarantinedItem> RestoreDialog::TheOnesReplacingWhatIsThere() const

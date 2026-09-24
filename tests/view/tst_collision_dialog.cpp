@@ -94,7 +94,7 @@ void CollisionDialogTest::ASideWithoutAVersionInItsManifestStillShowsTheSize()
                                  .occupant = MeasuredFolder{.bytes = kOccupantBytes, .measured = true}});
 
     QVERIFY(Says(dialog, AsSize(kOccupantBytes)));
-    QVERIFY(Says(dialog, QStringLiteral("the manifest does not say")));
+    QVERIFY(Says(dialog, QStringLiteral("not declared")));
 }
 
 void CollisionDialogTest::NothingIsPreselectedAndTheReplaceButtonIsNotTheDefault()

@@ -58,7 +58,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     bar->addStretch();
     bar->addWidget(empty_);
 
-    panel_ = new ContextPanel(tr("Item held"), 400, this);
+    panel_ = new ContextPanel(tr("Item in quarantine"), 400, this);
     panel_->setObjectName(QStringLiteral("QuarantineItemPanel"));
     detail_ = new ModelRowDetail(panel_);
     restoreFromPanel_ = new QPushButton(panel_);
@@ -150,14 +150,14 @@ void QuarantinePage::changeEvent(QEvent* event)
 
 void QuarantinePage::RetranslateUi()
 {
-    restore_->setText(tr("Restore the selected ones"));
-    discard_->setText(tr("Discard the selected ones"));
+    restore_->setText(tr("Restore selected"));
+    discard_->setText(tr("Discard selected"));
     empty_->setText(tr("Empty the quarantine"));
-    openFolder_->setText(tr("Open the folder"));
-    panel_->RenameTheFallback(tr("Item held"));
+    openFolder_->setText(tr("Open folder"));
+    panel_->RenameTheFallback(tr("Item in quarantine"));
     nothingHeld_->Retell(tr("The quarantine is empty."),
-                         tr("When two copies of the same addon fight over the same name, the losing one comes here "
-                            "instead of being deleted. Nothing has been held so far."));
+                         tr("When you resolve a conflict between two copies of an addon, the one you do not keep comes "
+                            "here instead of being deleted."));
 }
 
 void QuarantinePage::ShowTheSelectedItem()
@@ -228,10 +228,10 @@ QList<ModelRowDetail::Field> QuarantinePage::TheComparisonFor(const QModelIndex&
         return {};
     }
 
-    return {{tr("Already in place"), AsText(detail->replacedBy)},
-            {tr("Version there"),
-             detail->replacementVersion.empty() ? tr("the manifest does not say")
-                                                : QString::fromStdString(detail->replacementVersion)}};
+    return {
+        {tr("Now in its place"), AsText(detail->replacedBy)},
+        {tr("Its version"),
+         detail->replacementVersion.empty() ? tr("not declared") : QString::fromStdString(detail->replacementVersion)}};
 }
 
 void QuarantinePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
@@ -257,7 +257,7 @@ void QuarantinePage::ShowTheSelectedBatch(const QModelIndexList& rows) const
     QList<ModelRowDetail::Field> fields;
     fields.append({tr("Size on disk"), SizeOfTheSelection(model_.TallyOf(rows))});
     fields.append({tr("Items"), QString::number(held)});
-    fields.append({tr("Know where they came from"), tr("%1 of %2").arg(known).arg(held)});
+    fields.append({tr("With a known origin"), tr("%1 of %2").arg(known).arg(held)});
     fields.append({tr("Go back to"), tr("%n place", nullptr, static_cast<int>(origins.size()))});
 
     panel_->ShowTitle(tr("%n item selected", nullptr, held));
@@ -297,7 +297,7 @@ void QuarantinePage::RestoreSelected()
         return;
     }
 
-    emit StatusChanged(tr("Checking what restoring would touch…"));
+    emit StatusChanged(tr("Checking what restoring would affect…"));
 
     viewModel_.PrepareRestore(items);
 }
@@ -341,7 +341,7 @@ void QuarantinePage::DiscardSelected()
 
     const QMessageBox::StandardButton answer = QMessageBox::question(
         this, tr("Discard from the quarantine"),
-        tr("%n item will be deleted from the disk for good. Continue?", nullptr, static_cast<int>(items.size())),
+        tr("Permanently delete %n item? This cannot be undone.", nullptr, static_cast<int>(items.size())),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
     if (answer == QMessageBox::Yes)
@@ -359,11 +359,11 @@ void QuarantinePage::EmptyTheQuarantine()
         return;
     }
 
-    const QMessageBox::StandardButton answer = QMessageBox::question(
-        this, tr("Empty the quarantine"),
-        tr("Everything in the quarantine, %n item, will be deleted from the disk for good. Continue?", nullptr,
-           static_cast<int>(items.size())),
-        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    const QMessageBox::StandardButton answer =
+        QMessageBox::question(this, tr("Empty the quarantine"),
+                              tr("Permanently delete everything in the quarantine (%n item)? This cannot be undone.",
+                                 nullptr, static_cast<int>(items.size())),
+                              QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
     if (answer == QMessageBox::Yes)
     {
@@ -410,9 +410,8 @@ void QuarantinePage::Report(const QString& title, const std::vector<FileOperatio
         return;
     }
 
-    QMessageBox report(QMessageBox::Warning, title,
-                       tr("%n item could not be handled.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
-                       this);
+    QMessageBox report(QMessageBox::Warning, title, tr("%n item failed.", nullptr, static_cast<int>(failed.size())),
+                       QMessageBox::Ok, this);
     report.setInformativeText(tr("%n item finished.", nullptr, done));
     report.setDetailedText(failed.join('\n'));
     report.exec();
@@ -449,8 +448,8 @@ void QuarantinePage::ReportTheSwaps(const std::vector<SwapResult>& results)
     }
 
     QMessageBox report(QMessageBox::Warning, tr("Replace what's there"),
-                       tr("%n replacement stopped part of the way.", nullptr, stopped), QMessageBox::Ok, this);
-    report.setInformativeText(tr("Nothing was deleted. The detail says where each one stopped."));
+                       tr("%n replacement did not finish.", nullptr, stopped), QMessageBox::Ok, this);
+    report.setInformativeText(tr("Nothing was deleted. The details say where each one stopped."));
     report.setDetailedText(told.join('\n'));
     report.exec();
 }
@@ -477,7 +476,7 @@ void QuarantinePage::UpdateSummary()
     pages_->setCurrentIndex(rows == 0 ? 1 : 0);
 
     emit SummaryChanged(rows == 0 ? tr("0 items in the quarantine") : tr("%n item in the quarantine.", nullptr, rows));
-    emit AsideChanged(rows == 0 ? tr("0 bytes held") : QString());
+    emit AsideChanged(rows == 0 ? tr("0 bytes") : QString());
 
     restore_->setEnabled(selected > 0);
     discard_->setEnabled(selected > 0);

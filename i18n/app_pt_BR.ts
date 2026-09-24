@@ -831,8 +831,8 @@
     <name>CollisionDialog</name>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="43"/>
-        <source>Restoring would collide</source>
-        <translation>A restauração colidiria</translation>
+        <source>Something is already there</source>
+        <translation>Já existe algo no lugar</translation>
     </message>
     <message>
         <source>Something with this name is already in %1. Restoring would put two addons in one place, so the app does not pick for you.</source>
@@ -840,8 +840,8 @@
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="50"/>
-        <source>Something with this name is already in %1. Restoring would put two addons in one place.</source>
-        <translation>Algo com esse nome já está em %1. Restaurar poria dois addons no mesmo lugar.</translation>
+        <source>%1 already has something with this name. Restoring would put two addons in the same place.</source>
+        <translation>%1 já tem algo com este nome. Restaurar poria dois addons no mesmo lugar.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="63"/>
@@ -855,8 +855,8 @@
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="67"/>
-        <source>Replacing puts what is there in the quarantine, with its own origin recorded.</source>
-        <translation>Substituir põe o que está lá na quarentena, com a origem dele gravada.</translation>
+        <source>Replacing moves what is there to the quarantine, so it can be restored later.</source>
+        <translation>Substituir move o que está lá para a quarentena, e ele pode ser restaurado depois.</translation>
     </message>
     <message>
         <source>Replacing puts what is there in the quarantine, with its own origin recorded. Nothing is deleted, and the same dialog brings it back.</source>
@@ -2001,8 +2001,8 @@ Também na biblioteca: %2</translation>
         <location filename="../src/view/quarantine/DiscardProgressDialog.cpp" line="42"/>
         <source>Deleting %1 of %n item</source>
         <translation>
-            <numerusform>Apagando %1 de %n item</numerusform>
-            <numerusform>Apagando %1 de %n itens</numerusform>
+            <numerusform>Excluindo %1 de %n item</numerusform>
+            <numerusform>Excluindo %1 de %n itens</numerusform>
         </translation>
     </message>
 </context>
@@ -5092,17 +5092,17 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="47"/>
-        <source>it is in %1</source>
-        <translation>está em %1</translation>
+        <source>at %1</source>
+        <translation>em %1</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="27"/>
-        <source>the manifest does not say</source>
-        <translation>o manifesto não diz</translation>
+        <source>not declared</source>
+        <translation>não declarada</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="32"/>
-        <source>it could not be measured</source>
+        <source>could not be measured</source>
         <translation>não foi possível medir</translation>
     </message>
     <message>
@@ -5286,13 +5286,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="130"/>
-        <source>neither has it</source>
-        <translation>nenhum dos dois tem</translation>
+        <source>neither knows</source>
+        <translation>nenhum dos dois sabe</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="178"/>
         <source>quarantined %1</source>
-        <translation>posto em quarentena em %1</translation>
+        <translation>na quarentena desde %1</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="235"/>
@@ -5339,14 +5339,14 @@ Tamanho %2</translation>
 <context>
     <name>QuarantinePage</name>
     <message>
-        <source>Checking what restoring would touch…</source>
-        <translation>Conferindo o que a restauração vai tocar…</translation>
+        <source>Checking what restoring would affect…</source>
+        <translation>Verificando o que a restauração vai afetar…</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="59"/>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="144"/>
-        <source>Item held</source>
-        <translation>Item retido</translation>
+        <source>Item in quarantine</source>
+        <translation>Item na quarentena</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="112"/>
@@ -5361,12 +5361,12 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="140"/>
-        <source>Restore the selected ones</source>
+        <source>Restore selected</source>
         <translation>Restaurar selecionados</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="141"/>
-        <source>Discard the selected ones</source>
+        <source>Discard selected</source>
         <translation>Descartar selecionados</translation>
     </message>
     <message>
@@ -5377,8 +5377,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="143"/>
-        <source>Open the folder</source>
-        <translation>Abrir a pasta</translation>
+        <source>Open folder</source>
+        <translation>Abrir pasta</translation>
     </message>
     <message>
         <source>Nothing leaves the quarantine without you saying so.</source>
@@ -5391,8 +5391,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="146"/>
-        <source>When two copies of the same addon fight over the same name, the losing one comes here instead of being deleted. Nothing has been held so far.</source>
-        <translation>Quando duas cópias do mesmo addon disputam o mesmo nome, a perdedora vem para cá em vez de ser apagada. Nada foi retido até agora.</translation>
+        <source>When you resolve a conflict between two copies of an addon, the one you do not keep comes here instead of being deleted.</source>
+        <translation>Quando você resolve um conflito entre duas cópias de um addon, a que você não mantém vem para cá em vez de ser excluída.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="185"/>
@@ -5403,7 +5403,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="190"/>
         <source>Quarantined on</source>
-        <translation>Quarentenado em</translation>
+        <translation>Na quarentena desde</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="193"/>
@@ -5422,18 +5422,18 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="218"/>
-        <source>Already in place</source>
-        <translation>Já está no lugar</translation>
+        <source>Now in its place</source>
+        <translation>Agora no lugar dele</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="219"/>
-        <source>Version there</source>
-        <translation>Versão de lá</translation>
+        <source>Its version</source>
+        <translation>Versão dele</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="220"/>
-        <source>the manifest does not say</source>
-        <translation>o manifesto não diz</translation>
+        <source>not declared</source>
+        <translation>não declarada</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="246"/>
@@ -5442,8 +5442,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="247"/>
-        <source>Know where they came from</source>
-        <translation>Sabem de onde vieram</translation>
+        <source>With a known origin</source>
+        <translation>Com origem conhecida</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="247"/>
@@ -5502,10 +5502,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="331"/>
-        <source>%n item will be deleted from the disk for good. Continue?</source>
+        <source>Permanently delete %n item? This cannot be undone.</source>
         <translation>
-            <numerusform>%n item será apagado do disco para sempre. Continuar?</numerusform>
-            <numerusform>%n itens serão apagados do disco para sempre. Continuar?</numerusform>
+            <numerusform>Excluir %n item definitivamente? Não pode ser desfeito.</numerusform>
+            <numerusform>Excluir %n itens definitivamente? Não pode ser desfeito.</numerusform>
         </translation>
     </message>
     <message>
@@ -5515,10 +5515,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="351"/>
-        <source>Everything in the quarantine, %n item, will be deleted from the disk for good. Continue?</source>
+        <source>Permanently delete everything in the quarantine (%n item)? This cannot be undone.</source>
         <translation>
-            <numerusform>Tudo que está na quarentena, %n item, será apagado do disco para sempre. Continuar?</numerusform>
-            <numerusform>Tudo que está na quarentena, %n itens, será apagado do disco para sempre. Continuar?</numerusform>
+            <numerusform>Excluir definitivamente tudo o que está na quarentena (%n item)? Não pode ser desfeito.</numerusform>
+            <numerusform>Excluir definitivamente tudo o que está na quarentena (%n itens)? Não pode ser desfeito.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5531,10 +5531,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="381"/>
-        <source>%n item could not be handled.</source>
+        <source>%n item failed.</source>
         <translation>
-            <numerusform>%n item não pôde ser tratado.</numerusform>
-            <numerusform>%n itens não puderam ser tratados.</numerusform>
+            <numerusform>%n item falhou.</numerusform>
+            <numerusform>%n itens falharam.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5560,16 +5560,16 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="419"/>
-        <source>%n replacement stopped part of the way.</source>
+        <source>%n replacement did not finish.</source>
         <translation>
-            <numerusform>%n substituição parou no meio do caminho.</numerusform>
-            <numerusform>%n substituições pararam no meio do caminho.</numerusform>
+            <numerusform>%n substituição não terminou.</numerusform>
+            <numerusform>%n substituições não terminaram.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="420"/>
-        <source>Nothing was deleted. The detail says where each one stopped.</source>
-        <translation>Nada foi apagado. O detalhe diz onde cada um parou.</translation>
+        <source>Nothing was deleted. The details say where each one stopped.</source>
+        <translation>Nada foi excluído. Os detalhes dizem onde cada uma parou.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="446"/>
@@ -5586,8 +5586,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="447"/>
-        <source>0 bytes held</source>
-        <translation>0 bytes retidos</translation>
+        <source>0 bytes</source>
+        <translation>0 bytes</translation>
     </message>
     <message>
         <source>nothing leaves here without you saying so</source>
@@ -5653,13 +5653,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="68"/>
-        <source>Each folder goes back to where it came from. What would collide is listed here with both versions, and replacing puts the occupant in the quarantine with its own origin recorded.</source>
-        <translation>Cada pasta volta para onde veio. O que colidiria está listado aqui com as duas versões, e substituir põe o ocupante na quarentena com a origem dele gravada.</translation>
+        <source>Each folder goes back to where it came from. Conflicts are listed with both versions; replacing moves what is there to the quarantine.</source>
+        <translation>Cada pasta volta para onde veio. Os conflitos aparecem com as duas versões; substituir move o que está lá para a quarentena.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="159"/>
-        <source>goes back to %1, and the link that is there goes away</source>
-        <translation>volta para %1, e o link que está lá sai</translation>
+        <source>goes back to %1, replacing the link there</source>
+        <translation>volta para %1, no lugar do link que está lá</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="160"/>
@@ -5668,8 +5668,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="182"/>
-        <source>Choose where this goes back to</source>
-        <translation>Escolha para onde isto volta</translation>
+        <source>Choose where it goes back</source>
+        <translation>Escolha para onde volta</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="199"/>
@@ -5701,10 +5701,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="241"/>
-        <source>%n of them puts the occupant in the quarantine first.</source>
+        <source>%n of them moves what is there to the quarantine first.</source>
         <translation>
-            <numerusform>%n deles põe o ocupante na quarentena antes.</numerusform>
-            <numerusform>%n deles põem o ocupante na quarentena antes.</numerusform>
+            <numerusform>%n delas move o que está lá para a quarentena antes.</numerusform>
+            <numerusform>%n delas movem o que está lá para a quarentena antes.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

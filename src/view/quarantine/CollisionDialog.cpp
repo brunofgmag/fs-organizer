@@ -24,12 +24,12 @@ namespace
 
     QString VersionOrSilence(const std::string& version)
     {
-        return version.empty() ? QObject::tr("the manifest does not say") : QString::fromStdString(version);
+        return version.empty() ? QObject::tr("not declared") : QString::fromStdString(version);
     }
 
     QString SizeOrSilence(const MeasuredFolder& measured)
     {
-        return measured.measured ? AsSize(measured.bytes) : QObject::tr("it could not be measured");
+        return measured.measured ? AsSize(measured.bytes) : QObject::tr("could not be measured");
     }
 
     QString SideText(const QString& version, const QString& size)
@@ -40,14 +40,14 @@ namespace
 
 CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Restoring would collide"));
+    setWindowTitle(tr("Something is already there"));
 
     auto* name = new QLabel(AsText(check.item.path.filename()), this);
     name->setObjectName(QStringLiteral("PanelTitle"));
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto* explanation =
-        new QLabel(tr("Something with this name is already in %1. Restoring would put two addons in one place.")
+        new QLabel(tr("%1 already has something with this name. Restoring would put two addons in the same place.")
                        .arg(AsText(check.occupant.parent_path())),
                    this);
     explanation->setWordWrap(true);
@@ -64,7 +64,7 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
     occupant_ = AddTheSide(*grid, 1, tr("Already there"), VersionOrSilence(check.occupantVersion));
 
     auto* promise =
-        new QLabel(tr("Replacing puts what is there in the quarantine, with its own origin recorded."), this);
+        new QLabel(tr("Replacing moves what is there to the quarantine, so it can be restored later."), this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
 

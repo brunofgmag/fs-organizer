@@ -360,22 +360,21 @@ because both copies are still where they were.
 
 \section{Quarantine}
 
-When two copies of the same addon fight over the same name, the losing one comes
-to the quarantine instead of being deleted. \textbf{Nothing leaves the quarantine
-without you saying so}, and nothing is deleted on the way in.
+When you resolve a conflict between two copies of an addon, the copy you do not
+keep goes to the quarantine instead of being deleted. \textbf{Nothing leaves the
+quarantine unless you ask}, and nothing is deleted on the way in.
 
-Beside each item the program records where it came from. That record is
-independent of the journal, and it is what allows an item to be restored even
-after the journal has been deleted. The table shows both sources, \ui{The record
-says} and \ui{The Journal says}, and flags when they disagree.
+Next to each item the program records where it came from. That record does not
+depend on the journal, so an item can be restored even if the journal is gone.
+The table shows both sources, \ui{The record says} and \ui{The Journal says},
+and flags when they disagree.
 
 \shot{05-quarantine.png}{The quarantine, with the origin of each item and the flag
 for when the record and the journal disagree.}
 
 \ui{Restore} sends each folder back to where it came from. Nothing is
-overwritten: what would collide is listed with both versions, and replacing puts
-the occupant in the quarantine with its own origin recorded. \ui{Discard} erases
-from the disk for good, and asks first.
+overwritten: conflicts are listed with both versions, and replacing moves what
+is there to the quarantine. \ui{Discard} deletes permanently, and asks first.
 
 \section{Deleting an addon from the library}
 
