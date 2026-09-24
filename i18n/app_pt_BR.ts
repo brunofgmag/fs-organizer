@@ -116,8 +116,8 @@
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="407"/>
-        <source>A folder with this name already exists in the destination: %1</source>
-        <translation>Já existe uma pasta com este nome no destino: %1</translation>
+        <source>A regular folder with this name already exists in the destination: %1</source>
+        <translation>Já existe uma pasta comum com este nome no destino: %1</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="417"/>
@@ -1006,8 +1006,8 @@ Também na biblioteca: %2</translation>
         <translation>Substituída</translation>
     </message>
     <message>
-        <source>Something wrote a regular folder over the link this app made. The simulator now loads that folder and ignores your library copy. Choose which copy to keep.</source>
-        <translation>Algo gravou uma pasta comum por cima do link que este app criou. O simulador agora carrega essa pasta e ignora a cópia da biblioteca. Escolha qual cópia manter.</translation>
+        <source>Something wrote a regular folder over the link this app made. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy. Choose which copy to keep.</source>
+        <translation>Algo gravou uma pasta comum por cima do link que este app criou. O simulador agora carrega essa pasta, e ativar, presets e a busca pelo culpado não alcançam mais a cópia da biblioteca. Escolha qual cópia manter.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="115"/>
@@ -1684,8 +1684,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/panels/DependencySection.cpp" line="112"/>
-        <source>installed %1</source>
-        <translation>instalado %1</translation>
+        <source>in library %1</source>
+        <translation>na biblioteca %1</translation>
     </message>
 </context>
 <context>
@@ -2612,8 +2612,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="91"/>
-        <source>Link another program&apos;s folder to the library</source>
-        <translation>Criar link da pasta de outro programa na biblioteca</translation>
+        <source>Replace another program&apos;s folder with a link to the library</source>
+        <translation>Trocar a pasta do outro programa por um link para a biblioteca</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="92"/>
@@ -3231,8 +3231,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="275"/>
-        <source>This profile is not active. Make it active to change its destinations or libraries.</source>
-        <translation>Este perfil não está ativo. Ative-o para alterar os destinos ou as bibliotecas dele.</translation>
+        <source>This profile is not in use. Select it to change its destinations or libraries.</source>
+        <translation>Este perfil não está em uso. Selecione-o para alterar os destinos ou as bibliotecas dele.</translation>
     </message>
     <message>
         <source>Unregistering takes the library out of the configuration and deletes no file at all. The links that pointed at it keep working in the simulator, but start showing up as third party links, which FS Organizer does not touch.</source>
@@ -4326,16 +4326,16 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>Pelo menos uma cópia não declara versão, então não dá para saber qual é a mais nova.</translation>
     </message>
     <message>
-        <source>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder and ignores your library copy.</source>
-        <translation>Esta pasta era um link para a sua biblioteca até algo gravar uma pasta comum por cima dele. O simulador agora carrega essa pasta e ignora a cópia da biblioteca.</translation>
+        <source>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy.</source>
+        <translation>Esta pasta era um link para a sua biblioteca até algo gravar uma pasta comum por cima dele. O simulador agora carrega essa pasta, e ativar, presets e a busca pelo culpado não alcançam mais a cópia da biblioteca.</translation>
     </message>
     <message>
         <source>Folder in place of the link</source>
         <translation>Pasta no lugar do link</translation>
     </message>
     <message>
-        <source>Move this folder into the library</source>
-        <translation>Levar esta pasta para a biblioteca</translation>
+        <source>Move this folder into the library and link it back</source>
+        <translation>Levar esta pasta para a biblioteca e refazer o link</translation>
     </message>
     <message>
         <source>The library copy is enabled in %1. It is moved to the quarantine first.</source>
@@ -4389,13 +4389,13 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="12"/>
-        <source>a folder with that name already exists in the destination</source>
-        <translation>já existe uma pasta com esse nome no destino</translation>
+        <source>a regular folder with that name already exists in the destination</source>
+        <translation>já existe uma pasta comum com esse nome no destino</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="14"/>
         <source>the destination already has a working link from another program</source>
-        <translation>o destino já tem um link ativo de outro programa</translation>
+        <translation>o destino já tem um link funcionando de outro programa</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="16"/>
@@ -4470,8 +4470,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="56"/>
-        <source>that drive is read-only</source>
-        <translation>esse disco é somente leitura</translation>
+        <source>that drive is read-only, and running as administrator does not help</source>
+        <translation>esse disco é somente leitura, e executar como administrador não resolve</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="58"/>
@@ -4747,7 +4747,7 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <source>
     neither of them is in the library right now, and nothing was deleted</source>
         <translation>
-    nenhum dos dois está na biblioteca agora, e nada foi apagado</translation>
+    nenhum dos dois está na biblioteca agora, e nada foi excluído</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="221"/>
@@ -4909,8 +4909,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="393"/>
-        <source>Already applied</source>
-        <translation>Já aplicado</translation>
+        <source>Matches your setup</source>
+        <translation>Igual ao atual</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/PresetsPage.cpp" line="388"/>
@@ -6142,8 +6142,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="180"/>
-        <source>The simulator&apos;s startup file (EXE.xml) was not found for this profile, or it lists no programs.</source>
-        <translation>O arquivo de inicialização do simulador (EXE.xml) não foi encontrado para este perfil, ou não lista nenhum programa.</translation>
+        <source>The simulator&apos;s startup file (EXE.xml) was not found next to this profile&apos;s UserCfg.opt, or it lists no programs.</source>
+        <translation>O arquivo de inicialização do simulador (EXE.xml) não foi encontrado ao lado do UserCfg.opt deste perfil, ou não lista nenhum programa.</translation>
     </message>
     <message>
         <source>The startup entries are left alone</source>
@@ -6332,7 +6332,7 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/shell/TriageStrip.cpp" line="88"/>
-        <source>Show duplicated…</source>
+        <source>Show duplicates…</source>
         <translation>Ver duplicadas…</translation>
     </message>
     <message>

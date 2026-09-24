@@ -394,7 +394,7 @@ namespace
 
         if (row.satisfied)
         {
-            item->setData(TagTextRole, QObject::tr("Already applied"));
+            item->setData(TagTextRole, QObject::tr("Matches your setup"));
             item->setData(TagToneRole, static_cast<int>(TagTone::Muted));
         }
 

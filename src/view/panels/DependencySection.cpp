@@ -109,7 +109,7 @@ QWidget* DependencySection::LineFor(const DependencyAnswer& answer) const
 
     if (!answer.libraryVersion.empty())
     {
-        grid->addWidget(Quiet(new QLabel(tr("installed %1").arg(QString::fromStdString(answer.libraryVersion)), line)),
+        grid->addWidget(Quiet(new QLabel(tr("in library %1").arg(QString::fromStdString(answer.libraryVersion)), line)),
                         1, 1);
     }
 

@@ -90,9 +90,9 @@ void DependencySectionTest::TheDeclaredVersionAndTheOneTheLibraryHoldsAppearSide
     const QStringList written = EverythingWritten(section);
 
     QVERIFY(written.contains(QStringLiteral("requires 1.0.0")));
-    QVERIFY(written.contains(QStringLiteral("installed 1.0.1")));
+    QVERIFY(written.contains(QStringLiteral("in library 1.0.1")));
     QCOMPARE(written.filter(QStringLiteral("requires ")).size(), 1);
-    QCOMPARE(written.filter(QStringLiteral("installed ")).size(), 1);
+    QCOMPARE(written.filter(QStringLiteral("in library ")).size(), 1);
 }
 
 void DependencySectionTest::TheSectionSaysWhereTheListCameFromWhenTheListAnswered()

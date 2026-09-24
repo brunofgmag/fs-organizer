@@ -9,7 +9,7 @@ QString Explain(const LinkFailure failure)
     switch (failure)
     {
     case LinkFailure::DestinationHoldsRealFolder:
-        return QObject::tr("a folder with that name already exists in the destination");
+        return QObject::tr("a regular folder with that name already exists in the destination");
     case LinkFailure::DestinationHoldsLiveLink:
         return QObject::tr("the destination already has a working link from another program");
     case LinkFailure::UnreadableLinkTarget: return QObject::tr("the link already in the destination could not be read");
@@ -50,7 +50,8 @@ QString Explain(const WriteAccess access)
     case WriteAccess::TheFolderIsNotThere: return QObject::tr("that folder is no longer there");
     case WriteAccess::PermissionIsDenied:
         return QObject::tr("Windows denied access; running the app as administrator may help");
-    case WriteAccess::TheVolumeIsReadOnly: return QObject::tr("that drive is read-only");
+    case WriteAccess::TheVolumeIsReadOnly:
+        return QObject::tr("that drive is read-only, and running as administrator does not help");
     case WriteAccess::ItRefusedForAnotherReason: return QObject::tr("Windows refused the operation");
     case WriteAccess::ItAccepts: break;
     }

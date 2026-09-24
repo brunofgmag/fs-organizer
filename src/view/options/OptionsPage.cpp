@@ -281,7 +281,7 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     underTheLibraries->addWidget(underneath);
 
     onlyForTheProfileInUse_ =
-        Quiet(tr("This profile is not active. Make it active to change its destinations or libraries."), libraryGroup);
+        Quiet(tr("This profile is not in use. Select it to change its destinations or libraries."), libraryGroup);
     underTheLibraries->addWidget(onlyForTheProfileInUse_);
     layout->addWidget(libraryGroup);
     layout->addStretch();
