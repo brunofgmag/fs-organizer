@@ -22,20 +22,18 @@ namespace
 
         if (leftover.theCopyResolvedAConflict)
         {
-            return StagingLeftoverDialog::tr(
-                "half of a conflict resolution: the two copies are still where they were, so only discarding is "
-                "offered");
+            return StagingLeftoverDialog::tr("left by an interrupted conflict resolution; both copies are still in "
+                                             "place, so it can only be discarded");
         }
 
-        return StagingLeftoverDialog::tr(
-            "the journal does not know where this came from, so only discarding is offered");
+        return StagingLeftoverDialog::tr("its origin is unknown, so it can only be discarded");
     }
 }
 
 StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>& leftovers, QWidget* parent)
     : QDialog(parent)
 {
-    setWindowTitle(tr("Imports that were left half finished"));
+    setWindowTitle(tr("Unfinished imports"));
 
     auto* grid = new QGridLayout;
     grid->setColumnStretch(0, 1);
@@ -50,12 +48,12 @@ StagingLeftoverDialog::StagingLeftoverDialog(const std::vector<StagingLeftover>&
         grid->addWidget(name, row, 0);
 
         auto* action = new QComboBox(this);
-        action->addItem(tr("Leave it as it is"), LeaveItThere);
+        action->addItem(tr("Leave as is"), LeaveItThere);
         if (leftover.CanBeResumed())
         {
             action->addItem(tr("Resume the import"), Resume);
         }
-        action->addItem(tr("Discard the half finished copy"), Discard);
+        action->addItem(tr("Discard the partial copy"), Discard);
         action->setCurrentIndex(action->findData(leftover.CanBeResumed() ? Resume : LeaveItThere));
         LetTheWheelScrollPastUnlessTheWidgetHasFocus(action);
         grid->addWidget(action, row, 1);

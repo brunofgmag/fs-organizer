@@ -182,27 +182,28 @@ instead of recreated. The program never adds a startup entry.
 
 \section{First setup}
 
-On the first run the program looks for the simulator installations on the
-machine and asks for two things.
+On the first run the program looks for simulator installations on the computer
+and asks for two things.
 
 \begin{description}
-  \item[The simulator] Choose the installation this profile will manage, from
-    the list it found, or point at a folder by hand. If the folder you point at
-    does not look like a simulator destination, which is usually called
-    \where|Community|, the program says so and uses it anyway.
-  \item[The library] Choose the root folder where your addons are kept, outside
-    the simulator. Its subfolders become categories.
+  \item[The simulator] Choose the installation this profile will manage from
+    the list, or choose a folder yourself. If that folder does not look like the
+    simulator's \where|Community| folder, the program says so and uses it
+    anyway.
+  \item[The library] Choose the folder outside the simulator where you keep
+    your addons. Its subfolders become categories.
 \end{description}
 
-When you register a very deep library, the program shows how many characters
-that root consumes and how many are left for the addon, next to a short root for
-comparison. Nothing is blocked: addons that go past the Windows limit say so
-when it matters, and \ui{Diagnostics} keeps the longest path of each library.
+When you add a library with a long path, the program shows how many characters
+the path already takes and how many are left for the addon, next to a short
+path for comparison. Nothing is blocked: addons that go past the Windows limit
+say so when it matters, and \ui{Diagnostics} shows the longest path in each
+library.
 
-Anyone coming from MSFS Addons Linker can bring its configuration over in
-\ui{Options}, through \ui{Import from MSFS Addons Linker}. Nothing is moved or
-deleted: importing registers the library, the categories and the presets that
-are not here yet.
+If you come from MSFS Addons Linker, you can bring its configuration over in
+\ui{Options}, with \ui{Import from MSFS Addons Linker}. No files are moved or
+deleted: importing adds the libraries, categories and presets that are not here
+yet.
 
 \section{Library}
 
@@ -351,12 +352,12 @@ If the copy does not match, nothing is removed.
 
 \subsection{Half finished imports}
 
-If an import is interrupted, the next run offers three ways out: resume, discard
-the half finished copy, or leave it as it is. The original files are still where
-they were, and nothing was removed from the destination.
+If an import is interrupted, the next time the program opens it offers three
+choices: resume, discard the partial copy, or leave it as is. The original files
+are still where they were, and nothing was removed from the destination.
 
-When the half that stopped is a conflict resolution, only discarding is offered,
-because both copies are still where they were.
+If the interrupted operation was a conflict resolution, the copy can only be
+discarded, because both copies are still in place.
 
 \section{Quarantine}
 

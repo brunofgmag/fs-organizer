@@ -2812,8 +2812,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="158"/>
-        <source>already registered</source>
-        <translation>already registered</translation>
+        <source>already added</source>
+        <translation>already added</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="162"/>
@@ -2833,8 +2833,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="173"/>
-        <source>refused: the name does not become a folder</source>
-        <translation>refused: the name does not become a folder</translation>
+        <source>refused: the name is not a valid folder name</source>
+        <translation>refused: the name is not a valid folder name</translation>
     </message>
     <message>
         <source>FS Organizer has read the old program&apos;s configuration and proposes what follows. Importing registers the library and the categories that are not here yet.</source>
@@ -2882,23 +2882,23 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="240"/>
-        <source> %1 imported, %2 with a name already used here.</source>
-        <translation> %1 imported, %2 with a name already used here.</translation>
+        <source> %1 imported, %2 skipped because the name is already in use.</source>
+        <translation> %1 imported, %2 skipped because the name is already in use.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="247"/>
-        <source> %n name the presets cite was not found in any library.</source>
+        <source> %n addon named in the presets was not found in any library.</source>
         <translation>
-            <numerusform> %n name the presets cite was not found in any library.</numerusform>
-            <numerusform> %n names the presets cite were not found in any library.</numerusform>
+            <numerusform> %n addon named in the presets was not found in any library.</numerusform>
+            <numerusform> %n addons named in the presets were not found in any library.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="253"/>
-        <source> %n refused for being inside an already registered library.</source>
+        <source> %n refused because it is inside a library already added.</source>
         <translation>
-            <numerusform> %n refused for being inside an already registered library.</numerusform>
-            <numerusform> %n refused for being inside an already registered library.</numerusform>
+            <numerusform> %n refused because it is inside a library already added.</numerusform>
+            <numerusform> %n refused because they are inside libraries already added.</numerusform>
         </translation>
     </message>
 </context>
@@ -3068,8 +3068,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="298"/>
-        <source>The simulator is running. The changes were applied, but it will only see them after it is restarted.</source>
-        <translation>The simulator is running. The changes were applied, but it will only see them after it is restarted.</translation>
+        <source>Changes applied. Restart the simulator to see them.</source>
+        <translation>Changes applied. Restart the simulator to see them.</translation>
     </message>
     <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="315"/>
@@ -4927,21 +4927,21 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="35"/>
-        <source>Destination pinnings pointing outside</source>
-        <translation>Destination pinnings pointing outside</translation>
+        <source>Pinned destinations not found</source>
+        <translation>Pinned destinations not found</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/shell/StartupOffers.cpp" line="36"/>
-        <source>%n destination pinning of this profile names a folder that is not a destination of it. While that is so, the pinned addons use the default destination. Nothing was deleted from the configuration.</source>
+        <source>%n pinned destination of this profile is no longer one of its destinations. Until that changes, the addons pinned to it use the default destination.</source>
         <translation>
-            <numerusform>%n destination pinning of this profile names a folder that is not a destination of it. While that is so, the pinned addons use the default destination. Nothing was deleted from the configuration.</numerusform>
-            <numerusform>%n destination pinnings of this profile name a folder that is not a destination of it. While that is so, the pinned addons use the default destination. Nothing was deleted from the configuration.</numerusform>
+            <numerusform>%n pinned destination of this profile is no longer one of its destinations. Until that changes, the addons pinned to it use the default destination.</numerusform>
+            <numerusform>%n pinned destinations of this profile are no longer among its destinations. Until that changes, the addons pinned to them use the default destination.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="42"/>
-        <source>Discard the pinnings</source>
-        <translation>Discard the pinnings</translation>
+        <source>Remove the pins</source>
+        <translation>Remove the pins</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="43"/>
@@ -4950,18 +4950,18 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="59"/>
-        <source>MSFS Addons Linker is on this machine</source>
-        <translation>MSFS Addons Linker is on this machine</translation>
+        <source>MSFS Addons Linker found</source>
+        <translation>MSFS Addons Linker found</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="60"/>
-        <source>It has libraries FS Organizer does not know yet. Nothing is moved or deleted: you choose what to bring over before anything happens.</source>
-        <translation>It has libraries FS Organizer does not know yet. Nothing is moved or deleted: you choose what to bring over before anything happens.</translation>
+        <source>It has libraries FS Organizer does not know yet. You choose what to import; no files are moved or deleted.</source>
+        <translation>It has libraries FS Organizer does not know yet. You choose what to import; no files are moved or deleted.</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="64"/>
-        <source>See what can be brought over</source>
-        <translation>See what can be brought over</translation>
+        <source>See what can be imported</source>
+        <translation>See what can be imported</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="65"/>
@@ -4970,26 +4970,26 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="92"/>
-        <source>A folder of another program was left renamed</source>
-        <translation>A folder of another program was left renamed</translation>
+        <source>Another program&apos;s folder was left renamed</source>
+        <translation>Another program&apos;s folder was left renamed</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/shell/StartupOffers.cpp" line="93"/>
-        <source>%n folder that FS Organizer took over is still under the name it was given while the swap ran, so the other program no longer finds it. Your addon is safe in the library: what is missing is the folder under its own name.</source>
+        <source>%n folder imported by FS Organizer still has a temporary name from an interrupted swap, so the other program cannot find it. Your addon is safe in the library.</source>
         <translation>
-            <numerusform>%n folder that FS Organizer took over is still under the name it was given while the swap ran, so the other program no longer finds it. Your addon is safe in the library: what is missing is the folder under its own name.</numerusform>
-            <numerusform>%n folders that FS Organizer took over are still under the names they were given while the swap ran, so the other programs no longer find them. Your addons are safe in the library: what is missing are the folders under their own names.</numerusform>
+            <numerusform>%n folder imported by FS Organizer still has a temporary name from an interrupted swap, so the other program cannot find it. Your addon is safe in the library.</numerusform>
+            <numerusform>%n folders imported by FS Organizer still have temporary names from an interrupted swap, so the other programs cannot find them. Your addons are safe in the library.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="100"/>
-        <source>Put the folders back</source>
-        <translation>Put the folders back</translation>
+        <source>Restore the folder names</source>
+        <translation>Restore the folder names</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="101"/>
-        <source>Leave them and decide later</source>
-        <translation>Leave them and decide later</translation>
+        <source>Decide later</source>
+        <translation>Decide later</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="216"/>
@@ -4998,8 +4998,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="217"/>
-        <source>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</source>
-        <translation>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</translation>
+        <source>The settings file could not be read, so FS Organizer will not overwrite it. Fix or move %1 and open the program again.</source>
+        <translation>The settings file could not be read, so FS Organizer will not overwrite it. Fix or move %1 and open the program again.</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="392"/>
@@ -5008,8 +5008,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="393"/>
-        <source>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</source>
-        <translation>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</translation>
+        <source>The %1 translation did not load, so the interface stays in English. Your choice was saved.</source>
+        <translation>The %1 translation did not load, so the interface stays in English. Your choice was saved.</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="403"/>
@@ -5019,13 +5019,13 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="404"/>
-        <source>The option could not be written to %1, so it stays as it was.</source>
-        <translation>The option could not be written to %1, so it stays as it was.</translation>
+        <source>Could not save the option to %1, so it was not changed.</source>
+        <translation>Could not save the option to %1, so it was not changed.</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="681"/>
-        <source>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</source>
-        <translation>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</translation>
+        <source>The change was applied, but the profile could not be saved to %1, so the program will not remember it next time.</source>
+        <translation>The change was applied, but the profile could not be saved to %1, so the program will not remember it next time.</translation>
     </message>
     <message>
         <source>Restore the selected ones</source>
@@ -5731,8 +5731,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="63"/>
-        <source>The profile could not be written to the disk, so the setup did not finish. Check that you have write permission on the settings folder and try again.</source>
-        <translation>The profile could not be written to the disk, so the setup did not finish. Check that you have write permission on the settings folder and try again.</translation>
+        <source>The profile could not be saved. Check that you can write to the settings folder and try again.</source>
+        <translation>The profile could not be saved. Check that you can write to the settings folder and try again.</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="74"/>
@@ -5746,8 +5746,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="86"/>
-        <source>Point at a folder by hand…</source>
-        <translation>Point at a folder by hand…</translation>
+        <source>Choose a folder…</source>
+        <translation>Choose a folder…</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="96"/>
@@ -5761,8 +5761,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="107"/>
-        <source>Choose the root folder where your addons are kept, outside the simulator. Its subfolders become categories.</source>
-        <translation>Choose the root folder where your addons are kept, outside the simulator. Its subfolders become categories.</translation>
+        <source>Choose the folder outside the simulator where you keep your addons. Its subfolders become categories.</source>
+        <translation>Choose the folder outside the simulator where you keep your addons. Its subfolders become categories.</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="112"/>
@@ -5797,8 +5797,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="157"/>
-        <source>That folder does not look like a simulator destination, which is usually called Community. It will be used anyway.</source>
-        <translation>That folder does not look like a simulator destination, which is usually called Community. It will be used anyway.</translation>
+        <source>That folder does not look like the simulator&apos;s Community folder. It will be used anyway.</source>
+        <translation>That folder does not look like the simulator&apos;s Community folder. It will be used anyway.</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="183"/>
@@ -5807,13 +5807,13 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="192"/>
-        <source>Repeated library</source>
-        <translation>Repeated library</translation>
+        <source>Already in a library</source>
+        <translation>Already in a library</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="193"/>
-        <source>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</source>
-        <translation>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</translation>
+        <source>That folder is inside a library you already added. Choose the top folder where you keep your addons; its subfolders become categories.</source>
+        <translation>That folder is inside a library you already added. Choose the top folder where you keep your addons; its subfolders become categories.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/setup/SetupWizard.cpp" line="206"/>
@@ -6009,8 +6009,8 @@ Size %2</translation>
     <name>StagingLeftoverDialog</name>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="38"/>
-        <source>Imports that were left half finished</source>
-        <translation>Imports that were left half finished</translation>
+        <source>Unfinished imports</source>
+        <translation>Unfinished imports</translation>
     </message>
     <message>
         <source>An import was interrupted before it finished. The original files are still where they were: nothing was removed from the destination.</source>
@@ -6018,8 +6018,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="53"/>
-        <source>Leave it as it is</source>
-        <translation>Leave it as it is</translation>
+        <source>Leave as is</source>
+        <translation>Leave as is</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="56"/>
@@ -6028,8 +6028,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="58"/>
-        <source>Discard the half finished copy</source>
-        <translation>Discard the half finished copy</translation>
+        <source>Discard the partial copy</source>
+        <translation>Discard the partial copy</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="20"/>
@@ -6038,13 +6038,13 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="25"/>
-        <source>half of a conflict resolution: the two copies are still where they were, so only discarding is offered</source>
-        <translation>half of a conflict resolution: the two copies are still where they were, so only discarding is offered</translation>
+        <source>left by an interrupted conflict resolution; both copies are still in place, so it can only be discarded</source>
+        <translation>left by an interrupted conflict resolution; both copies are still in place, so it can only be discarded</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="30"/>
-        <source>the journal does not know where this came from, so only discarding is offered</source>
-        <translation>the journal does not know where this came from, so only discarding is offered</translation>
+        <source>its origin is unknown, so it can only be discarded</source>
+        <translation>its origin is unknown, so it can only be discarded</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="74"/>

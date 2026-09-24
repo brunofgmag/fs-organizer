@@ -323,9 +323,7 @@ void MainWindow::ShowUpdateOffer(const UpdateOffer offer, const QString& version
 
 void MainWindow::WarnTheSimulatorIsOpen()
 {
-    QMessageBox::information(this, tr("Simulator open"),
-                             tr("The simulator is running. The changes were applied, but it will only see them "
-                                "after it is restarted."));
+    QMessageBox::information(this, tr("Simulator open"), tr("Changes applied. Restart the simulator to see them."));
 }
 
 void MainWindow::changeEvent(QEvent* event)

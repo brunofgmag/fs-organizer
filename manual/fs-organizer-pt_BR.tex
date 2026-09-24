@@ -184,27 +184,27 @@ inicialização.
 
 \section{A primeira configuração}
 
-Na primeira abertura, o programa procura as instalações do simulador na máquina
-e pede duas coisas.
+Na primeira abertura, o programa procura as instalações do simulador no
+computador e pede duas coisas.
 
 \begin{description}
-  \item[O simulador] Escolha a instalação que este perfil vai gerenciar, na
-    lista encontrada, ou aponte a pasta manualmente. Se a pasta apontada não se
-    parecer com um destino do simulador, que costuma se chamar
-    \where|Community|, o programa avisa e usa assim mesmo.
-  \item[A biblioteca] Escolha a pasta raiz onde os seus addons ficam guardados,
-    fora do simulador. As subpastas dela viram categorias.
+  \item[O simulador] Escolha na lista a instalação que este perfil vai
+    gerenciar, ou escolha uma pasta você mesmo. Se essa pasta não parecer a
+    pasta \where|Community| do simulador, o programa avisa e usa assim mesmo.
+  \item[A biblioteca] Escolha a pasta fora do simulador onde ficam os seus
+    addons. As subpastas dela viram categorias.
 \end{description}
 
-Ao cadastrar uma biblioteca muito funda, o programa mostra quantos caracteres
-aquela raiz consome e quantos sobram para o addon, comparando com uma raiz
-curta. Nada é bloqueado: addons que passarem do limite do Windows avisam quando
-isso importar, e os \ui{Diagnósticos} guardam o caminho mais longo de cada
-biblioteca.
+Ao adicionar uma biblioteca com caminho longo, o programa mostra quantos
+caracteres o caminho já ocupa e quantos sobram para o addon, comparando com um
+caminho curto. Nada é bloqueado: addons que passarem do limite do Windows avisam
+quando isso importar, e os \ui{Diagnósticos} mostram o caminho mais longo de
+cada biblioteca.
 
 Quem vem do MSFS Addons Linker pode trazer a configuração dele em \ui{Opções},
-por \ui{Importar do MSFS Addons Linker}. Nada é movido nem apagado: importar
-cadastra a biblioteca, as categorias e os presets que ainda não existem aqui.
+com \ui{Importar do MSFS Addons Linker}. Nenhum arquivo é movido ou excluído:
+importar adiciona as bibliotecas, as categorias e os presets que ainda não
+existem aqui.
 
 \section{Biblioteca}
 
@@ -350,12 +350,12 @@ Se a cópia não conferir, nada é removido.
 
 \subsection{Importações pela metade}
 
-Se uma importação for interrompida, a abertura seguinte oferece três saídas:
-retomar, descartar a cópia pela metade, ou deixar como está. Os arquivos
+Se uma importação for interrompida, na próxima abertura o programa oferece três
+opções: retomar, descartar a cópia parcial, ou deixar como está. Os arquivos
 originais continuam onde estavam, e nada foi removido do destino.
 
-Quando a metade parada é uma resolução de conflito, só o descarte é oferecido,
-porque as duas cópias continuam onde estavam.
+Se a operação interrompida era uma resolução de conflito, só dá para descartar a
+cópia, porque as duas cópias continuam no lugar.
 
 \section{Quarentena}
 
