@@ -2407,38 +2407,38 @@ Also in the library: %2</translation>
     <name>GithubUpdateService</name>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="111"/>
-        <source>This version did not bring the files to download.</source>
-        <translation>This version did not bring the files to download.</translation>
+        <source>This release has no files to download.</source>
+        <translation>This release has no files to download.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="220"/>
-        <source>GitHub answered in a format the app does not understand.</source>
-        <translation>GitHub answered in a format the app does not understand.</translation>
+        <source>GitHub sent a response the app could not read.</source>
+        <translation>GitHub sent a response the app could not read.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="245"/>
-        <source>The checksum file came in invalid.</source>
-        <translation>The checksum file came in invalid.</translation>
+        <source>The checksum file is invalid.</source>
+        <translation>The checksum file is invalid.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="278"/>
-        <source>The downloaded file could not be written.</source>
-        <translation>The downloaded file could not be written.</translation>
+        <source>Could not save the downloaded file.</source>
+        <translation>Could not save the downloaded file.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="285"/>
-        <source>The downloaded file could not be read, and was kept for you to inspect.</source>
-        <translation>The downloaded file could not be read, and was kept for you to inspect.</translation>
+        <source>Could not read the downloaded file. It was kept so you can check it.</source>
+        <translation>Could not read the downloaded file. It was kept so you can check it.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="288"/>
-        <source>The downloaded file does not match the checksum, and was discarded.</source>
-        <translation>The downloaded file does not match the checksum, and was discarded.</translation>
+        <source>The downloaded file failed verification and was discarded.</source>
+        <translation>The downloaded file failed verification and was discarded.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="346"/>
-        <source>The update package could not be opened.</source>
-        <translation>The update package could not be opened.</translation>
+        <source>Could not open the update package.</source>
+        <translation>Could not open the update package.</translation>
     </message>
 </context>
 <context>
@@ -3231,8 +3231,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="275"/>
-        <source>This is another profile, and FS Organizer only touches what is in use. Mark it as active to switch a destination or a library.</source>
-        <translation>This is another profile, and FS Organizer only touches what is in use. Mark it as active to switch a destination or a library.</translation>
+        <source>This profile is not active. Make it active to change its destinations or libraries.</source>
+        <translation>This profile is not active. Make it active to change its destinations or libraries.</translation>
     </message>
     <message>
         <source>Unregistering takes the library out of the configuration and deletes no file at all. The links that pointed at it keep working in the simulator, but start showing up as third party links, which FS Organizer does not touch.</source>
@@ -3250,8 +3250,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="349"/>
-        <source>Needs no administrator and crosses local volumes. It is the only path the MVP has tested.</source>
-        <translation>Needs no administrator and crosses local volumes. It is the only path the MVP has tested.</translation>
+        <source>Works across local drives without administrator rights. Recommended.</source>
+        <translation>Works across local drives without administrator rights. Recommended.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="351"/>
@@ -3260,23 +3260,23 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="352"/>
-        <source>Only for a library on a network path, where the junction does not reach. Needs privilege; without it the app explains the refusal instead of failing quietly.</source>
-        <translation>Only for a library on a network path, where the junction does not reach. Needs privilege; without it the app explains the refusal instead of failing quietly.</translation>
+        <source>Only needed for a library on a network share. Requires Developer Mode or administrator rights.</source>
+        <translation>Only needed for a library on a network share. Requires Developer Mode or administrator rights.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="363"/>
-        <source>New links become symbolic links. The ones that already exist stay directory junctions.</source>
-        <translation>New links become symbolic links. The ones that already exist stay directory junctions.</translation>
+        <source>New links will be symbolic links. Existing ones stay as directory junctions.</source>
+        <translation>New links will be symbolic links. Existing ones stay as directory junctions.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="364"/>
-        <source>New links become directory junctions.</source>
-        <translation>New links become directory junctions.</translation>
+        <source>New links will be directory junctions.</source>
+        <translation>New links will be directory junctions.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="370"/>
-        <source>Check after copying</source>
-        <translation>Check after copying</translation>
+        <source>Verify after copying</source>
+        <translation>Verify after copying</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="375"/>
@@ -3285,8 +3285,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="376"/>
-        <source>Checks the count and the size of every file. It is what runs today.</source>
-        <translation>Checks the count and the size of every file. It is what runs today.</translation>
+        <source>Compares the number and size of the files. Fast.</source>
+        <translation>Compares the number and size of the files. Fast.</translation>
     </message>
     <message>
         <source>Phase 2</source>
@@ -3303,18 +3303,18 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="387"/>
-        <source>Reads both sides in full and compares the bytes, which catches a change the size hides. Makes an import several times slower, and the number of files weighs more than their size.</source>
-        <translation>Reads both sides in full and compares the bytes, which catches a change the size hides. Makes an import several times slower, and the number of files weighs more than their size.</translation>
+        <source>Compares the content of every file. Catches more, but makes imports several times slower, especially with many small files.</source>
+        <translation>Compares the content of every file. Catches more, but makes imports several times slower, especially with many small files.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="398"/>
-        <source>Imports now read both sides in full before removing the folder they copied.</source>
-        <translation>Imports now read both sides in full before removing the folder they copied.</translation>
+        <source>Imports will now compare the content of every file.</source>
+        <translation>Imports will now compare the content of every file.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="400"/>
-        <source>Imports now check the count and the size of every file.</source>
-        <translation>Imports now check the count and the size of every file.</translation>
+        <source>Imports will now compare the number and size of the files.</source>
+        <translation>Imports will now compare the number and size of the files.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="423"/>
@@ -3323,8 +3323,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="424"/>
-        <source>Downloads the new version on its own and applies it when you close the program.</source>
-        <translation>Downloads the new version on its own and applies it when you close the program.</translation>
+        <source>Downloads new versions and installs them when you close the program.</source>
+        <translation>Downloads new versions and installs them when you close the program.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="427"/>
@@ -3342,8 +3342,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="432"/>
-        <source>Only looks when you click Check now.</source>
-        <translation>Only looks when you click Check now.</translation>
+        <source>Only checks when you click Check now.</source>
+        <translation>Only checks when you click Check now.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="466"/>
@@ -3396,8 +3396,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="617"/>
-        <source>%1 · written on every change</source>
-        <translation>%1 · written on every change</translation>
+        <source>%1 · saved on every change</source>
+        <translation>%1 · saved on every change</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="638"/>
@@ -3451,8 +3451,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="817"/>
-        <source>Library registered: %1, %2</source>
-        <translation>Library registered: %1, %2</translation>
+        <source>Library added: %1, %2</source>
+        <translation>Library added: %1, %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="652"/>
@@ -3461,13 +3461,13 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="428"/>
-        <source>Looks for a new version and says it exists, but only downloads it if you say so.</source>
-        <translation>Looks for a new version and says it exists, but only downloads it if you say so.</translation>
+        <source>Tells you when a new version is available, and downloads it only when you ask.</source>
+        <translation>Tells you when a new version is available, and downloads it only when you ask.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="531"/>
-        <source>Choosing a language writes the language key in settings.json and changes the interface right away.</source>
-        <translation>Choosing a language writes the language key in settings.json and changes the interface right away.</translation>
+        <source>The interface changes right away.</source>
+        <translation>The interface changes right away.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="656"/>
@@ -3507,24 +3507,24 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>FS Organizer marks the folders you built, so that a category keeps counting as one even after it loses its last addon. It never marks what it imported, and it never looks inside an addon.&#xa;&#xa;Folders that already carry the marker: %1&#xa;Folders that would receive it now: %2</source>
-        <translation>FS Organizer marks the folders you built, so that a category keeps counting as one even after it loses its last addon. It never marks what it imported, and it never looks inside an addon.&#xa;&#xa;Folders that already carry the marker: %1&#xa;Folders that would receive it now: %2</translation>
+        <source>FS Organizer marks the category folders you created, so a category is still recognized after its last addon is gone. Imported folders and addon folders are never marked.
+
+Already marked: %1
+To be marked now: %2</source>
+        <translation>FS Organizer marks the category folders you created, so a category is still recognized after its last addon is gone. Imported folders and addon folders are never marked.
+
+Already marked: %1
+To be marked now: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>Mark them</source>
-        <translation>Mark them</translation>
+        <source>Mark</source>
+        <translation>Mark</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>Take every marker back</source>
-        <translation>Take every marker back</translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <location filename="../src/view/options/OptionsPage.cpp" line="884"/>
-        <source>Unregister</source>
-        <translation>Unregister</translation>
+        <source>Remove all markers</source>
+        <translation>Remove all markers</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="764"/>
@@ -3533,17 +3533,17 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="777"/>
-        <source>Switch the destination</source>
-        <translation>Switch the destination</translation>
+        <source>Change the destination</source>
+        <translation>Change the destination</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="778"/>
-        <source>The profile starts using %1.
+        <source>The profile will use %1.
 
-The links that already exist in %2 stay there, working, and FS Organizer stops touching them. The destination pinnings that pointed at the old folder start pointing at the new one.</source>
-        <translation>The profile starts using %1.
+Links already in %2 stay there and keep working, but FS Organizer stops managing them. Addons pinned to the old folder move to the new one.</source>
+        <translation>The profile will use %1.
 
-The links that already exist in %2 stay there, working, and FS Organizer stops touching them. The destination pinnings that pointed at the old folder start pointing at the new one.</translation>
+Links already in %2 stay there and keep working, but FS Organizer stops managing them. Addons pinned to the old folder move to the new one.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="784"/>
@@ -3569,13 +3569,13 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="810"/>
-        <source>Library refused</source>
-        <translation>Library refused</translation>
+        <source>Already in a library</source>
+        <translation>Already in a library</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="811"/>
-        <source>%1 is inside a library that is already registered.</source>
-        <translation>%1 is inside a library that is already registered.</translation>
+        <source>%1 is inside a library you already added.</source>
+        <translation>%1 is inside a library you already added.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="824"/>
@@ -3584,15 +3584,15 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="827"/>
-        <source>The profile leaves the configuration along with its libraries and its destinations. No file is deleted or moved.</source>
-        <translation>The profile leaves the configuration along with its libraries and its destinations. No file is deleted or moved.</translation>
+        <source>The profile, its libraries and its destinations are removed from FS Organizer. No files are deleted or moved.</source>
+        <translation>The profile, its libraries and its destinations are removed from FS Organizer. No files are deleted or moved.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="836"/>
-        <source>%n addon of this profile is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</source>
+        <source>%n addon of this profile is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</source>
         <translation>
-            <numerusform>%n addon of this profile is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</numerusform>
-            <numerusform>%n addons of this profile are enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</numerusform>
+            <numerusform>%n addon of this profile is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</numerusform>
+            <numerusform>%n addons of this profile are enabled. Their links stay in the destination and keep working, but FS Organizer will no longer manage them.</numerusform>
         </translation>
     </message>
     <message>
@@ -3602,37 +3602,27 @@ The links that already exist in %2 stay there, working, and FS Organizer stops t
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="856"/>
-        <source>%1 was not removed: the program needs at least one profile.</source>
-        <translation>%1 was not removed: the program needs at least one profile.</translation>
+        <source>%1 was not removed: at least one profile is needed.</source>
+        <translation>%1 was not removed: at least one profile is needed.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="860"/>
         <location filename="../src/view/options/OptionsPage.cpp" line="895"/>
-        <source>%1 left the configuration.</source>
-        <translation>%1 left the configuration.</translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="865"/>
-        <source>Unregister %1?</source>
-        <translation>Unregister %1?</translation>
+        <source>Removed %1.</source>
+        <translation>Removed %1.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="868"/>
-        <source>The library leaves the configuration. No file is deleted or moved.</source>
-        <translation>The library leaves the configuration. No file is deleted or moved.</translation>
+        <source>The library is removed from FS Organizer. No files are deleted or moved.</source>
+        <translation>The library is removed from FS Organizer. No files are deleted or moved.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="875"/>
-        <source>%n addon of it is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</source>
+        <source>%n addon of this library is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</source>
         <translation>
-            <numerusform>%n addon of it is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</numerusform>
-            <numerusform>%n addons of it are enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</numerusform>
+            <numerusform>%n addon of this library is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</numerusform>
+            <numerusform>%n addons of this library are enabled. Their links stay in the destination and keep working, but FS Organizer will no longer manage them.</numerusform>
         </translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="879"/>
-        <source>Disable the %1 before unregistering</source>
-        <translation>Disable the %1 before unregistering</translation>
     </message>
 </context>
 <context>
@@ -6383,8 +6373,8 @@ Size %2</translation>
     <name>UpdateViewModel</name>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="30"/>
-        <source>Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.</source>
-        <translation>Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.</translation>
+        <source>Updates are off in this copy of the program (development build or FSORG_NO_UPDATES).</source>
+        <translation>Updates are off in this copy of the program (development build or FSORG_NO_UPDATES).</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="36"/>
@@ -6393,8 +6383,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="37"/>
-        <source>The installed version is the newest one.</source>
-        <translation>The installed version is the newest one.</translation>
+        <source>You have the latest version.</source>
+        <translation>You have the latest version.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="38"/>
@@ -6408,13 +6398,13 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="41"/>
-        <source>Version %1 is ready and goes in when the program closes.</source>
-        <translation>Version %1 is ready and goes in when the program closes.</translation>
+        <source>Version %1 is ready and will be installed when you close the program.</source>
+        <translation>Version %1 is ready and will be installed when you close the program.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="46"/>
-        <source>Nothing has been checked yet.</source>
-        <translation>Nothing has been checked yet.</translation>
+        <source>Not checked yet.</source>
+        <translation>Not checked yet.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="144"/>

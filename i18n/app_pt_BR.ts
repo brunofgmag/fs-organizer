@@ -2407,38 +2407,38 @@ Também na biblioteca: %2</translation>
     <name>GithubUpdateService</name>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="111"/>
-        <source>This version did not bring the files to download.</source>
-        <translation>Esta versão não trouxe os arquivos para baixar.</translation>
+        <source>This release has no files to download.</source>
+        <translation>Esta versão não tem arquivos para baixar.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="220"/>
-        <source>GitHub answered in a format the app does not understand.</source>
-        <translation>O GitHub respondeu num formato que o app não entende.</translation>
+        <source>GitHub sent a response the app could not read.</source>
+        <translation>O GitHub enviou uma resposta que o app não conseguiu ler.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="245"/>
-        <source>The checksum file came in invalid.</source>
-        <translation>O arquivo de verificação veio inválido.</translation>
+        <source>The checksum file is invalid.</source>
+        <translation>O arquivo de verificação é inválido.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="278"/>
-        <source>The downloaded file could not be written.</source>
-        <translation>Não deu para gravar o arquivo baixado.</translation>
+        <source>Could not save the downloaded file.</source>
+        <translation>Não foi possível salvar o arquivo baixado.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="285"/>
-        <source>The downloaded file could not be read, and was kept for you to inspect.</source>
-        <translation>O arquivo baixado não pôde ser lido, e foi mantido para você conferir.</translation>
+        <source>Could not read the downloaded file. It was kept so you can check it.</source>
+        <translation>Não foi possível ler o arquivo baixado. Ele foi mantido para você conferir.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="288"/>
-        <source>The downloaded file does not match the checksum, and was discarded.</source>
-        <translation>O arquivo baixado não confere com a verificação, e foi descartado.</translation>
+        <source>The downloaded file failed verification and was discarded.</source>
+        <translation>O arquivo baixado não passou na verificação e foi descartado.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="346"/>
-        <source>The update package could not be opened.</source>
-        <translation>Não deu para abrir o pacote da atualização.</translation>
+        <source>Could not open the update package.</source>
+        <translation>Não foi possível abrir o pacote da atualização.</translation>
     </message>
 </context>
 <context>
@@ -3231,8 +3231,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="275"/>
-        <source>This is another profile, and FS Organizer only touches what is in use. Mark it as active to switch a destination or a library.</source>
-        <translation>Este é outro perfil, e o FS Organizer só mexe no que está em uso. Marque-o como ativo para trocar destino ou biblioteca.</translation>
+        <source>This profile is not active. Make it active to change its destinations or libraries.</source>
+        <translation>Este perfil não está ativo. Ative-o para alterar os destinos ou as bibliotecas dele.</translation>
     </message>
     <message>
         <source>Unregistering takes the library out of the configuration and deletes no file at all. The links that pointed at it keep working in the simulator, but start showing up as third party links, which FS Organizer does not touch.</source>
@@ -3250,8 +3250,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="349"/>
-        <source>Needs no administrator and crosses local volumes. It is the only path the MVP has tested.</source>
-        <translation>Não exige administrador e cruza volumes locais. É o único caminho testado do MVP.</translation>
+        <source>Works across local drives without administrator rights. Recommended.</source>
+        <translation>Funciona entre discos locais sem precisar de administrador. Recomendado.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="351"/>
@@ -3260,22 +3260,22 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="352"/>
-        <source>Only for a library on a network path, where the junction does not reach. Needs privilege; without it the app explains the refusal instead of failing quietly.</source>
-        <translation>Só para biblioteca em caminho de rede, onde a junção não chega. Exige privilégio; sem ele o app explica a recusa em vez de falhar calado.</translation>
+        <source>Only needed for a library on a network share. Requires Developer Mode or administrator rights.</source>
+        <translation>Só é necessário para biblioteca numa pasta de rede. Exige o Modo de Desenvolvedor ou direitos de administrador.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="363"/>
-        <source>New links become symbolic links. The ones that already exist stay directory junctions.</source>
-        <translation>Os links novos passam a ser link simbólico. Os que já existem continuam junção de diretório.</translation>
+        <source>New links will be symbolic links. Existing ones stay as directory junctions.</source>
+        <translation>Os novos links serão links simbólicos. Os que já existem continuam como junções de diretório.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="364"/>
-        <source>New links become directory junctions.</source>
-        <translation>Os links novos passam a ser junção de diretório.</translation>
+        <source>New links will be directory junctions.</source>
+        <translation>Os novos links serão junções de diretório.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="370"/>
-        <source>Check after copying</source>
+        <source>Verify after copying</source>
         <translation>Verificação depois de copiar</translation>
     </message>
     <message>
@@ -3285,8 +3285,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="376"/>
-        <source>Checks the count and the size of every file. It is what runs today.</source>
-        <translation>Confere contagem e tamanho de cada arquivo. É o que roda hoje.</translation>
+        <source>Compares the number and size of the files. Fast.</source>
+        <translation>Compara a quantidade e o tamanho dos arquivos. Rápido.</translation>
     </message>
     <message>
         <source>Phase 2</source>
@@ -3303,18 +3303,18 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="387"/>
-        <source>Reads both sides in full and compares the bytes, which catches a change the size hides. Makes an import several times slower, and the number of files weighs more than their size.</source>
-        <translation>Lê os dois lados inteiros e compara os bytes, o que pega uma mudança que o tamanho esconde. Deixa a importação várias vezes mais lenta, e a quantidade de arquivos pesa mais do que o tamanho deles.</translation>
+        <source>Compares the content of every file. Catches more, but makes imports several times slower, especially with many small files.</source>
+        <translation>Compara o conteúdo de cada arquivo. Pega mais diferenças, mas deixa a importação várias vezes mais lenta, principalmente com muitos arquivos pequenos.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="398"/>
-        <source>Imports now read both sides in full before removing the folder they copied.</source>
-        <translation>As importações passam a ler os dois lados inteiros antes de remover a pasta que copiaram.</translation>
+        <source>Imports will now compare the content of every file.</source>
+        <translation>As importações passam a comparar o conteúdo de cada arquivo.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="400"/>
-        <source>Imports now check the count and the size of every file.</source>
-        <translation>As importações passam a conferir contagem e tamanho de cada arquivo.</translation>
+        <source>Imports will now compare the number and size of the files.</source>
+        <translation>As importações passam a comparar a quantidade e o tamanho dos arquivos.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="423"/>
@@ -3323,8 +3323,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="424"/>
-        <source>Downloads the new version on its own and applies it when you close the program.</source>
-        <translation>Baixa a versão nova sozinha e a aplica quando você fecha o programa.</translation>
+        <source>Downloads new versions and installs them when you close the program.</source>
+        <translation>Baixa as versões novas e as instala quando você fecha o programa.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="427"/>
@@ -3342,7 +3342,7 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="432"/>
-        <source>Only looks when you click Check now.</source>
+        <source>Only checks when you click Check now.</source>
         <translation>Só procura quando você clica em Procurar agora.</translation>
     </message>
     <message>
@@ -3396,8 +3396,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="617"/>
-        <source>%1 · written on every change</source>
-        <translation>%1 · gravado a cada mudança</translation>
+        <source>%1 · saved on every change</source>
+        <translation>%1 · salvo a cada alteração</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="638"/>
@@ -3451,8 +3451,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="817"/>
-        <source>Library registered: %1, %2</source>
-        <translation>Biblioteca cadastrada: %1, %2</translation>
+        <source>Library added: %1, %2</source>
+        <translation>Biblioteca adicionada: %1, %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="652"/>
@@ -3461,13 +3461,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="428"/>
-        <source>Looks for a new version and says it exists, but only downloads it if you say so.</source>
-        <translation>Procura versão nova e diz que ela existe, mas só baixa se você mandar.</translation>
+        <source>Tells you when a new version is available, and downloads it only when you ask.</source>
+        <translation>Avisa quando há uma versão nova, e só baixa quando você pedir.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="531"/>
-        <source>Choosing a language writes the language key in settings.json and changes the interface right away.</source>
-        <translation>Escolher um idioma grava a chave language no settings.json e troca a interface na hora.</translation>
+        <source>The interface changes right away.</source>
+        <translation>A interface muda na hora.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="656"/>
@@ -3507,43 +3507,43 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>FS Organizer marks the folders you built, so that a category keeps counting as one even after it loses its last addon. It never marks what it imported, and it never looks inside an addon.&#xa;&#xa;Folders that already carry the marker: %1&#xa;Folders that would receive it now: %2</source>
-        <translation>O FS Organizer marca as pastas que você construiu, para que uma categoria continue contando como categoria mesmo depois de perder o último addon. Ele nunca marca o que importou, e nunca olha dentro de um addon.&#xa;&#xa;Pastas que já carregam o marcador: %1&#xa;Pastas que receberiam agora: %2</translation>
+        <source>FS Organizer marks the category folders you created, so a category is still recognized after its last addon is gone. Imported folders and addon folders are never marked.
+
+Already marked: %1
+To be marked now: %2</source>
+        <translation>O FS Organizer marca as pastas de categoria que você criou, para que a categoria continue reconhecida mesmo sem addons. Pastas importadas e pastas de addon nunca são marcadas.
+
+Já marcadas: %1
+A marcar agora: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>Mark them</source>
+        <source>Mark</source>
         <translation>Marcar</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>Take every marker back</source>
-        <translation>Retirar todos os marcadores</translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <location filename="../src/view/options/OptionsPage.cpp" line="884"/>
-        <source>Unregister</source>
-        <translation>Descadastrar</translation>
+        <source>Remove all markers</source>
+        <translation>Remover todos os marcadores</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="764"/>
         <source>Choose the new folder for this destination</source>
-        <translation>Escolha a pasta nova deste destino</translation>
+        <translation>Escolha a nova pasta deste destino</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="777"/>
-        <source>Switch the destination</source>
+        <source>Change the destination</source>
         <translation>Trocar o destino</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="778"/>
-        <source>The profile starts using %1.
+        <source>The profile will use %1.
 
-The links that already exist in %2 stay there, working, and FS Organizer stops touching them. The destination pinnings that pointed at the old folder start pointing at the new one.</source>
-        <translation>O perfil passa a usar %1.
+Links already in %2 stay there and keep working, but FS Organizer stops managing them. Addons pinned to the old folder move to the new one.</source>
+        <translation>O perfil vai usar %1.
 
-Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deixa de mexer neles. As fixações de destino que apontavam para a pasta antiga passam a apontar para a nova.</translation>
+Os links que já estão em %2 continuam lá funcionando, mas o FS Organizer deixa de gerenciá-los. Os addons fixados na pasta antiga passam para a nova.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="784"/>
@@ -3569,13 +3569,13 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="810"/>
-        <source>Library refused</source>
-        <translation>Biblioteca recusada</translation>
+        <source>Already in a library</source>
+        <translation>Já está numa biblioteca</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="811"/>
-        <source>%1 is inside a library that is already registered.</source>
-        <translation>%1 está dentro de uma biblioteca que já é cadastrada.</translation>
+        <source>%1 is inside a library you already added.</source>
+        <translation>%1 fica dentro de uma biblioteca já adicionada.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="824"/>
@@ -3584,55 +3584,45 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="827"/>
-        <source>The profile leaves the configuration along with its libraries and its destinations. No file is deleted or moved.</source>
-        <translation>O perfil sai da configuração com as bibliotecas e os destinos dele. Nenhum arquivo é apagado ou movido.</translation>
+        <source>The profile, its libraries and its destinations are removed from FS Organizer. No files are deleted or moved.</source>
+        <translation>O perfil, as bibliotecas e os destinos dele saem do FS Organizer. Nenhum arquivo é excluído ou movido.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="836"/>
-        <source>%n addon of this profile is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</source>
+        <source>%n addon of this profile is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</source>
         <translation>
-            <numerusform>%n addon deste perfil está habilitado agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-lo como link de terceiros e não mexe mais nele.</numerusform>
-            <numerusform>%n addons deste perfil estão habilitados agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-los como links de terceiros e não mexe mais neles.</numerusform>
+            <numerusform>%n addon deste perfil está ativado. O link dele continua no destino e funcionando, mas o FS Organizer deixa de gerenciá-lo.</numerusform>
+            <numerusform>%n addons deste perfil estão ativados. Os links deles continuam no destino e funcionando, mas o FS Organizer deixa de gerenciá-los.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="840"/>
         <source>Disable the %1 before removing</source>
-        <translation>Desabilitar os %1 antes de remover</translation>
+        <translation>Desativar os %1 antes de remover</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="856"/>
-        <source>%1 was not removed: the program needs at least one profile.</source>
-        <translation>%1 não foi removido: o programa precisa de pelo menos um perfil.</translation>
+        <source>%1 was not removed: at least one profile is needed.</source>
+        <translation>%1 não foi removido: é preciso ter pelo menos um perfil.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="860"/>
         <location filename="../src/view/options/OptionsPage.cpp" line="895"/>
-        <source>%1 left the configuration.</source>
-        <translation>%1 saiu da configuração.</translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="865"/>
-        <source>Unregister %1?</source>
-        <translation>Descadastrar %1?</translation>
+        <source>Removed %1.</source>
+        <translation>Removido: %1.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="868"/>
-        <source>The library leaves the configuration. No file is deleted or moved.</source>
-        <translation>A biblioteca sai da configuração. Nenhum arquivo é apagado ou movido.</translation>
+        <source>The library is removed from FS Organizer. No files are deleted or moved.</source>
+        <translation>A biblioteca sai do FS Organizer. Nenhum arquivo é excluído ou movido.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="875"/>
-        <source>%n addon of it is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</source>
+        <source>%n addon of this library is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</source>
         <translation>
-            <numerusform>%n addon dela está habilitado agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-lo como link de terceiros e não mexe mais nele.</numerusform>
-            <numerusform>%n addons dela estão habilitados agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-los como links de terceiros e não mexe mais neles.</numerusform>
+            <numerusform>%n addon desta biblioteca está ativado. O link dele continua no destino e funcionando, mas o FS Organizer deixa de gerenciá-lo.</numerusform>
+            <numerusform>%n addons desta biblioteca estão ativados. Os links deles continuam no destino e funcionando, mas o FS Organizer deixa de gerenciá-los.</numerusform>
         </translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="879"/>
-        <source>Disable the %1 before unregistering</source>
-        <translation>Desabilitar os %1 antes de descadastrar</translation>
     </message>
 </context>
 <context>
@@ -6387,8 +6377,8 @@ Tamanho %2</translation>
     <name>UpdateViewModel</name>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="30"/>
-        <source>Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.</source>
-        <translation>As atualizações estão desligadas nesta cópia: ela roda de uma árvore de build ou o FSORG_NO_UPDATES está no ambiente.</translation>
+        <source>Updates are off in this copy of the program (development build or FSORG_NO_UPDATES).</source>
+        <translation>As atualizações estão desativadas nesta cópia do programa (build de desenvolvimento ou FSORG_NO_UPDATES).</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="36"/>
@@ -6397,8 +6387,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="37"/>
-        <source>The installed version is the newest one.</source>
-        <translation>A versão instalada é a mais nova.</translation>
+        <source>You have the latest version.</source>
+        <translation>Você já tem a versão mais recente.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="38"/>
@@ -6412,13 +6402,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="41"/>
-        <source>Version %1 is ready and goes in when the program closes.</source>
-        <translation>A versão %1 está pronta e entra ao fechar o programa.</translation>
+        <source>Version %1 is ready and will be installed when you close the program.</source>
+        <translation>A versão %1 está pronta e será instalada quando você fechar o programa.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="46"/>
-        <source>Nothing has been checked yet.</source>
-        <translation>Nada foi verificado ainda.</translation>
+        <source>Not checked yet.</source>
+        <translation>Ainda não verificado.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="144"/>
