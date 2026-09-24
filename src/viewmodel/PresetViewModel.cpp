@@ -161,8 +161,8 @@ bool PresetViewModel::SetAction(const QString& name,
         return true;
     }
 
-    emit Refused(tr("The change could not be written to the preset \"%1\". It may have changed since the table was "
-                    "built, or the presets folder may be full or protected.")
+    emit Refused(tr("Could not save the change to the preset \"%1\". It may have changed on the disk, or the presets "
+                    "folder may be full or read-only.")
                      .arg(name));
 
     return false;
@@ -178,8 +178,8 @@ bool PresetViewModel::SetStartupAction(const QString& name,
         return true;
     }
 
-    emit Refused(tr("The change could not be written to the preset \"%1\". It may have changed since the table was "
-                    "built, or the presets folder may be full or protected.")
+    emit Refused(tr("Could not save the change to the preset \"%1\". It may have changed on the disk, or the presets "
+                    "folder may be full or read-only.")
                      .arg(name));
 
     return false;
@@ -347,9 +347,8 @@ void PresetViewModel::NoteApplied(const PresetApplyReport& report)
 {
     if (report.refusal == PresetApplyRefusal::TheReturnPresetCouldNotBeWritten)
     {
-        emit Refused(tr("Nothing was applied. The app writes down what is enabled right now before applying a preset, "
-                        "so that you can come back to it, and this time it could not: the presets folder may be full "
-                        "or protected."));
+        emit Refused(tr("Nothing was applied: the addons enabled right now could not be saved to come back to later. "
+                        "The presets folder may be full or read-only."));
         return;
     }
 
@@ -370,8 +369,7 @@ QString PresetViewModel::WhatTheStartupHalfLeftUndone(const PresetApplyReport& r
 {
     if (report.startupNotApplied > 0)
     {
-        return tr("%n startup entry the preset asks for was not applied, because startup management is off in "
-                  "Options.",
+        return tr("%n startup entry of the preset was not applied because startup management is off in Options.",
                   nullptr, static_cast<int>(report.startupNotApplied));
     }
 
@@ -386,14 +384,14 @@ QString PresetViewModel::WhatTheStartupHalfLeftUndone(const PresetApplyReport& r
         missing.append(AsText(path));
     }
 
-    return tr("These startup entries of the preset are no longer in the simulator file:\n\n%1")
+    return tr("These preset startup entries are no longer in the simulator's file:\n\n%1")
         .arg(missing.join(QStringLiteral("\n")));
 }
 
 void PresetViewModel::RefuseTheWriteOf(const QString& name)
 {
-    emit Refused(tr("The preset \"%1\" could not be written. The name may be too long for the disk, or the presets "
-                    "folder may be full or protected.")
+    emit Refused(tr("Could not save the preset \"%1\". The name may be too long, or the presets folder may be full or "
+                    "read-only.")
                      .arg(name));
 }
 
@@ -403,19 +401,20 @@ bool PresetViewModel::Accepts(const QString& name)
 
     if (wanted.isEmpty())
     {
-        emit Refused(tr("Give the preset a name."));
+        emit Refused(tr("Enter a name for the preset."));
         return false;
     }
 
     if (PathTooLong(wanted.toStdString()))
     {
-        emit Refused(tr("The preset name has to fit in %n character(s).", nullptr, static_cast<int>(kASegmentStopsAt)));
+        emit Refused(
+            tr("The preset name can have at most %n character(s).", nullptr, static_cast<int>(kASegmentStopsAt)));
         return false;
     }
 
     if (!PathSegment::From(wanted.toStdString()).has_value())
     {
-        emit Refused(tr("The preset name cannot contain %1, and cannot end with a space or a full stop.")
+        emit Refused(tr("The preset name cannot contain %1 or end with a space or a full stop.")
                          .arg(QStringLiteral(R"(<>:"/\|?*)")));
         return false;
     }

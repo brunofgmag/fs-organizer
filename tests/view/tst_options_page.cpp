@@ -143,7 +143,7 @@ namespace
 
     Question WhatUnregisteringAsks(const OptionsPage& page)
     {
-        return WhatClickingAsks(ButtonSaying(page, QStringLiteral("Unregister")));
+        return WhatClickingAsks(page.findChild<QPushButton*>(QStringLiteral("UnregisterLibrary")));
     }
 
     SimulatorProfile SecondProfile()
@@ -312,7 +312,7 @@ void OptionsPageTest::ChoosingSymlinkWritesItAndSaysWhatChanges()
 
     QCOMPARE(f.settings.stored.linkType, LinkType::Symbolic);
     QCOMPARE(said.count(), 1);
-    QVERIFY(said.front().front().toString().contains(QStringLiteral("stay directory junctions")));
+    QVERIFY(said.front().front().toString().contains(QStringLiteral("stay as directory junctions")));
 }
 
 void OptionsPageTest::BothChecksAreOfferedAndTheTabOpensOnTheOneThatIsStored()
@@ -349,7 +349,7 @@ void OptionsPageTest::ChoosingTheHashWritesItAndSaysWhatEveryImportWillDo()
 
     QCOMPARE(f.settings.stored.verification, Verification::ByHash);
     QCOMPARE(said.count(), 1);
-    QVERIFY(said.front().front().toString().contains(QStringLiteral("read both sides in full")));
+    QVERIFY(said.front().front().toString().contains(QStringLiteral("content of every file")));
 
     f.page.findChild<QRadioButton*>(QStringLiteral("StructureChoice"))->click();
 
@@ -500,7 +500,7 @@ void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
 
     QVERIFY(!ButtonSaying(f.page, QStringLiteral("Add library…"))->isEnabled());
     QVERIFY(!ButtonSaying(f.page, QStringLiteral("Import from MSFS Addons Linker…"))->isEnabled());
-    QVERIFY(!ButtonSaying(f.page, QStringLiteral("Unregister"))->isEnabled());
+    QVERIFY(!f.page.findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"))->isEnabled());
 }
 
 void OptionsPageTest::TheOnlyProfileCannotBeRemoved()

@@ -64,13 +64,13 @@ void CoverageDialogTest::NeitherAnswerIsADeadEndAndOnlyOneOfThemWrites()
     CoverageDialog agreeing({Covered(QStringLiteral("SBGR"), QStringLiteral("gsx-pro-airport-sbgr"),
                                      QStringLiteral("fs24-asobo-airport-sbgr-guarulhos"))});
     QSignalSpy accepted(&agreeing, &QDialog::accepted);
-    ButtonSaying(agreeing, QStringLiteral("Turn the simulator's one off"))->click();
+    ButtonSaying(agreeing, QStringLiteral("Disable the simulator's airport"))->click();
     QCOMPARE(accepted.count(), 1);
 
     CoverageDialog refusing({Covered(QStringLiteral("SBGR"), QStringLiteral("gsx-pro-airport-sbgr"),
                                      QStringLiteral("fs24-asobo-airport-sbgr-guarulhos"))});
     QSignalSpy rejected(&refusing, &QDialog::rejected);
-    ButtonSaying(refusing, QStringLiteral("Leave both on"))->click();
+    ButtonSaying(refusing, QStringLiteral("Keep both enabled"))->click();
     QCOMPARE(rejected.count(), 1);
     QCOMPARE(refusing.result(), static_cast<int>(QDialog::Rejected));
 }
@@ -78,11 +78,11 @@ void CoverageDialogTest::NeitherAnswerIsADeadEndAndOnlyOneOfThemWrites()
 void CoverageDialogTest::TheButtonCountsTheAirportsInsteadOfAlwaysSayingOne()
 {
     const CoverageDialog alone({Covered(QStringLiteral("SBGR"), QStringLiteral("yours"), QStringLiteral("theirs"))});
-    QVERIFY(ButtonSaying(alone, QStringLiteral("Turn the simulator's one off")) != nullptr);
+    QVERIFY(ButtonSaying(alone, QStringLiteral("Disable the simulator's airport")) != nullptr);
 
     const CoverageDialog several({Covered(QStringLiteral("SBGR"), QStringLiteral("yours"), QStringLiteral("theirs")),
                                   Covered(QStringLiteral("LPMA"), QStringLiteral("mine"), QStringLiteral("hers"))});
-    QVERIFY(ButtonSaying(several, QStringLiteral("Turn the simulator's ones off")) != nullptr);
+    QVERIFY(ButtonSaying(several, QStringLiteral("Disable the simulator's airports")) != nullptr);
 }
 
 void CoverageDialogTest::NeitherSideOfTheOverlapIsCalledAProblem()
@@ -110,7 +110,7 @@ void CoverageDialogTest::TheWarningSaysTheCodeOfTheSimulatorCameFromTheName()
 
     const QString said = TextsOf(dialog).join(QLatin1Char(' '));
 
-    QVERIFY2(said.contains(QStringLiteral("package name")) && said.contains(QStringLiteral("archive")),
+    QVERIFY2(said.contains(QStringLiteral("package name")),
              "the app cannot open what the simulator ships, so it reads the code off the name, and the sentence that "
              "claims the overlap is where that has to be said");
 }

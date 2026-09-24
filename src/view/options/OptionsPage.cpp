@@ -280,9 +280,8 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     buttons->addStretch();
     underTheLibraries->addWidget(underneath);
 
-    onlyForTheProfileInUse_ = Quiet(tr("This is another profile, and FS Organizer only touches what is in use. Mark it "
-                                       "as active to switch a destination or a library."),
-                                    libraryGroup);
+    onlyForTheProfileInUse_ =
+        Quiet(tr("This profile is not active. Make it active to change its destinations or libraries."), libraryGroup);
     underTheLibraries->addWidget(onlyForTheProfileInUse_);
     layout->addWidget(libraryGroup);
     layout->addStretch();
@@ -352,14 +351,13 @@ QWidget* OptionsPage::CreateLinks()
     symbolic->setObjectName(QStringLiteral("SymbolicChoice"));
     linkTypes_->addButton(symbolic, static_cast<int>(LinkType::Symbolic));
 
+    links->addWidget(Choice(tr("Directory junction"),
+                            tr("Works across local drives without administrator rights. Recommended."), junction,
+                            false));
     links->addWidget(
-        Choice(tr("Directory junction"),
-               tr("Needs no administrator and crosses local volumes. It is the only path the MVP has tested."),
-               junction, false));
-    links->addWidget(Choice(tr("Symbolic link"),
-                            tr("Only for a library on a network path, where the junction does not reach. Needs "
-                               "privilege; without it the app explains the refusal instead of failing quietly."),
-                            symbolic, true));
+        Choice(tr("Symbolic link"),
+               tr("Only needed for a library on a network share. Requires Developer Mode or administrator rights."),
+               symbolic, true));
     layout->addLayout(links);
 
     connect(linkTypes_, &QButtonGroup::idClicked, this,
@@ -368,14 +366,14 @@ QWidget* OptionsPage::CreateLinks()
                 viewModel_.ChooseTypeOfLink(static_cast<LinkType>(chosen));
                 emit StatusChanged(
                     chosen == static_cast<int>(LinkType::Symbolic)
-                        ? tr("New links become symbolic links. The ones that already exist stay directory junctions.")
-                        : tr("New links become directory junctions."));
+                        ? tr("New links will be symbolic links. Existing ones stay as directory junctions.")
+                        : tr("New links will be directory junctions."));
             });
 
     auto* verification = new QVBoxLayout;
     verification->setContentsMargins(0, 0, 0, 0);
     verification->setSpacing(kInsideGroup);
-    verification->addWidget(Heading(tr("Check after copying"), pane));
+    verification->addWidget(Heading(tr("Verify after copying"), pane));
 
     verifications_ = new QButtonGroup(this);
 
@@ -387,13 +385,11 @@ QWidget* OptionsPage::CreateLinks()
     hashed->setObjectName(QStringLiteral("HashChoice"));
     verifications_->addButton(hashed, static_cast<int>(Verification::ByHash));
 
-    verification->addWidget(Choice(tr("By structure"),
-                                   tr("Checks the count and the size of every file. It is what runs today."), structure,
-                                   false));
+    verification->addWidget(
+        Choice(tr("By structure"), tr("Compares the number and size of the files. Fast."), structure, false));
     verification->addWidget(Choice(tr("By hash"),
-                                   tr("Reads both sides in full and compares the bytes, which catches a change the "
-                                      "size hides. Makes an import several times slower, and the number of files "
-                                      "weighs more than their size."),
+                                   tr("Compares the content of every file. Catches more, but makes imports several "
+                                      "times slower, especially with many small files."),
                                    hashed, true));
     layout->addLayout(verification);
 
@@ -402,9 +398,8 @@ QWidget* OptionsPage::CreateLinks()
             {
                 viewModel_.ChooseVerification(static_cast<Verification>(chosen));
                 emit StatusChanged(chosen == static_cast<int>(Verification::ByHash)
-                                       ? tr("Imports now read both sides in full before removing the folder they "
-                                            "copied.")
-                                       : tr("Imports now check the count and the size of every file."));
+                                       ? tr("Imports will now compare the content of every file.")
+                                       : tr("Imports will now compare the number and size of the files."));
             });
     layout->addStretch();
 
@@ -435,15 +430,15 @@ QWidget* OptionsPage::CreateUpdates()
     } offered[] = {
         {.mode = UpdateMode::Automatic,
          .name = tr("Automatic"),
-         .explanation = tr("Downloads the new version on its own and applies it when you close the program."),
+         .explanation = tr("Downloads new versions and installs them when you close the program."),
          .objectName = "AutomaticUpdateChoice"},
         {.mode = UpdateMode::Notify,
          .name = tr("Notify"),
-         .explanation = tr("Looks for a new version and says it exists, but only downloads it if you say so."),
+         .explanation = tr("Tells you when a new version is available, and downloads it only when you ask."),
          .objectName = "NotifyUpdateChoice"},
         {.mode = UpdateMode::Manual,
          .name = tr("Manual"),
-         .explanation = tr("Only looks when you click Check now."),
+         .explanation = tr("Only checks when you click Check now."),
          .objectName = "ManualUpdateChoice"},
     };
 
@@ -541,9 +536,7 @@ QWidget* OptionsPage::CreateLanguage()
     }
 
     layout->addLayout(choices);
-    layout->addWidget(
-        Quiet(tr("Choosing a language writes the language key in settings.json and changes the interface right away."),
-              pane));
+    layout->addWidget(Quiet(tr("The interface changes right away."), pane));
     layout->addStretch();
 
     connect(languages_, &QButtonGroup::idClicked, this,
@@ -634,7 +627,7 @@ void OptionsPage::Reload()
         chosen->setChecked(true);
     }
 
-    emit SummaryChanged(tr("%1 · written on every change").arg(AsText(settingsFile_)));
+    emit SummaryChanged(tr("%1 · saved on every change").arg(AsText(settingsFile_)));
 }
 
 void OptionsPage::ReloadProfiles()
@@ -762,7 +755,7 @@ void OptionsPage::ReloadLibraries()
         categories->setEnabled(library.counted);
         layout->addWidget(categories);
 
-        auto* unregister = new QPushButton(tr("Unregister"), row);
+        auto* unregister = new QPushButton(tr("Remove"), row);
         unregister->setObjectName(QStringLiteral("UnregisterLibrary"));
         unregister->setEnabled(library.counted);
         layout->addWidget(unregister);
@@ -796,16 +789,15 @@ void OptionsPage::DeclareCategories(const LibraryLine& library)
     const LibraryGrouping grouping = viewModel_.GroupingOf(library.id);
 
     QMessageBox question(QMessageBox::Question, tr("Categories of %1").arg(library.label),
-                         tr("FS Organizer marks the folders you built, so that a category keeps counting as one even "
-                            "after it loses its last addon. It never marks what it imported, and it never looks inside "
-                            "an addon.\n\nFolders that already carry the marker: %1\nFolders that would receive it "
-                            "now: %2")
+                         tr("FS Organizer marks the category folders you created, so a category is still recognized "
+                            "after its last addon is gone. Imported folders and addon folders are never "
+                            "marked.\n\nAlready marked: %1\nTo be marked now: %2")
                              .arg(grouping.alreadyDeclared.size())
                              .arg(grouping.notYetDeclared.size()),
                          QMessageBox::NoButton, this);
 
-    QPushButton* declare = question.addButton(tr("Mark them"), QMessageBox::AcceptRole);
-    QPushButton* takeBack = question.addButton(tr("Take every marker back"), QMessageBox::DestructiveRole);
+    QPushButton* declare = question.addButton(tr("Mark"), QMessageBox::AcceptRole);
+    QPushButton* takeBack = question.addButton(tr("Remove all markers"), QMessageBox::DestructiveRole);
     question.addButton(QMessageBox::Cancel);
 
     declare->setEnabled(!grouping.notYetDeclared.empty());
@@ -838,10 +830,9 @@ void OptionsPage::Repoint(const std::filesystem::path& destination)
         return;
     }
 
-    QMessageBox question(QMessageBox::Question, tr("Switch the destination"),
-                         tr("The profile starts using %1.\n\nThe links that already exist in %2 stay there, working, "
-                            "and FS Organizer stops touching them. The destination pinnings that pointed at the old "
-                            "folder start pointing at the new one.")
+    QMessageBox question(QMessageBox::Question, tr("Change the destination"),
+                         tr("The profile will use %1.\n\nLinks already in %2 stay there and keep working, but FS "
+                            "Organizer stops managing them. Addons pinned to the old folder move to the new one.")
                              .arg(chosen, AsText(destination)),
                          QMessageBox::NoButton, this);
 
@@ -870,8 +861,8 @@ void OptionsPage::AddLibrary()
 
     if (!viewModel_.WouldAcceptLibrary(AsPath(chosen)))
     {
-        QMessageBox::warning(this, tr("Library refused"),
-                             tr("%1 is inside a library that is already registered.").arg(chosen));
+        QMessageBox::warning(this, tr("Already in a library"),
+                             tr("%1 is inside a library you already added.").arg(chosen));
         return;
     }
 
@@ -884,14 +875,14 @@ void OptionsPage::SayTheLibraryWasRegistered(const std::filesystem::path& path, 
 {
     if (!report.Accepted())
     {
-        QMessageBox::warning(this, tr("Library refused"),
-                             tr("%1 is inside a library that is already registered.").arg(AsText(path)));
+        QMessageBox::warning(this, tr("Already in a library"),
+                             tr("%1 is inside a library you already added.").arg(AsText(path)));
         return;
     }
 
     Reload();
 
-    emit StatusChanged(tr("Library registered: %1, %2")
+    emit StatusChanged(tr("Library added: %1, %2")
                            .arg(tr("%n category", nullptr, static_cast<int>(report.categories)),
                                 tr("%n addon", nullptr, static_cast<int>(report.addons))));
 }
@@ -901,18 +892,17 @@ void OptionsPage::Remove(const ProfileLine& profile)
     QMessageBox question(QMessageBox::Question, tr("Remove %1?").arg(profile.label), QString{}, QMessageBox::NoButton,
                          this);
 
-    question.setText(tr("The profile leaves the configuration along with its libraries and its destinations. No file "
-                        "is deleted or moved."));
+    question.setText(tr("The profile, its libraries and its destinations are removed from FS Organizer. No files are "
+                        "deleted or moved."));
 
     QCheckBox* disabling = nullptr;
     const std::size_t enabled = profile.active ? viewModel_.EnabledInTheProfileInUse() : 0;
 
     if (enabled > 0)
     {
-        question.setInformativeText(
-            tr("%n addon of this profile is enabled right now. The links stay in the destination and keep working in "
-               "the simulator, but FS Organizer starts treating them as third party links and no longer touches them.",
-               nullptr, static_cast<int>(enabled)));
+        question.setInformativeText(tr("%n addon of this profile is enabled. Its link stays in the destination and "
+                                       "keeps working, but FS Organizer will no longer manage it.",
+                                       nullptr, static_cast<int>(enabled)));
 
         disabling = new QCheckBox(tr("Disable the %1 before removing").arg(enabled), &question);
         disabling->setChecked(false);
@@ -930,35 +920,34 @@ void OptionsPage::Remove(const ProfileLine& profile)
 
     if (!viewModel_.RemoveProfile(profile.id, disabling != nullptr && disabling->isChecked()))
     {
-        emit StatusChanged(tr("%1 was not removed: the program needs at least one profile.").arg(profile.label));
+        emit StatusChanged(tr("%1 was not removed: at least one profile is needed.").arg(profile.label));
         return;
     }
 
-    emit StatusChanged(tr("%1 left the configuration.").arg(profile.label));
+    emit StatusChanged(tr("Removed %1.").arg(profile.label));
 }
 
 void OptionsPage::Unregister(const LibraryLine& library)
 {
-    QMessageBox question(QMessageBox::Question, tr("Unregister %1?").arg(library.label), QString{},
-                         QMessageBox::NoButton, this);
+    QMessageBox question(QMessageBox::Question, tr("Remove %1?").arg(library.label), QString{}, QMessageBox::NoButton,
+                         this);
 
-    question.setText(tr("The library leaves the configuration. No file is deleted or moved."));
+    question.setText(tr("The library is removed from FS Organizer. No files are deleted or moved."));
 
     QCheckBox* disabling = nullptr;
 
     if (library.enabled > 0)
     {
-        question.setInformativeText(
-            tr("%n addon of it is enabled right now. The links stay in the destination and keep working in the "
-               "simulator, but FS Organizer starts treating them as third party links and no longer touches them.",
-               nullptr, static_cast<int>(library.enabled)));
+        question.setInformativeText(tr("%n addon of this library is enabled. Its link stays in the destination and "
+                                       "keeps working, but FS Organizer will no longer manage it.",
+                                       nullptr, static_cast<int>(library.enabled)));
 
-        disabling = new QCheckBox(tr("Disable the %1 before unregistering").arg(library.enabled), &question);
+        disabling = new QCheckBox(tr("Disable the %1 before removing").arg(library.enabled), &question);
         disabling->setChecked(false);
         question.setCheckBox(disabling);
     }
 
-    const QPushButton* proceed = question.addButton(tr("Unregister"), QMessageBox::AcceptRole);
+    const QPushButton* proceed = question.addButton(tr("Remove"), QMessageBox::AcceptRole);
     question.addButton(tr("Cancel"), QMessageBox::RejectRole);
     question.exec();
 
@@ -969,5 +958,5 @@ void OptionsPage::Unregister(const LibraryLine& library)
 
     viewModel_.UnregisterLibrary(library.id, disabling != nullptr && disabling->isChecked());
 
-    emit StatusChanged(tr("%1 left the configuration.").arg(library.label));
+    emit StatusChanged(tr("Removed %1.").arg(library.label));
 }

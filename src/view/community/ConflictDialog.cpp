@@ -47,15 +47,12 @@ namespace
     Wording WordingWhenOurLinkWasReplaced()
     {
         return Wording{
-            .title = ConflictDialog::tr("Something replaced the link"),
-            .explanation =
-                QObject::tr("This folder used to be a link into your library, and something else wrote a real folder "
-                            "over it. The simulator now loads that folder, and the copy in the library is adrift: it "
-                            "answers no switch, enters no preset and joins no bisection."),
-            .provenanceSide = QObject::tr("Folder that stands where the link was"),
-            .keepTheProvenanceOne = QObject::tr("Take it into the library and link it back"),
-            .warning = QObject::tr("The library copy is enabled in %1. Taking the destination one back moves the old "
-                                   "copy to the quarantine first.")};
+            .title = ConflictDialog::tr("The link was replaced"),
+            .explanation = QObject::tr("This folder was a link to your library until something wrote a regular folder "
+                                       "over it. The simulator now loads that folder and ignores your library copy."),
+            .provenanceSide = QObject::tr("Folder in place of the link"),
+            .keepTheProvenanceOne = QObject::tr("Move this folder into the library"),
+            .warning = QObject::tr("The library copy is enabled in %1. It is moved to the quarantine first.")};
     }
 
     Wording WordingFor(const ConflictDetails& details)
@@ -67,26 +64,24 @@ namespace
 
         if (details.theProvenanceIsAnotherProgram)
         {
-            return Wording{
-                .title = ConflictDialog::tr("Two copies of the same addon"),
-                .explanation =
-                    QObject::tr("The other program put a real folder back where it installs this addon, and your copy "
-                                "is still in the library. Choose which one stays: the other goes to the quarantine."),
-                .provenanceSide = QObject::tr("Copy in the other program's folder"),
-                .keepTheProvenanceOne = QObject::tr("Keep the other program's one"),
-                .warning = QObject::tr("The library copy is enabled in %1. Keeping the other program's one removes "
-                                       "those links before sending it to the quarantine.")};
+            return Wording{.title = ConflictDialog::tr("Two copies of the same addon"),
+                           .explanation = QObject::tr(
+                               "The program that installed this addon put its own copy back, and yours is still in the "
+                               "library. Choose which one to keep; the other goes to the quarantine."),
+                           .provenanceSide = QObject::tr("Copy in the other program's folder"),
+                           .keepTheProvenanceOne = QObject::tr("Keep the other program's copy"),
+                           .warning = QObject::tr("The library copy is enabled in %1. Keeping the other program's copy "
+                                                  "removes those links and moves the library copy to the quarantine.")};
         }
 
-        return Wording{
-            .title = ConflictDialog::tr("Two copies of the same addon"),
-            .explanation =
-                QObject::tr("There is a real folder in the destination and an addon with the same name in the library. "
-                            "Choose which one stays: the other goes to the quarantine."),
-            .provenanceSide = QObject::tr("Copy in the destination"),
-            .keepTheProvenanceOne = QObject::tr("Keep the destination one"),
-            .warning = QObject::tr("The library copy is enabled in %1. Keeping the destination one removes those links "
-                                   "before sending it to the quarantine.")};
+        return Wording{.title = ConflictDialog::tr("Two copies of the same addon"),
+                       .explanation =
+                           QObject::tr("The destination has a regular folder with the same name as an addon in your "
+                                       "library. Choose which one to keep; the other goes to the quarantine."),
+                       .provenanceSide = QObject::tr("Copy in the destination"),
+                       .keepTheProvenanceOne = QObject::tr("Keep the destination copy"),
+                       .warning = QObject::tr("The library copy is enabled in %1. Keeping the destination copy removes "
+                                              "those links and moves the library copy to the quarantine.")};
     }
 
     QString WarningAbout(const QString& sentence, const std::vector<std::filesystem::path>& links)
@@ -111,11 +106,9 @@ namespace
             HowTheVersionCompares(details.provenance.manifest.packageVersion, details.library.manifest.packageVersion))
         {
         case VersionOrder::TheSame:
-            return QObject::tr("Both copies declare the same version, so nothing here says which one is newer. If "
-                               "anything changed, it changed inside the folder.");
+            return QObject::tr("Both copies declare the same version, so there is no telling which one is newer.");
         case VersionOrder::NoOneCanTell:
-            return QObject::tr("The manifests do not both name a version, so nothing here says which one is newer. "
-                               "If anything changed, it changed inside the folder.");
+            return QObject::tr("At least one copy declares no version, so there is no telling which one is newer.");
         case VersionOrder::Newer:
         case VersionOrder::Older: break;
         }
@@ -177,7 +170,7 @@ ConflictDialog::ConflictDialog(const ConflictDetails& details, QWidget* parent) 
     keepDestination->setVisible(theTakeBackIsOffered);
 
     QPushButton* keepLibrary = buttons->addButton(
-        details.ourLinkWasReplaced ? tr("Put the link back over the library copy") : tr("Keep the library one"),
+        details.ourLinkWasReplaced ? tr("Keep the library copy and restore the link") : tr("Keep the library copy"),
         QDialogButtonBox::AcceptRole);
 
     QPushButton* cancel = buttons->button(QDialogButtonBox::Cancel);

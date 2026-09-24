@@ -103,13 +103,14 @@ QWidget* DependencySection::LineFor(const DependencyAnswer& answer) const
 
     if (!answer.declaredVersion.empty())
     {
-        grid->addWidget(Quiet(new QLabel(tr("needs %1").arg(QString::fromStdString(answer.declaredVersion)), line)), 0,
-                        1);
+        grid->addWidget(Quiet(new QLabel(tr("requires %1").arg(QString::fromStdString(answer.declaredVersion)), line)),
+                        0, 1);
     }
 
     if (!answer.libraryVersion.empty())
     {
-        grid->addWidget(Quiet(new QLabel(tr("has %1").arg(QString::fromStdString(answer.libraryVersion)), line)), 1, 1);
+        grid->addWidget(Quiet(new QLabel(tr("installed %1").arg(QString::fromStdString(answer.libraryVersion)), line)),
+                        1, 1);
     }
 
     return line;

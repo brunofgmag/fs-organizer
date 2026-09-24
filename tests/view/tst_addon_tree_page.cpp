@@ -419,7 +419,7 @@ void AddonTreePageTest::ABatchWithNothingToDoSaysTheSelectionWasAlreadyAsAsked()
 
     f.viewModel.Toggle({addon}, true);
 
-    QCOMPARE(LastStatusOf(status), QString{"Nothing to do: the selection was already the way you asked."});
+    QCOMPARE(LastStatusOf(status), QString{"Nothing to do: the selection is already that way."});
 }
 
 void AddonTreePageTest::ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectionWasAlreadyRight()
@@ -438,7 +438,7 @@ void AddonTreePageTest::ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectio
     f.viewModel.Toggle({addon}, false);
 
     QCOMPARE(LastStatusOf(status),
-             QString{"Nothing was applied: 1 addon was not the way the screen showed it. The list is up to date now."});
+             QString{"Nothing changed: 1 addon had changed on the disk. The list has been refreshed."});
 }
 
 void AddonTreePageTest::ThePageFitsTheNarrowestWindow()

@@ -32,8 +32,8 @@ namespace
     {
         switch (line.alarm)
         {
-        case StartupAlarm::TheExecutableIsMissing: return QObject::tr("the program is not there");
-        case StartupAlarm::TheAddonHoldingItIsOff: return QObject::tr("the addon that holds it is off");
+        case StartupAlarm::TheExecutableIsMissing: return QObject::tr("the program is missing");
+        case StartupAlarm::TheAddonHoldingItIsOff: return QObject::tr("its addon is disabled");
         case StartupAlarm::None: break;
         }
 
@@ -102,7 +102,7 @@ StartupPage::StartupPage(StartupViewModel& viewModel, QWidget* parent) : QWidget
     connect(&viewModel_, &StartupViewModel::SettingsCouldNotBeSaved, this,
             [this]
             {
-                emit StatusChanged(tr("The app could not write the choice down, so it stays as it was."));
+                emit StatusChanged(tr("Could not save the choice, so nothing changed."));
             });
 
     RetranslateUi();
@@ -172,18 +172,18 @@ QWidget* StartupPage::CreateEntriesPane()
 
 void StartupPage::RetranslateUi() const
 {
-    readAgain_->setText(tr("Read it again"));
-    leaveAlone_->setText(tr("Stop managing these"));
+    readAgain_->setText(tr("Refresh"));
+    leaveAlone_->setText(tr("Stop managing startup entries"));
     entries_->setHeaderLabels({tr("Program"), tr("Path"), tr("State")});
 
-    nothingToShow_->Retell(tr("No startup entry to show"),
-                           tr("The startup file of this profile was not found beside its UserCfg.opt, or it carries no "
-                              "program. Nothing was written."));
-    leftAlone_->Retell(tr("The startup entries are not managed"),
-                       tr("Manage these and FS Organizer reads the startup file of the simulator, lists the programs "
-                          "it launches with itself, and lets you switch one off without editing XML. It changes one "
-                          "thing only: the switch of an entry that is already there."));
-    turnOn_->setText(tr("Manage these"));
+    nothingToShow_->Retell(
+        tr("No startup entries"),
+        tr("The simulator's startup file (EXE.xml) was not found for this profile, or it lists no programs."));
+    leftAlone_->Retell(
+        tr("The startup entries are not managed"),
+        tr("When managed, FS Organizer reads the simulator's startup file, lists the programs it launches with itself, "
+           "and lets you disable one without editing XML. It only enables or disables entries that already exist."));
+    turnOn_->setText(tr("Manage startup entries"));
 }
 
 void StartupPage::ShowWhatTheFileSays()
@@ -194,7 +194,7 @@ void StartupPage::ShowWhatTheFileSays()
     if (!viewModel_.Managing())
     {
         panes_->setCurrentIndex(LeftAlone);
-        emit SummaryChanged(tr("The startup entries of the simulator are not managed."));
+        emit SummaryChanged(tr("The simulator's startup entries are not managed."));
 
         return;
     }
@@ -259,7 +259,7 @@ void StartupPage::Apply(const WhatTheRowAsks& asked)
     const FileResult result = viewModel_.Switch(asked.path, asked.enabled);
     if (!Succeeded(result))
     {
-        emit StatusChanged(tr("The switch was not changed: %1.").arg(Explain(result)));
+        emit StatusChanged(tr("Nothing changed: %1.").arg(Explain(result)));
         ShowWhatTheFileSays();
 
         return;
@@ -274,8 +274,8 @@ bool StartupPage::TheSimulatorIsInTheWay()
     while (const std::optional<std::string> running = viewModel_.RunningSimulator())
     {
         QMessageBox blocked(QMessageBox::Warning, tr("Simulator open"),
-                            tr("The startup file stays untouched while the simulator runs."), QMessageBox::Cancel,
-                            this);
+                            tr("The startup file cannot be changed while the simulator is running."),
+                            QMessageBox::Cancel, this);
         blocked.setInformativeText(tr("Close %1 and check again.").arg(QString::fromStdString(*running)));
 
         const QPushButton* again = blocked.addButton(tr("Check again"), QMessageBox::AcceptRole);

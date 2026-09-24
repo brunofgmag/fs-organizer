@@ -85,7 +85,7 @@ void JournalModelTest::AnImportIsOneRowWithItsStepsUnderneath()
     QVERIFY(run.data(JournalModel::SucceededRole).toBool());
 
     const QModelIndex firstStep = model.index(0, JournalModel::OperationColumn, model.index(1, 0, {}));
-    QCOMPARE(firstStep.data(Qt::DisplayRole).toString(), QStringLiteral("Copy to the staging area"));
+    QCOMPARE(firstStep.data(Qt::DisplayRole).toString(), QStringLiteral("Copy to a temporary folder"));
     QCOMPARE(model.rowCount(firstStep), 0);
     QCOMPARE(model.parent(firstStep), model.index(1, 0, {}));
 }
@@ -222,7 +222,7 @@ void JournalModelTest::ADisableWithItsStartupEntryIsOneRowNamedAfterBoth()
     QCOMPARE(model.rowCount({}), 1);
     QCOMPARE(model.rowCount(model.index(0, 0, {})), 2);
     QCOMPARE(model.index(0, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
-             QStringLiteral("Disable addon and the startup entry it carries"));
+             QStringLiteral("Disable addon and its startup entry"));
     QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(),
              QStringLiteral("pmdg-aircraft-77w"));
     QCOMPARE(model.index(0, JournalModel::TargetColumn, {}).data(Qt::DisplayRole).toString(), AsText(executable));

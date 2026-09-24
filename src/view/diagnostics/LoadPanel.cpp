@@ -89,11 +89,9 @@ void LoadPanel::changeEvent(QEvent* event)
 
 void LoadPanel::RetranslateUi()
 {
-    refusal_->setText(
-        tr("The simulator's report attributes no loading time to a package, so this screen shows none. "
-           "What it does attribute is the module each package loaded, and the memory that module holds."));
-    empty_->setText(tr("The simulator writes this report only when a load takes long, so there may be none yet. "
-                       "Everything else on this screen works without it."));
+    refusal_->setText(tr("The simulator does not report loading time per package. This shows which module each package "
+                         "loaded and how much memory it holds."));
+    empty_->setText(tr("The simulator only writes this report after a slow load, so there may not be one yet."));
     modules_->setHeaderLabels({tr("Module"), tr("Package"), tr("Addon"), tr("Memory")});
     modules_->headerItem()->setTextAlignment(3, Qt::AlignRight | Qt::AlignVCenter);
 
@@ -113,11 +111,10 @@ void LoadPanel::ShowWhatTheReportAttributes() const
     const QString counted =
         tr("%n package registered by the simulator", nullptr, static_cast<int>(load_.packagesRegistered));
     const QString said =
-        load_.runAt.has_value() ? tr("%1, on the run of %2").arg(counted, AsMoment(*load_.runAt)) : counted;
+        load_.runAt.has_value() ? tr("%1, in the session of %2").arg(counted, AsMoment(*load_.runAt)) : counted;
 
     registered_->setText(
-        tr("%1. It counts what the simulator registered on that run, which is not the number of addons in your "
-           "library.")
+        tr("%1. This is what the simulator registered in that session, not the number of addons in your library.")
             .arg(said));
 
     modules_->clear();
@@ -127,7 +124,7 @@ void LoadPanel::ShowWhatTheReportAttributes() const
         auto* row = new QTreeWidgetItem(modules_);
         row->setText(0, QString::fromStdString(line.moduleName));
         row->setText(1, QString::fromStdString(line.packageName));
-        row->setText(2, line.addonUnderLibrary.empty() ? tr("not one of yours") : AsText(line.addonUnderLibrary));
+        row->setText(2, line.addonUnderLibrary.empty() ? tr("not in your library") : AsText(line.addonUnderLibrary));
         row->setText(3, line.memoryBytes.has_value() ? AsSize(*line.memoryBytes) : QString());
         row->setTextAlignment(3, Qt::AlignRight | Qt::AlignVCenter);
         row->setData(1, QuietRole, true);

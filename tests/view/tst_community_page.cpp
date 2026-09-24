@@ -356,7 +356,7 @@ namespace
     {
         for (const QString& line : said)
         {
-            if (line.contains(QStringLiteral("does not know about the link")))
+            if (line.contains(QStringLiteral("will not know about the link")))
             {
                 return true;
             }

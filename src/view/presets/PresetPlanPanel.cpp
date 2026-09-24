@@ -56,29 +56,29 @@ namespace
     {
         if (preview.notApplied > 0)
         {
-            return QObject::tr("This preset asks for %n startup entry, and none will be applied, because startup "
+            return QObject::tr("This preset has %n startup entry, but it will not be applied because startup "
                                "management is off in Options.",
                                nullptr, static_cast<int>(preview.notApplied));
         }
 
         if (preview.startupUnresolved > 0)
         {
-            return QObject::tr("This preset asks for %1 startup entries. %2 of them are no longer in the simulator "
-                               "file, and %3 will be switched.")
+            return QObject::tr("This preset has %1 startup entries: %3 will be changed, and %2 are no longer in the "
+                               "simulator's file.")
                 .arg(preview.startupAsked)
                 .arg(preview.startupUnresolved)
                 .arg(preview.startupToApply);
         }
 
-        return QObject::tr("This preset asks for %n startup entry, and all of them will be applied.", nullptr,
+        return QObject::tr("This preset has %n startup entry, and it will be applied.", nullptr,
                            static_cast<int>(preview.startupAsked));
     }
 }
 
 QString CountsSentenceFor(const PresetPreview& preview)
 {
-    QString counted = QObject::tr("Enables %1, disables %2. %3 already match what the preset asks, %4 were not "
-                                  "found, and %5 destination entries stay as they are.")
+    QString counted = QObject::tr("Enables %1 and disables %2. %3 are already as the preset asks, %4 were not found, "
+                                  "and %5 destination entries are left alone.")
                           .arg(preview.toEnable)
                           .arg(preview.toDisable)
                           .arg(preview.alreadyInPlace)
@@ -87,7 +87,7 @@ QString CountsSentenceFor(const PresetPreview& preview)
 
     if (preview.notNamedByThePreset > 0)
     {
-        counted += QObject::tr(" Of the ones it disables, %1 entered the library after the preset was saved.")
+        counted += QObject::tr(" Of those disabled, %1 were added to the library after the preset was saved.")
                        .arg(preview.notNamedByThePreset);
     }
 
@@ -257,16 +257,16 @@ void PresetPlanPanel::Show(const PresetPlanState& state)
     switch (Mode())
     {
     case ApplyMode::Replace:
-        modeExplained_->setText(tr("Leaves only what the preset enables."));
-        planTitle_->setText(tr("The plan, as Replace"));
+        modeExplained_->setText(tr("Enables the preset's addons and disables everything else."));
+        planTitle_->setText(tr("Plan: Replace"));
         break;
     case ApplyMode::Cumulative:
-        modeExplained_->setText(tr("Enables what the preset names, without touching the rest."));
-        planTitle_->setText(tr("The plan, as Accumulate"));
+        modeExplained_->setText(tr("Enables the preset's addons and leaves the rest as it is."));
+        planTitle_->setText(tr("Plan: Accumulate"));
         break;
     case ApplyMode::Disable:
-        modeExplained_->setText(tr("Disables what the preset enables."));
-        planTitle_->setText(tr("The plan, as Disable"));
+        modeExplained_->setText(tr("Disables the preset's addons."));
+        planTitle_->setText(tr("Plan: Disable"));
         break;
     }
 
@@ -297,7 +297,7 @@ void PresetPlanPanel::Show(const PresetPlanState& state)
     showOmitted_->setVisible(replacing);
     showOmitted_->setEnabled(preview.notNamedByThePreset > 0);
     omittedNote_->setVisible(replacing && preview.notNamedByThePreset > 0);
-    omittedNote_->setText(tr("The %1 omitted are part of the %2 being turned off, and not a pile on top of them.")
+    omittedNote_->setText(tr("The %1 not in the preset are included in the %2 being disabled.")
                               .arg(preview.notNamedByThePreset)
                               .arg(preview.toDisable));
 
@@ -320,11 +320,11 @@ void PresetPlanPanel::RetranslateUi()
     modes_->button(static_cast<int>(ApplyMode::Replace))->setText(tr("Replace"));
     modes_->button(static_cast<int>(ApplyMode::Cumulative))->setText(tr("Accumulate"));
     modes_->button(static_cast<int>(ApplyMode::Disable))->setText(tr("Disable"));
-    toEnableName_->setText(tr("Turn on"));
-    toDisableName_->setText(tr("Turn off"));
+    toEnableName_->setText(tr("To enable"));
+    toDisableName_->setText(tr("To disable"));
     alreadyName_->setText(tr("Already as the preset asks"));
-    unresolvedName_->setText(tr("Named, but no addon found"));
-    notNamedName_->setText(tr("Off because Replace omits them"));
-    notAppliedName_->setText(tr("Asked for, but not applied"));
+    unresolvedName_->setText(tr("Not found in the library"));
+    notNamedName_->setText(tr("Disabled by Replace"));
+    notAppliedName_->setText(tr("Requested, but not applied"));
     showOmitted_->setText(tr("Show them…"));
 }

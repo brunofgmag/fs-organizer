@@ -27,23 +27,22 @@ QString UpdateViewModel::WhatIsGoingOn() const
 {
     if (!updatesAreOn_)
     {
-        return tr(
-            "Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.");
+        return tr("Updates are off in this copy of the program (development build or FSORG_NO_UPDATES).");
     }
 
     switch (state_)
     {
     case UpdateState::Checking: return tr("Looking for a new version…");
-    case UpdateState::UpToDate: return tr("The installed version is the newest one.");
+    case UpdateState::UpToDate: return tr("You have the latest version.");
     case UpdateState::Available: return tr("Version %1 is available.").arg(OfferedVersion());
     case UpdateState::Downloading: return tr("Downloading version %1: %2%").arg(OfferedVersion()).arg(progress_);
     case UpdateState::ReadyToApply:
-        return tr("Version %1 is ready and goes in when the program closes.").arg(OfferedVersion());
+        return tr("Version %1 is ready and will be installed when you close the program.").arg(OfferedVersion());
     case UpdateState::Failed: return failure_;
     case UpdateState::Idle: break;
     }
 
-    return tr("Nothing has been checked yet.");
+    return tr("Not checked yet.");
 }
 
 QString UpdateViewModel::OfferedVersion() const

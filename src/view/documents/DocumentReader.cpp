@@ -488,7 +488,7 @@ void DocumentReader::Retranslate() const
     fitWidth_->setToolTip(tr("Fit width"));
     bookmark_->setToolTip(tr("Bookmark"));
     detach_->setText(detached_ ? kBackIntoTheTab : kOutOfTheTab);
-    detach_->setToolTip(detached_ ? tr("Bring it back") : tr("Detach"));
+    detach_->setToolTip(detached_ ? tr("Back into the tab") : tr("Open in a separate window"));
     openFolder_->setToolTip(tr("Open folder"));
     outlineHeading_->setText(TheHeadingOfThePane());
     rename_->setText(tr("Rename this bookmark…"));
@@ -496,10 +496,10 @@ void DocumentReader::Retranslate() const
     wanted_->setPlaceholderText(tr("Search in this document"));
     previousResult_->setToolTip(tr("Previous match"));
     nextResult_->setToolTip(tr("Next match"));
-    wheelZoom_->setToolTip(kind_ == DocumentKind::Chart ? tr("The wheel zooms the chart")
-                                                        : tr("The wheel zooms the document"));
-    dragMoves_->setToolTip(dragMoves_->isChecked() ? tr("Dragging moves the page. Turn it off to select text")
-                                                   : tr("Dragging selects text. Turn it on to move the page"));
+    wheelZoom_->setToolTip(kind_ == DocumentKind::Chart ? tr("The mouse wheel zooms the chart")
+                                                        : tr("The mouse wheel zooms the document"));
+    dragMoves_->setToolTip(dragMoves_->isChecked() ? tr("Dragging moves the page. Click to select text instead")
+                                                   : tr("Dragging selects text. Click to move the page instead"));
     copy_->setText(tr("Copy"));
 
     const bool anythingToStepThrough = !wanted_->text().isEmpty() && search_->rowCount({}) > 0;

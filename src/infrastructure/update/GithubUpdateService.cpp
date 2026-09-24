@@ -108,7 +108,7 @@ void GithubUpdateService::DownloadAndStage(const UpdateInfo& info)
 
     if (info.zipUrl.empty() || info.shaUrl.empty())
     {
-        SayTheStageFinished(false, tr("This version did not bring the files to download."));
+        SayTheStageFinished(false, tr("This release has no files to download."));
         return;
     }
 
@@ -217,7 +217,7 @@ void GithubUpdateService::OnCheckFinished()
     const std::optional<UpdateInfo> info = ParseLatestRelease(reply->readAll());
     if (!info.has_value())
     {
-        SayTheCheckFinished(false, false, {}, tr("GitHub answered in a format the app does not understand."));
+        SayTheCheckFinished(false, false, {}, tr("GitHub sent a response the app could not read."));
         return;
     }
 
@@ -242,7 +242,7 @@ void GithubUpdateService::OnChecksumFinished()
     expectedChecksum_ = ParseSha256File(reply->readAll());
     if (expectedChecksum_.isEmpty())
     {
-        SayTheStageFinished(false, tr("The checksum file came in invalid."));
+        SayTheStageFinished(false, tr("The checksum file is invalid."));
         return;
     }
 
@@ -275,17 +275,17 @@ void GithubUpdateService::OnDownloadFinished()
 
     if (!WriteTheDownload(reply, zipPath))
     {
-        SayTheStageFinished(false, tr("The downloaded file could not be written."));
+        SayTheStageFinished(false, tr("Could not save the downloaded file."));
         return;
     }
 
     switch (VerifyChecksum(zipPath))
     {
     case ChecksumVerdict::CouldNotBeRead:
-        SayTheStageFinished(false, tr("The downloaded file could not be read, and was kept for you to inspect."));
+        SayTheStageFinished(false, tr("Could not read the downloaded file. It was kept so you can check it."));
         return;
     case ChecksumVerdict::DoesNotMatch:
-        SayTheStageFinished(false, tr("The downloaded file does not match the checksum, and was discarded."));
+        SayTheStageFinished(false, tr("The downloaded file failed verification and was discarded."));
         return;
     case ChecksumVerdict::Matches: break;
     }
@@ -343,7 +343,7 @@ void GithubUpdateService::OnExtractionFinished(const int exitCode)
 
     if (exitCode != 0 || !QFile::exists(StagedFolder() + QStringLiteral("/") + exeName))
     {
-        SayTheStageFinished(false, tr("The update package could not be opened."));
+        SayTheStageFinished(false, tr("Could not open the update package."));
         return;
     }
 

@@ -9,9 +9,9 @@ QString AnswerFor(const DependencyAnswer& answer)
     switch (answer.resolution)
     {
     case DependencyResolution::InThisLibrary:
-        return answer.enabled ? QObject::tr("In this library, on") : QObject::tr("In this library, off");
+        return answer.enabled ? QObject::tr("In this library, enabled") : QObject::tr("In this library, disabled");
     case DependencyResolution::InTheSimulator: return QObject::tr("In the simulator, outside the library");
-    case DependencyResolution::Unverifiable: return QObject::tr("Not verifiable");
+    case DependencyResolution::Unverifiable: return QObject::tr("Cannot be checked");
     }
 
     return {};

@@ -48,7 +48,7 @@ RepairDialog::RepairDialog(const std::vector<RepairCandidate>& candidates, QWidg
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    auto* repair = buttons->addButton(tr("Repair the selected ones"), QDialogButtonBox::AcceptRole);
+    auto* repair = buttons->addButton(tr("Repair selected"), QDialogButtonBox::AcceptRole);
     repair->setDefault(true);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -81,7 +81,7 @@ QWidget* RepairDialog::CreateGroup(const QString& title,
         grid->addWidget(selected, row, 0);
 
         auto* action = new QComboBox(group);
-        action->addItem(tr("Remove the dead node"));
+        action->addItem(tr("Remove the broken link"));
         if (candidate.repointTo.has_value())
         {
             action->addItem(tr("Repoint to the library"));

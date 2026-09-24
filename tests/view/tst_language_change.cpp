@@ -73,19 +73,19 @@ void LanguageChangeTest::InstallingATranslatorRewritesWhatIsAlreadyOnTheScreen()
     TriageStrip strip;
     strip.ShowBreakdown({.broken = 1});
 
-    QVERIFY(HasActionLabelled(strip, QStringLiteral("Repair the broken ones…")));
+    QVERIFY(HasActionLabelled(strip, QStringLiteral("Repair broken links…")));
 
     MarkingTranslator marking;
     QCoreApplication::installTranslator(&marking);
     QCoreApplication::processEvents();
 
-    QVERIFY2(HasActionLabelled(strip, QStringLiteral("<Repair the broken ones…>")),
+    QVERIFY2(HasActionLabelled(strip, QStringLiteral("<Repair broken links…>")),
              "the strip was built before the switch and kept the old text");
 
     QCoreApplication::removeTranslator(&marking);
     QCoreApplication::processEvents();
 
-    QVERIFY(HasActionLabelled(strip, QStringLiteral("Repair the broken ones…")));
+    QVERIFY(HasActionLabelled(strip, QStringLiteral("Repair broken links…")));
 }
 
 void LanguageChangeTest::AStoredLanguageIsHonouredAndAnythingElseFallsBackTheSameWay()

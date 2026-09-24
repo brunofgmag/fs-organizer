@@ -79,7 +79,7 @@ PackageListPage::PackageListPage(CoverageViewModel& viewModel, QWidget* parent) 
     connect(&viewModel_, &CoverageViewModel::SettingsCouldNotBeSaved, this,
             [this]
             {
-                emit StatusChanged(tr("The app could not write the choice down, so it stays as it was."));
+                emit StatusChanged(tr("Could not save the choice, so nothing changed."));
             });
 
     RetranslateUi();
@@ -189,20 +189,20 @@ QWidget* PackageListPage::CreateHalves()
 
 void PackageListPage::RetranslateUi() const
 {
-    turnOff_->setText(tr("Turn the simulator's one off"));
+    turnOff_->setText(tr("Disable the simulator's airport"));
     coexist_->setText(tr("They can coexist"));
-    turnBackOn_->setText(tr("Turn it back on"));
-    leaveAlone_->setText(tr("Stop managing this"));
+    turnBackOn_->setText(tr("Enable again"));
+    leaveAlone_->setText(tr("Stop managing the package list"));
 
     conflicts_->setHeaderLabels({tr("Airport"), tr("Covered by"), tr("And by")});
-    turnedOff_->setHeaderLabels({tr("Airport"), tr("Package you turned off"), QString()});
+    turnedOff_->setHeaderLabels({tr("Airport"), tr("Package you disabled"), QString()});
 
-    leftAlone_->Retell(tr("The package list is not managed"),
-                       tr("Manage it and FS Organizer reads the package list of the simulator, tells you when one of "
-                          "your airports covers the same place as one the simulator ships, and lets you switch that "
-                          "one off without editing XML. It writes nothing until you accept a warning. The warning "
-                          "between two addons of your own does not need this and keeps working."));
-    turnOn_->setText(tr("Manage it"));
+    leftAlone_->Retell(
+        tr("The package list is not managed"),
+        tr("When managed, FS Organizer reads the simulator's package list, warns you when one of your airports covers "
+           "the same place as one the simulator ships, and lets you disable that one without editing XML. Nothing is "
+           "written until you accept a warning. Warnings between two of your own addons work without this."));
+    turnOn_->setText(tr("Manage the package list"));
 }
 
 void PackageListPage::ShowWhatTheListSays()
@@ -223,7 +223,7 @@ void PackageListPage::ShowWhatTheListSays()
         return;
     }
 
-    emit SummaryChanged(covered + QLatin1Char(' ') + tr("The package list of the simulator is not managed."));
+    emit SummaryChanged(covered + QLatin1Char(' ') + tr("The simulator's package list is not managed."));
 }
 
 void PackageListPage::FillTheConflicts() const
@@ -243,11 +243,9 @@ void PackageListPage::FillTheConflicts() const
     const std::size_t read = viewModel_.AddonsWhoseSceneryWasRead();
 
     conflictsPromise_->setText(
-        read == 0 ? tr("No scenery has been read yet, so this half has nothing to say. The Diagnostics screen reads "
-                       "them all in one go, and enabling an airport reads that one.")
-                  : tr("Read from the scenery of %n addon. The app never turns anything off by itself: between two "
-                       "addons of your own it only shows the pair, because turning one off is enabling and disabling, "
-                       "which you already do.",
+        read == 0 ? tr("No scenery scanned yet. Scan everything in Diagnostics, or enable an airport to scan it.")
+                  : tr("Based on the scenery of %n addon. For two addons of your own, the app only shows the pair: "
+                       "disable one yourself if you want.",
                        nullptr, static_cast<int>(read)));
 }
 
@@ -263,7 +261,7 @@ void PackageListPage::FillTheTurnedOff() const
         Dress(row, line);
     }
 
-    turnedOffHeading_->setText(tr("Packages you turned off") + QStringLiteral("  ") + QString::number(lines.size()));
+    turnedOffHeading_->setText(tr("Packages you disabled") + QStringLiteral("  ") + QString::number(lines.size()));
 }
 
 void PackageListPage::DressTheToolbar() const
@@ -329,7 +327,7 @@ void PackageListPage::LetThemCoexist()
 
     viewModel_.TheyCanCoexist(one, other);
 
-    emit StatusChanged(tr("The two addons of %1 will not be shown as covering each other again.").arg(code));
+    emit StatusChanged(tr("No more warnings about the two addons of %1.").arg(code));
 }
 
 void PackageListPage::TurnItBackOn()
@@ -367,8 +365,8 @@ bool PackageListPage::TheSimulatorIsInTheWay()
     while (const std::optional<std::string> running = viewModel_.RunningSimulator())
     {
         QMessageBox blocked(QMessageBox::Warning, tr("Simulator open"),
-                            tr("The package list stays untouched while the simulator runs."), QMessageBox::Cancel,
-                            this);
+                            tr("The package list cannot be changed while the simulator is running."),
+                            QMessageBox::Cancel, this);
         blocked.setInformativeText(tr("Close %1 and check again.").arg(QString::fromStdString(*running)));
 
         const QPushButton* again = blocked.addButton(tr("Check again"), QMessageBox::AcceptRole);

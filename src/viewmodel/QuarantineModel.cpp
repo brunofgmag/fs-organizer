@@ -127,7 +127,7 @@ QString QuarantineModel::WhatTheSourcesSay(const QuarantinedItem& item) const
     {
     case OriginSource::Sidecar: return tr("the record only");
     case OriginSource::Journal: return tr("the Journal only");
-    case OriginSource::Unknown: return tr("neither has it");
+    case OriginSource::Unknown: return tr("neither knows");
     }
 
     return {};

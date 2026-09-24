@@ -19,8 +19,8 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
 
     model_.Show(suggestions);
 
-    auto* explanation = new QLabel(tr("The rules that get it right on their own come checked. The livery rule comes "
-                                      "unchecked because it is often wrong: check it before applying."),
+    auto* explanation = new QLabel(tr("Reliable rules come checked. The livery rule is often wrong, so it comes "
+                                      "unchecked: review it before applying."),
                                    this);
     explanation->setWordWrap(true);
 
@@ -49,7 +49,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
             });
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    QPushButton* apply = buttons->addButton(tr("Move the checked ones"), QDialogButtonBox::AcceptRole);
+    QPushButton* apply = buttons->addButton(tr("Move checked"), QDialogButtonBox::AcceptRole);
     apply->setDefault(true);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);

@@ -1,5 +1,49 @@
 # Changelog
 
+## [0.54.12](https://github.com/brunofgmag/fs-organizer/compare/v0.54.11...v0.54.12) (2026-09-24)
+
+
+* rewrite the remaining interface texts ([#188](https://github.com/brunofgmag/fs-organizer/issues/188)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+
+
+### Bug Fixes
+
+* **documents:** rewrite the texts of the documents screen and the reader ([79e21b3](https://github.com/brunofgmag/fs-organizer/commit/79e21b37ccde17bcee9b676e74c6390589d5f2c5)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+* **journal:** rewrite the texts of the journal screen and call it Histórico in Portuguese ([a1438bf](https://github.com/brunofgmag/fs-organizer/commit/a1438bf03d01010cbe961ce3a333fb50f6fb9e27)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+* **options:** rewrite the texts of the options screen and the update messages ([db41d0f](https://github.com/brunofgmag/fs-organizer/commit/db41d0fcd9df2449a719555762c6ea403cd643a5)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+* **quarantine:** rewrite the texts of the quarantine screen and its dialogs ([705fd1f](https://github.com/brunofgmag/fs-organizer/commit/705fd1f1a2356ae983a7af980f8c0c987d3fdf57)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+* **shell:** rewrite the texts of the setup, the startup offers and the app-wide messages ([650a85f](https://github.com/brunofgmag/fs-organizer/commit/650a85f57f38c2c4cc61956ff2918d975de9a1c9)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+* **simulator:** rewrite the texts of the simulator screen ([42a6849](https://github.com/brunofgmag/fs-organizer/commit/42a684917e3879d9b4cd22baaed5be3f594a0b80)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+* **viewmodel:** rewrite the failure reasons shown when an operation stops ([c8b77bc](https://github.com/brunofgmag/fs-organizer/commit/c8b77bc512b8d178c5bf0b7617bd8a30ca85144d)) ([0aa8bcf](https://github.com/brunofgmag/fs-organizer/commit/0aa8bcfd4cd9763d7143f8e4598d8676474f31a4))
+
+## [0.54.11](https://github.com/brunofgmag/fs-organizer/compare/v0.54.10...v0.54.11) (2026-09-23)
+
+
+### Bug Fixes
+
+* **diagnostics:** rewrite the texts of the diagnostics screen and the culprit search ([f2cf867](https://github.com/brunofgmag/fs-organizer/commit/f2cf867a2f2aacc456c022bb396bc7d385b4a42f))
+
+## [0.54.10](https://github.com/brunofgmag/fs-organizer/compare/v0.54.9...v0.54.10) (2026-09-23)
+
+
+### Bug Fixes
+
+* **presets:** rewrite the texts of the presets screen and its panels ([339fe54](https://github.com/brunofgmag/fs-organizer/commit/339fe545086902209b848e745498ea9734696281))
+
+## [0.54.9](https://github.com/brunofgmag/fs-organizer/compare/v0.54.8...v0.54.9) (2026-09-23)
+
+
+### Bug Fixes
+
+* **community:** rewrite the texts of the destinations screen and its dialogs ([77a3321](https://github.com/brunofgmag/fs-organizer/commit/77a33216b05d90b55a6134b32159638bf21ef648))
+
+## [0.54.8](https://github.com/brunofgmag/fs-organizer/compare/v0.54.7...v0.54.8) (2026-09-23)
+
+
+### Bug Fixes
+
+* **library:** rewrite the texts of the library screen and its dialogs ([6ca8f67](https://github.com/brunofgmag/fs-organizer/commit/6ca8f67f0db25a7dd413545c485bd8399e4e52e3))
+
 ## [0.54.7](https://github.com/brunofgmag/fs-organizer/compare/v0.54.6...v0.54.7) (2026-09-02)
 
 

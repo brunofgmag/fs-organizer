@@ -156,7 +156,7 @@ void LegacyImportDialog::FillLibrary(QTreeWidgetItem* installation, const Migrat
     }
     else if (library.proposal.state == ProposedState::AlreadyPresent)
     {
-        row->setText(1, tr("already registered"));
+        row->setText(1, tr("already added"));
     }
     else
     {
@@ -171,7 +171,7 @@ void LegacyImportDialog::FillLibrary(QTreeWidgetItem* installation, const Migrat
     {
         QTreeWidgetItem* line = LineUnder(row);
         line->setText(0, AsText(refused));
-        line->setText(1, tr("refused: the name does not become a folder"));
+        line->setText(1, tr("refused: the name is not a valid folder name"));
     }
 }
 
@@ -234,20 +234,20 @@ void LegacyImportDialog::Land(const LegacyImportReport& report, const LegacyPres
 
     if (presets.imported > 0 || presets.nameAlreadyTaken > 0)
     {
-        said += tr(" %1 imported, %2 with a name already used here.")
+        said += tr(" %1 imported, %2 skipped because the name is already in use.")
                     .arg(tr("%n preset", nullptr, static_cast<int>(presets.imported)))
                     .arg(presets.nameAlreadyTaken);
     }
 
     if (presets.entriesNotFound > 0)
     {
-        said += tr(" %n name the presets cite was not found in any library.", nullptr,
+        said += tr(" %n addon named in the presets was not found in any library.", nullptr,
                    static_cast<int>(presets.entriesNotFound));
     }
 
     if (!report.refused.empty())
     {
-        said += tr(" %n refused for being inside an already registered library.", nullptr,
+        said += tr(" %n refused because it is inside a library already added.", nullptr,
                    static_cast<int>(report.refused.size()));
     }
 

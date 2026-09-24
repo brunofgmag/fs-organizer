@@ -12,13 +12,13 @@
 
 StartupEntryDialog::StartupEntryDialog(const std::vector<StartupLine>& carried, QWidget* parent) : QDialog(parent)
 {
-    setWindowTitle(tr("The simulator launches this from inside the addon"));
+    setWindowTitle(tr("Startup program inside the addon"));
 
-    auto* explanation = new QLabel(
-        tr("%n startup entry of the simulator points inside what you are turning off. Leave it on and the simulator "
-           "keeps trying to launch a program that will not be there.",
-           nullptr, static_cast<int>(carried.size())),
-        this);
+    auto* explanation =
+        new QLabel(tr("%n simulator startup entry points inside what you are disabling. If it stays enabled, the "
+                      "simulator will keep trying to launch a program that is no longer there.",
+                      nullptr, static_cast<int>(carried.size())),
+                   this);
     explanation->setWordWrap(true);
 
     auto* listed = new QWidget(this);
@@ -59,13 +59,13 @@ StartupEntryDialog::StartupEntryDialog(const std::vector<StartupLine>& carried, 
     scroll->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
     const QString turnOff =
-        carried.size() == 1 ? tr("Turn the addon and the entry off") : tr("Turn the addon and the entries off");
+        carried.size() == 1 ? tr("Disable the addon and the entry") : tr("Disable the addon and the entries");
 
     auto* buttons = new QDialogButtonBox(this);
     QPushButton* both = buttons->addButton(turnOff, QDialogButtonBox::AcceptRole);
     both->setProperty("role", "primary");
     both->setDefault(true);
-    buttons->addButton(tr("Only turn the addon off"), QDialogButtonBox::RejectRole);
+    buttons->addButton(tr("Disable only the addon"), QDialogButtonBox::RejectRole);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);

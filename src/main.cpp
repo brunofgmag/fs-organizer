@@ -239,8 +239,8 @@ int main(int argc, char* argv[])
     if (!loaded.has_value())
     {
         QMessageBox::critical(nullptr, QObject::tr("Unreadable configuration"),
-                              QObject::tr("The configuration file exists but could not be read, so FS Organizer will "
-                                          "not overwrite it. Move or fix %1 and open the program again.")
+                              QObject::tr("The settings file could not be read, so FS Organizer will not overwrite it. "
+                                          "Fix or move %1 and open the program again.")
                                   .arg(AsText(SettingsFilePath())));
 
         return 1;
@@ -437,30 +437,32 @@ int main(int argc, char* argv[])
                          importEngine.UseVerification(verification);
                      });
 
-    QObject::connect(&optionsViewModel, &OptionsViewModel::LanguageChosen, &window,
-                     [&language, &window, &documentsViewModel](const QString& chosen)
-                     {
-                         const bool applied = language.Use(chosen);
+    QObject::connect(
+        &optionsViewModel, &OptionsViewModel::LanguageChosen, &window,
+        [&language, &window, &documentsViewModel](const QString& chosen)
+        {
+            const bool applied = language.Use(chosen);
 
-                         documentsViewModel.TheInterfaceSpeaks(language.InUse().toStdString());
+            documentsViewModel.TheInterfaceSpeaks(language.InUse().toStdString());
 
-                         if (!applied)
-                         {
-                             QMessageBox::warning(&window, QObject::tr("Language not applied"),
-                                                  QObject::tr("The translation for %1 did not load, so the interface "
-                                                              "stays in English. The choice was still written down.")
-                                                      .arg(chosen));
-                         }
-                     });
+            if (!applied)
+            {
+                QMessageBox::warning(
+                    &window, QObject::tr("Language not applied"),
+                    QObject::tr(
+                        "The %1 translation did not load, so the interface stays in English. Your choice was saved.")
+                        .arg(chosen));
+            }
+        });
 
-    QObject::connect(&optionsViewModel, &OptionsViewModel::SettingsCouldNotBeSaved, &window,
-                     [&window]
-                     {
-                         QMessageBox::warning(
-                             &window, QObject::tr("Could not save"),
-                             QObject::tr("The option could not be written to %1, so it stays as it was.")
-                                 .arg(AsText(SettingsFilePath())));
-                     });
+    QObject::connect(
+        &optionsViewModel, &OptionsViewModel::SettingsCouldNotBeSaved, &window,
+        [&window]
+        {
+            QMessageBox::warning(
+                &window, QObject::tr("Could not save"),
+                QObject::tr("Could not save the option to %1, so it was not changed.").arg(AsText(SettingsFilePath())));
+        });
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &updateViewModel,
                      [&updateViewModel, &updateService]
@@ -756,11 +758,10 @@ int main(int argc, char* argv[])
                          window.ShowProfiles(session.Settings());
                          optionsPage->Reload();
 
-                         QMessageBox::warning(
-                             &window, QObject::tr("Could not save"),
-                             QObject::tr("The change was applied on the disk, but the profile could not be written to "
-                                         "%1. Next time the program opens it will not be recorded.")
-                                 .arg(AsText(SettingsFilePath())));
+                         QMessageBox::warning(&window, QObject::tr("Could not save"),
+                                              QObject::tr("The change was applied, but the profile could not be saved "
+                                                          "to %1, so the program will not remember it next time.")
+                                                  .arg(AsText(SettingsFilePath())));
                      });
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
