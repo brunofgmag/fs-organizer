@@ -1679,13 +1679,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/panels/DependencySection.cpp" line="106"/>
-        <source>needs %1</source>
-        <translation>pede %1</translation>
+        <source>requires %1</source>
+        <translation>exige %1</translation>
     </message>
     <message>
         <location filename="../src/view/panels/DependencySection.cpp" line="112"/>
-        <source>has %1</source>
-        <translation>tem %1</translation>
+        <source>installed %1</source>
+        <translation>instalado %1</translation>
     </message>
 </context>
 <context>
@@ -3648,23 +3648,23 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="86"/>
-        <source>The app could not write the choice down, so it stays as it was.</source>
-        <translation>O app não conseguiu gravar a escolha, então ela fica como estava.</translation>
+        <source>Could not save the choice, so nothing changed.</source>
+        <translation>Não foi possível salvar a escolha, então nada mudou.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="187"/>
-        <source>Turn the simulator&apos;s one off</source>
-        <translation>Desligar o do simulador</translation>
+        <source>Disable the simulator&apos;s airport</source>
+        <translation>Desativar o aeroporto do simulador</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="189"/>
-        <source>Turn it back on</source>
-        <translation>Religar</translation>
+        <source>Enable again</source>
+        <translation>Ativar de novo</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="190"/>
-        <source>Stop managing this</source>
-        <translation>Parar de gerenciar</translation>
+        <source>Stop managing the package list</source>
+        <translation>Parar de gerenciar a lista de pacotes</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="192"/>
@@ -3684,8 +3684,8 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="193"/>
-        <source>Package you turned off</source>
-        <translation>Pacote que você desligou</translation>
+        <source>Package you disabled</source>
+        <translation>Pacote que você desativou</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="195"/>
@@ -3694,17 +3694,17 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="196"/>
-        <source>Manage it and FS Organizer reads the package list of the simulator, tells you when one of your airports covers the same place as one the simulator ships, and lets you switch that one off without editing XML. It writes nothing until you accept a warning. The warning between two addons of your own does not need this and keeps working.</source>
-        <translation>Gerencie e o FS Organizer lê a lista de pacotes do simulador, avisa quando um aeroporto seu cobre o mesmo lugar que um que o simulador traz, e deixa você desligar esse sem editar XML. Ele não grava nada até você aceitar um aviso. O aviso entre dois addons seus não precisa disto e continua funcionando.</translation>
+        <source>When managed, FS Organizer reads the simulator&apos;s package list, warns you when one of your airports covers the same place as one the simulator ships, and lets you disable that one without editing XML. Nothing is written until you accept a warning. Warnings between two of your own addons work without this.</source>
+        <translation>Com a lista gerenciada, o FS Organizer lê a lista de pacotes do simulador, avisa quando um aeroporto seu cobre o mesmo lugar que um que o simulador traz, e deixa você desativar o do simulador sem editar XML. Nada é gravado até você aceitar um aviso. Os avisos entre dois addons seus funcionam sem isto.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="200"/>
-        <source>Manage it</source>
-        <translation>Gerenciar</translation>
+        <source>Manage the package list</source>
+        <translation>Gerenciar a lista de pacotes</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="213"/>
-        <source>The package list of the simulator is not managed.</source>
+        <source>The simulator&apos;s package list is not managed.</source>
         <translation>A lista de pacotes do simulador não é gerenciada.</translation>
     </message>
     <message numerus="yes">
@@ -3722,21 +3722,21 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="240"/>
-        <source>No scenery has been read yet, so this half has nothing to say. The Diagnostics screen reads them all in one go, and enabling an airport reads that one.</source>
-        <translation>Nenhum cenário foi lido ainda, então esta metade não tem o que dizer. A tela de Diagnósticos lê todos de uma vez, e habilitar um aeroporto lê aquele.</translation>
+        <source>No scenery scanned yet. Scan everything in Diagnostics, or enable an airport to scan it.</source>
+        <translation>Nenhum cenário analisado ainda. Analise tudo em Diagnósticos, ou ative um aeroporto para analisá-lo.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/simulator/PackageListPage.cpp" line="242"/>
-        <source>Read from the scenery of %n addon. The app never turns anything off by itself: between two addons of your own it only shows the pair, because turning one off is enabling and disabling, which you already do.</source>
+        <source>Based on the scenery of %n addon. For two addons of your own, the app only shows the pair: disable one yourself if you want.</source>
         <translation>
-            <numerusform>Lido do cenário de %n addon. O app nunca desliga nada sozinho: entre dois addons seus ele só mostra o par, porque desligar um é habilitar e desabilitar, coisa que você já faz.</numerusform>
-            <numerusform>Lido do cenário de %n addons. O app nunca desliga nada sozinho: entre dois addons seus ele só mostra o par, porque desligar um é habilitar e desabilitar, coisa que você já faz.</numerusform>
+            <numerusform>Com base no cenário de %n addon. Para dois addons seus, o app só mostra o par: desative um deles se quiser.</numerusform>
+            <numerusform>Com base no cenário de %n addons. Para dois addons seus, o app só mostra o par: desative um deles se quiser.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="260"/>
-        <source>Packages you turned off</source>
-        <translation>Pacotes que você desligou</translation>
+        <source>Packages you disabled</source>
+        <translation>Pacotes que você desativou</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="267"/>
@@ -3755,8 +3755,8 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="322"/>
-        <source>The two addons of %1 will not be shown as covering each other again.</source>
-        <translation>Os dois addons de %1 não vão mais aparecer cobrindo um ao outro.</translation>
+        <source>No more warnings about the two addons of %1.</source>
+        <translation>Sem mais avisos sobre os dois addons de %1.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="342"/>
@@ -3775,8 +3775,8 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="360"/>
-        <source>The package list stays untouched while the simulator runs.</source>
-        <translation>A lista de pacotes fica intocada enquanto o simulador roda.</translation>
+        <source>The package list cannot be changed while the simulator is running.</source>
+        <translation>A lista de pacotes não pode ser alterada com o simulador aberto.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="362"/>
@@ -5047,13 +5047,13 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="12"/>
-        <source>In this library, on</source>
-        <translation>Nesta biblioteca, ligado</translation>
+        <source>In this library, enabled</source>
+        <translation>Nesta biblioteca, ativado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="12"/>
-        <source>In this library, off</source>
-        <translation>Nesta biblioteca, desligado</translation>
+        <source>In this library, disabled</source>
+        <translation>Nesta biblioteca, desativado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="13"/>
@@ -5062,7 +5062,7 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="14"/>
-        <source>Not verifiable</source>
+        <source>Cannot be checked</source>
         <translation>Não dá para verificar</translation>
     </message>
     <message>
@@ -5114,13 +5114,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="35"/>
-        <source>the program is not there</source>
-        <translation>o programa não está lá</translation>
+        <source>the program is missing</source>
+        <translation>o programa não existe</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="36"/>
-        <source>the addon that holds it is off</source>
-        <translation>o addon que o guarda está desligado</translation>
+        <source>its addon is disabled</source>
+        <translation>o addon dele está desativado</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="40"/>
@@ -6119,8 +6119,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="175"/>
-        <source>Read it again</source>
-        <translation>Ler de novo</translation>
+        <source>Refresh</source>
+        <translation>Atualizar</translation>
     </message>
     <message>
         <source>Leave these alone</source>
@@ -6147,13 +6147,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="179"/>
-        <source>No startup entry to show</source>
-        <translation>Nenhuma entrada de inicialização para mostrar</translation>
+        <source>No startup entries</source>
+        <translation>Nenhuma entrada de inicialização</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="180"/>
-        <source>The startup file of this profile was not found beside its UserCfg.opt, or it carries no program. Nothing was written.</source>
-        <translation>O arquivo de inicialização deste perfil não foi encontrado ao lado do UserCfg.opt dele, ou não carrega programa nenhum. Nada foi gravado.</translation>
+        <source>The simulator&apos;s startup file (EXE.xml) was not found for this profile, or it lists no programs.</source>
+        <translation>O arquivo de inicialização do simulador (EXE.xml) não foi encontrado para este perfil, ou não lista nenhum programa.</translation>
     </message>
     <message>
         <source>The startup entries are left alone</source>
@@ -6173,13 +6173,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="105"/>
-        <source>The app could not write the choice down, so it stays as it was.</source>
-        <translation>O app não conseguiu gravar a escolha, então ela fica como estava.</translation>
+        <source>Could not save the choice, so nothing changed.</source>
+        <translation>Não foi possível salvar a escolha, então nada mudou.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="176"/>
-        <source>Stop managing these</source>
-        <translation>Parar de gerenciar</translation>
+        <source>Stop managing startup entries</source>
+        <translation>Parar de gerenciar as entradas de inicialização</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="182"/>
@@ -6188,17 +6188,17 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="183"/>
-        <source>Manage these and FS Organizer reads the startup file of the simulator, lists the programs it launches with itself, and lets you switch one off without editing XML. It changes one thing only: the switch of an entry that is already there.</source>
-        <translation>Gerencie estas e o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você desligar um sem editar XML. Ele muda uma coisa só: o interruptor de uma entrada que já está lá.</translation>
+        <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you disable one without editing XML. It only enables or disables entries that already exist.</source>
+        <translation>Com as entradas gerenciadas, o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você desativar um sem editar XML. Ele só ativa ou desativa entradas que já existem.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="186"/>
-        <source>Manage these</source>
-        <translation>Gerenciar</translation>
+        <source>Manage startup entries</source>
+        <translation>Gerenciar as entradas de inicialização</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="197"/>
-        <source>The startup entries of the simulator are not managed.</source>
+        <source>The simulator&apos;s startup entries are not managed.</source>
         <translation>As entradas de inicialização do simulador não são gerenciadas.</translation>
     </message>
     <message numerus="yes">
@@ -6221,8 +6221,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="262"/>
-        <source>The switch was not changed: %1.</source>
-        <translation>O interruptor não foi mudado: %1.</translation>
+        <source>Nothing changed: %1.</source>
+        <translation>Nada mudou: %1.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="268"/>
@@ -6241,8 +6241,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="277"/>
-        <source>The startup file stays untouched while the simulator runs.</source>
-        <translation>O arquivo de inicialização fica intocado enquanto o simulador roda.</translation>
+        <source>The startup file cannot be changed while the simulator is running.</source>
+        <translation>O arquivo de inicialização não pode ser alterado com o simulador aberto.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="279"/>

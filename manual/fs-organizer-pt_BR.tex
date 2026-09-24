@@ -397,45 +397,44 @@ junto com o addon.
 
 \section{Simulador}
 
-A aba \ui{Simulador} tem dois painéis, e os dois mexem em arquivos do próprio
-simulador. Em ambos, o programa mantém uma cópia de segurança do arquivo ao lado
-dele, e nenhum dos dois escreve enquanto o simulador está rodando.
+A aba \ui{Simulador} tem dois painéis, e os dois alteram arquivos do próprio
+simulador. Nos dois, o programa guarda uma cópia de segurança do arquivo ao lado
+dele, e nenhum altera nada com o simulador aberto.
 
 \subsection{Entradas de inicialização}
 
-O simulador tem um arquivo que decide o que abre junto com ele. O painel
-\ui{Entradas de inicialização} lista esses programas e liga ou desliga cada um,
-sem você editar XML.
+O simulador tem um arquivo (\where|EXE.xml|) com os programas que ele abre junto
+consigo. O painel \ui{Entradas de inicialização} mostra esses programas e deixa
+você ativar ou desativar cada um sem editar XML.
 
-O programa \textbf{grava uma coisa só ali: o interruptor de uma entrada que já
-existe}. Ele nunca acrescenta, remove nem reordena.
+O programa \textbf{só ativa ou desativa entradas que já existem}. Ele nunca
+acrescenta, remove nem reordena.
 
 \shot{19-simulator-startup.png}{As entradas de inicialização, com o programa que
-cada uma lança e o interruptor dela.}
+cada uma abre e o interruptor dela.}
 
-Esse gerenciamento vem desligado. Enquanto estiver assim, o programa não lê nem
-grava aquele arquivo.
+Este painel vem desativado, e enquanto estiver assim o programa não lê nem grava
+aquele arquivo.
 
-Desabilitar um addon que carrega uma entrada de inicialização viva faz o
-programa avisar antes: deixar a entrada ligada faria o simulador seguir tentando
-lançar um programa que não vai estar lá. Desligar os dois é uma operação só, uma
-linha só no diário, desfeita de uma vez.
+Quando você desativa um addon que tem uma entrada de inicialização, o programa
+avisa antes: se a entrada continuasse ativada, o simulador seguiria tentando
+abrir um programa que não está mais lá. Desativar os dois é uma operação só, com
+uma linha no histórico e um desfazer.
 
 \subsection{Lista de pacotes}
 
 O simulador traz aeroportos próprios. Quando um aeroporto seu cobre o mesmo
 lugar que um deles, o painel \ui{Lista de pacotes} mostra o par e deixa você
-desligar o do simulador.
+desativar o aeroporto do simulador.
 
-Desligar grava \textbf{um valor} na lista de pacotes. O programa não acrescenta,
-não remove e não reordena nada, e recusa uma entrada que não traga o atributo em
-vez de acrescentá-lo, porque XML inválido faz o simulador zerar a lista toda.
+Desativar altera \textbf{um valor} na lista de pacotes. Nada é acrescentado,
+removido ou reordenado, e uma entrada sem esse valor fica como está em vez de
+ser editada, porque XML inválido faz o simulador zerar a lista toda.
 
-Entre dois addons \textbf{seus}, o programa só mostra o par e não desliga nada:
-desligar um é habilitar e desabilitar, coisa que você já faz na aba
-\ui{Biblioteca}.
+Para dois addons \textbf{seus}, o programa só mostra o par: para escolher um,
+desative o outro na aba \ui{Biblioteca}.
 
-Este painel também vem desligado, e enquanto estiver assim o arquivo não é lido
+Este painel também vem desativado, e enquanto estiver assim o arquivo não é lido
 nem gravado.
 
 \section{Documentos}

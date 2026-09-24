@@ -399,44 +399,42 @@ it: the link goes with the addon.
 
 \section{Simulator}
 
-The \ui{Simulator} tab has two panels, and both write to files that belong to
-the simulator. In both, the program keeps one backup copy of the file beside it,
-and neither writes while the simulator is running.
+The \ui{Simulator} tab has two panels, and both change files that belong to the
+simulator. For both, the program keeps a backup of the file next to it, and
+neither changes anything while the simulator is running.
 
 \subsection{Startup entries}
 
-The simulator has a file that decides what opens with it. The \ui{Startup
-entries} panel lists those programs and turns each one on or off, without you
-editing XML.
+The simulator has a file (\where|EXE.xml|) that lists the programs it launches
+with itself. The \ui{Startup entries} panel shows them and lets you enable or
+disable each one without editing XML.
 
-The program \textbf{writes one thing there: the switch of an entry that already
-exists}. It never adds, removes or reorders.
+The program \textbf{only enables or disables entries that already exist}. It
+never adds, removes or reorders them.
 
 \shot{19-simulator-startup.png}{The startup entries, with the program each one
 launches and its switch.}
 
-This management starts off. While it is off, the program neither reads nor
-writes that file.
+This panel starts off, and while it is off the program neither reads nor writes
+that file.
 
-Disabling an addon that carries a live startup entry makes the program warn
-first: leaving the entry on would have the simulator keep trying to launch a
-program that will not be there. Turning both off is a single operation, one line
-in the journal, undone as one.
+When you disable an addon that has a startup entry, the program warns first:
+if the entry stayed enabled, the simulator would keep trying to launch a program
+that is no longer there. Disabling both is a single operation, with one line in
+the journal and one undo.
 
 \subsection{Package list}
 
-The simulator ships airports of its own. When an airport of yours covers the
-same place as one of them, the \ui{Package list} panel shows the pair and lets
-you turn the simulator's one off.
+The simulator ships its own airports. When one of your airports covers the same
+place as one of them, the \ui{Package list} panel shows the pair and lets you
+disable the simulator's airport.
 
-Turning it off writes \textbf{one value} in the package list. The program adds
-nothing, removes nothing and reorders nothing, and it refuses an entry that does
-not carry the attribute instead of adding it, because invalid XML makes the
-simulator wipe the whole list.
+Disabling it changes \textbf{one value} in the package list. Nothing is added,
+removed or reordered, and an entry without that value is left alone rather than
+edited, because invalid XML makes the simulator reset the whole list.
 
-Between two addons \textbf{of your own}, the program only shows the pair and
-turns nothing off: turning one off is enabling and disabling, which you already
-do on the \ui{Library} tab.
+For two addons \textbf{of your own}, the program only shows the pair: to choose
+one, disable the other on the \ui{Library} tab.
 
 This panel also starts off, and while it is off the file is neither read nor
 written.
