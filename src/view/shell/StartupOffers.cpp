@@ -67,15 +67,14 @@ void OfferToDropTheOverridesThatPointNowhere(Session& session, QWidget* parent)
         detailed.append(AsText(destination));
     }
 
-    QMessageBox question(
-        QMessageBox::Warning, QObject::tr("Destination pinnings pointing outside"),
-        QObject::tr("%n destination pinning of this profile names a folder that is not a destination of it. While that "
-                    "is so, the pinned addons use the default destination. Nothing was deleted from the configuration.",
-                    nullptr, static_cast<int>(orphans.size())),
-        QMessageBox::NoButton, parent);
+    QMessageBox question(QMessageBox::Warning, QObject::tr("Pinned destinations not found"),
+                         QObject::tr("%n pinned destination of this profile is no longer one of its destinations. "
+                                     "Until that changes, the addons pinned to it use the default destination.",
+                                     nullptr, static_cast<int>(orphans.size())),
+                         QMessageBox::NoButton, parent);
     question.setDetailedText(detailed.join(QChar::LineFeed));
 
-    const QPushButton* drop = question.addButton(QObject::tr("Discard the pinnings"), QMessageBox::AcceptRole);
+    const QPushButton* drop = question.addButton(QObject::tr("Remove the pins"), QMessageBox::AcceptRole);
     question.addButton(QObject::tr("Keep them and decide later"), QMessageBox::RejectRole);
     question.exec();
 
@@ -92,12 +91,12 @@ void OfferWhatTheOldProgramKept(LegacyImportViewModel& legacyViewModel, QWidget*
         return;
     }
 
-    QMessageBox question(QMessageBox::Question, QObject::tr("MSFS Addons Linker is on this machine"),
-                         QObject::tr("It has libraries FS Organizer does not know yet. Nothing is moved or "
-                                     "deleted: you choose what to bring over before anything happens."),
+    QMessageBox question(QMessageBox::Question, QObject::tr("MSFS Addons Linker found"),
+                         QObject::tr("It has libraries FS Organizer does not know yet. You choose what to import; no "
+                                     "files are moved or deleted."),
                          QMessageBox::NoButton, parent);
 
-    const QPushButton* look = question.addButton(QObject::tr("See what can be brought over"), QMessageBox::AcceptRole);
+    const QPushButton* look = question.addButton(QObject::tr("See what can be imported"), QMessageBox::AcceptRole);
     question.addButton(QObject::tr("Not now"), QMessageBox::RejectRole);
     question.exec();
 
@@ -125,16 +124,15 @@ void OfferToPutBackWhatALostSwapRenamed(ImportViewModel& importViewModel, QWidge
     }
 
     QMessageBox question(
-        QMessageBox::Warning, QObject::tr("A folder of another program was left renamed"),
-        QObject::tr("%n folder that FS Organizer took over is still under the name it was given while the swap ran, so "
-                    "the other program no longer finds it. Your addon is safe in the library: what is missing is the "
-                    "folder under its own name.",
+        QMessageBox::Warning, QObject::tr("Another program's folder was left renamed"),
+        QObject::tr("%n folder imported by FS Organizer still has a temporary name from an interrupted swap, so the "
+                    "other program cannot find it. Your addon is safe in the library.",
                     nullptr, static_cast<int>(swaps.size())),
         QMessageBox::NoButton, parent);
     question.setDetailedText(detailed.join(QChar::LineFeed));
 
-    const QPushButton* putBack = question.addButton(QObject::tr("Put the folders back"), QMessageBox::AcceptRole);
-    question.addButton(QObject::tr("Leave them and decide later"), QMessageBox::RejectRole);
+    const QPushButton* putBack = question.addButton(QObject::tr("Restore the folder names"), QMessageBox::AcceptRole);
+    question.addButton(QObject::tr("Decide later"), QMessageBox::RejectRole);
     question.exec();
 
     if (question.clickedButton() == putBack)

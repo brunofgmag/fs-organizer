@@ -59,9 +59,9 @@ void SetupWizard::accept()
 
     if (!viewModel_.Complete())
     {
-        QMessageBox::critical(this, tr("The configuration could not be saved"),
-                              tr("The profile could not be written to the disk, so the setup did not finish. Check "
-                                 "that you have write permission on the settings folder and try again."));
+        QMessageBox::critical(
+            this, tr("The configuration could not be saved"),
+            tr("The profile could not be saved. Check that you can write to the settings folder and try again."));
         return;
     }
 
@@ -83,7 +83,7 @@ QWizardPage* SetupWizard::CreateSimulatorPage()
     variant_->addItem(NameOf(SimulatorVariant::MSFS2020), static_cast<int>(SimulatorVariant::MSFS2020));
     LetTheWheelScrollPastUnlessTheWidgetHasFocus(variant_);
 
-    auto* browse = new QPushButton(tr("Point at a folder by hand…"), page);
+    auto* browse = new QPushButton(tr("Choose a folder…"), page);
     connect(browse, &QPushButton::clicked, this, &SetupWizard::BrowseForDestination);
 
     auto* manual = new QHBoxLayout;
@@ -104,8 +104,8 @@ QWizardPage* SetupWizard::CreateLibraryPage()
 {
     auto* page = new QWizardPage;
     page->setTitle(tr("Libraries"));
-    page->setSubTitle(tr(
-        "Choose the root folder where your addons are kept, outside the simulator. Its subfolders become categories."));
+    page->setSubTitle(
+        tr("Choose the folder outside the simulator where you keep your addons. Its subfolders become categories."));
 
     libraries_ = new QListWidget(page);
 
@@ -153,9 +153,9 @@ bool SetupWizard::ConfirmDestination(const std::filesystem::path& path)
         return false;
 
     case DestinationCheck::AcceptedButUnfamiliar:
-        QMessageBox::information(this, tr("Confirm the folder"),
-                                 tr("That folder does not look like a simulator destination, which is usually called "
-                                    "Community. It will be used anyway."));
+        QMessageBox::information(
+            this, tr("Confirm the folder"),
+            tr("That folder does not look like the simulator's Community folder. It will be used anyway."));
         return true;
 
     case DestinationCheck::Accepted: return true;
@@ -189,9 +189,9 @@ void SetupWizard::BrowseForLibrary()
     const std::filesystem::path path = AsPath(chosen);
     if (!viewModel_.RegisterLibrary(path, path.filename().string()).Accepted())
     {
-        QMessageBox::warning(this, tr("Repeated library"),
-                             tr("That folder is already inside a registered library. Choose the root folder where the "
-                                "addons are kept; its subfolders become categories."));
+        QMessageBox::warning(this, tr("Already in a library"),
+                             tr("That folder is inside a library you already added. Choose the top folder where you "
+                                "keep your addons; its subfolders become categories."));
         return;
     }
 

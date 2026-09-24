@@ -831,8 +831,8 @@
     <name>CollisionDialog</name>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="43"/>
-        <source>Restoring would collide</source>
-        <translation>A restauração colidiria</translation>
+        <source>Something is already there</source>
+        <translation>Já existe algo no lugar</translation>
     </message>
     <message>
         <source>Something with this name is already in %1. Restoring would put two addons in one place, so the app does not pick for you.</source>
@@ -840,8 +840,8 @@
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="50"/>
-        <source>Something with this name is already in %1. Restoring would put two addons in one place.</source>
-        <translation>Algo com esse nome já está em %1. Restaurar poria dois addons no mesmo lugar.</translation>
+        <source>%1 already has something with this name. Restoring would put two addons in the same place.</source>
+        <translation>%1 já tem algo com este nome. Restaurar poria dois addons no mesmo lugar.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="63"/>
@@ -855,8 +855,8 @@
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="67"/>
-        <source>Replacing puts what is there in the quarantine, with its own origin recorded.</source>
-        <translation>Substituir põe o que está lá na quarentena, com a origem dele gravada.</translation>
+        <source>Replacing moves what is there to the quarantine, so it can be restored later.</source>
+        <translation>Substituir move o que está lá para a quarentena, e ele pode ser restaurado depois.</translation>
     </message>
     <message>
         <source>Replacing puts what is there in the quarantine, with its own origin recorded. Nothing is deleted, and the same dialog brings it back.</source>
@@ -1679,13 +1679,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/panels/DependencySection.cpp" line="106"/>
-        <source>needs %1</source>
-        <translation>pede %1</translation>
+        <source>requires %1</source>
+        <translation>exige %1</translation>
     </message>
     <message>
         <location filename="../src/view/panels/DependencySection.cpp" line="112"/>
-        <source>has %1</source>
-        <translation>tem %1</translation>
+        <source>installed %1</source>
+        <translation>instalado %1</translation>
     </message>
 </context>
 <context>
@@ -2001,8 +2001,8 @@ Também na biblioteca: %2</translation>
         <location filename="../src/view/quarantine/DiscardProgressDialog.cpp" line="42"/>
         <source>Deleting %1 of %n item</source>
         <translation>
-            <numerusform>Apagando %1 de %n item</numerusform>
-            <numerusform>Apagando %1 de %n itens</numerusform>
+            <numerusform>Excluindo %1 de %n item</numerusform>
+            <numerusform>Excluindo %1 de %n itens</numerusform>
         </translation>
     </message>
 </context>
@@ -2010,18 +2010,18 @@ Também na biblioteca: %2</translation>
     <name>DocumentReader</name>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="353"/>
-        <source>The wheel zooms the chart</source>
-        <translation>A roda aproxima a carta</translation>
+        <source>The mouse wheel zooms the chart</source>
+        <translation>A roda do mouse dá zoom na carta</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="491"/>
-        <source>Dragging moves the page. Turn it off to select text</source>
-        <translation>Arrastar passeia a página. Desligue para selecionar texto</translation>
+        <source>Dragging moves the page. Click to select text instead</source>
+        <translation>Arrastar move a página. Clique para selecionar texto</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="492"/>
-        <source>Dragging selects text. Turn it on to move the page</source>
-        <translation>Arrastar seleciona texto. Ligue para passear a página</translation>
+        <source>Dragging selects text. Click to move the page instead</source>
+        <translation>Arrastar seleciona texto. Clique para mover a página</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="493"/>
@@ -2070,13 +2070,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="345"/>
-        <source>Bring it back</source>
-        <translation>Trazer de volta</translation>
+        <source>Back into the tab</source>
+        <translation>Voltar para a aba</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="345"/>
-        <source>Detach</source>
-        <translation>Destacar</translation>
+        <source>Open in a separate window</source>
+        <translation>Abrir numa janela à parte</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="346"/>
@@ -2095,8 +2095,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="354"/>
-        <source>The wheel zooms the document</source>
-        <translation>A roda aproxima o documento</translation>
+        <source>The mouse wheel zooms the document</source>
+        <translation>A roda do mouse dá zoom no documento</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentReader.cpp" line="537"/>
@@ -2170,34 +2170,34 @@ Também na biblioteca: %2</translation>
         <translation>Tentar de novo</translation>
     </message>
     <message>
-        <source>Getting the manual</source>
+        <source>Downloading the manual</source>
         <translation>Baixando o manual</translation>
     </message>
     <message>
-        <source>It is downloading from GitHub. It stays on this machine, so opening it again asks nothing of the network.</source>
-        <translation>Ele está baixando do GitHub. Fica nesta máquina, então abrir de novo não pede nada da rede.</translation>
+        <source>Downloading from GitHub. After this, it opens without an internet connection.</source>
+        <translation>Baixando do GitHub. Depois disso, ele abre sem precisar de internet.</translation>
     </message>
     <message>
-        <source>The manual did not come down</source>
-        <translation>O manual não baixou</translation>
+        <source>The manual could not be downloaded</source>
+        <translation>Não foi possível baixar o manual</translation>
     </message>
     <message>
-        <source>%1. The manual for this version also lives at %2, and reading it there costs nothing but a browser.</source>
-        <translation>%1. O manual desta versão também mora em %2, e lê-lo por lá custa só um navegador.</translation>
+        <source>%1. You can also read it online at %2.</source>
+        <translation>%1. Você também pode lê-lo online em %2.</translation>
     </message>
     <message>
-        <source>The manual is not on this machine yet</source>
-        <translation>O manual ainda não está nesta máquina</translation>
+        <source>The manual is not downloaded yet</source>
+        <translation>O manual ainda não foi baixado</translation>
     </message>
     <message>
-        <source>It is not in the package, because it weighs more than everything else you download to update. Getting it once leaves it here for good.</source>
-        <translation>Ele não vem no pacote, porque pesa mais que todo o resto que você baixa para atualizar. Baixar uma vez deixa ele aqui para sempre.</translation>
+        <source>It is downloaded separately to keep updates small. You only need to do this once.</source>
+        <translation>Ele é baixado à parte para manter as atualizações leves. Basta baixar uma vez.</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="530"/>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="608"/>
         <source>Reading in a separate window</source>
-        <translation>Leitura numa janela à parte</translation>
+        <translation>Lendo numa janela à parte</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="591"/>
@@ -2218,8 +2218,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="746"/>
-        <source>Read again</source>
-        <translation>Ler de novo</translation>
+        <source>Scan again</source>
+        <translation>Analisar de novo</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="747"/>
@@ -2228,33 +2228,33 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="748"/>
-        <source>Bring it back</source>
-        <translation>Trazer de volta</translation>
+        <source>Back into the tab</source>
+        <translation>Voltar para a aba</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="749"/>
-        <source>Read the library</source>
-        <translation>Ler a biblioteca</translation>
+        <source>Scan the library</source>
+        <translation>Analisar a biblioteca</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="753"/>
-        <source>Read on %1</source>
-        <translation>Lido em %1</translation>
+        <source>Scanned on %1</source>
+        <translation>Analisada em %1</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="756"/>
-        <source>Reading the library…</source>
-        <translation>Lendo a biblioteca…</translation>
+        <source>Scanning the library…</source>
+        <translation>Analisando a biblioteca…</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="757"/>
-        <source>Reading the library… %1 of %2</source>
-        <translation>Lendo a biblioteca… %1 de %2</translation>
+        <source>Scanning the library… %1 of %2</source>
+        <translation>Analisando a biblioteca… %1 de %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="762"/>
-        <source>Pick a document on the left. The one you were last reading opens where you stopped.</source>
-        <translation>Escolha um documento à esquerda. O último que você estava lendo abre onde você parou.</translation>
+        <source>Choose a document on the left. Documents reopen on the page where you stopped.</source>
+        <translation>Escolha um documento à esquerda. Os documentos reabrem na página em que você parou.</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="766"/>
@@ -2263,18 +2263,18 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="767"/>
-        <source>None of the addons carries a PDF. When one does, it shows up here without you asking.</source>
-        <translation>Nenhum addon traz um PDF. Quando algum trouxer, ele aparece aqui sem você pedir.</translation>
+        <source>No addon includes a PDF. When one does, it shows up here automatically.</source>
+        <translation>Nenhum addon traz um PDF. Quando algum trouxer, ele aparece aqui automaticamente.</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="773"/>
-        <source>The library was never read for documentation</source>
-        <translation>A biblioteca nunca foi lida em busca de documentação</translation>
+        <source>The library has not been scanned for documents yet</source>
+        <translation>A biblioteca ainda não foi analisada em busca de documentos</translation>
     </message>
     <message>
         <location filename="../src/view/documents/DocumentsPage.cpp" line="774"/>
-        <source>Reading it walks every addon looking for PDFs, and what it finds is written down so the next time is instant.</source>
-        <translation>Ler percorre todo addon procurando PDF, e o que ela achar fica gravado para a próxima vez ser instantânea.</translation>
+        <source>Scanning looks for PDFs in every addon. The result is saved, so later scans are quick.</source>
+        <translation>A análise procura PDFs em cada addon. O resultado fica salvo, então as próximas são rápidas.</translation>
     </message>
 </context>
 <context>
@@ -2298,7 +2298,7 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <source>download failed</source>
-        <translation>não baixou</translation>
+        <translation>falha no download</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DocumentsViewModel.cpp" line="21"/>
@@ -2399,46 +2399,46 @@ Também na biblioteca: %2</translation>
 <context>
     <name>GithubManual</name>
     <message>
-        <source>The manual came down but could not be written to %1.</source>
-        <translation>O manual baixou mas não pôde ser gravado em %1.</translation>
+        <source>The manual was downloaded but could not be saved to %1.</source>
+        <translation>O manual foi baixado, mas não pôde ser salvo em %1.</translation>
     </message>
 </context>
 <context>
     <name>GithubUpdateService</name>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="111"/>
-        <source>This version did not bring the files to download.</source>
-        <translation>Esta versão não trouxe os arquivos para baixar.</translation>
+        <source>This release has no files to download.</source>
+        <translation>Esta versão não tem arquivos para baixar.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="220"/>
-        <source>GitHub answered in a format the app does not understand.</source>
-        <translation>O GitHub respondeu num formato que o app não entende.</translation>
+        <source>GitHub sent a response the app could not read.</source>
+        <translation>O GitHub enviou uma resposta que o app não conseguiu ler.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="245"/>
-        <source>The checksum file came in invalid.</source>
-        <translation>O arquivo de verificação veio inválido.</translation>
+        <source>The checksum file is invalid.</source>
+        <translation>O arquivo de verificação é inválido.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="278"/>
-        <source>The downloaded file could not be written.</source>
-        <translation>Não deu para gravar o arquivo baixado.</translation>
+        <source>Could not save the downloaded file.</source>
+        <translation>Não foi possível salvar o arquivo baixado.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="285"/>
-        <source>The downloaded file could not be read, and was kept for you to inspect.</source>
-        <translation>O arquivo baixado não pôde ser lido, e foi mantido para você conferir.</translation>
+        <source>Could not read the downloaded file. It was kept so you can check it.</source>
+        <translation>Não foi possível ler o arquivo baixado. Ele foi mantido para você conferir.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="288"/>
-        <source>The downloaded file does not match the checksum, and was discarded.</source>
-        <translation>O arquivo baixado não confere com a verificação, e foi descartado.</translation>
+        <source>The downloaded file failed verification and was discarded.</source>
+        <translation>O arquivo baixado não passou na verificação e foi descartado.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="346"/>
-        <source>The update package could not be opened.</source>
-        <translation>Não deu para abrir o pacote da atualização.</translation>
+        <source>Could not open the update package.</source>
+        <translation>Não foi possível abrir o pacote da atualização.</translation>
     </message>
 </context>
 <context>
@@ -2518,12 +2518,12 @@ Também na biblioteca: %2</translation>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="72"/>
         <source>Enable addon</source>
-        <translation>Habilitar addon</translation>
+        <translation>Ativar addon</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="73"/>
         <source>Disable addon</source>
-        <translation>Desabilitar addon</translation>
+        <translation>Desativar addon</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="74"/>
@@ -2537,8 +2537,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="76"/>
-        <source>Copy to the staging area</source>
-        <translation>Copiar para a área de staging</translation>
+        <source>Copy to a temporary folder</source>
+        <translation>Copiar para uma pasta temporária</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="77"/>
@@ -2557,13 +2557,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="80"/>
-        <source>Quarantine the destination copy</source>
-        <translation>Quarentenar a cópia do destino</translation>
+        <source>Move the destination copy to the quarantine</source>
+        <translation>Mover a cópia do destino para a quarentena</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="81"/>
-        <source>Quarantine the library copy</source>
-        <translation>Quarentenar a cópia da biblioteca</translation>
+        <source>Move the library copy to the quarantine</source>
+        <translation>Mover a cópia da biblioteca para a quarentena</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="82"/>
@@ -2597,13 +2597,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="88"/>
-        <source>Discard a half finished import</source>
-        <translation>Descartar uma importação pela metade</translation>
+        <source>Discard an unfinished import</source>
+        <translation>Descartar uma importação incompleta</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="89"/>
-        <source>Delete addon to the Recycle Bin</source>
-        <translation>Excluir addon para a Lixeira</translation>
+        <source>Move addon to the Recycle Bin</source>
+        <translation>Mover addon para a Lixeira</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="90"/>
@@ -2612,13 +2612,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="91"/>
-        <source>Link the other program&apos;s folder into the library</source>
-        <translation>Ligar a pasta do outro programa à biblioteca</translation>
+        <source>Link another program&apos;s folder to the library</source>
+        <translation>Criar link da pasta de outro programa na biblioteca</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="92"/>
-        <source>Start taking over another program&apos;s folder</source>
-        <translation>Começar a assumir a pasta de outro programa</translation>
+        <source>Start importing another program&apos;s folder</source>
+        <translation>Começar a importar a pasta de outro programa</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="93"/>
@@ -2627,28 +2627,28 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="94"/>
-        <source>Put back the folder a lost swap left renamed</source>
-        <translation>Repor a pasta que uma troca perdida deixou renomeada</translation>
+        <source>Restore a folder left renamed by an interrupted swap</source>
+        <translation>Restaurar uma pasta que uma troca interrompida deixou renomeada</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="95"/>
-        <source>Restore over the addon that held the place</source>
-        <translation>Repor por cima do addon que ocupava o lugar</translation>
+        <source>Restore, replacing the addon in its place</source>
+        <translation>Restaurar no lugar do addon que estava lá</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="96"/>
-        <source>Turn off the startup entry it carries</source>
-        <translation>Desligar a entrada de inicialização que ele carrega</translation>
+        <source>Disable its startup entry</source>
+        <translation>Desativar a entrada de inicialização dele</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="97"/>
-        <source>Turn the startup entry back on</source>
-        <translation>Religar a entrada de inicialização</translation>
+        <source>Enable the startup entry again</source>
+        <translation>Ativar a entrada de inicialização de novo</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
-        <source>Take back the category marker</source>
-        <translation>Retirar o marcador de categoria</translation>
+        <source>Remove the category marker</source>
+        <translation>Remover o marcador de categoria</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
@@ -2662,13 +2662,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="217"/>
-        <source>Disable addon and the startup entry it carries</source>
-        <translation>Desabilitar o addon e a entrada de inicialização que ele carrega</translation>
+        <source>Disable addon and its startup entry</source>
+        <translation>Desativar o addon e a entrada de inicialização dele</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="218"/>
-        <source>Enable addon and the startup entry it carries</source>
-        <translation>Habilitar o addon e a entrada de inicialização que ele carrega</translation>
+        <source>Enable addon and its startup entry</source>
+        <translation>Ativar o addon e a entrada de inicialização dele</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/viewmodel/JournalModel.cpp" line="221"/>
@@ -2739,13 +2739,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="102"/>
-        <source>Only what failed</source>
-        <translation>Só o que falhou</translation>
+        <source>Failures only</source>
+        <translation>Só falhas</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="103"/>
-        <source>Read the journal again</source>
-        <translation>Reler o diário</translation>
+        <source>Refresh</source>
+        <translation>Atualizar</translation>
     </message>
     <message>
         <source>The journal is append-only. Nothing on this screen writes to the disk.</source>
@@ -2753,15 +2753,15 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/JournalPage.cpp" line="127"/>
-        <source>The journal has not recorded any change on the disk yet.</source>
-        <translation>O diário ainda não registrou nenhuma mudança no disco.</translation>
+        <source>No changes recorded yet.</source>
+        <translation>Nenhuma alteração registrada ainda.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/JournalPage.cpp" line="128"/>
-        <source>%n operation recorded, from the newest to the oldest.</source>
+        <source>%n operation recorded, newest first.</source>
         <translation>
-            <numerusform>%n operação registrada, da mais recente para a mais antiga.</numerusform>
-            <numerusform>%n operações registradas, da mais recente para a mais antiga.</numerusform>
+            <numerusform>%n operação registrada, mais recentes primeiro.</numerusform>
+            <numerusform>%n operações registradas, mais recentes primeiro.</numerusform>
         </translation>
     </message>
     <message>
@@ -2812,8 +2812,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="158"/>
-        <source>already registered</source>
-        <translation>já cadastrada</translation>
+        <source>already added</source>
+        <translation>já adicionada</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="162"/>
@@ -2833,8 +2833,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="173"/>
-        <source>refused: the name does not become a folder</source>
-        <translation>recusada: o nome não vira pasta</translation>
+        <source>refused: the name is not a valid folder name</source>
+        <translation>recusada: o nome não é um nome de pasta válido</translation>
     </message>
     <message>
         <source>FS Organizer has read the old program&apos;s configuration and proposes what follows. Importing registers the library and the categories that are not here yet.</source>
@@ -2882,23 +2882,23 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="240"/>
-        <source> %1 imported, %2 with a name already used here.</source>
-        <translation> %1 importados, %2 com nome já usado aqui.</translation>
+        <source> %1 imported, %2 skipped because the name is already in use.</source>
+        <translation> %1 importados, %2 ignorados porque o nome já está em uso.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="247"/>
-        <source> %n name the presets cite was not found in any library.</source>
+        <source> %n addon named in the presets was not found in any library.</source>
         <translation>
-            <numerusform> %n nome citado pelos presets não foi encontrado em biblioteca nenhuma.</numerusform>
-            <numerusform> %n nomes citados pelos presets não foram encontrados em biblioteca nenhuma.</numerusform>
+            <numerusform> %n addon citado nos presets não foi encontrado em nenhuma biblioteca.</numerusform>
+            <numerusform> %n addons citados nos presets não foram encontrados em nenhuma biblioteca.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="253"/>
-        <source> %n refused for being inside an already registered library.</source>
+        <source> %n refused because it is inside a library already added.</source>
         <translation>
-            <numerusform> %n recusada por estar dentro de biblioteca já cadastrada.</numerusform>
-            <numerusform> %n recusadas por estarem dentro de biblioteca já cadastrada.</numerusform>
+            <numerusform> %n recusada porque fica dentro de uma biblioteca já adicionada.</numerusform>
+            <numerusform> %n recusadas porque ficam dentro de bibliotecas já adicionadas.</numerusform>
         </translation>
     </message>
 </context>
@@ -3068,8 +3068,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="298"/>
-        <source>The simulator is running. The changes were applied, but it will only see them after it is restarted.</source>
-        <translation>O simulador está aberto. As mudanças foram aplicadas, mas ele só vai vê-las depois de reiniciar.</translation>
+        <source>Changes applied. Restart the simulator to see them.</source>
+        <translation>Mudanças aplicadas. Reinicie o simulador para vê-las.</translation>
     </message>
     <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="315"/>
@@ -3114,7 +3114,7 @@ Também na biblioteca: %2</translation>
     <message>
         <location filename="../src/view/shell/PageNames.cpp" line="11"/>
         <source>Journal</source>
-        <translation>Diário</translation>
+        <translation>Histórico</translation>
     </message>
     <message>
         <location filename="../src/view/shell/PageNames.cpp" line="12"/>
@@ -3231,8 +3231,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="275"/>
-        <source>This is another profile, and FS Organizer only touches what is in use. Mark it as active to switch a destination or a library.</source>
-        <translation>Este é outro perfil, e o FS Organizer só mexe no que está em uso. Marque-o como ativo para trocar destino ou biblioteca.</translation>
+        <source>This profile is not active. Make it active to change its destinations or libraries.</source>
+        <translation>Este perfil não está ativo. Ative-o para alterar os destinos ou as bibliotecas dele.</translation>
     </message>
     <message>
         <source>Unregistering takes the library out of the configuration and deletes no file at all. The links that pointed at it keep working in the simulator, but start showing up as third party links, which FS Organizer does not touch.</source>
@@ -3250,8 +3250,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="349"/>
-        <source>Needs no administrator and crosses local volumes. It is the only path the MVP has tested.</source>
-        <translation>Não exige administrador e cruza volumes locais. É o único caminho testado do MVP.</translation>
+        <source>Works across local drives without administrator rights. Recommended.</source>
+        <translation>Funciona entre discos locais sem precisar de administrador. Recomendado.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="351"/>
@@ -3260,22 +3260,22 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="352"/>
-        <source>Only for a library on a network path, where the junction does not reach. Needs privilege; without it the app explains the refusal instead of failing quietly.</source>
-        <translation>Só para biblioteca em caminho de rede, onde a junção não chega. Exige privilégio; sem ele o app explica a recusa em vez de falhar calado.</translation>
+        <source>Only needed for a library on a network share. Requires Developer Mode or administrator rights.</source>
+        <translation>Só é necessário para biblioteca numa pasta de rede. Exige o Modo de Desenvolvedor ou direitos de administrador.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="363"/>
-        <source>New links become symbolic links. The ones that already exist stay directory junctions.</source>
-        <translation>Os links novos passam a ser link simbólico. Os que já existem continuam junção de diretório.</translation>
+        <source>New links will be symbolic links. Existing ones stay as directory junctions.</source>
+        <translation>Os novos links serão links simbólicos. Os que já existem continuam como junções de diretório.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="364"/>
-        <source>New links become directory junctions.</source>
-        <translation>Os links novos passam a ser junção de diretório.</translation>
+        <source>New links will be directory junctions.</source>
+        <translation>Os novos links serão junções de diretório.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="370"/>
-        <source>Check after copying</source>
+        <source>Verify after copying</source>
         <translation>Verificação depois de copiar</translation>
     </message>
     <message>
@@ -3285,8 +3285,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="376"/>
-        <source>Checks the count and the size of every file. It is what runs today.</source>
-        <translation>Confere contagem e tamanho de cada arquivo. É o que roda hoje.</translation>
+        <source>Compares the number and size of the files. Fast.</source>
+        <translation>Compara a quantidade e o tamanho dos arquivos. Rápido.</translation>
     </message>
     <message>
         <source>Phase 2</source>
@@ -3303,18 +3303,18 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="387"/>
-        <source>Reads both sides in full and compares the bytes, which catches a change the size hides. Makes an import several times slower, and the number of files weighs more than their size.</source>
-        <translation>Lê os dois lados inteiros e compara os bytes, o que pega uma mudança que o tamanho esconde. Deixa a importação várias vezes mais lenta, e a quantidade de arquivos pesa mais do que o tamanho deles.</translation>
+        <source>Compares the content of every file. Catches more, but makes imports several times slower, especially with many small files.</source>
+        <translation>Compara o conteúdo de cada arquivo. Pega mais diferenças, mas deixa a importação várias vezes mais lenta, principalmente com muitos arquivos pequenos.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="398"/>
-        <source>Imports now read both sides in full before removing the folder they copied.</source>
-        <translation>As importações passam a ler os dois lados inteiros antes de remover a pasta que copiaram.</translation>
+        <source>Imports will now compare the content of every file.</source>
+        <translation>As importações passam a comparar o conteúdo de cada arquivo.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="400"/>
-        <source>Imports now check the count and the size of every file.</source>
-        <translation>As importações passam a conferir contagem e tamanho de cada arquivo.</translation>
+        <source>Imports will now compare the number and size of the files.</source>
+        <translation>As importações passam a comparar a quantidade e o tamanho dos arquivos.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="423"/>
@@ -3323,8 +3323,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="424"/>
-        <source>Downloads the new version on its own and applies it when you close the program.</source>
-        <translation>Baixa a versão nova sozinha e a aplica quando você fecha o programa.</translation>
+        <source>Downloads new versions and installs them when you close the program.</source>
+        <translation>Baixa as versões novas e as instala quando você fecha o programa.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="427"/>
@@ -3342,7 +3342,7 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="432"/>
-        <source>Only looks when you click Check now.</source>
+        <source>Only checks when you click Check now.</source>
         <translation>Só procura quando você clica em Procurar agora.</translation>
     </message>
     <message>
@@ -3396,8 +3396,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="617"/>
-        <source>%1 · written on every change</source>
-        <translation>%1 · gravado a cada mudança</translation>
+        <source>%1 · saved on every change</source>
+        <translation>%1 · salvo a cada alteração</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="638"/>
@@ -3451,8 +3451,8 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="817"/>
-        <source>Library registered: %1, %2</source>
-        <translation>Biblioteca cadastrada: %1, %2</translation>
+        <source>Library added: %1, %2</source>
+        <translation>Biblioteca adicionada: %1, %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="652"/>
@@ -3461,13 +3461,13 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="428"/>
-        <source>Looks for a new version and says it exists, but only downloads it if you say so.</source>
-        <translation>Procura versão nova e diz que ela existe, mas só baixa se você mandar.</translation>
+        <source>Tells you when a new version is available, and downloads it only when you ask.</source>
+        <translation>Avisa quando há uma versão nova, e só baixa quando você pedir.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="531"/>
-        <source>Choosing a language writes the language key in settings.json and changes the interface right away.</source>
-        <translation>Escolher um idioma grava a chave language no settings.json e troca a interface na hora.</translation>
+        <source>The interface changes right away.</source>
+        <translation>A interface muda na hora.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="656"/>
@@ -3507,43 +3507,43 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>FS Organizer marks the folders you built, so that a category keeps counting as one even after it loses its last addon. It never marks what it imported, and it never looks inside an addon.&#xa;&#xa;Folders that already carry the marker: %1&#xa;Folders that would receive it now: %2</source>
-        <translation>O FS Organizer marca as pastas que você construiu, para que uma categoria continue contando como categoria mesmo depois de perder o último addon. Ele nunca marca o que importou, e nunca olha dentro de um addon.&#xa;&#xa;Pastas que já carregam o marcador: %1&#xa;Pastas que receberiam agora: %2</translation>
+        <source>FS Organizer marks the category folders you created, so a category is still recognized after its last addon is gone. Imported folders and addon folders are never marked.
+
+Already marked: %1
+To be marked now: %2</source>
+        <translation>O FS Organizer marca as pastas de categoria que você criou, para que a categoria continue reconhecida mesmo sem addons. Pastas importadas e pastas de addon nunca são marcadas.
+
+Já marcadas: %1
+A marcar agora: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>Mark them</source>
+        <source>Mark</source>
         <translation>Marcar</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <source>Take every marker back</source>
-        <translation>Retirar todos os marcadores</translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="740"/>
-        <location filename="../src/view/options/OptionsPage.cpp" line="884"/>
-        <source>Unregister</source>
-        <translation>Descadastrar</translation>
+        <source>Remove all markers</source>
+        <translation>Remover todos os marcadores</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="764"/>
         <source>Choose the new folder for this destination</source>
-        <translation>Escolha a pasta nova deste destino</translation>
+        <translation>Escolha a nova pasta deste destino</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="777"/>
-        <source>Switch the destination</source>
+        <source>Change the destination</source>
         <translation>Trocar o destino</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="778"/>
-        <source>The profile starts using %1.
+        <source>The profile will use %1.
 
-The links that already exist in %2 stay there, working, and FS Organizer stops touching them. The destination pinnings that pointed at the old folder start pointing at the new one.</source>
-        <translation>O perfil passa a usar %1.
+Links already in %2 stay there and keep working, but FS Organizer stops managing them. Addons pinned to the old folder move to the new one.</source>
+        <translation>O perfil vai usar %1.
 
-Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deixa de mexer neles. As fixações de destino que apontavam para a pasta antiga passam a apontar para a nova.</translation>
+Os links que já estão em %2 continuam lá funcionando, mas o FS Organizer deixa de gerenciá-los. Os addons fixados na pasta antiga passam para a nova.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="784"/>
@@ -3569,13 +3569,13 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="810"/>
-        <source>Library refused</source>
-        <translation>Biblioteca recusada</translation>
+        <source>Already in a library</source>
+        <translation>Já está numa biblioteca</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="811"/>
-        <source>%1 is inside a library that is already registered.</source>
-        <translation>%1 está dentro de uma biblioteca que já é cadastrada.</translation>
+        <source>%1 is inside a library you already added.</source>
+        <translation>%1 fica dentro de uma biblioteca já adicionada.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="824"/>
@@ -3584,55 +3584,45 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="827"/>
-        <source>The profile leaves the configuration along with its libraries and its destinations. No file is deleted or moved.</source>
-        <translation>O perfil sai da configuração com as bibliotecas e os destinos dele. Nenhum arquivo é apagado ou movido.</translation>
+        <source>The profile, its libraries and its destinations are removed from FS Organizer. No files are deleted or moved.</source>
+        <translation>O perfil, as bibliotecas e os destinos dele saem do FS Organizer. Nenhum arquivo é excluído ou movido.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="836"/>
-        <source>%n addon of this profile is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</source>
+        <source>%n addon of this profile is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</source>
         <translation>
-            <numerusform>%n addon deste perfil está habilitado agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-lo como link de terceiros e não mexe mais nele.</numerusform>
-            <numerusform>%n addons deste perfil estão habilitados agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-los como links de terceiros e não mexe mais neles.</numerusform>
+            <numerusform>%n addon deste perfil está ativado. O link dele continua no destino e funcionando, mas o FS Organizer deixa de gerenciá-lo.</numerusform>
+            <numerusform>%n addons deste perfil estão ativados. Os links deles continuam no destino e funcionando, mas o FS Organizer deixa de gerenciá-los.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="840"/>
         <source>Disable the %1 before removing</source>
-        <translation>Desabilitar os %1 antes de remover</translation>
+        <translation>Desativar os %1 antes de remover</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="856"/>
-        <source>%1 was not removed: the program needs at least one profile.</source>
-        <translation>%1 não foi removido: o programa precisa de pelo menos um perfil.</translation>
+        <source>%1 was not removed: at least one profile is needed.</source>
+        <translation>%1 não foi removido: é preciso ter pelo menos um perfil.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="860"/>
         <location filename="../src/view/options/OptionsPage.cpp" line="895"/>
-        <source>%1 left the configuration.</source>
-        <translation>%1 saiu da configuração.</translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="865"/>
-        <source>Unregister %1?</source>
-        <translation>Descadastrar %1?</translation>
+        <source>Removed %1.</source>
+        <translation>Removido: %1.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="868"/>
-        <source>The library leaves the configuration. No file is deleted or moved.</source>
-        <translation>A biblioteca sai da configuração. Nenhum arquivo é apagado ou movido.</translation>
+        <source>The library is removed from FS Organizer. No files are deleted or moved.</source>
+        <translation>A biblioteca sai do FS Organizer. Nenhum arquivo é excluído ou movido.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="875"/>
-        <source>%n addon of it is enabled right now. The links stay in the destination and keep working in the simulator, but FS Organizer starts treating them as third party links and no longer touches them.</source>
+        <source>%n addon of this library is enabled. Its link stays in the destination and keeps working, but FS Organizer will no longer manage it.</source>
         <translation>
-            <numerusform>%n addon dela está habilitado agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-lo como link de terceiros e não mexe mais nele.</numerusform>
-            <numerusform>%n addons dela estão habilitados agora. Os links continuam no destino e continuam funcionando no simulador, mas o FS Organizer passa a tratá-los como links de terceiros e não mexe mais neles.</numerusform>
+            <numerusform>%n addon desta biblioteca está ativado. O link dele continua no destino e funcionando, mas o FS Organizer deixa de gerenciá-lo.</numerusform>
+            <numerusform>%n addons desta biblioteca estão ativados. Os links deles continuam no destino e funcionando, mas o FS Organizer deixa de gerenciá-los.</numerusform>
         </translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="879"/>
-        <source>Disable the %1 before unregistering</source>
-        <translation>Desabilitar os %1 antes de descadastrar</translation>
     </message>
 </context>
 <context>
@@ -3648,23 +3638,23 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="86"/>
-        <source>The app could not write the choice down, so it stays as it was.</source>
-        <translation>O app não conseguiu gravar a escolha, então ela fica como estava.</translation>
+        <source>Could not save the choice, so nothing changed.</source>
+        <translation>Não foi possível salvar a escolha, então nada mudou.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="187"/>
-        <source>Turn the simulator&apos;s one off</source>
-        <translation>Desligar o do simulador</translation>
+        <source>Disable the simulator&apos;s airport</source>
+        <translation>Desativar o aeroporto do simulador</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="189"/>
-        <source>Turn it back on</source>
-        <translation>Religar</translation>
+        <source>Enable again</source>
+        <translation>Ativar de novo</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="190"/>
-        <source>Stop managing this</source>
-        <translation>Parar de gerenciar</translation>
+        <source>Stop managing the package list</source>
+        <translation>Parar de gerenciar a lista de pacotes</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="192"/>
@@ -3684,8 +3674,8 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="193"/>
-        <source>Package you turned off</source>
-        <translation>Pacote que você desligou</translation>
+        <source>Package you disabled</source>
+        <translation>Pacote que você desativou</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="195"/>
@@ -3694,17 +3684,17 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="196"/>
-        <source>Manage it and FS Organizer reads the package list of the simulator, tells you when one of your airports covers the same place as one the simulator ships, and lets you switch that one off without editing XML. It writes nothing until you accept a warning. The warning between two addons of your own does not need this and keeps working.</source>
-        <translation>Gerencie e o FS Organizer lê a lista de pacotes do simulador, avisa quando um aeroporto seu cobre o mesmo lugar que um que o simulador traz, e deixa você desligar esse sem editar XML. Ele não grava nada até você aceitar um aviso. O aviso entre dois addons seus não precisa disto e continua funcionando.</translation>
+        <source>When managed, FS Organizer reads the simulator&apos;s package list, warns you when one of your airports covers the same place as one the simulator ships, and lets you disable that one without editing XML. Nothing is written until you accept a warning. Warnings between two of your own addons work without this.</source>
+        <translation>Com a lista gerenciada, o FS Organizer lê a lista de pacotes do simulador, avisa quando um aeroporto seu cobre o mesmo lugar que um que o simulador traz, e deixa você desativar o do simulador sem editar XML. Nada é gravado até você aceitar um aviso. Os avisos entre dois addons seus funcionam sem isto.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="200"/>
-        <source>Manage it</source>
-        <translation>Gerenciar</translation>
+        <source>Manage the package list</source>
+        <translation>Gerenciar a lista de pacotes</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="213"/>
-        <source>The package list of the simulator is not managed.</source>
+        <source>The simulator&apos;s package list is not managed.</source>
         <translation>A lista de pacotes do simulador não é gerenciada.</translation>
     </message>
     <message numerus="yes">
@@ -3722,21 +3712,21 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="240"/>
-        <source>No scenery has been read yet, so this half has nothing to say. The Diagnostics screen reads them all in one go, and enabling an airport reads that one.</source>
-        <translation>Nenhum cenário foi lido ainda, então esta metade não tem o que dizer. A tela de Diagnósticos lê todos de uma vez, e habilitar um aeroporto lê aquele.</translation>
+        <source>No scenery scanned yet. Scan everything in Diagnostics, or enable an airport to scan it.</source>
+        <translation>Nenhum cenário analisado ainda. Analise tudo em Diagnósticos, ou ative um aeroporto para analisá-lo.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/simulator/PackageListPage.cpp" line="242"/>
-        <source>Read from the scenery of %n addon. The app never turns anything off by itself: between two addons of your own it only shows the pair, because turning one off is enabling and disabling, which you already do.</source>
+        <source>Based on the scenery of %n addon. For two addons of your own, the app only shows the pair: disable one yourself if you want.</source>
         <translation>
-            <numerusform>Lido do cenário de %n addon. O app nunca desliga nada sozinho: entre dois addons seus ele só mostra o par, porque desligar um é habilitar e desabilitar, coisa que você já faz.</numerusform>
-            <numerusform>Lido do cenário de %n addons. O app nunca desliga nada sozinho: entre dois addons seus ele só mostra o par, porque desligar um é habilitar e desabilitar, coisa que você já faz.</numerusform>
+            <numerusform>Com base no cenário de %n addon. Para dois addons seus, o app só mostra o par: desative um deles se quiser.</numerusform>
+            <numerusform>Com base no cenário de %n addons. Para dois addons seus, o app só mostra o par: desative um deles se quiser.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="260"/>
-        <source>Packages you turned off</source>
-        <translation>Pacotes que você desligou</translation>
+        <source>Packages you disabled</source>
+        <translation>Pacotes que você desativou</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="267"/>
@@ -3755,8 +3745,8 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="322"/>
-        <source>The two addons of %1 will not be shown as covering each other again.</source>
-        <translation>Os dois addons de %1 não vão mais aparecer cobrindo um ao outro.</translation>
+        <source>No more warnings about the two addons of %1.</source>
+        <translation>Sem mais avisos sobre os dois addons de %1.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="342"/>
@@ -3775,8 +3765,8 @@ Os links que já existem em %2 continuam lá, funcionando, e o FS Organizer deix
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="360"/>
-        <source>The package list stays untouched while the simulator runs.</source>
-        <translation>A lista de pacotes fica intocada enquanto o simulador roda.</translation>
+        <source>The package list cannot be changed while the simulator is running.</source>
+        <translation>A lista de pacotes não pode ser alterada com o simulador aberto.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/PackageListPage.cpp" line="362"/>
@@ -4399,23 +4389,23 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="12"/>
-        <source>there is already a real folder with that name in the destination</source>
-        <translation>já existe uma pasta de verdade com esse nome no destino</translation>
+        <source>a folder with that name already exists in the destination</source>
+        <translation>já existe uma pasta com esse nome no destino</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="14"/>
-        <source>the destination already holds a live link from another program</source>
-        <translation>o destino já tem um link vivo de outro programa</translation>
+        <source>the destination already has a working link from another program</source>
+        <translation>o destino já tem um link ativo de outro programa</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="16"/>
-        <source>the target of the link holding the destination could not be read</source>
-        <translation>não foi possível ler o alvo do link que ocupa o destino</translation>
+        <source>the link already in the destination could not be read</source>
+        <translation>não foi possível ler o link que já está no destino</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="18"/>
-        <source>the dead link holding the destination could not be removed</source>
-        <translation>não foi possível remover o link morto que ocupava o destino</translation>
+        <source>the broken link already in the destination could not be removed</source>
+        <translation>não foi possível remover o link quebrado que está no destino</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="19"/>
@@ -4440,8 +4430,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="26"/>
         <location filename="../src/viewmodel/FailureText.cpp" line="103"/>
-        <source>the journal records this operation, but does not say how it ended</source>
-        <translation>o diário registra esta operação, mas não diz como ela terminou</translation>
+        <source>the journal does not say how this operation ended</source>
+        <translation>o histórico não diz como esta operação terminou</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="37"/>
@@ -4475,18 +4465,18 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="54"/>
-        <source>Windows denied permission there, so running the app as administrator may get past it</source>
-        <translation>o Windows negou permissão ali, então executar o aplicativo como administrador pode resolver</translation>
+        <source>Windows denied access; running the app as administrator may help</source>
+        <translation>o Windows negou acesso; executar o app como administrador pode resolver</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="56"/>
-        <source>that volume is read-only, and no privilege gets past that</source>
-        <translation>aquele volume é somente leitura, e nenhum privilégio passa disso</translation>
+        <source>that drive is read-only</source>
+        <translation>esse disco é somente leitura</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="58"/>
-        <source>Windows refused for a reason that is neither permission nor a read-only volume</source>
-        <translation>o Windows recusou por um motivo que não é permissão nem volume somente leitura</translation>
+        <source>Windows refused the operation</source>
+        <translation>o Windows recusou a operação</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="70"/>
@@ -4500,8 +4490,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="72"/>
-        <source>the losing copy could not be moved to the quarantine</source>
-        <translation>não foi possível mover a cópia perdedora para a quarentena</translation>
+        <source>the copy you did not keep could not be moved to the quarantine</source>
+        <translation>não foi possível mover para a quarentena a cópia que você não manteve</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="74"/>
@@ -4515,8 +4505,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="77"/>
-        <source>the free space of the destination volume could not be read</source>
-        <translation>não foi possível consultar o espaço livre do volume de destino</translation>
+        <source>the free space on the destination drive could not be checked</source>
+        <translation>não foi possível verificar o espaço livre no disco de destino</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="78"/>
@@ -4525,8 +4515,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="80"/>
-        <source>the copy failed, and what was already copied stays where it is for the resume</source>
-        <translation>a cópia falhou, e o que já foi copiado continua onde está para a retomada</translation>
+        <source>the copy failed; what was already copied is kept so the import can resume</source>
+        <translation>a cópia falhou; o que já foi copiado fica guardado para retomar a importação</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="82"/>
@@ -4550,23 +4540,23 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="88"/>
-        <source>neither the record beside it nor the journal says where this came from</source>
-        <translation>nem o registro ao lado dele nem o diário dizem de onde isto veio</translation>
+        <source>its origin is unknown</source>
+        <translation>a origem é desconhecida</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="123"/>
-        <source>the startup entries of the simulator are not managed, so the app does not read or write that file</source>
-        <translation>as entradas de inicialização do simulador não são gerenciadas, então o app não lê nem grava aquele arquivo</translation>
+        <source>startup entries are not managed, so that file is not read or changed</source>
+        <translation>as entradas de inicialização não são gerenciadas, então esse arquivo não é lido nem alterado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="126"/>
-        <source>nobody measured this addon, so there is no telling whether the Recycle Bin of that volume takes it</source>
-        <translation>ninguém mediu este addon, então não há como saber se a Lixeira daquele volume o aceita</translation>
+        <source>this addon was not measured, so it is unknown whether it fits in the Recycle Bin</source>
+        <translation>este addon não foi medido, então não dá para saber se ele cabe na Lixeira</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="129"/>
-        <source>the name is longer than a folder name can be, so the disk would refuse it</source>
-        <translation>o nome é mais longo do que um nome de pasta pode ser, então o disco o recusaria</translation>
+        <source>the name is too long for a folder name</source>
+        <translation>o nome é longo demais para um nome de pasta</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="131"/>
@@ -4580,13 +4570,13 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="135"/>
-        <source>the package list of the simulator is not managed, so the app does not read or write that file</source>
-        <translation>a lista de pacotes do simulador não é gerenciada, então o app não lê nem grava esse arquivo</translation>
+        <source>the package list is not managed, so that file is not read or changed</source>
+        <translation>a lista de pacotes não é gerenciada, então esse arquivo não é lido nem alterado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="138"/>
-        <source>another program is holding that folder open, and Windows refuses to move it until that program lets go</source>
-        <translation>outro programa está com essa pasta aberta, e o Windows recusa movê-la enquanto esse programa não soltar</translation>
+        <source>another program has that folder open; close it and try again</source>
+        <translation>outro programa está com essa pasta aberta; feche-o e tente de novo</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="141"/>
@@ -4595,8 +4585,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="143"/>
-        <source>this copy is not inside a destination or a library of the profile, so there is no quarantine for it</source>
-        <translation>esta cópia não está dentro de um destino nem de uma biblioteca do perfil, então não há quarentena para ela</translation>
+        <source>this copy is outside the profile&apos;s destinations and libraries, so it cannot go to the quarantine</source>
+        <translation>esta cópia está fora dos destinos e das bibliotecas do perfil, então não pode ir para a quarentena</translation>
     </message>
     <message>
         <source>the journal does not know where this came from</source>
@@ -4633,8 +4623,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="97"/>
-        <source>the target of the operation is not inside a library of the profile</source>
-        <translation>o destino da operação não está dentro de uma biblioteca do perfil</translation>
+        <source>the target is not inside a library of this profile</source>
+        <translation>o alvo não está dentro de uma biblioteca deste perfil</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="98"/>
@@ -4643,18 +4633,18 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="100"/>
-        <source>this category still holds addons, and only an empty category can be deleted</source>
-        <translation>esta categoria ainda guarda addons, e só categoria vazia pode ser apagada</translation>
+        <source>only empty categories can be deleted</source>
+        <translation>só categorias vazias podem ser excluídas</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="101"/>
         <source>the category could not be deleted</source>
-        <translation>não foi possível apagar a categoria</translation>
+        <translation>não foi possível excluir a categoria</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="105"/>
-        <source>the source folder could not be walked, so nothing was copied</source>
-        <translation>não foi possível percorrer a pasta de origem, então nada foi copiado</translation>
+        <source>the source folder could not be read, so nothing was copied</source>
+        <translation>não foi possível ler a pasta de origem, então nada foi copiado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="107"/>
@@ -4663,8 +4653,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="109"/>
-        <source>the Recycle Bin stops at 260 characters, and this addon holds a longer path</source>
-        <translation>a Lixeira para em 260 caracteres, e este addon tem um caminho mais longo</translation>
+        <source>this addon has a path longer than the 260 characters the Recycle Bin accepts</source>
+        <translation>este addon tem um caminho maior que os 260 caracteres que a Lixeira aceita</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="110"/>
@@ -4673,18 +4663,18 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="112"/>
-        <source>the record that says where this came from could not be written, so nothing was moved</source>
-        <translation>o registro que diz de onde isto veio não pôde ser gravado, então nada foi movido</translation>
+        <source>the origin record could not be saved, so nothing was moved</source>
+        <translation>não foi possível salvar o registro de origem, então nada foi movido</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="114"/>
-        <source>the folder of the other program does not accept writes from you, so nothing was taken away from it</source>
-        <translation>a pasta do outro programa não aceita escrita sua, então nada foi tirado dela</translation>
+        <source>you cannot write to the other program&apos;s folder, so nothing was moved from it</source>
+        <translation>você não pode gravar na pasta do outro programa, então nada foi tirado dela</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="117"/>
-        <source>the entry no longer points where the last scan saw it point, so nothing was touched</source>
-        <translation>a entrada não aponta mais para onde a última varredura a viu apontar, então nada foi tocado</translation>
+        <source>the entry changed since the last scan, so nothing was changed</source>
+        <translation>a entrada mudou desde a última varredura, então nada foi alterado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="119"/>
@@ -4739,8 +4729,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="211"/>
-        <source>%1: it is back, and %2 is in the quarantine with its origin recorded.</source>
-        <translation>%1: voltou, e %2 está na quarentena com a origem gravada.</translation>
+        <source>%1: restored, and %2 moved to the quarantine.</source>
+        <translation>%1: restaurado, e %2 foi para a quarentena.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="216"/>
@@ -4778,8 +4768,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="232"/>
-        <source>deleted for good</source>
-        <translation>excluído de vez</translation>
+        <source>deleted permanently</source>
+        <translation>excluído definitivamente</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="241"/>
@@ -4795,13 +4785,13 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="265"/>
-        <source>Checking whether the copy matches the source…</source>
-        <translation>Conferindo se a cópia bate com a origem…</translation>
+        <source>Verifying the copy…</source>
+        <translation>Conferindo a cópia…</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="266"/>
-        <source>Putting the copy in its final place…</source>
-        <translation>Pondo a cópia no lugar definitivo…</translation>
+        <source>Moving the copy into place…</source>
+        <translation>Pondo a cópia no lugar…</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="267"/>
@@ -4937,21 +4927,21 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="35"/>
-        <source>Destination pinnings pointing outside</source>
-        <translation>Fixações de destino apontando para fora</translation>
+        <source>Pinned destinations not found</source>
+        <translation>Destinos fixados não encontrados</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/shell/StartupOffers.cpp" line="36"/>
-        <source>%n destination pinning of this profile names a folder that is not a destination of it. While that is so, the pinned addons use the default destination. Nothing was deleted from the configuration.</source>
+        <source>%n pinned destination of this profile is no longer one of its destinations. Until that changes, the addons pinned to it use the default destination.</source>
         <translation>
-            <numerusform>%n fixação de destino deste perfil cita uma pasta que não é destino dele. Enquanto for assim, os addons fixados usam o destino padrão. Nada foi apagado da configuração.</numerusform>
-            <numerusform>%n fixações de destino deste perfil citam uma pasta que não é destino dele. Enquanto for assim, os addons fixados usam o destino padrão. Nada foi apagado da configuração.</numerusform>
+            <numerusform>%n destino fixado deste perfil não é mais um destino dele. Enquanto isso, os addons fixados nele usam o destino padrão.</numerusform>
+            <numerusform>%n destinos fixados deste perfil não são mais destinos dele. Enquanto isso, os addons fixados neles usam o destino padrão.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="42"/>
-        <source>Discard the pinnings</source>
-        <translation>Descartar as fixações</translation>
+        <source>Remove the pins</source>
+        <translation>Remover as fixações</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="43"/>
@@ -4960,18 +4950,18 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="59"/>
-        <source>MSFS Addons Linker is on this machine</source>
-        <translation>O MSFS Addons Linker está nesta máquina</translation>
+        <source>MSFS Addons Linker found</source>
+        <translation>MSFS Addons Linker encontrado</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="60"/>
-        <source>It has libraries FS Organizer does not know yet. Nothing is moved or deleted: you choose what to bring over before anything happens.</source>
-        <translation>Ele tem bibliotecas que o FS Organizer ainda não conhece. Nada é movido nem apagado: você escolhe o que trazer antes de qualquer coisa acontecer.</translation>
+        <source>It has libraries FS Organizer does not know yet. You choose what to import; no files are moved or deleted.</source>
+        <translation>Ele tem bibliotecas que o FS Organizer ainda não conhece. Você escolhe o que importar; nenhum arquivo é movido ou excluído.</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="64"/>
-        <source>See what can be brought over</source>
-        <translation>Ver o que dá para trazer</translation>
+        <source>See what can be imported</source>
+        <translation>Ver o que dá para importar</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="65"/>
@@ -4980,26 +4970,26 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="92"/>
-        <source>A folder of another program was left renamed</source>
+        <source>Another program&apos;s folder was left renamed</source>
         <translation>Uma pasta de outro programa ficou renomeada</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/shell/StartupOffers.cpp" line="93"/>
-        <source>%n folder that FS Organizer took over is still under the name it was given while the swap ran, so the other program no longer finds it. Your addon is safe in the library: what is missing is the folder under its own name.</source>
+        <source>%n folder imported by FS Organizer still has a temporary name from an interrupted swap, so the other program cannot find it. Your addon is safe in the library.</source>
         <translation>
-            <numerusform>%n pasta que o FS Organizer assumiu continua com o nome que recebeu enquanto a troca rodava, então o outro programa não a encontra mais. Seu addon está seguro na biblioteca: o que falta é a pasta com o nome dela.</numerusform>
-            <numerusform>%n pastas que o FS Organizer assumiu continuam com o nome que receberam enquanto a troca rodava, então os outros programas não as encontram mais. Seus addons estão seguros na biblioteca: o que falta são as pastas com os nomes delas.</numerusform>
+            <numerusform>%n pasta importada pelo FS Organizer ainda está com um nome temporário de uma troca interrompida, então o outro programa não a encontra. O seu addon está seguro na biblioteca.</numerusform>
+            <numerusform>%n pastas importadas pelo FS Organizer ainda estão com nomes temporários de uma troca interrompida, então os outros programas não as encontram. Os seus addons estão seguros na biblioteca.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="100"/>
-        <source>Put the folders back</source>
-        <translation>Repor as pastas</translation>
+        <source>Restore the folder names</source>
+        <translation>Restaurar os nomes das pastas</translation>
     </message>
     <message>
         <location filename="../src/view/shell/StartupOffers.cpp" line="101"/>
-        <source>Leave them and decide later</source>
-        <translation>Deixar como está e decidir depois</translation>
+        <source>Decide later</source>
+        <translation>Decidir depois</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="216"/>
@@ -5008,8 +4998,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="217"/>
-        <source>The configuration file exists but could not be read, so FS Organizer will not overwrite it. Move or fix %1 and open the program again.</source>
-        <translation>O arquivo de configuração existe mas não pôde ser lido, então o FS Organizer não vai sobrescrevê-lo. Mova ou conserte %1 e abra o programa de novo.</translation>
+        <source>The settings file could not be read, so FS Organizer will not overwrite it. Fix or move %1 and open the program again.</source>
+        <translation>Não foi possível ler o arquivo de configurações, então o FS Organizer não vai sobrescrevê-lo. Conserte ou mova %1 e abra o programa de novo.</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="392"/>
@@ -5018,8 +5008,8 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="393"/>
-        <source>The translation for %1 did not load, so the interface stays in English. The choice was still written down.</source>
-        <translation>A tradução de %1 não carregou, então a interface continua em inglês. A escolha foi gravada mesmo assim.</translation>
+        <source>The %1 translation did not load, so the interface stays in English. Your choice was saved.</source>
+        <translation>A tradução para %1 não carregou, então a interface continua em inglês. A sua escolha foi salva.</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="403"/>
@@ -5029,13 +5019,13 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="404"/>
-        <source>The option could not be written to %1, so it stays as it was.</source>
-        <translation>A opção não pôde ser gravada em %1, então ela continua como estava.</translation>
+        <source>Could not save the option to %1, so it was not changed.</source>
+        <translation>Não foi possível salvar a opção em %1, então ela não mudou.</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="681"/>
-        <source>The change was applied on the disk, but the profile could not be written to %1. Next time the program opens it will not be recorded.</source>
-        <translation>A mudança foi aplicada no disco, mas o perfil não pôde ser gravado em %1. Na próxima abertura ela não vai estar registrada.</translation>
+        <source>The change was applied, but the profile could not be saved to %1, so the program will not remember it next time.</source>
+        <translation>A mudança foi aplicada, mas o perfil não pôde ser salvo em %1, então o programa não vai lembrá-la na próxima vez.</translation>
     </message>
     <message>
         <source>Restore the selected ones</source>
@@ -5047,13 +5037,13 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="12"/>
-        <source>In this library, on</source>
-        <translation>Nesta biblioteca, ligado</translation>
+        <source>In this library, enabled</source>
+        <translation>Nesta biblioteca, ativado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="12"/>
-        <source>In this library, off</source>
-        <translation>Nesta biblioteca, desligado</translation>
+        <source>In this library, disabled</source>
+        <translation>Nesta biblioteca, desativado</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="13"/>
@@ -5062,7 +5052,7 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/DependencyText.cpp" line="14"/>
-        <source>Not verifiable</source>
+        <source>Cannot be checked</source>
         <translation>Não dá para verificar</translation>
     </message>
     <message>
@@ -5092,17 +5082,17 @@ Aplicar o preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="47"/>
-        <source>it is in %1</source>
-        <translation>está em %1</translation>
+        <source>at %1</source>
+        <translation>em %1</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="27"/>
-        <source>the manifest does not say</source>
-        <translation>o manifesto não diz</translation>
+        <source>not declared</source>
+        <translation>não declarada</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/CollisionDialog.cpp" line="32"/>
-        <source>it could not be measured</source>
+        <source>could not be measured</source>
         <translation>não foi possível medir</translation>
     </message>
     <message>
@@ -5114,13 +5104,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="35"/>
-        <source>the program is not there</source>
-        <translation>o programa não está lá</translation>
+        <source>the program is missing</source>
+        <translation>o programa não existe</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="36"/>
-        <source>the addon that holds it is off</source>
-        <translation>o addon que o guarda está desligado</translation>
+        <source>its addon is disabled</source>
+        <translation>o addon dele está desativado</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="40"/>
@@ -5272,7 +5262,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="123"/>
         <source>the record and the Journal agree</source>
-        <translation>o registro e o Diário concordam</translation>
+        <translation>o registro e o Histórico concordam</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="128"/>
@@ -5282,17 +5272,17 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="129"/>
         <source>the Journal only</source>
-        <translation>só o Diário</translation>
+        <translation>só o Histórico</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="130"/>
-        <source>neither has it</source>
-        <translation>nenhum dos dois tem</translation>
+        <source>neither knows</source>
+        <translation>nenhum dos dois sabe</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="178"/>
         <source>quarantined %1</source>
-        <translation>posto em quarentena em %1</translation>
+        <translation>na quarentena desde %1</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/QuarantineModel.cpp" line="235"/>
@@ -5339,14 +5329,14 @@ Tamanho %2</translation>
 <context>
     <name>QuarantinePage</name>
     <message>
-        <source>Checking what restoring would touch…</source>
-        <translation>Conferindo o que a restauração vai tocar…</translation>
+        <source>Checking what restoring would affect…</source>
+        <translation>Verificando o que a restauração vai afetar…</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="59"/>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="144"/>
-        <source>Item held</source>
-        <translation>Item retido</translation>
+        <source>Item in quarantine</source>
+        <translation>Item na quarentena</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="112"/>
@@ -5361,12 +5351,12 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="140"/>
-        <source>Restore the selected ones</source>
+        <source>Restore selected</source>
         <translation>Restaurar selecionados</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="141"/>
-        <source>Discard the selected ones</source>
+        <source>Discard selected</source>
         <translation>Descartar selecionados</translation>
     </message>
     <message>
@@ -5377,8 +5367,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="143"/>
-        <source>Open the folder</source>
-        <translation>Abrir a pasta</translation>
+        <source>Open folder</source>
+        <translation>Abrir pasta</translation>
     </message>
     <message>
         <source>Nothing leaves the quarantine without you saying so.</source>
@@ -5391,8 +5381,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="146"/>
-        <source>When two copies of the same addon fight over the same name, the losing one comes here instead of being deleted. Nothing has been held so far.</source>
-        <translation>Quando duas cópias do mesmo addon disputam o mesmo nome, a perdedora vem para cá em vez de ser apagada. Nada foi retido até agora.</translation>
+        <source>When you resolve a conflict between two copies of an addon, the one you do not keep comes here instead of being deleted.</source>
+        <translation>Quando você resolve um conflito entre duas cópias de um addon, a que você não mantém vem para cá em vez de ser excluída.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="185"/>
@@ -5403,7 +5393,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="190"/>
         <source>Quarantined on</source>
-        <translation>Quarentenado em</translation>
+        <translation>Na quarentena desde</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="193"/>
@@ -5418,22 +5408,22 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="207"/>
         <source>The Journal says</source>
-        <translation>O Diário diz</translation>
+        <translation>O Histórico diz</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="218"/>
-        <source>Already in place</source>
-        <translation>Já está no lugar</translation>
+        <source>Now in its place</source>
+        <translation>Agora no lugar dele</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="219"/>
-        <source>Version there</source>
-        <translation>Versão de lá</translation>
+        <source>Its version</source>
+        <translation>Versão dele</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="220"/>
-        <source>the manifest does not say</source>
-        <translation>o manifesto não diz</translation>
+        <source>not declared</source>
+        <translation>não declarada</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="246"/>
@@ -5442,8 +5432,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="247"/>
-        <source>Know where they came from</source>
-        <translation>Sabem de onde vieram</translation>
+        <source>With a known origin</source>
+        <translation>Com origem conhecida</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="247"/>
@@ -5502,10 +5492,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="331"/>
-        <source>%n item will be deleted from the disk for good. Continue?</source>
+        <source>Permanently delete %n item? This cannot be undone.</source>
         <translation>
-            <numerusform>%n item será apagado do disco para sempre. Continuar?</numerusform>
-            <numerusform>%n itens serão apagados do disco para sempre. Continuar?</numerusform>
+            <numerusform>Excluir %n item definitivamente? Não pode ser desfeito.</numerusform>
+            <numerusform>Excluir %n itens definitivamente? Não pode ser desfeito.</numerusform>
         </translation>
     </message>
     <message>
@@ -5515,10 +5505,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="351"/>
-        <source>Everything in the quarantine, %n item, will be deleted from the disk for good. Continue?</source>
+        <source>Permanently delete everything in the quarantine (%n item)? This cannot be undone.</source>
         <translation>
-            <numerusform>Tudo que está na quarentena, %n item, será apagado do disco para sempre. Continuar?</numerusform>
-            <numerusform>Tudo que está na quarentena, %n itens, será apagado do disco para sempre. Continuar?</numerusform>
+            <numerusform>Excluir definitivamente tudo o que está na quarentena (%n item)? Não pode ser desfeito.</numerusform>
+            <numerusform>Excluir definitivamente tudo o que está na quarentena (%n itens)? Não pode ser desfeito.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5531,10 +5521,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="381"/>
-        <source>%n item could not be handled.</source>
+        <source>%n item failed.</source>
         <translation>
-            <numerusform>%n item não pôde ser tratado.</numerusform>
-            <numerusform>%n itens não puderam ser tratados.</numerusform>
+            <numerusform>%n item falhou.</numerusform>
+            <numerusform>%n itens falharam.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5560,16 +5550,16 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="419"/>
-        <source>%n replacement stopped part of the way.</source>
+        <source>%n replacement did not finish.</source>
         <translation>
-            <numerusform>%n substituição parou no meio do caminho.</numerusform>
-            <numerusform>%n substituições pararam no meio do caminho.</numerusform>
+            <numerusform>%n substituição não terminou.</numerusform>
+            <numerusform>%n substituições não terminaram.</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="420"/>
-        <source>Nothing was deleted. The detail says where each one stopped.</source>
-        <translation>Nada foi apagado. O detalhe diz onde cada um parou.</translation>
+        <source>Nothing was deleted. The details say where each one stopped.</source>
+        <translation>Nada foi excluído. Os detalhes dizem onde cada uma parou.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="446"/>
@@ -5586,8 +5576,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/QuarantinePage.cpp" line="447"/>
-        <source>0 bytes held</source>
-        <translation>0 bytes retidos</translation>
+        <source>0 bytes</source>
+        <translation>0 bytes</translation>
     </message>
     <message>
         <source>nothing leaves here without you saying so</source>
@@ -5653,13 +5643,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="68"/>
-        <source>Each folder goes back to where it came from. What would collide is listed here with both versions, and replacing puts the occupant in the quarantine with its own origin recorded.</source>
-        <translation>Cada pasta volta para onde veio. O que colidiria está listado aqui com as duas versões, e substituir põe o ocupante na quarentena com a origem dele gravada.</translation>
+        <source>Each folder goes back to where it came from. Conflicts are listed with both versions; replacing moves what is there to the quarantine.</source>
+        <translation>Cada pasta volta para onde veio. Os conflitos aparecem com as duas versões; substituir move o que está lá para a quarentena.</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="159"/>
-        <source>goes back to %1, and the link that is there goes away</source>
-        <translation>volta para %1, e o link que está lá sai</translation>
+        <source>goes back to %1, replacing the link there</source>
+        <translation>volta para %1, no lugar do link que está lá</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="160"/>
@@ -5668,8 +5658,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="182"/>
-        <source>Choose where this goes back to</source>
-        <translation>Escolha para onde isto volta</translation>
+        <source>Choose where it goes back</source>
+        <translation>Escolha para onde volta</translation>
     </message>
     <message>
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="199"/>
@@ -5701,10 +5691,10 @@ Tamanho %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/quarantine/RestoreDialog.cpp" line="241"/>
-        <source>%n of them puts the occupant in the quarantine first.</source>
+        <source>%n of them moves what is there to the quarantine first.</source>
         <translation>
-            <numerusform>%n deles põe o ocupante na quarentena antes.</numerusform>
-            <numerusform>%n deles põem o ocupante na quarentena antes.</numerusform>
+            <numerusform>%n delas move o que está lá para a quarentena antes.</numerusform>
+            <numerusform>%n delas movem o que está lá para a quarentena antes.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5732,7 +5722,7 @@ Tamanho %2</translation>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="35"/>
         <source>FS Organizer · first setup</source>
-        <translation>FS Organizer · primeira configuração</translation>
+        <translation>FS Organizer · configuração inicial</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="62"/>
@@ -5741,8 +5731,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="63"/>
-        <source>The profile could not be written to the disk, so the setup did not finish. Check that you have write permission on the settings folder and try again.</source>
-        <translation>O perfil não pôde ser gravado no disco, então a configuração não foi concluída. Confira se você tem permissão de escrita na pasta de configurações e tente de novo.</translation>
+        <source>The profile could not be saved. Check that you can write to the settings folder and try again.</source>
+        <translation>Não foi possível salvar o perfil. Confira se você pode gravar na pasta de configurações e tente de novo.</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="74"/>
@@ -5756,8 +5746,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="86"/>
-        <source>Point at a folder by hand…</source>
-        <translation>Apontar uma pasta manualmente…</translation>
+        <source>Choose a folder…</source>
+        <translation>Escolher uma pasta…</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="96"/>
@@ -5771,8 +5761,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="107"/>
-        <source>Choose the root folder where your addons are kept, outside the simulator. Its subfolders become categories.</source>
-        <translation>Escolha a pasta raiz onde os seus addons ficam guardados, fora do simulador. As subpastas dela viram categorias.</translation>
+        <source>Choose the folder outside the simulator where you keep your addons. Its subfolders become categories.</source>
+        <translation>Escolha a pasta fora do simulador onde ficam os seus addons. As subpastas dela viram categorias.</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="112"/>
@@ -5807,8 +5797,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="157"/>
-        <source>That folder does not look like a simulator destination, which is usually called Community. It will be used anyway.</source>
-        <translation>Essa pasta não se parece com um destino do simulador, que costuma se chamar Community. Ela será usada assim mesmo.</translation>
+        <source>That folder does not look like the simulator&apos;s Community folder. It will be used anyway.</source>
+        <translation>Essa pasta não parece a pasta Community do simulador. Ela será usada assim mesmo.</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="183"/>
@@ -5817,13 +5807,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="192"/>
-        <source>Repeated library</source>
-        <translation>Biblioteca repetida</translation>
+        <source>Already in a library</source>
+        <translation>Já está numa biblioteca</translation>
     </message>
     <message>
         <location filename="../src/view/setup/SetupWizard.cpp" line="193"/>
-        <source>That folder is already inside a registered library. Choose the root folder where the addons are kept; its subfolders become categories.</source>
-        <translation>Essa pasta já está dentro de uma biblioteca cadastrada. Escolha a pasta raiz onde os addons ficam guardados; as subpastas dela viram categorias.</translation>
+        <source>That folder is inside a library you already added. Choose the top folder where you keep your addons; its subfolders become categories.</source>
+        <translation>Essa pasta fica dentro de uma biblioteca já adicionada. Escolha a pasta principal onde ficam os seus addons; as subpastas dela viram categorias.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/setup/SetupWizard.cpp" line="206"/>
@@ -6019,8 +6009,8 @@ Tamanho %2</translation>
     <name>StagingLeftoverDialog</name>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="38"/>
-        <source>Imports that were left half finished</source>
-        <translation>Importações que ficaram pela metade</translation>
+        <source>Unfinished imports</source>
+        <translation>Importações incompletas</translation>
     </message>
     <message>
         <source>An import was interrupted before it finished. The original files are still where they were: nothing was removed from the destination.</source>
@@ -6028,7 +6018,7 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="53"/>
-        <source>Leave it as it is</source>
+        <source>Leave as is</source>
         <translation>Deixar como está</translation>
     </message>
     <message>
@@ -6038,8 +6028,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="58"/>
-        <source>Discard the half finished copy</source>
-        <translation>Descartar a cópia pela metade</translation>
+        <source>Discard the partial copy</source>
+        <translation>Descartar a cópia parcial</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="20"/>
@@ -6048,13 +6038,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="25"/>
-        <source>half of a conflict resolution: the two copies are still where they were, so only discarding is offered</source>
-        <translation>metade de uma resolução de conflito: as duas cópias continuam onde estavam, então só o descarte é oferecido</translation>
+        <source>left by an interrupted conflict resolution; both copies are still in place, so it can only be discarded</source>
+        <translation>sobrou de uma resolução de conflito interrompida; as duas cópias continuam no lugar, então só dá para descartar</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="30"/>
-        <source>the journal does not know where this came from, so only discarding is offered</source>
-        <translation>o diário não sabe de onde isto veio, então só o descarte é oferecido</translation>
+        <source>its origin is unknown, so it can only be discarded</source>
+        <translation>a origem é desconhecida, então só dá para descartar</translation>
     </message>
     <message>
         <location filename="../src/view/setup/StagingLeftoverDialog.cpp" line="74"/>
@@ -6119,8 +6109,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="175"/>
-        <source>Read it again</source>
-        <translation>Ler de novo</translation>
+        <source>Refresh</source>
+        <translation>Atualizar</translation>
     </message>
     <message>
         <source>Leave these alone</source>
@@ -6147,13 +6137,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="179"/>
-        <source>No startup entry to show</source>
-        <translation>Nenhuma entrada de inicialização para mostrar</translation>
+        <source>No startup entries</source>
+        <translation>Nenhuma entrada de inicialização</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="180"/>
-        <source>The startup file of this profile was not found beside its UserCfg.opt, or it carries no program. Nothing was written.</source>
-        <translation>O arquivo de inicialização deste perfil não foi encontrado ao lado do UserCfg.opt dele, ou não carrega programa nenhum. Nada foi gravado.</translation>
+        <source>The simulator&apos;s startup file (EXE.xml) was not found for this profile, or it lists no programs.</source>
+        <translation>O arquivo de inicialização do simulador (EXE.xml) não foi encontrado para este perfil, ou não lista nenhum programa.</translation>
     </message>
     <message>
         <source>The startup entries are left alone</source>
@@ -6173,13 +6163,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="105"/>
-        <source>The app could not write the choice down, so it stays as it was.</source>
-        <translation>O app não conseguiu gravar a escolha, então ela fica como estava.</translation>
+        <source>Could not save the choice, so nothing changed.</source>
+        <translation>Não foi possível salvar a escolha, então nada mudou.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="176"/>
-        <source>Stop managing these</source>
-        <translation>Parar de gerenciar</translation>
+        <source>Stop managing startup entries</source>
+        <translation>Parar de gerenciar as entradas de inicialização</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="182"/>
@@ -6188,17 +6178,17 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="183"/>
-        <source>Manage these and FS Organizer reads the startup file of the simulator, lists the programs it launches with itself, and lets you switch one off without editing XML. It changes one thing only: the switch of an entry that is already there.</source>
-        <translation>Gerencie estas e o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você desligar um sem editar XML. Ele muda uma coisa só: o interruptor de uma entrada que já está lá.</translation>
+        <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you disable one without editing XML. It only enables or disables entries that already exist.</source>
+        <translation>Com as entradas gerenciadas, o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você desativar um sem editar XML. Ele só ativa ou desativa entradas que já existem.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="186"/>
-        <source>Manage these</source>
-        <translation>Gerenciar</translation>
+        <source>Manage startup entries</source>
+        <translation>Gerenciar as entradas de inicialização</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="197"/>
-        <source>The startup entries of the simulator are not managed.</source>
+        <source>The simulator&apos;s startup entries are not managed.</source>
         <translation>As entradas de inicialização do simulador não são gerenciadas.</translation>
     </message>
     <message numerus="yes">
@@ -6221,8 +6211,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="262"/>
-        <source>The switch was not changed: %1.</source>
-        <translation>O interruptor não foi mudado: %1.</translation>
+        <source>Nothing changed: %1.</source>
+        <translation>Nada mudou: %1.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="268"/>
@@ -6241,8 +6231,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="277"/>
-        <source>The startup file stays untouched while the simulator runs.</source>
-        <translation>O arquivo de inicialização fica intocado enquanto o simulador roda.</translation>
+        <source>The startup file cannot be changed while the simulator is running.</source>
+        <translation>O arquivo de inicialização não pode ser alterado com o simulador aberto.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="279"/>
@@ -6387,8 +6377,8 @@ Tamanho %2</translation>
     <name>UpdateViewModel</name>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="30"/>
-        <source>Updates are off in this copy: it runs from a build tree, or FSORG_NO_UPDATES is in the environment.</source>
-        <translation>As atualizações estão desligadas nesta cópia: ela roda de uma árvore de build ou o FSORG_NO_UPDATES está no ambiente.</translation>
+        <source>Updates are off in this copy of the program (development build or FSORG_NO_UPDATES).</source>
+        <translation>As atualizações estão desativadas nesta cópia do programa (build de desenvolvimento ou FSORG_NO_UPDATES).</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="36"/>
@@ -6397,8 +6387,8 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="37"/>
-        <source>The installed version is the newest one.</source>
-        <translation>A versão instalada é a mais nova.</translation>
+        <source>You have the latest version.</source>
+        <translation>Você já tem a versão mais recente.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="38"/>
@@ -6412,13 +6402,13 @@ Tamanho %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="41"/>
-        <source>Version %1 is ready and goes in when the program closes.</source>
-        <translation>A versão %1 está pronta e entra ao fechar o programa.</translation>
+        <source>Version %1 is ready and will be installed when you close the program.</source>
+        <translation>A versão %1 está pronta e será instalada quando você fechar o programa.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="46"/>
-        <source>Nothing has been checked yet.</source>
-        <translation>Nada foi verificado ainda.</translation>
+        <source>Not checked yet.</source>
+        <translation>Ainda não verificado.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="144"/>

@@ -59,7 +59,7 @@ void DependencyTextTest::TheThirdAnswerIsNotVerifiableAndNeverCallsTheEntryAProb
 {
     const QString said = AnswerFor(AnswerOf(DependencyResolution::Unverifiable));
 
-    QCOMPARE(said, QStringLiteral("Not verifiable"));
+    QCOMPARE(said, QStringLiteral("Cannot be checked"));
 
     for (const DependencyResolution resolution :
          {DependencyResolution::InThisLibrary, DependencyResolution::InTheSimulator,

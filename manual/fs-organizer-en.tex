@@ -182,27 +182,28 @@ instead of recreated. The program never adds a startup entry.
 
 \section{First setup}
 
-On the first run the program looks for the simulator installations on the
-machine and asks for two things.
+On the first run the program looks for simulator installations on the computer
+and asks for two things.
 
 \begin{description}
-  \item[The simulator] Choose the installation this profile will manage, from
-    the list it found, or point at a folder by hand. If the folder you point at
-    does not look like a simulator destination, which is usually called
-    \where|Community|, the program says so and uses it anyway.
-  \item[The library] Choose the root folder where your addons are kept, outside
-    the simulator. Its subfolders become categories.
+  \item[The simulator] Choose the installation this profile will manage from
+    the list, or choose a folder yourself. If that folder does not look like the
+    simulator's \where|Community| folder, the program says so and uses it
+    anyway.
+  \item[The library] Choose the folder outside the simulator where you keep
+    your addons. Its subfolders become categories.
 \end{description}
 
-When you register a very deep library, the program shows how many characters
-that root consumes and how many are left for the addon, next to a short root for
-comparison. Nothing is blocked: addons that go past the Windows limit say so
-when it matters, and \ui{Diagnostics} keeps the longest path of each library.
+When you add a library with a long path, the program shows how many characters
+the path already takes and how many are left for the addon, next to a short
+path for comparison. Nothing is blocked: addons that go past the Windows limit
+say so when it matters, and \ui{Diagnostics} shows the longest path in each
+library.
 
-Anyone coming from MSFS Addons Linker can bring its configuration over in
-\ui{Options}, through \ui{Import from MSFS Addons Linker}. Nothing is moved or
-deleted: importing registers the library, the categories and the presets that
-are not here yet.
+If you come from MSFS Addons Linker, you can bring its configuration over in
+\ui{Options}, with \ui{Import from MSFS Addons Linker}. No files are moved or
+deleted: importing adds the libraries, categories and presets that are not here
+yet.
 
 \section{Library}
 
@@ -324,7 +325,7 @@ The operation has five steps, and the journal records each one:
 be copied, into which library and category, and where the addon will end up.}
 
 \begin{enumerate}
-  \item Copy to the staging area.
+  \item Copy to a temporary folder.
   \item Check the copy.
   \item Put the copy in place.
   \item Remove the source folder.
@@ -351,31 +352,30 @@ If the copy does not match, nothing is removed.
 
 \subsection{Half finished imports}
 
-If an import is interrupted, the next run offers three ways out: resume, discard
-the half finished copy, or leave it as it is. The original files are still where
-they were, and nothing was removed from the destination.
+If an import is interrupted, the next time the program opens it offers three
+choices: resume, discard the partial copy, or leave it as is. The original files
+are still where they were, and nothing was removed from the destination.
 
-When the half that stopped is a conflict resolution, only discarding is offered,
-because both copies are still where they were.
+If the interrupted operation was a conflict resolution, the copy can only be
+discarded, because both copies are still in place.
 
 \section{Quarantine}
 
-When two copies of the same addon fight over the same name, the losing one comes
-to the quarantine instead of being deleted. \textbf{Nothing leaves the quarantine
-without you saying so}, and nothing is deleted on the way in.
+When you resolve a conflict between two copies of an addon, the copy you do not
+keep goes to the quarantine instead of being deleted. \textbf{Nothing leaves the
+quarantine unless you ask}, and nothing is deleted on the way in.
 
-Beside each item the program records where it came from. That record is
-independent of the journal, and it is what allows an item to be restored even
-after the journal has been deleted. The table shows both sources, \ui{The record
-says} and \ui{The Journal says}, and flags when they disagree.
+Next to each item the program records where it came from. That record does not
+depend on the journal, so an item can be restored even if the journal is gone.
+The table shows both sources, \ui{The record says} and \ui{The Journal says},
+and flags when they disagree.
 
 \shot{05-quarantine.png}{The quarantine, with the origin of each item and the flag
 for when the record and the journal disagree.}
 
 \ui{Restore} sends each folder back to where it came from. Nothing is
-overwritten: what would collide is listed with both versions, and replacing puts
-the occupant in the quarantine with its own origin recorded. \ui{Discard} erases
-from the disk for good, and asks first.
+overwritten: conflicts are listed with both versions, and replacing moves what
+is there to the quarantine. \ui{Discard} deletes permanently, and asks first.
 
 \section{Deleting an addon from the library}
 
@@ -399,69 +399,67 @@ it: the link goes with the addon.
 
 \section{Simulator}
 
-The \ui{Simulator} tab has two panels, and both write to files that belong to
-the simulator. In both, the program keeps one backup copy of the file beside it,
-and neither writes while the simulator is running.
+The \ui{Simulator} tab has two panels, and both change files that belong to the
+simulator. For both, the program keeps a backup of the file next to it, and
+neither changes anything while the simulator is running.
 
 \subsection{Startup entries}
 
-The simulator has a file that decides what opens with it. The \ui{Startup
-entries} panel lists those programs and turns each one on or off, without you
-editing XML.
+The simulator has a file (\where|EXE.xml|) that lists the programs it launches
+with itself. The \ui{Startup entries} panel shows them and lets you enable or
+disable each one without editing XML.
 
-The program \textbf{writes one thing there: the switch of an entry that already
-exists}. It never adds, removes or reorders.
+The program \textbf{only enables or disables entries that already exist}. It
+never adds, removes or reorders them.
 
 \shot{19-simulator-startup.png}{The startup entries, with the program each one
 launches and its switch.}
 
-This management starts off. While it is off, the program neither reads nor
-writes that file.
+This panel starts off, and while it is off the program neither reads nor writes
+that file.
 
-Disabling an addon that carries a live startup entry makes the program warn
-first: leaving the entry on would have the simulator keep trying to launch a
-program that will not be there. Turning both off is a single operation, one line
-in the journal, undone as one.
+When you disable an addon that has a startup entry, the program warns first:
+if the entry stayed enabled, the simulator would keep trying to launch a program
+that is no longer there. Disabling both is a single operation, with one line in
+the journal and one undo.
 
 \subsection{Package list}
 
-The simulator ships airports of its own. When an airport of yours covers the
-same place as one of them, the \ui{Package list} panel shows the pair and lets
-you turn the simulator's one off.
+The simulator ships its own airports. When one of your airports covers the same
+place as one of them, the \ui{Package list} panel shows the pair and lets you
+disable the simulator's airport.
 
-Turning it off writes \textbf{one value} in the package list. The program adds
-nothing, removes nothing and reorders nothing, and it refuses an entry that does
-not carry the attribute instead of adding it, because invalid XML makes the
-simulator wipe the whole list.
+Disabling it changes \textbf{one value} in the package list. Nothing is added,
+removed or reordered, and an entry without that value is left alone rather than
+edited, because invalid XML makes the simulator reset the whole list.
 
-Between two addons \textbf{of your own}, the program only shows the pair and
-turns nothing off: turning one off is enabling and disabling, which you already
-do on the \ui{Library} tab.
+For two addons \textbf{of your own}, the program only shows the pair: to choose
+one, disable the other on the \ui{Library} tab.
 
 This panel also starts off, and while it is off the file is neither read nor
 written.
 
 \section{Documents}
 
-The \ui{Documents} tab finds the PDFs your addons carry and opens them inside
-the program. Reading the library walks every addon looking for PDFs, and what it
-finds is written down so the next time is instant.
+The \ui{Documents} tab finds the PDFs your addons include and opens them inside
+the program. \ui{Scan the library} looks for PDFs in every addon, and the result
+is saved, so later scans are quick.
 
-What it finds is split in two: \ui{Charts} and \ui{Manuals}. One addon can carry
-one manual and a hundred and fifty charts, which is why the count comes before
-the list. Charts are grouped by airport and by type when the addon ships a
-catalogue describing them.
+What it finds is split in two: \ui{Documents} and \ui{Charts}. One addon can
+include one manual and a hundred and fifty charts, which is why the count comes
+before the list. Charts are grouped by airport, and by type when the addon ships
+a catalogue describing them.
 
-The reader has an outline, search inside the document, fit to width and
-bookmarks. A bookmark you do not name takes the page number. The \ui{Detach}
-button pulls the reader out into a separate window.
+The reader has an outline, search, fit to width and bookmarks. A bookmark you do
+not name takes the page number. \ui{Open in a separate window} moves the reader
+out of the tab.
 
 \shot{26-documents.png}{The documents tab: charts grouped by airport on the left,
 the reader in the middle and the outline of the document on the right.}
 
-Charts and manuals start with different gestures: on a chart the wheel zooms and
-dragging moves the page; on a manual both start off. The two toggles on the bar
-say what they do.
+Charts and documents start with different settings: on a chart the mouse wheel
+zooms and dragging moves the page; on a document both start off. The two
+toggles on the toolbar say what they do.
 
 \section{Diagnostics}
 
@@ -516,13 +514,13 @@ enabled together, the result may point to the wrong one, and the panel says so.
 
 \section{Journal}
 
-Every operation that writes to the disk becomes a line in the \ui{Journal}. It
-is append-only, nothing on its screen writes to the disk, and \textbf{the program
-never deletes it}.
+Every operation that writes to the disk becomes a line in the \ui{Journal}. Lines
+are only ever added, nothing on this screen writes to the disk, and \textbf{the
+program never deletes it}.
 
-Each line carries when, which operation, which addon, which library, source,
-destination and result. The \ui{Only what failed} filter narrows the list to
-what went wrong, and the search covers addon, path and operation.
+Each line shows when, which operation, which addon, which library, source,
+destination and result. \ui{Failures only} narrows the list to what went wrong,
+and the search covers addon, path and operation.
 
 \ui{Undo last change}, on the \ui{Library} tab, takes back the whole last
 batch, not one operation inside it.
@@ -534,18 +532,17 @@ The gear in the header opens the options, in five tabs.
 \shot{10-options-profiles.png}{The profiles and libraries tab of the options.}
 
 \begin{description}
-  \item[Profiles and libraries] Adds and removes profiles, switches
-    destinations, registers and unregisters libraries. Unregistering takes the
-    library out of the configuration and deletes no file at all: the links that
-    pointed at it keep working in the simulator, but start showing up as third
-    party links, which the program does not touch. \ui{Categories} says how many
-    folders of that library already carry the category marker and how many would
-    receive it, and marks them or takes every marker back.
-  \item[Links] The link type and the check after copying.
-  \item[Updates] Automatic, notify or manual. The automatic one downloads the new
-    version on its own and applies it when you close the program.
-  \item[Language] English and Brazilian Portuguese. The switch takes effect right
-    away, with no restart.
+  \item[Profiles and libraries] Adds and removes profiles, changes destinations,
+    and adds and removes libraries. Removing a library deletes no files: links
+    that pointed at it keep working in the simulator, but FS Organizer stops
+    managing them. \ui{Categories} says how many category folders of that
+    library are already marked and how many would be, and marks them or removes
+    all markers.
+  \item[Links] The link type and how imports are verified.
+  \item[Updates] Automatic, notify or manual. Automatic downloads new versions
+    and installs them when you close the program.
+  \item[Language] English and Brazilian Portuguese. The change takes effect
+    right away, with no restart.
   \item[About] The version, the licence and the credits.
 \end{description}
 

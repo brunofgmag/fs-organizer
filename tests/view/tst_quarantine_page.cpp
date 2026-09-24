@@ -230,8 +230,8 @@ void QuarantinePageTest::TheActionsOnlyLightUpWhenSomethingIsSelected()
     Fixture f;
     f.Open();
 
-    const QPushButton* restore = ButtonSaying(f.page, QStringLiteral("Restore the selected ones"));
-    const QPushButton* discard = ButtonSaying(f.page, QStringLiteral("Discard the selected ones"));
+    const QPushButton* restore = ButtonSaying(f.page, QStringLiteral("Restore selected"));
+    const QPushButton* discard = ButtonSaying(f.page, QStringLiteral("Discard selected"));
 
     QVERIFY(restore != nullptr);
     QVERIFY(discard != nullptr);

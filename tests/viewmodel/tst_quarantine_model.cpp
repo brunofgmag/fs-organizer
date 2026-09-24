@@ -72,7 +72,7 @@ void QuarantineModelTest::AnItemNeitherSourceKnowsSaysSoInsteadOfShowingAnEmptyC
     model.ShowItems(TwoItems());
 
     QCOMPARE(CellOf(model, 1, QuarantineModel::OriginColumn), QStringLiteral("not recorded"));
-    QCOMPARE(CellOf(model, 1, QuarantineModel::SourceColumn), QStringLiteral("neither has it"));
+    QCOMPARE(CellOf(model, 1, QuarantineModel::SourceColumn), QStringLiteral("neither knows"));
 }
 
 void QuarantineModelTest::NoCellRepeatsItsOwnTextAsATooltip()

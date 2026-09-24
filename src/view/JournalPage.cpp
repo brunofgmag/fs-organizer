@@ -99,8 +99,8 @@ void JournalPage::changeEvent(QEvent* event)
 void JournalPage::RetranslateUi()
 {
     search_->setPlaceholderText(tr("Search addon, path or operation…"));
-    failuresOnly_->setText(tr("Only what failed"));
-    reload_->setText(tr("Read the journal again"));
+    failuresOnly_->setText(tr("Failures only"));
+    reload_->setText(tr("Refresh"));
     panel_->RenameTheFallback(tr("Operation"));
 }
 
@@ -124,8 +124,8 @@ void JournalPage::UpdateSummary()
 {
     const int entries = model_.rowCount({});
 
-    emit SummaryChanged(entries == 0 ? tr("The journal has not recorded any change on the disk yet.")
-                                     : tr("%n operation recorded, from the newest to the oldest.", nullptr, entries));
+    emit SummaryChanged(entries == 0 ? tr("No changes recorded yet.")
+                                     : tr("%n operation recorded, newest first.", nullptr, entries));
 
     emit AsideChanged({});
 

@@ -275,7 +275,7 @@ void JournalPageTest::ReadingItAgainGoesBackToTheJournalInsteadOfTheModel()
     QCOMPARE(TreeOf(f.page)->model()->rowCount({}), 2);
 
     f.journal.appended.push_back(Link(OperationKind::EnableAddon, 4));
-    ButtonSaying(f.page, QStringLiteral("Read the journal again"))->click();
+    ButtonSaying(f.page, QStringLiteral("Refresh"))->click();
 
     QCOMPARE(TreeOf(f.page)->model()->rowCount({}), 3);
 }
@@ -289,8 +289,7 @@ void JournalPageTest::AJournalWithNothingInItSaysSoInsteadOfCountingOperations()
 
     QCOMPARE(TreeOf(f.page)->model()->rowCount({}), 0);
     QVERIFY(!summary.isEmpty());
-    QCOMPARE(summary.back().front().toString(),
-             QStringLiteral("The journal has not recorded any change on the disk yet."));
+    QCOMPARE(summary.back().front().toString(), QStringLiteral("No changes recorded yet."));
 }
 
 void JournalPageTest::ALanguageChangeKeepsTheToolbarAndTheOpenPanel()
@@ -303,7 +302,7 @@ void JournalPageTest::ALanguageChangeKeepsTheToolbarAndTheOpenPanel()
     QCoreApplication::sendEvent(&f.page, &language);
     QCoreApplication::processEvents();
 
-    QVERIFY(ButtonSaying(f.page, QStringLiteral("Read the journal again")) != nullptr);
+    QVERIFY(ButtonSaying(f.page, QStringLiteral("Refresh")) != nullptr);
     QVERIFY(PanelOf(f.page)->isVisible());
     QCOMPARE(PanelTitleOf(f.page), TheNewestOperationIsCalled(f.model));
 }

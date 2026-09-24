@@ -273,7 +273,7 @@ void StartupPageTest::TheLooseStateOffersToTurnItOnInsteadOfShowingAnEmptyTable(
     const QStackedWidget* panes = fixture.page.findChild<QStackedWidget*>();
 
     QCOMPARE(panes->currentIndex(), 2);
-    QVERIFY(ButtonSaying(fixture.page, "Manage these") != nullptr);
+    QVERIFY(ButtonSaying(fixture.page, "Manage startup entries") != nullptr);
     QCOMPARE(fixture.entries.reads, std::size_t{0});
 }
 
@@ -282,7 +282,7 @@ void StartupPageTest::TurningItOnFromTheLooseStateShowsTheEntries()
     Fixture fixture(false);
     fixture.viewModel.Show();
 
-    ButtonSaying(fixture.page, "Manage these")->click();
+    ButtonSaying(fixture.page, "Manage startup entries")->click();
 
     QCOMPARE(fixture.page.findChild<QStackedWidget*>()->currentIndex(), 0);
     QCOMPARE(TableOf(fixture.page)->topLevelItemCount(), 3);
@@ -297,7 +297,7 @@ void StartupPageTest::ALanguageChangeReachesTheToolbarAndTheLooseState()
     QEvent language(QEvent::LanguageChange);
     QCoreApplication::sendEvent(&fixture.page, &language);
 
-    QVERIFY(ButtonSaying(fixture.page, "Manage these") != nullptr);
+    QVERIFY(ButtonSaying(fixture.page, "Manage startup entries") != nullptr);
     QCOMPARE(fixture.page.findChild<QStackedWidget*>()->currentIndex(), 2);
     QCOMPARE(fixture.entries.reads, std::size_t{0});
 }

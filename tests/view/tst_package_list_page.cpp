@@ -172,7 +172,7 @@ void PackageListPageTest::TurnedOffTheScreenSaysSoAndSaysWhereToTurnItOn()
     QVERIFY2(summary.last().first().toString().contains(QStringLiteral("not managed")),
              "the off state is a screen that says where to turn it on, not an absent screen");
 
-    QPushButton* turnOn = ButtonSaying(page, QStringLiteral("Manage it"));
+    QPushButton* turnOn = ButtonSaying(page, QStringLiteral("Manage the package list"));
     QVERIFY2(turnOn != nullptr, "the switch lives on the panel of the feature, so one click turns it on");
 
     turnOn->click();
@@ -219,7 +219,7 @@ void PackageListPageTest::TurnedOffThePairBetweenTwoAddonsStaysOnTheScreenAndSta
     QCOMPARE(f.settings.stored.coexistingAirports.size(), std::size_t{1});
     QVERIFY(f.packageList.switched.empty());
 
-    QVERIFY2(!ButtonSaying(page, QStringLiteral("Turn the simulator's one off"))->isVisibleTo(&page),
+    QVERIFY2(!ButtonSaying(page, QStringLiteral("Disable the simulator's airport"))->isVisibleTo(&page),
              "the buttons that write into the package list have nothing to act on, and a button that can never be "
              "pressed is noise");
 }
@@ -233,7 +233,7 @@ void PackageListPageTest::AnInstallationWhereNobodyTurnedAnythingOffOpensWithAnE
     f.viewModel.Show();
 
     QCOMPARE(TurnedOff(page)->topLevelItemCount(), 0);
-    QVERIFY2(!ButtonSaying(page, QStringLiteral("Turn it back on"))->isEnabled(),
+    QVERIFY2(!ButtonSaying(page, QStringLiteral("Enable again"))->isEnabled(),
              "an empty half is a correct answer, not a broken screen");
 }
 
@@ -260,7 +260,7 @@ void PackageListPageTest::ThePairOfTwoAddonsOffersNoWayToTurnEitherOff()
     QVERIFY(pair != nullptr);
     conflicts->setCurrentItem(pair);
 
-    QVERIFY2(!ButtonSaying(page, QStringLiteral("Turn the simulator's one off"))->isEnabled(),
+    QVERIFY2(!ButtonSaying(page, QStringLiteral("Disable the simulator's airport"))->isEnabled(),
              "between two addons of the library the app offers no action, because turning one off is enabling and "
              "disabling, which the user already does");
 
@@ -305,7 +305,7 @@ void PackageListPageTest::ThePackageTheSimulatorShipsIsTheOnlyOneTheScreenOffers
 
     QVERIFY(!ButtonSaying(page, QStringLiteral("They can coexist"))->isEnabled());
 
-    ButtonSaying(page, QStringLiteral("Turn the simulator's one off"))->click();
+    ButtonSaying(page, QStringLiteral("Disable the simulator's airport"))->click();
 
     QCOMPARE(f.packageList.switched.size(), std::size_t{1});
     QCOMPARE(QString::fromStdString(f.packageList.switched.front().first),
