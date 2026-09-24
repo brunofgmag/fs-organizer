@@ -37,6 +37,11 @@ graphify-out/
 .impeccable/
 
 # Agent instructions
+AGENTS.md
+AGENTS.local.md
+.opencode/
+opencode.json
+opencode.jsonc
 CLAUDE.md
 GEMINI.md
 
