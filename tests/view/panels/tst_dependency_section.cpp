@@ -89,10 +89,10 @@ void DependencySectionTest::TheDeclaredVersionAndTheOneTheLibraryHoldsAppearSide
 
     const QStringList written = EverythingWritten(section);
 
-    QVERIFY(written.contains(QStringLiteral("needs 1.0.0")));
-    QVERIFY(written.contains(QStringLiteral("has 1.0.1")));
-    QCOMPARE(written.filter(QStringLiteral("needs ")).size(), 1);
-    QCOMPARE(written.filter(QStringLiteral("has ")).size(), 1);
+    QVERIFY(written.contains(QStringLiteral("requires 1.0.0")));
+    QVERIFY(written.contains(QStringLiteral("in library 1.0.1")));
+    QCOMPARE(written.filter(QStringLiteral("requires ")).size(), 1);
+    QCOMPARE(written.filter(QStringLiteral("in library ")).size(), 1);
 }
 
 void DependencySectionTest::TheSectionSaysWhereTheListCameFromWhenTheListAnswered()
@@ -134,7 +134,7 @@ void DependencySectionTest::NothingInTheSectionEverCallsADependencyAProblem()
     QVERIFY(!written.contains(QStringLiteral("broken")));
     QVERIFY(!written.contains(QStringLiteral("absent")));
     QVERIFY(!written.contains(QStringLiteral("unsatisfied")));
-    QVERIFY(written.contains(QStringLiteral("not verifiable")));
+    QVERIFY(written.contains(QStringLiteral("cannot be checked")));
 }
 
 QTEST_MAIN(DependencySectionTest)

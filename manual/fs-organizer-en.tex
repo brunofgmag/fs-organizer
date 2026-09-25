@@ -28,400 +28,378 @@
 
 \section{What this program does}
 
-FS Organizer turns Microsoft Flight Simulator addons on and off without moving a
-single file.
+FS Organizer enables and disables Microsoft Flight Simulator addons without
+moving their files.
 
-Your addons live in a folder of your own, outside the simulator, which the
-program calls a \ui{library}. Its subfolders become \ui{categories}. Enabling an
-addon creates a link inside a folder the simulator reads, which the program
-calls a \ui{destination}; disabling removes that link and nothing else. The real
-files never leave the library, and that is why swapping tens of gigabytes of
-content is instant.
-
-The link is an NTFS directory junction. To the simulator it is the folder; to
-you it is an entry FS Organizer creates and removes.
+You keep your addons in a folder outside the simulator, which the program calls
+a \ui{library}. Its subfolders are \ui{categories}. Enabling an addon creates a
+link to it in a folder the simulator reads, called a \ui{destination}.
+Disabling it removes the link. The files stay in the library the whole time, so
+enabling or disabling even a large addon takes no time at all.
 
 \subsection{What the program does not store}
 
-Whether an addon is enabled \textbf{is never written down anywhere}. On every
-scan the program reads the destinations from the disk and answers for what it
-found there. That has a practical consequence: moving folders around from the
-outside, with Explorer or with another program's installer, never leaves the app
-saying one thing while the simulator does another. Read again and it is current.
+The program never writes down which addons are enabled. Every time it scans, it
+looks at the destinations on disk and reports what is there. If you change
+folders by hand, or another program's installer does, click \ui{Refresh} and the
+list matches what the simulator sees.
 
 \subsection{Profile}
 
-A \ui{profile} is one simulator installation with its destinations and its
-libraries. Anyone running Flight Simulator 2020 and 2024 on the same machine has
-two profiles, and the program only touches what is in use: marking another one
-active is what switches the target of everything.
+A \ui{profile} is one simulator installation with its destinations and
+libraries. If you have Flight Simulator 2020 and 2024 on the same computer, you
+have two profiles. The program only changes the profile in use, which you
+choose in \ui{Options}.
 
 \subsection{Link type}
 
-In \ui{Options}, under \ui{Links}, the program offers two types.
+In \ui{Options}, on the \ui{Links} tab, you choose how links are made.
 
 \begin{description}
-  \item[Directory junction] Needs no administrator and crosses local volumes. It
-    is the default, and the only path that has been tested.
-  \item[Symbolic link] Only for a library on a network path, where the junction
-    does not reach. It needs a Windows privilege; without it the program
-    explains the refusal instead of failing quietly.
+  \item[Directory junction] Works across local drives without administrator
+    rights. This is the default, and the one to use unless your library is on
+    a network share.
+  \item[Symbolic link] Only needed for a library on a network share. Windows
+    only allows it with Developer Mode turned on or with administrator rights,
+    and the program tells you when neither is available.
 \end{description}
 
-Switching the type changes new links only. The ones that already exist stay as
-they are.
+Changing the type affects new links only. Existing links stay as they are.
 
 \section{Presets}
 
-Presets come first in this manual because they are the part nobody gets right
-by trial. A preset looks like a list of addons, but it is a list of addons
-\textbf{plus an apply mode}, and the same preset gives three different results
-depending on the mode.
+A preset is a named set of enabled addons. The same preset can be applied in
+three ways, and each gives a different result, so read the plan before you
+apply.
 
 \subsection{What a preset holds}
 
-A preset saves a set of enabled addons under a name. Enable what you want to
-fly with and use \ui{New from enabled addons}.
+To make a preset, enable the addons you want and click \ui{New from enabled
+addons}.
 
-The \ui{Content} column says how many addons it names and how many categories
-they are in. The \ui{Updated} column says when it was last saved.
+The \ui{Content} column shows how many addons the preset names and how many
+categories they are in. The \ui{Updated} column shows when it was last saved.
 
-A preset can also control the simulator's startup entries, covered in
-section~\ref{sec:presets-startup}.
+A preset can also control the simulator's startup entries
+(section~\ref{sec:presets-startup}).
 
-\subsection{An applied preset}
+\subsection{A preset that matches your setup}
 
-The \ui{If applied} column says how many addons would change state if you
-applied that preset now. When the number is zero, the table says
-\ui{Already applied}.
+The \ui{If applied} column shows how many addons would change if you applied
+the preset now, in the mode chosen under \ui{Apply as}.
 
-\textbf{This is always measured as Replace}, even if you mean to apply the
-preset another way. A preset naming three addons, all enabled, shows as applied
-only if \textbf{nothing else} is enabled. If a fourth addon the preset does not
-name is enabled, the preset is not applied, because Replace would disable that
-fourth addon.
+\ui{Matches your setup} appears next to a preset when the enabled addons are
+exactly the ones it names. This check always works as Replace: if one more
+addon is enabled that the preset does not name, the preset no longer matches,
+because Replace would disable that addon. A preset you have just saved matches
+straight away, even though you never applied it.
 
-This is deliberate: the column answers ``is my installation the way this
-preset describes it?'', and only Replace reads a preset as a description of the
-whole installation.
+Because the count follows the chosen mode and the mark does not, a preset can
+match your setup and still show changes. In Disable mode, for example, it would
+disable every addon it names.
 
 \subsection{The three apply modes}
-
-\ui{Apply as} chooses between three readings of the same preset.
 
 \begin{description}
   \item[Replace] Enables the preset's addons and disables everything else.
   \item[Accumulate] Enables the preset's addons and leaves the rest as it is.
-  \item[Disable] Disables the preset's addons. Addons the preset lists as
-    disabled are ignored.
+  \item[Disable] Disables the preset's addons. Entries that the preset marks as
+    disabled are ignored in this mode.
 \end{description}
 
-Before you apply, the \ui{Plan} panel shows what will happen, in five groups
-that add up to the whole count:
+Before you apply, the \ui{Plan} panel splits the result into five groups:
 
 \begin{itemize}
   \item \ui{To enable}: addons in the preset that are disabled now.
-  \item \ui{To disable}: addons going off, either because the preset says so or
-    because Replace leaves them out.
-  \item \ui{Already as the preset asks}: nothing happens to them.
+  \item \ui{To disable}: addons the preset disables, or that Replace disables
+    because the preset does not name them.
+  \item \ui{Already as the preset asks}: addons that stay as they are.
   \item \ui{Not found in the library}: addons the preset names that are no
-    longer in the library. The program lists them and applies the rest.
+    longer in the library. The rest of the preset is still applied.
   \item \ui{Requested, but not applied}: startup entries the preset asks for
     that could not be changed.
 \end{itemize}
 
-\shot{03b-presets-plan.png}{The plan of the ``Voo curto'' preset, read as
-Replace. The five groups add up to the whole count, and the sentence under them
-says the 4 not in the preset are among the 4 being disabled.}
+\shot{03b-presets-plan.png}{The plan of the ``Voo curto'' preset in Replace
+mode. The sentence under the groups says the 4 addons outside the preset are
+part of the 4 being disabled.}
 
 \subsection{What Replace disables by omission}
 
-Applying as Replace disables the addons that are enabled now and that the
-preset does not name. They show up under \ui{Disabled by Replace}, and
-\ui{Show them} opens the list.
+In Replace mode, addons that are enabled now but not named in the preset are
+disabled. They are listed under \ui{Disabled by Replace}, and \ui{Show them}
+opens the list.
 
-\textbf{They are already included in the plan's count.} If the plan says
-``disables 12'' and the list has 5 names, the total is still 12: 5 left out of
-the preset and 7 the preset asks to disable.
+They are already part of the plan's count. If the plan says it disables 12 and
+the list has 5 names, 12 addons are disabled in total: those 5, plus 7 the
+preset itself disables.
 
 \subsection{The return preset}
 
-Before applying any preset, the program \textbf{saves what is enabled at that
-moment} as the profile's return preset. \ui{Back to the previous set} applies
-it.
+Just before applying a preset, the program saves the addons enabled at that
+moment as the profile's return preset. \ui{Back to the previous set} applies it.
+If the return preset cannot be saved, for example because the presets folder is
+read-only, nothing is applied.
 
-If it cannot be saved, because the presets folder is full or read-only,
-\textbf{nothing is applied}, so there is always a way back.
-
-The return is not the same as \ui{Undo last change}:
+This is different from \ui{Undo last change}:
 
 \begin{description}
-  \item[Undo last change] Undoes exactly what you just applied. An import or a
-    quarantine operation done afterwards uses up the undo.
-  \item[Back to the previous set] Applies the return preset, which is a preset
-    like any other. It survives imports and quarantine operations, because it
-    does not depend on the journal.
+  \item[Undo last change] Undoes what you just applied. It stops being
+    available once you import an addon, work in the quarantine or change a
+    category.
+  \item[Back to the previous set] Applies the return preset like any other
+    preset. It stays available after imports and quarantine work.
 \end{description}
-
-Applying a preset is a single batch: \ui{Undo last change} takes all of it
-back at once.
 
 \subsection{Presets and startup entries}
 \label{sec:presets-startup}
 
-On the preset's \ui{Startup} tab, a checkbox makes the preset also control the
-programs the simulator launches with itself. Checking it saves the entries
-enabled at that moment, and you can then enable or disable each one there.
+On the preset's \ui{Startup} tab, a checkbox lets the preset also control the
+programs the simulator launches with itself. Checking it saves the startup
+entries that are enabled at that moment. You can then enable or disable each
+one there.
 
-If startup management is off in \ui{Options}, the preset's entries \textbf{are
-not applied}, and the program says how many. The rest of the preset is applied
-normally.
+If startup management is off in \ui{Options}, the preset's startup entries are
+not applied, and the program tells you how many were skipped. The addons are
+applied as usual.
 
-If an entry the preset names is no longer in the simulator's file, it is listed
-instead of recreated. The program never adds a startup entry.
+If an entry the preset names is no longer in the simulator's file, the program
+lists it. It never adds startup entries.
 
 \section{First setup}
 
-On the first run the program looks for simulator installations on the computer
-and asks for two things.
+The first time you open the program, it looks for simulator installations and
+asks for two things:
 
 \begin{description}
-  \item[The simulator] Choose the installation this profile will manage from
-    the list, or choose a folder yourself. If that folder does not look like the
-    simulator's \where|Community| folder, the program says so and uses it
-    anyway.
+  \item[The simulator] Pick the installation for this profile from the list, or
+    choose a folder yourself. If the folder does not look like the simulator's
+    \where|Community| folder, the program says so and uses it anyway.
   \item[The library] Choose the folder outside the simulator where you keep
     your addons. Its subfolders become categories.
 \end{description}
 
 When you add a library with a long path, the program shows how many characters
-the path already takes and how many are left for the addon, next to a short
-path for comparison. Nothing is blocked: addons that go past the Windows limit
-say so when it matters, and \ui{Diagnostics} shows the longest path in each
-library.
+the path already uses and compares it with a short path. Windows refuses some
+operations, including the Recycle Bin, on paths longer than 260 characters.
+The program does not block you: it warns when a path gets in the way, and
+\ui{Diagnostics} shows the longest path in each library.
 
-If you come from MSFS Addons Linker, you can bring its configuration over in
-\ui{Options}, with \ui{Import from MSFS Addons Linker}. No files are moved or
-deleted: importing adds the libraries, categories and presets that are not here
-yet.
+If you used MSFS Addons Linker before, open \ui{Options} and use
+\ui{Import from MSFS Addons Linker}. It adds the libraries, categories and
+presets that are not here yet. No files are moved or deleted.
 
 \section{Library}
 
-The \ui{Library} tab is the tree of your addons, grouped by the categories that
-are the subfolders of the root. The checkbox on each row turns it on and off.
+The \ui{Library} tab shows your addons as a tree, grouped by category. The
+checkbox on each row enables or disables the addon.
 
-\shot{01-library.png}{The library, with the categories open and the panel of the
-selected addon on the right.}
+\shot{01-library.png}{The library, with the categories open and the selected
+addon's panel on the right.}
 
 \subsection{The columns}
 
 \begin{description}
   \item[Addon] The folder name.
-  \item[Version] What the addon's \where|manifest.json| declares.
-  \item[Enabled] Whether a link to it exists in a destination right now.
-  \item[Destination] Which destination it is linked in, and whether that
-    destination is pinned.
-  \item[Link] Whether the link finds the folder. When it does not, the link is
+  \item[Version] The version declared in the addon's \where|manifest.json|.
+  \item[Enabled] Whether the addon has a link in a destination right now.
+  \item[Destination] Where the link is, and whether the destination is pinned.
+  \item[Link] Whether the link works. If its folder is missing, the link is
     broken.
 \end{description}
 
-Three marks appear on a row when something is out of place: \ui{Broken link},
-\ui{In conflict} and \ui{Two copies}. Each one has a section in this manual.
+A row can carry one of three marks: \ui{Broken link}, \ui{In conflict} or
+\ui{Two copies}. The sections on destinations and quarantine explain them.
 
 \subsection{Enabling and disabling in bulk}
 
-Selecting several rows and using \ui{Enable selected} or \ui{Disable selected}
-does it all in one batch. Past a certain number, the program asks
-first.
+Select several rows and use \ui{Enable selected} or \ui{Disable selected}. For
+more than 10 addons, the program asks first. \ui{Undo last change} undoes the
+whole batch.
 
-If an addon's spot is taken by another addon of yours, the program does not
-refuse: it offers the \textbf{swap}, which goes out and comes in as one
-operation, with one line in the journal and one undo.
+If another addon of yours already uses the folder name in the destination, the
+program offers to swap them: it disables that one and enables yours in a single
+step, which you can undo in one go.
 
 \subsection{Categories}
 
-The tree's context menu creates, renames and deletes categories, and moves
-addons between them. Only an empty category can be deleted.
+Right-click the tree to create, rename or delete a category, or to move addons
+between categories. Only an empty category can be deleted.
 
-\ui{Suggest categories} reads rules about the folder name and about the
-\where|manifest.json| and proposes moving whatever is out of place. The rules
-that are reliable come checked; the livery rule is often wrong, so it comes
-unchecked: review it before applying.
+\ui{Suggest categories} looks at folder names and \where|manifest.json| files
+and proposes where to move each addon. The reliable rules come checked. The
+livery rule is often wrong, so it comes unchecked: review it before applying.
 
-A folder counts as a category while it groups addons, and the program writes a
-hidden \where|.fsorg-category| inside the ones it knows about so that a category
-which loses its last addon keeps being one. It marks them when it registers the
-library, and \ui{Categories} in the options marks them again later.
+The program puts a hidden \where|.fsorg-category| file in each category folder
+it knows about, so an empty category is still recognized as one. It marks them
+when you add the library, and \ui{Categories} in the options can mark them
+again or remove every marker.
 
-A folder that groups no addon and carries no \where|manifest.json| of its own is
-treated as an addon, so it can be enabled, moved and deleted like any other. That
-is what a converted package the simulator writes beside yours looks like, and
-what a scenery object library that ships without a manifest looks like too.
+A folder with no addons inside and no \where|manifest.json| of its own counts as
+an addon, so you can enable, move and delete it like any other. Converted
+packages that the simulator writes, and scenery object libraries shipped
+without a manifest, look like this.
 
 \subsection{Pinning the destination}
 
-By default an addon is linked in the profile's default destination. \ui{Always
-use}, followed by a destination, ties an addon or a whole category to it. When a pinning
-names a folder that has stopped being a destination of the profile, the program
-says so and uses the default destination while that is true, without deleting
-the pinning from the configuration.
+Addons are linked in the profile's default destination. \ui{Always use}
+followed by a destination pins an addon, or a whole category, to that
+destination. If a pinned destination is removed from the profile, the program
+tells you and uses the default destination until you choose another. The pin
+itself is kept.
 
 \subsection{Repointing}
 
-When a link exists but points at the wrong place, or at a folder that is gone,
-\ui{Repoint to the library} fixes it. Repairing never touches the real files:
-only the reparse node is rewritten.
+If a link points to the wrong place, or to a folder that no longer exists,
+\ui{Repoint to the library} fixes it. Only the link changes; the addon's files
+are not touched.
 
 \section{Destinations}
 
-The \ui{Destinations} tab shows everything inside the folders the simulator
-reads, including what is not yours. Each entry gets a classification.
+The \ui{Destinations} tab lists everything in the folders the simulator reads,
+including folders you did not add through FS Organizer. Each entry has a
+classification:
 
-\shot{02-community.png}{The destinations, with the classification filter at the top
-and the count of each kind in the footer.}
+\shot{02-community.png}{The destinations, with the classification filter at the
+top and the count of each kind at the bottom.}
 
 \begin{description}
   \item[Managed] The simulator loads it from your library. This is the normal
     state.
-  \item[External] A regular folder another program installed, not in a library
-    yet.
-  \item[Divergent] The other program put its own copy back, so there are two
-    copies.
+  \item[External] A regular folder installed by another program, not in a
+    library yet.
+  \item[Divergent] The program that installed the addon put its own copy back,
+    so there are two copies.
   \item[Vanished] The library copy is gone, removed by the other program. There
-    is nothing to repair: the files no longer exist on this computer.
+    is nothing to repair: the files are no longer on this computer.
   \item[Broken] The link points to a folder that does not exist.
-  \item[Unavailable] The drive is not connected right now. It can come back, so
-    the program offers no cleanup.
+  \item[Unavailable] The drive is not connected. It may come back, so the
+    program does not offer to clean it up.
   \item[Unmanaged] A regular folder, not in a library yet.
   \item[Duplicated] Linked in more than one destination.
   \item[Substituted] Something wrote a regular folder over a link this program
-    made. The simulator loads that folder and ignores the library copy.
+    made. The simulator loads that folder, and enabling, presets and the culprit
+    search no longer reach your library copy.
 \end{description}
 
-The filter at the top narrows the list by classification, and \ui{Select all
-shown} selects exactly what is visible.
+The filter at the top shows one classification at a time, and \ui{Select all
+shown} selects exactly what is on screen.
 
-\subsection{Taking over another program's folder}
+\subsection{Importing another program's folder}
 
 \ui{Import this folder} moves the folder into your library and leaves a link in
-its place. From then on it is an addon of yours like any other.
+its place, so the addon becomes one of yours.
 
-The risk is that \textbf{the other program will not know about the link}. Its
-next update may write into the link, or replace it with a regular folder and
-leave you with two copies. When that happens, the entry shows up as
-\ui{Divergent} and the program asks which copy to keep.
+The other program will not know about the link. Its next update may write into
+the link, or replace it with a regular folder and leave you with two copies.
+When that happens, the entry shows as \ui{Divergent} and the program asks which
+copy to keep.
 
-You can give the addon back to the program that installed it later, through
-\ui{Delete from the library}.
+To give the addon back to the program that installed it, use \ui{Delete from
+the library}.
 
 \section{Importing}
 
-Importing copies a regular folder into the library and leaves a link in its
-place. The original is removed only after the copy is verified.
+Importing copies a regular folder into the library and leaves a link where it
+was. The original is removed only after the copy has been verified. The journal
+records each of the five steps:
 
-The operation has five steps, and the journal records each one:
-
-\shot{27-community-import.png}{The import dialog, which says how much is about to
-be copied, into which library and category, and where the addon will end up.}
+\shot{27-community-import.png}{The import dialog: how much will be copied, into
+which library and category, and where the addon will end up.}
 
 \begin{enumerate}
   \item Copy to a temporary folder.
-  \item Check the copy.
-  \item Put the copy in place.
-  \item Remove the source folder.
+  \item Verify the copy.
+  \item Move the copy into place.
+  \item Remove the original folder.
   \item Create the link in the destination.
 \end{enumerate}
 
-While the copy runs, a window shows which folder it is on, how far it has got
-and a \ui{Cancel} button. Cancelling deletes nothing: what was already copied
-stays where it is, for the resume.
+While the copy runs, a window shows the current folder, the progress and a
+\ui{Cancel} button. Cancelling deletes nothing: what was already copied is kept,
+so the import can be resumed later.
 
-\subsection{Check after copying}
+\subsection{Verify after copying}
 
-In \ui{Options}, under \ui{Links}, the check comes in two forms.
+On the \ui{Links} tab in \ui{Options}, you choose how the copy is verified.
 
 \begin{description}
-  \item[By structure] Checks the count and the size of every file. It is the
-    default.
-  \item[By hash] Reads both sides in full and compares the bytes, which catches
-    a change the size hides. It makes an import several times slower, and the
-    number of files weighs more than their size.
+  \item[By structure] Compares the number and size of the files. This is the
+    default and it is fast.
+  \item[By hash] Compares the content of every file. It catches more, but
+    imports become several times slower, especially with many small files.
 \end{description}
 
-If the copy does not match, nothing is removed.
+If the copy does not match, the original is not removed.
 
-\subsection{Half finished imports}
+\subsection{Unfinished imports}
 
-If an import is interrupted, the next time the program opens it offers three
-choices: resume, discard the partial copy, or leave it as is. The original files
-are still where they were, and nothing was removed from the destination.
+If an import is interrupted, the program offers three choices the next time it
+opens: resume the import, discard the partial copy, or leave it as it is. The
+original folder is untouched in every case.
 
-If the interrupted operation was a conflict resolution, the copy can only be
-discarded, because both copies are still in place.
+If the interrupted operation was a conflict resolution, the partial copy can
+only be discarded, because both copies are still in place.
 
 \section{Quarantine}
 
 When you resolve a conflict between two copies of an addon, the copy you do not
-keep goes to the quarantine instead of being deleted. \textbf{Nothing leaves the
-quarantine unless you ask}, and nothing is deleted on the way in.
+keep goes to the quarantine instead of being deleted. Items stay there until
+you restore or discard them.
 
-Next to each item the program records where it came from. That record does not
-depend on the journal, so an item can be restored even if the journal is gone.
-The table shows both sources, \ui{The record says} and \ui{The Journal says},
-and flags when they disagree.
+For each item, the program records where it came from, in a file next to the
+item. That record does not depend on the journal, so you can restore an item
+even if the journal is lost. The table shows both sources, \ui{The record says}
+and \ui{The Journal says}, and flags any disagreement.
 
-\shot{05-quarantine.png}{The quarantine, with the origin of each item and the flag
-for when the record and the journal disagree.}
+\shot{05-quarantine.png}{The quarantine, with each item's origin and a flag
+where the record and the journal disagree.}
 
-\ui{Restore} sends each folder back to where it came from. Nothing is
-overwritten: conflicts are listed with both versions, and replacing moves what
-is there to the quarantine. \ui{Discard} deletes permanently, and asks first.
+\ui{Restore} puts each folder back where it came from. If something is already
+there, the dialog shows both versions and you decide; replacing moves the
+current folder to the quarantine. \ui{Discard} deletes the item permanently,
+after asking.
 
 \section{Deleting an addon from the library}
 
-\ui{Delete} offers three routes, and says up front when one of them will not
-work.
+\ui{Delete} offers three ways to remove an addon, and tells you in advance when
+one of them will not work.
 
 \begin{description}
-  \item[Move to the Recycle Bin] You can restore it from the Recycle Bin. The
-    program refuses this route when the selection does not fit in the Recycle Bin
-    of that volume, or when the addon holds a path past the 260 characters the
-    Recycle Bin stops at. Windows may remove older items from the Bin to make
-    room.
+  \item[Move to the Recycle Bin] You can restore the addon from the Recycle Bin.
+    This option is refused when the addon does not fit in that drive's Recycle
+    Bin, or when it has a path longer than the 260 characters the Recycle Bin
+    accepts. Windows may remove older items from the Recycle Bin to make room.
   \item[Delete permanently] This cannot be undone.
   \item[Give it back to the program that installed it] Only offered for an
-    addon that came from another program. The files move back to the folder
-    that program keeps them in, and leave the library.
+    addon imported from another program's folder. The files go back to that
+    folder and leave the library.
 \end{description}
 
-Turning the addon off is part of the deletion and happens because you asked for
-it: the link goes with the addon.
+If the addon is enabled, it is disabled first.
 
 \section{Simulator}
 
 The \ui{Simulator} tab has two panels, and both change files that belong to the
-simulator. For both, the program keeps a backup of the file next to it, and
-neither changes anything while the simulator is running.
+simulator. Before changing one, the program saves a backup copy next to it.
+Neither panel changes anything while the simulator is running. Both start
+unmanaged, and until then the program does not read or write the file: click
+\ui{Manage startup entries} or \ui{Manage the package list} to turn each one on.
 
 \subsection{Startup entries}
 
-The simulator has a file (\where|EXE.xml|) that lists the programs it launches
-with itself. The \ui{Startup entries} panel shows them and lets you enable or
-disable each one without editing XML.
-
-The program \textbf{only enables or disables entries that already exist}. It
-never adds, removes or reorders them.
+The simulator's \where|EXE.xml| file, next to its \where|UserCfg.opt|, lists the
+programs it launches with itself. The \ui{Startup entries} panel shows them and
+lets you enable or disable each one without editing XML. The program only
+enables or disables entries that already exist. It never adds, removes or
+reorders them.
 
 \shot{19-simulator-startup.png}{The startup entries, with the program each one
 launches and its switch.}
 
-This panel starts off, and while it is off the program neither reads nor writes
-that file.
-
-When you disable an addon that has a startup entry, the program warns first:
-if the entry stayed enabled, the simulator would keep trying to launch a program
-that is no longer there. Disabling both is a single operation, with one line in
-the journal and one undo.
+When you disable an addon that has a startup entry, the program warns you:
+otherwise the simulator would keep trying to launch a program that is no longer
+there. You can disable both in one step, which you can undo in one go.
 
 \subsection{Package list}
 
@@ -429,146 +407,129 @@ The simulator ships its own airports. When one of your airports covers the same
 place as one of them, the \ui{Package list} panel shows the pair and lets you
 disable the simulator's airport.
 
-Disabling it changes \textbf{one value} in the package list. Nothing is added,
-removed or reordered, and an entry without that value is left alone rather than
-edited, because invalid XML makes the simulator reset the whole list.
+This changes one value in the simulator's package list. Nothing is added,
+removed or reordered. An entry that does not have that value is left alone,
+because an invalid file makes the simulator reset the whole list.
 
-For two addons \textbf{of your own}, the program only shows the pair: to choose
-one, disable the other on the \ui{Library} tab.
-
-This panel also starts off, and while it is off the file is neither read nor
-written.
+When two of your own addons cover the same airport, the program only shows the
+pair. To keep just one, disable the other on the \ui{Library} tab.
 
 \section{Documents}
 
-The \ui{Documents} tab finds the PDFs your addons include and opens them inside
-the program. \ui{Scan the library} looks for PDFs in every addon, and the result
+The \ui{Documents} tab finds the PDFs that come with your addons and opens them
+in the program. \ui{Scan the library} looks for PDFs in every addon. The result
 is saved, so later scans are quick.
 
-What it finds is split in two: \ui{Documents} and \ui{Charts}. One addon can
-include one manual and a hundred and fifty charts, which is why the count comes
-before the list. Charts are grouped by airport, and by type when the addon ships
-a catalogue describing them.
+PDFs are split into \ui{Documents} and \ui{Charts}. Charts are grouped by
+airport, and also by type when the addon includes a catalogue of them. One
+addon can bring a manual and a hundred and fifty charts, so each group shows
+its count first.
 
 The reader has an outline, search, fit to width and bookmarks. A bookmark you do
-not name takes the page number. \ui{Open in a separate window} moves the reader
+not name is named after its page. \ui{Open in a separate window} moves the reader
 out of the tab.
 
 \shot{26-documents.png}{The documents tab: charts grouped by airport on the left,
-the reader in the middle and the outline of the document on the right.}
+the reader in the middle and the document outline on the right.}
 
-Charts and documents start with different settings: on a chart the mouse wheel
-zooms and dragging moves the page; on a document both start off. The two
-toggles on the toolbar say what they do.
+On a chart, the mouse wheel zooms and dragging moves the page. On a document,
+both start off. The two buttons on the toolbar switch them.
 
 \section{Diagnostics}
 
-The \ui{Diagnostics} tab reports what the scan found. Every number shows when it
-was measured, and you can measure again at any time.
+The \ui{Diagnostics} tab shows what the program found on disk. Each section
+shows when it was measured, and you can measure it again at any time.
 
-\shot{09-diagnostics-size.png}{The size on disk section, with the total per category
-and per addon, and the time of the measurement.}
+\shot{09-diagnostics-size.png}{The size on disk section, with the total per
+category and per addon, and when it was measured.}
 
 \begin{description}
   \item[Destination entries] How many entries there are of each kind, and the
     longest path in each library.
-  \item[Broken or unavailable] What is broken and what is on a disconnected
+  \item[Broken or unavailable] Broken links and entries on a disconnected
     drive, with a button to repair the broken links.
-  \item[Quarantine] How much space the quarantine takes. Nothing is emptied from
-    here.
-  \item[Size on disk] How much each category and each addon takes. It may take a
-    few seconds; \ui{Stop} stops after the addon being measured.
-  \item[Airports in the scenery] Scans the scenery of every addon and sorts it
-    into addons with an airport code, with an unreadable airport record, with
-    navigation data instead of scenery, and without an airport record.
-  \item[Modules loaded] Reads the report the simulator writes after a slow load.
-    The simulator does not report loading time per package, so this shows which
-    module each package loaded and how much memory it holds.
+  \item[Quarantine] How much space the quarantine uses.
+  \item[Size on disk] How much each category and addon takes up. It may take a
+    few seconds; \ui{Stop} stops after the current addon.
+  \item[Airports in the scenery] Scans each addon's scenery and groups addons
+    by what it finds: an airport code, an airport record that cannot be read,
+    navigation data instead of scenery, or no airport record.
+  \item[Modules loaded] Reads the report the simulator writes after a slow
+    load. The simulator does not report loading time per package, so this
+    shows which module each package loaded and how much memory it uses.
 \end{description}
 
 \subsection{Finding the culprit}
 
-When the simulator crashes and you do not know which addon causes it,
-\ui{Find the culprit} searches by halves. It disables half of your addons, you
-launch the simulator and answer \ui{It crashed} or \ui{It worked}, and each
-round rules out half of the suspects.
+When the simulator crashes and you do not know which addon is responsible,
+\ui{Find the culprit} narrows it down by halves. In each round, the program
+enables part of your addons, you launch the simulator and answer \ui{It crashed}
+or \ui{It worked}, and half of the remaining suspects are ruled out.
+
+\shot{31-diagnostics-bisection.png}{The culprit search, with the current round,
+what has been ruled out, and the two answers.}
 
 Before you start:
 
-\shot{31-diagnostics-bisection.png}{The search for the culprit, with the current
-round, what has been ruled out and the two answers the user gives.}
-
 \begin{itemize}
-  \item The search works on \textbf{units}: one addon, or a group of addons that
-    must stay together because they share a model folder. The panel says why a
-    group is together, and offers to split it when that is safe.
-  \item The first round disables \textbf{all} your addons, to tell whether the
-    cause is among them at all.
+  \item The search works on units. A unit is one addon, or a group of addons
+    that must stay together, for example because they share a model folder. The
+    panel says why a group is together, and offers to split it when that is
+    safe.
+  \item The first round disables all your addons, to find out whether the cause
+    is among them at all.
   \item Your setup is saved before the first round and restored when the search
-    ends, however it ends. If the program is closed during the search, it offers
-    to restore it the next time it opens.
+    ends, however it ends. If the program closes during the search, it offers
+    to restore your setup the next time it opens.
+  \item The search assumes a single culprit. If the crash only happens when two
+    addons are enabled together, the result may point to the wrong one.
 \end{itemize}
-
-The search assumes a single culprit. If the crash only happens with two addons
-enabled together, the result may point to the wrong one, and the panel says so.
 
 \section{Journal}
 
-Every operation that writes to the disk becomes a line in the \ui{Journal}. Lines
-are only ever added, nothing on this screen writes to the disk, and \textbf{the
-program never deletes it}.
+Every operation that changes files on disk adds a line to the \ui{Journal}.
+Lines are only ever added, and the program never deletes the journal.
 
-Each line shows when, which operation, which addon, which library, source,
-destination and result. \ui{Failures only} narrows the list to what went wrong,
-and the search covers addon, path and operation.
+Each line shows when it happened, the operation, the addon, the library, the
+source, the destination and the result. \ui{Failures only} shows just what went
+wrong, and the search box looks in addon names, paths and operations.
 
-\ui{Undo last change}, on the \ui{Library} tab, takes back the whole last
-batch, not one operation inside it.
+\ui{Undo last change}, on the \ui{Library} tab, undoes the whole last change,
+not a single line of it.
 
 \section{Options}
 
-The gear in the header opens the options, in five tabs.
+The gear button in the header opens the options. They have five tabs.
 
-\shot{10-options-profiles.png}{The profiles and libraries tab of the options.}
+\shot{10-options-profiles.png}{The profiles and libraries tab.}
 
 \begin{description}
-  \item[Profiles and libraries] Adds and removes profiles, changes destinations,
-    and adds and removes libraries. Removing a library deletes no files: links
-    that pointed at it keep working in the simulator, but FS Organizer stops
-    managing them. \ui{Categories} says how many category folders of that
-    library are already marked and how many would be, and marks them or removes
-    all markers.
-  \item[Links] The link type and how imports are verified.
-  \item[Updates] Automatic, notify or manual. Automatic downloads new versions
+  \item[Profiles and libraries] Choose the profile in use, add or remove
+    profiles and libraries, and change destinations. Removing a library deletes
+    no files: its links keep working in the simulator, but FS Organizer stops
+    managing them. \ui{Categories} shows how many category folders are marked
+    and lets you mark them or remove the markers.
+  \item[Links] The link type, and how imports are verified.
+  \item[Updates] Automatic, notify, or manual. Automatic downloads new versions
     and installs them when you close the program.
-  \item[Language] English and Brazilian Portuguese. The change takes effect
-    right away, with no restart.
+  \item[Language] English or Brazilian Portuguese. The change is immediate.
   \item[About] The version, the licence and the credits.
 \end{description}
 
 \section{Where things are kept}
 
-The whole configuration of the program lives under
-\where|%LOCALAPPDATA%\fs-organizer|, like this:
+The program keeps its data in \where|%LOCALAPPDATA%\fs-organizer|.
+\where|settings.json| holds the profiles, libraries, destinations and your
+choices. \where|journal\operations.jsonl| is the journal. \where|presets| holds
+one file per preset, plus each profile's return preset. \where|bisection| holds
+the state of a culprit search in progress, and is deleted when the search ends.
 
-\where|settings.json| holds the profiles, the libraries, the destinations and
-your choices.
+None of your addons are stored there. If you delete that folder, you lose the
+configuration and the presets, but no addon: the program finds them again by
+reading the destinations and libraries.
 
-\where|journal\operations.jsonl| is the journal.
-
-\where|presets| holds the presets, one file per preset, plus the return preset of
-each profile.
-
-\where|bisection| holds the state of a search for the culprit that is under way.
-It stops existing when the search ends.
-
-None of your addon files live there. Deleting that folder deletes the
-configuration and the presets, and touches no addon: the program rebuilds what
-it knows by reading the destinations and the libraries again.
-
-One thing the program writes outside that folder: the hidden
-\where|.fsorg-category| it leaves in the folders of your library that group
-addons. It holds nothing, and its whole job is to keep a category counting as one
-after it empties. \ui{Categories} in the options takes every one of them back.
+The only thing the program writes outside that folder is the hidden
+\where|.fsorg-category| marker in your category folders. \ui{Categories} in
+the options removes all of them.
 
 \end{document}

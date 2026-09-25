@@ -1,6 +1,7 @@
 #include "view/shell/ImportProgressDialog.h"
 
 #include <algorithm>
+#include <cstdint>
 
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressBar>
@@ -13,6 +14,8 @@
 
 namespace
 {
+    constexpr std::uintmax_t kWidestSize = (std::uintmax_t{1} << 30) - 1;
+
     QProgressBar* ABarThatStartsEmpty(QWidget* on)
     {
         auto* bar = new QProgressBar(on);
@@ -65,8 +68,10 @@ ImportProgressDialog::ImportProgressDialog(const int folders, QWidget* over) : Q
     connect(cancel_, &QPushButton::clicked, this, &ImportProgressDialog::Cancelled);
 
     const QMargins around = column->contentsMargins();
-    const int widest = std::max(copyLine_->fontMetrics().horizontalAdvance(copyLine_->text()),
-                                checkLine_->fontMetrics().horizontalAdvance(checkLine_->text()));
+    const QString widestBytes = tr("%1 of %2").arg(AsSize(kWidestSize), AsSize(kWidestSize));
+    const int widest = std::max({copyLine_->fontMetrics().horizontalAdvance(copyLine_->text()),
+                                 checkLine_->fontMetrics().horizontalAdvance(checkLine_->text()),
+                                 bytesLine_->fontMetrics().horizontalAdvance(widestBytes)});
 
     setMinimumWidth(widest + around.left() + around.right());
 

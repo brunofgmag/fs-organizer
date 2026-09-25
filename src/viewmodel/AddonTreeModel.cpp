@@ -443,7 +443,7 @@ QString AddonTreeModel::ToolTipOf(const Reading& reading) const
         return reading.conflict->theProvenanceIsAnotherProgram
             ? tr("The program that installed this addon put its own copy back in: %1")
                   .arg(AsText(reading.conflict->provenancePath))
-            : tr("A folder with this name already exists in the destination: %1")
+            : tr("A regular folder with this name already exists in the destination: %1")
                   .arg(AsText(reading.conflict->provenancePath));
     }
 

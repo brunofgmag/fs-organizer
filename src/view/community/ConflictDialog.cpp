@@ -49,9 +49,10 @@ namespace
         return Wording{
             .title = ConflictDialog::tr("The link was replaced"),
             .explanation = QObject::tr("This folder was a link to your library until something wrote a regular folder "
-                                       "over it. The simulator now loads that folder and ignores your library copy."),
+                                       "over it. The simulator now loads that folder, and enabling, presets and the "
+                                       "culprit search no longer reach your library copy."),
             .provenanceSide = QObject::tr("Folder in place of the link"),
-            .keepTheProvenanceOne = QObject::tr("Move this folder into the library"),
+            .keepTheProvenanceOne = QObject::tr("Move this folder into the library and link it back"),
             .warning = QObject::tr("The library copy is enabled in %1. It is moved to the quarantine first.")};
     }
 

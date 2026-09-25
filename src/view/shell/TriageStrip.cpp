@@ -85,7 +85,7 @@ void TriageStrip::RetranslateUi()
 {
     broken_.action->setText(tr("Repair broken links…"));
     conflicts_.action->setText(tr("Resolve conflicts…"));
-    duplicated_.action->setText(tr("Show duplicated…"));
+    duplicated_.action->setText(tr("Show duplicates…"));
     unmanaged_.action->setText(tr("Import into the library…"));
 
     broken_.label->setText(tr("%n broken link", nullptr, static_cast<int>(shown_.broken)));

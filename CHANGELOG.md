@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.54.13](https://github.com/brunofgmag/fs-organizer/compare/v0.54.12...v0.54.13) (2026-09-24)
+
+
+* keep the widths and the tests right after the interface text rewrite ([#191](https://github.com/brunofgmag/fs-organizer/issues/191)) ([9d87228](https://github.com/brunofgmag/fs-organizer/commit/9d872286e7b17373cda2e4b004b7946b01a007bd))
+
+
+### Bug Fixes
+
+* keep the widths and the tests right after the interface text rewrite ([3414d68](https://github.com/brunofgmag/fs-organizer/commit/3414d68891778c517f11e81ff1181c11ab5eb450)) ([9d87228](https://github.com/brunofgmag/fs-organizer/commit/9d872286e7b17373cda2e4b004b7946b01a007bd))
+
 ## [0.54.12](https://github.com/brunofgmag/fs-organizer/compare/v0.54.11...v0.54.12) (2026-09-24)
 
 
