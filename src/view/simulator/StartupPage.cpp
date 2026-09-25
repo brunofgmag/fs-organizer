@@ -176,9 +176,9 @@ void StartupPage::RetranslateUi() const
     leaveAlone_->setText(tr("Stop managing startup entries"));
     entries_->setHeaderLabels({tr("Program"), tr("Path"), tr("State")});
 
-    nothingToShow_->Retell(
-        tr("No startup entries"),
-        tr("The simulator's startup file (EXE.xml) was not found for this profile, or it lists no programs."));
+    nothingToShow_->Retell(tr("No startup entries"),
+                           tr("The simulator's startup file (EXE.xml) was not found next to this profile's "
+                              "UserCfg.opt, or it lists no programs."));
     leftAlone_->Retell(
         tr("The startup entries are not managed"),
         tr("When managed, FS Organizer reads the simulator's startup file, lists the programs it launches with itself, "

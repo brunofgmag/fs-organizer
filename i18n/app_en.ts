@@ -116,8 +116,8 @@
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="407"/>
-        <source>A folder with this name already exists in the destination: %1</source>
-        <translation>A folder with this name already exists in the destination: %1</translation>
+        <source>A regular folder with this name already exists in the destination: %1</source>
+        <translation>A regular folder with this name already exists in the destination: %1</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="417"/>
@@ -1006,8 +1006,8 @@ Also in the library: %2</translation>
         <translation>Substituted</translation>
     </message>
     <message>
-        <source>Something wrote a regular folder over the link this app made. The simulator now loads that folder and ignores your library copy. Choose which copy to keep.</source>
-        <translation>Something wrote a regular folder over the link this app made. The simulator now loads that folder and ignores your library copy. Choose which copy to keep.</translation>
+        <source>Something wrote a regular folder over the link this app made. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy. Choose which copy to keep.</source>
+        <translation>Something wrote a regular folder over the link this app made. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy. Choose which copy to keep.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="115"/>
@@ -1684,8 +1684,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/panels/DependencySection.cpp" line="112"/>
-        <source>installed %1</source>
-        <translation>installed %1</translation>
+        <source>in library %1</source>
+        <translation>in library %1</translation>
     </message>
 </context>
 <context>
@@ -2612,8 +2612,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="91"/>
-        <source>Link another program&apos;s folder to the library</source>
-        <translation>Link another program&apos;s folder to the library</translation>
+        <source>Replace another program&apos;s folder with a link to the library</source>
+        <translation>Replace another program&apos;s folder with a link to the library</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="92"/>
@@ -3231,8 +3231,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="275"/>
-        <source>This profile is not active. Make it active to change its destinations or libraries.</source>
-        <translation>This profile is not active. Make it active to change its destinations or libraries.</translation>
+        <source>This profile is not in use. Select it to change its destinations or libraries.</source>
+        <translation>This profile is not in use. Select it to change its destinations or libraries.</translation>
     </message>
     <message>
         <source>Unregistering takes the library out of the configuration and deletes no file at all. The links that pointed at it keep working in the simulator, but start showing up as third party links, which FS Organizer does not touch.</source>
@@ -4326,16 +4326,16 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>At least one copy declares no version, so there is no telling which one is newer.</translation>
     </message>
     <message>
-        <source>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder and ignores your library copy.</source>
-        <translation>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder and ignores your library copy.</translation>
+        <source>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy.</source>
+        <translation>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy.</translation>
     </message>
     <message>
         <source>Folder in place of the link</source>
         <translation>Folder in place of the link</translation>
     </message>
     <message>
-        <source>Move this folder into the library</source>
-        <translation>Move this folder into the library</translation>
+        <source>Move this folder into the library and link it back</source>
+        <translation>Move this folder into the library and link it back</translation>
     </message>
     <message>
         <source>The library copy is enabled in %1. It is moved to the quarantine first.</source>
@@ -4389,8 +4389,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="12"/>
-        <source>a folder with that name already exists in the destination</source>
-        <translation>a folder with that name already exists in the destination</translation>
+        <source>a regular folder with that name already exists in the destination</source>
+        <translation>a regular folder with that name already exists in the destination</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="14"/>
@@ -4470,8 +4470,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="56"/>
-        <source>that drive is read-only</source>
-        <translation>that drive is read-only</translation>
+        <source>that drive is read-only, and running as administrator does not help</source>
+        <translation>that drive is read-only, and running as administrator does not help</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/FailureText.cpp" line="58"/>
@@ -4909,8 +4909,8 @@ Apply the preset &quot;%2&quot;?</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="393"/>
-        <source>Already applied</source>
-        <translation>Already applied</translation>
+        <source>Matches your setup</source>
+        <translation>Matches your setup</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/PresetsPage.cpp" line="388"/>
@@ -6138,8 +6138,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="180"/>
-        <source>The simulator&apos;s startup file (EXE.xml) was not found for this profile, or it lists no programs.</source>
-        <translation>The simulator&apos;s startup file (EXE.xml) was not found for this profile, or it lists no programs.</translation>
+        <source>The simulator&apos;s startup file (EXE.xml) was not found next to this profile&apos;s UserCfg.opt, or it lists no programs.</source>
+        <translation>The simulator&apos;s startup file (EXE.xml) was not found next to this profile&apos;s UserCfg.opt, or it lists no programs.</translation>
     </message>
     <message>
         <source>The startup entries are left alone</source>
@@ -6328,8 +6328,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/shell/TriageStrip.cpp" line="88"/>
-        <source>Show duplicated…</source>
-        <translation>Show duplicated…</translation>
+        <source>Show duplicates…</source>
+        <translation>Show duplicates…</translation>
     </message>
     <message>
         <location filename="../src/view/shell/TriageStrip.cpp" line="89"/>

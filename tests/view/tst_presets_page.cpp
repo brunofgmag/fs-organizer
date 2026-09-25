@@ -450,7 +450,7 @@ void PresetsPageTest::TheNameTableSaysWhatEachPresetWouldChangeAndTagsTheSatisfi
     QCOMPARE(names->horizontalHeaderItem(3)->text(), QStringLiteral("If applied"));
 
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Already applied"));
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
 
     f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
     f.session.RefreshEntries();
@@ -639,12 +639,12 @@ void PresetsPageTest::ASatisfiedPresetStillShowsWhatDisableWouldChange()
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Already applied"));
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
 
     page.findChild<QRadioButton*>(QStringLiteral("ModeDisable"))->click();
 
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Already applied"));
+    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
 }
 

@@ -88,7 +88,8 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::DiscardStaging: return tr("Discard an unfinished import");
     case OperationKind::RecycleFromLibrary: return tr("Move addon to the Recycle Bin");
     case OperationKind::DeleteFromLibrary: return tr("Delete addon permanently");
-    case OperationKind::LinkTheOtherProgramsFolder: return tr("Link another program's folder to the library");
+    case OperationKind::LinkTheOtherProgramsFolder:
+        return tr("Replace another program's folder with a link to the library");
     case OperationKind::ImportFromAnotherProgram: return tr("Start importing another program's folder");
     case OperationKind::GiveBackToAnotherProgram: return tr("Give the folder back to the other program");
     case OperationKind::UndoTheInterruptedSwap: return tr("Restore a folder left renamed by an interrupted swap");
