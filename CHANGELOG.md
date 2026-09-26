@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.55.0](https://github.com/brunofgmag/fs-organizer/compare/v0.54.13...v0.55.0) (2026-09-26)
+
+
+* add a FlightSim.to edition without the self-updater and stop the startup freeze ([#194](https://github.com/brunofgmag/fs-organizer/issues/194)) ([0d595df](https://github.com/brunofgmag/fs-organizer/commit/0d595dfb5ba220fe56b3028c1f9117d1f7af7831))
+
+
+### Features
+
+* add a FlightSim.to edition without the self-updater and stop the startup freeze ([745a0ba](https://github.com/brunofgmag/fs-organizer/commit/745a0babc8692d683643a1e1c4948a0ef2a56030)) ([0d595df](https://github.com/brunofgmag/fs-organizer/commit/0d595dfb5ba220fe56b3028c1f9117d1f7af7831))
+
+
+### Bug Fixes
+
+* correct the interface texts the rewrite got wrong and rewrite the manual ([7e00188](https://github.com/brunofgmag/fs-organizer/commit/7e001880d051f901692d08a830e45387c0448a75))
+* correct the interface texts the rewrite got wrong and rewrite the manual ([f1c8b0b](https://github.com/brunofgmag/fs-organizer/commit/f1c8b0bab8c085e762b087622df221cadf158660))
+
 ## [0.54.13](https://github.com/brunofgmag/fs-organizer/compare/v0.54.12...v0.54.13) (2026-09-24)
 
 
