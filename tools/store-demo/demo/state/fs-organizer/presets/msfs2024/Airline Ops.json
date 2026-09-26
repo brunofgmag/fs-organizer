@@ -1,0 +1,250 @@
+{
+    "entries": [
+        {
+            "action": "enable",
+            "folderName": "halcyon-aircraft-737-800",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "halcyon-aircraft-a320neo",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "fernhill-aircraft-dhc8-400",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "halcyon-aircraft-757-200",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "quillon-aircraft-a330-900",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "quillon-aircraft-atr72-600",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "fernhill-mod-b737max-cockpit-lights",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "lanternfish-mod-a320neo-cabin-lights",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "halcyon-livery-a320neo-house-colours",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-737-800-bluefjord-air",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-737-800-sunfield-airways",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-a320neo-bluefjord-air",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-a320neo-solenne-airways",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-atr72-sunfield-regional",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-b737max-solenne-airways",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "quillon-livery-a330-900-bluefjord-air",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "quillon-livery-a330-900-solenne-airways",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "harbourlight-airport-egpe-inverness",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "harbourlight-airport-eick-cork",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "harbourlight-airport-enbr-bergen",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "ironbark-airport-nzqn-queenstown",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "ironbark-airport-ybbn-brisbane",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "lanternfish-airport-lppt-night-lights",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "tessellate-airport-kbos-boston",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "tessellate-airport-lemd-madrid",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "tessellate-airport-lpfr-faro",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "tessellate-airport-lppt-lisbon",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "wrenfield-airport-lowi-innsbruck",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "wrenfield-airport-lows-salzburg",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "wrenfield-airport-lszh-zurich",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "wrenfield-scenery-alpine-landmarks",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "saltmarsh-sound-737-800-cfm56",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "saltmarsh-sound-a320neo-leap1a",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "saltmarsh-sound-ambience-airports",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "pinecrest-traffic-flightplans-s26",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "pinecrest-traffic-liveries-europe",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "pinecrest-traffic-models-narrowbody",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "pinecrest-traffic-models-widebody",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "brightwater-util-bridge",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "brightwater-util-camera-presets",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "lanternfish-lights-apron-floods",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "pinecrest-util-traffic-injector",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "vireo-navdata-airac-2609",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "halcyon-aircraft-a321neo",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-a321neo-veluna-airlines",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "paperwing-livery-737-800-veluna-airlines",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        }
+    ],
+    "governsStartup": true,
+    "name": "Airline Ops",
+    "startupEntries": [
+        {
+            "action": "enable",
+            "path": "F:\\MSFS 2024\\Community\\brightwater-util-bridge\\bin\\BrightwaterBridge.exe"
+        },
+        {
+            "action": "enable",
+            "path": "F:\\Programs\\Stratoform\\Live Weather\\StratoformLive.exe"
+        },
+        {
+            "action": "enable",
+            "path": "F:\\MSFS 2024\\Community\\pinecrest-util-traffic-injector\\tools\\PinecrestInjector.exe"
+        }
+    ]
+}

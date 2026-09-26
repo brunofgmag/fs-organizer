@@ -43,6 +43,8 @@ namespace
         static void ThePageFitsTheNarrowestWindow();
         static void TheLanguageTabOffersBothAndOpensOnTheStoredOne();
         static void TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands();
+        static void WhereTheProgramCannotUpdateItselfTheUpdatesTabOffersNoWayToInstall();
+        static void ThePageThatCannotUpdateItselfFitsTheNarrowestWindow();
         static void TheLinksTabOpensOnTheTypeThatIsStored();
         static void ChoosingSymlinkWritesItAndSaysWhatChanges();
         static void BothChecksAreOfferedAndTheTabOpensOnTheOneThatIsStored();
@@ -172,7 +174,7 @@ namespace
 
     struct Fixture
     {
-        Fixture()
+        explicit Fixture(const UpdateDelivery chosen = UpdateDelivery::SelfUpdate) : delivery(chosen)
         {
             fileSystem.AddDirectory(kCommunity);
             fileSystem.AddDirectory(kLibrary);
@@ -219,7 +221,8 @@ namespace
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         OptionsViewModel viewModel{session, service, runner, notifier};
         FakeUpdateService updateService;
-        UpdateViewModel updates{updateService, UpdateMode::Notify, true};
+        UpdateDelivery delivery{};
+        UpdateViewModel updates{updateService, UpdateMode::Notify, true, delivery};
         OptionsPage page{viewModel, updates, kSettingsFile};
     };
 }
@@ -279,6 +282,21 @@ void OptionsPageTest::TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands()
 
     QCOMPARE(f.updates.Mode(), UpdateMode::Automatic);
     QCOMPARE(f.settings.stored.updateMode, UpdateMode::Automatic);
+}
+
+void OptionsPageTest::WhereTheProgramCannotUpdateItselfTheUpdatesTabOffersNoWayToInstall()
+{
+    const Fixture f(UpdateDelivery::NoticeOnly);
+
+    QVERIFY(f.page.findChild<QRadioButton*>(QStringLiteral("NotifyUpdateChoice")) != nullptr);
+    QVERIFY(f.page.findChild<QRadioButton*>(QStringLiteral("ManualUpdateChoice")) != nullptr);
+    QVERIFY2(f.page.findChild<QRadioButton*>(QStringLiteral("AutomaticUpdateChoice")) == nullptr,
+             "the Automatic choice was offered by a copy that cannot update itself");
+    QVERIFY(ButtonSaying(f.page, QStringLiteral("Check now")) != nullptr);
+    QVERIFY2(ButtonSaying(f.page, QStringLiteral("Download")) == nullptr,
+             "the Download button was offered by a copy that cannot update itself");
+    QVERIFY2(ButtonSaying(f.page, QStringLiteral("Apply and restart")) == nullptr,
+             "the Apply and restart button was offered by a copy that cannot update itself");
 }
 
 void OptionsPageTest::TheLinksTabOpensOnTheTypeThatIsStored()
@@ -537,6 +555,13 @@ void OptionsPageTest::ThePageFitsTheNarrowestWindow()
     Fixture f;
 
     ItFitsTheNarrowestWindow(f.page, "The options page");
+}
+
+void OptionsPageTest::ThePageThatCannotUpdateItselfFitsTheNarrowestWindow()
+{
+    Fixture f(UpdateDelivery::NoticeOnly);
+
+    ItFitsTheNarrowestWindow(f.page, "The options page without the updater");
 }
 
 QTEST_MAIN(OptionsPageTest)

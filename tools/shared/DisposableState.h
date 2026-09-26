@@ -17,17 +17,29 @@ struct DisposableState final
     std::filesystem::path presetsFolder;
 };
 
-[[nodiscard]] inline std::optional<DisposableState> StageStateWhereWritingIsHarmless(const std::string& toolName)
+[[nodiscard]] inline DisposableState StateLaidOutUnder(const std::filesystem::path& folder)
+{
+    return DisposableState{.settingsFile = folder / SettingsFilePath().filename(),
+                           .journalFile =
+                               folder / JournalFilePath().parent_path().filename() / JournalFilePath().filename(),
+                           .presetsFolder = folder / PresetsFolderPath().filename()};
+}
+
+[[nodiscard]] inline std::filesystem::path TheInstalledStateFolder()
+{
+    return SettingsFilePath().parent_path();
+}
+
+[[nodiscard]] inline std::optional<DisposableState>
+StageStateWhereWritingIsHarmless(const std::string& toolName, const std::filesystem::path& sourceFolder)
 {
     const std::filesystem::path folder = AsPath(QDir::tempPath()) / (toolName + "-state");
 
     std::error_code failure;
     std::filesystem::remove_all(folder, failure);
 
-    const DisposableState staged{.settingsFile = folder / SettingsFilePath().filename(),
-                                 .journalFile =
-                                     folder / JournalFilePath().parent_path().filename() / JournalFilePath().filename(),
-                                 .presetsFolder = folder / PresetsFolderPath().filename()};
+    const DisposableState source = StateLaidOutUnder(sourceFolder);
+    const DisposableState staged = StateLaidOutUnder(folder);
 
     std::filesystem::create_directories(staged.journalFile.parent_path(), failure);
     if (failure)
@@ -35,22 +47,22 @@ struct DisposableState final
         return std::nullopt;
     }
 
-    if (std::filesystem::exists(SettingsFilePath()))
+    if (std::filesystem::exists(source.settingsFile))
     {
-        std::filesystem::copy_file(SettingsFilePath(), staged.settingsFile,
+        std::filesystem::copy_file(source.settingsFile, staged.settingsFile,
                                    std::filesystem::copy_options::overwrite_existing, failure);
     }
 
-    if (std::filesystem::exists(JournalFilePath()))
+    if (std::filesystem::exists(source.journalFile))
     {
-        std::filesystem::copy_file(JournalFilePath(), staged.journalFile,
+        std::filesystem::copy_file(source.journalFile, staged.journalFile,
                                    std::filesystem::copy_options::overwrite_existing, failure);
     }
 
-    if (std::filesystem::exists(PresetsFolderPath()))
+    if (std::filesystem::exists(source.presetsFolder))
     {
         std::filesystem::copy(
-            PresetsFolderPath(), staged.presetsFolder,
+            source.presetsFolder, staged.presetsFolder,
             std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, failure);
     }
 
@@ -60,6 +72,11 @@ struct DisposableState final
     }
 
     return staged;
+}
+
+[[nodiscard]] inline std::optional<DisposableState> StageStateWhereWritingIsHarmless(const std::string& toolName)
+{
+    return StageStateWhereWritingIsHarmless(toolName, TheInstalledStateFolder());
 }
 
 #endif // FS_ORGANIZER_TOOLS_SHARED_DISPOSABLE_STATE_H

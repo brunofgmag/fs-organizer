@@ -4,6 +4,13 @@ set(CMAKE_SUPPRESS_REGENERATION ON)
 
 set(APP_NAME "fs-organizer")
 
+set(FSORG_EDITION "github" CACHE STRING "The edition the executable is built as: github or flightsim-to.")
+set_property(CACHE FSORG_EDITION PROPERTY STRINGS github flightsim-to)
+
+if (NOT FSORG_EDITION STREQUAL "github" AND NOT FSORG_EDITION STREQUAL "flightsim-to")
+    message(FATAL_ERROR "FSORG_EDITION must be github or flightsim-to, not '${FSORG_EDITION}'.")
+endif ()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

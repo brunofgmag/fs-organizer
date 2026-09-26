@@ -37,6 +37,16 @@
       "inherits": "msvc-qt-base"
     },
     {
+      "name": "release-flightsim-to",
+      "displayName": "Qt MSVC 2022 x64 - Release, FlightSim.to edition",
+      "description": "Release build of the edition published on flightsim.to: no self-updater and no manual.",
+      "inherits": "release",
+      "cacheVariables": {
+        "FSORG_EDITION": "flightsim-to",
+        "BUILD_TESTING": "OFF"
+      }
+    },
+    {
       "name": "relwithdebinfo",
       "displayName": "Qt MSVC 2022 x64 - RelWithDebInfo",
       "description": "Optimised build with symbols and the full Qt runtime.",
@@ -70,6 +80,13 @@
       "name": "release",
       "displayName": "Build Qt MSVC Release",
       "configurePreset": "release",
+      "configuration": "Release",
+      "jobs": 0
+    },
+    {
+      "name": "release-flightsim-to",
+      "displayName": "Build Qt MSVC Release, FlightSim.to edition",
+      "configurePreset": "release-flightsim-to",
       "configuration": "Release",
       "jobs": 0
     },

@@ -434,7 +434,7 @@ QWidget* OptionsPage::CreateUpdates()
          .objectName = "AutomaticUpdateChoice"},
         {.mode = UpdateMode::Notify,
          .name = tr("Notify"),
-         .explanation = tr("Tells you when a new version is available, and downloads it only when you ask."),
+         .explanation = tr("Tells you when a new version is available, without downloading it."),
          .objectName = "NotifyUpdateChoice"},
         {.mode = UpdateMode::Manual,
          .name = tr("Manual"),
@@ -445,6 +445,11 @@ QWidget* OptionsPage::CreateUpdates()
     bool follows = false;
     for (const auto& choice : offered)
     {
+        if (choice.mode == UpdateMode::Automatic && !updates_.UpdatesItself())
+        {
+            continue;
+        }
+
         auto* button = new QRadioButton(pane);
         button->setObjectName(QLatin1String(choice.objectName));
         button->setEnabled(updates_.UpdatesAreOn());
@@ -473,21 +478,29 @@ QWidget* OptionsPage::CreateUpdates()
     layout->addWidget(updateStatus_);
 
     checkForUpdates_ = new QPushButton(tr("Check now"), pane);
-    downloadUpdate_ = new QPushButton(tr("Download"), pane);
-    applyUpdate_ = new QPushButton(tr("Apply and restart"), pane);
 
     auto* buttons = new QWidget(pane);
     auto* row = new QHBoxLayout(buttons);
     row->setContentsMargins(0, 0, 0, 0);
     row->addWidget(checkForUpdates_);
-    row->addWidget(downloadUpdate_);
-    row->addWidget(applyUpdate_);
+
+    connect(checkForUpdates_, &QPushButton::clicked, &updates_, &UpdateViewModel::Check);
+
+    if (updates_.UpdatesItself())
+    {
+        downloadUpdate_ = new QPushButton(tr("Download"), pane);
+        applyUpdate_ = new QPushButton(tr("Apply and restart"), pane);
+
+        row->addWidget(downloadUpdate_);
+        row->addWidget(applyUpdate_);
+
+        connect(downloadUpdate_, &QPushButton::clicked, &updates_, &UpdateViewModel::Download);
+        connect(applyUpdate_, &QPushButton::clicked, &updates_, &UpdateViewModel::ApplyAndRestart);
+    }
+
     row->addStretch();
     layout->addWidget(buttons);
 
-    connect(checkForUpdates_, &QPushButton::clicked, &updates_, &UpdateViewModel::Check);
-    connect(downloadUpdate_, &QPushButton::clicked, &updates_, &UpdateViewModel::Download);
-    connect(applyUpdate_, &QPushButton::clicked, &updates_, &UpdateViewModel::ApplyAndRestart);
     connect(&updates_, &UpdateViewModel::Changed, this, &OptionsPage::ReloadUpdates);
 
     layout->addStretch();
@@ -504,8 +517,16 @@ void OptionsPage::ReloadUpdates() const
 
     updateStatus_->setText(updates_.WhatIsGoingOn());
     checkForUpdates_->setEnabled(updates_.CanCheck());
-    downloadUpdate_->setEnabled(updates_.CanDownload());
-    applyUpdate_->setEnabled(updates_.State() == UpdateState::ReadyToApply);
+
+    if (downloadUpdate_ != nullptr)
+    {
+        downloadUpdate_->setEnabled(updates_.CanDownload());
+    }
+
+    if (applyUpdate_ != nullptr)
+    {
+        applyUpdate_->setEnabled(updates_.State() == UpdateState::ReadyToApply);
+    }
 }
 
 QWidget* OptionsPage::CreateLanguage()

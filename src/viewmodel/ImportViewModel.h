@@ -49,7 +49,7 @@ public:
 
     [[nodiscard]] std::uintmax_t TotalSizeOf(const std::vector<std::filesystem::path>& folders) const;
 
-    [[nodiscard]] std::vector<StagingLeftover> Leftovers() const;
+    void LookForLeftovers();
 
     [[nodiscard]] std::vector<InterruptedSwap> InterruptedSwaps() const;
 
@@ -83,6 +83,8 @@ signals:
 
     void GaveBack(const std::vector<FileOperationResult>& results);
 
+    void LeftoversFound(const std::vector<StagingLeftover>& leftovers);
+
 private:
     [[nodiscard]] std::function<void(OperationKind)> OnStep();
 
@@ -100,6 +102,7 @@ private:
     Session& session_;
     GuardedRunner running_;
     GuardedRunner preparingDetails_;
+    GuardedRunner lookingForLeftovers_;
     OperationKind step_ = OperationKind::ImportCopyToStaging;
     std::atomic<bool> cancelled_{false};
     std::atomic<int> folder_{0};

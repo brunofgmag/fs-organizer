@@ -1,0 +1,95 @@
+{
+    "activeProfileId": "msfs2024",
+    "coexistingAirports": [],
+    "documents": [
+        {
+            "addon": "halcyon-aircraft-a320neo",
+            "bookmarks": [
+                {
+                    "name": "Takeoff speeds",
+                    "page": 8
+                }
+            ],
+            "document": "Documents\\A320neo FCOM.pdf",
+            "favourite": true,
+            "page": 7
+        },
+        {
+            "addon": "halcyon-aircraft-737-800",
+            "bookmarks": [],
+            "document": "Documents\\737-800 Introduction.pdf",
+            "favourite": false,
+            "page": 3
+        },
+        {
+            "addon": "cobaltridge-aircraft-c172",
+            "bookmarks": [],
+            "document": "Manual\\Pilot Guide.pdf",
+            "favourite": false,
+            "page": 2
+        }
+    ],
+    "dragMovesCharts": true,
+    "dragMovesDocuments": true,
+    "language": "en",
+    "linkType": "junction",
+    "managePackageList": true,
+    "manageStartupEntries": true,
+    "profiles": [
+        {
+            "defaultDestination": "F:\\MSFS 2024\\Community",
+            "destinationOverrides": [
+                {
+                    "destination": "F:\\MSFS 2024\\Community2024",
+                    "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}",
+                    "relativePath": "Aircraft (2024)"
+                },
+                {
+                    "destination": "F:\\MSFS 2024\\Community2024",
+                    "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}",
+                    "relativePath": "Liveries\\quillon-livery-a330-900-bluefjord-air"
+                },
+                {
+                    "destination": "F:\\MSFS 2024\\Community2024",
+                    "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}",
+                    "relativePath": "Liveries\\quillon-livery-a330-900-solenne-airways"
+                }
+            ],
+            "destinations": [
+                "F:\\MSFS 2024\\Community",
+                "F:\\MSFS 2024\\Community2024"
+            ],
+            "externalOrigins": [],
+            "id": "msfs2024",
+            "libraries": [
+                {
+                    "id": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}",
+                    "label": "MSFS 2024",
+                    "path": "F:\\MSFS Library"
+                }
+            ],
+            "variant": "MSFS2024"
+        },
+        {
+            "defaultDestination": "F:\\MSFS 2020\\Community",
+            "destinationOverrides": [],
+            "destinations": [
+                "F:\\MSFS 2020\\Community"
+            ],
+            "externalOrigins": [],
+            "id": "msfs2020",
+            "libraries": [
+                {
+                    "id": "{c93a0f64-1b7e-4d25-8f3a-6e4b2d90a1c7}",
+                    "label": "MSFS 2020",
+                    "path": "F:\\MSFS 2020 Library"
+                }
+            ],
+            "variant": "MSFS2020"
+        }
+    ],
+    "updateMode": "notify",
+    "verifyWithHash": false,
+    "wheelZoomsCharts": true,
+    "wheelZoomsDocuments": false
+}

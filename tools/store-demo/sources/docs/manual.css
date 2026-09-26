@@ -1,0 +1,47 @@
+@page { size: A4; margin: 18mm 17mm 20mm 17mm; }
+:root { --ink: #1c2330; --quiet: #5b6576; --rule: #c9d0db; --accent: #1f4e8c; --accent-soft: #e8eef7; --warn: #b3261e; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #ffffff; }
+body { font-family: "Segoe UI", "Bahnschrift", Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; }
+.brand { font-family: "Bahnschrift", "Segoe UI", sans-serif; letter-spacing: 0.04em; }
+.cover { height: 257mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
+.cover .band { background: var(--accent); color: #ffffff; padding: 16mm 14mm 14mm; }
+.cover .studio { font-family: "Bahnschrift", sans-serif; font-size: 12pt; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.85; }
+.cover .product { font-family: "Bahnschrift", sans-serif; font-size: 40pt; font-weight: 600; margin: 8mm 0 2mm; line-height: 1.05; }
+.cover .doc { font-size: 15pt; font-weight: 300; }
+.cover .art { flex: 1; display: flex; align-items: center; justify-content: center; }
+.cover .meta { display: flex; justify-content: space-between; border-top: 1.2pt solid var(--accent); padding-top: 3mm; color: var(--quiet); font-size: 9pt; }
+.cover .notice { font-size: 8.5pt; color: var(--quiet); margin-top: 2mm; }
+h1 { font-family: "Bahnschrift", "Segoe UI", sans-serif; font-size: 20pt; font-weight: 600; color: var(--accent); margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 1.6pt solid var(--accent); page-break-before: always; }
+h1 .number { color: var(--quiet); font-weight: 400; margin-right: 3mm; }
+h2 { font-family: "Bahnschrift", "Segoe UI", sans-serif; font-size: 13pt; font-weight: 600; margin: 6mm 0 2mm; color: var(--ink); }
+h3 { font-size: 10.5pt; font-weight: 700; margin: 4mm 0 1mm; text-transform: uppercase; letter-spacing: 0.06em; color: var(--quiet); }
+p { margin: 0 0 2.4mm; text-align: justify; hyphens: auto; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.5pt; }
+th { text-align: left; background: var(--accent-soft); color: var(--accent); font-weight: 600; padding: 1.6mm 2mm; border-bottom: 1pt solid var(--accent); }
+td { padding: 1.4mm 2mm; border-bottom: 0.5pt solid var(--rule); vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.checklist { border: 1pt solid var(--ink); margin: 3mm 0 5mm; }
+.checklist .title { background: var(--ink); color: #ffffff; font-family: "Bahnschrift", sans-serif; letter-spacing: 0.08em; text-transform: uppercase; padding: 1.6mm 3mm; font-size: 10pt; }
+.checklist .row { display: flex; align-items: baseline; padding: 1.2mm 3mm; font-size: 9.6pt; border-bottom: 0.4pt solid var(--rule); }
+.checklist .row:last-child { border-bottom: none; }
+.checklist .item { white-space: nowrap; }
+.checklist .dots { flex: 1; border-bottom: 1pt dotted var(--quiet); margin: 0 2mm; transform: translateY(-1mm); }
+.checklist .action { white-space: nowrap; font-weight: 700; }
+.note, .caution, .warning { border-left: 3pt solid var(--accent); background: var(--accent-soft); padding: 2mm 3mm; margin: 3mm 0; font-size: 9.6pt; }
+.caution { border-color: #c77700; background: #fdf3e2; }
+.warning { border-color: var(--warn); background: #fbe9e7; }
+.note b, .caution b, .warning b { text-transform: uppercase; letter-spacing: 0.06em; margin-right: 2mm; }
+.figure { border: 0.6pt solid var(--rule); padding: 3mm; margin: 3mm 0 4mm; text-align: center; }
+.figure .caption { font-size: 8.8pt; color: var(--quiet); margin-top: 2mm; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+.toc { margin: 4mm 0; }
+.toc .line { display: flex; padding: 1.2mm 0; border-bottom: 0.4pt solid var(--rule); }
+.toc .line .n { width: 12mm; color: var(--quiet); }
+.toc .line .t { flex: 1; }
+.big-step { display: flex; gap: 4mm; margin: 3mm 0; align-items: flex-start; }
+.big-step .n { flex: 0 0 9mm; height: 9mm; border-radius: 50%; background: var(--accent); color: #ffffff; font-family: "Bahnschrift", sans-serif; font-weight: 600; display: flex; align-items: center; justify-content: center; font-size: 12pt; }
+.page-title { font-family: "Bahnschrift", "Segoe UI", sans-serif; font-size: 20pt; font-weight: 600; color: var(--accent); margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 1.6pt solid var(--accent); page-break-before: always; }
+.running { font-size: 8pt; color: var(--quiet); display: flex; justify-content: space-between; border-bottom: 0.4pt solid var(--rule); margin-bottom: 4mm; padding-bottom: 1mm; }
+.keycap { display: inline-block; border: 0.8pt solid var(--quiet); border-radius: 1.4mm; padding: 0 1.4mm; font-size: 8.6pt; font-family: Consolas, monospace; background: #f5f6f8; }
+.sim-only { font-size: 8pt; color: var(--quiet); text-align: center; margin-top: 6mm; letter-spacing: 0.08em; text-transform: uppercase; }

@@ -71,6 +71,20 @@ namespace
         return {.box = box, .wide = std::max(0, box.width() - tagRoom - suffixRoom)};
     }
 
+    void MeasureInTheFontTheCanvasDraws(QStyleOptionViewItem& item)
+    {
+        const auto* view = qobject_cast<const QAbstractItemView*>(item.widget);
+        const QWidget* canvas = view != nullptr ? view->viewport() : item.widget;
+
+        if (canvas != nullptr)
+        {
+            item.font = item.font.resolve(canvas->font());
+        }
+
+        item.font.setResolveMask(QFont::AllPropertiesResolved);
+        item.fontMetrics = QFontMetrics(item.font);
+    }
+
     [[nodiscard]] QString TextThatIsDrawn(const QStyleOptionViewItem& item, const QString& tag)
     {
         return tag == item.text ? QString() : item.text;
@@ -204,6 +218,8 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
         item.font.setWeight(QFont::DemiBold);
     }
 
+    MeasureInTheFontTheCanvasDraws(item);
+
     if ((item.state & QStyle::State_Selected) == 0)
     {
         if (index.data(AlarmingRole).toBool())
@@ -305,6 +321,8 @@ bool RowDelegate::helpEvent(QHelpEvent* event,
         item.font.setWeight(QFont::DemiBold);
     }
 
+    MeasureInTheFontTheCanvasDraws(item);
+
     const QString suffix = index.data(QuietSuffixRole).toString();
     const QString tag = index.data(TagTextRole).toString();
     const QString text = TextThatIsDrawn(item, tag);
@@ -333,29 +351,32 @@ int RowDelegate::TimesItAskedTheFont() const
 
 QSize RowDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    QStyleOptionViewItem item = option;
+    QStyleOptionViewItem drawnIn = option;
+    MeasureInTheFontTheCanvasDraws(drawnIn);
+
+    QStyleOptionViewItem item = drawnIn;
     initStyleOption(&item, index);
 
-    QSize wanted = QStyledItemDelegate::sizeHint(option, index);
+    QSize wanted = QStyledItemDelegate::sizeHint(drawnIn, index);
     wanted.setWidth(wanted.width() + 2 * kBreathingRoom);
 
     if (const QString suffix = index.data(QuietSuffixRole).toString(); !suffix.isEmpty())
     {
-        wanted.setWidth(wanted.width() + QFontMetrics(option.font).horizontalAdvance(suffix) + kBeforeTheSuffix);
+        wanted.setWidth(wanted.width() + QFontMetrics(drawnIn.font).horizontalAdvance(suffix) + kBeforeTheSuffix);
     }
 
     if (const QString tag = index.data(TagTextRole).toString(); !tag.isEmpty())
     {
-        const QFontMetrics measured(option.font);
+        const QFontMetrics measured(drawnIn.font);
         const int dropped =
             measured.horizontalAdvance(item.text) - measured.horizontalAdvance(TextThatIsDrawn(item, tag));
 
-        wanted.setWidth(wanted.width() - dropped + TagSizeOf(tag, option.font).width() + kBeforeTheTag);
+        wanted.setWidth(wanted.width() - dropped + TagSizeOf(tag, drawnIn.font).width() + kBeforeTheTag);
     }
 
     if (!index.data(SecondLineRole).toString().isEmpty())
     {
-        wanted.setHeight(wanted.height() + QFontMetrics(option.font).height() + kBreathingRoom);
+        wanted.setHeight(wanted.height() + QFontMetrics(drawnIn.font).height() + kBreathingRoom);
     }
 
     wanted.setHeight(std::max(wanted.height(), shortestRow_));

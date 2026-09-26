@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/scripts">
+        <file alias="apply.ps1">scripts/apply.ps1</file>
+    </qresource>
+</RCC>

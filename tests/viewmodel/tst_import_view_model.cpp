@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "application/LibraryOrganizer.h"
+#include "domain/importing/ImportPaths.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/profile/ExternalOrigins.h"
@@ -33,6 +34,8 @@ namespace
         static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
         static void GivingAnAddonBackForgetsWhereItCameFromInsteadOfRememberingIt();
         static void EveryLongOperationOpensAndClosesTheSameProgress();
+        static void LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread();
+        static void NoLeftoversMeansNoSignal();
     };
 }
 
@@ -205,6 +208,46 @@ void ImportViewModelTest::EveryLongOperationOpensAndClosesTheSameProgress()
 
     QCOMPARE(started.size(), 3);
     QCOMPARE(idle.size(), 3);
+}
+
+void ImportViewModelTest::LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread()
+{
+    Fixture f;
+    const std::filesystem::path target = kLibrary / "Utils" / "imported";
+    const std::filesystem::path staging = StagingPathFor(target);
+    f.fileSystem.AddDirectory(target.parent_path());
+    f.fileSystem.AddDirectory(staging);
+    f.fileSystem.AddFile(staging / "manifest.json", 300);
+
+    const QSignalSpy found(&f.viewModel, &ImportViewModel::LeftoversFound);
+    f.runner.defer = true;
+
+    f.viewModel.LookForLeftovers();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+    QCOMPARE(found.size(), 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(found.size(), 1);
+
+    const auto leftovers = found.front().front().value<std::vector<StagingLeftover>>();
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().staging, staging);
+    QCOMPARE(leftovers.front().target, target);
+}
+
+void ImportViewModelTest::NoLeftoversMeansNoSignal()
+{
+    Fixture f;
+    const QSignalSpy found(&f.viewModel, &ImportViewModel::LeftoversFound);
+    f.runner.defer = true;
+
+    f.viewModel.LookForLeftovers();
+    f.runner.Finish();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{0});
+    QCOMPARE(found.size(), 0);
 }
 
 QTEST_MAIN(ImportViewModelTest)

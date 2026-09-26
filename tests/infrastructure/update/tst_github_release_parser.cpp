@@ -12,6 +12,8 @@ namespace
     private slots:
         static void ARealPayloadOfOurOwnReleaseGivesVersionZipAndChecksum();
         static void ARealPayloadOfAnotherProjectParsesWithoutOfferingAnything();
+        static void TheFlightsimToZipBesideOursIsNeverTakenForIt();
+        static void AZipNamedForAnotherVersionIsNotOffered();
         static void JsonThatIsNotAReleaseIsRefused();
         static void AReleaseWithoutATagIsRefused();
         static void TheChecksumFileIsReadWhateverComesAfterTheHash();
@@ -27,6 +29,26 @@ namespace
         QFile file(QStringLiteral(FSORG_FIXTURES_DIR "/") + name);
 
         return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
+    }
+
+    QByteArray ReleaseCarrying(const QStringList& assetNames)
+    {
+        QByteArray assets;
+
+        for (const QString& name : assetNames)
+        {
+            if (!assets.isEmpty())
+            {
+                assets += ",";
+            }
+
+            assets += "{\"name\": \"" + name.toUtf8()
+                + "\", \"browser_download_url\": "
+                  "\"https://github.com/brunofgmag/fs-organizer/releases/download/v0.60.0/"
+                + name.toUtf8() + "\"}";
+        }
+
+        return "{\"tag_name\": \"v0.60.0\", \"assets\": [" + assets + "]}";
     }
 }
 
@@ -52,6 +74,33 @@ void GithubReleaseParserTest::ARealPayloadOfAnotherProjectParsesWithoutOfferingA
     QCOMPARE(QString::fromStdString(info->version), QStringLiteral("2.97.0"));
     QVERIFY(info->zipUrl.empty());
     QVERIFY(info->shaUrl.empty());
+}
+
+void GithubReleaseParserTest::TheFlightsimToZipBesideOursIsNeverTakenForIt()
+{
+    const QStringList ours = {QStringLiteral("fs-organizer-0.60.0.zip"),
+                              QStringLiteral("fs-organizer-0.60.0.zip.sha256")};
+    const QStringList theirs = {QStringLiteral("flightsim-to-fs-organizer-0.60.0.zip")};
+
+    for (const QStringList& order : {ours + theirs, theirs + ours})
+    {
+        const std::optional<UpdateInfo> info = ParseLatestRelease(ReleaseCarrying(order));
+
+        QVERIFY(info.has_value());
+        QCOMPARE(QString::fromStdString(info->zipName), QStringLiteral("fs-organizer-0.60.0.zip"));
+        QVERIFY(QString::fromStdString(info->zipUrl).endsWith(QStringLiteral("/fs-organizer-0.60.0.zip")));
+        QVERIFY(QString::fromStdString(info->shaUrl).endsWith(QStringLiteral("/fs-organizer-0.60.0.zip.sha256")));
+    }
+}
+
+void GithubReleaseParserTest::AZipNamedForAnotherVersionIsNotOffered()
+{
+    const std::optional<UpdateInfo> info =
+        ParseLatestRelease(ReleaseCarrying({QStringLiteral("fs-organizer-foo.zip")}));
+
+    QVERIFY(info.has_value());
+    QVERIFY(info->zipUrl.empty());
+    QVERIFY(info->zipName.empty());
 }
 
 void GithubReleaseParserTest::JsonThatIsNotAReleaseIsRefused()

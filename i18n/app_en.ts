@@ -2162,6 +2162,10 @@ Also in the library: %2</translation>
 <context>
     <name>DocumentsPage</name>
     <message>
+        <source>The user manual is on the project&apos;s GitHub page.</source>
+        <translation>The user manual is on the project&apos;s GitHub page.</translation>
+    </message>
+    <message>
         <source>Get the manual</source>
         <translation>Get the manual</translation>
     </message>
@@ -2279,6 +2283,10 @@ Also in the library: %2</translation>
 </context>
 <context>
     <name>DocumentsViewModel</name>
+    <message>
+        <source>on GitHub</source>
+        <translation>on GitHub</translation>
+    </message>
     <message>
         <source>Manual</source>
         <comment>the user manual</comment>
@@ -2404,16 +2412,18 @@ Also in the library: %2</translation>
     </message>
 </context>
 <context>
+    <name>GithubReleaseFeed</name>
+    <message>
+        <source>GitHub sent a response the app could not read.</source>
+        <translation>GitHub sent a response the app could not read.</translation>
+    </message>
+</context>
+<context>
     <name>GithubUpdateService</name>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="111"/>
         <source>This release has no files to download.</source>
         <translation>This release has no files to download.</translation>
-    </message>
-    <message>
-        <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="220"/>
-        <source>GitHub sent a response the app could not read.</source>
-        <translation>GitHub sent a response the app could not read.</translation>
     </message>
     <message>
         <location filename="../src/infrastructure/update/GithubUpdateService.cpp" line="245"/>
@@ -3461,8 +3471,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="428"/>
-        <source>Tells you when a new version is available, and downloads it only when you ask.</source>
-        <translation>Tells you when a new version is available, and downloads it only when you ask.</translation>
+        <source>Tells you when a new version is available, without downloading it.</source>
+        <translation>Tells you when a new version is available, without downloading it.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="531"/>
@@ -6390,6 +6400,10 @@ Size %2</translation>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="38"/>
         <source>Version %1 is available.</source>
         <translation>Version %1 is available.</translation>
+    </message>
+    <message>
+        <source>Version %1 is available. Download it again from flightsim.to.</source>
+        <translation>Version %1 is available. Download it again from flightsim.to.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="39"/>
