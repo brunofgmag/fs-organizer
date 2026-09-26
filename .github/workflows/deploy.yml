@@ -67,10 +67,11 @@ jobs:
           set -euo pipefail
           zip="fs-organizer-$VER.zip"
           sha="$zip.sha256"
+          flightsim="flightsim-to-fs-organizer-$VER.zip"
           if names="$(gh release view "$TAG" --json assets --jq '.assets[].name' 2>/dev/null)"; then
-            if grep -qxF "$zip" <<<"$names" && grep -qxF "$sha" <<<"$names"; then
+            if grep -qxF "$zip" <<<"$names" && grep -qxF "$sha" <<<"$names" && grep -qxF "$flightsim" <<<"$names"; then
               echo "exists=true" >> "$GITHUB_OUTPUT"
-              echo "::notice::Release $TAG already published with both assets; nothing to do."
+              echo "::notice::Release $TAG already published with all three assets; nothing to do."
             else
               echo "exists=false" >> "$GITHUB_OUTPUT"
               echo "::warning::Release $TAG exists but is missing assets; rebuilding and re-uploading."
@@ -93,11 +94,23 @@ jobs:
           fi
 
   build:
-    name: Build + Package
+    name: Build + Package (${{ matrix.edition }})
     needs: version
     if: needs.version.outputs.release_exists == 'false'
     runs-on: windows-2022
     timeout-minutes: 60
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - edition: github
+            bin: build/release/bin
+            zip: fs-organizer
+            checksum: true
+          - edition: flightsim-to
+            bin: build/release-flightsim-to/bin
+            zip: flightsim-to-fs-organizer
+            checksum: false
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -116,33 +129,45 @@ jobs:
           cache: true
 
       - name: Build
+        if: matrix.edition == 'github'
         shell: pwsh
         run: ./build.ps1 -Config Release -SkipTests
 
+      - name: Build FlightSim.to
+        if: matrix.edition == 'flightsim-to'
+        shell: pwsh
+        run: ./build.ps1 -Config Release -SkipTests -Edition FlightSimTo
+
       - name: Stage bundle
         shell: pwsh
+        env:
+          BIN: ${{ matrix.bin }}
         run: |
           $stage = 'staging/fs-organizer'
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          Copy-Item -Path 'build/release/bin/*' -Destination $stage -Recurse -Force
+          Copy-Item -Path "$env:BIN/*" -Destination $stage -Recurse -Force
 
       - name: Package + Hash
         shell: pwsh
         env:
           VER: ${{ needs.version.outputs.version }}
+          NAME: ${{ matrix.zip }}
+          CHECKSUM: ${{ matrix.checksum }}
         run: |
-          $zip = "fs-organizer-$env:VER.zip"
+          $zip = "$env:NAME-$env:VER.zip"
           Compress-Archive -Path 'staging/fs-organizer' -DestinationPath $zip -Force
-          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLower()
-          "$hash  $zip" | Out-File -FilePath "$zip.sha256" -Encoding ascii -NoNewline
+          if ($env:CHECKSUM -eq 'true') {
+            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLower()
+            "$hash  $zip" | Out-File -FilePath "$zip.sha256" -Encoding ascii -NoNewline
+          }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release-bundle
+          name: release-bundle-${{ matrix.edition }}
           path: |
-            fs-organizer-*.zip
-            fs-organizer-*.zip.sha256
+            ${{ matrix.zip }}-*.zip
+            ${{ matrix.zip }}-*.zip.sha256
           if-no-files-found: error
 
   publish:
@@ -162,7 +187,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: release-bundle
+          pattern: release-bundle-*
+          merge-multiple: true
 
       - name: Publish release
         uses: brunofgmag/gsx-integrator-ci/.github/actions/publish-release@main
@@ -173,3 +199,4 @@ jobs:
           assets: |
             fs-organizer-${{ needs.version.outputs.version }}.zip
             fs-organizer-${{ needs.version.outputs.version }}.zip.sha256
+            flightsim-to-fs-organizer-${{ needs.version.outputs.version }}.zip

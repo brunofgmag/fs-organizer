@@ -64,6 +64,7 @@ namespace
         static void AnInterfaceLanguageTheManualWasNeverWrittenInAsksForTheEnglishOne();
         static void TheManualThatIsAlreadyHereIsNotFetchedASecondTime();
         static void AManualThatDidNotComeDownSaysWhyAndCanBeAskedAgain();
+        static void AManualTheEditionDoesNotShipIsNeverFetchedAndSaysSo();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -107,7 +108,7 @@ namespace
 
     struct Fixture
     {
-        Fixture()
+        explicit Fixture(const ManualDelivery chosen = ManualDelivery::Download) : manualDelivery(chosen)
         {
             fileSystem.AddDirectory(kLibrary);
 
@@ -177,7 +178,8 @@ namespace
         DocumentService documents{catalog, filesystemProbe, catalogueParser, chartVersions};
         FakeDocumentIndexCache cache;
         FakeManualSource theManual;
-        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, theManual, clock};
+        ManualDelivery manualDelivery{};
+        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, theManual, manualDelivery, clock};
     };
 
     [[nodiscard]] std::vector<DocumentGroup> TheAddonsAmong(const DocumentsViewModel& viewModel,
@@ -656,6 +658,27 @@ void DocumentsViewModelTest::AManualThatDidNotComeDownSaysWhyAndCanBeAskedAgain(
     QCOMPARE(f.viewModel.TheManualIs(), ManualState::Fetching);
     QVERIFY2(f.viewModel.WhatHappenedToTheManual().isEmpty(),
              "asking again clears the reason, so the screen does not show a stale failure while it tries");
+}
+
+void DocumentsViewModelTest::AManualTheEditionDoesNotShipIsNeverFetchedAndSaysSo()
+{
+    Fixture f(ManualDelivery::NotShipped);
+    f.viewModel.TheInterfaceSpeaks("pt_BR");
+
+    const std::vector<DocumentGroup> documents = f.viewModel.GroupsOf(DocumentPanel::Documents);
+
+    QVERIFY2(!documents.empty() && f.viewModel.ItIsTheManual(documents.front().lines.front()),
+             "the manual keeps its line, so the user learns where to find it");
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::NotShipped);
+
+    f.viewModel.FetchTheManual();
+
+    QVERIFY2(f.theManual.asked.empty(), "an edition that ships no manual asked for one to be downloaded");
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::NotShipped);
+
+    f.viewModel.TheInterfaceSpeaks("en");
+
+    QCOMPARE(f.viewModel.TheManualIs(), ManualState::NotShipped);
 }
 
 QTEST_APPLESS_MAIN(DocumentsViewModelTest)

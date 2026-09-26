@@ -626,6 +626,7 @@ target_compile_definitions(fsorg-github-release-parser-tests PRIVATE
 
 fsorg_add_qt_test(fsorg-github-update-service-tests github-update-service
         tests/infrastructure/update/tst_github_update_service.cpp
+        src/infrastructure/update/GithubReleaseFeed.cpp
         src/infrastructure/update/GithubUpdateService.cpp)
 target_link_libraries(fsorg-github-update-service-tests PRIVATE fsorg-infrastructure Qt6::Network)
 
@@ -634,6 +635,22 @@ if (WIN32)
             COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "$<TARGET_FILE:Qt6::Network>"
             "$<TARGET_FILE_DIR:fsorg-github-update-service-tests>"
+            VERBATIM)
+endif ()
+
+fsorg_add_qt_test(fsorg-notice-only-update-service-tests notice-only-update-service
+        tests/infrastructure/update/tst_notice_only_update_service.cpp
+        src/infrastructure/update/GithubReleaseFeed.cpp
+        src/infrastructure/update/NoticeOnlyUpdateService.cpp)
+target_link_libraries(fsorg-notice-only-update-service-tests PRIVATE fsorg-infrastructure Qt6::Network)
+target_compile_definitions(fsorg-notice-only-update-service-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+if (WIN32)
+    add_custom_command(TARGET fsorg-notice-only-update-service-tests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "$<TARGET_FILE:Qt6::Network>"
+            "$<TARGET_FILE_DIR:fsorg-notice-only-update-service-tests>"
             VERBATIM)
 endif ()
 

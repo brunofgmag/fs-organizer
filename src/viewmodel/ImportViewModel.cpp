@@ -18,7 +18,8 @@ ImportViewModel::ImportViewModel(const ImportService& service,
       probe_(probe),
       session_(session),
       running_(runner),
-      preparingDetails_(runner)
+      preparingDetails_(runner),
+      lookingForLeftovers_(runner)
 {
 }
 
@@ -73,9 +74,25 @@ std::uintmax_t ImportViewModel::TotalSizeOf(const std::vector<std::filesystem::p
     return service_.TotalSizeOf(folders);
 }
 
-std::vector<StagingLeftover> ImportViewModel::Leftovers() const
+void ImportViewModel::LookForLeftovers()
 {
-    return service_.Leftovers(Profile());
+    const SimulatorProfile profile = Profile();
+    const auto leftovers = std::make_shared<std::vector<StagingLeftover>>();
+
+    lookingForLeftovers_.Run(
+        [this, profile, leftovers]
+        {
+            *leftovers = service_.Leftovers(profile);
+        },
+        [this, leftovers]
+        {
+            if (leftovers->empty())
+            {
+                return;
+            }
+
+            emit LeftoversFound(*leftovers);
+        });
 }
 
 std::vector<InterruptedSwap> ImportViewModel::InterruptedSwaps() const

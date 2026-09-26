@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>LPFR AGC</title>
+<style>
+@page { size: A5; margin: 7mm; }
+html, body { margin: 0; padding: 0; }
+body { font-family: "Bahnschrift", "Segoe UI", Arial, sans-serif; color: #111; font-size: 8pt; }
+.frame { border: 1.2pt solid #111; height: 192mm; overflow: hidden; display: flex; flex-direction: column; }
+.head { display: grid; grid-template-columns: 1fr auto; border-bottom: 1.2pt solid #111; }
+.head .left { padding: 2mm 3mm; } .head .code { font-size: 15pt; font-weight: 700; letter-spacing: 0.06em; }
+.head .name { font-size: 9pt; } .head .right { border-left: 1.2pt solid #111; padding: 2mm 3mm; text-align: right; }
+.head .type { font-size: 13pt; font-weight: 700; } .head .small { font-size: 7pt; color: #333; }
+.freq { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 0.8pt solid #111; }
+.freq div { padding: 1.2mm 2mm; border-right: 0.5pt solid #111; } .freq div:last-child { border-right: none; }
+.freq b { display: block; font-size: 6.5pt; letter-spacing: 0.08em; } .drawing { flex: 1; min-height: 0; position: relative; }
+.drawing > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.foot { border-top: 0.8pt solid #111; display: flex; justify-content: space-between; padding: 1.2mm 3mm; font-size: 6.5pt; }
+</style></head><body><div class="frame">
+<div class="head"><div class="left"><div class="code">LPFR / FAO</div><div class="name">FARO · PORTUGAL · ELEV 24 FT</div></div>
+<div class="right"><div class="type">AGC</div><div class="small">Aerodrome chart</div></div></div>
+<div class="freq"><div><b>ATIS</b>124.925</div><div><b>DELIVERY</b>121.975</div><div><b>GROUND</b>121.750</div><div><b>TOWER</b>120.750</div></div>
+<div class="drawing"><svg width="100%" height="100%" viewBox="0 0 420 560" xmlns="http://www.w3.org/2000/svg" font-family="Bahnschrift, Segoe UI">
+<rect width="420" height="560" fill="#ffffff"/>
+<g stroke="#9ab" stroke-width="0.5" opacity="0.6"><line x1="0" y1="0" x2="0" y2="560"/><line x1="60" y1="0" x2="60" y2="560"/><line x1="120" y1="0" x2="120" y2="560"/><line x1="180" y1="0" x2="180" y2="560"/><line x1="240" y1="0" x2="240" y2="560"/><line x1="300" y1="0" x2="300" y2="560"/><line x1="360" y1="0" x2="360" y2="560"/><line x1="420" y1="0" x2="420" y2="560"/><line x1="0" y1="0" x2="420" y2="0"/><line x1="0" y1="60" x2="420" y2="60"/><line x1="0" y1="120" x2="420" y2="120"/><line x1="0" y1="180" x2="420" y2="180"/><line x1="0" y1="240" x2="420" y2="240"/><line x1="0" y1="300" x2="420" y2="300"/><line x1="0" y1="360" x2="420" y2="360"/><line x1="0" y1="420" x2="420" y2="420"/><line x1="0" y1="480" x2="420" y2="480"/><line x1="0" y1="540" x2="420" y2="540"/></g>
+<path d="M0 470 C80 440 160 500 240 470 C320 440 380 480 420 460 L420 560 L0 560 Z" fill="#dce8f2"/>
+<text x="300" y="520" font-size="9" fill="#46607a" font-style="italic">Ria Formosa lagoon</text>
+<g transform="translate(210 300) rotate(8) scale(0.86) translate(-210 -300)">
+<rect x="30" y="286" width="360" height="22" fill="#b9b9b9" stroke="#111" stroke-width="1"/>
+<g stroke="#ffffff" stroke-width="2" stroke-dasharray="10 8"><line x1="50" y1="297" x2="370" y2="297"/></g>
+<text x="40" y="327" font-size="11" font-weight="700">10</text><text x="366" y="280" font-size="11" font-weight="700">28</text>
+<text x="210" y="330" font-size="8" text-anchor="middle">RWY 10/28 · 2490 × 45 m · ASPH</text>
+<g fill="none" stroke="#111" stroke-width="1.4">
+<path d="M70 286 L70 240 L330 240 L330 286"/><path d="M150 240 L150 120"/><path d="M250 240 L250 120"/><path d="M200 240 L200 286"/>
+</g>
+<g font-size="8" font-weight="700"><text x="58" y="262">A</text><text x="138" y="200">B</text><text x="203" y="262">C</text><text x="238" y="200">D</text><text x="334" y="262">E</text></g>
+<rect x="110" y="60" width="285" height="62" fill="#efefef" stroke="#111" stroke-width="0.8"/>
+<text x="252" y="50" font-size="8" text-anchor="middle">MAIN APRON</text>
+<rect x="122" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="130" y="88" font-size="7" text-anchor="middle">1</text><rect x="144" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="152" y="88" font-size="7" text-anchor="middle">2</text><rect x="166" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="174" y="88" font-size="7" text-anchor="middle">3</text><rect x="188" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="196" y="88" font-size="7" text-anchor="middle">4</text><rect x="210" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="218" y="88" font-size="7" text-anchor="middle">5</text><rect x="232" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="240" y="88" font-size="7" text-anchor="middle">6</text><rect x="254" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="262" y="88" font-size="7" text-anchor="middle">7</text><rect x="276" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="284" y="88" font-size="7" text-anchor="middle">8</text><rect x="298" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="306" y="88" font-size="7" text-anchor="middle">9</text><rect x="320" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="328" y="88" font-size="7" text-anchor="middle">10</text><rect x="342" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="350" y="88" font-size="7" text-anchor="middle">11</text><rect x="364" y="92" width="16" height="26" fill="none" stroke="#111" stroke-width="0.8"/><text x="372" y="88" font-size="7" text-anchor="middle">12</text>
+<rect x="170" y="4" width="150" height="26" fill="#d0d0d0" stroke="#111" stroke-width="0.8"/><text x="245" y="21" font-size="8" text-anchor="middle">TERMINAL</text>
+<circle cx="100" cy="150" r="7" fill="none" stroke="#111"/><text x="100" y="170" font-size="7" text-anchor="middle">TWR</text>
+<rect x="330" y="150" width="40" height="30" fill="#e3e3e3" stroke="#111" stroke-width="0.8"/><text x="350" y="194" font-size="7" text-anchor="middle">CARGO</text>
+</g>
+<g transform="translate(370 410)"><circle r="22" fill="none" stroke="#111"/><path d="M0 -20 L6 0 L0 -6 L-6 0 Z" fill="#111"/><text y="-26" font-size="9" text-anchor="middle" font-weight="700">N</text></g>
+<g transform="translate(24 500)" font-size="7"><rect width="100" height="4" fill="#111"/><rect x="50" width="50" height="4" fill="#fff" stroke="#111" stroke-width="0.5"/><text y="14">0</text><text x="92" y="14">500 m</text></g>
+<text x="24" y="40" font-size="7">ARP 37°00'53"N 007°57'56"W</text><text x="24" y="52" font-size="7">VAR 1°W</text>
+</svg></div>
+<div class="foot"><span>Tessellate Airports · scenery chart set 1.3</span><span>SIMULATION USE ONLY · NOT FOR NAVIGATION</span></div>
+</div></body></html>

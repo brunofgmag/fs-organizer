@@ -1,0 +1,20 @@
+{
+    "icao": "LPFR",
+    "catalogue": [
+        {
+            "chart_id": "LPFR_ADC",
+            "chart_type": "AGC",
+            "chart_name": "Aerodrome chart"
+        },
+        {
+            "chart_id": "LPFR_APC",
+            "chart_type": "APC",
+            "chart_name": "Aprons and stands"
+        },
+        {
+            "chart_id": "LPFR_VAC",
+            "chart_type": "VAC",
+            "chart_name": "Visual approach"
+        }
+    ]
+}

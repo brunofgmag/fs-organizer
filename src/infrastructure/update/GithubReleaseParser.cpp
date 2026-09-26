@@ -10,7 +10,7 @@ namespace
 {
     constexpr auto kAssetPrefix = "fs-organizer-";
     constexpr auto kZipSuffix = ".zip";
-    constexpr auto kChecksumSuffix = ".zip.sha256";
+    constexpr auto kChecksumSuffix = ".sha256";
 
     QString WithoutTheTagPrefix(const QString& tag)
     {
@@ -44,22 +44,20 @@ std::optional<UpdateInfo> ParseLatestRelease(const QByteArray& json)
     info.version = WithoutTheTagPrefix(tag).toStdString();
     info.releasePageUrl = release.value(QStringLiteral("html_url")).toString().toStdString();
 
+    const QString zipName = QLatin1String(kAssetPrefix) + WithoutTheTagPrefix(tag) + QLatin1String(kZipSuffix);
+    const QString checksumName = zipName + QLatin1String(kChecksumSuffix);
+
     for (const QJsonValue value : release.value(QStringLiteral("assets")).toArray())
     {
         const QJsonObject asset = value.toObject();
         const QString name = asset.value(QStringLiteral("name")).toString();
         const QString url = asset.value(QStringLiteral("browser_download_url")).toString();
 
-        if (!name.startsWith(QLatin1String(kAssetPrefix)))
-        {
-            continue;
-        }
-
-        if (name.endsWith(QLatin1String(kChecksumSuffix)))
+        if (name == checksumName)
         {
             info.shaUrl = url.toStdString();
         }
-        else if (name.endsWith(QLatin1String(kZipSuffix)))
+        else if (name == zipName)
         {
             info.zipName = name.toStdString();
             info.zipUrl = url.toStdString();

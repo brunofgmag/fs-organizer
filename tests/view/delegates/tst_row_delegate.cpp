@@ -33,6 +33,9 @@ namespace
         static void ASecondLineThatFitsLeavesTheCellWithoutATooltip();
         static void TheSecondLineIsCutInTheMiddleSoBothEndsSurvive();
         static void ACellThatOnlyDrawsATagDoesNotAskForTheWidthOfTheTextItReplaced();
+        static void TheTagIsLaidAfterTheTextTheViewportDrawsAndNotOverIt();
+        static void ATextCutInTheFontTheViewportDrawsAnswersWithATooltip();
+        static void TheWidthACellAsksForFitsTheFontTheViewportDraws();
     };
 }
 
@@ -132,11 +135,12 @@ namespace
         int inkEndsAt = -1;
     };
 
-    SuffixShot CellPaintedWith(const QString& suffix)
+    SuffixShot CellPaintedWith(const QString& suffix, const QString& tag = QString())
     {
         QStandardItemModel model(1, 1);
         auto* content = new QStandardItem(QStringLiteral("Community2024"));
         content->setData(suffix, QuietSuffixRole);
+        content->setData(tag, TagTextRole);
         model.setItem(0, 0, content);
 
         QTableView view;
@@ -466,6 +470,81 @@ void RowDelegateTest::ACellThatOnlyDrawsATagDoesNotAskForTheWidthOfTheTextItRepl
     const RowDelegate delegate;
 
     QCOMPARE(delegate.sizeHint(item, model.index(0, 0)).width(), delegate.sizeHint(item, model.index(1, 0)).width());
+}
+
+namespace
+{
+    class ItemViewsInTheirOwnFont
+    {
+    public:
+        ItemViewsInTheirOwnFont()
+        {
+            QFont smaller = QApplication::font();
+            smaller.setPointSizeF(QApplication::font().pointSizeF() * 0.7);
+            QApplication::setFont(smaller, "QAbstractItemView");
+        }
+
+        ItemViewsInTheirOwnFont(const ItemViewsInTheirOwnFont&) = delete;
+        ItemViewsInTheirOwnFont& operator=(const ItemViewsInTheirOwnFont&) = delete;
+
+        ~ItemViewsInTheirOwnFont()
+        {
+            QApplication::setFont(QApplication::font());
+        }
+    };
+}
+
+void RowDelegateTest::TheTagIsLaidAfterTheTextTheViewportDrawsAndNotOverIt()
+{
+    ApplyModernistTheme(*qApp);
+    const ItemViewsInTheirOwnFont themed;
+
+    const SuffixShot alone = CellPaintedWith(QString());
+    const SuffixShot tagged = CellPaintedWith(QString(), QStringLiteral("Your library"));
+
+    QVERIFY(alone.inkEndsAt > alone.cell.left());
+    QVERIFY(tagged.inkEndsAt > alone.inkEndsAt);
+
+    for (int x = alone.cell.left(); x <= alone.inkEndsAt; ++x)
+    {
+        for (int y = alone.cell.top(); y <= alone.cell.bottom(); ++y)
+        {
+            QCOMPARE(tagged.painted.pixelColor(x, y), alone.painted.pixelColor(x, y));
+        }
+    }
+}
+
+void RowDelegateTest::ATextCutInTheFontTheViewportDrawsAnswersWithATooltip()
+{
+    ApplyModernistTheme(*qApp);
+    const ItemViewsInTheirOwnFont themed;
+
+    Table table{QString::fromLatin1(kLongName)};
+    QVERIFY(table.view.font() != table.view.viewport()->font());
+
+    const int drawnWide = QFontMetrics(table.view.viewport()->font()).horizontalAdvance(QString::fromLatin1(kLongName));
+    const int measuredWide = QFontMetrics(table.view.font()).horizontalAdvance(QString::fromLatin1(kLongName));
+    QVERIFY(measuredWide + 30 < drawnWide);
+
+    QVERIFY2(table.AsksForATooltipOn(measuredWide + 30), "the name was cut on screen with no way to read the rest");
+}
+
+void RowDelegateTest::TheWidthACellAsksForFitsTheFontTheViewportDraws()
+{
+    ApplyModernistTheme(*qApp);
+    const ItemViewsInTheirOwnFont themed;
+
+    Table table{QString::fromLatin1(kLongName)};
+    QVERIFY(table.view.font() != table.view.viewport()->font());
+
+    QStyleOptionViewItem option;
+    option.initFrom(&table.view);
+    option.widget = &table.view;
+    option.font = table.view.font();
+
+    const int drawnWide = QFontMetrics(table.view.viewport()->font()).horizontalAdvance(QString::fromLatin1(kLongName));
+
+    QVERIFY(table.delegate.sizeHint(option, table.model.index(0, 0)).width() > drawnWide);
 }
 
 QTEST_MAIN(RowDelegateTest)

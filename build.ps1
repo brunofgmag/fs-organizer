@@ -2,13 +2,20 @@ param(
     [ValidateSet('Debug', 'Release', 'RelWithDebInfo')]
     [string]$Config = 'Release',
     [switch]$RunTests,
-    [switch]$SkipTests
+    [switch]$SkipTests,
+    [ValidateSet('GitHub', 'FlightSimTo')]
+    [string]$Edition = 'GitHub'
 )
 
 $ErrorActionPreference = 'Stop'
 
 if ($RunTests -and $SkipTests) {
     throw 'Use either -RunTests or -SkipTests, not both.'
+}
+
+$flightSimTo = $Edition -eq 'FlightSimTo'
+if ($flightSimTo -and ($Config -ne 'Release' -or -not $SkipTests)) {
+    throw 'The FlightSimTo edition builds only with -Config Release -SkipTests. The tests cover both editions and run in the default build.'
 }
 
 $cmakeCommand = Get-Command cmake -ErrorAction SilentlyContinue
@@ -30,7 +37,7 @@ if (-not $cmake) {
     throw 'CMake was not found. Install CMake or CLion and ensure cmake.exe is available.'
 }
 
-$preset = $Config.ToLowerInvariant()
+$preset = if ($flightSimTo) { 'release-flightsim-to' } else { $Config.ToLowerInvariant() }
 $buildDir = Join-Path $PSScriptRoot "build/$preset"
 $exe = Join-Path $buildDir 'bin/fs-organizer.exe'
 $cacheFile = Join-Path $buildDir 'CMakeCache.txt'
@@ -100,6 +107,11 @@ if ($RunTests) {
     -DeploymentDir (Join-Path $buildDir 'bin') `
     -Configuration $Config
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+if ($flightSimTo) {
+    & (Join-Path $PSScriptRoot 'tools/assert-no-self-updater.ps1') -Executable $exe
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
 
 $registry = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'cmake') -Filter '*.cmake' -File)
 $registry += Get-Item -LiteralPath (Join-Path $PSScriptRoot 'CMakeLists.txt')

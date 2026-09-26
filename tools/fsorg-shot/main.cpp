@@ -1,11 +1,14 @@
+#include <algorithm>
 #include <filesystem>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <vector>
 
 #include <QtCore/QCommandLineOption>
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QDir>
+#include <QtCore/QLocale>
 #include <QtCore/QTextStream>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
@@ -13,6 +16,7 @@
 #include <QtGui/QGuiApplication>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPixmap>
+#include <QtGui/QScreen>
 #include <QtGui/QStyleHints>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDialog>
@@ -64,6 +68,8 @@
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "infrastructure/update/GithubUpdateService.h"
+#include "infrastructure/update/NoticeOnlyUpdateService.h"
+#include "edition/Edition.h"
 #include "shared/DisposableState.h"
 #include "support/PathText.h"
 #include "view/JournalPage.h"
@@ -423,6 +429,55 @@ namespace
 
         return {parts[0].toInt(), parts[1].toInt()};
     }
+
+    std::vector<UserCfgLocation> TheSimulatorFilesIn(const std::filesystem::path& userFolder)
+    {
+        std::vector<UserCfgLocation> locations;
+
+        for (const UserCfgLocation& installed : WindowsUserCfgLocations())
+        {
+            const bool alreadyThere = std::ranges::any_of(locations,
+                                                          [&installed](const UserCfgLocation& kept)
+                                                          {
+                                                              return kept.variant == installed.variant;
+                                                          });
+
+            if (!alreadyThere)
+            {
+                locations.push_back(
+                    {.variant = installed.variant, .configPath = userFolder / installed.configPath.filename()});
+            }
+        }
+
+        return locations;
+    }
+
+    std::optional<EditionParts> TheEditionNamed(const QString& name)
+    {
+        if (name == QLatin1String("github"))
+        {
+            return EditionParts{
+                .updates =
+                    std::make_unique<GithubUpdateService>(QString(), QCoreApplication::applicationVersion(),
+                                                          QDir::tempPath() + QStringLiteral("/fsorg-shot-updates")),
+                .manual = std::make_unique<NoManualToFetch>(),
+                .updateDelivery = UpdateDelivery::SelfUpdate,
+                .manualDelivery = ManualDelivery::Download,
+            };
+        }
+
+        if (name == QLatin1String("flightsim-to"))
+        {
+            return EditionParts{
+                .updates = std::make_unique<NoticeOnlyUpdateService>(QString(), QCoreApplication::applicationVersion()),
+                .manual = std::make_unique<NoManualToFetch>(),
+                .updateDelivery = UpdateDelivery::NoticeOnly,
+                .manualDelivery = ManualDelivery::NotShipped,
+            };
+        }
+
+        return std::nullopt;
+    }
 }
 
 int main(int argc, char* argv[])
@@ -430,6 +485,7 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
     QApplication::setApplicationName(QStringLiteral("FS Organizer"));
     QApplication::setApplicationVersion(QStringLiteral(FSORG_VERSION));
+    QApplication::setWindowIcon(BrandIcon());
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
@@ -451,12 +507,25 @@ int main(int argc, char* argv[])
                                    "How many top rows to select before the Library, Destinations and Quarantine "
                                    "shots, so the batch panel is in the picture. Wins over --select.",
                                    "rows", "0");
+    const QCommandLineOption state("state",
+                                   "Folder laid out like %LOCALAPPDATA%\\fs-organizer to copy the settings, journal "
+                                   "and presets from, instead of your install. The shots whose dialogs are drawn "
+                                   "from names written into this tool are skipped.",
+                                   "folder");
+    const QCommandLineOption simulator("simulator",
+                                       "The simulator's user folder, the one that holds UserCfg.opt, Content.xml, "
+                                       "EXE.xml and the loading report, instead of the ones Windows knows.",
+                                       "folder");
+    const QCommandLineOption edition("edition", "github or flightsim-to.", "edition", "github");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
     parser.addOption(language);
     parser.addOption(select);
     parser.addOption(batch);
+    parser.addOption(state);
+    parser.addOption(simulator);
+    parser.addOption(edition);
     parser.process(app);
 
     if (const QString wanted = parser.value(theme); wanted != QLatin1String("system"))
@@ -495,6 +564,7 @@ int main(int argc, char* argv[])
     }
 
     QCoreApplication::installTranslator(&interface);
+    QLocale::setDefault(QLocale(wantedLanguage));
 
     QTranslator nativeWidgets;
     if (LanguageSwitch::LoadNativeWidgets(nativeWidgets, wantedLanguage))
@@ -525,14 +595,43 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-shot");
+    const std::optional<EditionParts> parts = TheEditionNamed(parser.value(edition));
+    if (!parts.has_value())
+    {
+        Out() << "unknown edition: " << parser.value(edition) << ". Offered: github flightsim-to\n";
+        return 1;
+    }
+
+    const bool demoState = parser.isSet(state);
+    const std::filesystem::path stateSource = demoState ? AsPath(parser.value(state)) : TheInstalledStateFolder();
+    if (demoState && !std::filesystem::is_directory(stateSource))
+    {
+        Out() << "no such state folder: " << parser.value(state) << "\n";
+        return 1;
+    }
+
+    const bool demoSimulator = parser.isSet(simulator);
+    const std::filesystem::path simulatorFolder = AsPath(parser.value(simulator));
+    if (demoSimulator && !std::filesystem::is_directory(simulatorFolder))
+    {
+        Out() << "no such simulator folder: " << parser.value(simulator) << "\n";
+        return 1;
+    }
+
+    const std::vector<UserCfgLocation> userCfgLocations =
+        demoSimulator ? TheSimulatorFilesIn(simulatorFolder) : WindowsUserCfgLocations();
+
+    const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-shot", stateSource);
     if (!staged.has_value())
     {
         Out() << "could not stage a disposable copy of the state, so nothing ran\n";
         return 1;
     }
 
-    Out() << "reading a copy, so your install is never written: " << AsText(staged->settingsFile.parent_path()) << "\n";
+    Out() << "reading a copy of " << AsText(stateSource)
+          << ", so it is never written: " << AsText(staged->settingsFile.parent_path()) << "\n";
+    Out() << "edition " << parser.value(edition) << ", numbers in " << QLocale().name() << ", simulator files from "
+          << (demoSimulator ? AsText(simulatorFolder) : QStringLiteral("the folders Windows knows")) << "\n";
 
     JsonSettingsRepository settings(staged->settingsFile);
 
@@ -567,8 +666,7 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
-    const std::vector<StartupFileLocation> startupFiles =
-        StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe);
+    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries{{}};
     StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
 
@@ -595,7 +693,7 @@ int main(int argc, char* argv[])
     SizeService sizes(catalog, filesystemProbe, clock, runner);
 
     AddonTreeModel treeModel;
-    ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+    ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe));
     packages.Reload(session.Profile().variant);
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
     const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
@@ -604,7 +702,7 @@ int main(int argc, char* argv[])
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
     ContentXmlPackageList packageList(
-        ChooseContentList(ContentListLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant)
+        ChooseContentList(ContentListLocations(userCfgLocations, filesystemProbe), session.Profile().variant)
             .value_or(ChosenContentList{})
             .listPath);
     CoverageService coverageService(packageList, processProbe, true);
@@ -619,10 +717,8 @@ int main(int argc, char* argv[])
     const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(staged->settingsFile.parent_path() / "document-index.json");
-    NoManualToFetch manual;
-
-    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, manual,
-                                          clock);
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache,
+                                          *parts->manual, parts->manualDelivery, clock);
     auto* documentsPage = new DocumentsPage(documentsViewModel);
 
     auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
@@ -648,7 +744,7 @@ int main(int argc, char* argv[])
 
     ProfileLoadingReport loadingReport(
         filesystemProbe,
-        LoadingReportOf(LoadingReportLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant));
+        LoadingReportOf(LoadingReportLocations(userCfgLocations, filesystemProbe), session.Profile().variant));
 
     DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
                                               runner);
@@ -664,9 +760,7 @@ int main(int argc, char* argv[])
     auto* packageListPage = new PackageListPage(coverageViewModel);
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    GithubUpdateService updateService({}, QCoreApplication::applicationVersion(),
-                                      QDir::tempPath() + QStringLiteral("/fsorg-shot-updates"));
-    UpdateViewModel updateViewModel(updateService, UpdateMode::Notify, false);
+    UpdateViewModel updateViewModel(*parts->updates, UpdateMode::Notify, false, parts->updateDelivery);
 
     OptionsViewModel optionsViewModel(session, profileService, runner, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
@@ -692,6 +786,9 @@ int main(int argc, char* argv[])
 
     treeViewModel.ShowActiveProfile();
 
+    QScreen* primary = QGuiApplication::primaryScreen();
+    shell.setScreen(primary);
+    shell.move(primary->availableGeometry().topLeft());
     shell.resize(window);
     shell.show();
     LetTheLayoutSettle();
@@ -834,6 +931,12 @@ int main(int argc, char* argv[])
         libraryTab->click();
         LetTheLayoutSettle();
 
+        if (demoState)
+        {
+            Out()
+                << "skipped 30-library-shared-airports: its names are written into this tool, not read from --state\n";
+        }
+        else
         {
             SharedAirportsDialog sharedDialog(
                 {{.turningOn = QStringLiteral("flytampa-airport-eham-amsterdam"),
@@ -909,6 +1012,12 @@ int main(int argc, char* argv[])
         Out() << "fewer than two addons in the libraries, so there is no swap to picture\n";
     }
 
+    if (demoState)
+    {
+        Out() << "skipped 27-community-import and 21-library-deep-root: their paths are written into this tool, not "
+                 "read from --state\n";
+    }
+    else
     {
         ImportRequest owned;
         owned.source = PathFromUtf8("C:/Users/bruno/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
@@ -926,6 +1035,7 @@ int main(int argc, char* argv[])
             && landed;
     }
 
+    if (!demoState)
     {
         const std::filesystem::path deepRoot =
             PathFromUtf8("C:/Users/bruno/Documents/Flight Simulator Addons/MSFS 2024 Library");

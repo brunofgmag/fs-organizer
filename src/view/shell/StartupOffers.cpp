@@ -143,17 +143,19 @@ void OfferToPutBackWhatALostSwapRenamed(ImportViewModel& importViewModel, QWidge
 
 void OfferWhatALostImportLeftBehind(ImportViewModel& importViewModel, QWidget* parent)
 {
-    const std::vector<StagingLeftover> leftovers = importViewModel.Leftovers();
-    if (leftovers.empty())
-    {
-        return;
-    }
+    QObject::connect(
+        &importViewModel, &ImportViewModel::LeftoversFound, parent,
+        [&importViewModel, parent](const std::vector<StagingLeftover>& leftovers)
+        {
+            StagingLeftoverDialog dialog(leftovers, parent);
+            if (dialog.exec() != QDialog::Accepted)
+            {
+                return;
+            }
 
-    StagingLeftoverDialog dialog(leftovers, parent);
-    if (dialog.exec() != QDialog::Accepted)
-    {
-        return;
-    }
+            importViewModel.SettleTheLeftovers(dialog.ToDiscard(), dialog.ToResume());
+        },
+        Qt::SingleShotConnection);
 
-    importViewModel.SettleTheLeftovers(dialog.ToDiscard(), dialog.ToResume());
+    importViewModel.LookForLeftovers();
 }

@@ -10,6 +10,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 
 #include "application/ports/UpdateService.h"
+#include "infrastructure/update/GithubReleaseFeed.h"
 
 class QNetworkReply;
 class QProcess;
@@ -38,7 +39,7 @@ public:
     void RemoveObserver(UpdateServiceObserver* observer) override;
 
 private:
-    void OnCheckFinished();
+    void OnCheckFinished(const FeedAnswer& answer);
 
     void OnChecksumFinished();
 
@@ -70,12 +71,11 @@ private:
     void SayTheStageFinished(bool ok, const QString& error);
 
     QNetworkAccessManager network_;
-    QString feedUrl_;
     QString currentVersion_;
     QString updatesFolder_;
     std::vector<UpdateServiceObserver*> observers_;
+    GithubReleaseFeed feed_;
 
-    QNetworkReply* checkReply_ = nullptr;
     QNetworkReply* checksumReply_ = nullptr;
     QNetworkReply* zipReply_ = nullptr;
     QProcess* extraction_ = nullptr;
