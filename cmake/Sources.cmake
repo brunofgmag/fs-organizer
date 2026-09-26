@@ -107,9 +107,26 @@ set(INFRASTRUCTURE_SOURCES
 )
 
 set(NETWORK_INFRASTRUCTURE_SOURCES
+        src/infrastructure/update/GithubReleaseFeed.cpp
+)
+
+set(GITHUB_EDITION_SOURCES
+        src/edition/GithubEdition.cpp
         src/infrastructure/manual/GithubManual.cpp
         src/infrastructure/update/GithubUpdateService.cpp
+        assets/updater.qrc
 )
+
+set(FLIGHTSIM_TO_EDITION_SOURCES
+        src/edition/FlightSimToEdition.cpp
+        src/infrastructure/update/NoticeOnlyUpdateService.cpp
+)
+
+if (FSORG_EDITION STREQUAL "flightsim-to")
+    set(EDITION_SOURCES ${FLIGHTSIM_TO_EDITION_SOURCES})
+else ()
+    set(EDITION_SOURCES ${GITHUB_EDITION_SOURCES})
+endif ()
 
 set(PDF_INFRASTRUCTURE_SOURCES
         src/infrastructure/documents/QtPdfChartVersions.cpp
@@ -216,6 +233,7 @@ set(WINDOWS_SHELL_SOURCES
 
 set(APP_SOURCES
         src/main.cpp
+        ${EDITION_SOURCES}
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${PDF_INFRASTRUCTURE_SOURCES}
         ${WINDOWS_SHELL_SOURCES}

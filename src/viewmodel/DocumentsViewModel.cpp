@@ -24,6 +24,7 @@ namespace
         case ManualState::NotHere: return DocumentsViewModel::tr("not downloaded");
         case ManualState::Fetching: return DocumentsViewModel::tr("downloading…");
         case ManualState::Failed: return DocumentsViewModel::tr("download failed");
+        case ManualState::NotShipped: return DocumentsViewModel::tr("on GitHub");
         case ManualState::Here: break;
         }
 
@@ -237,6 +238,7 @@ DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
                                        BackgroundRunner& runner,
                                        DocumentIndexCache& cache,
                                        ManualSource& manual,
+                                       const ManualDelivery manualDelivery,
                                        const Clock& clock,
                                        QObject* parent)
     : QObject(parent),
@@ -245,9 +247,15 @@ DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
       session_(session),
       cache_(cache),
       manual_(manual),
+      manualDelivery_(manualDelivery),
       clock_(clock),
       reading_(runner)
 {
+    if (manualDelivery_ == ManualDelivery::NotShipped)
+    {
+        manualState_ = ManualState::NotShipped;
+    }
+
     manual_.AddObserver(this);
 }
 
@@ -260,7 +268,11 @@ void DocumentsViewModel::TheInterfaceSpeaks(const std::string& language)
 {
     language_ = ManualLanguageFor(language);
 
-    if (manualState_ != ManualState::Fetching)
+    if (manualDelivery_ == ManualDelivery::NotShipped)
+    {
+        manualState_ = ManualState::NotShipped;
+    }
+    else if (manualState_ != ManualState::Fetching)
     {
         manualState_ = manual_.TheManualIsHere(language_) ? ManualState::Here : ManualState::NotHere;
         manualFailure_.clear();
@@ -281,7 +293,7 @@ QString DocumentsViewModel::WhatHappenedToTheManual() const
 
 void DocumentsViewModel::FetchTheManual()
 {
-    if (manualState_ == ManualState::Fetching)
+    if (manualState_ == ManualState::Fetching || manualDelivery_ == ManualDelivery::NotShipped)
     {
         return;
     }

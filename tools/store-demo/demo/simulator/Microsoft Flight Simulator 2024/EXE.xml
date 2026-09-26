@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SimBase.Document Type="Launch" version="1,0">
+  <Descr>Launch</Descr>
+  <Filename>EXE.xml</Filename>
+  <Disabled>False</Disabled>
+  <Launch.ManualLoad>False</Launch.ManualLoad>
+  <Launch.Addon>
+    <Name>Brightwater Bridge</Name>
+    <Disabled>False</Disabled>
+    <Path>F:\MSFS 2024\Community\brightwater-util-bridge\bin\BrightwaterBridge.exe</Path>
+    <CommandLine>-minimized</CommandLine>
+  </Launch.Addon>
+  <Launch.Addon>
+    <Name>Stratoform Live Weather</Name>
+    <Disabled>False</Disabled>
+    <Path>F:\Programs\Stratoform\Live Weather\StratoformLive.exe</Path>
+  </Launch.Addon>
+  <Launch.Addon>
+    <Name>Pinecrest Traffic Injector</Name>
+    <Disabled>True</Disabled>
+    <Path>F:\MSFS 2024\Community\pinecrest-util-traffic-injector\tools\PinecrestInjector.exe</Path>
+  </Launch.Addon>
+</SimBase.Document>

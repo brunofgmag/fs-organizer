@@ -1,0 +1,15 @@
+Version 66
+{Video
+	Adapter "Display adapter"
+	Monitor 0
+	Windowed 0
+	FullscreenBorderless 1
+	Resolution 2560 1440
+}
+{Sound
+	MasterVolume 0.800000
+}
+{Graphics
+	Preset HIGH_END
+}
+InstalledPackagesPath "F:\MSFS 2024"

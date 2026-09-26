@@ -18,6 +18,7 @@
 #include "application/ports/BackgroundRunner.h"
 #include "viewmodel/GuardedRunner.h"
 #include "application/ports/DocumentIndexCache.h"
+#include "application/model/ManualDelivery.h"
 #include "application/ports/ManualSource.h"
 #include "application/model/ReadingGestures.h"
 #include "domain/documents/DocumentClassification.h"
@@ -35,6 +36,7 @@ enum class ManualState : int
     Fetching = 1,
     Here = 2,
     Failed = 3,
+    NotShipped = 4,
 };
 
 struct DocumentLine
@@ -76,6 +78,7 @@ public:
                        BackgroundRunner& runner,
                        DocumentIndexCache& cache,
                        ManualSource& manual,
+                       ManualDelivery manualDelivery,
                        const Clock& clock,
                        QObject* parent = nullptr);
 
@@ -181,6 +184,7 @@ private:
     Session& session_;
     DocumentIndexCache& cache_;
     ManualSource& manual_;
+    ManualDelivery manualDelivery_;
     const Clock& clock_;
 
     std::vector<DocumentsOfAnAddon> indexed_{};

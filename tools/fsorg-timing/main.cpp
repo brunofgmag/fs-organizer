@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
             {
                 communityViewModel.Show();
             });
-    Measure("ImportService::Leftovers", true,
+    Measure("ImportService::Leftovers", false,
             [&]
             {
                 static_cast<void>(importService.Leftovers(profile));

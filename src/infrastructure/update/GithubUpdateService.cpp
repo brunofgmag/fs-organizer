@@ -20,13 +20,6 @@ namespace
 
     constexpr auto kApplyScriptResource = ":/scripts/apply.ps1";
 
-    QString HttpError(const QNetworkReply* reply)
-    {
-        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-        return status > 0 ? QStringLiteral("HTTP %1").arg(status) : reply->errorString();
-    }
-
     QNetworkReply* Taken(QNetworkReply*& member)
     {
         QNetworkReply* reply = std::exchange(member, nullptr);
@@ -75,9 +68,14 @@ GithubUpdateService::GithubUpdateService(QString feedUrl,
                                          QString updatesFolder,
                                          QObject* parent)
     : QObject(parent),
-      feedUrl_(std::move(feedUrl)),
       currentVersion_(std::move(currentVersion)),
-      updatesFolder_(std::move(updatesFolder))
+      updatesFolder_(std::move(updatesFolder)),
+      feed_(std::move(feedUrl),
+            currentVersion_,
+            [this](const FeedAnswer& answer)
+            {
+                OnCheckFinished(answer);
+            })
 {
     network_.setTransferTimeout(kTransferTimeoutMs);
 }
@@ -89,14 +87,7 @@ QString GithubUpdateService::DefaultUpdatesFolder()
 
 void GithubUpdateService::CheckForUpdates()
 {
-    if (checkReply_ != nullptr || feedUrl_.isEmpty())
-    {
-        return;
-    }
-
-    checkReply_ = StartGet(feedUrl_);
-
-    connect(checkReply_, &QNetworkReply::finished, this, &GithubUpdateService::OnCheckFinished);
+    feed_.Ask();
 }
 
 void GithubUpdateService::DownloadAndStage(const UpdateInfo& info)
@@ -204,29 +195,20 @@ void GithubUpdateService::RemoveObserver(UpdateServiceObserver* observer)
     std::erase(observers_, observer);
 }
 
-void GithubUpdateService::OnCheckFinished()
+void GithubUpdateService::OnCheckFinished(const FeedAnswer& answer)
 {
-    QNetworkReply* reply = Taken(checkReply_);
-
-    if (reply->error() != QNetworkReply::NoError)
+    if (!answer.ok)
     {
-        SayTheCheckFinished(false, false, {}, HttpError(reply));
+        SayTheCheckFinished(false, false, {}, answer.error);
         return;
     }
 
-    const std::optional<UpdateInfo> info = ParseLatestRelease(reply->readAll());
-    if (!info.has_value())
-    {
-        SayTheCheckFinished(false, false, {}, tr("GitHub sent a response the app could not read."));
-        return;
-    }
-
-    if (!stagedVersion_.isEmpty() && QString::fromStdString(info->version) != stagedVersion_)
+    if (!stagedVersion_.isEmpty() && QString::fromStdString(answer.info.version) != stagedVersion_)
     {
         DiscardStaged();
     }
 
-    SayTheCheckFinished(true, IsNewerVersion(QString::fromStdString(info->version), currentVersion_), *info, {});
+    SayTheCheckFinished(true, answer.available, answer.info, {});
 }
 
 void GithubUpdateService::OnChecksumFinished()
@@ -354,11 +336,7 @@ void GithubUpdateService::OnExtractionFinished(const int exitCode)
 
 QNetworkReply* GithubUpdateService::StartGet(const QString& url)
 {
-    QNetworkRequest request{QUrl(url)};
-    request.setRawHeader("Accept", "application/vnd.github+json");
-    request.setRawHeader("User-Agent", QStringLiteral("fs-organizer/%1").arg(currentVersion_).toUtf8());
-
-    return network_.get(request);
+    return network_.get(GithubRequest(url, currentVersion_));
 }
 
 QString GithubUpdateService::UpdatesFolder() const

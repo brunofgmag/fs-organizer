@@ -4,11 +4,29 @@
 
 #include <QtCore/QCoreApplication>
 
+namespace
+{
+    UpdateMode WhatTheDeliveryAllows(const UpdateMode stored, const UpdateDelivery delivery)
+    {
+        if (delivery == UpdateDelivery::NoticeOnly && stored == UpdateMode::Automatic)
+        {
+            return UpdateMode::Notify;
+        }
+
+        return stored;
+    }
+}
+
 UpdateViewModel::UpdateViewModel(UpdateService& service,
                                  const UpdateMode mode,
                                  const bool updatesAreOn,
+                                 const UpdateDelivery delivery,
                                  QObject* parent)
-    : QObject(parent), service_(service), mode_(mode), updatesAreOn_(updatesAreOn)
+    : QObject(parent),
+      service_(service),
+      delivery_(delivery),
+      mode_(WhatTheDeliveryAllows(mode, delivery)),
+      updatesAreOn_(updatesAreOn)
 {
     service_.AddObserver(this);
 }
@@ -34,7 +52,13 @@ QString UpdateViewModel::WhatIsGoingOn() const
     {
     case UpdateState::Checking: return tr("Looking for a new version…");
     case UpdateState::UpToDate: return tr("You have the latest version.");
-    case UpdateState::Available: return tr("Version %1 is available.").arg(OfferedVersion());
+    case UpdateState::Available:
+        if (!UpdatesItself())
+        {
+            return tr("Version %1 is available. Download it again from flightsim.to.").arg(OfferedVersion());
+        }
+
+        return tr("Version %1 is available.").arg(OfferedVersion());
     case UpdateState::Downloading: return tr("Downloading version %1: %2%").arg(OfferedVersion()).arg(progress_);
     case UpdateState::ReadyToApply:
         return tr("Version %1 is ready and will be installed when you close the program.").arg(OfferedVersion());
@@ -55,6 +79,11 @@ bool UpdateViewModel::UpdatesAreOn() const
     return updatesAreOn_;
 }
 
+bool UpdateViewModel::UpdatesItself() const
+{
+    return delivery_ == UpdateDelivery::SelfUpdate;
+}
+
 bool UpdateViewModel::CanCheck() const
 {
     return updatesAreOn_ && state_ != UpdateState::Checking && state_ != UpdateState::Downloading;
@@ -62,7 +91,7 @@ bool UpdateViewModel::CanCheck() const
 
 bool UpdateViewModel::CanDownload() const
 {
-    return updatesAreOn_ && state_ == UpdateState::Available && !offered_.zipUrl.empty();
+    return UpdatesItself() && updatesAreOn_ && state_ == UpdateState::Available && !offered_.zipUrl.empty();
 }
 
 UpdateMode UpdateViewModel::Mode() const
@@ -72,12 +101,12 @@ UpdateMode UpdateViewModel::Mode() const
 
 bool UpdateViewModel::ShouldApplyOnExit() const
 {
-    return mode_ != UpdateMode::Manual && service_.HasStagedUpdate();
+    return UpdatesItself() && mode_ != UpdateMode::Manual && service_.HasStagedUpdate();
 }
 
 void UpdateViewModel::ChooseMode(const UpdateMode mode)
 {
-    if (mode_ == mode)
+    if (mode_ == mode || WhatTheDeliveryAllows(mode, delivery_) != mode)
     {
         return;
     }
@@ -172,7 +201,7 @@ void UpdateViewModel::OnCheckFinished(const bool ok,
     offered_ = info;
     failure_.clear();
 
-    if (service_.HasStagedUpdate())
+    if (UpdatesItself() && service_.HasStagedUpdate())
     {
         SetState(UpdateState::ReadyToApply);
         return;
@@ -202,6 +231,11 @@ void UpdateViewModel::OnDownloadProgress(const long long received, const long lo
 
 void UpdateViewModel::OnStageFinished(const bool ok, const std::string& error)
 {
+    if (!UpdatesItself())
+    {
+        return;
+    }
+
     if (!ok)
     {
         failure_ = QString::fromStdString(error);

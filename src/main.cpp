@@ -21,6 +21,7 @@
 #include "application/DocumentService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
+#include "edition/Edition.h"
 #include "infrastructure/bisection/JsonBisectionStore.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
@@ -33,7 +34,6 @@
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JournalLinkedFolders.h"
-#include "infrastructure/manual/GithubManual.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/legacy/WindowsLegacyConfigSource.h"
 #include "infrastructure/link/WindowsLinkService.h"
@@ -54,7 +54,6 @@
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
-#include "infrastructure/update/GithubUpdateService.h"
 #include "support/PathText.h"
 #include "view/library/AddonTreePage.h"
 #include "view/community/CommunityPage.h"
@@ -320,10 +319,12 @@ int main(int argc, char* argv[])
     const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(DocumentIndexFilePath());
-    GithubManual manual(QCoreApplication::applicationVersion().toStdString(), ManualFolderPath());
+    const EditionParts edition =
+        BuildTheEdition(qEnvironmentVariable("FSORG_UPDATE_FEED", QString::fromLatin1(kDefaultUpdateFeed)),
+                        QCoreApplication::applicationVersion());
 
-    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache, manual,
-                                          clock);
+    DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache,
+                                          *edition.manual, edition.manualDelivery, clock);
 
     documentsViewModel.TheInterfaceSpeaks(language.InUse().toStdString());
 
@@ -396,12 +397,10 @@ int main(int argc, char* argv[])
     PresetViewModel presetViewModel(session, presetService, profileService, runner);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
 
-    GithubUpdateService updateService(
-        qEnvironmentVariable("FSORG_UPDATE_FEED", QString::fromLatin1(kDefaultUpdateFeed)),
-        QCoreApplication::applicationVersion(), GithubUpdateService::DefaultUpdatesFolder());
+    UpdateService& updateService = *edition.updates;
     updateService.DiscardStaged();
 
-    UpdateViewModel updateViewModel(updateService, stored.updateMode, UpdatesAreOn());
+    UpdateViewModel updateViewModel(updateService, stored.updateMode, UpdatesAreOn(), edition.updateDelivery);
 
     OptionsViewModel optionsViewModel(session, profileService, runner, notifier);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());

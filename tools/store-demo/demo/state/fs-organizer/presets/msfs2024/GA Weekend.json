@@ -1,0 +1,97 @@
+{
+    "entries": [
+        {
+            "action": "enable",
+            "folderName": "cobaltridge-aircraft-c172",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "cobaltridge-aircraft-pa28-181",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "fernhill-aircraft-dhc6-300",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "cobaltridge-mod-pa28-tundra-tires",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "vireo-mod-c172-avionics-bezel",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "cobaltridge-livery-c172-club-pack",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "saltmarsh-sound-c172-piston",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "saltmarsh-sound-ambience-airports",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "harbourlight-airport-egpe-inverness",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "harbourlight-airport-eick-cork",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "harbourlight-airport-enbr-bergen",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "ironbark-airport-nzqn-queenstown",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "wrenfield-airport-lowi-innsbruck",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "wrenfield-airport-lows-salzburg",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "wrenfield-scenery-alpine-landmarks",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "lanternfish-lights-apron-floods",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "brightwater-util-camera-presets",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        },
+        {
+            "action": "enable",
+            "folderName": "vireo-navdata-airac-2609",
+            "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}"
+        }
+    ],
+    "governsStartup": false,
+    "name": "GA Weekend",
+    "startupEntries": []
+}

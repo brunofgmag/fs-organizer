@@ -567,6 +567,14 @@ void DocumentsPage::RetellTheManual()
 {
     const ManualState state = viewModel_.TheManualIs();
 
+    if (state == ManualState::NotShipped)
+    {
+        getTheManual_->setVisible(false);
+        manual_->Retell(viewModel_.TheManualLine().caption, tr("The user manual is on the project's GitHub page."));
+
+        return;
+    }
+
     getTheManual_->setEnabled(state != ManualState::Fetching);
     getTheManual_->setText(state == ManualState::Failed ? tr("Try again") : tr("Get the manual"));
 

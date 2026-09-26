@@ -100,6 +100,7 @@ namespace
         static void AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt();
         static void TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick();
         static void AManualThatDidNotComeDownSaysSoAndKeepsTheWayToAskAgain();
+        static void AManualTheEditionDoesNotShipSaysWhereItIsAndOffersNothingToClick();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -139,7 +140,7 @@ namespace
 
     struct Fixture
     {
-        Fixture()
+        explicit Fixture(const ManualDelivery chosen = ManualDelivery::Download) : manualDelivery(chosen)
         {
             fileSystem.AddDirectory(kLibrary);
 
@@ -195,7 +196,8 @@ namespace
         DocumentService documents{catalog, filesystemProbe, catalogueParser, chartVersions};
         FakeDocumentIndexCache cache;
         FakeManualSource theManual;
-        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, theManual, clock};
+        ManualDelivery manualDelivery{};
+        DocumentsViewModel viewModel{documents, scenery, session, runner, cache, theManual, manualDelivery, clock};
     };
 
     [[nodiscard]] QTreeWidget* TheIndexOf(const DocumentsPage& page, const DocumentPanel panel)
@@ -1332,6 +1334,47 @@ void DocumentsPageTest::AManualThatDidNotComeDownSaysSoAndKeepsTheWayToAskAgain(
     again->click();
 
     QCOMPARE(f.theManual.asked.size(), std::size_t{2});
+}
+
+void DocumentsPageTest::AManualTheEditionDoesNotShipSaysWhereItIsAndOffersNothingToClick()
+{
+    Fixture f(ManualDelivery::NotShipped);
+    f.viewModel.TheInterfaceSpeaks("en");
+
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+    page.show();
+
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* ours = GroupNamed(*index, QStringLiteral("FS Organizer"));
+
+    QVERIFY2(ours != nullptr, "the manual keeps its line in the edition that does not ship it");
+    ours->setExpanded(true);
+
+    const QRect name = index->visualItemRect(ours->child(0));
+
+    ClickAt(*index, QPoint(name.center().x(), name.center().y()));
+
+    QVERIFY2(f.theManual.asked.empty(), "the click asked for a manual this edition does not ship");
+    QVERIFY2(WhatIsOpen(page).isEmpty(), "something opened where there is no manual to open");
+    const QString where = QStringLiteral("The user manual is on the project's GitHub page.");
+
+    QVERIFY(SomethingSays(page, where));
+
+    for (const QLabel* said : page.findChildren<QLabel*>(QStringLiteral("EmptyBody")))
+    {
+        if (!said->text().contains(where))
+        {
+            continue;
+        }
+
+        QVERIFY2(said->isVisible(), "the sentence that says where the manual is was not on screen");
+
+        for (const QPushButton* button : said->parentWidget()->findChildren<QPushButton*>())
+        {
+            QVERIFY2(!button->isVisible(), "the manual offered a button where there is nothing to fetch");
+        }
+    }
 }
 
 QTEST_MAIN(DocumentsPageTest)

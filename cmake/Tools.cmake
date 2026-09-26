@@ -193,6 +193,8 @@ add_executable(fsorg-shot
         ${PDF_INFRASTRUCTURE_SOURCES}
         tools/shared/DisposableState.h
         ${NETWORK_INFRASTRUCTURE_SOURCES}
+        src/infrastructure/update/GithubUpdateService.cpp
+        src/infrastructure/update/NoticeOnlyUpdateService.cpp
         ${WINDOWS_SHELL_SOURCES}
         assets/resources.qrc
 )

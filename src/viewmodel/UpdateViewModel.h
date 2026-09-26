@@ -6,6 +6,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
+#include "application/model/UpdateDelivery.h"
 #include "application/model/UpdateInfo.h"
 #include "application/model/UpdateMode.h"
 #include "application/ports/UpdateService.h"
@@ -26,7 +27,11 @@ class UpdateViewModel final : public QObject, public UpdateServiceObserver
     Q_OBJECT
 
 public:
-    UpdateViewModel(UpdateService& service, UpdateMode mode, bool updatesAreOn, QObject* parent = nullptr);
+    UpdateViewModel(UpdateService& service,
+                    UpdateMode mode,
+                    bool updatesAreOn,
+                    UpdateDelivery delivery,
+                    QObject* parent = nullptr);
 
     ~UpdateViewModel() override;
 
@@ -37,6 +42,8 @@ public:
     [[nodiscard]] QString OfferedVersion() const;
 
     [[nodiscard]] bool UpdatesAreOn() const;
+
+    [[nodiscard]] bool UpdatesItself() const;
 
     [[nodiscard]] bool CanCheck() const;
 
@@ -73,6 +80,7 @@ private:
     void SetState(UpdateState state);
 
     UpdateService& service_;
+    UpdateDelivery delivery_;
     UpdateMode mode_;
     bool updatesAreOn_;
 

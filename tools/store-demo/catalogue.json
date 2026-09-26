@@ -1,0 +1,4568 @@
+{
+  "about": "Demo installation for the flightsim.to screenshots of FS Organizer. Every add-on, studio and airline is fictional; the only real package names are the simulator's own, in simulator.defaultPackages.",
+  "anchorDate": "2026-09-25",
+  "dateRule": "Every date in this folder is written as if today were anchorDate. Shift journal timestamps, sidecar 'quarantined' values, file modification times and the loading report's TimeUTC by the whole number of days between anchorDate and the day the demo is generated.",
+  "drive": {
+    "letter": "F:",
+    "how": "subst F: <demo root>\\drive, so every path the screens print starts with F:\\"
+  },
+  "paths": {
+    "library": "F:\\MSFS Library",
+    "libraryLabel": "MSFS 2024",
+    "libraryId": "{5b1e7c2a-9d4f-4e8b-a3c6-2f0d8e71b945}",
+    "simulatorRoot": "F:\\MSFS 2024",
+    "destinations": {
+      "Community": "F:\\MSFS 2024\\Community",
+      "Community2024": "F:\\MSFS 2024\\Community2024"
+    },
+    "defaultDestination": "Community",
+    "libraryQuarantine": "F:\\MSFS Library\\_fsorganizer-quarantine",
+    "destinationQuarantine": "F:\\MSFS 2024\\_fsorganizer-quarantine",
+    "programs": "F:\\Programs",
+    "secondProfile": {
+      "variant": "MSFS2020",
+      "library": "F:\\MSFS 2020 Library",
+      "destination": "F:\\MSFS 2020\\Community",
+      "note": "inactive profile, both folders created empty"
+    },
+    "stateFolder": "demo/state/fs-organizer -> stands in for %LOCALAPPDATA%\\fs-organizer",
+    "simulatorUserFolder": "demo/simulator/Microsoft Flight Simulator 2024 -> stands in for %APPDATA%\\Microsoft Flight Simulator 2024 (Steam edition layout)"
+  },
+  "studios": [
+    {
+      "name": "Halcyon Flightworks",
+      "prefix": "halcyon",
+      "makes": "airliners and their house liveries"
+    },
+    {
+      "name": "Cobalt Ridge Simulations",
+      "prefix": "cobaltridge",
+      "makes": "piston GA aircraft, a flying-club livery pack, a tyre mod"
+    },
+    {
+      "name": "Fernhill Simulations",
+      "prefix": "fernhill",
+      "makes": "utility turboprops and a cockpit-lighting mod"
+    },
+    {
+      "name": "Quillon Aerospace",
+      "prefix": "quillon",
+      "makes": "2024-native aircraft and their liveries"
+    },
+    {
+      "name": "Paperwing Studio",
+      "prefix": "paperwing",
+      "makes": "liveries for fictional airlines, one wing mod"
+    },
+    {
+      "name": "Tessellate Airports",
+      "prefix": "tessellate",
+      "makes": "large international airports"
+    },
+    {
+      "name": "Harbourlight Scenery",
+      "prefix": "harbourlight",
+      "makes": "coastal regional airports"
+    },
+    {
+      "name": "Ironbark Airfields",
+      "prefix": "ironbark",
+      "makes": "Australian and New Zealand airports"
+    },
+    {
+      "name": "Wrenfield Simulations",
+      "prefix": "wrenfield",
+      "makes": "Alpine airports and landmarks"
+    },
+    {
+      "name": "Lanternfish Design",
+      "prefix": "lanternfish",
+      "makes": "night lighting for airports and cabins"
+    },
+    {
+      "name": "Saltmarsh Sound Lab",
+      "prefix": "saltmarsh",
+      "makes": "engine and ambience sound packs"
+    },
+    {
+      "name": "Pinecrest Traffic Works",
+      "prefix": "pinecrest",
+      "makes": "AI traffic models, liveries, schedules and an injector"
+    },
+    {
+      "name": "Vireo Avionics",
+      "prefix": "vireo",
+      "makes": "an EFB, a hub program, navigation data, an avionics mod"
+    },
+    {
+      "name": "Brightwater Simworks",
+      "prefix": "brightwater",
+      "makes": "a bridge program and camera presets"
+    },
+    {
+      "name": "Stratoform",
+      "prefix": "stratoform",
+      "makes": "cloud textures and a live-weather engine"
+    }
+  ],
+  "airlines": [
+    "Bluefjord Air",
+    "Solenne Airways",
+    "Sunfield Airways",
+    "Veluna Airlines"
+  ],
+  "categories": [
+    {
+      "name": "Aircraft",
+      "destination": "Community",
+      "pinned": false,
+      "path": "F:\\MSFS Library\\Aircraft",
+      "marker": "F:\\MSFS Library\\Aircraft\\.fsorg-category"
+    },
+    {
+      "name": "Aircraft (2024)",
+      "destination": "Community2024",
+      "pinned": true,
+      "path": "F:\\MSFS Library\\Aircraft (2024)",
+      "marker": "F:\\MSFS Library\\Aircraft (2024)\\.fsorg-category"
+    },
+    {
+      "name": "Aircraft Mods",
+      "destination": "Community",
+      "pinned": false,
+      "path": "F:\\MSFS Library\\Aircraft Mods",
+      "marker": "F:\\MSFS Library\\Aircraft Mods\\.fsorg-category"
+    },
+    {
+      "name": "Liveries",
+      "destination": "Community",
+      "pinned": false,
+      "path": "F:\\MSFS Library\\Liveries",
+      "marker": "F:\\MSFS Library\\Liveries\\.fsorg-category"
+    },
+    {
+      "name": "Sceneries",
+      "destination": "Community",
+      "pinned": false,
+      "path": "F:\\MSFS Library\\Sceneries",
+      "marker": "F:\\MSFS Library\\Sceneries\\.fsorg-category"
+    },
+    {
+      "name": "Sounds",
+      "destination": "Community",
+      "pinned": false,
+      "path": "F:\\MSFS Library\\Sounds",
+      "marker": "F:\\MSFS Library\\Sounds\\.fsorg-category"
+    },
+    {
+      "name": "Traffic",
+      "destination": "Community",
+      "pinned": false,
+      "path": "F:\\MSFS Library\\Traffic",
+      "marker": "F:\\MSFS Library\\Traffic\\.fsorg-category"
+    },
+    {
+      "name": "Utilities",
+      "destination": "Community",
+      "pinned": false,
+      "path": "F:\\MSFS Library\\Utilities",
+      "marker": "F:\\MSFS Library\\Utilities\\.fsorg-category"
+    }
+  ],
+  "library": [
+    {
+      "folder": "cobaltridge-aircraft-c172",
+      "category": "Aircraft",
+      "libraryPath": "F:\\MSFS Library\\Aircraft\\cobaltridge-aircraft-c172",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\cobaltridge-aircraft-c172",
+      "contentXml": "communityfs20-cobaltridge-aircraft-c172",
+      "sizeBytes": 1525563947,
+      "airports": [],
+      "documents": [
+        "Manual\\Pilot Guide.pdf"
+      ],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "C172 Classic",
+        "manufacturer": "Cessna",
+        "creator": "Cobalt Ridge Simulations",
+        "package_version": "2.3.1",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000001525563947"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Cessna\"\natc_model = \"C172 Classic\"\n\n[FLTSIM.0]\ntitle = \"Cobalt Ridge Simulations C172 Classic\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "Manual\\Pilot Guide.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/pilot-guide.pdf"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\model\\CobaltRidge_C172_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 701729143
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\model\\CobaltRidge_C172_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 320354608
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\texture\\CobaltRidge_C172_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 503414387
+        }
+      ]
+    },
+    {
+      "folder": "cobaltridge-aircraft-pa28-181",
+      "category": "Aircraft",
+      "libraryPath": "F:\\MSFS Library\\Aircraft\\cobaltridge-aircraft-pa28-181",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\cobaltridge-aircraft-pa28-181",
+      "contentXml": "communityfs20-cobaltridge-aircraft-pa28-181",
+      "sizeBytes": 1267545017,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "PA-28-181",
+        "manufacturer": "Piper",
+        "creator": "Cobalt Ridge Simulations",
+        "package_version": "1.4.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000001267545017"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Piper\"\natc_model = \"PA-28-181\"\n\n[FLTSIM.0]\ntitle = \"Cobalt Ridge Simulations PA-28-181\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\model\\CobaltRidge_PA28-181_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 583040438
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\model\\CobaltRidge_PA28-181_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 266170635
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\texture\\CobaltRidge_PA28-181_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 418268142
+        }
+      ]
+    },
+    {
+      "folder": "fernhill-aircraft-dhc6-300",
+      "category": "Aircraft",
+      "libraryPath": "F:\\MSFS Library\\Aircraft\\fernhill-aircraft-dhc6-300",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\fernhill-aircraft-dhc6-300",
+      "contentXml": "communityfs20-fernhill-aircraft-dhc6-300",
+      "sizeBytes": 2223111655,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "DHC-6-300",
+        "manufacturer": "de Havilland Canada",
+        "creator": "Fernhill Simulations",
+        "package_version": "1.1.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000002223111655"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC6-300\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"de Havilland Canada\"\natc_model = \"DHC-6-300\"\n\n[FLTSIM.0]\ntitle = \"Fernhill Simulations DHC-6-300\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC6-300\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC6-300\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC6-300\\model\\Fernhill_DHC6-300_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 1022601087
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC6-300\\model\\Fernhill_DHC6-300_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 466839627
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC6-300\\texture\\Fernhill_DHC6-300_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 733605129
+        }
+      ]
+    },
+    {
+      "folder": "fernhill-aircraft-pc12-47e",
+      "category": "Aircraft",
+      "libraryPath": "F:\\MSFS Library\\Aircraft\\fernhill-aircraft-pc12-47e",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 1782681161,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "PC-12/47E",
+        "manufacturer": "Pilatus",
+        "creator": "Fernhill Simulations",
+        "package_version": "2.0.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000001782681161"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_PC12-47E\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Pilatus\"\natc_model = \"PC-12/47E\"\n\n[FLTSIM.0]\ntitle = \"Fernhill Simulations PC-12/47E\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_PC12-47E\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_PC12-47E\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_PC12-47E\\model\\Fernhill_PC12-47E_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 820003066
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_PC12-47E\\model\\Fernhill_PC12-47E_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 374349225
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_PC12-47E\\texture\\Fernhill_PC12-47E_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 588263070
+        }
+      ]
+    },
+    {
+      "folder": "halcyon-aircraft-737-800",
+      "category": "Aircraft",
+      "libraryPath": "F:\\MSFS Library\\Aircraft\\halcyon-aircraft-737-800",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\halcyon-aircraft-737-800",
+      "contentXml": "communityfs20-halcyon-aircraft-737-800",
+      "sizeBytes": 8418434665,
+      "airports": [],
+      "documents": [
+        "Documents\\737-800 Introduction.pdf"
+      ],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "Halcyon 737-800",
+        "manufacturer": "Boeing",
+        "creator": "Halcyon Flightworks",
+        "package_version": "3.0.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000008418434665"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Boeing\"\natc_model = \"Halcyon 737-800\"\n\n[FLTSIM.0]\ntitle = \"Halcyon Flightworks Halcyon 737-800\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "Documents\\737-800 Introduction.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/737-introduction.pdf"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\model\\Halcyon_737-800_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 3872449673
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\model\\Halcyon_737-800_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 1767857459
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\texture\\Halcyon_737-800_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 2778061723
+        }
+      ]
+    },
+    {
+      "folder": "halcyon-aircraft-a320neo",
+      "category": "Aircraft",
+      "libraryPath": "F:\\MSFS Library\\Aircraft\\halcyon-aircraft-a320neo",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\halcyon-aircraft-a320neo",
+      "contentXml": "communityfs20-halcyon-aircraft-a320neo",
+      "sizeBytes": 9588886478,
+      "airports": [],
+      "documents": [
+        "Documents\\A320neo FCOM.pdf",
+        "Documents\\Quick Start Guide.pdf"
+      ],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": "halcyon_a320_systems.wasm",
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "A320neo",
+        "manufacturer": "Airbus",
+        "creator": "Halcyon Flightworks",
+        "package_version": "1.8.4",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000009588886478"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Airbus\"\natc_model = \"A320neo\"\n\n[FLTSIM.0]\ntitle = \"Halcyon Flightworks A320neo\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "Documents\\A320neo FCOM.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/a320neo-fcom.pdf"
+        },
+        {
+          "path": "Documents\\Quick Start Guide.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/a320neo-quick-start.pdf"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\halcyon-aircraft-a320neo\\panel\\halcyon_a320_systems.wasm",
+          "kind": "sparse",
+          "bytes": 1572864
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\model\\Halcyon_A320neo_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 4410133997
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\model\\Halcyon_A320neo_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 2013322042
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\texture\\Halcyon_A320neo_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 3163791781
+        }
+      ]
+    },
+    {
+      "folder": "halcyon-aircraft-a321neo",
+      "category": "Aircraft",
+      "libraryPath": "F:\\MSFS Library\\Aircraft\\halcyon-aircraft-a321neo",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 6668939195,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "A321neo",
+        "manufacturer": "Airbus",
+        "creator": "Halcyon Flightworks",
+        "package_version": "1.8.4",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000006668939195"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Airbus\"\natc_model = \"A321neo\"\n\n[FLTSIM.0]\ntitle = \"Halcyon Flightworks A321neo\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\model\\Halcyon_A321neo_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 3067681764
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\model\\Halcyon_A321neo_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 1400463414
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\texture\\Halcyon_A321neo_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 2200728223
+        }
+      ]
+    },
+    {
+      "folder": "fernhill-aircraft-dhc8-400",
+      "category": "Aircraft (2024)",
+      "libraryPath": "F:\\MSFS Library\\Aircraft (2024)\\fernhill-aircraft-dhc8-400",
+      "enabled": true,
+      "destination": "Community2024",
+      "pinned": "category",
+      "junction": "F:\\MSFS 2024\\Community2024\\fernhill-aircraft-dhc8-400",
+      "contentXml": "communityfs24-fernhill-aircraft-dhc8-400",
+      "sizeBytes": 5884195003,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "DHC-8-400",
+        "manufacturer": "De Havilland",
+        "creator": "Fernhill Simulations",
+        "package_version": "1.2.6",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000005884195003"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC8-400\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"De Havilland\"\natc_model = \"DHC-8-400\"\n\n[FLTSIM.0]\ntitle = \"Fernhill Simulations DHC-8-400\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC8-400\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC8-400\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC8-400\\model\\Fernhill_DHC8-400_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 2706699431
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC8-400\\model\\Fernhill_DHC8-400_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 1235667131
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Fernhill_DHC8-400\\texture\\Fernhill_DHC8-400_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 1941762636
+        }
+      ]
+    },
+    {
+      "folder": "halcyon-aircraft-757-200",
+      "category": "Aircraft (2024)",
+      "libraryPath": "F:\\MSFS Library\\Aircraft (2024)\\halcyon-aircraft-757-200",
+      "enabled": true,
+      "destination": "Community2024",
+      "pinned": "category",
+      "junction": "F:\\MSFS 2024\\Community2024\\halcyon-aircraft-757-200",
+      "contentXml": "communityfs24-halcyon-aircraft-757-200",
+      "sizeBytes": 10330096897,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "757-200",
+        "manufacturer": "Boeing",
+        "creator": "Halcyon Flightworks",
+        "package_version": "1.0.1",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000010330096897"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_757-200\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Boeing\"\natc_model = \"757-200\"\n\n[FLTSIM.0]\ntitle = \"Halcyon Flightworks 757-200\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_757-200\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_757-200\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_757-200\\model\\Halcyon_757-200_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 4751814307
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_757-200\\model\\Halcyon_757-200_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 2169306531
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_757-200\\texture\\Halcyon_757-200_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 3408910265
+        }
+      ]
+    },
+    {
+      "folder": "quillon-aircraft-a330-900",
+      "category": "Aircraft (2024)",
+      "libraryPath": "F:\\MSFS Library\\Aircraft (2024)\\quillon-aircraft-a330-900",
+      "enabled": true,
+      "destination": "Community2024",
+      "pinned": "category",
+      "junction": "F:\\MSFS 2024\\Community2024\\quillon-aircraft-a330-900",
+      "contentXml": "communityfs24-quillon-aircraft-a330-900",
+      "sizeBytes": 12209102782,
+      "airports": [],
+      "documents": [
+        "Docs\\A330-900 User Guide.pdf"
+      ],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": "quillon_a339_fms.wasm",
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "A330-900",
+        "manufacturer": "Airbus",
+        "creator": "Quillon Aerospace",
+        "package_version": "1.2.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000012209102782"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Airbus\"\natc_model = \"A330-900\"\n\n[FLTSIM.0]\ntitle = \"Quillon Aerospace A330-900\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "Docs\\A330-900 User Guide.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/a330-user-guide.pdf"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\quillon-aircraft-a330-900\\panel\\quillon_a339_fms.wasm",
+          "kind": "sparse",
+          "bytes": 1572864
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\model\\Quillon_A330-900_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 5615433497
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\model\\Quillon_A330-900_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 2563567466
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\texture\\Quillon_A330-900_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 4028463161
+        }
+      ]
+    },
+    {
+      "folder": "quillon-aircraft-atr72-600",
+      "category": "Aircraft (2024)",
+      "libraryPath": "F:\\MSFS Library\\Aircraft (2024)\\quillon-aircraft-atr72-600",
+      "enabled": true,
+      "destination": "Community2024",
+      "pinned": "category",
+      "junction": "F:\\MSFS 2024\\Community2024\\quillon-aircraft-atr72-600",
+      "contentXml": "communityfs24-quillon-aircraft-atr72-600",
+      "sizeBytes": 4424401228,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "ATR 72-600",
+        "manufacturer": "ATR",
+        "creator": "Quillon Aerospace",
+        "package_version": "1.0.3",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000004424401228"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"ATR\"\natc_model = \"ATR 72-600\"\n\n[FLTSIM.0]\ntitle = \"Quillon Aerospace ATR 72-600\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\model\\Quillon_ATR72-600_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 2035194299
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\model\\Quillon_ATR72-600_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 929110440
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\texture\\Quillon_ATR72-600_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 1460030694
+        }
+      ]
+    },
+    {
+      "folder": "quillon-aircraft-e175",
+      "category": "Aircraft (2024)",
+      "libraryPath": "F:\\MSFS Library\\Aircraft (2024)\\quillon-aircraft-e175",
+      "enabled": false,
+      "destination": "Community2024",
+      "pinned": "category",
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 5004392720,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "fs-base-aircraft-common",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments",
+            "package_version": "0.1.0"
+          },
+          {
+            "name": "asobo-vcockpits-instruments-airliners",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "E175 (Early Access)",
+        "manufacturer": "Embraer",
+        "creator": "Quillon Aerospace",
+        "package_version": "0.9.8",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000005004392720"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Embraer\"\natc_model = \"E175 (Early Access)\"\n\n[FLTSIM.0]\ntitle = \"Quillon Aerospace E175 (Early Access)\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\model\\Quillon_E175_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 2301990375
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\model\\Quillon_E175_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 1050908649
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\texture\\Quillon_E175_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 1651427879
+        }
+      ]
+    },
+    {
+      "folder": "cobaltridge-mod-pa28-tundra-tires",
+      "category": "Aircraft Mods",
+      "libraryPath": "F:\\MSFS Library\\Aircraft Mods\\cobaltridge-mod-pa28-tundra-tires",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\cobaltridge-mod-pa28-tundra-tires",
+      "contentXml": "communityfs20-cobaltridge-mod-pa28-tundra-tires",
+      "sizeBytes": 40441915,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "cobaltridge-aircraft-pa28-181",
+            "package_version": "1.3.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "PA-28-181 Tundra Tyres",
+        "manufacturer": "",
+        "creator": "Cobalt Ridge Simulations",
+        "package_version": "1.0.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000040441915"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\model/tundra_gear.gltf",
+          "kind": "text",
+          "text": "<!-- PA-28-181 Tundra Tyres -->\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_PA28-181\\texture\\COBALTRIDGE_MOD.ktx2",
+          "kind": "sparse",
+          "bytes": 40376325
+        }
+      ]
+    },
+    {
+      "folder": "fernhill-mod-b737max-cockpit-lights",
+      "category": "Aircraft Mods",
+      "libraryPath": "F:\\MSFS Library\\Aircraft Mods\\fernhill-mod-b737max-cockpit-lights",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\fernhill-mod-b737max-cockpit-lights",
+      "contentXml": "communityfs20-fernhill-mod-b737max-cockpit-lights",
+      "sizeBytes": 13563969,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "asobo-aircraft-b737max",
+            "package_version": "0.1.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "737 MAX Cockpit Flood Lights",
+        "manufacturer": "",
+        "creator": "Fernhill Simulations",
+        "package_version": "1.1.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000013563969"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Asobo_B737_MAX\\model/cockpit_flood.xml",
+          "kind": "text",
+          "text": "<!-- 737 MAX Cockpit Flood Lights -->\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Asobo_B737_MAX\\texture\\FERNHILL_MOD.ktx2",
+          "kind": "sparse",
+          "bytes": 13498373
+        }
+      ]
+    },
+    {
+      "folder": "lanternfish-mod-a320neo-cabin-lights",
+      "category": "Aircraft Mods",
+      "libraryPath": "F:\\MSFS Library\\Aircraft Mods\\lanternfish-mod-a320neo-cabin-lights",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\lanternfish-mod-a320neo-cabin-lights",
+      "contentXml": "communityfs20-lanternfish-mod-a320neo-cabin-lights",
+      "sizeBytes": 67509802,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "halcyon-aircraft-a320neo",
+            "package_version": "1.8.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "A320neo Cabin Mood Lighting",
+        "manufacturer": "",
+        "creator": "Lanternfish Design",
+        "package_version": "2.0.1",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000067509802"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\model/cabin_lighting.xml",
+          "kind": "text",
+          "text": "<!-- A320neo Cabin Mood Lighting -->\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\texture\\LANTERNFISH_MOD.ktx2",
+          "kind": "sparse",
+          "bytes": 67444207
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-mod-737-800-wing-flex",
+      "category": "Aircraft Mods",
+      "libraryPath": "F:\\MSFS Library\\Aircraft Mods\\paperwing-mod-737-800-wing-flex",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 23751742,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "halcyon-aircraft-737-800",
+            "package_version": "3.0.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "737-800 Wing Flex",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "0.4.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000023751742"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\model/wing_flex.xml",
+          "kind": "text",
+          "text": "<!-- 737-800 Wing Flex -->\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\texture\\PAPERWING_MOD.ktx2",
+          "kind": "sparse",
+          "bytes": 23686157
+        }
+      ]
+    },
+    {
+      "folder": "vireo-mod-c172-avionics-bezel",
+      "category": "Aircraft Mods",
+      "libraryPath": "F:\\MSFS Library\\Aircraft Mods\\vireo-mod-c172-avionics-bezel",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\vireo-mod-c172-avionics-bezel",
+      "contentXml": "communityfs20-vireo-mod-c172-avionics-bezel",
+      "sizeBytes": 18239828,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "cobaltridge-aircraft-c172",
+            "package_version": "2.3.0"
+          }
+        ],
+        "content_type": "AIRCRAFT",
+        "title": "C172 Avionics Bezel",
+        "manufacturer": "",
+        "creator": "Vireo Avionics",
+        "package_version": "1.3.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000018239828"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\panel/vireo_bezel.cfg",
+          "kind": "text",
+          "text": "<!-- C172 Avionics Bezel -->\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\texture\\VIREO_MOD.ktx2",
+          "kind": "sparse",
+          "bytes": 18174241
+        }
+      ]
+    },
+    {
+      "folder": "cobaltridge-livery-c172-club-pack",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\cobaltridge-livery-c172-club-pack",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\cobaltridge-livery-c172-club-pack",
+      "contentXml": "communityfs20-cobaltridge-livery-c172-club-pack",
+      "sizeBytes": 328155838,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "C172 Classic Flying Club Pack",
+        "manufacturer": "",
+        "creator": "Cobalt Ridge Simulations",
+        "package_version": "1.2.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000328155838"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\liveries\\cobaltridge\\club-pack\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"C172 Classic Flying Club Pack\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\liveries\\cobaltridge\\club-pack\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"C172 Classic Flying Club Pack\",\n    \"productPackage\": \"cobaltridge-aircraft-c172\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\liveries\\cobaltridge\\club-pack\\texture\\CLUB-PACK_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 328090101
+        }
+      ]
+    },
+    {
+      "folder": "halcyon-livery-a320neo-house-colours",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\halcyon-livery-a320neo-house-colours",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\halcyon-livery-a320neo-house-colours",
+      "contentXml": "communityfs20-halcyon-livery-a320neo-house-colours",
+      "sizeBytes": 155567454,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "A320neo Halcyon House Colours",
+        "manufacturer": "",
+        "creator": "Halcyon Flightworks",
+        "package_version": "1.0.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000155567454"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\halcyon\\house-colours\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"A320neo Halcyon House Colours\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\halcyon\\house-colours\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"A320neo Halcyon House Colours\",\n    \"productPackage\": \"halcyon-aircraft-a320neo\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\halcyon\\house-colours\\texture\\HOUSE-COLOURS_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 155501718
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-737-800-bluefjord-air",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-737-800-bluefjord-air",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\paperwing-livery-737-800-bluefjord-air",
+      "contentXml": "communityfs20-paperwing-livery-737-800-bluefjord-air",
+      "sizeBytes": 185372328,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "737-800 Bluefjord Air",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.1.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000185372328"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\bluefjord-air\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"737-800 Bluefjord Air\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\bluefjord-air\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"737-800 Bluefjord Air\",\n    \"productPackage\": \"halcyon-aircraft-737-800\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\bluefjord-air\\texture\\BLUEFJORD-AIR_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 185306608
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-737-800-sunfield-airways",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-737-800-sunfield-airways",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\paperwing-livery-737-800-sunfield-airways",
+      "contentXml": "communityfs20-paperwing-livery-737-800-sunfield-airways",
+      "sizeBytes": 190038301,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "737-800 Sunfield Airways",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.0.3",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000190038301"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\sunfield-airways\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"737-800 Sunfield Airways\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\sunfield-airways\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"737-800 Sunfield Airways\",\n    \"productPackage\": \"halcyon-aircraft-737-800\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\sunfield-airways\\texture\\SUNFIELD-AIRWAYS_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 189972575
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-737-800-veluna-airlines",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-737-800-veluna-airlines",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 177673992,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "737-800 Veluna Airlines",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.0.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000177673992"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\veluna-airlines\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"737-800 Veluna Airlines\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\veluna-airlines\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"737-800 Veluna Airlines\",\n    \"productPackage\": \"halcyon-aircraft-737-800\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\liveries\\paperwing\\veluna-airlines\\texture\\VELUNA-AIRLINES_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 177608268
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-a320neo-bluefjord-air",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-a320neo-bluefjord-air",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\paperwing-livery-a320neo-bluefjord-air",
+      "contentXml": "communityfs20-paperwing-livery-a320neo-bluefjord-air",
+      "sizeBytes": 172124874,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "A320neo Bluefjord Air",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.2.1",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000172124874"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\bluefjord-air\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"A320neo Bluefjord Air\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\bluefjord-air\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"A320neo Bluefjord Air\",\n    \"productPackage\": \"halcyon-aircraft-a320neo\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\bluefjord-air\\texture\\BLUEFJORD-AIR_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 172059154
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-a320neo-solenne-airways",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-a320neo-solenne-airways",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\paperwing-livery-a320neo-solenne-airways",
+      "contentXml": "communityfs20-paperwing-livery-a320neo-solenne-airways",
+      "sizeBytes": 166705892,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "A320neo Solenne Airways",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.2.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000166705892"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\solenne-airways\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"A320neo Solenne Airways\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\solenne-airways\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"A320neo Solenne Airways\",\n    \"productPackage\": \"halcyon-aircraft-a320neo\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\solenne-airways\\texture\\SOLENNE-AIRWAYS_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 166640168
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-a320neo-sunfield-airways",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-a320neo-sunfield-airways",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 169648960,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "A320neo Sunfield Airways",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.1.4",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000169648960"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\sunfield-airways\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"A320neo Sunfield Airways\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\sunfield-airways\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"A320neo Sunfield Airways\",\n    \"productPackage\": \"halcyon-aircraft-a320neo\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\liveries\\paperwing\\sunfield-airways\\texture\\SUNFIELD-AIRWAYS_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 169583234
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-a321neo-veluna-airlines",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-a321neo-veluna-airlines",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 180694201,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "A321neo Veluna Airlines",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.0.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000180694201"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\liveries\\paperwing\\veluna-airlines\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"A321neo Veluna Airlines\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\liveries\\paperwing\\veluna-airlines\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"A321neo Veluna Airlines\",\n    \"productPackage\": \"halcyon-aircraft-a321neo\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A321neo\\liveries\\paperwing\\veluna-airlines\\texture\\VELUNA-AIRLINES_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 180628477
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-atr72-sunfield-regional",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-atr72-sunfield-regional",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\paperwing-livery-atr72-sunfield-regional",
+      "contentXml": "communityfs24-paperwing-livery-atr72-sunfield-regional",
+      "sizeBytes": 101123015,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "ATR 72-600 Sunfield Regional",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.0.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000000101123015"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\liveries\\paperwing\\sunfield-regional\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"ATR 72-600 Sunfield Regional\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\liveries\\paperwing\\sunfield-regional\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"ATR 72-600 Sunfield Regional\",\n    \"productPackage\": \"quillon-aircraft-atr72-600\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\liveries\\paperwing\\sunfield-regional\\texture\\SUNFIELD-REGIONAL_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 101057279
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-b737max-solenne-airways",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-b737max-solenne-airways",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\paperwing-livery-b737max-solenne-airways",
+      "contentXml": "communityfs24-paperwing-livery-b737max-solenne-airways",
+      "sizeBytes": 150373453,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "737 MAX 8 Solenne Airways",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "1.0.1",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000000150373453"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Asobo_B737_MAX\\liveries\\paperwing\\solenne-airways\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"737 MAX 8 Solenne Airways\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Asobo_B737_MAX\\liveries\\paperwing\\solenne-airways\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"737 MAX 8 Solenne Airways\",\n    \"productPackage\": \"asobo-aircraft-b737max\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Asobo_B737_MAX\\liveries\\paperwing\\solenne-airways\\texture\\SOLENNE-AIRWAYS_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 150307727
+        }
+      ]
+    },
+    {
+      "folder": "paperwing-livery-e175-veluna-connect",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\paperwing-livery-e175-veluna-connect",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 92881859,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "E175 Veluna Connect",
+        "manufacturer": "",
+        "creator": "Paperwing Studio",
+        "package_version": "0.9.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000000092881859"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\liveries\\paperwing\\veluna-connect\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"E175 Veluna Connect\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\liveries\\paperwing\\veluna-connect\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"E175 Veluna Connect\",\n    \"productPackage\": \"quillon-aircraft-e175\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_E175\\liveries\\paperwing\\veluna-connect\\texture\\VELUNA-CONNECT_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 92816146
+        }
+      ]
+    },
+    {
+      "folder": "quillon-livery-a330-900-bluefjord-air",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\quillon-livery-a330-900-bluefjord-air",
+      "enabled": true,
+      "destination": "Community2024",
+      "pinned": "addon",
+      "junction": "F:\\MSFS 2024\\Community2024\\quillon-livery-a330-900-bluefjord-air",
+      "contentXml": "communityfs24-quillon-livery-a330-900-bluefjord-air",
+      "sizeBytes": 247554072,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "A330-900 Bluefjord Air",
+        "manufacturer": "",
+        "creator": "Quillon Aerospace",
+        "package_version": "1.0.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000000247554072"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\liveries\\quillon\\bluefjord-air\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"A330-900 Bluefjord Air\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\liveries\\quillon\\bluefjord-air\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"A330-900 Bluefjord Air\",\n    \"productPackage\": \"quillon-aircraft-a330-900\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\liveries\\quillon\\bluefjord-air\\texture\\BLUEFJORD-AIR_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 247488349
+        }
+      ]
+    },
+    {
+      "folder": "quillon-livery-a330-900-solenne-airways",
+      "category": "Liveries",
+      "libraryPath": "F:\\MSFS Library\\Liveries\\quillon-livery-a330-900-solenne-airways",
+      "enabled": true,
+      "destination": "Community2024",
+      "pinned": "addon",
+      "junction": "F:\\MSFS 2024\\Community2024\\quillon-livery-a330-900-solenne-airways",
+      "contentXml": "communityfs24-quillon-livery-a330-900-solenne-airways",
+      "sizeBytes": 253235932,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "LIVERY",
+        "title": "A330-900 Solenne Airways",
+        "manufacturer": "",
+        "creator": "Quillon Aerospace",
+        "package_version": "1.0.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "total_package_size": "00000000000253235932"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\liveries\\quillon\\solenne-airways\\livery.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"A330-900 Solenne Airways\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\liveries\\quillon\\solenne-airways\\livery.json",
+          "kind": "text",
+          "text": "{\n    \"name\": \"A330-900 Solenne Airways\",\n    \"productPackage\": \"quillon-aircraft-a330-900\"\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Quillon_A330-900\\liveries\\quillon\\solenne-airways\\texture\\SOLENNE-AIRWAYS_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 253170205
+        }
+      ]
+    },
+    {
+      "folder": "harbourlight-airport-egpe-inverness",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\harbourlight-airport-egpe-inverness",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\harbourlight-airport-egpe-inverness",
+      "contentXml": "communityfs20-harbourlight-airport-egpe-inverness",
+      "sizeBytes": 1202849113,
+      "airports": [
+        "EGPE"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "EGPE Inverness",
+        "manufacturer": "",
+        "creator": "Harbourlight Scenery",
+        "package_version": "1.0.4",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000001202849113"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\harbourlight\\egpe\\EGPE_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "EGPE"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/harbourlight-airport-egpe-inverness__EGPE_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQOO5AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\egpe_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 745725804
+        },
+        {
+          "path": "scenery\\global\\modellib\\egpe_objects.bin",
+          "kind": "sparse",
+          "bytes": 457057751
+        }
+      ]
+    },
+    {
+      "folder": "harbourlight-airport-eick-cork",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\harbourlight-airport-eick-cork",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\harbourlight-airport-eick-cork",
+      "contentXml": "communityfs20-harbourlight-airport-eick-cork",
+      "sizeBytes": 1482194575,
+      "airports": [
+        "EICK"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "EICK Cork Airport",
+        "manufacturer": "",
+        "creator": "Harbourlight Scenery",
+        "package_version": "1.1.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000001482194575"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\harbourlight\\eick\\EICK_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "EICK"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/harbourlight-airport-eick-cork__EICK_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQA+7AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\eick_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 918919990
+        },
+        {
+          "path": "scenery\\global\\modellib\\eick_objects.bin",
+          "kind": "sparse",
+          "bytes": 563209027
+        }
+      ]
+    },
+    {
+      "folder": "harbourlight-airport-enbr-bergen",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\harbourlight-airport-enbr-bergen",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\harbourlight-airport-enbr-bergen",
+      "contentXml": "communityfs24-harbourlight-airport-enbr-bergen",
+      "sizeBytes": 1761471903,
+      "airports": [
+        "ENBR"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "ENBR Bergen Airport Flesland",
+        "manufacturer": "",
+        "creator": "Harbourlight Scenery",
+        "package_version": "1.0.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000001761471903"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\harbourlight\\enbr\\ENBR_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "ENBR"
+          ],
+          "record": "fs24",
+          "source": "demo/files/bgl/harbourlight-airport-enbr-bergen__ENBR_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAAATAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwCN9AwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\enbr_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1092071933
+        },
+        {
+          "path": "scenery\\global\\modellib\\enbr_objects.bin",
+          "kind": "sparse",
+          "bytes": 669334412
+        }
+      ]
+    },
+    {
+      "folder": "ironbark-airport-nzqn-queenstown",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\ironbark-airport-nzqn-queenstown",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\ironbark-airport-nzqn-queenstown",
+      "contentXml": "communityfs20-ironbark-airport-nzqn-queenstown",
+      "sizeBytes": 2426951208,
+      "airports": [
+        "NZQN"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "NZQN Queenstown Airport",
+        "manufacturer": "",
+        "creator": "Ironbark Airfields",
+        "package_version": "2.1.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000002426951208"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\ironbark\\nzqn\\NZQN_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "NZQN"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/ironbark-airport-nzqn-queenstown__NZQN_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoHG4AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\nzqn_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1504669103
+        },
+        {
+          "path": "scenery\\global\\modellib\\nzqn_objects.bin",
+          "kind": "sparse",
+          "bytes": 922216547
+        }
+      ]
+    },
+    {
+      "folder": "ironbark-airport-ybbn-brisbane",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\ironbark-airport-ybbn-brisbane",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\ironbark-airport-ybbn-brisbane",
+      "contentXml": "communityfs20-ironbark-airport-ybbn-brisbane",
+      "sizeBytes": 3275571512,
+      "airports": [
+        "YBBN"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "YBBN Brisbane Airport",
+        "manufacturer": "",
+        "creator": "Ironbark Airfields",
+        "package_version": "1.3.1",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000003275571512"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\ironbark\\ybbn\\YBBN_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "YBBN"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/ironbark-airport-ybbn-brisbane__YBBN_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYPfNAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\ybbn_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 2030813691
+        },
+        {
+          "path": "scenery\\global\\modellib\\ybbn_objects.bin",
+          "kind": "sparse",
+          "bytes": 1244692263
+        }
+      ]
+    },
+    {
+      "folder": "ironbark-airport-ymml-melbourne",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\ironbark-airport-ymml-melbourne",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 3018197346,
+      "airports": [
+        "YMML"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "YMML Melbourne Airport",
+        "manufacturer": "",
+        "creator": "Ironbark Airfields",
+        "package_version": "1.0.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000003018197346"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\ironbark\\ymml\\YMML_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "YMML"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/ironbark-airport-ymml-melbourne__YMML_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4OzVAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\ymml_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1871241708
+        },
+        {
+          "path": "scenery\\global\\modellib\\ymml_objects.bin",
+          "kind": "sparse",
+          "bytes": 1146890080
+        }
+      ]
+    },
+    {
+      "folder": "lanternfish-airport-lppt-night-lights",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\lanternfish-airport-lppt-night-lights",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\lanternfish-airport-lppt-night-lights",
+      "contentXml": "communityfs20-lanternfish-airport-lppt-night-lights",
+      "sizeBytes": 223321048,
+      "airports": [
+        "LPPT"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LPPT Lisbon Night Lighting",
+        "manufacturer": "",
+        "creator": "Lanternfish Design",
+        "package_version": "1.0.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000000223321048"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\lanternfish\\lppt\\LPPT_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LPPT"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/lanternfish-airport-lppt-night-lights__LPPT_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoMp7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\lppt_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 138418403
+        },
+        {
+          "path": "scenery\\global\\modellib\\lppt_objects.bin",
+          "kind": "sparse",
+          "bytes": 84837087
+        }
+      ]
+    },
+    {
+      "folder": "tessellate-airport-kbos-boston",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\tessellate-airport-kbos-boston",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\tessellate-airport-kbos-boston",
+      "contentXml": "communityfs24-tessellate-airport-kbos-boston",
+      "sizeBytes": 4155734073,
+      "airports": [
+        "KBOS"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "KBOS Boston Logan International",
+        "manufacturer": "",
+        "creator": "Tessellate Airports",
+        "package_version": "1.4.2",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000004155734073"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\tessellate\\kbos\\KBOS_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "KBOS"
+          ],
+          "record": "fs24",
+          "source": "demo/files/bgl/tessellate-airport-kbos-boston__KBOS_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAAATAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgDeuBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\kbos_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 2576514479
+        },
+        {
+          "path": "scenery\\global\\modellib\\kbos_objects.bin",
+          "kind": "sparse",
+          "bytes": 1579154036
+        }
+      ]
+    },
+    {
+      "folder": "tessellate-airport-lemd-madrid",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\tessellate-airport-lemd-madrid",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\tessellate-airport-lemd-madrid",
+      "contentXml": "communityfs24-tessellate-airport-lemd-madrid",
+      "sizeBytes": 4768115282,
+      "airports": [
+        "LEMD"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LEMD Adolfo Suarez Madrid-Barajas",
+        "manufacturer": "",
+        "creator": "Tessellate Airports",
+        "package_version": "2.0.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000004768115282"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\tessellate\\lemd\\LEMD_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LEMD"
+          ],
+          "record": "fs24",
+          "source": "demo/files/bgl/tessellate-airport-lemd-madrid__LEMD_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAAATAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwPHnBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\lemd_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 2956190828
+        },
+        {
+          "path": "scenery\\global\\modellib\\lemd_objects.bin",
+          "kind": "sparse",
+          "bytes": 1811858896
+        }
+      ]
+    },
+    {
+      "folder": "tessellate-airport-lpfr-faro",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\tessellate-airport-lpfr-faro",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\tessellate-airport-lpfr-faro",
+      "contentXml": "communityfs20-tessellate-airport-lpfr-faro",
+      "sizeBytes": 2105464904,
+      "airports": [
+        "LPFR"
+      ],
+      "documents": [
+        "Manual\\Scenery Manual.pdf"
+      ],
+      "charts": [
+        "Charts\\LPFR\\LPFR_ADC.pdf",
+        "Charts\\LPFR\\LPFR_APC.pdf",
+        "Charts\\LPFR\\LPFR_VAC.pdf"
+      ],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LPFR Faro Airport",
+        "manufacturer": "",
+        "creator": "Tessellate Airports",
+        "package_version": "1.3.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000002105464904"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\tessellate\\lpfr\\LPFR_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LPFR"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/tessellate-airport-lpfr-faro__LPFR_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Jp7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "Manual\\Scenery Manual.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/lpfr-scenery-manual.pdf"
+        },
+        {
+          "path": "Charts\\LPFR\\catalogue.json",
+          "kind": "copy",
+          "source": "demo/files/charts/LPFR/catalogue.json"
+        },
+        {
+          "path": "Charts\\LPFR\\LPFR_ADC.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/lpfr-adc.pdf"
+        },
+        {
+          "path": "Charts\\LPFR\\LPFR_APC.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/lpfr-apc.pdf"
+        },
+        {
+          "path": "Charts\\LPFR\\LPFR_VAC.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/lpfr-vac.pdf"
+        },
+        {
+          "path": "scenery\\global\\texture\\lpfr_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1305347594
+        },
+        {
+          "path": "scenery\\global\\modellib\\lpfr_objects.bin",
+          "kind": "sparse",
+          "bytes": 800051752
+        }
+      ]
+    },
+    {
+      "folder": "tessellate-airport-lppt-lisbon",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\tessellate-airport-lppt-lisbon",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\tessellate-airport-lppt-lisbon",
+      "contentXml": "communityfs24-tessellate-airport-lppt-lisbon",
+      "sizeBytes": 3844394091,
+      "airports": [
+        "LPPT"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LPPT Humberto Delgado Lisbon",
+        "manufacturer": "",
+        "creator": "Tessellate Airports",
+        "package_version": "2.2.1",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000003844394091"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\tessellate\\lppt\\LPPT_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LPPT"
+          ],
+          "record": "fs24",
+          "source": "demo/files/bgl/tessellate-airport-lppt-lisbon__LPPT_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAAATAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQJX3BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\lppt_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 2383483690
+        },
+        {
+          "path": "scenery\\global\\modellib\\lppt_objects.bin",
+          "kind": "sparse",
+          "bytes": 1460844843
+        }
+      ]
+    },
+    {
+      "folder": "tessellate-airport-sbgr-guarulhos",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\tessellate-airport-sbgr-guarulhos",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 4316548463,
+      "airports": [
+        "SBGR"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "SBGR Sao Paulo-Guarulhos International",
+        "manufacturer": "",
+        "creator": "Tessellate Airports",
+        "package_version": "1.1.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000004316548463"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\tessellate\\sbgr\\SBGR_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "SBGR"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/tessellate-airport-sbgr-guarulhos__SBGR_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoE0tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\sbgr_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 2676219401
+        },
+        {
+          "path": "scenery\\global\\modellib\\sbgr_objects.bin",
+          "kind": "sparse",
+          "bytes": 1640263504
+        }
+      ]
+    },
+    {
+      "folder": "wrenfield-airport-lowi-innsbruck",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\wrenfield-airport-lowi-innsbruck",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\wrenfield-airport-lowi-innsbruck",
+      "contentXml": "communityfs20-wrenfield-airport-lowi-innsbruck",
+      "sizeBytes": 2674540392,
+      "airports": [
+        "LOWI"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LOWI Innsbruck Airport",
+        "manufacturer": "",
+        "creator": "Wrenfield Simulations",
+        "package_version": "3.0.1",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000002674540392"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\wrenfield\\lowi\\LOWI_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LOWI"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/wrenfield-airport-lowi-innsbruck__LOWI_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADZ7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\lowi_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1658174397
+        },
+        {
+          "path": "scenery\\global\\modellib\\lowi_objects.bin",
+          "kind": "sparse",
+          "bytes": 1016300437
+        }
+      ]
+    },
+    {
+      "folder": "wrenfield-airport-lows-salzburg",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\wrenfield-airport-lows-salzburg",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\wrenfield-airport-lows-salzburg",
+      "contentXml": "communityfs20-wrenfield-airport-lows-salzburg",
+      "sizeBytes": 1857960530,
+      "airports": [
+        "LOWS"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LOWS Salzburg W. A. Mozart",
+        "manufacturer": "",
+        "creator": "Wrenfield Simulations",
+        "package_version": "1.2.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000001857960530"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\wrenfield\\lows\\LOWS_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LOWS"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/wrenfield-airport-lows-salzburg__LOWS_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQDd7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\lows_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1151894882
+        },
+        {
+          "path": "scenery\\global\\modellib\\lows_objects.bin",
+          "kind": "sparse",
+          "bytes": 706000090
+        }
+      ]
+    },
+    {
+      "folder": "wrenfield-airport-lszh-zurich",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\wrenfield-airport-lszh-zurich",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\wrenfield-airport-lszh-zurich",
+      "contentXml": "communityfs24-wrenfield-airport-lszh-zurich",
+      "sizeBytes": 5057456118,
+      "airports": [
+        "LSZH"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LSZH Zurich Airport",
+        "manufacturer": "",
+        "creator": "Wrenfield Simulations",
+        "package_version": "2.4.0",
+        "minimum_game_version": "1.4.20",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "builder": "Microsoft Flight Simulator 2024",
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000005057456118"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\wrenfield\\lszh\\LSZH_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LSZH"
+          ],
+          "record": "fs24",
+          "source": "demo/files/bgl/wrenfield-airport-lszh-zurich__LSZH_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAAATAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQCz8BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\lszh_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 3135582147
+        },
+        {
+          "path": "scenery\\global\\modellib\\lszh_objects.bin",
+          "kind": "sparse",
+          "bytes": 1921808413
+        }
+      ]
+    },
+    {
+      "folder": "wrenfield-scenery-alpine-landmarks",
+      "category": "Sceneries",
+      "libraryPath": "F:\\MSFS Library\\Sceneries\\wrenfield-scenery-alpine-landmarks",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\wrenfield-scenery-alpine-landmarks",
+      "contentXml": "communityfs20-wrenfield-scenery-alpine-landmarks",
+      "sizeBytes": 2341787658,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "Alpine Landmarks",
+        "manufacturer": "",
+        "creator": "Wrenfield Simulations",
+        "package_version": "1.0.5",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SCENERY",
+        "total_package_size": "00000000002341787658"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\global\\texture\\landmarks_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1451867702
+        },
+        {
+          "path": "scenery\\global\\modellib\\landmarks_objects.bin",
+          "kind": "sparse",
+          "bytes": 889854398
+        }
+      ]
+    },
+    {
+      "folder": "saltmarsh-sound-737-800-cfm56",
+      "category": "Sounds",
+      "libraryPath": "F:\\MSFS Library\\Sounds\\saltmarsh-sound-737-800-cfm56",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\saltmarsh-sound-737-800-cfm56",
+      "contentXml": "communityfs20-saltmarsh-sound-737-800-cfm56",
+      "sizeBytes": 510461564,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "halcyon-aircraft-737-800",
+            "package_version": "3.0.0"
+          }
+        ],
+        "content_type": "MISC",
+        "title": "737-800 CFM56 Sound Pack",
+        "manufacturer": "",
+        "creator": "Saltmarsh Sound Lab",
+        "package_version": "1.2.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000510461564"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n  <!-- 737-800 CFM56 Sound Pack -->\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_737-800\\sound\\737-800-CFM56.PC.PCK",
+          "kind": "sparse",
+          "bytes": 510395931
+        }
+      ]
+    },
+    {
+      "folder": "saltmarsh-sound-a320neo-leap1a",
+      "category": "Sounds",
+      "libraryPath": "F:\\MSFS Library\\Sounds\\saltmarsh-sound-a320neo-leap1a",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\saltmarsh-sound-a320neo-leap1a",
+      "contentXml": "communityfs20-saltmarsh-sound-a320neo-leap1a",
+      "sizeBytes": 537784251,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "halcyon-aircraft-a320neo",
+            "package_version": "1.8.0"
+          }
+        ],
+        "content_type": "MISC",
+        "title": "A320neo LEAP-1A Sound Pack",
+        "manufacturer": "",
+        "creator": "Saltmarsh Sound Lab",
+        "package_version": "1.1.3",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000537784251"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n  <!-- A320neo LEAP-1A Sound Pack -->\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\Halcyon_A320neo\\sound\\A320NEO-LEAP1A.PC.PCK",
+          "kind": "sparse",
+          "bytes": 537718616
+        }
+      ]
+    },
+    {
+      "folder": "saltmarsh-sound-ambience-airports",
+      "category": "Sounds",
+      "libraryPath": "F:\\MSFS Library\\Sounds\\saltmarsh-sound-ambience-airports",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\saltmarsh-sound-ambience-airports",
+      "contentXml": "communityfs20-saltmarsh-sound-ambience-airports",
+      "sizeBytes": 769992270,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Airport Ambience",
+        "manufacturer": "",
+        "creator": "Saltmarsh Sound Lab",
+        "package_version": "2.0.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000769992270"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SoundAI\\ambience\\AIRPORT_AMBIENCE.PC.PCK",
+          "kind": "sparse",
+          "bytes": 769926712
+        }
+      ]
+    },
+    {
+      "folder": "saltmarsh-sound-c172-piston",
+      "category": "Sounds",
+      "libraryPath": "F:\\MSFS Library\\Sounds\\saltmarsh-sound-c172-piston",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\saltmarsh-sound-c172-piston",
+      "contentXml": "communityfs20-saltmarsh-sound-c172-piston",
+      "sizeBytes": 239820880,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [
+          {
+            "name": "cobaltridge-aircraft-c172",
+            "package_version": "2.0.0"
+          }
+        ],
+        "content_type": "MISC",
+        "title": "C172 Piston Sound Pack",
+        "manufacturer": "",
+        "creator": "Saltmarsh Sound Lab",
+        "package_version": "1.0.4",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_SIMOBJECTS_PATCH",
+        "total_package_size": "00000000000239820880"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n  <!-- C172 Piston Sound Pack -->\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C172\\sound\\C172-PISTON.PC.PCK",
+          "kind": "sparse",
+          "bytes": 239755249
+        }
+      ]
+    },
+    {
+      "folder": "pinecrest-traffic-flightplans-s26",
+      "category": "Traffic",
+      "libraryPath": "F:\\MSFS Library\\Traffic\\pinecrest-traffic-flightplans-s26",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\pinecrest-traffic-flightplans-s26",
+      "contentXml": "communityfs20-pinecrest-traffic-flightplans-s26",
+      "sizeBytes": 99197299,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Schedules Summer 2026",
+        "manufacturer": "",
+        "creator": "Pinecrest Traffic Works",
+        "package_version": "2026.3.1",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000099197299"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "traffic\\s26\\flightplans.bin",
+          "kind": "sparse",
+          "bytes": 99131741
+        }
+      ]
+    },
+    {
+      "folder": "pinecrest-traffic-liveries-europe",
+      "category": "Traffic",
+      "libraryPath": "F:\\MSFS Library\\Traffic\\pinecrest-traffic-liveries-europe",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\pinecrest-traffic-liveries-europe",
+      "contentXml": "communityfs20-pinecrest-traffic-liveries-europe",
+      "sizeBytes": 6808293638,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "AIRCRAFT",
+        "title": "AI Liveries Europe",
+        "manufacturer": "",
+        "creator": "Pinecrest Traffic Works",
+        "package_version": "4.2.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000006808293638"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\LIVERIES-EUROPE\\model\\PACK.bin",
+          "kind": "sparse",
+          "bytes": 3744525444
+        },
+        {
+          "path": "SimObjects\\Airplanes\\LIVERIES-EUROPE\\texture\\PACK.ktx2",
+          "kind": "sparse",
+          "bytes": 3063702636
+        }
+      ]
+    },
+    {
+      "folder": "pinecrest-traffic-models-narrowbody",
+      "category": "Traffic",
+      "libraryPath": "F:\\MSFS Library\\Traffic\\pinecrest-traffic-models-narrowbody",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\pinecrest-traffic-models-narrowbody",
+      "contentXml": "communityfs20-pinecrest-traffic-models-narrowbody",
+      "sizeBytes": 4198422660,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "AIRCRAFT",
+        "title": "AI Models Narrowbody",
+        "manufacturer": "",
+        "creator": "Pinecrest Traffic Works",
+        "package_version": "4.1.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000004198422660"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\MODELS-NARROWBODY\\model\\PACK.bin",
+          "kind": "sparse",
+          "bytes": 2309096406
+        },
+        {
+          "path": "SimObjects\\Airplanes\\MODELS-NARROWBODY\\texture\\PACK.ktx2",
+          "kind": "sparse",
+          "bytes": 1889260696
+        }
+      ]
+    },
+    {
+      "folder": "pinecrest-traffic-models-widebody",
+      "category": "Traffic",
+      "libraryPath": "F:\\MSFS Library\\Traffic\\pinecrest-traffic-models-widebody",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\pinecrest-traffic-models-widebody",
+      "contentXml": "communityfs20-pinecrest-traffic-models-widebody",
+      "sizeBytes": 5229213510,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "AIRCRAFT",
+        "title": "AI Models Widebody",
+        "manufacturer": "",
+        "creator": "Pinecrest Traffic Works",
+        "package_version": "4.1.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000005229213510"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\MODELS-WIDEBODY\\model\\PACK.bin",
+          "kind": "sparse",
+          "bytes": 2876031373
+        },
+        {
+          "path": "SimObjects\\Airplanes\\MODELS-WIDEBODY\\texture\\PACK.ktx2",
+          "kind": "sparse",
+          "bytes": 2353116579
+        }
+      ]
+    },
+    {
+      "folder": "brightwater-util-bridge",
+      "category": "Utilities",
+      "libraryPath": "F:\\MSFS Library\\Utilities\\brightwater-util-bridge",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\brightwater-util-bridge",
+      "contentXml": "communityfs20-brightwater-util-bridge",
+      "sizeBytes": 153593890,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": "bin\\BrightwaterBridge.exe",
+      "wasmModule": "brightwater_bridge.wasm",
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Brightwater Bridge",
+        "manufacturer": "",
+        "creator": "Brightwater Simworks",
+        "package_version": "3.4.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000153593890"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "bin\\BrightwaterBridge.exe",
+          "kind": "empty"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\brightwater-util-bridge\\panel\\brightwater_bridge.wasm",
+          "kind": "sparse",
+          "bytes": 1572864
+        },
+        {
+          "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+          "kind": "sparse",
+          "bytes": 151955468
+        }
+      ]
+    },
+    {
+      "folder": "brightwater-util-camera-presets",
+      "category": "Utilities",
+      "libraryPath": "F:\\MSFS Library\\Utilities\\brightwater-util-camera-presets",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\brightwater-util-camera-presets",
+      "contentXml": "communityfs20-brightwater-util-camera-presets",
+      "sizeBytes": 3851367,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Camera Presets",
+        "manufacturer": "",
+        "creator": "Brightwater Simworks",
+        "package_version": "1.6.2",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000003851367"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+          "kind": "sparse",
+          "bytes": 3785809
+        }
+      ]
+    },
+    {
+      "folder": "lanternfish-lights-apron-floods",
+      "category": "Utilities",
+      "libraryPath": "F:\\MSFS Library\\Utilities\\lanternfish-lights-apron-floods",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\lanternfish-lights-apron-floods",
+      "contentXml": "communityfs20-lanternfish-lights-apron-floods",
+      "sizeBytes": 61807045,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Apron Flood Lights",
+        "manufacturer": "",
+        "creator": "Lanternfish Design",
+        "package_version": "1.4.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000061807045"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+          "kind": "sparse",
+          "bytes": 61741487
+        }
+      ]
+    },
+    {
+      "folder": "pinecrest-util-traffic-injector",
+      "category": "Utilities",
+      "libraryPath": "F:\\MSFS Library\\Utilities\\pinecrest-util-traffic-injector",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\pinecrest-util-traffic-injector",
+      "contentXml": "communityfs20-pinecrest-util-traffic-injector",
+      "sizeBytes": 75573211,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": "tools\\PinecrestInjector.exe",
+      "wasmModule": "pinecrest_injector.wasm",
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Traffic Injector",
+        "manufacturer": "",
+        "creator": "Pinecrest Traffic Works",
+        "package_version": "2.2.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000075573211"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "tools\\PinecrestInjector.exe",
+          "kind": "empty"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\pinecrest-util-traffic-injector\\panel\\pinecrest_injector.wasm",
+          "kind": "sparse",
+          "bytes": 1572864
+        },
+        {
+          "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+          "kind": "sparse",
+          "bytes": 73934789
+        }
+      ]
+    },
+    {
+      "folder": "stratoform-weather-cloud-textures",
+      "category": "Utilities",
+      "libraryPath": "F:\\MSFS Library\\Utilities\\stratoform-weather-cloud-textures",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 1364281075,
+      "airports": [],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Cloud Textures HD",
+        "manufacturer": "",
+        "creator": "Stratoform",
+        "package_version": "1.9.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000001364281075"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+          "kind": "sparse",
+          "bytes": 1364215517
+        }
+      ]
+    },
+    {
+      "folder": "vireo-efb-tablet",
+      "category": "Utilities",
+      "libraryPath": "F:\\MSFS Library\\Utilities\\vireo-efb-tablet",
+      "enabled": false,
+      "destination": "Community",
+      "pinned": null,
+      "junction": null,
+      "contentXml": null,
+      "sizeBytes": 222927710,
+      "airports": [],
+      "documents": [
+        "docs\\Vireo EFB Guide.pdf"
+      ],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": "vireo_efb.wasm",
+      "conflict": true,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Vireo EFB",
+        "manufacturer": "",
+        "creator": "Vireo Avionics",
+        "package_version": "2.4.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000222927710"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "docs\\Vireo EFB Guide.pdf",
+          "kind": "pdf",
+          "source": "demo/files/pdf/vireo-efb-guide.pdf"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\vireo-efb-tablet\\panel\\vireo_efb.wasm",
+          "kind": "sparse",
+          "bytes": 1572864
+        },
+        {
+          "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+          "kind": "sparse",
+          "bytes": 221289288
+        }
+      ]
+    },
+    {
+      "folder": "vireo-navdata-airac-2609",
+      "category": "Utilities",
+      "libraryPath": "F:\\MSFS Library\\Utilities\\vireo-navdata-airac-2609",
+      "enabled": true,
+      "destination": "Community",
+      "pinned": null,
+      "junction": "F:\\MSFS 2024\\Community\\vireo-navdata-airac-2609",
+      "contentXml": "communityfs20-vireo-navdata-airac-2609",
+      "sizeBytes": 405791288,
+      "airports": [
+        "LPPT",
+        "LPFR",
+        "LEMD",
+        "LOWI",
+        "LSZH",
+        "EICK",
+        "KBOS",
+        "YBBN"
+      ],
+      "documents": [],
+      "charts": [],
+      "startupExecutable": null,
+      "wasmModule": null,
+      "conflict": false,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "MISC",
+        "title": "Navigation Data AIRAC 2609",
+        "manufacturer": "",
+        "creator": "Vireo Avionics",
+        "package_version": "2609.1.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_NAVDATA",
+        "total_package_size": "00000000000405791288"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\navdata\\airac2609\\AIRPORTS.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LPPT",
+            "LPFR",
+            "LEMD",
+            "LOWI",
+            "LSZH",
+            "EICK",
+            "KBOS",
+            "YBBN"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/vireo-navdata-airac-2609__AIRPORTS.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAAIAAAAXAAAAAAEAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoMp7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFYAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgmnsCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVgCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOD4cwIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADZ7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFYAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgFn4CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVgCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAPuwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwBtXAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFYAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABg980DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        },
+        {
+          "path": "scenery\\navdata\\airac2609\\NAVAIDS.bin",
+          "kind": "sparse",
+          "bytes": 405725730
+        }
+      ]
+    }
+  ],
+  "destinationEntries": {
+    "external": [
+      {
+        "folder": "vireo-hub-core",
+        "where": "external",
+        "path": "F:\\Programs\\Vireo Avionics\\Vireo Hub\\Package\\vireo-hub-core",
+        "why": "installed by the Vireo Hub setup, which keeps the package in its own program folder and links it into Community",
+        "sizeBytes": 44625369,
+        "manifest": {
+          "dependencies": [],
+          "content_type": "MISC",
+          "title": "Vireo Hub Core",
+          "manufacturer": "",
+          "creator": "Vireo Avionics",
+          "package_version": "5.0.3",
+          "minimum_game_version": "1.37.19",
+          "release_notes": {
+            "neutral": {
+              "LastUpdate": "",
+              "OlderHistory": ""
+            }
+          },
+          "total_package_size": "00000000000044625369"
+        },
+        "files": [
+          {
+            "path": "layout.json",
+            "kind": "text",
+            "text": "{\n    \"content\": []\n}\n"
+          },
+          {
+            "path": "SimObjects\\Airplanes\\vireo-hub-core\\panel\\vireo_hub.wasm",
+            "kind": "sparse",
+            "bytes": 1572864
+          },
+          {
+            "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+            "kind": "sparse",
+            "bytes": 42986947
+          }
+        ]
+      },
+      {
+        "folder": "stratoform-weather-live-engine",
+        "where": "external",
+        "path": "F:\\Programs\\Stratoform\\Live Weather\\Package\\stratoform-weather-live-engine",
+        "why": "the live-weather program's own package, linked in by its installer",
+        "sizeBytes": 24887071,
+        "manifest": {
+          "dependencies": [],
+          "content_type": "MISC",
+          "title": "Stratoform Live Weather",
+          "manufacturer": "",
+          "creator": "Stratoform",
+          "package_version": "2.8.1",
+          "minimum_game_version": "1.37.19",
+          "release_notes": {
+            "neutral": {
+              "LastUpdate": "",
+              "OlderHistory": ""
+            }
+          },
+          "total_package_size": "00000000000024887071"
+        },
+        "files": [
+          {
+            "path": "layout.json",
+            "kind": "text",
+            "text": "{\n    \"content\": []\n}\n"
+          },
+          {
+            "path": "SimObjects\\Airplanes\\stratoform-weather-live-engine\\panel\\stratoform_live.wasm",
+            "kind": "sparse",
+            "bytes": 1572864
+          },
+          {
+            "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+            "kind": "sparse",
+            "bytes": 23248649
+          }
+        ]
+      }
+    ],
+    "unmanaged": [
+      {
+        "folder": "harbourlight-airport-lpma-madeira",
+        "where": "unmanaged",
+        "path": "F:\\MSFS 2024\\Community\\harbourlight-airport-lpma-madeira",
+        "why": "downloaded yesterday and unzipped straight into Community, not imported yet",
+        "sizeBytes": 1300008643,
+        "manifest": {
+          "dependencies": [],
+          "content_type": "SCENERY",
+          "title": "LPMA Madeira Cristiano Ronaldo International",
+          "manufacturer": "",
+          "creator": "Harbourlight Scenery",
+          "package_version": "1.0.0",
+          "minimum_game_version": "1.37.19",
+          "release_notes": {
+            "neutral": {
+              "LastUpdate": "",
+              "OlderHistory": ""
+            }
+          },
+          "package_order_hint": "CUSTOM_AIRPORT",
+          "total_package_size": "00000000001300008643"
+        },
+        "files": [
+          {
+            "path": "layout.json",
+            "kind": "text",
+            "text": "{\n    \"content\": []\n}\n"
+          },
+          {
+            "path": "scenery\\harbourlight\\lpma\\LPMA_AIRPORT.bgl",
+            "kind": "bgl",
+            "airports": [
+              "LPMA"
+            ],
+            "record": "fs20",
+            "source": "demo/files/bgl/harbourlight-airport-lpma-madeira__LPMA_AIRPORT.bgl",
+            "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALp7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+          },
+          {
+            "path": "scenery\\global\\texture\\lpma_ground_albd.png.dds",
+            "kind": "sparse",
+            "bytes": 805964712
+          },
+          {
+            "path": "scenery\\global\\modellib\\lpma_objects.bin",
+            "kind": "sparse",
+            "bytes": 493978373
+          }
+        ]
+      },
+      {
+        "folder": "paperwing-livery-atr72-veluna-connect",
+        "where": "unmanaged",
+        "path": "F:\\MSFS 2024\\Community\\paperwing-livery-atr72-veluna-connect",
+        "why": "a new livery, unzipped into Community, not imported yet",
+        "sizeBytes": 98890128,
+        "manifest": {
+          "dependencies": [],
+          "content_type": "LIVERY",
+          "title": "ATR 72-600 Veluna Connect",
+          "manufacturer": "",
+          "creator": "Paperwing Studio",
+          "package_version": "1.0.0",
+          "minimum_game_version": "1.4.20",
+          "release_notes": {
+            "neutral": {
+              "LastUpdate": "",
+              "OlderHistory": ""
+            }
+          },
+          "builder": "Microsoft Flight Simulator 2024",
+          "total_package_size": "00000000000098890128"
+        },
+        "files": [
+          {
+            "path": "layout.json",
+            "kind": "text",
+            "text": "{\n    \"content\": []\n}\n"
+          },
+          {
+            "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\liveries\\paperwing\\veluna-connect\\livery.cfg",
+            "kind": "text",
+            "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\nname = \"ATR 72-600 Veluna Connect\"\n"
+          },
+          {
+            "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\liveries\\paperwing\\veluna-connect\\livery.json",
+            "kind": "text",
+            "text": "{\n    \"name\": \"ATR 72-600 Veluna Connect\",\n    \"productPackage\": \"quillon-aircraft-atr72-600\"\n}\n"
+          },
+          {
+            "path": "SimObjects\\Airplanes\\Quillon_ATR72-600\\liveries\\paperwing\\veluna-connect\\texture\\VELUNA-CONNECT_ALBD.ktx2",
+            "kind": "sparse",
+            "bytes": 98824398
+          }
+        ]
+      },
+      {
+        "folder": "vireo-efb-tablet",
+        "where": "unmanaged",
+        "path": "F:\\MSFS 2024\\Community\\vireo-efb-tablet",
+        "why": "the Vireo updater replaced the link with a real folder holding 2.5.1: the library still holds 2.4.0, so this is the one conflict",
+        "sizeBytes": 230267742,
+        "manifest": {
+          "dependencies": [],
+          "content_type": "MISC",
+          "title": "Vireo EFB",
+          "manufacturer": "",
+          "creator": "Vireo Avionics",
+          "package_version": "2.5.1",
+          "minimum_game_version": "1.37.19",
+          "release_notes": {
+            "neutral": {
+              "LastUpdate": "",
+              "OlderHistory": ""
+            }
+          },
+          "total_package_size": "00000000000230267742"
+        },
+        "files": [
+          {
+            "path": "layout.json",
+            "kind": "text",
+            "text": "{\n    \"content\": []\n}\n"
+          },
+          {
+            "path": "html_ui\\Pages\\VCockpit\\Instruments\\package.bin",
+            "kind": "sparse",
+            "bytes": 230202184
+          }
+        ]
+      }
+    ]
+  },
+  "quarantine": [
+    {
+      "folder": "cobaltridge-aircraft-c152-trainer",
+      "where": "quarantine",
+      "path": "F:\\MSFS Library\\_fsorganizer-quarantine\\cobaltridge-aircraft-c152-trainer",
+      "why": "",
+      "sizeBytes": 818930291,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "AIRCRAFT",
+        "title": "C152 Trainer",
+        "manufacturer": "Cessna",
+        "creator": "Cobalt Ridge Simulations",
+        "package_version": "1.1.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "total_package_size": "00000000000818930291"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C152\\aircraft.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[GENERAL]\natc_type = \"Cessna\"\natc_model = \"C152 Trainer\"\n\n[FLTSIM.0]\ntitle = \"Cobalt Ridge Simulations C152 Trainer\"\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C152\\panel\\panel.cfg",
+          "kind": "text",
+          "text": "[VERSION]\nmajor = 1\nminor = 0\n\n[VCockpit01]\nsize_mm = 1024, 768\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C152\\sound\\sound.xml",
+          "kind": "text",
+          "text": "<SoundInfo Version=\"0.1\">\n</SoundInfo>\n"
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C152\\model\\CobaltRidge_C152_EXTERIOR_LOD00.bin",
+          "kind": "sparse",
+          "bytes": 376677661
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C152\\model\\CobaltRidge_C152_INTERIOR.bin",
+          "kind": "sparse",
+          "bytes": 171961541
+        },
+        {
+          "path": "SimObjects\\Airplanes\\CobaltRidge_C152\\texture\\CobaltRidge_C152_ALBD.ktx2",
+          "kind": "sparse",
+          "bytes": 270225280
+        }
+      ],
+      "origin": "F:\\MSFS Library\\Aircraft\\cobaltridge-aircraft-c152-trainer",
+      "sidecar": {
+        "path": "F:\\MSFS Library\\_fsorganizer-quarantine\\cobaltridge-aircraft-c152-trainer.fsorg-origin",
+        "text": "version=1\norigin=F:\\MSFS Library\\Aircraft\\cobaltridge-aircraft-c152-trainer\nquarantined=1789081902000\n"
+      }
+    },
+    {
+      "folder": "tessellate-airport-lpfr-faro",
+      "where": "quarantine",
+      "path": "F:\\MSFS 2024\\_fsorganizer-quarantine\\tessellate-airport-lpfr-faro",
+      "why": "",
+      "sizeBytes": 2083990067,
+      "manifest": {
+        "dependencies": [],
+        "content_type": "SCENERY",
+        "title": "LPFR Faro Airport",
+        "manufacturer": "",
+        "creator": "Tessellate Airports",
+        "package_version": "1.3.0",
+        "minimum_game_version": "1.37.19",
+        "release_notes": {
+          "neutral": {
+            "LastUpdate": "",
+            "OlderHistory": ""
+          }
+        },
+        "package_order_hint": "CUSTOM_AIRPORT",
+        "total_package_size": "00000000002083990067"
+      },
+      "files": [
+        {
+          "path": "layout.json",
+          "kind": "text",
+          "text": "{\n    \"content\": []\n}\n"
+        },
+        {
+          "path": "scenery\\tessellate\\lpfr\\LPFR_AIRPORT.bgl",
+          "kind": "bgl",
+          "airports": [
+            "LPFR"
+          ],
+          "record": "fs20",
+          "source": "demo/files/bgl/tessellate-airport-lpfr-faro__LPFR_AIRPORT.bgl",
+          "base64": "AQKSGTgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAEAAABMAAAAAAAAAAAAAAABAAAAXAAAAIAAAABWAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Jp7AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        },
+        {
+          "path": "scenery\\global\\texture\\lpfr_ground_albd.png.dds",
+          "kind": "sparse",
+          "bytes": 1292033195
+        },
+        {
+          "path": "scenery\\global\\modellib\\lpfr_objects.bin",
+          "kind": "sparse",
+          "bytes": 791891314
+        }
+      ],
+      "origin": "F:\\MSFS 2024\\Community\\tessellate-airport-lpfr-faro",
+      "sidecar": {
+        "path": "F:\\MSFS 2024\\_fsorganizer-quarantine\\tessellate-airport-lpfr-faro.fsorg-origin",
+        "text": "version=1\norigin=F:\\MSFS 2024\\Community\\tessellate-airport-lpfr-faro\nquarantined=1789593727000\n"
+      }
+    }
+  ],
+  "programFiles": [
+    "F:\\Programs\\Stratoform\\Live Weather\\StratoformLive.exe",
+    "F:\\Programs\\Vireo Avionics\\Vireo Hub\\VireoHub.exe"
+  ],
+  "simulator": {
+    "defaultPackages": [
+      {
+        "name": "fs24-asobo-aircraft-b737max",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-asobo-aircraft-c172sp-as1000",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-asobo-airport-kjfk-new-york-jfk",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-asobo-airport-lowi-innsbruck",
+        "active": "UserDisabled"
+      },
+      {
+        "name": "fs24-asobo-airport-lpma-madeira",
+        "active": "UserDisabled"
+      },
+      {
+        "name": "fs24-asobo-airport-nzqn-queenstown",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-asobo-jetways",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-asobo-modellib-airport-generic",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-asobo-vcockpits-instruments",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-asobo-vcockpits-instruments-airliners",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-fcr-embedded",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-fs-base",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-fs-base-aircraft-common",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-microsoft-airport-eick-cork",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-microsoft-airport-lows-salzburg",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-microsoft-airport-lpfr-faro",
+        "active": "Activated"
+      },
+      {
+        "name": "fs24-microsoft-airport-lszh-zurich",
+        "active": "UserDisabled"
+      }
+    ],
+    "defaultPackagesMeasuredFrom": [
+      "E:\\Flight Simulator 2024\\StreamedPackages (1115 folders)",
+      "%APPDATA%\\Microsoft Flight Simulator 2024\\<account>\\Content.xml (2008 entries)"
+    ],
+    "contentXml": {
+      "file": "demo/simulator/Microsoft Flight Simulator 2024/Content.xml",
+      "entries": 75,
+      "order": "sorted by the package name without its generation prefix, as the real list is",
+      "modified": {
+        "daysAgo": 1,
+        "localTime": "22:58"
+      }
+    },
+    "exeXml": {
+      "file": "demo/simulator/Microsoft Flight Simulator 2024/EXE.xml",
+      "entries": [
+        {
+          "name": "Brightwater Bridge",
+          "disabled": false,
+          "path": "F:\\MSFS 2024\\Community\\brightwater-util-bridge\\bin\\BrightwaterBridge.exe",
+          "commandLine": "-minimized",
+          "reach": "inside an addon (brightwater-util-bridge, enabled)"
+        },
+        {
+          "name": "Stratoform Live Weather",
+          "disabled": false,
+          "path": "F:\\Programs\\Stratoform\\Live Weather\\StratoformLive.exe",
+          "reach": "outside your addons"
+        },
+        {
+          "name": "Pinecrest Traffic Injector",
+          "disabled": true,
+          "path": "F:\\MSFS 2024\\Community\\pinecrest-util-traffic-injector\\tools\\PinecrestInjector.exe",
+          "reach": "inside an addon (pinecrest-util-traffic-injector, enabled), switched off five days ago"
+        }
+      ]
+    },
+    "loadingReport": {
+      "file": "demo/simulator/Microsoft Flight Simulator 2024/Report-loading.toml",
+      "packagesRegistered": 60,
+      "modules": [
+        "halcyon_a320_systems.wasm",
+        "quillon_a339_fms.wasm",
+        "vireo_efb.wasm",
+        "stratoform_live.wasm",
+        "pinecrest_injector.wasm",
+        "vireo_hub.wasm",
+        "brightwater_bridge.wasm",
+        "fcr_embedded_system.wasm"
+      ]
+    },
+    "userCfg": "demo/simulator/Microsoft Flight Simulator 2024/UserCfg.opt"
+  },
+  "state": {
+    "settings": "demo/state/fs-organizer/settings.json",
+    "journal": "demo/state/fs-organizer/journal/operations.jsonl",
+    "presets": {
+      "Airline Ops": {
+        "file": "demo/state/fs-organizer/presets/msfs2024/Airline Ops.json",
+        "modifiedDaysAgo": 12
+      },
+      "GA Weekend": {
+        "file": "demo/state/fs-organizer/presets/msfs2024/GA Weekend.json",
+        "modifiedDaysAgo": 20
+      },
+      "Long Haul": {
+        "file": "demo/state/fs-organizer/presets/msfs2024/Long Haul.json",
+        "modifiedDaysAgo": 3
+      }
+    },
+    "returnPreset": {
+      "file": "demo/state/fs-organizer/presets/msfs2024.return.json",
+      "modifiedDaysAgo": 3
+    }
+  },
+  "totals": {
+    "addons": 62,
+    "enabled": 50,
+    "disabled": 12,
+    "destinationEntries": 55,
+    "librarySizeBytes": 137255578049
+  }
+}
