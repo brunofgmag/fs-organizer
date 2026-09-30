@@ -5,6 +5,8 @@
 
 #include <aclapi.h>
 
+#include <fstream>
+#include <utility>
 #include <vector>
 
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -26,6 +28,7 @@ namespace
         static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
         static void AJunctionIsAReparsePointAndARealFolderIsNot();
         static void OnlyARealFolderIsPhysicalAndALiveJunctionOverItIsNot();
+        static void TargetDirectoryExistsAnswersLikeTheStandardLibraryForFilesAndChainsOfJunctions();
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
         static void AFolderThatIsNotThereIsNotTheSameAsOneThatRefusesTheWrite();
         static void AFolderThatWillNotTakeAFileSaysPermissionIsWhatStoppedIt();
@@ -170,6 +173,35 @@ void WindowsFilesystemProbeTest::OnlyARealFolderIsPhysicalAndALiveJunctionOverIt
     QVERIFY2(filesystemProbe.TargetDirectoryExists(live),
              "the two probes stopped disagreeing, so one of them is not answering what it promises");
     QVERIFY(!filesystemProbe.TargetDirectoryExists(dangling));
+}
+
+void WindowsFilesystemProbeTest::TargetDirectoryExistsAnswersLikeTheStandardLibraryForFilesAndChainsOfJunctions()
+{
+    const Disk disk;
+    const std::filesystem::path physical = disk.AddFolder("Library/Aircrafts/aerosoft-crj");
+    const std::filesystem::path file = disk.Root() / "Library/readme.txt";
+    std::ofstream(file, std::ios::binary) << "not a folder";
+
+    const std::filesystem::path live = disk.AddLiveJunction("Community/aerosoft-crj", physical);
+    const std::filesystem::path chained = disk.AddLiveJunction("Second/aerosoft-crj", live);
+    const std::filesystem::path dangling = disk.AddDanglingJunction("Community/ag-airport-bgqq");
+    const std::filesystem::path chainedToDangling = disk.AddLiveJunction("Second/ag-airport-bgqq", dangling);
+    const std::filesystem::path never = disk.Root() / "Community/never-created";
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    const std::vector<std::pair<std::filesystem::path, bool>> expected{
+        {physical, true},           {file, false},  {live, true}, {chained, true}, {dangling, false},
+        {chainedToDangling, false}, {never, false},
+    };
+
+    for (const auto& [path, isThere] : expected)
+    {
+        std::error_code error;
+
+        QCOMPARE(filesystemProbe.TargetDirectoryExists(path), isThere);
+        QCOMPARE(filesystemProbe.TargetDirectoryExists(path), std::filesystem::is_directory(path, error));
+    }
 }
 
 void WindowsFilesystemProbeTest::FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists()

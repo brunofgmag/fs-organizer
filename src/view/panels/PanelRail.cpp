@@ -14,7 +14,6 @@ namespace
 {
     constexpr int kRailWidth = 34;
     constexpr int kArrowSide = 24;
-    constexpr int kAboveTheArrow = 7;
     constexpr int kBeforeTheSpine = 12;
     constexpr int kDotSide = 5;
 }
@@ -33,7 +32,7 @@ PanelRail::PanelRail(QWidget* parent) : QWidget(parent)
     expand_->setCursor(Qt::PointingHandCursor);
 
     auto* column = new QVBoxLayout(this);
-    column->setContentsMargins(0, kAboveTheArrow, 0, 0);
+    column->setContentsMargins(0, 0, 0, 0);
     column->setSpacing(0);
     column->addWidget(expand_, 0, Qt::AlignHCenter);
     column->addStretch();
@@ -59,6 +58,11 @@ void PanelRail::RetranslateUi() const
 int PanelRail::Width()
 {
     return kRailWidth;
+}
+
+void PanelRail::AlignTheArrowWithAStripOf(const int height)
+{
+    layout()->setContentsMargins(0, qMax(0, (height - kArrowSide) / 2), 0, 0);
 }
 
 void PanelRail::ShowTitle(const QString& title, const bool alarming)

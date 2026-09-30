@@ -80,7 +80,22 @@ public:
     [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile,
                                                                const std::vector<TreeNode>& libraries = {}) const;
 
+    [[nodiscard]] std::vector<ExternalAddon> WhatCameFromAnotherProgram(const SimulatorProfile& profile,
+                                                                        const std::vector<TreeNode>& libraries) const;
+
     [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile,
+                                           const std::vector<ExternalAddon>& externals) const;
+
+    [[nodiscard]] std::vector<DestinationEntry> EntriesAfter(const SimulatorProfile& profile,
+                                                             const std::vector<DestinationEntry>& before,
+                                                             const std::vector<LinkOperationResult>& results,
+                                                             const std::vector<ExternalAddon>& externals) const;
+
+    [[nodiscard]] std::vector<TakenPlace> PlacesTakenNow(const SimulatorProfile& profile,
+                                                         const std::vector<const TreeNode*>& nodes,
+                                                         const EnabledAddons& shown) const;
 
     [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
                                                       const std::vector<const TreeNode*>& nodes) const;
@@ -152,9 +167,6 @@ private:
     [[nodiscard]] LinkOperationResult RunTheStartupStep(const Step& step) const;
 
     [[nodiscard]] std::vector<LinkOperationResult> RunAsOneBatch(const std::vector<Step>& steps);
-
-    [[nodiscard]] std::vector<ExternalAddon> WhatCameFromAnotherProgram(const SimulatorProfile& profile,
-                                                                        const std::vector<TreeNode>& libraries) const;
 
     const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;

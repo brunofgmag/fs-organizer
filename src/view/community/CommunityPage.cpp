@@ -28,6 +28,7 @@
 #include "view/TableColumns.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/ModelRowDetail.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/ModelRetranslation.h"
@@ -200,18 +201,18 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
     table_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(table_->horizontalHeader());
 
-    auto* column = new QVBoxLayout;
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(0);
-    column->addWidget(CreateFilters());
-    column->addWidget(CreateActions());
-    column->addWidget(table_, 1);
-
-    auto* layout = new QHBoxLayout(this);
+    auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addLayout(column, 1);
-    layout->addWidget(CreatePanel());
+    layout->addWidget(CreateFilters());
+    layout->addWidget(CreateActions());
+
+    auto* body = new QHBoxLayout;
+    body->setContentsMargins(0, 0, 0, 0);
+    body->setSpacing(0);
+    body->addWidget(table_, 1);
+    body->addWidget(CreatePanel());
+    layout->addLayout(body, 1);
 
     connect(&model_, &QAbstractItemModel::modelReset, this, &CommunityPage::UpdateSummary);
     connect(&model_, &QAbstractItemModel::modelReset, this, &CommunityPage::ShowTheSelectedEntry);
@@ -255,7 +256,7 @@ QWidget* CommunityPage::CreateFilters()
     auto* group = new QButtonGroup(bar);
     auto* grid = new QGridLayout(bar);
     grid->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, 0);
-    grid->setSpacing(6);
+    grid->setSpacing(kChipGap);
 
     int column = 0;
     int row = 0;
@@ -404,6 +405,8 @@ QWidget* CommunityPage::CreatePanel()
     panel_->Add(promise_);
 
     panel_->RestoreCollapsedState();
+    panel_->LevelWith(table_->horizontalHeader());
+    CapTheScrollBarOf(table_, table_->horizontalHeader());
     panel_->Summon(false);
     ShowWhatTheActionsWillTouch({});
 

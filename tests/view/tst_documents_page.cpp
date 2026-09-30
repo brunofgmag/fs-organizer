@@ -53,6 +53,8 @@
 #include "tests/support/PathPrinting.h"
 #include "view/documents/DocumentReader.h"
 #include "view/documents/DocumentsPage.h"
+#include "view/documents/SelectablePages.h"
+#include "view/theme/ModernistMetrics.h"
 #include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/SessionNotifier.h"
 #include "tests/support/PageFloor.h"
@@ -65,6 +67,10 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void ThePaneStartsLevelWithThePage();
+        static void TheHeadingOfThePaneStartsLevelWithThePage();
+        static void TheBarRunsOverThePane();
+        static void TheReaderWithAnOutlineFitsTheNarrowestWindow();
         static void OneClickOnTheLineOpensIt();
         static void TheStarTurnsTheFavouriteWithoutOpeningAnything();
         static void OnlyTheGlyphOfTheArrowOpensAndClosesTheGroup();
@@ -93,6 +99,10 @@ namespace
         static void TheMenuAnswersOnAMarkAndOnNothingElse();
         static void TheSearchStepsForwardAndBackThroughWhatItFound();
         static void SteppingToAMatchFurtherDownTheSamePageScrollsToIt();
+        static void AnEntryOnAnotherPageBringsItsTitleToTheTop();
+        static void AnEntryOnThePageAlreadyCurrentBringsItsTitleToTheTopToo();
+        static void AMarkBringsTheTopOfItsPageToTheTop();
+        static void AnEntryNearTheEndOfTheDocumentGoesAsFarAsTheScrollAllows();
         static void TheLensesTakeTheReadingCloserAndFurtherAway();
         static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
@@ -1165,6 +1175,159 @@ void DocumentsPageTest::SteppingToAMatchFurtherDownTheSamePageScrollsToIt()
              "and stepping back walks the page up again instead of parking at the end");
 }
 
+namespace
+{
+    constexpr int kHeightOfTheTestPage = 200;
+
+    const std::vector<ASectionOfAManual> kSectionsWithTitlesInTheMiddle = {
+        {.title = "Cover", .page = 0, .heightFromTheFoot = std::nullopt},
+        {.title = "Fuel", .page = 0, .heightFromTheFoot = 120},
+        {.title = "Electrical", .page = 5, .heightFromTheFoot = 120},
+        {.title = "Appendix", .page = 22, .heightFromTheFoot = 20}};
+
+    [[nodiscard]] int
+    WhereThePointSitsInTheScrollbar(const SelectablePages& pages, const int page, const int heightFromTheFoot)
+    {
+        const WhereAPageSits sits = pages.WhereThePageSits(page);
+
+        return qRound(sits.box.y() + (kHeightOfTheTestPage - heightFromTheFoot) * sits.scale);
+    }
+
+    [[nodiscard]] int WhereTheTopOfThePageSitsInTheScrollbar(const SelectablePages& pages, const int page)
+    {
+        return pages.WhereThePageSits(page).box.y();
+    }
+
+    void ClickTheLineOf(QTreeWidget& pane, QTreeWidgetItem& entry)
+    {
+        QTest::mouseClick(pane.viewport(), Qt::LeftButton, Qt::NoModifier, pane.visualItemRect(&entry).center());
+    }
+}
+
+void DocumentsPageTest::AnEntryOnAnotherPageBringsItsTitleToTheTop()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual =
+        WrittenInto(folder, L"manual.pdf", AManualOf(24, kSectionsWithTitlesInTheMiddle));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* pages = dynamic_cast<SelectablePages*>(reader.findChild<QPdfView*>());
+    QTreeWidget* pane = ThePaneOf(reader);
+
+    QVERIFY(pages != nullptr);
+    QVERIFY(pane != nullptr);
+    QVERIFY2(pages->verticalScrollBar()->maximum() > 0, "a page that fits needs no scrolling and proves nothing");
+
+    ClickTheLineOf(*pane, *SectionNamed(*pane, QStringLiteral("Electrical")));
+
+    const int wanted = WhereThePointSitsInTheScrollbar(*pages, 5, 120);
+
+    QVERIFY2(wanted < pages->verticalScrollBar()->maximum(),
+             "the title has to be reachable for the check to mean anything");
+    QVERIFY2(qAbs(pages->verticalScrollBar()->value() - wanted) <= 1,
+             qPrintable(QStringLiteral("the title sits at %1 and the view is at %2, and the page jump alone lands on "
+                                       "the top of the page, which is above it")
+                            .arg(wanted)
+                            .arg(pages->verticalScrollBar()->value())));
+}
+
+void DocumentsPageTest::AnEntryOnThePageAlreadyCurrentBringsItsTitleToTheTopToo()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual =
+        WrittenInto(folder, L"manual.pdf", AManualOf(24, kSectionsWithTitlesInTheMiddle));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* pages = dynamic_cast<SelectablePages*>(reader.findChild<QPdfView*>());
+    QTreeWidget* pane = ThePaneOf(reader);
+
+    QVERIFY(pages != nullptr);
+    QVERIFY(pane != nullptr);
+
+    const int before = pages->verticalScrollBar()->value();
+    const int wanted = WhereThePointSitsInTheScrollbar(*pages, 0, 120);
+
+    QVERIFY2(wanted > before + pages->viewport()->height() / 8 && wanted < before + pages->viewport()->height(),
+             "the title has to start visible and below the top, which is the case the page jump leaves untouched");
+
+    ClickTheLineOf(*pane, *SectionNamed(*pane, QStringLiteral("Fuel")));
+
+    QVERIFY2(qAbs(pages->verticalScrollBar()->value() - wanted) <= 1,
+             qPrintable(QStringLiteral("the title sits at %1 and the view is at %2, and the page did not change, so "
+                                       "the navigator had nothing to say and the view stayed where it was")
+                            .arg(wanted)
+                            .arg(pages->verticalScrollBar()->value())));
+}
+
+void DocumentsPageTest::AMarkBringsTheTopOfItsPageToTheTop()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual =
+        WrittenInto(folder, L"manual.pdf", AManualOf(24, kSectionsWithTitlesInTheMiddle));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+    reader.Read(manual, 7, DocumentKind::Document, {{.page = 7, .name = {}}});
+
+    auto* pages = dynamic_cast<SelectablePages*>(reader.findChild<QPdfView*>());
+    QTreeWidget* pane = ThePaneOf(reader);
+    QTreeWidgetItem* electrical = SectionNamed(*pane, QStringLiteral("Electrical"));
+
+    QVERIFY(pages != nullptr);
+    QVERIFY(electrical != nullptr);
+    QCOMPARE(electrical->childCount(), 1);
+
+    const int wanted = WhereTheTopOfThePageSitsInTheScrollbar(*pages, 7);
+
+    pages->verticalScrollBar()->setValue(wanted + 20);
+
+    QVERIFY2(
+        pages->verticalScrollBar()->value() > wanted + 1,
+        "the reading has to start on the page and below its top, which is the case the page jump leaves untouched");
+
+    electrical->setExpanded(true);
+    ClickTheLineOf(*pane, *electrical->child(0));
+
+    QVERIFY2(qAbs(pages->verticalScrollBar()->value() - wanted) <= 1,
+             qPrintable(QStringLiteral("a mark carries only a page, so the top of the page sits at %1 and the view "
+                                       "is at %2")
+                            .arg(wanted)
+                            .arg(pages->verticalScrollBar()->value())));
+}
+
+void DocumentsPageTest::AnEntryNearTheEndOfTheDocumentGoesAsFarAsTheScrollAllows()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual =
+        WrittenInto(folder, L"manual.pdf", AManualOf(24, kSectionsWithTitlesInTheMiddle));
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+    reader.Read(manual, 0, DocumentKind::Document, {});
+
+    auto* pages = dynamic_cast<SelectablePages*>(reader.findChild<QPdfView*>());
+    QTreeWidget* pane = ThePaneOf(reader);
+
+    QVERIFY(pages != nullptr);
+    QVERIFY(pane != nullptr);
+    QVERIFY2(WhereThePointSitsInTheScrollbar(*pages, 22, 20) > pages->verticalScrollBar()->maximum(),
+             "the title has to sit lower than the scroll can bring it, or the clamp is not what the check sees");
+
+    ClickTheLineOf(*pane, *SectionNamed(*pane, QStringLiteral("Appendix")));
+
+    QCOMPARE(pages->verticalScrollBar()->value(), pages->verticalScrollBar()->maximum());
+}
+
 void DocumentsPageTest::TheMenuAnswersOnAMarkAndOnNothingElse()
 {
     const QTemporaryDir folder;
@@ -1274,6 +1437,78 @@ void DocumentsPageTest::ThePageFitsTheNarrowestWindow()
     DocumentsPage page(f.viewModel);
 
     ItFitsTheNarrowestWindow(page, "The documents page");
+}
+
+void DocumentsPageTest::ThePaneStartsLevelWithThePage()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(1024, 600);
+    reader.show();
+    reader.Read(manual, 0, DocumentKind::Document, {});
+    QCoreApplication::processEvents();
+
+    const QWidget* pane = ThePaneOf(reader)->parentWidget();
+    const auto* page = reader.findChild<QPdfView*>();
+
+    QVERIFY(pane != nullptr);
+    QVERIFY(page != nullptr);
+    QVERIFY(pane->isVisible());
+
+    QCOMPARE(pane->mapTo(&reader, QPoint(0, 0)).y(), page->mapTo(&reader, QPoint(0, 0)).y());
+}
+
+void DocumentsPageTest::TheHeadingOfThePaneStartsLevelWithThePage()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(1024, 600);
+    reader.show();
+    reader.Read(manual, 0, DocumentKind::Document, {});
+    QCoreApplication::processEvents();
+
+    const auto* heading = reader.findChild<QLabel*>(QStringLiteral("PanelSubHeading"));
+    const auto* page = reader.findChild<QPdfView*>();
+
+    QVERIFY(heading != nullptr);
+    QVERIFY(page != nullptr);
+    QVERIFY(heading->isVisible());
+
+    QCOMPARE(heading->mapTo(&reader, QPoint(0, 0)).y(), page->mapTo(&reader, QPoint(0, 0)).y());
+}
+
+void DocumentsPageTest::TheBarRunsOverThePane()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.resize(1024, 600);
+    reader.show();
+    reader.Read(manual, 0, DocumentKind::Document, {});
+    QCoreApplication::processEvents();
+
+    const auto* last = reader.findChild<QPushButton*>(QStringLiteral("OpenTheFolder"));
+
+    QVERIFY(last != nullptr);
+    QVERIFY(ThePaneOf(reader)->isVisible());
+
+    QCOMPARE(last->mapTo(&reader, QPoint(last->width(), 0)).x(), reader.width() - kPageGutter);
+}
+
+void DocumentsPageTest::TheReaderWithAnOutlineFitsTheNarrowestWindow()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    DocumentReader reader;
+    reader.Read(manual, 13, DocumentKind::Document, {{.page = 13, .name = {}}});
+
+    ItFitsTheNarrowestWindow(reader, "The reader with its outline");
 }
 
 void DocumentsPageTest::TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick()

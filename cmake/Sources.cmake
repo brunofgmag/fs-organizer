@@ -218,6 +218,7 @@ set(VIEW_SOURCES
         src/view/panels/EmptyState.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp
+        src/view/panels/ScrollBarCap.cpp
         src/view/shell/TriageStrip.cpp
         src/view/theme/ModernistPaint.cpp
         src/view/theme/ModernistStyle.cpp

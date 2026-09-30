@@ -134,18 +134,18 @@ DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
     QLayout* bar = TheBar();
     bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, 0);
 
-    auto* pages = new QVBoxLayout;
+    auto* row = new QHBoxLayout;
+    row->setContentsMargins(0, 0, 0, 0);
+    row->setSpacing(12);
+    row->addWidget(view_, 1);
+    row->addWidget(outlinePane_);
+
+    auto* pages = new QVBoxLayout(this);
     pages->setContentsMargins(0, 0, 0, 0);
     pages->setSpacing(8);
     pages->addLayout(bar);
     pages->addWidget(caption_);
-    pages->addWidget(view_, 1);
-
-    auto* row = new QHBoxLayout(this);
-    row->setContentsMargins(0, 0, 0, 0);
-    row->setSpacing(12);
-    row->addLayout(pages, 1);
-    row->addWidget(outlinePane_);
+    pages->addLayout(row, 1);
 
     ConnectTheBar();
     ConnectThePane();
@@ -565,16 +565,16 @@ void DocumentReader::JumpToTheResult(const int result)
     Retranslate();
 }
 
-int DocumentReader::WhereTheResultSitsInTheScrollbar(const QPdfLink& found) const
+int DocumentReader::WhereTheLocationSitsInTheScrollbar(const int page, const QPointF& location) const
 {
-    const WhereAPageSits sits = view_->WhereThePageSits(found.page());
+    const WhereAPageSits sits = view_->WhereThePageSits(page);
 
     if (sits.box.isEmpty())
     {
         return -1;
     }
 
-    return qRound(sits.box.y() + found.location().y() * sits.scale);
+    return qRound(sits.box.y() + location.y() * sits.scale);
 }
 
 void DocumentReader::BringTheResultIntoView(const QPdfLink& found) const
@@ -586,7 +586,7 @@ void DocumentReader::BringTheResultIntoView(const QPdfLink& found) const
         return;
     }
 
-    const int where = WhereTheResultSitsInTheScrollbar(found);
+    const int where = WhereTheLocationSitsInTheScrollbar(found.page(), found.location());
     const int lead = view_->viewport()->height() / 4;
 
     if (where < 0 || (where >= bar->value() + lead && where <= bar->value() + view_->viewport()->height() - lead))
@@ -595,6 +595,20 @@ void DocumentReader::BringTheResultIntoView(const QPdfLink& found) const
     }
 
     bar->setValue(std::clamp(where - lead, bar->minimum(), bar->maximum()));
+}
+
+void DocumentReader::BringTheLocationToTheTop(const int page, const QPointF& location) const
+{
+    const int where = WhereTheLocationSitsInTheScrollbar(page, location);
+
+    if (where < 0)
+    {
+        return;
+    }
+
+    QScrollBar* bar = view_->verticalScrollBar();
+
+    bar->setValue(std::clamp(where, bar->minimum(), bar->maximum()));
 }
 
 std::vector<bool> DocumentReader::WhichSectionsAreOpen() const
@@ -883,7 +897,7 @@ void DocumentReader::BuildTheOutlinePane()
     outlinePane_->setFixedWidth(kOutlineWidth);
 
     auto* outlineColumn = new QVBoxLayout(outlinePane_);
-    outlineColumn->setContentsMargins(0, kPageGutter, kPageGutter, 0);
+    outlineColumn->setContentsMargins(0, 0, kPageGutter, 0);
     outlineColumn->setSpacing(6);
     outlineColumn->addWidget(outlineHeading_);
     outlineColumn->addWidget(outlineView_);
@@ -1050,8 +1064,11 @@ void DocumentReader::ConnectThePane()
     connect(outlineView_, &QTreeWidget::itemClicked, this,
             [this](const QTreeWidgetItem* entry)
             {
-                view_->pageNavigator()->jump(PageOf(*entry), entry->data(kTheOnlyColumn, kLocationRole).toPointF(),
-                                             entry->data(kTheOnlyColumn, kZoomRole).toReal());
+                const int page = PageOf(*entry);
+                const QPointF location = entry->data(kTheOnlyColumn, kLocationRole).toPointF();
+
+                view_->pageNavigator()->jump(page, location, entry->data(kTheOnlyColumn, kZoomRole).toReal());
+                BringTheLocationToTheTop(page, location);
             });
     connect(outlineView_, &QTreeWidget::currentItemChanged, this,
             [this]

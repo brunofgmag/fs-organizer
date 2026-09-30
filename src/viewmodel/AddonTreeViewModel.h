@@ -31,7 +31,6 @@ struct WeighedSwap
 
 struct TogglePlan
 {
-    ProfileService::LinksOnDisk onDisk{};
     std::vector<TakenPlace> swapsNeeded{};
 };
 
@@ -143,12 +142,14 @@ private:
     {
         SimulatorProfile profile{};
         ProfileSnapshot shown{};
-        ProfileService::LinksOnDisk onDisk{};
+        std::vector<TreeNode> libraries{};
         std::vector<TreeNode> toDisable{};
         std::vector<TreeNode> toEnable{};
         std::vector<StartupLine> startupEntriesToTurnOff{};
         std::size_t leftAlone = 0;
         LinkBatchReport report{};
+        std::vector<DestinationEntry> entries{};
+        bool simulatorRunning = false;
     };
 
     [[nodiscard]] const TreeNode* LibraryTreeHolding(const TreeNode& node) const;
@@ -159,7 +160,9 @@ private:
 
     void AdoptScan();
 
-    void ApplyResults(const LinkBatchReport& report);
+    void ReadTheEntriesAfter(ToggleWork& work) const;
+
+    void ApplyResults(ToggleWork& work);
 
     void RunTheBatch(std::shared_ptr<ToggleWork> work);
 

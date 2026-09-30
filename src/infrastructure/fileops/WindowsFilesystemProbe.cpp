@@ -168,6 +168,12 @@ bool WindowsFilesystemProbe::PhysicalDirectoryExists(const std::filesystem::path
 
 bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& path) const
 {
+    if (const DWORD attributes = AttributesWithoutFollowingLinks(path);
+        attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
+    {
+        return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    }
+
     std::error_code error;
     return std::filesystem::is_directory(WithExtendedPrefix(path), error);
 }

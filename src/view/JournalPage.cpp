@@ -13,6 +13,7 @@
 #include "view/delegates/RowDelegate.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/ModelRowDetail.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/ModelRetranslation.h"
@@ -57,19 +58,21 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
 
     panel_->Add(detail_);
     panel_->RestoreCollapsedState();
+    panel_->LevelWith(operations_->header());
+    CapTheScrollBarOf(operations_, operations_->header());
     panel_->Summon(false);
 
-    auto* column = new QVBoxLayout;
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(0);
-    column->addWidget(toolbar);
-    column->addWidget(operations_, 1);
-
-    auto* layout = new QHBoxLayout(this);
+    auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addLayout(column, 1);
-    layout->addWidget(panel_);
+    layout->addWidget(toolbar);
+
+    auto* body = new QHBoxLayout;
+    body->setContentsMargins(0, 0, 0, 0);
+    body->setSpacing(0);
+    body->addWidget(operations_, 1);
+    body->addWidget(panel_);
+    layout->addLayout(body, 1);
 
     connect(operations_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
             &JournalPage::ShowTheSelectedOperation);

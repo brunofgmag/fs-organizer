@@ -52,6 +52,38 @@
     </message>
 </context>
 <context>
+    <name>AddonTreeFilterModel</name>
+    <message>
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="189"/>
+        <source>%1 of %2</source>
+        <comment>addons shown out of all the addons under a category while a filter or a search is active</comment>
+        <translation>%1 of %2</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="196"/>
+        <source>%1 of %n addon</source>
+        <comment>addons shown out of all the addons of a library while a filter or a search is active</comment>
+        <translation>
+            <numerusform>%1 of %n addon</numerusform>
+            <numerusform>%1 of %n addons</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="200"/>
+        <source>%1 of %n category</source>
+        <comment>categories shown out of all the categories of a library while a filter or a search is active</comment>
+        <translation>
+            <numerusform>%1 of %n category</numerusform>
+            <numerusform>%1 of %n categories</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="206"/>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+</context>
+<context>
     <name>AddonTreeModel</name>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="207"/>
@@ -199,6 +231,28 @@
         <translation>Hide empty categories</translation>
     </message>
     <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="421"/>
+        <source>All</source>
+        <comment>several addons</comment>
+        <translation>All</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="422"/>
+        <source>Disabled</source>
+        <comment>several addons</comment>
+        <translation>Disabled</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="470"/>
+        <source>No addon is enabled now, so the filter was cleared.</source>
+        <translation>No addon is enabled now, so the filter was cleared.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="471"/>
+        <source>No addon is disabled now, so the filter was cleared.</source>
+        <translation>No addon is disabled now, so the filter was cleared.</translation>
+    </message>
+    <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="274"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="538"/>
         <source>Repoint to the library</source>
@@ -322,6 +376,7 @@
         <translation>Addons</translation>
     </message>
     <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="421"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="473"/>
         <source>Enabled</source>
         <comment>several addons</comment>

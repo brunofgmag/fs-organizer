@@ -65,6 +65,11 @@ namespace
         static void ARefusedSwapStillTurnsOnTheRestOfTheSelection();
         static void ASwapAgreedOnAPairThatChangedOnTheDiskIsNotCarriedOut();
         static void TheToggleBatchRunsInAWorkerAndASecondGestureWaitsItsTurn();
+        static void PlanningAToggleDoesNotReadTheDestinations();
+        static void AnAddonAlreadyStandingInItsOwnPlaceIsNoSwap();
+        static void AToggleStillReportsTheDriftWhenTheDiskChangedBehindTheScreen();
+        static void TheCallingThreadReadsNoDestinationWhileABatchRunsAndLands();
+        static void AToggleLandingAfterTheProfileChangedReadsTheCurrentProfileInsteadOfAdoptingTheStaleEntries();
     };
 }
 
@@ -832,6 +837,118 @@ void AddonTreeViewModelTest::TheToggleBatchRunsInAWorkerAndASecondGestureWaitsIt
     QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.journal.appended.front().kind, OperationKind::EnableAddon);
+}
+
+void AddonTreeViewModelTest::PlanningAToggleDoesNotReadTheDestinations()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+
+    f.LinkIn(kCommunity, kOtherAddon);
+    f.filesystemProbe.enumerated.clear();
+
+    static_cast<void>(f.viewModel.PlanToggle({&addon}, true));
+    static_cast<void>(f.viewModel.PlanToggle({&addon}, false));
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "planning asks about the places it needs and lists none");
+}
+
+void AddonTreeViewModelTest::AnAddonAlreadyStandingInItsOwnPlaceIsNoSwap()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+
+    f.LinkIn(kCommunity, kAddon);
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QVERIFY(f.viewModel.PlanToggle({&addon}, true).swapsNeeded.empty());
+    QVERIFY(f.viewModel.SwapsNeededTo({&addon}).empty());
+}
+
+void AddonTreeViewModelTest::AToggleStillReportsTheDriftWhenTheDiskChangedBehindTheScreen()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    f.LinkIn(kCommunity, kAddon);
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.Toggle({&addon}, true);
+
+    QCOMPARE(finished.size(), 1);
+
+    const auto report = finished.front().front().value<LinkBatchReport>();
+    QVERIFY(report.results.empty());
+    QCOMPARE(report.drifted, std::size_t{1});
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void AddonTreeViewModelTest::TheCallingThreadReadsNoDestinationWhileABatchRunsAndLands()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    const QSignalSpy refreshed(&f.notifier, &SessionNotifier::Refreshed);
+
+    f.runner.defer = true;
+    f.filesystemProbe.enumerated.clear();
+
+    f.viewModel.Toggle({&addon}, true);
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "the gesture itself reads nothing");
+
+    f.runner.RunPendingWork();
+
+    QVERIFY2(!f.filesystemProbe.enumerated.empty(), "the worker is the one that reads the destinations");
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "landing the result reads nothing");
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(refreshed.size(), 1);
+
+    f.viewModel.UndoLastBatch();
+    f.runner.RunPendingWork();
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "landing an undo reads nothing either");
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(refreshed.size(), 2);
+}
+
+void AddonTreeViewModelTest::
+    AToggleLandingAfterTheProfileChangedReadsTheCurrentProfileInsteadOfAdoptingTheStaleEntries()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+    constexpr auto kMovedCommunity = "E:/Flight Simulator 2024/CommunityMoved";
+    f.fileSystem.AddDirectory(kMovedCommunity);
+
+    f.runner.defer = true;
+
+    f.viewModel.Toggle({&addon}, true);
+    f.runner.RunPendingWork();
+
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+
+    f.runner.defer = false;
+    f.session.RepointDestination(kCommunity, kMovedCommunity);
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(!f.filesystemProbe.enumerated.empty(), "the entries read for the old destinations were not adopted");
+    QVERIFY(f.session.Snapshot().entries.empty());
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)
