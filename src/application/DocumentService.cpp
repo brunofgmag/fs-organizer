@@ -1,22 +1,103 @@
 #include "application/DocumentService.h"
 
 #include <algorithm>
+#include <array>
+#include <charconv>
+#include <cstdint>
+#include <map>
 #include <optional>
 #include <utility>
 
 #include "domain/documents/DocumentClassification.h"
 #include "domain/support/CaseFolding.h"
 #include "domain/support/PathUtils.h"
-#include "domain/tree/AddonTree.h"
 
 namespace
 {
     constexpr auto kDocumentSuffix = ".pdf";
     constexpr auto kCatalogueFileName = "catalogue.json";
 
+    constexpr std::uint64_t kHashBasis = 14695981039346656037ULL;
+    constexpr std::uint64_t kHashPrime = 1099511628211ULL;
+
     [[nodiscard]] bool ItIsADocumentFile(const std::filesystem::path& file)
     {
         return ComparableFileName(file).ends_with(kDocumentSuffix);
+    }
+
+    [[nodiscard]] std::uint64_t Mixed(std::uint64_t hash, const std::uint64_t value)
+    {
+        for (int shift = 0; shift < 64; shift += 8)
+        {
+            hash ^= (value >> shift) & 0xFFU;
+            hash *= kHashPrime;
+        }
+
+        return hash;
+    }
+
+    [[nodiscard]] std::uint64_t Mixed(std::uint64_t hash, const std::string& text)
+    {
+        for (const char letter : text)
+        {
+            hash ^= static_cast<unsigned char>(letter);
+            hash *= kHashPrime;
+        }
+
+        return Mixed(hash, static_cast<std::uint64_t>(text.size()));
+    }
+
+    [[nodiscard]] std::uint64_t HashOfAFile(const FileFingerprint& file)
+    {
+        std::uint64_t hash = Mixed(kHashBasis, ComparablePath(file.relativePath));
+        hash = Mixed(hash, static_cast<std::uint64_t>(file.size));
+
+        return Mixed(hash, static_cast<std::uint64_t>(file.lastWriteTime.time_since_epoch().count()));
+    }
+
+    [[nodiscard]] std::string DigestOf(const TreeFingerprint& walk, const std::vector<std::string>& codes)
+    {
+        std::uint64_t files = 0;
+
+        for (const FileFingerprint& file : walk.files)
+        {
+            files += HashOfAFile(file);
+        }
+
+        std::uint64_t airports = 0;
+
+        for (const std::string& code : codes)
+        {
+            airports += Mixed(kHashBasis, code);
+        }
+
+        std::uint64_t hash = Mixed(kHashBasis, files);
+        hash = Mixed(hash, static_cast<std::uint64_t>(walk.files.size()));
+        hash = Mixed(hash, airports);
+        hash = Mixed(hash, static_cast<std::uint64_t>(codes.size()));
+
+        std::array<char, 16> digits{};
+        const auto written = std::to_chars(digits.data(), digits.data() + digits.size(), hash, 16);
+
+        return std::string(digits.data(), written.ptr);
+    }
+
+    [[nodiscard]] std::string KeyOf(const AddonId& addon)
+    {
+        return LoweredForComparison(addon.libraryId) + '|' + LoweredForComparison(addon.folderName);
+    }
+
+    [[nodiscard]] std::map<std::string, const DocumentsOfAnAddon*>
+    KnownByAddon(const std::vector<DocumentsOfAnAddon>& before)
+    {
+        std::map<std::string, const DocumentsOfAnAddon*> known;
+
+        for (const DocumentsOfAnAddon& addon : before)
+        {
+            known.emplace(KeyOf(addon.addon), &addon);
+        }
+
+        return known;
     }
 
     struct AnAirportsFolder
@@ -76,14 +157,10 @@ namespace
     }
 }
 
-DocumentService::DocumentService(const CatalogScanner& catalog,
-                                 const FilesystemProbe& filesystemProbe,
+DocumentService::DocumentService(const FilesystemProbe& filesystemProbe,
                                  const ChartCatalogueParser& catalogueParser,
                                  const ChartVersions& chartVersions)
-    : catalog_(catalog),
-      filesystemProbe_(filesystemProbe),
-      catalogueParser_(catalogueParser),
-      chartVersions_(chartVersions)
+    : filesystemProbe_(filesystemProbe), catalogueParser_(catalogueParser), chartVersions_(chartVersions)
 {
 }
 
@@ -135,7 +212,8 @@ std::vector<CatalogueOfAnAirport> DocumentService::CataloguesBeside(const std::f
 
 DocumentsOfAnAddon DocumentService::DocumentsOf(const AddonId& addon,
                                                 const std::filesystem::path& folder,
-                                                const std::vector<std::string>& codes) const
+                                                const std::vector<std::string>& codes,
+                                                const DocumentsOfAnAddon* before) const
 {
     const std::optional<TreeFingerprint> walk = filesystemProbe_.FingerprintTree(folder);
 
@@ -144,7 +222,14 @@ DocumentsOfAnAddon DocumentService::DocumentsOf(const AddonId& addon,
         return {.addon = addon, .folder = folder, .itWasWalked = false};
     }
 
-    DocumentsOfAnAddon found{.addon = addon, .folder = folder};
+    const std::string digest = DigestOf(*walk, codes);
+
+    if (before != nullptr && before->digest == digest)
+    {
+        return *before;
+    }
+
+    DocumentsOfAnAddon found{.addon = addon, .folder = folder, .digest = digest};
     std::vector<ChartFile> charts;
 
     for (const FileFingerprint& file : walk->files)
@@ -173,31 +258,25 @@ DocumentsOfAnAddon DocumentService::DocumentsOf(const AddonId& addon,
     return found;
 }
 
-std::vector<DocumentsOfAnAddon> DocumentService::IndexWhile(const std::vector<Library>& libraries,
+std::vector<DocumentsOfAnAddon> DocumentService::IndexWhile(const std::vector<AddonToRead>& addons,
                                                             const std::vector<AirportsOfAnAddon>& airports,
+                                                            const std::vector<DocumentsOfAnAddon>& before,
                                                             const DocumentProgress& onProgress) const
 {
-    std::vector<std::pair<AddonId, std::filesystem::path>> addons;
-
-    for (const Library& library : libraries)
-    {
-        const TreeNode tree = catalog_.Scan(library.path);
-
-        for (const TreeNode* addon : AddonsUnder(tree))
-        {
-            addons.emplace_back(AddonId{.libraryId = library.id, .folderName = AsUtf8(addon->path.filename())},
-                                addon->path);
-        }
-    }
+    const std::map<std::string, const DocumentsOfAnAddon*> known = KnownByAddon(before);
 
     std::vector<DocumentsOfAnAddon> indexed;
     indexed.reserve(addons.size());
 
-    for (const auto& [addon, folder] : addons)
+    for (const AddonToRead& addon : addons)
     {
-        const std::vector<std::string>* codes = CodesOf(airports, addon);
+        const std::vector<std::string>* codes = CodesOf(airports, addon.addon);
+        const auto earlier = known.find(KeyOf(addon.addon));
+        const bool itIsTheSameFolder =
+            earlier != known.end() && ComparablePath(earlier->second->folder) == ComparablePath(addon.folder);
 
-        indexed.push_back(DocumentsOf(addon, folder, codes == nullptr ? std::vector<std::string>{} : *codes));
+        indexed.push_back(DocumentsOf(addon.addon, addon.folder, codes == nullptr ? std::vector<std::string>{} : *codes,
+                                      itIsTheSameFolder ? earlier->second : nullptr));
 
         if (onProgress && !onProgress(indexed.back(), indexed.size(), addons.size()))
         {

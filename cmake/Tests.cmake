@@ -134,12 +134,21 @@ fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
         tests/support/EnumPrinting.h)
 
+fsorg_add_qt_test(fsorg-file-clock-tests file-clock
+        tests/support/tst_file_clock.cpp
+        src/support/FileClock.h)
+
 fsorg_add_qt_test(fsorg-scenery-outside-the-scan-tests scenery-outside-the-scan
         tests/infrastructure/scenery/tst_scenery_outside_the_scan.cpp
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-scenery-outside-the-scan-tests PRIVATE fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-json-scenery-cache-on-real-disk-tests json-scenery-cache-on-real-disk
+        tests/infrastructure/scenery/tst_json_scenery_cache_on_real_disk.cpp
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-json-scenery-cache-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-chart-file-naming-tests chart-file-naming
         tests/domain/documents/tst_chart_file_naming.cpp

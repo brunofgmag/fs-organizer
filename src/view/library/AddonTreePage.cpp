@@ -660,8 +660,8 @@ void AddonTreePage::ShowTheFields(const QString& size) const
 void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const
 {
     int relinkable = 0;
-    int movable = 0;
     int deletable = 0;
+    std::vector<const TreeNode*> addons;
 
     for (const QModelIndex& position : rows)
     {
@@ -679,8 +679,10 @@ void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
                 || model_.data(source, AddonTreeModel::DivergentRole).toBool()
             ? 1
             : 0;
-        movable += viewModel_.CategoriesFor(node).empty() ? 0 : 1;
+        addons.push_back(node);
     }
+
+    const int movable = static_cast<int>(viewModel_.MovableAmong(addons));
 
     relink_->setEnabled(relinkable > 0);
     relink_->setText(relinkable > 1 ? tr("Repoint %n addon", nullptr, relinkable) : tr("Repoint to the library"));
@@ -1523,12 +1525,11 @@ void AddonTreePage::ChooseDestination(const TreeNode* clicked, const std::filesy
 {
     viewModel_.OverrideDestination(SelectedNodes(clicked), destination);
 
-    const std::vector<const TreeNode*> reachable = Chosen(clicked);
-    const std::size_t strayed = viewModel_.StrayAddonsUnder(reachable);
+    const std::vector<const TreeNode*> strayed = viewModel_.StrayedUnder(Chosen(clicked));
 
-    if (strayed > 0 && AskWhetherToRelink(strayed))
+    if (!strayed.empty() && AskWhetherToRelink(strayed.size()))
     {
-        viewModel_.RelinkToTheProfileDestination(reachable);
+        viewModel_.RelinkStrayed(strayed);
     }
 }
 

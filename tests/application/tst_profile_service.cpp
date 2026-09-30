@@ -70,6 +70,9 @@ namespace
         static void ADisabledEntryInsideTheAddonIsNotWorthAsking();
         static void AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAsking();
         static void TurningOffAStartupEntryOutsideTheAddonsCarriesItsLabelToTheJournal();
+        static void TheStartupBatchIsOpenedOnceAroundAllTheStepsOfABatch();
+        static void UndoRunsItsStartupStepsInsideOneBatchOfTheirOwn();
+        static void AStartupBatchIsClosedEvenWhenAStepThrows();
     };
 }
 
@@ -157,6 +160,31 @@ namespace
         [[nodiscard]] std::vector<const TreeNode*> Pmdg(const ProfileSnapshot& snapshot) const
         {
             return {AddonAt(snapshot, 0)};
+        }
+
+        void CarryThreeStrangers()
+        {
+            for (const char* name : {"one", "two", "three"})
+            {
+                const std::filesystem::path path = std::filesystem::path("C:/Program Files/Other") / name / "agent.exe";
+                fileSystem.AddFile(path);
+                startup.entries.Carry(StartupEntry{.label = name, .path = path, .enabled = true});
+            }
+        }
+
+        [[nodiscard]] static LinkBatch TurningOffTheThreeStrangers()
+        {
+            LinkBatch batch;
+            for (const char* name : {"one", "two", "three"})
+            {
+                const StartupLine line{.label = name,
+                                       .path = std::filesystem::path("C:/Program Files/Other") / name / "agent.exe",
+                                       .enabled = true,
+                                       .reach = StartupReach::OutsideYourAddons};
+                batch.startupSwitches.push_back(StartupSwitch{.line = line, .enable = false});
+            }
+
+            return batch;
         }
 
         void CarryTheEntry(const bool enabled)
@@ -1165,6 +1193,61 @@ void ProfileServiceTest::AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAs
     const ProfileSnapshot snapshot = f.Snapshot(profile);
 
     QVERIFY(f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot)).empty());
+}
+
+void ProfileServiceTest::TheStartupBatchIsOpenedOnceAroundAllTheStepsOfABatch()
+{
+    Fixture f;
+    f.CarryThreeStrangers();
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const std::vector<LinkOperationResult> results =
+        f.service.SetEnabled(profile, snapshot, Fixture::TurningOffTheThreeStrangers()).results;
+
+    QCOMPARE(results.size(), std::size_t{3});
+    QCOMPARE(f.startup.entries.batchesOpened, std::size_t{1});
+    QCOMPARE(f.startup.entries.batchesClosed, std::size_t{1});
+    QCOMPARE(f.startup.entries.switchesInsideABatch, std::size_t{3});
+    QCOMPARE(f.startup.entries.switchesOutsideABatch, std::size_t{0});
+    QCOMPARE(f.journal.appended.size(), std::size_t{3});
+}
+
+void ProfileServiceTest::UndoRunsItsStartupStepsInsideOneBatchOfTheirOwn()
+{
+    Fixture f;
+    f.CarryThreeStrangers();
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    static_cast<void>(f.service.SetEnabled(profile, snapshot, Fixture::TurningOffTheThreeStrangers()));
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{3});
+    QCOMPARE(f.startup.entries.batchesOpened, std::size_t{2});
+    QCOMPARE(f.startup.entries.batchesClosed, std::size_t{2});
+    QCOMPARE(f.startup.entries.switchesInsideABatch, std::size_t{6});
+    QCOMPARE(f.startup.entries.switchesOutsideABatch, std::size_t{0});
+}
+
+void ProfileServiceTest::AStartupBatchIsClosedEvenWhenAStepThrows()
+{
+    Fixture f;
+    f.CarryThreeStrangers();
+    f.startup.entries.MakeSwitchingThrow();
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    QVERIFY_THROWS_EXCEPTION(
+        std::runtime_error,
+        static_cast<void>(f.service.SetEnabled(profile, snapshot, Fixture::TurningOffTheThreeStrangers())));
+
+    QCOMPARE(f.startup.entries.batchesOpened, std::size_t{1});
+    QCOMPARE(f.startup.entries.batchesClosed, std::size_t{1});
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)

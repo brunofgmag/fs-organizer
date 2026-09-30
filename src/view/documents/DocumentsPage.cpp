@@ -546,6 +546,8 @@ void DocumentsPage::Open(const DocumentLine& line)
         return;
     }
 
+    viewModel_.FlushThePage();
+
     askedForTheManual_ = viewModel_.ItIsTheManual(line);
     open_ = line;
 

@@ -201,11 +201,19 @@ bool PresetService::IsSatisfied(const SimulatorProfile& profile,
                                 const ProfileSnapshot& snapshot,
                                 const Preset& preset) const
 {
-    if (!PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled))
-    {
-        return false;
-    }
+    return PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled)
+        && StartupIsInPlace(snapshot, preset);
+}
 
+bool PresetService::IsSatisfied(const ProfileSnapshot& snapshot,
+                                const Preset& preset,
+                                const PresetPlan& replacePlan) const
+{
+    return AddonsThatWouldChange(replacePlan) == 0 && StartupIsInPlace(snapshot, preset);
+}
+
+bool PresetService::StartupIsInPlace(const ProfileSnapshot& snapshot, const Preset& preset) const
+{
     std::vector<StartupLine> lines;
     for (const StartupEntry& entry : snapshot.startupEntries)
     {

@@ -7,10 +7,9 @@
 #include <string>
 #include <vector>
 
+#include "application/SceneryService.h"
 #include "application/model/AddonDocuments.h"
 #include "domain/model/AddonId.h"
-#include "domain/model/Library.h"
-#include "domain/ports/CatalogScanner.h"
 #include "domain/ports/ChartCatalogueParser.h"
 #include "domain/ports/ChartVersions.h"
 #include "domain/ports/FilesystemProbe.h"
@@ -21,16 +20,18 @@ using DocumentProgress = std::function<bool(const DocumentsOfAnAddon& addon, std
 class DocumentService
 {
 public:
-    DocumentService(const CatalogScanner& catalog,
-                    const FilesystemProbe& filesystemProbe,
+    DocumentService(const FilesystemProbe& filesystemProbe,
                     const ChartCatalogueParser& catalogueParser,
                     const ChartVersions& chartVersions);
 
-    [[nodiscard]] DocumentsOfAnAddon
-    DocumentsOf(const AddonId& addon, const std::filesystem::path& folder, const std::vector<std::string>& codes) const;
+    [[nodiscard]] DocumentsOfAnAddon DocumentsOf(const AddonId& addon,
+                                                 const std::filesystem::path& folder,
+                                                 const std::vector<std::string>& codes,
+                                                 const DocumentsOfAnAddon* before = nullptr) const;
 
-    [[nodiscard]] std::vector<DocumentsOfAnAddon> IndexWhile(const std::vector<Library>& libraries,
+    [[nodiscard]] std::vector<DocumentsOfAnAddon> IndexWhile(const std::vector<AddonToRead>& addons,
                                                              const std::vector<AirportsOfAnAddon>& airports,
+                                                             const std::vector<DocumentsOfAnAddon>& before,
                                                              const DocumentProgress& onProgress) const;
 
 private:
@@ -40,7 +41,6 @@ private:
     [[nodiscard]] std::vector<ChartVersion> TheVersionsOf(const std::vector<std::filesystem::path>& charts,
                                                           const std::filesystem::path& folder) const;
 
-    const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;
     const ChartCatalogueParser& catalogueParser_;
     const ChartVersions& chartVersions_;

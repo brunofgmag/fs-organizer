@@ -96,6 +96,8 @@ namespace
         static void EnableSelectedOnACategoryLeavesTheAddonsASearchHides();
         static void WithoutAnyFilterEnableSelectedReachesEveryAddonOfTheCategory();
         static void WithoutAnyFilterTheCheckboxOfACategoryReachesEveryAddonOfIt();
+        static void TheMoveButtonCountsTheSelectedAddonsThatHaveACategoryToGoTo();
+        static void TheMoveButtonStaysOffWhenTheOnlyCategoryIsTheOneTheAddonsSitIn();
     };
 }
 
@@ -251,7 +253,7 @@ namespace
         CoverageViewModel coverage{coverageService, sceneryService, session, clock, runner};
         FakeChartCatalogueParser catalogueParser;
         FakeChartVersions chartVersions;
-        DocumentService documentService{catalog, filesystemProbe, catalogueParser, chartVersions};
+        DocumentService documentService{filesystemProbe, catalogueParser, chartVersions};
         AddonDocumentsViewModel documents{documentService, sceneryService, session, runner};
     };
 
@@ -295,6 +297,19 @@ namespace
                 tree.expand(tree.model()->index(child, 0, library));
             }
         }
+    }
+
+    const QPushButton* MoveButtonOf(const QWidget& page)
+    {
+        for (const QPushButton* button : page.findChildren<QPushButton*>())
+        {
+            if (button->text().startsWith(QStringLiteral("Move")))
+            {
+                return button;
+            }
+        }
+
+        return nullptr;
     }
 
     struct Screen
@@ -1717,6 +1732,57 @@ void AddonTreePageTest::WithoutAnyFilterTheCheckboxOfACategoryReachesEveryAddonO
     }
 
     QVERIFY(!IsEnabled(f, QStringLiteral("Sceneries"), 0));
+}
+
+void AddonTreePageTest::TheMoveButtonCountsTheSelectedAddonsThatHaveACategoryToGoTo()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    const QModelIndex first = IndexOf(*screen.tree, kCompanion, {});
+    const QModelIndex second = IndexOf(*screen.tree, kChosen, {});
+    QVERIFY(first.isValid());
+    QVERIFY(second.isValid());
+
+    const QPushButton* move = MoveButtonOf(screen.page);
+    QVERIFY(move != nullptr);
+
+    screen.tree->selectionModel()->select(first, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+
+    QVERIFY(move->isEnabled());
+    QCOMPARE(move->text(), QStringLiteral("Move to…"));
+
+    screen.tree->selectionModel()->select(second, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+
+    QVERIFY(move->isEnabled());
+    QCOMPARE(move->text(), QStringLiteral("Move 2 addon to…"));
+}
+
+void AddonTreePageTest::TheMoveButtonStaysOffWhenTheOnlyCategoryIsTheOneTheAddonsSitIn()
+{
+    Fixture f;
+
+    TreeNode library;
+    library.kind = TreeNodeKind::Library;
+    library.path = kLibrary;
+    library.children.push_back(CategoryNode(QStringLiteral("Aircrafts"), Ascending(), {}));
+    f.catalog.SetTree(kLibrary, library);
+
+    const Screen screen(f);
+
+    const QModelIndex first = IndexOf(*screen.tree, kCompanion, {});
+    const QModelIndex second = IndexOf(*screen.tree, kChosen, {});
+    QVERIFY(first.isValid());
+    QVERIFY(second.isValid());
+
+    const QPushButton* move = MoveButtonOf(screen.page);
+    QVERIFY(move != nullptr);
+
+    screen.tree->selectionModel()->select(first, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+    screen.tree->selectionModel()->select(second, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+
+    QVERIFY(!move->isEnabled());
+    QCOMPARE(move->text(), QStringLiteral("Move to…"));
 }
 
 QTEST_MAIN(AddonTreePageTest)

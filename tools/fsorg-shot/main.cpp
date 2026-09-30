@@ -714,7 +714,7 @@ int main(int argc, char* argv[])
 
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
-    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(staged->settingsFile.parent_path() / "document-index.json");
     DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache,
@@ -746,8 +746,8 @@ int main(int argc, char* argv[])
         filesystemProbe,
         LoadingReportOf(LoadingReportLocations(userCfgLocations, filesystemProbe), session.Profile().variant));
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
-                                              runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, notifier, loadingReport,
+                                              clock, runner);
     const CouplingScan coupling(filesystemProbe);
     JsonBisectionStore bisectionStore(staged->settingsFile.parent_path() / "bisection");
     BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore, clock);

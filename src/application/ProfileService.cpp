@@ -14,6 +14,26 @@
 
 namespace
 {
+    class StartupBatchScope
+    {
+    public:
+        explicit StartupBatchScope(StartupService& startup) : startup_(startup)
+        {
+            startup_.OpenBatch();
+        }
+
+        StartupBatchScope(const StartupBatchScope&) = delete;
+        StartupBatchScope& operator=(const StartupBatchScope&) = delete;
+
+        ~StartupBatchScope()
+        {
+            startup_.CloseBatch();
+        }
+
+    private:
+        StartupService& startup_;
+    };
+
     std::vector<std::filesystem::path> LibraryRoots(const SimulatorProfile& profile)
     {
         std::vector<std::filesystem::path> roots;
@@ -464,6 +484,7 @@ LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
 std::vector<LinkOperationResult> ProfileService::RunAsOneBatch(const std::vector<Step>& steps)
 {
     const std::lock_guard lock(guard_);
+    const StartupBatchScope startupBatch(startup_);
 
     std::vector<LinkOperationResult> results;
     std::vector<Step> undo;
@@ -623,6 +644,7 @@ void ProfileService::ForgetUndo()
 std::vector<LinkOperationResult> ProfileService::UndoLastBatch()
 {
     const std::lock_guard lock(guard_);
+    const StartupBatchScope startupBatch(startup_);
 
     const std::vector<Step> steps = std::exchange(undo_, {});
 

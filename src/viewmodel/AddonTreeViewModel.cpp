@@ -1,6 +1,7 @@
 #include "viewmodel/AddonTreeViewModel.h"
 
 #include <algorithm>
+#include <map>
 #include <set>
 #include <string>
 
@@ -562,16 +563,27 @@ std::vector<const TreeNode*> AddonTreeViewModel::StrayedUnder(const std::vector<
     const ProfileSnapshot& snapshot = session_.Snapshot();
     const SimulatorProfile& profile = session_.Profile();
 
-    std::vector<const TreeNode*> strayed;
+    std::vector<const TreeNode*> addons;
+    std::vector<std::filesystem::path> folders;
 
     for (const TreeNode* node : nodes)
     {
         for (const TreeNode* addon : AddonsUnder(*node))
         {
-            if (!DestinationItStrayedTo(profile, snapshot.entries, addon->path).empty())
-            {
-                strayed.push_back(addon);
-            }
+            addons.push_back(addon);
+            folders.push_back(addon->path);
+        }
+    }
+
+    const std::vector<std::filesystem::path> strayedTo = DestinationsItStrayedTo(profile, snapshot.entries, folders);
+
+    std::vector<const TreeNode*> strayed;
+
+    for (std::size_t index = 0; index < addons.size(); ++index)
+    {
+        if (!strayedTo[index].empty())
+        {
+            strayed.push_back(addons[index]);
         }
     }
 
@@ -590,7 +602,15 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         return;
     }
 
-    const std::vector<const TreeNode*> strayed = StrayedUnder(nodes);
+    RelinkStrayed(StrayedUnder(nodes));
+}
+
+void AddonTreeViewModel::RelinkStrayed(const std::vector<const TreeNode*>& strayed)
+{
+    if (toggling_.Busy())
+    {
+        return;
+    }
 
     if (strayed.empty())
     {
@@ -674,6 +694,40 @@ std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) 
     }
 
     return offered;
+}
+
+std::size_t AddonTreeViewModel::MovableAmong(const std::vector<const TreeNode*>& addons) const
+{
+    std::map<const TreeNode*, std::set<std::string>> offeredByTree;
+    std::size_t movable = 0;
+
+    for (const TreeNode* node : addons)
+    {
+        const TreeNode* tree = LibraryTreeHolding(*node);
+        if (tree == nullptr)
+        {
+            continue;
+        }
+
+        auto offered = offeredByTree.find(tree);
+        if (offered == offeredByTree.end())
+        {
+            std::set<std::string> categories;
+            for (const TreeNode* candidate : CategoriesOfferedIn(*tree, false))
+            {
+                categories.insert(ComparablePath(candidate->path));
+            }
+
+            offered = offeredByTree.emplace(tree, std::move(categories)).first;
+        }
+
+        const std::set<std::string>& categories = offered->second;
+        const std::size_t holdingIt = categories.contains(ComparablePath(CategoryHolding(*node))) ? 1 : 0;
+
+        movable += categories.size() > holdingIt ? 1 : 0;
+    }
+
+    return movable;
 }
 
 bool AddonTreeViewModel::WouldAcceptLibrary(const std::filesystem::path& path) const

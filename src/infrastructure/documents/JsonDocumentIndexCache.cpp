@@ -29,6 +29,7 @@ namespace
     constexpr auto kItWasWalked = "itWasWalked";
     constexpr auto kDocuments = "documents";
     constexpr auto kAirports = "airports";
+    constexpr auto kDigest = "digest";
     constexpr auto kCode = "code";
     constexpr auto kCatalogued = "catalogued";
     constexpr auto kEntries = "entries";
@@ -162,6 +163,7 @@ namespace
         object[kItWasWalked] = addon.itWasWalked;
         object[kDocuments] = PathsToJson(addon.documents);
         object[kAirports] = airports;
+        object[kDigest] = QString::fromStdString(addon.digest);
 
         return object;
     }
@@ -173,7 +175,8 @@ namespace
                                  .folder = PathFromUtf8(object.value(kFolder).toString().toStdString()),
                                  .itWasWalked = object.value(kItWasWalked).toBool(),
                                  .documents = PathsFromJson(object.value(kDocuments).toArray()),
-                                 .airports = {}};
+                                 .airports = {},
+                                 .digest = object.value(kDigest).toString().toStdString()};
 
         for (const QJsonValue& airport : object.value(kAirports).toArray())
         {

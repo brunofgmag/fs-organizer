@@ -33,6 +33,8 @@ namespace
         static void CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo();
         static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
         static void GivingAnAddonBackForgetsWhereItCameFromInsteadOfRememberingIt();
+        static void ImportingFromAnotherProgramSavesTheOriginAndLeavesTheScanToTheRescanThatFollows();
+        static void GivingAnAddonBackStartsNoScanOfItsOwn();
         static void EveryLongOperationOpensAndClosesTheSameProgress();
         static void LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread();
         static void NoLeftoversMeansNoSignal();
@@ -186,10 +188,47 @@ void ImportViewModelTest::GivingAnAddonBackForgetsWhereItCameFromInsteadOfRememb
     const auto results = gaveBack.front().front().value<std::vector<FileOperationResult>>();
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);
-    QVERIFY2(ExternalAddonsOf(f.session.Profile()).empty(),
+    QVERIFY2(f.settings.stored.profiles.front().externalOrigins.empty(),
              "an adoption that remembers would write back the origin the give back just erased");
     QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
     QVERIFY(!f.fileSystem.Exists(kVendorInLibrary));
+}
+
+void ImportViewModelTest::ImportingFromAnotherProgramSavesTheOriginAndLeavesTheScanToTheRescanThatFollows()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+    f.fileSystem.AddDirectory(kVendorFolder);
+    f.fileSystem.AddFile(kVendorFolder / "manifest.json", 900);
+    f.fileSystem.AddLink(kDestination / "gsx-pro", kVendorFolder);
+
+    const QSignalSpy finished(&f.viewModel, &ImportViewModel::Finished);
+    const QSignalSpy scans(&f.notifier, &SessionNotifier::ScanStarted);
+    const int runsBefore = f.runner.runs;
+
+    f.viewModel.Import(
+        {ImportRequest{.source = kDestination / "gsx-pro", .category = kLibrary, .externalSource = kVendorFolder}});
+
+    QCOMPARE(finished.size(), 1);
+    QCOMPARE(scans.size(), 0);
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QCOMPARE(f.settings.stored.profiles.front().externalOrigins.size(), std::size_t{1});
+
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.Profile().externalOrigins.size(), std::size_t{1});
+}
+
+void ImportViewModelTest::GivingAnAddonBackStartsNoScanOfItsOwn()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    const QSignalSpy scans(&f.notifier, &SessionNotifier::ScanStarted);
+
+    f.viewModel.GiveBack({kVendorInLibrary});
+
+    QCOMPARE(scans.size(), 0);
 }
 
 void ImportViewModelTest::EveryLongOperationOpensAndClosesTheSameProgress()

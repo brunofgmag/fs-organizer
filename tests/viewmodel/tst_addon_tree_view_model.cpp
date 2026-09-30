@@ -5,6 +5,7 @@
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
 #include "domain/tree/DestinationDivergence.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -42,6 +43,11 @@ namespace
         static void AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets();
         static void ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart();
         static void AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo();
+        static void TheMovableCountAgreesWithAskingEachAddonForItsCategoriesAcrossLibraries();
+        static void TheMovableCountIsZeroWhenTheOnlyCategoryIsTheOneTheAddonsSitIn();
+        static void AnAddonOfAnUnknownLibraryIsNeverMovable();
+        static void TheStrayedAddonsAreTheOnesTheFreeFunctionFindsOneByOne();
+        static void RelinkingTheStrayedAddonsGivenTouchesOnlyThoseAndRefusesAnEmptyList();
         static void AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees();
         static void AdoptingIsRefusedWhenTheEnabledAddonsPointAtDifferentDestinations();
         static void AdoptingIsRefusedWhenNoAddonInTheCategoryIsEnabled();
@@ -386,6 +392,145 @@ void AddonTreeViewModelTest::AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedT
     const TreeNode addon = AddonNode(kAddon);
 
     QVERIFY(f.viewModel.CategoriesFor(&addon).empty());
+}
+
+void AddonTreeViewModelTest::TheMovableCountAgreesWithAskingEachAddonForItsCategoriesAcrossLibraries()
+{
+    Fixture f;
+    const std::filesystem::path loose = std::filesystem::path{kLibrary} / "loose-addon";
+    f.fileSystem.AddDirectory(loose);
+
+    TreeNode tree = CategoryNode(kLibrary,
+                                 {CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)}),
+                                  DeclaredCategoryNode(kSceneries), AddonNode(loose)});
+    tree.kind = TreeNodeKind::Library;
+    f.catalog.SetTree(kLibrary, tree);
+    f.session.ShowActiveProfile();
+    f.RegisterTheSpareLibrary();
+
+    std::vector<const TreeNode*> addons;
+    for (const TreeNode& library : f.session.Snapshot().libraries)
+    {
+        for (const TreeNode* addon : AddonsUnder(library))
+        {
+            addons.push_back(addon);
+        }
+    }
+
+    QCOMPARE(addons.size(), std::size_t{5});
+
+    std::size_t expected = 0;
+    for (const TreeNode* addon : addons)
+    {
+        expected += f.viewModel.CategoriesFor(addon).empty() ? 0 : 1;
+    }
+
+    QCOMPARE(expected, std::size_t{3});
+    QCOMPARE(f.viewModel.MovableAmong(addons), expected);
+
+    for (const TreeNode* addon : addons)
+    {
+        QCOMPARE(f.viewModel.MovableAmong({addon}),
+                 f.viewModel.CategoriesFor(addon).empty() ? std::size_t{0} : std::size_t{1});
+    }
+
+    std::vector<const TreeNode*> twice = addons;
+    twice.insert(twice.end(), addons.begin(), addons.end());
+
+    QCOMPARE(f.viewModel.MovableAmong(twice), expected * 2);
+    QCOMPARE(f.viewModel.MovableAmong({}), std::size_t{0});
+}
+
+void AddonTreeViewModelTest::TheMovableCountIsZeroWhenTheOnlyCategoryIsTheOneTheAddonsSitIn()
+{
+    Fixture f;
+    TreeNode tree = CategoryNode(kLibrary, {CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)})});
+    tree.kind = TreeNodeKind::Library;
+    f.catalog.SetTree(kLibrary, tree);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> addons = AddonsUnder(f.session.Snapshot().libraries.front());
+
+    QCOMPARE(addons.size(), std::size_t{2});
+    QVERIFY(f.viewModel.CategoriesFor(addons.front()).empty());
+    QVERIFY(f.viewModel.CategoriesFor(addons.back()).empty());
+    QCOMPARE(f.viewModel.MovableAmong(addons), std::size_t{0});
+}
+
+void AddonTreeViewModelTest::AnAddonOfAnUnknownLibraryIsNeverMovable()
+{
+    const Fixture f;
+    const TreeNode stranger = AddonNode("G:/Nowhere/Aircrafts/stranger");
+
+    QVERIFY(f.viewModel.CategoriesFor(&stranger).empty());
+    QCOMPARE(f.viewModel.MovableAmong({&stranger}), std::size_t{0});
+}
+
+void AddonTreeViewModelTest::TheStrayedAddonsAreTheOnesTheFreeFunctionFindsOneByOne()
+{
+    Fixture f;
+    TreeNode tree =
+        CategoryNode(kLibrary,
+                     {CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon), AddonNode(kTrafficAddon)}),
+                      DeclaredCategoryNode(kSceneries)});
+    tree.kind = TreeNodeKind::Library;
+    f.catalog.SetTree(kLibrary, tree);
+    f.fileSystem.AddDirectory(kTrafficAddon);
+    f.session.ShowActiveProfile();
+
+    const TreeNode category =
+        CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon), AddonNode(kTrafficAddon)});
+
+    f.viewModel.OverrideDestination({&category}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.LinkIn(kCommunity, kOtherAddon);
+    f.LinkIn(kCommunity2024, kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const TreeNode& aircrafts = f.session.Snapshot().libraries.front().children.front();
+
+    std::vector<const TreeNode*> expected;
+    for (const TreeNode* addon : AddonsUnder(aircrafts))
+    {
+        if (!DestinationItStrayedTo(f.viewModel.Profile(), f.session.Snapshot().entries, addon->path).empty())
+        {
+            expected.push_back(addon);
+        }
+    }
+
+    const std::vector<const TreeNode*> strayed = f.viewModel.StrayedUnder({&aircrafts});
+
+    QCOMPARE(expected.size(), std::size_t{2});
+    QVERIFY(strayed == expected);
+    QCOMPARE(f.viewModel.StrayAddonsUnder({&aircrafts}), expected.size());
+    QVERIFY(f.viewModel.StrayedUnder({}).empty());
+}
+
+void AddonTreeViewModelTest::RelinkingTheStrayedAddonsGivenTouchesOnlyThoseAndRefusesAnEmptyList()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)});
+
+    f.viewModel.OverrideDestination({&category}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.LinkIn(kCommunity2024, kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> strayed = f.viewModel.StrayedUnder({&category});
+
+    QCOMPARE(strayed.size(), std::size_t{1});
+
+    f.viewModel.RelinkStrayed(strayed);
+
+    QVERIFY(!f.fileSystem.Exists(std::filesystem::path{kCommunity} / "pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity2024} / "pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity2024} / "aerosoft-crj"));
+
+    const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
+
+    f.viewModel.RelinkStrayed({});
+
+    QCOMPARE(refused.size(), 1);
 }
 
 void AddonTreeViewModelTest::AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees()

@@ -676,6 +676,10 @@ void PresetViewModelTest::ApplyRunsInAWorkerAndASecondGestureWaitsItsTurn()
     f.runner.Finish();
 
     QCOMPARE(applied.count(), 1);
+    QVERIFY2(f.runner.Pending(), "the entries are read again in a worker once the apply lands");
+
+    f.runner.Finish();
+
     QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
 }
 

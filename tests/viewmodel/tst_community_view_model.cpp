@@ -27,6 +27,8 @@ namespace
     private slots:
         static void ShowingFillsTheTableFromTheSharedSnapshot();
         static void RepairingRemovesTheDeadRowsAndDropsTheAttentionCount();
+        static void ReadingTheDestinationsAgainShowsTheListAtOnceAndAgainWhenTheReadLands();
+        static void RepairingShowsTheListAtOnceAndAgainWhenTheReadLands();
         static void TheBreakdownSeparatesBrokenConflictedAndUnmanaged();
         static void TheBreakdownCountsAnAddonLinkedIntoTwoDestinations();
         static void AManagedEntryIsMeasuredAsTheAddonItPointsAtAndNeverAsTheLink();
@@ -219,6 +221,56 @@ void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCoun
     QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{0});
     QCOMPARE(attention.size(), 1);
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/gone"));
+}
+
+void CommunityViewModelTest::ReadingTheDestinationsAgainShowsTheListAtOnceAndAgainWhenTheReadLands()
+{
+    Fixture f;
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    QCOMPARE(f.model.rowCount({}), 0);
+
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.runner.defer = true;
+
+    f.viewModel.ReadTheDestinationsAgain();
+
+    QCOMPARE(f.model.rowCount({}), 0);
+    QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{0});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.model.rowCount({}), 1);
+    QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{1});
+}
+
+void CommunityViewModelTest::RepairingShowsTheListAtOnceAndAgainWhenTheReadLands()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    QCOMPARE(f.model.rowCount({}), 1);
+
+    const QSignalSpy finished(&f.viewModel, &CommunityViewModel::RepairFinished);
+    std::vector<RepairRequest> requests;
+    for (const RepairCandidate& candidate : f.viewModel.PlanRepairs())
+    {
+        requests.push_back({.candidate = candidate, .action = RepairAction::RemoveDeadNode});
+    }
+
+    f.runner.defer = true;
+    f.viewModel.Repair(requests);
+
+    QCOMPARE(finished.size(), 1);
+    QCOMPARE(f.model.rowCount({}), 1);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.model.rowCount({}), 0);
+    QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{0});
 }
 
 void CommunityViewModelTest::AManagedEntryIsMeasuredAsTheAddonItPointsAtAndNeverAsTheLink()

@@ -33,6 +33,10 @@ public:
 
     [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, bool enabled);
 
+    void OpenBatch();
+
+    void CloseBatch();
+
 private:
     StartupEntries& entries_;
     const ProcessProbe& processProbe_;

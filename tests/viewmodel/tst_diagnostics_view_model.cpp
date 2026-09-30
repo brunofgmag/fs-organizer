@@ -38,6 +38,11 @@ namespace
         static void AClassificationWithNoEntryIsShownWithZeroInsteadOfDisappearing();
         static void BrokenAndUnavailableAreCarriedApartFromEachOther();
         static void TheQuarantineWeightSumsBothPlacesAndSaysWhichOnesExist();
+        static void TheQuarantineIsListedAndWeighedOnTheRunnerInsteadOfTheCallingThread();
+        static void TheSizeStillLandsWhenTheQuarantineIsWeighedWhileItIsMeasuring();
+        static void TheCountsFollowTheEntriesThatLandAfterTheScreenIsShown();
+        static void AnInterruptedSceneryReadKeepsWhatWasKnownAndIsNotReportedAsComplete();
+        static void AnInterruptedFirstSceneryReadLeavesTheCensusEmpty();
         static void EachSectionCarriesTheMomentItWasMeasured();
         static void NoTreeIsWalkedUntilTheSizeSectionIsOpened();
         static void ComingBackToTheSizeSectionShowsWhatWasMeasuredWithoutWalkingAgain();
@@ -153,7 +158,7 @@ namespace
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
         FakeLoadingReportSource loading;
-        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, loading, clock, runner};
+        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, notifier, loading, clock, runner};
     };
 }
 
@@ -231,6 +236,123 @@ void DiagnosticsViewModelTest::TheQuarantineWeightSumsBothPlacesAndSaysWhichOnes
     QCOMPARE(weight.bytes, std::uintmax_t{1000});
     QCOMPARE(weight.besideDestinations, std::size_t{1});
     QCOMPARE(weight.insideLibraries, std::size_t{1});
+}
+
+void DiagnosticsViewModelTest::TheQuarantineIsListedAndWeighedOnTheRunnerInsteadOfTheCallingThread()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/_fsorganizer-quarantine/pmdg-737");
+    f.fileSystem.AddFile("E:/Flight Simulator 2024/_fsorganizer-quarantine/pmdg-737/texture.dds", 700);
+    f.Seed(Profile());
+    f.runner.defer = true;
+
+    const std::size_t listedBefore =
+        f.filesystemProbe.TimesEnumerated("E:/Flight Simulator 2024/_fsorganizer-quarantine");
+
+    f.viewModel.Show();
+
+    QCOMPARE(f.filesystemProbe.TimesEnumerated("E:/Flight Simulator 2024/_fsorganizer-quarantine"), listedBefore);
+    QCOMPARE(f.viewModel.Quarantine().besideDestinations, std::size_t{0});
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(f.viewModel.Quarantine().besideDestinations, std::size_t{1});
+    QCOMPARE(f.viewModel.Quarantine().bytes, std::uintmax_t{700});
+}
+
+void DiagnosticsViewModelTest::TheSizeStillLandsWhenTheQuarantineIsWeighedWhileItIsMeasuring()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/model.bin", 4096);
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/_fsorganizer-quarantine/pmdg-737");
+    f.fileSystem.AddFile("E:/Flight Simulator 2024/_fsorganizer-quarantine/pmdg-737/texture.dds", 700);
+    f.Seed(Profile());
+
+    const QSignalSpy measured(&f.viewModel, &DiagnosticsViewModel::SizeMeasured);
+
+    f.runner.defer = true;
+    f.viewModel.ShowSize();
+    f.viewModel.Show();
+    f.runner.FinishNewestDone();
+    f.runner.Finish();
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(measured.size(), 1);
+    QVERIFY(!f.viewModel.Measuring());
+    QCOMPARE(f.viewModel.Size().libraries.front().bytes, std::uintmax_t{4096});
+    QCOMPARE(f.viewModel.Quarantine().bytes, std::uintmax_t{700});
+}
+
+void DiagnosticsViewModelTest::TheCountsFollowTheEntriesThatLandAfterTheScreenIsShown()
+{
+    Fixture f;
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    QCOMPARE(CountOf(f.viewModel.Counts(), EntryClassification::Broken), std::size_t{0});
+
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+
+    QCOMPARE(CountOf(f.viewModel.Counts(), EntryClassification::Broken), std::size_t{0});
+
+    f.runner.Finish();
+
+    QCOMPARE(CountOf(f.viewModel.Counts(), EntryClassification::Broken), std::size_t{1});
+    QCOMPARE(f.viewModel.Broken().size(), std::size_t{1});
+}
+
+void DiagnosticsViewModelTest::AnInterruptedSceneryReadKeepsWhatWasKnownAndIsNotReportedAsComplete()
+{
+    Fixture f;
+    f.Seed(Profile());
+
+    f.viewModel.ShowScenery();
+
+    const std::optional<std::chrono::system_clock::time_point> readAt = f.viewModel.SceneryReadAt();
+
+    QVERIFY(readAt.has_value());
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{1});
+
+    f.clock.now += std::chrono::minutes{5};
+    f.runner.defer = true;
+
+    const QSignalSpy landed(&f.viewModel, &DiagnosticsViewModel::SceneryRead);
+
+    f.viewModel.ReadTheSceneryAgain();
+    f.viewModel.CancelScenery();
+    f.runner.Finish();
+
+    QVERIFY(!f.viewModel.ReadingTheScenery());
+    QCOMPARE(landed.size(), 1);
+    QCOMPARE(f.viewModel.SceneryReadAt(), readAt);
+}
+
+void DiagnosticsViewModelTest::AnInterruptedFirstSceneryReadLeavesTheCensusEmpty()
+{
+    Fixture f;
+    f.Seed(Profile());
+    f.runner.defer = true;
+
+    const QSignalSpy landed(&f.viewModel, &DiagnosticsViewModel::SceneryRead);
+
+    f.viewModel.ShowScenery();
+    f.viewModel.CancelScenery();
+    f.runner.Finish();
+
+    QVERIFY(!f.viewModel.ReadingTheScenery());
+    QCOMPARE(landed.size(), 1);
+    QVERIFY(!f.viewModel.SceneryReadAt().has_value());
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{0});
 }
 
 void DiagnosticsViewModelTest::EachSectionCarriesTheMomentItWasMeasured()

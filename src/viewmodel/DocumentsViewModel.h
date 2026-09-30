@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_VIEWMODEL_DOCUMENTS_VIEW_MODEL_H
 #define FS_ORGANIZER_VIEWMODEL_DOCUMENTS_VIEW_MODEL_H
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
@@ -11,6 +12,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 
 #include "application/DocumentService.h"
 #include "application/SceneryService.h"
@@ -110,6 +112,8 @@ public:
 
     void RememberThePage(const DocumentLine& line, int page);
 
+    void FlushThePage();
+
     [[nodiscard]] std::vector<DocumentBookmark> BookmarksOf(const DocumentLine& line) const;
 
     void MarkThePage(const DocumentLine& line, int page, bool marked);
@@ -148,8 +152,18 @@ signals:
     void TheManualChanged();
 
 private:
-    [[nodiscard]] std::vector<DocumentsOfAnAddon>
-    WhatEachAddonCarries(const std::vector<Library>& libraries, const std::vector<AddonToRead>& addons, bool& stopped);
+    struct PendingPage
+    {
+        std::string addon{};
+        std::string document{};
+        int page = 0;
+    };
+
+    [[nodiscard]] std::vector<DocumentsOfAnAddon> WhatEachAddonCarries(const std::vector<AddonToRead>& addons,
+                                                                       const std::vector<DocumentsOfAnAddon>& before,
+                                                                       bool& stopped);
+
+    void CountWhatIsShown();
 
     void TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found, bool stopped);
 
@@ -192,7 +206,11 @@ private:
     std::optional<std::chrono::system_clock::time_point> readAt_{};
     bool itWasRead_ = false;
     GuardedRunner reading_;
-    bool stop_ = false;
+    std::atomic<bool> stop_ = false;
+    std::size_t documentLines_ = 0;
+    std::size_t chartLines_ = 0;
+    std::optional<PendingPage> pendingPage_{};
+    QTimer quietAfterTheLastTurn_;
     std::string language_{};
     ManualState manualState_ = ManualState::NotHere;
     QString manualFailure_{};

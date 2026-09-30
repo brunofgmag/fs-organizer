@@ -24,6 +24,8 @@ namespace
         static void AFileNobodyWroteAnswersNothingInsteadOfAnEmptyIndex();
         static void AFileSomethingElseWroteAnswersNothingInsteadOfHalfAnIndex();
         static void WritingAgainReplacesTheAddonsInsteadOfAddingToThem();
+        static void TheDigestOfAnAddonComesBackWithTheAddon();
+        static void AnIndexWrittenBeforeTheDigestExistedComesBackWithNoDigest();
     };
 
     struct AFolderNobodyElseUses
@@ -48,7 +50,8 @@ namespace
                 .itWasWalked = true,
                 .documents = {PathFromUtf8("Documentation/Vol1_Aircraft Manual.pdf"),
                               PathFromUtf8("Documentation/Vol4_Normal Ops Checklist.pdf")},
-                .airports = {}};
+                .airports = {},
+                .digest = "9f3a51c0de77b214"};
     }
 
     [[nodiscard]] DocumentsOfAnAddon Brussels()
@@ -166,6 +169,42 @@ void DocumentIndexCacheOnRealDiskTest::WritingAgainReplacesTheAddonsInsteadOfAdd
     QVERIFY2(known->addons.size() == std::size_t{1},
              "the addon the user deleted between two runs stops being in the index, because the whole index is "
              "written every time instead of one addon being added to what was there");
+}
+
+void DocumentIndexCacheOnRealDiskTest::TheDigestOfAnAddonComesBackWithTheAddon()
+{
+    const AFolderNobodyElseUses folder;
+
+    {
+        JsonDocumentIndexCache writing(folder.File());
+        writing.Keep({.readAt = AMomentWithoutFractions(), .addons = {TheCrj(), Brussels()}});
+    }
+
+    const JsonDocumentIndexCache reading(folder.File());
+    const std::optional<RememberedDocuments> known = reading.Remember();
+
+    QVERIFY(known.has_value());
+    QCOMPARE(known->addons.front().digest, std::string{"9f3a51c0de77b214"});
+    QVERIFY(known->addons.back().digest.empty());
+}
+
+void DocumentIndexCacheOnRealDiskTest::AnIndexWrittenBeforeTheDigestExistedComesBackWithNoDigest()
+{
+    const AFolderNobodyElseUses folder;
+
+    std::ofstream stream(folder.File(), std::ios::binary);
+    stream << R"({"readAt":1786000000000,"addons":[{"library":"library-1","folderName":"aerosoft-crj",)"
+              R"("folder":"D:/MSFS 2024/Aircrafts/aerosoft-crj","itWasWalked":true,)"
+              R"("documents":["Documentation/Vol1_Aircraft Manual.pdf"],"airports":[]}]})";
+    stream.close();
+
+    const JsonDocumentIndexCache reading(folder.File());
+    const std::optional<RememberedDocuments> known = reading.Remember();
+
+    QVERIFY(known.has_value());
+    QCOMPARE(known->addons.size(), std::size_t{1});
+    QCOMPARE(known->addons.front().documents.size(), std::size_t{1});
+    QVERIFY(known->addons.front().digest.empty());
 }
 
 QTEST_APPLESS_MAIN(DocumentIndexCacheOnRealDiskTest)

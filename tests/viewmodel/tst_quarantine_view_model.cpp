@@ -30,6 +30,8 @@ namespace
     private slots:
         static void TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing();
         static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
+        static void ShowingListsWhatIsHeldOnTheRunnerInsteadOfTheCallingThread();
+        static void ALateListingDoesNotOverwriteTheNewerOne();
         static void TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards();
         static void AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain();
         static void TheQuarantineIsCountedWhenTheScanLandsAndOnlyWeighedWhenTheScreenIsShown();
@@ -147,6 +149,51 @@ void QuarantineViewModelTest::TheQuarantineCatchesUpWhenTheActiveProfileFinallyL
     f.ScanLands();
 
     QCOMPARE(f.model.rowCount({}), 1);
+}
+
+void QuarantineViewModelTest::ShowingListsWhatIsHeldOnTheRunnerInsteadOfTheCallingThread()
+{
+    Fixture f;
+    f.ScanLands();
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine/fenix");
+    f.runner.defer = true;
+
+    const std::size_t listedBefore = f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine");
+
+    f.viewModel.Show();
+
+    QVERIFY(f.runner.Pending());
+    QCOMPARE(f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine"), listedBefore);
+    QCOMPARE(f.model.rowCount({}), 1);
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QVERIFY(f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine") > listedBefore);
+    QCOMPARE(f.model.rowCount({}), 2);
+}
+
+void QuarantineViewModelTest::ALateListingDoesNotOverwriteTheNewerOne()
+{
+    Fixture f;
+    f.ScanLands();
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+    f.runner.RunPendingWork();
+
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine/fenix");
+    f.viewModel.Show();
+
+    f.runner.FinishNewestDone();
+
+    QCOMPARE(f.model.rowCount({}), 2);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.model.rowCount({}), 2);
 }
 
 void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards()

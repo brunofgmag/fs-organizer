@@ -57,3 +57,13 @@ FileResult StartupService::Switch(const std::filesystem::path& entryPath, const 
 
     return entries_.Switch(entryPath, enabled);
 }
+
+void StartupService::OpenBatch()
+{
+    entries_.OpenBatch();
+}
+
+void StartupService::CloseBatch()
+{
+    entries_.CloseBatch();
+}

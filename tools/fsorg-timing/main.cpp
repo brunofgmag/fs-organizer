@@ -232,8 +232,9 @@ int main(int argc, char* argv[])
     {
         MainWindow window(loaded);
         QtBackgroundRunner runner;
+        TimedRunner timedRunner(runner);
         SessionNotifier notifier;
-        Session session(profileService, organizer, settings, loaded, processProbe, runner, notifier);
+        Session session(profileService, organizer, settings, loaded, processProbe, timedRunner, notifier);
 
         SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -260,7 +261,7 @@ int main(int argc, char* argv[])
 
         const JsonChartCatalogueParser catalogueParser;
         const QtPdfChartVersions chartVersions;
-        const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+        const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
         AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
 
         auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
@@ -295,7 +296,8 @@ int main(int argc, char* argv[])
         {
             libraryTab->click();
 
-            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, sceneryService, session);
+            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, sceneryService, session,
+                                        timedRunner);
         }
 
         return MeasureTheAppJournal(window, *journalPage, journalViewModel, journalModel);

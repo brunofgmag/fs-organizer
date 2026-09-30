@@ -90,7 +90,12 @@ public:
     [[nodiscard]] bool
     IsSatisfied(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
 
+    [[nodiscard]] bool
+    IsSatisfied(const ProfileSnapshot& snapshot, const Preset& preset, const PresetPlan& replacePlan) const;
+
 private:
+    [[nodiscard]] bool StartupIsInPlace(const ProfileSnapshot& snapshot, const Preset& preset) const;
+
     [[nodiscard]] PresetApplyReport Apply(const SimulatorProfile& profile,
                                           const ProfileSnapshot& snapshot,
                                           const Preset& preset,

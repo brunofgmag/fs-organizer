@@ -73,9 +73,11 @@ void BisectionViewModel::Show()
     const SimulatorProfile profile = session_.Profile();
     const auto found = std::make_shared<BisectionReport>();
 
-    emit Changed();
-
     reading_.Run(
+        [this]
+        {
+            emit Changed();
+        },
         [this, profile, snapshot, found]
         {
             *found = bisection_.WhatWasInterrupted(profile.id).has_value()
@@ -116,6 +118,15 @@ void BisectionViewModel::Begin()
         [this, profile = session_.Profile(), snapshot = session_.Snapshot()]
         {
             return bisection_.Begin(profile, snapshot);
+        });
+}
+
+void BisectionViewModel::StartOver()
+{
+    RunTheProcedure(
+        [this, profile = session_.Profile()]
+        {
+            return bisection_.StartOver(profile);
         });
 }
 

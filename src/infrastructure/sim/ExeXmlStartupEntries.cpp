@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iterator>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <utility>
@@ -30,19 +31,61 @@ ExeXmlStartupEntries::ExeXmlStartupEntries(std::filesystem::path filePath) : fil
 
 void ExeXmlStartupEntries::Use(std::filesystem::path filePath)
 {
+    const std::lock_guard lock(guard_);
+
     filePath_ = std::move(filePath);
+    batchHasBackedUp_ = false;
+}
+
+std::filesystem::path ExeXmlStartupEntries::FilePath() const
+{
+    const std::lock_guard lock(guard_);
+
+    return filePath_;
+}
+
+bool ExeXmlStartupEntries::BackupIsDue() const
+{
+    const std::lock_guard lock(guard_);
+
+    return !batchIsOpen_ || !batchHasBackedUp_;
+}
+
+void ExeXmlStartupEntries::BackupWasTaken()
+{
+    const std::lock_guard lock(guard_);
+
+    batchHasBackedUp_ = batchIsOpen_;
+}
+
+void ExeXmlStartupEntries::OpenBatch()
+{
+    const std::lock_guard lock(guard_);
+
+    batchIsOpen_ = true;
+    batchHasBackedUp_ = false;
+}
+
+void ExeXmlStartupEntries::CloseBatch()
+{
+    const std::lock_guard lock(guard_);
+
+    batchIsOpen_ = false;
+    batchHasBackedUp_ = false;
 }
 
 std::vector<StartupEntry> ExeXmlStartupEntries::Entries() const
 {
-    const std::optional<std::string> document = BytesOf(filePath_);
+    const std::optional<std::string> document = BytesOf(FilePath());
 
     return document.has_value() ? StartupEntriesIn(*document) : std::vector<StartupEntry>{};
 }
 
 FileResult ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, const bool enabled)
 {
-    const std::optional<std::string> before = BytesOf(filePath_);
+    const std::filesystem::path filePath = FilePath();
+
+    const std::optional<std::string> before = BytesOf(filePath);
     if (!before.has_value())
     {
         return FileResult::CouldNotReadTheStartupFile;
@@ -59,10 +102,15 @@ FileResult ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, 
         return FileResult::Completed;
     }
 
-    if (!WriteFileReplacing(BackupOfStartupFile(filePath_), *before))
+    if (BackupIsDue())
     {
-        return FileResult::CouldNotWriteTheStartupFile;
+        if (!WriteFileReplacing(BackupOfStartupFile(filePath), *before))
+        {
+            return FileResult::CouldNotWriteTheStartupFile;
+        }
+
+        BackupWasTaken();
     }
 
-    return WriteFileReplacing(filePath_, *after) ? FileResult::Completed : FileResult::CouldNotWriteTheStartupFile;
+    return WriteFileReplacing(filePath, *after) ? FileResult::Completed : FileResult::CouldNotWriteTheStartupFile;
 }

@@ -43,7 +43,13 @@ namespace
         static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
         static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
         static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
+        static void RefreshingTheEntriesReadsTheDiskInAWorkerAndAdoptsItWhereTheWorkerLands();
+        static void RefreshingTheEntriesWhileOneIsBeingReadStartsExactlyOneMoreAfterItLands();
+        static void EntriesReadWhileAScanLandedAreDiscardedInsteadOfOverwritingTheScan();
+        static void EntriesAdoptedWhileOneIsBeingReadAreNotOverwrittenByTheOlderRead();
+        static void DroppingTheOverridesWhileEntriesAreBeingReadReadsThemAgainAfterwards();
         static void RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated();
+        static void RefreshingTheStartupEntriesThatHaveNotChangedAnnouncesNothing();
         static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
         static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
         static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
@@ -72,11 +78,12 @@ namespace
         static void ImportingALegacyLibraryScansInAWorkerAndTheTreeLandsWithIt();
         static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
         static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
-        static void AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgain();
+        static void AnImportFromAnotherProgramIsRememberedInTheSettingsAndTheNextScanCarriesIt();
+        static void RememberingWhatCameFromAnotherProgramStartsNoScanOfItsOwn();
         static void APlainImportRemembersNothingAndScansNothingAgain();
         static void MovingAnAddonCarriesTheRecordOfWhereItCameFrom();
         static void UnregisteringALibraryForgetsWhereItsAddonsCameFrom();
-        static void GivingAnAddonBackForgetsWhereItCameFromAndScansAgain();
+        static void GivingAnAddonBackForgetsWhereItCameFromAndTheNextScanSeesIt();
         static void ForgettingNothingNeitherSavesNorScans();
         static void RegisteringALibraryDeclaresTheStructureTheUserAlreadyBuilt();
     };
@@ -441,6 +448,127 @@ void SessionTest::RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan()
     QCOMPARE(f.session.Snapshot().conflicts.Count(), std::size_t{1});
 }
 
+void SessionTest::RefreshingTheEntriesReadsTheDiskInAWorkerAndAdoptsItWhereTheWorkerLands()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kAddon);
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.RefreshEntries();
+
+    QVERIFY(f.runner.Pending());
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+
+    f.runner.Finish();
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    QVERIFY(!f.runner.Pending());
+}
+
+void SessionTest::RefreshingTheEntriesWhileOneIsBeingReadStartsExactlyOneMoreAfterItLands()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
+
+    f.session.RefreshEntries();
+    f.session.RefreshEntries();
+    f.session.RefreshEntries();
+
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.runner.runs, runsBefore + 2);
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.runner.runs, runsBefore + 2);
+    QVERIFY(!f.runner.Pending());
+    QCOMPARE(f.observer.refreshed, 2);
+}
+
+void SessionTest::EntriesReadWhileAScanLandedAreDiscardedInsteadOfOverwritingTheScan()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.RefreshEntries();
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{2});
+
+    f.runner.FinishNewestDone();
+
+    QVERIFY(!f.session.Scanning());
+
+    const int refreshedBefore = f.observer.refreshed;
+    f.runner.Finish();
+
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+    QVERIFY(!f.runner.Pending());
+}
+
+void SessionTest::EntriesAdoptedWhileOneIsBeingReadAreNotOverwrittenByTheOlderRead()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.RefreshEntries();
+    f.session.AdoptEntries({DestinationEntry{.path = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w",
+                                             .target = kAddon,
+                                             .classification = EntryClassification::Managed}});
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+
+    const int refreshedBefore = f.observer.refreshed;
+    f.runner.Finish();
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+}
+
+void SessionTest::DroppingTheOverridesWhileEntriesAreBeingReadReadsThemAgainAfterwards()
+{
+    Fixture f;
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Aircrafts",
+                                                                .destination = "E:/Flight Simulator 2024/Retired"}};
+        });
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.RefreshEntries();
+    f.session.DropOverridesPointingNowhere();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kAddon);
+    f.runner.Finish();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QVERIFY(!f.runner.Pending());
+}
+
 void SessionTest::RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated()
 {
     Fixture f;
@@ -454,6 +582,26 @@ void SessionTest::RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocate
     QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
     QCOMPARE(QString::fromStdString(f.session.Snapshot().startupEntries.front().label), QString{"Fenix"});
     QCOMPARE(f.observer.refreshed, 1);
+}
+
+void SessionTest::RefreshingTheStartupEntriesThatHaveNotChangedAnnouncesNothing()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+
+    QCOMPARE(f.startup.entries.Switch("C:/Tools/Fenix.exe", false), FileResult::Completed);
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
 }
 
 void SessionTest::CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt()
@@ -1001,7 +1149,7 @@ namespace
     }
 }
 
-void SessionTest::AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgain()
+void SessionTest::AnImportFromAnotherProgramIsRememberedInTheSettingsAndTheNextScanCarriesIt()
 {
     Fixture f;
     f.session.ShowActiveProfile();
@@ -1013,7 +1161,26 @@ void SessionTest::AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgai
     QCOMPARE(remembered.front().libraryId, LibraryId{"library-1"});
     QCOMPARE(ComparablePath(remembered.front().relativePath), ComparablePath("Aircrafts/gsx-pro"));
     QCOMPARE(remembered.front().externalPath, std::filesystem::path{kVendorFolder});
+    QCOMPARE(f.observer.started, 1);
+    QVERIFY(f.session.Profile().externalOrigins.empty());
+
+    f.session.ShowActiveProfile();
+
     QCOMPARE(f.observer.started, 2);
+    QCOMPARE(f.session.Profile().externalOrigins.size(), std::size_t{1});
+}
+
+void SessionTest::RememberingWhatCameFromAnotherProgramStartsNoScanOfItsOwn()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
+
+    f.session.RememberWhatCameFromAnotherProgram({LandedFromAnotherProgram()});
+
+    QCOMPARE(f.runner.runs, runsBefore);
+    QVERIFY(!f.session.Scanning());
 }
 
 void SessionTest::APlainImportRemembersNothingAndScansNothingAgain()
@@ -1069,7 +1236,7 @@ void SessionTest::UnregisteringALibraryForgetsWhereItsAddonsCameFrom()
     QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
 }
 
-void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
+void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndTheNextScanSeesIt()
 {
     Fixture f;
     f.Seed(
@@ -1081,10 +1248,19 @@ void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
         });
     f.session.ShowActiveProfile();
 
+    f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
+
     f.session.ForgetWhatCameFromAnotherProgram({kAddon});
 
     QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
-    QCOMPARE(f.observer.started, 2);
+    QCOMPARE(f.runner.runs, runsBefore);
+    QCOMPARE(f.observer.started, 1);
+
+    f.session.ShowActiveProfile();
+    f.runner.Finish();
+
+    QVERIFY(f.session.Profile().externalOrigins.empty());
 }
 
 void SessionTest::ForgettingNothingNeitherSavesNorScans()

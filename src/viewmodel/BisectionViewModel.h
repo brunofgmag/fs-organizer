@@ -52,6 +52,8 @@ public:
 
     void Begin();
 
+    void StartOver();
+
     void Answer(BisectionAnswer answer);
 
     void Refine();

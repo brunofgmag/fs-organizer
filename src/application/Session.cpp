@@ -197,11 +197,36 @@ void Session::CancelScan()
 
 void Session::RefreshEntries()
 {
-    AdoptEntries(service_.ResolveEntries(profile_, snapshot_.libraries));
+    if (readingEntries_)
+    {
+        readEntriesAgain_ = true;
+        return;
+    }
+
+    readingEntries_ = true;
+    readEntriesAgain_ = false;
+    entriesFor_ = profile_;
+    snapshotsAdoptedWhenTheReadBegan_ = snapshotsAdopted_;
+
+    runner_.Run(
+        [this, libraries = snapshot_.libraries]
+        {
+            entriesRead_ = {};
+            entriesRead_.entries = service_.ResolveEntries(entriesFor_, libraries);
+            entriesRead_.enabled = EnabledAddons(EnabledAddonFolders(entriesRead_.entries));
+            entriesRead_.conflicts = FindCopyConflicts(entriesRead_.entries, libraries);
+            entriesRead_.startupEntries = service_.StartupEntriesNow();
+        },
+        [this]
+        {
+            AdoptEntriesRead();
+        });
 }
 
 void Session::AdoptEntries(std::vector<DestinationEntry> entries)
 {
+    ++snapshotsAdopted_;
+
     snapshot_.entries = std::move(entries);
     snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
     snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
@@ -237,11 +262,52 @@ namespace
                                            });
     }
 
+    bool SameStartupEntries(const std::vector<StartupEntry>& left, const std::vector<StartupEntry>& right)
+    {
+        return std::ranges::equal(left, right,
+                                  [](const StartupEntry& one, const StartupEntry& other)
+                                  {
+                                      return one.label == other.label && one.path == other.path
+                                          && one.enabled == other.enabled;
+                                  });
+    }
+
     bool SameEntriesComeOutOf(const SimulatorProfile& left, const SimulatorProfile& right)
     {
         return left.id == right.id && left.destinations == right.destinations
             && LibraryPathsOf(left) == LibraryPathsOf(right)
             && SameExternalOrigins(left.externalOrigins, right.externalOrigins);
+    }
+}
+
+void Session::AdoptEntriesRead()
+{
+    readingEntries_ = false;
+
+    const bool stillCurrent =
+        snapshotsAdoptedWhenTheReadBegan_ == snapshotsAdopted_ && SameEntriesComeOutOf(entriesFor_, profile_);
+    const bool again = readEntriesAgain_;
+    readEntriesAgain_ = false;
+
+    if (stillCurrent)
+    {
+        snapshot_.entries = std::move(entriesRead_.entries);
+        snapshot_.enabled = std::move(entriesRead_.enabled);
+        snapshot_.conflicts = std::move(entriesRead_.conflicts);
+        snapshot_.startupEntries = std::move(entriesRead_.startupEntries);
+    }
+
+    entriesRead_ = {};
+    entriesFor_ = {};
+
+    if (stillCurrent)
+    {
+        observer_.OnRefreshed();
+    }
+
+    if (again)
+    {
+        RefreshEntries();
     }
 }
 
@@ -258,7 +324,14 @@ void Session::AdoptEntriesReadFor(const SimulatorProfile& readFor, std::vector<D
 
 void Session::RefreshStartupEntries()
 {
-    snapshot_.startupEntries = service_.StartupEntriesNow();
+    std::vector<StartupEntry> entries = service_.StartupEntriesNow();
+
+    if (SameStartupEntries(entries, snapshot_.startupEntries))
+    {
+        return;
+    }
+
+    snapshot_.startupEntries = std::move(entries);
 
     observer_.OnRefreshed();
 }
@@ -396,7 +469,6 @@ void Session::RememberWhatCameFromAnotherProgram(const std::vector<ImportOperati
     }
 
     Save(next);
-    Scan(std::move(next));
 }
 
 void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem::path>& addonFolders)
@@ -414,7 +486,6 @@ void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem
     }
 
     Save(next);
-    Scan(std::move(next));
 }
 
 Session::LegacyImport Session::ImportLegacyOn(SimulatorProfile profile, const LegacyImportRequest& request) const
@@ -702,6 +773,8 @@ void Session::Adopt()
         observer_.OnScanFinished();
         return;
     }
+
+    ++snapshotsAdopted_;
 
     profile_ = std::move(scanning_);
     snapshot_ = std::move(scanned_);

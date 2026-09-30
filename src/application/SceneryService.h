@@ -57,13 +57,16 @@ private:
     [[nodiscard]] SceneryOfAnAddon ReadOne(const AddonToRead& addon, SceneryFreshness freshness);
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
-    WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder) const;
+    WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder,
+                              const std::vector<std::filesystem::path>& sceneryFolders) const;
 
     [[nodiscard]] std::vector<std::filesystem::path> SceneryFoldersOf(const std::filesystem::path& addonFolder) const;
 
-    [[nodiscard]] std::vector<std::filesystem::path> SceneryFilesOf(const std::filesystem::path& addonFolder) const;
+    [[nodiscard]] std::vector<std::filesystem::path>
+    SceneryFilesIn(const std::vector<std::filesystem::path>& sceneryFolders) const;
 
-    [[nodiscard]] std::vector<SceneryCodes> ReadTheFilesOf(const std::filesystem::path& addonFolder) const;
+    [[nodiscard]] std::vector<SceneryCodes>
+    ReadTheFilesIn(const std::vector<std::filesystem::path>& sceneryFolders) const;
 
     const FilesystemProbe& filesystemProbe_;
     const SceneryParser& parser_;

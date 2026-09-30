@@ -18,6 +18,7 @@
 #include <QtWidgets/QTreeView>
 
 #include "application/SceneryService.h"
+#include "SessionForMeasuring.h"
 #include "application/Session.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/support/PathUtils.h"
@@ -324,7 +325,8 @@ int MeasureTheAppLibrary(MainWindow& window,
                          AddonTreeModel& model,
                          CoverageViewModel& coverage,
                          SceneryService& scenery,
-                         Session& session)
+                         Session& session,
+                         const TimedRunner& timing)
 {
     window.showMaximized();
     LetTheWindowSettle();
@@ -429,14 +431,31 @@ int MeasureTheAppLibrary(MainWindow& window,
                                }
                            }));
 
-    Out() << "\nwhat one toggle still costs the main thread\n";
+    Out() << "\nwhat one refresh of the entries costs, by thread\n";
 
-    Report("Session::RefreshEntries",
+    const int landedBefore = timing.Landed();
+
+    Report("RefreshEntries: the call [main]",
            Milliseconds(
                [&session]
                {
                    session.RefreshEntries();
                }));
+
+    QElapsedTimer untilItLanded;
+    untilItLanded.start();
+
+    while (timing.Landed() == landedBefore && untilItLanded.elapsed() < 30000)
+    {
+        QApplication::processEvents();
+        QThread::msleep(1);
+    }
+
+    Report("RefreshEntries: the read [worker]", timing.LastWorkMilliseconds());
+    Report("RefreshEntries: the adoption [main]", timing.LastAdoptionMilliseconds());
+    Report("RefreshEntries: wall clock until it landed", static_cast<double>(untilItLanded.elapsed()));
+
+    Out() << "\nwhat one toggle still costs the main thread\n";
 
     Report("AddonTreeModel::Refresh, with the tree shown",
            Milliseconds(

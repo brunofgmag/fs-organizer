@@ -106,6 +106,7 @@ namespace
         static void TheLensesTakeTheReadingCloserAndFurtherAway();
         static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
+        static void ThePagesTheReaderTurnsAreWrittenOnceWhenAnotherDocumentOpens();
         static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
         static void AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt();
         static void TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick();
@@ -203,7 +204,7 @@ namespace
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
         FakeChartCatalogueParser catalogueParser;
         FakeChartVersions chartVersions;
-        DocumentService documents{catalog, filesystemProbe, catalogueParser, chartVersions};
+        DocumentService documents{filesystemProbe, catalogueParser, chartVersions};
         FakeDocumentIndexCache cache;
         FakeManualSource theManual;
         ManualDelivery manualDelivery{};
@@ -1390,6 +1391,40 @@ void DocumentsPageTest::TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen()
     emit reader->TheBookmarkWasNamed(12, QStringLiteral("Where I stopped"));
 
     QCOMPARE(f.settings.stored.documents.front().bookmarks.front().name, std::string{"Where I stopped"});
+}
+
+void DocumentsPageTest::ThePagesTheReaderTurnsAreWrittenOnceWhenAnotherDocumentOpens()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+    f.viewModel.ReadTheLibrary();
+
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* crj = GroupNamed(*index, QString::fromStdString(kCrj));
+    crj->setExpanded(true);
+
+    const QRect first = index->visualItemRect(crj->child(0));
+    ClickAt(*index, QPoint(first.center().x(), first.center().y()));
+
+    auto* reader = page.findChild<DocumentReader*>();
+
+    QVERIFY(reader != nullptr);
+
+    const int saves = f.settings.saves;
+
+    for (int turned = 1; turned <= 6; ++turned)
+    {
+        emit reader->ThePageChanged(turned);
+    }
+
+    QCOMPARE(f.settings.saves, saves);
+
+    const QRect second = index->visualItemRect(crj->child(1));
+    ClickAt(*index, QPoint(second.center().x(), second.center().y()));
+
+    QCOMPARE(f.settings.saves, saves + 1);
+    QCOMPARE(f.settings.stored.documents.back().page, 6);
 }
 
 void DocumentsPageTest::SayingNoToTheQuestionLeavesTheMarkWhereItIs()

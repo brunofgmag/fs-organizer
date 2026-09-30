@@ -158,7 +158,7 @@ namespace
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
         FakeLoadingReportSource loading;
-        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, loading, clock, runner};
+        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, notifier, loading, clock, runner};
     };
 
     SelectionSize LastSize(const QSignalSpy& measured)

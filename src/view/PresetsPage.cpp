@@ -1,6 +1,7 @@
 #include "view/PresetsPage.h"
 
 #include <QtCore/QEvent>
+#include <QtGui/QShowEvent>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFrame>
@@ -141,7 +142,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(goBack_, &QPushButton::clicked, this, &PresetsPage::GoBack);
     connect(planPanel_, &PresetPlanPanel::ApplyRequested, this, &PresetsPage::ApplySelected);
     connect(planPanel_, &PresetPlanPanel::OmittedRequested, this, &PresetsPage::ListTheOmitted);
-    connect(planPanel_, &PresetPlanPanel::ModeChanged, this, &PresetsPage::ReloadNames);
+    connect(planPanel_, &PresetPlanPanel::ModeChanged, this, &PresetsPage::RequestReload);
     connect(names_, &QTableWidget::currentCellChanged, this,
             [this](const int row, int, const int previous, int)
             {
@@ -165,9 +166,9 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(startupPanel_, &PresetStartupPanel::GovernToggled, this, &PresetsPage::GovernStartupToggled);
     connect(startupPanel_, &PresetStartupPanel::RecaptureRequested, this, &PresetsPage::RecaptureStartup);
 
-    connect(&viewModel_, &PresetViewModel::Changed, this, &PresetsPage::ReloadNames);
-    connect(&notifier, &SessionNotifier::Refreshed, this, &PresetsPage::ReloadNames);
-    connect(&notifier, &SessionNotifier::ScanFinished, this, &PresetsPage::ReloadNames);
+    connect(&viewModel_, &PresetViewModel::Changed, this, &PresetsPage::RequestReload);
+    connect(&notifier, &SessionNotifier::Refreshed, this, &PresetsPage::RequestReload);
+    connect(&notifier, &SessionNotifier::ScanFinished, this, &PresetsPage::RequestReload);
     connect(&viewModel_, &PresetViewModel::Refused, this,
             [this](const QString& explanation)
             {
@@ -224,6 +225,40 @@ void PresetsPage::changeEvent(QEvent* event)
     }
 
     QWidget::changeEvent(event);
+}
+
+void PresetsPage::showEvent(QShowEvent* event)
+{
+    QWidget::showEvent(event);
+
+    if (stale_)
+    {
+        ReloadNames();
+    }
+}
+
+void PresetsPage::RequestReload()
+{
+    stale_ = true;
+
+    if (!isVisible() || reloadQueued_)
+    {
+        return;
+    }
+
+    reloadQueued_ = true;
+
+    QMetaObject::invokeMethod(this, &PresetsPage::ReloadIfStale, Qt::QueuedConnection);
+}
+
+void PresetsPage::ReloadIfStale()
+{
+    reloadQueued_ = false;
+
+    if (stale_ && isVisible())
+    {
+        ReloadNames();
+    }
 }
 
 void PresetsPage::RetranslateUi()
@@ -404,6 +439,8 @@ namespace
 
 void PresetsPage::ReloadNames()
 {
+    stale_ = false;
+
     const QString wanted = SelectedName();
     const QList<PresetRow> rows = viewModel_.Rows(Mode());
 

@@ -78,6 +78,7 @@ CommunityViewModel::CommunityViewModel(ProfileService& service,
     : QObject(parent), service_(service), session_(session), model_(model), sizes_(sizes), caller_(sizes.NewCaller())
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &CommunityViewModel::Show);
+    connect(&notifier, &SessionNotifier::Refreshed, this, &CommunityViewModel::Show);
 }
 
 void CommunityViewModel::Show()

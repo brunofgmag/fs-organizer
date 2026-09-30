@@ -49,6 +49,8 @@ namespace
         static void OpeningTheScreenReadsTheCouplingThroughTheRunnerAndNotOnTheSpot();
         static void ComingBackToTheScreenShowsWhatWasReadWithoutReadingAgain();
         static void TurningAnAddonOnMakesTheNextOpeningReadTheCouplingAgain();
+        static void TheScreenAnnouncesTheReadWhileTheViewModelIsStillBusyWithIt();
+        static void StartingOverRunsAsOneProcedureAndBeginsANewRunFromTheDiskAfterThePutBack();
     };
 }
 
@@ -624,6 +626,77 @@ void BisectionViewModelTest::AMutatingClickRunsInAWorkerAndASecondClickWaitsItsT
 
     QCOMPARE(f.viewModel.Report().units, std::size_t{3});
     QCOMPARE(f.viewModel.Stage(), BisectionStage::Asking);
+}
+
+void BisectionViewModelTest::TheScreenAnnouncesTheReadWhileTheViewModelIsStillBusyWithIt()
+{
+    Fixture f;
+    f.TurnOn(kMd11);
+    f.TurnOn(kCrj);
+    f.Seed();
+
+    f.runner.defer = true;
+
+    std::vector<bool> readingWhenAnnounced;
+
+    QObject::connect(&f.viewModel, &BisectionViewModel::Changed, &f.viewModel,
+                     [&f, &readingWhenAnnounced]
+                     {
+                         readingWhenAnnounced.push_back(f.viewModel.ReadingWhatIsOn());
+                     });
+
+    f.viewModel.Show();
+
+    QCOMPARE(readingWhenAnnounced, std::vector<bool>{true});
+
+    f.runner.Finish();
+
+    QCOMPARE(readingWhenAnnounced, (std::vector<bool>{true, false}));
+}
+
+void BisectionViewModelTest::StartingOverRunsAsOneProcedureAndBeginsANewRunFromTheDiskAfterThePutBack()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.viewModel.Begin();
+    f.viewModel.Answer(BisectionAnswer::ItRanFine);
+    f.session.ShowActiveProfile();
+
+    QVERIFY2(EnabledAddonFolders(f.session.Snapshot().entries).size() < 3,
+             "the session shows the half-searched setup, which is what makes its snapshot stale");
+
+    const std::size_t savesBefore = f.store.saves;
+
+    f.runner.defer = true;
+
+    f.viewModel.StartOver();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.viewModel.StartOver();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Asking);
+    QCOMPARE(f.viewModel.Report().round, std::size_t{0});
+    QCOMPARE(f.viewModel.Report().units, std::size_t{3});
+    QCOMPARE(f.viewModel.LaunchesAlreadyMade(), std::size_t{1});
+    QCOMPARE(f.store.saves, savesBefore + 1);
+
+    const std::optional<BisectionRun> run = f.store.Load(kProfileId);
+
+    QVERIFY(run.has_value());
+    QCOMPARE(run->startingConfiguration.size(), std::size_t{3});
+    QVERIFY2(!f.viewModel.Report().results.empty(), "the put-back and the new reference round both reach the report");
 }
 
 QTEST_MAIN(BisectionViewModelTest)

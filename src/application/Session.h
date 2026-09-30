@@ -147,6 +147,8 @@ private:
 
     void Adopt();
 
+    void AdoptEntriesRead();
+
     void Save(const SimulatorProfile& profile);
 
     bool Commit(AppSettings next);
@@ -162,6 +164,12 @@ private:
     ProfileSnapshot snapshot_;
     SimulatorProfile scanning_;
     ProfileSnapshot scanned_;
+    SimulatorProfile entriesFor_;
+    ProfileSnapshot entriesRead_;
+    int snapshotsAdopted_ = 0;
+    int snapshotsAdoptedWhenTheReadBegan_ = 0;
+    bool readingEntries_ = false;
+    bool readEntriesAgain_ = false;
     std::optional<SimulatorProfile> queued_;
     std::atomic<bool> cancelled_{false};
     bool running_ = false;

@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
 
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
-    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(DocumentIndexFilePath());
     const EditionParts edition =
@@ -356,8 +356,8 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
-                                              runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, notifier, loadingReport,
+                                              clock, runner);
 
     const CouplingScan coupling(filesystemProbe);
     JsonBisectionStore bisectionStore(BisectionFolderPath());

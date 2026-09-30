@@ -59,11 +59,12 @@ std::vector<std::filesystem::path> SceneryService::SceneryFoldersOf(const std::f
     return folders;
 }
 
-std::vector<std::filesystem::path> SceneryService::SceneryFilesOf(const std::filesystem::path& addonFolder) const
+std::vector<std::filesystem::path>
+SceneryService::SceneryFilesIn(const std::vector<std::filesystem::path>& sceneryFolders) const
 {
     std::vector<std::filesystem::path> files;
 
-    for (const std::filesystem::path& folder : SceneryFoldersOf(addonFolder))
+    for (const std::filesystem::path& folder : sceneryFolders)
     {
         for (const std::filesystem::path& file : filesystemProbe_.ChildFiles(folder))
         {
@@ -77,11 +78,11 @@ std::vector<std::filesystem::path> SceneryService::SceneryFilesOf(const std::fil
     return files;
 }
 
-std::vector<SceneryCodes> SceneryService::ReadTheFilesOf(const std::filesystem::path& addonFolder) const
+std::vector<SceneryCodes> SceneryService::ReadTheFilesIn(const std::vector<std::filesystem::path>& sceneryFolders) const
 {
     std::vector<SceneryCodes> read;
 
-    for (const std::filesystem::path& file : SceneryFilesOf(addonFolder))
+    for (const std::filesystem::path& file : SceneryFilesIn(sceneryFolders))
     {
         const std::optional<std::string> head = filesystemProbe_.FirstBytesOf(file, kEnoughForTheSectionTable);
         if (!head.has_value() || !parser_.CouldCarryAnAirportSection(AsBytes(*head)))
@@ -103,11 +104,12 @@ std::vector<SceneryCodes> SceneryService::ReadTheFilesOf(const std::filesystem::
 }
 
 std::optional<std::chrono::system_clock::time_point>
-SceneryService::WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder) const
+SceneryService::WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder,
+                                          const std::vector<std::filesystem::path>& sceneryFolders) const
 {
     std::optional<std::chrono::system_clock::time_point> newest = filesystemProbe_.LastWriteTime(addonFolder);
 
-    for (const std::filesystem::path& folder : SceneryFoldersOf(addonFolder))
+    for (const std::filesystem::path& folder : sceneryFolders)
     {
         const std::optional<std::chrono::system_clock::time_point> changed = filesystemProbe_.LastWriteTime(folder);
 
@@ -169,19 +171,28 @@ SceneryOfAnAddon SceneryService::SceneryOf(const AddonToRead& addon, const Scene
 
 SceneryOfAnAddon SceneryService::ReadOne(const AddonToRead& addon, const SceneryFreshness freshness)
 {
-    const std::optional<RememberedScenery> remembered =
-        freshness == SceneryFreshness::ReadAgain ? std::nullopt : cache_.Remember(addon.folder);
-    const std::optional<std::chrono::system_clock::time_point> changed = WhenTheSceneryLastChanged(addon.folder);
+    const std::vector<std::filesystem::path> sceneryFolders = SceneryFoldersOf(addon.folder);
 
-    if (remembered.has_value() && changed.has_value() && *changed <= remembered->readAt)
+    if (freshness != SceneryFreshness::ReadAgain)
     {
-        return {.addon = addon.addon,
-                .resolvedPath = addon.folder,
-                .files = remembered->files,
-                .itIsNavigationData = addon.itIsNavigationData};
+        const std::optional<RememberedScenery> remembered = cache_.Remember(addon.folder);
+
+        if (remembered.has_value())
+        {
+            const std::optional<std::chrono::system_clock::time_point> changed =
+                WhenTheSceneryLastChanged(addon.folder, sceneryFolders);
+
+            if (changed.has_value() && *changed <= remembered->readAt)
+            {
+                return {.addon = addon.addon,
+                        .resolvedPath = addon.folder,
+                        .files = remembered->files,
+                        .itIsNavigationData = addon.itIsNavigationData};
+            }
+        }
     }
 
-    const RememberedScenery read{.readAt = clock_.Now(), .files = ReadTheFilesOf(addon.folder)};
+    const RememberedScenery read{.readAt = clock_.Now(), .files = ReadTheFilesIn(sceneryFolders)};
     cache_.Keep(addon.folder, read);
 
     return {.addon = addon.addon,

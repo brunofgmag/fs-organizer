@@ -30,6 +30,10 @@ namespace
         static void APresetIsJudgedAsReplaceEvenWhereAnotherModeWouldChangeNothing();
         static void AnEntryWhoseAddonIsGoneDoesNotKeepThePresetFromBeingSatisfied();
         static void WhatWouldChangeCountsTheTwoSidesAndNothingElse();
+        static void ALookupPlansLikeTheWrapperInEveryModeOnEveryFixture();
+        static void ALookupPlansLikeTheWrapperWhateverTheCaseOfTheLibraryAndTheFolder();
+        static void ALookupJudgesSatisfactionAndContentLikeTheWrappers();
+        static void OneLookupServesEveryPresetOfTheReload();
     };
 }
 
@@ -88,6 +92,31 @@ namespace
         profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
+    }
+
+    TreeNode MixedCaseLibraryTree()
+    {
+        TreeNode aircrafts;
+        aircrafts.kind = TreeNodeKind::Category;
+        aircrafts.path = "D:/MSFS 2024/Aircrafts";
+        aircrafts.children = {AddonNode("D:/MSFS 2024/Aircrafts/Aircraft-MIXED"),
+                              AddonNode("D:/MSFS 2024/Aircrafts/aircraft-b")};
+
+        TreeNode library;
+        library.kind = TreeNodeKind::Library;
+        library.path = kLibrary;
+        library.children = {std::move(aircrafts)};
+
+        return library;
+    }
+
+    void VerifySamePlan(const PresetPlan& got, const PresetPlan& expected)
+    {
+        QVERIFY(got.toDisable == expected.toDisable);
+        QVERIFY(got.toEnable == expected.toEnable);
+        QVERIFY(got.unresolved == expected.unresolved);
+        QVERIFY(got.alreadyInPlace == expected.alreadyInPlace);
+        QVERIFY(got.notNamedByThePreset == expected.notNamedByThePreset);
     }
 
     PresetEntry Enabling(const std::string& folderName)
@@ -370,6 +399,134 @@ void PresetPlanTest::WhatWouldChangeCountsTheTwoSidesAndNothingElse()
     QCOMPARE(plan.alreadyInPlace.size(), std::size_t{1});
     QCOMPARE(AddonsThatWouldChange(plan), plan.toEnable.size() + plan.toDisable.size());
     QCOMPARE(AddonsThatWouldChange(plan), std::size_t{2});
+}
+
+void PresetPlanTest::ALookupPlansLikeTheWrapperInEveryModeOnEveryFixture()
+{
+    const std::vector<TreeNode> libraries{LibraryTree(), SecondLibraryTree()};
+
+    SimulatorProfile profile = Profile();
+    profile.libraries.push_back(Library{.id = "library-2", .path = kSecondLibrary, .label = "Cenarios"});
+
+    const std::vector<EnabledAddons> states{EnabledAddons{}, EnabledAddons{{kAircraftB, kAircraftC}},
+                                            EnabledAddons{{kAircraftA, kSceneryZ}},
+                                            EnabledAddons{{kAircraftA, kAircraftB, kAircraftC, kSceneryZ}}};
+
+    const std::vector<Preset> presets{
+        Preset{.name = "Empty", .entries = {}},
+        Preset{.name = "Short", .entries = {Enabling("aircraft-a"), Enabling("aircraft-b")}},
+        Preset{.name = "Mixed", .entries = {Enabling("aircraft-a"), Disabling("aircraft-c")}},
+        Preset{.name = "Gone", .entries = {Enabling("aircraft-gone"), Disabling("aircraft-b")}},
+        Preset{.name = "Other library",
+               .entries = {{.addonId = AddonId{.libraryId = "library-2", .folderName = "scenery-z"},
+                            .action = PresetAction::Enable},
+                           {.addonId = AddonId{.libraryId = "library-3", .folderName = "scenery-z"},
+                            .action = PresetAction::Enable}}}};
+
+    for (const EnabledAddons& enabled : states)
+    {
+        const PresetLookup lookup = BuildPresetLookup(profile, libraries, enabled);
+
+        for (const Preset& preset : presets)
+        {
+            for (const ApplyMode mode : {ApplyMode::Replace, ApplyMode::Cumulative, ApplyMode::Disable})
+            {
+                VerifySamePlan(PlanPresetApplication(preset, mode, lookup),
+                               PlanPresetApplication(preset, mode, profile, libraries, enabled));
+            }
+        }
+    }
+
+    const PresetLookup lookup = BuildPresetLookup(profile, libraries, states[1]);
+    const PresetPlan plan = PlanPresetApplication(presets[1], ApplyMode::Replace, lookup);
+
+    QCOMPARE(plan.toEnable.size(), std::size_t{1});
+    QCOMPARE(plan.toEnable.front()->path, std::filesystem::path{kAircraftA});
+    QCOMPARE(plan.toDisable.size(), std::size_t{1});
+    QCOMPARE(plan.toDisable.front()->path, std::filesystem::path{kAircraftC});
+    QCOMPARE(plan.alreadyInPlace.size(), std::size_t{1});
+    QCOMPARE(plan.notNamedByThePreset.size(), std::size_t{1});
+}
+
+void PresetPlanTest::ALookupPlansLikeTheWrapperWhateverTheCaseOfTheLibraryAndTheFolder()
+{
+    const std::vector<TreeNode> libraries{MixedCaseLibraryTree()};
+    const EnabledAddons enabled{{"D:/MSFS 2024/Aircrafts/aircraft-mixed"}};
+
+    SimulatorProfile profile = Profile();
+    profile.libraries = {Library{.id = "Library-1", .path = kLibrary, .label = "MSFS 2024"}};
+
+    const Preset preset{.name = "Case",
+                        .entries = {{.addonId = AddonId{.libraryId = "LIBRARY-1", .folderName = "aircraft-MIXED"},
+                                     .action = PresetAction::Disable},
+                                    {.addonId = AddonId{.libraryId = "library-1", .folderName = "AIRCRAFT-B"},
+                                     .action = PresetAction::Enable}}};
+
+    const PresetLookup lookup = BuildPresetLookup(profile, libraries, enabled);
+
+    for (const ApplyMode mode : {ApplyMode::Replace, ApplyMode::Cumulative, ApplyMode::Disable})
+    {
+        VerifySamePlan(PlanPresetApplication(preset, mode, lookup),
+                       PlanPresetApplication(preset, mode, profile, libraries, enabled));
+    }
+
+    const PresetPlan replace = PlanPresetApplication(preset, ApplyMode::Replace, lookup);
+
+    QVERIFY(replace.unresolved.empty());
+    QCOMPARE(replace.toDisable.size(), std::size_t{1});
+    QCOMPARE(replace.toEnable.size(), std::size_t{1});
+    QVERIFY(replace.notNamedByThePreset.empty());
+}
+
+void PresetPlanTest::ALookupJudgesSatisfactionAndContentLikeTheWrappers()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const std::vector<EnabledAddons> states{EnabledAddons{}, EnabledAddons{{kAircraftB}},
+                                            EnabledAddons{{kAircraftB, kAircraftC}}};
+    const std::vector<Preset> presets{
+        Preset{.name = "Empty", .entries = {}}, Preset{.name = "B", .entries = {Enabling("aircraft-b")}},
+        Preset{.name = "Gone", .entries = {Enabling("aircraft-b"), Enabling("aircraft-gone")}},
+        Preset{.name = "AC", .entries = {Enabling("Aircraft-A"), Disabling("aircraft-c")}}};
+
+    for (const EnabledAddons& enabled : states)
+    {
+        const PresetLookup lookup = BuildPresetLookup(Profile(), libraries, enabled);
+
+        for (const Preset& preset : presets)
+        {
+            QCOMPARE(PresetIsSatisfied(preset, lookup), PresetIsSatisfied(preset, Profile(), libraries, enabled));
+
+            const PresetContent viaLookup = ContentOf(preset, lookup);
+            const PresetContent viaWrapper = ContentOf(preset, Profile(), libraries);
+
+            QCOMPARE(viaLookup.addons, viaWrapper.addons);
+            QCOMPARE(viaLookup.categories, viaWrapper.categories);
+        }
+    }
+
+    const PresetLookup onlyB = BuildPresetLookup(Profile(), libraries, states[1]);
+    const PresetLookup bAndC = BuildPresetLookup(Profile(), libraries, states[2]);
+
+    QVERIFY(PresetIsSatisfied(presets[1], onlyB));
+    QVERIFY(!PresetIsSatisfied(presets[1], bAndC));
+    QCOMPARE(ContentOf(presets[2], onlyB).addons, std::size_t{2});
+    QCOMPARE(ContentOf(presets[2], onlyB).categories, std::size_t{1});
+}
+
+void PresetPlanTest::OneLookupServesEveryPresetOfTheReload()
+{
+    const std::vector<TreeNode> libraries{LibraryTree()};
+    const EnabledAddons enabled{{kAircraftB}};
+    const PresetLookup lookup = BuildPresetLookup(Profile(), libraries, enabled);
+
+    const Preset satisfied{.name = "B", .entries = {Enabling("aircraft-b")}};
+    const Preset unsatisfied{.name = "A", .entries = {Enabling("aircraft-a")}};
+
+    QVERIFY(PresetIsSatisfied(satisfied, lookup));
+    QVERIFY(!PresetIsSatisfied(unsatisfied, lookup));
+    QVERIFY(PresetIsSatisfied(satisfied, lookup));
+    QCOMPARE(lookup.enabledAddons.size(), std::size_t{1});
+    QCOMPARE(lookup.enabledAddons.front().addon->path, std::filesystem::path{kAircraftB});
 }
 
 QTEST_MAIN(PresetPlanTest)

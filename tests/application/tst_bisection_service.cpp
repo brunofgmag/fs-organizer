@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include <QtCore/QString>
+
 #include "application/BisectionService.h"
 #include "domain/importing/ImportPaths.h"
 #include "tests/doubles/FakeBisectionStore.h"
@@ -53,6 +55,8 @@ namespace
         static void TheProcedureRecordsTheInstantItStarted();
         static void ReReadingWhereItStandsStillSaysWhichAddonsAreOn();
         static void ASecondPassEntryOfTheStoryReachesTheFileAsTheSecondPass();
+        static void ARoundStoredWithAnotherCaseOfTheFoldersStillTurnsTheSameAddonsOn();
+        static void StartingOverPutsTheSetupBackAndBeginsAgainFromWhatIsOnTheDiskThen();
     };
 }
 
@@ -224,6 +228,23 @@ base_container = "..\TFDi_Design_MD-11F_PW"
         FakePresetRepository presets;
         BisectionService service{profiles, coupling, filesystemProbe, store, clock};
     };
+
+    [[nodiscard]] std::filesystem::path Shouted(const std::filesystem::path& path)
+    {
+        return PathFromUtf8(QString::fromStdString(AsUtf8(path)).toUpper().toStdString());
+    }
+
+    [[nodiscard]] std::vector<std::string> FolderNamesOf(const std::vector<PresetEntry>& entries)
+    {
+        std::vector<std::string> names;
+
+        for (const PresetEntry& entry : entries)
+        {
+            names.push_back(entry.addonId.folderName);
+        }
+
+        return names;
+    }
 
     [[nodiscard]] bool Holds(const std::vector<std::filesystem::path>& where, const std::filesystem::path& what)
     {
@@ -723,6 +744,92 @@ void BisectionServiceTest::ASecondPassEntryOfTheStoryReachesTheFileAsTheSecondPa
     QVERIFY(run->story.size() >= 3);
     QCOMPARE(run->story.front().pass, BisectionPass::OverTheUnits);
     QCOMPARE(run->story.back().pass, BisectionPass::InsideTheGroup);
+}
+
+void BisectionServiceTest::ARoundStoredWithAnotherCaseOfTheFoldersStillTurnsTheSameAddonsOn()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).refusal, BisectionRefusal::None);
+
+    const std::vector<std::filesystem::path> turnedOn = f.WhatIsOn();
+
+    QVERIFY(!turnedOn.empty());
+    QVERIFY(turnedOn.size() < 4);
+
+    std::optional<BisectionRun> run = f.store.Load(kProfileId);
+    QVERIFY(run.has_value());
+
+    for (SearchUnit& unit : run->units)
+    {
+        for (std::filesystem::path& addon : unit.addons)
+        {
+            addon = Shouted(addon);
+        }
+    }
+
+    QVERIFY(f.store.Save(kProfileId, *run));
+
+    for (const std::filesystem::path& addon : {kCrj, kFenix, kMd11, kLivery})
+    {
+        if (!Holds(turnedOn, addon))
+        {
+            f.Enable({addon});
+        }
+    }
+
+    QCOMPARE(f.WhatIsOn().size(), std::size_t{4});
+
+    const BisectionReport carriedOn = f.service.Resume(profile, ResumeChoice::CarryOnFromWhereItStopped);
+
+    QCOMPARE(carriedOn.refusal, BisectionRefusal::None);
+    QCOMPARE(f.WhatIsOn(), turnedOn);
+}
+
+void BisectionServiceTest::StartingOverPutsTheSetupBackAndBeginsAgainFromWhatIsOnTheDiskThen()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11, kLivery});
+
+    const SimulatorProfile profile = Profile();
+    const std::vector<std::filesystem::path> before = f.WhatIsOn();
+
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+
+    const std::vector<std::string> firstStarting = FolderNamesOf(f.store.Load(kProfileId)->startingConfiguration);
+
+    QCOMPARE(f.service.Answer(profile, BisectionAnswer::ItRanFine).refusal, BisectionRefusal::None);
+
+    const std::size_t turnedOnByTheRound = f.WhatIsOn().size();
+
+    QVERIFY(turnedOnByTheRound < before.size());
+
+    const BisectionReport started = f.service.StartOver(profile);
+
+    QCOMPARE(started.refusal, BisectionRefusal::None);
+    QCOMPARE(started.round, std::size_t{0});
+    QCOMPARE(started.launchesBehind, std::size_t{1});
+    QVERIFY(f.WhatIsOn().empty());
+
+    const std::optional<BisectionRun> run = f.store.Load(kProfileId);
+
+    QVERIFY(run.has_value());
+    QCOMPARE(run->round, std::size_t{0});
+    QVERIFY(run->story.empty());
+    QCOMPARE(FolderNamesOf(run->startingConfiguration), firstStarting);
+
+    const std::size_t putBack = before.size() - turnedOnByTheRound;
+
+    QCOMPARE(started.results.size(), putBack + before.size());
+    QCOMPARE(started.results.front().kind, OperationKind::EnableAddon);
+    QCOMPARE(started.results.back().kind, OperationKind::DisableAddon);
+
+    QCOMPARE(f.service.Stop(profile).refusal, BisectionRefusal::None);
+    QCOMPARE(f.WhatIsOn(), before);
 }
 
 QTEST_APPLESS_MAIN(BisectionServiceTest)

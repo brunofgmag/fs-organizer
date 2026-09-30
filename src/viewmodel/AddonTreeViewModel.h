@@ -108,9 +108,15 @@ public:
 
     void RelinkToTheProfileDestination(const std::vector<const TreeNode*>& nodes);
 
+    void RelinkStrayed(const std::vector<const TreeNode*>& strayed);
+
     [[nodiscard]] std::size_t StrayAddonsUnder(const std::vector<const TreeNode*>& nodes) const;
 
+    [[nodiscard]] std::vector<const TreeNode*> StrayedUnder(const std::vector<const TreeNode*>& nodes) const;
+
     [[nodiscard]] std::vector<MoveTarget> CategoriesFor(const TreeNode* node) const;
+
+    [[nodiscard]] std::size_t MovableAmong(const std::vector<const TreeNode*>& addons) const;
 
     [[nodiscard]] std::vector<CategorySuggestion> SuggestionsFor(const TreeNode* node) const;
 
@@ -153,8 +159,6 @@ private:
     };
 
     [[nodiscard]] const TreeNode* LibraryTreeHolding(const TreeNode& node) const;
-
-    [[nodiscard]] std::vector<const TreeNode*> StrayedUnder(const std::vector<const TreeNode*>& nodes) const;
 
     void Perform(const std::vector<AddonMove>& moves);
 

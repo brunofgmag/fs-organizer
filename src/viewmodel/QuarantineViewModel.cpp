@@ -27,50 +27,43 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
     connect(&notifier, &SessionNotifier::ScanFinished, this,
             [this]
             {
-                const int mine = ++listed_;
-                const SimulatorProfile profile = session_.Profile();
-                const auto items = std::make_shared<std::vector<QuarantinedItem>>();
-
-                runner_.Run(
-                    [this, profile, items]
-                    {
-                        *items = service_.Quarantined(profile);
-                    },
-                    [this, mine, items]
-                    {
-                        if (mine != listed_)
-                        {
-                            return;
-                        }
-
-                        model_.ShowItems(*items);
-
-                        if (shown_)
-                        {
-                            Describe(*items);
-                            Weigh(*items);
-                        }
-                    });
+                ListWhatIsHeld();
             });
 }
 
-std::vector<QuarantinedItem> QuarantineViewModel::ListWhatIsHeld()
+void QuarantineViewModel::ListWhatIsHeld()
 {
-    std::vector<QuarantinedItem> items = service_.Quarantined(session_.Profile());
+    const int mine = ++listed_;
+    const SimulatorProfile profile = session_.Profile();
+    const auto items = std::make_shared<std::vector<QuarantinedItem>>();
 
-    model_.ShowItems(items);
+    runner_.Run(
+        [this, profile, items]
+        {
+            *items = service_.Quarantined(profile);
+        },
+        [this, mine, items]
+        {
+            if (mine != listed_)
+            {
+                return;
+            }
 
-    return items;
+            model_.ShowItems(*items);
+
+            if (shown_)
+            {
+                Describe(*items);
+                Weigh(*items);
+            }
+        });
 }
 
 void QuarantineViewModel::Show()
 {
     shown_ = true;
 
-    const std::vector<QuarantinedItem> items = ListWhatIsHeld();
-
-    Describe(items);
-    Weigh(items);
+    ListWhatIsHeld();
 }
 
 void QuarantineViewModel::Describe(const std::vector<QuarantinedItem>& items)

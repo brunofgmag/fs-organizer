@@ -65,6 +65,15 @@ namespace
         static void TheManualThatIsAlreadyHereIsNotFetchedASecondTime();
         static void AManualThatDidNotComeDownSaysWhyAndCanBeAskedAgain();
         static void AManualTheEditionDoesNotShipIsNeverFetchedAndSaysSo();
+        static void TheCountOfAPanelIsTheCountOfItsRebuiltLinesWhileTheReadingGoesAndAfterIt();
+        static void TheCountOfWhatWasKeptIsTheCountOfItsRebuiltLines();
+        static void TheRereadOfAnUnchangedLibraryReadsNoCatalogueAndNoChartVersion();
+        static void TheIndexKeptByAnEarlierRunSavesTheRereadFromReadingAnything();
+        static void FiftyPageTurnsAreOneWriteOfTheSettingsAfterTheQuietInterval();
+        static void ThePageStillWaitingToBeWrittenIsWrittenWhenTheViewModelGoes();
+        static void FlushingThePageWritesItAtOnceAndOnlyOnce();
+        static void TurningThePageOfAnotherDocumentWritesTheWaitingOneAtOnce();
+        static void AFavouriteMarkedWhileAPageWaitsCarriesThePageInTheSameWrite();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library");
@@ -175,7 +184,7 @@ namespace
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
         FakeChartCatalogueParser catalogueParser;
         FakeChartVersions chartVersions;
-        DocumentService documents{catalog, filesystemProbe, catalogueParser, chartVersions};
+        DocumentService documents{filesystemProbe, catalogueParser, chartVersions};
         FakeDocumentIndexCache cache;
         FakeManualSource theManual;
         ManualDelivery manualDelivery{};
@@ -205,6 +214,25 @@ namespace
         }
 
         return nullptr;
+    }
+
+    [[nodiscard]] std::size_t LinesIn(const std::vector<DocumentGroup>& groups)
+    {
+        std::size_t lines = 0;
+
+        for (const DocumentGroup& group : groups)
+        {
+            lines += group.lines.size() + LinesIn(group.groups);
+        }
+
+        return lines;
+    }
+
+    [[nodiscard]] std::size_t TheRebuiltCountOf(const DocumentsViewModel& viewModel, const DocumentPanel panel)
+    {
+        const std::vector<DocumentGroup> groups = viewModel.GroupsOf(panel);
+
+        return LinesIn(panel == DocumentPanel::Documents ? TheAddonsAmong(viewModel, groups) : groups);
     }
 
     [[nodiscard]] DocumentLine TheFirstDocumentOfTheCrj(const Fixture& fixture)
@@ -681,6 +709,203 @@ void DocumentsViewModelTest::AManualTheEditionDoesNotShipIsNeverFetchedAndSaysSo
     QCOMPARE(f.viewModel.TheManualIs(), ManualState::NotShipped);
 }
 
-QTEST_APPLESS_MAIN(DocumentsViewModelTest)
+void DocumentsViewModelTest::TheCountOfAPanelIsTheCountOfItsRebuiltLinesWhileTheReadingGoesAndAfterIt()
+{
+    Fixture f;
+    std::size_t checked = 0;
+
+    QObject::connect(&f.viewModel, &DocumentsViewModel::Progressed, &f.viewModel,
+                     [&f, &checked]
+                     {
+                         for (const DocumentPanel panel : {DocumentPanel::Documents, DocumentPanel::Charts})
+                         {
+                             QCOMPARE(f.viewModel.CountOf(panel), TheRebuiltCountOf(f.viewModel, panel));
+                         }
+
+                         ++checked;
+                     });
+
+    f.viewModel.ReadTheLibrary();
+
+    QCOMPARE(checked, std::size_t{5});
+    QCOMPARE(f.viewModel.CountOf(DocumentPanel::Documents), std::size_t{3});
+    QCOMPARE(f.viewModel.CountOf(DocumentPanel::Charts), std::size_t{5});
+
+    for (const DocumentPanel panel : {DocumentPanel::Documents, DocumentPanel::Charts})
+    {
+        QCOMPARE(f.viewModel.CountOf(panel), TheRebuiltCountOf(f.viewModel, panel));
+    }
+
+    f.viewModel.ReadTheLibrary();
+
+    QCOMPARE(f.viewModel.CountOf(DocumentPanel::Documents), std::size_t{3});
+    QCOMPARE(f.viewModel.CountOf(DocumentPanel::Charts), std::size_t{5});
+}
+
+void DocumentsViewModelTest::TheCountOfWhatWasKeptIsTheCountOfItsRebuiltLines()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    Fixture other;
+    other.cache.kept = f.cache.kept;
+
+    QCOMPARE(other.viewModel.CountOf(DocumentPanel::Documents), std::size_t{0});
+
+    other.viewModel.ShowWhatWasKept();
+
+    QCOMPARE(other.viewModel.CountOf(DocumentPanel::Documents), std::size_t{3});
+    QCOMPARE(other.viewModel.CountOf(DocumentPanel::Charts), std::size_t{5});
+
+    for (const DocumentPanel panel : {DocumentPanel::Documents, DocumentPanel::Charts})
+    {
+        QCOMPARE(other.viewModel.CountOf(panel), TheRebuiltCountOf(other.viewModel, panel));
+    }
+}
+
+void DocumentsViewModelTest::TheRereadOfAnUnchangedLibraryReadsNoCatalogueAndNoChartVersion()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const std::size_t catalogues = f.catalogueParser.parsed.size();
+    const std::size_t versions = f.chartVersions.asked.size();
+    const std::size_t walks = f.filesystemProbe.walked.size();
+
+    QVERIFY(catalogues > 0);
+    QVERIFY(versions > 0);
+
+    f.viewModel.ReadTheLibrary();
+
+    QCOMPARE(f.catalogueParser.parsed.size(), catalogues);
+    QCOMPARE(f.chartVersions.asked.size(), versions);
+    QVERIFY2(f.filesystemProbe.walked.size() > walks,
+             "the reread still walks every addon, because the walk is what sees a file that changed");
+    QCOMPARE(f.viewModel.CountOf(DocumentPanel::Charts), std::size_t{5});
+}
+
+void DocumentsViewModelTest::TheIndexKeptByAnEarlierRunSavesTheRereadFromReadingAnything()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const std::size_t catalogues = f.catalogueParser.parsed.size();
+    const std::size_t versions = f.chartVersions.asked.size();
+
+    DocumentsViewModel laterRun(f.documents, f.scenery, f.session, f.runner, f.cache, f.theManual, f.manualDelivery,
+                                f.clock);
+    laterRun.ShowWhatWasKept();
+    laterRun.ReadTheLibrary();
+
+    QCOMPARE(f.catalogueParser.parsed.size(), catalogues);
+    QCOMPARE(f.chartVersions.asked.size(), versions);
+    QCOMPARE(laterRun.CountOf(DocumentPanel::Charts), std::size_t{5});
+}
+
+void DocumentsViewModelTest::FiftyPageTurnsAreOneWriteOfTheSettingsAfterTheQuietInterval()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+    const int saves = f.settings.saves;
+
+    for (int page = 1; page <= 50; ++page)
+    {
+        f.viewModel.RememberThePage(line, page);
+    }
+
+    QCOMPARE(f.settings.saves, saves);
+    QCOMPARE(f.viewModel.PageOf(line), 50);
+
+    QTRY_COMPARE_WITH_TIMEOUT(f.settings.saves, saves + 1, 5000);
+    QTest::qWait(300);
+
+    QCOMPARE(f.settings.saves, saves + 1);
+    QCOMPARE(f.settings.stored.documents.back().page, 50);
+    QCOMPARE(f.viewModel.PageOf(line), 50);
+}
+
+void DocumentsViewModelTest::ThePageStillWaitingToBeWrittenIsWrittenWhenTheViewModelGoes()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+    const int saves = f.settings.saves;
+
+    {
+        DocumentsViewModel leaving(f.documents, f.scenery, f.session, f.runner, f.cache, f.theManual, f.manualDelivery,
+                                   f.clock);
+        leaving.RememberThePage(line, 17);
+
+        QCOMPARE(f.settings.saves, saves);
+    }
+
+    QCOMPARE(f.settings.saves, saves + 1);
+    QCOMPARE(f.settings.stored.documents.back().page, 17);
+    QCOMPARE(f.viewModel.PageOf(line), 17);
+}
+
+void DocumentsViewModelTest::FlushingThePageWritesItAtOnceAndOnlyOnce()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+    const int saves = f.settings.saves;
+
+    f.viewModel.FlushThePage();
+
+    QCOMPARE(f.settings.saves, saves);
+
+    f.viewModel.RememberThePage(line, 9);
+    f.viewModel.FlushThePage();
+    f.viewModel.FlushThePage();
+
+    QCOMPARE(f.settings.saves, saves + 1);
+    QCOMPARE(f.settings.stored.documents.back().page, 9);
+}
+
+void DocumentsViewModelTest::TurningThePageOfAnotherDocumentWritesTheWaitingOneAtOnce()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const std::vector<DocumentGroup> documents = f.viewModel.GroupsOf(DocumentPanel::Documents);
+    const DocumentLine crj = GroupNamed(documents, QString::fromStdString(kCrj))->lines.front();
+    const DocumentLine tbm = GroupNamed(documents, QString::fromStdString(kTbm))->lines.front();
+    const int saves = f.settings.saves;
+
+    f.viewModel.RememberThePage(crj, 3);
+    f.viewModel.RememberThePage(tbm, 4);
+
+    QCOMPARE(f.settings.saves, saves + 1);
+    QCOMPARE(f.settings.stored.documents.back().page, 3);
+    QCOMPARE(f.viewModel.PageOf(crj), 3);
+    QCOMPARE(f.viewModel.PageOf(tbm), 4);
+}
+
+void DocumentsViewModelTest::AFavouriteMarkedWhileAPageWaitsCarriesThePageInTheSameWrite()
+{
+    Fixture f;
+    f.viewModel.ReadTheLibrary();
+
+    const DocumentLine line = TheFirstDocumentOfTheCrj(f);
+    const int saves = f.settings.saves;
+
+    f.viewModel.RememberThePage(line, 12);
+    f.viewModel.Favour(line, true);
+
+    QCOMPARE(f.settings.saves, saves + 1);
+    QCOMPARE(f.settings.stored.documents.back().page, 12);
+    QVERIFY(f.settings.stored.documents.back().favourite);
+
+    QTest::qWait(2300);
+
+    QCOMPARE(f.settings.saves, saves + 1);
+}
+
+QTEST_GUILESS_MAIN(DocumentsViewModelTest)
 
 #include "tst_documents_view_model.moc"

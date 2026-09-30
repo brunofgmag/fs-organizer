@@ -243,12 +243,7 @@ BisectionPanel::BisectionPanel(BisectionViewModel& viewModel, QWidget* parent) :
     connect(carryOn_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::CarryOn);
     connect(finish_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Stop);
     connect(refine_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::Refine);
-    connect(startOver_, &QPushButton::clicked, this,
-            [this]
-            {
-                viewModel_.Stop();
-                viewModel_.Begin();
-            });
+    connect(startOver_, &QPushButton::clicked, &viewModel_, &BisectionViewModel::StartOver);
     connect(bringThemIn_, &QPushButton::clicked, this, &BisectionPanel::ImportRequested);
     connect(&viewModel_, &BisectionViewModel::Changed, this, &BisectionPanel::ShowWhereItStands);
 

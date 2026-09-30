@@ -22,6 +22,10 @@ public:
     [[nodiscard]] virtual std::vector<StartupEntry> Entries() const = 0;
 
     [[nodiscard]] virtual FileResult Switch(const std::filesystem::path& entryPath, bool enabled) = 0;
+
+    virtual void OpenBatch() = 0;
+
+    virtual void CloseBatch() = 0;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_PORTS_STARTUP_ENTRIES_H
