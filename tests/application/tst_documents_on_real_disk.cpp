@@ -10,7 +10,6 @@
 #include "application/DocumentService.h"
 #include "domain/support/PathUtils.h"
 #include "domain/ports/ImportedFolders.h"
-#include "domain/tree/AddonTree.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -45,7 +44,7 @@ namespace
 
         [[nodiscard]] std::filesystem::path Root() const
         {
-            return std::filesystem::path(directory.path().toStdWString());
+            return directory.path().toStdWString();
         }
     };
 

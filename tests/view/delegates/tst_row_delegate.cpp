@@ -421,7 +421,7 @@ namespace
         }
     };
 
-    constexpr auto kLongPath = "D:\\MSFS 2024\\Utils\\a-folder-with-a-name-far-too-long-for-the-column\\";
+    constexpr auto kLongPath = R"(D:\MSFS 2024\Utils\a-folder-with-a-name-far-too-long-for-the-column\)";
 }
 
 void RowDelegateTest::ASecondLineTooWideForItsColumnAnswersWithATooltipCarryingBothLines()

@@ -84,6 +84,7 @@ namespace
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
         static void TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked();
         static void TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot();
+        static void TheWheelZoomsByHowFarItTurnedAndNotByItsSignAlone();
         static void TheWheelSwitchSaysWhichOfTheTwoKindsItIsAbout();
         static void EachKindCarriesItsOwnPairOfSwitches();
         static void DraggingMovesADocumentAndNotOnlyAChart();
@@ -239,15 +240,13 @@ namespace
 
     [[nodiscard]] bool SomethingSays(const QWidget& page, const QString& text)
     {
-        for (const QLabel* said : page.findChildren<QLabel*>(QStringLiteral("EmptyBody")))
-        {
-            if (said->text().contains(text))
-            {
-                return true;
-            }
-        }
+        const QList<QLabel*> bodies = page.findChildren<QLabel*>(QStringLiteral("EmptyBody"));
 
-        return false;
+        return std::ranges::any_of(bodies,
+                                   [&](const QLabel* said)
+                                   {
+                                       return said->text().contains(text);
+                                   });
     }
 
     [[nodiscard]] bool ItSaysItIsReading(const DocumentsPage& page)
@@ -573,7 +572,7 @@ void DocumentsPageTest::ThePointerSaysWhenTheReadingCarriesALink()
     reader.show();
     reader.Read(linked, 0, DocumentKind::Document, {});
 
-    QPdfView* pages = reader.findChild<QPdfView*>();
+    auto* pages = reader.findChild<QPdfView*>();
     auto* fitWidth = reader.findChild<QPushButton*>(QStringLiteral("FitTheWidth"));
 
     QVERIFY(pages != nullptr);
@@ -608,7 +607,7 @@ void DocumentsPageTest::TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked
     reader.resize(600, 400);
     reader.show();
 
-    QPdfView* pages = reader.findChild<QPdfView*>();
+    auto* pages = reader.findChild<QPdfView*>();
     QVERIFY(pages != nullptr);
 
     const auto roll = [pages]
@@ -645,10 +644,10 @@ void DocumentsPageTest::TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked
 
 namespace
 {
-    void Roll(QPdfView& pages)
+    void Roll(QPdfView& pages, const QPoint& turn = QPoint(0, 120))
     {
-        QWheelEvent turned(QPointF(100, 100), pages.viewport()->mapToGlobal(QPointF(100, 100)), {}, QPoint(0, 120),
-                           Qt::NoButton, {}, Qt::NoScrollPhase, false);
+        QWheelEvent turned(QPointF(100, 100), pages.viewport()->mapToGlobal(QPointF(100, 100)), {}, turn, Qt::NoButton,
+                           {}, Qt::NoScrollPhase, false);
 
         QCoreApplication::sendEvent(pages.viewport(), &turned);
     }
@@ -667,7 +666,7 @@ namespace
         reader.show();
         reader.Read(manual, 0, DocumentKind::Document, {});
 
-        QPdfView* pages = reader.findChild<QPdfView*>();
+        auto* pages = reader.findChild<QPdfView*>();
 
         if (pages == nullptr)
         {
@@ -689,7 +688,7 @@ void DocumentsPageTest::TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot()
     reader.SayTheGesturesOf(DocumentKind::Chart, {.wheelZooms = false, .dragMovesThePage = true});
     reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = true});
 
-    QPdfView* pages = reader.findChild<QPdfView*>();
+    auto* pages = reader.findChild<QPdfView*>();
 
     QVERIFY(pages != nullptr);
 
@@ -705,6 +704,56 @@ void DocumentsPageTest::TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot()
     Roll(*pages);
 
     QVERIFY2(pages->zoomFactor() > told, "and told to, it takes the same chart closer");
+}
+
+void DocumentsPageTest::TheWheelZoomsByHowFarItTurnedAndNotByItsSignAlone()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path chart = WrittenInto(folder, L"53117.pdf", APdfWhoseInfoSays("/Title(CV-1)"));
+
+    DocumentReader reader;
+    reader.resize(600, 400);
+    reader.show();
+
+    auto* pages = reader.findChild<QPdfView*>();
+
+    QVERIFY(pages != nullptr);
+
+    reader.Read(chart, 0, DocumentKind::Chart, {});
+
+    const qreal before = pages->zoomFactor();
+
+    Roll(*pages, QPoint(120, 0));
+
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), before),
+             "a sideways tilt turns nothing vertically, so it zooms nothing");
+
+    Roll(*pages, QPoint(0, 120));
+    Roll(*pages, QPoint(0, 120));
+
+    const qreal afterTwoNotches = pages->zoomFactor();
+
+    QVERIFY2(afterTwoNotches > before, "the notches did zoom, or the comparisons below prove nothing");
+
+    pages->setZoomFactor(before);
+    Roll(*pages, QPoint(0, 240));
+
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), afterTwoNotches),
+             "one turn of two notches zooms as far as two turns of one notch");
+
+    pages->setZoomFactor(before);
+    Roll(*pages, QPoint(0, 60));
+    Roll(*pages, QPoint(0, 60));
+    Roll(*pages, QPoint(0, 60));
+    Roll(*pages, QPoint(0, 60));
+
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), afterTwoNotches),
+             "a high-resolution wheel reporting half a notch at a time zooms by what it turned");
+
+    pages->setZoomFactor(before);
+    Roll(*pages, QPoint(0, -240));
+
+    QVERIFY2(pages->zoomFactor() < before, "turning the wheel the other way takes the chart further");
 }
 
 void DocumentsPageTest::TheWheelSwitchSaysWhichOfTheTwoKindsItIsAbout()
@@ -1022,7 +1071,7 @@ void DocumentsPageTest::TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt()
     QTreeWidgetItem* hydraulics = SectionNamed(*pane, QStringLiteral("Hydraulics"));
     hydraulics->setExpanded(true);
 
-    QMenu* menu = reader.findChild<QMenu*>();
+    auto* menu = reader.findChild<QMenu*>();
 
     QVERIFY(menu != nullptr);
     QVERIFY(!menu->isVisible());

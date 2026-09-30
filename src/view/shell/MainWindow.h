@@ -1,7 +1,6 @@
 #ifndef FS_ORGANIZER_VIEW_SHELL_MAIN_WINDOW_H
 #define FS_ORGANIZER_VIEW_SHELL_MAIN_WINDOW_H
 
-#include <cstddef>
 #include <string>
 
 #include <QtCore/QHash>

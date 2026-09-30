@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <optional>
 
 #include <QtCore/QList>

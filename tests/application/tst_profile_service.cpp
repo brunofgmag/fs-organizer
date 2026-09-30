@@ -1,7 +1,5 @@
 #include <QtTest/QtTest>
 
-#include <variant>
-
 #include "domain/journal/JournalEntries.h"
 #include "domain/journal/OperationLog.h"
 #include "application/ProfileService.h"
@@ -13,7 +11,6 @@
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
-#include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"

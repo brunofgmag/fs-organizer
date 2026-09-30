@@ -1,7 +1,6 @@
 #include "domain/tree/LibraryLookup.h"
 
 #include <algorithm>
-#include <ranges>
 #include <string>
 
 #include "domain/support/PathUtils.h"

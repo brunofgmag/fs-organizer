@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
             report = measured;
         });
 
-    const std::chrono::milliseconds elapsed =
+    const auto elapsed =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started);
 
     Out() << "\r" << QString(72, ' ') << "\r";

@@ -6,7 +6,6 @@
 
 #include "application/PresetService.h"
 #include "application/preset/PresetStartupPlan.h"
-#include "domain/tree/LibraryTrees.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
@@ -472,6 +471,7 @@ namespace
     std::vector<std::string> FolderNamesOf(const Preset& preset)
     {
         std::vector<std::string> names;
+        names.reserve(preset.entries.size());
 
         for (const PresetEntry& entry : preset.entries)
         {

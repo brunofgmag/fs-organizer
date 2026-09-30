@@ -3,7 +3,6 @@
 
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
-#include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"

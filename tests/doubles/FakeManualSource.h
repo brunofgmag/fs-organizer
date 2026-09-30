@@ -1,7 +1,6 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_MANUAL_SOURCE_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_MANUAL_SOURCE_H
 
-#include <algorithm>
 #include <filesystem>
 #include <set>
 #include <string>

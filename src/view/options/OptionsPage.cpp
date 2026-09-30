@@ -22,7 +22,6 @@
 
 #include "support/PathText.h"
 #include "view/shell/LanguageSwitch.h"
-#include "view/theme/ModernistMetrics.h"
 #include "viewmodel/SimulatorText.h"
 
 namespace

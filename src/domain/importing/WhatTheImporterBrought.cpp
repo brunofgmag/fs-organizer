@@ -17,11 +17,11 @@ std::vector<std::filesystem::path> FoldersTheImporterBrought(const std::vector<O
             continue;
         }
 
-        if (record.kind == OperationKind::ImportMoveIntoPlace)
-        {
-            brought.insert_or_assign(ComparablePath(record.target), record.target);
-        }
-        else if (record.kind == OperationKind::MoveAddon && brought.erase(ComparablePath(record.source)) == 1)
+        const bool arrivedNow = record.kind == OperationKind::ImportMoveIntoPlace;
+        const bool movedOn =
+            record.kind == OperationKind::MoveAddon && brought.erase(ComparablePath(record.source)) == 1;
+
+        if (arrivedNow || movedOn)
         {
             brought.insert_or_assign(ComparablePath(record.target), record.target);
         }

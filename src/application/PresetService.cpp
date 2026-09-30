@@ -3,13 +3,12 @@
 #include <algorithm>
 #include <vector>
 
-#include "domain/linking/EntryClassifier.h"
-
 namespace
 {
     std::vector<StartupSwitch> SwitchesFor(const PresetStartupPlan& plan)
     {
         std::vector<StartupSwitch> switches;
+        switches.reserve(plan.toTurnOff.size() + plan.toTurnOn.size());
 
         for (const StartupLine& line : plan.toTurnOff)
         {
@@ -215,6 +214,7 @@ bool PresetService::IsSatisfied(const ProfileSnapshot& snapshot,
 bool PresetService::StartupIsInPlace(const ProfileSnapshot& snapshot, const Preset& preset) const
 {
     std::vector<StartupLine> lines;
+    lines.reserve(snapshot.startupEntries.size());
     for (const StartupEntry& entry : snapshot.startupEntries)
     {
         lines.push_back(StartupLine{.label = entry.label, .path = entry.path, .enabled = entry.enabled});

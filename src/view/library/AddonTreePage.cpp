@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <ranges>
 #include <set>
 #include <string>
 
@@ -951,11 +950,11 @@ void AddonTreePage::Apply(const std::vector<const TreeNode*>& nodes, const bool 
         return;
     }
 
-    TogglePlan plan = viewModel_.PlanToggle(nodes, enable);
+    const TogglePlan plan = viewModel_.PlanToggle(nodes, enable);
     const std::vector<TakenPlace> agreedSwaps = SwapsTheUserAgreedTo(plan.swapsNeeded);
     const std::vector<StartupLine> agreedEntries = StartupEntriesTheUserAgreedTo(nodes, enable);
 
-    viewModel_.Toggle(nodes, enable, std::move(plan), agreedSwaps, agreedEntries);
+    viewModel_.Toggle(nodes, enable, plan, agreedSwaps, agreedEntries);
 
     if (enable)
     {

@@ -1,5 +1,7 @@
 #include "view/shell/LanguageSwitch.h"
 
+#include <algorithm>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QLibraryInfo>
 #include <QtCore/QLocale>
@@ -29,15 +31,11 @@ const std::array<LanguageSwitch::Offer, 2>& LanguageSwitch::Offered()
 
 bool LanguageSwitch::IsOffered(const QString& language)
 {
-    for (const Offer& offer : Offered())
-    {
-        if (language == QLatin1String(offer.code))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return std::ranges::any_of(Offered(),
+                               [&](const Offer& offer)
+                               {
+                                   return language == QLatin1String(offer.code);
+                               });
 }
 
 QString LanguageSwitch::Resolve(const QString& stored)
@@ -49,12 +47,9 @@ QString LanguageSwitch::Resolve(const QString& stored)
 
     const QString system = QLocale::system().name();
 
-    for (const Offer& offer : Offered())
+    if (IsOffered(system))
     {
-        if (system == QLatin1String(offer.code))
-        {
-            return system;
-        }
+        return system;
     }
 
     return system.startsWith(QLatin1String("pt")) ? QStringLiteral("pt_BR") : QLatin1String(kSourceLanguage);

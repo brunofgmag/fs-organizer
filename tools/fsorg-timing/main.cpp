@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <optional>
-#include <ranges>
 #include <vector>
 
 #include "application/ImportService.h"
@@ -15,7 +14,6 @@
 #include "application/SizeService.h"
 #include "application/StartupService.h"
 #include "domain/model/EnabledAddons.h"
-#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "infrastructure/sim/StartupFileLocations.h"
@@ -32,7 +30,6 @@
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ProfilePackages.h"

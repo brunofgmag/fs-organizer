@@ -159,6 +159,7 @@ namespace
     std::vector<int> Ascending()
     {
         std::vector<int> order;
+        order.reserve(static_cast<std::size_t>(kAddonsPerCategory));
 
         for (int index = 0; index < kAddonsPerCategory; ++index)
         {

@@ -17,6 +17,7 @@ namespace
     std::vector<std::filesystem::path> LibraryRoots(const SimulatorProfile& profile)
     {
         std::vector<std::filesystem::path> roots;
+        roots.reserve(profile.libraries.size());
         for (const Library& library : profile.libraries)
         {
             roots.push_back(library.path);
@@ -700,6 +701,7 @@ std::vector<LinkOperationResult> ProfileService::RunTheUndo()
 
     StartupBackup backup;
     std::vector<LinkOperationResult> results;
+    results.reserve(steps.size());
     for (const Step& step : steps)
     {
         results.push_back(Run(step, backup));

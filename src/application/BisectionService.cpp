@@ -1,6 +1,5 @@
 #include "application/BisectionService.h"
 
-#include <algorithm>
 #include <map>
 #include <set>
 #include <string>

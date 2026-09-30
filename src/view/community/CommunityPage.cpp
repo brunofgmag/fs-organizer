@@ -20,7 +20,6 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
-#include "support/SizeText.h"
 #include "view/community/ConflictDialog.h"
 #include "view/community/ImportDialog.h"
 #include "view/community/RepairDialog.h"

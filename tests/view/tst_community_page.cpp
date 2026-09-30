@@ -363,15 +363,11 @@ namespace
 
     [[nodiscard]] bool AnyOfThemWarnsAboutTheOtherProgram(const QStringList& said)
     {
-        for (const QString& line : said)
-        {
-            if (line.contains(QStringLiteral("will not know about the link")))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return std::ranges::any_of(said,
+                                   [](const QString& line)
+                                   {
+                                       return line.contains(QStringLiteral("will not know about the link"));
+                                   });
     }
 }
 

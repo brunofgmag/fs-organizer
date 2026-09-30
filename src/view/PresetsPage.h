@@ -73,7 +73,7 @@ private:
 
     void ActionToggled(const QTableWidgetItem* item);
 
-    void StartupActionToggled(int row, PresetAction wanted);
+    void StartupActionToggled(int index, PresetAction wanted);
 
     void RecaptureStartup();
 

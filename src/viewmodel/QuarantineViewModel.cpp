@@ -4,8 +4,6 @@
 #include <memory>
 #include <utility>
 
-#include "domain/support/PathUtils.h"
-
 QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                                          ProfileService& profileService,
                                          const Session& session,
@@ -21,9 +19,9 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
       model_(model),
       sizes_(sizes),
       runner_(runner),
-      working_(runner),
       caller_(sizes.NewCaller()),
-      collisionCaller_(sizes.NewCaller())
+      collisionCaller_(sizes.NewCaller()),
+      working_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this,
             [this]

@@ -72,7 +72,7 @@ public:
 
     void Toggle(const std::vector<const TreeNode*>& nodes,
                 bool enable,
-                TogglePlan plan,
+                const TogglePlan& plan,
                 const std::vector<TakenPlace>& agreedSwaps,
                 const std::vector<StartupLine>& agreedEntries);
 
@@ -166,7 +166,7 @@ private:
 
     void ApplyResults(ToggleWork& work);
 
-    void RunTheBatch(std::shared_ptr<ToggleWork> work);
+    void RunTheBatch(const std::shared_ptr<ToggleWork>& work);
 
     Session& session_;
     ProfileService& service_;

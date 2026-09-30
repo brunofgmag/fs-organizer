@@ -9,7 +9,6 @@
 
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
-#include "domain/importing/ImportPaths.h"
 #include "domain/journal/JournalEntries.h"
 #include "domain/ports/ImportedFolders.h"
 #include "domain/support/PathUtils.h"
@@ -503,6 +502,7 @@ void LinkPlanOnRealDiskTest::AFullReadClassifiesEveryKindOfEntryOnRealJunctions(
     }
 
     std::vector<std::filesystem::path> places;
+    places.reserve(expected.size());
     for (const Expected& want : expected)
     {
         places.push_back(want.place);

@@ -134,7 +134,7 @@ namespace
         case Coupling::NotYetMeasured: break;
         }
 
-        return QString();
+        return {};
     }
 
     [[nodiscard]] QString HowItIsHeld(const MemberOnScreen& member)
@@ -194,7 +194,7 @@ namespace
         case DriftKind::AnAddonJoinedTheLibrary: return QObject::tr("an addon was added to the library");
         }
 
-        return QString();
+        return {};
     }
 }
 

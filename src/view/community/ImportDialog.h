@@ -2,7 +2,6 @@
 #define FS_ORGANIZER_VIEW_COMMUNITY_IMPORT_DIALOG_H
 
 #include <cstdint>
-#include <filesystem>
 #include <vector>
 
 #include <QtWidgets/QDialog>

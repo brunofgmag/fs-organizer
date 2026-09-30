@@ -2,7 +2,6 @@
 
 #include "application/LibraryOrganizer.h"
 #include "application/Session.h"
-#include "domain/importing/ExternalSidecar.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/support/PathUtils.h"

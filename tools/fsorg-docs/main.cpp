@@ -228,12 +228,12 @@ namespace
     {
         if (chart.revision == ChartRevision::Previous)
         {
-            return QString("(previous edition)");
+            return "(previous edition)";
         }
 
         if (chart.name.empty())
         {
-            return QString("(unnamed)");
+            return "(unnamed)";
         }
 
         return QString::fromStdString(chart.name);
@@ -335,6 +335,7 @@ int main(int argc, char* argv[])
     const DocumentService documents(filesystemProbe, catalogueParser, chartVersions);
 
     std::vector<Library> libraries;
+    libraries.reserve(arguments.libraries.size());
     for (const std::filesystem::path& path : arguments.libraries)
     {
         libraries.push_back({.id = AsUtf8(path), .path = path, .label = AsUtf8(path.filename())});

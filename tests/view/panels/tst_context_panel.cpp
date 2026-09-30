@@ -544,6 +544,7 @@ void ContextPanelTest::TheRailKeepsTheLeftLineOnTheColumnOfTheOpenPanel()
 
     const std::vector<qreal> ratios{1.0, 1.25, 1.5, 1.75};
     std::vector<std::vector<int>> whenOpen;
+    whenOpen.reserve(ratios.size());
     for (const qreal ratio : ratios)
     {
         whenOpen.push_back(ColumnsOfTheRuleIn(PhotographAt(panel, ratio), panel, *strip, strip->height() / 2));

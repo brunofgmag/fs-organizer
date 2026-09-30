@@ -1,14 +1,12 @@
 #include "application/LibraryOrganizer.h"
 
 #include <map>
-#include <ranges>
 #include <string>
 
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/WhatTheImporterBrought.h"
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/CategoryMarker.h"
-#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"

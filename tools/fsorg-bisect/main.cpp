@@ -4,12 +4,10 @@
 #include <algorithm>
 #include <chrono>
 #include <optional>
-#include <string>
 #include <vector>
 
 #include "application/BisectionService.h"
 #include "application/model/AppSettings.h"
-#include "domain/tree/LibraryTrees.h"
 #include "infrastructure/bisection/JsonBisectionStore.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -386,7 +384,11 @@ int main(int argc, char* argv[])
         ReportUnits(units);
 
         Out() << "\nthe coupling scan of " << enabled.size() << " enabled addons took "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(ended - started).count() << " ms\n";
+              << std::chrono::duration_cast<std::chrono::milliseconds>(ended - started).count() << " ms ("
+              << std::chrono::duration_cast<std::chrono::milliseconds>(grouped - started).count()
+              << " ms for the coupling facts, "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(ended - grouped).count()
+              << " ms for the grouping)\n";
         Out().flush();
 
         return 0;

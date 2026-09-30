@@ -5,7 +5,6 @@
 #include <QtWidgets/QLabel>
 
 #include <cstdint>
-#include <filesystem>
 
 #include "application/model/RestorePlan.h"
 #include "support/SizeText.h"

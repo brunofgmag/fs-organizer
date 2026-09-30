@@ -1,7 +1,6 @@
 #include "viewmodel/CoverageViewModel.h"
 
 #include <algorithm>
-#include <filesystem>
 #include <memory>
 #include <set>
 #include <string>

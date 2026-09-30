@@ -20,6 +20,7 @@ namespace
     std::vector<std::filesystem::path> FoldersIn(const DeletionPlan& plan)
     {
         std::vector<std::filesystem::path> folders;
+        folders.reserve(plan.addons.size());
 
         for (const AddonToDelete& addon : plan.addons)
         {
@@ -180,7 +181,8 @@ QString DeleteDialog::WhatTheRecycleBinWillNotTake() const
         }
     }
 
-    return tr("%n selected addon cannot go to the Recycle Bin and will stay in the library:", nullptr, refused.size())
+    return tr("%n selected addon cannot go to the Recycle Bin and will stay in the library:", nullptr,
+              static_cast<int>(refused.size()))
         + QStringLiteral("\n") + refused.join(QStringLiteral("\n"));
 }
 

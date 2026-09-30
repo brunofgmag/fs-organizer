@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <utility>
 
 #include "domain/importing/ImportPaths.h"
 #include "domain/support/PathUtils.h"

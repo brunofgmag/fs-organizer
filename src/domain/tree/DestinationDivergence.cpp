@@ -1,7 +1,5 @@
 #include "domain/tree/DestinationDivergence.h"
 
-#include <algorithm>
-#include <ranges>
 #include <string>
 
 #include "domain/linking/EntryClassifier.h"

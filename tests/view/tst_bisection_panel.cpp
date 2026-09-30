@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include "domain/importing/ImportPaths.h"
 #include "tests/doubles/FakeBisectionStore.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -157,8 +156,10 @@ namespace
     {
         const std::string model = "SimObjects/Airplanes/Shared_Model";
 
+        const std::string modelFolder = model + "/";
+
         for (const std::string& level :
-             {std::string("SimObjects"), std::string("SimObjects/Airplanes"), model, model + "/" + written})
+             {std::string("SimObjects"), std::string("SimObjects/Airplanes"), model, modelFolder + written})
         {
             f.fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8(level)));
         }

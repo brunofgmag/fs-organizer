@@ -1,11 +1,9 @@
 #include "application/Session.h"
 
 #include <algorithm>
-#include <ranges>
 #include <utility>
 
 #include "domain/importing/CopyConflicts.h"
-#include "domain/linking/EntryClassifier.h"
 #include "domain/profile/ExternalOrigins.h"
 #include "domain/profile/OrphanOverrides.h"
 #include "domain/profile/ProfileEdits.h"
@@ -240,6 +238,7 @@ namespace
     std::vector<std::filesystem::path> LibraryPathsOf(const SimulatorProfile& profile)
     {
         std::vector<std::filesystem::path> paths;
+        paths.reserve(profile.libraries.size());
 
         for (const Library& library : profile.libraries)
         {

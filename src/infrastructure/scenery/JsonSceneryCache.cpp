@@ -1,7 +1,6 @@
 #include "infrastructure/scenery/JsonSceneryCache.h"
 
 #include <chrono>
-#include <cstdint>
 #include <fstream>
 #include <iterator>
 #include <mutex>
@@ -87,7 +86,7 @@ namespace
                           .codes = {},
                           .anIdentifierDidNotDecode = object.value(kDidNotDecode).toBool()};
 
-        for (const QJsonValue& code : object.value(kCodes).toArray())
+        for (const QJsonValue code : object.value(kCodes).toArray())
         {
             file.codes.push_back(code.toString().toStdString());
         }
@@ -115,14 +114,14 @@ void JsonSceneryCache::Read()
     const QJsonDocument document =
         QJsonDocument::fromJson(QByteArray::fromRawData(bytes.data(), static_cast<qsizetype>(bytes.size())));
 
-    for (const QJsonValue& value : document.object().value(kAddons).toArray())
+    for (const QJsonValue value : document.object().value(kAddons).toArray())
     {
         const QJsonObject addon = value.toObject();
 
         RememberedScenery scenery{.readAt = MomentOf(static_cast<qint64>(addon.value(kReadAt).toDouble())),
                                   .files = {}};
 
-        for (const QJsonValue& file : addon.value(kFiles).toArray())
+        for (const QJsonValue file : addon.value(kFiles).toArray())
         {
             scenery.files.push_back(FileFromJson(file.toObject()));
         }

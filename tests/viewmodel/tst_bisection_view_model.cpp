@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "domain/importing/ImportPaths.h"
 #include "tests/doubles/FakeBisectionStore.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"

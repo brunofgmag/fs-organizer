@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <cstddef>
-#include <cstdint>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -67,7 +66,7 @@ namespace
     {
         std::vector<std::filesystem::path> paths;
 
-        for (const QJsonValue& path : read)
+        for (const QJsonValue path : read)
         {
             paths.push_back(PathFromUtf8(path.toString().toStdString()));
         }
@@ -130,13 +129,13 @@ namespace
                                   .entriesInTheCatalogue = static_cast<std::size_t>(object.value(kEntries).toDouble()),
                                   .types = {}};
 
-        for (const QJsonValue& value : object.value(kTypes).toArray())
+        for (const QJsonValue value : object.value(kTypes).toArray())
         {
             const QJsonObject read = value.toObject();
 
             ChartsOfAType group{.type = read.value(kType).toString().toStdString(), .charts = {}};
 
-            for (const QJsonValue& chart : read.value(kCharts).toArray())
+            for (const QJsonValue chart : read.value(kCharts).toArray())
             {
                 group.charts.push_back(ChartFromJson(chart.toObject()));
             }
@@ -178,7 +177,7 @@ namespace
                                  .airports = {},
                                  .digest = object.value(kDigest).toString().toStdString()};
 
-        for (const QJsonValue& airport : object.value(kAirports).toArray())
+        for (const QJsonValue airport : object.value(kAirports).toArray())
         {
             addon.airports.push_back(AirportFromJson(airport.toObject()));
         }
@@ -213,7 +212,7 @@ std::optional<RememberedDocuments> JsonDocumentIndexCache::Remember() const
 
     RememberedDocuments index{.readAt = MomentOf(static_cast<qint64>(root.value(kReadAt).toDouble())), .addons = {}};
 
-    for (const QJsonValue& addon : root.value(kAddons).toArray())
+    for (const QJsonValue addon : root.value(kAddons).toArray())
     {
         index.addons.push_back(AddonFromJson(addon.toObject()));
     }

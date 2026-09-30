@@ -1,6 +1,5 @@
 #include "domain/tree/AddonTree.h"
 
-#include "domain/model/AddonId.h"
 #include "domain/support/PathUtils.h"
 
 namespace

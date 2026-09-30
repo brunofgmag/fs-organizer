@@ -8,7 +8,6 @@
 #include <QtCore/QString>
 
 #include "application/BisectionService.h"
-#include "domain/importing/ImportPaths.h"
 #include "tests/doubles/FakeBisectionStore.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -239,6 +238,7 @@ base_container = "..\TFDi_Design_MD-11F_PW"
     [[nodiscard]] std::vector<std::string> FolderNamesOf(const std::vector<PresetEntry>& entries)
     {
         std::vector<std::string> names;
+        names.reserve(entries.size());
 
         for (const PresetEntry& entry : entries)
         {

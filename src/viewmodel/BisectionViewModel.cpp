@@ -11,6 +11,7 @@ namespace
     [[nodiscard]] std::vector<MemberOnScreen> MembersOf(const SearchUnit& unit)
     {
         std::vector<MemberOnScreen> members;
+        members.reserve(unit.writingApart.size());
 
         for (const std::filesystem::path& folder : unit.writingApart)
         {

@@ -6,7 +6,6 @@
 #include <ranges>
 #include <set>
 
-#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 
 namespace

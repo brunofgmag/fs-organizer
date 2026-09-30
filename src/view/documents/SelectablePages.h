@@ -44,7 +44,7 @@ public:
 
     void FollowTheDocument(QPdfDocument* document);
 
-    [[nodiscard]] WhereAPageSits WhereThePageSits(int page) const;
+    [[nodiscard]] WhereAPageSits WhereThePageSits(int wanted) const;
 
     void StartSelectingAt(const QPoint& where);
 

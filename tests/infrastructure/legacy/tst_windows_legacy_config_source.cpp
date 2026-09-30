@@ -36,7 +36,7 @@ namespace
 
         [[nodiscard]] std::filesystem::path Root() const
         {
-            return std::filesystem::path(directory.path().toStdString());
+            return directory.path().toStdString();
         }
 
         [[nodiscard]] std::filesystem::path Folder(const std::string& name) const

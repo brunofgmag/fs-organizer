@@ -64,6 +64,7 @@ namespace
     void KeepAndWriteFromEveryThread(JsonSceneryCache& cache, const std::size_t writeEvery)
     {
         std::vector<std::thread> threads;
+        threads.reserve(kThreads);
 
         for (std::size_t thread = 0; thread < kThreads; ++thread)
         {

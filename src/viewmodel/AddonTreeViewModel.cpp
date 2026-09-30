@@ -241,7 +241,7 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
                                 const bool enable,
-                                TogglePlan plan,
+                                const TogglePlan& plan,
                                 const std::vector<TakenPlace>& agreedSwaps,
                                 const std::vector<StartupLine>& agreedEntries)
 {
@@ -304,7 +304,7 @@ std::shared_ptr<AddonTreeViewModel::ToggleWork> AddonTreeViewModel::WorkOnTheSho
     return work;
 }
 
-void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
+void AddonTreeViewModel::RunTheBatch(const std::shared_ptr<ToggleWork>& work)
 {
     toggling_.Run(
         [this, work]

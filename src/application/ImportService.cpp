@@ -921,6 +921,7 @@ std::vector<StagingLeftover> ImportService::WhatAnImportLeftBehind(const Simulat
 
     std::vector<StagingLeftover> leftovers;
     std::vector<std::filesystem::path> pending;
+    pending.reserve(profile.libraries.size());
 
     for (const Library& library : profile.libraries)
     {

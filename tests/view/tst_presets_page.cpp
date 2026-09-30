@@ -588,7 +588,7 @@ void PresetsPageTest::TheStartupExplanationKeepsAReadingMeasure()
 
     QVERIFY(QTest::qWaitForWindowExposed(&page));
 
-    QPushButton* startup = page.findChild<QPushButton*>(QStringLiteral("PresetStartupTab"));
+    auto* startup = page.findChild<QPushButton*>(QStringLiteral("PresetStartupTab"));
     const QCheckBox* governs = page.findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup"));
 
     QVERIFY(startup != nullptr && governs != nullptr);
