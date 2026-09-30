@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.56.1](https://github.com/brunofgmag/fs-organizer/compare/v0.56.0...v0.56.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* zoom by how far the wheel turned and clear the clang-tidy findings ([f3591fa](https://github.com/brunofgmag/fs-organizer/commit/f3591faaee1e37b29b9cf933ad72819c7d1c58a2)) ([634c4a3](https://github.com/brunofgmag/fs-organizer/commit/634c4a3f11d948bc59ebf2c8fdbc6c4be3eb1767))
+
+
+### Performance Improvements
+
+* move the entries reads off the UI thread and fix what the performance audit found ([#199](https://github.com/brunofgmag/fs-organizer/issues/199)) ([634c4a3](https://github.com/brunofgmag/fs-organizer/commit/634c4a3f11d948bc59ebf2c8fdbc6c4be3eb1767))
+* read the entries off the UI thread and fix the defects the performance audit found ([81feb43](https://github.com/brunofgmag/fs-organizer/commit/81feb4376953e82ee0d1d67959bc7ee7e32fa7f2)) ([634c4a3](https://github.com/brunofgmag/fs-organizer/commit/634c4a3f11d948bc59ebf2c8fdbc6c4be3eb1767))
+
 ## [0.56.0](https://github.com/brunofgmag/fs-organizer/compare/v0.55.0...v0.56.0) (2026-09-30)
 
 
