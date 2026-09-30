@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.56.0](https://github.com/brunofgmag/fs-organizer/compare/v0.55.0...v0.56.0) (2026-09-30)
+
+
+* filter the library by state, speed up toggling and line the side panels up with their tables ([#197](https://github.com/brunofgmag/fs-organizer/issues/197)) ([3f92b4f](https://github.com/brunofgmag/fs-organizer/commit/3f92b4f669ba1dd869deda740984a096b566dc45))
+
+
+### Features
+
+* filter the library by state, speed up toggling and line the side panels up with their tables ([03e6b58](https://github.com/brunofgmag/fs-organizer/commit/03e6b5884146be885f4add1b92e4365126d34da7)) ([3f92b4f](https://github.com/brunofgmag/fs-organizer/commit/3f92b4f669ba1dd869deda740984a096b566dc45))
+
 ## [0.55.0](https://github.com/brunofgmag/fs-organizer/compare/v0.54.13...v0.55.0) (2026-09-26)
 
 
