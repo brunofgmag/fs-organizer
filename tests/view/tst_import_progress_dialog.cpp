@@ -47,9 +47,9 @@ namespace
         const QList<QLabel*> labels = dialog.findChildren<QLabel*>();
         const QList<QProgressBar*> bars = dialog.findChildren<QProgressBar*>();
 
-        for (int at = 0; at < labels.size(); ++at)
+        for (const QLabel* label : labels)
         {
-            if (labels[at]->text() != wanted)
+            if (label->text() != wanted)
             {
                 continue;
             }
@@ -147,7 +147,7 @@ void ImportProgressDialogTest::CancellingIsNotPaintedAsTheThingToDo()
     dialog.setStyleSheet(ModernistStyleSheet(Qt::ColorScheme::Dark));
     dialog.show();
 
-    QPushButton* cancel = dialog.findChild<QPushButton*>();
+    auto* cancel = dialog.findChild<QPushButton*>();
     QVERIFY(cancel != nullptr);
 
     cancel->resize(160, 30);

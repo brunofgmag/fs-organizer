@@ -62,6 +62,7 @@ private:
     CommunityModel& model_;
     SizeService& sizes_;
     MeasurementCaller caller_;
+    MeasurementCaller foldersCaller_;
     AttentionBreakdown breakdown_;
 };
 

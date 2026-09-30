@@ -1,6 +1,5 @@
 #include "viewmodel/AddonTreeModel.h"
 
-#include <algorithm>
 #include <set>
 #include <string>
 
@@ -350,7 +349,7 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
             return {};
         }
 
-        return QVariant(reading.conflict->theProvenanceIsAnotherProgram ? tr("Two copies") : tr("In conflict"));
+        return reading.conflict->theProvenanceIsAnotherProgram ? tr("Two copies") : tr("In conflict");
     }
 
     if (role == TagToneRole)

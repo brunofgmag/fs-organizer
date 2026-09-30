@@ -19,6 +19,7 @@
 #include "application/ports/BackgroundRunner.h"
 #include "application/ports/LoadingReportSource.h"
 #include "domain/ports/Clock.h"
+#include "viewmodel/SessionNotifier.h"
 
 struct ClassificationCount
 {
@@ -51,6 +52,7 @@ public:
                          SizeService& sizes,
                          SceneryService& scenery,
                          Session& session,
+                         const SessionNotifier& notifier,
                          const LoadingReportSource& loading,
                          const Clock& clock,
                          BackgroundRunner& runner,
@@ -114,6 +116,8 @@ private:
 
     void WeighTheQuarantine();
 
+    void LandTheQuarantine(const SimulatorProfile& profile, const std::vector<QuarantinedItem>& items);
+
     void Ask(Freshness freshness);
 
     void Walk(const std::vector<AddonToRead>& addons, SceneryFreshness freshness);
@@ -126,6 +130,7 @@ private:
     const Clock& clock_;
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
+    MeasurementCaller quarantineCaller_;
     std::vector<ClassificationCount> counts_;
     std::vector<DestinationEntry> broken_;
     std::vector<DestinationEntry> unavailable_;
@@ -138,6 +143,7 @@ private:
     std::optional<std::chrono::system_clock::time_point> sceneryReadAt_;
     bool measuring_ = false;
     bool reading_ = false;
+    int weighing_ = 0;
     std::atomic<bool> cancelling_ = false;
     std::atomic<bool> stopReading_ = false;
 };

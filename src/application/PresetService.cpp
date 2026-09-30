@@ -3,13 +3,12 @@
 #include <algorithm>
 #include <vector>
 
-#include "domain/linking/EntryClassifier.h"
-
 namespace
 {
     std::vector<StartupSwitch> SwitchesFor(const PresetStartupPlan& plan)
     {
         std::vector<StartupSwitch> switches;
+        switches.reserve(plan.toTurnOff.size() + plan.toTurnOn.size());
 
         for (const StartupLine& line : plan.toTurnOff)
         {
@@ -201,12 +200,21 @@ bool PresetService::IsSatisfied(const SimulatorProfile& profile,
                                 const ProfileSnapshot& snapshot,
                                 const Preset& preset) const
 {
-    if (!PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled))
-    {
-        return false;
-    }
+    return PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled)
+        && StartupIsInPlace(snapshot, preset);
+}
 
+bool PresetService::IsSatisfied(const ProfileSnapshot& snapshot,
+                                const Preset& preset,
+                                const PresetPlan& replacePlan) const
+{
+    return AddonsThatWouldChange(replacePlan) == 0 && StartupIsInPlace(snapshot, preset);
+}
+
+bool PresetService::StartupIsInPlace(const ProfileSnapshot& snapshot, const Preset& preset) const
+{
     std::vector<StartupLine> lines;
+    lines.reserve(snapshot.startupEntries.size());
     for (const StartupEntry& entry : snapshot.startupEntries)
     {
         lines.push_back(StartupLine{.label = entry.label, .path = entry.path, .enabled = entry.enabled});
@@ -282,7 +290,7 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
                                        const ApplyMode mode,
                                        const bool recordReturn) const
 {
-    const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile);
+    const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile, snapshot.libraries);
     const PresetApplyPlan plan = Plan(profile, snapshot, preset, mode, onDisk.enabled);
 
     if (recordReturn)

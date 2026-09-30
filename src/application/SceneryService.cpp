@@ -6,6 +6,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <utility>
 
 #include "domain/model/SceneryFolder.h"
 #include "domain/support/PathUtils.h"
@@ -25,6 +26,14 @@ namespace
     [[nodiscard]] std::span<const std::uint8_t> AsBytes(const std::string& text)
     {
         return {reinterpret_cast<const std::uint8_t*>(text.data()), text.size()};
+    }
+
+    [[nodiscard]] SceneryOfAnAddon SceneryFrom(const AddonToRead& addon, std::vector<SceneryCodes> files)
+    {
+        return {.addon = addon.addon,
+                .resolvedPath = addon.folder,
+                .files = std::move(files),
+                .itIsNavigationData = addon.itIsNavigationData};
     }
 }
 
@@ -59,11 +68,12 @@ std::vector<std::filesystem::path> SceneryService::SceneryFoldersOf(const std::f
     return folders;
 }
 
-std::vector<std::filesystem::path> SceneryService::SceneryFilesOf(const std::filesystem::path& addonFolder) const
+std::vector<std::filesystem::path>
+SceneryService::SceneryFilesIn(const std::vector<std::filesystem::path>& sceneryFolders) const
 {
     std::vector<std::filesystem::path> files;
 
-    for (const std::filesystem::path& folder : SceneryFoldersOf(addonFolder))
+    for (const std::filesystem::path& folder : sceneryFolders)
     {
         for (const std::filesystem::path& file : filesystemProbe_.ChildFiles(folder))
         {
@@ -77,11 +87,11 @@ std::vector<std::filesystem::path> SceneryService::SceneryFilesOf(const std::fil
     return files;
 }
 
-std::vector<SceneryCodes> SceneryService::ReadTheFilesOf(const std::filesystem::path& addonFolder) const
+std::vector<SceneryCodes> SceneryService::ReadTheFilesIn(const std::vector<std::filesystem::path>& sceneryFolders) const
 {
     std::vector<SceneryCodes> read;
 
-    for (const std::filesystem::path& file : SceneryFilesOf(addonFolder))
+    for (const std::filesystem::path& file : SceneryFilesIn(sceneryFolders))
     {
         const std::optional<std::string> head = filesystemProbe_.FirstBytesOf(file, kEnoughForTheSectionTable);
         if (!head.has_value() || !parser_.CouldCarryAnAirportSection(AsBytes(*head)))
@@ -103,11 +113,12 @@ std::vector<SceneryCodes> SceneryService::ReadTheFilesOf(const std::filesystem::
 }
 
 std::optional<std::chrono::system_clock::time_point>
-SceneryService::WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder) const
+SceneryService::WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder,
+                                          const std::vector<std::filesystem::path>& sceneryFolders) const
 {
     std::optional<std::chrono::system_clock::time_point> newest = filesystemProbe_.LastWriteTime(addonFolder);
 
-    for (const std::filesystem::path& folder : SceneryFoldersOf(addonFolder))
+    for (const std::filesystem::path& folder : sceneryFolders)
     {
         const std::optional<std::chrono::system_clock::time_point> changed = filesystemProbe_.LastWriteTime(folder);
 
@@ -148,10 +159,7 @@ std::vector<SceneryOfAnAddon> SceneryService::WhatIsAlreadyKnown(const std::vect
 
         if (remembered.has_value())
         {
-            known.push_back({.addon = addon.addon,
-                             .resolvedPath = addon.folder,
-                             .files = remembered->files,
-                             .itIsNavigationData = addon.itIsNavigationData});
+            known.push_back(SceneryFrom(addon, remembered->files));
         }
     }
 
@@ -167,27 +175,44 @@ SceneryOfAnAddon SceneryService::SceneryOf(const AddonToRead& addon, const Scene
     return scenery;
 }
 
-SceneryOfAnAddon SceneryService::ReadOne(const AddonToRead& addon, const SceneryFreshness freshness)
+std::optional<RememberedScenery>
+SceneryService::WhatIsStillFresh(const std::filesystem::path& addonFolder,
+                                 const std::vector<std::filesystem::path>& sceneryFolders) const
 {
-    const std::optional<RememberedScenery> remembered =
-        freshness == SceneryFreshness::ReadAgain ? std::nullopt : cache_.Remember(addon.folder);
-    const std::optional<std::chrono::system_clock::time_point> changed = WhenTheSceneryLastChanged(addon.folder);
+    std::optional<RememberedScenery> remembered = cache_.Remember(addonFolder);
 
-    if (remembered.has_value() && changed.has_value() && *changed <= remembered->readAt)
+    if (!remembered.has_value())
     {
-        return {.addon = addon.addon,
-                .resolvedPath = addon.folder,
-                .files = remembered->files,
-                .itIsNavigationData = addon.itIsNavigationData};
+        return std::nullopt;
     }
 
-    const RememberedScenery read{.readAt = clock_.Now(), .files = ReadTheFilesOf(addon.folder)};
+    const std::optional<std::chrono::system_clock::time_point> changed =
+        WhenTheSceneryLastChanged(addonFolder, sceneryFolders);
+
+    if (!changed.has_value() || *changed > remembered->readAt)
+    {
+        return std::nullopt;
+    }
+
+    return remembered;
+}
+
+SceneryOfAnAddon SceneryService::ReadOne(const AddonToRead& addon, const SceneryFreshness freshness)
+{
+    const std::vector<std::filesystem::path> sceneryFolders = SceneryFoldersOf(addon.folder);
+
+    if (freshness != SceneryFreshness::ReadAgain)
+    {
+        if (std::optional<RememberedScenery> fresh = WhatIsStillFresh(addon.folder, sceneryFolders); fresh.has_value())
+        {
+            return SceneryFrom(addon, std::move(fresh->files));
+        }
+    }
+
+    RememberedScenery read{.readAt = clock_.Now(), .files = ReadTheFilesIn(sceneryFolders)};
     cache_.Keep(addon.folder, read);
 
-    return {.addon = addon.addon,
-            .resolvedPath = addon.folder,
-            .files = read.files,
-            .itIsNavigationData = addon.itIsNavigationData};
+    return SceneryFrom(addon, std::move(read.files));
 }
 
 std::vector<SceneryOfAnAddon> SceneryService::SceneryOfEach(const std::vector<AddonToRead>& addons,

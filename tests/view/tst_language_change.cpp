@@ -29,28 +29,22 @@ namespace
 
     bool HasActionLabelled(const QWidget& strip, const QString& text)
     {
-        for (const QPushButton* button : strip.findChildren<QPushButton*>())
-        {
-            if (button->text() == text)
-            {
-                return true;
-            }
-        }
+        const QList<QPushButton*> buttons = strip.findChildren<QPushButton*>();
 
-        return false;
+        return std::ranges::any_of(buttons,
+                                   [&](const QPushButton* button)
+                                   {
+                                       return button->text() == text;
+                                   });
     }
 
     bool Ships(const QString& language)
     {
-        for (const LanguageSwitch::Offer& offer : LanguageSwitch::Offered())
-        {
-            if (language == QLatin1String(offer.code))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return std::ranges::any_of(LanguageSwitch::Offered(),
+                                   [&](const LanguageSwitch::Offer& offer)
+                                   {
+                                       return language == QLatin1String(offer.code);
+                                   });
     }
 }
 

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <string>
-#include <variant>
 
 #include "domain/support/PathUtils.h"
 

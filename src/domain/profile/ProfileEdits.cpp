@@ -1,6 +1,5 @@
 #include "domain/profile/ProfileEdits.h"
 
-#include <algorithm>
 #include <string>
 
 #include "domain/support/PathUtils.h"

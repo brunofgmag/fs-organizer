@@ -2,7 +2,6 @@
 #define FS_ORGANIZER_DOMAIN_LEGACY_LEGACY_INSTALLATION_H
 
 #include <filesystem>
-#include <string>
 #include <vector>
 
 struct LegacyInstallation

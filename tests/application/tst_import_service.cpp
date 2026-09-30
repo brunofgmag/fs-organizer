@@ -1,8 +1,6 @@
 #include <QtTest/QtTest>
 
 #include <algorithm>
-#include <ranges>
-#include <variant>
 
 #include "domain/journal/OperationLog.h"
 #include "application/ImportService.h"

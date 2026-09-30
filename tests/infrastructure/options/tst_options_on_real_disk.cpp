@@ -54,7 +54,7 @@ namespace
 
         [[nodiscard]] std::filesystem::path Root() const
         {
-            return std::filesystem::path(directory.path().toStdWString());
+            return directory.path().toStdWString();
         }
 
         [[nodiscard]] std::filesystem::path Library() const

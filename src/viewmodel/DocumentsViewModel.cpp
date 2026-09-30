@@ -16,6 +16,7 @@ namespace
     constexpr auto kTheProgramItself = "fs-organizer";
     constexpr auto kTheManual = "manual";
     const QString kSeparator = QString::fromUtf8(" · ");
+    constexpr std::chrono::milliseconds kQuietBeforeThePageIsWritten{2000};
 
     [[nodiscard]] QString WhatTheManualStateMeans(const ManualState state)
     {
@@ -230,6 +231,41 @@ namespace
     {
         return !addon.documents.empty() || !addon.airports.empty();
     }
+
+    [[nodiscard]] std::size_t ChartLinesOf(const DocumentsOfAnAddon& addon)
+    {
+        std::size_t lines = 0;
+
+        for (const ChartsOfAnAirport& airport : addon.airports)
+        {
+            for (const ChartsOfAType& type : airport.types)
+            {
+                lines += type.charts.size();
+            }
+        }
+
+        return lines;
+    }
+
+    void ChangeTheDocument(AppSettings& settings,
+                           const std::string& addon,
+                           const std::string& named,
+                           const std::function<void(ReadDocument&)>& change)
+    {
+        for (ReadDocument& known : settings.documents)
+        {
+            if (known.addon == addon && known.document == named)
+            {
+                change(known);
+
+                return;
+            }
+        }
+
+        ReadDocument fresh{.addon = addon, .document = named};
+        change(fresh);
+        settings.documents.push_back(std::move(fresh));
+    }
 }
 
 DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
@@ -251,6 +287,11 @@ DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
       clock_(clock),
       reading_(runner)
 {
+    quietAfterTheLastTurn_.setSingleShot(true);
+    quietAfterTheLastTurn_.setInterval(kQuietBeforeThePageIsWritten);
+
+    connect(&quietAfterTheLastTurn_, &QTimer::timeout, this, &DocumentsViewModel::FlushThePage);
+
     if (manualDelivery_ == ManualDelivery::NotShipped)
     {
         manualState_ = ManualState::NotShipped;
@@ -261,6 +302,8 @@ DocumentsViewModel::DocumentsViewModel(const DocumentService& documents,
 
 DocumentsViewModel::~DocumentsViewModel()
 {
+    FlushThePage();
+
     manual_.RemoveObserver(this);
 }
 
@@ -367,11 +410,30 @@ void DocumentsViewModel::ShowWhatWasKept()
     readAt_ = known->readAt;
     itWasRead_ = true;
 
+    CountWhatIsShown();
+
     emit Indexed();
 }
 
-std::vector<DocumentsOfAnAddon> DocumentsViewModel::WhatEachAddonCarries(const std::vector<Library>& libraries,
-                                                                         const std::vector<AddonToRead>& addons,
+void DocumentsViewModel::CountWhatIsShown()
+{
+    documentLines_ = 0;
+    chartLines_ = 0;
+
+    for (const DocumentsOfAnAddon& addon : WhatToShow())
+    {
+        CountTheLinesOf(addon);
+    }
+}
+
+void DocumentsViewModel::CountTheLinesOf(const DocumentsOfAnAddon& addon)
+{
+    documentLines_ += addon.documents.size();
+    chartLines_ += ChartLinesOf(addon);
+}
+
+std::vector<DocumentsOfAnAddon> DocumentsViewModel::WhatEachAddonCarries(const std::vector<AddonToRead>& addons,
+                                                                         const std::vector<DocumentsOfAnAddon>& before,
                                                                          bool& stopped)
 {
     const std::vector<SceneryOfAnAddon> scenery = scenery_.SceneryOfEach(addons,
@@ -381,7 +443,7 @@ std::vector<DocumentsOfAnAddon> DocumentsViewModel::WhatEachAddonCarries(const s
                                                                          });
 
     return documents_.IndexWhile(
-        libraries, AirportsOfEachAddon(scenery),
+        addons, AirportsOfEachAddon(scenery), before,
         [this, &stopped](const DocumentsOfAnAddon& addon, const std::size_t indexed, const std::size_t outOf)
         {
             QMetaObject::invokeMethod(this,
@@ -402,7 +464,14 @@ void DocumentsViewModel::TakeTheAddonThatArrived(const DocumentsOfAnAddon& addon
 {
     arriving_.push_back(addon);
 
-    if (!indexed_.empty() || !ItPutsALineOnTheScreen(addon))
+    if (!indexed_.empty())
+    {
+        return;
+    }
+
+    CountTheLinesOf(addon);
+
+    if (!ItPutsALineOnTheScreen(addon))
     {
         return;
     }
@@ -438,6 +507,8 @@ void DocumentsViewModel::TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found,
     readAt_ = clock_.Now();
     itWasRead_ = true;
 
+    CountWhatIsShown();
+
     cache_.Keep({.readAt = *readAt_, .addons = indexed_});
 
     emit Indexed();
@@ -450,9 +521,9 @@ void DocumentsViewModel::ReadTheLibrary()
         return;
     }
 
-    const std::vector<Library> libraries = session_.Profile().libraries;
     const std::vector<AddonToRead> addons = SceneryService::AddonsOf(session_.Profile(), session_.Snapshot());
 
+    auto before = std::make_shared<const std::vector<DocumentsOfAnAddon>>(indexed_);
     auto found = std::make_shared<std::vector<DocumentsOfAnAddon>>();
     auto stopped = std::make_shared<bool>(false);
 
@@ -462,11 +533,13 @@ void DocumentsViewModel::ReadTheLibrary()
             stop_ = false;
             arriving_.clear();
 
+            CountWhatIsShown();
+
             emit ReadingChanged();
         },
-        [this, libraries, addons, found, stopped]
+        [this, addons, before, found, stopped]
         {
-            *found = WhatEachAddonCarries(libraries, addons, *stopped);
+            *found = WhatEachAddonCarries(addons, *before, *stopped);
         },
         [this, found, stopped]
         {
@@ -682,14 +755,7 @@ std::vector<DocumentGroup> DocumentsViewModel::GroupsOf(const DocumentPanel pane
 
 std::size_t DocumentsViewModel::CountOf(const DocumentPanel panel) const
 {
-    std::size_t lines = 0;
-
-    for (const DocumentGroup& group : panel == DocumentPanel::Documents ? TheDocuments() : TheCharts())
-    {
-        lines += LinesUnder(group);
-    }
-
-    return lines;
+    return panel == DocumentPanel::Documents ? documentLines_ : chartLines_;
 }
 
 std::optional<DocumentPlace> DocumentsViewModel::WhereToFind(const std::string& addon) const
@@ -735,23 +801,51 @@ void DocumentsViewModel::Remember(const DocumentLine& line, const std::function<
 {
     const std::string addon = line.addon;
     const std::string named = AsUtf8(line.document);
+    const std::optional<PendingPage> turned = TakeThePendingPage();
 
     session_.Rewrite(
-        [&addon, &named, &change](AppSettings& settings)
+        [&addon, &named, &change, &turned](AppSettings& settings)
         {
-            for (ReadDocument& known : settings.documents)
+            if (turned.has_value())
             {
-                if (known.addon == addon && known.document == named)
-                {
-                    change(known);
-
-                    return true;
-                }
+                WriteThePage(settings, *turned);
             }
 
-            ReadDocument fresh{.addon = addon, .document = named};
-            change(fresh);
-            settings.documents.push_back(std::move(fresh));
+            ChangeTheDocument(settings, addon, named, change);
+
+            return true;
+        });
+}
+
+std::optional<DocumentsViewModel::PendingPage> DocumentsViewModel::TakeThePendingPage()
+{
+    quietAfterTheLastTurn_.stop();
+
+    return std::exchange(pendingPage_, std::nullopt);
+}
+
+void DocumentsViewModel::WriteThePage(AppSettings& settings, const PendingPage& turned)
+{
+    ChangeTheDocument(settings, turned.addon, turned.document,
+                      [page = turned.page](ReadDocument& known)
+                      {
+                          known.page = page;
+                      });
+}
+
+void DocumentsViewModel::FlushThePage()
+{
+    const std::optional<PendingPage> turned = TakeThePendingPage();
+
+    if (!turned.has_value())
+    {
+        return;
+    }
+
+    session_.Rewrite(
+        [&turned](AppSettings& settings)
+        {
+            WriteThePage(settings, *turned);
 
             return true;
         });
@@ -775,6 +869,11 @@ void DocumentsViewModel::Favour(const DocumentLine& line, const bool favourite)
 
 int DocumentsViewModel::PageOf(const DocumentLine& line) const
 {
+    if (pendingPage_.has_value() && pendingPage_->IsFor(line.addon, AsUtf8(line.document)))
+    {
+        return pendingPage_->page;
+    }
+
     const ReadDocument* known = Remembered(line);
 
     return known == nullptr ? 0 : known->page;
@@ -787,11 +886,16 @@ void DocumentsViewModel::RememberThePage(const DocumentLine& line, const int pag
         return;
     }
 
-    Remember(line,
-             [page](ReadDocument& known)
-             {
-                 known.page = page;
-             });
+    const std::string named = AsUtf8(line.document);
+
+    if (pendingPage_.has_value() && !pendingPage_->IsFor(line.addon, named))
+    {
+        FlushThePage();
+    }
+
+    pendingPage_ = PendingPage{.addon = line.addon, .document = named, .page = page};
+
+    quietAfterTheLastTurn_.start();
 }
 
 std::vector<DocumentBookmark> DocumentsViewModel::BookmarksOf(const DocumentLine& line) const

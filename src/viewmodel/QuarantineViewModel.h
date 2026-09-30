@@ -59,7 +59,7 @@ signals:
     void Discarded(const std::vector<FileOperationResult>& results);
 
 private:
-    [[nodiscard]] std::vector<QuarantinedItem> ListWhatIsHeld();
+    void ListWhatIsHeld();
 
     void Describe(const std::vector<QuarantinedItem>& items);
 
@@ -72,6 +72,7 @@ private:
     SizeService& sizes_;
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
+    MeasurementCaller collisionCaller_;
     int listed_ = 0;
     GuardedRunner working_;
     bool shown_ = false;

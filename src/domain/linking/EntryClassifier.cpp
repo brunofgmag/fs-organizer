@@ -6,7 +6,6 @@
 #include <ranges>
 #include <set>
 
-#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 
 namespace
@@ -15,6 +14,18 @@ namespace
     {
         return candidate.size() > prefix.size() && candidate.compare(0, prefix.size(), prefix) == 0
             && candidate[prefix.size()] == '/';
+    }
+
+    [[nodiscard]] std::set<std::string> ComparablePathsOf(const std::vector<std::filesystem::path>& paths)
+    {
+        std::set<std::string> comparable;
+
+        for (const std::filesystem::path& path : paths)
+        {
+            comparable.insert(ComparablePath(path));
+        }
+
+        return comparable;
     }
 
     void MarkDuplicates(std::vector<DestinationEntry>& entries)
@@ -160,6 +171,19 @@ bool ClassificationLookups::VolumeIsAvailable(const std::filesystem::path& path)
     return known->second;
 }
 
+std::vector<std::filesystem::path>
+EntryClassifier::PlacesUnder(const std::vector<std::filesystem::path>& destinationRoots) const
+{
+    std::vector<std::filesystem::path> places;
+
+    for (const std::filesystem::path& root : destinationRoots)
+    {
+        std::ranges::copy(filesystemProbe_.ChildDirectories(root), std::back_inserter(places));
+    }
+
+    return places;
+}
+
 EntryClassifier::EntryClassifier(const LinkService& linkService,
                                  const FilesystemProbe& filesystemProbe,
                                  const LinkedFolders& linkedFolders)
@@ -171,11 +195,7 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::fi
                                                        const std::vector<std::filesystem::path>& libraryRoots,
                                                        const std::vector<ExternalAddon>& externals) const
 {
-    std::vector<std::filesystem::path> places;
-    for (const std::filesystem::path& root : destinationRoots)
-    {
-        std::ranges::copy(filesystemProbe_.ChildDirectories(root), std::back_inserter(places));
-    }
+    const std::vector<std::filesystem::path> places = PlacesUnder(destinationRoots);
 
     const std::vector<std::optional<std::filesystem::path>> targets = linkService_.ReadLinkTargets(places);
 
@@ -201,23 +221,10 @@ std::vector<DestinationEntry> EntryClassifier::Refresh(const std::vector<Destina
                                                        const std::vector<std::filesystem::path>& libraryRoots,
                                                        const std::vector<ExternalAddon>& externals) const
 {
-    std::vector<std::filesystem::path> places;
-    for (const std::filesystem::path& root : destinationRoots)
-    {
-        std::ranges::copy(filesystemProbe_.ChildDirectories(root), std::back_inserter(places));
-    }
+    const std::vector<std::filesystem::path> places = PlacesUnder(destinationRoots);
 
-    std::set<std::string> touched;
-    for (const std::filesystem::path& path : changed)
-    {
-        touched.insert(ComparablePath(path));
-    }
-
-    std::set<std::string> present;
-    for (const std::filesystem::path& place : places)
-    {
-        present.insert(ComparablePath(place));
-    }
+    const std::set<std::string> touched = ComparablePathsOf(changed);
+    const std::set<std::string> present = ComparablePathsOf(places);
 
     std::map<std::string, const DestinationEntry*> knownByPlace;
     std::set<std::string> retargeted;
@@ -267,10 +274,12 @@ std::vector<DestinationEntry> EntryClassifier::Refresh(const std::vector<Destina
         }
 
         const DestinationEntry& before = *knownByPlace.at(key);
-        const bool sharesATarget = !before.target.empty() && retargeted.contains(ComparablePath(before.target));
+        const bool itsDuplicateMarkMayBeStale =
+            !before.target.empty() && retargeted.contains(ComparablePath(before.target));
 
-        entries.push_back(
-            sharesATarget ? ClassifyEntry(place, linkService_.ReadLinkTarget(place), lookups, theAppLinked) : before);
+        entries.push_back(itsDuplicateMarkMayBeStale
+                              ? ClassifyEntry(place, linkService_.ReadLinkTarget(place), lookups, theAppLinked)
+                              : before);
     }
 
     MarkDuplicates(entries);

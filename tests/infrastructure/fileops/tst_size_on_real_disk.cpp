@@ -7,7 +7,6 @@
 #include <string>
 
 #include "application/SizeService.h"
-#include "domain/importing/ImportPaths.h"
 #include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"

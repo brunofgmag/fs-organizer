@@ -1,8 +1,6 @@
 #include "infrastructure/sim/ExeXmlDocument.h"
 
-#include <algorithm>
 #include <cstddef>
-#include <utility>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QLatin1StringView>

@@ -144,7 +144,7 @@ private:
 
     void RestTheCursor() const;
 
-    void ZoomBy(int notches);
+    void ZoomBy(qreal notches);
 
     QPdfDocument* document_ = nullptr;
     SelectablePages* view_ = nullptr;

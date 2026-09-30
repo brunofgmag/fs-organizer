@@ -1,12 +1,14 @@
 #include "viewmodel/AddonTreeViewModel.h"
 
 #include <algorithm>
+#include <map>
 #include <set>
 #include <string>
 
 #include <QtCore/QStringList>
 
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonDestinations.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/DestinationDivergence.h"
 #include "domain/tree/LibraryLookup.h"
@@ -64,8 +66,9 @@ AddonTreeViewModel::AddonTreeViewModel(Session& session,
       model_(model),
       packages_(packages),
       sizes_(sizes),
-      toggling_(runner),
-      caller_(sizes.NewCaller())
+      selectionCaller_(sizes.NewCaller()),
+      swapsCaller_(sizes.NewCaller()),
+      toggling_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &AddonTreeViewModel::AdoptScan);
 
@@ -86,7 +89,7 @@ void AddonTreeViewModel::MeasureTheSelection(const std::vector<std::filesystem::
 
     emit SizeMeasuring();
 
-    sizes_.MeasureFolders(addonFolders, caller_, Freshness::ReuseWhatIsKnown, {},
+    sizes_.MeasureFolders(addonFolders, selectionCaller_, Freshness::ReuseWhatIsKnown, {},
                           [this](const FolderSizeReport& report)
                           {
                               emit SizeMeasured(SelectionSize{.bytes = report.bytes,
@@ -107,7 +110,7 @@ void AddonTreeViewModel::WeighTheSwaps(const std::vector<TakenPlace>& swaps,
         folders.push_back(swap.addonFolder);
     }
 
-    sizes_.MeasureFolders(folders, caller_, Freshness::ReuseWhatIsKnown, {},
+    sizes_.MeasureFolders(folders, swapsCaller_, Freshness::ReuseWhatIsKnown, {},
                           [swaps, weighed = std::move(onWeighed)](const FolderSizeReport& report)
                           {
                               std::vector<WeighedSwap> sides;
@@ -188,7 +191,7 @@ std::vector<TakenPlace> AddonTreeViewModel::SwapsNeededTo(const std::vector<cons
 
     std::vector<TakenPlace> swaps;
 
-    for (const TakenPlace& taken : service_.PlacesTakenNow(session_.Profile(), nodes, snapshot.enabled))
+    for (const TakenPlace& taken : service_.PlacesTakenNow(session_.Profile(), nodes, snapshot))
     {
         if (AddonAt(snapshot.libraries, taken.occupant) != nullptr)
         {
@@ -238,14 +241,11 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
                                 const bool enable,
-                                TogglePlan plan,
+                                const TogglePlan& plan,
                                 const std::vector<TakenPlace>& agreedSwaps,
                                 const std::vector<StartupLine>& agreedEntries)
 {
-    auto work = std::make_shared<ToggleWork>();
-    work->profile = session_.Profile();
-    work->shown.enabled = session_.Snapshot().enabled;
-    work->libraries = session_.Snapshot().libraries;
+    const std::shared_ptr<ToggleWork> work = WorkOnTheShownProfile();
 
     if (!enable)
     {
@@ -259,7 +259,7 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
             }
         }
 
-        RunTheBatch(std::move(work));
+        RunTheBatch(work);
         return;
     }
 
@@ -291,10 +291,20 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
 
     work->leftAlone = heldBack.size();
 
-    RunTheBatch(std::move(work));
+    RunTheBatch(work);
 }
 
-void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
+std::shared_ptr<AddonTreeViewModel::ToggleWork> AddonTreeViewModel::WorkOnTheShownProfile() const
+{
+    auto work = std::make_shared<ToggleWork>();
+    work->stamp = session_.StampForAnEntriesRead();
+    work->shown.enabled = session_.Snapshot().enabled;
+    work->shown.libraries = session_.Snapshot().libraries;
+
+    return work;
+}
+
+void AddonTreeViewModel::RunTheBatch(const std::shared_ptr<ToggleWork>& work)
 {
     toggling_.Run(
         [this, work]
@@ -312,15 +322,9 @@ void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
                 batch.toEnable.push_back(&addon);
             }
 
-            const std::vector<ExternalAddon> externals =
-                service_.WhatCameFromAnotherProgram(work->profile, work->libraries);
-            const ProfileService::LinksOnDisk onDisk = service_.ReadLinksNow(work->profile, externals);
-
-            work->report = service_.SetEnabled(work->profile, work->shown, batch, onDisk);
-            work->report.leftAlone = work->leftAlone;
-
-            work->entries = service_.EntriesAfter(work->profile, onDisk.entries, work->report.results, externals);
-            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->report.results);
+            work->outcome = service_.SetEnabled(work->stamp, work->shown, batch);
+            work->outcome.report.leftAlone = work->leftAlone;
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
         [this, work]
         {
@@ -330,16 +334,13 @@ void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
 
 void AddonTreeViewModel::UndoLastBatch()
 {
-    auto work = std::make_shared<ToggleWork>();
-    work->profile = session_.Profile();
-    work->libraries = session_.Snapshot().libraries;
+    const std::shared_ptr<ToggleWork> work = WorkOnTheShownProfile();
 
     toggling_.Run(
         [this, work]
         {
-            work->report.results = service_.UndoLastBatch();
-
-            ReadTheEntriesAfter(*work);
+            work->outcome = service_.UndoLastBatch(work->stamp, work->shown.libraries);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
         [this, work]
         {
@@ -347,19 +348,13 @@ void AddonTreeViewModel::UndoLastBatch()
         });
 }
 
-void AddonTreeViewModel::ReadTheEntriesAfter(ToggleWork& work) const
-{
-    work.entries = service_.ResolveEntries(work.profile, work.libraries);
-    work.simulatorRunning = session_.SimulatorIsRunningAfter(work.report.results);
-}
-
 void AddonTreeViewModel::ApplyResults(ToggleWork& work)
 {
-    session_.AdoptEntriesReadFor(work.profile, std::move(work.entries));
+    session_.AdoptTheEntriesRead(std::move(work.outcome.read));
 
-    session_.NoteLinkResults(work.report.results, work.simulatorRunning);
+    session_.NoteLinkResults(work.outcome.report.results, work.simulatorRunning);
 
-    emit BatchFinished(work.report);
+    emit BatchFinished(work.outcome.report);
 }
 
 void AddonTreeViewModel::OverrideDestination(const std::vector<const TreeNode*>& nodes,
@@ -559,16 +554,16 @@ void AddonTreeViewModel::AdoptDestination(const TreeNode* category)
 
 std::vector<const TreeNode*> AddonTreeViewModel::StrayedUnder(const std::vector<const TreeNode*>& nodes) const
 {
-    const ProfileSnapshot& snapshot = session_.Snapshot();
-    const SimulatorProfile& profile = session_.Profile();
+    const AddonDestinations destinations(session_.Profile(), session_.Snapshot().entries);
 
     std::vector<const TreeNode*> strayed;
+    std::set<std::string> asked;
 
     for (const TreeNode* node : nodes)
     {
         for (const TreeNode* addon : AddonsUnder(*node))
         {
-            if (!DestinationItStrayedTo(profile, snapshot.entries, addon->path).empty())
+            if (asked.insert(ComparablePath(addon->path)).second && !destinations.Of(addon->path).strayedTo.empty())
             {
                 strayed.push_back(addon);
             }
@@ -590,7 +585,15 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         return;
     }
 
-    const std::vector<const TreeNode*> strayed = StrayedUnder(nodes);
+    RelinkStrayed(StrayedUnder(nodes));
+}
+
+void AddonTreeViewModel::RelinkStrayed(const std::vector<const TreeNode*>& strayed)
+{
+    if (toggling_.Busy())
+    {
+        return;
+    }
 
     if (strayed.empty())
     {
@@ -598,10 +601,7 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         return;
     }
 
-    auto work = std::make_shared<ToggleWork>();
-    work->profile = session_.Profile();
-    work->shown.enabled = session_.Snapshot().enabled;
-    work->libraries = session_.Snapshot().libraries;
+    const std::shared_ptr<ToggleWork> work = WorkOnTheShownProfile();
 
     for (const TreeNode* addon : strayed)
     {
@@ -619,9 +619,8 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
                 relinking.push_back(&addon);
             }
 
-            work->report = service_.Relink(work->profile, work->shown, relinking);
-
-            ReadTheEntriesAfter(*work);
+            work->outcome = service_.Relink(work->stamp, work->shown, relinking);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
         [this, work]
         {
@@ -674,6 +673,40 @@ std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) 
     }
 
     return offered;
+}
+
+std::size_t AddonTreeViewModel::MovableAmong(const std::vector<const TreeNode*>& addons) const
+{
+    std::map<const TreeNode*, std::set<std::string>> offeredByTree;
+    std::size_t movable = 0;
+
+    for (const TreeNode* node : addons)
+    {
+        const TreeNode* tree = LibraryTreeHolding(*node);
+        if (tree == nullptr)
+        {
+            continue;
+        }
+
+        auto offered = offeredByTree.find(tree);
+        if (offered == offeredByTree.end())
+        {
+            std::set<std::string> categories;
+            for (const TreeNode* candidate : CategoriesOfferedIn(*tree, false))
+            {
+                categories.insert(ComparablePath(candidate->path));
+            }
+
+            offered = offeredByTree.emplace(tree, std::move(categories)).first;
+        }
+
+        const std::set<std::string>& categories = offered->second;
+        const std::size_t holdingIt = categories.contains(ComparablePath(CategoryHolding(*node))) ? 1 : 0;
+
+        movable += categories.size() > holdingIt ? 1 : 0;
+    }
+
+    return movable;
 }
 
 bool AddonTreeViewModel::WouldAcceptLibrary(const std::filesystem::path& path) const

@@ -1,11 +1,13 @@
 #include <QtTest/QtTest>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "application/StartupReport.h"
@@ -34,11 +36,19 @@ namespace
         static void SwitchingAnEntryToTheValueItAlreadyHasWritesNothing();
         static void PointingItAtAnotherProfilesFileReadsAndWritesThatOne();
         static void TheEntryOfTheRealFileIsRecognisedAsCarriedByTheAddonItPointsInto();
+        static void ABatchOfSwitchesLeavesTheBackupOfTheFileAsItWasBeforeTheFirstWrite();
+        static void ASwitchOutsideABatchStillBacksUpItsOwnBefore();
+        static void ASwitchAloneStillBacksUpItsOwnBeforeWhileABatchHoldsItsBackup();
+        static void ABatchThatWritesNothingLeavesNoBackup();
+        static void ABatchThatCouldNotBackUpTriesAgainOnTheNextWrite();
+        static void ABatchWithARecordOfItsOwnBacksUpAgainAfterTheLastOne();
+        static void PointingItAtAnotherFileWhileTheOtherIsBeingReadNeverMixesThemUp();
     };
 
     constexpr auto kAny2GSX = R"(C:\Users\pilot\AppData\Roaming\Any2GSX\bin\Any2GSX.exe)";
     constexpr auto kFsRealistic =
         R"(E:\Flight Simulator 2024\Community\rkapps-fsrealistic\service\FSRealistic-Plus.exe)";
+    constexpr auto kFslControlCenter = R"(C:\FlightSimLabs\ControlCenter\FSLControlCenter.exe)";
 
     [[nodiscard]] std::string BytesOf(const std::filesystem::path& file)
     {
@@ -79,6 +89,17 @@ namespace
     {
         return static_cast<std::size_t>(
             std::distance(std::filesystem::directory_iterator(folder), std::filesystem::directory_iterator()));
+    }
+
+    [[nodiscard]] std::string SignatureOf(const std::vector<StartupEntry>& entries)
+    {
+        std::string signature;
+        for (const StartupEntry& entry : entries)
+        {
+            signature += entry.label + '|' + AsUtf8(entry.path) + '|' + (entry.enabled ? '1' : '0') + '\n';
+        }
+
+        return signature;
     }
 
     [[nodiscard]] bool EnabledIn(const std::vector<StartupEntry>& entries, const char* label)
@@ -232,6 +253,163 @@ void StartupOnRealDiskTest::TheEntryOfTheRealFileIsRecognisedAsCarriedByTheAddon
     QCOMPARE(carried.front().label, std::string("FSRealistic+"));
     QCOMPARE(carried.front().path, PathFromUtf8(kFsRealistic));
     QVERIFY(EntriesCarriedBy(report, {PathFromUtf8(R"(D:\MSFS 2024\Utilities\any2gsx)")}).empty());
+}
+
+void StartupOnRealDiskTest::ABatchOfSwitchesLeavesTheBackupOfTheFileAsItWasBeforeTheFirstWrite()
+{
+    const TempFiles files;
+    const std::filesystem::path file = StartupFileIn(files, "simulator-exe.xml");
+    const std::filesystem::path backup = BackupOfStartupFile(file);
+    ExeXmlStartupEntries startup(file);
+
+    StartupBackup batch;
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), true, batch), FileResult::Completed);
+    QCOMPARE(startup.Switch(PathFromUtf8(kFsRealistic), false, batch), FileResult::Completed);
+    QCOMPARE(startup.Switch(PathFromUtf8(kFslControlCenter), false, batch), FileResult::Completed);
+
+    const std::vector<StartupEntry> entries = startup.Entries();
+    QVERIFY(EnabledIn(entries, "Any2GSX"));
+    QVERIFY(!EnabledIn(entries, "FSRealistic+"));
+    QVERIFY(!EnabledIn(entries, "FSL Control Center"));
+    QVERIFY(batch.taken);
+    QCOMPARE(FirstDifference(BytesOf(backup), Fixture("simulator-exe.xml")), std::string::npos);
+    QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{2});
+}
+
+void StartupOnRealDiskTest::ASwitchOutsideABatchStillBacksUpItsOwnBefore()
+{
+    const TempFiles files;
+    const std::filesystem::path file = StartupFileIn(files, "simulator-exe.xml");
+    const std::filesystem::path backup = BackupOfStartupFile(file);
+    ExeXmlStartupEntries startup(file);
+
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), true), FileResult::Completed);
+    QCOMPARE(startup.Switch(PathFromUtf8(kFsRealistic), false), FileResult::Completed);
+    QCOMPARE(startup.Switch(PathFromUtf8(kFslControlCenter), false), FileResult::Completed);
+
+    const std::vector<StartupEntry> beforeTheLastSwitch = ExeXmlStartupEntries(backup).Entries();
+    QVERIFY(EnabledIn(beforeTheLastSwitch, "Any2GSX"));
+    QVERIFY(!EnabledIn(beforeTheLastSwitch, "FSRealistic+"));
+    QVERIFY(EnabledIn(beforeTheLastSwitch, "FSL Control Center"));
+}
+
+void StartupOnRealDiskTest::ASwitchAloneStillBacksUpItsOwnBeforeWhileABatchHoldsItsBackup()
+{
+    const TempFiles files;
+    const std::filesystem::path file = StartupFileIn(files, "simulator-exe.xml");
+    const std::filesystem::path backup = BackupOfStartupFile(file);
+    ExeXmlStartupEntries startup(file);
+
+    StartupBackup batch;
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), true, batch), FileResult::Completed);
+    QVERIFY(batch.taken);
+    QCOMPARE(FirstDifference(BytesOf(backup), Fixture("simulator-exe.xml")), std::string::npos);
+
+    QCOMPARE(startup.Switch(PathFromUtf8(kFsRealistic), false), FileResult::Completed);
+
+    QCOMPARE(FirstDifference(BytesOf(backup), Fixture("simulator-exe-any2gsx-enabled.xml")), std::string::npos);
+
+    QCOMPARE(startup.Switch(PathFromUtf8(kFslControlCenter), false, batch), FileResult::Completed);
+
+    QCOMPARE(FirstDifference(BytesOf(backup), Fixture("simulator-exe-any2gsx-enabled.xml")), std::string::npos);
+}
+
+void StartupOnRealDiskTest::ABatchThatWritesNothingLeavesNoBackup()
+{
+    const TempFiles files;
+    const std::filesystem::path file = StartupFileIn(files, "simulator-exe.xml");
+    ExeXmlStartupEntries startup(file);
+
+    StartupBackup batch;
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), false, batch), FileResult::Completed);
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), false, batch), FileResult::Completed);
+
+    QVERIFY(!batch.taken);
+    QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{1});
+}
+
+void StartupOnRealDiskTest::ABatchThatCouldNotBackUpTriesAgainOnTheNextWrite()
+{
+    const TempFiles files;
+    const std::filesystem::path file = StartupFileIn(files, "simulator-exe.xml");
+    const std::filesystem::path backup = BackupOfStartupFile(file);
+    std::filesystem::create_directories(backup);
+    ExeXmlStartupEntries startup(file);
+
+    StartupBackup batch;
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), true, batch), FileResult::CouldNotWriteTheStartupFile);
+    QVERIFY(!batch.taken);
+    QCOMPARE(FirstDifference(BytesOf(file), Fixture("simulator-exe.xml")), std::string::npos);
+
+    std::filesystem::remove(backup);
+
+    QCOMPARE(startup.Switch(PathFromUtf8(kFsRealistic), false, batch), FileResult::Completed);
+
+    QCOMPARE(FirstDifference(BytesOf(backup), Fixture("simulator-exe.xml")), std::string::npos);
+}
+
+void StartupOnRealDiskTest::ABatchWithARecordOfItsOwnBacksUpAgainAfterTheLastOne()
+{
+    const TempFiles files;
+    const std::filesystem::path file = StartupFileIn(files, "simulator-exe.xml");
+    const std::filesystem::path backup = BackupOfStartupFile(file);
+    ExeXmlStartupEntries startup(file);
+
+    StartupBackup first;
+    QCOMPARE(startup.Switch(PathFromUtf8(kAny2GSX), true, first), FileResult::Completed);
+    QCOMPARE(FirstDifference(BytesOf(backup), Fixture("simulator-exe.xml")), std::string::npos);
+
+    StartupBackup second;
+    QCOMPARE(startup.Switch(PathFromUtf8(kFsRealistic), false, second), FileResult::Completed);
+    QCOMPARE(startup.Switch(PathFromUtf8(kFslControlCenter), false, second), FileResult::Completed);
+
+    QCOMPARE(FirstDifference(BytesOf(backup), Fixture("simulator-exe-any2gsx-enabled.xml")), std::string::npos);
+}
+
+void StartupOnRealDiskTest::PointingItAtAnotherFileWhileTheOtherIsBeingReadNeverMixesThemUp()
+{
+    const TempFiles files;
+    const std::filesystem::path shortFolder = files.Root() / "a";
+    const std::filesystem::path longFolder =
+        files.Root() / "a-profile-folder-long-enough-to-leave-the-small-string-buffer-behind";
+    std::filesystem::create_directories(shortFolder);
+    std::filesystem::create_directories(longFolder);
+    std::ofstream(shortFolder / "EXE.xml", std::ios::binary) << Fixture("simulator-exe.xml");
+    std::ofstream(longFolder / "EXE.xml", std::ios::binary) << Fixture("simulator-exe-any2gsx-enabled.xml");
+
+    const std::string ofTheShortOne = SignatureOf(ExeXmlStartupEntries(shortFolder / "EXE.xml").Entries());
+    const std::string ofTheLongOne = SignatureOf(ExeXmlStartupEntries(longFolder / "EXE.xml").Entries());
+    QVERIFY(!ofTheShortOne.empty());
+    QVERIFY(ofTheShortOne != ofTheLongOne);
+
+    ExeXmlStartupEntries startup(shortFolder / "EXE.xml");
+    std::atomic<bool> reading = true;
+
+    std::thread swapper(
+        [&]
+        {
+            bool toTheLongOne = true;
+            while (reading)
+            {
+                startup.Use((toTheLongOne ? longFolder : shortFolder) / "EXE.xml");
+                toTheLongOne = !toTheLongOne;
+            }
+        });
+
+    std::size_t strangers = 0;
+    for (int round = 0; round < 3000; ++round)
+    {
+        const std::string answer = SignatureOf(startup.Entries());
+        if (answer != ofTheShortOne && answer != ofTheLongOne)
+        {
+            ++strangers;
+        }
+    }
+
+    reading = false;
+    swapper.join();
+
+    QCOMPARE(strangers, std::size_t{0});
 }
 
 QTEST_APPLESS_MAIN(StartupOnRealDiskTest)

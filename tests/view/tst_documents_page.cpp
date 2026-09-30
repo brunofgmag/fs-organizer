@@ -84,6 +84,7 @@ namespace
         static void TheProgressAppearsWhenTheReadingStartsAndGoesWhenItEnds();
         static void TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked();
         static void TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot();
+        static void TheWheelZoomsByHowFarItTurnedAndNotByItsSignAlone();
         static void TheWheelSwitchSaysWhichOfTheTwoKindsItIsAbout();
         static void EachKindCarriesItsOwnPairOfSwitches();
         static void DraggingMovesADocumentAndNotOnlyAChart();
@@ -106,6 +107,7 @@ namespace
         static void TheLensesTakeTheReadingCloserAndFurtherAway();
         static void TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt();
         static void TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen();
+        static void ThePagesTheReaderTurnsAreWrittenOnceWhenAnotherDocumentOpens();
         static void SayingNoToTheQuestionLeavesTheMarkWhereItIs();
         static void AReaderOnItsWayOutStopsAnsweringThePagesItIsTakingWithIt();
         static void TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick();
@@ -203,7 +205,7 @@ namespace
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
         FakeChartCatalogueParser catalogueParser;
         FakeChartVersions chartVersions;
-        DocumentService documents{catalog, filesystemProbe, catalogueParser, chartVersions};
+        DocumentService documents{filesystemProbe, catalogueParser, chartVersions};
         FakeDocumentIndexCache cache;
         FakeManualSource theManual;
         ManualDelivery manualDelivery{};
@@ -238,15 +240,13 @@ namespace
 
     [[nodiscard]] bool SomethingSays(const QWidget& page, const QString& text)
     {
-        for (const QLabel* said : page.findChildren<QLabel*>(QStringLiteral("EmptyBody")))
-        {
-            if (said->text().contains(text))
-            {
-                return true;
-            }
-        }
+        const QList<QLabel*> bodies = page.findChildren<QLabel*>(QStringLiteral("EmptyBody"));
 
-        return false;
+        return std::ranges::any_of(bodies,
+                                   [&](const QLabel* said)
+                                   {
+                                       return said->text().contains(text);
+                                   });
     }
 
     [[nodiscard]] bool ItSaysItIsReading(const DocumentsPage& page)
@@ -572,7 +572,7 @@ void DocumentsPageTest::ThePointerSaysWhenTheReadingCarriesALink()
     reader.show();
     reader.Read(linked, 0, DocumentKind::Document, {});
 
-    QPdfView* pages = reader.findChild<QPdfView*>();
+    auto* pages = reader.findChild<QPdfView*>();
     auto* fitWidth = reader.findChild<QPushButton*>(QStringLiteral("FitTheWidth"));
 
     QVERIFY(pages != nullptr);
@@ -607,7 +607,7 @@ void DocumentsPageTest::TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked
     reader.resize(600, 400);
     reader.show();
 
-    QPdfView* pages = reader.findChild<QPdfView*>();
+    auto* pages = reader.findChild<QPdfView*>();
     QVERIFY(pages != nullptr);
 
     const auto roll = [pages]
@@ -644,10 +644,10 @@ void DocumentsPageTest::TheWheelZoomsTheChartFromTheStartAndTheManualOnlyIfAsked
 
 namespace
 {
-    void Roll(QPdfView& pages)
+    void Roll(QPdfView& pages, const QPoint& turn = QPoint(0, 120))
     {
-        QWheelEvent turned(QPointF(100, 100), pages.viewport()->mapToGlobal(QPointF(100, 100)), {}, QPoint(0, 120),
-                           Qt::NoButton, {}, Qt::NoScrollPhase, false);
+        QWheelEvent turned(QPointF(100, 100), pages.viewport()->mapToGlobal(QPointF(100, 100)), {}, turn, Qt::NoButton,
+                           {}, Qt::NoScrollPhase, false);
 
         QCoreApplication::sendEvent(pages.viewport(), &turned);
     }
@@ -666,7 +666,7 @@ namespace
         reader.show();
         reader.Read(manual, 0, DocumentKind::Document, {});
 
-        QPdfView* pages = reader.findChild<QPdfView*>();
+        auto* pages = reader.findChild<QPdfView*>();
 
         if (pages == nullptr)
         {
@@ -688,7 +688,7 @@ void DocumentsPageTest::TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot()
     reader.SayTheGesturesOf(DocumentKind::Chart, {.wheelZooms = false, .dragMovesThePage = true});
     reader.SayTheGesturesOf(DocumentKind::Document, {.wheelZooms = false, .dragMovesThePage = true});
 
-    QPdfView* pages = reader.findChild<QPdfView*>();
+    auto* pages = reader.findChild<QPdfView*>();
 
     QVERIFY(pages != nullptr);
 
@@ -704,6 +704,56 @@ void DocumentsPageTest::TheWheelStopsZoomingWhenTheReaderIsToldItShouldNot()
     Roll(*pages);
 
     QVERIFY2(pages->zoomFactor() > told, "and told to, it takes the same chart closer");
+}
+
+void DocumentsPageTest::TheWheelZoomsByHowFarItTurnedAndNotByItsSignAlone()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path chart = WrittenInto(folder, L"53117.pdf", APdfWhoseInfoSays("/Title(CV-1)"));
+
+    DocumentReader reader;
+    reader.resize(600, 400);
+    reader.show();
+
+    auto* pages = reader.findChild<QPdfView*>();
+
+    QVERIFY(pages != nullptr);
+
+    reader.Read(chart, 0, DocumentKind::Chart, {});
+
+    const qreal before = pages->zoomFactor();
+
+    Roll(*pages, QPoint(120, 0));
+
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), before),
+             "a sideways tilt turns nothing vertically, so it zooms nothing");
+
+    Roll(*pages, QPoint(0, 120));
+    Roll(*pages, QPoint(0, 120));
+
+    const qreal afterTwoNotches = pages->zoomFactor();
+
+    QVERIFY2(afterTwoNotches > before, "the notches did zoom, or the comparisons below prove nothing");
+
+    pages->setZoomFactor(before);
+    Roll(*pages, QPoint(0, 240));
+
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), afterTwoNotches),
+             "one turn of two notches zooms as far as two turns of one notch");
+
+    pages->setZoomFactor(before);
+    Roll(*pages, QPoint(0, 60));
+    Roll(*pages, QPoint(0, 60));
+    Roll(*pages, QPoint(0, 60));
+    Roll(*pages, QPoint(0, 60));
+
+    QVERIFY2(qFuzzyCompare(pages->zoomFactor(), afterTwoNotches),
+             "a high-resolution wheel reporting half a notch at a time zooms by what it turned");
+
+    pages->setZoomFactor(before);
+    Roll(*pages, QPoint(0, -240));
+
+    QVERIFY2(pages->zoomFactor() < before, "turning the wheel the other way takes the chart further");
 }
 
 void DocumentsPageTest::TheWheelSwitchSaysWhichOfTheTwoKindsItIsAbout()
@@ -1021,7 +1071,7 @@ void DocumentsPageTest::TheMarkMenuOpensOnTheMarkAndNotOnTheEmptySpaceBelowIt()
     QTreeWidgetItem* hydraulics = SectionNamed(*pane, QStringLiteral("Hydraulics"));
     hydraulics->setExpanded(true);
 
-    QMenu* menu = reader.findChild<QMenu*>();
+    auto* menu = reader.findChild<QMenu*>();
 
     QVERIFY(menu != nullptr);
     QVERIFY(!menu->isVisible());
@@ -1390,6 +1440,40 @@ void DocumentsPageTest::TheMarkTheReaderTurnsIsKeptWithTheDocumentThatIsOpen()
     emit reader->TheBookmarkWasNamed(12, QStringLiteral("Where I stopped"));
 
     QCOMPARE(f.settings.stored.documents.front().bookmarks.front().name, std::string{"Where I stopped"});
+}
+
+void DocumentsPageTest::ThePagesTheReaderTurnsAreWrittenOnceWhenAnotherDocumentOpens()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+    f.viewModel.ReadTheLibrary();
+
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidgetItem* crj = GroupNamed(*index, QString::fromStdString(kCrj));
+    crj->setExpanded(true);
+
+    const QRect first = index->visualItemRect(crj->child(0));
+    ClickAt(*index, QPoint(first.center().x(), first.center().y()));
+
+    auto* reader = page.findChild<DocumentReader*>();
+
+    QVERIFY(reader != nullptr);
+
+    const int saves = f.settings.saves;
+
+    for (int turned = 1; turned <= 6; ++turned)
+    {
+        emit reader->ThePageChanged(turned);
+    }
+
+    QCOMPARE(f.settings.saves, saves);
+
+    const QRect second = index->visualItemRect(crj->child(1));
+    ClickAt(*index, QPoint(second.center().x(), second.center().y()));
+
+    QCOMPARE(f.settings.saves, saves + 1);
+    QCOMPARE(f.settings.stored.documents.back().page, 6);
 }
 
 void DocumentsPageTest::SayingNoToTheQuestionLeavesTheMarkWhereItIs()

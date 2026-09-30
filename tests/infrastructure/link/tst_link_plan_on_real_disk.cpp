@@ -9,7 +9,6 @@
 
 #include "application/PresetService.h"
 #include "application/ProfileService.h"
-#include "domain/importing/ImportPaths.h"
 #include "domain/journal/JournalEntries.h"
 #include "domain/ports/ImportedFolders.h"
 #include "domain/support/PathUtils.h"
@@ -40,6 +39,7 @@ namespace
         static void ApplyingAPresetReachesAnAddonWhoseJunctionTheUserDeleted();
         static void SwappingTheOccupantMovesTheRealJunctionAndIsOneEntryInTheJournal();
         static void TheIncrementalEntriesEqualAFullReadAfterARealEnableAndARealDisable();
+        static void TheEntriesTheServiceReturnsAfterEachBatchEqualAFullReadOfTheRealDisk();
         static void AFullReadClassifiesEveryKindOfEntryOnRealJunctions();
     };
 }
@@ -240,7 +240,7 @@ void LinkPlanOnRealDiskTest::SwappingTheOccupantMovesTheRealJunctionAndIsOneEntr
     const TreeNode* wanted = &shown.libraries.back().children.front().children.front();
     const TreeNode* occupant = &shown.libraries.front().children.front().children.front();
 
-    const std::vector<TakenPlace> taken = linking.profiles.PlacesTaken(profile, {wanted});
+    const std::vector<TakenPlace> taken = linking.profiles.PlacesTaken(profile, {wanted}, shown.libraries);
 
     QCOMPARE(taken.size(), std::size_t{1});
     QCOMPARE(taken.front().occupant, disk.Addon());
@@ -337,6 +337,69 @@ void LinkPlanOnRealDiskTest::TheIncrementalEntriesEqualAFullReadAfterARealEnable
     QCOMPARE(survivor.size(), std::size_t{1});
     QCOMPARE(survivor.front().classification, EntryClassification::Managed);
     verifyTheSame(survivor);
+}
+
+void LinkPlanOnRealDiskTest::TheEntriesTheServiceReturnsAfterEachBatchEqualAFullReadOfTheRealDisk()
+{
+    const Disk disk;
+    Linking linking;
+
+    const std::filesystem::path second = disk.Root() / "Community2";
+    const std::filesystem::path other = disk.Library() / "Aircrafts" / "other-addon";
+    std::filesystem::create_directories(second);
+    std::filesystem::create_directories(other);
+    std::ofstream(ManifestPathIn(other), std::ios::binary) << kManifest;
+
+    SimulatorProfile profile = ProfileOn(disk);
+    profile.destinations = {disk.Community(), second};
+
+    const ProfileSnapshot shown = linking.profiles.Scan(profile);
+    QVERIFY(shown.libraries.size() == 1 && shown.libraries.front().children.size() == 1);
+
+    const std::vector<TreeNode>& addons = shown.libraries.front().children.front().children;
+    QCOMPARE(addons.size(), std::size_t{2});
+
+    const EntriesStamp stamp{.profile = profile, .adoptions = 3};
+
+    const auto verifyTheSame = [&](const EntriesRead& read)
+    {
+        const std::vector<DestinationEntry> full = linking.profiles.ResolveEntries(profile, shown.libraries);
+
+        QCOMPARE(read.stamp.adoptions, 3);
+        QCOMPARE(read.entries.size(), full.size());
+
+        for (std::size_t index = 0; index < full.size(); ++index)
+        {
+            QCOMPARE(read.entries[index].path, full[index].path);
+            QCOMPARE(read.entries[index].target, full[index].target);
+            QCOMPARE(read.entries[index].classification, full[index].classification);
+        }
+
+        for (const DestinationEntry& entry : full)
+        {
+            QVERIFY(read.enabled.Contains(entry.target));
+        }
+    };
+
+    const LinkBatchOutcome enabling =
+        linking.profiles.SetEnabled(stamp, shown, LinkBatch{.toDisable = {}, .toEnable = {&addons[0], &addons[1]}});
+    QCOMPARE(enabling.report.results.size(), std::size_t{2});
+    QCOMPARE(enabling.read.entries.size(), std::size_t{2});
+    verifyTheSame(enabling.read);
+
+    const LinkBatchOutcome relinking = linking.profiles.Relink(stamp, shown, {&addons[1]});
+    QCOMPARE(relinking.report.results.size(), std::size_t{2});
+    verifyTheSame(relinking.read);
+
+    const LinkBatchOutcome undoing = linking.profiles.UndoLastBatch(stamp, shown.libraries);
+    QCOMPARE(undoing.report.results.size(), std::size_t{2});
+    verifyTheSame(undoing.read);
+
+    const LinkBatchOutcome disabling =
+        linking.profiles.SetEnabled(stamp, shown, LinkBatch{.toDisable = {&addons[0]}, .toEnable = {}});
+    QCOMPARE(disabling.report.results.size(), std::size_t{1});
+    QCOMPARE(disabling.read.entries.size(), std::size_t{1});
+    verifyTheSame(disabling.read);
 }
 
 void LinkPlanOnRealDiskTest::AFullReadClassifiesEveryKindOfEntryOnRealJunctions()
@@ -439,6 +502,7 @@ void LinkPlanOnRealDiskTest::AFullReadClassifiesEveryKindOfEntryOnRealJunctions(
     }
 
     std::vector<std::filesystem::path> places;
+    places.reserve(expected.size());
     for (const Expected& want : expected)
     {
         places.push_back(want.place);

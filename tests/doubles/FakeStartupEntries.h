@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -14,6 +15,8 @@ class FakeStartupEntries final : public StartupEntries
 public:
     std::size_t writes = 0;
     mutable std::size_t reads = 0;
+    std::size_t switchesThatFoundTheBackupTaken = 0;
+    std::size_t switchesThatFoundNoBackup = 0;
 
     void Carry(StartupEntry entry)
     {
@@ -32,8 +35,23 @@ public:
         refusal_ = result;
     }
 
-    [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, const bool enabled) override
+    void MakeSwitchingThrow()
     {
+        throwing_ = true;
+    }
+
+    using StartupEntries::Switch;
+
+    [[nodiscard]] FileResult
+    Switch(const std::filesystem::path& entryPath, const bool enabled, StartupBackup& backup) override
+    {
+        ++(backup.taken ? switchesThatFoundTheBackupTaken : switchesThatFoundNoBackup);
+
+        if (throwing_)
+        {
+            throw std::runtime_error("the startup file went away");
+        }
+
         if (refusal_ != FileResult::Completed)
         {
             return refusal_;
@@ -49,6 +67,7 @@ public:
             if (entry.enabled != enabled)
             {
                 entry.enabled = enabled;
+                backup.taken = true;
                 ++writes;
             }
 
@@ -61,6 +80,7 @@ public:
 private:
     std::vector<StartupEntry> entries_;
     FileResult refusal_ = FileResult::Completed;
+    bool throwing_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_STARTUP_ENTRIES_H

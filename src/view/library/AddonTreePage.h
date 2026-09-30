@@ -66,6 +66,8 @@ private:
         int disabled{};
 
         [[nodiscard]] bool operator==(const Population& other) const = default;
+
+        [[nodiscard]] int Of(AddonStateFilter state) const;
     };
 
     void RetranslateUi() const;

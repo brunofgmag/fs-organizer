@@ -1,10 +1,8 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
-#include <cstddef>
 #include <fstream>
 #include <string>
-#include <vector>
 
 #include "infrastructure/documents/QtPdfChartVersions.h"
 #include "tests/support/APdf.h"

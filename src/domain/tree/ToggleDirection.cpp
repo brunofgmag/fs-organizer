@@ -1,5 +1,6 @@
 #include "domain/tree/ToggleDirection.h"
 
+#include <algorithm>
 #include <map>
 #include <string>
 
@@ -21,15 +22,11 @@ bool DestinationBlocks(const SimulatorProfile& profile,
 {
     const std::string linkPath = ComparablePath(PlannedLinkPath(profile, addonFolder));
 
-    for (const DestinationEntry& entry : entries)
-    {
-        if (ComparablePath(entry.path) == linkPath && !LinksTo(entry, addonFolder))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return std::ranges::any_of(entries,
+                               [&](const DestinationEntry& entry)
+                               {
+                                   return ComparablePath(entry.path) == linkPath && !LinksTo(entry, addonFolder);
+                               });
 }
 
 bool ShouldEnable(const SimulatorProfile& profile,

@@ -75,9 +75,16 @@ CommunityViewModel::CommunityViewModel(ProfileService& service,
                                        CommunityModel& model,
                                        SizeService& sizes,
                                        QObject* parent)
-    : QObject(parent), service_(service), session_(session), model_(model), sizes_(sizes), caller_(sizes.NewCaller())
+    : QObject(parent),
+      service_(service),
+      session_(session),
+      model_(model),
+      sizes_(sizes),
+      caller_(sizes.NewCaller()),
+      foldersCaller_(sizes.NewCaller())
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &CommunityViewModel::Show);
+    connect(&notifier, &SessionNotifier::Refreshed, this, &CommunityViewModel::Show);
 }
 
 void CommunityViewModel::Show()
@@ -126,7 +133,7 @@ void CommunityViewModel::MeasureTheSelection(const std::vector<DestinationEntry>
 void CommunityViewModel::WeighTheFolders(const std::vector<std::filesystem::path>& folders,
                                          std::function<void(std::uintmax_t bytes)> onWeighed)
 {
-    sizes_.MeasureFolders(folders, caller_, Freshness::ReuseWhatIsKnown, {},
+    sizes_.MeasureFolders(folders, foldersCaller_, Freshness::ReuseWhatIsKnown, {},
                           [weighed = std::move(onWeighed)](const FolderSizeReport& report)
                           {
                               weighed(report.bytes);

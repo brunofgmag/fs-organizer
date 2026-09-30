@@ -4,8 +4,6 @@
 #include <memory>
 #include <utility>
 
-#include "domain/support/PathUtils.h"
-
 QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                                          ProfileService& profileService,
                                          const Session& session,
@@ -21,56 +19,50 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
       model_(model),
       sizes_(sizes),
       runner_(runner),
-      working_(runner),
-      caller_(sizes.NewCaller())
+      caller_(sizes.NewCaller()),
+      collisionCaller_(sizes.NewCaller()),
+      working_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this,
             [this]
             {
-                const int mine = ++listed_;
-                const SimulatorProfile profile = session_.Profile();
-                const auto items = std::make_shared<std::vector<QuarantinedItem>>();
-
-                runner_.Run(
-                    [this, profile, items]
-                    {
-                        *items = service_.Quarantined(profile);
-                    },
-                    [this, mine, items]
-                    {
-                        if (mine != listed_)
-                        {
-                            return;
-                        }
-
-                        model_.ShowItems(*items);
-
-                        if (shown_)
-                        {
-                            Describe(*items);
-                            Weigh(*items);
-                        }
-                    });
+                ListWhatIsHeld();
             });
 }
 
-std::vector<QuarantinedItem> QuarantineViewModel::ListWhatIsHeld()
+void QuarantineViewModel::ListWhatIsHeld()
 {
-    std::vector<QuarantinedItem> items = service_.Quarantined(session_.Profile());
+    const int mine = ++listed_;
+    const SimulatorProfile profile = session_.Profile();
+    const auto items = std::make_shared<std::vector<QuarantinedItem>>();
 
-    model_.ShowItems(items);
+    runner_.Run(
+        [this, profile, items]
+        {
+            *items = service_.Quarantined(profile);
+        },
+        [this, mine, items]
+        {
+            if (mine != listed_)
+            {
+                return;
+            }
 
-    return items;
+            model_.ShowItems(*items);
+
+            if (shown_)
+            {
+                Describe(*items);
+                Weigh(*items);
+            }
+        });
 }
 
 void QuarantineViewModel::Show()
 {
     shown_ = true;
 
-    const std::vector<QuarantinedItem> items = ListWhatIsHeld();
-
-    Describe(items);
-    Weigh(items);
+    ListWhatIsHeld();
 }
 
 void QuarantineViewModel::Describe(const std::vector<QuarantinedItem>& items)
@@ -174,7 +166,7 @@ void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& ite
 void QuarantineViewModel::WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed)
 {
     sizes_.MeasureFolders(
-        {check.item.path, check.occupant}, caller_, Freshness::MeasureAgain, {},
+        {check.item.path, check.occupant}, collisionCaller_, Freshness::MeasureAgain, {},
         [held = check.item.path, occupant = check.occupant,
          weighed = std::move(onWeighed)](const FolderSizeReport& report)
         {

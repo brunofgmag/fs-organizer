@@ -30,12 +30,15 @@ namespace
     private slots:
         static void TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing();
         static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
+        static void ShowingListsWhatIsHeldOnTheRunnerInsteadOfTheCallingThread();
+        static void ALateListingDoesNotOverwriteTheNewerOne();
         static void TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards();
         static void AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain();
         static void TheQuarantineIsCountedWhenTheScanLandsAndOnlyWeighedWhenTheScreenIsShown();
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
         static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
+        static void TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures();
         static void EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsWayThrough();
         static void RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallingThread();
     };
@@ -147,6 +150,51 @@ void QuarantineViewModelTest::TheQuarantineCatchesUpWhenTheActiveProfileFinallyL
     f.ScanLands();
 
     QCOMPARE(f.model.rowCount({}), 1);
+}
+
+void QuarantineViewModelTest::ShowingListsWhatIsHeldOnTheRunnerInsteadOfTheCallingThread()
+{
+    Fixture f;
+    f.ScanLands();
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine/fenix");
+    f.runner.defer = true;
+
+    const std::size_t listedBefore = f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine");
+
+    f.viewModel.Show();
+
+    QVERIFY(f.runner.Pending());
+    QCOMPARE(f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine"), listedBefore);
+    QCOMPARE(f.model.rowCount({}), 1);
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QVERIFY(f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine") > listedBefore);
+    QCOMPARE(f.model.rowCount({}), 2);
+}
+
+void QuarantineViewModelTest::ALateListingDoesNotOverwriteTheNewerOne()
+{
+    Fixture f;
+    f.ScanLands();
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+    f.runner.RunPendingWork();
+
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine/fenix");
+    f.viewModel.Show();
+
+    f.runner.FinishNewestDone();
+
+    QCOMPARE(f.model.rowCount({}), 2);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.model.rowCount({}), 2);
 }
 
 void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards()
@@ -347,6 +395,37 @@ void QuarantineViewModelTest::RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallin
 
     QCOMPARE(restored.count(), 1);
     QVERIFY(f.fileSystem.Exists(origin));
+}
+
+void QuarantineViewModelTest::TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures()
+{
+    Fixture f;
+    const std::filesystem::path occupied = "E:/Sim/Community/simbridge";
+    f.fileSystem.AddFile(std::filesystem::path(kQuarantined) / "content.bin", 4096);
+    f.fileSystem.AddFile(occupied / "content.bin", 4096);
+    f.ScanLands();
+
+    bool bothSidesWeighed = false;
+
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+    f.runner.Finish();
+    f.viewModel.WeighBothSidesOf(RestoreCheck{.item = QuarantinedItem{.path = kQuarantined},
+                                              .result = FileResult::TheOriginIsOccupied,
+                                              .occupant = occupied},
+                                 [&bothSidesWeighed](const TwoSides&)
+                                 {
+                                     bothSidesWeighed = true;
+                                 });
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QVERIFY(bothSidesWeighed);
+    QCOMPARE(f.model.TallyOf({f.model.index(0, QuarantineModel::NameColumn, {})}).measured, std::size_t{1});
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

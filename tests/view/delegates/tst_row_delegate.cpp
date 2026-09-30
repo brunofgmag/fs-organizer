@@ -36,6 +36,7 @@ namespace
         static void TheTagIsLaidAfterTheTextTheViewportDrawsAndNotOverIt();
         static void ATextCutInTheFontTheViewportDrawsAnswersWithATooltip();
         static void TheWidthACellAsksForFitsTheFontTheViewportDraws();
+        static void AnEmphasisedNameIsCutInTheWeightItIsDrawnIn();
     };
 }
 
@@ -420,7 +421,7 @@ namespace
         }
     };
 
-    constexpr auto kLongPath = "D:\\MSFS 2024\\Utils\\a-folder-with-a-name-far-too-long-for-the-column\\";
+    constexpr auto kLongPath = R"(D:\MSFS 2024\Utils\a-folder-with-a-name-far-too-long-for-the-column\)";
 }
 
 void RowDelegateTest::ASecondLineTooWideForItsColumnAnswersWithATooltipCarryingBothLines()
@@ -545,6 +546,21 @@ void RowDelegateTest::TheWidthACellAsksForFitsTheFontTheViewportDraws()
     const int drawnWide = QFontMetrics(table.view.viewport()->font()).horizontalAdvance(QString::fromLatin1(kLongName));
 
     QVERIFY(table.delegate.sizeHint(option, table.model.index(0, 0)).width() > drawnWide);
+}
+
+void RowDelegateTest::AnEmphasisedNameIsCutInTheWeightItIsDrawnIn()
+{
+    Table table{QString::fromLatin1(kLongName)};
+
+    int tightest = 90;
+    while (table.AsksForATooltipOn(tightest))
+    {
+        ++tightest;
+    }
+
+    table.model.item(0, 0)->setData(true, EmphasisRole);
+
+    QVERIFY2(table.AsksForATooltipOn(tightest), "the name was cut in its heavier weight with no way to read the rest");
 }
 
 QTEST_MAIN(RowDelegateTest)

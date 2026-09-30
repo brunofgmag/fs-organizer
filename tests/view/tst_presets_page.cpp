@@ -68,6 +68,10 @@ namespace
         static void AFilterThatMatchesNothingLeavesNoStaleCountBehind();
         static void ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable();
         static void TheStartupTabEditsTheStartupEntriesOfAGoverningPreset();
+        static void AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnceWhenShown();
+        static void AHiddenPageReadsNothingOnALanguageChangeAndReadsOnceWhenShown();
+        static void AShownPageReadsOnceWhenTheSessionRefreshesAndFinishesAScanInTheSameTurn();
+        static void AShownPageReloadsOnceForAChangeOfThePresetsAndTheRefreshThatFollowsIt();
     };
 }
 
@@ -114,6 +118,21 @@ namespace
         profile.libraries = {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
+    }
+
+    void ShowAndSettle(QWidget& page)
+    {
+        page.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&page));
+        QCoreApplication::processEvents();
+    }
+
+    void SettleTheQueuedReload()
+    {
+        for (int round = 0; round < 3; ++round)
+        {
+            QCoreApplication::processEvents();
+        }
     }
 
     class MarkingTranslator final : public QTranslator
@@ -391,6 +410,7 @@ void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation(
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
@@ -407,13 +427,13 @@ void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation(
 
     MarkingTranslator marking;
     QCoreApplication::installTranslator(&marking);
-    QCoreApplication::processEvents();
+    SettleTheQueuedReload();
 
     QVERIFY2(apply->text() != applyBefore, "the apply button kept its old text after the language change");
     QVERIFY2(explained->text() != explainedBefore, "the mode explanation kept its old text after the language change");
 
     QCoreApplication::removeTranslator(&marking);
-    QCoreApplication::processEvents();
+    SettleTheQueuedReload();
 
     QCOMPARE(apply->text(), applyBefore);
     QCOMPARE(explained->text(), explainedBefore);
@@ -443,6 +463,7 @@ void PresetsPageTest::TheNameTableSaysWhatEachPresetWouldChangeAndTagsTheSatisfi
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
@@ -454,6 +475,7 @@ void PresetsPageTest::TheNameTableSaysWhatEachPresetWouldChangeAndTagsTheSatisfi
 
     f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
     f.session.RefreshEntries();
+    QCoreApplication::processEvents();
 
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
     QVERIFY(names->item(0, 3)->data(TagTextRole).toString().isEmpty());
@@ -464,6 +486,7 @@ void PresetsPageTest::TheReturnPresetSitsInItsOwnTableAndAppearsOnlyAfterAnAppli
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
 
     auto* back = page.findChild<QTableWidget*>(QStringLiteral("PresetReturn"));
     QVERIFY(back != nullptr);
@@ -474,6 +497,7 @@ void PresetsPageTest::TheReturnPresetSitsInItsOwnTableAndAppearsOnlyAfterAnAppli
     auto* apply = page.findChild<QPushButton*>(QStringLiteral("PresetApply"));
     QVERIFY(apply != nullptr);
     apply->click();
+    QCoreApplication::processEvents();
 
     QVERIFY(!back->isHidden());
     QCOMPARE(back->rowCount(), 1);
@@ -508,6 +532,7 @@ void PresetsPageTest::TheOmittedCountAndItsButtonLeaveThePanelOutsideReplace()
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
 
     auto* omitted = page.findChild<QLabel*>(QStringLiteral("PlanNotNamed"));
     auto* show = page.findChild<QPushButton*>(QStringLiteral("PresetShowOmitted"));
@@ -517,6 +542,7 @@ void PresetsPageTest::TheOmittedCountAndItsButtonLeaveThePanelOutsideReplace()
     auto* cumulative = page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"));
     QVERIFY(cumulative != nullptr);
     cumulative->click();
+    QCoreApplication::processEvents();
 
     QVERIFY(omitted->isHidden());
     QVERIFY(show->isHidden());
@@ -562,7 +588,7 @@ void PresetsPageTest::TheStartupExplanationKeepsAReadingMeasure()
 
     QVERIFY(QTest::qWaitForWindowExposed(&page));
 
-    QPushButton* startup = page.findChild<QPushButton*>(QStringLiteral("PresetStartupTab"));
+    auto* startup = page.findChild<QPushButton*>(QStringLiteral("PresetStartupTab"));
     const QCheckBox* governs = page.findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup"));
 
     QVERIFY(startup != nullptr && governs != nullptr);
@@ -609,6 +635,7 @@ void PresetsPageTest::TheWayBackIsTheBatchUndoAndFallsBackToTheReturnPreset()
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
 
     auto* back = page.findChild<QPushButton*>(QStringLiteral("PresetGoBack"));
     QVERIFY(back != nullptr);
@@ -616,9 +643,12 @@ void PresetsPageTest::TheWayBackIsTheBatchUndoAndFallsBackToTheReturnPreset()
 
     f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
     f.session.RefreshEntries();
+    QCoreApplication::processEvents();
 
     page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"))->click();
+    QCoreApplication::processEvents();
     page.findChild<QPushButton*>(QStringLiteral("PresetApply"))->click();
+    QCoreApplication::processEvents();
 
     QVERIFY(back->isEnabled());
     QCOMPARE(back->text(), QStringLiteral("Back to the previous set"));
@@ -626,6 +656,7 @@ void PresetsPageTest::TheWayBackIsTheBatchUndoAndFallsBackToTheReturnPreset()
 
     f.service.ForgetUndo();
     f.session.RefreshEntries();
+    QCoreApplication::processEvents();
 
     QVERIFY(back->isEnabled());
     QCOMPARE(back->text(), QStringLiteral("Back to the previous set"));
@@ -636,6 +667,7 @@ void PresetsPageTest::ASatisfiedPresetStillShowsWhatDisableWouldChange()
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
@@ -643,6 +675,7 @@ void PresetsPageTest::ASatisfiedPresetStillShowsWhatDisableWouldChange()
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
 
     page.findChild<QRadioButton*>(QStringLiteral("ModeDisable"))->click();
+    QCoreApplication::processEvents();
 
     QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
     QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
@@ -739,6 +772,122 @@ void PresetsPageTest::ThePageFitsTheNarrowestWindow()
     PresetsPage page(f.viewModel, f.notifier);
 
     ItFitsTheNarrowestWindow(page, "The presets page");
+}
+
+void PresetsPageTest::AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnceWhenShown()
+{
+    Fixture f;
+
+    f.presets.ForgetTheCalls();
+    PresetsPage page(f.viewModel, f.notifier);
+
+    const std::size_t listsOfOneReload = f.presets.ListCalls();
+    const std::size_t loadsOfOneReload = f.presets.LoadCalls();
+
+    QVERIFY(listsOfOneReload > 0);
+
+    f.presets.ForgetTheCalls();
+
+    emit f.notifier.Refreshed();
+    emit f.notifier.ScanFinished();
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), std::size_t{0});
+    QCOMPARE(f.presets.LoadCalls(), std::size_t{0});
+
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), listsOfOneReload);
+    QCOMPARE(f.presets.LoadCalls(), loadsOfOneReload);
+
+    f.presets.ForgetTheCalls();
+    page.hide();
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), std::size_t{0});
+}
+
+void PresetsPageTest::AHiddenPageReadsNothingOnALanguageChangeAndReadsOnceWhenShown()
+{
+    Fixture f;
+
+    f.presets.ForgetTheCalls();
+    PresetsPage page(f.viewModel, f.notifier);
+
+    const std::size_t listsOfOneReload = f.presets.ListCalls();
+    const std::size_t loadsOfOneReload = f.presets.LoadCalls();
+
+    QVERIFY(listsOfOneReload > 0);
+
+    f.presets.ForgetTheCalls();
+
+    QEvent languageChange(QEvent::LanguageChange);
+    QCoreApplication::sendEvent(&page, &languageChange);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), std::size_t{0});
+    QCOMPARE(f.presets.LoadCalls(), std::size_t{0});
+
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), listsOfOneReload);
+    QCOMPARE(f.presets.LoadCalls(), loadsOfOneReload);
+}
+
+void PresetsPageTest::AShownPageReadsOnceWhenTheSessionRefreshesAndFinishesAScanInTheSameTurn()
+{
+    Fixture f;
+
+    f.presets.ForgetTheCalls();
+    PresetsPage page(f.viewModel, f.notifier);
+
+    const std::size_t listsOfOneReload = f.presets.ListCalls();
+    const std::size_t loadsOfOneReload = f.presets.LoadCalls();
+
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    QCoreApplication::processEvents();
+
+    f.presets.ForgetTheCalls();
+
+    emit f.notifier.Refreshed();
+    emit f.notifier.ScanFinished();
+
+    QCOMPARE(f.presets.ListCalls(), std::size_t{0});
+
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), listsOfOneReload);
+    QCOMPARE(f.presets.LoadCalls(), loadsOfOneReload);
+}
+
+void PresetsPageTest::AShownPageReloadsOnceForAChangeOfThePresetsAndTheRefreshThatFollowsIt()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    QCoreApplication::processEvents();
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QVERIFY(names != nullptr);
+    QCOMPARE(names->rowCount(), 1);
+
+    f.viewModel.Create(QStringLiteral("Outro voo"));
+
+    f.presets.ForgetTheCalls();
+
+    emit f.notifier.Refreshed();
+    QCoreApplication::processEvents();
+
+    QCOMPARE(names->rowCount(), 2);
+    QCOMPARE(f.presets.ListCalls(), std::size_t{1});
 }
 
 QTEST_MAIN(PresetsPageTest)

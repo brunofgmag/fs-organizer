@@ -1,11 +1,9 @@
 #include "application/Session.h"
 
 #include <algorithm>
-#include <ranges>
 #include <utility>
 
 #include "domain/importing/CopyConflicts.h"
-#include "domain/linking/EntryClassifier.h"
 #include "domain/profile/ExternalOrigins.h"
 #include "domain/profile/OrphanOverrides.h"
 #include "domain/profile/ProfileEdits.h"
@@ -197,15 +195,40 @@ void Session::CancelScan()
 
 void Session::RefreshEntries()
 {
-    AdoptEntries(service_.ResolveEntries(profile_, snapshot_.libraries));
+    if (readingEntries_)
+    {
+        readEntriesAgain_ = true;
+        return;
+    }
+
+    readingEntries_ = true;
+    readEntriesAgain_ = false;
+
+    runner_.Run(
+        [this, stamp = StampForAnEntriesRead(), libraries = snapshot_.libraries]
+        {
+            entriesRead_ = service_.ReadEntries(stamp, libraries);
+        },
+        [this]
+        {
+            FinishTheRefresh();
+        });
 }
 
-void Session::AdoptEntries(std::vector<DestinationEntry> entries)
+EntriesStamp Session::StampForAnEntriesRead() const
 {
-    snapshot_.entries = std::move(entries);
-    snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
-    snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
-    snapshot_.startupEntries = service_.StartupEntriesNow();
+    return {.profile = profile_, .adoptions = snapshotsAdopted_};
+}
+
+void Session::AdoptTheEntriesRead(EntriesRead read)
+{
+    if (!TakeTheEntriesRead(read))
+    {
+        RefreshEntries();
+        return;
+    }
+
+    ++snapshotsAdopted_;
 
     observer_.OnRefreshed();
 }
@@ -215,6 +238,7 @@ namespace
     std::vector<std::filesystem::path> LibraryPathsOf(const SimulatorProfile& profile)
     {
         std::vector<std::filesystem::path> paths;
+        paths.reserve(profile.libraries.size());
 
         for (const Library& library : profile.libraries)
         {
@@ -237,6 +261,16 @@ namespace
                                            });
     }
 
+    bool SameStartupEntries(const std::vector<StartupEntry>& left, const std::vector<StartupEntry>& right)
+    {
+        return std::ranges::equal(left, right,
+                                  [](const StartupEntry& one, const StartupEntry& other)
+                                  {
+                                      return one.label == other.label && one.path == other.path
+                                          && one.enabled == other.enabled;
+                                  });
+    }
+
     bool SameEntriesComeOutOf(const SimulatorProfile& left, const SimulatorProfile& right)
     {
         return left.id == right.id && left.destinations == right.destinations
@@ -245,20 +279,53 @@ namespace
     }
 }
 
-void Session::AdoptEntriesReadFor(const SimulatorProfile& readFor, std::vector<DestinationEntry> entries)
+bool Session::TakeTheEntriesRead(EntriesRead& read)
 {
-    if (!SameEntriesComeOutOf(readFor, profile_))
+    const bool stillCurrent =
+        read.stamp.adoptions == snapshotsAdopted_ && SameEntriesComeOutOf(read.stamp.profile, profile_);
+
+    if (stillCurrent)
     {
-        RefreshEntries();
-        return;
+        snapshot_.entries = std::move(read.entries);
+        snapshot_.enabled = std::move(read.enabled);
+        snapshot_.conflicts = std::move(read.conflicts);
+        snapshot_.startupEntries = std::move(read.startupEntries);
     }
 
-    AdoptEntries(std::move(entries));
+    return stillCurrent;
+}
+
+void Session::FinishTheRefresh()
+{
+    readingEntries_ = false;
+
+    const bool again = readEntriesAgain_;
+    readEntriesAgain_ = false;
+
+    EntriesRead read = std::exchange(entriesRead_, {});
+
+    if (TakeTheEntriesRead(read))
+    {
+        observer_.OnRefreshed();
+    }
+
+    if (again)
+    {
+        RefreshEntries();
+    }
 }
 
 void Session::RefreshStartupEntries()
 {
-    snapshot_.startupEntries = service_.StartupEntriesNow();
+    std::vector<StartupEntry> entries = service_.StartupEntriesNow();
+
+    if (SameStartupEntries(entries, snapshot_.startupEntries))
+    {
+        return;
+    }
+
+    snapshot_.startupEntries = std::move(entries);
+    ++snapshotsAdopted_;
 
     observer_.OnRefreshed();
 }
@@ -395,8 +462,9 @@ void Session::RememberWhatCameFromAnotherProgram(const std::vector<ImportOperati
         return;
     }
 
-    Save(next);
-    Scan(std::move(next));
+    profile_ = std::move(next);
+
+    Save(profile_);
 }
 
 void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem::path>& addonFolders)
@@ -413,8 +481,9 @@ void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem
         ForgetWhereItCameFrom(next, addonFolder);
     }
 
-    Save(next);
-    Scan(std::move(next));
+    profile_ = std::move(next);
+
+    Save(profile_);
 }
 
 Session::LegacyImport Session::ImportLegacyOn(SimulatorProfile profile, const LegacyImportRequest& request) const
@@ -702,6 +771,8 @@ void Session::Adopt()
         observer_.OnScanFinished();
         return;
     }
+
+    ++snapshotsAdopted_;
 
     profile_ = std::move(scanning_);
     snapshot_ = std::move(scanned_);

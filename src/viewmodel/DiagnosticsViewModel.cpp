@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <utility>
 
 #include "domain/importing/ImportPaths.h"
 #include "domain/support/PathUtils.h"
@@ -69,6 +68,7 @@ DiagnosticsViewModel::DiagnosticsViewModel(const ImportService& imports,
                                            SizeService& sizes,
                                            SceneryService& scenery,
                                            Session& session,
+                                           const SessionNotifier& notifier,
                                            const LoadingReportSource& loading,
                                            const Clock& clock,
                                            BackgroundRunner& runner,
@@ -81,14 +81,17 @@ DiagnosticsViewModel::DiagnosticsViewModel(const ImportService& imports,
       loading_(loading),
       clock_(clock),
       runner_(runner),
-      caller_(sizes.NewCaller())
+      caller_(sizes.NewCaller()),
+      quarantineCaller_(sizes.NewCaller())
 {
+    connect(&notifier, &SessionNotifier::Refreshed, this, &DiagnosticsViewModel::Count);
 }
 
 void DiagnosticsViewModel::Show()
 {
     session_.RefreshEntries();
     Count();
+    WeighTheQuarantine();
 }
 
 void DiagnosticsViewModel::ShowSize()
@@ -190,9 +193,13 @@ void DiagnosticsViewModel::Walk(const std::vector<AddonToRead>& addons, const Sc
         },
         [this, addons, walked]
         {
-            census_ = CensusOf(*walked, addons.size());
             reading_ = false;
-            sceneryReadAt_ = clock_.Now();
+
+            if (!stopReading_)
+            {
+                census_ = CensusOf(*walked, addons.size());
+                sceneryReadAt_ = clock_.Now();
+            }
 
             emit SceneryRead();
         });
@@ -266,8 +273,6 @@ void DiagnosticsViewModel::Count()
         }
     }
 
-    WeighTheQuarantine();
-
     countedAt_ = clock_.Now();
 
     emit Counted();
@@ -275,8 +280,28 @@ void DiagnosticsViewModel::Count()
 
 void DiagnosticsViewModel::WeighTheQuarantine()
 {
-    const SimulatorProfile& profile = session_.Profile();
-    const std::vector<QuarantinedItem> items = imports_.Quarantined(profile);
+    const int mine = ++weighing_;
+    const SimulatorProfile profile = session_.Profile();
+    auto items = std::make_shared<std::vector<QuarantinedItem>>();
+
+    runner_.Run(
+        [this, profile, items]
+        {
+            *items = imports_.Quarantined(profile);
+        },
+        [this, profile, items, mine]
+        {
+            if (mine != weighing_)
+            {
+                return;
+            }
+
+            LandTheQuarantine(profile, *items);
+        });
+}
+
+void DiagnosticsViewModel::LandTheQuarantine(const SimulatorProfile& profile, const std::vector<QuarantinedItem>& items)
+{
     const std::vector<std::string> beside = QuarantineFoldersBeside(profile);
     const std::vector<std::string> inside = QuarantineFoldersInside(profile);
 
@@ -301,12 +326,14 @@ void DiagnosticsViewModel::WeighTheQuarantine()
         }
     }
 
+    emit Counted();
+
     if (folders.empty())
     {
         return;
     }
 
-    sizes_.MeasureFolders(folders, caller_, Freshness::ReuseWhatIsKnown, {},
+    sizes_.MeasureFolders(folders, quarantineCaller_, Freshness::ReuseWhatIsKnown, {},
                           [this](const FolderSizeReport& report)
                           {
                               quarantine_.bytes = report.bytes;

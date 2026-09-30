@@ -30,31 +30,49 @@ QStringList PresetViewModel::Names() const
     return names;
 }
 
-PresetRow PresetViewModel::RowFor(const Preset& preset, const PresetListing& listing, const ApplyMode mode) const
+PresetLookup PresetViewModel::LookupOfTheSnapshot() const
 {
-    const SimulatorProfile& profile = session_.Profile();
     const ProfileSnapshot& snapshot = session_.Snapshot();
-    const PresetContent content = ContentOf(preset, profile, snapshot.libraries);
-    const PresetPlan plan = PlanPresetApplication(preset, mode, profile, snapshot.libraries, snapshot.enabled);
+
+    return BuildPresetLookup(session_.Profile(), snapshot.libraries, snapshot.enabled);
+}
+
+PresetRow PresetViewModel::RowFor(const Preset& preset,
+                                  const PresetListing& listing,
+                                  const ApplyMode mode,
+                                  const PresetLookup& lookup) const
+{
+    const PresetContent content = ContentOf(preset, lookup);
+    const PresetPlan plan = PlanPresetApplication(preset, mode, lookup);
+
+    std::optional<PresetPlan> replaceOfAnotherMode;
+
+    if (mode != ApplyMode::Replace)
+    {
+        replaceOfAnotherMode = PlanPresetApplication(preset, ApplyMode::Replace, lookup);
+    }
+
+    const PresetPlan& replace = replaceOfAnotherMode.has_value() ? *replaceOfAnotherMode : plan;
 
     return {.name = QString::fromStdString(listing.name),
             .content = tr("%n addon", nullptr, static_cast<int>(content.addons))
                 + tr(" · %n category", nullptr, static_cast<int>(content.categories)),
             .updated = listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{},
             .changes = AddonsThatWouldChange(plan),
-            .satisfied = service_.IsSatisfied(profile, snapshot, preset)};
+            .satisfied = service_.IsSatisfied(session_.Snapshot(), preset, replace)};
 }
 
 QList<PresetRow> PresetViewModel::Rows(const ApplyMode mode) const
 {
     const SimulatorProfile& profile = session_.Profile();
+    const PresetLookup lookup = LookupOfTheSnapshot();
     QList<PresetRow> rows;
 
     for (const PresetListing& listing : service_.List(profile.id))
     {
         const std::optional<Preset> preset = service_.Load(profile.id, listing.name);
 
-        rows.append(RowFor(preset.value_or(Preset{}), listing, mode));
+        rows.append(RowFor(preset.value_or(Preset{}), listing, mode, lookup));
     }
 
     return rows;
@@ -74,7 +92,7 @@ std::optional<PresetRow> PresetViewModel::ReturnRow(const ApplyMode mode) const
         return std::nullopt;
     }
 
-    return RowFor(*preset, PresetListing{}, mode);
+    return RowFor(*preset, PresetListing{}, mode, LookupOfTheSnapshot());
 }
 
 std::optional<Preset> PresetViewModel::Load(const QString& name) const

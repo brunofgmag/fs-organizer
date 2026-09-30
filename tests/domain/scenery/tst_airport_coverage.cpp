@@ -122,7 +122,7 @@ void AirportCoverageTest::TheSameAddonReachedByTheLibraryAndByTheLinkCountsOnce(
 {
     SceneryOfAnAddon throughTheLibrary = AddonAt("eham", {Carrying({"EHAM"})});
     SceneryOfAnAddon throughTheLink = AddonAt("eham", {Carrying({"EHAM"})});
-    throughTheLink.resolvedPath = PathFromUtf8("D:\\Library\\Sceneries\\.\\eham");
+    throughTheLink.resolvedPath = PathFromUtf8(R"(D:\Library\Sceneries\.\eham)");
 
     const std::vector<AirportsOfAnAddon> airports = AirportsOfEachAddon({throughTheLibrary, throughTheLink});
 
@@ -245,7 +245,7 @@ void AirportCoverageTest::TheOrderTheUserMarkedThePairInDoesNotDecideWhetherItIs
 void AirportCoverageTest::AnAddonReachedTwiceOrCarryingNoCodeMakesNoPair()
 {
     SceneryOfAnAddon throughTheLink = AddonAt("eham", {Carrying({"EHAM"})});
-    throughTheLink.resolvedPath = PathFromUtf8("D:\\Library\\Sceneries\\.\\eham");
+    throughTheLink.resolvedPath = PathFromUtf8(R"(D:\Library\Sceneries\.\eham)");
 
     QVERIFY2(
         PairsOfTheSameAirport(AirportsOfEachAddon({AddonAt("eham", {Carrying({"EHAM"})}), throughTheLink}), {}).empty(),

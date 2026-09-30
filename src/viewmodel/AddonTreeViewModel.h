@@ -72,7 +72,7 @@ public:
 
     void Toggle(const std::vector<const TreeNode*>& nodes,
                 bool enable,
-                TogglePlan plan,
+                const TogglePlan& plan,
                 const std::vector<TakenPlace>& agreedSwaps,
                 const std::vector<StartupLine>& agreedEntries);
 
@@ -108,9 +108,15 @@ public:
 
     void RelinkToTheProfileDestination(const std::vector<const TreeNode*>& nodes);
 
+    void RelinkStrayed(const std::vector<const TreeNode*>& strayed);
+
     [[nodiscard]] std::size_t StrayAddonsUnder(const std::vector<const TreeNode*>& nodes) const;
 
+    [[nodiscard]] std::vector<const TreeNode*> StrayedUnder(const std::vector<const TreeNode*>& nodes) const;
+
     [[nodiscard]] std::vector<MoveTarget> CategoriesFor(const TreeNode* node) const;
+
+    [[nodiscard]] std::size_t MovableAmong(const std::vector<const TreeNode*>& addons) const;
 
     [[nodiscard]] std::vector<CategorySuggestion> SuggestionsFor(const TreeNode* node) const;
 
@@ -140,38 +146,35 @@ signals:
 private:
     struct ToggleWork
     {
-        SimulatorProfile profile{};
+        EntriesStamp stamp{};
         ProfileSnapshot shown{};
-        std::vector<TreeNode> libraries{};
         std::vector<TreeNode> toDisable{};
         std::vector<TreeNode> toEnable{};
         std::vector<StartupLine> startupEntriesToTurnOff{};
         std::size_t leftAlone = 0;
-        LinkBatchReport report{};
-        std::vector<DestinationEntry> entries{};
+        LinkBatchOutcome outcome{};
         bool simulatorRunning = false;
     };
 
     [[nodiscard]] const TreeNode* LibraryTreeHolding(const TreeNode& node) const;
 
-    [[nodiscard]] std::vector<const TreeNode*> StrayedUnder(const std::vector<const TreeNode*>& nodes) const;
+    [[nodiscard]] std::shared_ptr<ToggleWork> WorkOnTheShownProfile() const;
 
     void Perform(const std::vector<AddonMove>& moves);
 
     void AdoptScan();
 
-    void ReadTheEntriesAfter(ToggleWork& work) const;
-
     void ApplyResults(ToggleWork& work);
 
-    void RunTheBatch(std::shared_ptr<ToggleWork> work);
+    void RunTheBatch(const std::shared_ptr<ToggleWork>& work);
 
     Session& session_;
     ProfileService& service_;
     AddonTreeModel& model_;
     const SimulatorPackages& packages_;
     SizeService& sizes_;
-    MeasurementCaller caller_;
+    MeasurementCaller selectionCaller_;
+    MeasurementCaller swapsCaller_;
     GuardedRunner toggling_;
 };
 

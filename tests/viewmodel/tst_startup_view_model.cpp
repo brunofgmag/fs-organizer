@@ -8,7 +8,6 @@
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
-#include "domain/support/PathUtils.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"

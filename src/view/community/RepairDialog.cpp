@@ -1,7 +1,5 @@
 #include "view/community/RepairDialog.h"
 
-#include <algorithm>
-
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QDialogButtonBox>

@@ -14,7 +14,7 @@ struct TempFiles
 
     [[nodiscard]] std::filesystem::path Root() const
     {
-        return std::filesystem::path(directory.path().toStdString());
+        return directory.path().toStdString();
     }
 
     [[nodiscard]] std::filesystem::path Write(const std::string& name, const std::vector<unsigned char>& bytes) const

@@ -26,7 +26,21 @@ namespace
         return text;
     }
 
-    AddonsByLibrary AddonsOfEveryLibrary(const std::vector<TreeNode>& libraries, const SimulatorProfile& profile)
+    const TreeNode* AddonAt(const PresetLookup& lookup, const AddonId& addonId)
+    {
+        const auto library = lookup.addons.find(Lowered(addonId.libraryId));
+
+        if (library == lookup.addons.end())
+        {
+            return nullptr;
+        }
+
+        const auto addon = library->second.find(Lowered(addonId.folderName));
+
+        return addon == library->second.end() ? nullptr : addon->second;
+    }
+
+    AddonsByLibrary AddonsOfEveryLibrary(const SimulatorProfile& profile, const std::vector<TreeNode>& libraries)
     {
         AddonsByLibrary index;
 
@@ -50,30 +64,43 @@ namespace
         return index;
     }
 
-    const TreeNode* AddonAt(const AddonsByLibrary& index, const AddonId& addonId)
+    std::vector<const TreeNode*> EnabledAmong(const std::vector<TreeNode>& libraries, const EnabledAddons& enabled)
     {
-        const auto library = index.find(Lowered(addonId.libraryId));
+        std::vector<const TreeNode*> among;
 
-        if (library == index.end())
+        for (const TreeNode& library : libraries)
         {
-            return nullptr;
+            for (const TreeNode* addon : AddonsUnder(library))
+            {
+                if (enabled.Contains(addon->path))
+                {
+                    among.push_back(addon);
+                }
+            }
         }
 
-        const auto addon = library->second.find(Lowered(addonId.folderName));
-
-        return addon == library->second.end() ? nullptr : addon->second;
+        return among;
     }
 }
 
-PresetPlan PlanPresetApplication(const Preset& preset,
-                                 const ApplyMode mode,
-                                 const SimulatorProfile& profile,
-                                 const std::vector<TreeNode>& libraries,
-                                 const EnabledAddons& enabled)
+PresetLookup
+BuildPresetLookup(const SimulatorProfile& profile, const std::vector<TreeNode>& libraries, const EnabledAddons& enabled)
+{
+    PresetLookup lookup{.addons = AddonsOfEveryLibrary(profile, libraries)};
+
+    for (const TreeNode* addon : EnabledAmong(libraries, enabled))
+    {
+        lookup.enabledAddons.push_back(EnabledAddon{.addon = addon, .comparablePath = ComparablePath(addon->path)});
+        lookup.enabledPaths.insert(lookup.enabledAddons.back().comparablePath);
+    }
+
+    return lookup;
+}
+
+PresetPlan PlanPresetApplication(const Preset& preset, const ApplyMode mode, const PresetLookup& lookup)
 {
     PresetPlan plan;
     std::set<std::string> named;
-    const AddonsByLibrary index = AddonsOfEveryLibrary(libraries, profile);
 
     for (const PresetEntry& entry : preset.entries)
     {
@@ -82,7 +109,7 @@ PresetPlan PlanPresetApplication(const Preset& preset,
             continue;
         }
 
-        const TreeNode* addon = AddonAt(index, entry.addonId);
+        const TreeNode* addon = AddonAt(lookup, entry.addonId);
 
         if (addon == nullptr)
         {
@@ -90,9 +117,11 @@ PresetPlan PlanPresetApplication(const Preset& preset,
             continue;
         }
 
-        named.insert(ComparablePath(addon->path));
+        const std::string comparable = ComparablePath(addon->path);
 
-        const bool on = enabled.Contains(addon->path);
+        named.insert(comparable);
+
+        const bool on = lookup.enabledPaths.contains(comparable);
         const bool wantsOn = entry.action == PresetAction::Enable && mode != ApplyMode::Disable;
 
         if (on == wantsOn)
@@ -114,21 +143,27 @@ PresetPlan PlanPresetApplication(const Preset& preset,
         return plan;
     }
 
-    for (const TreeNode& library : libraries)
+    for (const EnabledAddon& enabledAddon : lookup.enabledAddons)
     {
-        for (const TreeNode* addon : AddonsUnder(library))
+        if (named.contains(enabledAddon.comparablePath))
         {
-            if (named.contains(ComparablePath(addon->path)) || !enabled.Contains(addon->path))
-            {
-                continue;
-            }
-
-            plan.toDisable.push_back(addon);
-            plan.notNamedByThePreset.push_back(addon);
+            continue;
         }
+
+        plan.toDisable.push_back(enabledAddon.addon);
+        plan.notNamedByThePreset.push_back(enabledAddon.addon);
     }
 
     return plan;
+}
+
+PresetPlan PlanPresetApplication(const Preset& preset,
+                                 const ApplyMode mode,
+                                 const SimulatorProfile& profile,
+                                 const std::vector<TreeNode>& libraries,
+                                 const EnabledAddons& enabled)
+{
+    return PlanPresetApplication(preset, mode, BuildPresetLookup(profile, libraries, enabled));
 }
 
 std::size_t AddonsThatWouldChange(const PresetPlan& plan)
@@ -136,22 +171,26 @@ std::size_t AddonsThatWouldChange(const PresetPlan& plan)
     return plan.toEnable.size() + plan.toDisable.size();
 }
 
+bool PresetIsSatisfied(const Preset& preset, const PresetLookup& lookup)
+{
+    return AddonsThatWouldChange(PlanPresetApplication(preset, ApplyMode::Replace, lookup)) == 0;
+}
+
 bool PresetIsSatisfied(const Preset& preset,
                        const SimulatorProfile& profile,
                        const std::vector<TreeNode>& libraries,
                        const EnabledAddons& enabled)
 {
-    return AddonsThatWouldChange(PlanPresetApplication(preset, ApplyMode::Replace, profile, libraries, enabled)) == 0;
+    return PresetIsSatisfied(preset, BuildPresetLookup(profile, libraries, enabled));
 }
 
-PresetContent ContentOf(const Preset& preset, const SimulatorProfile& profile, const std::vector<TreeNode>& libraries)
+PresetContent ContentOf(const Preset& preset, const PresetLookup& lookup)
 {
-    const AddonsByLibrary index = AddonsOfEveryLibrary(libraries, profile);
     std::set<std::string> categories;
 
     for (const PresetEntry& entry : preset.entries)
     {
-        if (const TreeNode* addon = AddonAt(index, entry.addonId); addon != nullptr)
+        if (const TreeNode* addon = AddonAt(lookup, entry.addonId); addon != nullptr)
         {
             categories.insert(ComparablePath(addon->path.parent_path()));
         }
@@ -160,22 +199,20 @@ PresetContent ContentOf(const Preset& preset, const SimulatorProfile& profile, c
     return {.addons = preset.entries.size(), .categories = categories.size()};
 }
 
+PresetContent ContentOf(const Preset& preset, const SimulatorProfile& profile, const std::vector<TreeNode>& libraries)
+{
+    return ContentOf(preset, BuildPresetLookup(profile, libraries, EnabledAddons{}));
+}
+
 std::vector<PresetEntry> EntriesForWhatIsEnabled(const SimulatorProfile& profile,
                                                  const std::vector<TreeNode>& libraries,
                                                  const EnabledAddons& enabled)
 {
     std::vector<PresetEntry> entries;
 
-    for (const TreeNode& library : libraries)
+    for (const TreeNode* addon : EnabledAmong(libraries, enabled))
     {
-        for (const TreeNode* addon : AddonsUnder(library))
-        {
-            if (enabled.Contains(addon->path))
-            {
-                entries.push_back(
-                    PresetEntry{.addonId = IdentityOf(profile, addon->path), .action = PresetAction::Enable});
-            }
-        }
+        entries.push_back(PresetEntry{.addonId = IdentityOf(profile, addon->path), .action = PresetAction::Enable});
     }
 
     return entries;

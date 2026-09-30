@@ -14,6 +14,7 @@
 #include <execution>
 #include <fstream>
 #include <iterator>
+#include <memory>
 #include <numeric>
 #include <string>
 #include <system_error>
@@ -64,34 +65,56 @@ namespace
         return GetLastError() == ERROR_SHARING_VIOLATION;
     }
 
+    struct FindHandleCloser
+    {
+        void operator()(const HANDLE handle) const
+        {
+            FindClose(handle);
+        }
+    };
+
+    using FindHandle = std::unique_ptr<void, FindHandleCloser>;
+
+    [[nodiscard]] bool ItIsADotEntry(const wchar_t* name)
+    {
+        return std::wcscmp(name, L".") == 0 || std::wcscmp(name, L"..") == 0;
+    }
+
     template<typename Wanted>
     std::vector<std::filesystem::path> ChildrenWhoseAttributesPass(const std::filesystem::path& path,
                                                                    const Wanted& wanted)
     {
-        std::error_code error;
-        std::filesystem::directory_iterator entry(WithExtendedPrefix(path),
-                                                  std::filesystem::directory_options::skip_permission_denied, error);
-        if (error)
+        std::wstring pattern = NativePath(path);
+        if (pattern.empty() || pattern.back() != L'\\')
+        {
+            pattern.push_back(L'\\');
+        }
+
+        pattern.push_back(L'*');
+
+        WIN32_FIND_DATAW found{};
+        const HANDLE opened = FindFirstFileExW(pattern.c_str(), FindExInfoBasic, &found, FindExSearchNameMatch, nullptr,
+                                               FIND_FIRST_EX_LARGE_FETCH);
+        if (opened == INVALID_HANDLE_VALUE)
         {
             return {};
         }
 
+        const FindHandle search(opened);
+
         std::vector<std::filesystem::path> children;
-        const std::filesystem::directory_iterator end;
 
-        while (entry != end)
+        do
         {
-            if (const DWORD attributes = AttributesWithoutFollowingLinks(entry->path());
-                attributes != INVALID_FILE_ATTRIBUTES && wanted(attributes))
+            if (!ItIsADotEntry(found.cFileName) && wanted(found.dwFileAttributes))
             {
-                children.push_back(path / entry->path().filename());
+                children.push_back(path / found.cFileName);
             }
+        } while (FindNextFileW(search.get(), &found) != FALSE);
 
-            entry.increment(error);
-            if (error)
-            {
-                return {};
-            }
+        if (GetLastError() != ERROR_NO_MORE_FILES)
+        {
+            return {};
         }
 
         return children;
@@ -404,8 +427,15 @@ std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std
                 return std::nullopt;
             }
 
-            walked.files.push_back(
-                FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
+            const std::filesystem::file_time_type written = entry->last_write_time(error);
+            if (error)
+            {
+                return std::nullopt;
+            }
+
+            walked.files.push_back(FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot),
+                                                   .size = size,
+                                                   .lastWriteTime = SystemTimeOf(written)});
         }
 
         entry.increment(error);

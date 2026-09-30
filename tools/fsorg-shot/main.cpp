@@ -49,7 +49,6 @@
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "application/CoverageService.h"
@@ -358,7 +357,7 @@ namespace
 
     QPushButton* ButtonNamed(const QWidget& page, const QString& objectName)
     {
-        QPushButton* button = page.findChild<QPushButton*>(objectName);
+        auto* button = page.findChild<QPushButton*>(objectName);
         if (button == nullptr)
         {
             Out() << "no button called " << objectName << " on this page, so the shot it opens is missing\n";
@@ -714,7 +713,7 @@ int main(int argc, char* argv[])
 
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
-    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(staged->settingsFile.parent_path() / "document-index.json");
     DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache,
@@ -746,8 +745,8 @@ int main(int argc, char* argv[])
         filesystemProbe,
         LoadingReportOf(LoadingReportLocations(userCfgLocations, filesystemProbe), session.Profile().variant));
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
-                                              runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, notifier, loadingReport,
+                                              clock, runner);
     const CouplingScan coupling(filesystemProbe);
     JsonBisectionStore bisectionStore(staged->settingsFile.parent_path() / "bisection");
     BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore, clock);
@@ -989,7 +988,7 @@ int main(int argc, char* argv[])
             Out() << "no enabled startup entry reaches into an addon, so there is no warning to write\n";
         }
 
-        QPushButton* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
+        auto* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
 
         if (SelectTheAddonNamed(*libraryPage, TheFirstAddonOf(session.Snapshot())) && remove != nullptr
             && remove->isEnabled())
@@ -1301,7 +1300,7 @@ int main(int argc, char* argv[])
     static_cast<void>(ClickingReaches(*navigation, 0));
     LetTheLayoutSettle();
 
-    if (QPushButton* unregister = optionsPage->findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"));
+    if (auto* unregister = optionsPage->findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"));
         unregister != nullptr)
     {
         landed = SaveTheDialogOpenedBy(
@@ -1317,7 +1316,7 @@ int main(int argc, char* argv[])
         Out() << "no library registered, so there is no unregister dialog to write\n";
     }
 
-    if (QPushButton* categories = optionsPage->findChild<QPushButton*>(QStringLiteral("DeclareCategories"));
+    if (auto* categories = optionsPage->findChild<QPushButton*>(QStringLiteral("DeclareCategories"));
         categories != nullptr)
     {
         landed = SaveTheDialogOpenedBy(

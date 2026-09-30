@@ -246,8 +246,15 @@ public:
                     return std::nullopt;
                 }
 
-                walked.files.push_back(
-                    FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
+                const std::filesystem::file_time_type written = entry->last_write_time(error);
+                if (error)
+                {
+                    return std::nullopt;
+                }
+
+                walked.files.push_back(FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot),
+                                                       .size = size,
+                                                       .lastWriteTime = SystemTimeOf(written)});
             }
 
             entry.increment(error);

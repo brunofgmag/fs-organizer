@@ -14,6 +14,11 @@ struct StartupEntry
     bool enabled = true;
 };
 
+struct StartupBackup
+{
+    bool taken = false;
+};
+
 class StartupEntries
 {
 public:
@@ -21,7 +26,15 @@ public:
 
     [[nodiscard]] virtual std::vector<StartupEntry> Entries() const = 0;
 
-    [[nodiscard]] virtual FileResult Switch(const std::filesystem::path& entryPath, bool enabled) = 0;
+    [[nodiscard]] virtual FileResult
+    Switch(const std::filesystem::path& entryPath, bool enabled, StartupBackup& backup) = 0;
+
+    [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, const bool enabled)
+    {
+        StartupBackup alone;
+
+        return Switch(entryPath, enabled, alone);
+    }
 };
 
 #endif // FS_ORGANIZER_APPLICATION_PORTS_STARTUP_ENTRIES_H

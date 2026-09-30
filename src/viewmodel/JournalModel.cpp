@@ -271,7 +271,7 @@ bool JournalModel::SupportsTheName(const QModelIndex& position) const
     case TargetColumn: return true;
     case OutcomeColumn: return ItWorked(position);
     case OperationColumn:
-    case AddonColumn: return false;
+    case AddonColumn:
     default: return false;
     }
 }

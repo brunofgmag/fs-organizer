@@ -18,7 +18,7 @@
 
 [[nodiscard]] inline std::filesystem::path PathFromUtf8(const std::string& text)
 {
-    return std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(text.data()), text.size()));
+    return std::u8string(reinterpret_cast<const char8_t*>(text.data()), text.size());
 }
 
 [[nodiscard]] inline std::string WithGenericSeparators(std::string text)

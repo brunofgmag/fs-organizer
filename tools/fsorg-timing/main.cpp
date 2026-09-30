@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <optional>
-#include <ranges>
 #include <vector>
 
 #include "application/ImportService.h"
@@ -15,7 +14,6 @@
 #include "application/SizeService.h"
 #include "application/StartupService.h"
 #include "domain/model/EnabledAddons.h"
-#include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "infrastructure/sim/StartupFileLocations.h"
@@ -32,7 +30,6 @@
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ProfilePackages.h"
@@ -232,8 +229,9 @@ int main(int argc, char* argv[])
     {
         MainWindow window(loaded);
         QtBackgroundRunner runner;
+        TimedRunner timedRunner(runner);
         SessionNotifier notifier;
-        Session session(profileService, organizer, settings, loaded, processProbe, runner, notifier);
+        Session session(profileService, organizer, settings, loaded, processProbe, timedRunner, notifier);
 
         SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -260,7 +258,7 @@ int main(int argc, char* argv[])
 
         const JsonChartCatalogueParser catalogueParser;
         const QtPdfChartVersions chartVersions;
-        const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+        const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
         AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
 
         auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
@@ -295,7 +293,8 @@ int main(int argc, char* argv[])
         {
             libraryTab->click();
 
-            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, sceneryService, session);
+            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, sceneryService, session,
+                                        timedRunner);
         }
 
         return MeasureTheAppJournal(window, *journalPage, journalViewModel, journalModel);
@@ -436,12 +435,18 @@ int main(int argc, char* argv[])
                                               && left.classification == right.classification;
                                       });
 
-            std::vector<DestinationEntry> handedOver = std::move(incremental);
+            EntriesRead read;
 
-            Measure(tag + "Session::AdoptEntries", true,
+            Measure(tag + "ReadEntries (resolve and derive)", false,
                     [&]
                     {
-                        session.AdoptEntries(std::move(handedOver));
+                        read =
+                            profileService.ReadEntries(session.StampForAnEntriesRead(), session.Snapshot().libraries);
+                    });
+            Measure(tag + "Session::AdoptTheEntriesRead", true,
+                    [&]
+                    {
+                        session.AdoptTheEntriesRead(std::move(read));
                     });
             Measure(tag + "AddonTreeModel::Refresh", true,
                     [&]

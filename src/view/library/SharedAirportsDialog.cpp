@@ -1,7 +1,5 @@
 #include "view/library/SharedAirportsDialog.h"
 
-#include <algorithm>
-
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QGridLayout>

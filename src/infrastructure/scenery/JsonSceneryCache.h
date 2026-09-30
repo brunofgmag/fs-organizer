@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <mutex>
 #include <optional>
 #include <string>
 
@@ -21,12 +22,16 @@ public:
     void WriteWhatIsKept() override;
 
 private:
+    using Known = std::map<std::string, RememberedScenery, std::less<>>;
+
     void Read();
 
-    void Write() const;
+    void Write(const Known& snapshot) const;
 
     std::filesystem::path filePath_;
-    std::map<std::string, RememberedScenery, std::less<>> known_;
+    mutable std::mutex guard_;
+    std::mutex writing_;
+    Known known_;
     bool dirty_ = false;
 };
 

@@ -1,7 +1,6 @@
 #ifndef FS_ORGANIZER_VIEW_COMMUNITY_COMMUNITY_PAGE_H
 #define FS_ORGANIZER_VIEW_COMMUNITY_COMMUNITY_PAGE_H
 
-#include <optional>
 #include <vector>
 
 #include <QtCore/QHash>

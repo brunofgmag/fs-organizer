@@ -1,7 +1,6 @@
 #ifndef FS_ORGANIZER_INFRASTRUCTURE_UPDATE_GITHUB_UPDATE_SERVICE_H
 #define FS_ORGANIZER_INFRASTRUCTURE_UPDATE_GITHUB_UPDATE_SERVICE_H
 
-#include <string>
 #include <vector>
 
 #include <QtCore/QObject>

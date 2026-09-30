@@ -6,7 +6,6 @@
 
 #include "application/PresetService.h"
 #include "application/preset/PresetStartupPlan.h"
-#include "domain/tree/LibraryTrees.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
@@ -58,6 +57,7 @@ namespace
         static void ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction();
         static void SettingAStartupActionRefusesWhenTheRowNoLongerHoldsThatEntry();
         static void RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns();
+        static void SatisfactionFromTheReplacePlanAgreesWithSatisfactionFromTheSnapshot();
     };
 }
 
@@ -471,6 +471,7 @@ namespace
     std::vector<std::string> FolderNamesOf(const Preset& preset)
     {
         std::vector<std::string> names;
+        names.reserve(preset.entries.size());
 
         for (const PresetEntry& entry : preset.entries)
         {
@@ -776,6 +777,55 @@ void PresetServiceTest::RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns()
     QVERIFY(saved->governsStartup);
     QCOMPARE(saved->startupEntries.size(), std::size_t{1});
     QCOMPARE(saved->startupEntries.front().path, std::filesystem::path{kLauncher});
+}
+
+void PresetServiceTest::SatisfactionFromTheReplacePlanAgreesWithSatisfactionFromTheSnapshot()
+{
+    const SimulatorProfile profile = Profile();
+
+    const PresetEntry crj{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                          .action = PresetAction::Enable};
+    const PresetEntry fenix{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "fenix-a320"},
+                            .action = PresetAction::Enable};
+
+    std::vector<Preset> presets;
+
+    for (const bool governsStartup : {false, true})
+    {
+        for (const std::vector<PresetEntry>& entries : {std::vector<PresetEntry>{}, {crj}, {fenix}, {crj, fenix}})
+        {
+            Preset preset = GoverningStartup({TurningOn(kLauncher)});
+            preset.governsStartup = governsStartup;
+            preset.entries = entries;
+            presets.push_back(preset);
+        }
+    }
+
+    std::size_t satisfied = 0;
+    std::size_t unsatisfied = 0;
+
+    for (const bool launcherOn : {false, true})
+    {
+        Fixture f;
+        f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+        f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = launcherOn});
+
+        const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+        for (const Preset& preset : presets)
+        {
+            const PresetPlan replace =
+                PlanPresetApplication(preset, ApplyMode::Replace, profile, snapshot.libraries, snapshot.enabled);
+            const bool viaPlan = f.service.IsSatisfied(snapshot, preset, replace);
+
+            QCOMPARE(viaPlan, f.service.IsSatisfied(profile, snapshot, preset));
+
+            ++(viaPlan ? satisfied : unsatisfied);
+        }
+    }
+
+    QVERIFY(satisfied > 0);
+    QVERIFY(unsatisfied > 0);
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)

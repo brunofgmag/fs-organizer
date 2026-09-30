@@ -80,6 +80,8 @@ public:
 
     [[nodiscard]] BisectionReport Stop(const SimulatorProfile& profile);
 
+    [[nodiscard]] BisectionReport StartOver(const SimulatorProfile& profile);
+
     [[nodiscard]] std::optional<BisectionRun> WhatWasInterrupted(const std::string& profileId) const;
 
     [[nodiscard]] BisectionReport Resume(const SimulatorProfile& profile, ResumeChoice choice);
@@ -94,6 +96,9 @@ private:
     [[nodiscard]] static Reading ReadingOf(ProfileSnapshot snapshot);
 
     [[nodiscard]] Reading ReadTheDisk(const SimulatorProfile& profile) const;
+
+    [[nodiscard]] BisectionReport
+    BeginFrom(const SimulatorProfile& profile, const ProfileSnapshot& shown, const Reading& reading);
 
     [[nodiscard]] BisectionRun RunFor(const SimulatorProfile& profile, const ProfileSnapshot& shown) const;
 

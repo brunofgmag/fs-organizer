@@ -13,8 +13,26 @@
 class FakePresetRepository final : public PresetRepository
 {
 public:
+    [[nodiscard]] std::size_t ListCalls() const
+    {
+        return listCalls_;
+    }
+
+    [[nodiscard]] std::size_t LoadCalls() const
+    {
+        return loadCalls_;
+    }
+
+    void ForgetTheCalls()
+    {
+        listCalls_ = 0;
+        loadCalls_ = 0;
+    }
+
     [[nodiscard]] std::vector<PresetListing> List(const std::string& profileId) const override
     {
+        ++listCalls_;
+
         std::vector<PresetListing> listings;
 
         const auto profile = byProfile_.find(profileId);
@@ -42,6 +60,8 @@ public:
 
     [[nodiscard]] std::optional<Preset> Load(const std::string& profileId, const std::string& name) const override
     {
+        ++loadCalls_;
+
         const auto profile = byProfile_.find(profileId);
         if (profile == byProfile_.end())
         {
@@ -100,6 +120,8 @@ public:
 
     [[nodiscard]] std::optional<Preset> LoadReturnPreset(const std::string& profileId) const override
     {
+        ++loadCalls_;
+
         const auto preset = returns_.find(profileId);
 
         return preset == returns_.end() ? std::nullopt : std::optional(preset->second);
@@ -127,6 +149,8 @@ private:
     std::map<std::string, Preset> returns_;
     std::map<std::string, std::chrono::system_clock::time_point> writtenAt_;
     bool refusing_ = false;
+    mutable std::size_t listCalls_ = 0;
+    mutable std::size_t loadCalls_ = 0;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_PRESET_REPOSITORY_H

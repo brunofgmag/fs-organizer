@@ -432,8 +432,8 @@ void SelectablePages::SelectTheWordAt(const QPoint& where)
     QTextBoundaryFinder words(QTextBoundaryFinder::Word, text);
     words.setPosition(place.index);
 
-    const int from = words.isAtBoundary() ? place.index : words.toPreviousBoundary();
-    const int to = words.toNextBoundary();
+    const int from = static_cast<int>(words.isAtBoundary() ? place.index : words.toPreviousBoundary());
+    const int to = static_cast<int>(words.toNextBoundary());
 
     if (from < 0 || to <= from)
     {

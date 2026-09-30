@@ -2,6 +2,9 @@
 #define FS_ORGANIZER_DOMAIN_PRESET_PRESET_PLAN_H
 
 #include <cstddef>
+#include <map>
+#include <set>
+#include <string>
 #include <vector>
 
 #include "domain/model/AddonId.h"
@@ -26,6 +29,29 @@ struct PresetPlan
     std::vector<const TreeNode*> notNamedByThePreset;
 };
 
+struct EnabledAddon
+{
+    const TreeNode* addon = nullptr;
+    std::string comparablePath{};
+};
+
+struct PresetLookup
+{
+    std::map<std::string, std::map<std::string, const TreeNode*>> addons{};
+    std::vector<EnabledAddon> enabledAddons{};
+    std::set<std::string> enabledPaths{};
+};
+
+[[nodiscard]] PresetLookup BuildPresetLookup(const SimulatorProfile& profile,
+                                             const std::vector<TreeNode>& libraries,
+                                             const EnabledAddons& enabled);
+
+PresetLookup BuildPresetLookup(const SimulatorProfile& profile,
+                               std::vector<TreeNode>&& libraries,
+                               const EnabledAddons& enabled) = delete;
+
+[[nodiscard]] PresetPlan PlanPresetApplication(const Preset& preset, ApplyMode mode, const PresetLookup& lookup);
+
 [[nodiscard]] PresetPlan PlanPresetApplication(const Preset& preset,
                                                ApplyMode mode,
                                                const SimulatorProfile& profile,
@@ -39,6 +65,8 @@ PresetPlan PlanPresetApplication(const Preset& preset,
                                  const EnabledAddons& enabled) = delete;
 
 [[nodiscard]] std::size_t AddonsThatWouldChange(const PresetPlan& plan);
+
+[[nodiscard]] bool PresetIsSatisfied(const Preset& preset, const PresetLookup& lookup);
 
 [[nodiscard]] bool PresetIsSatisfied(const Preset& preset,
                                      const SimulatorProfile& profile,
@@ -55,6 +83,8 @@ struct PresetContent
     std::size_t addons = 0;
     std::size_t categories = 0;
 };
+
+[[nodiscard]] PresetContent ContentOf(const Preset& preset, const PresetLookup& lookup);
 
 [[nodiscard]] PresetContent
 ContentOf(const Preset& preset, const SimulatorProfile& profile, const std::vector<TreeNode>& libraries);

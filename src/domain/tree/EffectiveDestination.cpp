@@ -1,7 +1,6 @@
 #include "domain/tree/EffectiveDestination.h"
 
 #include <algorithm>
-#include <ranges>
 #include <string>
 
 #include "domain/profile/OrphanOverrides.h"

@@ -1,7 +1,6 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_UPDATE_SERVICE_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_UPDATE_SERVICE_H
 
-#include <algorithm>
 #include <string>
 #include <vector>
 

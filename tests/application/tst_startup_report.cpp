@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "application/StartupReport.h"
-#include "domain/support/PathUtils.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"

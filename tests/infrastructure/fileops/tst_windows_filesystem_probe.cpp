@@ -5,7 +5,11 @@
 
 #include <aclapi.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
 #include <fstream>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -38,6 +42,12 @@ namespace
         static void EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable();
         static void ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem();
         static void TheStandardLibraryDoubleAnswersPastTheOldCeilingTheSameWayThisProbeDoes();
+        static void TheFingerprintCarriesTheWriteTimeOfEachFileAsTheFileSystemHoldsIt();
+        static void AFolderAndAFileAreListedEachUnderItsOwnKindAndNeverTheDotEntries();
+        static void AJunctionToAFolderIsListedAsAFolderAndNotAsAFile();
+        static void ANameOutsideTheCodePageComesBackIntact();
+        static void FilesOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem();
+        static void AFolderThatIsNotThereOrHasNothingInItListsNothing();
     };
 }
 
@@ -452,6 +462,121 @@ void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersPastTheOldCeilin
     QCOMPARE(byTheDouble->files.size(), byProduction->files.size());
     QCOMPARE(byTheDouble->files.front().relativePath, byProduction->files.front().relativePath);
     QCOMPARE(byTheDouble->longestEntry, byProduction->longestEntry);
+}
+
+void WindowsFilesystemProbeTest::TheFingerprintCarriesTheWriteTimeOfEachFileAsTheFileSystemHoldsIt()
+{
+    constexpr std::int64_t kFileTimeTicksAtTheUnixBillennium = 126'444'736'000'000'000;
+    constexpr std::int64_t kUnixBillennium = 1'000'000'000;
+
+    const Disk disk;
+    const std::filesystem::path addon = disk.AddFolder("Community/asfs");
+    const std::filesystem::path first = addon / "manifest.json";
+    const std::filesystem::path second = addon / "scenery" / "world.bgl";
+    std::filesystem::create_directories(second.parent_path());
+    std::ofstream(first) << R"({"title": "ASFS"})";
+    std::ofstream(second) << "bgl";
+
+    const std::filesystem::file_time_type billennium{
+        std::filesystem::file_time_type::duration{kFileTimeTicksAtTheUnixBillennium}};
+    std::filesystem::last_write_time(first, billennium);
+    std::filesystem::last_write_time(second, billennium + std::chrono::milliseconds(7));
+
+    const WindowsFilesystemProbe production;
+    const StdFilesystemProbe double_;
+
+    for (const FilesystemProbe* probe :
+         {static_cast<const FilesystemProbe*>(&production), static_cast<const FilesystemProbe*>(&double_)})
+    {
+        const std::optional<TreeFingerprint> walked = probe->FingerprintTree(addon);
+
+        QVERIFY(walked.has_value());
+        QCOMPARE(walked->files.size(), std::size_t{2});
+
+        for (const FileFingerprint& file : walked->files)
+        {
+            QCOMPARE(file.lastWriteTime, production.LastWriteTime(addon / file.relativePath).value());
+        }
+
+        const auto whereIs = [&walked](const std::filesystem::path& relative)
+        {
+            return std::ranges::find(walked->files, relative, &FileFingerprint::relativePath)->lastWriteTime;
+        };
+
+        QCOMPARE(whereIs("manifest.json"),
+                 std::chrono::system_clock::time_point{std::chrono::seconds{kUnixBillennium}});
+        QCOMPARE(whereIs(std::filesystem::path("scenery") / "world.bgl"),
+                 std::chrono::system_clock::time_point{std::chrono::seconds{kUnixBillennium}}
+                     + std::chrono::milliseconds(7));
+    }
+}
+
+void WindowsFilesystemProbeTest::AFolderAndAFileAreListedEachUnderItsOwnKindAndNeverTheDotEntries()
+{
+    const Disk disk;
+    const std::filesystem::path destination = disk.AddFolder("Community");
+    const std::filesystem::path folder = disk.AddFolder("Community/asfs");
+    const std::filesystem::path file = destination / "readme.txt";
+    std::ofstream(file) << "hello";
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QCOMPARE(filesystemProbe.ChildDirectories(destination), std::vector<std::filesystem::path>{folder});
+    QCOMPARE(filesystemProbe.ChildFiles(destination), std::vector<std::filesystem::path>{file});
+}
+
+void WindowsFilesystemProbeTest::AJunctionToAFolderIsListedAsAFolderAndNotAsAFile()
+{
+    const Disk disk;
+    const std::filesystem::path target = disk.AddFolder("Library/fenix-a320");
+    const std::filesystem::path junction = disk.AddLiveJunction("Community/fenix-a320", target);
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QCOMPARE(filesystemProbe.ChildDirectories(junction.parent_path()), std::vector<std::filesystem::path>{junction});
+    QVERIFY(filesystemProbe.ChildFiles(junction.parent_path()).empty());
+}
+
+void WindowsFilesystemProbeTest::ANameOutsideTheCodePageComesBackIntact()
+{
+    const Disk disk;
+    const std::filesystem::path destination = disk.AddFolder("Community");
+    const std::filesystem::path folder = destination / std::filesystem::path(L"café-日本語");
+    const std::filesystem::path file = destination / std::filesystem::path(L"über-Ж.bgl");
+    std::filesystem::create_directories(folder);
+    std::ofstream(file) << "hello";
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QCOMPARE(filesystemProbe.ChildDirectories(destination), std::vector<std::filesystem::path>{folder});
+    QCOMPARE(filesystemProbe.ChildFiles(destination), std::vector<std::filesystem::path>{file});
+}
+
+void WindowsFilesystemProbeTest::FilesOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "Utils");
+    WriteFilePastTheCeiling(deep / "manifest.json", R"({"title": "MD-11"})");
+
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::vector<std::filesystem::path> files = filesystemProbe.ChildFiles(deep);
+
+    QVERIFY(deep.wstring().size() > kOldPathCeiling);
+    QCOMPARE(files, std::vector<std::filesystem::path>{deep / "manifest.json"});
+    QVERIFY(filesystemProbe.ChildDirectories(deep).empty());
+}
+
+void WindowsFilesystemProbeTest::AFolderThatIsNotThereOrHasNothingInItListsNothing()
+{
+    const Disk disk;
+    const std::filesystem::path empty = disk.AddFolder("Community");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.ChildDirectories(empty).empty());
+    QVERIFY(filesystemProbe.ChildFiles(empty).empty());
+    QVERIFY(filesystemProbe.ChildDirectories(disk.Root() / "missing").empty());
+    QVERIFY(filesystemProbe.ChildFiles(disk.Root() / "missing").empty());
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

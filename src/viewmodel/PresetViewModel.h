@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <optional>
 
 #include <QtCore/QList>
@@ -136,7 +135,10 @@ private:
 
     [[nodiscard]] bool Accepts(const QString& name);
 
-    [[nodiscard]] PresetRow RowFor(const Preset& preset, const PresetListing& listing, ApplyMode mode) const;
+    [[nodiscard]] PresetLookup LookupOfTheSnapshot() const;
+
+    [[nodiscard]] PresetRow
+    RowFor(const Preset& preset, const PresetListing& listing, ApplyMode mode, const PresetLookup& lookup) const;
 
     [[nodiscard]] static QString WhatTheStartupHalfLeftUndone(const PresetApplyReport& report);
 

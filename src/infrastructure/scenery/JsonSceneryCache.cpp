@@ -1,9 +1,9 @@
 #include "infrastructure/scenery/JsonSceneryCache.h"
 
 #include <chrono>
-#include <cstdint>
 #include <fstream>
 #include <iterator>
+#include <mutex>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -86,7 +86,7 @@ namespace
                           .codes = {},
                           .anIdentifierDidNotDecode = object.value(kDidNotDecode).toBool()};
 
-        for (const QJsonValue& code : object.value(kCodes).toArray())
+        for (const QJsonValue code : object.value(kCodes).toArray())
         {
             file.codes.push_back(code.toString().toStdString());
         }
@@ -102,6 +102,8 @@ JsonSceneryCache::JsonSceneryCache(std::filesystem::path filePath) : filePath_(s
 
 void JsonSceneryCache::Read()
 {
+    const std::lock_guard lock(guard_);
+
     std::ifstream stream(filePath_, std::ios::binary);
     if (!stream.is_open())
     {
@@ -112,14 +114,14 @@ void JsonSceneryCache::Read()
     const QJsonDocument document =
         QJsonDocument::fromJson(QByteArray::fromRawData(bytes.data(), static_cast<qsizetype>(bytes.size())));
 
-    for (const QJsonValue& value : document.object().value(kAddons).toArray())
+    for (const QJsonValue value : document.object().value(kAddons).toArray())
     {
         const QJsonObject addon = value.toObject();
 
         RememberedScenery scenery{.readAt = MomentOf(static_cast<qint64>(addon.value(kReadAt).toDouble())),
                                   .files = {}};
 
-        for (const QJsonValue& file : addon.value(kFiles).toArray())
+        for (const QJsonValue file : addon.value(kFiles).toArray())
         {
             scenery.files.push_back(FileFromJson(file.toObject()));
         }
@@ -128,11 +130,11 @@ void JsonSceneryCache::Read()
     }
 }
 
-void JsonSceneryCache::Write() const
+void JsonSceneryCache::Write(const Known& snapshot) const
 {
     QJsonArray addons;
 
-    for (const auto& [folder, scenery] : known_)
+    for (const auto& [folder, scenery] : snapshot)
     {
         QJsonArray files;
         for (const SceneryCodes& file : scenery.files)
@@ -162,26 +164,43 @@ void JsonSceneryCache::Write() const
 
 std::optional<RememberedScenery> JsonSceneryCache::Remember(const std::filesystem::path& addonFolder) const
 {
-    const auto known = known_.find(ComparablePath(addonFolder));
+    const std::string key = ComparablePath(addonFolder);
+
+    const std::lock_guard lock(guard_);
+
+    const auto known = known_.find(key);
 
     return known == known_.end() ? std::nullopt : std::optional(known->second);
 }
 
 void JsonSceneryCache::Keep(const std::filesystem::path& addonFolder, const RememberedScenery& scenery)
 {
-    known_.insert_or_assign(ComparablePath(addonFolder), scenery);
+    std::string key = ComparablePath(addonFolder);
+
+    const std::lock_guard lock(guard_);
+
+    known_.insert_or_assign(std::move(key), scenery);
 
     dirty_ = true;
 }
 
 void JsonSceneryCache::WriteWhatIsKept()
 {
-    if (!dirty_)
+    const std::lock_guard writer(writing_);
+
+    Known snapshot;
+
     {
-        return;
+        const std::lock_guard lock(guard_);
+
+        if (!dirty_)
+        {
+            return;
+        }
+
+        snapshot = known_;
+        dirty_ = false;
     }
 
-    Write();
-
-    dirty_ = false;
+    Write(snapshot);
 }

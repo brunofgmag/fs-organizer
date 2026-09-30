@@ -20,7 +20,6 @@
 
 #include "view/JournalPage.h"
 #include "view/shell/MainWindow.h"
-#include "viewmodel/AddonTreeModel.h"
 #include "viewmodel/JournalModel.h"
 #include "viewmodel/JournalViewModel.h"
 

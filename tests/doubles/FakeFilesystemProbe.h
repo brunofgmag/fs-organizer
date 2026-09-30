@@ -54,6 +54,7 @@ public:
     [[nodiscard]] std::vector<std::filesystem::path> ChildDirectories(const std::filesystem::path& path) const override
     {
         enumerated.push_back(path);
+        directoriesListed.push_back(path);
 
         return fileSystem_.ChildDirectoriesOf(path);
     }
@@ -76,6 +77,13 @@ public:
     }
 
     mutable std::vector<std::filesystem::path> enumerated;
+
+    [[nodiscard]] std::size_t TimesTheDirectoriesOfWereListed(const std::filesystem::path& path) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(directoriesListed, path));
+    }
+
+    mutable std::vector<std::filesystem::path> directoriesListed;
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override
     {
@@ -113,8 +121,12 @@ public:
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override
     {
+        ++lastWriteTimesAsked;
+
         return fileSystem_.LastWriteTime(path);
     }
+
+    mutable std::size_t lastWriteTimesAsked = 0;
 
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override
     {
@@ -204,8 +216,10 @@ public:
         TreeFingerprint walk{.longestEntry = *longest};
         for (const std::filesystem::path& file : fileSystem_.FilesUnder(root))
         {
-            walk.files.push_back(
-                FileFingerprint{.relativePath = file.lexically_relative(root), .size = fileSystem_.FileSize(file)});
+            walk.files.push_back(FileFingerprint{
+                .relativePath = file.lexically_relative(root),
+                .size = fileSystem_.FileSize(file),
+                .lastWriteTime = fileSystem_.LastWriteTime(file).value_or(std::chrono::system_clock::time_point{})});
         }
 
         return walk;

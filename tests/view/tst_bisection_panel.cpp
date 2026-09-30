@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTreeWidget>
 
@@ -10,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include "domain/importing/ImportPaths.h"
 #include "tests/doubles/FakeBisectionStore.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -41,6 +41,8 @@ namespace
         static void TheHistoryStaysHiddenUntilARoundHasBeenAnswered();
         static void EveryPageOfThePanelHasAWidgetBehindIt();
         static void AGroupOpensIntoItsMembersAndSaysWhichOneOnlyBringsTheName();
+        static void TheStartOverButtonBeginsANewRunInsteadOfOnlyStoppingTheOldOne();
+        static void TheReadingLineIsOnTheScreenWhileTheReadIsStillPending();
     };
 }
 
@@ -154,8 +156,10 @@ namespace
     {
         const std::string model = "SimObjects/Airplanes/Shared_Model";
 
+        const std::string modelFolder = model + "/";
+
         for (const std::string& level :
-             {std::string("SimObjects"), std::string("SimObjects/Airplanes"), model, model + "/" + written})
+             {std::string("SimObjects"), std::string("SimObjects/Airplanes"), model, modelFolder + written})
         {
             f.fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8(level)));
         }
@@ -276,6 +280,66 @@ void BisectionPanelTest::AGroupOpensIntoItsMembersAndSaysWhichOneOnlyBringsTheNa
                                      return said.second == 1;
                                  }),
              "one member is held differently from the other two, and the screen has to say so");
+}
+
+void BisectionPanelTest::TheStartOverButtonBeginsANewRunInsteadOfOnlyStoppingTheOldOne()
+{
+    Fixture f;
+    BisectionPanel panel(f.viewModel);
+    panel.show();
+
+    f.viewModel.Begin();
+    f.viewModel.Answer(BisectionAnswer::ItRanFine);
+    f.session.ShowActiveProfile();
+
+    const std::size_t savesBefore = f.store.saves;
+
+    QPushButton* startOver = nullptr;
+
+    for (QPushButton* button : panel.findChildren<QPushButton*>())
+    {
+        if (button->text() == QStringLiteral("Start over with the current setup"))
+        {
+            startOver = button;
+        }
+    }
+
+    QVERIFY(startOver != nullptr);
+
+    f.runner.defer = true;
+
+    startOver->click();
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Asking);
+    QCOMPARE(f.viewModel.Report().round, std::size_t{0});
+    QCOMPARE(f.store.saves, savesBefore + 1);
+}
+
+void BisectionPanelTest::TheReadingLineIsOnTheScreenWhileTheReadIsStillPending()
+{
+    Fixture f;
+    BisectionPanel panel(f.viewModel);
+    panel.show();
+
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+
+    bool saysItIsReading = false;
+
+    for (const QLabel* label : panel.findChildren<QLabel*>())
+    {
+        saysItIsReading = saysItIsReading || label->text().startsWith(QStringLiteral("Reading the enabled addons"));
+    }
+
+    QVERIFY(saysItIsReading);
+
+    f.runner.Finish();
 }
 
 QTEST_MAIN(BisectionPanelTest)

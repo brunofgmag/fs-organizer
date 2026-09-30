@@ -157,8 +157,8 @@ namespace
 void CoverageViewModelTest::TheCheckIsHandedToTheRunnerInsteadOfRunningWhereItWasAsked()
 {
     Fixture f;
-    f.runner.defer = true;
     f.TurnOn("one-eham");
+    f.runner.defer = true;
 
     QSignalSpy answered(&f.viewModel, &CoverageViewModel::TurningThemOnWasChecked);
     const int before = f.runner.runs;
@@ -211,8 +211,8 @@ void CoverageViewModelTest::ATurnAskedWhileAnotherIsRunningWaitsInsteadOfBeingDr
 void CoverageViewModelTest::StoppingTheCheckBringsBackNothingToAskAbout()
 {
     Fixture f;
-    f.runner.defer = true;
     f.TurnOn("one-eham");
+    f.runner.defer = true;
 
     QSignalSpy answered(&f.viewModel, &CoverageViewModel::TurningThemOnWasChecked);
 

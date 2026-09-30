@@ -25,6 +25,7 @@
 
 #include <array>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <optional>
 
@@ -207,11 +208,11 @@ void DocumentReader::SayItIsDetached(const bool detached)
     Retranslate();
 }
 
-void DocumentReader::ZoomBy(const int notches)
+void DocumentReader::ZoomBy(const qreal notches)
 {
     fitWidth_->setChecked(false);
 
-    const qreal closer = notches > 0 ? kOneNotchCloser : 1 / kOneNotchCloser;
+    const qreal closer = std::pow(kOneNotchCloser, notches);
 
     view_->setZoomMode(QPdfView::ZoomMode::Custom);
     view_->setZoomFactor(view_->zoomFactor() * closer);
@@ -392,7 +393,14 @@ bool DocumentReader::TheGestureAnswersThe(QEvent* event)
             return false;
         }
 
-        ZoomBy(static_cast<QWheelEvent*>(event)->angleDelta().y());
+        const int turned = static_cast<QWheelEvent*>(event)->angleDelta().y();
+
+        if (turned == 0)
+        {
+            return false;
+        }
+
+        ZoomBy(static_cast<qreal>(turned) / kNotch);
 
         return true;
     }

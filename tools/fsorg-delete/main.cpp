@@ -2,7 +2,6 @@
 #include <QtCore/QTextStream>
 
 #include <optional>
-#include <string>
 #include <vector>
 
 #include "application/DeletionService.h"
