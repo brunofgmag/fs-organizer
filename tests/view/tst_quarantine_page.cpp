@@ -1,7 +1,9 @@
 #include <QtTest/QtTest>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QToolButton>
 
@@ -27,6 +29,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PageFloor.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/PhysicalRows.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/PanelRail.h"
 #include "view/quarantine/DiscardProgressDialog.h"
@@ -41,6 +44,12 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void ThePanelStartsLevelWithTheTable();
+        static void ThePanelTitleStripEndsWhereTheColumnHeaderEnds();
+        static void ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine();
+        static void ThePanelLeftLineRunsFromTheTitleStripToTheBottom();
+        static void TheScrollBarCapGoesWhenTheScrollBarDoes();
+        static void TheToolbarSpansTheWholePageOverThePanel();
         static void EverythingHeldLandsOnItsOwnRow();
         static void WithNothingHeldTheScreenSaysSoInsteadOfShowingAnEmptyTable();
         static void SelectingAnItemOpensThePanelAndNamesItAfterTheItem();
@@ -316,6 +325,124 @@ void QuarantinePageTest::ThePageFitsTheNarrowestWindow()
              "selected or because the panel came back folded from a previous run");
 
     ItFitsTheNarrowestWindow(f.page, "The quarantine page with an item selected");
+}
+
+namespace
+{
+    int TopWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{}).y();
+    }
+
+    int BottomWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{0, widget.height()}).y();
+    }
+
+    int RightEdgeWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{widget.width(), 0}).x();
+    }
+}
+
+void QuarantinePageTest::ThePanelStartsLevelWithTheTable()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const ContextPanel* panel = PanelOf(f.page);
+
+    QVERIFY(panel->isVisible());
+    QCOMPARE(TopWithin(f.page, *panel), TopWithin(f.page, *TableOf(f.page)));
+}
+
+void QuarantinePageTest::ThePanelTitleStripEndsWhereTheColumnHeaderEnds()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->isVisible());
+    QCOMPARE(BottomWithin(f.page, *strip), BottomWithin(f.page, *TableOf(f.page)->horizontalHeader()));
+}
+
+void QuarantinePageTest::ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    auto* header = TableOf(f.page)->horizontalHeader();
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->isVisible());
+    LetTheScrollBarShow(f.page, *TableOf(f.page));
+    QVERIFY(TableOf(f.page)->verticalScrollBar()->isVisible());
+
+    const QWidget* cap = ScrollBarCapOf(*TableOf(f.page));
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(cap->isVisible());
+    MakeTheColumnHeaderOnePixelShorter(*header);
+    TheThreeRulesLandOnTheSamePhysicalRows(f.page, *strip, *header, *cap);
+}
+
+void QuarantinePageTest::ThePanelLeftLineRunsFromTheTitleStripToTheBottom()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    const auto* body = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelBody"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(body != nullptr);
+    QVERIFY(strip->isVisible());
+    LetTheScrollBarShow(f.page, *TableOf(f.page));
+    QVERIFY(TableOf(f.page)->verticalScrollBar()->isVisible());
+    TheLeftRuleRunsTheWholeHeightOfThePanel(f.page, *strip, *body);
+}
+
+void QuarantinePageTest::TheScrollBarCapGoesWhenTheScrollBarDoes()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+    LetTheScrollBarGo(f.page);
+
+    const QWidget* cap = ScrollBarCapOf(*TableOf(f.page));
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(!TableOf(f.page)->verticalScrollBar()->isVisible());
+    QVERIFY(!cap->isVisible());
+}
+
+void QuarantinePageTest::TheToolbarSpansTheWholePageOverThePanel()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* toolbar = f.page.findChild<QWidget*>(QStringLiteral("PageToolbar"));
+
+    QVERIFY(PanelOf(f.page)->isVisible());
+    QVERIFY(toolbar != nullptr);
+    QCOMPARE(RightEdgeWithin(f.page, *toolbar), f.page.width());
 }
 
 QTEST_MAIN(QuarantinePageTest)

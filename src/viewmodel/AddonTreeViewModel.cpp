@@ -184,13 +184,13 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes, const
 
 std::vector<TakenPlace> AddonTreeViewModel::SwapsNeededTo(const std::vector<const TreeNode*>& nodes) const
 {
-    const std::vector<TreeNode>& libraries = session_.Snapshot().libraries;
+    const ProfileSnapshot& snapshot = session_.Snapshot();
 
     std::vector<TakenPlace> swaps;
 
-    for (const TakenPlace& taken : service_.PlacesTaken(session_.Profile(), nodes))
+    for (const TakenPlace& taken : service_.PlacesTakenNow(session_.Profile(), nodes, snapshot.enabled))
     {
-        if (AddonAt(libraries, taken.occupant) != nullptr)
+        if (AddonAt(snapshot.libraries, taken.occupant) != nullptr)
         {
             swaps.push_back(taken);
         }
@@ -225,25 +225,7 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
 
 TogglePlan AddonTreeViewModel::PlanToggle(const std::vector<const TreeNode*>& nodes, const bool enable) const
 {
-    TogglePlan plan;
-    plan.onDisk = service_.ReadLinksNow(session_.Profile());
-
-    if (!enable)
-    {
-        return plan;
-    }
-
-    const std::vector<TreeNode>& libraries = session_.Snapshot().libraries;
-
-    for (const TakenPlace& taken : service_.PlacesTaken(session_.Profile(), nodes, plan.onDisk))
-    {
-        if (AddonAt(libraries, taken.occupant) != nullptr)
-        {
-            plan.swapsNeeded.push_back(taken);
-        }
-    }
-
-    return plan;
+    return TogglePlan{.swapsNeeded = enable ? SwapsNeededTo(nodes) : std::vector<TakenPlace>{}};
 }
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
@@ -263,7 +245,7 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
     auto work = std::make_shared<ToggleWork>();
     work->profile = session_.Profile();
     work->shown.enabled = session_.Snapshot().enabled;
-    work->onDisk = std::move(plan.onDisk);
+    work->libraries = session_.Snapshot().libraries;
 
     if (!enable)
     {
@@ -330,37 +312,54 @@ void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
                 batch.toEnable.push_back(&addon);
             }
 
-            work->report = service_.SetEnabled(work->profile, work->shown, batch, work->onDisk);
+            const std::vector<ExternalAddon> externals =
+                service_.WhatCameFromAnotherProgram(work->profile, work->libraries);
+            const ProfileService::LinksOnDisk onDisk = service_.ReadLinksNow(work->profile, externals);
+
+            work->report = service_.SetEnabled(work->profile, work->shown, batch, onDisk);
             work->report.leftAlone = work->leftAlone;
+
+            work->entries = service_.EntriesAfter(work->profile, onDisk.entries, work->report.results, externals);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->report.results);
         },
         [this, work]
         {
-            ApplyResults(work->report);
+            ApplyResults(*work);
         });
 }
 
 void AddonTreeViewModel::UndoLastBatch()
 {
-    const auto results = std::make_shared<std::vector<LinkOperationResult>>();
+    auto work = std::make_shared<ToggleWork>();
+    work->profile = session_.Profile();
+    work->libraries = session_.Snapshot().libraries;
 
     toggling_.Run(
-        [this, results]
+        [this, work]
         {
-            *results = service_.UndoLastBatch();
+            work->report.results = service_.UndoLastBatch();
+
+            ReadTheEntriesAfter(*work);
         },
-        [this, results]
+        [this, work]
         {
-            ApplyResults({.results = *results, .drifted = 0});
+            ApplyResults(*work);
         });
 }
 
-void AddonTreeViewModel::ApplyResults(const LinkBatchReport& report)
+void AddonTreeViewModel::ReadTheEntriesAfter(ToggleWork& work) const
 {
-    session_.RefreshEntries();
+    work.entries = service_.ResolveEntries(work.profile, work.libraries);
+    work.simulatorRunning = session_.SimulatorIsRunningAfter(work.report.results);
+}
 
-    session_.NoteLinkResults(report.results);
+void AddonTreeViewModel::ApplyResults(ToggleWork& work)
+{
+    session_.AdoptEntriesReadFor(work.profile, std::move(work.entries));
 
-    emit BatchFinished(report);
+    session_.NoteLinkResults(work.report.results, work.simulatorRunning);
+
+    emit BatchFinished(work.report);
 }
 
 void AddonTreeViewModel::OverrideDestination(const std::vector<const TreeNode*>& nodes,
@@ -602,6 +601,7 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
     auto work = std::make_shared<ToggleWork>();
     work->profile = session_.Profile();
     work->shown.enabled = session_.Snapshot().enabled;
+    work->libraries = session_.Snapshot().libraries;
 
     for (const TreeNode* addon : strayed)
     {
@@ -620,10 +620,12 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
             }
 
             work->report = service_.Relink(work->profile, work->shown, relinking);
+
+            ReadTheEntriesAfter(*work);
         },
         [this, work]
         {
-            ApplyResults(work->report);
+            ApplyResults(*work);
         });
 }
 

@@ -15,7 +15,14 @@ public:
 
     void KeepRowsAtLeast(int tall);
 
+    void AlignTheCheckWithTheText();
+
     bool eventFilter(QObject* watched, QEvent* event) override;
+
+    bool editorEvent(QEvent* event,
+                     QAbstractItemModel* model,
+                     const QStyleOptionViewItem& option,
+                     const QModelIndex& index) override;
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
@@ -33,9 +40,12 @@ private:
 
     [[nodiscard]] bool IsPointedAt(const QModelIndex& index) const;
 
+    [[nodiscard]] int CheckShiftOf(const QStyleOptionViewItem& item) const;
+
     QPersistentModelIndex pointedAt_;
     FittedText fitted_;
     int shortestRow_ = 0;
+    bool checkAlignedWithText_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_DELEGATES_ROW_DELEGATE_H

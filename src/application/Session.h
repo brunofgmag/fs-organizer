@@ -40,6 +40,10 @@ public:
 
     void NoteLinkResults(const std::vector<LinkOperationResult>& results);
 
+    void NoteLinkResults(const std::vector<LinkOperationResult>& results, bool simulatorIsRunning);
+
+    [[nodiscard]] bool SimulatorIsRunningAfter(const std::vector<LinkOperationResult>& results) const;
+
     void ShowActiveProfile();
 
     void ChooseProfile(const std::string& profileId);
@@ -55,6 +59,10 @@ public:
     void CancelScan();
 
     void RefreshEntries();
+
+    void AdoptEntries(std::vector<DestinationEntry> entries);
+
+    void AdoptEntriesReadFor(const SimulatorProfile& readFor, std::vector<DestinationEntry> entries);
 
     void RefreshStartupEntries();
 

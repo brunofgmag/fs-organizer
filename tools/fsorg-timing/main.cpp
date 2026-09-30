@@ -14,6 +14,11 @@
 #include "application/DeletionService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
+#include "domain/model/EnabledAddons.h"
+#include "domain/profile/ExternalOrigins.h"
+#include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
+#include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
@@ -315,6 +320,152 @@ int main(int argc, char* argv[])
             {
                 model.Show(session.Snapshot(), session.Profile());
             });
+
+    if (QCoreApplication::arguments().contains(QStringLiteral("--toggle")))
+    {
+        startupEntries.Use(
+            StartupFileOf(StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe), profile.variant));
+        session.RefreshStartupEntries();
+        measurements.clear();
+
+        std::vector<const TreeNode*> everyAddon;
+        for (const TreeNode& library : session.Snapshot().libraries)
+        {
+            std::ranges::copy(AddonsUnder(library), std::back_inserter(everyAddon));
+        }
+
+        const EnabledAddons enabledNow = session.Snapshot().enabled;
+        const auto enabledOne = std::ranges::find_if(everyAddon,
+                                                     [&enabledNow](const TreeNode* addon)
+                                                     {
+                                                         return enabledNow.Contains(addon->path);
+                                                     });
+        const auto disabledOne = std::ranges::find_if(everyAddon,
+                                                      [&enabledNow](const TreeNode* addon)
+                                                      {
+                                                          return !enabledNow.Contains(addon->path);
+                                                      });
+
+        if (enabledOne == everyAddon.end() || disabledOne == everyAddon.end())
+        {
+            Out() << "needs one enabled and one disabled addon\n";
+            Out().flush();
+            return 2;
+        }
+
+        const std::vector<const TreeNode*> turningOff{*enabledOne};
+        const std::vector<const TreeNode*> turningOn{*disabledOne};
+
+        const std::vector<DestinationEntry>& shownEntries = session.Snapshot().entries;
+        const auto itsLink =
+            std::ranges::find_if(shownEntries,
+                                 [&enabledOne](const DestinationEntry& entry)
+                                 {
+                                     return ComparablePath(entry.target) == ComparablePath((*enabledOne)->path);
+                                 });
+        const std::vector<std::filesystem::path> changed = itsLink == shownEntries.end()
+            ? std::vector<std::filesystem::path>{}
+            : std::vector<std::filesystem::path>{itsLink->path};
+
+        ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+        packages.Reload(session.Profile().variant);
+        AddonTreeViewModel treeViewModel(session, profileService, model, packages, inlineSizes, runInline, notifier);
+
+        bool theIncrementalListMatches = true;
+
+        for (int round = 1; round <= 3; ++round)
+        {
+            const QString tag = QStringLiteral("r%1 ").arg(round);
+
+            Measure(tag + "PlanToggle (enable)", true,
+                    [&]
+                    {
+                        static_cast<void>(treeViewModel.PlanToggle(turningOn, true));
+                    });
+            Measure(tag + "StartupEntriesAtRisk (disable)", true,
+                    [&]
+                    {
+                        static_cast<void>(treeViewModel.StartupEntriesAtRisk(turningOff));
+                    });
+            Measure(tag + "trees copied for the worker", true,
+                    [&]
+                    {
+                        const std::vector<TreeNode> copied = session.Snapshot().libraries;
+                        static_cast<void>(copied.size());
+                    });
+
+            std::vector<ExternalAddon> externals;
+            ProfileService::LinksOnDisk onDisk;
+            std::vector<DestinationEntry> incremental;
+
+            Measure(tag + "externals (sidecars)", false,
+                    [&]
+                    {
+                        externals =
+                            profileService.WhatCameFromAnotherProgram(session.Profile(), session.Snapshot().libraries);
+                    });
+            Measure(tag + "ReadLinksNow", false,
+                    [&]
+                    {
+                        onDisk = profileService.ReadLinksNow(session.Profile(), externals);
+                    });
+
+            Measure(
+                tag + "EntriesAfter (incremental)", false,
+                [&]
+                {
+                    incremental = profileService.EntriesAfter(
+                        session.Profile(), onDisk.entries,
+                        {LinkOperationResult{.linkPath = changed.empty() ? std::filesystem::path{} : changed.front()}},
+                        externals);
+                });
+            Measure(tag + "SimulatorIsRunning", false,
+                    [&]
+                    {
+                        static_cast<void>(processProbe.SimulatorIsRunning());
+                    });
+
+            const std::vector<DestinationEntry> full =
+                profileService.ResolveEntries(session.Profile(), session.Snapshot().libraries);
+
+            theIncrementalListMatches = theIncrementalListMatches && incremental.size() == full.size()
+                && std::ranges::equal(incremental, full,
+                                      [](const DestinationEntry& left, const DestinationEntry& right)
+                                      {
+                                          return left.path == right.path && left.target == right.target
+                                              && left.classification == right.classification;
+                                      });
+
+            std::vector<DestinationEntry> handedOver = std::move(incremental);
+
+            Measure(tag + "Session::AdoptEntries", true,
+                    [&]
+                    {
+                        session.AdoptEntries(std::move(handedOver));
+                    });
+            Measure(tag + "AddonTreeModel::Refresh", true,
+                    [&]
+                    {
+                        model.Refresh(session.Snapshot(), session.Profile());
+                    });
+        }
+
+        Out() << "addons: " << everyAddon.size() << "  entries: " << session.Snapshot().entries.size()
+              << "  startup entries: " << session.Snapshot().startupEntries.size() << "\n";
+        for (const EntryClassification classification : kEveryClassification)
+        {
+            Out() << "  classification #" << OrderOf(classification) << ": "
+                  << std::ranges::count(session.Snapshot().entries, classification, &DestinationEntry::classification)
+                  << "\n";
+        }
+        Out() << "incremental list equals a full read of the same disk: " << (theIncrementalListMatches ? "yes" : "NO")
+              << "\n";
+
+        Report();
+
+        return theIncrementalListMatches ? 0 : 1;
+    }
+
     Measure("CommunityViewModel::Show", true,
             [&]
             {

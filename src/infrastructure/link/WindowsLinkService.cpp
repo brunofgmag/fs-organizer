@@ -10,7 +10,10 @@
 #include <windows.h>
 #include <winioctl.h>
 
+#include <algorithm>
 #include <cstring>
+#include <execution>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -198,4 +201,21 @@ std::optional<std::filesystem::path> WindowsLinkService::ReadLinkTarget(const st
     const std::wstring target(reinterpret_cast<const wchar_t*>(pathBuffer + nameOffset), nameLength / sizeof(WCHAR));
 
     return NormalizeReparseTarget(std::filesystem::path(target));
+}
+
+std::vector<std::optional<std::filesystem::path>>
+WindowsLinkService::ReadLinkTargets(const std::vector<std::filesystem::path>& paths) const
+{
+    std::vector<std::optional<std::filesystem::path>> targets(paths.size());
+
+    std::vector<std::size_t> places(paths.size());
+    std::iota(places.begin(), places.end(), std::size_t{0});
+
+    std::for_each(std::execution::par, places.begin(), places.end(),
+                  [this, &paths, &targets](const std::size_t place)
+                  {
+                      targets[place] = ReadLinkTarget(paths[place]);
+                  });
+
+    return targets;
 }

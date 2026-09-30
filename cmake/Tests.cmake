@@ -1457,6 +1457,7 @@ if (WIN32)
     fsorg_add_qt_test(fsorg-community-page-tests community-page
             tests/view/tst_community_page.cpp
         tests/support/PageFloor.h
+        tests/support/PhysicalRows.h
             tests/doubles/StartupOverFakes.h
             tests/doubles/FakeCatalogScanner.h
             tests/doubles/FakeClock.h
@@ -1528,7 +1529,9 @@ configure_fsorg_gui_test(fsorg-paint-timing-tests paint-timing)
 
 fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/view/tst_addon_tree_page.cpp
+        tests/support/ButtonLookup.h
         tests/support/PageFloor.h
+        tests/support/PhysicalRows.h
         tests/doubles/StartupOverFakes.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1585,6 +1588,7 @@ configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
 fsorg_add_qt_test(fsorg-quarantine-page-tests quarantine-page
         tests/view/tst_quarantine_page.cpp
         tests/support/ButtonLookup.h
+        tests/support/PhysicalRows.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1608,6 +1612,7 @@ configure_fsorg_gui_test(fsorg-quarantine-page-tests quarantine-page)
 fsorg_add_qt_test(fsorg-journal-page-tests journal-page
         tests/view/tst_journal_page.cpp
         tests/support/ButtonLookup.h
+        tests/support/PhysicalRows.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1689,3 +1694,8 @@ fsorg_add_qt_test(fsorg-theme-contrast-tests theme-contrast
         tests/view/theme/tst_theme_contrast.cpp)
 target_link_libraries(fsorg-theme-contrast-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-theme-contrast-tests theme-contrast)
+
+fsorg_add_qt_test(fsorg-wrapping-row-tests wrapping-row
+        tests/view/tst_wrapping_row.cpp)
+target_link_libraries(fsorg-wrapping-row-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-wrapping-row-tests wrapping-row)

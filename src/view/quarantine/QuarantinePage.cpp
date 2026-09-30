@@ -21,6 +21,7 @@
 #include "view/panels/ContextPanel.h"
 #include "view/panels/EmptyState.h"
 #include "view/panels/ModelRowDetail.h"
+#include "view/panels/ScrollBarCap.h"
 #include "viewmodel/SizeSummary.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
@@ -68,20 +69,22 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     panel_->Add(restoreFromPanel_);
     panel_->Add(openFolder_);
     panel_->RestoreCollapsedState();
+    panel_->LevelWith(table_->horizontalHeader());
+    CapTheScrollBarOf(table_, table_->horizontalHeader());
     panel_->Summon(false);
 
-    auto* column = new QVBoxLayout;
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(0);
-    column->addWidget(toolbar);
-    column->addWidget(table_, 1);
-
     auto* held = new QWidget(this);
-    auto* heldLayout = new QHBoxLayout(held);
+    auto* heldLayout = new QVBoxLayout(held);
     heldLayout->setContentsMargins(0, 0, 0, 0);
     heldLayout->setSpacing(0);
-    heldLayout->addLayout(column, 1);
-    heldLayout->addWidget(panel_);
+    heldLayout->addWidget(toolbar);
+
+    auto* body = new QHBoxLayout;
+    body->setContentsMargins(0, 0, 0, 0);
+    body->setSpacing(0);
+    body->addWidget(table_, 1);
+    body->addWidget(panel_);
+    heldLayout->addLayout(body, 1);
 
     pages_ = new QStackedWidget(this);
     pages_->addWidget(held);

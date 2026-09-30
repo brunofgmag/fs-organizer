@@ -163,10 +163,74 @@ std::vector<ExternalAddon> ProfileService::WhatCameFromAnotherProgram(const Simu
 
 ProfileService::LinksOnDisk ProfileService::ReadLinksNow(const SimulatorProfile& profile) const
 {
-    std::vector<DestinationEntry> entries = ResolveEntries(profile);
+    return ReadLinksNow(profile, ExternalAddonsOf(profile));
+}
+
+ProfileService::LinksOnDisk ProfileService::ReadLinksNow(const SimulatorProfile& profile,
+                                                         const std::vector<ExternalAddon>& externals) const
+{
+    std::vector<DestinationEntry> entries = classifier_.Resolve(profile.destinations, LibraryRoots(profile), externals);
     EnabledAddons enabled{EnabledAddonFolders(entries)};
 
     return {.entries = std::move(entries), .enabled = std::move(enabled)};
+}
+
+std::vector<DestinationEntry> ProfileService::EntriesAfter(const SimulatorProfile& profile,
+                                                           const std::vector<DestinationEntry>& before,
+                                                           const std::vector<LinkOperationResult>& results,
+                                                           const std::vector<ExternalAddon>& externals) const
+{
+    std::vector<std::filesystem::path> changed;
+    changed.reserve(results.size());
+
+    for (const LinkOperationResult& result : results)
+    {
+        changed.push_back(result.linkPath);
+    }
+
+    return classifier_.Refresh(before, changed, profile.destinations, LibraryRoots(profile), externals);
+}
+
+std::vector<TakenPlace> ProfileService::PlacesTakenNow(const SimulatorProfile& profile,
+                                                       const std::vector<const TreeNode*>& nodes,
+                                                       const EnabledAddons& shown) const
+{
+    std::vector<const TreeNode*> wanting;
+    std::vector<std::filesystem::path> places;
+    std::set<std::string> asked;
+
+    for (const TreeNode* node : nodes)
+    {
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            if (shown.Contains(addon->path) || !asked.insert(ComparablePath(addon->path)).second)
+            {
+                continue;
+            }
+
+            wanting.push_back(addon);
+            places.push_back(PlannedLinkPath(profile, addon->path));
+        }
+    }
+
+    const std::vector<DestinationEntry> links =
+        classifier_.LinksAt(places, LibraryRoots(profile), ExternalAddonsOf(profile));
+    const std::map<std::string, const DestinationEntry*> held = LinksHeldByPath(links);
+
+    std::vector<TakenPlace> taken;
+
+    for (std::size_t index = 0; index < wanting.size(); ++index)
+    {
+        const auto occupied = held.find(ComparablePath(places[index]));
+
+        if (occupied != held.end() && ComparablePath(occupied->second->target) != ComparablePath(wanting[index]->path))
+        {
+            taken.push_back(TakenPlace{
+                .addonFolder = wanting[index]->path, .linkPath = places[index], .occupant = occupied->second->target});
+        }
+    }
+
+    return taken;
 }
 
 std::size_t ProfileService::AddonsThatDrifted(const std::vector<const TreeNode*>& nodes,

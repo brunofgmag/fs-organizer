@@ -7,8 +7,10 @@
 
 #include <QtCore/QEvent>
 #include <QtCore/QItemSelection>
+#include <QtCore/QTimer>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
+#include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QHBoxLayout>
@@ -21,6 +23,8 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollBar>
 #include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QStyle>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QVBoxLayout>
 
@@ -40,6 +44,7 @@
 #include "view/panels/DependencySection.h"
 #include "view/panels/EmptyState.h"
 #include "view/panels/ModelRowDetail.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "view/WrappingRow.h"
@@ -52,6 +57,9 @@ namespace
     constexpr std::size_t kAskAboveThisMany = 10;
     constexpr int kAddonColumnWidth = 420;
     constexpr int kVersionColumnWidth = 92;
+    constexpr int kFilterGroupGap = 16;
+    constexpr int kSearchMinimum = 120;
+    constexpr int kSearchMaximum = 220;
 
     [[nodiscard]] std::vector<const TreeNode*> AddonsAmong(const std::vector<const TreeNode*>& nodes)
     {
@@ -147,17 +155,17 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     header->resizeSection(AddonTreeModel::VersionColumn, kVersionColumnWidth);
 
     auto* browser = new QWidget(this);
-    auto* column = new QVBoxLayout;
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(0);
-    column->addWidget(CreateActions());
-    column->addWidget(tree_, 1);
-
-    auto* browserLayout = new QHBoxLayout(browser);
+    auto* browserLayout = new QVBoxLayout(browser);
     browserLayout->setContentsMargins(0, 0, 0, 0);
     browserLayout->setSpacing(0);
-    browserLayout->addLayout(column, 1);
-    browserLayout->addWidget(CreatePanel());
+    browserLayout->addWidget(CreateActions());
+
+    auto* body = new QHBoxLayout;
+    body->setContentsMargins(0, 0, 0, 0);
+    body->setSpacing(0);
+    body->addWidget(tree_, 1);
+    body->addWidget(CreatePanel());
+    browserLayout->addLayout(body, 1);
 
     pages_ = new QStackedWidget(this);
     pages_->addWidget(browser);
@@ -190,6 +198,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
     connect(&model_, &QAbstractItemModel::modelReset, this,
             [this]
             {
+                Recount();
                 ShowTheSelectedAddon();
             });
 
@@ -225,6 +234,7 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
             [this](const QModelIndex&, const QModelIndex&)
             {
                 PublishSummary();
+                Recount();
             });
 
     connect(&notifier, &SessionNotifier::ScanStarted, this,
@@ -265,6 +275,8 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
 
     connect(&coverage_, &CoverageViewModel::TurningThemOnWasChecked, this, &AddonTreePage::OnTurningThemOnWasChecked);
 
+    counted_ = PopulationNow();
+
     RetranslateUi();
 }
 
@@ -289,6 +301,7 @@ void AddonTreePage::RetranslateUi() const
     rescan_->setText(tr("Refresh"));
     search_->setPlaceholderText(tr("Search addons…"));
     hideEmpty_->setText(tr("Hide empty categories"));
+    ShowTheChips(PopulationNow());
     relink_->setText(tr("Repoint to the library"));
     moveTo_->setText(tr("Move to…"));
     openFolder_->setText(tr("Open folder"));
@@ -310,20 +323,25 @@ QWidget* AddonTreePage::CreateActions()
     roomForASecondRow.setHeightForWidth(true);
     bar->setSizePolicy(roomForASecondRow);
 
+    rescan_ = new QPushButton(bar);
+    rescan_->setObjectName(QStringLiteral("LibraryRefresh"));
+    rescan_->setProperty("role", "primary");
     enable_ = new QPushButton(bar);
     disable_ = new QPushButton(bar);
     undo_ = new QPushButton(bar);
-    rescan_ = new QPushButton(bar);
-    rescan_->setProperty("role", "primary");
+    undo_->setEnabled(false);
 
-    search_ = new QLineEdit(bar);
-    search_->setClearButtonEnabled(true);
-    search_->setMinimumWidth(120);
-    search_->setMaximumWidth(220);
+    QWidget* stateFilter = CreateStateFilter(bar);
 
     hideEmpty_ = new QCheckBox(bar);
+    hideEmpty_->setObjectName(QStringLiteral("LibraryHideEmpty"));
+    hideEmpty_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    undo_->setEnabled(false);
+    search_ = new QLineEdit(bar);
+    search_->setObjectName(QStringLiteral("LibrarySearch"));
+    search_->setClearButtonEnabled(true);
+    search_->setMinimumWidth(kSearchMinimum);
+    search_->setMaximumWidth(kSearchMaximum);
 
     connect(enable_, &QPushButton::clicked, this,
             [this]
@@ -342,16 +360,122 @@ QWidget* AddonTreePage::CreateActions()
 
     auto* layout = new WrappingRow(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
+    layout->setSpacing(kToolbarGap);
     layout->addWidget(rescan_);
     layout->addWidget(enable_);
     layout->addWidget(disable_);
     layout->addWidget(undo_);
     layout->AddSpring();
-    layout->addWidget(hideEmpty_);
-    layout->addWidget(search_);
+    layout->AddWidgetThatStepsDown(stateFilter);
+    layout->AddSpringOnTheLowerLine();
+    layout->AddWidgetThatStepsDown(hideEmpty_);
+    layout->AddWidgetThatStepsDown(search_);
 
     return bar;
+}
+
+QWidget* AddonTreePage::CreateStateFilter(QWidget* bar)
+{
+    auto* holder = new QWidget(bar);
+    holder->setObjectName(QStringLiteral("LibraryStateFilter"));
+    holder->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+    auto* line = new QHBoxLayout(holder);
+    line->setContentsMargins(0, 0, kFilterGroupGap - kToolbarGap, 0);
+    line->setSpacing(kChipGap);
+
+    auto* group = new QButtonGroup(holder);
+
+    for (const AddonStateFilter state : {AddonStateFilter::All, AddonStateFilter::Enabled, AddonStateFilter::Disabled})
+    {
+        auto* chip = new QToolButton(holder);
+        chip->setObjectName(QStringLiteral("FilterChip"));
+        chip->setCheckable(true);
+        chip->setChecked(state == AddonStateFilter::All);
+        chip->setCursor(Qt::PointingHandCursor);
+        chip->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+        group->addButton(chip, static_cast<int>(state));
+        line->addWidget(chip);
+        chips_.append(chip);
+    }
+
+    connect(group, &QButtonGroup::idClicked, this,
+            [this](const int id)
+            {
+                filter_->ShowOnly(static_cast<AddonStateFilter>(id));
+            });
+
+    return holder;
+}
+
+AddonTreePage::Population AddonTreePage::PopulationNow() const
+{
+    const auto all = static_cast<int>(model_.AddonCount());
+    const auto enabled = static_cast<int>(model_.EnabledCount());
+
+    return {.all = all, .enabled = enabled, .disabled = all - enabled};
+}
+
+void AddonTreePage::ShowTheChips(const Population& population) const
+{
+    const QStringList labels{tr("All", "several addons"), tr("Enabled", "several addons"),
+                             tr("Disabled", "several addons")};
+    const int counts[] = {population.all, population.enabled, population.disabled};
+    const auto digits = static_cast<int>(QString::number(population.all).size());
+
+    for (qsizetype at = 0; at < chips_.size(); ++at)
+    {
+        QToolButton* chip = chips_[at];
+
+        chip->ensurePolished();
+        chip->setProperty("population", counts[at] == 0 ? "none" : "some");
+        chip->style()->unpolish(chip);
+        chip->style()->polish(chip);
+
+        chip->setText(QStringLiteral("%1 %2").arg(labels[at], QString(digits, QLatin1Char('0'))));
+        chip->setMinimumWidth(chip->sizeHint().width());
+        chip->setText(QStringLiteral("%1 %2").arg(labels[at]).arg(counts[at]));
+    }
+}
+
+void AddonTreePage::Recount()
+{
+    const Population before = counted_;
+    const Population now = PopulationNow();
+
+    if (now == before)
+    {
+        return;
+    }
+
+    counted_ = now;
+    ShowTheChips(now);
+    LeaveAStateThatRanOut(before, now);
+}
+
+void AddonTreePage::LeaveAStateThatRanOut(const Population& before, const Population& now)
+{
+    const AddonStateFilter showing = filter_->ShowingOnly();
+    const bool enabledRanOut = showing == AddonStateFilter::Enabled && before.enabled > 0 && now.enabled == 0;
+    const bool disabledRanOut = showing == AddonStateFilter::Disabled && before.disabled > 0 && now.disabled == 0;
+
+    if (!enabledRanOut && !disabledRanOut)
+    {
+        return;
+    }
+
+    chips_.front()->setChecked(true);
+    filter_->ShowOnly(AddonStateFilter::All);
+
+    const QString message = enabledRanOut ? tr("No addon is enabled now, so the filter was cleared.")
+                                          : tr("No addon is disabled now, so the filter was cleared.");
+
+    QTimer::singleShot(0, this,
+                       [this, message]
+                       {
+                           emit StatusChanged(message);
+                       });
 }
 
 QWidget* AddonTreePage::CreateInvite()
@@ -391,6 +515,8 @@ QWidget* AddonTreePage::CreatePanel()
     panel_->Add(delete_);
 
     panel_->RestoreCollapsedState();
+    panel_->LevelWith(tree_->header());
+    CapTheScrollBarOf(tree_, tree_->header());
     panel_->Summon(false);
 
     connect(relink_, &QPushButton::clicked, this,
@@ -664,7 +790,7 @@ void AddonTreePage::MoveTheSelectedAddon()
         where.addAction(AsText(target.relativePath), this,
                         [this, node, target]
                         {
-                            viewModel_.MoveTo(Chosen(node), target.category);
+                            viewModel_.MoveTo(SelectedNodes(node), target.category);
                         });
     }
 
@@ -695,6 +821,11 @@ void AddonTreePage::OpenTheSelectedFolder() const
 
 std::vector<const TreeNode*> AddonTreePage::Chosen(const TreeNode* clicked) const
 {
+    return ReachableAmong(SelectedNodes(clicked));
+}
+
+std::vector<const TreeNode*> AddonTreePage::SelectedNodes(const TreeNode* clicked) const
+{
     std::vector<const TreeNode*> nodes;
 
     for (const QModelIndex& position : tree_->selectionModel()->selectedRows())
@@ -713,6 +844,49 @@ std::vector<const TreeNode*> AddonTreePage::Chosen(const TreeNode* clicked) cons
     return std::ranges::find(nodes, clicked) == nodes.end() ? std::vector<const TreeNode*>{clicked} : nodes;
 }
 
+std::vector<const TreeNode*> AddonTreePage::ReachableAmong(const std::vector<const TreeNode*>& nodes) const
+{
+    if (!filter_->HidesAddons())
+    {
+        return nodes;
+    }
+
+    std::set<const TreeNode*> shown;
+    CollectTheShownAddons({}, shown);
+
+    std::vector<const TreeNode*> reachable;
+    std::set<const TreeNode*> taken;
+
+    for (const TreeNode* node : nodes)
+    {
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            if (shown.contains(addon) && taken.insert(addon).second)
+            {
+                reachable.push_back(addon);
+            }
+        }
+    }
+
+    return reachable;
+}
+
+void AddonTreePage::CollectTheShownAddons(const QModelIndex& parent, std::set<const TreeNode*>& found) const
+{
+    for (int row = 0; row < filter_->rowCount(parent); ++row)
+    {
+        const QModelIndex position = filter_->index(row, 0, parent);
+
+        if (const TreeNode* node = AddonTreeModel::NodeAt(filter_->mapToSource(position));
+            node != nullptr && node->kind == TreeNodeKind::Addon)
+        {
+            found.insert(node);
+        }
+
+        CollectTheShownAddons(position, found);
+    }
+}
+
 void AddonTreePage::ToggleSelection(const bool enable)
 {
     const std::vector<const TreeNode*> nodes = Chosen(nullptr);
@@ -728,6 +902,10 @@ void AddonTreePage::ToggleSelection(const bool enable)
 void AddonTreePage::OnToggleRequested(const TreeNode* node)
 {
     const std::vector<const TreeNode*> nodes = Chosen(node);
+    if (nodes.empty())
+    {
+        return;
+    }
 
     Apply(nodes, viewModel_.WouldEnable(nodes));
 }
@@ -1202,7 +1380,7 @@ void AddonTreePage::AddMoveAction(QMenu& menu, const TreeNode* node)
         where->addAction(AsText(target.relativePath), this,
                          [this, node, target]
                          {
-                             viewModel_.MoveTo(Chosen(node), target.category);
+                             viewModel_.MoveTo(SelectedNodes(node), target.category);
                          });
     }
 }
@@ -1275,7 +1453,7 @@ void AddonTreePage::ShowSuggestions(const TreeNode* node)
 
 void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
 {
-    if (viewModel_.StrayAddonsUnder({node}) == 0)
+    if (viewModel_.StrayAddonsUnder(ReachableAmong({node})) == 0)
     {
         return;
     }
@@ -1313,7 +1491,7 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
     menu.addAction(tr("Use the parent category's destination"), this,
                    [this, node]
                    {
-                       ChooseDestination(Chosen(node), {});
+                       ChooseDestination(node, {});
                    });
     menu.addSeparator();
 
@@ -1322,7 +1500,7 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
         menu.addAction(tr("Always use %1").arg(AsText(destination.filename())), this,
                        [this, node, destination]
                        {
-                           ChooseDestination(Chosen(node), destination);
+                           ChooseDestination(node, destination);
                        });
     }
 }
@@ -1341,16 +1519,16 @@ bool AddonTreePage::AskWhetherToRelink(const std::size_t strayed)
     return question.clickedButton() == relink;
 }
 
-void AddonTreePage::ChooseDestination(const std::vector<const TreeNode*>& nodes,
-                                      const std::filesystem::path& destination)
+void AddonTreePage::ChooseDestination(const TreeNode* clicked, const std::filesystem::path& destination)
 {
-    viewModel_.OverrideDestination(nodes, destination);
+    viewModel_.OverrideDestination(SelectedNodes(clicked), destination);
 
-    const std::size_t strayed = viewModel_.StrayAddonsUnder(nodes);
+    const std::vector<const TreeNode*> reachable = Chosen(clicked);
+    const std::size_t strayed = viewModel_.StrayAddonsUnder(reachable);
 
     if (strayed > 0 && AskWhetherToRelink(strayed))
     {
-        viewModel_.RelinkToTheProfileDestination(nodes);
+        viewModel_.RelinkToTheProfileDestination(reachable);
     }
 }
 

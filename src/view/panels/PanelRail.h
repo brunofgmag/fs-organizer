@@ -16,6 +16,8 @@ public:
 
     void ShowTitle(const QString& title, bool alarming);
 
+    void AlignTheArrowWithAStripOf(int height);
+
 signals:
     void ExpandRequested();
 

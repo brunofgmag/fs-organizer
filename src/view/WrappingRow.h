@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_VIEW_WRAPPING_ROW_H
 
 #include <QtCore/QList>
+#include <QtCore/QSet>
 #include <QtWidgets/QLayout>
 
 class WrappingRow final : public QLayout
@@ -12,6 +13,10 @@ public:
     ~WrappingRow() override;
 
     void AddSpring();
+
+    void AddWidgetThatStepsDown(QWidget* widget);
+
+    void AddSpringOnTheLowerLine();
 
     void addItem(QLayoutItem* item) override;
 
@@ -36,11 +41,19 @@ public:
 private:
     [[nodiscard]] int Gap() const;
 
+    [[nodiscard]] int WidthInOneLine(const QList<QLayoutItem*>& items) const;
+
+    [[nodiscard]] QList<QLayoutItem*> ItemsOnOneLine() const;
+
+    [[nodiscard]] QList<QList<QLayoutItem*>> WrapInOrder(const QList<QLayoutItem*>& items, int width) const;
+
     [[nodiscard]] QList<QList<QLayoutItem*>> LinesThatFit(int width) const;
 
     void PlaceTheLine(const QList<QLayoutItem*>& row, const QRect& where) const;
 
     QList<QLayoutItem*> items_;
+    QSet<const QLayoutItem*> steppingDown_;
+    QSet<const QLayoutItem*> onlyOnTheLowerLine_;
 };
 
 #endif // FS_ORGANIZER_VIEW_WRAPPING_ROW_H

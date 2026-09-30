@@ -160,7 +160,9 @@ QWidget* StartupPage::CreateEntriesPane()
     entries_->setColumnWidth(kSwitch, kProgramWidth);
     DressTheHeaderOf(entries_->header());
 
-    entries_->setItemDelegate(new RowDelegate(entries_));
+    auto* rows = new RowDelegate(entries_);
+    rows->AlignTheCheckWithTheText();
+    entries_->setItemDelegate(rows);
 
     auto* layout = new QVBoxLayout(pane);
     layout->setContentsMargins(0, 0, 0, 0);

@@ -48,6 +48,14 @@ namespace
         static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
         static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
         static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
+        static void AdoptingEntriesTakesTheEnabledSetFromThemWithoutReadingTheDiskAndAnnouncesOnce();
+        static void EntriesReadForTheCurrentProfileAreAdoptedWithoutReadingTheDiskAgain();
+        static void EntriesReadForAProfileWithOtherDestinationsAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileWithAnotherIdAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileWithOtherLibrariesAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileWithOtherExternalOriginsAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileThatOnlyDiffersInItsOverridesAreStillAdopted();
+        static void TheSimulatorReadingTheWorkerTookDecidesTheWarningWithoutAskingTheProbeAgain();
         static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
         static void UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty();
         static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
@@ -547,6 +555,166 @@ void SessionTest::TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALin
 
     QCOMPARE(f.observer.simulatorWarnings, 1);
     QCOMPARE(f.observer.restartReports, 1);
+    QVERIFY(f.observer.restartPending);
+}
+
+void SessionTest::AdoptingEntriesTakesTheEnabledSetFromThemWithoutReadingTheDiskAndAnnouncesOnce()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+
+    const std::filesystem::path place = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w";
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.AdoptEntries(
+        {DestinationEntry{.path = place, .target = kAddon, .classification = EntryClassification::Managed}});
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+}
+
+namespace
+{
+    std::vector<DestinationEntry> TheAddonLinkedInTheCommunityFolder()
+    {
+        return {DestinationEntry{.path = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w",
+                                 .target = kAddon,
+                                 .classification = EntryClassification::Managed}};
+    }
+
+    void ExpectTheEntriesToBeDiscardedWhenReadFor(Fixture& f, const std::function<void(SimulatorProfile&)>& change)
+    {
+        f.session.ShowActiveProfile();
+
+        SimulatorProfile other = f.session.Profile();
+        change(other);
+
+        const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+        const int refreshedBefore = f.observer.refreshed;
+
+        f.session.AdoptEntriesReadFor(other, TheAddonLinkedInTheCommunityFolder());
+
+        QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+        QVERIFY(f.session.Snapshot().entries.empty());
+        QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore + 1);
+        QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    }
+}
+
+void SessionTest::EntriesReadForTheCurrentProfileAreAdoptedWithoutReadingTheDiskAgain()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    const SimulatorProfile current = f.session.Profile();
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.AdoptEntriesReadFor(current, TheAddonLinkedInTheCommunityFolder());
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+}
+
+void SessionTest::EntriesReadForAProfileWithOtherDestinationsAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(f,
+                                             [](SimulatorProfile& profile)
+                                             {
+                                                 profile.destinations = {kOtherDestination};
+                                             });
+}
+
+void SessionTest::EntriesReadForAProfileWithAnotherIdAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(f,
+                                             [](SimulatorProfile& profile)
+                                             {
+                                                 profile.id = "msfs2020";
+                                             });
+}
+
+void SessionTest::EntriesReadForAProfileWithOtherLibrariesAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(
+        f,
+        [](SimulatorProfile& profile)
+        {
+            profile.libraries.push_back(Library{.id = "library-2", .path = kExtraLibrary, .label = "Extra"});
+        });
+}
+
+void SessionTest::EntriesReadForAProfileWithOtherExternalOriginsAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(f,
+                                             [](SimulatorProfile& profile)
+                                             {
+                                                 profile.externalOrigins.push_back(
+                                                     ExternalOrigin{.libraryId = "library-1",
+                                                                    .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                                    .externalPath = "F:/Elsewhere/pmdg-aircraft-77w"});
+                                             });
+}
+
+void SessionTest::EntriesReadForAProfileThatOnlyDiffersInItsOverridesAreStillAdopted()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    SimulatorProfile other = f.session.Profile();
+    other.destinationOverrides.push_back(DestinationOverride{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .destination = kOtherDestination});
+
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+
+    f.session.AdoptEntriesReadFor(other, TheAddonLinkedInTheCommunityFolder());
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+}
+
+void SessionTest::TheSimulatorReadingTheWorkerTookDecidesTheWarningWithoutAskingTheProbeAgain()
+{
+    Fixture f;
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const std::vector<LinkOperationResult> changed = {
+        LinkOperationResult{.addonId = AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"},
+                            .addonFolder = kAddon,
+                            .linkPath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                            .kind = OperationKind::EnableAddon,
+                            .outcome = LinkOutcome::Success()}};
+
+    QVERIFY(f.session.SimulatorIsRunningAfter(changed));
+    QVERIFY(!f.session.SimulatorIsRunningAfter({}));
+
+    f.session.NoteLinkResults(changed, false);
+
+    QCOMPARE(f.observer.simulatorWarnings, 0);
+    QVERIFY(!f.observer.restartPending);
+
+    f.session.NoteLinkResults({}, true);
+
+    QCOMPARE(f.observer.simulatorWarnings, 0);
+
+    f.session.NoteLinkResults(changed, true);
+
+    QCOMPARE(f.observer.simulatorWarnings, 1);
     QVERIFY(f.observer.restartPending);
 }
 

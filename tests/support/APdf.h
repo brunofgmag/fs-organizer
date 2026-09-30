@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_TESTS_SUPPORT_A_PDF_H
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -9,6 +10,7 @@ struct ASectionOfAManual
 {
     std::string title{};
     int page = 0;
+    std::optional<int> heightFromTheFoot{};
 };
 
 [[nodiscard]] inline std::string TenDigitsOf(const std::size_t offset)
@@ -116,8 +118,14 @@ inline const std::string kOnEveryPage = "flight manual";
         const std::size_t me = firstSection + which;
         const std::size_t target = firstPage + static_cast<std::size_t>(sections[which].page);
 
+        std::string position = "null null null";
+        if (sections[which].heightFromTheFoot.has_value())
+        {
+            position = "0 " + std::to_string(*sections[which].heightFromTheFoot) + " null";
+        }
+
         std::string item = "<</Title(" + sections[which].title + ")/Parent 3 0 R/Count 0/Dest[" + std::to_string(target)
-            + " 0 R/XYZ null null null]";
+            + " 0 R/XYZ " + position + "]";
 
         if (which > 0)
         {

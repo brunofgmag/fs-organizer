@@ -67,15 +67,31 @@ bool Session::Commit(AppSettings next)
     return true;
 }
 
+namespace
+{
+    bool SomethingChanged(const std::vector<LinkOperationResult>& results)
+    {
+        return std::ranges::any_of(results,
+                                   [](const LinkOperationResult& result)
+                                   {
+                                       return result.outcome.Succeeded();
+                                   });
+    }
+}
+
+bool Session::SimulatorIsRunningAfter(const std::vector<LinkOperationResult>& results) const
+{
+    return SomethingChanged(results) && probe_.SimulatorIsRunning();
+}
+
 void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results)
 {
-    const bool changed = std::ranges::any_of(results,
-                                             [](const LinkOperationResult& result)
-                                             {
-                                                 return result.outcome.Succeeded();
-                                             });
+    NoteLinkResults(results, SimulatorIsRunningAfter(results));
+}
 
-    if (!changed || !probe_.SimulatorIsRunning())
+void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results, const bool simulatorIsRunning)
+{
+    if (!SomethingChanged(results) || !simulatorIsRunning)
     {
         return;
     }
@@ -181,12 +197,63 @@ void Session::CancelScan()
 
 void Session::RefreshEntries()
 {
-    snapshot_.entries = service_.ResolveEntries(profile_, snapshot_.libraries);
+    AdoptEntries(service_.ResolveEntries(profile_, snapshot_.libraries));
+}
+
+void Session::AdoptEntries(std::vector<DestinationEntry> entries)
+{
+    snapshot_.entries = std::move(entries);
     snapshot_.enabled = EnabledAddons(EnabledAddonFolders(snapshot_.entries));
     snapshot_.conflicts = FindCopyConflicts(snapshot_.entries, snapshot_.libraries);
     snapshot_.startupEntries = service_.StartupEntriesNow();
 
     observer_.OnRefreshed();
+}
+
+namespace
+{
+    std::vector<std::filesystem::path> LibraryPathsOf(const SimulatorProfile& profile)
+    {
+        std::vector<std::filesystem::path> paths;
+
+        for (const Library& library : profile.libraries)
+        {
+            paths.push_back(library.path);
+        }
+
+        std::ranges::sort(paths);
+
+        return paths;
+    }
+
+    bool SameExternalOrigins(const std::vector<ExternalOrigin>& left, const std::vector<ExternalOrigin>& right)
+    {
+        return std::ranges::is_permutation(left, right,
+                                           [](const ExternalOrigin& one, const ExternalOrigin& other)
+                                           {
+                                               return one.libraryId == other.libraryId
+                                                   && one.relativePath == other.relativePath
+                                                   && one.externalPath == other.externalPath;
+                                           });
+    }
+
+    bool SameEntriesComeOutOf(const SimulatorProfile& left, const SimulatorProfile& right)
+    {
+        return left.id == right.id && left.destinations == right.destinations
+            && LibraryPathsOf(left) == LibraryPathsOf(right)
+            && SameExternalOrigins(left.externalOrigins, right.externalOrigins);
+    }
+}
+
+void Session::AdoptEntriesReadFor(const SimulatorProfile& readFor, std::vector<DestinationEntry> entries)
+{
+    if (!SameEntriesComeOutOf(readFor, profile_))
+    {
+        RefreshEntries();
+        return;
+    }
+
+    AdoptEntries(std::move(entries));
 }
 
 void Session::RefreshStartupEntries()
