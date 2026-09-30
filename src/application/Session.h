@@ -60,9 +60,9 @@ public:
 
     void RefreshEntries();
 
-    void AdoptEntries(std::vector<DestinationEntry> entries);
+    [[nodiscard]] EntriesStamp StampForAnEntriesRead() const;
 
-    void AdoptEntriesReadFor(const SimulatorProfile& readFor, std::vector<DestinationEntry> entries);
+    void AdoptTheEntriesRead(EntriesRead read);
 
     void RefreshStartupEntries();
 
@@ -147,7 +147,9 @@ private:
 
     void Adopt();
 
-    void AdoptEntriesRead();
+    void FinishTheRefresh();
+
+    [[nodiscard]] bool TakeTheEntriesRead(EntriesRead& read);
 
     void Save(const SimulatorProfile& profile);
 
@@ -164,10 +166,8 @@ private:
     ProfileSnapshot snapshot_;
     SimulatorProfile scanning_;
     ProfileSnapshot scanned_;
-    SimulatorProfile entriesFor_;
-    ProfileSnapshot entriesRead_;
+    EntriesRead entriesRead_;
     int snapshotsAdopted_ = 0;
-    int snapshotsAdoptedWhenTheReadBegan_ = 0;
     bool readingEntries_ = false;
     bool readEntriesAgain_ = false;
     std::optional<SimulatorProfile> queued_;

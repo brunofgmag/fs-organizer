@@ -38,6 +38,7 @@ namespace
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
         static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
+        static void TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures();
         static void EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsWayThrough();
         static void RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallingThread();
     };
@@ -394,6 +395,37 @@ void QuarantineViewModelTest::RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallin
 
     QCOMPARE(restored.count(), 1);
     QVERIFY(f.fileSystem.Exists(origin));
+}
+
+void QuarantineViewModelTest::TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures()
+{
+    Fixture f;
+    const std::filesystem::path occupied = "E:/Sim/Community/simbridge";
+    f.fileSystem.AddFile(std::filesystem::path(kQuarantined) / "content.bin", 4096);
+    f.fileSystem.AddFile(occupied / "content.bin", 4096);
+    f.ScanLands();
+
+    bool bothSidesWeighed = false;
+
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+    f.runner.Finish();
+    f.viewModel.WeighBothSidesOf(RestoreCheck{.item = QuarantinedItem{.path = kQuarantined},
+                                              .result = FileResult::TheOriginIsOccupied,
+                                              .occupant = occupied},
+                                 [&bothSidesWeighed](const TwoSides&)
+                                 {
+                                     bothSidesWeighed = true;
+                                 });
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QVERIFY(bothSidesWeighed);
+    QCOMPARE(f.model.TallyOf({f.model.index(0, QuarantineModel::NameColumn, {})}).measured, std::size_t{1});
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

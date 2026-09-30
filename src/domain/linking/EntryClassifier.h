@@ -75,6 +75,9 @@ public:
                                                         const std::vector<ExternalAddon>& externals = {}) const;
 
 private:
+    [[nodiscard]] std::vector<std::filesystem::path>
+    PlacesUnder(const std::vector<std::filesystem::path>& destinationRoots) const;
+
     [[nodiscard]] DestinationEntry ClassifyEntry(const std::filesystem::path& entryPath,
                                                  const std::optional<std::filesystem::path>& target,
                                                  const ClassificationLookups& lookups,

@@ -4,6 +4,7 @@
 #include <QtCore/QTranslator>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QLineEdit>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QToolButton>
@@ -98,6 +99,8 @@ namespace
         static void WithoutAnyFilterTheCheckboxOfACategoryReachesEveryAddonOfIt();
         static void TheMoveButtonCountsTheSelectedAddonsThatHaveACategoryToGoTo();
         static void TheMoveButtonStaysOffWhenTheOnlyCategoryIsTheOneTheAddonsSitIn();
+        static void ASelectionOffersRelinkWhenAnyMemberStrayedEvenIfTheClickedOneDidNot();
+        static void TheFilterLeavesTheOfferToKeepTheDestinationOfACategoryThatStrayed();
     };
 }
 
@@ -105,6 +108,7 @@ namespace
 {
     constexpr auto kLibrary = "D:/MSFS 2024";
     constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
+    constexpr auto kSecondCommunity = "E:/Flight Simulator 2024/Community2024";
     constexpr auto kChosen = "D:/MSFS 2024/Aircrafts/addon-17";
     constexpr auto kCompanion = "D:/MSFS 2024/Aircrafts/addon-05";
     constexpr int kAddonsPerCategory = 20;
@@ -190,11 +194,20 @@ namespace
         return profile;
     }
 
+    SimulatorProfile ProfileWithTwoDestinations()
+    {
+        SimulatorProfile profile = Profile();
+        profile.destinations = {kCommunity, kSecondCommunity};
+
+        return profile;
+    }
+
     struct Fixture
     {
-        Fixture()
+        explicit Fixture(SimulatorProfile chosenProfile = Profile()) : settings(SettingsWith(std::move(chosenProfile)))
         {
             fileSystem.AddDirectory(kCommunity);
+            fileSystem.AddDirectory(kSecondCommunity);
             fileSystem.AddDirectory(kLibrary);
 
             for (const QString& category : Categories())
@@ -229,7 +242,7 @@ namespace
                                log,     identities,      startup.service, LinkType::Junction};
         LibraryOrganizer organizer{catalog,    filesystemProbe, files, linking,
                                    classifier, processProbe,    log,   LinkType::Junction};
-        FakeSettingsRepository settings{SettingsWith(Profile())};
+        FakeSettingsRepository settings;
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
@@ -1783,6 +1796,81 @@ void AddonTreePageTest::TheMoveButtonStaysOffWhenTheOnlyCategoryIsTheOneTheAddon
 
     QVERIFY(!move->isEnabled());
     QCOMPARE(move->text(), QStringLiteral("Move to…"));
+}
+
+namespace
+{
+    QStringList OfferedByTheMenuOn(const Screen& screen, const std::filesystem::path& path)
+    {
+        const QModelIndex position = IndexOf(*screen.tree, path, {});
+        QStringList offered;
+
+        QTimer::singleShot(0, qApp,
+                           [&offered]
+                           {
+                               if (auto* menu = qobject_cast<QMenu*>(QApplication::activePopupWidget());
+                                   menu != nullptr)
+                               {
+                                   for (const QAction* action : menu->actions())
+                                   {
+                                       offered.push_back(action->text());
+                                   }
+
+                                   menu->close();
+                               }
+                           });
+        Q_EMIT screen.tree->customContextMenuRequested(screen.tree->visualRect(position).center());
+
+        return offered;
+    }
+
+    const QString kRelink = QStringLiteral("Relink in the profile destination");
+    const QString kKeepTheDestination = QStringLiteral("Keep the destination they are linked in");
+}
+
+void AddonTreePageTest::ASelectionOffersRelinkWhenAnyMemberStrayedEvenIfTheClickedOneDidNot()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture f(ProfileWithTwoDestinations());
+    f.fileSystem.AddLink(std::filesystem::path(kSecondCommunity) / "strayed",
+                         AddonPath(QStringLiteral("Aircrafts"), 0));
+    const Screen screen(f);
+
+    const QModelIndex strayed = IndexOf(*screen.tree, AddonPath(QStringLiteral("Aircrafts"), 0), {});
+    const QModelIndex innocent = IndexOf(*screen.tree, AddonPath(QStringLiteral("Aircrafts"), 1), {});
+    QVERIFY(strayed.isValid());
+    QVERIFY(innocent.isValid());
+    screen.tree->selectionModel()->select(strayed, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    screen.tree->selectionModel()->select(innocent, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+    Settle();
+    QCOMPARE(screen.SelectedPaths().size(), std::size_t{2});
+
+    QVERIFY(OfferedByTheMenuOn(screen, AddonPath(QStringLiteral("Aircrafts"), 1)).contains(kRelink));
+
+    screen.tree->selectionModel()->select(innocent, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    Settle();
+
+    QVERIFY(!OfferedByTheMenuOn(screen, AddonPath(QStringLiteral("Aircrafts"), 1)).contains(kRelink));
+}
+
+void AddonTreePageTest::TheFilterLeavesTheOfferToKeepTheDestinationOfACategoryThatStrayed()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture f(ProfileWithTwoDestinations());
+    f.fileSystem.AddLink(std::filesystem::path(kSecondCommunity) / "strayed",
+                         AddonPath(QStringLiteral("Aircrafts"), 0));
+    const Screen screen(f);
+
+    const QStringList before = OfferedByTheMenuOn(screen, CategoryPath(QStringLiteral("Aircrafts")));
+    QVERIFY(before.contains(kRelink));
+    QVERIFY(before.contains(kKeepTheDestination));
+
+    ChipNumber(screen, 2)->click();
+    Settle();
+
+    const QStringList filtered = OfferedByTheMenuOn(screen, CategoryPath(QStringLiteral("Aircrafts")));
+    QVERIFY(!filtered.contains(kRelink));
+    QVERIFY(filtered.contains(kKeepTheDestination));
 }
 
 QTEST_MAIN(AddonTreePageTest)

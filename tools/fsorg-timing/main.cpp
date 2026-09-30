@@ -438,12 +438,18 @@ int main(int argc, char* argv[])
                                               && left.classification == right.classification;
                                       });
 
-            std::vector<DestinationEntry> handedOver = std::move(incremental);
+            EntriesRead read;
 
-            Measure(tag + "Session::AdoptEntries", true,
+            Measure(tag + "ReadEntries (resolve and derive)", false,
                     [&]
                     {
-                        session.AdoptEntries(std::move(handedOver));
+                        read =
+                            profileService.ReadEntries(session.StampForAnEntriesRead(), session.Snapshot().libraries);
+                    });
+            Measure(tag + "Session::AdoptTheEntriesRead", true,
+                    [&]
+                    {
+                        session.AdoptTheEntriesRead(std::move(read));
                     });
             Measure(tag + "AddonTreeModel::Refresh", true,
                     [&]

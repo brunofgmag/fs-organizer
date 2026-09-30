@@ -42,6 +42,8 @@ private:
 
     [[nodiscard]] int CheckShiftOf(const QStyleOptionViewItem& item) const;
 
+    [[nodiscard]] QStyleOptionViewItem ItemAsDrawn(const QStyleOptionViewItem& option, const QModelIndex& index) const;
+
     QPersistentModelIndex pointedAt_;
     FittedText fitted_;
     int shortestRow_ = 0;

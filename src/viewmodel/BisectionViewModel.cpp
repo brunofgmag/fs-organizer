@@ -72,23 +72,24 @@ void BisectionViewModel::Show()
 
     const SimulatorProfile profile = session_.Profile();
     const auto found = std::make_shared<BisectionReport>();
+    const auto aRunIsStored = std::make_shared<bool>(false);
 
     reading_.Run(
         [this]
         {
             emit Changed();
         },
-        [this, profile, snapshot, found]
+        [this, profile, snapshot, found, aRunIsStored]
         {
-            *found = bisection_.WhatWasInterrupted(profile.id).has_value()
-                ? bisection_.WhereItStands(profile)
-                : bisection_.WhatWouldBeSearched(profile, snapshot);
+            *aRunIsStored = bisection_.WhatWasInterrupted(profile.id).has_value();
+            *found =
+                *aRunIsStored ? bisection_.WhereItStands(profile) : bisection_.WhatWouldBeSearched(profile, snapshot);
         },
-        [this, found, read = std::move(enabled)]
+        [this, found, aRunIsStored, read = std::move(enabled)]
         {
             readFor_ = read;
 
-            Take(*found);
+            Take(*found, *aRunIsStored);
         });
 }
 
@@ -99,16 +100,19 @@ void BisectionViewModel::RunTheProcedure(std::function<BisectionReport()> work)
         return;
     }
 
+    const std::string profileId = session_.Profile().id;
     const auto found = std::make_shared<BisectionReport>();
+    const auto aRunIsStored = std::make_shared<bool>(false);
 
     mutating_.Run(
-        [work = std::move(work), found]
+        [this, work = std::move(work), profileId, found, aRunIsStored]
         {
             *found = work();
+            *aRunIsStored = bisection_.WhatWasInterrupted(profileId).has_value();
         },
-        [this, found]
+        [this, found, aRunIsStored]
         {
-            Take(*found);
+            Take(*found, *aRunIsStored);
         });
 }
 
@@ -228,7 +232,7 @@ BisectionReport BisectionViewModel::EndedReport(BisectionReport ended, const Sim
     return announced;
 }
 
-void BisectionViewModel::Take(const BisectionReport& report)
+void BisectionViewModel::Take(const BisectionReport& report, const bool aRunIsStored)
 {
     report_ = report;
 
@@ -244,7 +248,7 @@ void BisectionViewModel::Take(const BisectionReport& report)
     {
         stage_ = BisectionStage::Finished;
     }
-    else if (AProcedureWasInterrupted())
+    else if (aRunIsStored)
     {
         stage_ = BisectionStage::Asking;
     }

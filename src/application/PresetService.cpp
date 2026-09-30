@@ -290,7 +290,7 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
                                        const ApplyMode mode,
                                        const bool recordReturn) const
 {
-    const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile);
+    const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile, snapshot.libraries);
     const PresetApplyPlan plan = Plan(profile, snapshot, preset, mode, onDisk.enabled);
 
     if (recordReturn)

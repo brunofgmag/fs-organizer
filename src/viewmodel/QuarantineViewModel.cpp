@@ -22,7 +22,8 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
       sizes_(sizes),
       runner_(runner),
       working_(runner),
-      caller_(sizes.NewCaller())
+      caller_(sizes.NewCaller()),
+      collisionCaller_(sizes.NewCaller())
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this,
             [this]
@@ -167,7 +168,7 @@ void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& ite
 void QuarantineViewModel::WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed)
 {
     sizes_.MeasureFolders(
-        {check.item.path, check.occupant}, caller_, Freshness::MeasureAgain, {},
+        {check.item.path, check.occupant}, collisionCaller_, Freshness::MeasureAgain, {},
         [held = check.item.path, occupant = check.occupant,
          weighed = std::move(onWeighed)](const FolderSizeReport& report)
         {

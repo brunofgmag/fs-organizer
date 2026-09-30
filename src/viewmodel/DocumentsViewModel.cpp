@@ -422,9 +422,14 @@ void DocumentsViewModel::CountWhatIsShown()
 
     for (const DocumentsOfAnAddon& addon : WhatToShow())
     {
-        documentLines_ += addon.documents.size();
-        chartLines_ += ChartLinesOf(addon);
+        CountTheLinesOf(addon);
     }
+}
+
+void DocumentsViewModel::CountTheLinesOf(const DocumentsOfAnAddon& addon)
+{
+    documentLines_ += addon.documents.size();
+    chartLines_ += ChartLinesOf(addon);
 }
 
 std::vector<DocumentsOfAnAddon> DocumentsViewModel::WhatEachAddonCarries(const std::vector<AddonToRead>& addons,
@@ -464,8 +469,7 @@ void DocumentsViewModel::TakeTheAddonThatArrived(const DocumentsOfAnAddon& addon
         return;
     }
 
-    documentLines_ += addon.documents.size();
-    chartLines_ += ChartLinesOf(addon);
+    CountTheLinesOf(addon);
 
     if (!ItPutsALineOnTheScreen(addon))
     {
@@ -797,21 +801,14 @@ void DocumentsViewModel::Remember(const DocumentLine& line, const std::function<
 {
     const std::string addon = line.addon;
     const std::string named = AsUtf8(line.document);
-    const std::optional<PendingPage> turned = pendingPage_;
-
-    pendingPage_.reset();
-    quietAfterTheLastTurn_.stop();
+    const std::optional<PendingPage> turned = TakeThePendingPage();
 
     session_.Rewrite(
         [&addon, &named, &change, &turned](AppSettings& settings)
         {
             if (turned.has_value())
             {
-                ChangeTheDocument(settings, turned->addon, turned->document,
-                                  [page = turned->page](ReadDocument& known)
-                                  {
-                                      known.page = page;
-                                  });
+                WriteThePage(settings, *turned);
             }
 
             ChangeTheDocument(settings, addon, named, change);
@@ -820,27 +817,35 @@ void DocumentsViewModel::Remember(const DocumentLine& line, const std::function<
         });
 }
 
-void DocumentsViewModel::FlushThePage()
+std::optional<DocumentsViewModel::PendingPage> DocumentsViewModel::TakeThePendingPage()
 {
     quietAfterTheLastTurn_.stop();
 
-    if (!pendingPage_.has_value())
+    return std::exchange(pendingPage_, std::nullopt);
+}
+
+void DocumentsViewModel::WriteThePage(AppSettings& settings, const PendingPage& turned)
+{
+    ChangeTheDocument(settings, turned.addon, turned.document,
+                      [page = turned.page](ReadDocument& known)
+                      {
+                          known.page = page;
+                      });
+}
+
+void DocumentsViewModel::FlushThePage()
+{
+    const std::optional<PendingPage> turned = TakeThePendingPage();
+
+    if (!turned.has_value())
     {
         return;
     }
 
-    const PendingPage turned = *pendingPage_;
-
-    pendingPage_.reset();
-
     session_.Rewrite(
         [&turned](AppSettings& settings)
         {
-            ChangeTheDocument(settings, turned.addon, turned.document,
-                              [page = turned.page](ReadDocument& known)
-                              {
-                                  known.page = page;
-                              });
+            WriteThePage(settings, *turned);
 
             return true;
         });
@@ -864,8 +869,7 @@ void DocumentsViewModel::Favour(const DocumentLine& line, const bool favourite)
 
 int DocumentsViewModel::PageOf(const DocumentLine& line) const
 {
-    if (pendingPage_.has_value() && pendingPage_->addon == line.addon
-        && pendingPage_->document == AsUtf8(line.document))
+    if (pendingPage_.has_value() && pendingPage_->IsFor(line.addon, AsUtf8(line.document)))
     {
         return pendingPage_->page;
     }
@@ -884,7 +888,7 @@ void DocumentsViewModel::RememberThePage(const DocumentLine& line, const int pag
 
     const std::string named = AsUtf8(line.document);
 
-    if (pendingPage_.has_value() && (pendingPage_->addon != line.addon || pendingPage_->document != named))
+    if (pendingPage_.has_value() && !pendingPage_->IsFor(line.addon, named))
     {
         FlushThePage();
     }

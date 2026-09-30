@@ -1,10 +1,12 @@
 #include "view/library/AddonTreePage.h"
 
 #include <algorithm>
+#include <array>
 #include <ranges>
 #include <set>
 #include <string>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
 #include <QtCore/QItemSelection>
 #include <QtCore/QTimer>
@@ -60,6 +62,27 @@ namespace
     constexpr int kFilterGroupGap = 16;
     constexpr int kSearchMinimum = 120;
     constexpr int kSearchMaximum = 220;
+    constexpr std::array kStates{AddonStateFilter::All, AddonStateFilter::Enabled, AddonStateFilter::Disabled};
+
+    [[nodiscard]] QString LabelOf(const AddonStateFilter state)
+    {
+        switch (state)
+        {
+        case AddonStateFilter::All: return QCoreApplication::translate("AddonTreePage", "All", "several addons");
+        case AddonStateFilter::Enabled:
+            return QCoreApplication::translate("AddonTreePage", "Enabled", "several addons");
+        case AddonStateFilter::Disabled:
+            return QCoreApplication::translate("AddonTreePage", "Disabled", "several addons");
+        }
+
+        return {};
+    }
+
+    void ReserveTheWidestCount(QToolButton& chip, const QString& label, const int digits)
+    {
+        chip.setText(QStringLiteral("%1 %2").arg(label, QString(digits, QLatin1Char('0'))));
+        chip.setMinimumWidth(chip.sizeHint().width());
+    }
 
     [[nodiscard]] std::vector<const TreeNode*> AddonsAmong(const std::vector<const TreeNode*>& nodes)
     {
@@ -386,7 +409,7 @@ QWidget* AddonTreePage::CreateStateFilter(QWidget* bar)
 
     auto* group = new QButtonGroup(holder);
 
-    for (const AddonStateFilter state : {AddonStateFilter::All, AddonStateFilter::Enabled, AddonStateFilter::Disabled})
+    for (const AddonStateFilter state : kStates)
     {
         auto* chip = new QToolButton(holder);
         chip->setObjectName(QStringLiteral("FilterChip"));
@@ -417,25 +440,35 @@ AddonTreePage::Population AddonTreePage::PopulationNow() const
     return {.all = all, .enabled = enabled, .disabled = all - enabled};
 }
 
+int AddonTreePage::Population::Of(const AddonStateFilter state) const
+{
+    switch (state)
+    {
+    case AddonStateFilter::All: return all;
+    case AddonStateFilter::Enabled: return enabled;
+    case AddonStateFilter::Disabled: return disabled;
+    }
+
+    return 0;
+}
+
 void AddonTreePage::ShowTheChips(const Population& population) const
 {
-    const QStringList labels{tr("All", "several addons"), tr("Enabled", "several addons"),
-                             tr("Disabled", "several addons")};
-    const int counts[] = {population.all, population.enabled, population.disabled};
     const auto digits = static_cast<int>(QString::number(population.all).size());
 
-    for (qsizetype at = 0; at < chips_.size(); ++at)
+    for (const AddonStateFilter state : kStates)
     {
-        QToolButton* chip = chips_[at];
+        QToolButton* chip = chips_[static_cast<qsizetype>(state)];
+        const QString label = LabelOf(state);
+        const int count = population.Of(state);
 
         chip->ensurePolished();
-        chip->setProperty("population", counts[at] == 0 ? "none" : "some");
+        chip->setProperty("population", count == 0 ? "none" : "some");
         chip->style()->unpolish(chip);
         chip->style()->polish(chip);
 
-        chip->setText(QStringLiteral("%1 %2").arg(labels[at], QString(digits, QLatin1Char('0'))));
-        chip->setMinimumWidth(chip->sizeHint().width());
-        chip->setText(QStringLiteral("%1 %2").arg(labels[at]).arg(counts[at]));
+        ReserveTheWidestCount(*chip, label, digits);
+        chip->setText(QStringLiteral("%1 %2").arg(label).arg(count));
     }
 }
 
@@ -457,19 +490,18 @@ void AddonTreePage::Recount()
 void AddonTreePage::LeaveAStateThatRanOut(const Population& before, const Population& now)
 {
     const AddonStateFilter showing = filter_->ShowingOnly();
-    const bool enabledRanOut = showing == AddonStateFilter::Enabled && before.enabled > 0 && now.enabled == 0;
-    const bool disabledRanOut = showing == AddonStateFilter::Disabled && before.disabled > 0 && now.disabled == 0;
 
-    if (!enabledRanOut && !disabledRanOut)
+    if (showing == AddonStateFilter::All || before.Of(showing) == 0 || now.Of(showing) > 0)
     {
         return;
     }
 
-    chips_.front()->setChecked(true);
+    chips_[static_cast<qsizetype>(AddonStateFilter::All)]->setChecked(true);
     filter_->ShowOnly(AddonStateFilter::All);
 
-    const QString message = enabledRanOut ? tr("No addon is enabled now, so the filter was cleared.")
-                                          : tr("No addon is disabled now, so the filter was cleared.");
+    const QString message = showing == AddonStateFilter::Enabled
+        ? tr("No addon is enabled now, so the filter was cleared.")
+        : tr("No addon is disabled now, so the filter was cleared.");
 
     QTimer::singleShot(0, this,
                        [this, message]
@@ -1455,18 +1487,24 @@ void AddonTreePage::ShowSuggestions(const TreeNode* node)
 
 void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
 {
-    if (viewModel_.StrayAddonsUnder(ReachableAmong({node})) == 0)
+    const std::vector<const TreeNode*> strayed = viewModel_.StrayedUnder(Chosen(node));
+    const bool theCategoryStrayed = node->kind == TreeNodeKind::Category && !viewModel_.StrayedUnder({node}).empty();
+
+    if (strayed.empty() && !theCategoryStrayed)
     {
         return;
     }
 
-    menu.addAction(tr("Relink in the profile destination"), this,
-                   [this, node]
-                   {
-                       viewModel_.RelinkToTheProfileDestination(Chosen(node));
-                   });
+    if (!strayed.empty())
+    {
+        menu.addAction(tr("Relink in the profile destination"), this,
+                       [this, strayed]
+                       {
+                           viewModel_.RelinkStrayed(strayed);
+                       });
+    }
 
-    if (node->kind == TreeNodeKind::Category)
+    if (theCategoryStrayed)
     {
         menu.addAction(tr("Keep the destination they are linked in"), this,
                        [this, node]

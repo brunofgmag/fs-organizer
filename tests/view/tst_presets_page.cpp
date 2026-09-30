@@ -69,6 +69,7 @@ namespace
         static void ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable();
         static void TheStartupTabEditsTheStartupEntriesOfAGoverningPreset();
         static void AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnceWhenShown();
+        static void AHiddenPageReadsNothingOnALanguageChangeAndReadsOnceWhenShown();
         static void AShownPageReadsOnceWhenTheSessionRefreshesAndFinishesAScanInTheSameTurn();
         static void AShownPageReloadsOnceForAChangeOfThePresetsAndTheRefreshThatFollowsIt();
     };
@@ -124,6 +125,14 @@ namespace
         page.show();
         QVERIFY(QTest::qWaitForWindowExposed(&page));
         QCoreApplication::processEvents();
+    }
+
+    void SettleTheQueuedReload()
+    {
+        for (int round = 0; round < 3; ++round)
+        {
+            QCoreApplication::processEvents();
+        }
     }
 
     class MarkingTranslator final : public QTranslator
@@ -401,6 +410,7 @@ void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation(
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
@@ -417,13 +427,13 @@ void PresetsPageTest::ALanguageChangeReachesTheApplyButtonAndTheModeExplanation(
 
     MarkingTranslator marking;
     QCoreApplication::installTranslator(&marking);
-    QCoreApplication::processEvents();
+    SettleTheQueuedReload();
 
     QVERIFY2(apply->text() != applyBefore, "the apply button kept its old text after the language change");
     QVERIFY2(explained->text() != explainedBefore, "the mode explanation kept its old text after the language change");
 
     QCoreApplication::removeTranslator(&marking);
-    QCoreApplication::processEvents();
+    SettleTheQueuedReload();
 
     QCOMPARE(apply->text(), applyBefore);
     QCOMPARE(explained->text(), explainedBefore);
@@ -799,6 +809,35 @@ void PresetsPageTest::AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnce
     QCoreApplication::processEvents();
 
     QCOMPARE(f.presets.ListCalls(), std::size_t{0});
+}
+
+void PresetsPageTest::AHiddenPageReadsNothingOnALanguageChangeAndReadsOnceWhenShown()
+{
+    Fixture f;
+
+    f.presets.ForgetTheCalls();
+    PresetsPage page(f.viewModel, f.notifier);
+
+    const std::size_t listsOfOneReload = f.presets.ListCalls();
+    const std::size_t loadsOfOneReload = f.presets.LoadCalls();
+
+    QVERIFY(listsOfOneReload > 0);
+
+    f.presets.ForgetTheCalls();
+
+    QEvent languageChange(QEvent::LanguageChange);
+    QCoreApplication::sendEvent(&page, &languageChange);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), std::size_t{0});
+    QCOMPARE(f.presets.LoadCalls(), std::size_t{0});
+
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    QCoreApplication::processEvents();
+
+    QCOMPARE(f.presets.ListCalls(), listsOfOneReload);
+    QCOMPARE(f.presets.LoadCalls(), loadsOfOneReload);
 }
 
 void PresetsPageTest::AShownPageReadsOnceWhenTheSessionRefreshesAndFinishesAScanInTheSameTurn()

@@ -146,25 +146,23 @@ signals:
 private:
     struct ToggleWork
     {
-        SimulatorProfile profile{};
+        EntriesStamp stamp{};
         ProfileSnapshot shown{};
-        std::vector<TreeNode> libraries{};
         std::vector<TreeNode> toDisable{};
         std::vector<TreeNode> toEnable{};
         std::vector<StartupLine> startupEntriesToTurnOff{};
         std::size_t leftAlone = 0;
-        LinkBatchReport report{};
-        std::vector<DestinationEntry> entries{};
+        LinkBatchOutcome outcome{};
         bool simulatorRunning = false;
     };
 
     [[nodiscard]] const TreeNode* LibraryTreeHolding(const TreeNode& node) const;
 
+    [[nodiscard]] std::shared_ptr<ToggleWork> WorkOnTheShownProfile() const;
+
     void Perform(const std::vector<AddonMove>& moves);
 
     void AdoptScan();
-
-    void ReadTheEntriesAfter(ToggleWork& work) const;
 
     void ApplyResults(ToggleWork& work);
 
@@ -175,7 +173,8 @@ private:
     AddonTreeModel& model_;
     const SimulatorPackages& packages_;
     SizeService& sizes_;
-    MeasurementCaller caller_;
+    MeasurementCaller selectionCaller_;
+    MeasurementCaller swapsCaller_;
     GuardedRunner toggling_;
 };
 

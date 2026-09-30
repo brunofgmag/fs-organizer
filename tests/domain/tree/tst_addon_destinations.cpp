@@ -20,10 +20,6 @@ namespace
         static void ABrokenLinkAtThePlannedPathIsWhatLinksNowhereMeans();
         static void ABrokenLinkSomewhereElseLeavesTheAddonAlone();
         static void AnOverrideNamingAPathThatIsNoLongerADestinationDoesNotDecide();
-        static void TheBatchAnswersTheSameStrayedFolderAsAskingEachAddonAlone();
-        static void TheBatchKeepsTheOrderOfTheFoldersAndAnswersEmptyForAnAddonWithNoLink();
-        static void TheBatchReadsTheFirstStrayedLinkOfAnAddonLinkedInTwoDestinations();
-        static void TheBatchOfNoFolderAnswersNothing();
     };
 }
 
@@ -154,70 +150,6 @@ void AddonDestinationsTest::AnOverrideNamingAPathThatIsNoLongerADestinationDoesN
 
     QCOMPARE(prepared.Of(folder).destination, EffectiveDestination(profile, folder));
     QCOMPARE(prepared.Of(folder).destination, std::filesystem::path(kCommunity));
-}
-
-void AddonDestinationsTest::TheBatchAnswersTheSameStrayedFolderAsAskingEachAddonAlone()
-{
-    const SimulatorProfile profile = ProfileWithOverridesAtEveryLevel();
-    const std::vector<DestinationEntry> entries = EntriesPointingAllOver();
-    const std::vector<std::filesystem::path> folders = FoldersToAsk();
-
-    const std::vector<std::filesystem::path> batch = DestinationsItStrayedTo(profile, entries, folders);
-
-    QCOMPARE(batch.size(), folders.size());
-
-    std::size_t strayed = 0;
-
-    for (std::size_t index = 0; index < folders.size(); ++index)
-    {
-        QCOMPARE(batch[index], DestinationItStrayedTo(profile, entries, folders[index]));
-
-        strayed += batch[index].empty() ? 0 : 1;
-    }
-
-    QVERIFY(strayed > 0);
-    QVERIFY(strayed < folders.size());
-}
-
-void AddonDestinationsTest::TheBatchKeepsTheOrderOfTheFoldersAndAnswersEmptyForAnAddonWithNoLink()
-{
-    const SimulatorProfile profile = ProfileWithOverridesAtEveryLevel();
-    const std::vector<DestinationEntry> entries = EntriesPointingAllOver();
-
-    const std::vector<std::filesystem::path> batch = DestinationsItStrayedTo(
-        profile, entries,
-        {"D:/MSFS 2024/Sceneries/Europe", "F:/Extra Addons/Aircrafts/fenix-a320", "D:/MSFS 2024/Sceneries/Europe",
-         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w", "F:/Extra Addons/Aircrafts/fenix-a320"});
-
-    QCOMPARE(batch.size(), std::size_t{5});
-    QVERIFY(batch[0].empty());
-    QCOMPARE(batch[1], std::filesystem::path(kCommunity));
-    QVERIFY(batch[2].empty());
-    QVERIFY(batch[3].empty());
-    QCOMPARE(batch[4], std::filesystem::path(kCommunity));
-}
-
-void AddonDestinationsTest::TheBatchReadsTheFirstStrayedLinkOfAnAddonLinkedInTwoDestinations()
-{
-    const SimulatorProfile profile = ProfileWith({});
-    const std::filesystem::path folder = "D:/MSFS 2024/Sceneries/Europe/orbx-lfmn";
-    const std::vector<DestinationEntry> entries = {
-        LinkAt("E:/Flight Simulator 2024/Community2024/orbx-lfmn", folder),
-        LinkAt("E:/Flight Simulator 2024/Community/orbx-lfmn", folder, EntryClassification::Duplicated),
-        LinkAt("G:/Another Community/orbx-lfmn", folder, EntryClassification::Divergent)};
-
-    const std::vector<std::filesystem::path> batch = DestinationsItStrayedTo(profile, entries, {folder});
-
-    QCOMPARE(batch.size(), std::size_t{1});
-    QCOMPARE(batch.front(), DestinationItStrayedTo(profile, entries, folder));
-    QCOMPARE(batch.front(), std::filesystem::path("E:/Flight Simulator 2024/Community2024"));
-}
-
-void AddonDestinationsTest::TheBatchOfNoFolderAnswersNothing()
-{
-    const SimulatorProfile profile = ProfileWith({});
-
-    QVERIFY(DestinationsItStrayedTo(profile, EntriesPointingAllOver(), {}).empty());
 }
 
 QTEST_MAIN(AddonDestinationsTest)

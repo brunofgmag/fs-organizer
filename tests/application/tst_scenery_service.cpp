@@ -36,6 +36,7 @@ namespace
         static void AColdReadListsEachFolderOfTheAddonOnce();
         static void AWarmReadListsEachFolderOfTheAddonOnceToo();
         static void ReadingAgainAsksNoFolderWhenItWasLastWritten();
+        static void WhatComesBackNamesTheAddonWhetherItWasReadOrRemembered();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library/Sceneries");
@@ -66,6 +67,14 @@ namespace
         }
 
         return codes;
+    }
+
+    [[nodiscard]] AddonToRead NavigationData(const std::string& folderName)
+    {
+        AddonToRead addon = Addon(folderName);
+        addon.itIsNavigationData = true;
+
+        return addon;
     }
 
     struct Reading
@@ -377,6 +386,35 @@ void SceneryServiceTest::ReadingAgainAsksNoFolderWhenItWasLastWritten()
     QCOMPARE(scenery.size(), std::size_t{1});
     QCOMPARE(CodesOf(scenery.front()), QStringList({"EHAM"}));
     QCOMPARE(reading.filesystemProbe.lastWriteTimesAsked, std::size_t{0});
+}
+
+void SceneryServiceTest::WhatComesBackNamesTheAddonWhetherItWasReadOrRemembered()
+{
+    Reading reading;
+    const AddonToRead asked = NavigationData("someone-navdata");
+
+    reading.fileSystem.AddFileWithContents(asked.folder / "scenery" / "APX.bgl", FakeSceneryParser::Carrying({"EHAM"}));
+    reading.Touch(asked.folder);
+    reading.Touch(asked.folder / "scenery");
+
+    SceneryService service = reading.Service();
+
+    const auto verify = [&asked](const SceneryOfAnAddon& scenery)
+    {
+        QVERIFY(scenery.addon == asked.addon);
+        QCOMPARE(scenery.resolvedPath, asked.folder);
+        QVERIFY(scenery.itIsNavigationData);
+        QCOMPARE(CodesOf(scenery), QStringList({"EHAM"}));
+    };
+
+    verify(service.SceneryOf(asked));
+    verify(service.SceneryOf(asked));
+    QCOMPARE(reading.cache.kept, std::size_t{1});
+
+    const std::vector<SceneryOfAnAddon> remembered = service.WhatIsAlreadyKnown({asked});
+
+    QCOMPARE(remembered.size(), std::size_t{1});
+    verify(remembered.front());
 }
 
 QTEST_APPLESS_MAIN(SceneryServiceTest)

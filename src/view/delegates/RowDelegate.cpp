@@ -57,6 +57,11 @@ namespace
         int wide = 0;
     };
 
+    [[nodiscard]] QStyle* StyleOf(const QStyleOptionViewItem& item)
+    {
+        return item.widget != nullptr ? item.widget->style() : QApplication::style();
+    }
+
     [[nodiscard]] RoomForTheText RoomIn(const QStyleOptionViewItem& item,
                                         const QString& suffix,
                                         const QString& tag,
@@ -64,7 +69,7 @@ namespace
                                         const int shift)
     {
         const QWidget* widget = item.widget;
-        const QStyle* style = widget != nullptr ? widget->style() : QApplication::style();
+        const QStyle* style = StyleOf(item);
 
         const QRect written = style->subElementRect(QStyle::SE_ItemViewItemText, &item, widget);
         const QRect box = written.adjusted(kBreathingRoom + shift, 0, -kBreathingRoom, 0);
@@ -92,7 +97,7 @@ namespace
     void DrawWithTheCheckMovedBy(const int shift, QStyleOptionViewItem item, QPainter& painter)
     {
         const QWidget* widget = item.widget;
-        QStyle* style = widget != nullptr ? widget->style() : QApplication::style();
+        QStyle* style = StyleOf(item);
 
         QStyleOptionViewItem check = item;
         check.rect = style->subElementRect(QStyle::SE_ItemViewItemCheckIndicator, &item, widget).translated(shift, 0);
@@ -196,7 +201,7 @@ int RowDelegate::CheckShiftOf(const QStyleOptionViewItem& item) const
     }
 
     const QWidget* widget = item.widget;
-    const QStyle* style = widget != nullptr ? widget->style() : QApplication::style();
+    const QStyle* style = StyleOf(item);
 
     QStyleOptionViewItem cell = item;
     cell.rect = QRect(0, 0, kProbeWidth, kRowHeight);
@@ -207,6 +212,21 @@ int RowDelegate::CheckShiftOf(const QStyleOptionViewItem& item) const
     const QRect text = style->subElementRect(QStyle::SE_ItemViewItemText, &cell, widget);
 
     return std::max(0, text.left() + kBreathingRoom - check.left());
+}
+
+QStyleOptionViewItem RowDelegate::ItemAsDrawn(const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    QStyleOptionViewItem item = option;
+    initStyleOption(&item, index);
+
+    if (index.data(EmphasisRole).toBool())
+    {
+        item.font.setWeight(QFont::DemiBold);
+    }
+
+    MeasureInTheFontTheCanvasDraws(item);
+
+    return item;
 }
 
 bool RowDelegate::editorEvent(QEvent* event,
@@ -270,21 +290,13 @@ bool RowDelegate::IsPointedAt(const QModelIndex& index) const
 
 void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    QStyleOptionViewItem item = option;
-    initStyleOption(&item, index);
+    QStyleOptionViewItem item = ItemAsDrawn(option, index);
     item.state &= ~QStyle::State_HasFocus;
 
     if (item.viewItemPosition == QStyleOptionViewItem::Invalid)
     {
         item.viewItemPosition = WhereInTheRow(index);
     }
-
-    if (index.data(EmphasisRole).toBool())
-    {
-        item.font.setWeight(QFont::DemiBold);
-    }
-
-    MeasureInTheFontTheCanvasDraws(item);
 
     if ((item.state & QStyle::State_Selected) == 0)
     {
@@ -299,7 +311,7 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
     }
 
     const QWidget* widget = item.widget;
-    QStyle* style = widget != nullptr ? widget->style() : QApplication::style();
+    QStyle* style = StyleOf(item);
 
     const QString suffix = index.data(QuietSuffixRole).toString();
     const QString tag = index.data(TagTextRole).toString();
@@ -388,15 +400,7 @@ bool RowDelegate::helpEvent(QHelpEvent* event,
         return QStyledItemDelegate::helpEvent(event, view, option, index);
     }
 
-    QStyleOptionViewItem item = option;
-    initStyleOption(&item, index);
-
-    if (index.data(EmphasisRole).toBool())
-    {
-        item.font.setWeight(QFont::DemiBold);
-    }
-
-    MeasureInTheFontTheCanvasDraws(item);
+    const QStyleOptionViewItem item = ItemAsDrawn(option, index);
 
     const QString suffix = index.data(QuietSuffixRole).toString();
     const QString tag = index.data(TagTextRole).toString();

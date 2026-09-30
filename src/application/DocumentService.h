@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_APPLICATION_DOCUMENT_SERVICE_H
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -20,9 +21,15 @@ using DocumentProgress = std::function<bool(const DocumentsOfAnAddon& addon, std
 class DocumentService
 {
 public:
+    static constexpr std::uint32_t kIndexingRulesVersion = 1;
+
     DocumentService(const FilesystemProbe& filesystemProbe,
                     const ChartCatalogueParser& catalogueParser,
                     const ChartVersions& chartVersions);
+
+    [[nodiscard]] static std::string DigestOf(const TreeFingerprint& walk,
+                                              const std::vector<std::string>& codes,
+                                              std::uint32_t rulesVersion = kIndexingRulesVersion);
 
     [[nodiscard]] DocumentsOfAnAddon DocumentsOf(const AddonId& addon,
                                                  const std::filesystem::path& folder,

@@ -61,6 +61,8 @@ private:
 
     [[nodiscard]] QString CountTextOf(const TreeNode& node, const Reach& reach) const;
 
+    void Refilter();
+
     void ForgetTheCounts();
 
     void AnnounceTheCounts(const QModelIndex& parent);

@@ -6,6 +6,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <utility>
 
 #include "domain/model/SceneryFolder.h"
 #include "domain/support/PathUtils.h"
@@ -25,6 +26,14 @@ namespace
     [[nodiscard]] std::span<const std::uint8_t> AsBytes(const std::string& text)
     {
         return {reinterpret_cast<const std::uint8_t*>(text.data()), text.size()};
+    }
+
+    [[nodiscard]] SceneryOfAnAddon SceneryFrom(const AddonToRead& addon, std::vector<SceneryCodes> files)
+    {
+        return {.addon = addon.addon,
+                .resolvedPath = addon.folder,
+                .files = std::move(files),
+                .itIsNavigationData = addon.itIsNavigationData};
     }
 }
 
@@ -150,10 +159,7 @@ std::vector<SceneryOfAnAddon> SceneryService::WhatIsAlreadyKnown(const std::vect
 
         if (remembered.has_value())
         {
-            known.push_back({.addon = addon.addon,
-                             .resolvedPath = addon.folder,
-                             .files = remembered->files,
-                             .itIsNavigationData = addon.itIsNavigationData});
+            known.push_back(SceneryFrom(addon, remembered->files));
         }
     }
 
@@ -169,36 +175,44 @@ SceneryOfAnAddon SceneryService::SceneryOf(const AddonToRead& addon, const Scene
     return scenery;
 }
 
+std::optional<RememberedScenery>
+SceneryService::WhatIsStillFresh(const std::filesystem::path& addonFolder,
+                                 const std::vector<std::filesystem::path>& sceneryFolders) const
+{
+    std::optional<RememberedScenery> remembered = cache_.Remember(addonFolder);
+
+    if (!remembered.has_value())
+    {
+        return std::nullopt;
+    }
+
+    const std::optional<std::chrono::system_clock::time_point> changed =
+        WhenTheSceneryLastChanged(addonFolder, sceneryFolders);
+
+    if (!changed.has_value() || *changed > remembered->readAt)
+    {
+        return std::nullopt;
+    }
+
+    return remembered;
+}
+
 SceneryOfAnAddon SceneryService::ReadOne(const AddonToRead& addon, const SceneryFreshness freshness)
 {
     const std::vector<std::filesystem::path> sceneryFolders = SceneryFoldersOf(addon.folder);
 
     if (freshness != SceneryFreshness::ReadAgain)
     {
-        const std::optional<RememberedScenery> remembered = cache_.Remember(addon.folder);
-
-        if (remembered.has_value())
+        if (std::optional<RememberedScenery> fresh = WhatIsStillFresh(addon.folder, sceneryFolders); fresh.has_value())
         {
-            const std::optional<std::chrono::system_clock::time_point> changed =
-                WhenTheSceneryLastChanged(addon.folder, sceneryFolders);
-
-            if (changed.has_value() && *changed <= remembered->readAt)
-            {
-                return {.addon = addon.addon,
-                        .resolvedPath = addon.folder,
-                        .files = remembered->files,
-                        .itIsNavigationData = addon.itIsNavigationData};
-            }
+            return SceneryFrom(addon, std::move(fresh->files));
         }
     }
 
-    const RememberedScenery read{.readAt = clock_.Now(), .files = ReadTheFilesIn(sceneryFolders)};
+    RememberedScenery read{.readAt = clock_.Now(), .files = ReadTheFilesIn(sceneryFolders)};
     cache_.Keep(addon.folder, read);
 
-    return {.addon = addon.addon,
-            .resolvedPath = addon.folder,
-            .files = read.files,
-            .itIsNavigationData = addon.itIsNavigationData};
+    return SceneryFrom(addon, std::move(read.files));
 }
 
 std::vector<SceneryOfAnAddon> SceneryService::SceneryOfEach(const std::vector<AddonToRead>& addons,

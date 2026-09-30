@@ -19,14 +19,17 @@ void AddonTreeFilterModel::HideEmptyCategories(const bool hide)
 void AddonTreeFilterModel::Search(const QString& text)
 {
     search_ = text.trimmed();
-    ForgetTheCounts();
-    invalidateRowsFilter();
-    AnnounceTheCounts({});
+    Refilter();
 }
 
 void AddonTreeFilterModel::ShowOnly(const AddonStateFilter state)
 {
     state_ = state;
+    Refilter();
+}
+
+void AddonTreeFilterModel::Refilter()
+{
     ForgetTheCounts();
     invalidateRowsFilter();
     AnnounceTheCounts({});

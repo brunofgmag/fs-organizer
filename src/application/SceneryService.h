@@ -56,6 +56,10 @@ public:
 private:
     [[nodiscard]] SceneryOfAnAddon ReadOne(const AddonToRead& addon, SceneryFreshness freshness);
 
+    [[nodiscard]] std::optional<RememberedScenery>
+    WhatIsStillFresh(const std::filesystem::path& addonFolder,
+                     const std::vector<std::filesystem::path>& sceneryFolders) const;
+
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     WhenTheSceneryLastChanged(const std::filesystem::path& addonFolder,
                               const std::vector<std::filesystem::path>& sceneryFolders) const;

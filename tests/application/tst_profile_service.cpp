@@ -70,9 +70,16 @@ namespace
         static void ADisabledEntryInsideTheAddonIsNotWorthAsking();
         static void AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAsking();
         static void TurningOffAStartupEntryOutsideTheAddonsCarriesItsLabelToTheJournal();
-        static void TheStartupBatchIsOpenedOnceAroundAllTheStepsOfABatch();
-        static void UndoRunsItsStartupStepsInsideOneBatchOfTheirOwn();
-        static void AStartupBatchIsClosedEvenWhenAStepThrows();
+        static void TheStartupStepsOfABatchShareOneBackupRecord();
+        static void UndoKeepsABackupRecordOfItsOwn();
+        static void ALinkToTheOtherProgramsFolderWhoseCopyIsKnownOnlyBySidecarIsReadAsDivergent();
+        static void ThePlaceTakenByThatLinkIsSeenByThePlacesTakenReadThroughTheLibraries();
+        static void ThePlaceTakenByThatLinkIsSeenByThePlacesTakenNowRead();
+        static void PlanningOverPlacesThatAreFreeReadsNoSidecar();
+        static void EnablingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
+        static void RelinkingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
+        static void UndoingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
+        static void TheOutcomeOfABatchCarriesTheStampItWasAskedFor();
     };
 }
 
@@ -798,14 +805,14 @@ void ProfileServiceTest::ThePlaceAnAddonWantsNamesTheAddonOfYoursHoldingIt()
     const ProfileSnapshot snapshot = f.Snapshot(profile);
     const TreeNode* wanted = &snapshot.libraries[1].children.front();
 
-    const std::vector<TakenPlace> taken = f.service.PlacesTaken(profile, {wanted});
+    const std::vector<TakenPlace> taken = f.service.PlacesTaken(profile, {wanted}, snapshot.libraries);
 
     QCOMPARE(taken.size(), std::size_t{1});
     QCOMPARE(taken.front().addonFolder, std::filesystem::path{"F:/Extra/pmdg-aircraft-77w"});
     QCOMPARE(taken.front().linkPath, place);
     QCOMPARE(taken.front().occupant, std::filesystem::path{"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"});
 
-    QVERIFY(f.service.PlacesTaken(profile, {Fixture::AddonAt(snapshot, 0)}).empty());
+    QVERIFY(f.service.PlacesTaken(profile, {Fixture::AddonAt(snapshot, 0)}, snapshot.libraries).empty());
 }
 
 void ProfileServiceTest::APlaceHeldByAFolderOrByAForeignLinkIsNotOfferedForSwapping()
@@ -817,19 +824,23 @@ void ProfileServiceTest::APlaceHeldByAFolderOrByAForeignLinkIsNotOfferedForSwapp
     f.fileSystem.AddDirectory(place);
 
     const ProfileSnapshot withAFolder = f.Snapshot(profile);
-    QVERIFY(f.service.PlacesTaken(profile, {&withAFolder.libraries[1].children.front()}).empty());
+    QVERIFY(
+        f.service.PlacesTaken(profile, {&withAFolder.libraries[1].children.front()}, withAFolder.libraries).empty());
 
     QVERIFY(f.fileSystem.RemoveTree(place));
     f.fileSystem.AddDirectory("G:/Another program/pmdg-aircraft-77w");
     f.fileSystem.AddLink(place, "G:/Another program/pmdg-aircraft-77w");
 
     const ProfileSnapshot withAForeignLink = f.Snapshot(profile);
-    QVERIFY(f.service.PlacesTaken(profile, {&withAForeignLink.libraries[1].children.front()}).empty());
+    QVERIFY(
+        f.service.PlacesTaken(profile, {&withAForeignLink.libraries[1].children.front()}, withAForeignLink.libraries)
+            .empty());
 
     QVERIFY(f.fileSystem.RemoveTree("G:/Another program/pmdg-aircraft-77w"));
 
     const ProfileSnapshot withADeadLink = f.Snapshot(profile);
-    QVERIFY(f.service.PlacesTaken(profile, {&withADeadLink.libraries[1].children.front()}).empty());
+    QVERIFY(f.service.PlacesTaken(profile, {&withADeadLink.libraries[1].children.front()}, withADeadLink.libraries)
+                .empty());
 }
 
 void ProfileServiceTest::ThePlaceAnAddonWantsIsFoundFromItsPlannedPathAlone()
@@ -846,7 +857,7 @@ void ProfileServiceTest::ThePlaceAnAddonWantsIsFoundFromItsPlannedPathAlone()
 
     f.filesystemProbe.enumerated.clear();
 
-    const std::vector<TakenPlace> taken = f.service.PlacesTakenNow(profile, {wanted}, snapshot.enabled);
+    const std::vector<TakenPlace> taken = f.service.PlacesTakenNow(profile, {wanted}, snapshot);
 
     QCOMPARE(taken.size(), std::size_t{1});
     QCOMPARE(taken.front().addonFolder, std::filesystem::path{"F:/Extra/pmdg-aircraft-77w"});
@@ -854,7 +865,7 @@ void ProfileServiceTest::ThePlaceAnAddonWantsIsFoundFromItsPlannedPathAlone()
     QCOMPARE(taken.front().occupant, std::filesystem::path{"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"});
     QVERIFY2(f.filesystemProbe.enumerated.empty(), "no destination is listed to answer about one place");
 
-    QVERIFY(f.service.PlacesTakenNow(profile, {Fixture::AddonAt(snapshot, 0)}, snapshot.enabled).empty());
+    QVERIFY(f.service.PlacesTakenNow(profile, {Fixture::AddonAt(snapshot, 0)}, snapshot).empty());
 }
 
 void ProfileServiceTest::AnAddonStandingInItsOwnPlaceIsNotAskedToSwapWithItself()
@@ -867,12 +878,12 @@ void ProfileServiceTest::AnAddonStandingInItsOwnPlaceIsNotAskedToSwapWithItself(
     f.fileSystem.AddLink(place, "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
 
     QVERIFY(!shown.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
-    QVERIFY(f.service.PlacesTakenNow(profile, {Fixture::AddonAt(shown, 0)}, shown.enabled).empty());
+    QVERIFY(f.service.PlacesTakenNow(profile, {Fixture::AddonAt(shown, 0)}, shown).empty());
 
     QVERIFY(f.fileSystem.RemoveNode(place));
     f.fileSystem.AddLink(place, "D:/MSFS 2024/Aircrafts/aerosoft-crj");
 
-    QCOMPARE(f.service.PlacesTakenNow(profile, {Fixture::AddonAt(shown, 0)}, shown.enabled).size(), std::size_t{1});
+    QCOMPARE(f.service.PlacesTakenNow(profile, {Fixture::AddonAt(shown, 0)}, shown).size(), std::size_t{1});
 }
 
 void ProfileServiceTest::APlaceHeldByAFolderAForeignLinkOrADeadLinkIsNotTakenByAnAddonOfYours()
@@ -884,15 +895,15 @@ void ProfileServiceTest::APlaceHeldByAFolderAForeignLinkOrADeadLinkIsNotTakenByA
     const std::vector<const TreeNode*> wanted{&snapshot.libraries[1].children.front()};
 
     f.fileSystem.AddDirectory(place);
-    QVERIFY(f.service.PlacesTakenNow(profile, wanted, snapshot.enabled).empty());
+    QVERIFY(f.service.PlacesTakenNow(profile, wanted, snapshot).empty());
 
     QVERIFY(f.fileSystem.RemoveTree(place));
     f.fileSystem.AddDirectory("G:/Another program/pmdg-aircraft-77w");
     f.fileSystem.AddLink(place, "G:/Another program/pmdg-aircraft-77w");
-    QVERIFY(f.service.PlacesTakenNow(profile, wanted, snapshot.enabled).empty());
+    QVERIFY(f.service.PlacesTakenNow(profile, wanted, snapshot).empty());
 
     QVERIFY(f.fileSystem.RemoveTree("G:/Another program/pmdg-aircraft-77w"));
-    QVERIFY(f.service.PlacesTakenNow(profile, wanted, snapshot.enabled).empty());
+    QVERIFY(f.service.PlacesTakenNow(profile, wanted, snapshot).empty());
 }
 
 void ProfileServiceTest::TheEntriesAfterABatchAreWhatAFullReadOfTheSameDiskGives()
@@ -1195,7 +1206,7 @@ void ProfileServiceTest::AnEntryInsideADestinationButOutsideTheAddonIsNotWorthAs
     QVERIFY(f.service.StartupEntriesCarriedBy(profile, snapshot, f.Pmdg(snapshot)).empty());
 }
 
-void ProfileServiceTest::TheStartupBatchIsOpenedOnceAroundAllTheStepsOfABatch()
+void ProfileServiceTest::TheStartupStepsOfABatchShareOneBackupRecord()
 {
     Fixture f;
     f.CarryThreeStrangers();
@@ -1207,14 +1218,12 @@ void ProfileServiceTest::TheStartupBatchIsOpenedOnceAroundAllTheStepsOfABatch()
         f.service.SetEnabled(profile, snapshot, Fixture::TurningOffTheThreeStrangers()).results;
 
     QCOMPARE(results.size(), std::size_t{3});
-    QCOMPARE(f.startup.entries.batchesOpened, std::size_t{1});
-    QCOMPARE(f.startup.entries.batchesClosed, std::size_t{1});
-    QCOMPARE(f.startup.entries.switchesInsideABatch, std::size_t{3});
-    QCOMPARE(f.startup.entries.switchesOutsideABatch, std::size_t{0});
+    QCOMPARE(f.startup.entries.switchesThatFoundNoBackup, std::size_t{1});
+    QCOMPARE(f.startup.entries.switchesThatFoundTheBackupTaken, std::size_t{2});
     QCOMPARE(f.journal.appended.size(), std::size_t{3});
 }
 
-void ProfileServiceTest::UndoRunsItsStartupStepsInsideOneBatchOfTheirOwn()
+void ProfileServiceTest::UndoKeepsABackupRecordOfItsOwn()
 {
     Fixture f;
     f.CarryThreeStrangers();
@@ -1227,27 +1236,263 @@ void ProfileServiceTest::UndoRunsItsStartupStepsInsideOneBatchOfTheirOwn()
     const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
 
     QCOMPARE(reverted.size(), std::size_t{3});
-    QCOMPARE(f.startup.entries.batchesOpened, std::size_t{2});
-    QCOMPARE(f.startup.entries.batchesClosed, std::size_t{2});
-    QCOMPARE(f.startup.entries.switchesInsideABatch, std::size_t{6});
-    QCOMPARE(f.startup.entries.switchesOutsideABatch, std::size_t{0});
+    QCOMPARE(f.startup.entries.switchesThatFoundNoBackup, std::size_t{2});
+    QCOMPARE(f.startup.entries.switchesThatFoundTheBackupTaken, std::size_t{4});
 }
 
-void ProfileServiceTest::AStartupBatchIsClosedEvenWhenAStepThrows()
+namespace
+{
+    void PutTheLinkOnTheOtherProgramsFolder(Fixture& f)
+    {
+        f.fileSystem.AddDirectory("C:/Program Files (x86)/Addon Manager/MSFS");
+        f.fileSystem.AddDirectory(kVendorFolder);
+        f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", kVendorFolder);
+        f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kImportedExternal),
+                                         TextOfTheExternalOrigin(kVendorFolder));
+    }
+
+    class CountingLinkReads final : public LinkService
+    {
+    public:
+        explicit CountingLinkReads(LinkService& inner) : inner_(inner)
+        {
+        }
+
+        [[nodiscard]] LinkFailure CreateLink(const std::filesystem::path& linkPath,
+                                             const std::filesystem::path& target,
+                                             LinkType linkType) override
+        {
+            return inner_.CreateLink(linkPath, target, linkType);
+        }
+
+        [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override
+        {
+            return inner_.RemoveReparseNode(linkPath);
+        }
+
+        [[nodiscard]] std::optional<std::filesystem::path>
+        ReadLinkTarget(const std::filesystem::path& path) const override
+        {
+            ++singleReads;
+
+            return inner_.ReadLinkTarget(path);
+        }
+
+        [[nodiscard]] std::vector<std::optional<std::filesystem::path>>
+        ReadLinkTargets(const std::vector<std::filesystem::path>& paths) const override
+        {
+            ++fullReads;
+
+            return inner_.ReadLinkTargets(paths);
+        }
+
+        mutable std::size_t fullReads = 0;
+        mutable std::size_t singleReads = 0;
+
+    private:
+        LinkService& inner_;
+    };
+
+    struct CountedService
+    {
+        explicit CountedService(Fixture& f)
+            : counting(f.linkService),
+              classifier(counting, f.filesystemProbe),
+              service(f.catalog,
+                      f.filesystemProbe,
+                      f.sidecars,
+                      classifier,
+                      f.linking,
+                      f.log,
+                      f.identities,
+                      f.startup.service,
+                      LinkType::Junction)
+        {
+        }
+
+        CountingLinkReads counting;
+        EntryClassifier classifier;
+        ProfileService service;
+    };
+}
+
+void ProfileServiceTest::ALinkToTheOtherProgramsFolderWhoseCopyIsKnownOnlyBySidecarIsReadAsDivergent()
+{
+    Fixture f;
+    PutTheLinkOnTheOtherProgramsFolder(f);
+
+    const SimulatorProfile forgetful = Profile();
+    QVERIFY(forgetful.externalOrigins.empty());
+
+    const ProfileSnapshot shown = f.Snapshot(forgetful);
+    QCOMPARE(shown.entries.size(), std::size_t{1});
+    QCOMPARE(shown.entries.front().classification, EntryClassification::Divergent);
+
+    const ProfileService::LinksOnDisk onDisk = f.service.ReadLinksNow(forgetful, shown.libraries);
+
+    QCOMPARE(onDisk.entries.size(), std::size_t{1});
+    QCOMPARE(onDisk.entries.front().classification, EntryClassification::Divergent);
+    QVERIFY(onDisk.enabled.Contains(kVendorFolder));
+}
+
+void ProfileServiceTest::ThePlaceTakenByThatLinkIsSeenByThePlacesTakenReadThroughTheLibraries()
+{
+    Fixture f;
+    const SimulatorProfile profile = ProfileWithASecondLibraryHolding(f, "F:/Extra/pmdg-aircraft-77w");
+    PutTheLinkOnTheOtherProgramsFolder(f);
+
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+    const std::vector<const TreeNode*> wanted{&snapshot.libraries[1].children.front()};
+
+    const std::vector<TakenPlace> throughTheLibraries = f.service.PlacesTaken(profile, wanted, snapshot.libraries);
+
+    QCOMPARE(throughTheLibraries.size(), std::size_t{1});
+    QCOMPARE(throughTheLibraries.front().occupant, std::filesystem::path{kVendorFolder});
+}
+
+void ProfileServiceTest::ThePlaceTakenByThatLinkIsSeenByThePlacesTakenNowRead()
+{
+    Fixture f;
+    const SimulatorProfile profile = ProfileWithASecondLibraryHolding(f, "F:/Extra/pmdg-aircraft-77w");
+    PutTheLinkOnTheOtherProgramsFolder(f);
+
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+    const std::vector<const TreeNode*> wanted{&snapshot.libraries[1].children.front()};
+
+    const std::vector<TakenPlace> throughTheSnapshot = f.service.PlacesTakenNow(profile, wanted, snapshot);
+
+    QCOMPARE(throughTheSnapshot.size(), std::size_t{1});
+    QCOMPARE(throughTheSnapshot.front().occupant, std::filesystem::path{kVendorFolder});
+}
+
+namespace
+{
+    class CountingSidecarReads final : public SidecarStore
+    {
+    public:
+        explicit CountingSidecarReads(SidecarStore& inner) : inner_(inner)
+        {
+        }
+
+        [[nodiscard]] bool Write(const std::filesystem::path& path, const std::string& contents) override
+        {
+            return inner_.Write(path, contents);
+        }
+
+        [[nodiscard]] std::optional<std::string> Read(const std::filesystem::path& path) const override
+        {
+            ++reads;
+
+            return inner_.Read(path);
+        }
+
+        [[nodiscard]] bool Forget(const std::filesystem::path& path) override
+        {
+            return inner_.Forget(path);
+        }
+
+        mutable std::size_t reads = 0;
+
+    private:
+        SidecarStore& inner_;
+    };
+}
+
+void ProfileServiceTest::PlanningOverPlacesThatAreFreeReadsNoSidecar()
+{
+    Fixture f;
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    CountingSidecarReads counting{f.sidecars};
+    ProfileService service{f.catalog, f.filesystemProbe, counting,          f.classifier,      f.linking,
+                           f.log,     f.identities,      f.startup.service, LinkType::Junction};
+
+    QVERIFY(service.PlacesTakenNow(profile, {Fixture::AddonAt(shown, 0)}, shown).empty());
+    QCOMPARE(counting.reads, std::size_t{0});
+
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    QCOMPARE(service.PlacesTakenNow(profile, {Fixture::AddonAt(shown, 0)}, shown).size(), std::size_t{1});
+    QVERIFY(counting.reads > 0);
+}
+
+void ProfileServiceTest::EnablingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    CountedService counted(f);
+
+    const LinkBatchOutcome outcome = counted.service.SetEnabled(
+        EntriesStamp{.profile = profile}, shown, LinkBatch{.toDisable = {}, .toEnable = {Fixture::AddonAt(shown, 0)}});
+
+    QCOMPARE(outcome.report.results.size(), std::size_t{1});
+    QCOMPARE(counted.counting.fullReads, std::size_t{1});
+    QCOMPARE(outcome.read.entries.size(), std::size_t{2});
+    QVERIFY(outcome.read.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
+    QVERIFY(outcome.read.enabled.Contains("D:/MSFS 2024/Aircrafts/aerosoft-crj"));
+}
+
+void ProfileServiceTest::RelinkingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    CountedService counted(f);
+
+    const LinkBatchOutcome outcome =
+        counted.service.Relink(EntriesStamp{.profile = profile}, shown, {Fixture::AddonAt(shown, 0)});
+
+    QCOMPARE(outcome.report.results.size(), std::size_t{2});
+    QCOMPARE(counted.counting.fullReads, std::size_t{1});
+    QCOMPARE(outcome.read.entries.size(), std::size_t{1});
+    QCOMPARE(outcome.read.entries.front().path,
+             std::filesystem::path{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"});
+    QVERIFY(outcome.read.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
+}
+
+void ProfileServiceTest::UndoingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards()
+{
+    Fixture f;
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    CountedService counted(f);
+
+    const LinkBatchOutcome enabled = counted.service.SetEnabled(
+        EntriesStamp{.profile = profile}, shown, LinkBatch{.toDisable = {}, .toEnable = {Fixture::AddonAt(shown, 0)}});
+    QCOMPARE(enabled.read.entries.size(), std::size_t{1});
+
+    counted.counting.fullReads = 0;
+
+    const LinkBatchOutcome undone = counted.service.UndoLastBatch(EntriesStamp{.profile = profile}, shown.libraries);
+
+    QCOMPARE(undone.report.results.size(), std::size_t{1});
+    QCOMPARE(counted.counting.fullReads, std::size_t{1});
+    QVERIFY(undone.read.entries.empty());
+    QVERIFY(!undone.read.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
+}
+
+void ProfileServiceTest::TheOutcomeOfABatchCarriesTheStampItWasAskedFor()
 {
     Fixture f;
     f.CarryThreeStrangers();
-    f.startup.entries.MakeSwitchingThrow();
 
     const SimulatorProfile profile = Profile();
-    const ProfileSnapshot snapshot = f.Snapshot(profile);
+    const ProfileSnapshot shown = f.Snapshot(profile);
 
-    QVERIFY_THROWS_EXCEPTION(
-        std::runtime_error,
-        static_cast<void>(f.service.SetEnabled(profile, snapshot, Fixture::TurningOffTheThreeStrangers())));
+    const LinkBatchOutcome outcome = f.service.SetEnabled(EntriesStamp{.profile = profile, .adoptions = 7}, shown,
+                                                          Fixture::TurningOffTheThreeStrangers());
 
-    QCOMPARE(f.startup.entries.batchesOpened, std::size_t{1});
-    QCOMPARE(f.startup.entries.batchesClosed, std::size_t{1});
+    QCOMPARE(outcome.read.stamp.adoptions, 7);
+    QCOMPARE(outcome.read.stamp.profile.id, profile.id);
+    QCOMPARE(outcome.read.startupEntries.size(), std::size_t{3});
+    QVERIFY(!outcome.read.startupEntries.front().enabled);
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)

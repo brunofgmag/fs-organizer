@@ -76,6 +76,9 @@ namespace
         static void AToggleStillReportsTheDriftWhenTheDiskChangedBehindTheScreen();
         static void TheCallingThreadReadsNoDestinationWhileABatchRunsAndLands();
         static void AToggleLandingAfterTheProfileChangedReadsTheCurrentProfileInsteadOfAdoptingTheStaleEntries();
+        static void LandingARelinkReadsNothingAndShowsTheLinkWhereTheProfileWantsIt();
+        static void ACategoryAndOneOfItsAddonsSelectedTogetherCountTheAddonOnce();
+        static void TheSwapsAndTheSelectionAreMeasuredAtTheSameTimeWithoutOneCancellingTheOther();
     };
 }
 
@@ -1094,6 +1097,79 @@ void AddonTreeViewModelTest::
     QVERIFY2(!f.filesystemProbe.enumerated.empty(), "the entries read for the old destinations were not adopted");
     QVERIFY(f.session.Snapshot().entries.empty());
     QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void AddonTreeViewModelTest::LandingARelinkReadsNothingAndShowsTheLinkWhereTheProfileWantsIt()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)});
+
+    f.viewModel.OverrideDestination({&category}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> strayed = f.viewModel.StrayedUnder({&category});
+    QCOMPARE(strayed.size(), std::size_t{1});
+
+    f.runner.defer = true;
+    f.viewModel.RelinkStrayed(strayed);
+    f.runner.RunPendingWork();
+
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "landing a relink reads nothing");
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().entries.front().path, std::filesystem::path{kCommunity2024} / "pmdg-aircraft-77w");
+    QVERIFY(f.viewModel.StrayedUnder({&category}).empty());
+}
+
+void AddonTreeViewModelTest::ACategoryAndOneOfItsAddonsSelectedTogetherCountTheAddonOnce()
+{
+    Fixture f;
+    const TreeNode declared = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)});
+
+    f.viewModel.OverrideDestination({&declared}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    const TreeNode& category = f.session.Snapshot().libraries.front().children.front();
+    const TreeNode* addon = &category.children.front();
+
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{1});
+    QCOMPARE(f.viewModel.StrayedUnder({&category, addon}).size(), std::size_t{1});
+    QCOMPARE(f.viewModel.StrayAddonsUnder({addon, &category, addon}), std::size_t{1});
+}
+
+void AddonTreeViewModelTest::TheSwapsAndTheSelectionAreMeasuredAtTheSameTimeWithoutOneCancellingTheOther()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+    f.fileSystem.AddFile(std::filesystem::path(kOtherAddon) / "content.bin", 700);
+    f.runner.defer = true;
+
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+    std::vector<WeighedSwap> weighed;
+    int weighings = 0;
+
+    f.viewModel.MeasureTheSelection({kAddon});
+    f.viewModel.WeighTheSwaps({TakenPlace{.addonFolder = kAddon,
+                                          .linkPath = std::filesystem::path{kCommunity} / "pmdg-aircraft-77w",
+                                          .occupant = kOtherAddon}},
+                              [&weighed, &weighings](const std::vector<WeighedSwap>& sides)
+                              {
+                                  weighed = sides;
+                                  ++weighings;
+                              });
+
+    f.runner.Finish();
+    f.runner.Finish();
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{300});
+    QCOMPARE(weighings, 1);
+    QCOMPARE(weighed.size(), std::size_t{1});
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

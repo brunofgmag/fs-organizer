@@ -34,7 +34,6 @@ void ExeXmlStartupEntries::Use(std::filesystem::path filePath)
     const std::lock_guard lock(guard_);
 
     filePath_ = std::move(filePath);
-    batchHasBackedUp_ = false;
 }
 
 std::filesystem::path ExeXmlStartupEntries::FilePath() const
@@ -44,36 +43,6 @@ std::filesystem::path ExeXmlStartupEntries::FilePath() const
     return filePath_;
 }
 
-bool ExeXmlStartupEntries::BackupIsDue() const
-{
-    const std::lock_guard lock(guard_);
-
-    return !batchIsOpen_ || !batchHasBackedUp_;
-}
-
-void ExeXmlStartupEntries::BackupWasTaken()
-{
-    const std::lock_guard lock(guard_);
-
-    batchHasBackedUp_ = batchIsOpen_;
-}
-
-void ExeXmlStartupEntries::OpenBatch()
-{
-    const std::lock_guard lock(guard_);
-
-    batchIsOpen_ = true;
-    batchHasBackedUp_ = false;
-}
-
-void ExeXmlStartupEntries::CloseBatch()
-{
-    const std::lock_guard lock(guard_);
-
-    batchIsOpen_ = false;
-    batchHasBackedUp_ = false;
-}
-
 std::vector<StartupEntry> ExeXmlStartupEntries::Entries() const
 {
     const std::optional<std::string> document = BytesOf(FilePath());
@@ -81,7 +50,8 @@ std::vector<StartupEntry> ExeXmlStartupEntries::Entries() const
     return document.has_value() ? StartupEntriesIn(*document) : std::vector<StartupEntry>{};
 }
 
-FileResult ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, const bool enabled)
+FileResult
+ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, const bool enabled, StartupBackup& backup)
 {
     const std::filesystem::path filePath = FilePath();
 
@@ -102,14 +72,14 @@ FileResult ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, 
         return FileResult::Completed;
     }
 
-    if (BackupIsDue())
+    if (!backup.taken)
     {
         if (!WriteFileReplacing(BackupOfStartupFile(filePath), *before))
         {
             return FileResult::CouldNotWriteTheStartupFile;
         }
 
-        BackupWasTaken();
+        backup.taken = true;
     }
 
     return WriteFileReplacing(filePath, *after) ? FileResult::Completed : FileResult::CouldNotWriteTheStartupFile;

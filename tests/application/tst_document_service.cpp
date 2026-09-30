@@ -42,6 +42,8 @@ namespace
         static void ChangedAirportCodesReclassifyTheAddon();
         static void AnIndexKeptBeforeTheDigestExistedReusesNothing();
         static void AnAddonThatMovedToAnotherFolderIsNotTakenForTheOneThatWasIndexed();
+        static void AnEarlierRecordOfAnotherFolderIsNotReusedEvenWhenItsDigestMatches();
+        static void ARecordWhoseDigestWasMadeUnderOtherIndexingRulesIsNotReused();
         static void AnAddonTheProbeCouldNotWalkIsNeverReused();
     };
 
@@ -468,6 +470,50 @@ namespace
         QCOMPARE(second.front().folder, FolderOf("one"));
         QVERIFY(second.front().documents.empty());
         QCOMPARE(munich.catalogueParser.parsed.size(), std::size_t{3});
+    }
+
+    void DocumentServiceTest::AnEarlierRecordOfAnotherFolderIsNotReusedEvenWhenItsDigestMatches()
+    {
+        TwoAirportsOfRepeatedPages munich;
+
+        const std::vector<DocumentsOfAnAddon> first = munich.Sweep({});
+
+        DocumentsOfAnAddon elsewhere = first.front();
+        elsewhere.folder = FolderOf("somewhere-else");
+        elsewhere.documents.push_back(PathFromUtf8("ghost.pdf"));
+
+        const FakeFilesystemProbe probe(munich.fileSystem);
+        const DocumentService service(probe, munich.catalogueParser, munich.chartVersions);
+
+        const DocumentsOfAnAddon read =
+            service.DocumentsOf(Named("one"), FolderOf("one"), munich.airports.front().codes, &elsewhere);
+
+        QCOMPARE(read.folder, FolderOf("one"));
+        QVERIFY(read.documents.empty());
+        QCOMPARE(munich.catalogueParser.parsed.size(), std::size_t{3});
+    }
+
+    void DocumentServiceTest::ARecordWhoseDigestWasMadeUnderOtherIndexingRulesIsNotReused()
+    {
+        TwoAirportsOfRepeatedPages munich;
+
+        std::vector<DocumentsOfAnAddon> kept = munich.Sweep({});
+        const FakeFilesystemProbe probe(munich.fileSystem);
+
+        for (DocumentsOfAnAddon& addon : kept)
+        {
+            const std::optional<TreeFingerprint> walk = probe.FingerprintTree(addon.folder);
+
+            QVERIFY(walk.has_value());
+            QCOMPARE(addon.digest, DocumentService::DigestOf(*walk, {"EDDM"}));
+
+            addon.digest = DocumentService::DigestOf(*walk, {"EDDM"}, DocumentService::kIndexingRulesVersion + 1);
+        }
+
+        static_cast<void>(munich.Sweep(kept));
+
+        QCOMPARE(munich.catalogueParser.parsed.size(), std::size_t{4});
+        QCOMPARE(munich.chartVersions.asked.size(), std::size_t{8});
     }
 
     void DocumentServiceTest::AnAddonTheProbeCouldNotWalkIsNeverReused()

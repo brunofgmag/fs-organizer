@@ -152,13 +152,8 @@ QSize WrappingRow::sizeHint() const
 {
     const QMargins around = contentsMargins();
 
-    int height = 0;
-    for (const QLayoutItem* item : items_)
-    {
-        height = std::max(height, item->sizeHint().height());
-    }
-
-    return {WidthInOneLine(ItemsOnOneLine()) + around.left() + around.right(), height + around.top() + around.bottom()};
+    return {WidthInOneLine(ItemsOnOneLine()) + around.left() + around.right(),
+            TallestIn(items_) + around.top() + around.bottom()};
 }
 
 QSize WrappingRow::minimumSize() const

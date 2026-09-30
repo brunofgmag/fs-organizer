@@ -23,11 +23,6 @@ struct DestinationAgreement
                                                            const std::vector<DestinationEntry>& entries,
                                                            const std::filesystem::path& addonFolder);
 
-[[nodiscard]] std::vector<std::filesystem::path>
-DestinationsItStrayedTo(const SimulatorProfile& profile,
-                        const std::vector<DestinationEntry>& entries,
-                        const std::vector<std::filesystem::path>& addonFolders);
-
 [[nodiscard]] DestinationAgreement WhereTheEnabledAddonsPoint(const TreeNode& category,
                                                               const std::vector<DestinationEntry>& entries);
 

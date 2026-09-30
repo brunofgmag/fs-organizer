@@ -20,6 +20,8 @@ namespace
     constexpr std::uint64_t kHashBasis = 14695981039346656037ULL;
     constexpr std::uint64_t kHashPrime = 1099511628211ULL;
 
+    const std::vector<std::string> kNoCodes;
+
     [[nodiscard]] bool ItIsADocumentFile(const std::filesystem::path& file)
     {
         return ComparableFileName(file).ends_with(kDocumentSuffix);
@@ -53,33 +55,6 @@ namespace
         hash = Mixed(hash, static_cast<std::uint64_t>(file.size));
 
         return Mixed(hash, static_cast<std::uint64_t>(file.lastWriteTime.time_since_epoch().count()));
-    }
-
-    [[nodiscard]] std::string DigestOf(const TreeFingerprint& walk, const std::vector<std::string>& codes)
-    {
-        std::uint64_t files = 0;
-
-        for (const FileFingerprint& file : walk.files)
-        {
-            files += HashOfAFile(file);
-        }
-
-        std::uint64_t airports = 0;
-
-        for (const std::string& code : codes)
-        {
-            airports += Mixed(kHashBasis, code);
-        }
-
-        std::uint64_t hash = Mixed(kHashBasis, files);
-        hash = Mixed(hash, static_cast<std::uint64_t>(walk.files.size()));
-        hash = Mixed(hash, airports);
-        hash = Mixed(hash, static_cast<std::uint64_t>(codes.size()));
-
-        std::array<char, 16> digits{};
-        const auto written = std::to_chars(digits.data(), digits.data() + digits.size(), hash, 16);
-
-        return std::string(digits.data(), written.ptr);
     }
 
     [[nodiscard]] std::string KeyOf(const AddonId& addon)
@@ -142,19 +117,55 @@ namespace
             != catalogues.end();
     }
 
-    [[nodiscard]] const std::vector<std::string>* CodesOf(const std::vector<AirportsOfAnAddon>& airports,
+    [[nodiscard]] const std::vector<std::string>& CodesOf(const std::vector<AirportsOfAnAddon>& airports,
                                                           const AddonId& addon)
     {
         for (const AirportsOfAnAddon& carried : airports)
         {
             if (carried.addon == addon)
             {
-                return &carried.codes;
+                return carried.codes;
             }
         }
 
-        return nullptr;
+        return kNoCodes;
     }
+
+    [[nodiscard]] bool
+    ItStillDescribes(const DocumentsOfAnAddon& before, const std::filesystem::path& folder, const std::string& digest)
+    {
+        return ComparablePath(before.folder) == ComparablePath(folder) && before.digest == digest;
+    }
+}
+
+std::string DocumentService::DigestOf(const TreeFingerprint& walk,
+                                      const std::vector<std::string>& codes,
+                                      const std::uint32_t rulesVersion)
+{
+    std::uint64_t files = 0;
+
+    for (const FileFingerprint& file : walk.files)
+    {
+        files += HashOfAFile(file);
+    }
+
+    std::uint64_t airports = 0;
+
+    for (const std::string& code : codes)
+    {
+        airports += Mixed(kHashBasis, code);
+    }
+
+    std::uint64_t hash = Mixed(kHashBasis, static_cast<std::uint64_t>(rulesVersion));
+    hash = Mixed(hash, files);
+    hash = Mixed(hash, static_cast<std::uint64_t>(walk.files.size()));
+    hash = Mixed(hash, airports);
+    hash = Mixed(hash, static_cast<std::uint64_t>(codes.size()));
+
+    std::array<char, 16> digits{};
+    const auto written = std::to_chars(digits.data(), digits.data() + digits.size(), hash, 16);
+
+    return std::string(digits.data(), written.ptr);
 }
 
 DocumentService::DocumentService(const FilesystemProbe& filesystemProbe,
@@ -224,7 +235,7 @@ DocumentsOfAnAddon DocumentService::DocumentsOf(const AddonId& addon,
 
     const std::string digest = DigestOf(*walk, codes);
 
-    if (before != nullptr && before->digest == digest)
+    if (before != nullptr && ItStillDescribes(*before, folder, digest))
     {
         return *before;
     }
@@ -270,13 +281,10 @@ std::vector<DocumentsOfAnAddon> DocumentService::IndexWhile(const std::vector<Ad
 
     for (const AddonToRead& addon : addons)
     {
-        const std::vector<std::string>* codes = CodesOf(airports, addon.addon);
         const auto earlier = known.find(KeyOf(addon.addon));
-        const bool itIsTheSameFolder =
-            earlier != known.end() && ComparablePath(earlier->second->folder) == ComparablePath(addon.folder);
 
-        indexed.push_back(DocumentsOf(addon.addon, addon.folder, codes == nullptr ? std::vector<std::string>{} : *codes,
-                                      itIsTheSameFolder ? earlier->second : nullptr));
+        indexed.push_back(DocumentsOf(addon.addon, addon.folder, CodesOf(airports, addon.addon),
+                                      earlier == known.end() ? nullptr : earlier->second));
 
         if (onProgress && !onProgress(indexed.back(), indexed.size(), addons.size()))
         {

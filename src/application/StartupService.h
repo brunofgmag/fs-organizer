@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_APPLICATION_STARTUP_SERVICE_H
 #define FS_ORGANIZER_APPLICATION_STARTUP_SERVICE_H
 
+#include <atomic>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -33,15 +34,13 @@ public:
 
     [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, bool enabled);
 
-    void OpenBatch();
-
-    void CloseBatch();
+    [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, bool enabled, StartupBackup& backup);
 
 private:
     StartupEntries& entries_;
     const ProcessProbe& processProbe_;
     const FilesystemProbe& filesystemProbe_;
-    bool managing_;
+    std::atomic<bool> managing_;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_STARTUP_SERVICE_H

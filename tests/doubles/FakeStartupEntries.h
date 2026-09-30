@@ -15,10 +15,8 @@ class FakeStartupEntries final : public StartupEntries
 public:
     std::size_t writes = 0;
     mutable std::size_t reads = 0;
-    std::size_t batchesOpened = 0;
-    std::size_t batchesClosed = 0;
-    std::size_t switchesInsideABatch = 0;
-    std::size_t switchesOutsideABatch = 0;
+    std::size_t switchesThatFoundTheBackupTaken = 0;
+    std::size_t switchesThatFoundNoBackup = 0;
 
     void Carry(StartupEntry entry)
     {
@@ -42,24 +40,12 @@ public:
         throwing_ = true;
     }
 
-    void OpenBatch() override
-    {
-        ++batchesOpened;
-    }
+    using StartupEntries::Switch;
 
-    void CloseBatch() override
+    [[nodiscard]] FileResult
+    Switch(const std::filesystem::path& entryPath, const bool enabled, StartupBackup& backup) override
     {
-        ++batchesClosed;
-    }
-
-    [[nodiscard]] bool BatchIsOpen() const
-    {
-        return batchesOpened > batchesClosed;
-    }
-
-    [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, const bool enabled) override
-    {
-        ++(BatchIsOpen() ? switchesInsideABatch : switchesOutsideABatch);
+        ++(backup.taken ? switchesThatFoundTheBackupTaken : switchesThatFoundNoBackup);
 
         if (throwing_)
         {
@@ -81,6 +67,7 @@ public:
             if (entry.enabled != enabled)
             {
                 entry.enabled = enabled;
+                backup.taken = true;
                 ++writes;
             }
 

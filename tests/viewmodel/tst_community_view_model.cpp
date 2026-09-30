@@ -1,5 +1,7 @@
 #include <QtTest/QtTest>
 
+#include <optional>
+
 #include "application/LibraryOrganizer.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -35,6 +37,7 @@ namespace
         static void AnUnmanagedFolderIsMeasuredWhereItSitsBecauseThereIsNoLinkToFollow();
         static void AnUnavailableEntryIsNotMeasuredAndTheAnswerSaysWhatIsMissing();
         static void TwoEntriesPointingAtTheSameAddonCountItsBytesOnce();
+        static void TheSelectionSizeStillLandsWhenTheFoldersAreWeighedWhileItMeasures();
     };
 }
 
@@ -351,6 +354,36 @@ void CommunityViewModelTest::TwoEntriesPointingAtTheSameAddonCountItsBytesOnce()
     QCOMPARE(size.measured, std::size_t{2});
     QCOMPARE(size.selected, std::size_t{2});
     QCOMPARE(f.filesystemProbe.TimesWalked(kAddonFolder), std::size_t{1});
+}
+
+void CommunityViewModelTest::TheSelectionSizeStillLandsWhenTheFoldersAreWeighedWhileItMeasures()
+{
+    Fixture f;
+    const std::filesystem::path link = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w";
+
+    f.fileSystem.AddFile(std::filesystem::path(kAddonFolder) / "content.bin", 4096);
+
+    const QSignalSpy measured(&f.viewModel, &CommunityViewModel::SizeMeasured);
+    std::optional<std::uintmax_t> weighed;
+
+    f.runner.defer = true;
+
+    f.viewModel.MeasureTheSelection({Entry(link, kAddonFolder, EntryClassification::Managed)});
+    f.viewModel.WeighTheFolders({kAddonFolder},
+                                [&weighed](const std::uintmax_t bytes)
+                                {
+                                    weighed = bytes;
+                                });
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{4096});
+    QVERIFY(weighed.has_value());
+    QCOMPARE(*weighed, std::uintmax_t{4096});
 }
 
 QTEST_APPLESS_MAIN(CommunityViewModelTest)

@@ -51,6 +51,8 @@ namespace
         static void TurningAnAddonOnMakesTheNextOpeningReadTheCouplingAgain();
         static void TheScreenAnnouncesTheReadWhileTheViewModelIsStillBusyWithIt();
         static void StartingOverRunsAsOneProcedureAndBeginsANewRunFromTheDiskAfterThePutBack();
+        static void OpeningTheScreenAsksTheStoreOnlyInTheWorkerAndNeverWhenTheReadLands();
+        static void AProcedureAsksTheStoreOnlyInTheWorkerAndNeverWhenItsReportLands();
     };
 }
 
@@ -127,6 +129,36 @@ namespace
         return profile;
     }
 
+    class CountingBisectionStore final : public BisectionStore
+    {
+    public:
+        explicit CountingBisectionStore(BisectionStore& inner) : inner_(inner)
+        {
+        }
+
+        [[nodiscard]] std::optional<BisectionRun> Load(const std::string& profileId) const override
+        {
+            ++loads;
+
+            return inner_.Load(profileId);
+        }
+
+        [[nodiscard]] bool Save(const std::string& profileId, const BisectionRun& run) override
+        {
+            return inner_.Save(profileId, run);
+        }
+
+        void Forget(const std::string& profileId) override
+        {
+            inner_.Forget(profileId);
+        }
+
+        mutable std::size_t loads = 0;
+
+    private:
+        BisectionStore& inner_;
+    };
+
     struct Fixture
     {
         Fixture()
@@ -201,7 +233,8 @@ namespace
         mutable Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
-        BisectionService bisection{service, coupling, filesystemProbe, store, clock};
+        CountingBisectionStore counted{store};
+        BisectionService bisection{service, coupling, filesystemProbe, counted, clock};
         BisectionViewModel viewModel{bisection, session, runner};
     };
 }
@@ -652,6 +685,48 @@ void BisectionViewModelTest::TheScreenAnnouncesTheReadWhileTheViewModelIsStillBu
     f.runner.Finish();
 
     QCOMPARE(readingWhenAnnounced, (std::vector<bool>{true, false}));
+}
+
+void BisectionViewModelTest::OpeningTheScreenAsksTheStoreOnlyInTheWorkerAndNeverWhenTheReadLands()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.runner.defer = true;
+    f.viewModel.Show();
+    f.runner.RunPendingWork();
+
+    const std::size_t loadsInTheWorker = f.counted.loads;
+
+    QVERIFY(loadsInTheWorker > 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.counted.loads, loadsInTheWorker);
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::NotStarted);
+}
+
+void BisectionViewModelTest::AProcedureAsksTheStoreOnlyInTheWorkerAndNeverWhenItsReportLands()
+{
+    Fixture f;
+    f.TurnOn(kCrj);
+    f.TurnOn(kFenix);
+    f.TurnOn(kPmdg);
+    f.Seed();
+
+    f.runner.defer = true;
+    f.viewModel.Begin();
+    f.runner.RunPendingWork();
+
+    const std::size_t loadsInTheWorker = f.counted.loads;
+
+    f.runner.Finish();
+
+    QCOMPARE(f.counted.loads, loadsInTheWorker);
+    QCOMPARE(f.viewModel.Stage(), BisectionStage::Asking);
 }
 
 void BisectionViewModelTest::StartingOverRunsAsOneProcedureAndBeginsANewRunFromTheDiskAfterThePutBack()

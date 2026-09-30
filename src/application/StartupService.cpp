@@ -45,6 +45,13 @@ StartupReport StartupService::Report(const SimulatorProfile& profile, const Prof
 
 FileResult StartupService::Switch(const std::filesystem::path& entryPath, const bool enabled)
 {
+    StartupBackup alone;
+
+    return Switch(entryPath, enabled, alone);
+}
+
+FileResult StartupService::Switch(const std::filesystem::path& entryPath, const bool enabled, StartupBackup& backup)
+{
     if (!managing_)
     {
         return FileResult::TheStartupEntriesAreLeftLoose;
@@ -55,15 +62,5 @@ FileResult StartupService::Switch(const std::filesystem::path& entryPath, const 
         return FileResult::TheSimulatorIsRunning;
     }
 
-    return entries_.Switch(entryPath, enabled);
-}
-
-void StartupService::OpenBatch()
-{
-    entries_.OpenBatch();
-}
-
-void StartupService::CloseBatch()
-{
-    entries_.CloseBatch();
+    return entries_.Switch(entryPath, enabled, backup);
 }

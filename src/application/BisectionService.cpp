@@ -99,17 +99,17 @@ BisectionReport BisectionService::WhereItStands(const SimulatorProfile& profile)
 
 BisectionReport BisectionService::Begin(const SimulatorProfile& profile, const ProfileSnapshot& shown)
 {
-    if (EnabledAddonFolders(shown.entries).empty())
-    {
-        return BisectionReport{.refusal = BisectionRefusal::NothingIsEnabledToSearch};
-    }
-
     return BeginFrom(profile, shown, ReadTheDisk(profile));
 }
 
 BisectionReport
 BisectionService::BeginFrom(const SimulatorProfile& profile, const ProfileSnapshot& shown, const Reading& reading)
 {
+    if (EnabledAddonFolders(shown.entries).empty())
+    {
+        return BisectionReport{.refusal = BisectionRefusal::NothingIsEnabledToSearch};
+    }
+
     const BisectionRun run = RunFor(profile, shown);
 
     return TakeTheNextRound(profile, run, run, reading);

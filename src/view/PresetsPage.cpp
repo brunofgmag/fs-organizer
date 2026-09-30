@@ -221,7 +221,7 @@ void PresetsPage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        ReloadNames();
+        RequestReload();
     }
 
     QWidget::changeEvent(event);
@@ -633,7 +633,7 @@ void PresetsPage::ActionToggled(const QTableWidgetItem* item)
 
     if (!viewModel_.SetAction(SelectedName(), row, selected_->entries[row].addonId, wanted))
     {
-        QMetaObject::invokeMethod(this, &PresetsPage::ReloadNames, Qt::QueuedConnection);
+        RequestReload();
         return;
     }
 
@@ -658,7 +658,7 @@ void PresetsPage::StartupActionToggled(const int index, const PresetAction wante
 
     if (!viewModel_.SetStartupAction(SelectedName(), row, selected_->startupEntries[row].path, wanted))
     {
-        QMetaObject::invokeMethod(this, &PresetsPage::ReloadNames, Qt::QueuedConnection);
+        RequestReload();
         return;
     }
 

@@ -157,6 +157,11 @@ private:
         std::string addon{};
         std::string document{};
         int page = 0;
+
+        [[nodiscard]] bool IsFor(const std::string& ofAddon, const std::string& ofDocument) const
+        {
+            return addon == ofAddon && document == ofDocument;
+        }
     };
 
     [[nodiscard]] std::vector<DocumentsOfAnAddon> WhatEachAddonCarries(const std::vector<AddonToRead>& addons,
@@ -164,6 +169,8 @@ private:
                                                                        bool& stopped);
 
     void CountWhatIsShown();
+
+    void CountTheLinesOf(const DocumentsOfAnAddon& addon);
 
     void TakeWhatWasRead(std::vector<DocumentsOfAnAddon>& found, bool stopped);
 
@@ -192,6 +199,10 @@ private:
     [[nodiscard]] const ReadDocument* Remembered(const DocumentLine& line) const;
 
     void Remember(const DocumentLine& line, const std::function<void(ReadDocument&)>& change);
+
+    [[nodiscard]] std::optional<PendingPage> TakeThePendingPage();
+
+    static void WriteThePage(AppSettings& settings, const PendingPage& turned);
 
     const DocumentService& documents_;
     SceneryService& scenery_;

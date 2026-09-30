@@ -57,6 +57,8 @@ namespace
         static void ASecondPassEntryOfTheStoryReachesTheFileAsTheSecondPass();
         static void ARoundStoredWithAnotherCaseOfTheFoldersStillTurnsTheSameAddonsOn();
         static void StartingOverPutsTheSetupBackAndBeginsAgainFromWhatIsOnTheDiskThen();
+        static void StartingOverWithNothingLeftEnabledRefusesInsteadOfSavingARunWithNoUnits();
+        static void StartingOverWithNoRunStoredBeginsAFreshOneFromWhatIsOnTheDisk();
     };
 }
 
@@ -830,6 +832,43 @@ void BisectionServiceTest::StartingOverPutsTheSetupBackAndBeginsAgainFromWhatIsO
 
     QCOMPARE(f.service.Stop(profile).refusal, BisectionRefusal::None);
     QCOMPARE(f.WhatIsOn(), before);
+}
+
+void BisectionServiceTest::StartingOverWithNothingLeftEnabledRefusesInsteadOfSavingARunWithNoUnits()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix});
+
+    const SimulatorProfile profile = Profile();
+
+    QCOMPARE(f.service.Begin(profile, f.Snapshot(profile)).refusal, BisectionRefusal::None);
+
+    std::optional<BisectionRun> run = f.store.Load(kProfileId);
+    QVERIFY(run.has_value());
+    run->startingConfiguration.clear();
+    QVERIFY(f.store.Save(kProfileId, *run));
+
+    const BisectionReport started = f.service.StartOver(profile);
+
+    QCOMPARE(started.refusal, BisectionRefusal::NothingIsEnabledToSearch);
+    QVERIFY(!f.store.Load(kProfileId).has_value());
+    QVERIFY(f.WhatIsOn().empty());
+}
+
+void BisectionServiceTest::StartingOverWithNoRunStoredBeginsAFreshOneFromWhatIsOnTheDisk()
+{
+    Fixture f;
+    f.Enable({kCrj, kFenix, kMd11});
+
+    const SimulatorProfile profile = Profile();
+
+    QVERIFY(!f.store.Load(kProfileId).has_value());
+
+    const BisectionReport started = f.service.StartOver(profile);
+
+    QCOMPARE(started.refusal, BisectionRefusal::None);
+    QCOMPARE(started.round, std::size_t{0});
+    QVERIFY(f.store.Load(kProfileId).has_value());
 }
 
 QTEST_APPLESS_MAIN(BisectionServiceTest)

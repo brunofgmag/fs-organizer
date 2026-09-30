@@ -72,6 +72,7 @@ private:
     SizeService& sizes_;
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
+    MeasurementCaller collisionCaller_;
     int listed_ = 0;
     GuardedRunner working_;
     bool shown_ = false;
