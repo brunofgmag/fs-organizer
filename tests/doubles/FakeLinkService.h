@@ -66,12 +66,62 @@ public:
 
     [[nodiscard]] std::optional<std::filesystem::path> ReadLinkTarget(const std::filesystem::path& path) const override
     {
+        ++singleReads_;
+        placesRead_.push_back(ComparablePath(path));
+
         return fileSystem_.LinkTarget(path);
+    }
+
+    [[nodiscard]] std::vector<std::optional<std::filesystem::path>>
+    ReadLinkTargets(const std::vector<std::filesystem::path>& paths) const override
+    {
+        ++batchReads_;
+
+        std::vector<std::optional<std::filesystem::path>> targets;
+        targets.reserve(paths.size());
+
+        for (const std::filesystem::path& path : paths)
+        {
+            placesRead_.push_back(ComparablePath(path));
+            targets.push_back(fileSystem_.LinkTarget(path));
+        }
+
+        return targets;
+    }
+
+    [[nodiscard]] std::size_t TimesRead(const std::filesystem::path& place) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(placesRead_, ComparablePath(place)));
+    }
+
+    [[nodiscard]] std::size_t PlacesRead() const
+    {
+        return placesRead_.size();
+    }
+
+    [[nodiscard]] std::size_t SingleReads() const
+    {
+        return singleReads_;
+    }
+
+    [[nodiscard]] std::size_t BatchReads() const
+    {
+        return batchReads_;
+    }
+
+    void ForgetTheReads()
+    {
+        singleReads_ = 0;
+        batchReads_ = 0;
+        placesRead_.clear();
     }
 
     LinkType lastLinkType = LinkType::Junction;
 
 private:
+    mutable std::size_t singleReads_ = 0;
+    mutable std::size_t batchReads_ = 0;
+    mutable std::vector<std::string> placesRead_;
     InMemoryFileSystem& fileSystem_;
     std::vector<std::string> unremovable_;
     LinkFailure linkCreationRefusal_ = LinkFailure::None;

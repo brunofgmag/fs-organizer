@@ -4,7 +4,9 @@
 class MainWindow;
 class AddonTreePage;
 class AddonTreeModel;
+class CommunityViewModel;
 class CoverageViewModel;
+class PageTab;
 class SceneryService;
 class Session;
 class TimedRunner;
@@ -13,6 +15,9 @@ int MeasureTheAppLibrary(MainWindow& window,
                          AddonTreePage& page,
                          AddonTreeModel& model,
                          CoverageViewModel& coverage,
+                         CommunityViewModel& community,
+                         PageTab& libraryTab,
+                         PageTab& destinationsTab,
                          SceneryService& scenery,
                          Session& session,
                          const TimedRunner& timing);

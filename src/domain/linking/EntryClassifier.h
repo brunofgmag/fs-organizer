@@ -74,9 +74,27 @@ public:
                                                         const std::vector<std::filesystem::path>& libraryRoots,
                                                         const std::vector<ExternalAddon>& externals = {}) const;
 
+    [[nodiscard]] std::vector<std::optional<std::filesystem::path>>
+    TargetsAt(const std::vector<std::filesystem::path>& places) const;
+
+    [[nodiscard]] std::vector<DestinationEntry>
+    LinksAmong(const std::vector<std::filesystem::path>& places,
+               const std::vector<std::optional<std::filesystem::path>>& targets,
+               const std::vector<std::filesystem::path>& libraryRoots,
+               const std::vector<ExternalAddon>& externals = {}) const;
+
 private:
     [[nodiscard]] std::vector<std::filesystem::path>
     PlacesUnder(const std::vector<std::filesystem::path>& destinationRoots) const;
+
+    [[nodiscard]] std::vector<DestinationEntry> ClassifyPlaces(const std::vector<std::filesystem::path>& places,
+                                                               const ClassificationLookups& lookups,
+                                                               const TheAppLinkedPlaces& theAppLinked) const;
+
+    [[nodiscard]] std::map<std::string, DestinationEntry>
+    ClassifyByPlace(const std::vector<std::filesystem::path>& places,
+                    const ClassificationLookups& lookups,
+                    const TheAppLinkedPlaces& theAppLinked) const;
 
     [[nodiscard]] DestinationEntry ClassifyEntry(const std::filesystem::path& entryPath,
                                                  const std::optional<std::filesystem::path>& target,
@@ -88,12 +106,15 @@ private:
                                                 const ClassificationLookups& lookups) const;
 
     [[nodiscard]] DestinationEntry WhatStandsWhereALinkWas(const std::filesystem::path& entryPath,
+                                                           const ClassificationLookups& lookups,
                                                            const TheAppLinkedPlaces& theAppLinked) const;
 
-    [[nodiscard]] bool APhysicalFolderIsThere(const std::filesystem::path& path) const;
+    [[nodiscard]] bool APhysicalFolderIsThere(const std::filesystem::path& path,
+                                              const ClassificationLookups& lookups) const;
 
     [[nodiscard]] bool BothCopiesAreThere(const std::filesystem::path& theOtherPrograms,
-                                          const std::filesystem::path& inTheLibrary) const;
+                                          const std::filesystem::path& inTheLibrary,
+                                          const ClassificationLookups& lookups) const;
 
     const LinkService& linkService_;
     const FilesystemProbe& filesystemProbe_;

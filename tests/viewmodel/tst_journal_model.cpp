@@ -1,4 +1,5 @@
 #include <QtTest/QAbstractItemModelTester>
+#include <QtCore/QTranslator>
 #include <QtTest/QtTest>
 
 #include "support/PathText.h"
@@ -17,6 +18,10 @@ namespace
         static void TheNewestOperationComesFirst();
         static void FilteringKeepsOnlyWhatFailed();
         static void SearchingReachesTheStepsOfAnImport();
+        static void ASecondSearchOverTheSameRecordsBuildsNoSearchText();
+        static void SearchingAfterNewRecordsFindsOnlyWhatTheyHold();
+        static void SearchingAfterALanguageChangeFindsTheNewLanguageOnly();
+        static void ATermSpanningTwoColumnsMatchesNothing();
         static void ASwapIsOneRowNamingBothAddons();
         static void WhatSupportsTheOperationIsQuietAndAFailedResultKeepsTheNameInk();
         static void ADisableWithItsStartupEntryIsOneRowNamedAfterBoth();
@@ -54,6 +59,38 @@ namespace
 
         return profile;
     }
+
+    int RowsUnder(const QAbstractItemModel& model, const QModelIndex& parent = {})
+    {
+        int rows = model.rowCount(parent);
+
+        for (int row = 0; row < model.rowCount(parent); ++row)
+        {
+            rows += RowsUnder(model, model.index(row, 0, parent));
+        }
+
+        return rows;
+    }
+
+    class CopyInPortuguese final : public QTranslator
+    {
+    public:
+        [[nodiscard]] bool isEmpty() const override
+        {
+            return false;
+        }
+
+        [[nodiscard]] QString translate(const char* context, const char* source, const char*, int) const override
+        {
+            if (QLatin1String(context) == QLatin1String("JournalModel")
+                && QLatin1String(source) == QLatin1String("Copy to a temporary folder"))
+            {
+                return QStringLiteral("Copiar para uma pasta temporaria");
+            }
+
+            return {};
+        }
+    };
 
     std::vector<OperationRecord> AnImportAndALink()
     {
@@ -150,6 +187,107 @@ void JournalModelTest::SearchingReachesTheStepsOfAnImport()
 
     filter.Search(QStringLiteral("none of that exists"));
     QCOMPARE(filter.rowCount({}), 0);
+}
+
+void JournalModelTest::ASecondSearchOverTheSameRecordsBuildsNoSearchText()
+{
+    JournalModel model;
+    model.ShowRecords(AnImportAndALink(), Profile());
+
+    JournalFilterModel filter;
+    filter.setSourceModel(&model);
+
+    QCOMPARE(model.TimesItBuiltASearchText(), 0);
+
+    filter.Search(QStringLiteral("none of that exists"));
+    QCOMPARE(filter.rowCount({}), 0);
+
+    const int firstSearch = model.TimesItBuiltASearchText();
+    QVERIFY(firstSearch > 0);
+    QVERIFY(firstSearch <= RowsUnder(model));
+
+    filter.Search(QStringLiteral("check the copy"));
+    QCOMPARE(filter.rowCount({}), 1);
+    filter.Search(QStringLiteral("simbridge"));
+    QCOMPARE(filter.rowCount({}), 1);
+
+    QCOMPARE(model.TimesItBuiltASearchText(), firstSearch);
+}
+
+void JournalModelTest::SearchingAfterNewRecordsFindsOnlyWhatTheyHold()
+{
+    const auto link = [](const char* folder)
+    {
+        return OperationRecord::OfLink(Moment(0), OperationKind::EnableAddon,
+                                       AddonId{.libraryId = "lib-1", .folderName = folder}, kTarget, kSource,
+                                       LinkFailure::None);
+    };
+
+    JournalModel model;
+    model.ShowRecords({link("old-addon")}, Profile());
+
+    JournalFilterModel filter;
+    filter.setSourceModel(&model);
+
+    filter.Search(QStringLiteral("old-addon"));
+    QCOMPARE(filter.rowCount({}), 1);
+
+    model.ShowRecords({link("new-addon")}, Profile());
+
+    filter.Search(QStringLiteral("old-addon"));
+    QCOMPARE(filter.rowCount({}), 0);
+
+    filter.Search(QStringLiteral("new-addon"));
+    QCOMPARE(filter.rowCount({}), 1);
+}
+
+void JournalModelTest::SearchingAfterALanguageChangeFindsTheNewLanguageOnly()
+{
+    JournalModel model;
+    model.ShowRecords(AnImportAndALink(), Profile());
+
+    JournalFilterModel filter;
+    filter.setSourceModel(&model);
+
+    filter.Search(QStringLiteral("copy to a temporary"));
+    QCOMPARE(filter.rowCount({}), 1);
+
+    CopyInPortuguese portuguese;
+    QCoreApplication::installTranslator(&portuguese);
+    model.Retranslate();
+
+    filter.Search(QStringLiteral("COPIAR PARA UMA PASTA"));
+    const int theNewLanguage = filter.rowCount({});
+
+    filter.Search(QStringLiteral("copy to a temporary"));
+    const int theOldLanguage = filter.rowCount({});
+
+    QCoreApplication::removeTranslator(&portuguese);
+
+    QCOMPARE(theNewLanguage, 1);
+    QCOMPARE(theOldLanguage, 0);
+}
+
+void JournalModelTest::ATermSpanningTwoColumnsMatchesNothing()
+{
+    JournalModel model;
+    model.ShowRecords({Link(OperationKind::EnableAddon, 0)}, Profile());
+
+    const QModelIndex row = model.index(0, 0, {});
+    const QString operation = row.siblingAtColumn(JournalModel::OperationColumn).data().toString();
+    const QString addon = row.siblingAtColumn(JournalModel::AddonColumn).data().toString();
+
+    JournalFilterModel filter;
+    filter.setSourceModel(&model);
+
+    filter.Search(operation.right(3) + addon.left(3));
+    QCOMPARE(filter.rowCount({}), 0);
+
+    filter.Search(operation.right(3));
+    QCOMPARE(filter.rowCount({}), 1);
+
+    filter.Search(addon.left(3));
+    QCOMPARE(filter.rowCount({}), 1);
 }
 
 void JournalModelTest::ASwapIsOneRowNamingBothAddons()

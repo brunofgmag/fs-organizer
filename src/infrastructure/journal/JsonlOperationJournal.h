@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_INFRASTRUCTURE_JOURNAL_JSONL_OPERATION_JOURNAL_H
 #define FS_ORGANIZER_INFRASTRUCTURE_JOURNAL_JSONL_OPERATION_JOURNAL_H
 
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -17,7 +18,11 @@ public:
 
     [[nodiscard]] std::vector<OperationRecord> Read() const override;
 
+    [[nodiscard]] std::vector<OperationRecord> ReadFrom(std::size_t first) const override;
+
 private:
+    [[nodiscard]] const std::vector<OperationRecord>& Known() const;
+
     [[nodiscard]] std::vector<OperationRecord> WhatTheFileHolds() const;
 
     std::filesystem::path file_;

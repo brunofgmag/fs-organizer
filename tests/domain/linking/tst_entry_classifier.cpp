@@ -58,6 +58,11 @@ namespace
         static void EntriesOnDifferentVolumesAreEachJudgedOnTheirOwnInOneRead();
         static void WhenTwoExternalsNameTheSameAddonTheFirstOneIsTheOrigin();
         static void WhenTwoExternalsNameTheSameFolderTheFirstLibraryCopyIsTheOneReported();
+        static void ManyOriginsOnTheSameRootAskTheVolumeOnceInOneRead();
+        static void ManyLibraryCopiesOfSubstitutedFoldersAskTheirVolumeOnceInOneRead();
+        static void RefreshReadsTheTouchedPlacesInOneBatchAndNoneOneByOne();
+        static void RefreshReadsTheStalePlacesInOneBatchAndNoneOneByOne();
+        static void LinksAtReadsEveryPlaceInOneBatch();
     };
 
     constexpr auto kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
@@ -831,6 +836,123 @@ void EntryClassifierTest::WhenTwoExternalsNameTheSameFolderTheFirstLibraryCopyIs
     QCOMPARE(entries.size(), std::size_t{1});
     QCOMPARE(entries.front().classification, EntryClassification::Divergent);
     QCOMPARE(entries.front().libraryCopy, firstCopy);
+}
+
+void EntryClassifierTest::ManyOriginsOnTheSameRootAskTheVolumeOnceInOneRead()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+
+    std::vector<ExternalAddon> externals;
+    for (const std::string name : {"gsx-pro", "navigraph", "fenix-a320"})
+    {
+        const std::filesystem::path copy = "D:/Library/Utilities/" + name;
+        f.fileSystem.AddDirectory(copy);
+        f.fileSystem.AddLink("E:/Sim/Community/" + name, copy);
+        externals.push_back(ExternalAddon{.addonFolder = copy, .externalPath = "Y:/Vendor/MSFS/" + name});
+    }
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, externals);
+
+    QCOMPARE(entries.size(), std::size_t{3});
+    QCOMPARE(f.filesystemProbe.TimesTheVolumeWasAsked("Y:/"), std::size_t{1});
+    QCOMPARE(f.filesystemProbe.TimesTheVolumeWasAsked("D:/"), std::size_t{1});
+}
+
+void EntryClassifierTest::ManyLibraryCopiesOfSubstitutedFoldersAskTheirVolumeOnceInOneRead()
+{
+    FixtureWithAJournal f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+
+    for (const std::string name : {"gsx-pro", "navigraph", "fenix-a320"})
+    {
+        const std::filesystem::path copy = "D:/Library/Utilities/" + name;
+        f.fileSystem.AddDirectory(copy);
+        f.fileSystem.AddDirectory("E:/Sim/Community/" + name);
+        f.theAppLinked.Remember("E:/Sim/Community/" + name, copy);
+    }
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+
+    QCOMPARE(entries.size(), std::size_t{3});
+    QCOMPARE(RefreshFixture::ClassificationOf(entries, "E:/Sim/Community/navigraph"), EntryClassification::Substituted);
+    QCOMPARE(f.filesystemProbe.TimesTheVolumeWasAsked("D:/"), std::size_t{1});
+}
+
+void EntryClassifierTest::RefreshReadsTheTouchedPlacesInOneBatchAndNoneOneByOne()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-c", kAddonC);
+    f.linkService.ForgetTheReads();
+
+    const std::vector<DestinationEntry> incremental =
+        f.Incremental(known, {"E:/Sim/Community/addon-b", "E:/Sim/Community2024/addon-c"});
+
+    QCOMPARE(incremental.size(), std::size_t{3});
+    QCOMPARE(f.linkService.SingleReads(), std::size_t{0});
+    QCOMPARE(f.linkService.BatchReads(), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
+    QCOMPARE(f.linkService.TimesRead("E:/Sim/Community/addon-a"), std::size_t{0});
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::RefreshReadsTheStalePlacesInOneBatchAndNoneOneByOne()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-b", kAddonB);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-c", kAddonC);
+    const std::vector<DestinationEntry> known = f.Full();
+    QCOMPARE(f.ClassificationOf(known, "E:/Sim/Community/addon-a"), EntryClassification::Duplicated);
+
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community2024/addon-a"));
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community2024/addon-b"));
+    f.linkService.ForgetTheReads();
+
+    const std::vector<DestinationEntry> incremental =
+        f.Incremental(known, {"E:/Sim/Community2024/addon-a", "E:/Sim/Community2024/addon-b"});
+
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-a"), EntryClassification::Managed);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-b"), EntryClassification::Managed);
+    QCOMPARE(f.linkService.SingleReads(), std::size_t{0});
+    QCOMPARE(f.linkService.BatchReads(), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
+    QCOMPARE(f.linkService.TimesRead("E:/Sim/Community/addon-c"), std::size_t{0});
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::LinksAtReadsEveryPlaceInOneBatch()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddDirectory("E:/Sim/Community/a-physical-folder");
+    f.fileSystem.AddLink("E:/Sim/Community/a-dead-link", "D:/Library/Aircrafts/gone");
+
+    const std::vector<std::filesystem::path> places{"E:/Sim/Community/addon-a", "E:/Sim/Community/a-physical-folder",
+                                                    "E:/Sim/Community/a-dead-link", "E:/Sim/Community/nothing-here"};
+    f.linkService.ForgetTheReads();
+
+    const std::vector<DestinationEntry> links = f.classifier.LinksAt(places, f.libraries);
+
+    QCOMPARE(links.size(), std::size_t{2});
+    QCOMPARE(f.linkService.SingleReads(), std::size_t{0});
+    QCOMPARE(f.linkService.BatchReads(), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), places.size());
+
+    f.linkService.ForgetTheReads();
+    const std::vector<DestinationEntry> classifiedAfterwards =
+        f.classifier.LinksAmong(places, f.classifier.TargetsAt(places), f.libraries);
+
+    QCOMPARE(f.linkService.PlacesRead(), places.size());
+    QCOMPARE(classifiedAfterwards.size(), links.size());
+    QCOMPARE(classifiedAfterwards.front().classification, links.front().classification);
+    QCOMPARE(classifiedAfterwards.back().classification, links.back().classification);
 }
 
 QTEST_APPLESS_MAIN(EntryClassifierTest)

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QtCore/QTranslator>
@@ -9,6 +11,7 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QRadioButton>
 #include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QStyleOption>
 #include <QtWidgets/QTableWidget>
 
 #include "application/LibraryOrganizer.h"
@@ -35,6 +38,7 @@
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
+#include "tests/support/CatalogueBesideTheBuild.h"
 #include "tests/support/PageFloor.h"
 
 namespace
@@ -45,6 +49,8 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow_data();
+        static void TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void SelectingAPresetFillsThePanelPreview();
         static void ApplyingFromThePanelGoesThroughTheViewModel();
@@ -68,6 +74,7 @@ namespace
         static void AFilterThatMatchesNothingLeavesNoStaleCountBehind();
         static void ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable();
         static void TheStartupTabEditsTheStartupEntriesOfAGoverningPreset();
+        static void ATargetTooLongForItsColumnLosesTheMiddleAndKeepsTheFileName();
         static void AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnceWhenShown();
         static void AHiddenPageReadsNothingOnALanguageChangeAndReadsOnceWhenShown();
         static void AShownPageReadsOnceWhenTheSessionRefreshesAndFinishesAScanInTheSameTurn();
@@ -133,6 +140,44 @@ namespace
         {
             QCoreApplication::processEvents();
         }
+    }
+
+    int WhatTheCellsAskFor(const QTableWidget& table, const int column)
+    {
+        QStyleOptionViewItem option;
+        option.initFrom(&table);
+        option.font = table.font();
+
+        int asked = 0;
+
+        for (int row = 0; row < table.rowCount(); ++row)
+        {
+            const QModelIndex index = table.model()->index(row, column);
+
+            asked = std::max(asked, table.itemDelegate()->sizeHint(option, index).width());
+        }
+
+        return asked;
+    }
+
+    bool TheWholeTextFits(const QTableWidget& table, const int column)
+    {
+        return WhatTheCellsAskFor(table, column) <= table.columnWidth(column);
+    }
+
+    QString TheColumnsOf(const QTableWidget& table)
+    {
+        QStringList said;
+
+        for (int column = 0; column < table.columnCount(); ++column)
+        {
+            said << QStringLiteral("column %1 is %2 px and asks %3")
+                        .arg(column)
+                        .arg(table.columnWidth(column))
+                        .arg(WhatTheCellsAskFor(table, column));
+        }
+
+        return QStringLiteral("viewport %1 px, %2").arg(table.viewport()->width()).arg(said.join(QStringLiteral(", ")));
     }
 
     class MarkingTranslator final : public QTranslator
@@ -766,12 +811,101 @@ void PresetsPageTest::TheStartupTabEditsTheStartupEntriesOfAGoverningPreset()
     QVERIFY(saved->startupEntries.front().action == PresetAction::Disable);
 }
 
+void PresetsPageTest::ATargetTooLongForItsColumnLosesTheMiddleAndKeepsTheFileName()
+{
+    Fixture f;
+    const std::filesystem::path launcher = "D:/MSFS 2024/Community/brightwater-util-bridge/bin/BrightwaterBridge.exe";
+    f.startup.entries.Carry(StartupEntry{.label = "Brightwater Bridge", .path = launcher, .enabled = true});
+    f.session.RefreshEntries();
+
+    PresetsPage page(f.viewModel, f.notifier);
+
+    auto* startupEntries = page.findChild<QTableWidget*>(QStringLiteral("PresetStartupEntries"));
+    QVERIFY(startupEntries != nullptr);
+
+    page.findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup"))->click();
+
+    const QString target = startupEntries->item(0, 1)->text();
+    const QFontMetrics metrics(startupEntries->font());
+    const int roomForThreeQuartersOfIt = metrics.horizontalAdvance(target) * 3 / 4;
+
+    const QString shown = metrics.elidedText(target, startupEntries->textElideMode(), roomForThreeQuartersOfIt);
+
+    QVERIFY2(shown != target, qPrintable(shown));
+    QVERIFY2(shown.endsWith(QStringLiteral("BrightwaterBridge.exe")), qPrintable(shown));
+}
+
 void PresetsPageTest::ThePageFitsTheNarrowestWindow()
 {
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
 
     ItFitsTheNarrowestWindow(page, "The presets page");
+}
+
+void PresetsPageTest::TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow_data()
+{
+    QTest::addColumn<QString>("language");
+
+    QTest::newRow("English") << QStringLiteral("en");
+    QTest::newRow("Brazilian Portuguese") << QStringLiteral("pt_BR");
+}
+
+void PresetsPageTest::TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+
+    if (language != QLatin1String("en"))
+    {
+        const QString file = TheCatalogueBesideTheBuild(language);
+
+        QVERIFY2(!file.isEmpty(), "app_pt_BR.qm is not beside the build: build the release_translations target");
+        QVERIFY(catalogue.load(file));
+        QVERIFY(QCoreApplication::installTranslator(&catalogue));
+    }
+
+    Fixture f;
+    f.viewModel.Create(QStringLiteral("GA Weekend"));
+    f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
+    f.session.RefreshEntries();
+
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(kWidestAPageMayBe, 700);
+    ApplyModernistTheme(*qApp);
+    ShowAndSettle(page);
+    SettleTheQueuedReload();
+
+    QVERIFY(page.width() <= kWidestAPageMayBe);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* back = page.findChild<QTableWidget*>(QStringLiteral("PresetReturn"));
+    QVERIFY(names != nullptr && back != nullptr);
+
+    QStringList shown;
+    for (int row = 0; row < names->rowCount(); ++row)
+    {
+        shown << names->item(row, 0)->text();
+    }
+
+    QVERIFY2(shown.contains(QStringLiteral("GA Weekend")), qPrintable(shown.join(QLatin1Char('|'))));
+
+    const QString saidOfTheNames = TheColumnsOf(*names);
+
+    QVERIFY2(TheWholeTextFits(*names, 0), qPrintable(saidOfTheNames));
+
+    page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"))->click();
+    page.findChild<QPushButton*>(QStringLiteral("PresetApply"))->click();
+    SettleTheQueuedReload();
+
+    QVERIFY(!back->isHidden());
+
+    const QString saidOfTheReturn = TheColumnsOf(*back);
+
+    QVERIFY2(TheWholeTextFits(*back, 0), qPrintable(saidOfTheReturn));
+
+    QCoreApplication::removeTranslator(&catalogue);
 }
 
 void PresetsPageTest::AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnceWhenShown()

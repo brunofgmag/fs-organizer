@@ -63,6 +63,24 @@ namespace
     constexpr int kSearchMaximum = 220;
     constexpr std::array kStates{AddonStateFilter::All, AddonStateFilter::Enabled, AddonStateFilter::Disabled};
 
+    [[nodiscard]] bool ChangedAtOrBelow(const AddonTreeModel& model, const QModelIndex& position)
+    {
+        if (AddonTreeModel::ChangedInTheLastRefresh(position))
+        {
+            return true;
+        }
+
+        for (int row = 0; row < model.rowCount(position); ++row)
+        {
+            if (ChangedAtOrBelow(model, model.index(row, 0, position)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     [[nodiscard]] QString LabelOf(const AddonStateFilter state)
     {
         switch (state)
@@ -252,11 +270,16 @@ AddonTreePage::AddonTreePage(AddonTreeViewModel& viewModel,
                 ShowTheFields(SizeOfTheSelection(size));
             });
 
-    connect(&model_, &QAbstractItemModel::dataChanged, this,
-            [this](const QModelIndex&, const QModelIndex&)
+    connect(&model_, &AddonTreeModel::ValuesChanged, this,
+            [this]
             {
                 PublishSummary();
                 Recount();
+
+                if (TheRefreshReachedTheSelection())
+                {
+                    ShowTheSelectedAddon();
+                }
             });
 
     connect(&notifier, &SessionNotifier::ScanStarted, this,
@@ -575,6 +598,17 @@ QWidget* AddonTreePage::CreatePanel()
 const TreeNode* AddonTreePage::Current() const
 {
     return AddonTreeModel::NodeAt(filter_->mapToSource(tree_->selectionModel()->currentIndex()));
+}
+
+bool AddonTreePage::TheRefreshReachedTheSelection() const
+{
+    const QModelIndexList chosen = tree_->selectionModel()->selectedRows();
+
+    return std::ranges::any_of(chosen,
+                               [this](const QModelIndex& row)
+                               {
+                                   return ChangedAtOrBelow(model_, filter_->mapToSource(row));
+                               });
 }
 
 void AddonTreePage::ShowTheSelectedAddon()

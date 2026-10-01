@@ -1431,11 +1431,28 @@ Also in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="851"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="874"/>
         <source>%n failed</source>
         <translation>
             <numerusform>%n failed</numerusform>
             <numerusform>%n failed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/CommunityPage.cpp" line="866"/>
+        <source>Nothing changed: %n link had changed on the disk. The list has been refreshed.</source>
+        <translation>
+            <numerusform>Nothing changed: %n link had changed on the disk. The list has been refreshed.</numerusform>
+            <numerusform>Nothing changed: %n links had changed on the disk. The list has been refreshed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/CommunityPage.cpp" line="869"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="876"/>
+        <source>%n had changed on the disk</source>
+        <translation>
+            <numerusform>%n had changed on the disk</numerusform>
+            <numerusform>%n had changed on the disk</numerusform>
         </translation>
     </message>
     <message>
@@ -4976,7 +4993,7 @@ Apply the preset &quot;%2&quot;?</translation>
         <source>%n change</source>
         <translation>
             <numerusform>%n change</numerusform>
-            <numerusform>%n change</numerusform>
+            <numerusform>%n changes</numerusform>
         </translation>
     </message>
     <message>

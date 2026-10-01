@@ -17,13 +17,13 @@
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStyle>
-#include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QTreeWidgetItemIterator>
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/MomentText.h"
 #include "support/PathText.h"
+#include "view/delegates/WithoutTheFocusFrame.h"
 #include "view/documents/DocumentReader.h"
 #include "view/panels/EmptyState.h"
 #include "view/theme/ModernistMetrics.h"
@@ -42,20 +42,6 @@ namespace
     const auto kLineRole = Qt::UserRole;
     const QString kOneLevelIn = QString::fromUtf8("   ");
     const QString kSeparator = QString::fromUtf8(" · ");
-
-    class WithoutTheFocusFrame final : public QStyledItemDelegate
-    {
-    public:
-        using QStyledItemDelegate::QStyledItemDelegate;
-
-    protected:
-        void initStyleOption(QStyleOptionViewItem* option, const QModelIndex& line) const override
-        {
-            QStyledItemDelegate::initStyleOption(option, line);
-
-            option->state &= ~QStyle::State_HasFocus;
-        }
-    };
 
     [[nodiscard]] QString StarOf(const bool favourite)
     {

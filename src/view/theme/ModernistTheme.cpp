@@ -139,7 +139,7 @@ QFrame#OptionsBox { background: %window%; border: 1px solid %divider%; }
 #OptionsRow[follows="true"] { border-top: 1px solid %raised%; }
 #OptionsChoice[follows="true"] { border-top: 1px solid %divider%; }
 QLabel#OptionsGroupName {
-    color: %secondary%; font-weight: 700; font-size: 11px; letter-spacing: 1px;
+    color: %secondary%; font-weight: 800; font-size: 10px; letter-spacing: 1px;
 }
 QLabel#OptionsChoiceName { font-weight: 600; }
 QLabel#AboutVersion { font-weight: 700; }
@@ -231,4 +231,5 @@ void RefreshModernistTheme(QApplication& app)
     QApplication::setStyle(new ModernistStyle(scheme));
     QApplication::setPalette(ModernistPalette(scheme));
     app.setStyleSheet(ModernistStyleSheet(scheme));
+    QApplication::setFont(QApplication::font(), "QAbstractItemView");
 }

@@ -23,7 +23,12 @@ public:
 
     [[nodiscard]] bool Contains(const std::filesystem::path& folder) const
     {
-        return folders_.contains(ComparablePath(folder));
+        return ContainsKey(ComparablePath(folder));
+    }
+
+    [[nodiscard]] bool ContainsKey(const std::string& comparableKey) const
+    {
+        return folders_.contains(comparableKey);
     }
 
 private:

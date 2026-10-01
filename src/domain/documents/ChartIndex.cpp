@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <unordered_map>
 #include <utility>
 
 #include "domain/documents/ChartFileNaming.h"
@@ -40,6 +41,8 @@ namespace
         std::string code{};
         std::vector<std::filesystem::path> files{};
     };
+
+    using FilesByStem = std::unordered_map<std::string, const std::filesystem::path*>;
 
     [[nodiscard]] int NumberIn(const std::string& digits)
     {
@@ -149,20 +152,24 @@ namespace
         return nullptr;
     }
 
-    [[nodiscard]] const std::filesystem::path* FileNamed(const std::vector<std::filesystem::path>& files,
-                                                         const std::string& chartId)
+    [[nodiscard]] FilesByStem ByStem(const FilesOfAnAirport& airport)
     {
-        const std::string wanted = LoweredForComparison(chartId);
+        FilesByStem byStem;
+        byStem.reserve(airport.files.size());
 
-        for (const std::filesystem::path& file : files)
+        for (const std::filesystem::path& file : airport.files)
         {
-            if (LoweredForComparison(AsUtf8(file.stem())) == wanted)
-            {
-                return &file;
-            }
+            byStem.try_emplace(LoweredForComparison(AsUtf8(file.stem())), &file);
         }
 
-        return nullptr;
+        return byStem;
+    }
+
+    [[nodiscard]] const std::filesystem::path* FileNamed(const FilesByStem& byStem, const std::string& chartId)
+    {
+        const auto found = byStem.find(LoweredForComparison(chartId));
+
+        return found == byStem.end() ? nullptr : found->second;
     }
 
     [[nodiscard]] TypeBeingBuilt& GroupOfType(std::vector<TypeBeingBuilt>& types, const std::string& type)
@@ -230,11 +237,12 @@ namespace
     [[nodiscard]] std::vector<Page> TheInformationPagesOf(const FilesOfAnAirport& airport,
                                                           const ChartCatalogue& catalogue)
     {
+        const FilesByStem byStem = ByStem(airport);
         std::vector<Page> pages;
 
         for (const CatalogueEntry& entry : catalogue.entries)
         {
-            const std::filesystem::path* file = FileNamed(airport.files, entry.chartId);
+            const std::filesystem::path* file = FileNamed(byStem, entry.chartId);
 
             if (entry.chartType != kInformation || file == nullptr)
             {
@@ -339,11 +347,12 @@ namespace
                                                                     const ChartCatalogue& catalogue,
                                                                     std::vector<std::string>& placed)
     {
+        const FilesByStem byStem = ByStem(airport);
         std::vector<TypeBeingBuilt> types;
 
         for (const CatalogueEntry& entry : catalogue.entries)
         {
-            const std::filesystem::path* file = FileNamed(airport.files, entry.chartId);
+            const std::filesystem::path* file = FileNamed(byStem, entry.chartId);
 
             if (file == nullptr || entry.chartType == kPageOfASid)
             {
@@ -356,7 +365,7 @@ namespace
 
         for (const CatalogueEntry& entry : catalogue.entries)
         {
-            const std::filesystem::path* file = FileNamed(airport.files, entry.chartId);
+            const std::filesystem::path* file = FileNamed(byStem, entry.chartId);
 
             if (file == nullptr || entry.chartType != kPageOfASid)
             {

@@ -8,11 +8,26 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
+#include "viewmodel/ModelRetranslation.h"
 #include "viewmodel/RowTagRoles.h"
 
 namespace
 {
     constexpr quintptr kNoParent = std::numeric_limits<quintptr>::max();
+    constexpr int kColumnCount = 7;
+    constexpr QChar kColumnSeparator = QChar(0x1F);
+
+    QString JoinedColumns(const auto& textOf)
+    {
+        QStringList columns;
+
+        for (int column = 0; column < kColumnCount; ++column)
+        {
+            columns.append(textOf(column).toString().toCaseFolded());
+        }
+
+        return columns.join(kColumnSeparator);
+    }
 
     QString OutcomeOf(const OperationRecord& record)
     {
@@ -61,8 +76,70 @@ void JournalModel::ShowRecords(const std::vector<OperationRecord>& records, Simu
     entries_ = GroupOperations(records);
     std::ranges::reverse(entries_);
     profile_ = std::move(profile);
+    DropTheSearchTexts();
 
     endResetModel();
+}
+
+void JournalModel::Retranslate()
+{
+    DropTheSearchTexts();
+    SayTheModelWasRetranslated(*this);
+}
+
+int JournalModel::TimesItBuiltASearchText() const
+{
+    return searchTextsBuilt_;
+}
+
+void JournalModel::DropTheSearchTexts()
+{
+    searchTexts_.assign(entries_.size(), SearchTexts{});
+}
+
+QString* JournalModel::SearchTextSlotAt(const QModelIndex& position) const
+{
+    if (EntryAt(position) != nullptr)
+    {
+        return &searchTexts_[static_cast<std::size_t>(position.row())].entry;
+    }
+
+    if (StepAt(position) == nullptr)
+    {
+        return nullptr;
+    }
+
+    const auto owner = static_cast<std::size_t>(position.internalId());
+    std::vector<QString>& steps = searchTexts_[owner].steps;
+
+    if (steps.empty())
+    {
+        steps.resize(entries_[owner].steps.size());
+    }
+
+    return &steps[static_cast<std::size_t>(position.row())];
+}
+
+QString JournalModel::SearchTextAt(const QModelIndex& position) const
+{
+    QString* text = SearchTextSlotAt(position);
+
+    if (text == nullptr)
+    {
+        return {};
+    }
+
+    if (text->isEmpty())
+    {
+        *text = JoinedColumns(
+            [this, &position](const int column)
+            {
+                return data(position.siblingAtColumn(column), Qt::DisplayRole);
+            });
+        ++searchTextsBuilt_;
+    }
+
+    return *text;
 }
 
 QString JournalModel::KindLabel(const OperationKind kind)
@@ -178,7 +255,7 @@ int JournalModel::rowCount(const QModelIndex& parent) const
 
 int JournalModel::columnCount(const QModelIndex&) const
 {
-    return 7;
+    return kColumnCount;
 }
 
 QVariant JournalModel::EntryColumn(const JournalEntry& entry, const int column) const
@@ -288,6 +365,11 @@ QVariant JournalModel::data(const QModelIndex& position, const int role) const
         return SupportsTheName(position);
     }
 
+    if (role == SearchTextRole)
+    {
+        return SearchTextAt(position);
+    }
+
     if (role != Qt::DisplayRole)
     {
         return {};
@@ -334,6 +416,7 @@ JournalFilterModel::JournalFilterModel(QObject* parent) : QSortFilterProxyModel(
 void JournalFilterModel::Search(const QString& text)
 {
     search_ = text.trimmed();
+    foldedSearch_ = search_.toCaseFolded();
     invalidateRowsFilter();
 }
 
@@ -357,16 +440,5 @@ bool JournalFilterModel::filterAcceptsRow(const int sourceRow, const QModelIndex
         return true;
     }
 
-    for (int column = 0; column < sourceModel()->columnCount(sourceParent); ++column)
-    {
-        if (sourceModel()
-                ->data(position.siblingAtColumn(column), Qt::DisplayRole)
-                .toString()
-                .contains(search_, Qt::CaseInsensitive))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return sourceModel()->data(position, JournalModel::SearchTextRole).toString().contains(foldedSearch_);
 }

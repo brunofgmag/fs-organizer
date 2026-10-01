@@ -87,8 +87,17 @@ public:
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override
     {
+        volumesAsked.push_back(ComparablePath(path.root_path()));
+
         return fileSystem_.VolumeIsAvailable(path);
     }
+
+    [[nodiscard]] std::size_t TimesTheVolumeWasAsked(const std::filesystem::path& root) const
+    {
+        return static_cast<std::size_t>(std::ranges::count(volumesAsked, ComparablePath(root)));
+    }
+
+    mutable std::vector<std::string> volumesAsked;
 
     [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override
     {

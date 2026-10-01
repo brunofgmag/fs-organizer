@@ -188,6 +188,7 @@ set(VIEW_SOURCES
         src/view/delegates/CenteredCheckDelegate.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
+        src/view/delegates/WithoutTheFocusFrame.cpp
         src/view/presets/OmittedDialog.cpp
         src/view/presets/PresetPlanPanel.cpp
         src/view/presets/PresetStartupPanel.cpp

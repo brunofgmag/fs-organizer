@@ -54,6 +54,8 @@ void AFolderThatGroupsNothingBecomesAnAddon(TreeNode& node);
 
 std::vector<const TreeNode*> CategoriesOfferedIn(TreeNode&& tree, bool offerTheRoot) = delete;
 
+[[nodiscard]] CheckState CheckStateOf(std::size_t enabledBelow, std::size_t addonsBelow);
+
 [[nodiscard]] CheckState DeriveCheckState(const TreeNode& node, const EnabledAddons& enabled);
 
 #endif // FS_ORGANIZER_DOMAIN_TREE_ADDON_TREE_H

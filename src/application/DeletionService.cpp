@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <iterator>
+#include <map>
+#include <optional>
+#include <string>
 
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/model/CategoryMarker.h"
@@ -44,6 +47,53 @@ namespace
 
         return roots;
     }
+
+    std::map<std::string, MeasuredFolder> MeasuredFoldersIn(const FolderSizeReport& weighed)
+    {
+        std::map<std::string, MeasuredFolder> measured;
+
+        for (const MeasuredFolder& folder : weighed.folders)
+        {
+            if (folder.measured)
+            {
+                measured.emplace(ComparablePath(folder.folder), folder);
+            }
+        }
+
+        return measured;
+    }
+
+    std::optional<std::uintmax_t> BytesOf(const std::map<std::string, MeasuredFolder>& measured,
+                                          const std::filesystem::path& folder)
+    {
+        const auto found = measured.find(ComparablePath(folder));
+
+        return found == measured.end() ? std::nullopt : std::optional(found->second.bytes);
+    }
+
+    std::optional<std::size_t> LongestEntryOf(const std::map<std::string, MeasuredFolder>& measured,
+                                              const std::filesystem::path& folder)
+    {
+        const auto found = measured.find(ComparablePath(folder));
+
+        return found == measured.end() ? std::nullopt : std::optional(found->second.longestEntry);
+    }
+
+    std::map<std::string, std::vector<std::filesystem::path>>
+    LinksByTarget(const std::vector<DestinationEntry>& entries)
+    {
+        std::map<std::string, std::vector<std::filesystem::path>> links;
+
+        for (const DestinationEntry& entry : entries)
+        {
+            if (CountsAsEnabled(entry.classification))
+            {
+                links[ComparablePath(entry.target)].push_back(entry.path);
+            }
+        }
+
+        return links;
+    }
 }
 
 DeletionService::DeletionService(const FilesystemProbe& filesystemProbe,
@@ -52,16 +102,14 @@ DeletionService::DeletionService(const FilesystemProbe& filesystemProbe,
                                  const LinkingEngine& linking,
                                  const EntryClassifier& classifier,
                                  const ProcessProbe& processProbe,
-                                 const OperationLog& log,
-                                 const SizeService& sizes)
+                                 const OperationLog& log)
     : filesystemProbe_(filesystemProbe),
       files_(files),
       sidecars_(sidecars),
       linking_(linking),
       classifier_(classifier),
       processProbe_(processProbe),
-      log_(log),
-      sizes_(sizes)
+      log_(log)
 {
 }
 
@@ -74,7 +122,8 @@ DeletionService::ReadLinksNow(const std::vector<SimulatorProfile>& everyProfile)
     for (const SimulatorProfile& profile : everyProfile)
     {
         seen.push_back(LinksNow{.profileId = profile.id,
-                                .entries = classifier_.Resolve(profile.destinations, LibraryRootsOf(profile))});
+                                .linksByTarget =
+                                    LinksByTarget(classifier_.Resolve(profile.destinations, LibraryRootsOf(profile)))});
     }
 
     return seen;
@@ -83,11 +132,19 @@ DeletionService::ReadLinksNow(const std::vector<SimulatorProfile>& everyProfile)
 std::vector<EnabledSomewhere> DeletionService::WhereItIsEnabled(const std::vector<LinksNow>& seen,
                                                                 const std::filesystem::path& folder)
 {
+    const std::string wanted = ComparablePath(folder);
+
     std::vector<EnabledSomewhere> enabled;
 
     for (const LinksNow& profile : seen)
     {
-        for (const std::filesystem::path& link : LinksPointingAt(profile.entries, folder))
+        const auto links = profile.linksByTarget.find(wanted);
+        if (links == profile.linksByTarget.end())
+        {
+            continue;
+        }
+
+        for (const std::filesystem::path& link : links->second)
         {
             enabled.push_back(EnabledSomewhere{.profileId = profile.profileId, .linkPath = link});
         }
@@ -142,9 +199,11 @@ std::vector<VolumeRoom> DeletionService::RoomOnEachVolume(const std::vector<Addo
 
 DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
                                    const std::vector<SimulatorProfile>& everyProfile,
-                                   const std::vector<const TreeNode*>& nodes) const
+                                   const std::vector<const TreeNode*>& nodes,
+                                   const FolderSizeReport& weighed) const
 {
     const std::vector<LinksNow> seen = ReadLinksNow(everyProfile);
+    const std::map<std::string, MeasuredFolder> measured = MeasuredFoldersIn(weighed);
     const std::vector<ExternalAddon> externals = ExternalAddonsOf(profile);
 
     DeletionPlan plan;
@@ -160,8 +219,8 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
         plan.addons.push_back(AddonToDelete{.folder = node->path,
                                             .addonId = IdentityOf(profile, node->path),
                                             .enabled = WhereItIsEnabled(seen, node->path),
-                                            .bytes = sizes_.BytesOf(node->path),
-                                            .longestEntry = sizes_.LongestEntryOf(node->path),
+                                            .bytes = BytesOf(measured, node->path),
+                                            .longestEntry = LongestEntryOf(measured, node->path),
                                             .cameFrom = ExternalOriginOf(externals, node->path)});
     }
 

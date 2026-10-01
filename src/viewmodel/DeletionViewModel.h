@@ -53,6 +53,7 @@ private:
         SimulatorProfile profile{};
         std::vector<SimulatorProfile> profiles{};
         std::vector<TreeNode> nodes{};
+        FolderSizeReport weighed{};
         DeletionPlan plan{};
     };
 

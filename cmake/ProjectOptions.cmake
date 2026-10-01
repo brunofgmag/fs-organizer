@@ -26,7 +26,7 @@ endif ()
 set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
 
 if (MSVC)
-    add_compile_options(/MP /W4 /WX /w14062 /external:W0)
+    add_compile_options(/MP /W4 /WX /w14062 /w15038 /external:W0)
 else ()
     add_compile_options(-Wall -Wextra -Werror)
 endif ()

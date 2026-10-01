@@ -1,8 +1,6 @@
 #include "domain/journal/LinksTheAppMade.h"
 
-#include <map>
 #include <ranges>
-#include <string>
 
 #include "domain/support/PathUtils.h"
 
@@ -12,54 +10,67 @@ namespace
     {
         return kind == OperationKind::DisableAddon || kind == OperationKind::RemoveBrokenLink;
     }
+}
 
-    void FollowTheMove(std::map<std::string, LinkTheAppMade>& made, const OperationRecord& record)
+void LinksTheAppMadeSoFar::Fold(const OperationRecord& record)
+{
+    if (!Succeeded(record.outcome))
     {
-        const std::string moved = ComparablePath(record.source);
+        return;
+    }
 
-        for (LinkTheAppMade& link : made | std::views::values)
+    if (CreatesALink(record.kind))
+    {
+        made_.insert_or_assign(ComparablePath(record.target),
+                               Made{.link = LinkTheAppMade{.place = record.target, .libraryCopy = record.source},
+                                    .comparableCopy = ComparablePath(record.source)});
+    }
+    else if (TakesTheLinkAway(record.kind))
+    {
+        made_.erase(ComparablePath(record.target));
+    }
+    else if (record.kind == OperationKind::MoveAddon)
+    {
+        FollowTheMove(record);
+    }
+}
+
+void LinksTheAppMadeSoFar::FollowTheMove(const OperationRecord& record)
+{
+    const std::string moved = ComparablePath(record.source);
+    const std::string arrivedAt = ComparablePath(record.target);
+
+    for (Made& made : made_ | std::views::values)
+    {
+        if (made.comparableCopy == moved)
         {
-            if (ComparablePath(link.libraryCopy) == moved)
-            {
-                link.libraryCopy = record.target;
-            }
+            made.link.libraryCopy = record.target;
+            made.comparableCopy = arrivedAt;
         }
     }
 }
 
-std::vector<LinkTheAppMade> WhereTheAppMadeLinks(const std::vector<OperationRecord>& history)
+std::vector<LinkTheAppMade> LinksTheAppMadeSoFar::Links() const
 {
-    std::map<std::string, LinkTheAppMade> made;
-
-    for (const OperationRecord& record : history)
-    {
-        if (!Succeeded(record.outcome))
-        {
-            continue;
-        }
-
-        if (CreatesALink(record.kind))
-        {
-            made.insert_or_assign(ComparablePath(record.target),
-                                  LinkTheAppMade{.place = record.target, .libraryCopy = record.source});
-        }
-        else if (TakesTheLinkAway(record.kind))
-        {
-            made.erase(ComparablePath(record.target));
-        }
-        else if (record.kind == OperationKind::MoveAddon)
-        {
-            FollowTheMove(made, record);
-        }
-    }
-
     std::vector<LinkTheAppMade> links;
-    links.reserve(made.size());
+    links.reserve(made_.size());
 
-    for (const LinkTheAppMade& link : made | std::views::values)
+    for (const Made& made : made_ | std::views::values)
     {
-        links.push_back(link);
+        links.push_back(made.link);
     }
 
     return links;
+}
+
+std::vector<LinkTheAppMade> WhereTheAppMadeLinks(const std::vector<OperationRecord>& history)
+{
+    LinksTheAppMadeSoFar made;
+
+    for (const OperationRecord& record : history)
+    {
+        made.Fold(record);
+    }
+
+    return made.Links();
 }

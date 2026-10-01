@@ -29,8 +29,13 @@ namespace
     private slots:
         static void ShowingFillsTheTableFromTheSharedSnapshot();
         static void RepairingRemovesTheDeadRowsAndDropsTheAttentionCount();
-        static void ReadingTheDestinationsAgainShowsTheListAtOnceAndAgainWhenTheReadLands();
-        static void RepairingShowsTheListAtOnceAndAgainWhenTheReadLands();
+        static void ReadingTheDestinationsAgainKeepsTheOldRowsAndTheBreakdownUntilTheReadLands();
+        static void RepairingChangesNothingUntilTheWorkerLandsAndThenStartsNoReadOfItsOwn();
+        static void ASecondRepairWhileOneIsOnTheRunnerIsIgnored();
+        static void ReadingTheDestinationsAgainDoesNotTouchTheTableUntilTheReadLands();
+        static void OffScreenARefreshLeavesTheTableAloneAndStillSaysWhatNeedsAttention();
+        static void BecomingOnScreenAfterAChangeShowsTheCurrentSnapshotWithOneReset();
+        static void BecomingOnScreenWhenNothingChangedResetsNothing();
         static void TheBreakdownSeparatesBrokenConflictedAndUnmanaged();
         static void TheBreakdownCountsAnAddonLinkedIntoTwoDestinations();
         static void AManagedEntryIsMeasuredAsTheAddonItPointsAtAndNeverAsTheLink();
@@ -126,7 +131,7 @@ namespace
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         CommunityModel model;
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        CommunityViewModel viewModel{service, session, notifier, model, sizes};
+        CommunityViewModel viewModel{service, session, notifier, model, sizes, runner};
     };
 
     constexpr auto kAddonFolder = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
@@ -136,6 +141,17 @@ namespace
                            const EntryClassification classification)
     {
         return DestinationEntry{.path = path, .target = target, .classification = classification};
+    }
+
+    std::vector<RepairRequest> RemovalsOf(const std::vector<RepairCandidate>& candidates)
+    {
+        std::vector<RepairRequest> requests;
+        for (const RepairCandidate& candidate : candidates)
+        {
+            requests.push_back({.candidate = candidate, .action = RepairAction::RemoveDeadNode});
+        }
+
+        return requests;
     }
 
     SelectionSize LastSize(const QSignalSpy& measured)
@@ -211,13 +227,7 @@ void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCoun
     const QSignalSpy finished(&f.viewModel, &CommunityViewModel::RepairFinished);
     const QSignalSpy attention(&f.viewModel, &CommunityViewModel::BreakdownChanged);
 
-    std::vector<RepairRequest> requests;
-    for (const RepairCandidate& candidate : f.viewModel.PlanRepairs())
-    {
-        requests.push_back({.candidate = candidate, .action = RepairAction::RemoveDeadNode});
-    }
-
-    f.viewModel.Repair(requests);
+    f.viewModel.Repair(RemovalsOf(f.viewModel.PlanRepairs()));
 
     QCOMPARE(finished.size(), 1);
     QCOMPARE(f.model.rowCount({}), 0);
@@ -226,7 +236,7 @@ void CommunityViewModelTest::RepairingRemovesTheDeadRowsAndDropsTheAttentionCoun
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/gone"));
 }
 
-void CommunityViewModelTest::ReadingTheDestinationsAgainShowsTheListAtOnceAndAgainWhenTheReadLands()
+void CommunityViewModelTest::ReadingTheDestinationsAgainKeepsTheOldRowsAndTheBreakdownUntilTheReadLands()
 {
     Fixture f;
     f.Seed(Profile());
@@ -248,7 +258,7 @@ void CommunityViewModelTest::ReadingTheDestinationsAgainShowsTheListAtOnceAndAga
     QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{1});
 }
 
-void CommunityViewModelTest::RepairingShowsTheListAtOnceAndAgainWhenTheReadLands()
+void CommunityViewModelTest::RepairingChangesNothingUntilTheWorkerLandsAndThenStartsNoReadOfItsOwn()
 {
     Fixture f;
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
@@ -258,22 +268,128 @@ void CommunityViewModelTest::RepairingShowsTheListAtOnceAndAgainWhenTheReadLands
     QCOMPARE(f.model.rowCount({}), 1);
 
     const QSignalSpy finished(&f.viewModel, &CommunityViewModel::RepairFinished);
-    std::vector<RepairRequest> requests;
-    for (const RepairCandidate& candidate : f.viewModel.PlanRepairs())
-    {
-        requests.push_back({.candidate = candidate, .action = RepairAction::RemoveDeadNode});
-    }
+    const std::vector<RepairRequest> requests = RemovalsOf(f.viewModel.PlanRepairs());
 
     f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
     f.viewModel.Repair(requests);
 
-    QCOMPARE(finished.size(), 1);
+    QCOMPARE(finished.size(), 0);
     QCOMPARE(f.model.rowCount({}), 1);
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
 
     f.runner.Finish();
 
+    QCOMPARE(finished.size(), 1);
     QCOMPARE(f.model.rowCount({}), 0);
     QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{0});
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QVERIFY(!f.runner.Pending());
+}
+
+void CommunityViewModelTest::ASecondRepairWhileOneIsOnTheRunnerIsIgnored()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    const QSignalSpy finished(&f.viewModel, &CommunityViewModel::RepairFinished);
+    const std::vector<RepairRequest> requests = RemovalsOf(f.viewModel.PlanRepairs());
+
+    f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
+    f.viewModel.Repair(requests);
+    f.viewModel.Repair(requests);
+
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(finished.size(), 1);
+    QVERIFY(!f.runner.Pending());
+}
+
+void CommunityViewModelTest::ReadingTheDestinationsAgainDoesNotTouchTheTableUntilTheReadLands()
+{
+    Fixture f;
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    const QSignalSpy resets(&f.model, &QAbstractItemModel::modelReset);
+
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.runner.defer = true;
+
+    f.viewModel.ReadTheDestinationsAgain();
+
+    QCOMPARE(resets.size(), 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(f.model.rowCount({}), 1);
+}
+
+void CommunityViewModelTest::OffScreenARefreshLeavesTheTableAloneAndStillSaysWhatNeedsAttention()
+{
+    Fixture f;
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    const QSignalSpy resets(&f.model, &QAbstractItemModel::modelReset);
+    const QSignalSpy attention(&f.viewModel, &CommunityViewModel::BreakdownChanged);
+
+    f.viewModel.TheListIsOnScreen(false);
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.session.RefreshEntries();
+
+    QCOMPARE(resets.size(), 0);
+    QCOMPARE(f.model.rowCount({}), 0);
+    QCOMPARE(attention.size(), 1);
+    QCOMPARE(f.viewModel.Breakdown().broken, std::size_t{1});
+}
+
+void CommunityViewModelTest::BecomingOnScreenAfterAChangeShowsTheCurrentSnapshotWithOneReset()
+{
+    Fixture f;
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    const QSignalSpy resets(&f.model, &QAbstractItemModel::modelReset);
+
+    f.viewModel.TheListIsOnScreen(false);
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed/gone");
+    f.session.RefreshEntries();
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/physical");
+    f.session.RefreshEntries();
+
+    QCOMPARE(resets.size(), 0);
+
+    f.viewModel.TheListIsOnScreen(true);
+
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(f.model.rowCount({}), 2);
+}
+
+void CommunityViewModelTest::BecomingOnScreenWhenNothingChangedResetsNothing()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community/physical");
+    f.Seed(Profile());
+    f.viewModel.Show();
+
+    QCOMPARE(f.model.rowCount({}), 1);
+
+    const QSignalSpy resets(&f.model, &QAbstractItemModel::modelReset);
+
+    f.viewModel.TheListIsOnScreen(false);
+    f.session.RefreshEntries();
+    f.viewModel.TheListIsOnScreen(true);
+
+    QCOMPARE(resets.size(), 0);
+    QCOMPARE(f.model.rowCount({}), 1);
 }
 
 void CommunityViewModelTest::AManagedEntryIsMeasuredAsTheAddonItPointsAtAndNeverAsTheLink()

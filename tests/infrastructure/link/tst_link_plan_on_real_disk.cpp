@@ -43,6 +43,7 @@ namespace
         static void TheEntriesTheServiceReturnsAfterEachBatchEqualAFullReadOfTheRealDisk();
         static void RelinkingABrokenAddonThatNeverStrayedReplacesTheDeadJunctionAndUndoPutsTheOtherNameBack();
         static void AFullReadClassifiesEveryKindOfEntryOnRealJunctions();
+        static void ARepairRemovesTheJunctionWhoseTargetStayedDeletedAndLeavesTheOneWhoseTargetCameBack();
     };
 }
 
@@ -584,6 +585,60 @@ void LinkPlanOnRealDiskTest::AFullReadClassifiesEveryKindOfEntryOnRealJunctions(
             QCOMPARE(*together[index], *alone);
         }
     }
+}
+
+void LinkPlanOnRealDiskTest::ARepairRemovesTheJunctionWhoseTargetStayedDeletedAndLeavesTheOneWhoseTargetCameBack()
+{
+    const Disk disk;
+    Linking linking;
+    const SimulatorProfile profile = ProfileOn(disk);
+
+    const std::filesystem::path elsewhere = disk.Root() / "Elsewhere";
+    const std::filesystem::path stays = elsewhere / "stays-dead";
+    const std::filesystem::path returns = elsewhere / "comes-back";
+    const std::filesystem::path staysPlace = disk.Community() / "stays-dead";
+    const std::filesystem::path returnsPlace = disk.Community() / "comes-back";
+
+    for (const std::filesystem::path& target : {stays, returns})
+    {
+        std::filesystem::create_directories(target);
+    }
+
+    QCOMPARE(linking.linkService.CreateLink(staysPlace, stays, LinkType::Junction), LinkFailure::None);
+    QCOMPARE(linking.linkService.CreateLink(returnsPlace, returns, LinkType::Junction), LinkFailure::None);
+
+    for (const std::filesystem::path& target : {stays, returns})
+    {
+        std::filesystem::remove_all(target);
+    }
+
+    const ProfileSnapshot shown = linking.profiles.Scan(profile);
+
+    std::vector<RepairRequest> requests;
+    for (const RepairCandidate& candidate : PlanRepairs(profile, shown.entries, shown.libraries))
+    {
+        requests.push_back({.candidate = candidate, .action = RepairAction::RemoveDeadNode});
+    }
+
+    QCOMPARE(requests.size(), std::size_t{2});
+
+    std::filesystem::create_directories(returns);
+    linking.journal.appended.clear();
+
+    const LinkBatchOutcome outcome =
+        linking.profiles.Repair(EntriesStamp{.profile = profile}, shown.libraries, requests);
+
+    QCOMPARE(outcome.report.results.size(), std::size_t{1});
+    QVERIFY(outcome.report.results.front().outcome.Succeeded());
+    QCOMPARE(outcome.report.results.front().linkPath, staysPlace);
+    QCOMPARE(outcome.report.drifted, std::size_t{1});
+
+    QVERIFY(!linking.linkService.ReadLinkTarget(staysPlace).has_value());
+    QCOMPARE(linking.linkService.ReadLinkTarget(returnsPlace), std::optional<std::filesystem::path>{returns});
+    QVERIFY(std::filesystem::exists(returnsPlace));
+
+    QCOMPARE(linking.journal.appended.size(), std::size_t{1});
+    QCOMPARE(linking.journal.appended.front().kind, OperationKind::RemoveBrokenLink);
 }
 
 QTEST_APPLESS_MAIN(LinkPlanOnRealDiskTest)

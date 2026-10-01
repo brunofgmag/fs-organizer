@@ -299,8 +299,7 @@ int main(int argc, char* argv[])
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, runner, notifier);
 
-    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
-                                          sizes);
+    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
     DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
@@ -344,7 +343,7 @@ int main(int argc, char* argv[])
     LongOperationProgress progress(importViewModel, &window);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes, runner);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;
@@ -547,11 +546,12 @@ int main(int argc, char* argv[])
                      {
                          libraryButton->ShowCount(counted(model.AddonCount()));
                      });
-    QObject::connect(&communityModel, &QAbstractItemModel::modelReset, communityButton,
-                     [communityButton, &communityModel, counted]
-                     {
-                         communityButton->ShowCount(counted(static_cast<std::size_t>(communityModel.rowCount({}))));
-                     });
+    const auto showTheDestinationCount = [communityButton, &communityViewModel, counted]
+    {
+        communityButton->ShowCount(counted(communityViewModel.Snapshot().entries.size()));
+    };
+    QObject::connect(&notifier, &SessionNotifier::Refreshed, communityButton, showTheDestinationCount);
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, communityButton, showTheDestinationCount);
     const auto showThePresetCount = [presetsButton, &presetViewModel, counted]
     {
         presetsButton->ShowCount(counted(static_cast<std::size_t>(presetViewModel.Names().size())));

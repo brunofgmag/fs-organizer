@@ -227,6 +227,16 @@ const TreeNode* LibraryTreeAt(const std::vector<TreeNode>& libraries, const std:
     return nullptr;
 }
 
+CheckState CheckStateOf(const std::size_t enabledBelow, const std::size_t addonsBelow)
+{
+    if (enabledBelow == 0)
+    {
+        return CheckState::Unchecked;
+    }
+
+    return enabledBelow == addonsBelow ? CheckState::Checked : CheckState::Partial;
+}
+
 CheckState DeriveCheckState(const TreeNode& node, const EnabledAddons& enabled)
 {
     if (node.kind == TreeNodeKind::Addon)
@@ -242,10 +252,5 @@ CheckState DeriveCheckState(const TreeNode& node, const EnabledAddons& enabled)
         checked += enabled.Contains(addon->path) ? 1 : 0;
     }
 
-    if (checked == 0)
-    {
-        return CheckState::Unchecked;
-    }
-
-    return checked == addons.size() ? CheckState::Checked : CheckState::Partial;
+    return CheckStateOf(checked, addons.size());
 }

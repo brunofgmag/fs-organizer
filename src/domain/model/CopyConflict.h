@@ -9,6 +9,8 @@ struct CopyConflict
     std::filesystem::path libraryPath{};
     bool theProvenanceIsAnotherProgram = false;
     bool ourLinkWasReplaced = false;
+
+    [[nodiscard]] bool operator==(const CopyConflict& other) const = default;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_MODEL_COPY_CONFLICT_H

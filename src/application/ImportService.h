@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <vector>
 
 #include "application/model/ConflictDetails.h"
@@ -42,7 +43,8 @@ public:
     Import(const SimulatorProfile& profile,
            const std::vector<ImportRequest>& requests,
            const std::function<bool(const CopyProgress&)>& onProgress,
-           const std::function<void(OperationKind)>& onStep = {}) const;
+           const std::function<void(OperationKind)>& onStep = {},
+           const std::function<bool(std::size_t request)>& goOn = {}) const;
 
     [[nodiscard]] FileResult ResolveConflict(const SimulatorProfile& profile,
                                              const std::vector<DestinationEntry>& entries,
@@ -66,6 +68,9 @@ public:
 
     [[nodiscard]] std::vector<RestorePlace> PlacesFor(const SimulatorProfile& profile,
                                                       const QuarantinedItem& item) const;
+
+    [[nodiscard]] std::vector<RestoreOffer> OffersFor(const SimulatorProfile& profile,
+                                                      const std::vector<QuarantinedItem>& items) const;
 
     [[nodiscard]] std::vector<FileOperationResult> Restore(const SimulatorProfile& profile,
                                                            const std::vector<QuarantinedItem>& items) const;
@@ -131,6 +136,20 @@ private:
                                                   const std::filesystem::path& item) const;
 
     [[nodiscard]] RestoreCheck CheckOne(const std::vector<TreeNode>& libraries, const QuarantinedItem& item) const;
+
+    [[nodiscard]] std::vector<RestorePlace> PlacesIn(const SimulatorProfile& profile,
+                                                     const std::vector<TreeNode>& libraries,
+                                                     const QuarantinedItem& item) const;
+
+    [[nodiscard]] std::optional<FileResult>
+    WhyTheBatchStopsAt(std::size_t request, const std::function<bool(std::size_t request)>& goOn) const;
+
+    [[nodiscard]] ImportOperationResult ImportOne(const SimulatorProfile& profile,
+                                                  const ImportRequest& request,
+                                                  const std::vector<TreeNode>& scanned,
+                                                  std::vector<TreeNode>& landed,
+                                                  const std::function<bool(const CopyProgress&)>& onProgress,
+                                                  const std::function<void(OperationKind)>& onStep) const;
 
     [[nodiscard]] FileResult RestoreOne(const SimulatorProfile& profile,
                                         const QuarantinedItem& item,

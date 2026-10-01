@@ -38,7 +38,7 @@ namespace
     constexpr int kContentColumn = 1;
     constexpr int kUpdatedColumn = 2;
     constexpr int kChangesColumn = 3;
-    constexpr int kNameTableWidth = 420;
+    constexpr int kNameTableWidth = 480;
 
     QString TheWayBackIsCalled()
     {
