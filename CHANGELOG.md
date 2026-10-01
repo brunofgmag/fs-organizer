@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.56.3](https://github.com/brunofgmag/fs-organizer/compare/v0.56.2...v0.56.3) (2026-10-01)
+
+
+* run the second audit wave and draw item views in the theme font ([#203](https://github.com/brunofgmag/fs-organizer/issues/203)) ([ac9b4bf](https://github.com/brunofgmag/fs-organizer/commit/ac9b4bf2c8fc5824d80801c7e828ae67cc6da803))
+
+
+### Performance Improvements
+
+* run the second audit wave and draw item views in the theme font ([60a335b](https://github.com/brunofgmag/fs-organizer/commit/60a335b10774173e10b98b580a5ea25a19addbfb)) ([ac9b4bf](https://github.com/brunofgmag/fs-organizer/commit/ac9b4bf2c8fc5824d80801c7e828ae67cc6da803))
+
 ## [0.56.2](https://github.com/brunofgmag/fs-organizer/compare/v0.56.1...v0.56.2) (2026-10-01)
 
 
