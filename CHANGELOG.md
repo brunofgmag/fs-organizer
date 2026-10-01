@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.56.5](https://github.com/brunofgmag/fs-organizer/compare/v0.56.4...v0.56.5) (2026-10-01)
+
+
+* pay the findings beside the third audit wave ([#207](https://github.com/brunofgmag/fs-organizer/issues/207)) ([7895e83](https://github.com/brunofgmag/fs-organizer/commit/7895e83a84f39f4c07ca7c752bb22997be93e56e))
+
+
+### Bug Fixes
+
+* pay the findings beside the third audit wave ([b173029](https://github.com/brunofgmag/fs-organizer/commit/b1730298165826284e95a1e876570946e4c26b05)) ([7895e83](https://github.com/brunofgmag/fs-organizer/commit/7895e83a84f39f4c07ca7c752bb22997be93e56e))
+
 ## [0.56.4](https://github.com/brunofgmag/fs-organizer/compare/v0.56.3...v0.56.4) (2026-10-01)
 
 
