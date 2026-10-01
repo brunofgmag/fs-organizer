@@ -6,6 +6,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 
+#include "domain/importing/ImportPaths.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "view/theme/ModernistMetrics.h"
@@ -42,7 +43,7 @@ CollisionDialog::CollisionDialog(const RestoreCheck& check, QWidget* parent) : Q
 {
     setWindowTitle(tr("Something is already there"));
 
-    auto* name = new QLabel(AsText(check.item.path.filename()), this);
+    auto* name = new QLabel(AsText(ItemOfTheSwapSlot(check.item.path).filename()), this);
     name->setObjectName(QStringLiteral("PanelTitle"));
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
 

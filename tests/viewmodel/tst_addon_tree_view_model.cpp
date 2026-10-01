@@ -82,6 +82,8 @@ namespace
         static void LandingARelinkReadsNothingAndShowsTheLinkWhereTheProfileWantsIt();
         static void ACategoryAndOneOfItsAddonsSelectedTogetherCountTheAddonOnce();
         static void TheSwapsAndTheSelectionAreMeasuredAtTheSameTimeWithoutOneCancellingTheOther();
+        static void AddingALibraryRegistersAndSavesItWhenNothingChangedMeanwhile();
+        static void AddingALibraryWhenAnotherSaveLandsMeanwhileRegistersAgainAndKeepsBothChanges();
     };
 }
 
@@ -198,7 +200,9 @@ namespace
             spare.kind = TreeNodeKind::Library;
             catalog.SetTree(kSpare, std::move(spare));
 
-            QVERIFY(session.RegisterLibrary(kSpare).Accepted());
+            Session::LibraryRegistration registration = session.RegisterLibraryOn(session.BeginRegistration(), kSpare);
+            QVERIFY(registration.report.Accepted());
+            QVERIFY(session.AdoptTheRegistration(std::move(registration)));
 
             journal.appended.clear();
         }
@@ -1250,6 +1254,61 @@ void AddonTreeViewModelTest::TheSwapsAndTheSelectionAreMeasuredAtTheSameTimeWith
     QCOMPARE(LastSize(measured).bytes, std::uintmax_t{300});
     QCOMPARE(weighings, 1);
     QCOMPARE(weighed.size(), std::size_t{1});
+}
+
+void AddonTreeViewModelTest::AddingALibraryRegistersAndSavesItWhenNothingChangedMeanwhile()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kSpare);
+    f.catalog.SetTree(kSpare, TreeNode{});
+    int announced = 0;
+    bool accepted = false;
+    QObject::connect(&f.viewModel, &AddonTreeViewModel::LibraryRegistered, &f.viewModel,
+                     [&announced, &accepted](const std::filesystem::path&, const LibraryReport& report)
+                     {
+                         ++announced;
+                         accepted = report.Accepted();
+                     });
+
+    f.viewModel.AddLibrary(kSpare);
+
+    QCOMPARE(announced, 1);
+    QVERIFY(accepted);
+    QCOMPARE(f.settings.stored.profiles.front().libraries.size(), std::size_t{2});
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
+}
+
+void AddonTreeViewModelTest::AddingALibraryWhenAnotherSaveLandsMeanwhileRegistersAgainAndKeepsBothChanges()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kSpare);
+    f.catalog.SetTree(kSpare, TreeNode{});
+    f.runner.defer = true;
+    int announced = 0;
+    bool accepted = false;
+    QObject::connect(&f.viewModel, &AddonTreeViewModel::LibraryRegistered, &f.viewModel,
+                     [&announced, &accepted](const std::filesystem::path&, const LibraryReport& report)
+                     {
+                         ++announced;
+                         accepted = report.Accepted();
+                     });
+
+    f.viewModel.AddLibrary(kSpare);
+
+    const TreeNode addon = AddonNode(kAddon);
+    f.session.OverrideDestination({&addon}, kCommunity2024);
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(announced, 1);
+    QVERIFY(accepted);
+    QCOMPARE(f.settings.stored.profiles.front().libraries.size(), std::size_t{2});
+    QCOMPARE(f.settings.stored.profiles.front().destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
+    QCOMPARE(f.session.Profile().destinationOverrides.size(), std::size_t{1});
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

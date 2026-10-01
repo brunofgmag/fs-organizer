@@ -31,6 +31,8 @@ public:
 
     void Show();
 
+    [[nodiscard]] bool Busy() const;
+
     [[nodiscard]] std::vector<RestoreOffer> WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const;
 
     void PrepareRestore(const std::vector<QuarantinedItem>& items);
@@ -46,6 +48,8 @@ public:
     void Discard(const std::vector<QuarantinedItem>& items);
 
 signals:
+    void BusyChanged();
+
     void RestoreOffersReady(const std::vector<RestoreOffer>& offers);
 
     void CameBack();

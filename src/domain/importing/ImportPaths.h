@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 
 #include "domain/support/PathUtils.h"
 
@@ -16,6 +17,24 @@ inline constexpr auto kQuarantineFolderName = "_fsorganizer-quarantine";
     room += kSwapSlotSuffix;
 
     return room;
+}
+
+[[nodiscard]] inline std::filesystem::path WithoutTheSuffix(const std::filesystem::path& path,
+                                                            const std::string_view suffix)
+{
+    const std::string name = AsUtf8(path.filename());
+
+    return path.parent_path() / PathFromUtf8(name.substr(0, name.size() - suffix.size()));
+}
+
+[[nodiscard]] inline bool IsSwapSlot(const std::filesystem::path& path)
+{
+    return ComparablePath(path.filename()).ends_with(kSwapSlotSuffix);
+}
+
+[[nodiscard]] inline std::filesystem::path ItemOfTheSwapSlot(const std::filesystem::path& room)
+{
+    return IsSwapSlot(room) ? WithoutTheSuffix(room, kSwapSlotSuffix) : room;
 }
 
 [[nodiscard]] inline std::filesystem::path StagingPathFor(const std::filesystem::path& target)
@@ -33,11 +52,7 @@ inline constexpr auto kQuarantineFolderName = "_fsorganizer-quarantine";
 
 [[nodiscard]] inline std::filesystem::path ImportedPathFor(const std::filesystem::path& staging)
 {
-    const std::string name = AsUtf8(staging.filename());
-
-    return IsStagingPath(staging)
-        ? staging.parent_path() / PathFromUtf8(name.substr(0, name.size() - std::string_view(kStagingSuffix).size()))
-        : staging;
+    return IsStagingPath(staging) ? WithoutTheSuffix(staging, kStagingSuffix) : staging;
 }
 
 [[nodiscard]] inline bool IsQuarantineFolder(const std::filesystem::path& path)

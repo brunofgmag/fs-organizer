@@ -6,6 +6,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QTimeZone>
 
+#include "domain/importing/ImportPaths.h"
 #include "domain/support/PathUtils.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
@@ -236,7 +237,7 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
 
     switch (position.column())
     {
-    case NameColumn: return AsText(item->path.filename());
+    case NameColumn: return AsText(ItemOfTheSwapSlot(item->path).filename());
     case VersionColumn: return VersionOf(position);
     case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("not recorded");
     case SourceColumn: return WhatTheSourcesSay(*item);

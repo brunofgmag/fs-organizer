@@ -2,14 +2,25 @@
 
 #include <utility>
 
-ProfilePackages::ProfilePackages(const FilesystemProbe& filesystemProbe, std::vector<ContentListLocation> locations)
-    : filesystemProbe_(filesystemProbe), locations_(std::move(locations)), read_(filesystemProbe, {})
+ProfilePackages::ProfilePackages(const FilesystemProbe& filesystemProbe,
+                                 std::vector<ContentListLocation> locations,
+                                 std::function<std::vector<ContentListLocation>()> locateAgain)
+    : filesystemProbe_(filesystemProbe),
+      locations_(std::move(locations)),
+      locateAgain_(std::move(locateAgain)),
+      read_(filesystemProbe, {})
 {
 }
 
 void ProfilePackages::Reload(const SimulatorVariant variant)
 {
-    const std::optional<ChosenContentList> chosen = ChooseContentList(locations_, variant);
+    std::optional<ChosenContentList> chosen = ChooseContentList(locations_, variant);
+
+    if (!chosen.has_value() && locateAgain_)
+    {
+        locations_ = locateAgain_();
+        chosen = ChooseContentList(locations_, variant);
+    }
 
     accountFolder_ = chosen.has_value() ? chosen->accountFolder : std::string();
     read_.ReadAgain(chosen.has_value() ? chosen->listPath : std::filesystem::path{});

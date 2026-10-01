@@ -22,6 +22,45 @@ namespace
 
         return match == settings.profiles.end() ? nullptr : &*match;
     }
+
+    const Library* LibraryNamed(const SimulatorProfile& profile, const LibraryId& libraryId)
+    {
+        const auto match = std::ranges::find_if(profile.libraries,
+                                                [&libraryId](const Library& library)
+                                                {
+                                                    return library.id == libraryId;
+                                                });
+
+        return match == profile.libraries.end() ? nullptr : &*match;
+    }
+
+    bool
+    RememberTheDestination(SimulatorProfile& profile, const TreeNode& node, const std::filesystem::path& destination)
+    {
+        const Library* library = LibraryContaining(profile, node.path);
+        if (library == nullptr)
+        {
+            return false;
+        }
+
+        const std::filesystem::path relative = RelativeToLibrary(*library, node.path);
+        const LibraryId libraryId = library->id;
+
+        std::erase_if(profile.destinationOverrides,
+                      [&libraryId, &relative](const DestinationOverride& known)
+                      {
+                          return known.libraryId == libraryId
+                              && ComparablePath(known.relativePath) == ComparablePath(relative);
+                      });
+
+        if (!destination.empty())
+        {
+            profile.destinationOverrides.push_back(
+                {.libraryId = libraryId, .relativePath = relative, .destination = destination});
+        }
+
+        return true;
+    }
 }
 
 Session::Session(ProfileService& service,
@@ -104,6 +143,8 @@ void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results, c
 
 void Session::ShowActiveProfile()
 {
+    ++profileChanges_;
+
     const SimulatorProfile* active = ProfileById(settings_, settings_.activeProfileId);
 
     if (active != nullptr)
@@ -325,29 +366,11 @@ void Session::RefreshStartupEntries()
     observer_.OnRefreshed();
 }
 
-LibraryReport Session::RegisterLibrary(const std::filesystem::path& path)
+SimulatorProfile Session::LatestProfile() const
 {
-    SimulatorProfile next = profile_;
-    const LibraryReport report = service_.RegisterLibrary(next, path);
+    const SimulatorProfile* saved = ProfileById(settings_, profile_.id);
 
-    if (report.Accepted())
-    {
-        const auto registered = std::ranges::find_if(next.libraries,
-                                                     [&path](const Library& library)
-                                                     {
-                                                         return ComparablePath(library.path) == ComparablePath(path);
-                                                     });
-
-        if (registered != next.libraries.end())
-        {
-            static_cast<void>(organizer_.AdoptTheStructure(next, *registered));
-        }
-
-        Save(next);
-        Scan(std::move(next));
-    }
-
-    return report;
+    return saved != nullptr ? *saved : profile_;
 }
 
 bool Session::WouldAcceptLibrary(const std::filesystem::path& path) const
@@ -355,90 +378,91 @@ bool Session::WouldAcceptLibrary(const std::filesystem::path& path) const
     return LibraryContaining(profile_, path) == nullptr;
 }
 
-Session::LibraryRegistration Session::RegisterLibraryOn(SimulatorProfile profile,
+Session::LibraryRegistration Session::BeginRegistration() const
+{
+    return {.profile = LatestProfile(), .report = {}, .profileChanges = profileChanges_};
+}
+
+Session::LibraryRegistration Session::RegisterLibraryOn(LibraryRegistration started,
                                                         const std::filesystem::path& path) const
 {
-    const LibraryReport report = service_.RegisterLibrary(profile, path);
+    started.report = service_.RegisterLibrary(started.profile, path);
 
-    if (report.Accepted())
+    if (started.report.Accepted())
     {
-        const auto registered = std::ranges::find_if(profile.libraries,
+        const auto registered = std::ranges::find_if(started.profile.libraries,
                                                      [&path](const Library& library)
                                                      {
                                                          return ComparablePath(library.path) == ComparablePath(path);
                                                      });
 
-        if (registered != profile.libraries.end())
+        if (registered != started.profile.libraries.end())
         {
-            static_cast<void>(organizer_.AdoptTheStructure(profile, *registered));
+            static_cast<void>(organizer_.AdoptTheStructure(started.profile, *registered));
         }
     }
 
-    return {.profile = std::move(profile), .report = report};
+    return started;
 }
 
-void Session::AdoptTheRegistration(LibraryRegistration registered)
+bool Session::AdoptTheRegistration(LibraryRegistration registered)
 {
-    if (!registered.report.Accepted())
+    if (registered.profileChanges != profileChanges_)
     {
-        return;
+        return false;
     }
 
-    Save(registered.profile);
-    Scan(std::move(registered.profile));
-}
-
-const Library* Session::LibraryNamed(const LibraryId& libraryId) const
-{
-    for (const Library& library : profile_.libraries)
+    if (registered.report.Accepted())
     {
-        if (library.id == libraryId)
-        {
-            return &library;
-        }
+        Save(registered.profile);
+        Scan(std::move(registered.profile));
     }
 
-    return nullptr;
+    return true;
 }
 
 LibraryGrouping Session::HowTheLibraryIsGrouped(const LibraryId& libraryId) const
 {
-    const Library* library = LibraryNamed(libraryId);
+    const Library* library = LibraryNamed(profile_, libraryId);
 
     return library == nullptr ? LibraryGrouping{} : organizer_.HowItIsGrouped(*library);
 }
 
 std::vector<FileOperationResult> Session::AdoptTheStructureOf(const LibraryId& libraryId)
 {
-    const Library* library = LibraryNamed(libraryId);
+    SimulatorProfile latest = LatestProfile();
+
+    const Library* library = LibraryNamed(latest, libraryId);
     if (library == nullptr)
     {
         return {};
     }
 
-    std::vector<FileOperationResult> results = organizer_.AdoptTheStructure(profile_, *library);
-    Scan(profile_);
+    std::vector<FileOperationResult> results = organizer_.AdoptTheStructure(latest, *library);
+    Scan(std::move(latest));
 
     return results;
 }
 
 std::vector<FileOperationResult> Session::TakeBackTheMarkersOf(const LibraryId& libraryId)
 {
-    const Library* library = LibraryNamed(libraryId);
+    SimulatorProfile latest = LatestProfile();
+
+    const Library* library = LibraryNamed(latest, libraryId);
     if (library == nullptr)
     {
         return {};
     }
 
-    std::vector<FileOperationResult> results = organizer_.TakeBackEveryMarkerItWrote(profile_, *library);
-    Scan(profile_);
+    std::vector<FileOperationResult> results = organizer_.TakeBackEveryMarkerItWrote(latest, *library);
+    Scan(std::move(latest));
 
     return results;
 }
 
 void Session::RememberWhatCameFromAnotherProgram(const std::vector<ImportOperationResult>& results)
 {
-    SimulatorProfile next = profile_;
+    SimulatorProfile next = LatestProfile();
     bool remembered = false;
 
     for (const ImportOperationResult& result : results)
@@ -457,9 +481,7 @@ void Session::RememberWhatCameFromAnotherProgram(const std::vector<ImportOperati
         return;
     }
 
-    profile_ = std::move(next);
-
-    Save(profile_);
+    Keep(std::move(next));
 }
 
 void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem::path>& addonFolders)
@@ -469,21 +491,25 @@ void Session::ForgetWhatCameFromAnotherProgram(const std::vector<std::filesystem
         return;
     }
 
-    SimulatorProfile next = profile_;
+    SimulatorProfile next = LatestProfile();
 
     for (const std::filesystem::path& addonFolder : addonFolders)
     {
         ForgetWhereItCameFrom(next, addonFolder);
     }
 
-    profile_ = std::move(next);
-
-    Save(profile_);
+    Keep(std::move(next));
 }
 
-Session::LegacyImport Session::ImportLegacyOn(SimulatorProfile profile, const LegacyImportRequest& request) const
+Session::LegacyImport Session::BeginLegacyImport() const
 {
-    LegacyImportReport report;
+    return {.profile = LatestProfile(), .report = {}, .profileChanges = profileChanges_};
+}
+
+Session::LegacyImport Session::ImportLegacyOn(LegacyImport started, const LegacyImportRequest& request) const
+{
+    SimulatorProfile& profile = started.profile;
+    LegacyImportReport& report = started.report;
 
     for (const std::filesystem::path& root : request.libraryRoots)
     {
@@ -507,24 +533,31 @@ Session::LegacyImport Session::ImportLegacyOn(SimulatorProfile profile, const Le
         report.refused.push_back(category);
     }
 
-    return {.profile = std::move(profile), .report = std::move(report)};
+    return started;
 }
 
-void Session::AdoptTheLegacyImport(LegacyImport imported)
+bool Session::AdoptTheLegacyImport(LegacyImport imported)
 {
+    if (imported.profileChanges != profileChanges_)
+    {
+        return false;
+    }
+
     if (imported.report.librariesRegistered == 0 && imported.report.categoriesDeclared == 0)
     {
-        return;
+        return true;
     }
 
     service_.ForgetUndo();
     Save(imported.profile);
     Scan(std::move(imported.profile));
+
+    return true;
 }
 
 void Session::UnregisterLibrary(const LibraryId& libraryId)
 {
-    SimulatorProfile next = profile_;
+    SimulatorProfile next = LatestProfile();
     ::UnregisterLibrary(next, libraryId);
 
     service_.ForgetUndo();
@@ -534,7 +567,7 @@ void Session::UnregisterLibrary(const LibraryId& libraryId)
 
 void Session::RepointDestination(const std::filesystem::path& from, const std::filesystem::path& to)
 {
-    SimulatorProfile next = profile_;
+    SimulatorProfile next = LatestProfile();
     ::RepointDestination(next, from, to);
 
     service_.ForgetUndo();
@@ -549,55 +582,28 @@ std::vector<DestinationOverride> Session::OverridesPointingNowhere() const
 
 void Session::DropOverridesPointingNowhere()
 {
-    SimulatorProfile next = profile_;
+    SimulatorProfile next = LatestProfile();
+    const std::size_t before = next.destinationOverrides.size();
     ::DropOverridesPointingNowhere(next);
 
-    if (next.destinationOverrides.size() == profile_.destinationOverrides.size())
+    if (next.destinationOverrides.size() == before)
     {
         return;
     }
 
-    profile_ = std::move(next);
-
     service_.ForgetUndo();
-    Save(profile_);
+    Keep(std::move(next));
     RefreshEntries();
-}
-
-bool Session::RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination)
-{
-    const Library* library = LibraryContaining(profile_, node.path);
-    if (library == nullptr)
-    {
-        return false;
-    }
-
-    const std::filesystem::path relative = RelativeToLibrary(*library, node.path);
-    const LibraryId libraryId = library->id;
-
-    std::erase_if(profile_.destinationOverrides,
-                  [&libraryId, &relative](const DestinationOverride& known)
-                  {
-                      return known.libraryId == libraryId
-                          && ComparablePath(known.relativePath) == ComparablePath(relative);
-                  });
-
-    if (!destination.empty())
-    {
-        profile_.destinationOverrides.push_back(
-            {.libraryId = libraryId, .relativePath = relative, .destination = destination});
-    }
-
-    return true;
 }
 
 void Session::OverrideDestination(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& destination)
 {
+    SimulatorProfile next = LatestProfile();
     bool remembered = false;
 
     for (const TreeNode* node : nodes)
     {
-        remembered = RememberTheDestination(*node, destination) || remembered;
+        remembered = RememberTheDestination(next, *node, destination) || remembered;
     }
 
     if (!remembered)
@@ -606,68 +612,23 @@ void Session::OverrideDestination(const std::vector<const TreeNode*>& nodes, con
     }
 
     service_.ForgetUndo();
-    Save(profile_);
+    Keep(std::move(next));
 
     observer_.OnRefreshed();
 }
 
 FileOperationResult Session::CreateCategory(const std::filesystem::path& parent, const std::string& name)
 {
-    const FileOperationResult result = organizer_.CreateCategory(profile_, parent, name);
+    SimulatorProfile latest = LatestProfile();
+    const FileOperationResult result = organizer_.CreateCategory(latest, parent, name);
 
     if (Succeeded(result.result))
     {
         service_.ForgetUndo();
-        Scan(profile_);
+        Scan(std::move(latest));
     }
 
     return result;
-}
-
-FileOperationResult Session::RenameCategory(const std::filesystem::path& category, const std::string& name)
-{
-    const FileOperationResult result = organizer_.RenameCategory(profile_, category, name);
-
-    if (TheFolderLanded(result.result))
-    {
-        service_.ForgetUndo();
-        Save(profile_);
-        Scan(profile_);
-    }
-
-    return result;
-}
-
-FileOperationResult Session::RemoveCategory(const std::filesystem::path& category)
-{
-    const FileOperationResult result = organizer_.RemoveCategory(profile_, category);
-
-    if (Succeeded(result.result))
-    {
-        service_.ForgetUndo();
-        Save(profile_);
-        Scan(profile_);
-    }
-
-    return result;
-}
-
-std::vector<FileOperationResult> Session::MoveAddons(const std::vector<AddonMove>& moves)
-{
-    std::vector<FileOperationResult> results = organizer_.Move(profile_, moves);
-
-    if (std::ranges::any_of(results,
-                            [](const FileOperationResult& result)
-                            {
-                                return TheFolderLanded(result.result);
-                            }))
-    {
-        service_.ForgetUndo();
-        Save(profile_);
-        Scan(profile_);
-    }
-
-    return results;
 }
 
 FileOperationResult Session::CheckRenameCategory(const std::filesystem::path& category, const std::string& name) const
@@ -675,40 +636,99 @@ FileOperationResult Session::CheckRenameCategory(const std::filesystem::path& ca
     return organizer_.CheckRenameCategory(profile_, category, name);
 }
 
-Session::ReorganizedLibrary Session::MoveAddonsOn(SimulatorProfile profile, const std::vector<AddonMove>& moves) const
+Session::ReorganizedLibrary Session::BeginReorganization() const
 {
-    std::vector<FileOperationResult> results = organizer_.Move(profile, moves);
-
-    return {.profile = std::move(profile), .results = std::move(results)};
+    return {.profile = LatestProfile(), .results = {}, .carried = {}};
 }
 
-Session::ReorganizedLibrary Session::RenameCategoryOn(SimulatorProfile profile,
+Session::ReorganizedLibrary Session::MoveAddonsOn(ReorganizedLibrary started, const std::vector<AddonMove>& moves) const
+{
+    started.results = organizer_.Move(started.profile, moves);
+
+    for (std::size_t index = 0; index < moves.size() && index < started.results.size(); ++index)
+    {
+        if (TheFolderLanded(started.results[index].result))
+        {
+            started.carried.push_back({.from = moves[index].addonFolder, .to = started.results[index].path});
+        }
+    }
+
+    return started;
+}
+
+Session::ReorganizedLibrary Session::RenameCategoryOn(ReorganizedLibrary started,
                                                       const std::filesystem::path& category,
                                                       const std::string& name) const
 {
-    FileOperationResult result = organizer_.RenameCategory(profile, category, name);
+    FileOperationResult result = organizer_.RenameCategory(started.profile, category, name);
 
-    return {.profile = std::move(profile), .results = {std::move(result)}};
+    if (TheFolderLanded(result.result))
+    {
+        started.carried.push_back({.from = category, .to = result.path});
+    }
+
+    started.results = {std::move(result)};
+
+    return started;
 }
 
-Session::ReorganizedLibrary Session::RemoveCategoryOn(SimulatorProfile profile,
+Session::ReorganizedLibrary Session::RemoveCategoryOn(ReorganizedLibrary started,
                                                       const std::filesystem::path& category) const
 {
-    FileOperationResult result = organizer_.RemoveCategory(profile, category);
+    FileOperationResult result = organizer_.RemoveCategory(started.profile, category);
 
-    return {.profile = std::move(profile), .results = {std::move(result)}};
+    if (Succeeded(result.result))
+    {
+        started.carried.push_back({.from = category, .to = {}});
+    }
+
+    started.results = {std::move(result)};
+
+    return started;
 }
 
-void Session::AdoptTheReorganization(SimulatorProfile next, const bool landed)
+void Session::AdoptTheReorganization(const ReorganizedLibrary& reorganized)
 {
-    if (!landed)
+    if (reorganized.carried.empty())
     {
         return;
+    }
+
+    SimulatorProfile next = LatestProfile();
+
+    for (const FolderCarried& folder : reorganized.carried)
+    {
+        const Library* library = LibraryContaining(next, folder.from);
+        if (library == nullptr)
+        {
+            continue;
+        }
+
+        if (folder.to.empty())
+        {
+            ForgetTheFolder(next, *library, folder.from);
+            continue;
+        }
+
+        CarryTheFolder(next, *library, folder.from, folder.to);
     }
 
     service_.ForgetUndo();
     Save(next);
     Scan(std::move(next));
+}
+
+void Session::Keep(SimulatorProfile next)
+{
+    Save(next);
+
+    if (running_)
+    {
+        Scan(std::move(next));
+        return;
+    }
+
+    profile_ = std::move(next);
 }
 
 void Session::Scan(SimulatorProfile profile)
@@ -785,6 +805,8 @@ void Session::Adopt()
 
 void Session::Save(const SimulatorProfile& profile)
 {
+    ++profileChanges_;
+
     const bool written = Rewrite(
         [&profile](AppSettings& settings)
         {

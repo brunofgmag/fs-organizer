@@ -72,6 +72,8 @@ private:
 
     void UpdateSummary();
 
+    void GiveTheGesturesBack();
+
     QuarantineViewModel& viewModel_;
     QuarantineModel& model_;
     QStackedWidget* pages_ = nullptr;

@@ -47,6 +47,9 @@ namespace
         static void ARestoreOnlyGestureAnnouncesItsRescanOnce();
         static void ASwapOnlyGestureAnnouncesItsRescanOnce();
         static void AGestureWithNothingToDoAnnouncesNothing();
+        static void PreparingARestoreAnnouncesItBusyAtTheStartAndFreeAtTheLanding();
+        static void RestoringAnnouncesItBusyAtTheStartAndFreeAtTheLanding();
+        static void DiscardingAnnouncesItBusyAtTheStartAndFreeAtTheLanding();
     };
 }
 
@@ -132,6 +135,40 @@ namespace
     QString CellAt(const QuarantineModel& model, const int row, const int column)
     {
         return model.data(model.index(row, column, {}), Qt::DisplayRole).toString();
+    }
+
+    QuarantinedItem HeldItem()
+    {
+        return QuarantinedItem{.path = kQuarantined, .origin = kDestination / "simbridge"};
+    }
+
+    void ExpectBusyBetweenTheStartAndTheLandingOf(Fixture& f, const std::function<void()>& gesture)
+    {
+        f.ScanLands();
+
+        std::vector<bool> readWhenAnnounced;
+        QObject::connect(&f.viewModel, &QuarantineViewModel::BusyChanged, &f.viewModel,
+                         [&f, &readWhenAnnounced]
+                         {
+                             readWhenAnnounced.push_back(f.viewModel.Busy());
+                         });
+
+        QVERIFY(!f.viewModel.Busy());
+
+        f.runner.defer = true;
+        gesture();
+
+        QCOMPARE(readWhenAnnounced, (std::vector<bool>{true}));
+        QVERIFY2(f.viewModel.Busy(), "between the start and the landing the page must still read the worker as busy");
+
+        gesture();
+
+        QCOMPARE(readWhenAnnounced.size(), std::size_t{1});
+
+        f.runner.Finish();
+
+        QCOMPARE(readWhenAnnounced, (std::vector<bool>{true, false}));
+        QVERIFY(!f.viewModel.Busy());
     }
 }
 
@@ -541,6 +578,39 @@ void QuarantineViewModelTest::AGestureWithNothingToDoAnnouncesNothing()
     QCOMPARE(cameBack.count(), 0);
     QCOMPARE(restored.count(), 0);
     QCOMPARE(swapped.count(), 0);
+}
+
+void QuarantineViewModelTest::PreparingARestoreAnnouncesItBusyAtTheStartAndFreeAtTheLanding()
+{
+    Fixture f;
+
+    ExpectBusyBetweenTheStartAndTheLandingOf(f,
+                                             [&f]
+                                             {
+                                                 f.viewModel.PrepareRestore({HeldItem()});
+                                             });
+}
+
+void QuarantineViewModelTest::RestoringAnnouncesItBusyAtTheStartAndFreeAtTheLanding()
+{
+    Fixture f;
+
+    ExpectBusyBetweenTheStartAndTheLandingOf(f,
+                                             [&f]
+                                             {
+                                                 f.viewModel.Restore({HeldItem()});
+                                             });
+}
+
+void QuarantineViewModelTest::DiscardingAnnouncesItBusyAtTheStartAndFreeAtTheLanding()
+{
+    Fixture f;
+
+    ExpectBusyBetweenTheStartAndTheLandingOf(f,
+                                             [&f]
+                                             {
+                                                 f.viewModel.Discard({HeldItem()});
+                                             });
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

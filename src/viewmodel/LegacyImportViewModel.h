@@ -49,8 +49,9 @@ signals:
 private:
     [[nodiscard]] LegacyPresetReport ImportPresets(const std::vector<std::filesystem::path>& presetFolders) const;
 
-    void LandWhenTheLibrariesAreReadable(const LegacyImportReport& report,
-                                         const std::vector<std::filesystem::path>& presetFolders);
+    [[nodiscard]] QMetaObject::Connection
+    LandWhenTheLibrariesAreReadable(const LegacyImportReport& report,
+                                    const std::vector<std::filesystem::path>& presetFolders);
 
     Session& session_;
     const SessionNotifier& notifier_;

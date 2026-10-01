@@ -94,7 +94,8 @@ public:
     Resume(const SimulatorProfile& profile,
            const std::vector<StagingLeftover>& leftovers,
            const std::function<bool(const CopyProgress&)>& onProgress,
-           const std::function<void(OperationKind)>& onStep = {}) const;
+           const std::function<void(OperationKind)>& onStep = {},
+           const std::function<bool(std::size_t request)>& goOn = {}) const;
 
     [[nodiscard]] std::vector<FileOperationResult>
     DiscardLeftovers(const SimulatorProfile& profile, const std::vector<StagingLeftover>& leftovers) const;

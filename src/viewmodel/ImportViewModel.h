@@ -71,6 +71,8 @@ signals:
 
     void Idle();
 
+    void TheDiskChanged();
+
     void Finished(const std::vector<ImportOperationResult>& results);
 
     void ConflictsResolved(const std::vector<FileOperationResult>& results);
@@ -89,6 +91,8 @@ private:
     [[nodiscard]] std::function<bool(const CopyProgress&)> OnProgressOfFolder(int folder);
 
     [[nodiscard]] std::function<bool(const CopyProgress&)> OnProgressOfTheFolderInCourse();
+
+    [[nodiscard]] std::function<bool(std::size_t request)> GoOnWithTheNextFolder();
 
     [[nodiscard]] bool Report(const CopyProgress& progress, int folder);
 

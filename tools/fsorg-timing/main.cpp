@@ -149,11 +149,51 @@ namespace
         Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "RED: the interface freezes\n" : "GREEN\n");
         Out().flush();
     }
+
+    void ReportUsage()
+    {
+        Out() << "fsorg-timing: times what the app does on the main thread and which stages run on a worker.\n"
+              << "It measures a disposable copy of your settings and journal and never writes to the install.\n"
+              << "\n"
+              << "usage: fsorg-timing [option]\n"
+              << "\n"
+              << "with no option it times loading the active profile and exits 1 when the main thread spends\n"
+              << "more than " << kBudgetForTheMainThread
+              << " ms, 2 when it cannot stage the copy or finds no profile.\n"
+              << "\n"
+              << "  --help                      print this text and exit without measuring\n"
+              << "  --toggle                    time enabling and disabling one addon, three rounds, and check the\n"
+              << "                              incremental list against a full read of the same disk\n"
+              << "  --journal-scroll [W H]      scroll the Journal page at a fixed window size, W by H pixels\n"
+              << "                              (the last two arguments, read when there are two)\n"
+              << "  --app-journal               open the Journal in the real window, size its columns, search it\n"
+              << "                              keystroke by keystroke, then scroll and hover\n"
+              << "  --app-library               scroll the library tree in the real window, switch between tabs and\n"
+              << "                              time the model's data roles\n"
+              << "  --app-costs                 time what opening the library costs: the destination divergence,\n"
+              << "                              the Diagnostics load section and the selection after an enable\n"
+              << "      --airport-addon=<text>      with --app-costs, the airport addon to select, by part of its\n"
+              << "                                  folder name (default: the one with the most documents)\n"
+              << "      --aircraft-addon=<text>     with --app-costs, the aircraft addon to select, by part of its\n"
+              << "                                  folder name (default: the largest)\n"
+              << "      --stall-documents-ms=<n>    with --app-costs, hold the documents index for n ms to see what\n"
+              << "                                  a slow index does to the selection\n"
+              << "  -style <name>               the Qt style to draw with (default: windows11)\n";
+        Out().flush();
+    }
 }
 
 int main(int argc, char* argv[])
 {
     const QApplication application(argc, argv);
+
+    if (QCoreApplication::arguments().contains(QStringLiteral("--help")))
+    {
+        ReportUsage();
+
+        return 0;
+    }
+
     if (!QCoreApplication::arguments().contains(QStringLiteral("-style")))
     {
         QApplication::setStyle(QStringLiteral("windows11"));

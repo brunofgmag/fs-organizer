@@ -111,6 +111,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
                 UpdateSummary();
             });
 
+    connect(&viewModel_, &QuarantineViewModel::BusyChanged, this, &QuarantinePage::GiveTheGesturesBack);
     connect(&viewModel_, &QuarantineViewModel::RestoreOffersReady, this, &QuarantinePage::OfferTheRestore);
     connect(&viewModel_, &QuarantineViewModel::Restored, this,
             [this](const std::vector<FileOperationResult>& results)
@@ -271,7 +272,7 @@ void QuarantinePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) co
 {
     const auto held = static_cast<int>(rows.size());
 
-    restoreFromPanel_->setEnabled(held > 0);
+    restoreFromPanel_->setEnabled(!viewModel_.Busy() && held > 0);
     restoreFromPanel_->setText(held > 1 ? tr("Restore %n item", nullptr, held) : tr("Restore"));
     openFolder_->setEnabled(held == 1);
 }
@@ -481,7 +482,15 @@ void QuarantinePage::UpdateSummary()
     emit SummaryChanged(rows == 0 ? tr("0 items in the quarantine") : tr("%n item in the quarantine.", nullptr, rows));
     emit AsideChanged(rows == 0 ? tr("0 bytes") : QString());
 
-    restore_->setEnabled(selected > 0);
-    discard_->setEnabled(selected > 0);
-    empty_->setEnabled(rows > 0);
+    const bool free = !viewModel_.Busy();
+
+    restore_->setEnabled(free && selected > 0);
+    discard_->setEnabled(free && selected > 0);
+    empty_->setEnabled(free && rows > 0);
+}
+
+void QuarantinePage::GiveTheGesturesBack()
+{
+    UpdateSummary();
+    ShowWhatTheActionsWillTouch(table_->selectionModel()->selectedRows());
 }

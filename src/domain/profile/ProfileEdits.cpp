@@ -3,6 +3,30 @@
 #include <string>
 
 #include "domain/support/PathUtils.h"
+#include "domain/tree/LibraryLookup.h"
+
+namespace
+{
+    std::filesystem::path CarriedTo(const std::filesystem::path& relativePath,
+                                    const std::string& moved,
+                                    const std::size_t partsMoved,
+                                    const std::filesystem::path& landing)
+    {
+        const std::string key = ComparablePath(relativePath);
+
+        if (key == moved)
+        {
+            return landing;
+        }
+
+        if (key.size() > moved.size() && key.compare(0, moved.size(), moved) == 0 && key[moved.size()] == '/')
+        {
+            return landing / TailBelow(relativePath, partsMoved);
+        }
+
+        return relativePath;
+    }
+}
 
 void UnregisterLibrary(SimulatorProfile& profile, const LibraryId& libraryId)
 {
@@ -69,4 +93,48 @@ void RepointDestination(SimulatorProfile& profile, const std::filesystem::path& 
             destinationOverride.destination = to;
         }
     }
+}
+
+void CarryTheFolder(SimulatorProfile& profile,
+                    const Library& library,
+                    const std::filesystem::path& from,
+                    const std::filesystem::path& to)
+{
+    const std::filesystem::path leaving = RelativeToLibrary(library, from);
+    const std::string moved = ComparablePath(leaving);
+    const std::size_t partsMoved = PartsIn(leaving);
+    const std::filesystem::path landing = RelativeToLibrary(library, to);
+
+    for (DestinationOverride& known : profile.destinationOverrides)
+    {
+        if (known.libraryId == library.id)
+        {
+            known.relativePath = CarriedTo(known.relativePath, moved, partsMoved, landing);
+        }
+    }
+
+    for (ExternalOrigin& known : profile.externalOrigins)
+    {
+        if (known.libraryId == library.id)
+        {
+            known.relativePath = CarriedTo(known.relativePath, moved, partsMoved, landing);
+        }
+    }
+}
+
+void ForgetTheFolder(SimulatorProfile& profile, const Library& library, const std::filesystem::path& folder)
+{
+    const std::filesystem::path gone = RelativeToLibrary(library, folder);
+
+    std::erase_if(profile.destinationOverrides,
+                  [&library, &gone](const DestinationOverride& known)
+                  {
+                      return known.libraryId == library.id && PathIsInside(known.relativePath, gone);
+                  });
+
+    std::erase_if(profile.externalOrigins,
+                  [&library, &gone](const ExternalOrigin& known)
+                  {
+                      return known.libraryId == library.id && PathIsInside(known.relativePath, gone);
+                  });
 }

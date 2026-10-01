@@ -549,7 +549,10 @@ std::vector<QuarantinedItem> ImportService::Quarantined(const SimulatorProfile& 
                 continue;
             }
 
-            items.push_back(WhereItCameFrom(history, item));
+            QuarantinedItem listed = WhereItCameFrom(history, ItemOfTheSwapSlot(item));
+            listed.path = item;
+
+            items.push_back(std::move(listed));
         }
     }
 
@@ -573,7 +576,7 @@ std::vector<QuarantineDetail> ImportService::Describe(const std::vector<Destinat
     {
         QuarantineDetail detail{.path = item.path, .version = VersionIn(item.path)};
 
-        const std::string name = ComparableFileName(item.path);
+        const std::string name = ComparableFileName(ItemOfTheSwapSlot(item.path));
         const auto occupant =
             std::ranges::find_if(entries,
                                  [&name](const DestinationEntry& entry)
@@ -687,8 +690,9 @@ std::vector<RestorePlace> ImportService::PlacesIn(const SimulatorProfile& profil
     {
         if (ComparablePath(QuarantineFolderBeside(destination)) == folder)
         {
-            places.push_back(RestorePlace{
-                .place = destination, .target = LandingPathIn(destination, item.path), .label = destination});
+            places.push_back(RestorePlace{.place = destination,
+                                          .target = LandingPathIn(destination, ItemOfTheSwapSlot(item.path)),
+                                          .label = destination});
         }
     }
 
@@ -708,7 +712,7 @@ std::vector<RestorePlace> ImportService::PlacesIn(const SimulatorProfile& profil
         for (const TreeNode* category : CategoriesOfferedIn(*tree, true))
         {
             places.push_back(RestorePlace{.place = category->path,
-                                          .target = LandingPathIn(category->path, item.path),
+                                          .target = LandingPathIn(category->path, ItemOfTheSwapSlot(item.path)),
                                           .label = category->path.lexically_relative(library.path)});
         }
     }
@@ -1089,29 +1093,40 @@ FileResult ImportService::DiscardOneStaging(const SimulatorProfile& profile, con
 std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile& profile,
                                                          const std::vector<StagingLeftover>& leftovers,
                                                          const std::function<bool(const CopyProgress&)>& onProgress,
-                                                         const std::function<void(OperationKind)>& onStep) const
+                                                         const std::function<void(OperationKind)>& onStep,
+                                                         const std::function<bool(std::size_t request)>& goOn) const
 {
-    const bool blocked = processProbe_.SimulatorIsRunning();
-    const std::vector<TreeNode> libraries = blocked ? std::vector<TreeNode>{} : LibraryTreesOf(catalog_, profile);
-
+    std::optional<std::vector<TreeNode>> libraries;
     std::vector<TreeNode> landed = LibrariesHoldingNothing(profile);
+    std::optional<FileResult> stopped;
 
     std::vector<ImportOperationResult> results;
     results.reserve(leftovers.size());
 
-    for (const StagingLeftover& leftover : leftovers)
+    for (std::size_t index = 0; index < leftovers.size(); ++index)
     {
+        const StagingLeftover& leftover = leftovers[index];
         const ImportRequest request{.source = leftover.source,
                                     .category = leftover.target.parent_path(),
                                     .externalSource = leftover.externalSource};
 
-        if (blocked)
+        if (!stopped.has_value())
         {
-            results.push_back(ImportOperationResult{.request = request, .result = FileResult::TheSimulatorIsRunning});
+            stopped = WhyTheBatchStopsAt(index, goOn);
+        }
+
+        if (stopped.has_value())
+        {
+            results.push_back(ImportOperationResult{.request = request, .result = *stopped});
             continue;
         }
 
-        if (const TreeNode* occupant = OccupantOf(leftover.target, libraries, landed))
+        if (!libraries.has_value())
+        {
+            libraries = LibraryTreesOf(catalog_, profile);
+        }
+
+        if (const TreeNode* occupant = OccupantOf(leftover.target, *libraries, landed))
         {
             results.push_back(ImportOperationResult{
                 .request = request, .result = FileResult::TheIdentityIsTaken, .occupant = occupant->path});

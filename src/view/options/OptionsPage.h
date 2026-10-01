@@ -71,6 +71,12 @@ private:
 
     [[nodiscard]] QWidget* CreateAbout();
 
+    void ApplyBusy() const;
+
+    [[nodiscard]] bool CanRemoveAProfile() const;
+
+    [[nodiscard]] bool CanChangeTheLibraries() const;
+
     void ReloadProfiles();
 
     void ReloadDestinations();

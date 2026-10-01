@@ -8,6 +8,7 @@
 #include "domain/linking/DisableLinks.h"
 #include "domain/linking/LinksByTarget.h"
 #include "domain/model/CategoryMarker.h"
+#include "domain/profile/ProfileEdits.h"
 #include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
@@ -17,53 +18,6 @@
 
 namespace
 {
-    std::filesystem::path CarriedTo(const std::filesystem::path& relativePath,
-                                    const std::string& moved,
-                                    const std::size_t partsMoved,
-                                    const std::filesystem::path& landing)
-    {
-        const std::string key = ComparablePath(relativePath);
-
-        if (key == moved)
-        {
-            return landing;
-        }
-
-        if (key.size() > moved.size() && key.compare(0, moved.size(), moved) == 0 && key[moved.size()] == '/')
-        {
-            return landing / TailBelow(relativePath, partsMoved);
-        }
-
-        return relativePath;
-    }
-
-    void CarryTheOverrides(SimulatorProfile& profile,
-                           const Library& library,
-                           const std::filesystem::path& from,
-                           const std::filesystem::path& to)
-    {
-        const std::filesystem::path leaving = RelativeToLibrary(library, from);
-        const std::string moved = ComparablePath(leaving);
-        const std::size_t partsMoved = PartsIn(leaving);
-        const std::filesystem::path landing = RelativeToLibrary(library, to);
-
-        for (DestinationOverride& known : profile.destinationOverrides)
-        {
-            if (known.libraryId == library.id)
-            {
-                known.relativePath = CarriedTo(known.relativePath, moved, partsMoved, landing);
-            }
-        }
-
-        for (ExternalOrigin& known : profile.externalOrigins)
-        {
-            if (known.libraryId == library.id)
-            {
-                known.relativePath = CarriedTo(known.relativePath, moved, partsMoved, landing);
-            }
-        }
-    }
-
     const TreeNode* CategoryNamed(const TreeNode& tree, const std::filesystem::path& wanted)
     {
         const std::string key = ComparablePath(wanted);
@@ -77,23 +31,6 @@ namespace
         }
 
         return nullptr;
-    }
-
-    void ForgetTheOverrides(SimulatorProfile& profile, const Library& library, const std::filesystem::path& folder)
-    {
-        const std::filesystem::path gone = RelativeToLibrary(library, folder);
-
-        std::erase_if(profile.destinationOverrides,
-                      [&library, &gone](const DestinationOverride& known)
-                      {
-                          return known.libraryId == library.id && PathIsInside(known.relativePath, gone);
-                      });
-
-        std::erase_if(profile.externalOrigins,
-                      [&library, &gone](const ExternalOrigin& known)
-                      {
-                          return known.libraryId == library.id && PathIsInside(known.relativePath, gone);
-                      });
     }
 
     std::vector<std::filesystem::path>
@@ -243,7 +180,7 @@ FileOperationResult LibraryOrganizer::RemoveCategory(SimulatorProfile& profile,
 
     if (removed)
     {
-        ForgetTheOverrides(profile, *library, category);
+        ForgetTheFolder(profile, *library, category);
     }
 
     Record(OperationKind::RemoveCategory, IdentityOf(profile, category), category, {}, result);
@@ -310,7 +247,7 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
         return FileOperationResult{.path = landing, .result = FileResult::CouldNotMoveIntoPlace};
     }
 
-    CarryTheOverrides(profile, *library, category, landing);
+    CarryTheFolder(profile, *library, category, landing);
 
     auto result = FileResult::Completed;
     for (const std::filesystem::path& addon : enabled)
@@ -387,7 +324,7 @@ FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
 
     DeclareACategory(*library, move.addonFolder.parent_path());
     static_cast<void>(files_.Move(ExternalSidecarPathFor(move.addonFolder), ExternalSidecarPathFor(target)));
-    CarryTheOverrides(profile, *library, move.addonFolder, target);
+    CarryTheFolder(profile, *library, move.addonFolder, target);
 
     if (links.empty())
     {

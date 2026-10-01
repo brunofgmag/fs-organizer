@@ -280,7 +280,10 @@ void OptionsOnRealDiskTest::RegisteringTheLibraryBackRebuildsTheTreeUnderANewIde
     stack.session.UnregisterLibrary("library-1");
     QVERIFY(stack.session.Snapshot().libraries.empty());
 
-    const LibraryReport report = stack.session.RegisterLibrary(disk.Library());
+    Session::LibraryRegistration registration =
+        stack.session.RegisterLibraryOn(stack.session.BeginRegistration(), disk.Library());
+    const LibraryReport report = registration.report;
+    QVERIFY(stack.session.AdoptTheRegistration(std::move(registration)));
 
     QVERIFY2(report.Accepted(), "registering the same folder back was refused");
     QCOMPARE(stack.session.Profile().libraries.size(), std::size_t{1});

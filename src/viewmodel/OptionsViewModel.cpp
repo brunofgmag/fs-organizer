@@ -69,6 +69,27 @@ bool OptionsViewModel::ShowsTheProfileInUse() const
     return ProfileShown().id == session_.Profile().id;
 }
 
+bool OptionsViewModel::Busy() const
+{
+    return registering_.Busy();
+}
+
+void OptionsViewModel::RunInTheBackground(std::function<void()> work, std::function<void()> done)
+{
+    registering_.Run(
+        [this]
+        {
+            emit BusyChanged();
+        },
+        std::move(work),
+        [this, done = std::move(done)]
+        {
+            emit BusyChanged();
+
+            done();
+        });
+}
+
 void OptionsViewModel::RemoveProfile(const std::string& profileId, const bool disablingWhatItLeftBehind)
 {
     const QString label = LabelOfProfile(profileId);
@@ -140,7 +161,7 @@ std::shared_ptr<OptionsViewModel::DisablingWork> OptionsViewModel::WorkOnTheProf
 
 void OptionsViewModel::DisableThenRemove(const std::shared_ptr<DisablingWork>& work, std::function<void()> removal)
 {
-    registering_.Run(
+    RunInTheBackground(
         [this, work]
         {
             work->results = service_.SetEnabled(work->profile, work->snapshot, work->nodes, false).results;
@@ -159,7 +180,7 @@ void OptionsViewModel::FinishRemovingProfile(const std::string& profileId, const
 {
     if (!session_.RemoveProfile(profileId))
     {
-        emit ProfileNotRemoved(label);
+        emit Changed();
         return;
     }
 
@@ -427,19 +448,22 @@ bool OptionsViewModel::WouldAcceptLibrary(const std::filesystem::path& path) con
 
 void OptionsViewModel::RegisterLibrary(const std::filesystem::path& path)
 {
-    auto registration = std::make_shared<Session::LibraryRegistration>();
-    registration->profile = session_.Profile();
+    auto registration = std::make_shared<Session::LibraryRegistration>(session_.BeginRegistration());
 
-    registering_.Run(
+    RunInTheBackground(
         [this, registration, path]
         {
-            *registration = session_.RegisterLibraryOn(std::move(registration->profile), path);
+            *registration = session_.RegisterLibraryOn(std::move(*registration), path);
         },
         [this, registration, path]
         {
             const LibraryReport report = registration->report;
 
-            session_.AdoptTheRegistration(std::move(*registration));
+            if (!session_.AdoptTheRegistration(std::move(*registration)))
+            {
+                RegisterLibrary(path);
+                return;
+            }
 
             emit LibraryRegistered(path, report);
         });

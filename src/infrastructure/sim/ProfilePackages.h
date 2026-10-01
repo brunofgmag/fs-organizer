@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_INFRASTRUCTURE_SIM_PROFILE_PACKAGES_H
 
 #include <chrono>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -14,7 +15,9 @@
 class ProfilePackages final : public SimulatorPackages
 {
 public:
-    ProfilePackages(const FilesystemProbe& filesystemProbe, std::vector<ContentListLocation> locations);
+    ProfilePackages(const FilesystemProbe& filesystemProbe,
+                    std::vector<ContentListLocation> locations,
+                    std::function<std::vector<ContentListLocation>()> locateAgain = {});
 
     void Reload(SimulatorVariant variant);
 
@@ -27,6 +30,7 @@ public:
 private:
     const FilesystemProbe& filesystemProbe_;
     std::vector<ContentListLocation> locations_;
+    std::function<std::vector<ContentListLocation>()> locateAgain_;
     std::string accountFolder_;
     ContentXmlPackages read_;
 };

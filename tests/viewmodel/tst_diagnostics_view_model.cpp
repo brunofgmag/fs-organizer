@@ -672,7 +672,9 @@ void DiagnosticsViewModelTest::RegisteringALibraryInTheSameProfileForgetsBothMem
 
     const QSignalSpy changed(&f.viewModel, &DiagnosticsViewModel::TheLibrariesChanged);
 
-    QVERIFY(f.session.RegisterLibrary(kSpare).Accepted());
+    Session::LibraryRegistration registration = f.session.RegisterLibraryOn(f.session.BeginRegistration(), kSpare);
+    QVERIFY(registration.report.Accepted());
+    QVERIFY(f.session.AdoptTheRegistration(std::move(registration)));
 
     QCOMPARE(changed.size(), 1);
     QVERIFY(!f.viewModel.MeasuredAt().has_value());

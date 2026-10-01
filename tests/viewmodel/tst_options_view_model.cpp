@@ -4,6 +4,7 @@
 #include "application/LibraryOrganizer.h"
 #include "application/ports/ProcessProbe.h"
 #include "domain/journal/OperationLog.h"
+#include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -53,6 +54,12 @@ namespace
         static void TheChosenTypeOfLinkIsWrittenWhereTheNextStartupReadsIt();
         static void TheChosenTypeOfLinkReachesTheNextLinkWithoutReopeningTheApp();
         static void TheChosenCheckIsWrittenDownAndAnnouncedToWhoeverImportsNext();
+        static void RemovingAProfileWhileDisablingAnnouncesBusyAtTheStartAndAtTheLanding();
+        static void UnregisteringWhileDisablingAnnouncesBusyAtTheStartAndAtTheLanding();
+        static void RegisteringALibraryAnnouncesBusyAtTheStartAndAtTheLanding();
+        static void AProfileThatCouldNotBeSavedIsNotReportedAsMissing();
+        static void AProfileThatCouldNotBeSavedAfterTheBatchIsNotReportedAsMissing();
+        static void ARegistrationOvertakenBySaveIsRunAgainOnTheProfileAsItIsNow();
     };
 }
 
@@ -63,6 +70,8 @@ namespace
     constexpr auto kOtherDestination = "E:/Flight Simulator 2024/Community2024";
     constexpr auto kAddon = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
     constexpr auto kOtherAddon = "D:/MSFS 2024/Aircrafts/aerosoft-crj";
+    constexpr auto kExtraLibrary = "D:/MSFS 2024 Extra";
+    constexpr auto kThirdLibrary = "D:/Third Library";
 
     TreeNode AddonNode(const std::filesystem::path& path)
     {
@@ -189,6 +198,37 @@ namespace
         std::size_t linksDisabledResults = 0;
         std::size_t librariesWhenLinksWereDisabled = 0;
     };
+
+    void ExpectBusyAtTheStartAndAtTheLanding(Fixture& f, const std::function<void()>& ask)
+    {
+        const QSignalSpy busy(&f.viewModel, &OptionsViewModel::BusyChanged);
+        f.runner.defer = true;
+
+        QVERIFY(!f.viewModel.Busy());
+
+        ask();
+
+        QCOMPARE(busy.count(), 1);
+        QVERIFY(f.viewModel.Busy());
+
+        f.runner.defer = false;
+        f.runner.Finish();
+
+        QCOMPARE(busy.count(), 2);
+        QVERIFY(!f.viewModel.Busy());
+    }
+
+    std::vector<std::string> LibraryPathsStored(const FakeSettingsRepository& repository)
+    {
+        std::vector<std::string> paths;
+
+        for (const Library& library : repository.stored.profiles.front().libraries)
+        {
+            paths.push_back(ComparablePath(library.path));
+        }
+
+        return paths;
+    }
 
     void AddProfile(Fixture& f, const SimulatorProfile& profile)
     {
@@ -668,6 +708,132 @@ void OptionsViewModelTest::TheChosenCheckIsWrittenDownAndAnnouncedToWhoeverImpor
     f.viewModel.ChooseVerification(Verification::ByHash);
 
     QCOMPARE(announced.count(), 1);
+}
+
+void OptionsViewModelTest::RemovingAProfileWhileDisablingAnnouncesBusyAtTheStartAndAtTheLanding()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    ExpectBusyAtTheStartAndAtTheLanding(f,
+                                        [&f]
+                                        {
+                                            f.viewModel.RemoveProfile("msfs2024", true);
+                                        });
+}
+
+void OptionsViewModelTest::UnregisteringWhileDisablingAnnouncesBusyAtTheStartAndAtTheLanding()
+{
+    Fixture f;
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    ExpectBusyAtTheStartAndAtTheLanding(f,
+                                        [&f]
+                                        {
+                                            f.viewModel.UnregisterLibrary("library-1", true);
+                                        });
+}
+
+void OptionsViewModelTest::RegisteringALibraryAnnouncesBusyAtTheStartAndAtTheLanding()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    f.session.ShowActiveProfile();
+
+    ExpectBusyAtTheStartAndAtTheLanding(f,
+                                        [&f]
+                                        {
+                                            f.viewModel.RegisterLibrary(kThirdLibrary);
+                                        });
+}
+
+void OptionsViewModelTest::AProfileThatCouldNotBeSavedIsNotReportedAsMissing()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy refused(&f.viewModel, &OptionsViewModel::ProfileNotRemoved);
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+    const QSignalSpy unsaved(&f.notifier, &SessionNotifier::SettingsCouldNotBeSaved);
+    const QSignalSpy redraws(&f.viewModel, &OptionsViewModel::Changed);
+    f.settings.refusing = true;
+
+    f.viewModel.RemoveProfile("msfs2020", false);
+
+    QCOMPARE(refused.count(), 0);
+    QCOMPARE(removed.count(), 0);
+    QCOMPARE(unsaved.count(), 1);
+    QVERIFY(redraws.count() >= 1);
+    QCOMPARE(f.session.Settings().profiles.size(), std::size_t{2});
+}
+
+void OptionsViewModelTest::AProfileThatCouldNotBeSavedAfterTheBatchIsNotReportedAsMissing()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy refused(&f.viewModel, &OptionsViewModel::ProfileNotRemoved);
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+    const QSignalSpy unsaved(&f.notifier, &SessionNotifier::SettingsCouldNotBeSaved);
+    const QSignalSpy redraws(&f.viewModel, &OptionsViewModel::Changed);
+    f.settings.refusing = true;
+
+    f.viewModel.RemoveProfile("msfs2024", true);
+
+    QCOMPARE(f.linksDisabledAnnouncements, 1);
+    QCOMPARE(refused.count(), 0);
+    QCOMPARE(removed.count(), 0);
+    QCOMPARE(unsaved.count(), 1);
+    QVERIFY(redraws.count() >= 1);
+    QCOMPARE(f.session.Settings().profiles.size(), std::size_t{2});
+}
+
+void OptionsViewModelTest::ARegistrationOvertakenBySaveIsRunAgainOnTheProfileAsItIsNow()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kExtraLibrary);
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kExtraLibrary, TreeNode{});
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    static_cast<void>(f.session.Rewrite(
+        [](AppSettings& settings)
+        {
+            settings.profiles.front().libraries.push_back(
+                Library{.id = "library-2", .path = kExtraLibrary, .label = "Extra"});
+
+            return true;
+        }));
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy registered(&f.viewModel, &OptionsViewModel::LibraryRegistered);
+    const int runsBefore = f.runner.runs;
+    f.runner.defer = true;
+
+    f.viewModel.RegisterLibrary(kThirdLibrary);
+    f.viewModel.UnregisterLibrary("library-2", false);
+    f.runner.Finish();
+
+    QCOMPARE(registered.count(), 0);
+    QVERIFY(f.viewModel.Busy());
+
+    f.runner.defer = false;
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(registered.count(), 1);
+    QVERIFY(!f.viewModel.Busy());
+    QCOMPARE(f.runner.runs, runsBefore + 4);
+    QCOMPARE(LibraryPathsStored(f.settings),
+             (std::vector<std::string>{ComparablePath(kLibrary), ComparablePath(kThirdLibrary)}));
 }
 
 QTEST_MAIN(OptionsViewModelTest)
