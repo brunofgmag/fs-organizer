@@ -63,6 +63,7 @@ namespace
         static void TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt();
         static void TheOnlyProfileCannotBeRemoved();
         static void RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown();
+        static void TheEndOfARemovalIsSaidFromWhatTheViewModelAnnounces();
     };
 }
 
@@ -524,6 +525,23 @@ void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
     QVERIFY(!ButtonSaying(f.page, QStringLiteral("Add library…"))->isEnabled());
     QVERIFY(!ButtonSaying(f.page, QStringLiteral("Import from MSFS Addons Linker…"))->isEnabled());
     QVERIFY(!f.page.findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"))->isEnabled());
+}
+
+void OptionsPageTest::TheEndOfARemovalIsSaidFromWhatTheViewModelAnnounces()
+{
+    Fixture f;
+
+    QSignalSpy said(&f.page, &OptionsPage::StatusChanged);
+
+    emit f.viewModel.ProfileRemoved(QStringLiteral("MSFS 2020"));
+    emit f.viewModel.LibraryUnregistered(QStringLiteral("Legado"));
+    emit f.viewModel.ProfileNotRemoved(QStringLiteral("MSFS 2024"));
+
+    QCOMPARE(said.count(), 3);
+    QCOMPARE(said.at(0).front().toString(), QStringLiteral("Removed MSFS 2020."));
+    QCOMPARE(said.at(1).front().toString(), QStringLiteral("Removed Legado."));
+    QCOMPARE(said.at(2).front().toString(),
+             QStringLiteral("MSFS 2024 was not removed: at least one profile is needed."));
 }
 
 void OptionsPageTest::TheOnlyProfileCannotBeRemoved()

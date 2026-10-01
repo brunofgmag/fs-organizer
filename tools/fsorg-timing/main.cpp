@@ -41,6 +41,7 @@
 
 #include "AppScroll.h"
 #include "LibraryScroll.h"
+#include "OpenCosts.h"
 #include "JournalScroll.h"
 #include "SessionForMeasuring.h"
 #include "application/Session.h"
@@ -230,8 +231,9 @@ int main(int argc, char* argv[])
 
     const bool measuringTheJournal = QCoreApplication::arguments().contains(QStringLiteral("--app-journal"));
     const bool measuringTheLibrary = QCoreApplication::arguments().contains(QStringLiteral("--app-library"));
+    const bool measuringTheOpenCosts = QCoreApplication::arguments().contains(QStringLiteral("--app-costs"));
 
-    if (measuringTheJournal || measuringTheLibrary)
+    if (measuringTheJournal || measuringTheLibrary || measuringTheOpenCosts)
     {
         MainWindow window(loaded);
         QtBackgroundRunner runner;
@@ -257,7 +259,8 @@ int main(int argc, char* argv[])
         packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
         CoverageService coverageService(packageList, processProbe, loaded.managePackageList);
         const BglSceneryParser sceneryParser;
-        JsonSceneryCache sceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
+        JsonSceneryCache storedSceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
+        ColdableSceneryCache sceneryCache(storedSceneryCache);
         SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
         CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock, runner);
 
@@ -292,6 +295,15 @@ int main(int argc, char* argv[])
         {
             QApplication::processEvents();
             QThread::msleep(5);
+        }
+
+        if (measuringTheOpenCosts)
+        {
+            libraryTab->click();
+
+            return MeasureTheOpenCosts(window, *treePage, treeModel, treeViewModel, addonDocumentsViewModel,
+                                       profileService, documentService, filesystemProbe, sceneryService, sceneryCache,
+                                       session);
         }
 
         if (measuringTheLibrary)
@@ -428,6 +440,51 @@ int main(int argc, char* argv[])
                     {
                         onDisk = profileService.ReadLinksNow(session.Profile(), externals);
                     });
+
+            std::vector<std::filesystem::path> places;
+            std::vector<std::optional<std::filesystem::path>> targets;
+
+            Measure(tag + "  ChildDirectories (the places)", false,
+                    [&]
+                    {
+                        places.clear();
+                        for (const std::filesystem::path& root : session.Profile().destinations)
+                        {
+                            std::ranges::copy(filesystemProbe.ChildDirectories(root), std::back_inserter(places));
+                        }
+                    });
+            Measure(tag + "  TargetsAt (ReadLinkTargets)", false,
+                    [&]
+                    {
+                        targets = classifier.TargetsAt(places);
+                    });
+
+            std::size_t targetsChecked = 0;
+
+            Measure(tag + "  TargetDirectoryExists (every target)", false,
+                    [&]
+                    {
+                        for (const std::optional<std::filesystem::path>& target : targets)
+                        {
+                            if (target.has_value())
+                            {
+                                static_cast<void>(
+                                    filesystemProbe.TargetDirectoryExists(NormalizeReparseTarget(*target)));
+                                ++targetsChecked;
+                            }
+                        }
+                    });
+
+            const std::size_t readLinksNow = measurements.size() - 4;
+            measurements.push_back({.stage = tag + "  ReadLinksNow minus those three",
+                                    .onTheMainThread = false,
+                                    .elapsedMilliseconds = measurements[readLinksNow].elapsedMilliseconds
+                                        - measurements[readLinksNow + 1].elapsedMilliseconds
+                                        - measurements[readLinksNow + 2].elapsedMilliseconds
+                                        - measurements[readLinksNow + 3].elapsedMilliseconds});
+
+            Out() << tag << "places: " << places.size() << "  links read: " << targetsChecked
+                  << "  entries classified: " << onDisk.entries.size() << "\n";
 
             Measure(
                 tag + "EntriesAfter (incremental)", false,

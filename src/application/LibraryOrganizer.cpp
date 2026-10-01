@@ -6,6 +6,7 @@
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/WhatTheImporterBrought.h"
 #include "domain/linking/DisableLinks.h"
+#include "domain/linking/LinksByTarget.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
@@ -95,15 +96,14 @@ namespace
                       });
     }
 
-    std::vector<std::filesystem::path> EnabledAddonsUnder(const TreeNode& library,
-                                                          const std::vector<DestinationEntry>& entries,
-                                                          const std::filesystem::path& category)
+    std::vector<std::filesystem::path>
+    EnabledAddonsUnder(const TreeNode& library, const LinksByTarget& links, const std::filesystem::path& category)
     {
         std::vector<std::filesystem::path> enabled;
 
         for (const TreeNode* addon : AddonsUnder(library))
         {
-            if (PathIsInside(addon->path, category) && !LinksPointingAt(entries, addon->path).empty())
+            if (PathIsInside(addon->path, category) && !links.PointingAt(addon->path).empty())
             {
                 enabled.push_back(addon->path);
             }
@@ -288,14 +288,14 @@ FileOperationResult LibraryOrganizer::RenameCategory(SimulatorProfile& profile,
     const std::filesystem::path& landing = check.path;
     const Library* library = LibraryContaining(profile, category);
 
-    const std::vector<DestinationEntry> entries = classifier_.Resolve(profile.destinations, {library->path});
+    const LinksByTarget links(classifier_.Resolve(profile.destinations, {library->path}));
 
     const TreeNode scanned = catalog_.Scan(library->path);
-    const std::vector<std::filesystem::path> enabled = EnabledAddonsUnder(scanned, entries, category);
+    const std::vector<std::filesystem::path> enabled = EnabledAddonsUnder(scanned, links, category);
 
     for (const std::filesystem::path& addon : enabled)
     {
-        if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, addon), IdentityOf(profile, addon), addon))
+        if (!DisableEveryLink(linking_, log_, links.PointingAt(addon), IdentityOf(profile, addon), addon))
         {
             return FileOperationResult{.path = addon, .result = FileResult::CouldNotRemoveTheLink};
         }
@@ -339,11 +339,10 @@ bool LibraryOrganizer::Relink(const SimulatorProfile& profile,
     return outcome.Succeeded();
 }
 
-FileOperationResult
-LibraryOrganizer::MoveOne(SimulatorProfile& profile,
-                          const std::vector<TreeNode>& libraries,
-                          const AddonMove& move,
-                          std::map<std::string, std::vector<DestinationEntry>>& entriesByLibrary) const
+FileOperationResult LibraryOrganizer::MoveOne(SimulatorProfile& profile,
+                                              const std::vector<TreeNode>& libraries,
+                                              const AddonMove& move,
+                                              std::map<std::string, LinksByTarget>& linksByLibrary) const
 {
     const std::filesystem::path target = move.Target();
 
@@ -361,16 +360,16 @@ LibraryOrganizer::MoveOne(SimulatorProfile& profile,
 
     const AddonId addon = IdentityOf(profile, move.addonFolder);
 
-    auto known = entriesByLibrary.find(ComparablePath(library->path));
-    if (known == entriesByLibrary.end())
+    auto known = linksByLibrary.find(ComparablePath(library->path));
+    if (known == linksByLibrary.end())
     {
-        known = entriesByLibrary
-                    .emplace(ComparablePath(library->path), classifier_.Resolve(profile.destinations, {library->path}))
+        known = linksByLibrary
+                    .emplace(ComparablePath(library->path),
+                             LinksByTarget(classifier_.Resolve(profile.destinations, {library->path})))
                     .first;
     }
 
-    const std::vector<DestinationEntry>& entries = known->second;
-    const std::vector<std::filesystem::path> links = LinksPointingAt(entries, move.addonFolder);
+    const std::vector<std::filesystem::path>& links = known->second.PointingAt(move.addonFolder);
 
     if (!DisableEveryLink(linking_, log_, links, addon, move.addonFolder))
     {
@@ -473,11 +472,11 @@ std::vector<FileOperationResult> LibraryOrganizer::Move(SimulatorProfile& profil
 
     const std::vector<TreeNode> libraries = LibraryTreesOf(catalog_, profile);
 
-    std::map<std::string, std::vector<DestinationEntry>> entriesByLibrary;
+    std::map<std::string, LinksByTarget> linksByLibrary;
 
     for (const AddonMove& move : moves)
     {
-        results.push_back(MoveOne(profile, libraries, move, entriesByLibrary));
+        results.push_back(MoveOne(profile, libraries, move, linksByLibrary));
     }
 
     return results;

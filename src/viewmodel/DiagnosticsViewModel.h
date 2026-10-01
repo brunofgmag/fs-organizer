@@ -5,7 +5,9 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <QtCore/QObject>
@@ -41,6 +43,14 @@ struct SceneryCensus
     std::vector<QString> carryingNavigationData{};
     std::size_t carryingNoAirportRecord = 0;
     std::size_t addons = 0;
+};
+
+struct LibrarySet
+{
+    std::string profileId{};
+    std::vector<std::string> roots{};
+
+    [[nodiscard]] bool operator==(const LibrarySet& other) const = default;
 };
 
 class DiagnosticsViewModel final : public QObject
@@ -111,7 +121,15 @@ signals:
 
     void SceneryRead();
 
+    void TheLibrariesChanged();
+
 private:
+    using StopToken = std::shared_ptr<std::atomic<bool>>;
+
+    void FollowTheLibraries();
+
+    void ForgetWhatBelongedToTheOldLibraries();
+
     void Count();
 
     void WeighTheQuarantine();
@@ -141,11 +159,12 @@ private:
     std::optional<std::chrono::system_clock::time_point> countedAt_;
     std::optional<std::chrono::system_clock::time_point> measuredAt_;
     std::optional<std::chrono::system_clock::time_point> sceneryReadAt_;
+    LibrarySet libraries_;
     bool measuring_ = false;
     bool reading_ = false;
     int weighing_ = 0;
-    std::atomic<bool> cancelling_ = false;
-    std::atomic<bool> stopReading_ = false;
+    StopToken sizeStop_ = std::make_shared<std::atomic<bool>>(false);
+    StopToken sceneryStop_ = std::make_shared<std::atomic<bool>>(false);
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_DIAGNOSTICS_VIEW_MODEL_H

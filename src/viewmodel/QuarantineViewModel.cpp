@@ -209,6 +209,8 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
                 profileService_.ForgetUndo();
             }
 
+            emit CameBack();
+
             if (!going.empty())
             {
                 emit Restored(*restored);

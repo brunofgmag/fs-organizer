@@ -35,6 +35,11 @@ namespace
             .toString(QStringLiteral("dd/MM/yyyy HH:mm"));
     }
 
+    QString SizeOrThatItWasNotMeasured(const std::optional<std::uintmax_t>& size)
+    {
+        return size.has_value() ? AsSize(*size) : ConflictDialog::tr("could not be measured");
+    }
+
     struct Wording
     {
         QString title{};
@@ -221,7 +226,7 @@ QGroupBox* ConflictDialog::CreateSide(const QString& title, const ConflictSide& 
     auto* form = new QFormLayout(group);
     form->addRow(tr("Path:"), path);
     form->addRow(tr("Version:"), new QLabel(Version(side.manifest), group));
-    form->addRow(tr("Size:"), new QLabel(AsSize(side.sizeBytes), group));
+    form->addRow(tr("Size:"), new QLabel(SizeOrThatItWasNotMeasured(side.sizeBytes), group));
     form->addRow(tr("Changed on:"), new QLabel(Moment(side.modified), group));
 
     if (!side.manifest.title.empty())

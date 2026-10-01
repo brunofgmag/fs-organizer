@@ -56,8 +56,6 @@ public:
     [[nodiscard]] ConflictDetails DetailsOf(const std::vector<DestinationEntry>& entries,
                                             const CopyConflict& conflict) const;
 
-    [[nodiscard]] std::uintmax_t TotalSizeOf(const std::vector<std::filesystem::path>& folders) const;
-
     [[nodiscard]] std::vector<QuarantinedItem> Quarantined(const SimulatorProfile& profile) const;
 
     [[nodiscard]] std::vector<QuarantineDetail> Describe(const std::vector<DestinationEntry>& entries,

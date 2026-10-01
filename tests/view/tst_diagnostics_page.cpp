@@ -61,6 +61,9 @@ namespace
         static void TheSizeTableFloorCoversWhatItsWidestRowAsksFor();
         static void NoEntryOfTheSectionListIsCutInEitherLanguage_data();
         static void NoEntryOfTheSectionListIsCutInEitherLanguage();
+        static void ASwitchOfProfileWhileTheSizeSectionIsOpenMeasuresTheNewLibrariesOnScreen();
+        static void ASwitchOfProfileWhileTheLoadSectionIsOpenReadsTheLoadAgain();
+        static void ASwitchOfProfileWhileThePageIsHiddenIsCaughtUpWhenItIsShown();
     };
 }
 
@@ -106,6 +109,37 @@ namespace
         return profile;
     }
 
+    constexpr auto kLegacyLibrary = "Z:/Legado";
+    constexpr auto kLegacyCommunity = "C:/Packages/Community";
+    constexpr std::uintmax_t kLegacyBytes = 100;
+
+    TreeNode LegacyTree()
+    {
+        TreeNode aircrafts;
+        aircrafts.kind = TreeNodeKind::Category;
+        aircrafts.path = "Z:/Legado/Aircrafts";
+        aircrafts.children = {AddonNode("Z:/Legado/Aircrafts/fenix-a320")};
+
+        TreeNode node;
+        node.kind = TreeNodeKind::Library;
+        node.path = kLegacyLibrary;
+        node.children = {aircrafts};
+
+        return node;
+    }
+
+    SimulatorProfile LegacyProfile()
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2020";
+        profile.variant = SimulatorVariant::MSFS2020;
+        profile.destinations = {kLegacyCommunity};
+        profile.defaultDestination = kLegacyCommunity;
+        profile.libraries = {Library{.id = "library-9", .path = kLegacyLibrary, .label = "Legado"}};
+
+        return profile;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -117,6 +151,22 @@ namespace
             catalog.SetTree(kLibrary, LibraryTree());
 
             session.ShowActiveProfile();
+        }
+
+        void AddTheLegacyProfile()
+        {
+            fileSystem.AddDirectory(kLegacyCommunity);
+            fileSystem.AddDirectory("Z:/Legado/Aircrafts/fenix-a320");
+            fileSystem.AddFile("Z:/Legado/Aircrafts/fenix-a320/model.bin", kLegacyBytes);
+            catalog.SetTree(kLegacyLibrary, LegacyTree());
+
+            static_cast<void>(session.Rewrite(
+                [](AppSettings& stored)
+                {
+                    stored.profiles.push_back(LegacyProfile());
+
+                    return true;
+                }));
         }
 
         InMemoryFileSystem fileSystem;
@@ -160,6 +210,8 @@ namespace
 
     constexpr int kUsableHeight = 621;
     constexpr int kSearchRow = 7;
+    constexpr int kSizeRow = 3;
+    constexpr int kLoadRow = 5;
 
     QListWidget* RailOf(const DiagnosticsPage& page)
     {
@@ -513,6 +565,76 @@ void DiagnosticsPageTest::NoEntryOfTheSectionListIsCutInEitherLanguage()
                              .arg(texts.join(QLatin1Char('|')));
 
     QVERIFY2(rail->sizeHintForColumn(0) <= rail->viewport()->width(), qPrintable(said));
+}
+
+void DiagnosticsPageTest::ASwitchOfProfileWhileTheSizeSectionIsOpenMeasuresTheNewLibrariesOnScreen()
+{
+    Fixture f;
+    f.AddTheLegacyProfile();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+    page.resize(1200, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    RailOf(page)->setCurrentRow(kSizeRow);
+
+    const QTreeWidget* sizes = TableNamed(page, QStringLiteral("DiagnosticsSizes"));
+
+    QCOMPARE(sizes->topLevelItemCount(), 1);
+    QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(4096));
+
+    f.session.ChooseProfile("msfs2020");
+
+    QCOMPARE(sizes->topLevelItemCount(), 1);
+    QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(kLegacyBytes));
+    QCOMPARE(f.viewModel.Size().libraries.front().path, std::filesystem::path(kLegacyLibrary));
+}
+
+void DiagnosticsPageTest::ASwitchOfProfileWhileTheLoadSectionIsOpenReadsTheLoadAgain()
+{
+    Fixture f;
+    f.AddTheLegacyProfile();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+    page.resize(1200, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    RailOf(page)->setCurrentRow(kLoadRow);
+
+    const QTreeWidget* modules = TableNamed(page, QStringLiteral("DiagnosticsModules"));
+
+    QCOMPARE(modules->topLevelItemCount(), 0);
+
+    f.loading.ReportAModule("fmc.wasm", "pmdg-aircraft-77w", 327680);
+    f.session.ChooseProfile("msfs2020");
+
+    QCOMPARE(modules->topLevelItemCount(), 1);
+}
+
+void DiagnosticsPageTest::ASwitchOfProfileWhileThePageIsHiddenIsCaughtUpWhenItIsShown()
+{
+    Fixture f;
+    f.AddTheLegacyProfile();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+
+    RailOf(page)->setCurrentRow(kSizeRow);
+
+    f.session.ChooseProfile("msfs2020");
+
+    QVERIFY(!f.viewModel.MeasuredAt().has_value());
+    QVERIFY(!f.viewModel.Measuring());
+
+    page.resize(1200, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    const QTreeWidget* sizes = TableNamed(page, QStringLiteral("DiagnosticsSizes"));
+
+    QCOMPARE(sizes->topLevelItemCount(), 1);
+    QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(kLegacyBytes));
 }
 
 QTEST_MAIN(DiagnosticsPageTest)

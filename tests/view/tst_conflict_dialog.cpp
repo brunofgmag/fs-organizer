@@ -11,6 +11,7 @@
 #include "tests/support/ButtonLookup.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "support/SizeText.h"
 #include "view/community/ConflictDialog.h"
 
 namespace
@@ -30,6 +31,7 @@ namespace
         static void AnOlderCopyInTheDestinationIsNotOfferedForTakingBack();
         static void TheNewerSideAnswersTheEnterKey();
         static void CancelAnswersTheEnterKeyWhenTheVersionsDoNotTellTheSidesApart();
+        static void ASideNobodyCouldMeasureSaysSoInsteadOfShowingZeroBytes();
     };
 
     const std::filesystem::path kOtherProgramsFolder = "C:/Addon Manager/Aircraft/aerosoft-crj";
@@ -227,6 +229,29 @@ void ConflictDialogTest::CancelAnswersTheEnterKeyWhenTheVersionsDoNotTellTheSide
     QVERIFY2(cancel->isDefault(),
              "the button box elects the first accept-role button on show unless something else is the default, so "
              "leaving no default hands Enter right back to a destructive side");
+}
+
+void ConflictDialogTest::ASideNobodyCouldMeasureSaysSoInsteadOfShowingZeroBytes()
+{
+    constexpr std::uintmax_t kMegabyte = 1024 * 1024;
+
+    ConflictDetails details = AnOrdinaryConflict();
+    details.provenance.sizeBytes = kMegabyte;
+
+    const ConflictDialog oneSideUnmeasured(details);
+    const QStringList said = EverythingWritten(oneSideUnmeasured);
+
+    QCOMPARE(said.count(QStringLiteral("could not be measured")), 1);
+    QVERIFY(said.contains(AsSize(kMegabyte)));
+    QVERIFY2(!said.contains(AsSize(0)), "an unmeasured side must not borrow the look of an empty one");
+
+    details.library.sizeBytes = 0;
+
+    const ConflictDialog bothMeasured(details);
+    const QStringList measured = EverythingWritten(bothMeasured);
+
+    QCOMPARE(measured.count(QStringLiteral("could not be measured")), 0);
+    QVERIFY2(measured.contains(AsSize(0)), "a folder that was walked and found empty is still shown as empty");
 }
 
 QTEST_MAIN(ConflictDialogTest)

@@ -82,11 +82,6 @@ bool Session::SimulatorIsRunningAfter(const std::vector<LinkOperationResult>& re
     return SomethingChanged(results) && probe_.SimulatorIsRunning();
 }
 
-void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results)
-{
-    NoteLinkResults(results, SimulatorIsRunningAfter(results));
-}
-
 void Session::NoteLinkResults(const std::vector<LinkOperationResult>& results, const bool simulatorIsRunning)
 {
     if (!SomethingChanged(results) || !simulatorIsRunning)

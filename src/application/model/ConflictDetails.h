@@ -13,7 +13,7 @@ struct ConflictSide
 {
     std::filesystem::path path{};
     Manifest manifest{};
-    std::uintmax_t sizeBytes = 0;
+    std::optional<std::uintmax_t> sizeBytes{};
     std::optional<std::chrono::system_clock::time_point> modified{};
 };
 

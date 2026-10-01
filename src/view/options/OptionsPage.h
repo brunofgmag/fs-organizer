@@ -82,6 +82,8 @@ private:
     void AddLibrary();
 
     void SayTheLibraryWasRegistered(const std::filesystem::path& path, const LibraryReport& report);
+    void SayTheRemovalEnded(const QString& label);
+    void SayTheProfileWasNotRemoved(const QString& label);
 
     void Unregister(const LibraryLine& library);
 

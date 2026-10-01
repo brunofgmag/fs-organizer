@@ -1564,6 +1564,11 @@ Também na biblioteca: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="144"/>
+        <source>could not be measured</source>
+        <translation>não foi possível medir</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/ConflictDialog.cpp" line="144"/>
         <source>Changed on:</source>
         <translation>Modificada em:</translation>
     </message>
@@ -4195,9 +4200,8 @@ Os links que já estão em %2 continuam lá funcionando, mas o FS Organizer deix
         <translation>Preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="231"/>
         <source>Content</source>
-        <translation>Conteúdo</translation>
+        <translation type="vanished">Conteúdo</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="231"/>
@@ -5066,6 +5070,24 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <location filename="../src/view/shell/StartupOffers.cpp" line="101"/>
         <source>Decide later</source>
         <translation>Decidir depois</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="118"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="31"/>
+        <source>Folder names not restored</source>
+        <translation>Nomes das pastas não restaurados</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/shell/StartupOffers.cpp" line="32"/>
+        <source>%n folder still has its temporary name. FS Organizer will ask again the next time it starts.</source>
+        <translation>
+            <numerusform>%n pasta ainda está com o nome temporário. O FS Organizer pergunta de novo na próxima vez que abrir.</numerusform>
+            <numerusform>%n pastas ainda estão com os nomes temporários. O FS Organizer pergunta de novo na próxima vez que abrir.</numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="216"/>

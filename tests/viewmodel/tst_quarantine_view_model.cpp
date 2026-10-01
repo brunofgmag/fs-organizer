@@ -43,6 +43,10 @@ namespace
         static void TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures();
         static void EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsWayThrough();
         static void RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallingThread();
+        static void AMixedGestureAnnouncesItsRescanOnceAndBeforeBothReports();
+        static void ARestoreOnlyGestureAnnouncesItsRescanOnce();
+        static void ASwapOnlyGestureAnnouncesItsRescanOnce();
+        static void AGestureWithNothingToDoAnnouncesNothing();
     };
 }
 
@@ -459,6 +463,84 @@ void QuarantineViewModelTest::TheTableSizeStillLandsWhenACollisionIsWeighedWhile
 
     QVERIFY(bothSidesWeighed);
     QCOMPARE(f.model.TallyOf({f.model.index(0, QuarantineModel::NameColumn, {})}).measured, std::size_t{1});
+}
+
+void QuarantineViewModelTest::AMixedGestureAnnouncesItsRescanOnceAndBeforeBothReports()
+{
+    Fixture f;
+    f.ScanLands();
+
+    QStringList heard;
+    QObject::connect(&f.viewModel, &QuarantineViewModel::CameBack, &f.viewModel,
+                     [&heard]
+                     {
+                         heard.push_back("CameBack");
+                     });
+    QObject::connect(&f.viewModel, &QuarantineViewModel::Restored, &f.viewModel,
+                     [&heard](const std::vector<FileOperationResult>&)
+                     {
+                         heard.push_back("Restored");
+                     });
+    QObject::connect(&f.viewModel, &QuarantineViewModel::Swapped, &f.viewModel,
+                     [&heard](const std::vector<SwapResult>&)
+                     {
+                         heard.push_back("Swapped");
+                     });
+
+    const QuarantinedItem item{.path = kQuarantined, .origin = kDestination / "simbridge"};
+    f.viewModel.Restore({item}, {item});
+
+    QCOMPARE(heard, (QStringList{"CameBack", "Restored", "Swapped"}));
+}
+
+void QuarantineViewModelTest::ARestoreOnlyGestureAnnouncesItsRescanOnce()
+{
+    Fixture f;
+    f.ScanLands();
+
+    const QSignalSpy cameBack(&f.viewModel, &QuarantineViewModel::CameBack);
+    const QSignalSpy restored(&f.viewModel, &QuarantineViewModel::Restored);
+    const QSignalSpy swapped(&f.viewModel, &QuarantineViewModel::Swapped);
+
+    f.viewModel.Restore({QuarantinedItem{.path = kQuarantined, .origin = kDestination / "simbridge"}});
+
+    QCOMPARE(cameBack.count(), 1);
+    QCOMPARE(restored.count(), 1);
+    QCOMPARE(swapped.count(), 0);
+}
+
+void QuarantineViewModelTest::ASwapOnlyGestureAnnouncesItsRescanOnce()
+{
+    Fixture f;
+    f.ScanLands();
+
+    const QSignalSpy cameBack(&f.viewModel, &QuarantineViewModel::CameBack);
+    const QSignalSpy restored(&f.viewModel, &QuarantineViewModel::Restored);
+    const QSignalSpy swapped(&f.viewModel, &QuarantineViewModel::Swapped);
+
+    f.viewModel.Swap({QuarantinedItem{.path = kQuarantined, .origin = kDestination / "simbridge"}});
+
+    QCOMPARE(cameBack.count(), 1);
+    QCOMPARE(restored.count(), 0);
+    QCOMPARE(swapped.count(), 1);
+}
+
+void QuarantineViewModelTest::AGestureWithNothingToDoAnnouncesNothing()
+{
+    Fixture f;
+    f.ScanLands();
+
+    const QSignalSpy cameBack(&f.viewModel, &QuarantineViewModel::CameBack);
+    const QSignalSpy restored(&f.viewModel, &QuarantineViewModel::Restored);
+    const QSignalSpy swapped(&f.viewModel, &QuarantineViewModel::Swapped);
+
+    f.viewModel.Restore({}, {});
+    f.viewModel.Restore(std::vector<QuarantinedItem>{});
+    f.viewModel.Swap(std::vector<QuarantinedItem>{});
+
+    QCOMPARE(cameBack.count(), 0);
+    QCOMPARE(restored.count(), 0);
+    QCOMPARE(swapped.count(), 0);
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

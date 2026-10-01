@@ -22,7 +22,7 @@ namespace
 }
 
 AddonDestinations::AddonDestinations(const SimulatorProfile& profile, const std::vector<DestinationEntry>& entries)
-    : profile_(profile), defaultKey_(ComparablePath(profile.defaultDestination))
+    : profile_(profile), defaultKey_(ComparablePath(profile.defaultDestination)), linksByTarget_(entries)
 {
     for (const DestinationOverride& candidate : profile.destinationOverrides)
     {
@@ -35,11 +35,6 @@ AddonDestinations::AddonDestinations(const SimulatorProfile& profile, const std:
 
     for (const DestinationEntry& entry : entries)
     {
-        if (CountsAsEnabled(entry.classification))
-        {
-            linksByTarget_.emplace(ComparablePath(entry.target), entry.path);
-        }
-
         if (entry.classification == EntryClassification::Broken)
         {
             brokenLinks_.insert(ComparablePath(entry.path));
@@ -80,13 +75,11 @@ std::filesystem::path AddonDestinations::DestinationOf(const std::filesystem::pa
 std::filesystem::path AddonDestinations::StrayedFrom(const std::string& folderKey,
                                                      const std::string& destinationKey) const
 {
-    const auto [first, last] = linksByTarget_.equal_range(folderKey);
-
-    for (auto link = first; link != last; ++link)
+    for (const std::filesystem::path& link : linksByTarget_.PointingAtComparable(folderKey))
     {
-        if (ComparablePath(link->second.parent_path()) != destinationKey)
+        if (ComparablePath(link.parent_path()) != destinationKey)
         {
-            return link->second.parent_path();
+            return link.parent_path();
         }
     }
 
@@ -113,7 +106,7 @@ AddonDestination AddonDestinations::Of(const std::filesystem::path& addonFolder,
     return {.destination = destination,
             .strayedTo = StrayedFrom(folderKey, destinationKey),
             .linksNowhere = linksNowhere,
-            .linked = linksByTarget_.contains(folderKey),
+            .linked = !linksByTarget_.PointingAtComparable(folderKey).empty(),
             .pinned = IsPinned(destination, destinationKey)};
 }
 

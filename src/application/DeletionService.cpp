@@ -78,22 +78,6 @@ namespace
 
         return found == measured.end() ? std::nullopt : std::optional(found->second.longestEntry);
     }
-
-    std::map<std::string, std::vector<std::filesystem::path>>
-    LinksByTarget(const std::vector<DestinationEntry>& entries)
-    {
-        std::map<std::string, std::vector<std::filesystem::path>> links;
-
-        for (const DestinationEntry& entry : entries)
-        {
-            if (CountsAsEnabled(entry.classification))
-            {
-                links[ComparablePath(entry.target)].push_back(entry.path);
-            }
-        }
-
-        return links;
-    }
 }
 
 DeletionService::DeletionService(const FilesystemProbe& filesystemProbe,
@@ -138,13 +122,7 @@ std::vector<EnabledSomewhere> DeletionService::WhereItIsEnabled(const std::vecto
 
     for (const LinksNow& profile : seen)
     {
-        const auto links = profile.linksByTarget.find(wanted);
-        if (links == profile.linksByTarget.end())
-        {
-            continue;
-        }
-
-        for (const std::filesystem::path& link : links->second)
+        for (const std::filesystem::path& link : profile.linksByTarget.PointingAtComparable(wanted))
         {
             enabled.push_back(EnabledSomewhere{.profileId = profile.profileId, .linkPath = link});
         }

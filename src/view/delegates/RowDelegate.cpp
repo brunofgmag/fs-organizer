@@ -20,6 +20,7 @@ namespace
     constexpr int kBreathingRoom = 8;
     constexpr int kBeforeTheTag = 8;
     constexpr int kBeforeTheSuffix = 7;
+    constexpr int kBetweenTheTwoLines = 4;
     constexpr int kRowHeight = 29;
     constexpr int kProbeWidth = 200;
 
@@ -121,6 +122,29 @@ namespace
         return tag == item.text ? QString() : item.text;
     }
 
+    struct TwoLines
+    {
+        QRect first{};
+        QRect second{};
+    };
+
+    [[nodiscard]] TwoLines LinesIn(const QRect& box, const int line, const bool setAsABlock)
+    {
+        if (!setAsABlock)
+        {
+            QRect first = box;
+            first.setBottom(box.center().y());
+
+            return {.first = first, .second = QRect(box.left(), box.center().y(), box.width(), line)};
+        }
+
+        const int above = std::max(0, (box.height() - 2 * line - kBetweenTheTwoLines) / 2);
+        const QRect first(box.left(), box.top() + above, box.width(), line);
+
+        return {.first = first,
+                .second = QRect(box.left(), first.bottom() + 1 + kBetweenTheTwoLines, box.width(), line)};
+    }
+
     [[nodiscard]] QString BothLinesOf(const QString& text, const QString& second)
     {
         QStringList whole;
@@ -191,6 +215,11 @@ void RowDelegate::KeepRowsAtLeast(const int tall)
 void RowDelegate::AlignTheCheckWithTheText()
 {
     checkAlignedWithText_ = true;
+}
+
+void RowDelegate::LetTheFirstCellLeadTheRow()
+{
+    firstCellLeadsTheRow_ = true;
 }
 
 int RowDelegate::CheckShiftOf(const QStyleOptionViewItem& item) const
@@ -318,6 +347,8 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
     const QString second = index.data(SecondLineRole).toString();
     const QString text = TextThatIsDrawn(item, tag);
     const int shift = CheckShiftOf(item);
+    const QModelIndex leading = firstCellLeadsTheRow_ ? index.siblingAtColumn(0) : QModelIndex();
+    const bool ledByTwoLinesOfText = leading.isValid() && !leading.data(SecondLineRole).toString().isEmpty();
     const RoomForTheText room = RoomIn(item, suffix, tag, fitted_, shift);
 
     item.text.clear();
@@ -342,15 +373,18 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
     painter->save();
     painter->setFont(item.font);
 
+    const TwoLines lines = LinesIn(box, measured.height(), ledByTwoLinesOfText);
+
     if (!second.isEmpty())
     {
-        const QRect under(box.left(), box.center().y(), box.width(), measured.height());
-
         painter->setPen(QuietInk());
-        painter->drawText(under, Qt::AlignLeft | Qt::AlignVCenter,
+        painter->drawText(lines.second, Qt::AlignLeft | Qt::AlignVCenter,
                           fitted_.In(second, item.font, Qt::ElideMiddle, box.width()));
+    }
 
-        box.setBottom(box.center().y());
+    if (!second.isEmpty() || ledByTwoLinesOfText)
+    {
+        box = lines.first;
     }
 
     int pen = box.left();

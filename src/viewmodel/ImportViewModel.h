@@ -43,11 +43,7 @@ public:
 
     void Cancel();
 
-    [[nodiscard]] ConflictDetails DetailsOf(const CopyConflict& conflict) const;
-
     void PrepareConflictDetails(const std::vector<CopyConflict>& conflicts);
-
-    [[nodiscard]] std::uintmax_t TotalSizeOf(const std::vector<std::filesystem::path>& folders) const;
 
     void LookForLeftovers();
 
@@ -84,6 +80,8 @@ signals:
     void GaveBack(const std::vector<FileOperationResult>& results);
 
     void LeftoversFound(const std::vector<StagingLeftover>& leftovers);
+
+    void InterruptedSwapsUndone(const std::vector<FileOperationResult>& results);
 
 private:
     [[nodiscard]] std::function<void(OperationKind)> OnStep();

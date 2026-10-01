@@ -2,6 +2,7 @@
 #include <QtTest/QtTest>
 
 #include "application/LibraryOrganizer.h"
+#include "application/ports/ProcessProbe.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -11,7 +12,6 @@
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
-#include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/StartupOverFakes.h"
@@ -21,6 +21,7 @@
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/OptionsViewModel.h"
 #include "viewmodel/SessionNotifier.h"
+#include "viewmodel/SimulatorText.h"
 
 namespace
 {
@@ -32,7 +33,20 @@ namespace
         static void ALibraryLineCarriesItsCategoriesAddonsAndWhatIsEnabledFromIt();
         static void UnregisteringWithoutDisablingLeavesEveryLinkWhereItIs();
         static void UnregisteringWhileDisablingRemovesTheLinksAndSparesTheRealFolders();
+        static void UnregisteringWhileDisablingHandsTheBatchToTheRunnerInsteadOfRunningIt();
+        static void TheLibraryStaysRegisteredUntilTheWorkerLands();
+        static void TheLibraryBatchSurvivesAScanReplacingTheSnapshotMeanwhile();
+        static void TheLinksAreAnnouncedBeforeTheLibraryLeaves();
+        static void TheLibrarySimulatorWarningComesFromTheWorkersReading();
+        static void UnregisteringAnnouncesTheLibraryByItsLabelWithAndWithoutTheBatch();
         static void RemovingTheActiveProfileWithoutDisablingLeavesEveryLinkWhereItIs();
+        static void RemovingTheActiveProfileWithoutDisablingDoesNotWaitOnTheRunner();
+        static void RemovingTheActiveProfileWhileDisablingRemovesTheLinksThenTheProfile();
+        static void RemovingTheActiveProfileWhileDisablingHandsTheBatchToTheRunner();
+        static void TheProfileStaysRegisteredUntilTheWorkerLands();
+        static void TheProfileSimulatorWarningComesFromTheWorkersReading();
+        static void RemovingTheLastProfileWhileDisablingDisablesNothing();
+        static void RemovingAProfileThatIsNotInUseDisablesNothingEvenWhenAsked();
         static void OnlyTheActiveProfileIsAskedForItsAddonCount();
         static void TheProfileMarkedActiveIsTheOneTheOtherPanelsDescribe();
         static void TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLands();
@@ -99,10 +113,39 @@ namespace
         return profile;
     }
 
+    class CountingProcessProbe final : public ProcessProbe
+    {
+    public:
+        void ReportTheSimulatorAsRunning()
+        {
+            running_ = "FlightSimulator2024.exe";
+        }
+
+        [[nodiscard]] std::optional<std::string> RunningSimulator() const override
+        {
+            ++asked;
+
+            return running_;
+        }
+
+        mutable int asked = 0;
+
+    private:
+        std::optional<std::string> running_;
+    };
+
     struct Fixture
     {
         Fixture()
         {
+            QObject::connect(&viewModel, &OptionsViewModel::LinksDisabled, &viewModel,
+                             [this](const std::vector<LinkOperationResult>& results)
+                             {
+                                 ++linksDisabledAnnouncements;
+                                 linksDisabledResults = results.size();
+                                 librariesWhenLinksWereDisabled = session.Profile().libraries.size();
+                             });
+
             fileSystem.AddDirectory(kCommunity);
             fileSystem.AddDirectory(kOtherDestination);
             fileSystem.AddDirectory(kLibrary);
@@ -123,7 +166,7 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
         FakeSidecarStore sidecars{fileSystem};
-        FakeProcessProbe processProbe;
+        CountingProcessProbe processProbe;
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
@@ -142,6 +185,9 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         OptionsViewModel viewModel{session, service, runner, notifier};
+        int linksDisabledAnnouncements = 0;
+        std::size_t linksDisabledResults = 0;
+        std::size_t librariesWhenLinksWereDisabled = 0;
     };
 
     void AddProfile(Fixture& f, const SimulatorProfile& profile)
@@ -202,6 +248,284 @@ void OptionsViewModelTest::UnregisteringWhileDisablingRemovesTheLinksAndSparesTh
     QVERIFY(f.session.Snapshot().entries.empty());
 }
 
+void OptionsViewModelTest::UnregisteringWhileDisablingHandsTheBatchToTheRunnerInsteadOfRunningIt()
+{
+    Fixture f;
+    f.EnableOnDisk(kAddon);
+    f.EnableOnDisk(kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const int runsBefore = f.runner.runs;
+    f.runner.defer = true;
+
+    f.viewModel.UnregisterLibrary("library-1", true);
+
+    QVERIFY2(f.runner.Pending(), "the batch goes through the runner instead of holding the calling thread");
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QCOMPARE(f.linksDisabledAnnouncements, 0);
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
+void OptionsViewModelTest::TheLibraryStaysRegisteredUntilTheWorkerLands()
+{
+    Fixture f;
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy unregistered(&f.viewModel, &OptionsViewModel::LibraryUnregistered);
+    f.runner.defer = true;
+
+    f.viewModel.UnregisterLibrary("library-1", true);
+    f.runner.RunPendingWork();
+
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QCOMPARE(f.settings.stored.profiles.front().libraries.size(), std::size_t{1});
+    QCOMPARE(unregistered.count(), 0);
+
+    f.runner.Finish();
+
+    QVERIFY(f.settings.stored.profiles.front().libraries.empty());
+    QCOMPARE(unregistered.count(), 1);
+}
+
+void OptionsViewModelTest::TheLibraryBatchSurvivesAScanReplacingTheSnapshotMeanwhile()
+{
+    Fixture f;
+    f.EnableOnDisk(kAddon);
+    f.EnableOnDisk(kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    f.runner.defer = true;
+
+    f.viewModel.UnregisterLibrary("library-1", true);
+    f.session.ShowActiveProfile();
+    f.runner.FinishNewestDone();
+    f.runner.Finish();
+
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+    QCOMPARE(f.linksDisabledResults, std::size_t{2});
+    QVERIFY(f.settings.stored.profiles.front().libraries.empty());
+}
+
+void OptionsViewModelTest::TheLinksAreAnnouncedBeforeTheLibraryLeaves()
+{
+    Fixture f;
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    f.viewModel.UnregisterLibrary("library-1", true);
+
+    QCOMPARE(f.linksDisabledAnnouncements, 1);
+    QCOMPARE(f.librariesWhenLinksWereDisabled, std::size_t{1});
+    QVERIFY(f.session.Profile().libraries.empty());
+}
+
+void OptionsViewModelTest::TheLibrarySimulatorWarningComesFromTheWorkersReading()
+{
+    Fixture f;
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const QSignalSpy warned(&f.notifier, &SessionNotifier::SimulatorIsRunning);
+    const int askedBefore = f.processProbe.asked;
+    f.runner.defer = true;
+
+    f.viewModel.UnregisterLibrary("library-1", true);
+
+    QCOMPARE(f.processProbe.asked, askedBefore);
+
+    f.runner.RunPendingWork();
+
+    QCOMPARE(f.processProbe.asked, askedBefore + 1);
+    QCOMPARE(warned.count(), 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.processProbe.asked, askedBefore + 1);
+    QCOMPARE(warned.count(), 1);
+}
+
+void OptionsViewModelTest::UnregisteringAnnouncesTheLibraryByItsLabelWithAndWithoutTheBatch()
+{
+    Fixture plain;
+    const QSignalSpy plainly(&plain.viewModel, &OptionsViewModel::LibraryUnregistered);
+    plain.session.ShowActiveProfile();
+
+    plain.viewModel.UnregisterLibrary("library-1", false);
+
+    QCOMPARE(plainly.count(), 1);
+    QCOMPARE(plainly.front().front().toString(), QStringLiteral("MSFS 2024"));
+
+    Fixture disabling;
+    disabling.EnableOnDisk(kAddon);
+    const QSignalSpy afterTheBatch(&disabling.viewModel, &OptionsViewModel::LibraryUnregistered);
+    disabling.session.ShowActiveProfile();
+
+    disabling.viewModel.UnregisterLibrary("library-1", true);
+
+    QCOMPARE(afterTheBatch.count(), 1);
+    QCOMPARE(afterTheBatch.front().front().toString(), QStringLiteral("MSFS 2024"));
+}
+
+void OptionsViewModelTest::RemovingTheActiveProfileWithoutDisablingDoesNotWaitOnTheRunner()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+    f.runner.defer = true;
+
+    f.viewModel.RemoveProfile("msfs2024", false);
+
+    QCOMPARE(removed.count(), 1);
+    QCOMPARE(f.settings.stored.activeProfileId, std::string{"msfs2020"});
+}
+
+void OptionsViewModelTest::RemovingTheActiveProfileWhileDisablingRemovesTheLinksThenTheProfile()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.EnableOnDisk(kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+    const QSignalSpy refused(&f.viewModel, &OptionsViewModel::ProfileNotRemoved);
+
+    f.viewModel.RemoveProfile("msfs2024", true);
+
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+    QVERIFY(f.fileSystem.Exists(kAddon));
+    QVERIFY(f.fileSystem.Exists(kOtherAddon));
+    QCOMPARE(f.linksDisabledAnnouncements, 1);
+    QCOMPARE(f.linksDisabledResults, std::size_t{2});
+    QCOMPARE(f.librariesWhenLinksWereDisabled, std::size_t{1});
+    QCOMPARE(refused.count(), 0);
+    QCOMPARE(removed.count(), 1);
+    QCOMPARE(removed.front().front().toString(), NameOf(SimulatorVariant::MSFS2024));
+    QCOMPARE(f.settings.stored.profiles.size(), std::size_t{1});
+    QCOMPARE(f.session.Profile().id, std::string{"msfs2020"});
+}
+
+void OptionsViewModelTest::RemovingTheActiveProfileWhileDisablingHandsTheBatchToTheRunner()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.EnableOnDisk(kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const int runsBefore = f.runner.runs;
+    f.runner.defer = true;
+
+    f.viewModel.RemoveProfile("msfs2024", true);
+
+    QVERIFY2(f.runner.Pending(), "the batch goes through the runner instead of holding the calling thread");
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QCOMPARE(f.linksDisabledAnnouncements, 0);
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+}
+
+void OptionsViewModelTest::TheProfileStaysRegisteredUntilTheWorkerLands()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+    f.runner.defer = true;
+
+    f.viewModel.RemoveProfile("msfs2024", true);
+    f.runner.RunPendingWork();
+
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QCOMPARE(f.settings.stored.profiles.size(), std::size_t{2});
+    QCOMPARE(f.settings.stored.activeProfileId, std::string{"msfs2024"});
+    QCOMPARE(removed.count(), 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.settings.stored.profiles.size(), std::size_t{1});
+    QCOMPARE(f.settings.stored.activeProfileId, std::string{"msfs2020"});
+    QCOMPARE(removed.count(), 1);
+}
+
+void OptionsViewModelTest::TheProfileSimulatorWarningComesFromTheWorkersReading()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const QSignalSpy warned(&f.notifier, &SessionNotifier::SimulatorIsRunning);
+    const int askedBefore = f.processProbe.asked;
+    f.runner.defer = true;
+
+    f.viewModel.RemoveProfile("msfs2024", true);
+
+    QCOMPARE(f.processProbe.asked, askedBefore);
+
+    f.runner.RunPendingWork();
+
+    QCOMPARE(f.processProbe.asked, askedBefore + 1);
+    QCOMPARE(warned.count(), 0);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.processProbe.asked, askedBefore + 1);
+    QCOMPARE(warned.count(), 1);
+}
+
+void OptionsViewModelTest::RemovingTheLastProfileWhileDisablingDisablesNothing()
+{
+    Fixture f;
+    f.EnableOnDisk(kAddon);
+    f.EnableOnDisk(kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+    const QSignalSpy refused(&f.viewModel, &OptionsViewModel::ProfileNotRemoved);
+    const int runsBefore = f.runner.runs;
+
+    f.viewModel.RemoveProfile("msfs2024", true);
+
+    QCOMPARE(f.runner.runs, runsBefore);
+    QCOMPARE(f.linksDisabledAnnouncements, 0);
+    QCOMPARE(removed.count(), 0);
+    QCOMPARE(refused.count(), 1);
+    QCOMPARE(refused.front().front().toString(), NameOf(SimulatorVariant::MSFS2024));
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
+    QCOMPARE(f.session.Profile().id, std::string{"msfs2024"});
+}
+
+void OptionsViewModelTest::RemovingAProfileThatIsNotInUseDisablesNothingEvenWhenAsked()
+{
+    Fixture f;
+    AddProfile(f, LegacyProfile());
+    f.EnableOnDisk(kAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+    const int runsBefore = f.runner.runs;
+
+    f.viewModel.RemoveProfile("msfs2020", true);
+
+    QCOMPARE(f.runner.runs, runsBefore);
+    QCOMPARE(f.linksDisabledAnnouncements, 0);
+    QCOMPARE(removed.count(), 1);
+    QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    QCOMPARE(f.session.Profile().id, std::string{"msfs2024"});
+}
+
 void OptionsViewModelTest::RemovingTheActiveProfileWithoutDisablingLeavesEveryLinkWhereItIs()
 {
     Fixture f;
@@ -209,7 +533,11 @@ void OptionsViewModelTest::RemovingTheActiveProfileWithoutDisablingLeavesEveryLi
     f.EnableOnDisk(kAddon);
     f.session.ShowActiveProfile();
 
-    QVERIFY(f.viewModel.RemoveProfile("msfs2024", false));
+    const QSignalSpy removed(&f.viewModel, &OptionsViewModel::ProfileRemoved);
+
+    f.viewModel.RemoveProfile("msfs2024", false);
+
+    QCOMPARE(removed.count(), 1);
 
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QVERIFY(f.fileSystem.Exists(kAddon));

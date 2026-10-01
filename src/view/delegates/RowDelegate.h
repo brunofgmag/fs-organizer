@@ -16,6 +16,7 @@ public:
     void KeepRowsAtLeast(int tall);
 
     void AlignTheCheckWithTheText();
+    void LetTheFirstCellLeadTheRow();
 
     bool eventFilter(QObject* watched, QEvent* event) override;
 
@@ -48,6 +49,7 @@ private:
     FittedText fitted_;
     int shortestRow_ = 0;
     bool checkAlignedWithText_ = false;
+    bool firstCellLeadsTheRow_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_DELEGATES_ROW_DELEGATE_H

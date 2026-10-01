@@ -22,6 +22,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/DisableLinks.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/LinksByTarget.cpp
         src/domain/linking/RepairPlan.cpp
         src/domain/model/PackageVersion.cpp
         src/domain/preset/PresetPlan.cpp

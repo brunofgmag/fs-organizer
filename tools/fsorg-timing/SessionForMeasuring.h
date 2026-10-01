@@ -5,10 +5,12 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <utility>
 
 #include "application/model/AppSettings.h"
 #include "application/ports/BackgroundRunner.h"
+#include "application/ports/SceneryCache.h"
 #include "application/ports/SessionObserver.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/TreeNode.h"
@@ -108,6 +110,38 @@ private:
     std::atomic<double> worked_ = 0;
     std::atomic<double> adopted_ = 0;
     std::atomic<int> landed_ = 0;
+};
+
+class ColdableSceneryCache final : public SceneryCache
+{
+public:
+    explicit ColdableSceneryCache(SceneryCache& inner) : inner_(inner)
+    {
+    }
+
+    void Forget(const bool forgetting)
+    {
+        forgetting_ = forgetting;
+    }
+
+    [[nodiscard]] std::optional<RememberedScenery> Remember(const std::filesystem::path& addonFolder) const override
+    {
+        return forgetting_ ? std::nullopt : inner_.Remember(addonFolder);
+    }
+
+    void Keep(const std::filesystem::path& addonFolder, const RememberedScenery& scenery) override
+    {
+        inner_.Keep(addonFolder, scenery);
+    }
+
+    void WriteWhatIsKept() override
+    {
+        inner_.WriteWhatIsKept();
+    }
+
+private:
+    SceneryCache& inner_;
+    std::atomic<bool> forgetting_ = false;
 };
 
 class NoLibrariesToScan final : public CatalogScanner

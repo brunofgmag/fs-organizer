@@ -38,11 +38,6 @@ std::optional<std::string> ImportViewModel::RunningSimulator() const
     return probe_.RunningSimulator();
 }
 
-ConflictDetails ImportViewModel::DetailsOf(const CopyConflict& conflict) const
-{
-    return service_.DetailsOf(session_.Snapshot().entries, conflict);
-}
-
 void ImportViewModel::PrepareConflictDetails(const std::vector<CopyConflict>& conflicts)
 {
     if (conflicts.empty())
@@ -67,11 +62,6 @@ void ImportViewModel::PrepareConflictDetails(const std::vector<CopyConflict>& co
         {
             emit ConflictDetailsReady(conflicts, *details);
         });
-}
-
-std::uintmax_t ImportViewModel::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const
-{
-    return service_.TotalSizeOf(folders);
 }
 
 void ImportViewModel::LookForLeftovers()
@@ -108,15 +98,18 @@ void ImportViewModel::UndoInterruptedSwaps(const std::vector<InterruptedSwap>& s
     }
 
     const SimulatorProfile profile = Profile();
+    const auto undone = std::make_shared<std::vector<FileOperationResult>>();
 
     running_.Run(
-        [this, profile, swaps]
+        [this, profile, swaps, undone]
         {
-            static_cast<void>(service_.UndoInterruptedSwaps(profile, swaps));
+            *undone = service_.UndoInterruptedSwaps(profile, swaps);
         },
-        [this]
+        [this, undone]
         {
             session_.RefreshEntries();
+
+            emit InterruptedSwapsUndone(*undone);
         });
 }
 

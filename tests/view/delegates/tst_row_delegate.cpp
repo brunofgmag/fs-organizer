@@ -37,6 +37,9 @@ namespace
         static void ATextCutInTheFontTheViewportDrawsAnswersWithATooltip();
         static void TheWidthACellAsksForFitsTheFontTheViewportDraws();
         static void AnEmphasisedNameIsCutInTheWeightItIsDrawnIn();
+        static void TheTwoLinesOfALeadingCellAreABlockCentredInTheRow();
+        static void ACellBesideTwoLinesOfTextDrawsOnTheFirstLine();
+        static void WithoutALeadingCellTheSecondLineStillStartsAtTheMiddleOfTheRow();
     };
 }
 
@@ -561,6 +564,153 @@ void RowDelegateTest::AnEmphasisedNameIsCutInTheWeightItIsDrawnIn()
     table.model.item(0, 0)->setData(true, EmphasisRole);
 
     QVERIFY2(table.AsksForATooltipOn(tightest), "the name was cut in its heavier weight with no way to read the rest");
+}
+
+namespace
+{
+    constexpr int kTwoLinesRow = 46;
+    constexpr int kBetweenTheTwoLines = 4;
+    constexpr auto kCapitals = "HHHH";
+
+    struct Band
+    {
+        int top = 0;
+        int bottom = 0;
+    };
+
+    struct RowOfTwoCells
+    {
+        QStandardItemModel model{1, 2};
+        QTableView view;
+        RowDelegate delegate;
+        QImage painted;
+
+        RowOfTwoCells(const bool firstCellLeads, const QString& secondLine)
+        {
+            auto* leading = new QStandardItem(QString::fromLatin1(kCapitals));
+            leading->setData(secondLine, SecondLineRole);
+            model.setItem(0, 0, leading);
+            model.setItem(0, 1, new QStandardItem(QString::fromLatin1(kCapitals)));
+
+            delegate.KeepRowsAtLeast(kTwoLinesRow);
+
+            if (firstCellLeads)
+            {
+                delegate.LetTheFirstCellLeadTheRow();
+            }
+
+            view.setModel(&model);
+            view.setItemDelegate(&delegate);
+            view.verticalHeader()->setVisible(false);
+            view.verticalHeader()->setDefaultSectionSize(kTwoLinesRow);
+            view.horizontalHeader()->setVisible(false);
+            view.setShowGrid(false);
+            view.resize(440, 80);
+            view.horizontalHeader()->resizeSection(0, 200);
+            view.horizontalHeader()->resizeSection(1, 200);
+            view.show();
+            static_cast<void>(QTest::qWaitForWindowExposed(&view));
+
+            QPixmap shot(view.viewport()->size());
+            shot.fill(Qt::transparent);
+            view.viewport()->render(&shot);
+            painted = shot.toImage();
+        }
+
+        [[nodiscard]] QList<Band> InkIn(const int column) const
+        {
+            const QRect cell = view.visualRect(model.index(0, column));
+            const QColor ground = painted.pixelColor(cell.right() - 1, cell.top() + 1);
+
+            QList<Band> bands;
+
+            for (int y = cell.top(); y <= cell.bottom(); ++y)
+            {
+                bool inked = false;
+
+                for (int x = cell.left(); x <= cell.right() && !inked; ++x)
+                {
+                    inked = painted.pixelColor(x, y) != ground;
+                }
+
+                if (inked && (bands.isEmpty() || bands.last().bottom != y - 1))
+                {
+                    bands.append({.top = y, .bottom = y});
+                }
+                else if (inked)
+                {
+                    bands.last().bottom = y;
+                }
+            }
+
+            return bands;
+        }
+
+        [[nodiscard]] int Line() const
+        {
+            return QFontMetrics(view.viewport()->font()).height();
+        }
+    };
+}
+
+void RowDelegateTest::TheTwoLinesOfALeadingCellAreABlockCentredInTheRow()
+{
+    ApplyModernistTheme(*qApp);
+
+    const RowOfTwoCells alone(true, QString());
+    const RowOfTwoCells twoLines(true, QString::fromLatin1(kCapitals));
+
+    const QList<Band> single = alone.InkIn(0);
+    const QList<Band> both = twoLines.InkIn(0);
+
+    QCOMPARE(single.size(), 1);
+    QCOMPARE(both.size(), 2);
+
+    const int line = twoLines.Line();
+    QCOMPARE(both[1].top - both[0].top, line + kBetweenTheTwoLines);
+
+    const int above = (kTwoLinesRow - 2 * line - kBetweenTheTwoLines) / 2;
+    const int centred = (kTwoLinesRow - line) / 2;
+
+    QVERIFY2(qAbs((both[0].top - single[0].top) - (above - centred)) <= 1,
+             qPrintable(QStringLiteral("the first line starts at %1 and a lone line at %2 in a row of %3 with a line "
+                                       "of %4")
+                            .arg(both[0].top)
+                            .arg(single[0].top)
+                            .arg(kTwoLinesRow)
+                            .arg(line)));
+}
+
+void RowDelegateTest::ACellBesideTwoLinesOfTextDrawsOnTheFirstLine()
+{
+    ApplyModernistTheme(*qApp);
+
+    const RowOfTwoCells row(true, QString::fromLatin1(kCapitals));
+
+    const QList<Band> leading = row.InkIn(0);
+    const QList<Band> beside = row.InkIn(1);
+
+    QCOMPARE(leading.size(), 2);
+    QCOMPARE(beside.size(), 1);
+    QCOMPARE(beside[0].top, leading[0].top);
+    QCOMPARE(beside[0].bottom, leading[0].bottom);
+}
+
+void RowDelegateTest::WithoutALeadingCellTheSecondLineStillStartsAtTheMiddleOfTheRow()
+{
+    ApplyModernistTheme(*qApp);
+
+    const RowOfTwoCells row(false, QString::fromLatin1(kCapitals));
+
+    const QList<Band> leading = row.InkIn(0);
+    const QList<Band> beside = row.InkIn(1);
+    const int middle = row.view.visualRect(row.model.index(0, 0)).center().y();
+
+    QCOMPARE(leading.size(), 2);
+    QCOMPARE(beside.size(), 1);
+    QVERIFY(leading[0].bottom <= middle);
+    QVERIFY(leading[1].top >= middle);
+    QVERIFY(beside[0].top > leading[0].top);
 }
 
 QTEST_MAIN(RowDelegateTest)
