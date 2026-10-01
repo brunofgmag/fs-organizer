@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.56.4](https://github.com/brunofgmag/fs-organizer/compare/v0.56.3...v0.56.4) (2026-10-01)
+
+
+* run the third audit wave, show presets on two lines and refresh Diagnostics on a profile switch ([#205](https://github.com/brunofgmag/fs-organizer/issues/205)) ([d88b24c](https://github.com/brunofgmag/fs-organizer/commit/d88b24c0e078b8b77e6ffd43e18bb5790ee6ce4a))
+
+
+### Performance Improvements
+
+* run the third audit wave, show presets on two lines and refresh Diagnostics on a profile switch ([dcc0fa7](https://github.com/brunofgmag/fs-organizer/commit/dcc0fa7822dbaced3c923f767240c82e67a035f9)) ([d88b24c](https://github.com/brunofgmag/fs-organizer/commit/d88b24c0e078b8b77e6ffd43e18bb5790ee6ce4a))
+
 ## [0.56.3](https://github.com/brunofgmag/fs-organizer/compare/v0.56.2...v0.56.3) (2026-10-01)
 
 
