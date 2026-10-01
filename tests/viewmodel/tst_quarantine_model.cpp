@@ -2,6 +2,7 @@
 
 #include <QtCore/QDir>
 
+#include "domain/importing/ImportPaths.h"
 #include "viewmodel/QuarantineModel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SizeSummary.h"
@@ -24,6 +25,7 @@ namespace
         static void TheSourceColumnTellsTheFourWaysAnOriginCanBeAnswered();
         static void OnlyTheDisagreementIsLoudEnoughToWearATag();
         static void TheSelectionSumsWhatItMeasuredAndSaysHowMuchOfItItReached();
+        static void AnItemStrandedInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwap();
     };
 }
 
@@ -230,6 +232,18 @@ void QuarantineModelTest::TheSelectionSumsWhatItMeasuredAndSaysHowMuchOfItItReac
     QCOMPARE(counted.bytes, 2ULL * 1024 * 1024);
     QVERIFY2(SizeOfTheSelection(counted).contains(QStringLiteral("1 of 2")),
              "an item nobody measured is not a zero, and the sum has to say so");
+}
+
+void QuarantineModelTest::AnItemStrandedInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwap()
+{
+    QuarantineModel model;
+    model.ShowItems({QuarantinedItem{.path = SwapSlotFor("D:/Library/_fsorganizer-quarantine/simbridge"),
+                                     .origin = "D:/Library/Utils/simbridge",
+                                     .quarantinedAt = kMoment,
+                                     .source = OriginSource::Sidecar}});
+
+    QCOMPARE(CellOf(model, 0, QuarantineModel::NameColumn), QStringLiteral("simbridge"));
+    QVERIFY(model.ItemAt(model.index(0, 0))->path == SwapSlotFor("D:/Library/_fsorganizer-quarantine/simbridge"));
 }
 
 QTEST_APPLESS_MAIN(QuarantineModelTest)

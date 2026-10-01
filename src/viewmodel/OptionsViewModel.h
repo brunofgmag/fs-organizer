@@ -68,6 +68,8 @@ public:
 
     [[nodiscard]] bool ShowsTheProfileInUse() const;
 
+    [[nodiscard]] bool Busy() const;
+
     void RemoveProfile(const std::string& profileId, bool disablingWhatItLeftBehind);
 
     [[nodiscard]] std::size_t AddonsInTheActiveProfile() const;
@@ -109,6 +111,8 @@ public:
 signals:
     void Changed();
 
+    void BusyChanged();
+
     void LibraryRegistered(const std::filesystem::path& path, const LibraryReport& report);
 
     void LinkTypeChosen(LinkType linkType);
@@ -143,6 +147,7 @@ private:
     [[nodiscard]] QString LabelOfProfile(const std::string& profileId) const;
     [[nodiscard]] QString LabelOfLibrary(const LibraryId& libraryId) const;
     [[nodiscard]] bool WouldRemoveProfile(const std::string& profileId) const;
+    void RunInTheBackground(std::function<void()> work, std::function<void()> done);
     void DisableThenRemove(const std::shared_ptr<DisablingWork>& work, std::function<void()> removal);
     void FinishRemovingProfile(const std::string& profileId, const QString& label);
     void FinishUnregistering(const LibraryId& libraryId, const QString& label);

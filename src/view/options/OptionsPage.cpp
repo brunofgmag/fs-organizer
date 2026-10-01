@@ -169,6 +169,7 @@ OptionsPage::OptionsPage(OptionsViewModel& viewModel,
     connect(navigation_, &QListWidget::currentRowChanged, panes_, &QStackedWidget::setCurrentIndex);
 
     connect(&viewModel_, &OptionsViewModel::Changed, this, &OptionsPage::Reload);
+    connect(&viewModel_, &OptionsViewModel::BusyChanged, this, &OptionsPage::ApplyBusy);
 
     Reload();
 }
@@ -634,7 +635,7 @@ void OptionsPage::Reload()
 
     destinationsHeading_->setText(tr("Destinations of %1").arg(whose).toUpper());
     librariesHeading_->setText(tr("Libraries of %1").arg(whose).toUpper());
-    addLibrary_->setEnabled(inUse);
+    addLibrary_->setEnabled(CanChangeTheLibraries());
     importLegacy_->setEnabled(inUse);
     onlyForTheProfileInUse_->setVisible(!inUse);
 
@@ -656,6 +657,31 @@ void OptionsPage::Reload()
     }
 
     emit SummaryChanged(tr("%1 · saved on every change").arg(AsText(settingsFile_)));
+}
+
+bool OptionsPage::CanRemoveAProfile() const
+{
+    return !viewModel_.Busy() && viewModel_.Profiles().size() > 1;
+}
+
+bool OptionsPage::CanChangeTheLibraries() const
+{
+    return !viewModel_.Busy() && viewModel_.ShowsTheProfileInUse();
+}
+
+void OptionsPage::ApplyBusy() const
+{
+    addLibrary_->setEnabled(CanChangeTheLibraries());
+
+    for (QPushButton* remove : findChildren<QPushButton*>(QStringLiteral("RemoveProfile")))
+    {
+        remove->setEnabled(CanRemoveAProfile());
+    }
+
+    for (QPushButton* unregister : findChildren<QPushButton*>(QStringLiteral("UnregisterLibrary")))
+    {
+        unregister->setEnabled(CanChangeTheLibraries());
+    }
 }
 
 void OptionsPage::ReloadProfiles()
@@ -695,7 +721,8 @@ void OptionsPage::ReloadProfiles()
         layout->addWidget(edit);
 
         auto* remove = new QPushButton(tr("Remove"), row);
-        remove->setEnabled(viewModel_.Profiles().size() > 1);
+        remove->setObjectName(QStringLiteral("RemoveProfile"));
+        remove->setEnabled(CanRemoveAProfile());
         layout->addWidget(remove);
 
         connect(chosen, &QRadioButton::clicked, this,
@@ -785,7 +812,7 @@ void OptionsPage::ReloadLibraries()
 
         auto* unregister = new QPushButton(tr("Remove"), row);
         unregister->setObjectName(QStringLiteral("UnregisterLibrary"));
-        unregister->setEnabled(library.counted);
+        unregister->setEnabled(CanChangeTheLibraries());
         layout->addWidget(unregister);
 
         const std::filesystem::path path = library.path;

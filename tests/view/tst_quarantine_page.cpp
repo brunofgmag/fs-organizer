@@ -57,6 +57,8 @@ namespace
         static void TheActionsOnlyLightUpWhenSomethingIsSelected();
         static void EmptyingIsOfferedWhileAnythingIsHeldAndNeverWhenNothingIs();
         static void EmptyingPutsAProgressDialogUpAndTakesItDownWhenTheRunnerLands();
+        static void NoControlStartsAnotherGestureWhileThePreparationOfARestoreRuns();
+        static void NoControlStartsAnotherGestureWhileADiscardRuns();
         static void ClosingThePanelLetsGoOfTheSelectionThatSummonedIt();
         static void ALanguageChangeKeepsTheToolbarAndTheEmptyState();
     };
@@ -173,6 +175,47 @@ namespace
         return model.index(row, QuarantineModel::NameColumn, {}).data(Qt::DisplayRole).toString();
     }
 
+    struct GestureControls
+    {
+        explicit GestureControls(const QuarantinePage& page)
+            : restore(ButtonSaying(page, QStringLiteral("Restore selected"))),
+              discard(ButtonSaying(page, QStringLiteral("Discard selected"))),
+              empty(ButtonSaying(page, QStringLiteral("Empty the quarantine"))),
+              restoreFromPanel(ButtonSaying(page, QStringLiteral("Restore")))
+        {
+        }
+
+        [[nodiscard]] bool AllExist() const
+        {
+            return restore != nullptr && discard != nullptr && empty != nullptr && restoreFromPanel != nullptr;
+        }
+
+        [[nodiscard]] QStringList Enabled() const
+        {
+            QStringList enabled;
+
+            for (const QPushButton* button : {restore, discard, empty, restoreFromPanel})
+            {
+                if (button->isEnabled())
+                {
+                    enabled << button->text();
+                }
+            }
+
+            return enabled;
+        }
+
+        [[nodiscard]] QStringList Every() const
+        {
+            return {restore->text(), discard->text(), empty->text(), restoreFromPanel->text()};
+        }
+
+        const QPushButton* restore;
+        const QPushButton* discard;
+        const QPushButton* empty;
+        const QPushButton* restoreFromPanel;
+    };
+
     void Pick(const QuarantinePage& page, const int firstRow, const int lastRow)
     {
         QTableView* table = TableOf(page);
@@ -284,6 +327,65 @@ void QuarantinePageTest::EmptyingPutsAProgressDialogUpAndTakesItDownWhenTheRunne
     f.runner.Finish();
 
     QVERIFY2(!progress->isVisible(), "the sign goes away with the work that summoned it");
+}
+
+void QuarantinePageTest::NoControlStartsAnotherGestureWhileThePreparationOfARestoreRuns()
+{
+    Fixture f;
+    f.Open();
+    Pick(f.page, 0, 0);
+
+    const GestureControls controls(f.page);
+
+    QVERIFY(controls.AllExist());
+    QCOMPARE(controls.Enabled(), controls.Every());
+
+    f.runner.defer = true;
+    ButtonSaying(f.page, QStringLiteral("Restore selected"))->click();
+
+    QVERIFY(f.viewModel.Busy());
+    QCOMPARE(controls.Enabled(), QStringList{});
+
+    Pick(f.page, 0, 1);
+
+    QCOMPARE(controls.Enabled(), QStringList{});
+
+    QStringList enabledWhenTheOffersArrived;
+    QTimer::singleShot(0, &f.page,
+                       [&controls, &enabledWhenTheOffersArrived]
+                       {
+                           enabledWhenTheOffersArrived = controls.Enabled();
+                           QApplication::activeModalWidget()->close();
+                       });
+
+    f.runner.Finish();
+
+    QCOMPARE(enabledWhenTheOffersArrived, controls.Every());
+    QCOMPARE(controls.Enabled(), controls.Every());
+}
+
+void QuarantinePageTest::NoControlStartsAnotherGestureWhileADiscardRuns()
+{
+    Fixture f;
+    f.Open();
+    Pick(f.page, 0, 0);
+
+    const GestureControls controls(f.page);
+
+    QVERIFY(controls.AllExist());
+
+    const QuarantinedItem* held = f.model.ItemAt(f.model.index(0, QuarantineModel::NameColumn, {}));
+    QVERIFY(held != nullptr);
+
+    f.runner.defer = true;
+    f.viewModel.Discard({*held});
+
+    QCOMPARE(controls.Enabled(), QStringList{});
+
+    f.runner.Finish();
+
+    QVERIFY(!f.viewModel.Busy());
+    QCOMPARE(controls.Enabled(), controls.Every());
 }
 
 void QuarantinePageTest::ClosingThePanelLetsGoOfTheSelectionThatSummonedIt()

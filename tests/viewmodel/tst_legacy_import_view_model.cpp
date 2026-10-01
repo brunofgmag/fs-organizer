@@ -36,6 +36,8 @@ namespace
         static void ALibraryWhoseRootIsGoneWaitsForNothing();
         static void TheCounterAnswersHowManyPresetsAreInTheFolder();
         static void NoPresetWaitsInAnInstallationThatNamesNoPresetsFolder();
+        static void AnImportThatNothingDisturbedRegistersTheLibraryAndAnnouncesOnce();
+        static void AnImportRefusedBecauseAnotherSaveLandedRunsAgainAndAnnouncesOnce();
     };
 }
 
@@ -45,6 +47,20 @@ namespace
     constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
     constexpr auto kAddon = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
     constexpr auto kLegacy2024 = "C:/ProgramData/MSFS Addons Linker 2024";
+    constexpr auto kSecond = "D:/Second Library";
+    constexpr auto kThird = "D:/Third Library";
+
+    std::vector<std::string> LibraryPathsStored(const FakeSettingsRepository& repository)
+    {
+        std::vector<std::string> paths;
+
+        for (const Library& library : repository.stored.profiles.front().libraries)
+        {
+            paths.push_back(ComparablePath(library.path));
+        }
+
+        return paths;
+    }
 
     TreeNode LibraryTree()
     {
@@ -188,6 +204,64 @@ void LegacyImportViewModelTest::NoPresetWaitsInAnInstallationThatNamesNoPresetsF
     const Fixture f;
 
     QCOMPARE(f.viewModel.PresetsWaitingIn({}), std::size_t{0});
+}
+
+void LegacyImportViewModelTest::AnImportThatNothingDisturbedRegistersTheLibraryAndAnnouncesOnce()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kThird);
+    f.catalog.SetTree(kThird, TreeNode{});
+    int announced = 0;
+    QObject::connect(&f.viewModel, &LegacyImportViewModel::Imported, &f.viewModel,
+                     [&announced](const LegacyImportReport&)
+                     {
+                         ++announced;
+                     });
+
+    f.viewModel.Import(LegacyImportRequest{.libraryRoots = {kThird}, .categories = {}}, {});
+
+    QCOMPARE(announced, 1);
+    QCOMPARE(LibraryPathsStored(f.settings),
+             (std::vector<std::string>{ComparablePath(kLibrary), ComparablePath(kThird)}));
+}
+
+void LegacyImportViewModelTest::AnImportRefusedBecauseAnotherSaveLandedRunsAgainAndAnnouncesOnce()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kThird);
+    f.catalog.SetTree(kThird, TreeNode{});
+    QVERIFY(f.session.Rewrite(
+        [](AppSettings& settings)
+        {
+            settings.profiles.front().libraries.push_back(
+                Library{.id = "library-2", .path = kSecond, .label = "Second"});
+
+            return true;
+        }));
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+    int announced = 0;
+    std::size_t registered = 0;
+    QObject::connect(&f.viewModel, &LegacyImportViewModel::Imported, &f.viewModel,
+                     [&announced, &registered](const LegacyImportReport& report)
+                     {
+                         ++announced;
+                         registered = report.librariesRegistered;
+                     });
+
+    f.viewModel.Import(LegacyImportRequest{.libraryRoots = {kThird}, .categories = {}}, {});
+    f.session.UnregisterLibrary("library-2");
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(announced, 1);
+    QCOMPARE(registered, std::size_t{1});
+    QCOMPARE(LibraryPathsStored(f.settings),
+             (std::vector<std::string>{ComparablePath(kLibrary), ComparablePath(kThird)}));
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
 }
 
 QTEST_GUILESS_MAIN(LegacyImportViewModelTest)

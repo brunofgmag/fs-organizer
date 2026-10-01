@@ -64,6 +64,8 @@ namespace
         static void TheOnlyProfileCannotBeRemoved();
         static void RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown();
         static void TheEndOfARemovalIsSaidFromWhatTheViewModelAnnounces();
+        static void WhileTheRunnerWorksNoControlOffersAnotherRemovalOrRegistration();
+        static void WhatWasOffDuringTheRunStaysOffForItsOwnReasonWhenTheRunLands();
     };
 }
 
@@ -72,6 +74,7 @@ namespace
     constexpr auto kLibrary = "D:/MSFS 2024";
     constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
     constexpr auto kAddon = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+    constexpr auto kThirdLibrary = "D:/Third Library";
     constexpr auto kSettingsFile = "C:/Users/bruno/AppData/Local/fs-organizer/settings.json";
 
     TreeNode LibraryTree()
@@ -114,6 +117,18 @@ namespace
         }
 
         return last;
+    }
+
+    bool EveryButtonNamed(const QWidget& page, const QString& name, const bool enabled)
+    {
+        const QList<QPushButton*> buttons = page.findChildren<QPushButton*>(name);
+
+        return !buttons.isEmpty()
+            && std::ranges::all_of(buttons,
+                                   [enabled](const QPushButton* button)
+                                   {
+                                       return button->isEnabled() == enabled;
+                                   });
     }
 
     Question WhatClickingAsks(QPushButton* button)
@@ -231,6 +246,27 @@ namespace
         UpdateViewModel updates{updateService, UpdateMode::Notify, true, delivery};
         OptionsPage page{viewModel, updates, kSettingsFile};
     };
+}
+
+namespace
+{
+    void LandARefusedRegistration(Fixture& f)
+    {
+        f.runner.defer = true;
+        f.viewModel.RegisterLibrary(std::filesystem::path(kLibrary) / "Inside");
+
+        QTimer::singleShot(0,
+                           []
+                           {
+                               if (QWidget* warning = QApplication::activeModalWidget(); warning != nullptr)
+                               {
+                                   warning->close();
+                               }
+                           });
+
+        f.runner.defer = false;
+        f.runner.Finish();
+    }
 }
 
 void OptionsPageTest::TheLanguageTabOffersBothAndOpensOnTheStoredOne()
@@ -542,6 +578,69 @@ void OptionsPageTest::TheEndOfARemovalIsSaidFromWhatTheViewModelAnnounces()
     QCOMPARE(said.at(1).front().toString(), QStringLiteral("Removed Legado."));
     QCOMPARE(said.at(2).front().toString(),
              QStringLiteral("MSFS 2024 was not removed: at least one profile is needed."));
+}
+
+void OptionsPageTest::WhileTheRunnerWorksNoControlOffersAnotherRemovalOrRegistration()
+{
+    Fixture f;
+    f.Seed(
+        [](AppSettings& settings)
+        {
+            settings.profiles.push_back(SecondProfile());
+        });
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    f.page.Reload();
+
+    const QString addLibrary = QStringLiteral("Add library…");
+    const QString removeProfile = QStringLiteral("RemoveProfile");
+    const QString unregisterLibrary = QStringLiteral("UnregisterLibrary");
+
+    QVERIFY(ButtonSaying(f.page, addLibrary)->isEnabled());
+    QVERIFY(EveryButtonNamed(f.page, removeProfile, true));
+    QVERIFY(EveryButtonNamed(f.page, unregisterLibrary, true));
+
+    f.runner.defer = true;
+    f.viewModel.RegisterLibrary(kThirdLibrary);
+
+    QVERIFY(!ButtonSaying(f.page, addLibrary)->isEnabled());
+    QVERIFY(EveryButtonNamed(f.page, removeProfile, false));
+    QVERIFY(EveryButtonNamed(f.page, unregisterLibrary, false));
+
+    f.runner.defer = false;
+    f.runner.Finish();
+
+    QVERIFY(ButtonSaying(f.page, addLibrary)->isEnabled());
+    QVERIFY(EveryButtonNamed(f.page, removeProfile, true));
+    QVERIFY(EveryButtonNamed(f.page, unregisterLibrary, true));
+}
+
+void OptionsPageTest::WhatWasOffDuringTheRunStaysOffForItsOwnReasonWhenTheRunLands()
+{
+    Fixture alone;
+
+    LandARefusedRegistration(alone);
+
+    QVERIFY2(EveryButtonNamed(alone.page, QStringLiteral("RemoveProfile"), false),
+             "the only profile became removable when the run landed");
+
+    Fixture elsewhere;
+    elsewhere.Seed(
+        [](AppSettings& settings)
+        {
+            settings.profiles.push_back(SecondProfile());
+        });
+    elsewhere.page.Reload();
+
+    LastButtonLabelled(elsewhere.page, QStringLiteral("View…"))->click();
+
+    LandARefusedRegistration(elsewhere);
+
+    QVERIFY2(!ButtonSaying(elsewhere.page, QStringLiteral("Add library…"))->isEnabled(),
+             "Add library became available for a profile that is not in use when the run landed");
+    QVERIFY2(EveryButtonNamed(elsewhere.page, QStringLiteral("UnregisterLibrary"), false),
+             "Remove became available on a library of a profile that is not in use when the run landed");
+    QVERIFY(EveryButtonNamed(elsewhere.page, QStringLiteral("RemoveProfile"), true));
 }
 
 void OptionsPageTest::TheOnlyProfileCannotBeRemoved()

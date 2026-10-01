@@ -114,6 +114,11 @@ namespace
         static void AFolderWhoseNameTheBatchLandedInAnotherLibraryIsNotATwin();
         static void ARequestTheCallerStopsAtAndEveryOneAfterItAreCancelledUntouched();
         static void TheSimulatorStartingBetweenTwoRequestsRefusesTheRest();
+        static void AResumeStopsAtTheLeftoverTheCallerStopsAtAndCancelsEveryOneAfterIt();
+        static void TheSimulatorStartingBetweenTwoLeftoversRefusesTheRest();
+        static void AnItemStrandedInItsSwapSlotIsListedWithTheOriginOfItsRealName();
+        static void AnItemStrandedInItsSwapSlotIsOfferedEveryPlaceUnderItsRealName();
+        static void AnItemStrandedInItsSwapSlotIsMarkedAsReplacedByTheDestinationFolderOfItsRealName();
         static void OffersForManyItemsScanTheirLibraryOnce();
     };
 }
@@ -252,6 +257,29 @@ namespace
             }
 
             return requests;
+        }
+
+        [[nodiscard]] std::vector<StagingLeftover> ThreeLeftoversIntoUtils()
+        {
+            fileSystem.AddDirectory(kLibrary);
+            fileSystem.AddDirectory("D:/Library/Utils");
+
+            std::vector<StagingLeftover> leftovers;
+
+            for (const char* name : {"alpha", "beta", "gamma"})
+            {
+                const std::filesystem::path source = kDestination / name;
+                const std::filesystem::path target = std::filesystem::path{"D:/Library/Utils"} / name;
+                const std::filesystem::path staging =
+                    std::filesystem::path{"D:/Library/Utils"} / (std::string{name} + ".fsorg-partial");
+
+                AddASource(source);
+                fileSystem.AddDirectory(staging);
+                fileSystem.AddFile(staging / "half.bin", kMegabyte);
+                leftovers.push_back(StagingLeftover{.staging = staging, .target = target, .source = source});
+            }
+
+            return leftovers;
         }
 
         void AddBothCopies()
@@ -2024,6 +2052,111 @@ void ImportServiceTest::TheSimulatorStartingBetweenTwoRequestsRefusesTheRest()
     QVERIFY(f.fileSystem.Exists(requests[1].source / "manifest.json"));
     QVERIFY(!f.fileSystem.Exists(requests[1].Target()));
     QVERIFY(!f.fileSystem.Exists(requests[2].Target()));
+}
+
+void ImportServiceTest::AResumeStopsAtTheLeftoverTheCallerStopsAtAndCancelsEveryOneAfterIt()
+{
+    Fixture f;
+    const std::vector<StagingLeftover> leftovers = f.ThreeLeftoversIntoUtils();
+    std::vector<std::size_t> asked;
+
+    const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, leftovers, {}, {},
+                                                                        [&asked](const std::size_t request)
+                                                                        {
+                                                                            asked.push_back(request);
+
+                                                                            return request < 1;
+                                                                        });
+
+    QCOMPARE(results.size(), std::size_t{3});
+    QCOMPARE(results[0].result, FileResult::Completed);
+    QCOMPARE(results[1].result, FileResult::Cancelled);
+    QCOMPARE(results[2].result, FileResult::Cancelled);
+    QCOMPARE(asked, (std::vector<std::size_t>{0, 1}));
+    QVERIFY(f.fileSystem.Exists(leftovers[1].staging / "half.bin"));
+    QVERIFY(f.fileSystem.Exists(leftovers[2].staging / "half.bin"));
+    QVERIFY(!f.fileSystem.Exists(leftovers[1].target));
+    QVERIFY(!f.fileSystem.Exists(leftovers[2].target));
+}
+
+void ImportServiceTest::TheSimulatorStartingBetweenTwoLeftoversRefusesTheRest()
+{
+    Fixture f;
+    const std::vector<StagingLeftover> leftovers = f.ThreeLeftoversIntoUtils();
+
+    const std::vector<ImportOperationResult> results =
+        f.service.Resume(f.profile, leftovers, {}, {},
+                         [&f](const std::size_t request)
+                         {
+                             if (request == 1)
+                             {
+                                 f.processProbe.ReportTheSimulatorAsRunning();
+                             }
+
+                             return true;
+                         });
+
+    QCOMPARE(results.size(), std::size_t{3});
+    QCOMPARE(results[0].result, FileResult::Completed);
+    QCOMPARE(results[1].result, FileResult::TheSimulatorIsRunning);
+    QCOMPARE(results[2].result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.Exists(leftovers[1].staging / "half.bin"));
+    QVERIFY(f.fileSystem.Exists(leftovers[2].staging / "half.bin"));
+    QVERIFY(!f.fileSystem.Exists(leftovers[1].target));
+    QVERIFY(!f.fileSystem.Exists(leftovers[2].target));
+}
+
+void ImportServiceTest::AnItemStrandedInItsSwapSlotIsListedWithTheOriginOfItsRealName()
+{
+    Fixture f;
+    f.QuarantineHolds(kHeldInLibrary, kInLibrary, kInLibrary);
+    f.fileSystem.AddDirectory(SwapSlotFor(kHeldInLibrary));
+    f.fileSystem.AddFile(SwapSlotFor(kHeldInLibrary) / "manifest.json", kMegabyte);
+
+    const std::vector<QuarantinedItem> items = f.service.Quarantined(f.profile);
+
+    QCOMPARE(items.size(), std::size_t{2});
+
+    const auto stranded = std::ranges::find_if(items,
+                                               [](const QuarantinedItem& item)
+                                               {
+                                                   return item.path == SwapSlotFor(kHeldInLibrary);
+                                               });
+    QVERIFY(stranded != items.end());
+    QCOMPARE(stranded->origin, kInLibrary);
+    QCOMPARE(stranded->source, OriginSource::Sidecar);
+    QVERIFY(stranded->quarantinedAt.has_value());
+}
+
+void ImportServiceTest::AnItemStrandedInItsSwapSlotIsOfferedEveryPlaceUnderItsRealName()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.fileSystem.AddDirectory(SwapSlotFor(kHeldInLibrary));
+    f.TheLibraryIsShapedLike({"D:/Library/Utils"});
+
+    const std::vector<RestorePlace> places =
+        f.service.PlacesFor(f.profile, QuarantinedItem{.path = SwapSlotFor(kHeldInLibrary)});
+
+    QCOMPARE(places.size(), std::size_t{2});
+    QCOMPARE(places.front().target, std::filesystem::path{"D:/Library/simbridge"});
+    QCOMPARE(places.back().target, std::filesystem::path{"D:/Library/Utils/simbridge"});
+}
+
+void ImportServiceTest::AnItemStrandedInItsSwapSlotIsMarkedAsReplacedByTheDestinationFolderOfItsRealName()
+{
+    Fixture f;
+    const std::filesystem::path stranded = SwapSlotFor("E:/Sim/_fsorganizer-quarantine/simbridge");
+
+    f.fileSystem.AddDirectory(stranded);
+
+    const std::vector<QuarantineDetail> details = f.service.Describe(
+        {DestinationEntry{.path = kInDestination, .target = {}, .classification = EntryClassification::Unmanaged}},
+        {QuarantinedItem{.path = stranded}});
+
+    QCOMPARE(details.front().path, stranded);
+    QVERIFY(details.front().WasReplaced());
+    QCOMPARE(details.front().replacedBy, kInDestination);
 }
 
 void ImportServiceTest::OffersForManyItemsScanTheirLibraryOnce()

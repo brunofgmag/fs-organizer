@@ -10,6 +10,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 
+#include "domain/importing/ImportPaths.h"
 #include "support/PathText.h"
 #include "view/ScrollThatReportsItsContent.h"
 #include "view/theme/ModernistMetrics.h"
@@ -161,7 +162,7 @@ QString RestoreDialog::WhatGoingBackMeansFor(const RestoreCheck& check)
 
 void RestoreDialog::AddTheSettledRow(QGridLayout& grid, const RestoreOffer& offer, const int row)
 {
-    auto* name = new QLabel(AsText(offer.check.item.path.filename()), grid.parentWidget());
+    auto* name = new QLabel(AsText(ItemOfTheSwapSlot(offer.check.item.path).filename()), grid.parentWidget());
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
     grid.addWidget(name, row, 0, Qt::AlignTop);
 
@@ -174,7 +175,7 @@ void RestoreDialog::AddTheSettledRow(QGridLayout& grid, const RestoreOffer& offe
 
 void RestoreDialog::AddTheQuestionRow(QGridLayout& grid, const Choice& choice, const int row)
 {
-    auto* name = new QLabel(AsText(choice.offer.check.item.path.filename()), grid.parentWidget());
+    auto* name = new QLabel(AsText(ItemOfTheSwapSlot(choice.offer.check.item.path).filename()), grid.parentWidget());
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
     grid.addWidget(name, row, 0, Qt::AlignTop);
 
@@ -190,7 +191,7 @@ void RestoreDialog::AddTheQuestionRow(QGridLayout& grid, const Choice& choice, c
 
 void RestoreDialog::AddTheCollisionRow(QGridLayout& grid, const Collision& collision, const int row)
 {
-    auto* name = new QLabel(AsText(collision.offer.check.item.path.filename()), grid.parentWidget());
+    auto* name = new QLabel(AsText(ItemOfTheSwapSlot(collision.offer.check.item.path).filename()), grid.parentWidget());
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
     grid.addWidget(name, row, 0, Qt::AlignTop);
 

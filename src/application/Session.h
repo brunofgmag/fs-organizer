@@ -64,20 +64,21 @@ public:
 
     void RefreshStartupEntries();
 
-    [[nodiscard]] LibraryReport RegisterLibrary(const std::filesystem::path& path);
-
     struct LibraryRegistration
     {
         SimulatorProfile profile{};
         LibraryReport report{};
+        int profileChanges = 0;
     };
 
     [[nodiscard]] bool WouldAcceptLibrary(const std::filesystem::path& path) const;
 
-    [[nodiscard]] LibraryRegistration RegisterLibraryOn(SimulatorProfile profile,
+    [[nodiscard]] LibraryRegistration BeginRegistration() const;
+
+    [[nodiscard]] LibraryRegistration RegisterLibraryOn(LibraryRegistration started,
                                                         const std::filesystem::path& path) const;
 
-    void AdoptTheRegistration(LibraryRegistration registered);
+    [[nodiscard]] bool AdoptTheRegistration(LibraryRegistration registered);
 
     [[nodiscard]] LibraryGrouping HowTheLibraryIsGrouped(const LibraryId& libraryId) const;
 
@@ -93,11 +94,14 @@ public:
     {
         SimulatorProfile profile{};
         LegacyImportReport report{};
+        int profileChanges = 0;
     };
 
-    [[nodiscard]] LegacyImport ImportLegacyOn(SimulatorProfile profile, const LegacyImportRequest& request) const;
+    [[nodiscard]] LegacyImport BeginLegacyImport() const;
 
-    void AdoptTheLegacyImport(LegacyImport imported);
+    [[nodiscard]] LegacyImport ImportLegacyOn(LegacyImport started, const LegacyImportRequest& request) const;
+
+    [[nodiscard]] bool AdoptTheLegacyImport(LegacyImport imported);
 
     void UnregisterLibrary(const LibraryId& libraryId);
 
@@ -111,35 +115,39 @@ public:
 
     [[nodiscard]] FileOperationResult CreateCategory(const std::filesystem::path& parent, const std::string& name);
 
-    [[nodiscard]] FileOperationResult RemoveCategory(const std::filesystem::path& category);
-
-    [[nodiscard]] FileOperationResult RenameCategory(const std::filesystem::path& category, const std::string& name);
-
-    [[nodiscard]] std::vector<FileOperationResult> MoveAddons(const std::vector<AddonMove>& moves);
+    struct FolderCarried
+    {
+        std::filesystem::path from{};
+        std::filesystem::path to{};
+    };
 
     struct ReorganizedLibrary
     {
         SimulatorProfile profile{};
         std::vector<FileOperationResult> results{};
+        std::vector<FolderCarried> carried{};
     };
 
     [[nodiscard]] FileOperationResult CheckRenameCategory(const std::filesystem::path& category,
                                                           const std::string& name) const;
 
-    [[nodiscard]] ReorganizedLibrary MoveAddonsOn(SimulatorProfile profile, const std::vector<AddonMove>& moves) const;
+    [[nodiscard]] ReorganizedLibrary BeginReorganization() const;
+
+    [[nodiscard]] ReorganizedLibrary MoveAddonsOn(ReorganizedLibrary started,
+                                                  const std::vector<AddonMove>& moves) const;
 
     [[nodiscard]] ReorganizedLibrary
-    RenameCategoryOn(SimulatorProfile profile, const std::filesystem::path& category, const std::string& name) const;
+    RenameCategoryOn(ReorganizedLibrary started, const std::filesystem::path& category, const std::string& name) const;
 
-    [[nodiscard]] ReorganizedLibrary RemoveCategoryOn(SimulatorProfile profile,
+    [[nodiscard]] ReorganizedLibrary RemoveCategoryOn(ReorganizedLibrary started,
                                                       const std::filesystem::path& category) const;
 
-    void AdoptTheReorganization(SimulatorProfile next, bool landed);
+    void AdoptTheReorganization(const ReorganizedLibrary& reorganized);
 
 private:
-    [[nodiscard]] const Library* LibraryNamed(const LibraryId& libraryId) const;
+    [[nodiscard]] SimulatorProfile LatestProfile() const;
 
-    [[nodiscard]] bool RememberTheDestination(const TreeNode& node, const std::filesystem::path& destination);
+    void Keep(SimulatorProfile next);
 
     void Scan(SimulatorProfile profile);
 
@@ -166,6 +174,7 @@ private:
     ProfileSnapshot scanned_;
     EntriesRead entriesRead_;
     int snapshotsAdopted_ = 0;
+    int profileChanges_ = 0;
     bool readingEntries_ = false;
     bool readEntriesAgain_ = false;
     std::optional<SimulatorProfile> queued_;

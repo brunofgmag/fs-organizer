@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "application/model/RestorePlan.h"
+#include "domain/importing/ImportPaths.h"
 #include "support/PathText.h"
 #include "tests/support/PathPrinting.h"
 #include "view/quarantine/RestoreDialog.h"
@@ -32,6 +33,7 @@ namespace
         static void TheTotalCountsTheReplacementsItSaysAreAmongThem();
         static void EveryOfferIsVisibleWithoutScrolling();
         static void TheViewportIsNoTallerThanWhatTheOffersNeed();
+        static void AnItemInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwapInEveryKindOfRow();
     };
 
     const std::filesystem::path kHeld = "D:/Library/_fsorganizer-quarantine/simbridge";
@@ -259,6 +261,37 @@ void RestoreDialogTest::TheViewportIsNoTallerThanWhatTheOffersNeed()
              qPrintable(QStringLiteral("the viewport is %1 tall for content that needs %2")
                             .arg(scroll->viewport()->height())
                             .arg(needed)));
+}
+
+void RestoreDialogTest::AnItemInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwapInEveryKindOfRow()
+{
+    const std::filesystem::path quarantine = kHeld.parent_path();
+
+    RestoreOffer settled = ASettledRestore();
+    settled.check.item.path = SwapSlotFor(quarantine / "alpha");
+
+    RestoreOffer asked = ASettledRestore();
+    asked.check.item.path = SwapSlotFor(quarantine / "beta");
+    asked.check.item.origin.clear();
+    asked.check.result = FileResult::TheOriginIsUnknown;
+    asked.places = {RestorePlace{.place = "D:/Library/Aircraft", .target = "D:/Library/Aircraft/beta"}};
+
+    RestoreOffer collided = ACollisionThatCanBeSwapped();
+    collided.check.item.path = SwapSlotFor(quarantine / "gamma");
+
+    const RestoreDialog dialog({settled, asked, collided}, AlwaysAgrees());
+
+    QStringList names;
+    for (const QLabel* label : dialog.findChildren<QLabel*>())
+    {
+        QVERIFY2(!label->text().contains(QStringLiteral("fsorg-swap")), qPrintable(label->text()));
+        names.push_back(label->text());
+    }
+
+    for (const QString& real : {QStringLiteral("alpha"), QStringLiteral("beta"), QStringLiteral("gamma")})
+    {
+        QVERIFY2(names.contains(real), qPrintable(real));
+    }
 }
 
 QTEST_MAIN(RestoreDialogTest)

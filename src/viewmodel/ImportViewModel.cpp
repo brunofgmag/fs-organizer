@@ -147,9 +147,8 @@ void ImportViewModel::SettleTheLeftovers(const std::vector<StagingLeftover>& toD
         {
             static_cast<void>(service_.DiscardLeftovers(profile, toDiscard));
 
-            folder_ = 1;
-
-            *landed = service_.Resume(profile, toResume, OnProgressOfFolder(folder_), OnStep());
+            *landed =
+                service_.Resume(profile, toResume, OnProgressOfTheFolderInCourse(), OnStep(), GoOnWithTheNextFolder());
         },
         [this, landed]
         {
@@ -171,18 +170,8 @@ void ImportViewModel::Import(const std::vector<ImportRequest>& requests)
     RunInAWorker(
         [this, profile, requests, landed]
         {
-            *landed = service_.Import(profile, requests, OnProgressOfTheFolderInCourse(), OnStep(),
-                                      [this](const std::size_t request)
-                                      {
-                                          if (cancelled_)
-                                          {
-                                              return false;
-                                          }
-
-                                          folder_ = static_cast<int>(request) + 1;
-
-                                          return true;
-                                      });
+            *landed =
+                service_.Import(profile, requests, OnProgressOfTheFolderInCourse(), OnStep(), GoOnWithTheNextFolder());
         },
         [this, landed]
         {
@@ -199,9 +188,8 @@ void ImportViewModel::Resume(const std::vector<StagingLeftover>& leftovers)
     RunInAWorker(
         [this, profile, leftovers, landed]
         {
-            folder_ = 1;
-
-            *landed = service_.Resume(profile, leftovers, OnProgressOfFolder(folder_), OnStep());
+            *landed =
+                service_.Resume(profile, leftovers, OnProgressOfTheFolderInCourse(), OnStep(), GoOnWithTheNextFolder());
         },
         [this, landed]
         {
@@ -240,6 +228,7 @@ void ImportViewModel::ResolveConflicts(const std::vector<ConflictToResolve>& cho
                 profileService_.ForgetUndo();
             }
 
+            emit TheDiskChanged();
             emit ConflictsResolved(*landed);
         },
         static_cast<int>(chosen.size()));
@@ -286,6 +275,21 @@ std::function<bool(const CopyProgress&)> ImportViewModel::OnProgressOfTheFolderI
     return [this](const CopyProgress& progress)
     {
         return Report(progress, folder_);
+    };
+}
+
+std::function<bool(std::size_t request)> ImportViewModel::GoOnWithTheNextFolder()
+{
+    return [this](const std::size_t request)
+    {
+        if (cancelled_)
+        {
+            return false;
+        }
+
+        folder_ = static_cast<int>(request) + 1;
+
+        return true;
     };
 }
 
@@ -343,6 +347,7 @@ void ImportViewModel::Adopt(const std::vector<ImportOperationResult>& results)
         profileService_.ForgetUndo();
     }
 
+    emit TheDiskChanged();
     emit Finished(results);
 }
 
@@ -365,5 +370,6 @@ void ImportViewModel::AdoptWhatWentBack(const std::vector<FileOperationResult>& 
         profileService_.ForgetUndo();
     }
 
+    emit TheDiskChanged();
     emit GaveBack(results);
 }

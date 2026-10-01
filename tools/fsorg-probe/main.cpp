@@ -164,7 +164,19 @@ namespace
 
     void ReportUsage()
     {
-        Out() << "usage: fsorg-probe --library <path> [--library <path>]\n";
+        Out() << "fsorg-probe: reads the real simulator install and your libraries and counts what it finds.\n"
+              << "It only reads: it writes nothing to the simulator folders, the libraries or your journal.\n"
+              << "\n"
+              << "usage: fsorg-probe --library <path> [--library <path>]\n"
+              << "\n"
+              << "  --library <path>   a library folder to scan, repeat it for each library (at least one is\n"
+              << "                     required, otherwise this text is printed and the exit code is 2)\n"
+              << "  --help             print this text and exit 0\n"
+              << "\n"
+              << "it reports whether the simulator is running, what the libraries hold (categories, folders,\n"
+              << "addons, empty folders, content_type counts) and, for every simulator install it locates, how\n"
+              << "each destination's entries classify (managed, external, broken, unmanaged...) and how many\n"
+              << "unmanaged ones clash with an addon or any folder of the libraries.\n";
     }
 
     void ReportLibrary(const LibraryFacts& facts)
@@ -238,6 +250,14 @@ namespace
 int main(int argc, char* argv[])
 {
     const QCoreApplication application(argc, argv);
+
+    if (QCoreApplication::arguments().contains(QStringLiteral("--help")))
+    {
+        ReportUsage();
+        Out().flush();
+
+        return 0;
+    }
 
     const std::vector<std::filesystem::path> libraries = ParseLibraryArguments(QCoreApplication::arguments());
 

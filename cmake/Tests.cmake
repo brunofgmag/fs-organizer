@@ -1481,6 +1481,14 @@ if (WIN32)
     target_link_libraries(fsorg-omitted-dialog-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-omitted-dialog-tests omitted-dialog)
 
+    fsorg_add_qt_test(fsorg-suggestion-dialog-tests suggestion-dialog
+            tests/view/tst_suggestion_dialog.cpp
+            tests/support/CatalogueBesideTheBuild.h
+            assets/resources.qrc)
+    target_link_libraries(fsorg-suggestion-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-suggestion-dialog-tests suggestion-dialog)
+    add_dependencies(fsorg-suggestion-dialog-tests release_translations)
+
     fsorg_add_qt_test(fsorg-community-page-tests community-page
             tests/view/tst_community_page.cpp
         tests/support/PageFloor.h

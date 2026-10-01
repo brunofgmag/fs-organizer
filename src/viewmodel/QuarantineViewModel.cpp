@@ -58,6 +58,11 @@ void QuarantineViewModel::ListWhatIsHeld()
         });
 }
 
+bool QuarantineViewModel::Busy() const
+{
+    return working_.Busy();
+}
+
 void QuarantineViewModel::Show()
 {
     shown_ = true;
@@ -130,12 +135,17 @@ void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& ite
     const auto offers = std::make_shared<std::vector<RestoreOffer>>();
 
     working_.Run(
+        [this]
+        {
+            emit BusyChanged();
+        },
         [this, profile, items, offers]
         {
             *offers = service_.OffersFor(profile, items);
         },
         [this, offers]
         {
+            emit BusyChanged();
             emit RestoreOffersReady(*offers);
         });
 }
@@ -175,6 +185,10 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
     const auto swapped = std::make_shared<std::vector<SwapResult>>();
 
     working_.Run(
+        [this]
+        {
+            emit BusyChanged();
+        },
         [this, profile, entries, going, replacing, restored, swapped]
         {
             if (!going.empty())
@@ -191,6 +205,8 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
         },
         [this, going, replacing, restored, swapped]
         {
+            emit BusyChanged();
+
             Show();
 
             const bool anythingCameBack = std::ranges::any_of(*restored,
@@ -236,6 +252,7 @@ void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
     working_.Run(
         [this, count = static_cast<int>(items.size())]
         {
+            emit BusyChanged();
             emit DiscardStarted(count);
         },
         [this, profile, items, results]
@@ -249,6 +266,8 @@ void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
         },
         [this, results]
         {
+            emit BusyChanged();
+
             Show();
 
             emit Discarded(*results);

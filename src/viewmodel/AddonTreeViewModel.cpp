@@ -430,19 +430,18 @@ std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, c
         return {};
     }
 
-    auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
-    reorganized->profile = session_.Profile();
+    auto reorganized = std::make_shared<Session::ReorganizedLibrary>(session_.BeginReorganization());
 
     toggling_.Run(
         [this, reorganized, category = node->path, chosen = wanted.toStdString()]
         {
-            *reorganized = session_.RenameCategoryOn(std::move(reorganized->profile), category, chosen);
+            *reorganized = session_.RenameCategoryOn(std::move(*reorganized), category, chosen);
         },
         [this, reorganized]
         {
-            const FileOperationResult& result = reorganized->results.front();
+            session_.AdoptTheReorganization(*reorganized);
 
-            session_.AdoptTheReorganization(std::move(reorganized->profile), TheFolderLanded(result.result));
+            const FileOperationResult& result = reorganized->results.front();
 
             if (!Succeeded(result.result))
             {
@@ -460,19 +459,18 @@ bool AddonTreeViewModel::CanRemoveCategory(const TreeNode* node)
 
 void AddonTreeViewModel::RemoveCategory(const TreeNode* node)
 {
-    auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
-    reorganized->profile = session_.Profile();
+    auto reorganized = std::make_shared<Session::ReorganizedLibrary>(session_.BeginReorganization());
 
     toggling_.Run(
         [this, reorganized, category = node->path]
         {
-            *reorganized = session_.RemoveCategoryOn(std::move(reorganized->profile), category);
+            *reorganized = session_.RemoveCategoryOn(std::move(*reorganized), category);
         },
         [this, reorganized]
         {
-            const FileOperationResult& result = reorganized->results.front();
+            session_.AdoptTheReorganization(*reorganized);
 
-            session_.AdoptTheReorganization(std::move(reorganized->profile), Succeeded(result.result));
+            const FileOperationResult& result = reorganized->results.front();
 
             if (!Succeeded(result.result))
             {
@@ -519,23 +517,16 @@ void AddonTreeViewModel::ApplySuggestions(const std::vector<CategorySuggestion>&
 
 void AddonTreeViewModel::Perform(const std::vector<AddonMove>& moves)
 {
-    auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
-    reorganized->profile = session_.Profile();
+    auto reorganized = std::make_shared<Session::ReorganizedLibrary>(session_.BeginReorganization());
 
     toggling_.Run(
         [this, reorganized, moves]
         {
-            *reorganized = session_.MoveAddonsOn(std::move(reorganized->profile), moves);
+            *reorganized = session_.MoveAddonsOn(std::move(*reorganized), moves);
         },
         [this, reorganized]
         {
-            const bool landed = std::ranges::any_of(reorganized->results,
-                                                    [](const FileOperationResult& result)
-                                                    {
-                                                        return TheFolderLanded(result.result);
-                                                    });
-
-            session_.AdoptTheReorganization(std::move(reorganized->profile), landed);
+            session_.AdoptTheReorganization(*reorganized);
 
             QStringList refusals;
 
@@ -722,19 +713,22 @@ bool AddonTreeViewModel::WouldAcceptLibrary(const std::filesystem::path& path) c
 
 void AddonTreeViewModel::AddLibrary(const std::filesystem::path& path)
 {
-    auto registration = std::make_shared<Session::LibraryRegistration>();
-    registration->profile = session_.Profile();
+    auto registration = std::make_shared<Session::LibraryRegistration>(session_.BeginRegistration());
 
     toggling_.Run(
         [this, registration, path]
         {
-            *registration = session_.RegisterLibraryOn(std::move(registration->profile), path);
+            *registration = session_.RegisterLibraryOn(std::move(*registration), path);
         },
         [this, registration, path]
         {
             const LibraryReport report = registration->report;
 
-            session_.AdoptTheRegistration(std::move(*registration));
+            if (!session_.AdoptTheRegistration(std::move(*registration)))
+            {
+                AddLibrary(path);
+                return;
+            }
 
             emit LibraryRegistered(path, report);
         });
