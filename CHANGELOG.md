@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.56.2](https://github.com/brunofgmag/fs-organizer/compare/v0.56.1...v0.56.2) (2026-10-01)
+
+
+* relink broken addons from the panel, fit the PDF reader in 1024 px and name dropped connections ([#201](https://github.com/brunofgmag/fs-organizer/issues/201)) ([58537a6](https://github.com/brunofgmag/fs-organizer/commit/58537a67b4ab06e8bb3738c86b4dd2a245c51afe))
+
+
+### Bug Fixes
+
+* relink broken addons from the panel, fit the PDF reader in 1024 px and name dropped connections ([91306c6](https://github.com/brunofgmag/fs-organizer/commit/91306c63d84498bd2812308ac26708c465245938)) ([58537a6](https://github.com/brunofgmag/fs-organizer/commit/58537a67b4ab06e8bb3738c86b4dd2a245c51afe))
+
 ## [0.56.1](https://github.com/brunofgmag/fs-organizer/compare/v0.56.0...v0.56.1) (2026-09-30)
 
 
