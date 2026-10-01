@@ -31,6 +31,7 @@ namespace
         static void AFailedItemInABatchDoesNotUndoTheItemsThatWorked();
         static void AlreadyEnabledAddonsAreLeftAloneInsteadOfReportedAsOccupied();
         static void DisablingAnAddonRemovesItsLinkInEveryDestination();
+        static void UndoingTheDisableOfALinkNamedDifferentlyFromItsFolderPutsItBackUnderItsOwnName();
         static void EnablingHonoursTheDestinationOverrideOfTheCategory();
         static void TurningAnAddonOffAndOnAgainLeavesItInTheDestinationItLivedIn();
         static void EveryLinkOperationReachesTheJournalWhetherItWorkedOrNot();
@@ -304,6 +305,31 @@ void ProfileServiceTest::DisablingAnAddonRemovesItsLinkInEveryDestination()
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w"));
     QVERIFY(f.fileSystem.IsDirectory(folder));
+}
+
+void ProfileServiceTest::UndoingTheDisableOfALinkNamedDifferentlyFromItsFolderPutsItBackUnderItsOwnName()
+{
+    const std::filesystem::path folder = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+    const std::filesystem::path renamed = "E:/Flight Simulator 2024/Community/renamed-link";
+
+    Fixture f;
+    f.fileSystem.AddLink(renamed, folder);
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+    const std::vector<LinkOperationResult> disabled =
+        f.service.SetEnabled(profile, snapshot, {Fixture::AddonAt(snapshot, 0)}, false).results;
+
+    QCOMPARE(disabled.size(), std::size_t{1});
+    QVERIFY(!f.fileSystem.Exists(renamed));
+
+    const std::vector<LinkOperationResult> reverted = f.service.UndoLastBatch();
+
+    QCOMPARE(reverted.size(), std::size_t{1});
+    QVERIFY(f.fileSystem.IsLink(renamed));
+    QCOMPARE(f.fileSystem.LinkTarget(renamed).value_or(std::filesystem::path{}), folder);
+    QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
 }
 
 void ProfileServiceTest::EnablingHonoursTheDestinationOverrideOfTheCategory()

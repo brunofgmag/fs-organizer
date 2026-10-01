@@ -9,8 +9,7 @@
 #include <QtNetwork/QNetworkRequest>
 
 #include "application/model/UpdateInfo.h"
-
-class QNetworkReply;
+#include "infrastructure/update/HttpError.h"
 
 struct FeedAnswer
 {
@@ -21,8 +20,6 @@ struct FeedAnswer
 };
 
 [[nodiscard]] QNetworkRequest GithubRequest(const QString& url, const QString& currentVersion);
-
-[[nodiscard]] QString HttpError(const QNetworkReply* reply);
 
 class GithubReleaseFeed final : public QObject
 {

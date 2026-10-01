@@ -6,6 +6,7 @@
 
 #include <QtCore/QDir>
 
+#include "support/PathText.h"
 #include "tests/support/PathPrinting.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeModel.h"
@@ -31,6 +32,7 @@ namespace
         static void TheConflictItselfIsHandedOverForWhoeverHasToResolveIt();
         static void OnlyAnAddonLinkedAwayFromItsOwnDestinationIsMarkedAsDivergent();
         static void AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits();
+        static void TheLinkPathIsWhereTheAddonIsLinkedAndNotWhereTheProfileWouldPutIt();
         static void ABrokenLinkWearsTheTagAndAlarmsTheRow();
         static void OnlyTheNameColumnCarriesTheCheckbox();
         static void TheModelCountsAddonsAndHowManyAreEnabled();
@@ -107,6 +109,22 @@ namespace
     DestinationEntry LinkIn(const std::filesystem::path& destination, const std::filesystem::path& addonFolder)
     {
         return DestinationEntry{.path = destination / addonFolder.filename(),
+                                .target = addonFolder,
+                                .classification = EntryClassification::Managed};
+    }
+
+    DestinationEntry DeadLinkUnderTheNameOf(const std::filesystem::path& destination,
+                                            const std::filesystem::path& addonFolder)
+    {
+        return DestinationEntry{.path = destination / addonFolder.filename(),
+                                .target = addonFolder.parent_path() / "gone",
+                                .classification = EntryClassification::Broken};
+    }
+
+    DestinationEntry LinkUnderAnotherNameIn(const std::filesystem::path& destination,
+                                            const std::filesystem::path& addonFolder)
+    {
+        return DestinationEntry{.path = destination / "renamed-link",
                                 .target = addonFolder,
                                 .classification = EntryClassification::Managed};
     }
@@ -309,13 +327,25 @@ void AddonTreeModelTest::AnAddonLinkedElsewhereSaysOnTheTreeWhereItActuallySits(
     QVERIFY(model.data(AddonAt(model, 0), Qt::ToolTipRole).toString().contains(QStringLiteral("Community2024")));
 }
 
+void AddonTreeModelTest::TheLinkPathIsWhereTheAddonIsLinkedAndNotWhereTheProfileWouldPutIt()
+{
+    AddonTreeModel model;
+    ProfileSnapshot snapshot = SnapshotWith({kPmdg, kCrj});
+    snapshot.entries = {LinkIn(kCommunity2024, kPmdg), LinkIn(kCommunity, kCrj)};
+
+    model.Show(snapshot, Profile());
+
+    QCOMPARE(model.data(AddonAt(model, 0), AddonTreeModel::LinkPathRole).toString(),
+             AsText(std::filesystem::path(kCommunity2024) / "pmdg-aircraft-77w"));
+    QCOMPARE(model.data(AddonAt(model, 1), AddonTreeModel::LinkPathRole).toString(),
+             AsText(std::filesystem::path(kCommunity) / "aerosoft-crj"));
+}
+
 void AddonTreeModelTest::ABrokenLinkWearsTheTagAndAlarmsTheRow()
 {
     AddonTreeModel model;
     ProfileSnapshot snapshot = SnapshotWith({kPmdg, kCrj});
-    snapshot.entries = {DestinationEntry{.path = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w",
-                                         .target = kPmdg,
-                                         .classification = EntryClassification::Broken},
+    snapshot.entries = {DeadLinkUnderTheNameOf(kCommunity, kPmdg), LinkUnderAnotherNameIn(kCommunity, kPmdg),
                         LinkIn(kCommunity, kCrj)};
 
     model.Show(snapshot, Profile());
@@ -421,10 +451,8 @@ void AddonTreeModelTest::TheTallyReadsEnabledBrokenAndStrayedFromTheAddonsItReac
 {
     AddonTreeModel model;
     ProfileSnapshot snapshot = NestedSnapshotWith({kPmdg, kEmbraer});
-    snapshot.entries = {LinkIn(kCommunity, kPmdg),
-                        DestinationEntry{.path = std::filesystem::path(kCommunity) / "e195",
-                                         .target = kEmbraer,
-                                         .classification = EntryClassification::Broken}};
+    snapshot.entries = {LinkIn(kCommunity, kPmdg), DeadLinkUnderTheNameOf(kCommunity, kEmbraer),
+                        LinkUnderAnotherNameIn(kCommunity, kEmbraer)};
 
     model.Show(snapshot, Profile());
 

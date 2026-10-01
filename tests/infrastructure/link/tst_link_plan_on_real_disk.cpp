@@ -12,6 +12,7 @@
 #include "domain/journal/JournalEntries.h"
 #include "domain/ports/ImportedFolders.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonDestinations.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
@@ -40,6 +41,7 @@ namespace
         static void SwappingTheOccupantMovesTheRealJunctionAndIsOneEntryInTheJournal();
         static void TheIncrementalEntriesEqualAFullReadAfterARealEnableAndARealDisable();
         static void TheEntriesTheServiceReturnsAfterEachBatchEqualAFullReadOfTheRealDisk();
+        static void RelinkingABrokenAddonThatNeverStrayedReplacesTheDeadJunctionAndUndoPutsTheOtherNameBack();
         static void AFullReadClassifiesEveryKindOfEntryOnRealJunctions();
     };
 }
@@ -400,6 +402,67 @@ void LinkPlanOnRealDiskTest::TheEntriesTheServiceReturnsAfterEachBatchEqualAFull
     QCOMPARE(disabling.report.results.size(), std::size_t{1});
     QCOMPARE(disabling.read.entries.size(), std::size_t{1});
     verifyTheSame(disabling.read);
+}
+
+void LinkPlanOnRealDiskTest::RelinkingABrokenAddonThatNeverStrayedReplacesTheDeadJunctionAndUndoPutsTheOtherNameBack()
+{
+    const Disk disk;
+    Linking linking;
+
+    const std::filesystem::path renamed = disk.Community() / "renamed-link";
+    const std::filesystem::path doomed = disk.Root() / "doomed-target";
+    std::filesystem::create_directories(doomed);
+
+    QCOMPARE(linking.linkService.CreateLink(renamed, disk.Addon(), LinkType::Junction), LinkFailure::None);
+    QCOMPARE(linking.linkService.CreateLink(disk.Link(), doomed, LinkType::Junction), LinkFailure::None);
+    std::filesystem::remove_all(doomed);
+
+    const SimulatorProfile profile = ProfileOn(disk);
+    const ProfileSnapshot shown = linking.profiles.Scan(profile);
+    const TreeNode* addon = OnlyAddonOf(shown);
+    QVERIFY(addon != nullptr);
+
+    const AddonDestinations destinations(profile, shown.entries);
+    QVERIFY(destinations.Of(disk.Addon()).IsBroken());
+    QVERIFY(destinations.Of(disk.Addon()).strayedTo.empty());
+
+    const EntriesStamp stamp{.profile = profile, .adoptions = 3};
+
+    const auto verifyTheSame = [&](const EntriesRead& read)
+    {
+        const std::vector<DestinationEntry> full = linking.profiles.ResolveEntries(profile, shown.libraries);
+
+        QCOMPARE(read.entries.size(), full.size());
+
+        for (std::size_t index = 0; index < full.size(); ++index)
+        {
+            QCOMPARE(read.entries[index].path, full[index].path);
+            QCOMPARE(read.entries[index].target, full[index].target);
+            QCOMPARE(read.entries[index].classification, full[index].classification);
+        }
+    };
+
+    const auto present = [](const std::filesystem::path& path)
+    {
+        return std::filesystem::exists(std::filesystem::symlink_status(path));
+    };
+
+    const LinkBatchOutcome relinking = linking.profiles.Relink(stamp, shown, {addon});
+
+    QCOMPARE(relinking.report.results.size(), std::size_t{2});
+    QCOMPARE(linking.linkService.ReadLinkTarget(disk.Link()), std::optional<std::filesystem::path>{disk.Addon()});
+    QVERIFY(!present(renamed));
+    QCOMPARE(relinking.read.entries.size(), std::size_t{1});
+    QCOMPARE(relinking.read.entries.front().path, disk.Link());
+    QCOMPARE(relinking.read.entries.front().classification, EntryClassification::Managed);
+    verifyTheSame(relinking.read);
+
+    const LinkBatchOutcome undoing = linking.profiles.UndoLastBatch(stamp, shown.libraries);
+
+    QCOMPARE(undoing.report.results.size(), std::size_t{2});
+    QCOMPARE(linking.linkService.ReadLinkTarget(renamed), std::optional<std::filesystem::path>{disk.Addon()});
+    QVERIFY(!present(disk.Link()));
+    verifyTheSame(undoing.read);
 }
 
 void LinkPlanOnRealDiskTest::AFullReadClassifiesEveryKindOfEntryOnRealJunctions()

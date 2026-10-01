@@ -324,7 +324,7 @@ void AddonTreePage::RetranslateUi() const
     search_->setPlaceholderText(tr("Search addons…"));
     hideEmpty_->setText(tr("Hide empty categories"));
     ShowTheChips(PopulationNow());
-    relink_->setText(tr("Repoint to the library"));
+    relink_->setText(tr("Relink in the profile destination"));
     moveTo_->setText(tr("Move to…"));
     openFolder_->setText(tr("Open folder"));
     ShowWhatTheDocumentationHolds();
@@ -607,7 +607,7 @@ void AddonTreePage::ShowTheSelectedAddon()
 
     if (addon)
     {
-        fields_.append({tr("Linked in"), AsText(destination / node->path.filename())});
+        fields_.append({tr("Linked in"), model_.data(source, AddonTreeModel::LinkPathRole).toString()});
         fields_.append({tr("Link"), broken ? tr("broken, the target folder is missing") : tr("working")});
         fields_.append(
             {tr("Enabled"), model_.data(source, AddonTreeModel::EnabledRole).toBool() ? tr("yes") : tr("no")});
@@ -690,7 +690,6 @@ void AddonTreePage::ShowTheFields(const QString& size) const
 
 void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) const
 {
-    int relinkable = 0;
     int deletable = 0;
     std::vector<const TreeNode*> addons;
 
@@ -705,18 +704,15 @@ void AddonTreePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) con
         }
 
         ++deletable;
-
-        relinkable += model_.data(source, AddonTreeModel::BrokenRole).toBool()
-                || model_.data(source, AddonTreeModel::DivergentRole).toBool()
-            ? 1
-            : 0;
         addons.push_back(node);
     }
 
+    const int relinkable = static_cast<int>(viewModel_.NeedingRelinkUnder(addons).size());
     const int movable = static_cast<int>(viewModel_.MovableAmong(addons));
 
     relink_->setEnabled(relinkable > 0);
-    relink_->setText(relinkable > 1 ? tr("Repoint %n addon", nullptr, relinkable) : tr("Repoint to the library"));
+    relink_->setText(relinkable > 1 ? tr("Relink %n addon", nullptr, relinkable)
+                                    : tr("Relink in the profile destination"));
 
     moveTo_->setEnabled(movable > 0);
     moveTo_->setText(movable > 1 ? tr("Move %n addon to…", nullptr, movable) : tr("Move to…"));
@@ -1486,20 +1482,21 @@ void AddonTreePage::ShowSuggestions(const TreeNode* node)
 
 void AddonTreePage::AddStrayActions(QMenu& menu, const TreeNode* node)
 {
-    const std::vector<const TreeNode*> strayed = viewModel_.StrayedUnder(Chosen(node));
+    const std::vector<const TreeNode*> chosen = Chosen(node);
+    const bool relinkable = !viewModel_.NeedingRelinkUnder(chosen).empty();
     const bool theCategoryStrayed = node->kind == TreeNodeKind::Category && !viewModel_.StrayedUnder({node}).empty();
 
-    if (strayed.empty() && !theCategoryStrayed)
+    if (!relinkable && !theCategoryStrayed)
     {
         return;
     }
 
-    if (!strayed.empty())
+    if (relinkable)
     {
         menu.addAction(tr("Relink in the profile destination"), this,
-                       [this, strayed]
+                       [this, chosen]
                        {
-                           viewModel_.RelinkStrayed(strayed);
+                           viewModel_.RelinkToTheProfileDestination(chosen);
                        });
     }
 
@@ -1566,7 +1563,7 @@ void AddonTreePage::ChooseDestination(const TreeNode* clicked, const std::filesy
 
     if (!strayed.empty() && AskWhetherToRelink(strayed.size()))
     {
-        viewModel_.RelinkStrayed(strayed);
+        viewModel_.RelinkToTheProfileDestination(strayed);
     }
 }
 

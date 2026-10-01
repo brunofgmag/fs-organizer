@@ -69,8 +69,8 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     scrolled->viewport()->setAutoFillBackground(false);
 
     auto* scrollable = new QWidget(scrolled);
-    scrollable->setAutoFillBackground(false);
     scrolled->setWidget(scrollable);
+    scrollable->setAutoFillBackground(false);
 
     auto* bodyLayout = new QVBoxLayout(body_);
     bodyLayout->setContentsMargins(kRuleWidth, 0, 0, 0);

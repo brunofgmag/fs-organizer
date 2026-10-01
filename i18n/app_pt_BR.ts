@@ -253,12 +253,6 @@
         <translation>Nenhum addon está desativado agora, então o filtro foi limpo.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="274"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="538"/>
-        <source>Repoint to the library</source>
-        <translation>Reapontar para a biblioteca</translation>
-    </message>
-    <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="275"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="541"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1150"/>
@@ -432,10 +426,10 @@
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="538"/>
-        <source>Repoint %n addon</source>
+        <source>Relink %n addon</source>
         <translation>
-            <numerusform>Reapontar %n addon</numerusform>
-            <numerusform>Reapontar %n addons</numerusform>
+            <numerusform>Refazer o link de %n addon</numerusform>
+            <numerusform>Refazer os links de %n addons</numerusform>
         </translation>
     </message>
     <message numerus="yes">

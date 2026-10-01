@@ -253,12 +253,6 @@
         <translation>No addon is disabled now, so the filter was cleared.</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="274"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="538"/>
-        <source>Repoint to the library</source>
-        <translation>Repoint to the library</translation>
-    </message>
-    <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="275"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="541"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1150"/>
@@ -432,10 +426,10 @@
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="538"/>
-        <source>Repoint %n addon</source>
+        <source>Relink %n addon</source>
         <translation>
-            <numerusform>Repoint %n addon</numerusform>
-            <numerusform>Repoint %n addons</numerusform>
+            <numerusform>Relink %n addon</numerusform>
+            <numerusform>Relink %n addons</numerusform>
         </translation>
     </message>
     <message numerus="yes">

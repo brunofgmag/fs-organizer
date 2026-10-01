@@ -71,6 +71,8 @@ namespace
         static void TheHeadingOfThePaneStartsLevelWithThePage();
         static void TheBarRunsOverThePane();
         static void TheReaderWithAnOutlineFitsTheNarrowestWindow();
+        static void ThePageWithAnOutlineOpenFitsTheNarrowestWindow();
+        static void ThePageOfAFourDigitManualWithItsOutlineFitsTheNarrowestWindow();
         static void OneClickOnTheLineOpensIt();
         static void TheStarTurnsTheFavouriteWithoutOpeningAnything();
         static void OnlyTheGlyphOfTheArrowOpensAndClosesTheGroup();
@@ -305,6 +307,35 @@ namespace
         written.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
 
         return file;
+    }
+
+    [[nodiscard]] DocumentReader*
+    OpenInThePage(Fixture& f, DocumentsPage& page, const std::filesystem::path& document, const int pageToStartOn)
+    {
+        page.resize(1120, 621);
+        f.viewModel.ReadTheLibrary();
+
+        QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+        QTreeWidgetItem* crj = GroupNamed(*index, QString::fromStdString(kCrj));
+        crj->setExpanded(true);
+
+        const QRect name = index->visualItemRect(crj->child(0));
+        ClickAt(*index, QPoint(name.center().x(), name.center().y()));
+
+        auto* reader = page.findChild<DocumentReader*>();
+
+        if (reader == nullptr)
+        {
+            return nullptr;
+        }
+
+        reader->Read(document, pageToStartOn, DocumentKind::Document, {{.page = pageToStartOn, .name = {}}});
+
+        ApplyModernistTheme(*qApp);
+        page.show();
+        QCoreApplication::processEvents();
+
+        return reader;
     }
 
     [[nodiscard]] QTreeWidget* ThePaneOf(const DocumentReader& reader)
@@ -1593,6 +1624,38 @@ void DocumentsPageTest::TheReaderWithAnOutlineFitsTheNarrowestWindow()
     reader.Read(manual, 13, DocumentKind::Document, {{.page = 13, .name = {}}});
 
     ItFitsTheNarrowestWindow(reader, "The reader with its outline");
+}
+
+void DocumentsPageTest::ThePageWithAnOutlineOpenFitsTheNarrowestWindow()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+
+    const DocumentReader* reader = OpenInThePage(f, page, manual, 13);
+
+    QVERIFY(reader != nullptr);
+
+    ItFitsTheNarrowestWindow(page, "The documents page with a PDF and its outline open");
+    QVERIFY(ThePaneOf(*reader)->isVisible());
+}
+
+void DocumentsPageTest::ThePageOfAFourDigitManualWithItsOutlineFitsTheNarrowestWindow()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path volume = WrittenInto(folder, L"volume.pdf", AManualOf(1200, kChapters));
+
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+
+    const DocumentReader* reader = OpenInThePage(f, page, volume, 1199);
+
+    QVERIFY(reader != nullptr);
+
+    ItFitsTheNarrowestWindow(page, "The documents page on page 1200 of 1200 with its outline open");
+    QVERIFY(ThePaneOf(*reader)->isVisible());
 }
 
 void DocumentsPageTest::TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick()
