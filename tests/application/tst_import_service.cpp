@@ -61,9 +61,13 @@ namespace
         static void ASwapThatDiedHalfwayIsFoundInTheOtherProgramsFolder();
         static void ASwapThatFinishedIsNotOfferedAsInterrupted();
         static void PuttingTheFolderBackRenamesTheRoomToTheNameTheOtherProgramLooksFor();
+        static void NothingIsPutBackWhileTheSimulatorIsRunning();
         static void AGiveBackThatDiedHalfwayIsFoundBesideTheOtherProgramsFolder();
         static void ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSource();
+        static void NothingIsResumedWhileTheSimulatorIsRunning();
+        static void ALeftoverWhoseNameAnotherLeftoverOfTheGestureLandedElsewhereIsRefusedAsItsTwin();
         static void DiscardingALeftoverRemovesOnlyTheStaging();
+        static void NothingIsDiscardedWhileTheSimulatorIsRunning();
         static void KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuarantiningIt();
         static void NothingIsMovedWhenALinkToTheLibraryCopyCannotBeRemoved();
         static void ImportingIsRefusedWhenTheBaseNameAlreadyExistsInTheLibrary();
@@ -76,6 +80,7 @@ namespace
         static void TheGuardsRunAgainstThePlaceTheUserChose();
         static void ACheckedRestoreCarriesTheVersionOfBothSides();
         static void ASideWithoutAReadableVersionStaysEmptyAndTheOtherStillShows();
+        static void ASideTheWalkCouldNotReadHasNoSizeInsteadOfZero();
         static void AQuarantinedItemCarriesTheVersionItsOwnManifestDeclares();
         static void AnItemWhoseNameSitsAsAPhysicalFolderInADestinationIsMarkedAsReplaced();
         static void TheReplacementMarkIsReadFromTheDestinationsAndNeverFromTheRecordedOrigin();
@@ -863,6 +868,37 @@ void ImportServiceTest::PuttingTheFolderBackRenamesTheRoomToTheNameTheOtherProgr
     QVERIFY(f.service.InterruptedSwaps(f.profile).empty());
 }
 
+void ImportServiceTest::NothingIsPutBackWhileTheSimulatorIsRunning()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    const std::filesystem::path otherFolder = kVendorFolder.parent_path() / "other-addon";
+
+    f.fileSystem.RemoveTree(kVendorFolder);
+    f.fileSystem.AddDirectory(SwapSlotFor(kVendorFolder));
+    f.fileSystem.AddDirectory(SwapSlotFor(otherFolder));
+
+    const std::vector<InterruptedSwap> swaps{
+        InterruptedSwap{.room = SwapSlotFor(kVendorFolder), .folder = kVendorFolder, .libraryCopy = kVendorInLibrary},
+        InterruptedSwap{.room = SwapSlotFor(otherFolder), .folder = otherFolder, .libraryCopy = kVendorInLibrary}};
+
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const std::vector<FileOperationResult> results = f.service.UndoInterruptedSwaps(f.profile, swaps);
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QCOMPARE(results.back().result, FileResult::TheSimulatorIsRunning);
+    QCOMPARE(results.front().path, kVendorFolder);
+    QCOMPARE(results.back().path, otherFolder);
+    QVERIFY(f.fileSystem.Exists(SwapSlotFor(kVendorFolder)));
+    QVERIFY(f.fileSystem.Exists(SwapSlotFor(otherFolder)));
+    QVERIFY(!f.fileSystem.Exists(kVendorFolder));
+    QVERIFY(!f.fileSystem.Exists(otherFolder));
+    QVERIFY(f.journal.appended.empty());
+}
+
 void ImportServiceTest::AGiveBackThatDiedHalfwayIsFoundBesideTheOtherProgramsFolder()
 {
     Fixture f;
@@ -965,6 +1001,64 @@ void ImportServiceTest::ResumingThrowsTheHalfCopyAwayAndImportsAgainFromTheSourc
     QCOMPARE(f.journal.appended.front().kind, OperationKind::DiscardStaging);
 }
 
+void ImportServiceTest::NothingIsResumedWhileTheSimulatorIsRunning()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.fileSystem.AddDirectory("D:/Library/Sceneries");
+    f.fileSystem.AddDirectory("D:/Library/Sceneries/orbx-yssy.fsorg-partial");
+    f.fileSystem.AddFile("D:/Library/Sceneries/orbx-yssy.fsorg-partial/half.bin", kMegabyte);
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const StagingLeftover leftover{.staging = "D:/Library/Sceneries/orbx-yssy.fsorg-partial",
+                                   .target = "D:/Library/Sceneries/orbx-yssy",
+                                   .source = kInDestination};
+
+    const std::vector<ImportOperationResult> results = f.service.Resume(f.profile, {leftover, leftover}, {});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QCOMPARE(results.back().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.Exists("D:/Library/Sceneries/orbx-yssy.fsorg-partial/half.bin"));
+    QVERIFY(!f.fileSystem.Exists("D:/Library/Sceneries/orbx-yssy"));
+    QVERIFY(f.fileSystem.Exists(kInDestination / "manifest.json"));
+    QVERIFY(f.journal.appended.empty());
+}
+
+void ImportServiceTest::ALeftoverWhoseNameAnotherLeftoverOfTheGestureLandedElsewhereIsRefusedAsItsTwin()
+{
+    Fixture f;
+    const std::filesystem::path first = "E:/Sim/Community/simbridge";
+    const std::filesystem::path second = kLinkedElsewhere;
+    const std::filesystem::path firstStaging = "D:/Library/Utils/simbridge.fsorg-partial";
+    const std::filesystem::path secondStaging = "D:/Library/Sceneries/simbridge.fsorg-partial";
+
+    f.profile.destinations.push_back(kOtherDestination);
+    f.AddASource(first);
+    f.AddASource(second);
+    f.fileSystem.AddDirectory(kLibrary);
+    f.fileSystem.AddDirectory("D:/Library/Utils");
+    f.fileSystem.AddDirectory("D:/Library/Sceneries");
+    f.fileSystem.AddDirectory(firstStaging);
+    f.fileSystem.AddFile(firstStaging / "half.bin", kMegabyte);
+    f.fileSystem.AddDirectory(secondStaging);
+    f.fileSystem.AddFile(secondStaging / "half.bin", kMegabyte);
+
+    const std::vector<ImportOperationResult> results = f.service.Resume(
+        f.profile,
+        {StagingLeftover{.staging = firstStaging, .target = "D:/Library/Utils/simbridge", .source = first},
+         StagingLeftover{.staging = secondStaging, .target = "D:/Library/Sceneries/simbridge", .source = second}},
+        {});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QCOMPARE(results.back().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(results.back().occupant, std::filesystem::path{"D:/Library/Utils/simbridge"});
+    QVERIFY(f.fileSystem.Exists(secondStaging / "half.bin"));
+    QVERIFY(!f.fileSystem.Exists("D:/Library/Sceneries/simbridge"));
+    QVERIFY(f.fileSystem.Exists(second / "manifest.json"));
+}
+
 void ImportServiceTest::DiscardingALeftoverRemovesOnlyTheStaging()
 {
     Fixture f;
@@ -987,6 +1081,23 @@ void ImportServiceTest::DiscardingALeftoverRemovesOnlyTheStaging()
 
     QCOMPARE(refused.front().result, FileResult::CouldNotDiscard);
     QVERIFY(f.fileSystem.Exists(kInLibrary / "manifest.json"));
+}
+
+void ImportServiceTest::NothingIsDiscardedWhileTheSimulatorIsRunning()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.fileSystem.AddDirectory("D:/Library/Utils/imported.fsorg-partial");
+    f.fileSystem.AddFile("D:/Library/Utils/imported.fsorg-partial/manifest.json", kMegabyte);
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const std::vector<FileOperationResult> results =
+        f.service.DiscardLeftovers(f.profile, f.service.Leftovers(f.profile));
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.Exists("D:/Library/Utils/imported.fsorg-partial/manifest.json"));
+    QVERIFY(f.journal.appended.empty());
 }
 
 void ImportServiceTest::KeepingTheDestinationCopyUnlinksTheLibraryCopyBeforeQuarantiningIt()
@@ -1244,6 +1355,18 @@ void ImportServiceTest::ASideWithoutAReadableVersionStaysEmptyAndTheOtherStillSh
 
     QCOMPARE(checks.front().version, std::string{"2.4.1"});
     QVERIFY(checks.front().occupantVersion.empty());
+}
+
+void ImportServiceTest::ASideTheWalkCouldNotReadHasNoSizeInsteadOfZero()
+{
+    Fixture f;
+    f.AddBothCopies();
+    f.filesystemProbe.RefuseToWalk(kInDestination);
+
+    const ConflictDetails details = f.service.DetailsOf(f.Entries(), CopyConflict{kInDestination, kInLibrary});
+
+    QVERIFY2(!details.provenance.sizeBytes.has_value(), "a tree nobody could walk was not measured, it is not empty");
+    QCOMPARE(details.library.sizeBytes, std::optional<std::uintmax_t>{kMegabyte});
 }
 
 void ImportServiceTest::AQuarantinedItemCarriesTheVersionItsOwnManifestDeclares()

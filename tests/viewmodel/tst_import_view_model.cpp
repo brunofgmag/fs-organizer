@@ -41,6 +41,8 @@ namespace
         static void AGestureOfManyFoldersAsksTheServiceOnceAndNamesTheFolderEachProgressBelongsTo();
         static void LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread();
         static void NoLeftoversMeansNoSignal();
+        static void WhatBecameOfEachInterruptedSwapReachesTheSignal();
+        static void ASwapRefusedForTheRunningSimulatorReachesTheSignalToo();
     };
 }
 
@@ -313,6 +315,53 @@ void ImportViewModelTest::NoLeftoversMeansNoSignal()
 
     QCOMPARE(f.runner.HowManyPending(), std::size_t{0});
     QCOMPARE(found.size(), 0);
+}
+
+namespace
+{
+    InterruptedSwap ASwapLeftInTheRoom(Fixture& f)
+    {
+        f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+        f.fileSystem.AddDirectory(SwapSlotFor(kVendorFolder));
+
+        return InterruptedSwap{
+            .room = SwapSlotFor(kVendorFolder), .folder = kVendorFolder, .libraryCopy = kVendorInLibrary};
+    }
+}
+
+void ImportViewModelTest::WhatBecameOfEachInterruptedSwapReachesTheSignal()
+{
+    Fixture f;
+    const InterruptedSwap swap = ASwapLeftInTheRoom(f);
+    const QSignalSpy undone(&f.viewModel, &ImportViewModel::InterruptedSwapsUndone);
+
+    f.viewModel.UndoInterruptedSwaps({swap});
+
+    QCOMPARE(undone.size(), 1);
+
+    const auto results = undone.front().front().value<std::vector<FileOperationResult>>();
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().path, kVendorFolder);
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+}
+
+void ImportViewModelTest::ASwapRefusedForTheRunningSimulatorReachesTheSignalToo()
+{
+    Fixture f;
+    const InterruptedSwap swap = ASwapLeftInTheRoom(f);
+    const QSignalSpy undone(&f.viewModel, &ImportViewModel::InterruptedSwapsUndone);
+
+    f.processProbe.ReportTheSimulatorAsRunning();
+    f.viewModel.UndoInterruptedSwaps({swap});
+
+    QCOMPARE(undone.size(), 1);
+
+    const auto results = undone.front().front().value<std::vector<FileOperationResult>>();
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.Exists(SwapSlotFor(kVendorFolder)));
+    QVERIFY(!f.fileSystem.Exists(kVendorFolder));
 }
 
 QTEST_MAIN(ImportViewModelTest)

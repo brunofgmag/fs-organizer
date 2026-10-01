@@ -1,6 +1,8 @@
 #include "application/ProfileService.h"
 
 #include <algorithm>
+#include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -27,6 +29,46 @@ namespace
 
         return roots;
     }
+
+    class ExternalSidecarsBesideTheAddons
+    {
+    public:
+        explicit ExternalSidecarsBesideTheAddons(const SidecarStore& store) : store_(store)
+        {
+        }
+
+        [[nodiscard]] std::optional<std::filesystem::path> OriginRecordedFor(const std::filesystem::path& addonFolder)
+        {
+            const std::filesystem::path sidecar = ExternalSidecarPathFor(addonFolder);
+            if (!Exists(sidecar))
+            {
+                return std::nullopt;
+            }
+
+            const std::optional<std::string> written = store_.Read(sidecar);
+
+            return written.has_value() ? ExternalOriginFromText(*written) : std::nullopt;
+        }
+
+    private:
+        [[nodiscard]] bool Exists(const std::filesystem::path& sidecar)
+        {
+            const std::filesystem::path folder = sidecar.parent_path();
+            const auto [known, isNew] = namesByFolder_.try_emplace(ComparablePath(folder));
+            if (isNew)
+            {
+                for (const std::filesystem::path& file : store_.FilesIn(folder))
+                {
+                    known->second.insert(ComparableFileName(file));
+                }
+            }
+
+            return known->second.contains(ComparableFileName(sidecar));
+        }
+
+        const SidecarStore& store_;
+        std::map<std::string, std::set<std::string>> namesByFolder_;
+    };
 
     std::map<std::string, const DestinationEntry*> LinksHeldByPath(const std::vector<DestinationEntry>& entries)
     {
@@ -196,18 +238,14 @@ std::vector<ExternalAddon> ProfileService::WhatCameFromAnotherProgram(const Simu
                                                                       const std::vector<TreeNode>& libraries) const
 {
     std::vector<ExternalAddon> known = ExternalAddonsOf(profile);
+    ExternalSidecarsBesideTheAddons beside{sidecars_};
 
     for (const TreeNode& library : libraries)
     {
         for (const TreeNode* addon : AddonsUnder(library))
         {
-            const std::optional<std::string> written = sidecars_.Read(ExternalSidecarPathFor(addon->path));
-            if (!written.has_value())
-            {
-                continue;
-            }
-
-            if (const std::optional<std::filesystem::path> came = ExternalOriginFromText(*written); came.has_value())
+            if (const std::optional<std::filesystem::path> came = beside.OriginRecordedFor(addon->path);
+                came.has_value())
             {
                 RememberedByTheLibrary(known, addon->path, *came);
             }
@@ -229,7 +267,7 @@ ProfileService::LinksOnDisk ProfileService::ReadLinksNow(const SimulatorProfile&
     std::vector<DestinationEntry> entries = classifier_.Resolve(profile.destinations, LibraryRoots(profile), externals);
     EnabledAddons enabled{EnabledAddonFolders(entries)};
 
-    return {.entries = std::move(entries), .enabled = std::move(enabled)};
+    return {.entries = std::move(entries), .enabled = std::move(enabled), .externals = externals};
 }
 
 std::vector<DestinationEntry> ProfileService::EntriesAfter(const SimulatorProfile& profile,
@@ -503,12 +541,17 @@ ProfileService::SetEnabled(const SimulatorProfile& profile, const ProfileSnapsho
 LinkBatchOutcome
 ProfileService::SetEnabled(const EntriesStamp& stamp, const ProfileSnapshot& shown, const LinkBatch& batch)
 {
-    const std::vector<ExternalAddon> externals = WhatCameFromAnotherProgram(stamp.profile, shown.libraries);
-    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, externals);
+    return SetEnabled(stamp, shown, batch, ReadLinksNow(stamp.profile, shown.libraries));
+}
 
+LinkBatchOutcome ProfileService::SetEnabled(const EntriesStamp& stamp,
+                                            const ProfileSnapshot& shown,
+                                            const LinkBatch& batch,
+                                            const LinksOnDisk& onDisk)
+{
     LinkBatchReport report = SetEnabled(stamp.profile, shown, batch, onDisk);
 
-    return AfterTheBatch(stamp, shown.libraries, onDisk.entries, std::move(report), externals);
+    return AfterTheBatch(stamp, shown.libraries, onDisk.entries, std::move(report), onDisk.externals);
 }
 
 LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
@@ -571,8 +614,7 @@ LinkBatchOutcome ProfileService::Relink(const EntriesStamp& stamp,
                                         const std::vector<const TreeNode*>& nodes)
 {
     const SimulatorProfile& profile = stamp.profile;
-    const std::vector<ExternalAddon> externals = WhatCameFromAnotherProgram(profile, shown.libraries);
-    const LinksOnDisk onDisk = ReadLinksNow(profile, externals);
+    const LinksOnDisk onDisk = ReadLinksNow(profile, shown.libraries);
 
     const std::size_t drifted = AddonsThatDrifted(nodes, shown.enabled, onDisk.enabled);
 
@@ -594,7 +636,7 @@ LinkBatchOutcome ProfileService::Relink(const EntriesStamp& stamp,
 
     LinkBatchReport report{.results = RunAsOneBatch(steps), .drifted = drifted};
 
-    return AfterTheBatch(stamp, shown.libraries, onDisk.entries, std::move(report), externals);
+    return AfterTheBatch(stamp, shown.libraries, onDisk.entries, std::move(report), onDisk.externals);
 }
 
 LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
@@ -656,12 +698,11 @@ LinkBatchOutcome ProfileService::Repair(const EntriesStamp& stamp,
                                         const std::vector<TreeNode>& libraries,
                                         const std::vector<RepairRequest>& requests)
 {
-    const std::vector<ExternalAddon> externals = WhatCameFromAnotherProgram(stamp.profile, libraries);
-    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, externals);
+    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, libraries);
 
     LinkBatchReport report = RepairWhatStillHolds(stamp.profile, onDisk, requests);
 
-    return AfterTheBatch(stamp, libraries, onDisk.entries, std::move(report), externals);
+    return AfterTheBatch(stamp, libraries, onDisk.entries, std::move(report), onDisk.externals);
 }
 
 LinkBatchReport ProfileService::RepairWhatStillHolds(const SimulatorProfile& profile,
@@ -732,14 +773,11 @@ std::vector<LinkOperationResult> ProfileService::UndoLastBatch()
 
 LinkBatchOutcome ProfileService::UndoLastBatch(const EntriesStamp& stamp, const std::vector<TreeNode>& libraries)
 {
-    const std::lock_guard lock(guard_);
+    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, libraries);
 
-    const std::vector<ExternalAddon> externals = WhatCameFromAnotherProgram(stamp.profile, libraries);
-    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, externals);
+    LinkBatchReport report{.results = UndoLastBatch()};
 
-    LinkBatchReport report{.results = RunTheUndo()};
-
-    return AfterTheBatch(stamp, libraries, onDisk.entries, std::move(report), externals);
+    return AfterTheBatch(stamp, libraries, onDisk.entries, std::move(report), onDisk.externals);
 }
 
 std::vector<LinkOperationResult> ProfileService::RunTheUndo()

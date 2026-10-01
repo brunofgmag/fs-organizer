@@ -231,5 +231,5 @@ void RefreshModernistTheme(QApplication& app)
     QApplication::setStyle(new ModernistStyle(scheme));
     QApplication::setPalette(ModernistPalette(scheme));
     app.setStyleSheet(ModernistStyleSheet(scheme));
-    QApplication::setFont(QApplication::font(), "QAbstractItemView");
+    QApplication::setFont(QApplication::font());
 }

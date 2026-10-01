@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #include <QtCore/QCommandLineOption>
@@ -14,6 +15,8 @@
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QContextMenuEvent>
+#include <QtGui/QHelpEvent>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPixmap>
 #include <QtGui/QScreen>
@@ -23,6 +26,7 @@
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QRadioButton>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QTableView>
@@ -301,31 +305,35 @@ namespace
         return true;
     }
 
-    bool SaveTheDialogOpenedBy(const std::function<void()>& opensIt, const QDir& folder, const QString& name)
+    bool SaveTheWidgetOpenedBy(const std::function<QWidget*()>& find,
+                               const std::function<void()>& settle,
+                               const std::function<void()>& opensIt,
+                               const QDir& folder,
+                               const QString& name)
     {
         QPixmap shot;
         bool opened = false;
 
         QTimer::singleShot(0, QCoreApplication::instance(),
-                           [&shot, &opened]
+                           [&shot, &opened, &find, &settle]
                            {
-                               QWidget* dialog = QApplication::activeModalWidget();
-                               if (dialog == nullptr)
+                               QWidget* shown = find();
+                               if (shown == nullptr)
                                {
                                    return;
                                }
 
                                opened = true;
-                               LetTheLayoutSettle();
-                               shot = dialog->grab();
-                               dialog->close();
+                               settle();
+                               shot = shown->grab();
+                               shown->close();
                            });
 
         opensIt();
 
         if (!opened)
         {
-            Out() << "no modal dialog opened for " << name << "\n";
+            Out() << "nothing opened for " << name << "\n";
             return false;
         }
 
@@ -338,6 +346,137 @@ namespace
 
         Out() << shot.width() << "x" << shot.height() << "  " << file << "\n";
         return true;
+    }
+
+    bool SaveTheDialogOpenedBy(const std::function<void()>& opensIt, const QDir& folder, const QString& name)
+    {
+        return SaveTheWidgetOpenedBy(
+            []
+            {
+                return QApplication::activeModalWidget();
+            },
+            LetTheLayoutSettle, opensIt, folder, name);
+    }
+
+    bool SaveThePopupOpenedBy(const std::function<void()>& opensIt, const QDir& folder, const QString& name)
+    {
+        return SaveTheWidgetOpenedBy(
+            []
+            {
+                return QApplication::activePopupWidget();
+            },
+            []
+            {
+                KeepTheEventLoopTurning(30);
+            },
+            opensIt, folder, name);
+    }
+
+    void RightClickTheCurrentRowOf(QAbstractItemView& view)
+    {
+        const QPoint at = view.visualRect(view.currentIndex()).center();
+        QContextMenuEvent request(QContextMenuEvent::Mouse, at, view.viewport()->mapToGlobal(at));
+
+        QApplication::sendEvent(view.viewport(), &request);
+    }
+
+    QWidget* TheTipOnScreen()
+    {
+        for (QWidget* top : QApplication::topLevelWidgets())
+        {
+            if (top->isVisible() && top->inherits("QTipLabel"))
+            {
+                return top;
+            }
+        }
+
+        return nullptr;
+    }
+
+    QWidget* TheTipRaisedByHoveringAt(QAbstractItemView& view, const QPoint at)
+    {
+        QWidget* viewport = view.viewport();
+        QHelpEvent hover(QEvent::ToolTip, at, viewport->mapToGlobal(at));
+
+        QApplication::sendEvent(viewport, &hover);
+        KeepTheEventLoopTurning(3);
+
+        return TheTipOnScreen();
+    }
+
+    QWidget* TheTipOverACroppedCellOf(QAbstractItemView& view)
+    {
+        constexpr int kGridStep = 6;
+        constexpr int kColumnStep = 24;
+
+        QList<QModelIndex> hovered;
+
+        for (int y = kGridStep / 2; y < view.viewport()->height(); y += kGridStep)
+        {
+            for (int x = kGridStep / 2; x < view.viewport()->width(); x += kColumnStep)
+            {
+                const QModelIndex cell = view.indexAt(QPoint(x, y));
+                if (!cell.isValid() || hovered.contains(cell))
+                {
+                    continue;
+                }
+
+                hovered.append(cell);
+
+                if (TheTipRaisedByHoveringAt(view, view.visualRect(cell).center()) != nullptr)
+                {
+                    KeepTheEventLoopTurning(30);
+
+                    return TheTipOnScreen();
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+    QWidget* TheTipOverTheFirstCroppedCellIn(const std::vector<std::pair<PageTab*, QWidget*>>& listings)
+    {
+        for (const auto& [tab, page] : listings)
+        {
+            tab->click();
+            LetTheLayoutSettle();
+
+            QAbstractItemView* rows = TheViewThatCarriesTheRows(*page);
+            QWidget* tip = rows != nullptr ? TheTipOverACroppedCellOf(*rows) : nullptr;
+
+            if (tip != nullptr)
+            {
+                Out() << "the tooltip comes from the " << tab->Label() << " page\n";
+
+                return tip;
+            }
+        }
+
+        return nullptr;
+    }
+
+    QPushButton* TheRemoveButtonOfAProfileOn(const QWidget& page)
+    {
+        for (const QRadioButton* choice : page.findChildren<QRadioButton*>())
+        {
+            if (!choice->isVisible() || choice->parentWidget() == nullptr)
+            {
+                continue;
+            }
+
+            const QList<QPushButton*> buttons =
+                choice->parentWidget()->findChildren<QPushButton*>(QString(), Qt::FindDirectChildrenOnly);
+
+            if (buttons.size() == 2 && buttons.back()->isEnabled())
+            {
+                return buttons.back();
+            }
+        }
+
+        Out() << "no profile row offers Remove, so there is no profile question to write\n";
+
+        return nullptr;
     }
 
     bool ClickingReaches(const QListWidget& navigation, const int row)
@@ -1327,6 +1466,17 @@ int main(int argc, char* argv[])
             && landed;
     }
 
+    if (QPushButton* removeProfile = TheRemoveButtonOfAProfileOn(*optionsPage); removeProfile != nullptr)
+    {
+        landed = SaveTheDialogOpenedBy(
+                     [removeProfile]
+                     {
+                         removeProfile->click();
+                     },
+                     folder, QStringLiteral("41-message-box"))
+            && landed;
+    }
+
     PageTab* back = nullptr;
     for (PageTab* tab : shell.findChildren<PageTab*>())
     {
@@ -1345,6 +1495,41 @@ int main(int argc, char* argv[])
     back->click();
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("12-came-back")) && landed;
+
+    libraryTab->click();
+    LetTheLayoutSettle();
+
+    QAbstractItemView* libraryRows = TheViewThatCarriesTheRows(*libraryPage);
+
+    if (libraryRows != nullptr && SelectTheAddonNamed(*libraryPage, TheFirstAddonOf(session.Snapshot())))
+    {
+        landed = SaveThePopupOpenedBy(
+                     [libraryRows]
+                     {
+                         RightClickTheCurrentRowOf(*libraryRows);
+                     },
+                     folder, QStringLiteral("40-library-context-menu"))
+            && landed;
+    }
+    else
+    {
+        Out() << "no addon row in the library, so there is no context menu to write\n";
+    }
+
+    const std::vector<std::pair<PageTab*, QWidget*>> listings{{libraryTab, libraryPage},
+                                                              {communityTab, communityPage},
+                                                              {quarantineTab, quarantinePage},
+                                                              {journalTab, journalPage},
+                                                              {presetsTab, presetsPage}};
+
+    if (QWidget* tip = TheTipOverTheFirstCroppedCellIn(listings); tip != nullptr)
+    {
+        landed = Save(*tip, folder, QStringLiteral("42-tooltip")) && landed;
+    }
+    else
+    {
+        Out() << "no cell of any listing is cropped, so there is no tooltip to write\n";
+    }
 
     return landed ? 0 : 1;
 }

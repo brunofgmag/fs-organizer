@@ -38,6 +38,8 @@ signals:
 protected:
     void changeEvent(QEvent* event) override;
 
+    void showEvent(QShowEvent* event) override;
+
 private:
     enum Section : int
     {
@@ -72,6 +74,10 @@ private:
 
     void OpenSection(int row) const;
 
+    void FollowTheLibraries();
+
+    void CatchUp();
+
     [[nodiscard]] QString TheRailTextForTheSearch() const;
 
     void ShowWhatWasCounted();
@@ -102,6 +108,7 @@ private:
 
     DiagnosticsViewModel& viewModel_;
     BisectionViewModel& bisectionViewModel_;
+    bool stale_ = false;
     QListWidget* rail_ = nullptr;
     std::vector<QListWidgetItem*> railItems_{};
     QStackedWidget* panes_ = nullptr;

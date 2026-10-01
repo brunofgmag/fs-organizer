@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 class SidecarStore
 {
@@ -15,6 +16,8 @@ public:
     [[nodiscard]] virtual std::optional<std::string> Read(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual bool Forget(const std::filesystem::path& path) = 0;
+
+    [[nodiscard]] virtual std::vector<std::filesystem::path> FilesIn(const std::filesystem::path& folder) const = 0;
 };
 
 #endif // FS_ORGANIZER_DOMAIN_PORTS_SIDECAR_STORE_H

@@ -48,6 +48,8 @@ public:
 signals:
     void RestoreOffersReady(const std::vector<RestoreOffer>& offers);
 
+    void CameBack();
+
     void Restored(const std::vector<FileOperationResult>& results);
 
     void DiscardStarted(int items);

@@ -210,7 +210,9 @@ void LinkPlanOnRealDiskTest::ApplyingAPresetReachesAnAddonWhoseJunctionTheUserDe
 
     QVERIFY(std::filesystem::remove(disk.Link()));
 
-    const PresetApplyReport report = linking.service.Apply(profile, shown, *preset, ApplyMode::Replace);
+    const PresetApplyReport report =
+        linking.service.Apply(EntriesStamp{.profile = profile, .adoptions = 0}, shown, *preset, ApplyMode::Replace)
+            .report;
 
     QCOMPARE(report.results.size(), std::size_t{1});
     QVERIFY(report.results.front().outcome.Succeeded());

@@ -625,16 +625,7 @@ int main(int argc, char* argv[])
                      {
                          adoptWhatChangedOnDisk();
                      });
-    QObject::connect(&quarantineViewModel, &QuarantineViewModel::Restored, page,
-                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
-                     {
-                         adoptWhatChangedOnDisk();
-                     });
-    QObject::connect(&quarantineViewModel, &QuarantineViewModel::Swapped, page,
-                     [adoptWhatChangedOnDisk](const std::vector<SwapResult>&)
-                     {
-                         adoptWhatChangedOnDisk();
-                     });
+    QObject::connect(&quarantineViewModel, &QuarantineViewModel::CameBack, page, adoptWhatChangedOnDisk);
     QObject::connect(&deletionViewModel, &DeletionViewModel::Deleted, page,
                      [adoptWhatChangedOnDisk](const std::vector<DeletionResult>&, const DeletionRoute)
                      {

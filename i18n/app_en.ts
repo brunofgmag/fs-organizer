@@ -1564,6 +1564,11 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="144"/>
+        <source>could not be measured</source>
+        <translation>could not be measured</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/ConflictDialog.cpp" line="144"/>
         <source>Changed on:</source>
         <translation>Changed on:</translation>
     </message>
@@ -4195,9 +4200,8 @@ Links already in %2 stay there and keep working, but FS Organizer stops managing
         <translation>Preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="231"/>
         <source>Content</source>
-        <translation>Content</translation>
+        <translation type="vanished">Content</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="231"/>
@@ -5066,6 +5070,24 @@ Apply the preset &quot;%2&quot;?</translation>
         <location filename="../src/view/shell/StartupOffers.cpp" line="101"/>
         <source>Decide later</source>
         <translation>Decide later</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="118"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="31"/>
+        <source>Folder names not restored</source>
+        <translation>Folder names not restored</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/shell/StartupOffers.cpp" line="32"/>
+        <source>%n folder still has its temporary name. FS Organizer will ask again the next time it starts.</source>
+        <translation>
+            <numerusform>%n folder still has its temporary name. FS Organizer will ask again the next time it starts.</numerusform>
+            <numerusform>%n folders still have their temporary names. FS Organizer will ask again the next time it starts.</numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="216"/>

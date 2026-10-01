@@ -1,7 +1,6 @@
 #ifndef FS_ORGANIZER_APPLICATION_DELETION_SERVICE_H
 #define FS_ORGANIZER_APPLICATION_DELETION_SERVICE_H
 
-#include <map>
 #include <string>
 #include <vector>
 
@@ -11,6 +10,7 @@
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
+#include "domain/linking/LinksByTarget.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/model/TreeNode.h"
 #include "domain/ports/FileOperations.h"
@@ -40,7 +40,7 @@ private:
     struct LinksNow
     {
         std::string profileId{};
-        std::map<std::string, std::vector<std::filesystem::path>> linksByTarget{};
+        LinksByTarget linksByTarget{};
     };
 
     [[nodiscard]] std::vector<LinksNow> ReadLinksNow(const std::vector<SimulatorProfile>& everyProfile) const;

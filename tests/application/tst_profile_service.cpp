@@ -1,5 +1,11 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
+#include <chrono>
+#include <functional>
+#include <future>
+#include <thread>
+
 #include "domain/journal/JournalEntries.h"
 #include "domain/journal/OperationLog.h"
 #include "application/ProfileService.h"
@@ -85,6 +91,11 @@ namespace
         static void RelinkingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
         static void UndoingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
         static void TheOutcomeOfABatchCarriesTheStampItWasAskedFor();
+        static void TheSidecarReadAsksTheStoreOncePerFolderAndOpensOnlyTheSidecarsThatExist();
+        static void TheSidecarReadFindsASidecarThatTheStoreNamesInAnotherCase();
+        static void TheLinksReadRememberWhatTheyWereClassifiedAgainst();
+        static void SettingEnabledOverAReadKeepsTheExternalsOfThatRead();
+        static void UndoingReadsTheDestinationsWithoutHoldingTheLockThatCanUndoTakes();
     };
 }
 
@@ -1456,6 +1467,17 @@ void ProfileServiceTest::ThePlaceTakenByThatLinkIsSeenByThePlacesTakenNowRead()
 
 namespace
 {
+    std::string UpperCased(std::string text)
+    {
+        std::ranges::transform(text, text.begin(),
+                               [](const char letter)
+                               {
+                                   return static_cast<char>(std::toupper(static_cast<unsigned char>(letter)));
+                               });
+
+        return text;
+    }
+
     class CountingSidecarReads final : public SidecarStore
     {
     public:
@@ -1480,7 +1502,32 @@ namespace
             return inner_.Forget(path);
         }
 
+        [[nodiscard]] std::vector<std::filesystem::path> FilesIn(const std::filesystem::path& folder) const override
+        {
+            foldersAsked.push_back(ComparablePath(folder));
+
+            if (whileListing)
+            {
+                whileListing();
+            }
+
+            std::vector<std::filesystem::path> files = inner_.FilesIn(folder);
+
+            if (answerInUpperCase)
+            {
+                for (std::filesystem::path& file : files)
+                {
+                    file = file.parent_path() / PathFromUtf8(UpperCased(AsUtf8(file.filename())));
+                }
+            }
+
+            return files;
+        }
+
         mutable std::size_t reads = 0;
+        mutable std::vector<std::string> foldersAsked;
+        std::function<void()> whileListing;
+        bool answerInUpperCase = false;
 
     private:
         SidecarStore& inner_;
@@ -1495,6 +1542,9 @@ void ProfileServiceTest::PlanningOverPlacesThatAreFreeReadsNoSidecar()
     CountingSidecarReads counting{f.sidecars};
     ProfileService service{f.catalog, f.filesystemProbe, counting,          f.classifier,      f.linking,
                            f.log,     f.identities,      f.startup.service, LinkType::Junction};
+
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor("D:/MSFS 2024/Aircrafts/aerosoft-crj"),
+                                     TextOfTheExternalOrigin(kVendorFolder));
 
     QVERIFY(service.PlacesTakenNow(profile, {Fixture::AddonAt(shown, 0)}, shown).empty());
     QCOMPARE(counting.reads, std::size_t{0});
@@ -1642,6 +1692,138 @@ void ProfileServiceTest::TheOutcomeOfABatchCarriesTheStampItWasAskedFor()
     QCOMPARE(outcome.read.stamp.profile.id, profile.id);
     QCOMPARE(outcome.read.startupEntries.size(), std::size_t{3});
     QVERIFY(!outcome.read.startupEntries.front().enabled);
+}
+
+void ProfileServiceTest::TheSidecarReadAsksTheStoreOncePerFolderAndOpensOnlyTheSidecarsThatExist()
+{
+    Fixture f;
+    const SimulatorProfile profile = ProfileWithASecondLibraryHolding(f, "F:/Extra/pmdg-aircraft-77w");
+    f.fileSystem.AddDirectory(kVendorFolder);
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor("D:/MSFS 2024/Aircrafts/aerosoft-crj"),
+                                     TextOfTheExternalOrigin(kVendorFolder));
+
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    CountingSidecarReads counting{f.sidecars};
+    const ProfileService service{f.catalog, f.filesystemProbe, counting,          f.classifier,      f.linking,
+                                 f.log,     f.identities,      f.startup.service, LinkType::Junction};
+
+    const std::vector<ExternalAddon> externals = service.WhatCameFromAnotherProgram(profile, shown.libraries);
+
+    QCOMPARE(counting.foldersAsked.size(), std::size_t{2});
+    QCOMPARE(counting.reads, std::size_t{1});
+    QCOMPARE(externals.size(), std::size_t{1});
+    QCOMPARE(externals.front().addonFolder, std::filesystem::path{"D:/MSFS 2024/Aircrafts/aerosoft-crj"});
+    QCOMPARE(externals.front().externalPath, std::filesystem::path{kVendorFolder});
+}
+
+void ProfileServiceTest::TheSidecarReadFindsASidecarThatTheStoreNamesInAnotherCase()
+{
+    Fixture f;
+    const SimulatorProfile profile = Profile();
+    f.fileSystem.AddFileWithContents(ExternalSidecarPathFor("D:/MSFS 2024/Aircrafts/aerosoft-crj"),
+                                     TextOfTheExternalOrigin(kVendorFolder));
+
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    CountingSidecarReads counting{f.sidecars};
+    counting.answerInUpperCase = true;
+    const ProfileService service{f.catalog, f.filesystemProbe, counting,          f.classifier,      f.linking,
+                                 f.log,     f.identities,      f.startup.service, LinkType::Junction};
+
+    const std::vector<ExternalAddon> externals = service.WhatCameFromAnotherProgram(profile, shown.libraries);
+
+    QCOMPARE(externals.size(), std::size_t{1});
+    QCOMPARE(externals.front().externalPath, std::filesystem::path{kVendorFolder});
+}
+
+void ProfileServiceTest::TheLinksReadRememberWhatTheyWereClassifiedAgainst()
+{
+    Fixture f;
+    PutTheLinkOnTheOtherProgramsFolder(f);
+
+    const SimulatorProfile forgetful = Profile();
+    const ProfileSnapshot shown = f.Snapshot(forgetful);
+
+    const ProfileService::LinksOnDisk throughTheLibraries = f.service.ReadLinksNow(forgetful, shown.libraries);
+
+    QCOMPARE(throughTheLibraries.externals.size(), std::size_t{1});
+    QCOMPARE(throughTheLibraries.externals.front().externalPath, std::filesystem::path{kVendorFolder});
+
+    const std::vector<ExternalAddon> given{
+        ExternalAddon{.addonFolder = kImportedExternal, .externalPath = "C:/Somewhere/else"}};
+    const ProfileService::LinksOnDisk throughTheExternals = f.service.ReadLinksNow(forgetful, given);
+
+    QCOMPARE(throughTheExternals.externals.size(), std::size_t{1});
+    QCOMPARE(throughTheExternals.externals.front().externalPath, std::filesystem::path{"C:/Somewhere/else"});
+}
+
+void ProfileServiceTest::SettingEnabledOverAReadKeepsTheExternalsOfThatRead()
+{
+    Fixture f;
+    PutTheLinkOnTheOtherProgramsFolder(f);
+
+    const SimulatorProfile forgetful = Profile();
+    const ProfileSnapshot shown = f.Snapshot(forgetful);
+    const EntriesStamp stamp{.profile = forgetful, .adoptions = 3};
+    const ProfileService::LinksOnDisk onDisk = f.service.ReadLinksNow(forgetful, shown.libraries);
+    const LinkBatch batch{.toDisable = {}, .toEnable = {Fixture::AddonAt(shown, 0)}};
+
+    const LinkBatchOutcome outcome = f.service.SetEnabled(stamp, shown, batch, onDisk);
+
+    QCOMPARE(outcome.report.results.size(), std::size_t{1});
+    QCOMPARE(outcome.read.stamp.adoptions, 3);
+
+    const std::vector<DestinationEntry> full = f.service.ResolveEntries(forgetful, shown.libraries);
+
+    QCOMPARE(full.size(), std::size_t{1});
+    QCOMPARE(full.front().classification, EntryClassification::Divergent);
+    QVERIFY(outcome.read.entries == full);
+}
+
+void ProfileServiceTest::UndoingReadsTheDestinationsWithoutHoldingTheLockThatCanUndoTakes()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    CountingSidecarReads counting{f.sidecars};
+    ProfileService service{f.catalog, f.filesystemProbe, counting,          f.classifier,      f.linking,
+                           f.log,     f.identities,      f.startup.service, LinkType::Junction};
+
+    const EntriesStamp stamp{.profile = profile, .adoptions = 0};
+    const LinkBatchOutcome enabled =
+        service.SetEnabled(stamp, shown, LinkBatch{.toDisable = {}, .toEnable = {Fixture::AddonAt(shown, 0)}});
+
+    QCOMPARE(enabled.report.results.size(), std::size_t{1});
+    QVERIFY(service.CanUndo());
+
+    bool canUndoWaitedForTheRead = false;
+    std::promise<void> answered;
+    std::future<void> hasAnswered = answered.get_future();
+    std::thread asker;
+    counting.whileListing = [&service, &canUndoWaitedForTheRead, &answered, &hasAnswered, &asker]
+    {
+        if (asker.joinable())
+        {
+            return;
+        }
+
+        asker = std::thread(
+            [&service, &answered]
+            {
+                static_cast<void>(service.CanUndo());
+                answered.set_value();
+            });
+        canUndoWaitedForTheRead = hasAnswered.wait_for(std::chrono::seconds{2}) != std::future_status::ready;
+    };
+
+    const LinkBatchOutcome undone = service.UndoLastBatch(stamp, shown.libraries);
+    asker.join();
+
+    QVERIFY(!counting.foldersAsked.empty());
+    QVERIFY2(!canUndoWaitedForTheRead, "CanUndo answers while the undo is still reading the destinations");
+    QCOMPARE(undone.report.results.size(), std::size_t{1});
+    QVERIFY(!service.CanUndo());
 }
 
 QTEST_APPLESS_MAIN(ProfileServiceTest)

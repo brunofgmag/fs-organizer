@@ -416,6 +416,12 @@ fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-entry-classifier-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-links-by-target-tests links-by-target
+        tests/domain/linking/tst_links_by_target.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-links-by-target-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-repair-plan-tests repair-plan
         tests/domain/linking/tst_repair_plan.cpp
         tests/support/EnumPrinting.h
@@ -1234,6 +1240,11 @@ if (WIN32)
             tests/support/PathPrinting.h)
 
     target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-sidecar-store-on-real-disk-tests sidecar-store-on-real-disk
+            tests/infrastructure/fileops/tst_sidecar_store_on_real_disk.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-sidecar-store-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-main-window-tests main-window
             tests/view/tst_main_window.cpp

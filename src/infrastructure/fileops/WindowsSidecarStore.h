@@ -1,6 +1,8 @@
 #ifndef FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_SIDECAR_STORE_H
 #define FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_SIDECAR_STORE_H
 
+#include <vector>
+
 #include "domain/ports/SidecarStore.h"
 
 class WindowsSidecarStore final : public SidecarStore
@@ -11,6 +13,8 @@ public:
     [[nodiscard]] std::optional<std::string> Read(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool Forget(const std::filesystem::path& path) override;
+
+    [[nodiscard]] std::vector<std::filesystem::path> FilesIn(const std::filesystem::path& folder) const override;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_WINDOWS_SIDECAR_STORE_H

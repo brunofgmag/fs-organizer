@@ -136,6 +136,18 @@ namespace
         return nullptr;
     }
 
+    std::optional<std::uintmax_t> SizeOfTheWalk(const std::optional<TreeFingerprint>& walked)
+    {
+        if (!walked.has_value())
+        {
+            return std::nullopt;
+        }
+
+        const auto sizes = walked->files | std::views::transform(&FileFingerprint::size);
+
+        return std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});
+    }
+
     std::vector<TreeNode> LibrariesHoldingNothing(const SimulatorProfile& profile)
     {
         std::vector<TreeNode> libraries;
@@ -412,14 +424,11 @@ FileResult ImportService::TakeBackWhatWasReplaced(const SimulatorProfile& profil
 
 ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
 {
-    const TreeFingerprint walked = filesystemProbe_.FingerprintTree(folder).value_or(TreeFingerprint{});
-    const auto sizes = walked.files | std::views::transform(&FileFingerprint::size);
-
     const TreeNode scanned = catalog_.Scan(folder);
 
     return ConflictSide{.path = folder,
                         .manifest = scanned.addon.has_value() ? scanned.addon->manifest : Manifest{},
-                        .sizeBytes = std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0}),
+                        .sizeBytes = SizeOfTheWalk(filesystemProbe_.FingerprintTree(folder)),
                         .modified = filesystemProbe_.LastWriteTime(folder)};
 }
 
@@ -431,21 +440,6 @@ ConflictDetails ImportService::DetailsOf(const std::vector<DestinationEntry>& en
                            .linksToTheLibraryCopy = LinksPointingAt(entries, conflict.libraryPath),
                            .theProvenanceIsAnotherProgram = conflict.theProvenanceIsAnotherProgram,
                            .ourLinkWasReplaced = conflict.ourLinkWasReplaced};
-}
-
-std::uintmax_t ImportService::TotalSizeOf(const std::vector<std::filesystem::path>& folders) const
-{
-    std::uintmax_t total = 0;
-
-    for (const std::filesystem::path& folder : folders)
-    {
-        const TreeFingerprint walked = filesystemProbe_.FingerprintTree(folder).value_or(TreeFingerprint{});
-        const auto sizes = walked.files | std::views::transform(&FileFingerprint::size);
-
-        total += std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});
-    }
-
-    return total;
 }
 
 FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine,
@@ -1005,10 +999,19 @@ std::vector<InterruptedSwap> ImportService::InterruptedSwaps(const SimulatorProf
 std::vector<FileOperationResult> ImportService::UndoInterruptedSwaps(const SimulatorProfile& profile,
                                                                      const std::vector<InterruptedSwap>& swaps) const
 {
+    const bool blocked = processProbe_.SimulatorIsRunning();
+
     std::vector<FileOperationResult> results;
+    results.reserve(swaps.size());
 
     for (const InterruptedSwap& swap : swaps)
     {
+        if (blocked)
+        {
+            results.push_back(FileOperationResult{.path = swap.folder, .result = FileResult::TheSimulatorIsRunning});
+            continue;
+        }
+
         const bool moved = files_.Move(swap.room, swap.folder);
         const FileResult result = moved ? FileResult::Completed : FileResult::CouldNotMoveIntoPlace;
 
@@ -1091,6 +1094,8 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
     const bool blocked = processProbe_.SimulatorIsRunning();
     const std::vector<TreeNode> libraries = blocked ? std::vector<TreeNode>{} : LibraryTreesOf(catalog_, profile);
 
+    std::vector<TreeNode> landed = LibrariesHoldingNothing(profile);
+
     std::vector<ImportOperationResult> results;
     results.reserve(leftovers.size());
 
@@ -1106,7 +1111,7 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
             continue;
         }
 
-        if (const TreeNode* occupant = AddonHoldingTheIdentity(libraries, leftover.target, {}))
+        if (const TreeNode* occupant = OccupantOf(leftover.target, libraries, landed))
         {
             results.push_back(ImportOperationResult{
                 .request = request, .result = FileResult::TheIdentityIsTaken, .occupant = occupant->path});
@@ -1126,6 +1131,11 @@ std::vector<ImportOperationResult> ImportService::Resume(const SimulatorProfile&
         }
 
         const ImportOutcome outcome = engine_.Import(profile, request, onProgress, onStep);
+
+        if (outcome.Succeeded())
+        {
+            RememberTheLanding(landed, leftover.target);
+        }
 
         results.push_back(
             ImportOperationResult{.request = request, .result = outcome.Result(), .writeAccess = outcome.Access()});

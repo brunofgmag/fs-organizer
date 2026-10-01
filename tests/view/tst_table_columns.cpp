@@ -1,11 +1,15 @@
 #include <QtTest/QtTest>
 
+#include <QtGui/QPixmap>
 #include <QtGui/QStandardItemModel>
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTableView>
 
 #include "view/TableColumns.h"
+#include "view/delegates/RowDelegate.h"
+#include "view/theme/ModernistTheme.h"
 
 namespace
 {
@@ -29,6 +33,10 @@ namespace
         static void ATableAFewPixelsTooNarrowForItsColumnsAndTheSlackTitleTakesThemBackFromTheCells();
         static void ATableFarTooNarrowKeepsEveryColumnAtItsContentAndScrolls();
         static void WideningTheTableAgainReturnsWhatWasGivenBack();
+        static void AFollowerTakesTheWidthOfEveryColumnItFollowsAndStretchesItsLast();
+        static void AFollowerHidesWhatItFollowsHides();
+        static void AFollowerCreatedAfterAColumnWasHiddenStartsWithItHidden();
+        static void AMeasuredColumnNeverGivesBackMoreThanItsOwnRoomSoNoTextLosesALetter();
     };
 }
 
@@ -432,6 +440,191 @@ void TableColumnsTest::WideningTheTableAgainReturnsWhatWasGivenBack()
     QCoreApplication::processEvents();
 
     QCOMPARE(tight.view.horizontalHeader()->sectionSize(0), cell);
+}
+
+namespace
+{
+    struct Followed
+    {
+        QStandardItemModel followedModel{3, kColumns};
+        QStandardItemModel followerModel{1, kColumns};
+        QTableView followed;
+        QTableView follower;
+
+        Followed()
+        {
+            for (int column = 0; column < kColumns; ++column)
+            {
+                for (int row = 0; row < followedModel.rowCount(); ++row)
+                {
+                    followedModel.setItem(row, column, new QStandardItem(QStringLiteral("cell %1").arg(column)));
+                }
+
+                followerModel.setItem(0, column, new QStandardItem(QStringLiteral("back %1").arg(column)));
+            }
+
+            for (QTableView* view : {&followed, &follower})
+            {
+                view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+                view->verticalHeader()->setVisible(false);
+                view->resize(700, 200);
+            }
+
+            follower.resize(740, 200);
+
+            followed.setModel(&followedModel);
+            follower.setModel(&followerModel);
+            LetTheColumnsBeDraggedAndStillFillTheTable(&followed);
+            LetTheColumnsFollowThoseOf(&follower, &followed);
+            followed.show();
+            follower.show();
+            static_cast<void>(QTest::qWaitForWindowExposed(&followed));
+            static_cast<void>(QTest::qWaitForWindowExposed(&follower));
+        }
+    };
+}
+
+void TableColumnsTest::AFollowerTakesTheWidthOfEveryColumnItFollowsAndStretchesItsLast()
+{
+    const Followed pair;
+    const QHeaderView* theirs = pair.followed.horizontalHeader();
+    const QHeaderView* mine = pair.follower.horizontalHeader();
+
+    for (int column = 0; column < kColumns - 1; ++column)
+    {
+        QCOMPARE(mine->sectionSize(column), theirs->sectionSize(column));
+        QCOMPARE(mine->sectionResizeMode(column), QHeaderView::Fixed);
+    }
+
+    const int wider = theirs->sectionSize(1) + 25;
+    pair.followed.horizontalHeader()->resizeSection(1, wider);
+
+    QCOMPARE(mine->sectionSize(1), wider);
+    QCOMPARE(mine->sectionSize(0), theirs->sectionSize(0));
+
+    int total = 0;
+    for (int column = 0; column < kColumns; ++column)
+    {
+        total += mine->sectionSize(column);
+    }
+
+    QCOMPARE(total, pair.follower.viewport()->width());
+}
+
+void TableColumnsTest::AFollowerHidesWhatItFollowsHides()
+{
+    const Followed pair;
+    QHeaderView* theirs = pair.followed.horizontalHeader();
+    const QHeaderView* mine = pair.follower.horizontalHeader();
+
+    QVERIFY(!mine->isSectionHidden(1));
+
+    theirs->setSectionHidden(1, true);
+    theirs->resizeSection(0, theirs->sectionSize(0) + 10);
+
+    QVERIFY(mine->isSectionHidden(1));
+    QCOMPARE(mine->sectionSize(0), theirs->sectionSize(0));
+
+    theirs->setSectionHidden(1, false);
+
+    QVERIFY(!mine->isSectionHidden(1));
+    QCOMPARE(mine->sectionSize(1), theirs->sectionSize(1));
+}
+
+void TableColumnsTest::AFollowerCreatedAfterAColumnWasHiddenStartsWithItHidden()
+{
+    QStandardItemModel model(1, kColumns);
+    QTableView followed;
+    QTableView follower;
+
+    followed.setModel(&model);
+    follower.setModel(&model);
+    followed.horizontalHeader()->setSectionHidden(2, true);
+
+    LetTheColumnsFollowThoseOf(&follower, &followed);
+
+    QVERIFY(follower.horizontalHeader()->isSectionHidden(2));
+    QVERIFY(!follower.horizontalHeader()->isSectionHidden(1));
+}
+
+namespace
+{
+    constexpr int kMostShortfallWorthTrying = 10;
+
+    struct CutTable
+    {
+        QStandardItemModel model{4, 2};
+        QTableView view;
+        RowDelegate delegate;
+
+        explicit CutTable(const int viewportWidth)
+        {
+            model.setHorizontalHeaderLabels({QStringLiteral("A"), QStringLiteral("A title that asks for room")});
+
+            const QStringList names = {QStringLiteral("tfdidesign-md11f"), QStringLiteral("aerosoft-crj"),
+                                       QStringLiteral("Voo de linha"), QStringLiteral("Airline Ops")};
+
+            for (int row = 0; row < model.rowCount(); ++row)
+            {
+                model.setItem(row, 0, new QStandardItem(names[row]));
+                model.setItem(row, 1, new QStandardItem(QStringLiteral("x")));
+            }
+
+            view.setModel(&model);
+            view.setItemDelegate(&delegate);
+            view.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            view.verticalHeader()->setVisible(false);
+            view.resize(viewportWidth, 200);
+            LetTheColumnsBeDraggedAndStillFillTheTable(&view);
+            view.show();
+            static_cast<void>(QTest::qWaitForWindowExposed(&view));
+            view.resize(viewportWidth + view.width() - view.viewport()->width(), 200);
+            QCoreApplication::processEvents();
+        }
+
+        [[nodiscard]] int FirstColumn() const
+        {
+            return view.horizontalHeader()->sectionSize(0);
+        }
+
+        [[nodiscard]] int WhatTheColumnsAsk() const
+        {
+            return FirstColumn() + view.horizontalHeader()->sectionSizeHint(1);
+        }
+
+        [[nodiscard]] QImage FirstColumnPainted(const int wide) const
+        {
+            QPixmap shot(view.viewport()->size());
+            shot.fill(Qt::transparent);
+            view.viewport()->render(&shot);
+
+            return shot.toImage().copy(0, 0, wide, view.rowHeight(0) * model.rowCount());
+        }
+    };
+}
+
+void TableColumnsTest::AMeasuredColumnNeverGivesBackMoreThanItsOwnRoomSoNoTextLosesALetter()
+{
+    ApplyModernistTheme(*qApp);
+
+    const CutTable roomy(900);
+    const int asked = roomy.WhatTheColumnsAsk();
+    const int cell = roomy.FirstColumn();
+
+    const CutTable gives(asked - 1);
+    QVERIFY2(gives.FirstColumn() < cell, "a shortfall of one pixel was not taken from the column");
+
+    for (int shortfall = 1; shortfall <= kMostShortfallWorthTrying; ++shortfall)
+    {
+        const CutTable tight(asked - shortfall);
+        const int kept = std::min(tight.FirstColumn(), cell);
+
+        QVERIFY2(tight.FirstColumnPainted(kept) == roomy.FirstColumnPainted(kept),
+                 qPrintable(QStringLiteral("with %1 px short the column went from %2 to %3 and its text was cut")
+                                .arg(shortfall)
+                                .arg(cell)
+                                .arg(tight.FirstColumn())));
+    }
 }
 
 QTEST_MAIN(TableColumnsTest)

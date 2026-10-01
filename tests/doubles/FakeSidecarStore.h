@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "domain/ports/SidecarStore.h"
 #include "tests/doubles/InMemoryFileSystem.h"
@@ -40,6 +41,11 @@ public:
     [[nodiscard]] bool Forget(const std::filesystem::path& path) override
     {
         return !fileSystem_.IsDirectory(path) && fileSystem_.RemoveTree(path);
+    }
+
+    [[nodiscard]] std::vector<std::filesystem::path> FilesIn(const std::filesystem::path& folder) const override
+    {
+        return fileSystem_.ChildFilesOf(folder);
     }
 
 private:

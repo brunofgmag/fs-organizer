@@ -51,6 +51,13 @@ namespace
         static void MeasuringAgainSupersedesTheEarlierRequestAndTheLateAnswerIsNotShown();
         static void AMeasurementInFlightSurvivesTheScreenBeingLeftAndRevisited();
         static void ComingBackWhileItIsStillMeasuringDoesNotStartTheWalkOver();
+        static void AfterASwitchToOtherLibrariesOpeningSizeMeasuresTheNewSet();
+        static void AfterASwitchToOtherLibrariesOpeningTheSceneryReadsTheNewSet();
+        static void ARescanOfTheSameLibrariesKeepsBothMemosAndWalksNothing();
+        static void RegisteringALibraryInTheSameProfileForgetsBothMemos();
+        static void ASizeWalkForTheOldLibrariesThatLandsAfterASwitchIsDroppedAndToldToStop();
+        static void ASceneryWalkForTheOldLibrariesThatLandsAfterASwitchIsDroppedAndToldToStop();
+        static void MeasuringAgainWhileItRunsTellsTheEarlierWalkToStop();
     };
 }
 
@@ -82,6 +89,41 @@ namespace
         node.children = {aircrafts};
 
         return node;
+    }
+
+    constexpr auto kLegacyLibrary = "Z:/Legado";
+    constexpr auto kLegacyCommunity = "C:/Packages/Community";
+    constexpr auto kSpare = "F:/Spare";
+
+    TreeNode LibraryWithAddons(const std::filesystem::path& root, const std::vector<std::string>& names)
+    {
+        TreeNode aircrafts;
+        aircrafts.kind = TreeNodeKind::Category;
+        aircrafts.path = root / "Aircrafts";
+
+        for (const std::string& name : names)
+        {
+            aircrafts.children.push_back(AddonNode(aircrafts.path / name));
+        }
+
+        TreeNode node;
+        node.kind = TreeNodeKind::Library;
+        node.path = root;
+        node.children = {aircrafts};
+
+        return node;
+    }
+
+    SimulatorProfile LegacyProfile()
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2020";
+        profile.variant = SimulatorVariant::MSFS2020;
+        profile.destinations = {kLegacyCommunity};
+        profile.defaultDestination = kLegacyCommunity;
+        profile.libraries = {Library{.id = "library-9", .path = kLegacyLibrary, .label = "Legado"}};
+
+        return profile;
     }
 
     SimulatorProfile Profile()
@@ -124,6 +166,31 @@ namespace
                 }));
 
             session.ShowActiveProfile();
+        }
+
+        void AddTheLegacyProfile()
+        {
+            fileSystem.AddDirectory(kLegacyCommunity);
+            fileSystem.AddDirectory("Z:/Legado/Aircrafts/fenix-a320");
+            fileSystem.AddFile("Z:/Legado/Aircrafts/fenix-a320/model.bin", 100);
+            fileSystem.AddDirectory("Z:/Legado/Aircrafts/aerosoft-crj");
+            catalog.SetTree(kLegacyLibrary, LibraryWithAddons(kLegacyLibrary, {"fenix-a320", "aerosoft-crj"}));
+
+            static_cast<void>(session.Rewrite(
+                [](AppSettings& stored)
+                {
+                    stored.profiles.push_back(LegacyProfile());
+
+                    return true;
+                }));
+        }
+
+        void AddTheSpareLibrary()
+        {
+            fileSystem.AddDirectory(kSpare);
+            fileSystem.AddDirectory("F:/Spare/Aircrafts/fenix-a320");
+            fileSystem.AddFile("F:/Spare/Aircrafts/fenix-a320/model.bin", 64);
+            catalog.SetTree(kSpare, LibraryWithAddons(kSpare, {"fenix-a320"}));
         }
 
         InMemoryFileSystem fileSystem;
@@ -511,6 +578,191 @@ void DiagnosticsViewModelTest::ComingBackWhileItIsStillMeasuringDoesNotStartTheW
     f.viewModel.ShowSize();
 
     QCOMPARE(f.runner.runs, walked);
+}
+
+void DiagnosticsViewModelTest::AfterASwitchToOtherLibrariesOpeningSizeMeasuresTheNewSet()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/model.bin", 4096);
+    f.Seed(Profile());
+    f.AddTheLegacyProfile();
+
+    f.viewModel.ShowSize();
+
+    QCOMPARE(f.viewModel.Size().libraries.front().bytes, std::uintmax_t{4096});
+
+    const QSignalSpy changed(&f.viewModel, &DiagnosticsViewModel::TheLibrariesChanged);
+
+    f.session.ChooseProfile("msfs2020");
+
+    QCOMPARE(changed.size(), 1);
+    QVERIFY(!f.viewModel.MeasuredAt().has_value());
+
+    f.clock.now += std::chrono::hours{1};
+    f.viewModel.ShowSize();
+
+    QCOMPARE(f.viewModel.Size().libraries.size(), std::size_t{1});
+    QCOMPARE(f.viewModel.Size().libraries.front().path, std::filesystem::path(kLegacyLibrary));
+    QCOMPARE(f.viewModel.Size().libraries.front().bytes, std::uintmax_t{100});
+    QCOMPARE(f.viewModel.MeasuredAt(), std::optional(f.clock.now));
+}
+
+void DiagnosticsViewModelTest::AfterASwitchToOtherLibrariesOpeningTheSceneryReadsTheNewSet()
+{
+    Fixture f;
+    f.Seed(Profile());
+    f.AddTheLegacyProfile();
+
+    f.viewModel.ShowScenery();
+
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{1});
+
+    f.session.ChooseProfile("msfs2020");
+
+    QVERIFY(!f.viewModel.SceneryReadAt().has_value());
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{0});
+
+    f.clock.now += std::chrono::hours{1};
+    f.viewModel.ShowScenery();
+
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{2});
+    QCOMPARE(f.viewModel.SceneryReadAt(), std::optional(f.clock.now));
+}
+
+void DiagnosticsViewModelTest::ARescanOfTheSameLibrariesKeepsBothMemosAndWalksNothing()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/model.bin", 4096);
+    f.Seed(Profile());
+
+    f.viewModel.ShowSize();
+    f.viewModel.ShowScenery();
+
+    const std::optional<std::chrono::system_clock::time_point> measured = f.viewModel.MeasuredAt();
+    const std::optional<std::chrono::system_clock::time_point> read = f.viewModel.SceneryReadAt();
+    const QSignalSpy changed(&f.viewModel, &DiagnosticsViewModel::TheLibrariesChanged);
+
+    f.session.ChooseProfile("msfs2024");
+
+    const int runsAfterTheRescan = f.runner.runs;
+
+    f.clock.now += std::chrono::hours{1};
+    f.viewModel.ShowSize();
+    f.viewModel.ShowScenery();
+
+    QCOMPARE(changed.size(), 0);
+    QCOMPARE(f.runner.runs, runsAfterTheRescan);
+    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), std::size_t{1});
+    QCOMPARE(f.viewModel.MeasuredAt(), measured);
+    QCOMPARE(f.viewModel.SceneryReadAt(), read);
+}
+
+void DiagnosticsViewModelTest::RegisteringALibraryInTheSameProfileForgetsBothMemos()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/model.bin", 4096);
+    f.AddTheSpareLibrary();
+    f.Seed(Profile());
+
+    f.viewModel.ShowSize();
+    f.viewModel.ShowScenery();
+
+    QCOMPARE(f.viewModel.Size().libraries.size(), std::size_t{1});
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{1});
+
+    const QSignalSpy changed(&f.viewModel, &DiagnosticsViewModel::TheLibrariesChanged);
+
+    QVERIFY(f.session.RegisterLibrary(kSpare).Accepted());
+
+    QCOMPARE(changed.size(), 1);
+    QVERIFY(!f.viewModel.MeasuredAt().has_value());
+    QVERIFY(!f.viewModel.SceneryReadAt().has_value());
+
+    f.viewModel.ShowSize();
+    f.viewModel.ShowScenery();
+
+    QCOMPARE(f.viewModel.Size().libraries.size(), std::size_t{2});
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{2});
+}
+
+void DiagnosticsViewModelTest::ASizeWalkForTheOldLibrariesThatLandsAfterASwitchIsDroppedAndToldToStop()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/model.bin", 4096);
+    f.Seed(Profile());
+    f.AddTheLegacyProfile();
+
+    const QSignalSpy measured(&f.viewModel, &DiagnosticsViewModel::SizeMeasured);
+
+    f.runner.defer = true;
+    f.viewModel.ShowSize();
+    f.runner.defer = false;
+
+    QVERIFY(f.viewModel.Measuring());
+
+    f.session.ChooseProfile("msfs2020");
+
+    QVERIFY(!f.viewModel.Measuring());
+
+    f.runner.Finish();
+
+    QCOMPARE(measured.size(), 0);
+    QVERIFY(!f.viewModel.Measuring());
+    QVERIFY(!f.viewModel.MeasuredAt().has_value());
+    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), std::size_t{0});
+
+    f.viewModel.ShowSize();
+
+    QCOMPARE(f.viewModel.Size().libraries.front().path, std::filesystem::path(kLegacyLibrary));
+    QCOMPARE(f.viewModel.Size().libraries.front().bytes, std::uintmax_t{100});
+}
+
+void DiagnosticsViewModelTest::ASceneryWalkForTheOldLibrariesThatLandsAfterASwitchIsDroppedAndToldToStop()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("D:/MSFS 2024/Aircrafts/fenix-a320");
+    f.catalog.SetTree(kLibrary, LibraryWithAddons(kLibrary, {"pmdg-aircraft-77w", "fenix-a320"}));
+    f.Seed(Profile());
+    f.AddTheLegacyProfile();
+
+    const QSignalSpy progressed(&f.viewModel, &DiagnosticsViewModel::SceneryProgressed);
+    const QSignalSpy landed(&f.viewModel, &DiagnosticsViewModel::SceneryRead);
+
+    f.runner.defer = true;
+    f.viewModel.ShowScenery();
+    f.runner.defer = false;
+
+    QVERIFY(f.viewModel.ReadingTheScenery());
+
+    f.session.ChooseProfile("msfs2020");
+
+    QVERIFY(!f.viewModel.ReadingTheScenery());
+
+    f.runner.Finish();
+
+    QCOMPARE(progressed.size(), 0);
+    QCOMPARE(landed.size(), 0);
+    QVERIFY(!f.viewModel.ReadingTheScenery());
+    QVERIFY(!f.viewModel.SceneryReadAt().has_value());
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{0});
+
+    f.viewModel.ShowScenery();
+
+    QCOMPARE(f.viewModel.Scenery().addons, std::size_t{2});
+}
+
+void DiagnosticsViewModelTest::MeasuringAgainWhileItRunsTellsTheEarlierWalkToStop()
+{
+    Fixture f;
+    f.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/model.bin", 4096);
+    f.Seed(Profile());
+
+    f.runner.defer = true;
+    f.viewModel.ShowSize();
+    f.viewModel.MeasureSizeAgain();
+    f.runner.RunPendingWork();
+
+    QCOMPARE(f.filesystemProbe.TimesWalked("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"), std::size_t{1});
 }
 
 QTEST_APPLESS_MAIN(DiagnosticsViewModelTest)

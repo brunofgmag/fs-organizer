@@ -714,8 +714,8 @@ void SessionTest::TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALin
                             .kind = OperationKind::EnableAddon,
                             .outcome = LinkOutcome::Success()}};
 
-    f.session.NoteLinkResults(changed);
-    f.session.NoteLinkResults(changed);
+    f.session.NoteLinkResults(changed, f.session.SimulatorIsRunningAfter(changed));
+    f.session.NoteLinkResults(changed, f.session.SimulatorIsRunningAfter(changed));
 
     QCOMPARE(f.observer.simulatorWarnings, 1);
     QCOMPARE(f.observer.restartReports, 1);

@@ -38,8 +38,6 @@ public:
 
     bool Rewrite(const std::function<bool(AppSettings&)>& change);
 
-    void NoteLinkResults(const std::vector<LinkOperationResult>& results);
-
     void NoteLinkResults(const std::vector<LinkOperationResult>& results, bool simulatorIsRunning);
 
     [[nodiscard]] bool SimulatorIsRunningAfter(const std::vector<LinkOperationResult>& results) const;

@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iterator>
 #include <system_error>
+#include <vector>
 
 #include "infrastructure/fileops/ExtendedPaths.h"
 
@@ -50,4 +51,22 @@ bool WindowsSidecarStore::Forget(const std::filesystem::path& path)
     std::error_code error;
 
     return std::filesystem::remove(WithExtendedPrefix(path), error) && !error;
+}
+
+std::vector<std::filesystem::path> WindowsSidecarStore::FilesIn(const std::filesystem::path& folder) const
+{
+    std::vector<std::filesystem::path> files;
+    std::error_code error;
+
+    for (std::filesystem::directory_iterator entries(WithExtendedPrefix(folder), error), end; !error && entries != end;
+         entries.increment(error))
+    {
+        std::error_code kindError;
+        if (entries->is_regular_file(kindError) && !kindError)
+        {
+            files.push_back(folder / entries->path().filename());
+        }
+    }
+
+    return files;
 }

@@ -35,6 +35,27 @@ namespace
         return folders;
     }
 
+    LibrarySet LibrariesOf(const SimulatorProfile& profile)
+    {
+        LibrarySet set{.profileId = profile.id, .roots = {}};
+        set.roots.reserve(profile.libraries.size());
+
+        for (const Library& library : profile.libraries)
+        {
+            set.roots.push_back(ComparablePath(library.path));
+        }
+
+        return set;
+    }
+
+    std::shared_ptr<std::atomic<bool>> StopAndRenew(std::shared_ptr<std::atomic<bool>>& token)
+    {
+        token->store(true);
+        token = std::make_shared<std::atomic<bool>>(false);
+
+        return token;
+    }
+
     SceneryCensus CensusOf(const std::vector<SceneryOfAnAddon>& walked, const std::size_t addons)
     {
         SceneryCensus census{.carryingACode = {},
@@ -82,9 +103,40 @@ DiagnosticsViewModel::DiagnosticsViewModel(const ImportService& imports,
       clock_(clock),
       runner_(runner),
       caller_(sizes.NewCaller()),
-      quarantineCaller_(sizes.NewCaller())
+      quarantineCaller_(sizes.NewCaller()),
+      libraries_(LibrariesOf(session.Profile()))
 {
     connect(&notifier, &SessionNotifier::Refreshed, this, &DiagnosticsViewModel::Count);
+    connect(&notifier, &SessionNotifier::ScanFinished, this, &DiagnosticsViewModel::FollowTheLibraries);
+}
+
+void DiagnosticsViewModel::FollowTheLibraries()
+{
+    const LibrarySet now = LibrariesOf(session_.Profile());
+
+    if (now == libraries_)
+    {
+        return;
+    }
+
+    libraries_ = now;
+
+    ForgetWhatBelongedToTheOldLibraries();
+
+    emit TheLibrariesChanged();
+}
+
+void DiagnosticsViewModel::ForgetWhatBelongedToTheOldLibraries()
+{
+    StopAndRenew(sizeStop_);
+    size_ = SizeReport{};
+    measuredAt_.reset();
+    measuring_ = false;
+
+    StopAndRenew(sceneryStop_);
+    census_ = SceneryCensus{};
+    sceneryReadAt_.reset();
+    reading_ = false;
 }
 
 void DiagnosticsViewModel::Show()
@@ -111,7 +163,7 @@ void DiagnosticsViewModel::MeasureSizeAgain()
 
 void DiagnosticsViewModel::CancelSize()
 {
-    cancelling_ = true;
+    sizeStop_->store(true);
 }
 
 void DiagnosticsViewModel::ShowTheLoad()
@@ -143,7 +195,7 @@ void DiagnosticsViewModel::ReadTheSceneryAgain()
 
 void DiagnosticsViewModel::CancelScenery()
 {
-    stopReading_ = true;
+    sceneryStop_->store(true);
 }
 
 const LoadDiagnostics& DiagnosticsViewModel::Load() const
@@ -169,33 +221,41 @@ std::optional<std::chrono::system_clock::time_point> DiagnosticsViewModel::Scene
 void DiagnosticsViewModel::Walk(const std::vector<AddonToRead>& addons, const SceneryFreshness freshness)
 {
     reading_ = true;
-    stopReading_ = false;
 
+    const StopToken stop = StopAndRenew(sceneryStop_);
     auto walked = std::make_shared<std::vector<SceneryOfAnAddon>>();
 
     runner_.Run(
-        [this, addons, walked, freshness]
+        [this, addons, walked, freshness, stop]
         {
             *walked = scenery_.SceneryOfEach(
                 addons,
-                [this](const std::size_t read, const std::size_t outOf)
+                [this, stop](const std::size_t read, const std::size_t outOf)
                 {
-                    QMetaObject::invokeMethod(this,
-                                              [this, read, outOf]
-                                              {
-                                                  emit SceneryProgressed(static_cast<int>(read),
-                                                                         static_cast<int>(outOf));
-                                              });
+                    if (!*stop)
+                    {
+                        QMetaObject::invokeMethod(this,
+                                                  [this, read, outOf]
+                                                  {
+                                                      emit SceneryProgressed(static_cast<int>(read),
+                                                                             static_cast<int>(outOf));
+                                                  });
+                    }
 
-                    return !stopReading_;
+                    return !*stop;
                 },
                 freshness);
         },
-        [this, addons, walked]
+        [this, addons, walked, stop]
         {
+            if (stop != sceneryStop_)
+            {
+                return;
+            }
+
             reading_ = false;
 
-            if (!stopReading_)
+            if (!*stop)
             {
                 census_ = CensusOf(*walked, addons.size());
                 sceneryReadAt_ = clock_.Now();
@@ -353,23 +413,32 @@ void DiagnosticsViewModel::Ask(const Freshness freshness)
     }
 
     measuring_ = true;
-    cancelling_ = false;
+
+    const StopToken stop = StopAndRenew(sizeStop_);
 
     sizes_.Measure(
         roots, caller_, freshness,
-        [this](const SizeProgress& progress)
+        [this, stop](const SizeProgress& progress)
         {
-            QMetaObject::invokeMethod(
-                this,
-                [this, folder = AsText(progress.folder), measured = progress.measured, total = progress.total]
-                {
-                    emit SizeProgressed(folder, static_cast<int>(measured), static_cast<int>(total));
-                });
+            if (!*stop)
+            {
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, folder = AsText(progress.folder), measured = progress.measured, total = progress.total]
+                    {
+                        emit SizeProgressed(folder, static_cast<int>(measured), static_cast<int>(total));
+                    });
+            }
 
-            return !cancelling_;
+            return !*stop;
         },
-        [this](const SizeReport& report)
+        [this, stop](const SizeReport& report)
         {
+            if (stop != sizeStop_)
+            {
+                return;
+            }
+
             size_ = report;
             measuredAt_ = report.measuredAt;
             measuring_ = false;

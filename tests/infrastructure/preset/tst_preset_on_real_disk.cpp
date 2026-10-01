@@ -253,7 +253,9 @@ void PresetOnRealDiskTest::ApplyingAFreshlyCapturedPresetLeavesTheDestinationAsI
 
     const std::size_t before = ChildrenOf(disk.Community());
 
-    const PresetApplyReport report = composed.service.Apply(profile, snapshot, *stored, ApplyMode::Replace);
+    const PresetApplyReport report =
+        composed.service.Apply(EntriesStamp{.profile = profile, .adoptions = 0}, snapshot, *stored, ApplyMode::Replace)
+            .report;
 
     QCOMPARE(report.results.size(), std::size_t{0});
     QCOMPARE(ChildrenOf(disk.Community()), before);
@@ -295,8 +297,10 @@ void PresetOnRealDiskTest::TheReturnPresetLandsOnDiskWithWhatWasEnabledAndStaysO
 
     ReallyEnable(composed, disk, "Utils", 1);
 
-    const PresetApplyReport report =
-        composed.service.Apply(profile, composed.profiles.Scan(profile), *stored, ApplyMode::Replace);
+    const PresetApplyReport report = composed.service
+                                         .Apply(EntriesStamp{.profile = profile, .adoptions = 0},
+                                                composed.profiles.Scan(profile), *stored, ApplyMode::Replace)
+                                         .report;
 
     QVERIFY(report.refusal == PresetApplyRefusal::None);
     QVERIFY(std::filesystem::exists(disk.Root() / "presets" / "msfs2024.return.json"));
@@ -330,14 +334,16 @@ void PresetOnRealDiskTest::ApplyingTheReturnPresetPutsTheDestinationBackAsItWas(
     preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = "lib-1", .folderName = AddonNameAt("Utils", 3)},
                                   .action = PresetAction::Enable}};
 
-    static_cast<void>(composed.service.Apply(profile, composed.profiles.Scan(profile), preset, ApplyMode::Replace));
+    static_cast<void>(composed.service.Apply(EntriesStamp{.profile = profile, .adoptions = 0},
+                                             composed.profiles.Scan(profile), preset, ApplyMode::Replace));
 
     QVERIFY(LinkNamesIn(disk.Community()) != before);
 
     const std::optional<Preset> back = composed.service.ReturnPreset(profile.id);
     QVERIFY(back.has_value());
 
-    static_cast<void>(composed.service.Apply(profile, composed.profiles.Scan(profile), *back, ApplyMode::Replace));
+    static_cast<void>(composed.service.Apply(EntriesStamp{.profile = profile, .adoptions = 0},
+                                             composed.profiles.Scan(profile), *back, ApplyMode::Replace));
 
     QCOMPARE(LinkNamesIn(disk.Community()), before);
 }

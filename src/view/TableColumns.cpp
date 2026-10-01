@@ -10,7 +10,7 @@
 
 namespace
 {
-    constexpr int kMostAColumnGivesBack = 8;
+    constexpr int kMostAColumnGivesBack = 6;
 
     [[nodiscard]] std::vector<int> SpreadOver(const std::vector<int>& offered, int owed)
     {
@@ -319,9 +319,63 @@ namespace
         bool applying_ = false;
         bool waiting_ = false;
     };
+
+    class ColumnFollower final : public QObject
+    {
+    public:
+        ColumnFollower(QTableView* follower, QTableView* followed)
+            : QObject(follower), mine_(follower->horizontalHeader()), theirs_(followed->horizontalHeader())
+        {
+            mine_->setStretchLastSection(true);
+
+            connect(theirs_, &QHeaderView::sectionResized, this,
+                    [this]
+                    {
+                        CopyEveryWidth();
+                    });
+
+            connect(theirs_, &QObject::destroyed, this,
+                    [this]
+                    {
+                        theirs_ = nullptr;
+                    });
+
+            CopyEveryWidth();
+        }
+
+    private:
+        void CopyEveryWidth() const
+        {
+            if (theirs_ == nullptr)
+            {
+                return;
+            }
+
+            const int columns = std::min(mine_->count(), theirs_->count());
+
+            for (int column = 0; column < columns; ++column)
+            {
+                mine_->setSectionResizeMode(column, QHeaderView::Fixed);
+                mine_->setSectionHidden(column, theirs_->isSectionHidden(column));
+
+                if (!theirs_->isSectionHidden(column))
+                {
+                    mine_->resizeSection(column, theirs_->sectionSize(column));
+                }
+            }
+        }
+
+        QHeaderView* mine_;
+        QHeaderView* theirs_;
+    };
 }
 
 void LetTheColumnsBeDraggedAndStillFillTheTable(QTableView* table, const int columnThatTakesTheSlack)
 {
     new WidthKeeper(table, columnThatTakesTheSlack);
+}
+
+void LetTheColumnsFollowThoseOf(QTableView* follower, QTableView* followed)
+{
+    new ColumnFollower(follower, followed);
 }

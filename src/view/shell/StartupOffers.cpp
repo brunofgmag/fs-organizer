@@ -8,8 +8,38 @@
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/setup/StagingLeftoverDialog.h"
 #include "viewmodel/BisectionViewModel.h"
+#include "viewmodel/FailureText.h"
 #include "viewmodel/ImportViewModel.h"
 #include "viewmodel/LegacyImportViewModel.h"
+
+namespace
+{
+    void WarnAboutTheFoldersStillRenamed(const std::vector<FileOperationResult>& results, QWidget* parent)
+    {
+        QStringList detailed;
+        for (const FileOperationResult& result : results)
+        {
+            if (!Succeeded(result.result))
+            {
+                detailed.append(QObject::tr("%1: %2").arg(AsText(result.path), Explain(result.result)));
+            }
+        }
+
+        if (detailed.isEmpty())
+        {
+            return;
+        }
+
+        QMessageBox warning(
+            QMessageBox::Warning, QObject::tr("Folder names not restored"),
+            QObject::tr("%n folder still has its temporary name. FS Organizer will ask again the next time it "
+                        "starts.",
+                        nullptr, static_cast<int>(detailed.size())),
+            QMessageBox::Ok, parent);
+        warning.setDetailedText(detailed.join(QChar::LineFeed));
+        warning.exec();
+    }
+}
 
 void OfferToCarryOnTheSearchThatWasLeftHalfway(BisectionViewModel& bisectionViewModel, QWidget* parent)
 {
@@ -137,6 +167,14 @@ void OfferToPutBackWhatALostSwapRenamed(ImportViewModel& importViewModel, QWidge
 
     if (question.clickedButton() == putBack)
     {
+        QObject::connect(
+            &importViewModel, &ImportViewModel::InterruptedSwapsUndone, parent,
+            [parent](const std::vector<FileOperationResult>& results)
+            {
+                WarnAboutTheFoldersStillRenamed(results, parent);
+            },
+            Qt::SingleShotConnection);
+
         importViewModel.UndoInterruptedSwaps(swaps);
     }
 }

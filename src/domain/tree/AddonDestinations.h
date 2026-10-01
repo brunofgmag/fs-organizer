@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "domain/linking/LinksByTarget.h"
 #include "domain/model/DestinationEntry.h"
 #include "domain/model/LibraryId.h"
 #include "domain/model/SimulatorProfile.h"
@@ -56,7 +57,7 @@ private:
     const SimulatorProfile& profile_;
     std::string defaultKey_;
     std::map<std::pair<LibraryId, std::string>, std::filesystem::path> overrides_;
-    std::multimap<std::string, std::filesystem::path> linksByTarget_;
+    LinksByTarget linksByTarget_;
     std::set<std::string> brokenLinks_;
 };
 

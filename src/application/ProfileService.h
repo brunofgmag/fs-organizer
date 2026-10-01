@@ -76,6 +76,7 @@ public:
     {
         std::vector<DestinationEntry> entries{};
         EnabledAddons enabled{};
+        std::vector<ExternalAddon> externals{};
     };
 
     ProfileService(const CatalogScanner& catalog,
@@ -146,6 +147,11 @@ public:
 
     [[nodiscard]] LinkBatchOutcome
     SetEnabled(const EntriesStamp& stamp, const ProfileSnapshot& shown, const LinkBatch& batch);
+
+    [[nodiscard]] LinkBatchOutcome SetEnabled(const EntriesStamp& stamp,
+                                              const ProfileSnapshot& shown,
+                                              const LinkBatch& batch,
+                                              const LinksOnDisk& onDisk);
 
     [[nodiscard]] LinkBatchOutcome
     Relink(const EntriesStamp& stamp, const ProfileSnapshot& shown, const std::vector<const TreeNode*>& nodes);

@@ -272,6 +272,9 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     addLibrary_ = new QPushButton(tr("Add library…"), pane);
     connect(addLibrary_, &QPushButton::clicked, this, &OptionsPage::AddLibrary);
     connect(&viewModel_, &OptionsViewModel::LibraryRegistered, this, &OptionsPage::SayTheLibraryWasRegistered);
+    connect(&viewModel_, &OptionsViewModel::ProfileRemoved, this, &OptionsPage::SayTheRemovalEnded);
+    connect(&viewModel_, &OptionsViewModel::LibraryUnregistered, this, &OptionsPage::SayTheRemovalEnded);
+    connect(&viewModel_, &OptionsViewModel::ProfileNotRemoved, this, &OptionsPage::SayTheProfileWasNotRemoved);
 
     importLegacy_ = new QPushButton(tr("Import from MSFS Addons Linker…"), pane);
     connect(importLegacy_, &QPushButton::clicked, this, &OptionsPage::LegacyImportRequested);
@@ -943,13 +946,7 @@ void OptionsPage::Remove(const ProfileLine& profile)
         return;
     }
 
-    if (!viewModel_.RemoveProfile(profile.id, disabling != nullptr && disabling->isChecked()))
-    {
-        emit StatusChanged(tr("%1 was not removed: at least one profile is needed.").arg(profile.label));
-        return;
-    }
-
-    emit StatusChanged(tr("Removed %1.").arg(profile.label));
+    viewModel_.RemoveProfile(profile.id, disabling != nullptr && disabling->isChecked());
 }
 
 void OptionsPage::Unregister(const LibraryLine& library)
@@ -982,6 +979,14 @@ void OptionsPage::Unregister(const LibraryLine& library)
     }
 
     viewModel_.UnregisterLibrary(library.id, disabling != nullptr && disabling->isChecked());
+}
 
-    emit StatusChanged(tr("Removed %1.").arg(library.label));
+void OptionsPage::SayTheRemovalEnded(const QString& label)
+{
+    emit StatusChanged(tr("Removed %1.").arg(label));
+}
+
+void OptionsPage::SayTheProfileWasNotRemoved(const QString& label)
+{
+    emit StatusChanged(tr("%1 was not removed: at least one profile is needed.").arg(label));
 }

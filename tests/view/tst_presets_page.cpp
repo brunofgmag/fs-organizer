@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <numeric>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
@@ -10,6 +11,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QRadioButton>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStyleOption>
 #include <QtWidgets/QTableWidget>
@@ -33,6 +35,7 @@
 #include "tests/support/PathPrinting.h"
 #include "view/panels/EmptyState.h"
 #include "view/theme/ModernistMetrics.h"
+#include "view/theme/ModernistPaint.h"
 #include "view/PresetsPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/PresetViewModel.h"
@@ -51,6 +54,9 @@ namespace
         static void ThePageFitsTheNarrowestWindow();
         static void TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow_data();
         static void TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow();
+        static void TheTwoTablesKeepEveryNameWholeAndNeverScrollWhenAPresetMatches_data();
+        static void TheTwoTablesKeepEveryNameWholeAndNeverScrollWhenAPresetMatches();
+        static void TheColumnsKeepTheirWidthWhenAPresetBecomesSatisfied();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void SelectingAPresetFillsThePanelPreview();
         static void ApplyingFromThePanelGoesThroughTheViewModel();
@@ -180,6 +186,86 @@ namespace
         return QStringLiteral("viewport %1 px, %2").arg(table.viewport()->width()).arg(said.join(QStringLiteral(", ")));
     }
 
+    constexpr int kBreathingRoom = 8;
+    constexpr int kBeforeTheTag = 8;
+    constexpr int kPresetRow = 46;
+    constexpr int kReturnTableHeight = kPresetRow + 2;
+    constexpr auto kThirtyCharacters = "Transatlantic Long Haul Sector";
+
+    QString TheTagOf(const QTableWidget& table, const int row)
+    {
+        return table.item(row, 0)->data(TagTextRole).toString();
+    }
+
+    QRect WhereTheNameIsWritten(const QTableWidget& table)
+    {
+        QStyleOptionViewItem option;
+        option.initFrom(&table);
+        option.widget = &table;
+        option.font = table.viewport()->font();
+        option.rect = QRect(0, 0, table.columnWidth(0), kPresetRow);
+
+        return table.style()->subElementRect(QStyle::SE_ItemViewItemText, &option, &table);
+    }
+
+    int RoomForTheName(const QTableWidget& table, const int row)
+    {
+        const QString tag = TheTagOf(table, row);
+        const int tagRoom = tag.isEmpty() ? 0 : TagSizeOf(tag, table.viewport()->font()).width() + kBeforeTheTag;
+
+        return WhereTheNameIsWritten(table).width() - 2 * kBreathingRoom - tagRoom;
+    }
+
+    int WhatTheNameAsks(const QTableWidget& table, const int row)
+    {
+        return QFontMetrics(table.viewport()->font()).horizontalAdvance(table.item(row, 0)->text());
+    }
+
+    bool TheNameIsWhole(const QTableWidget& table, const int row)
+    {
+        return WhatTheNameAsks(table, row) <= RoomForTheName(table, row);
+    }
+
+    int WhereTheTagEnds(const QTableWidget& table, const int row)
+    {
+        const int tagWide = TagSizeOf(TheTagOf(table, row), table.viewport()->font()).width();
+
+        return WhereTheNameIsWritten(table).left() + kBreathingRoom + WhatTheNameAsks(table, row) + kBeforeTheTag
+            + tagWide;
+    }
+
+    int RowOf(const QTableWidget& table, const QString& name)
+    {
+        for (int row = 0; row < table.rowCount(); ++row)
+        {
+            if (table.item(row, 0)->text() == name)
+            {
+                return row;
+            }
+        }
+
+        return -1;
+    }
+
+    QList<int> SectionsOf(const QTableWidget& table)
+    {
+        QList<int> sections;
+
+        for (int column = 0; column < table.columnCount(); ++column)
+        {
+            sections << table.columnWidth(column);
+        }
+
+        return sections;
+    }
+
+    int WhatTheSectionsAddUpTo(const QTableWidget& table)
+    {
+        const QList<int> sections = SectionsOf(table);
+
+        return std::accumulate(sections.cbegin(), sections.cend(), 0);
+    }
+
     class MarkingTranslator final : public QTranslator
     {
     public:
@@ -237,6 +323,132 @@ namespace
         PresetService presetService{presets, service, startup.service};
         PresetViewModel viewModel{session, presetService, service, runner};
     };
+}
+
+void PresetsPageTest::TheTwoTablesKeepEveryNameWholeAndNeverScrollWhenAPresetMatches_data()
+{
+    QTest::addColumn<QString>("language");
+    QTest::addColumn<int>("width");
+
+    QTest::newRow("English") << QStringLiteral("en") << 1140;
+    QTest::newRow("Brazilian Portuguese") << QStringLiteral("pt_BR") << kWidestAPageMayBe;
+}
+
+void PresetsPageTest::TheTwoTablesKeepEveryNameWholeAndNeverScrollWhenAPresetMatches()
+{
+    QFETCH(const QString, language);
+    QFETCH(const int, width);
+
+    QTranslator catalogue;
+
+    if (language != QLatin1String("en"))
+    {
+        const QString file = TheCatalogueBesideTheBuild(language);
+
+        QVERIFY2(!file.isEmpty(), "app_pt_BR.qm is not beside the build: build the release_translations target");
+        QVERIFY(catalogue.load(file));
+        QVERIFY(QCoreApplication::installTranslator(&catalogue));
+    }
+
+    Fixture f;
+    const std::filesystem::path link = std::filesystem::path(kCommunity) / "aerosoft-crj";
+    const QStringList ordinary = {QStringLiteral("Airline Ops"), QStringLiteral("GA Weekend"),
+                                  QStringLiteral("Long Haul"), QStringLiteral("Everyday"),
+                                  QStringLiteral("Voo de linha")};
+
+    for (const QString& name : ordinary)
+    {
+        f.viewModel.Create(name);
+    }
+
+    f.fileSystem.RemoveNode(link);
+    f.session.RefreshEntries();
+    f.viewModel.Create(QString::fromLatin1(kThirtyCharacters));
+    f.fileSystem.AddLink(link, kAddon);
+    f.session.RefreshEntries();
+
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(width, 700);
+    ApplyModernistTheme(*qApp);
+    ShowAndSettle(page);
+    SettleTheQueuedReload();
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* back = page.findChild<QTableWidget*>(QStringLiteral("PresetReturn"));
+    QVERIFY(names != nullptr && back != nullptr);
+    QVERIFY2(!names->wordWrap() && !back->wordWrap(), "a long name would wrap and grow its row instead of being cut");
+
+    const QString said = TheColumnsOf(*names);
+
+    QVERIFY2(!names->horizontalScrollBar()->isVisible(), qPrintable(said));
+    QCOMPARE(WhatTheSectionsAddUpTo(*names), names->viewport()->width());
+
+    for (const QString& name : ordinary)
+    {
+        const int row = RowOf(*names, name);
+
+        QVERIFY2(row >= 0, qPrintable(name));
+        QVERIFY2(!TheTagOf(*names, row).isEmpty(), qPrintable(name + QStringLiteral(" should match what is enabled")));
+        QVERIFY2(TheNameIsWhole(*names, row), qPrintable(name + QStringLiteral(": ") + said));
+        QVERIFY2(WhereTheTagEnds(*names, row) <= names->columnWidth(0) - kBreathingRoom,
+                 qPrintable(name + QStringLiteral(": ") + said));
+        QCOMPARE(names->rowHeight(row), kPresetRow);
+    }
+
+    const int longRow = RowOf(*names, QString::fromLatin1(kThirtyCharacters));
+
+    QVERIFY(longRow >= 0);
+    QVERIFY2(TheTagOf(*names, longRow).isEmpty(), "the long name should sit on a row that does not match");
+    QVERIFY2(TheNameIsWhole(*names, longRow), qPrintable(said));
+
+    names->setCurrentCell(RowOf(*names, QStringLiteral("Everyday")), 0);
+    page.findChild<QRadioButton*>(QStringLiteral("ModeDisable"))->click();
+    page.findChild<QPushButton*>(QStringLiteral("PresetApply"))->click();
+    SettleTheQueuedReload();
+    page.findChild<QRadioButton*>(QStringLiteral("ModeCumulative"))->click();
+    SettleTheQueuedReload();
+
+    QVERIFY(!back->isHidden());
+    QVERIFY2(TheTagOf(*back, 0).isEmpty(), "the way back should not match what is enabled now");
+    QVERIFY2(!names->horizontalScrollBar()->isVisible(), qPrintable(TheColumnsOf(*names)));
+
+    const QString saidOfTheReturn = TheColumnsOf(*back);
+
+    QVERIFY2(SectionsOf(*back) == SectionsOf(*names),
+             qPrintable(saidOfTheReturn + QStringLiteral(" against ") + TheColumnsOf(*names)));
+    QVERIFY2(TheNameIsWhole(*back, 0), qPrintable(saidOfTheReturn));
+    QCOMPARE(back->rowHeight(0), kPresetRow);
+    QCOMPARE(back->height(), kReturnTableHeight);
+
+    QCoreApplication::removeTranslator(&catalogue);
+}
+
+void PresetsPageTest::TheColumnsKeepTheirWidthWhenAPresetBecomesSatisfied()
+{
+    Fixture f;
+    const std::filesystem::path link = std::filesystem::path(kCommunity) / "aerosoft-crj";
+
+    f.fileSystem.RemoveNode(link);
+    f.session.RefreshEntries();
+
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(kWidestAPageMayBe, 700);
+    ApplyModernistTheme(*qApp);
+    ShowAndSettle(page);
+    SettleTheQueuedReload();
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    QVERIFY(names != nullptr);
+    QVERIFY(TheTagOf(*names, 0).isEmpty());
+
+    const QList<int> before = SectionsOf(*names);
+
+    f.fileSystem.AddLink(link, kAddon);
+    f.session.RefreshEntries();
+    SettleTheQueuedReload();
+
+    QVERIFY(!TheTagOf(*names, 0).isEmpty());
+    QVERIFY2(SectionsOf(*names) == before, qPrintable(TheColumnsOf(*names)));
 }
 
 void PresetsPageTest::BuildingAndTearingDownAloneDoesNotCrash()
@@ -361,16 +573,16 @@ void PresetsPageTest::TheNameTableWritesTheContentAndTheDayBesideEachPreset()
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
-    QCOMPARE(names->columnCount(), 4);
+    QCOMPARE(names->columnCount(), 3);
     QCOMPARE(names->rowCount(), 1);
 
     QCOMPARE(names->horizontalHeaderItem(0)->text(), QStringLiteral("Preset"));
-    QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Content"));
-    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("Updated"));
+    QCOMPARE(names->horizontalHeaderItem(1)->text(), QStringLiteral("Updated"));
+    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("If applied"));
 
     QCOMPARE(names->item(0, 0)->text(), QStringLiteral("Voo de linha"));
-    QCOMPARE(names->item(0, 1)->text(), QStringLiteral("1 addon · 1 category"));
-    QCOMPARE(names->item(0, 2)->text(), QStringLiteral("17/02/2026"));
+    QCOMPARE(names->item(0, 0)->data(SecondLineRole).toString(), QStringLiteral("1 addon · 1 category"));
+    QCOMPARE(names->item(0, 1)->text(), QStringLiteral("17/02/2026"));
 }
 
 void PresetsPageTest::FilteringHidesTheNamesThatDoNotMatchAndKeepsASelectionThatSurvives()
@@ -498,7 +710,6 @@ void PresetsPageTest::WhatSupportsTheNameIsQuietInBothTables()
 
     QVERIFY(!names->item(0, 0)->data(QuietRole).toBool());
     QVERIFY(names->item(0, 1)->data(QuietRole).toBool());
-    QVERIFY(names->item(0, 2)->data(QuietRole).toBool());
 
     QVERIFY(!entries->item(0, 0)->data(QuietRole).toBool());
     QVERIFY(entries->item(0, 1)->data(QuietRole).toBool());
@@ -512,18 +723,19 @@ void PresetsPageTest::TheNameTableSaysWhatEachPresetWouldChangeAndTagsTheSatisfi
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
-    QCOMPARE(names->columnCount(), 4);
-    QCOMPARE(names->horizontalHeaderItem(3)->text(), QStringLiteral("If applied"));
+    QCOMPARE(names->columnCount(), 3);
+    QCOMPARE(names->horizontalHeaderItem(2)->text(), QStringLiteral("If applied"));
 
-    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
+    QCOMPARE(names->item(0, 2)->text(), QStringLiteral("0 change"));
+    QCOMPARE(names->item(0, 0)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
+    QVERIFY(names->item(0, 2)->data(TagTextRole).toString().isEmpty());
 
     f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / "aerosoft-crj");
     f.session.RefreshEntries();
     QCoreApplication::processEvents();
 
-    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
-    QVERIFY(names->item(0, 3)->data(TagTextRole).toString().isEmpty());
+    QCOMPARE(names->item(0, 2)->text(), QStringLiteral("1 change"));
+    QVERIFY(names->item(0, 0)->data(TagTextRole).toString().isEmpty());
     QVERIFY(!names->item(0, 0)->text().isEmpty());
 }
 
@@ -547,6 +759,8 @@ void PresetsPageTest::TheReturnPresetSitsInItsOwnTableAndAppearsOnlyAfterAnAppli
     QVERIFY(!back->isHidden());
     QCOMPARE(back->rowCount(), 1);
     QCOMPARE(back->item(0, 0)->text(), QStringLiteral("Back to the previous set"));
+    QVERIFY2(back->item(0, 0)->data(TagTextRole).toString().isEmpty(),
+             "the way back says it matches through its count, a tag beside the label would cut the label");
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QCOMPARE(names->rowCount(), 1);
@@ -716,14 +930,14 @@ void PresetsPageTest::ASatisfiedPresetStillShowsWhatDisableWouldChange()
 
     auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
     QVERIFY(names != nullptr);
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
-    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("0 change"));
+    QCOMPARE(names->item(0, 0)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
+    QCOMPARE(names->item(0, 2)->text(), QStringLiteral("0 change"));
 
     page.findChild<QRadioButton*>(QStringLiteral("ModeDisable"))->click();
     QCoreApplication::processEvents();
 
-    QCOMPARE(names->item(0, 3)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
-    QCOMPARE(names->item(0, 3)->text(), QStringLiteral("1 change"));
+    QCOMPARE(names->item(0, 0)->data(TagTextRole).toString(), QStringLiteral("Matches your setup"));
+    QCOMPARE(names->item(0, 2)->text(), QStringLiteral("1 change"));
 }
 
 void PresetsPageTest::AFilterThatMatchesNothingLeavesNoStaleCountBehind()
