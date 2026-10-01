@@ -100,5 +100,6 @@ AddonDestination AddonDestinations::Of(const std::filesystem::path& addonFolder)
 
     return {.destination = destination,
             .strayedTo = StrayedFrom(addonFolder, destination),
-            .linksNowhere = brokenLinks_.contains(ComparablePath(PathUnder(destination, addonFolder.filename())))};
+            .linksNowhere = brokenLinks_.contains(ComparablePath(PathUnder(destination, addonFolder.filename()))),
+            .linked = linksByTarget_.contains(ComparablePath(addonFolder))};
 }

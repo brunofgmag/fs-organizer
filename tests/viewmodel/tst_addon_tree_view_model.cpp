@@ -56,6 +56,9 @@ namespace
         static void RelinkingTouchesOnlyTheAddonsThatStrayedFromTheProfileDestination();
         static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
         static void OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff();
+        static void TheAddonsNeedingARelinkAreTheStrayedAndTheBrokenOnceEach();
+        static void RelinkingABrokenAddonThatNeverStrayedLeavesOneLinkAtThePlannedPath();
+        static void OneUndoAfterRelinkingABrokenAddonPutsTheLinkUnderItsOwnNameBack();
         static void RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink();
         static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
         static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
@@ -174,6 +177,13 @@ namespace
         void LinkIn(const std::filesystem::path& destination, const std::filesystem::path& addonFolder)
         {
             fileSystem.AddLink(destination / addonFolder.filename(), addonFolder);
+        }
+
+        void LeaveItBrokenUnderItsName(const std::filesystem::path& destination,
+                                       const std::filesystem::path& addonFolder)
+        {
+            fileSystem.AddLink(destination / addonFolder.filename(), addonFolder.parent_path() / "gone");
+            fileSystem.AddLink(destination / "renamed-link", addonFolder);
         }
 
         void RegisterTheSpareLibrary()
@@ -505,7 +515,6 @@ void AddonTreeViewModelTest::TheStrayedAddonsAreTheOnesTheFreeFunctionFindsOneBy
 
     QCOMPARE(expected.size(), std::size_t{2});
     QVERIFY(strayed == expected);
-    QCOMPARE(f.viewModel.StrayAddonsUnder({&aircrafts}), expected.size());
     QVERIFY(f.viewModel.StrayedUnder({}).empty());
 }
 
@@ -523,7 +532,7 @@ void AddonTreeViewModelTest::RelinkingTheStrayedAddonsGivenTouchesOnlyThoseAndRe
 
     QCOMPARE(strayed.size(), std::size_t{1});
 
-    f.viewModel.RelinkStrayed(strayed);
+    f.viewModel.RelinkToTheProfileDestination(strayed);
 
     QVERIFY(!f.fileSystem.Exists(std::filesystem::path{kCommunity} / "pmdg-aircraft-77w"));
     QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity2024} / "pmdg-aircraft-77w"));
@@ -531,7 +540,7 @@ void AddonTreeViewModelTest::RelinkingTheStrayedAddonsGivenTouchesOnlyThoseAndRe
 
     const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
 
-    f.viewModel.RelinkStrayed({});
+    f.viewModel.RelinkToTheProfileDestination({});
 
     QCOMPARE(refused.size(), 1);
 }
@@ -592,11 +601,11 @@ void AddonTreeViewModelTest::OnlyACategoryHoldingAStrayAddonIsWorthOfferingTheAd
 
     f.LinkIn(kCommunity, kAddon);
     f.session.ShowActiveProfile();
-    QCOMPARE(f.viewModel.StrayAddonsUnder({&category}), std::size_t{0});
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{0});
 
     f.LinkIn(kCommunity2024, kOtherAddon);
     f.session.ShowActiveProfile();
-    QCOMPARE(f.viewModel.StrayAddonsUnder({&category}), std::size_t{1});
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{1});
 }
 
 void AddonTreeViewModelTest::ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState()
@@ -1099,6 +1108,77 @@ void AddonTreeViewModelTest::
     QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
 }
 
+void AddonTreeViewModelTest::TheAddonsNeedingARelinkAreTheStrayedAndTheBrokenOnceEach()
+{
+    Fixture f;
+    const TreeNode strayed = AddonNode(kAddon);
+    const TreeNode category =
+        CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon), AddonNode(kTrafficAddon)});
+
+    f.fileSystem.AddDirectory(kTrafficAddon);
+    f.viewModel.OverrideDestination({&strayed}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.LeaveItBrokenUnderItsName(kCommunity, kOtherAddon);
+    f.LinkIn(kCommunity, kTrafficAddon);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> needing = f.viewModel.NeedingRelinkUnder({&category, &category.children[1]});
+
+    QCOMPARE(needing.size(), std::size_t{2});
+    QCOMPARE(needing.front()->path, std::filesystem::path{kAddon});
+    QCOMPARE(needing.back()->path, std::filesystem::path{kOtherAddon});
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{1});
+    QVERIFY(f.viewModel.NeedingRelinkUnder({}).empty());
+}
+
+void AddonTreeViewModelTest::RelinkingABrokenAddonThatNeverStrayedLeavesOneLinkAtThePlannedPath()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon)});
+    const std::filesystem::path planned = std::filesystem::path{kCommunity} / "pmdg-aircraft-77w";
+    const std::filesystem::path renamed = std::filesystem::path{kCommunity} / "renamed-link";
+
+    f.LeaveItBrokenUnderItsName(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.viewModel.StrayedUnder({&category}).empty());
+    QCOMPARE(f.viewModel.NeedingRelinkUnder({&category}).size(), std::size_t{1});
+
+    const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
+
+    f.viewModel.RelinkToTheProfileDestination({&category});
+
+    QCOMPARE(refused.size(), 0);
+    QVERIFY(f.fileSystem.IsLink(planned));
+    QCOMPARE(f.fileSystem.LinkTarget(planned).value_or(std::filesystem::path{}), std::filesystem::path{kAddon});
+    QVERIFY(!f.fileSystem.Exists(renamed));
+    QVERIFY(!f.journal.appended.empty());
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().entries.front().path, planned);
+    QCOMPARE(f.session.Snapshot().entries.front().target, std::filesystem::path{kAddon});
+    QVERIFY(f.viewModel.NeedingRelinkUnder({&category}).empty());
+}
+
+void AddonTreeViewModelTest::OneUndoAfterRelinkingABrokenAddonPutsTheLinkUnderItsOwnNameBack()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon)});
+    const std::filesystem::path planned = std::filesystem::path{kCommunity} / "pmdg-aircraft-77w";
+    const std::filesystem::path renamed = std::filesystem::path{kCommunity} / "renamed-link";
+
+    f.LeaveItBrokenUnderItsName(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+    f.viewModel.RelinkToTheProfileDestination({&category});
+
+    QVERIFY(f.viewModel.CanUndo());
+
+    f.viewModel.UndoLastBatch();
+
+    QVERIFY(f.fileSystem.IsLink(renamed));
+    QCOMPARE(f.fileSystem.LinkTarget(renamed).value_or(std::filesystem::path{}), std::filesystem::path{kAddon});
+    QVERIFY(!f.fileSystem.Exists(planned));
+}
+
 void AddonTreeViewModelTest::LandingARelinkReadsNothingAndShowsTheLinkWhereTheProfileWantsIt()
 {
     Fixture f;
@@ -1112,7 +1192,7 @@ void AddonTreeViewModelTest::LandingARelinkReadsNothingAndShowsTheLinkWhereThePr
     QCOMPARE(strayed.size(), std::size_t{1});
 
     f.runner.defer = true;
-    f.viewModel.RelinkStrayed(strayed);
+    f.viewModel.RelinkToTheProfileDestination(strayed);
     f.runner.RunPendingWork();
 
     f.filesystemProbe.enumerated.clear();
@@ -1139,7 +1219,7 @@ void AddonTreeViewModelTest::ACategoryAndOneOfItsAddonsSelectedTogetherCountTheA
 
     QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{1});
     QCOMPARE(f.viewModel.StrayedUnder({&category, addon}).size(), std::size_t{1});
-    QCOMPARE(f.viewModel.StrayAddonsUnder({addon, &category, addon}), std::size_t{1});
+    QCOMPARE(f.viewModel.StrayedUnder({addon, &category, addon}).size(), std::size_t{1});
 }
 
 void AddonTreeViewModelTest::TheSwapsAndTheSelectionAreMeasuredAtTheSameTimeWithoutOneCancellingTheOther()

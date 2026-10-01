@@ -20,6 +20,9 @@ namespace
         static void ABrokenLinkAtThePlannedPathIsWhatLinksNowhereMeans();
         static void ABrokenLinkSomewhereElseLeavesTheAddonAlone();
         static void AnOverrideNamingAPathThatIsNoLongerADestinationDoesNotDecide();
+        static void ItIsLinkedOnlyWhenALiveLinkTargetsTheFolder();
+        static void ItIsBrokenOnlyWhenItIsLinkedAndItsPlannedPathLinksNowhere();
+        static void ItNeedsRelinkingWhenItStrayedOrIsBroken();
     };
 }
 
@@ -150,6 +153,68 @@ void AddonDestinationsTest::AnOverrideNamingAPathThatIsNoLongerADestinationDoesN
 
     QCOMPARE(prepared.Of(folder).destination, EffectiveDestination(profile, folder));
     QCOMPARE(prepared.Of(folder).destination, std::filesystem::path(kCommunity));
+}
+
+void AddonDestinationsTest::ItIsLinkedOnlyWhenALiveLinkTargetsTheFolder()
+{
+    const SimulatorProfile profile = ProfileWith({});
+    const std::filesystem::path folder = "D:/MSFS 2024/Sceneries/Europe/orbx-eglc";
+    const std::filesystem::path another = "D:/MSFS 2024/Sceneries/Europe/orbx-lfmn";
+
+    const AddonDestinations live(profile, {LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc", folder)});
+    const AddonDestinations dead(
+        profile, {LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc", folder, EntryClassification::Broken)});
+    const AddonDestinations unmanaged(
+        profile, {LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc", folder, EntryClassification::Unmanaged)});
+    const AddonDestinations elsewhere(profile, {LinkAt("E:/Flight Simulator 2024/Community/orbx-lfmn", another)});
+
+    QVERIFY(live.Of(folder).linked);
+    QVERIFY(!dead.Of(folder).linked);
+    QVERIFY(!unmanaged.Of(folder).linked);
+    QVERIFY(!elsewhere.Of(folder).linked);
+}
+
+void AddonDestinationsTest::ItIsBrokenOnlyWhenItIsLinkedAndItsPlannedPathLinksNowhere()
+{
+    const SimulatorProfile profile = ProfileWith({});
+    const std::filesystem::path folder = "D:/MSFS 2024/Sceneries/Europe/orbx-eglc";
+    const DestinationEntry dead = LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc",
+                                         "D:/MSFS 2024/Sceneries/Europe/gone", EntryClassification::Broken);
+    const DestinationEntry otherName = LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc-copy", folder);
+
+    const AddonDestination onlyDead = AddonDestinations(profile, {dead}).Of(folder);
+    const AddonDestination onlyLive = AddonDestinations(profile, {otherName}).Of(folder);
+    const AddonDestination both = AddonDestinations(profile, {dead, otherName}).Of(folder);
+
+    QVERIFY(onlyDead.linksNowhere);
+    QVERIFY(!onlyDead.linked);
+    QVERIFY(!onlyDead.IsBroken());
+    QVERIFY(!onlyLive.linksNowhere);
+    QVERIFY(onlyLive.linked);
+    QVERIFY(!onlyLive.IsBroken());
+    QVERIFY(both.IsBroken());
+}
+
+void AddonDestinationsTest::ItNeedsRelinkingWhenItStrayedOrIsBroken()
+{
+    const SimulatorProfile profile = ProfileWith({});
+    const std::filesystem::path folder = "D:/MSFS 2024/Sceneries/Europe/orbx-eglc";
+    const DestinationEntry healthy = LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc", folder);
+    const DestinationEntry strayedLink = LinkAt("E:/Flight Simulator 2024/Community2024/orbx-eglc", folder);
+    const DestinationEntry dead = LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc",
+                                         "D:/MSFS 2024/Sceneries/Europe/gone", EntryClassification::Broken);
+    const DestinationEntry otherName = LinkAt("E:/Flight Simulator 2024/Community/orbx-eglc-copy", folder);
+
+    const AddonDestination strayed = AddonDestinations(profile, {strayedLink}).Of(folder);
+    const AddonDestination broken = AddonDestinations(profile, {dead, otherName}).Of(folder);
+
+    QVERIFY(!strayed.IsBroken());
+    QVERIFY(strayed.NeedsRelinking());
+    QVERIFY(broken.strayedTo.empty());
+    QVERIFY(broken.NeedsRelinking());
+    QVERIFY(!AddonDestinations(profile, {healthy}).Of(folder).NeedsRelinking());
+    QVERIFY(!AddonDestinations(profile, {}).Of(folder).NeedsRelinking());
+    QVERIFY(!AddonDestinations(profile, {dead}).Of(folder).NeedsRelinking());
 }
 
 QTEST_MAIN(AddonDestinationsTest)

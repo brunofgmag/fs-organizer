@@ -101,6 +101,9 @@ namespace
         static void TheMoveButtonStaysOffWhenTheOnlyCategoryIsTheOneTheAddonsSitIn();
         static void ASelectionOffersRelinkWhenAnyMemberStrayedEvenIfTheClickedOneDidNot();
         static void TheFilterLeavesTheOfferToKeepTheDestinationOfACategoryThatStrayed();
+        static void ABrokenAddonThatNeverStrayedCanBeRelinkedFromThePanel();
+        static void AHealthyEnabledAddonLeavesTheRelinkButtonOff();
+        static void TheMenuOffersToRelinkABrokenAddonThatNeverStrayed();
     };
 }
 
@@ -1872,6 +1875,63 @@ void AddonTreePageTest::TheFilterLeavesTheOfferToKeepTheDestinationOfACategoryTh
     const QStringList filtered = OfferedByTheMenuOn(screen, CategoryPath(QStringLiteral("Aircrafts")));
     QVERIFY(!filtered.contains(kRelink));
     QVERIFY(filtered.contains(kKeepTheDestination));
+}
+
+namespace
+{
+    void LeaveTheChosenAddonBrokenUnderItsName(Fixture& fixture)
+    {
+        fixture.fileSystem.AddLink(std::filesystem::path(kCommunity) / std::filesystem::path(kChosen).filename(),
+                                   std::filesystem::path(kLibrary) / "Aircrafts" / "gone");
+        Enable(fixture, QStringLiteral("Aircrafts"), 17);
+    }
+}
+
+void AddonTreePageTest::ABrokenAddonThatNeverStrayedCanBeRelinkedFromThePanel()
+{
+    Fixture f;
+    LeaveTheChosenAddonBrokenUnderItsName(f);
+    const Screen screen(f);
+
+    Select(screen, kChosen);
+
+    QPushButton* relink = ButtonSaying(screen.page, kRelink);
+    QVERIFY(relink != nullptr);
+    QVERIFY(relink->isEnabled());
+
+    const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
+
+    relink->click();
+
+    QCOMPARE(refused.size(), 0);
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path(kCommunity) / "addon-17"));
+    QCOMPARE(f.fileSystem.LinkTarget(std::filesystem::path(kCommunity) / "addon-17").value_or(std::filesystem::path{}),
+             std::filesystem::path(kChosen));
+    QVERIFY(!f.fileSystem.Exists(LinkNamed(QStringLiteral("Aircrafts"), 17)));
+}
+
+void AddonTreePageTest::AHealthyEnabledAddonLeavesTheRelinkButtonOff()
+{
+    Fixture f;
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / std::filesystem::path(kChosen).filename(), kChosen);
+    const Screen screen(f);
+
+    Select(screen, kChosen);
+
+    const QPushButton* relink = ButtonSaying(screen.page, kRelink);
+    QVERIFY(relink != nullptr);
+    QVERIFY(!relink->isEnabled());
+}
+
+void AddonTreePageTest::TheMenuOffersToRelinkABrokenAddonThatNeverStrayed()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture f(ProfileWithTwoDestinations());
+    LeaveTheChosenAddonBrokenUnderItsName(f);
+    const Screen screen(f);
+
+    QVERIFY(OfferedByTheMenuOn(screen, kChosen).contains(kRelink));
+    QVERIFY(!OfferedByTheMenuOn(screen, kCompanion).contains(kRelink));
 }
 
 QTEST_MAIN(AddonTreePageTest)

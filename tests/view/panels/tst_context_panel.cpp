@@ -47,6 +47,7 @@ namespace
         static void TheTitleStripHoldsItsContentInsideItself();
         static void TheTitleStripIsAsTallAsTheColumnHeaderNextToIt();
         static void TheLeftLineRunsTheWholeHeightOfAnOpenPanel();
+        static void TheBodyShowsTheGroundTheThemeDeclaresForIt();
         static void TheRailKeepsTheLeftLineOnTheColumnOfTheOpenPanel();
         static void TheTitleStripFollowsTheFontTheColumnHeaderFollows();
         static void TheTitleStripFollowsTheColumnHeaderWhenItsHeightChanges();
@@ -527,6 +528,25 @@ void ContextPanelTest::TheLeftLineRunsTheWholeHeightOfAnOpenPanel()
     QVERIFY(strip != nullptr);
     QVERIFY(body != nullptr);
     TheLeftRuleRunsTheWholeHeightOfThePanel(panel, *strip, *body);
+}
+
+void ContextPanelTest::TheBodyShowsTheGroundTheThemeDeclaresForIt()
+{
+    ContextPanel panel(QStringLiteral("Attention"));
+    panel.setObjectName(QStringLiteral("body-ground-test"));
+    panel.Add(new QLabel(QStringLiteral("content")));
+    panel.resize(380, 400);
+    panel.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&panel));
+
+    const auto* body = panel.findChild<QWidget*>(QStringLiteral("PanelBody"));
+
+    QVERIFY(body != nullptr);
+
+    const QImage painted = panel.grab().toImage();
+    const QPoint belowTheContent = body->mapTo(&panel, QPoint(body->width() / 2, body->height() - 4));
+
+    QCOMPARE(painted.pixelColor(belowTheContent), TonesOf(CurrentColorScheme()).chrome);
 }
 
 void ContextPanelTest::TheRailKeepsTheLeftLineOnTheColumnOfTheOpenPanel()

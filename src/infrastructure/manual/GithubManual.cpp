@@ -11,18 +11,12 @@
 #include <QtNetwork/QNetworkRequest>
 
 #include "application/ManualCopy.h"
+#include "infrastructure/update/HttpError.h"
 #include "support/PathText.h"
 
 namespace
 {
     constexpr int kTransferTimeoutMs = 30000;
-
-    QString HttpError(const QNetworkReply* reply)
-    {
-        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-        return status > 0 ? QStringLiteral("HTTP %1").arg(status) : reply->errorString();
-    }
 
     bool WriteTheDownload(QNetworkReply* reply, const QString& file)
     {

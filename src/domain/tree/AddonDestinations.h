@@ -17,6 +17,17 @@ struct AddonDestination
     std::filesystem::path destination{};
     std::filesystem::path strayedTo{};
     bool linksNowhere = false;
+    bool linked = false;
+
+    [[nodiscard]] bool IsBroken() const
+    {
+        return linked && linksNowhere;
+    }
+
+    [[nodiscard]] bool NeedsRelinking() const
+    {
+        return !strayedTo.empty() || IsBroken();
+    }
 };
 
 class AddonDestinations

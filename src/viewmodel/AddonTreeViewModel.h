@@ -108,11 +108,9 @@ public:
 
     void RelinkToTheProfileDestination(const std::vector<const TreeNode*>& nodes);
 
-    void RelinkStrayed(const std::vector<const TreeNode*>& strayed);
-
-    [[nodiscard]] std::size_t StrayAddonsUnder(const std::vector<const TreeNode*>& nodes) const;
-
     [[nodiscard]] std::vector<const TreeNode*> StrayedUnder(const std::vector<const TreeNode*>& nodes) const;
+
+    [[nodiscard]] std::vector<const TreeNode*> NeedingRelinkUnder(const std::vector<const TreeNode*>& nodes) const;
 
     [[nodiscard]] std::vector<MoveTarget> CategoriesFor(const TreeNode* node) const;
 

@@ -938,22 +938,22 @@ int main(int argc, char* argv[])
         else
         {
             SharedAirportsDialog sharedDialog(
-                {{.turningOn = QStringLiteral("flytampa-airport-eham-amsterdam"),
-                  .alreadyOn = QStringLiteral("asobo-airport-eham-amsterdam"),
+                {{.turningOn = QStringLiteral("tidewater-airport-eham-amsterdam"),
+                  .alreadyOn = QStringLiteral("ferro-airport-eham-amsterdam"),
                   .codes = {QStringLiteral("EHAM")},
-                  .one = {.libraryId = "library-1", .folderName = "flytampa-airport-eham-amsterdam"},
-                  .other = {.libraryId = "library-1", .folderName = "asobo-airport-eham-amsterdam"}},
-                 {.turningOn = QStringLiteral("stalex-airport-lfpg-charlesdegaulle"),
-                  .alreadyOn = QStringLiteral("fs24-asobo-airport-lfpg-paris-charles-de-gaulle"),
+                  .one = {.libraryId = "library-1", .folderName = "tidewater-airport-eham-amsterdam"},
+                  .other = {.libraryId = "library-1", .folderName = "ferro-airport-eham-amsterdam"}},
+                 {.turningOn = QStringLiteral("tidewater-airport-lfpg-charlesdegaulle"),
+                  .alreadyOn = QStringLiteral("fs24-ferro-airport-lfpg-paris-charles-de-gaulle"),
                   .codes = {QStringLiteral("LFPG")},
-                  .one = {.libraryId = "library-1", .folderName = "stalex-airport-lfpg-charlesdegaulle"},
-                  .other = {.libraryId = "library-1", .folderName = "fs24-asobo-airport-lfpg-paris-charles-de-gaulle"}},
-                 {.turningOn = QStringLiteral("navigraph-nav-jepp"),
-                  .alreadyOn = QStringLiteral("navigraph-nav-base"),
+                  .one = {.libraryId = "library-1", .folderName = "tidewater-airport-lfpg-charlesdegaulle"},
+                  .other = {.libraryId = "library-1", .folderName = "fs24-ferro-airport-lfpg-paris-charles-de-gaulle"}},
+                 {.turningOn = QStringLiteral("vireo-nav-premium"),
+                  .alreadyOn = QStringLiteral("vireo-nav-base"),
                   .codes = {QStringLiteral("EHAM"), QStringLiteral("LFPG"), QStringLiteral("LEBL"),
                             QStringLiteral("SBGL"), QStringLiteral("KJFK"), QStringLiteral("EGLL")},
-                  .one = {.libraryId = "library-1", .folderName = "navigraph-nav-jepp"},
-                  .other = {.libraryId = "library-1", .folderName = "navigraph-nav-base"}}},
+                  .one = {.libraryId = "library-1", .folderName = "vireo-nav-premium"},
+                  .other = {.libraryId = "library-1", .folderName = "vireo-nav-base"}}},
                 &shell);
 
             landed = SaveTheDialogOpenedBy(
@@ -1019,9 +1019,9 @@ int main(int argc, char* argv[])
     else
     {
         ImportRequest owned;
-        owned.source = PathFromUtf8("C:/Users/bruno/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
-                                    "fsdreamteam-gsx-pro");
-        owned.externalSource = PathFromUtf8("C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro");
+        owned.source = PathFromUtf8("C:/Users/pilot/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
+                                    "tidewater-util-sync");
+        owned.externalSource = PathFromUtf8("C:/Program Files (x86)/Hangar Desk/MSFS/tidewater-util-sync");
 
         ImportDialog importDialog({owned}, session.Snapshot().libraries, session.Profile(), 2147483648ULL, &shell);
 
@@ -1037,7 +1037,7 @@ int main(int argc, char* argv[])
     if (!demoState)
     {
         const std::filesystem::path deepRoot =
-            PathFromUtf8("C:/Users/bruno/Documents/Flight Simulator Addons/MSFS 2024 Library");
+            PathFromUtf8("C:/Users/pilot/Documents/Flight Simulator Addons/MSFS 2024 Library");
         LibraryRootDialog rootDialog(deepRoot, MeasureTheRoot(deepRoot), &shell);
 
         landed = SaveTheDialogOpenedBy(

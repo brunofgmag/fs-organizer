@@ -36,8 +36,9 @@ namespace
 {
     constexpr int kOutlineWidth = 210;
     constexpr int kPageSpacing = 8;
-    constexpr int kSearchWidth = 120;
+    constexpr int kSearchWidth = 100;
     constexpr int kStepWidth = 38;
+    constexpr int kBetweenSteps = 4;
     constexpr qreal kOneNotchCloser = 1.1;
     constexpr int kNotch = 120;
     constexpr int kTheOnlyColumn = 0;
@@ -971,7 +972,7 @@ QLayout* DocumentReader::TheBar()
 
     auto* bar = new QHBoxLayout;
     bar->setContentsMargins(0, 0, 0, 0);
-    bar->setSpacing(8);
+    bar->setSpacing(kBetweenSteps);
     bar->addWidget(previous_);
     bar->addWidget(next_);
     bar->addWidget(position_);

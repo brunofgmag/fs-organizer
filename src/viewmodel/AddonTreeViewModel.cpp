@@ -50,6 +50,28 @@ namespace
 
         return wanted;
     }
+
+    template<typename Wanted>
+    std::vector<const TreeNode*> AddonsWhere(const AddonDestinations& destinations,
+                                             const std::vector<const TreeNode*>& nodes,
+                                             const Wanted& isWanted)
+    {
+        std::vector<const TreeNode*> found;
+        std::set<std::string> asked;
+
+        for (const TreeNode* node : nodes)
+        {
+            for (const TreeNode* addon : AddonsUnder(*node))
+            {
+                if (asked.insert(ComparablePath(addon->path)).second && isWanted(destinations.Of(addon->path)))
+                {
+                    found.push_back(addon);
+                }
+            }
+        }
+
+        return found;
+    }
 }
 
 AddonTreeViewModel::AddonTreeViewModel(Session& session,
@@ -554,28 +576,20 @@ void AddonTreeViewModel::AdoptDestination(const TreeNode* category)
 
 std::vector<const TreeNode*> AddonTreeViewModel::StrayedUnder(const std::vector<const TreeNode*>& nodes) const
 {
-    const AddonDestinations destinations(session_.Profile(), session_.Snapshot().entries);
-
-    std::vector<const TreeNode*> strayed;
-    std::set<std::string> asked;
-
-    for (const TreeNode* node : nodes)
-    {
-        for (const TreeNode* addon : AddonsUnder(*node))
-        {
-            if (asked.insert(ComparablePath(addon->path)).second && !destinations.Of(addon->path).strayedTo.empty())
-            {
-                strayed.push_back(addon);
-            }
-        }
-    }
-
-    return strayed;
+    return AddonsWhere(AddonDestinations(session_.Profile(), session_.Snapshot().entries), nodes,
+                       [](const AddonDestination& where)
+                       {
+                           return !where.strayedTo.empty();
+                       });
 }
 
-std::size_t AddonTreeViewModel::StrayAddonsUnder(const std::vector<const TreeNode*>& nodes) const
+std::vector<const TreeNode*> AddonTreeViewModel::NeedingRelinkUnder(const std::vector<const TreeNode*>& nodes) const
 {
-    return StrayedUnder(nodes).size();
+    return AddonsWhere(AddonDestinations(session_.Profile(), session_.Snapshot().entries), nodes,
+                       [](const AddonDestination& where)
+                       {
+                           return where.NeedsRelinking();
+                       });
 }
 
 void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const TreeNode*>& nodes)
@@ -585,17 +599,9 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         return;
     }
 
-    RelinkStrayed(StrayedUnder(nodes));
-}
+    const std::vector<const TreeNode*> relinkable = NeedingRelinkUnder(nodes);
 
-void AddonTreeViewModel::RelinkStrayed(const std::vector<const TreeNode*>& strayed)
-{
-    if (toggling_.Busy())
-    {
-        return;
-    }
-
-    if (strayed.empty())
+    if (relinkable.empty())
     {
         emit Refused(tr("Every addon here is already linked in the profile destination."));
         return;
@@ -603,7 +609,7 @@ void AddonTreeViewModel::RelinkStrayed(const std::vector<const TreeNode*>& stray
 
     const std::shared_ptr<ToggleWork> work = WorkOnTheShownProfile();
 
-    for (const TreeNode* addon : strayed)
+    for (const TreeNode* addon : relinkable)
     {
         work->toDisable.push_back(*addon);
     }

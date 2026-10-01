@@ -46,6 +46,7 @@ public:
         EnabledRole,
         DivergentRole,
         BrokenRole,
+        LinkPathRole,
     };
 
     explicit AddonTreeModel(QObject* parent = nullptr);

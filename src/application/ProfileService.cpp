@@ -455,8 +455,7 @@ LinkOperationResult ProfileService::Run(const Step& step, StartupBackup& backup)
     }
 
     const LinkOutcome outcome = CreatesALink(step.kind)
-        ? linking_.Enable(Addon{.folderPath = step.addonFolder, .manifest = Manifest{}}, step.linkPath.parent_path(),
-                          linkType_)
+        ? linking_.LinkAt(step.linkPath, Addon{.folderPath = step.addonFolder, .manifest = Manifest{}}, linkType_)
         : linking_.Disable(step.linkPath);
 
     log_.RecordLink(step.kind, step.addonId, step.addonFolder, step.linkPath, outcome.Failure());

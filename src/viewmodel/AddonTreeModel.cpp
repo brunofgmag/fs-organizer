@@ -116,7 +116,7 @@ SelectionTally AddonTreeModel::TallyOf(const std::vector<const TreeNode*>& nodes
         }
 
         const AddonDestination where = destinations_->Of(addon.path);
-        const bool broken = enabled_.Contains(addon.path) && where.linksNowhere;
+        const bool broken = where.IsBroken();
 
         tally.addons.push_back(addon.path);
         tally.enabled += enabled_.Contains(addon.path) ? 1 : 0;
@@ -198,7 +198,7 @@ AddonTreeModel::Reading AddonTreeModel::ReadingOf(const TreeNode& node) const
             .categories = node.kind == TreeNodeKind::Library ? CountCategoriesInside(node) : 0,
             .checked = ToQt(DeriveCheckState(node, enabled_)),
             .enabled = enabled_.Contains(node.path),
-            .broken = addon && enabled_.Contains(node.path) && where.linksNowhere,
+            .broken = addon && where.IsBroken(),
             .pinned = !where.destination.empty()
                 && ComparablePath(where.destination) != ComparablePath(profile_.defaultDestination)};
 }
@@ -325,6 +325,11 @@ QVariant AddonTreeModel::data(const QModelIndex& position, const int role) const
     if (role == BrokenRole)
     {
         return reading.broken;
+    }
+
+    if (role == LinkPathRole)
+    {
+        return AsText((reading.strayedTo.empty() ? reading.destination : reading.strayedTo) / node.path.filename());
     }
 
     if (role == AlarmingRole)
