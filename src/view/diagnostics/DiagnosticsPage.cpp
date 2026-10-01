@@ -269,7 +269,7 @@ void DiagnosticsPage::AddTheRailSeparator()
 {
     auto* item = new QListWidgetItem(rail_);
     item->setFlags(Qt::NoItemFlags);
-    item->setSizeHint(QSize(kRailWidth, kRailSeparatorRow));
+    item->setSizeHint(QSize(0, kRailSeparatorRow));
 
     auto* holder = new QWidget(rail_);
     auto* line = new QFrame(holder);
@@ -745,6 +745,8 @@ void DiagnosticsPage::DressTheRail() const
                                                                    : tr("Modules loaded"));
 
     railItems_[FindTheCulprit]->setText(TheRailTextForTheSearch());
+
+    LetTheRailBeAsWideAsItsEntries(rail_, kRailWidth);
 }
 
 QString DiagnosticsPage::TheRailTextForTheSearch() const

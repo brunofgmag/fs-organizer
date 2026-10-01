@@ -4,6 +4,7 @@
 #include "domain/journal/OperationLog.h"
 #include "application/ProfileService.h"
 #include "domain/linking/RepairPlan.h"
+#include "domain/tree/EffectiveDestination.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "domain/importing/ExternalSidecar.h"
@@ -45,6 +46,10 @@ namespace
         static void RepointingReplacesTheDeadLinkWithTheLibraryAddon();
         static void UndoingARepairRecreatesTheDeadLink();
         static void UndoingARepointRestoresTheDeadLink();
+        static void ARepairLeavesAPlaceAloneWhoseDeadTargetCameBack();
+        static void ARepairLeavesAPlaceAloneThatNowPointsAtAnotherDeadTarget();
+        static void ARepairRunsTheRequestThatHoldsAndCountsTheOneThatDrifted();
+        static void RepairingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
         static void ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBatch();
         static void ABatchThatTurnsSomeOffAndOthersOnUndoesAsOnePiece();
         static void TheDisablesRunBeforeTheEnablesSoTheDestinationIsFree();
@@ -74,6 +79,8 @@ namespace
         static void ThePlaceTakenByThatLinkIsSeenByThePlacesTakenReadThroughTheLibraries();
         static void ThePlaceTakenByThatLinkIsSeenByThePlacesTakenNowRead();
         static void PlanningOverPlacesThatAreFreeReadsNoSidecar();
+        static void PlanningReadsEachPlaceOnceEvenWhenSomeAreTaken();
+        static void ThePlaceTakenIsTheEffectiveDestinationWithAndWithoutAnOverride();
         static void EnablingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
         static void RelinkingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
         static void UndoingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards();
@@ -530,6 +537,11 @@ namespace
 
         return requests;
     }
+
+    LinkBatchOutcome RepairNow(Fixture& f, const SimulatorProfile& profile, const std::vector<RepairRequest>& requests)
+    {
+        return f.service.Repair(EntriesStamp{.profile = profile}, f.Snapshot(profile).libraries, requests);
+    }
 }
 
 void ProfileServiceTest::RepairingRemovesTheDeadNodeAndJournalsIt()
@@ -539,7 +551,7 @@ void ProfileServiceTest::RepairingRemovesTheDeadNodeAndJournalsIt()
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> results =
-        f.service.Repair(profile, Requests(f, profile, RepairAction::RemoveDeadNode));
+        RepairNow(f, profile, Requests(f, profile, RepairAction::RemoveDeadNode)).report.results;
 
     QCOMPARE(results.size(), std::size_t{1});
     QVERIFY(results.front().outcome.Succeeded());
@@ -558,7 +570,7 @@ void ProfileServiceTest::RepointingReplacesTheDeadLinkWithTheLibraryAddon()
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> results =
-        f.service.Repair(profile, Requests(f, profile, RepairAction::Repoint));
+        RepairNow(f, profile, Requests(f, profile, RepairAction::Repoint)).report.results;
 
     QCOMPARE(results.size(), std::size_t{1});
     QVERIFY(results.front().outcome.Succeeded());
@@ -575,7 +587,7 @@ void ProfileServiceTest::UndoingARepairRecreatesTheDeadLink()
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> repaired =
-        f.service.Repair(profile, Requests(f, profile, RepairAction::RemoveDeadNode));
+        RepairNow(f, profile, Requests(f, profile, RepairAction::RemoveDeadNode)).report.results;
 
     QCOMPARE(repaired.size(), std::size_t{1});
     QVERIFY(f.service.CanUndo());
@@ -594,7 +606,7 @@ void ProfileServiceTest::UndoingARepointRestoresTheDeadLink()
 
     const SimulatorProfile profile = Profile();
     const std::vector<LinkOperationResult> repaired =
-        f.service.Repair(profile, Requests(f, profile, RepairAction::Repoint));
+        RepairNow(f, profile, Requests(f, profile, RepairAction::Repoint)).report.results;
 
     QCOMPARE(repaired.size(), std::size_t{1});
 
@@ -603,6 +615,124 @@ void ProfileServiceTest::UndoingARepointRestoresTheDeadLink()
     QCOMPARE(reverted.size(), std::size_t{2});
     QCOMPARE(f.fileSystem.LinkTarget("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"),
              std::optional<std::filesystem::path>("D:/Old Library/pmdg-aircraft-77w"));
+}
+
+namespace
+{
+    constexpr auto kGone = "E:/Flight Simulator 2024/Community/gone";
+    constexpr auto kLost = "E:/Flight Simulator 2024/Community/lost";
+
+    void EnableThePmdgSoThereIsSomethingToUndo(Fixture& f, const SimulatorProfile& profile)
+    {
+        const ProfileSnapshot shown = f.Snapshot(profile);
+
+        QCOMPARE(f.service.SetEnabled(profile, shown, {Fixture::AddonAt(shown, 0)}, true).results.size(),
+                 std::size_t{1});
+        QVERIFY(f.service.CanUndo());
+    }
+
+    void VerifyTheRepairLeftTheUndoAndTheJournalAsTheyWere(Fixture& f, const std::size_t journalSize)
+    {
+        QCOMPARE(f.journal.appended.size(), journalSize);
+        QVERIFY(f.service.CanUndo());
+        QCOMPARE(f.service.UndoLastBatch().size(), std::size_t{1});
+        QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
+    }
+}
+
+void ProfileServiceTest::ARepairLeavesAPlaceAloneWhoseDeadTargetCameBack()
+{
+    Fixture f;
+    f.fileSystem.AddLink(kGone, "D:/Removed Library/gone");
+
+    const SimulatorProfile profile = Profile();
+    EnableThePmdgSoThereIsSomethingToUndo(f, profile);
+    const std::size_t journalSize = f.journal.appended.size();
+
+    const std::vector<RepairRequest> requests = Requests(f, profile, RepairAction::RemoveDeadNode);
+    QCOMPARE(requests.size(), std::size_t{1});
+
+    f.fileSystem.AddDirectory("D:/Removed Library/gone");
+
+    const LinkBatchOutcome outcome = RepairNow(f, profile, requests);
+
+    QVERIFY(outcome.report.results.empty());
+    QCOMPARE(outcome.report.drifted, std::size_t{1});
+    QVERIFY(f.fileSystem.IsLink(kGone));
+    QCOMPARE(f.fileSystem.LinkTarget(kGone), std::optional<std::filesystem::path>("D:/Removed Library/gone"));
+
+    VerifyTheRepairLeftTheUndoAndTheJournalAsTheyWere(f, journalSize);
+}
+
+void ProfileServiceTest::ARepairLeavesAPlaceAloneThatNowPointsAtAnotherDeadTarget()
+{
+    Fixture f;
+    f.fileSystem.AddLink(kGone, "D:/Removed Library/gone");
+
+    const SimulatorProfile profile = Profile();
+    EnableThePmdgSoThereIsSomethingToUndo(f, profile);
+    const std::size_t journalSize = f.journal.appended.size();
+
+    const std::vector<RepairRequest> requests = Requests(f, profile, RepairAction::RemoveDeadNode);
+    QCOMPARE(requests.size(), std::size_t{1});
+
+    f.fileSystem.AddLink(kGone, "D:/Another Library/gone");
+
+    const LinkBatchOutcome outcome = RepairNow(f, profile, requests);
+
+    QVERIFY(outcome.report.results.empty());
+    QCOMPARE(outcome.report.drifted, std::size_t{1});
+    QCOMPARE(f.fileSystem.LinkTarget(kGone), std::optional<std::filesystem::path>("D:/Another Library/gone"));
+
+    VerifyTheRepairLeftTheUndoAndTheJournalAsTheyWere(f, journalSize);
+}
+
+void ProfileServiceTest::ARepairRunsTheRequestThatHoldsAndCountsTheOneThatDrifted()
+{
+    Fixture f;
+    f.fileSystem.AddLink(kGone, "D:/Removed Library/gone");
+    f.fileSystem.AddLink(kLost, "D:/Removed Library/lost");
+
+    const SimulatorProfile profile = Profile();
+    const std::vector<RepairRequest> requests = Requests(f, profile, RepairAction::RemoveDeadNode);
+    QCOMPARE(requests.size(), std::size_t{2});
+
+    f.fileSystem.AddDirectory("D:/Removed Library/lost");
+
+    const LinkBatchOutcome outcome = RepairNow(f, profile, requests);
+
+    QCOMPARE(outcome.report.results.size(), std::size_t{1});
+    QCOMPARE(outcome.report.results.front().linkPath, std::filesystem::path(kGone));
+    QCOMPARE(outcome.report.drifted, std::size_t{1});
+    QVERIFY(!f.fileSystem.Exists(kGone));
+    QVERIFY(f.fileSystem.IsLink(kLost));
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
+
+    QCOMPARE(f.service.UndoLastBatch().size(), std::size_t{1});
+    QCOMPARE(f.fileSystem.LinkTarget(kGone), std::optional<std::filesystem::path>("D:/Removed Library/gone"));
+    QCOMPARE(f.fileSystem.LinkTarget(kLost), std::optional<std::filesystem::path>("D:/Removed Library/lost"));
+}
+
+void ProfileServiceTest::RepairingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/gone", "D:/Removed Library/gone");
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    const std::vector<RepairRequest> requests = Requests(f, profile, RepairAction::RemoveDeadNode);
+    f.linkService.ForgetTheReads();
+
+    const LinkBatchOutcome outcome = f.service.Repair(EntriesStamp{.profile = profile}, shown.libraries, requests);
+
+    QCOMPARE(outcome.report.results.size(), std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/gone"), std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/aerosoft-crj"), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
+    QCOMPARE(outcome.read.entries.size(), std::size_t{1});
+    QCOMPARE(outcome.read.entries.front().path,
+             std::filesystem::path{"E:/Flight Simulator 2024/Community/aerosoft-crj"});
 }
 
 void ProfileServiceTest::ForgettingTheUndoLeavesTheLinksInPlaceAndOnlyDropsTheBatch()
@@ -1273,70 +1403,6 @@ namespace
         f.fileSystem.AddFileWithContents(ExternalSidecarPathFor(kImportedExternal),
                                          TextOfTheExternalOrigin(kVendorFolder));
     }
-
-    class CountingLinkReads final : public LinkService
-    {
-    public:
-        explicit CountingLinkReads(LinkService& inner) : inner_(inner)
-        {
-        }
-
-        [[nodiscard]] LinkFailure CreateLink(const std::filesystem::path& linkPath,
-                                             const std::filesystem::path& target,
-                                             LinkType linkType) override
-        {
-            return inner_.CreateLink(linkPath, target, linkType);
-        }
-
-        [[nodiscard]] bool RemoveReparseNode(const std::filesystem::path& linkPath) override
-        {
-            return inner_.RemoveReparseNode(linkPath);
-        }
-
-        [[nodiscard]] std::optional<std::filesystem::path>
-        ReadLinkTarget(const std::filesystem::path& path) const override
-        {
-            ++singleReads;
-
-            return inner_.ReadLinkTarget(path);
-        }
-
-        [[nodiscard]] std::vector<std::optional<std::filesystem::path>>
-        ReadLinkTargets(const std::vector<std::filesystem::path>& paths) const override
-        {
-            ++fullReads;
-
-            return inner_.ReadLinkTargets(paths);
-        }
-
-        mutable std::size_t fullReads = 0;
-        mutable std::size_t singleReads = 0;
-
-    private:
-        LinkService& inner_;
-    };
-
-    struct CountedService
-    {
-        explicit CountedService(Fixture& f)
-            : counting(f.linkService),
-              classifier(counting, f.filesystemProbe),
-              service(f.catalog,
-                      f.filesystemProbe,
-                      f.sidecars,
-                      classifier,
-                      f.linking,
-                      f.log,
-                      f.identities,
-                      f.startup.service,
-                      LinkType::Junction)
-        {
-        }
-
-        CountingLinkReads counting;
-        EntryClassifier classifier;
-        ProfileService service;
-    };
 }
 
 void ProfileServiceTest::ALinkToTheOtherProgramsFolderWhoseCopyIsKnownOnlyBySidecarIsReadAsDivergent()
@@ -1439,6 +1505,59 @@ void ProfileServiceTest::PlanningOverPlacesThatAreFreeReadsNoSidecar()
     QVERIFY(counting.reads > 0);
 }
 
+void ProfileServiceTest::PlanningReadsEachPlaceOnceEvenWhenSomeAreTaken()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    const std::vector<const TreeNode*> wanted = Fixture::Aircrafts(shown);
+    f.linkService.ForgetTheReads();
+
+    QCOMPARE(f.service.PlacesTakenNow(profile, wanted, shown).size(), std::size_t{1});
+
+    QCOMPARE(f.linkService.SingleReads(), std::size_t{0});
+    QCOMPARE(f.linkService.BatchReads(), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"), std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/fenix-a320"), std::size_t{1});
+}
+
+void ProfileServiceTest::ThePlaceTakenIsTheEffectiveDestinationWithAndWithoutAnOverride()
+{
+    const SimulatorProfile profile = Profile(
+        {DestinationOverride{
+             .libraryId = kLibraryId, .relativePath = "Aircrafts/aerosoft-crj", .destination = kCommunity2024},
+         DestinationOverride{
+             .libraryId = kLibraryId, .relativePath = "Aircrafts/fenix-a320", .destination = "Z:/Not/A/Destination"}});
+
+    Fixture f;
+    f.fileSystem.AddDirectory("D:/MSFS 2024/Elsewhere/occupant");
+
+    const std::vector<std::filesystem::path> addons{"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w",
+                                                    "D:/MSFS 2024/Aircrafts/aerosoft-crj",
+                                                    "D:/MSFS 2024/Aircrafts/fenix-a320"};
+    for (const std::filesystem::path& addon : addons)
+    {
+        f.fileSystem.AddLink(PlannedLinkPath(profile, addon), "D:/MSFS 2024/Elsewhere/occupant");
+    }
+
+    const ProfileSnapshot shown = f.Snapshot(profile);
+
+    const std::vector<TakenPlace> taken = f.service.PlacesTakenNow(profile, Fixture::Aircrafts(shown), shown);
+
+    QCOMPARE(taken.size(), addons.size());
+    QCOMPARE(taken[1].linkPath, std::filesystem::path{"E:/Flight Simulator 2024/Community2024/aerosoft-crj"});
+
+    for (std::size_t index = 0; index < addons.size(); ++index)
+    {
+        QCOMPARE(taken[index].addonFolder, addons[index]);
+        QCOMPARE(taken[index].linkPath, PlannedLinkPath(profile, addons[index]));
+        QCOMPARE(taken[index].occupant, std::filesystem::path{"D:/MSFS 2024/Elsewhere/occupant"});
+    }
+}
+
 void ProfileServiceTest::EnablingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards()
 {
     Fixture f;
@@ -1446,13 +1565,15 @@ void ProfileServiceTest::EnablingReadsTheDestinationsOnceAndDerivesTheEntriesAft
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot shown = f.Snapshot(profile);
-    CountedService counted(f);
+    f.linkService.ForgetTheReads();
 
-    const LinkBatchOutcome outcome = counted.service.SetEnabled(
+    const LinkBatchOutcome outcome = f.service.SetEnabled(
         EntriesStamp{.profile = profile}, shown, LinkBatch{.toDisable = {}, .toEnable = {Fixture::AddonAt(shown, 0)}});
 
     QCOMPARE(outcome.report.results.size(), std::size_t{1});
-    QCOMPARE(counted.counting.fullReads, std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/aerosoft-crj"), std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
     QCOMPARE(outcome.read.entries.size(), std::size_t{2});
     QVERIFY(outcome.read.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
     QVERIFY(outcome.read.enabled.Contains("D:/MSFS 2024/Aircrafts/aerosoft-crj"));
@@ -1466,13 +1587,15 @@ void ProfileServiceTest::RelinkingReadsTheDestinationsOnceAndDerivesTheEntriesAf
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot shown = f.Snapshot(profile);
-    CountedService counted(f);
+    f.linkService.ForgetTheReads();
 
     const LinkBatchOutcome outcome =
-        counted.service.Relink(EntriesStamp{.profile = profile}, shown, {Fixture::AddonAt(shown, 0)});
+        f.service.Relink(EntriesStamp{.profile = profile}, shown, {Fixture::AddonAt(shown, 0)});
 
     QCOMPARE(outcome.report.results.size(), std::size_t{2});
-    QCOMPARE(counted.counting.fullReads, std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community2024/pmdg-aircraft-77w"), std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
     QCOMPARE(outcome.read.entries.size(), std::size_t{1});
     QCOMPARE(outcome.read.entries.front().path,
              std::filesystem::path{"E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"});
@@ -1482,22 +1605,25 @@ void ProfileServiceTest::RelinkingReadsTheDestinationsOnceAndDerivesTheEntriesAf
 void ProfileServiceTest::UndoingReadsTheDestinationsOnceAndDerivesTheEntriesAfterwards()
 {
     Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
 
     const SimulatorProfile profile = Profile();
     const ProfileSnapshot shown = f.Snapshot(profile);
-    CountedService counted(f);
 
-    const LinkBatchOutcome enabled = counted.service.SetEnabled(
+    const LinkBatchOutcome enabled = f.service.SetEnabled(
         EntriesStamp{.profile = profile}, shown, LinkBatch{.toDisable = {}, .toEnable = {Fixture::AddonAt(shown, 0)}});
-    QCOMPARE(enabled.read.entries.size(), std::size_t{1});
+    QCOMPARE(enabled.read.entries.size(), std::size_t{2});
 
-    counted.counting.fullReads = 0;
+    f.linkService.ForgetTheReads();
 
-    const LinkBatchOutcome undone = counted.service.UndoLastBatch(EntriesStamp{.profile = profile}, shown.libraries);
+    const LinkBatchOutcome undone = f.service.UndoLastBatch(EntriesStamp{.profile = profile}, shown.libraries);
 
     QCOMPARE(undone.report.results.size(), std::size_t{1});
-    QCOMPARE(counted.counting.fullReads, std::size_t{1});
-    QVERIFY(undone.read.entries.empty());
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/aerosoft-crj"), std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
+    QCOMPARE(undone.read.entries.size(), std::size_t{1});
+    QVERIFY(undone.read.enabled.Contains("D:/MSFS 2024/Aircrafts/aerosoft-crj"));
     QVERIFY(!undone.read.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
 }
 

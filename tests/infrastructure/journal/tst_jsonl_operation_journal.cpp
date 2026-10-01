@@ -3,6 +3,8 @@
 
 #include <fstream>
 #include <iterator>
+#include <thread>
+#include <vector>
 
 #include "infrastructure/journal/JsonlOperationJournal.h"
 
@@ -24,6 +26,10 @@ namespace
         static void TheLabelOfAStartupEntrySurvivesTheRoundTrip();
         static void ASecondReadComesFromMemoryAndNotFromTheFile();
         static void AppendingAfterAReadKeepsTheMemoryCurrent();
+        static void ReadingFromAPositionAnswersTheTailOfTheFile();
+        static void ReadingFromThePastTheEndAnswersNothing();
+        static void AFreshJournalOverTheSameFileSeesEveryRecordFromAnyPosition();
+        static void AppendsFromSeveralThreadsLeaveEveryLineWholeAndCounted();
     };
 }
 
@@ -271,6 +277,101 @@ void JsonlOperationJournalTest::AppendingAfterAReadKeepsTheMemoryCurrent()
     QCOMPARE(read.size(), std::size_t{2});
     QCOMPARE(read.back().kind, OperationKind::DisableAddon);
     QCOMPARE(LinesOf(storage.File()).size(), 2);
+}
+
+void JsonlOperationJournalTest::ReadingFromAPositionAnswersTheTailOfTheFile()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+    journal.Append(Record(OperationKind::DisableAddon, LinkFailure::None));
+    journal.Append(Record(OperationKind::RemoveBrokenLink, LinkFailure::None));
+
+    QCOMPARE(journal.ReadFrom(0).size(), std::size_t{3});
+
+    const std::vector<OperationRecord> tail = journal.ReadFrom(1);
+    QCOMPARE(tail.size(), std::size_t{2});
+    QCOMPARE(tail.front().kind, OperationKind::DisableAddon);
+    QCOMPARE(tail.back().kind, OperationKind::RemoveBrokenLink);
+
+    journal.Append(Record(OperationKind::RepointLink, LinkFailure::None));
+
+    const std::vector<OperationRecord> appended = journal.ReadFrom(3);
+    QCOMPARE(appended.size(), std::size_t{1});
+    QCOMPARE(appended.front().kind, OperationKind::RepointLink);
+}
+
+void JsonlOperationJournalTest::ReadingFromThePastTheEndAnswersNothing()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    QVERIFY(journal.ReadFrom(0).empty());
+
+    journal.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+
+    QVERIFY(journal.ReadFrom(1).empty());
+    QVERIFY(journal.ReadFrom(40).empty());
+}
+
+void JsonlOperationJournalTest::AFreshJournalOverTheSameFileSeesEveryRecordFromAnyPosition()
+{
+    const Storage storage;
+
+    JsonlOperationJournal writer(storage.File());
+    writer.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+    writer.Append(Record(OperationKind::DisableAddon, LinkFailure::None));
+    writer.Append(Record(OperationKind::RemoveBrokenLink, LinkFailure::None));
+
+    const JsonlOperationJournal reader(storage.File());
+
+    QCOMPARE(reader.ReadFrom(0).size(), std::size_t{3});
+    QCOMPARE(reader.ReadFrom(2).size(), std::size_t{1});
+    QCOMPARE(reader.ReadFrom(2).front().kind, OperationKind::RemoveBrokenLink);
+    QCOMPARE(reader.Read().size(), std::size_t{3});
+}
+
+void JsonlOperationJournalTest::AppendsFromSeveralThreadsLeaveEveryLineWholeAndCounted()
+{
+    constexpr int kThreads = 8;
+    constexpr int kAppendsEach = 150;
+
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    QVERIFY(journal.Read().empty());
+
+    std::vector<std::thread> writers;
+    for (int thread = 0; thread < kThreads; ++thread)
+    {
+        writers.emplace_back(
+            [&journal]
+            {
+                for (int append = 0; append < kAppendsEach; ++append)
+                {
+                    journal.Append(Record(OperationKind::EnableAddon, LinkFailure::None));
+                }
+            });
+    }
+
+    for (std::thread& writer : writers)
+    {
+        writer.join();
+    }
+
+    constexpr int kExpected = kThreads * kAppendsEach;
+
+    const QStringList lines = LinesOf(storage.File());
+    QCOMPARE(lines.size(), kExpected);
+
+    for (const QString& line : lines)
+    {
+        QVERIFY2(QJsonDocument::fromJson(line.toUtf8()).isObject(), qPrintable(line));
+    }
+
+    QCOMPARE(journal.Read().size(), static_cast<std::size_t>(kExpected));
+    QCOMPARE(JsonlOperationJournal(storage.File()).Read().size(), static_cast<std::size_t>(kExpected));
 }
 
 QTEST_APPLESS_MAIN(JsonlOperationJournalTest)

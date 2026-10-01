@@ -9,6 +9,7 @@
 #include <QtGui/QPainterPath>
 #include <QtGui/QPixmap>
 #include <QtWidgets/QHeaderView>
+#include <QtWidgets/QListWidget>
 #include <QtWidgets/QStyle>
 
 #include "view/theme/ModernistTones.h"
@@ -17,8 +18,8 @@ namespace
 {
     constexpr int kTagPaddingX = 10;
     constexpr int kTagPaddingY = 5;
-    constexpr qreal kTagTextScale = 0.78;
-    constexpr qreal kHeaderTextScale = 0.82;
+    constexpr int kSmallLabelPixelSize = 10;
+    constexpr qreal kSmallLabelSpacing = 1.0;
     constexpr qreal kSpineTextScale = 0.85;
 
     class HeaderDresser final : public QObject
@@ -66,12 +67,13 @@ namespace
 
     QFont ScaledFont(const QFont& base, qreal factor);
 
-    QFont HeaderFont(const QFont& base)
+    QFont SmallLabelFont(const QFont& base)
     {
-        QFont label = ScaledFont(base, kHeaderTextScale);
-        label.setWeight(QFont::DemiBold);
+        QFont label = base;
+        label.setPixelSize(kSmallLabelPixelSize);
+        label.setWeight(QFont::ExtraBold);
         label.setCapitalization(QFont::AllUppercase);
-        label.setLetterSpacing(QFont::PercentageSpacing, 107);
+        label.setLetterSpacing(QFont::AbsoluteSpacing, kSmallLabelSpacing);
 
         return label;
     }
@@ -132,12 +134,7 @@ QRectF OutlineInside(const QPainter& painter, const QRectF& box)
 
 QFont TagFont(const QFont& base)
 {
-    QFont font = ScaledFont(base, kTagTextScale);
-    font.setWeight(QFont::DemiBold);
-    font.setCapitalization(QFont::AllUppercase);
-    font.setLetterSpacing(QFont::PercentageSpacing, 105);
-
-    return font;
+    return SmallLabelFont(base);
 }
 
 QFont SpineFont(const QFont& base)
@@ -243,7 +240,7 @@ void DressTheHeaderOf(QHeaderView* header)
         return;
     }
 
-    new HeaderDresser(header, HeaderFont(header->font()));
+    new HeaderDresser(header, SmallLabelFont(header->font()));
 
     header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     header->setHighlightSections(false);
@@ -259,4 +256,15 @@ void GiveItTheRole(QWidget* widget, const QString& role)
     widget->setProperty("role", role);
     widget->style()->unpolish(widget);
     widget->style()->polish(widget);
+}
+
+void LetTheRailBeAsWideAsItsEntries(QListWidget* rail, const int atLeast)
+{
+    if (rail == nullptr)
+    {
+        return;
+    }
+
+    rail->ensurePolished();
+    rail->setFixedWidth(std::max(atLeast, rail->sizeHintForColumn(0) + 2 * rail->frameWidth()));
 }

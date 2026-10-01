@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <QtCore/QTimer>
+#include <QtCore/QTranslator>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QtTest>
 #include <QtWidgets/QCheckBox>
@@ -31,6 +32,7 @@
 #include "view/shell/LanguageSwitch.h"
 #include "viewmodel/SessionNotifier.h"
 #include "tests/support/ButtonLookup.h"
+#include "tests/support/CatalogueBesideTheBuild.h"
 #include "tests/support/PageFloor.h"
 
 namespace
@@ -41,6 +43,9 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void TheSectionListGivesEveryRowItsOwnRoomWithTheItemViewFontInPlace();
+        static void NoEntryOfTheSectionListIsCutInEitherLanguage_data();
+        static void NoEntryOfTheSectionListIsCutInEitherLanguage();
         static void TheLanguageTabOffersBothAndOpensOnTheStoredOne();
         static void TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands();
         static void WhereTheProgramCannotUpdateItselfTheUpdatesTabOffersNoWayToInstall();
@@ -555,6 +560,88 @@ void OptionsPageTest::ThePageFitsTheNarrowestWindow()
     Fixture f;
 
     ItFitsTheNarrowestWindow(f.page, "The options page");
+}
+
+void OptionsPageTest::TheSectionListGivesEveryRowItsOwnRoomWithTheItemViewFontInPlace()
+{
+    ApplyModernistTheme(*qApp);
+
+    QStackedWidget shell;
+    shell.addWidget(new QLabel(QStringLiteral("Library"), &shell));
+
+    Fixture f;
+    shell.addWidget(&f.page);
+    shell.resize(kWidestAPageMayBe, 700);
+    shell.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&shell));
+    QCoreApplication::processEvents();
+
+    shell.setCurrentWidget(&f.page);
+    QCoreApplication::processEvents();
+
+    const auto* sections = f.page.findChild<QListWidget*>(QStringLiteral("SectionRail"));
+    QVERIFY(sections != nullptr);
+    QVERIFY(sections->count() > 1);
+
+    const int firstHeight = sections->visualItemRect(sections->item(0)).height();
+
+    for (int row = 0; row < sections->count(); ++row)
+    {
+        const QRect rect = sections->visualItemRect(sections->item(row));
+        const QString said = QStringLiteral("row %1 is %2 px tall at y %3, and row 0 is %4 px tall")
+                                 .arg(row)
+                                 .arg(rect.height())
+                                 .arg(rect.y())
+                                 .arg(firstHeight);
+
+        QVERIFY2(rect.height() == firstHeight, qPrintable(said));
+
+        if (row > 0)
+        {
+            QVERIFY2(rect.top() > sections->visualItemRect(sections->item(row - 1)).bottom(), qPrintable(said));
+        }
+    }
+}
+
+void OptionsPageTest::NoEntryOfTheSectionListIsCutInEitherLanguage_data()
+{
+    QTest::addColumn<QString>("language");
+
+    QTest::newRow("English") << QStringLiteral("en");
+    QTest::newRow("Brazilian Portuguese") << QStringLiteral("pt_BR");
+}
+
+void OptionsPageTest::NoEntryOfTheSectionListIsCutInEitherLanguage()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+
+    if (language != QLatin1String("en"))
+    {
+        const QString file = TheCatalogueBesideTheBuild(language);
+
+        QVERIFY2(!file.isEmpty(), "app_pt_BR.qm is not beside the build: build the release_translations target");
+        QVERIFY(catalogue.load(file));
+        QVERIFY(QCoreApplication::installTranslator(&catalogue));
+    }
+
+    ApplyModernistTheme(*qApp);
+
+    Fixture f;
+    f.page.resize(kWidestAPageMayBe, 700);
+    f.page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&f.page));
+    QCoreApplication::processEvents();
+
+    const auto* sections = f.page.findChild<QListWidget*>(QStringLiteral("SectionRail"));
+    QVERIFY(sections != nullptr);
+
+    const QString said = QStringLiteral("the list is %1 px wide inside and its widest entry asks for %2")
+                             .arg(sections->viewport()->width())
+                             .arg(sections->sizeHintForColumn(0));
+
+    QVERIFY2(sections->sizeHintForColumn(0) <= sections->viewport()->width(), qPrintable(said));
 }
 
 void OptionsPageTest::ThePageThatCannotUpdateItselfFitsTheNarrowestWindow()

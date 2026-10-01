@@ -116,20 +116,7 @@ void QuarantineViewModel::Weigh(const std::vector<QuarantinedItem>& items)
 
 std::vector<RestoreOffer> QuarantineViewModel::WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const
 {
-    std::vector<RestoreCheck> checks = service_.CheckRestore(session_.Profile(), items);
-
-    std::vector<RestoreOffer> offers;
-    offers.reserve(checks.size());
-
-    for (RestoreCheck& check : checks)
-    {
-        std::vector<RestorePlace> places =
-            check.NeedsAPlace() ? service_.PlacesFor(session_.Profile(), check.item) : std::vector<RestorePlace>{};
-
-        offers.push_back(RestoreOffer{.check = std::move(check), .places = std::move(places)});
-    }
-
-    return offers;
+    return service_.OffersFor(session_.Profile(), items);
 }
 
 void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& items)
@@ -145,17 +132,7 @@ void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& ite
     working_.Run(
         [this, profile, items, offers]
         {
-            std::vector<RestoreCheck> checks = service_.CheckRestore(profile, items);
-
-            offers->reserve(checks.size());
-
-            for (RestoreCheck& check : checks)
-            {
-                std::vector<RestorePlace> places =
-                    check.NeedsAPlace() ? service_.PlacesFor(profile, check.item) : std::vector<RestorePlace>{};
-
-                offers->push_back(RestoreOffer{.check = std::move(check), .places = std::move(places)});
-            }
+            *offers = service_.OffersFor(profile, items);
         },
         [this, offers]
         {

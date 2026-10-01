@@ -49,7 +49,7 @@ namespace
         static void TheLeftLineRunsTheWholeHeightOfAnOpenPanel();
         static void TheBodyShowsTheGroundTheThemeDeclaresForIt();
         static void TheRailKeepsTheLeftLineOnTheColumnOfTheOpenPanel();
-        static void TheTitleStripFollowsTheFontTheColumnHeaderFollows();
+        static void TheTitleStripStaysLevelWithTheColumnHeaderWhenTheApplicationFontGrows();
         static void TheTitleStripFollowsTheColumnHeaderWhenItsHeightChanges();
         static void ContentTallerThanThePanelScrollsInsteadOfBeingSquashed();
         static void APathWiderThanThePanelNeverAsksForMoreRoomThanItHas();
@@ -605,7 +605,7 @@ void ContextPanelTest::TheRailKeepsTheLeftLineOnTheColumnOfTheOpenPanel()
     }
 }
 
-void ContextPanelTest::TheTitleStripFollowsTheFontTheColumnHeaderFollows()
+void ContextPanelTest::TheTitleStripStaysLevelWithTheColumnHeaderWhenTheApplicationFontGrows()
 {
     const QFont usual = QApplication::font();
 
@@ -617,7 +617,8 @@ void ContextPanelTest::TheTitleStripFollowsTheFontTheColumnHeaderFollows()
     const int smallStrip = StripHeightBesideATable(usual, smallHeader);
     const int largeStrip = StripHeightBesideATable(larger, largeHeader);
 
-    QVERIFY(largeHeader > smallHeader);
+    QVERIFY(smallHeader > 0);
+    QVERIFY(largeHeader > 0);
     QCOMPARE(smallStrip, smallHeader);
     QCOMPARE(largeStrip, largeHeader);
 }

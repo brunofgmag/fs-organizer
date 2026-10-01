@@ -150,8 +150,9 @@ public:
     [[nodiscard]] LinkBatchOutcome
     Relink(const EntriesStamp& stamp, const ProfileSnapshot& shown, const std::vector<const TreeNode*>& nodes);
 
-    [[nodiscard]] std::vector<LinkOperationResult> Repair(const SimulatorProfile& profile,
-                                                          const std::vector<RepairRequest>& requests);
+    [[nodiscard]] LinkBatchOutcome Repair(const EntriesStamp& stamp,
+                                          const std::vector<TreeNode>& libraries,
+                                          const std::vector<RepairRequest>& requests);
 
     [[nodiscard]] bool CanUndo() const;
 
@@ -193,6 +194,10 @@ private:
     [[nodiscard]] static std::optional<Step> PlanRepair(const SimulatorProfile& profile, const RepairRequest& request);
 
     [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile, const RepairRequest& request);
+
+    [[nodiscard]] LinkBatchReport RepairWhatStillHolds(const SimulatorProfile& profile,
+                                                       const LinksOnDisk& onDisk,
+                                                       const std::vector<RepairRequest>& requests);
 
     [[nodiscard]] EntriesRead
     Derived(EntriesStamp stamp, std::vector<DestinationEntry> entries, const std::vector<TreeNode>& libraries) const;

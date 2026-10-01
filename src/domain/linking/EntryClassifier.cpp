@@ -197,12 +197,29 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::fi
 {
     const std::vector<std::filesystem::path> places = PlacesUnder(destinationRoots);
 
-    const std::vector<std::optional<std::filesystem::path>> targets = linkService_.ReadLinkTargets(places);
-
     const ClassificationLookups lookups(filesystemProbe_, libraryRoots, externals);
     const TheAppLinkedPlaces theAppLinked(linkedFolders_);
 
+    std::vector<DestinationEntry> entries = ClassifyPlaces(places, lookups, theAppLinked);
+
+    MarkDuplicates(entries);
+
+    return entries;
+}
+
+std::vector<DestinationEntry> EntryClassifier::ClassifyPlaces(const std::vector<std::filesystem::path>& places,
+                                                              const ClassificationLookups& lookups,
+                                                              const TheAppLinkedPlaces& theAppLinked) const
+{
     std::vector<DestinationEntry> entries;
+
+    if (places.empty())
+    {
+        return entries;
+    }
+
+    const std::vector<std::optional<std::filesystem::path>> targets = linkService_.ReadLinkTargets(places);
+
     entries.reserve(places.size());
 
     for (std::size_t index = 0; index < places.size(); ++index)
@@ -210,9 +227,23 @@ std::vector<DestinationEntry> EntryClassifier::Resolve(const std::vector<std::fi
         entries.push_back(ClassifyEntry(places[index], targets[index], lookups, theAppLinked));
     }
 
-    MarkDuplicates(entries);
-
     return entries;
+}
+
+std::map<std::string, DestinationEntry>
+EntryClassifier::ClassifyByPlace(const std::vector<std::filesystem::path>& places,
+                                 const ClassificationLookups& lookups,
+                                 const TheAppLinkedPlaces& theAppLinked) const
+{
+    std::vector<DestinationEntry> entries = ClassifyPlaces(places, lookups, theAppLinked);
+
+    std::map<std::string, DestinationEntry> byPlace;
+    for (std::size_t index = 0; index < places.size(); ++index)
+    {
+        byPlace.emplace(ComparablePath(places[index]), std::move(entries[index]));
+    }
+
+    return byPlace;
 }
 
 std::vector<DestinationEntry> EntryClassifier::Refresh(const std::vector<DestinationEntry>& known,
@@ -242,23 +273,40 @@ std::vector<DestinationEntry> EntryClassifier::Refresh(const std::vector<Destina
     const ClassificationLookups lookups(filesystemProbe_, libraryRoots, externals);
     const TheAppLinkedPlaces theAppLinked(linkedFolders_);
 
-    std::map<std::string, DestinationEntry> reclassified;
-    for (const std::filesystem::path& place : places)
-    {
-        const std::string key = ComparablePath(place);
-        if (!touched.contains(key) && knownByPlace.contains(key))
-        {
-            continue;
-        }
+    std::vector<std::filesystem::path> touchedOrUnknown;
+    std::ranges::copy_if(places, std::back_inserter(touchedOrUnknown),
+                         [&touched, &knownByPlace](const std::filesystem::path& place)
+                         {
+                             const std::string key = ComparablePath(place);
 
-        DestinationEntry entry = ClassifyEntry(place, linkService_.ReadLinkTarget(place), lookups, theAppLinked);
+                             return touched.contains(key) || !knownByPlace.contains(key);
+                         });
+
+    std::map<std::string, DestinationEntry> reclassified = ClassifyByPlace(touchedOrUnknown, lookups, theAppLinked);
+    for (const DestinationEntry& entry : reclassified | std::views::values)
+    {
         if (!entry.target.empty())
         {
             retargeted.insert(ComparablePath(entry.target));
         }
-
-        reclassified.emplace(key, std::move(entry));
     }
+
+    std::vector<std::filesystem::path> withAStaleMark;
+    std::ranges::copy_if(places, std::back_inserter(withAStaleMark),
+                         [&reclassified, &knownByPlace, &retargeted](const std::filesystem::path& place)
+                         {
+                             const std::string key = ComparablePath(place);
+                             if (reclassified.contains(key))
+                             {
+                                 return false;
+                             }
+
+                             const DestinationEntry& before = *knownByPlace.at(key);
+
+                             return !before.target.empty() && retargeted.contains(ComparablePath(before.target));
+                         });
+
+    reclassified.merge(ClassifyByPlace(withAStaleMark, lookups, theAppLinked));
 
     std::vector<DestinationEntry> entries;
     entries.reserve(places.size());
@@ -270,16 +318,11 @@ std::vector<DestinationEntry> EntryClassifier::Refresh(const std::vector<Destina
         if (const auto fresh = reclassified.find(key); fresh != reclassified.end())
         {
             entries.push_back(std::move(fresh->second));
-            continue;
         }
-
-        const DestinationEntry& before = *knownByPlace.at(key);
-        const bool itsDuplicateMarkMayBeStale =
-            !before.target.empty() && retargeted.contains(ComparablePath(before.target));
-
-        entries.push_back(itsDuplicateMarkMayBeStale
-                              ? ClassifyEntry(place, linkService_.ReadLinkTarget(place), lookups, theAppLinked)
-                              : before);
+        else
+        {
+            entries.push_back(*knownByPlace.at(key));
+        }
     }
 
     MarkDuplicates(entries);
@@ -291,15 +334,30 @@ std::vector<DestinationEntry> EntryClassifier::LinksAt(const std::vector<std::fi
                                                        const std::vector<std::filesystem::path>& libraryRoots,
                                                        const std::vector<ExternalAddon>& externals) const
 {
+    return LinksAmong(places, TargetsAt(places), libraryRoots, externals);
+}
+
+std::vector<std::optional<std::filesystem::path>>
+EntryClassifier::TargetsAt(const std::vector<std::filesystem::path>& places) const
+{
+    return places.empty() ? std::vector<std::optional<std::filesystem::path>>{} : linkService_.ReadLinkTargets(places);
+}
+
+std::vector<DestinationEntry>
+EntryClassifier::LinksAmong(const std::vector<std::filesystem::path>& places,
+                            const std::vector<std::optional<std::filesystem::path>>& targets,
+                            const std::vector<std::filesystem::path>& libraryRoots,
+                            const std::vector<ExternalAddon>& externals) const
+{
     const ClassificationLookups lookups(filesystemProbe_, libraryRoots, externals);
 
     std::vector<DestinationEntry> links;
 
-    for (const std::filesystem::path& place : places)
+    for (std::size_t index = 0; index < places.size(); ++index)
     {
-        if (const std::optional<std::filesystem::path> target = linkService_.ReadLinkTarget(place); target.has_value())
+        if (targets[index].has_value())
         {
-            links.push_back(ClassifyLink(place, *target, lookups));
+            links.push_back(ClassifyLink(places[index], *targets[index], lookups));
         }
     }
 
@@ -307,6 +365,7 @@ std::vector<DestinationEntry> EntryClassifier::LinksAt(const std::vector<std::fi
 }
 
 DestinationEntry EntryClassifier::WhatStandsWhereALinkWas(const std::filesystem::path& entryPath,
+                                                          const ClassificationLookups& lookups,
                                                           const TheAppLinkedPlaces& theAppLinked) const
 {
     DestinationEntry entry;
@@ -315,7 +374,7 @@ DestinationEntry EntryClassifier::WhatStandsWhereALinkWas(const std::filesystem:
 
     const std::map<std::string, LinkTheAppMade>& made = theAppLinked.Get();
     const auto ours = made.find(ComparablePath(entryPath));
-    if (ours == made.end() || !APhysicalFolderIsThere(ours->second.libraryCopy))
+    if (ours == made.end() || !APhysicalFolderIsThere(ours->second.libraryCopy, lookups))
     {
         return entry;
     }
@@ -333,7 +392,7 @@ DestinationEntry EntryClassifier::ClassifyEntry(const std::filesystem::path& ent
 {
     if (!target.has_value())
     {
-        return WhatStandsWhereALinkWas(entryPath, theAppLinked);
+        return WhatStandsWhereALinkWas(entryPath, lookups, theAppLinked);
     }
 
     return ClassifyLink(entryPath, *target, lookups);
@@ -363,7 +422,7 @@ DestinationEntry EntryClassifier::ClassifyLink(const std::filesystem::path& entr
         entry.classification =
             entry.externalOrigin.empty() ? EntryClassification::Broken : EntryClassification::Vanished;
     }
-    else if (BothCopiesAreThere(entry.target, handedOver))
+    else if (BothCopiesAreThere(entry.target, handedOver, lookups))
     {
         entry.externalOrigin = entry.target;
         entry.libraryCopy = handedOver;
@@ -376,7 +435,7 @@ DestinationEntry EntryClassifier::ClassifyLink(const std::filesystem::path& entr
     }
     else
     {
-        entry.theOtherProgramTookItsFolderBack = APhysicalFolderIsThere(entry.externalOrigin);
+        entry.theOtherProgramTookItsFolderBack = APhysicalFolderIsThere(entry.externalOrigin, lookups);
         entry.classification =
             entry.theOtherProgramTookItsFolderBack ? EntryClassification::Divergent : EntryClassification::Managed;
     }
@@ -384,13 +443,16 @@ DestinationEntry EntryClassifier::ClassifyLink(const std::filesystem::path& entr
     return entry;
 }
 
-bool EntryClassifier::APhysicalFolderIsThere(const std::filesystem::path& path) const
+bool EntryClassifier::APhysicalFolderIsThere(const std::filesystem::path& path,
+                                             const ClassificationLookups& lookups) const
 {
-    return !path.empty() && filesystemProbe_.VolumeIsAvailable(path) && filesystemProbe_.PhysicalDirectoryExists(path);
+    return !path.empty() && lookups.VolumeIsAvailable(path) && filesystemProbe_.PhysicalDirectoryExists(path);
 }
 
 bool EntryClassifier::BothCopiesAreThere(const std::filesystem::path& theOtherPrograms,
-                                         const std::filesystem::path& inTheLibrary) const
+                                         const std::filesystem::path& inTheLibrary,
+                                         const ClassificationLookups& lookups) const
 {
-    return !inTheLibrary.empty() && APhysicalFolderIsThere(theOtherPrograms) && APhysicalFolderIsThere(inTheLibrary);
+    return !inTheLibrary.empty() && APhysicalFolderIsThere(theOtherPrograms, lookups)
+        && APhysicalFolderIsThere(inTheLibrary, lookups);
 }

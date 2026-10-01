@@ -1,5 +1,6 @@
 #include "application/ProfileService.h"
 
+#include <algorithm>
 #include <set>
 #include <string>
 #include <utility>
@@ -7,6 +8,7 @@
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonDestinations.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
 #include "domain/tree/LibraryLookup.h"
@@ -39,6 +41,28 @@ namespace
         }
 
         return held;
+    }
+
+    std::map<std::string, std::string> BrokenTargetsByPath(const std::vector<DestinationEntry>& entries)
+    {
+        std::map<std::string, std::string> broken;
+
+        for (const DestinationEntry& entry : entries)
+        {
+            if (entry.classification == EntryClassification::Broken)
+            {
+                broken.emplace(ComparablePath(entry.path), ComparablePath(entry.target));
+            }
+        }
+
+        return broken;
+    }
+
+    bool StillBrokenAsShown(const std::map<std::string, std::string>& broken, const DestinationEntry& shown)
+    {
+        const auto found = broken.find(ComparablePath(shown.path));
+
+        return found != broken.end() && found->second == ComparablePath(shown.target);
     }
 }
 
@@ -228,6 +252,8 @@ std::vector<TakenPlace> ProfileService::PlacesTakenNow(const SimulatorProfile& p
                                                        const std::vector<const TreeNode*>& nodes,
                                                        const ProfileSnapshot& shown) const
 {
+    const AddonDestinations destinations(profile, shown.entries);
+
     std::vector<const TreeNode*> wanting;
     std::vector<std::filesystem::path> places;
     std::set<std::string> asked;
@@ -242,17 +268,18 @@ std::vector<TakenPlace> ProfileService::PlacesTakenNow(const SimulatorProfile& p
             }
 
             wanting.push_back(addon);
-            places.push_back(PlannedLinkPath(profile, addon->path));
+            places.push_back(destinations.Of(addon->path).destination / addon->path.filename());
         }
     }
 
-    if (classifier_.LinksAt(places, LibraryRoots(profile)).empty())
+    const std::vector<std::optional<std::filesystem::path>> targets = classifier_.TargetsAt(places);
+    if (std::ranges::none_of(targets, &std::optional<std::filesystem::path>::has_value))
     {
         return {};
     }
 
-    const std::vector<DestinationEntry> links =
-        classifier_.LinksAt(places, LibraryRoots(profile), WhatCameFromAnotherProgram(profile, shown.libraries));
+    const std::vector<DestinationEntry> links = classifier_.LinksAmong(
+        places, targets, LibraryRoots(profile), WhatCameFromAnotherProgram(profile, shown.libraries));
     const std::map<std::string, const DestinationEntry*> held = LinksHeldByPath(links);
 
     std::vector<TakenPlace> taken;
@@ -625,13 +652,28 @@ std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile
     return undo;
 }
 
-std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& profile,
-                                                        const std::vector<RepairRequest>& requests)
+LinkBatchOutcome ProfileService::Repair(const EntriesStamp& stamp,
+                                        const std::vector<TreeNode>& libraries,
+                                        const std::vector<RepairRequest>& requests)
 {
+    const std::vector<ExternalAddon> externals = WhatCameFromAnotherProgram(stamp.profile, libraries);
+    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, externals);
+
+    LinkBatchReport report = RepairWhatStillHolds(stamp.profile, onDisk, requests);
+
+    return AfterTheBatch(stamp, libraries, onDisk.entries, std::move(report), externals);
+}
+
+LinkBatchReport ProfileService::RepairWhatStillHolds(const SimulatorProfile& profile,
+                                                     const LinksOnDisk& onDisk,
+                                                     const std::vector<RepairRequest>& requests)
+{
+    const std::map<std::string, std::string> broken = BrokenTargetsByPath(onDisk.entries);
+
     const std::lock_guard lock(guard_);
 
     StartupBackup backup;
-    std::vector<LinkOperationResult> results;
+    LinkBatchReport report;
     std::vector<Step> undo;
 
     for (const RepairRequest& request : requests)
@@ -639,6 +681,12 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
         const std::optional<Step> step = PlanRepair(profile, request);
         if (!step.has_value())
         {
+            continue;
+        }
+
+        if (!StillBrokenAsShown(broken, request.candidate.entry))
+        {
+            ++report.drifted;
             continue;
         }
 
@@ -650,7 +698,7 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
             undo.insert(undo.end(), inverse.begin(), inverse.end());
         }
 
-        results.push_back(std::move(result));
+        report.results.push_back(std::move(result));
     }
 
     if (!undo.empty())
@@ -658,7 +706,7 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
         undo_ = std::move(undo);
     }
 
-    return results;
+    return report;
 }
 
 bool ProfileService::CanUndo() const

@@ -156,7 +156,7 @@ namespace
         SessionNotifier notifier{};
         Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
+        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log};
         DeletionViewModel viewModel{session, profiles, service, sizes, runner};
     };
 

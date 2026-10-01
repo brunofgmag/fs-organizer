@@ -65,6 +65,8 @@ public:
 private:
     void RepaintTheRows();
 
+    [[nodiscard]] QString VersionOf(const QModelIndex& position) const;
+
     std::vector<QuarantinedItem> items_;
     std::map<std::string, QuarantineDetail> details_;
     std::map<std::string, std::uintmax_t> bytes_;

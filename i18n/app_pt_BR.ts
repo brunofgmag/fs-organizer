@@ -1431,11 +1431,28 @@ Também na biblioteca: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="851"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="874"/>
         <source>%n failed</source>
         <translation>
             <numerusform>%n falhou</numerusform>
             <numerusform>%n falharam</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/CommunityPage.cpp" line="866"/>
+        <source>Nothing changed: %n link had changed on the disk. The list has been refreshed.</source>
+        <translation>
+            <numerusform>Nada mudou: %n link tinha mudado no disco. A lista foi atualizada.</numerusform>
+            <numerusform>Nada mudou: %n links tinham mudado no disco. A lista foi atualizada.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/CommunityPage.cpp" line="869"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="876"/>
+        <source>%n had changed on the disk</source>
+        <translation>
+            <numerusform>%n tinha mudado no disco</numerusform>
+            <numerusform>%n tinham mudado no disco</numerusform>
         </translation>
     </message>
     <message>

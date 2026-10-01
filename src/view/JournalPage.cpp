@@ -16,7 +16,11 @@
 #include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
-#include "viewmodel/ModelRetranslation.h"
+
+namespace
+{
+    constexpr int kColumnSizingSample = 200;
+}
 
 JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidget* parent)
     : QWidget(parent), viewModel_(viewModel), model_(model)
@@ -30,6 +34,7 @@ JournalPage::JournalPage(JournalViewModel& viewModel, JournalModel& model, QWidg
     operations_->setUniformRowHeights(true);
     operations_->setSelectionBehavior(QAbstractItemView::SelectRows);
     operations_->header()->setStretchLastSection(true);
+    operations_->header()->setResizeContentsPrecision(kColumnSizingSample);
     operations_->setItemDelegate(new RowDelegate(operations_));
     DressTheHeaderOf(operations_->header());
 
@@ -91,7 +96,7 @@ void JournalPage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        SayTheModelWasRetranslated(model_);
+        model_.Retranslate();
         UpdateSummary();
         ShowTheSelectedOperation();
     }

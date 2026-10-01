@@ -2,6 +2,7 @@
 
 #include <QtGui/QStandardItemModel>
 #include <QtWidgets/QHeaderView>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTableView>
 
 #include "view/TableColumns.h"
@@ -25,6 +26,9 @@ namespace
         static void ContentThatArrivesAfterTheHelperIsMeasuredJustTheSame();
         static void ContentThatChangesWithoutNewRowsIsMeasuredAgain();
         static void TheSlackCanBeGivenToAChosenColumnInsteadOfTheLast();
+        static void ATableAFewPixelsTooNarrowForItsColumnsAndTheSlackTitleTakesThemBackFromTheCells();
+        static void ATableFarTooNarrowKeepsEveryColumnAtItsContentAndScrolls();
+        static void WideningTheTableAgainReturnsWhatWasGivenBack();
     };
 }
 
@@ -341,6 +345,93 @@ void TableColumnsTest::NoColumnIsSqueezedNarrowerThanItsOwnTitle()
                                 .arg(header->sectionSize(column))
                                 .arg(title)));
     }
+}
+
+namespace
+{
+    constexpr int kSlackTitle = kColumns - 1;
+
+    struct Squeezed
+    {
+        QStandardItemModel model{6, kColumns};
+        QTableView view;
+
+        explicit Squeezed(const int viewportWidth)
+        {
+            model.setHorizontalHeaderLabels({QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C"),
+                                             QStringLiteral("A title that asks for a good deal of room")});
+
+            for (int row = 0; row < model.rowCount(); ++row)
+            {
+                for (int column = 0; column < kColumns; ++column)
+                {
+                    model.setItem(row, column, new QStandardItem(QStringLiteral("cell %1").arg(column)));
+                }
+            }
+
+            view.setModel(&model);
+            view.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            view.verticalHeader()->setVisible(false);
+            view.resize(viewportWidth + 2 * view.frameWidth(), 300);
+            LetTheColumnsBeDraggedAndStillFillTheTable(&view);
+            view.show();
+            static_cast<void>(QTest::qWaitForWindowExposed(&view));
+        }
+
+        [[nodiscard]] int Length() const
+        {
+            return view.horizontalHeader()->length();
+        }
+
+        [[nodiscard]] int WhatTheColumnsAndTheTitleAsk() const
+        {
+            const QHeaderView* header = view.horizontalHeader();
+
+            return header->sectionSize(0) + header->sectionSize(1) + header->sectionSize(2)
+                + header->sectionSizeHint(kSlackTitle);
+        }
+    };
+}
+
+void TableColumnsTest::ATableAFewPixelsTooNarrowForItsColumnsAndTheSlackTitleTakesThemBackFromTheCells()
+{
+    const Squeezed roomy(900);
+    const int asked = roomy.WhatTheColumnsAndTheTitleAsk();
+
+    const Squeezed tight(asked - 4);
+
+    QCOMPARE(tight.view.viewport()->width(), asked - 4);
+    QVERIFY2(tight.Length() <= tight.view.viewport()->width(),
+             qPrintable(QStringLiteral("the columns add up to %1 px in %2").arg(tight.Length()).arg(asked - 4)));
+    QVERIFY(tight.view.horizontalHeader()->sectionSize(kSlackTitle)
+            >= tight.view.horizontalHeader()->sectionSizeHint(kSlackTitle));
+    QVERIFY(!tight.view.horizontalScrollBar()->isVisible());
+}
+
+void TableColumnsTest::ATableFarTooNarrowKeepsEveryColumnAtItsContentAndScrolls()
+{
+    const Squeezed roomy(900);
+    const int asked = roomy.WhatTheColumnsAndTheTitleAsk();
+
+    const Squeezed far(asked - 100);
+
+    QCOMPARE(far.Length(), asked);
+    QVERIFY(far.view.horizontalScrollBar()->isVisible());
+}
+
+void TableColumnsTest::WideningTheTableAgainReturnsWhatWasGivenBack()
+{
+    Squeezed roomy(900);
+    const int asked = roomy.WhatTheColumnsAndTheTitleAsk();
+    const int cell = roomy.view.horizontalHeader()->sectionSize(0);
+
+    Squeezed tight(asked - 4);
+    QVERIFY(tight.view.horizontalHeader()->sectionSize(0) < cell);
+
+    tight.view.resize(900, 300);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(tight.view.horizontalHeader()->sectionSize(0), cell);
 }
 
 QTEST_MAIN(TableColumnsTest)

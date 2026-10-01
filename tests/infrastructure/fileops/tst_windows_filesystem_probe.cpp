@@ -8,11 +8,14 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cwctype>
 #include <fstream>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include "infrastructure/fileops/ExtendedPaths.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "tests/support/DeepPaths.h"
@@ -43,6 +46,9 @@ namespace
         static void ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem();
         static void TheStandardLibraryDoubleAnswersPastTheOldCeilingTheSameWayThisProbeDoes();
         static void TheFingerprintCarriesTheWriteTimeOfEachFileAsTheFileSystemHoldsIt();
+        static void TheFingerprintNamesEachFileRelativeToTheRootWhetherOrNotTheRootEndsInASeparator();
+        static void TheLongestEntryOfAFingerprintIsWhatTheOldMeasurementGivesForTheSameTree();
+        static void TheFingerprintOfARootReachedThroughTheNetworkShareAnswersLikeTheOldMeasurement();
         static void AFolderAndAFileAreListedEachUnderItsOwnKindAndNeverTheDotEntries();
         static void AJunctionToAFolderIsListedAsAFolderAndNotAsAFile();
         static void ANameOutsideTheCodePageComesBackIntact();
@@ -100,6 +106,70 @@ namespace
             return linkPath;
         }
     };
+}
+
+namespace
+{
+    void WriteAccentedTree(const std::filesystem::path& root)
+    {
+        const std::vector<std::filesystem::path> files{
+            std::filesystem::path(L"manifest.json"),
+            std::filesystem::path(L"café") / std::filesystem::path(L"über-Ж.bgl"),
+            std::filesystem::path(L"café") / std::filesystem::path(L"日本語") / std::filesystem::path(L"layout.json"),
+            std::filesystem::path(L"scenery") / std::filesystem::path(L"world") / std::filesystem::path(L"a.bgl"),
+            std::filesystem::path(L"scenery") / std::filesystem::path(L"world") / std::filesystem::path(L"b.bgl"),
+        };
+
+        for (const std::filesystem::path& file : files)
+        {
+            std::filesystem::create_directories((root / file).parent_path());
+            std::ofstream(root / file) << "content";
+        }
+
+        std::filesystem::create_directories(root / std::filesystem::path(L"vazia-ção"));
+    }
+
+    std::vector<std::filesystem::path> RelativePathsOfFilesUnder(const std::filesystem::path& root)
+    {
+        std::vector<std::filesystem::path> relative;
+
+        for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(root))
+        {
+            if (entry.is_regular_file())
+            {
+                relative.push_back(entry.path().lexically_relative(root));
+            }
+        }
+
+        std::ranges::sort(relative);
+
+        return relative;
+    }
+
+    std::vector<std::filesystem::path> RelativePathsOf(const TreeFingerprint& fingerprint)
+    {
+        std::vector<std::filesystem::path> relative;
+
+        for (const FileFingerprint& file : fingerprint.files)
+        {
+            relative.push_back(file.relativePath);
+        }
+
+        std::ranges::sort(relative);
+
+        return relative;
+    }
+
+    std::optional<std::filesystem::path> ThroughTheAdministrativeShare(const std::filesystem::path& local)
+    {
+        const std::wstring text = local.wstring();
+        if (text.size() < 3 || text[1] != L':' || !std::iswalpha(text[0]))
+        {
+            return std::nullopt;
+        }
+
+        return std::filesystem::path(LR"(\\localhost\)" + std::wstring(1, text[0]) + L"$" + text.substr(2));
+    }
 }
 
 void WindowsFilesystemProbeTest::ADanglingJunctionIsStillAnEntryThatOccupiesItsPath()
@@ -509,6 +579,74 @@ void WindowsFilesystemProbeTest::TheFingerprintCarriesTheWriteTimeOfEachFileAsTh
                  std::chrono::system_clock::time_point{std::chrono::seconds{kUnixBillennium}}
                      + std::chrono::milliseconds(7));
     }
+}
+
+void WindowsFilesystemProbeTest::TheFingerprintNamesEachFileRelativeToTheRootWhetherOrNotTheRootEndsInASeparator()
+{
+    const Disk disk;
+    WriteAccentedTree(disk.Root());
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    for (const std::filesystem::path& root : {disk.Root(), disk.Root() / ""})
+    {
+        const std::optional<TreeFingerprint> walked = filesystemProbe.FingerprintTree(root);
+
+        QVERIFY(walked.has_value());
+        QCOMPARE(walked->files.size(), std::size_t{5});
+        QCOMPARE(RelativePathsOf(*walked), RelativePathsOfFilesUnder(root));
+    }
+}
+
+void WindowsFilesystemProbeTest::TheLongestEntryOfAFingerprintIsWhatTheOldMeasurementGivesForTheSameTree()
+{
+    const Disk disk;
+    const std::filesystem::path accented = disk.AddFolder("accented");
+    WriteAccentedTree(accented);
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root() / "deep", "tfdidesign-aircraft-md11");
+    WriteFilePastTheCeiling(deep / "manifest.json", R"({"title": "MD-11"})");
+    const std::filesystem::path empty = disk.AddFolder("empty");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    for (const std::filesystem::path& root : {accented, accented / "", disk.Root() / "deep", deep, empty})
+    {
+        const std::optional<TreeFingerprint> walked = filesystemProbe.FingerprintTree(root);
+        const std::optional<std::size_t> measured = LongestEntryUnder(root);
+
+        QVERIFY(walked.has_value());
+        QVERIFY(measured.has_value());
+        QCOMPARE(walked->longestEntry, *measured);
+    }
+
+    const std::optional<TreeFingerprint> pastTheCeiling = filesystemProbe.FingerprintTree(deep);
+    QVERIFY(pastTheCeiling.has_value());
+    QVERIFY(pastTheCeiling->longestEntry > kOldPathCeiling);
+}
+
+void WindowsFilesystemProbeTest::TheFingerprintOfARootReachedThroughTheNetworkShareAnswersLikeTheOldMeasurement()
+{
+    const Disk disk;
+    WriteAccentedTree(disk.Root());
+
+    const std::optional<std::filesystem::path> shared = ThroughTheAdministrativeShare(disk.Root());
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::optional<TreeFingerprint> walked =
+        shared.has_value() ? filesystemProbe.FingerprintTree(*shared) : std::nullopt;
+
+    if (!walked.has_value())
+    {
+        qInfo("the UNC branch was not exercised: this machine does not answer through its administrative share");
+
+        return;
+    }
+
+    qInfo("the UNC branch was exercised through %s", shared->string().c_str());
+
+    QCOMPARE(walked->files.size(), std::size_t{5});
+    QCOMPARE(RelativePathsOf(*walked), RelativePathsOfFilesUnder(*shared));
+    QCOMPARE(walked->longestEntry, LongestEntryUnder(*shared).value());
+    QVERIFY(walked->longestEntry > shared->wstring().size());
 }
 
 void WindowsFilesystemProbeTest::AFolderAndAFileAreListedEachUnderItsOwnKindAndNeverTheDotEntries()

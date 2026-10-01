@@ -1,6 +1,7 @@
 #include "view/TableColumns.h"
 
 #include <algorithm>
+#include <vector>
 
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QEvent>
@@ -9,6 +10,24 @@
 
 namespace
 {
+    constexpr int kMostAColumnGivesBack = 8;
+
+    [[nodiscard]] std::vector<int> SpreadOver(const std::vector<int>& offered, int owed)
+    {
+        std::vector<int> given(offered.size(), 0);
+
+        for (std::size_t column = 0; owed > 0; column = (column + 1) % offered.size())
+        {
+            if (given[column] < offered[column])
+            {
+                ++given[column];
+                --owed;
+            }
+        }
+
+        return given;
+    }
+
     class WidthKeeper final : public QObject
     {
     public:
@@ -178,6 +197,8 @@ namespace
             QHeaderView* header = table_->horizontalHeader();
             const int slack = SlackColumn();
 
+            measured_.assign(header->count(), -1);
+
             applying_ = true;
             for (int column = 0; column < header->count(); ++column)
             {
@@ -191,6 +212,7 @@ namespace
 
                 header->setSectionResizeMode(column, QHeaderView::Interactive);
                 header->resizeSection(column, measured);
+                measured_[column] = measured;
             }
             applying_ = false;
 
@@ -212,18 +234,85 @@ namespace
                 return;
             }
 
+            applying_ = true;
+            if (!theirs_)
+            {
+                SizeTheMeasuredColumnsForTheSlack(slack);
+            }
+
             int taken = 0;
             for (int column = 0; column < header->count(); ++column)
             {
                 taken += column == slack || header->isSectionHidden(column) ? 0 : header->sectionSize(column);
             }
 
-            applying_ = true;
             header->resizeSection(slack, std::max(NarrowestFor(slack), table_->viewport()->width() - taken));
             applying_ = false;
         }
 
+        [[nodiscard]] bool WasMeasured(const int column) const
+        {
+            return column < static_cast<int>(measured_.size()) && measured_[column] >= 0;
+        }
+
+        [[nodiscard]] int WhatItAsks(const int column) const
+        {
+            return WasMeasured(column) ? measured_[column] : table_->horizontalHeader()->sectionSize(column);
+        }
+
+        [[nodiscard]] int CanGiveBack(const int column) const
+        {
+            return WasMeasured(column) ? std::clamp(measured_[column] - NarrowestFor(column), 0, kMostAColumnGivesBack)
+                                       : 0;
+        }
+
+        [[nodiscard]] bool SizedByContent(const int column, const int slack) const
+        {
+            return column != slack && !table_->horizontalHeader()->isSectionHidden(column);
+        }
+
+        [[nodiscard]] std::vector<int> WhatEachColumnGivesBack(const int slack) const
+        {
+            const int count = table_->horizontalHeader()->count();
+            std::vector<int> offered(count, 0);
+
+            int owed = NarrowestFor(slack) - table_->viewport()->width();
+            int room = 0;
+
+            for (int column = 0; column < count; ++column)
+            {
+                if (SizedByContent(column, slack))
+                {
+                    owed += WhatItAsks(column);
+                    offered[column] = CanGiveBack(column);
+                    room += offered[column];
+                }
+            }
+
+            if (owed <= 0 || owed > room)
+            {
+                return std::vector<int>(count, 0);
+            }
+
+            return SpreadOver(offered, owed);
+        }
+
+        void SizeTheMeasuredColumnsForTheSlack(const int slack)
+        {
+            QHeaderView* header = table_->horizontalHeader();
+            const std::vector<int> given = WhatEachColumnGivesBack(slack);
+
+            for (int column = 0; column < header->count(); ++column)
+            {
+                if (SizedByContent(column, slack) && WasMeasured(column))
+                {
+                    header->resizeSection(column, measured_[column] - given[column]);
+                }
+            }
+        }
+
         QTableView* table_;
+        std::vector<int> measured_;
         int wanted_ = -1;
         bool dying_ = false;
         bool theirs_ = false;

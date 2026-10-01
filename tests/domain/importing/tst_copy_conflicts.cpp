@@ -1,6 +1,8 @@
 #include <QtTest/QtTest>
 
 #include "domain/importing/CopyConflicts.h"
+#include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
 #include "tests/support/PathPrinting.h"
 
 namespace
@@ -21,6 +23,7 @@ namespace
         static void AnEntryPointedBackAtItsVendorStillPutsTheLibraryCopyOnTheOtherSide();
         static void ASubstitutedEntryTakesTheLibraryCopyTheJournalNamesAndNotOneGuessedByName();
         static void ASubstitutedConflictSaysTheLinkWasReplacedSoTheScreenCanOfferTheTakeBack();
+        static void TheNameLookupAnswersLikeAddonNamedEvenWithTwoLibrariesHoldingTheSameName();
     };
 }
 
@@ -256,6 +259,56 @@ void CopyConflictsTest::ASubstitutedConflictSaysTheLinkWasReplacedSoTheScreenCan
     QVERIFY(found->ourLinkWasReplaced);
     QVERIFY2(!found->theProvenanceIsAnotherProgram,
              "nobody handed this folder over: it was ours until something wrote over it");
+}
+
+void CopyConflictsTest::TheNameLookupAnswersLikeAddonNamedEvenWithTwoLibrariesHoldingTheSameName()
+{
+    const std::filesystem::path secondLibrary = "F:/Extra";
+
+    TreeNode second = Category(secondLibrary,
+                               {AddonNode(secondLibrary / "Aircrafts/gsx-pro"),
+                                AddonNode(secondLibrary / "Aircrafts/Only-In-The-Second"),
+                                AddonNode(secondLibrary / "Aircrafts/shared-name")});
+    second.kind = TreeNodeKind::Library;
+
+    const std::vector<TreeNode> libraries{
+        LibraryWith({Category(kLibrary / "Utils",
+                              {AddonNode(kLibrary / "Utils/GSX-PRO"), AddonNode(kLibrary / "Utils/shared-name")}),
+                     Category(kLibrary / "Aircrafts", {AddonNode(kLibrary / "Aircrafts/fenix-a320")})}),
+        second};
+
+    const std::vector<std::filesystem::path> names{"gsx-pro",    "Gsx-Pro", "only-in-the-second", "SHARED-NAME",
+                                                   "fenix-a320", "nothing", "also-nothing"};
+
+    std::vector<DestinationEntry> entries;
+    for (const std::filesystem::path& name : names)
+    {
+        entries.push_back(PhysicalFolder(kCommunity / name));
+        entries.push_back(PhysicalFolder(kCommunity2024 / name));
+    }
+
+    const CopyConflicts conflicts = FindCopyConflicts(entries, libraries);
+
+    std::size_t expected = 0;
+    for (const DestinationEntry& entry : entries)
+    {
+        const TreeNode* named = AddonNamed(libraries, AsUtf8(entry.path.filename()));
+        const CopyConflict* found = conflicts.OverTheProvenance(entry.path);
+
+        QCOMPARE(found != nullptr, named != nullptr);
+
+        if (named != nullptr)
+        {
+            QCOMPARE(found->libraryPath, named->path);
+            ++expected;
+        }
+    }
+
+    QCOMPARE(conflicts.Count(), expected);
+    QCOMPARE(conflicts.OverTheProvenance(kCommunity / "gsx-pro")->libraryPath,
+             std::filesystem::path{kLibrary / "Utils/GSX-PRO"});
+    QCOMPARE(conflicts.OverTheProvenance(kCommunity / "shared-name")->libraryPath,
+             std::filesystem::path{kLibrary / "Utils/shared-name"});
 }
 
 QTEST_APPLESS_MAIN(CopyConflictsTest)

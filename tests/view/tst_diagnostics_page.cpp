@@ -1,3 +1,4 @@
+#include <QtCore/QTranslator>
 #include <QtTest/QtTest>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -28,6 +29,7 @@
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
+#include "tests/support/CatalogueBesideTheBuild.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "view/delegates/RowDelegate.h"
@@ -57,6 +59,8 @@ namespace
         static void TheSearchAnnouncesTheUnitsAndTheRoundsWithoutWritingAnything();
         static void AColumnCountedToTheRightCarriesItsHeadingThere();
         static void TheSizeTableFloorCoversWhatItsWidestRowAsksFor();
+        static void NoEntryOfTheSectionListIsCutInEitherLanguage_data();
+        static void NoEntryOfTheSectionListIsCutInEitherLanguage();
     };
 }
 
@@ -450,6 +454,65 @@ void DiagnosticsPageTest::TheSizeTableFloorCoversWhatItsWidestRowAsksFor()
              qPrintable(QStringLiteral("the size table floors its sections at %1 for a row that asks for %2")
                             .arg(sizes->header()->minimumSectionSize())
                             .arg(asked)));
+}
+
+void DiagnosticsPageTest::NoEntryOfTheSectionListIsCutInEitherLanguage_data()
+{
+    QTest::addColumn<QString>("language");
+
+    QTest::newRow("English") << QStringLiteral("en");
+    QTest::newRow("Brazilian Portuguese") << QStringLiteral("pt_BR");
+}
+
+void DiagnosticsPageTest::NoEntryOfTheSectionListIsCutInEitherLanguage()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+
+    if (language != QLatin1String("en"))
+    {
+        const QString file = TheCatalogueBesideTheBuild(language);
+
+        QVERIFY2(!file.isEmpty(), "app_pt_BR.qm is not beside the build: build the release_translations target");
+        QVERIFY(catalogue.load(file));
+        QVERIFY(QCoreApplication::installTranslator(&catalogue));
+    }
+
+    ApplyModernistTheme(*qApp);
+
+    Fixture fixture;
+    fixture.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/payload.bin", 134000000ULL);
+    fixture.fileSystem.AddLink("E:/Flight Simulator 2024/Community/also-gone", "D:/Removed/also-gone");
+    fixture.session.ShowActiveProfile();
+
+    DiagnosticsPage page(fixture.viewModel, fixture.bisectionViewModel);
+    page.resize(kWidestAPageMayBe, kUsableHeight);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    const QListWidget* rail = RailOf(page);
+
+    QVERIFY(rail != nullptr);
+
+    for (const int section : {1, 3})
+    {
+        RailOf(page)->setCurrentRow(section);
+        QCoreApplication::processEvents();
+    }
+
+    QStringList texts;
+    for (int row = 0; row < rail->count(); ++row)
+    {
+        texts << rail->item(row)->text();
+    }
+
+    const QString said = QStringLiteral("the list is %1 px wide inside and its widest entry asks for %2: %3")
+                             .arg(rail->viewport()->width())
+                             .arg(rail->sizeHintForColumn(0))
+                             .arg(texts.join(QLatin1Char('|')));
+
+    QVERIFY2(rail->sizeHintForColumn(0) <= rail->viewport()->width(), qPrintable(said));
 }
 
 QTEST_MAIN(DiagnosticsPageTest)

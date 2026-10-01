@@ -28,11 +28,16 @@ public:
     enum Role
     {
         SucceededRole = Qt::UserRole,
+        SearchTextRole = Qt::UserRole + 1,
     };
 
     explicit JournalModel(QObject* parent = nullptr);
 
     void ShowRecords(const std::vector<OperationRecord>& records, SimulatorProfile profile);
+
+    void Retranslate();
+
+    [[nodiscard]] int TimesItBuiltASearchText() const;
 
     [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex& parent) const override;
 
@@ -67,8 +72,22 @@ private:
 
     [[nodiscard]] QString LibraryLabel(const LibraryId& libraryId) const;
 
+    [[nodiscard]] QString* SearchTextSlotAt(const QModelIndex& position) const;
+
+    [[nodiscard]] QString SearchTextAt(const QModelIndex& position) const;
+
+    void DropTheSearchTexts();
+
+    struct SearchTexts
+    {
+        QString entry{};
+        std::vector<QString> steps{};
+    };
+
     std::vector<JournalEntry> entries_;
     SimulatorProfile profile_;
+    mutable std::vector<SearchTexts> searchTexts_;
+    mutable int searchTextsBuilt_ = 0;
 };
 
 class JournalFilterModel final : public QSortFilterProxyModel
@@ -87,6 +106,7 @@ protected:
 
 private:
     QString search_;
+    QString foldedSearch_;
     bool failuresOnly_ = false;
 };
 

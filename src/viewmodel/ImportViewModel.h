@@ -90,6 +90,10 @@ private:
 
     [[nodiscard]] std::function<bool(const CopyProgress&)> OnProgressOfFolder(int folder);
 
+    [[nodiscard]] std::function<bool(const CopyProgress&)> OnProgressOfTheFolderInCourse();
+
+    [[nodiscard]] bool Report(const CopyProgress& progress, int folder);
+
     void RunInAWorker(std::function<void()> work, std::function<void()> land, int folders);
 
     void Adopt(const std::vector<ImportOperationResult>& results);

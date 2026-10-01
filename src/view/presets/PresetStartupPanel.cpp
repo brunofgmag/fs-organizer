@@ -60,6 +60,7 @@ QWidget* PresetStartupPanel::CreateTheLiveHalf()
     entries_->setItemDelegate(new RowDelegate(entries_));
     entries_->setItemDelegateForColumn(kActionColumn, new CenteredCheckDelegate(entries_));
     entries_->setShowGrid(false);
+    entries_->setTextElideMode(Qt::ElideMiddle);
     LetTheColumnsBeDraggedAndStillFillTheTable(entries_, kTargetColumn);
     entries_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(entries_->horizontalHeader());

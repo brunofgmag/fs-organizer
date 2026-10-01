@@ -11,6 +11,7 @@
 #include <QtWidgets/QAbstractButton>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QCheckBox>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QScrollBar>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QStyledItemDelegate>
@@ -62,6 +63,49 @@ namespace
         std::ranges::sort(samples);
 
         return samples.empty() ? 0 : samples.at(samples.size() / 2);
+    }
+
+    void ReportTyping(const QString& term, QLineEdit& search, const QAbstractItemModel& shown)
+    {
+        std::vector<double> keystrokes;
+
+        for (qsizetype typed = 1; typed <= term.size(); ++typed)
+        {
+            const QString prefix = term.left(typed);
+
+            QElapsedTimer timer;
+            timer.start();
+
+            search.setText(prefix);
+
+            keystrokes.push_back(static_cast<double>(timer.nsecsElapsed()) / 1e6);
+
+            LetTheWindowSettle();
+        }
+
+        Out() << QStringLiteral("typing \"%1\"").arg(term).leftJustified(34) << "median "
+              << QString::number(Median(keystrokes), 'f', 1).rightJustified(7) << " ms   worst "
+              << QString::number(*std::ranges::max_element(keystrokes), 'f', 1).rightJustified(7) << " ms   rows left "
+              << shown.rowCount({}) << "\n";
+        Out().flush();
+
+        search.clear();
+        LetTheWindowSettle();
+    }
+
+    QString TheAddonOfTheFirstRowThatHasOne(const JournalModel& model)
+    {
+        for (int row = 0; row < model.rowCount({}); ++row)
+        {
+            const QString addon = model.index(row, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString();
+
+            if (!addon.isEmpty())
+            {
+                return addon;
+            }
+        }
+
+        return {};
     }
 
     void ReportHover(const QString& what, const QTreeView& view)
@@ -198,6 +242,21 @@ int MeasureTheAppJournal(MainWindow& window, JournalPage& page, JournalViewModel
     }
     Out() << "resizeColumnToContents on the 7 columns: "
           << QString::number(static_cast<double>(timer.nsecsElapsed()) / 1e6, 'f', 0) << " ms\n\n";
+
+    if (auto* search = page.findChild<QLineEdit*>())
+    {
+        Out() << "searching the journal, one keystroke at a time\n";
+
+        ReportTyping(QStringLiteral("zzzzzz"), *search, *view->model());
+
+        const QString addon = TheAddonOfTheFirstRowThatHasOne(model);
+        if (!addon.isEmpty())
+        {
+            ReportTyping(addon.left(6), *search, *view->model());
+        }
+
+        Out() << "\n";
+    }
 
     ReportScroll("the whole journal", *view);
     ReportHover("hovering", *view);

@@ -54,6 +54,7 @@ namespace
         static void TheSwapReallyExchangesTheOccupantAndTheItemOnDisk();
         static void TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart();
         static void AnImportCheckedByTheHashReachesAsFarPastTheCeilingAsTheRestOfTheProbe();
+        static void ASecondFolderWithTheNameTheBatchJustLandedIsRefusedAndLeavesItsSourceWhole();
     };
 }
 
@@ -719,6 +720,42 @@ void ImportOnRealDiskTest::AnImportCheckedByTheHashReachesAsFarPastTheCeilingAsT
     QVERIFY(ExistsPastTheCeiling(target / "aircraft.cfg"));
     QVERIFY(!ExistsPastTheCeiling(StagingPathFor(target)));
     QCOMPARE(NormalizeReparseTarget(engine.linkService.ReadLinkTarget(request.source).value()), target);
+}
+
+void ImportOnRealDiskTest::ASecondFolderWithTheNameTheBatchJustLandedIsRefusedAndLeavesItsSourceWhole()
+{
+    const Disk disk;
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    static_cast<void>(disk.AddFolder("Library/Sceneries"));
+    disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Sim/Community/simbridge/dist/simbridge.exe", std::string(2048, 'a'));
+    disk.AddFile("Sim/Community2024/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Sim/Community2024/simbridge/dist/simbridge.exe", std::string(1024, 'b'));
+
+    SimulatorProfile profile = disk.Profile();
+    profile.destinations.push_back(disk.Root() / "Sim" / "Community2024");
+
+    const ImportRequest first{.source = disk.Destination() / "simbridge", .category = disk.Category()};
+    const ImportRequest second{.source = disk.Root() / "Sim" / "Community2024" / "simbridge",
+                               .category = disk.Root() / "Library" / "Sceneries"};
+
+    const std::vector<ImportOperationResult> results = composed.service.Import(profile, {first, second}, {});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QCOMPARE(results.back().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(results.back().occupant, first.Target());
+
+    QVERIFY(std::filesystem::exists(first.Target() / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(second.Target()));
+    QVERIFY(!composed.engine.filesystemProbe.IsReparsePoint(second.source));
+    QCOMPARE(std::filesystem::file_size(second.source / "dist" / "simbridge.exe"), std::uintmax_t{1024});
+    QVERIFY(std::filesystem::exists(second.source / "manifest.json"));
+
+    QVERIFY2(composed.service.Leftovers(profile).empty(), "the refused folder left no staging behind");
+    QVERIFY(!std::filesystem::exists(StagingPathFor(second.Target())));
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)

@@ -17,6 +17,7 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <string_view>
 #include <system_error>
 
 #include <QtCore/QByteArrayView>
@@ -38,6 +39,22 @@ namespace
     DWORD AttributesWithoutFollowingLinks(const std::filesystem::path& path)
     {
         return GetFileAttributesW(NativePath(path).c_str());
+    }
+
+    std::size_t LengthOfTheExtendedPrefixOn(const std::filesystem::path& reachableRoot)
+    {
+        return reachableRoot.native().size() - WithoutExtendedPrefix(reachableRoot).native().size();
+    }
+
+    std::wstring_view BelowTheRoot(const std::wstring& entry, const std::size_t rootLength)
+    {
+        std::wstring_view below(entry);
+        below.remove_prefix(std::min(rootLength, below.size()));
+
+        const std::size_t firstName = below.find_first_not_of(L'\\');
+        below.remove_prefix(firstName == std::wstring_view::npos ? below.size() : firstName);
+
+        return below;
     }
 
     WriteAccess WhatTheProbeRanInto(const DWORD error)
@@ -403,6 +420,9 @@ std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std
         return std::nullopt;
     }
 
+    const std::size_t prefixLength = LengthOfTheExtendedPrefixOn(reachableRoot);
+    const std::size_t rootLength = reachableRoot.native().size();
+
     TreeFingerprint walked{.longestEntry = WithoutExtendedPrefix(root).wstring().size()};
     const std::filesystem::recursive_directory_iterator end;
 
@@ -414,7 +434,9 @@ std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std
             return std::nullopt;
         }
 
-        if (const std::size_t here = WithoutExtendedPrefix(entry->path()).wstring().size(); here > walked.longestEntry)
+        const std::wstring& native = entry->path().native();
+
+        if (const std::size_t here = native.size() - prefixLength; here > walked.longestEntry)
         {
             walked.longestEntry = here;
         }
@@ -433,7 +455,7 @@ std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std
                 return std::nullopt;
             }
 
-            walked.files.push_back(FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot),
+            walked.files.push_back(FileFingerprint{.relativePath = BelowTheRoot(native, rootLength),
                                                    .size = size,
                                                    .lastWriteTime = SystemTimeOf(written)});
         }

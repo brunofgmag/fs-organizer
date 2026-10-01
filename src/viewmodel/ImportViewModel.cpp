@@ -178,19 +178,18 @@ void ImportViewModel::Import(const std::vector<ImportRequest>& requests)
     RunInAWorker(
         [this, profile, requests, landed]
         {
-            for (const ImportRequest& request : requests)
-            {
-                if (cancelled_)
-                {
-                    landed->push_back(ImportOperationResult{.request = request, .result = FileResult::Cancelled});
-                    continue;
-                }
+            *landed = service_.Import(profile, requests, OnProgressOfTheFolderInCourse(), OnStep(),
+                                      [this](const std::size_t request)
+                                      {
+                                          if (cancelled_)
+                                          {
+                                              return false;
+                                          }
 
-                const std::vector<ImportOperationResult> one =
-                    service_.Import(profile, {request}, OnProgressOfFolder(++folder_), OnStep());
+                                          folder_ = static_cast<int>(request) + 1;
 
-                landed->insert(landed->end(), one.begin(), one.end());
-            }
+                                          return true;
+                                      });
         },
         [this, landed]
         {
@@ -285,10 +284,23 @@ std::function<bool(const CopyProgress&)> ImportViewModel::OnProgressOfFolder(con
 {
     return [this, folder](const CopyProgress& progress)
     {
-        emit Progressed(progress.copiedBytes, progress.totalBytes, folder, step_);
-
-        return !cancelled_;
+        return Report(progress, folder);
     };
+}
+
+std::function<bool(const CopyProgress&)> ImportViewModel::OnProgressOfTheFolderInCourse()
+{
+    return [this](const CopyProgress& progress)
+    {
+        return Report(progress, folder_);
+    };
+}
+
+bool ImportViewModel::Report(const CopyProgress& progress, const int folder)
+{
+    emit Progressed(progress.copiedBytes, progress.totalBytes, folder, step_);
+
+    return !cancelled_;
 }
 
 std::function<void(OperationKind)> ImportViewModel::OnStep()

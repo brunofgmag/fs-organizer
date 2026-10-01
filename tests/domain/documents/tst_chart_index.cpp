@@ -31,6 +31,7 @@ namespace
         static void APageOfASidIsNeverReadForRevisionBecauseTheRuleIsTheInformationLinesAlone();
         static void AFileTheCatalogueDoesNotNameStillAppearsUnderNoType();
         static void ACatalogueEntryWithNoFileBesideItProducesNoLine();
+        static void WhenTwoFilesShareAStemTheCatalogueMeetsTheFirstOneListed();
         static void TheAirportSaysHowManyEntriesItsCatalogueCarriesSoTheMatchCanBeMeasured();
         static void TheCodeInTheFileNameGroupsTheChartWhenTheFolderGaveNone();
         static void OneFolderCanHoldTheChartsOfMoreThanOneAirportAndEachGetsItsGroup();
@@ -96,6 +97,16 @@ namespace
         }
 
         return pages;
+    }
+
+    [[nodiscard]] std::filesystem::path TheFileThatMetTheCatalogue(const std::vector<ChartFile>& files)
+    {
+        const std::vector<ChartsOfAnAirport> airports = ChartsGroupedByAirport(
+            files, {CatalogueOf("EBBR", {{.chartId = "Sid1", .chartType = "SID", .chartName = "SID ONE"}})});
+
+        const ChartsOfAType* sids = TypeNamed(*AirportNamed(airports, "EBBR"), "SID");
+
+        return sids->charts.front().pages.front();
     }
 
     void ChartIndexTest::TheChartsOfEachAirportComeOutInAGroupOfTheirOwn()
@@ -300,6 +311,17 @@ namespace
 
         QCOMPARE(brussels->types.size(), std::size_t{1});
         QVERIFY(TypeNamed(*brussels, "AGC") == nullptr);
+    }
+
+    void ChartIndexTest::WhenTwoFilesShareAStemTheCatalogueMeetsTheFirstOneListed()
+    {
+        const ChartFile upperCase = FileOf("EBBR", "SID1.pdf");
+        const ChartFile lowerCase = FileOf("EBBR", "sid1.png");
+        const ChartFile another = FileOf("EBBR", "Sid1.txt");
+
+        QCOMPARE(TheFileThatMetTheCatalogue({upperCase, lowerCase, another}), upperCase.relativePath);
+        QCOMPARE(TheFileThatMetTheCatalogue({lowerCase, another, upperCase}), lowerCase.relativePath);
+        QCOMPARE(TheFileThatMetTheCatalogue({another, upperCase, lowerCase}), another.relativePath);
     }
 
     void ChartIndexTest::TheAirportSaysHowManyEntriesItsCatalogueCarriesSoTheMatchCanBeMeasured()

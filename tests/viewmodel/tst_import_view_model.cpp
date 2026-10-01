@@ -1,5 +1,7 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
+
 #include "application/LibraryOrganizer.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/journal/OperationLog.h"
@@ -36,6 +38,7 @@ namespace
         static void ImportingFromAnotherProgramSavesTheOriginAndLeavesTheScanToTheRescanThatFollows();
         static void GivingAnAddonBackStartsNoScanOfItsOwn();
         static void EveryLongOperationOpensAndClosesTheSameProgress();
+        static void AGestureOfManyFoldersAsksTheServiceOnceAndNamesTheFolderEachProgressBelongsTo();
         static void LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread();
         static void NoLeftoversMeansNoSignal();
     };
@@ -247,6 +250,29 @@ void ImportViewModelTest::EveryLongOperationOpensAndClosesTheSameProgress()
 
     QCOMPARE(started.size(), 3);
     QCOMPARE(idle.size(), 3);
+}
+
+void ImportViewModelTest::AGestureOfManyFoldersAsksTheServiceOnceAndNamesTheFolderEachProgressBelongsTo()
+{
+    Fixture f;
+    const QSignalSpy progressed(&f.viewModel, &ImportViewModel::Progressed);
+    const std::size_t scansBefore = f.catalog.scanned;
+
+    f.viewModel.Import(
+        {ImportRequest{.source = kSmall, .category = kLibrary}, ImportRequest{.source = kBig, .category = kLibrary}});
+
+    QCOMPARE(f.catalog.scanned - scansBefore, f.session.Profile().libraries.size());
+
+    std::vector<int> folders;
+    for (const QList<QVariant>& arguments : progressed)
+    {
+        folders.push_back(arguments.at(2).toInt());
+    }
+
+    QVERIFY(!folders.empty());
+    QCOMPARE(folders.front(), 1);
+    QCOMPARE(folders.back(), 2);
+    QVERIFY(std::ranges::is_sorted(folders));
 }
 
 void ImportViewModelTest::LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread()

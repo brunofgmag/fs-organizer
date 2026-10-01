@@ -30,6 +30,8 @@ namespace
         static void TogglingAnAddonUnderAStateFilterMovesTheCounts();
         static void TheCountsAreWalkedOncePerChangeAndNotOncePerRead();
         static void ChangingTheFilterAnnouncesTheCounts();
+        static void ACategoryEmptiedByARefreshLeavesTheEnabledFilter();
+        static void ACategoryEmptiedByARefreshLeavesTheDisabledFilter();
     };
 }
 
@@ -527,6 +529,45 @@ void AddonTreeFilterModelTest::ChangingTheFilterAnnouncesTheCounts()
     const QSignalSpy afterTheSearch(&filter, &AddonTreeFilterModel::dataChanged);
     filter.Search("a320");
     QVERIFY(announcesTheCounts(afterTheSearch));
+}
+
+void AddonTreeFilterModelTest::ACategoryEmptiedByARefreshLeavesTheEnabledFilter()
+{
+    AddonTreeModel model;
+    model.Show(MixedSnapshot({"D:/MSFS 2024/Aircrafts/aerosoft-crj", "D:/MSFS 2024/Sceneries/lfpg-paris"}), Profile());
+
+    AddonTreeFilterModel filter;
+    filter.setSourceModel(&model);
+    filter.ShowOnly(AddonStateFilter::Enabled);
+
+    QCOMPARE(Shown(filter),
+             (QStringList{QStringLiteral("MSFS 2024"), QStringLiteral("Aircrafts"), QStringLiteral("aerosoft-crj"),
+                          QStringLiteral("Sceneries"), QStringLiteral("lfpg-paris")}));
+
+    model.Refresh(MixedSnapshot({"D:/MSFS 2024/Aircrafts/aerosoft-crj"}), Profile());
+
+    QCOMPARE(Shown(filter),
+             (QStringList{QStringLiteral("MSFS 2024"), QStringLiteral("Aircrafts"), QStringLiteral("aerosoft-crj")}));
+}
+
+void AddonTreeFilterModelTest::ACategoryEmptiedByARefreshLeavesTheDisabledFilter()
+{
+    AddonTreeModel model;
+    model.Show(MixedSnapshot({"D:/MSFS 2024/Aircrafts/aerosoft-crj"}), Profile());
+
+    AddonTreeFilterModel filter;
+    filter.setSourceModel(&model);
+    filter.ShowOnly(AddonStateFilter::Disabled);
+
+    QCOMPARE(Shown(filter),
+             (QStringList{QStringLiteral("MSFS 2024"), QStringLiteral("Aircrafts"), QStringLiteral("fenix-a320"),
+                          QStringLiteral("Sceneries"), QStringLiteral("lfpg-paris")}));
+
+    model.Refresh(MixedSnapshot({"D:/MSFS 2024/Aircrafts/aerosoft-crj", "D:/MSFS 2024/Sceneries/lfpg-paris"}),
+                  Profile());
+
+    QCOMPARE(Shown(filter),
+             (QStringList{QStringLiteral("MSFS 2024"), QStringLiteral("Aircrafts"), QStringLiteral("fenix-a320")}));
 }
 
 QTEST_APPLESS_MAIN(AddonTreeFilterModelTest)

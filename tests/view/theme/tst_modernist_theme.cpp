@@ -1,9 +1,12 @@
 #include <QtGui/QFontDatabase>
+#include <QtGui/QFontInfo>
 #include <QtGui/QIcon>
 #include <QtGui/QPainter>
+#include <QtGui/QPainterPath>
 #include <QtTest/QtTest>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDialog>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
@@ -27,6 +30,11 @@ namespace
         static void EachSchemeGetsItsOwnGroundAndTheSameAccent();
         static void TheStyleSheetLeavesNoPlaceholderBehind();
         static void ApplyingTheThemeSetsTheApplicationFont();
+        static void RefreshingTheThemeGivesTheItemViewsTheApplicationFont();
+        static void TheSmallLabelsShareOneHeavyFace_data();
+        static void TheSmallLabelsShareOneHeavyFace();
+        static void TheStemOfASmallLabelCoversAWholePixelAtAHundredAndTwentyFivePercent_data();
+        static void TheStemOfASmallLabelCoversAWholePixelAtAHundredAndTwentyFivePercent();
         static void ADisabledDefaultButtonTakesOffTheAccent();
         static void AnOutlineStaysInsideItsBoxAtEveryScale();
         static void ATagPaintsItsWordInsideItsOwnPadding();
@@ -47,6 +55,29 @@ namespace
         widget.render(&surface);
 
         return surface;
+    }
+
+    QFont DressedHeaderFont()
+    {
+        QHeaderView header(Qt::Horizontal);
+        DressTheHeaderOf(&header);
+
+        return header.font();
+    }
+
+    QFont TheTagFont()
+    {
+        return TagFont(QApplication::font());
+    }
+
+    QFont (*const kSmallLabelFonts[])() = {&DressedHeaderFont, &TheTagFont};
+
+    qreal StemInDevicePixels(const QFont& font, const qreal devicePixelRatio)
+    {
+        QPainterPath capitalI;
+        capitalI.addText(0.0, 0.0, font, QStringLiteral("I"));
+
+        return capitalI.boundingRect().width() * devicePixelRatio;
     }
 }
 
@@ -99,6 +130,64 @@ void ModernistThemeTest::ApplyingTheThemeSetsTheApplicationFont()
 
     QCOMPARE(QApplication::font().family(), QStringLiteral("Archivo"));
     QCOMPARE(QApplication::font().featureValue("tnum"), 1u);
+}
+
+void ModernistThemeTest::RefreshingTheThemeGivesTheItemViewsTheApplicationFont()
+{
+    ApplyModernistTheme(*qApp);
+
+    QFont other(QStringLiteral("Courier New"));
+    other.setPointSizeF(7.0);
+    QApplication::setFont(other, "QAbstractItemView");
+
+    QVERIFY(QApplication::font("QAbstractItemView") != QApplication::font());
+
+    RefreshModernistTheme(*qApp);
+
+    QCOMPARE(QApplication::font("QAbstractItemView"), QApplication::font());
+}
+
+void ModernistThemeTest::TheSmallLabelsShareOneHeavyFace_data()
+{
+    QTest::addColumn<int>("which");
+
+    QTest::newRow("column header") << 0;
+    QTest::newRow("tag") << 1;
+}
+
+void ModernistThemeTest::TheSmallLabelsShareOneHeavyFace()
+{
+    QFETCH(const int, which);
+
+    ApplyModernistTheme(*qApp);
+
+    const QFont font = kSmallLabelFonts[which]();
+
+    QCOMPARE(font.pixelSize(), 10);
+    QCOMPARE(font.weight(), QFont::ExtraBold);
+    QCOMPARE(font.capitalization(), QFont::AllUppercase);
+    QCOMPARE(font.letterSpacingType(), QFont::AbsoluteSpacing);
+    QCOMPARE(font.letterSpacing(), 1.0);
+}
+
+void ModernistThemeTest::TheStemOfASmallLabelCoversAWholePixelAtAHundredAndTwentyFivePercent_data()
+{
+    TheSmallLabelsShareOneHeavyFace_data();
+}
+
+void ModernistThemeTest::TheStemOfASmallLabelCoversAWholePixelAtAHundredAndTwentyFivePercent()
+{
+    QFETCH(const int, which);
+
+    ApplyModernistTheme(*qApp);
+
+    const QFont font = kSmallLabelFonts[which]();
+
+    QCOMPARE(QFontInfo(font).family(), QStringLiteral("Archivo"));
+
+    const qreal stem = StemInDevicePixels(font, 1.25);
+
+    QVERIFY2(stem >= 2.0, qPrintable(QStringLiteral("stem %1 device pixels").arg(stem)));
 }
 
 void ModernistThemeTest::ADisabledDefaultButtonTakesOffTheAccent()

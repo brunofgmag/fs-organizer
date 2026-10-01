@@ -2,6 +2,7 @@
 
 #include <QtTest/QtTest>
 
+#include "domain/support/PathUtils.h"
 #include "domain/tree/AddonDestinations.h"
 #include "domain/tree/DestinationDivergence.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -23,6 +24,10 @@ namespace
         static void ItIsLinkedOnlyWhenALiveLinkTargetsTheFolder();
         static void ItIsBrokenOnlyWhenItIsLinkedAndItsPlannedPathLinksNowhere();
         static void ItNeedsRelinkingWhenItStrayedOrIsBroken();
+        static void TheKeyedAnswerReadsTheDestinationTheStrayAndThePinOfEveryFolder();
+        static void TheKeyedAnswerSeesAnOverriddenAddonWhoseLinkIsBroken();
+        static void TheKeyedAnswerSeesAnAddonLinkedAwayFromItsDestination();
+        static void AFolderThatIsNotAnAddonOnlyAnswersWhereItWouldGoAndWhetherThatIsPinned();
     };
 }
 
@@ -215,6 +220,83 @@ void AddonDestinationsTest::ItNeedsRelinkingWhenItStrayedOrIsBroken()
     QVERIFY(!AddonDestinations(profile, {healthy}).Of(folder).NeedsRelinking());
     QVERIFY(!AddonDestinations(profile, {}).Of(folder).NeedsRelinking());
     QVERIFY(!AddonDestinations(profile, {dead}).Of(folder).NeedsRelinking());
+}
+
+void AddonDestinationsTest::TheKeyedAnswerReadsTheDestinationTheStrayAndThePinOfEveryFolder()
+{
+    const SimulatorProfile profile = ProfileWithOverridesAtEveryLevel();
+    const std::vector<DestinationEntry> entries = EntriesPointingAllOver();
+    const AddonDestinations prepared(profile, entries);
+
+    for (const std::filesystem::path& folder : FoldersToAsk())
+    {
+        const AddonDestination keyed = prepared.Of(folder, ComparablePath(folder));
+        const std::filesystem::path planned = EffectiveDestination(profile, folder);
+
+        QCOMPARE(keyed.destination, planned);
+        QCOMPARE(keyed.strayedTo, DestinationItStrayedTo(profile, entries, folder));
+        QCOMPARE(keyed.pinned, ComparablePath(planned) != ComparablePath(profile.defaultDestination));
+    }
+
+    QVERIFY(prepared.Of("D:/MSFS 2024/Sceneries/Europe/orbx-lfmn").pinned);
+    QVERIFY(!prepared.Of("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w").pinned);
+    QVERIFY(!prepared.Of("D:/MSFS 2024/Sceneries/Europe/orbx-eglc").pinned);
+}
+
+void AddonDestinationsTest::TheKeyedAnswerSeesAnOverriddenAddonWhoseLinkIsBroken()
+{
+    const SimulatorProfile profile =
+        ProfileWith({{.libraryId = "library-1", .relativePath = "Sceneries", .destination = kCommunity2024}});
+    const std::filesystem::path folder = "D:/MSFS 2024/Sceneries/Europe/orbx-eglc";
+    const AddonDestinations prepared(profile,
+                                     {LinkAt("E:/Flight Simulator 2024/Community2024/orbx-eglc",
+                                             "D:/MSFS 2024/Sceneries/Europe/gone", EntryClassification::Broken),
+                                      LinkAt("E:/Flight Simulator 2024/Community2024/orbx-eglc-copy", folder)});
+
+    const AddonDestination keyed = prepared.Of(folder, ComparablePath(folder));
+
+    QCOMPARE(keyed.destination, std::filesystem::path(kCommunity2024));
+    QVERIFY(keyed.pinned);
+    QVERIFY(keyed.linked);
+    QVERIFY(keyed.linksNowhere);
+    QVERIFY(keyed.IsBroken());
+    QVERIFY(keyed.strayedTo.empty());
+}
+
+void AddonDestinationsTest::TheKeyedAnswerSeesAnAddonLinkedAwayFromItsDestination()
+{
+    const SimulatorProfile profile = ProfileWith({});
+    const std::filesystem::path folder = "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w";
+    const AddonDestinations prepared(profile, {LinkAt("E:/Flight Simulator 2024/Community2024/pmdg", folder)});
+
+    const AddonDestination keyed = prepared.Of(folder, ComparablePath(folder));
+
+    QCOMPARE(keyed.destination, std::filesystem::path(kCommunity));
+    QVERIFY(!keyed.pinned);
+    QVERIFY(keyed.linked);
+    QVERIFY(!keyed.IsBroken());
+    QCOMPARE(keyed.strayedTo, std::filesystem::path(kCommunity2024));
+}
+
+void AddonDestinationsTest::AFolderThatIsNotAnAddonOnlyAnswersWhereItWouldGoAndWhetherThatIsPinned()
+{
+    const SimulatorProfile profile = ProfileWithOverridesAtEveryLevel();
+    const std::filesystem::path europe = "D:/MSFS 2024/Sceneries/Europe";
+    const AddonDestinations prepared(
+        profile,
+        {LinkAt("E:/Flight Simulator 2024/Community/europe-link", europe),
+         LinkAt("E:/Flight Simulator 2024/Community/dead", "D:/MSFS 2024/gone", EntryClassification::Broken)});
+
+    const AddonDestination category = prepared.OfAFolderThatIsNotAnAddon(europe);
+
+    QCOMPARE(category.destination, std::filesystem::path(kCommunity2024));
+    QVERIFY(category.pinned);
+    QVERIFY(category.strayedTo.empty());
+    QVERIFY(!category.linked);
+    QVERIFY(!category.linksNowhere);
+    QVERIFY(prepared.Of(europe).linked);
+    QVERIFY(!prepared.OfAFolderThatIsNotAnAddon("D:/MSFS 2024/Aircrafts").pinned);
+    QVERIFY(!prepared.OfAFolderThatIsNotAnAddon("D:/MSFS 2024").pinned);
 }
 
 QTEST_MAIN(AddonDestinationsTest)

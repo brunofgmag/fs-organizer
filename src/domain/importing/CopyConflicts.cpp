@@ -1,5 +1,6 @@
 #include "domain/importing/CopyConflicts.h"
 
+#include <optional>
 #include <utility>
 
 #include "domain/support/PathUtils.h"
@@ -15,6 +16,45 @@ namespace
 
         return match == index.end() ? nullptr : &found[match->second];
     }
+
+    class AddonsByName
+    {
+    public:
+        explicit AddonsByName(const std::vector<TreeNode>& libraries) : libraries_(libraries)
+        {
+        }
+
+        [[nodiscard]] const TreeNode* Named(const std::filesystem::path& folderName) const
+        {
+            if (!byName_.has_value())
+            {
+                byName_ = Indexed(libraries_);
+            }
+
+            const auto match = byName_->find(ComparableFileName(folderName));
+
+            return match == byName_->end() ? nullptr : match->second;
+        }
+
+    private:
+        [[nodiscard]] static std::map<std::string, const TreeNode*> Indexed(const std::vector<TreeNode>& libraries)
+        {
+            std::map<std::string, const TreeNode*> byName;
+
+            for (const TreeNode& library : libraries)
+            {
+                for (const TreeNode* addon : AddonsUnder(library))
+                {
+                    byName.emplace(ComparableFileName(addon->path), addon);
+                }
+            }
+
+            return byName;
+        }
+
+        const std::vector<TreeNode>& libraries_;
+        mutable std::optional<std::map<std::string, const TreeNode*>> byName_{};
+    };
 }
 
 CopyConflicts::CopyConflicts(std::vector<CopyConflict> found) : found_(std::move(found))
@@ -49,6 +89,7 @@ std::size_t CopyConflicts::Count() const
 CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, const std::vector<TreeNode>& libraries)
 {
     std::vector<CopyConflict> found;
+    const AddonsByName addons(libraries);
 
     for (const DestinationEntry& entry : entries)
     {
@@ -72,7 +113,7 @@ CopyConflicts FindCopyConflicts(const std::vector<DestinationEntry>& entries, co
             continue;
         }
 
-        if (const TreeNode* addon = AddonNamed(libraries, AsUtf8(entry.path.filename())))
+        if (const TreeNode* addon = addons.Named(entry.path.filename()))
         {
             found.push_back(CopyConflict{.provenancePath = entry.path, .libraryPath = addon->path});
         }

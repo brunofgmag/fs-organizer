@@ -22,6 +22,7 @@
 
 #include "support/PathText.h"
 #include "view/shell/LanguageSwitch.h"
+#include "view/theme/ModernistPaint.h"
 #include "viewmodel/SimulatorText.h"
 
 namespace
@@ -190,6 +191,8 @@ void OptionsPage::RetranslateUi()
         navigation_->item(row)->setText(names.at(row));
     }
 
+    LetTheRailBeAsWideAsItsEntries(navigation_, kNavigationWidth);
+
     const int shown = panes_->currentIndex();
 
     while (QWidget* pane = panes_->widget(0))
@@ -232,11 +235,13 @@ QWidget* OptionsPage::CreateNavigation()
 {
     navigation_ = new QListWidget(this);
     navigation_->setObjectName(QStringLiteral("SectionRail"));
+    navigation_->ensurePolished();
     navigation_->setFixedWidth(kNavigationWidth);
     navigation_->setFrameShape(QFrame::NoFrame);
     navigation_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     navigation_->addItems(PaneNames());
+    LetTheRailBeAsWideAsItsEntries(navigation_, kNavigationWidth);
     navigation_->setCurrentRow(0);
 
     return navigation_;

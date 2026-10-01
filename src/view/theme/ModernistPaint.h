@@ -12,6 +12,7 @@
 
 class QFont;
 class QHeaderView;
+class QListWidget;
 class QPainter;
 
 [[nodiscard]] qreal OneDevicePixel(const QPainter& painter);
@@ -37,6 +38,8 @@ void PaintTag(QPainter& painter, const QRect& box, const QString& text, TagTone 
 [[nodiscard]] QIcon GearIcon(int side);
 
 void DressTheHeaderOf(QHeaderView* header);
+
+void LetTheRailBeAsWideAsItsEntries(QListWidget* rail, int atLeast);
 
 void GiveItTheRole(QWidget* widget, const QString& role);
 

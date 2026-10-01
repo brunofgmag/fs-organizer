@@ -695,8 +695,7 @@ int main(int argc, char* argv[])
     ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe));
     packages.Reload(session.Profile().variant);
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
-    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
-                                          sizes);
+    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
     DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -724,7 +723,7 @@ int main(int argc, char* argv[])
                                           addonDocumentsViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes, runner);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;

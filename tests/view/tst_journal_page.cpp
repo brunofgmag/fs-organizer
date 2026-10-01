@@ -58,6 +58,7 @@ namespace
         static void ClosingThePanelLetsGoOfTheSelectionThatSummonedIt();
         static void KeepingOnlyWhatFailedLeavesTheFailureAlone();
         static void SearchingReachesTheAddonOfAnOperation();
+        static void ColumnsAreSizedFromASmallerSampleThanTheQtDefault();
         static void ReadingItAgainGoesBackToTheJournalInsteadOfTheModel();
         static void AJournalWithNothingInItSaysSoInsteadOfCountingOperations();
         static void ALanguageChangeKeepsTheToolbarAndTheOpenPanel();
@@ -274,6 +275,16 @@ void JournalPageTest::SearchingReachesTheAddonOfAnOperation()
     QCOMPARE(shown->rowCount({}), 1);
     QCOMPARE(shown->index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(),
              QStringLiteral("simbridge"));
+}
+
+void JournalPageTest::ColumnsAreSizedFromASmallerSampleThanTheQtDefault()
+{
+    Fixture f;
+    f.Open();
+
+    const QHeaderView untouched(Qt::Horizontal);
+
+    QVERIFY(TreeOf(f.page)->header()->resizeContentsPrecision() < untouched.resizeContentsPrecision());
 }
 
 void JournalPageTest::ReadingItAgainGoesBackToTheJournalInsteadOfTheModel()

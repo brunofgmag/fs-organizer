@@ -3,6 +3,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 #include <QtWidgets/QCheckBox>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
@@ -10,6 +11,7 @@
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QScrollBar>
+#include <QtWidgets/QTextEdit>
 #include <QtWidgets/QTreeView>
 
 #include <algorithm>
@@ -104,6 +106,13 @@ namespace
         static void ABrokenAddonThatNeverStrayedCanBeRelinkedFromThePanel();
         static void AHealthyEnabledAddonLeavesTheRelinkButtonOff();
         static void TheMenuOffersToRelinkABrokenAddonThatNeverStrayed();
+        static void ThePanelFollowsAToggleOfTheSelectedAddon();
+        static void TheRelinkButtonGoesOffWhenTheSelectedAddonIsRelinked();
+        static void ARefreshThatChangesNothingLeavesThePageAlone();
+        static void ARefreshThatChangesSomethingPublishesTheSummaryOnce();
+        static void AToggleElsewhereLeavesThePanelOfTheSelectedAddonAlone();
+        static void AToggleBelowTheSelectedCategoryRefreshesItsPanel();
+        static void TheBatchPanelFollowsAToggleBelowASelectedCategoryThatStaysPartial();
     };
 }
 
@@ -254,8 +263,7 @@ namespace
         AddonTreeModel model;
         FakeSimulatorPackages packages;
         AddonTreeViewModel viewModel{session, service, model, packages, sizes, runner, notifier};
-        DeletionService deletionService{filesystemProbe, files,        sidecars, linking,
-                                        classifier,      processProbe, log,      sizes};
+        DeletionService deletionService{filesystemProbe, files, sidecars, linking, classifier, processProbe, log};
         DeletionViewModel deletion{session, service, deletionService, sizes, runner};
         ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
                             Verification::ByStructure};
@@ -1932,6 +1940,155 @@ void AddonTreePageTest::TheMenuOffersToRelinkABrokenAddonThatNeverStrayed()
 
     QVERIFY(OfferedByTheMenuOn(screen, kChosen).contains(kRelink));
     QVERIFY(!OfferedByTheMenuOn(screen, kCompanion).contains(kRelink));
+}
+
+namespace
+{
+    QString PanelField(const Screen& screen, const QString& name)
+    {
+        const auto* panel = screen.page.findChild<ContextPanel*>();
+        const QList<QLabel*> names = panel->findChildren<QLabel*>(QStringLiteral("DetailFieldName"));
+        const QList<QTextEdit*> values = panel->findChildren<QTextEdit*>();
+
+        for (qsizetype field = 0; field < std::min(names.size(), values.size()); ++field)
+        {
+            if (names.at(field)->text() == name)
+            {
+                return values.at(field)->toPlainText();
+            }
+        }
+
+        return QStringLiteral("no such field");
+    }
+}
+
+void AddonTreePageTest::ThePanelFollowsAToggleOfTheSelectedAddon()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    Select(screen, kChosen);
+    QCOMPARE(PanelField(screen, QStringLiteral("Enabled")), QStringLiteral("no"));
+
+    f.viewModel.Toggle({AddonOf(screen, kChosen)}, true);
+    Settle();
+
+    QCOMPARE(PanelField(screen, QStringLiteral("Enabled")), QStringLiteral("yes"));
+
+    f.viewModel.Toggle({AddonOf(screen, kChosen)}, false);
+    Settle();
+
+    QCOMPARE(PanelField(screen, QStringLiteral("Enabled")), QStringLiteral("no"));
+}
+
+void AddonTreePageTest::TheRelinkButtonGoesOffWhenTheSelectedAddonIsRelinked()
+{
+    Fixture f(ProfileWithTwoDestinations());
+    f.fileSystem.AddLink(std::filesystem::path(kSecondCommunity) / "strayed",
+                         AddonPath(QStringLiteral("Aircrafts"), 0));
+    const Screen screen(f);
+
+    Select(screen, AddonPath(QStringLiteral("Aircrafts"), 0));
+
+    const QPushButton* relink = ButtonSaying(screen.page, kRelink);
+    QVERIFY(relink != nullptr);
+    QVERIFY(relink->isEnabled());
+
+    f.viewModel.RelinkToTheProfileDestination({AddonOf(screen, AddonPath(QStringLiteral("Aircrafts"), 0))});
+    Settle();
+
+    QVERIFY(!relink->isEnabled());
+}
+
+void AddonTreePageTest::ARefreshThatChangesNothingLeavesThePageAlone()
+{
+    Fixture f;
+    EnableTheFirst(f, QStringLiteral("Aircrafts"), 5);
+    const Screen screen(f);
+
+    const QSignalSpy summary(&screen.page, &AddonTreePage::SummaryChanged);
+    const QSignalSpy meter(&screen.page, &AddonTreePage::MeterChanged);
+
+    f.model.Refresh(f.session.Snapshot(), f.session.Profile());
+    Settle();
+
+    QCOMPARE(summary.size(), 0);
+    QCOMPARE(meter.size(), 0);
+}
+
+void AddonTreePageTest::ARefreshThatChangesSomethingPublishesTheSummaryOnce()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    const QSignalSpy summary(&screen.page, &AddonTreePage::SummaryChanged);
+    const QSignalSpy meter(&screen.page, &AddonTreePage::MeterChanged);
+    const QSignalSpy announced(&f.model, &AddonTreeModel::dataChanged);
+
+    f.viewModel.Toggle({AddonOf(screen, AddonPath(QStringLiteral("Aircrafts"), 9))}, true);
+    Settle();
+
+    QVERIFY(announced.size() > 1);
+    QCOMPARE(summary.size(), 1);
+    QCOMPARE(meter.size(), 1);
+    QCOMPARE(meter.back().front().toInt(), 1);
+}
+
+void AddonTreePageTest::AToggleElsewhereLeavesThePanelOfTheSelectedAddonAlone()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    Select(screen, kChosen);
+    Settle();
+
+    const QSignalSpy measuring(&f.viewModel, &AddonTreeViewModel::SizeMeasuring);
+
+    f.viewModel.Toggle({AddonOf(screen, AddonPath(QStringLiteral("Sceneries"), 3))}, true);
+    Settle();
+
+    QCOMPARE(measuring.size(), 0);
+}
+
+void AddonTreePageTest::AToggleBelowTheSelectedCategoryRefreshesItsPanel()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    Select(screen, std::filesystem::path(kLibrary) / "Sceneries");
+    Settle();
+
+    const QSignalSpy measuring(&f.viewModel, &AddonTreeViewModel::SizeMeasuring);
+
+    f.viewModel.Toggle({AddonOf(screen, AddonPath(QStringLiteral("Sceneries"), 3))}, true);
+    Settle();
+
+    QVERIFY(measuring.size() > 0);
+}
+
+void AddonTreePageTest::TheBatchPanelFollowsAToggleBelowASelectedCategoryThatStaysPartial()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    f.viewModel.Toggle({AddonOf(screen, AddonPath(QStringLiteral("Sceneries"), 3))}, true);
+    Settle();
+
+    const QModelIndex category = IndexOf(*screen.tree, std::filesystem::path(kLibrary) / "Sceneries", {});
+    const QModelIndex addon = IndexOf(*screen.tree, kChosen, {});
+    QVERIFY(category.isValid());
+    QVERIFY(addon.isValid());
+
+    screen.tree->selectionModel()->select(category, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    screen.tree->selectionModel()->select(addon, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+    Settle();
+
+    const QString before = PanelField(screen, QStringLiteral("Enabled"));
+
+    f.viewModel.Toggle({AddonOf(screen, AddonPath(QStringLiteral("Sceneries"), 4))}, true);
+    Settle();
+
+    QVERIFY(PanelField(screen, QStringLiteral("Enabled")) != before);
 }
 
 QTEST_MAIN(AddonTreePageTest)

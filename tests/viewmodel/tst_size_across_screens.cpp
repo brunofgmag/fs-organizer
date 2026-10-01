@@ -149,7 +149,7 @@ namespace
         AddonTreeViewModel tree{session, profiles, treeModel, packages, sizes, runner, notifier};
 
         CommunityModel communityModel;
-        CommunityViewModel community{profiles, session, notifier, communityModel, sizes};
+        CommunityViewModel community{profiles, session, notifier, communityModel, sizes, runner};
 
         QuarantineModel quarantineModel;
         QuarantineViewModel quarantine{imports, profiles, session, notifier, quarantineModel, sizes, runner};

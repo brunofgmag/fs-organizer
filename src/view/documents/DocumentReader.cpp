@@ -30,6 +30,7 @@
 #include <optional>
 
 #include "support/PathText.h"
+#include "view/delegates/WithoutTheFocusFrame.h"
 #include "view/theme/ModernistMetrics.h"
 
 namespace
@@ -881,6 +882,8 @@ void DocumentReader::BuildTheOutlinePane()
     outlineView_->setObjectName(QStringLiteral("ReadingOutline"));
     outlineView_->setColumnCount(1);
     outlineView_->setHeaderHidden(true);
+    outlineView_->setUniformRowHeights(true);
+    outlineView_->setItemDelegate(new WithoutTheFocusFrame(outlineView_));
     outlineView_->setContextMenuPolicy(Qt::CustomContextMenu);
 
     rename_ = new QAction(this);

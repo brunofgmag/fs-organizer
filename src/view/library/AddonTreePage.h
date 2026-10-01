@@ -98,6 +98,8 @@ private:
 
     [[nodiscard]] const TreeNode* Current() const;
 
+    [[nodiscard]] bool TheRefreshReachedTheSelection() const;
+
     void ShowTheSelectedAddon();
 
     void ShowTheSelectedBatch(const QModelIndexList& rows);

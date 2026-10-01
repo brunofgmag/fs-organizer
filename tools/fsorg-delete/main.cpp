@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "application/DeletionService.h"
+#include "application/SizeService.h"
 #include "application/model/AppSettings.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryTrees.h"
@@ -207,7 +208,7 @@ int main(int argc, char* argv[])
 
     RunHereAndNow runner;
     SizeService sizes(catalog, filesystemProbe, clock, runner);
-    const DeletionService service(filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes);
+    const DeletionService service(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
 
     const std::vector<TreeNode> libraries = LibraryTreesOf(catalog, profile);
     const std::vector<const TreeNode*> nodes = AddonsNamed(libraries, arguments.addons);
@@ -219,6 +220,8 @@ int main(int argc, char* argv[])
         folders.push_back(addon->path);
     }
 
+    FolderSizeReport weighed;
+
     sizes.MeasureFolders(
         folders, sizes.NewCaller(), Freshness::MeasureAgain,
         [](const SizeProgress& progress)
@@ -228,11 +231,14 @@ int main(int argc, char* argv[])
 
             return true;
         },
-        [](const FolderSizeReport&) {});
+        [&weighed](const FolderSizeReport& report)
+        {
+            weighed = report;
+        });
 
     Out() << "\r" << QString(72, ' ') << "\r";
 
-    const DeletionPlan plan = service.Plan(profile, stored->profiles, nodes);
+    const DeletionPlan plan = service.Plan(profile, stored->profiles, nodes, weighed);
     ReportPlan(plan);
 
     if (!arguments.go)

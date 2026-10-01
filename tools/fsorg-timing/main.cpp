@@ -27,6 +27,7 @@
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
@@ -71,7 +72,8 @@
 
 namespace
 {
-    constexpr qint64 kBudgetForTheMainThread = 300;
+    constexpr double kBudgetForTheMainThread = 300;
+    constexpr qsizetype kStageColumn = 46;
 
     QTextStream& Out()
     {
@@ -83,7 +85,7 @@ namespace
     {
         QString stage;
         bool onTheMainThread = false;
-        qint64 elapsed = 0;
+        double elapsedMilliseconds = 0;
     };
 
     std::vector<Measurement> measurements;
@@ -96,7 +98,9 @@ namespace
 
         std::forward<Work>(work)();
 
-        measurements.push_back({.stage = stage, .onTheMainThread = onTheMainThread, .elapsed = timer.elapsed()});
+        measurements.push_back({.stage = stage,
+                                .onTheMainThread = onTheMainThread,
+                                .elapsedMilliseconds = static_cast<double>(timer.nsecsElapsed()) / 1e6});
     }
 
     const SimulatorProfile* ActiveProfile(const AppSettings& settings)
@@ -115,12 +119,12 @@ namespace
         return settings.profiles.empty() ? nullptr : &settings.profiles.front();
     }
 
-    qint64 MainThreadTotal()
+    double MainThreadTotal()
     {
-        qint64 total = 0;
+        double total = 0;
         for (const Measurement& measurement : measurements)
         {
-            total += measurement.onTheMainThread ? measurement.elapsed : 0;
+            total += measurement.onTheMainThread ? measurement.elapsedMilliseconds : 0;
         }
 
         return total;
@@ -129,17 +133,18 @@ namespace
     void Report()
     {
         Out() << "\n"
-              << QStringLiteral("stage").leftJustified(34) << QStringLiteral("thread").leftJustified(10) << "ms\n";
+              << QStringLiteral("stage").leftJustified(kStageColumn) << QStringLiteral("thread").leftJustified(10)
+              << "ms\n";
 
         for (const Measurement& measurement : measurements)
         {
-            Out() << measurement.stage.leftJustified(34)
-                  << QString(measurement.onTheMainThread ? "main" : "worker").leftJustified(10) << measurement.elapsed
-                  << "\n";
+            Out() << measurement.stage.leftJustified(kStageColumn)
+                  << QString(measurement.onTheMainThread ? "main" : "worker").leftJustified(10)
+                  << QString::number(measurement.elapsedMilliseconds, 'f', 1) << "\n";
         }
 
-        Out() << "\ntotal on the main thread: " << MainThreadTotal() << " ms (budget " << kBudgetForTheMainThread
-              << " ms)\n";
+        Out() << "\ntotal on the main thread: " << QString::number(MainThreadTotal(), 'f', 1) << " ms (budget "
+              << kBudgetForTheMainThread << " ms)\n";
         Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "RED: the interface freezes\n" : "GREEN\n");
         Out().flush();
     }
@@ -186,12 +191,13 @@ int main(int argc, char* argv[])
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const JournalImportedFolders importedFolders(journal);
+    const JournalLinkedFolders theAppLinked(journal);
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
 
     const LinkingEngine linking(linkService, filesystemProbe);
-    const EntryClassifier classifier(linkService, filesystemProbe);
+    const EntryClassifier classifier(linkService, filesystemProbe, theAppLinked);
     const OperationLog log(journal, clock);
 
     ExeXmlStartupEntries startupEntries{{}};
@@ -239,8 +245,7 @@ int main(int argc, char* argv[])
         ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
         packages.Reload(session.Profile().variant);
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
-        const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
-                                              sizes);
+        const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
         DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -265,7 +270,7 @@ int main(int argc, char* argv[])
                                            addonDocumentsViewModel, treeModel, notifier);
 
         CommunityModel communityModel;
-        CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
+        CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes, runner);
         auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
         QuarantineModel quarantineModel;
@@ -278,7 +283,7 @@ int main(int argc, char* argv[])
         auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
         PageTab* libraryTab = window.AddPage(PageNames::kLibrary, treePage);
-        window.AddPage(PageNames::kDestinations, communityPage);
+        PageTab* destinationsTab = window.AddPage(PageNames::kDestinations, communityPage);
         window.AddPage(PageNames::kQuarantine, quarantinePage);
         window.AddPage(PageNames::kJournal, journalPage);
 
@@ -293,8 +298,8 @@ int main(int argc, char* argv[])
         {
             libraryTab->click();
 
-            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, sceneryService, session,
-                                        timedRunner);
+            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, communityViewModel,
+                                        *libraryTab, *destinationsTab, sceneryService, session, timedRunner);
         }
 
         return MeasureTheAppJournal(window, *journalPage, journalViewModel, journalModel);
@@ -306,7 +311,7 @@ int main(int argc, char* argv[])
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, loaded, processProbe, runInline, notifier);
     SizeService inlineSizes(catalog, filesystemProbe, clock, runInline);
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, inlineSizes);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, inlineSizes, runInline);
 
     Measure("Session::ShowActiveProfile", false,
             [&]
@@ -403,6 +408,21 @@ int main(int argc, char* argv[])
                         externals =
                             profileService.WhatCameFromAnotherProgram(session.Profile(), session.Snapshot().libraries);
                     });
+            Measure(tag + "journal.Read() (copy)", false,
+                    [&]
+                    {
+                        static_cast<void>(journal.Read());
+                    });
+            Measure(tag + "WhatTheAppLinked (journal fold)", false,
+                    [&]
+                    {
+                        static_cast<void>(theAppLinked.WhatTheAppLinked());
+                    });
+            Measure(tag + "FoldersTheImporterBrought (journal fold)", false,
+                    [&]
+                    {
+                        static_cast<void>(importedFolders.WhatTheImporterBrought());
+                    });
             Measure(tag + "ReadLinksNow", false,
                     [&]
                     {
@@ -455,7 +475,8 @@ int main(int argc, char* argv[])
                     });
         }
 
-        Out() << "addons: " << everyAddon.size() << "  entries: " << session.Snapshot().entries.size()
+        Out() << "journal records: " << journal.Read().size() << "  addons: " << everyAddon.size()
+              << "  entries: " << session.Snapshot().entries.size()
               << "  startup entries: " << session.Snapshot().startupEntries.size() << "\n";
         for (const EntryClassification classification : kEveryClassification)
         {

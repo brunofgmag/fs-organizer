@@ -18,6 +18,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QSplitter>
+#include <QtWidgets/QStyledItemDelegate>
 
 #include <cstddef>
 #include <fstream>
@@ -73,7 +74,9 @@ namespace
         static void TheReaderWithAnOutlineFitsTheNarrowestWindow();
         static void ThePageWithAnOutlineOpenFitsTheNarrowestWindow();
         static void ThePageOfAFourDigitManualWithItsOutlineFitsTheNarrowestWindow();
+        static void TheOutlineRowsHaveTheHeightOfTheIndexRowsWhetherOrNotTheyCarryAMark();
         static void OneClickOnTheLineOpensIt();
+        static void TheLinesOfTheIndexLeaveAirAroundTheirText();
         static void TheStarTurnsTheFavouriteWithoutOpeningAnything();
         static void OnlyTheGlyphOfTheArrowOpensAndClosesTheGroup();
         static void TheBarSwapsTheListAndLeavesOpenWhatWasOpen();
@@ -387,6 +390,26 @@ void DocumentsPageTest::OneClickOnTheLineOpensIt()
              "the line offers one action, so one click on it does that action");
 }
 
+void DocumentsPageTest::TheLinesOfTheIndexLeaveAirAroundTheirText()
+{
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+    page.resize(1120, 621);
+    f.viewModel.ReadTheLibrary();
+
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    const QModelIndex line = index->model()->index(0, 0);
+
+    QVERIFY(line.isValid());
+
+    QStyleOptionViewItem option;
+    option.initFrom(index);
+
+    const QStyledItemDelegate plain;
+
+    QVERIFY(index->itemDelegate()->sizeHint(option, line).height() > plain.sizeHint(option, line).height());
+}
+
 void DocumentsPageTest::TheStarTurnsTheFavouriteWithoutOpeningAnything()
 {
     Fixture f;
@@ -550,7 +573,7 @@ void DocumentsPageTest::TheIndexRunsToTheEdgeOfThePageLikeEveryOtherList()
     page.show();
     f.viewModel.ReadTheLibrary();
 
-    const QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
     const QSplitter* split = page.findChild<QSplitter*>();
 
     QVERIFY(index != nullptr);
@@ -1656,6 +1679,64 @@ void DocumentsPageTest::ThePageOfAFourDigitManualWithItsOutlineFitsTheNarrowestW
 
     ItFitsTheNarrowestWindow(page, "The documents page on page 1200 of 1200 with its outline open");
     QVERIFY(ThePaneOf(*reader)->isVisible());
+}
+
+void DocumentsPageTest::TheOutlineRowsHaveTheHeightOfTheIndexRowsWhetherOrNotTheyCarryAMark()
+{
+    const QTemporaryDir folder;
+    const std::filesystem::path manual = WrittenInto(folder, L"manual.pdf", AManualOf(24, kChapters));
+
+    Fixture f;
+    DocumentsPage page(f.viewModel);
+
+    const DocumentReader* reader = OpenInThePage(f, page, manual, 13);
+
+    QVERIFY(reader != nullptr);
+
+    QTreeWidget* outline = ThePaneOf(*reader);
+    QTreeWidget* index = TheIndexOf(page, DocumentPanel::Documents);
+    QVERIFY(outline != nullptr && outline->isVisible());
+
+    const auto heightOfTheFirstRowShown = [](QTreeWidget& tree)
+    {
+        for (QTreeWidgetItemIterator at(&tree); *at != nullptr; ++at)
+        {
+            if (const int height = tree.visualItemRect(*at).height(); height > 0)
+            {
+                return height;
+            }
+        }
+
+        return 0;
+    };
+
+    const int indexRow = heightOfTheFirstRowShown(*index);
+    int rows = 0;
+    int marked = 0;
+
+    QVERIFY(indexRow > 0);
+
+    for (QTreeWidgetItemIterator at(outline); *at != nullptr; ++at)
+    {
+        const int height = outline->visualItemRect(*at).height();
+
+        if (height <= 0)
+        {
+            continue;
+        }
+
+        ++rows;
+        marked += (*at)->text(0).startsWith(QString::fromUtf8("●")) ? 1 : 0;
+
+        QVERIFY2(height == indexRow,
+                 qPrintable(QStringLiteral("the row \"%1\" is %2 px and the index rows are %3 px")
+                                .arg((*at)->text(0))
+                                .arg(height)
+                                .arg(indexRow)));
+    }
+
+    QVERIFY(rows > 1);
+    QVERIFY2(marked > 0, "the outline carries no marked row, so the test cannot say it is uniform with one");
 }
 
 void DocumentsPageTest::TheManualIsThereWithoutReadingTheLibraryAndComesDownOnTheFirstClick()

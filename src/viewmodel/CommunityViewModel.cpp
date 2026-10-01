@@ -74,6 +74,7 @@ CommunityViewModel::CommunityViewModel(ProfileService& service,
                                        const SessionNotifier& notifier,
                                        CommunityModel& model,
                                        SizeService& sizes,
+                                       BackgroundRunner& runner,
                                        QObject* parent)
     : QObject(parent),
       service_(service),
@@ -81,7 +82,8 @@ CommunityViewModel::CommunityViewModel(ProfileService& service,
       model_(model),
       sizes_(sizes),
       caller_(sizes.NewCaller()),
-      foldersCaller_(sizes.NewCaller())
+      foldersCaller_(sizes.NewCaller()),
+      repairing_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &CommunityViewModel::Show);
     connect(&notifier, &SessionNotifier::Refreshed, this, &CommunityViewModel::Show);
@@ -95,8 +97,16 @@ void CommunityViewModel::Show()
 void CommunityViewModel::ReadTheDestinationsAgain()
 {
     session_.RefreshEntries();
+}
 
-    Refresh();
+void CommunityViewModel::TheListIsOnScreen(const bool onScreen)
+{
+    onScreen_ = onScreen;
+
+    if (onScreen_ && modelIsStale_)
+    {
+        HandTheEntriesToTheModel();
+    }
 }
 
 void CommunityViewModel::MeasureTheSelection(const std::vector<DestinationEntry>& entries)
@@ -149,12 +159,30 @@ std::vector<RepairCandidate> CommunityViewModel::PlanRepairs() const
 
 void CommunityViewModel::Repair(const std::vector<RepairRequest>& requests)
 {
-    const std::vector<LinkOperationResult> results = service_.Repair(session_.Profile(), requests);
+    auto work = std::make_shared<RepairWork>();
+    work->stamp = session_.StampForAnEntriesRead();
+    work->libraries = session_.Snapshot().libraries;
+    work->requests = requests;
 
-    session_.RefreshEntries();
-    Refresh();
+    repairing_.Run(
+        [this, work]
+        {
+            work->outcome = service_.Repair(work->stamp, work->libraries, work->requests);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
+        },
+        [this, work]
+        {
+            ApplyTheRepair(*work);
+        });
+}
 
-    emit RepairFinished(results);
+void CommunityViewModel::ApplyTheRepair(RepairWork& work)
+{
+    session_.AdoptTheEntriesRead(std::move(work.outcome.read));
+
+    session_.NoteLinkResults(work.outcome.report.results, work.simulatorRunning);
+
+    emit RepairFinished(work.outcome.report);
 }
 
 AttentionBreakdown CommunityViewModel::Breakdown() const
@@ -169,10 +197,30 @@ const ProfileSnapshot& CommunityViewModel::Snapshot() const
 
 void CommunityViewModel::Refresh()
 {
+    if (onScreen_)
+    {
+        HandTheEntriesToTheModel();
+    }
+    else
+    {
+        modelIsStale_ = true;
+    }
+
+    CountTheBreakdown();
+}
+
+void CommunityViewModel::HandTheEntriesToTheModel()
+{
+    const ProfileSnapshot& snapshot = session_.Snapshot();
+
+    model_.ShowEntries(snapshot.entries, snapshot.conflicts);
+    modelIsStale_ = false;
+}
+
+void CommunityViewModel::CountTheBreakdown()
+{
     const ProfileSnapshot& snapshot = session_.Snapshot();
     const std::vector<DestinationEntry>& entries = snapshot.entries;
-
-    model_.ShowEntries(entries, session_.Profile(), snapshot.conflicts);
 
     const auto classified = [&entries](const EntryClassification wanted)
     {

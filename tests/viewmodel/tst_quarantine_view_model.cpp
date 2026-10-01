@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "application/LibraryOrganizer.h"
+#include "domain/importing/ImportPaths.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -36,6 +37,7 @@ namespace
         static void AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain();
         static void TheQuarantineIsCountedWhenTheScanLandsAndOnlyWeighedWhenTheScreenIsShown();
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
+        static void PreparingARestoreOfManyItemsScansTheirLibraryOnce();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
         static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
         static void TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures();
@@ -286,6 +288,37 @@ void QuarantineViewModelTest::AnItemWithNoOriginIsAskedWhereItShouldGoBackTo()
     QCOMPARE(offers.front().places.size(), std::size_t{1});
     QCOMPARE(offers.front().places.front().place, kDestination);
     QCOMPARE(offers.front().places.front().target, std::filesystem::path{"E:/Sim/Community/simbridge"});
+}
+
+void QuarantineViewModelTest::PreparingARestoreOfManyItemsScansTheirLibraryOnce()
+{
+    Fixture f;
+    f.ScanLands();
+
+    std::vector<QuarantinedItem> items;
+    for (const char* name : {"first", "second", "third"})
+    {
+        items.push_back(QuarantinedItem{.path = QuarantineFolderInside(kLibrary) / name});
+    }
+
+    std::vector<RestoreOffer> offered;
+    QObject::connect(&f.viewModel, &QuarantineViewModel::RestoreOffersReady, &f.viewModel,
+                     [&offered](const std::vector<RestoreOffer>& offers)
+                     {
+                         offered = offers;
+                     });
+
+    const std::size_t scansBefore = f.catalog.scanned;
+
+    f.viewModel.PrepareRestore(items);
+
+    QCOMPARE(offered.size(), items.size());
+    QCOMPARE(f.catalog.scanned - scansBefore, f.session.Profile().libraries.size());
+    for (const RestoreOffer& offer : offered)
+    {
+        QVERIFY(offer.check.NeedsAPlace());
+        QVERIFY(!offer.places.empty());
+    }
 }
 
 void QuarantineViewModelTest::AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides()

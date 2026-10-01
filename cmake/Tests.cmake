@@ -597,6 +597,12 @@ fsorg_add_qt_test(fsorg-jsonl-operation-journal-tests jsonl-operation-journal
         tests/infrastructure/journal/tst_jsonl_operation_journal.cpp)
 target_link_libraries(fsorg-jsonl-operation-journal-tests PRIVATE fsorg-infrastructure)
 
+fsorg_add_qt_test(fsorg-journal-folds-tests journal-folds
+        tests/infrastructure/journal/tst_journal_folds.cpp
+        tests/doubles/FakeOperationJournal.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-journal-folds-tests PRIVATE fsorg-infrastructure)
+
 fsorg_add_qt_test(fsorg-json-settings-repository-tests json-settings-repository
         tests/infrastructure/settings/tst_json_settings_repository.cpp
         tests/support/EnumPrinting.h
@@ -1310,6 +1316,7 @@ if (WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-presets-page-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
+    add_dependencies(fsorg-presets-page-tests release_translations)
 
 
     fsorg_add_qt_test(fsorg-options-page-tests options-page
