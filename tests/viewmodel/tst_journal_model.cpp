@@ -2,6 +2,10 @@
 #include <QtCore/QTranslator>
 #include <QtTest/QtTest>
 
+#include <cstddef>
+#include <string>
+#include <vector>
+
 #include "support/PathText.h"
 #include "viewmodel/JournalModel.h"
 #include "viewmodel/RowTagRoles.h"
@@ -26,6 +30,8 @@ namespace
         static void WhatSupportsTheOperationIsQuietAndAFailedResultKeepsTheNameInk();
         static void ADisableWithItsStartupEntryIsOneRowNamedAfterBoth();
         static void AStartupEntryOutsideYourAddonsIsNamedByItsLabel();
+        static void ASwitchWithNoAddonSaysItsOwnWordsAndTheOneInsideAGroupKeepsTheirs();
+        static void TheStartupAndPackageOperationsAreRowsNamedAfterTheEntryOrThePackage();
     };
 }
 
@@ -381,6 +387,89 @@ void JournalModelTest::AStartupEntryOutsideYourAddonsIsNamedByItsLabel()
 
     QCOMPARE(model.rowCount({}), 1);
     QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(), QStringLiteral("Fenix"));
+}
+
+void JournalModelTest::ASwitchWithNoAddonSaysItsOwnWordsAndTheOneInsideAGroupKeepsTheirs()
+{
+    const std::filesystem::path executable = "C:/Program Files/Other/agent.exe";
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords(
+        {OperationRecord::OfImport(Moment(0), OperationKind::TurnOffTheStartupEntry, AddonId{}, std::filesystem::path{},
+                                   executable, FileResult::Completed, OriginSource::Unknown, "Fenix"),
+         OperationRecord::OfImport(Moment(1), OperationKind::TurnOnTheStartupEntry, AddonId{}, std::filesystem::path{},
+                                   executable, FileResult::Completed, OriginSource::Unknown, "Fenix"),
+         Link(OperationKind::DisableAddon, 2),
+         OperationRecord::OfImport(Moment(3), OperationKind::TurnOffTheStartupEntry,
+                                   AddonId{.libraryId = "lib-1", .folderName = "pmdg-aircraft-77w"},
+                                   "D:/Library/Aircrafts/pmdg-aircraft-77w", executable, FileResult::Completed)},
+        Profile());
+
+    QCOMPARE(model.rowCount({}), 3);
+
+    QCOMPARE(model.index(0, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("Disable addon and its startup entry"));
+    QCOMPARE(model.index(1, JournalModel::OperationColumn, model.index(0, 0, {})).data(Qt::DisplayRole).toString(),
+             QStringLiteral("Disable its startup entry"));
+
+    QCOMPARE(model.index(1, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("Enable a startup entry"));
+    QCOMPARE(model.index(1, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(), QStringLiteral("Fenix"));
+    QCOMPARE(model.index(1, JournalModel::TargetColumn, {}).data(Qt::DisplayRole).toString(), AsText(executable));
+    QCOMPARE(model.rowCount(model.index(1, 0, {})), 0);
+
+    QCOMPARE(model.index(2, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("Disable a startup entry"));
+}
+
+void JournalModelTest::TheStartupAndPackageOperationsAreRowsNamedAfterTheEntryOrThePackage()
+{
+    struct Expected
+    {
+        OperationKind kind;
+        const char* operation;
+    };
+
+    const std::vector<Expected> expected{
+        {OperationKind::AddTheStartupEntry, "Add a startup entry"},
+        {OperationKind::RemoveTheStartupEntry, "Remove a startup entry"},
+        {OperationKind::EditTheStartupEntry, "Edit a startup entry"},
+        {OperationKind::RestoreTheStartupEntry, "Restore a removed startup entry"},
+        {OperationKind::ForgetTheStartupEntry, "Discard a removed startup entry"},
+        {OperationKind::TurnOffTheSimulatorPackage, "Disable a simulator package"},
+        {OperationKind::TurnOnTheSimulatorPackage, "Enable a simulator package"},
+    };
+
+    std::vector<OperationRecord> records;
+
+    for (std::size_t at = 0; at < expected.size(); ++at)
+    {
+        records.push_back(OperationRecord::OfImport(Moment(static_cast<int>(at)), expected[at].kind, AddonId{}, {},
+                                                    "C:/Tools/tool.exe", FileResult::TheProgramDoesNotExist,
+                                                    OriginSource::Unknown, "The label " + std::to_string(at)));
+    }
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords(records, Profile());
+
+    QCOMPARE(model.rowCount({}), static_cast<int>(expected.size()));
+
+    for (std::size_t at = 0; at < expected.size(); ++at)
+    {
+        const int row = static_cast<int>(expected.size() - 1 - at);
+
+        QCOMPARE(model.index(row, JournalModel::OperationColumn, {}).data(Qt::DisplayRole).toString(),
+                 QString::fromLatin1(expected[at].operation));
+        QCOMPARE(model.index(row, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(),
+                 QStringLiteral("The label %1").arg(at));
+        QVERIFY(!model.index(row, 0, {}).data(JournalModel::SucceededRole).toBool());
+        QCOMPARE(model.index(row, JournalModel::OutcomeColumn, {}).data(Qt::DisplayRole).toString(),
+                 QStringLiteral("that program file does not exist, so nothing changed"));
+    }
 }
 
 QTEST_MAIN(JournalModelTest)

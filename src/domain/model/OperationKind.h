@@ -33,6 +33,13 @@ enum class OperationKind : int
     TurnOffTheStartupEntry = 24,
     TurnOnTheStartupEntry = 25,
     TakeBackTheCategoryMarker = 26,
+    AddTheStartupEntry = 27,
+    RemoveTheStartupEntry = 28,
+    EditTheStartupEntry = 29,
+    RestoreTheStartupEntry = 30,
+    ForgetTheStartupEntry = 31,
+    TurnOffTheSimulatorPackage = 32,
+    TurnOnTheSimulatorPackage = 33,
 };
 
 inline constexpr std::array kAllOperationKinds{
@@ -63,9 +70,16 @@ inline constexpr std::array kAllOperationKinds{
     OperationKind::TurnOffTheStartupEntry,
     OperationKind::TurnOnTheStartupEntry,
     OperationKind::TakeBackTheCategoryMarker,
+    OperationKind::AddTheStartupEntry,
+    OperationKind::RemoveTheStartupEntry,
+    OperationKind::EditTheStartupEntry,
+    OperationKind::RestoreTheStartupEntry,
+    OperationKind::ForgetTheStartupEntry,
+    OperationKind::TurnOffTheSimulatorPackage,
+    OperationKind::TurnOnTheSimulatorPackage,
 };
 
-static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::TakeBackTheCategoryMarker) + 1,
+static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::TurnOnTheSimulatorPackage) + 1,
               "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool CarriesAFileReason(const OperationKind kind)
@@ -93,6 +107,13 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::TurnOffTheStartupEntry:
     case OperationKind::TurnOnTheStartupEntry:
     case OperationKind::TakeBackTheCategoryMarker:
+    case OperationKind::AddTheStartupEntry:
+    case OperationKind::RemoveTheStartupEntry:
+    case OperationKind::EditTheStartupEntry:
+    case OperationKind::RestoreTheStartupEntry:
+    case OperationKind::ForgetTheStartupEntry:
+    case OperationKind::TurnOffTheSimulatorPackage:
+    case OperationKind::TurnOnTheSimulatorPackage:
     case OperationKind::DeleteFromLibrary: return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:
@@ -134,6 +155,13 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::TurnOffTheStartupEntry:
     case OperationKind::TurnOnTheStartupEntry:
     case OperationKind::TakeBackTheCategoryMarker:
+    case OperationKind::AddTheStartupEntry:
+    case OperationKind::RemoveTheStartupEntry:
+    case OperationKind::EditTheStartupEntry:
+    case OperationKind::RestoreTheStartupEntry:
+    case OperationKind::ForgetTheStartupEntry:
+    case OperationKind::TurnOffTheSimulatorPackage:
+    case OperationKind::TurnOnTheSimulatorPackage:
     case OperationKind::DeleteFromLibrary: return false;
     }
 

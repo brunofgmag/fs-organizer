@@ -1,8 +1,10 @@
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -27,6 +29,7 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QRadioButton>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QTableView>
@@ -58,6 +61,7 @@
 #include "application/CoverageService.h"
 #include "application/DocumentService.h"
 #include "application/SceneryService.h"
+#include "application/StartupEditor.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
 #include "infrastructure/scenery/JsonSceneryCache.h"
 #include "infrastructure/sim/ContentListLocations.h"
@@ -67,6 +71,7 @@
 #include "infrastructure/sim/LoadingReportLocations.h"
 #include "infrastructure/sim/ProfileLoadingReport.h"
 #include "infrastructure/sim/ProfilePackages.h"
+#include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
@@ -85,6 +90,7 @@
 #include "view/library/LibraryRootDialog.h"
 #include "view/community/ImportDialog.h"
 #include "view/library/StartupEntryDialog.h"
+#include "view/simulator/StartupDraftDialog.h"
 #include "view/library/SharedAirportsDialog.h"
 #include "view/library/SwapDialog.h"
 #include "view/options/OptionsPage.h"
@@ -540,6 +546,30 @@ namespace
                           .occupant = addons[0]->path};
     }
 
+    std::optional<ImportRequest> TheImportRequestToPicture(const SimulatorProfile& profile, const bool demoState)
+    {
+        constexpr const char* kInventedFolder = "tidewater-util-sync";
+
+        if (!demoState)
+        {
+            return ImportRequest{
+                .source = PathFromUtf8("C:/Users/pilot/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
+                                       "tidewater-util-sync"),
+                .externalSource = PathFromUtf8("C:/Program Files (x86)/Hangar Desk/MSFS/tidewater-util-sync")};
+        }
+
+        if (profile.destinations.empty())
+        {
+            return std::nullopt;
+        }
+
+        const std::filesystem::path& destination = profile.destinations.front();
+
+        return ImportRequest{.source = destination / PathFromUtf8(kInventedFolder),
+                             .externalSource = destination.root_path() / PathFromUtf8("Program Files (x86)")
+                                 / PathFromUtf8("Hangar Desk") / PathFromUtf8("MSFS") / PathFromUtf8(kInventedFolder)};
+    }
+
     std::vector<StartupLine> AStartupEntryWorthShowing(StartupViewModel& startup)
     {
         startup.Show();
@@ -555,6 +585,77 @@ namespace
         }
 
         return carried;
+    }
+
+    void KeepTheRemovedEntriesOfTheShots(ExeXmlStartupEntries& startupEntries,
+                                         const std::filesystem::path& folder,
+                                         const SimulatorVariant variant,
+                                         const Clock& clock)
+    {
+        const std::filesystem::path file = RemovedStartupEntriesFileOf(folder, variant);
+
+        startupEntries.KeepRemovedEntriesIn(file);
+
+        std::error_code none;
+        std::filesystem::create_directories(folder, none);
+
+        const RemovedStartupEntriesFile kept(file);
+
+        if (!kept.Entries().empty())
+        {
+            return;
+        }
+
+        const std::chrono::system_clock::time_point now = clock.Now();
+
+        for (
+            const RemovedStartupEntry& entry :
+            {RemovedStartupEntry{.label = "Couatl",
+                                 .path = R"(C:\Program Files (x86)\Addon Manager\couatl64\couatl64_boot.exe)",
+                                 .removedAt = now - std::chrono::minutes(2)},
+             RemovedStartupEntry{.label = "FS2Crew Command Center",
+                                 .path = R"(C:\Program Files (x86)\FS2Crew Command Center\FS2CrewCommandCenter.exe)",
+                                 .removedAt = now - std::chrono::minutes(5)},
+             RemovedStartupEntry{
+                 .label = "FS2Crew Fenix A320 Custom Liveries Patcher",
+                 .path =
+                     R"(C:\Program Files (x86)\FS2Crew Animated FO Fenix A320 Project\liveries_patcher\fs2crew_fenix_a320_liveries_patcher.exe)",
+                 .removedAt = now - std::chrono::minutes(9)}})
+        {
+            static_cast<void>(kept.Keep(entry));
+        }
+    }
+
+    std::optional<std::filesystem::path> AnExecutableInsideAnAddon(const Session& session)
+    {
+        std::optional<std::filesystem::path> ofAnAddonThatIsOff;
+
+        for (const TreeNode& library : session.Snapshot().libraries)
+        {
+            for (const TreeNode* addon : AddonsUnder(library))
+            {
+                std::error_code none;
+                const bool enabled = session.Snapshot().enabled.Contains(addon->path);
+
+                for (std::filesystem::recursive_directory_iterator found(addon->path, none), end; !none && found != end;
+                     found.increment(none))
+                {
+                    if (!found->is_regular_file(none) || found->path().extension() != ".exe")
+                    {
+                        continue;
+                    }
+
+                    if (enabled)
+                    {
+                        return found->path();
+                    }
+
+                    ofAnAddonThatIsOff = ofAnAddonThatIsOff.value_or(found->path());
+                }
+            }
+        }
+
+        return ofAnAddonThatIsOff;
     }
 
     QSize SizeFrom(const QString& text)
@@ -647,8 +748,9 @@ int main(int argc, char* argv[])
                                    "rows", "0");
     const QCommandLineOption state("state",
                                    "Folder laid out like %LOCALAPPDATA%\\fs-organizer to copy the settings, journal "
-                                   "and presets from, instead of your install. The shots whose dialogs are drawn "
-                                   "from names written into this tool are skipped.",
+                                   "and presets from, instead of your install. The import dialog is drawn from "
+                                   "folders inside the profile's first destination. The shots whose dialogs are "
+                                   "drawn from other names written into this tool are skipped.",
                                    "folder");
     const QCommandLineOption simulator("simulator",
                                        "The simulator's user folder, the one that holds UserCfg.opt, Content.xml, "
@@ -804,9 +906,9 @@ int main(int argc, char* argv[])
     const EntryClassifier classifier(linkService, filesystemProbe);
     const OperationLog log(journal, clock);
 
-    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries{{}};
     StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
+    const std::filesystem::path removedStartupFolder = staged->settingsFile.parent_path() / "removed-startup-entries";
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, stored->linkType);
@@ -822,9 +924,12 @@ int main(int argc, char* argv[])
     Session session(profileService, organizer, settings, *stored, processProbe, runner, notifier);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &shell,
-                     [&session, &startupEntries, &startupFiles]
+                     [&session, &startupEntries, &userCfgLocations, &filesystemProbe, &removedStartupFolder, &clock]
                      {
-                         startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
+                         const SimulatorVariant variant = session.Profile().variant;
+
+                         startupEntries.Use(StartupFileOrItsPlace(userCfgLocations, filesystemProbe, variant));
+                         KeepTheRemovedEntriesOfTheShots(startupEntries, removedStartupFolder, variant, clock);
                          session.RefreshStartupEntries();
                      });
 
@@ -842,7 +947,7 @@ int main(int argc, char* argv[])
         ChooseContentList(ContentListLocations(userCfgLocations, filesystemProbe), session.Profile().variant)
             .value_or(ChosenContentList{})
             .listPath);
-    CoverageService coverageService(packageList, processProbe, true);
+    CoverageService coverageService(packageList, processProbe, log, true);
 
     const BglSceneryParser sceneryParser;
     JsonSceneryCache sceneryCache(staged->settingsFile.parent_path() / "scenery-cache.json");
@@ -875,6 +980,7 @@ int main(int argc, char* argv[])
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
     FilePresetRepository presetRepository(staged->presetsFolder);
+    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, log);
     PresetService presetService(presetRepository, profileService, startupService);
     PresetViewModel presetViewModel(session, presetService, profileService, runner);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
@@ -892,7 +998,7 @@ int main(int argc, char* argv[])
 
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel, bisectionViewModel);
 
-    StartupViewModel startupViewModel(startupService, session, clock);
+    StartupViewModel startupViewModel(startupService, startupEditor, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
     auto* packageListPage = new PackageListPage(coverageViewModel);
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
@@ -916,9 +1022,11 @@ int main(int argc, char* argv[])
     shell.CarryTriageOn(communityPage);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &shell,
-                     [&shell](const AttentionBreakdown& breakdown)
+                     [&shell, libraryPage, communityPage](const AttentionBreakdown& breakdown)
                      {
                          shell.ShowTriage(breakdown);
+                         libraryPage->ShowFoldersOutside(breakdown.unmanaged);
+                         communityPage->ShowFoldersOutside(breakdown.unmanaged);
                      });
 
     treeViewModel.ShowActiveProfile();
@@ -1149,19 +1257,10 @@ int main(int argc, char* argv[])
         Out() << "fewer than two addons in the libraries, so there is no swap to picture\n";
     }
 
-    if (demoState)
+    if (const std::optional<ImportRequest> owned = TheImportRequestToPicture(session.Profile(), demoState);
+        owned.has_value())
     {
-        Out() << "skipped 27-community-import and 21-library-deep-root: their paths are written into this tool, not "
-                 "read from --state\n";
-    }
-    else
-    {
-        ImportRequest owned;
-        owned.source = PathFromUtf8("C:/Users/pilot/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
-                                    "tidewater-util-sync");
-        owned.externalSource = PathFromUtf8("C:/Program Files (x86)/Hangar Desk/MSFS/tidewater-util-sync");
-
-        ImportDialog importDialog({owned}, session.Snapshot().libraries, session.Profile(), 2147483648ULL, &shell);
+        ImportDialog importDialog({*owned}, session.Snapshot().libraries, session.Profile(), 2147483648ULL, &shell);
 
         landed = SaveTheDialogOpenedBy(
                      [&importDialog]
@@ -1171,8 +1270,16 @@ int main(int argc, char* argv[])
                      folder, QStringLiteral("27-community-import"))
             && landed;
     }
+    else
+    {
+        Out() << "the profile has no destination to draw the import from, so there is no import dialog to write\n";
+    }
 
-    if (!demoState)
+    if (demoState)
+    {
+        Out() << "skipped 21-library-deep-root: its path is written into this tool, not read from --state\n";
+    }
+    else
     {
         const std::filesystem::path deepRoot =
             PathFromUtf8("C:/Users/pilot/Documents/Flight Simulator Addons/MSFS 2024 Library");
@@ -1403,6 +1510,40 @@ int main(int argc, char* argv[])
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("20-simulator-startup-loose")) && landed;
     startupViewModel.Manage(true);
+
+    const QList<QToolButton*> startupChips = startupPage->findChildren<QToolButton*>(QStringLiteral("FilterChip"));
+
+    if (startupChips.size() == 2)
+    {
+        startupChips.at(1)->click();
+        LetTheLayoutSettle();
+        landed = Save(shell, folder, QStringLiteral("19b-simulator-startup-removed")) && landed;
+        startupChips.at(0)->click();
+        LetTheLayoutSettle();
+    }
+
+    if (const std::optional<std::filesystem::path> program = AnExecutableInsideAnAddon(session); program.has_value())
+    {
+        StartupDraftDialog draftDialog(
+            [&startupViewModel](const std::filesystem::path& file)
+            {
+                return startupViewModel.Check(file, std::nullopt);
+            },
+            std::nullopt, &shell);
+        draftDialog.TakeTheProgram(*program);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&draftDialog]
+                     {
+                         static_cast<void>(draftDialog.exec());
+                     },
+                     folder, QStringLiteral("19c-startup-add-inside-an-addon"))
+            && landed;
+    }
+    else
+    {
+        Out() << "no executable inside an addon, so there is no add dialog to write\n";
+    }
 
     simulatorPage->ShowThePackageList();
     coverageViewModel.Show();

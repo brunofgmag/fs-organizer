@@ -60,6 +60,7 @@ set(APPLICATION_SOURCES
         src/application/Session.cpp
         src/application/SetupService.cpp
         src/application/SizeService.cpp
+        src/application/StartupEditor.cpp
         src/application/StartupReport.cpp
         src/application/StartupService.cpp
 )
@@ -99,6 +100,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/PackageNaming.cpp
         src/infrastructure/sim/ProfileLoadingReport.cpp
         src/infrastructure/sim/ProfilePackages.cpp
+        src/infrastructure/sim/RemovedStartupEntriesFile.cpp
         src/infrastructure/sim/StartupFileLocations.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
@@ -189,6 +191,7 @@ set(VIEW_SOURCES
         src/view/delegates/CenteredCheckDelegate.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
+        src/view/delegates/PositionInTheRow.cpp
         src/view/delegates/WithoutTheFocusFrame.cpp
         src/view/presets/OmittedDialog.cpp
         src/view/presets/PresetPlanPanel.cpp
@@ -206,6 +209,7 @@ set(VIEW_SOURCES
         src/view/shell/StartupOffers.cpp
         src/view/simulator/PackageListPage.cpp
         src/view/simulator/SimulatorPage.cpp
+        src/view/simulator/StartupDraftDialog.cpp
         src/view/simulator/StartupPage.cpp
         src/view/library/SuggestionDialog.cpp
         src/view/library/StartupEntryDialog.cpp
@@ -218,6 +222,7 @@ set(VIEW_SOURCES
         src/view/panels/ContextPanel.cpp
         src/view/panels/DependencySection.cpp
         src/view/panels/EmptyState.cpp
+        src/view/panels/FoldersOutsideNotice.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp
         src/view/panels/ScrollBarCap.cpp

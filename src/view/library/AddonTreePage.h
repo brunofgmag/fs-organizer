@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_VIEW_LIBRARY_ADDON_TREE_PAGE_H
 #define FS_ORGANIZER_VIEW_LIBRARY_ADDON_TREE_PAGE_H
 
+#include <cstddef>
 #include <set>
 #include <string>
 #include <vector>
@@ -19,6 +20,7 @@
 class ContextPanel;
 class DependencySection;
 class EmptyState;
+class FoldersOutsideNotice;
 class QCheckBox;
 class QLabel;
 class QLineEdit;
@@ -44,6 +46,8 @@ public:
 
     void RefreshUndoState() const;
 
+    void ShowFoldersOutside(std::size_t folders) const;
+
 signals:
     void StatusChanged(const QString& message);
 
@@ -54,6 +58,8 @@ signals:
     void ConflictChosen(const CopyConflict& conflict);
 
     void DocumentationRequested(const std::string& addon);
+
+    void ImportRequested();
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -210,6 +216,7 @@ private:
     QPushButton* enable_ = nullptr;
     QPushButton* disable_ = nullptr;
     QPushButton* rescan_ = nullptr;
+    FoldersOutsideNotice* outside_ = nullptr;
     QLineEdit* search_ = nullptr;
     QCheckBox* hideEmpty_ = nullptr;
     QList<QToolButton*> chips_;

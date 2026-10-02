@@ -52,6 +52,13 @@ struct PresetStartupRow
     QString target{};
     std::filesystem::path path{};
     PresetAction action = PresetAction::Enable;
+    bool hasNoEntry = false;
+};
+
+struct PresetStartupCandidate
+{
+    QString label{};
+    std::filesystem::path path{};
 };
 
 class PresetViewModel final : public QObject
@@ -92,7 +99,15 @@ public:
                                         const std::filesystem::path& expected,
                                         PresetAction action);
 
+    void AddStartupEntry(const QString& name, const std::filesystem::path& path);
+
+    void TakeStartupEntryOut(const QString& name, std::size_t index, const std::filesystem::path& expected);
+
     [[nodiscard]] QList<PresetStartupRow> StartupRows(const Preset& preset) const;
+
+    [[nodiscard]] QList<PresetStartupCandidate> StartupCandidates(const Preset& preset) const;
+
+    [[nodiscard]] bool StartupFileHoldsEntries() const;
 
     [[nodiscard]] bool GovernStartup(const QString& name, bool governs);
 
@@ -142,6 +157,8 @@ private:
     void NoteApplied(ApplyWork& work);
 
     void RefuseTheWriteOf(const QString& name);
+
+    void RefuseTheChangeTo(const QString& name);
 
     [[nodiscard]] bool Accepts(const QString& name);
 

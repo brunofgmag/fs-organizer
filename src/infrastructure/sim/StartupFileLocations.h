@@ -16,6 +16,10 @@ struct StartupFileLocation
 [[nodiscard]] std::vector<StartupFileLocation>
 StartupFileLocations(const std::vector<UserCfgLocation>& userCfgLocations, const FilesystemProbe& filesystemProbe);
 
+[[nodiscard]] std::filesystem::path StartupFileOrItsPlace(const std::vector<UserCfgLocation>& userCfgLocations,
+                                                          const FilesystemProbe& filesystemProbe,
+                                                          SimulatorVariant variant);
+
 [[nodiscard]] std::filesystem::path StartupFileOf(const std::vector<StartupFileLocation>& locations,
                                                   SimulatorVariant variant);
 

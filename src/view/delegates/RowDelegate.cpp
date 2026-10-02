@@ -11,6 +11,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QToolTip>
 
+#include "view/delegates/PositionInTheRow.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/TagTone.h"
@@ -160,6 +161,17 @@ namespace
         return whole.join(QLatin1Char('\n'));
     }
 
+    [[nodiscard]] QRect WhereTheTagGoes(const QSize& wanted, const QRect& box, const int pen, const bool atTheEnd)
+    {
+        const int farthest = std::max(box.left(), box.right() - wanted.width() + 1);
+
+        QRect where(0, 0, wanted.width(), wanted.height());
+        where.moveLeft(atTheEnd ? farthest : std::clamp(pen, box.left(), farthest));
+        where.moveTop(box.center().y() - wanted.height() / 2 + 1);
+
+        return where;
+    }
+
     void RepaintTheRowOf(const QAbstractItemView& view, const QModelIndex& index)
     {
         if (!index.isValid())
@@ -180,22 +192,6 @@ namespace
         view.viewport()->update(band);
     }
 
-    [[nodiscard]] QStyleOptionViewItem::ViewItemPosition WhereInTheRow(const QModelIndex& index)
-    {
-        const int columns = index.model() == nullptr ? 1 : index.model()->columnCount(index.parent());
-
-        if (columns <= 1)
-        {
-            return QStyleOptionViewItem::OnlyOne;
-        }
-
-        if (index.column() == 0)
-        {
-            return QStyleOptionViewItem::Beginning;
-        }
-
-        return index.column() == columns - 1 ? QStyleOptionViewItem::End : QStyleOptionViewItem::Middle;
-    }
 }
 
 RowDelegate::RowDelegate(QObject* parent) : QStyledItemDelegate(parent), shortestRow_(kRowHeight)
@@ -241,6 +237,30 @@ int RowDelegate::CheckShiftOf(const QStyleOptionViewItem& item) const
     const QRect text = style->subElementRect(QStyle::SE_ItemViewItemText, &cell, widget);
 
     return std::max(0, text.left() + kBreathingRoom - check.left());
+}
+
+bool RowDelegate::IsOnTheCheck(const QModelIndex& index, const QPoint& at) const
+{
+    const auto* view = qobject_cast<const QAbstractItemView*>(parent());
+
+    if (view == nullptr || !index.isValid() || !index.data(Qt::CheckStateRole).isValid())
+    {
+        return false;
+    }
+
+    QStyleOptionViewItem item;
+    item.initFrom(view->viewport());
+    item.widget = view;
+    item.rect = view->visualRect(index);
+    initStyleOption(&item, index);
+    item.rect.adjust(CheckShiftOf(item), 0, 0, 0);
+
+    return view->style()->subElementRect(QStyle::SE_ItemViewItemCheckIndicator, &item, view).contains(at);
+}
+
+bool RowDelegate::DoubleClickedTheCheck() const
+{
+    return doubleClickedTheCheck_;
 }
 
 QStyleOptionViewItem RowDelegate::ItemAsDrawn(const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -289,6 +309,15 @@ bool RowDelegate::eventFilter(QObject* watched, QEvent* event)
         {
             PointAt({});
         }
+        else if (event->type() == QEvent::MouseButtonDblClick)
+        {
+            if (const auto* mouse = dynamic_cast<QMouseEvent*>(event); mouse != nullptr)
+            {
+                const QPoint at = mouse->position().toPoint();
+
+                doubleClickedTheCheck_ = IsOnTheCheck(view->indexAt(at), at);
+            }
+        }
     }
 
     return QStyledItemDelegate::eventFilter(watched, event);
@@ -321,11 +350,7 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 {
     QStyleOptionViewItem item = ItemAsDrawn(option, index);
     item.state &= ~QStyle::State_HasFocus;
-
-    if (item.viewItemPosition == QStyleOptionViewItem::Invalid)
-    {
-        item.viewItemPosition = WhereInTheRow(index);
-    }
+    TellWhereTheCellSitsInTheRow(item, index);
 
     if ((item.state & QStyle::State_Selected) == 0)
     {
@@ -412,11 +437,7 @@ void RowDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
     if (!tag.isEmpty())
     {
-        const QSize wanted = TagSizeOf(tag, item.font);
-
-        QRect where(0, 0, wanted.width(), wanted.height());
-        where.moveLeft(std::clamp(pen, box.left(), std::max(box.left(), box.right() - wanted.width() + 1)));
-        where.moveTop(box.center().y() - wanted.height() / 2 + 1);
+        const QRect where = WhereTheTagGoes(TagSizeOf(tag, item.font), box, pen, index.data(TagAtTheEndRole).toBool());
 
         PaintTag(*painter, where, tag, static_cast<TagTone>(index.data(TagToneRole).toInt()), item.font);
     }

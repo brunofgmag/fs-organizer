@@ -16,6 +16,7 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
@@ -67,6 +68,7 @@ namespace
         tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
         tree->header()->setSectionResizeMode(2, QHeaderView::Stretch);
         DressTheHeaderOf(tree->header());
+        CapTheScrollBarOf(tree, tree->header());
         tree->setItemDelegate(new RowDelegate(tree));
         tree->setTextElideMode(Qt::ElideMiddle);
 

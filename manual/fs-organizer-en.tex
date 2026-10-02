@@ -163,8 +163,16 @@ If startup management is off in \ui{Options}, the preset's startup entries are
 not applied, and the program tells you how many were skipped. The addons are
 applied as usual.
 
-If an entry the preset names is no longer in the simulator's file, the program
-lists it. It never adds startup entries.
+If an entry the preset names is no longer in the simulator's file, its row gets
+the \ui{not in the file} tag, and applying the preset leaves it out.
+\ui{Remove from preset} takes the selected row out.
+
+\ui{Add entry} adds to the preset an entry of the file that it does not name
+yet, and leaves the other rows alone. \ui{Update from enabled entries} does
+something else: it replaces the whole list with the entries enabled at that
+moment.
+
+Applying a preset never adds entries to the simulator's file.
 
 \section{First setup}
 
@@ -393,20 +401,62 @@ If the addon is enabled, it is disabled first.
 
 The \ui{Simulator} tab has two panels, and both change files that belong to the
 simulator. Before changing one, the program saves a backup copy next to it.
-Neither panel changes anything while the simulator is running. Both start
-unmanaged, and until then the program does not read or write the file: click
-\ui{Manage startup entries} or \ui{Manage the package list} to turn each one on.
+Neither panel changes anything while the simulator is running.
+
+The startup entries start managed, and the package list starts unmanaged. While
+a panel is unmanaged, the program does not read or write its file. \ui{Manage
+startup entries} and \ui{Manage the package list} turn each one on, and the
+stop managing button on the panel's bar turns it off.
 
 \subsection{Startup entries}
 
 The simulator's \where|EXE.xml| file, next to its \where|UserCfg.opt|, lists the
 programs it launches with itself. The \ui{Startup entries} panel shows them and
-lets you enable or disable each one without editing XML. The program only
-enables or disables entries that already exist. It never adds, removes or
-reorders them.
+lets you enable, disable, add, edit and remove each one without editing XML. The
+program changes only the entry you asked for. The rest of the file stays as it
+was, and the other entries keep their place.
 
 \shot{19-simulator-startup.png}{The startup entries, with the program each one
-launches and its switch.}
+launches, its switch and its state.}
+
+The \ui{State} column says whether the entry's program is inside an addon of
+yours or outside your addons. When the program no longer exists, the entry gets
+the \ui{the program is missing} tag. That is what an uninstalled program leaves
+behind, and it is usually the entry worth removing. If the program is in a
+disabled addon or on a drive that is not connected, the state says so instead of
+the tag, because in those two cases it can come back.
+
+\ui{Add} asks for the program, a name and, if you want, the command line. The
+entry starts enabled. Adding does not copy or move the program. If the profile
+has no \where|EXE.xml| yet, the file is created next to \where|UserCfg.opt|.
+
+\shot{19c-startup-add-inside-an-addon.png}{Adding a program that is inside an
+addon of the library. The entry is written with the path of the addon's link.}
+
+When the program you choose is inside an addon of your library, the entry is
+written with the path of the addon's link, which is what installers write. The
+window shows that path before you confirm. That way the entry follows the addon:
+disabling the addon warns you about it, as described further down.
+
+\ui{Edit}, a double click on the row or the F2 key open the same window with the
+selected entry. If you change the program, the presets that name the entry
+start naming the new path.
+
+\ui{Remove}, or the Delete key, takes the entry out of the file. Disabling
+already stops the simulator from launching the program, so removing is for the
+entry you no longer want to see in the list.
+
+Every removed entry is kept under \ui{Removed}, with its name, path and command
+line. \ui{Restore entry} puts it back in the file as it was. \ui{Discard}
+deletes it for good, and that cannot be undone. An edit that changes the
+program also keeps the entry there as it was before.
+
+\shot{19b-simulator-startup-removed.png}{The removed entries, which can be
+restored or discarded.}
+
+The \ui{Undo} button, or Ctrl+Z, takes back the last add, edit or removal made
+in this panel. It works while the program stays open. After that, the way back
+from a removal is the \ui{Removed} list.
 
 When you disable an addon that has a startup entry, the program warns you:
 otherwise the simulator would keep trying to launch a program that is no longer

@@ -16,6 +16,7 @@ struct ProfileSnapshot
     EnabledAddons enabled{};
     CopyConflicts conflicts{};
     std::vector<StartupEntry> startupEntries{};
+    bool startupEntriesWereRead = false;
     bool complete = true;
 };
 

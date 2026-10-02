@@ -3,6 +3,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QTableWidget>
 
+#include "tests/support/ScrollBarCapRule.h"
 #include "view/presets/OmittedDialog.h"
 
 namespace
@@ -15,6 +16,7 @@ namespace
         static void EveryOmittedAddonIsNamedWithTheCategoryItSitsIn();
         static void TheDialogSaysTheOmittedAreNotAPileOnTopOfWhatIsTurnedOff();
         static void TheDialogIsTallerWithMoreAddonsInsteadOfPinnedToItsMinimum();
+        static void TheScrollBarIsCappedAndTheCapFollowsTheBar();
     };
 
     QList<OmittedAddon> Some(const int howMany)
@@ -67,6 +69,18 @@ void OmittedDialogTest::TheDialogIsTallerWithMoreAddonsInsteadOfPinnedToItsMinim
 
     QVERIFY2(many.height() > few.height(),
              qPrintable(QStringLiteral("2 addons gave %1 px and 14 gave %2").arg(few.height()).arg(many.height())));
+}
+
+void OmittedDialogTest::TheScrollBarIsCappedAndTheCapFollowsTheBar()
+{
+    OmittedDialog dialog(Some(6));
+    dialog.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+
+    auto* table = dialog.findChild<QTableWidget*>(QStringLiteral("OmittedAddons"));
+
+    QVERIFY(table != nullptr);
+    TheCapRidesWithTheScrollBar(table, table->horizontalHeader());
 }
 
 QTEST_MAIN(OmittedDialogTest)

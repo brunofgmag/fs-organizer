@@ -5,6 +5,7 @@
 
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QEvent>
+#include <QtCore/QPointer>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QTableView>
 
@@ -81,7 +82,52 @@ namespace
             return QObject::eventFilter(watched, event);
         }
 
+        void AlsoFit(QTableView* companion)
+        {
+            companions_.append(companion);
+
+            connect(companion->model(), &QAbstractItemModel::modelReset, this,
+                    [this]
+                    {
+                        MeasureOnceTheContentSettles();
+                    });
+
+            connect(companion->model(), &QAbstractItemModel::dataChanged, this,
+                    [this]
+                    {
+                        MeasureOnceTheContentSettles();
+                    });
+        }
+
     private:
+        [[nodiscard]] static int WhatTheCompanionAsksFor(QTableView& companion, const int column)
+        {
+            QHeaderView* header = companion.horizontalHeader();
+            const int was = header->sectionSize(column);
+
+            companion.resizeColumnToContents(column);
+
+            const int asked = header->sectionSize(column);
+            header->resizeSection(column, was);
+
+            return asked;
+        }
+
+        [[nodiscard]] int WhatTheCompanionsAsk(const int column) const
+        {
+            int asked = 0;
+
+            for (const QPointer<QTableView>& companion : companions_)
+            {
+                if (companion != nullptr && !companion->isHidden())
+                {
+                    asked = std::max(asked, WhatTheCompanionAsksFor(*companion, column));
+                }
+            }
+
+            return asked;
+        }
+
         [[nodiscard]] int NarrowestFor(const int column) const
         {
             return table_->horizontalHeader()->sectionSizeHint(column);
@@ -208,7 +254,7 @@ namespace
                 }
 
                 header->setSectionResizeMode(column, QHeaderView::ResizeToContents);
-                const int measured = header->sectionSize(column);
+                const int measured = std::max(header->sectionSize(column), WhatTheCompanionsAsk(column));
 
                 header->setSectionResizeMode(column, QHeaderView::Interactive);
                 header->resizeSection(column, measured);
@@ -312,6 +358,7 @@ namespace
         }
 
         QTableView* table_;
+        QList<QPointer<QTableView>> companions_;
         std::vector<int> measured_;
         int wanted_ = -1;
         bool dying_ = false;
@@ -339,6 +386,14 @@ namespace
                     {
                         theirs_ = nullptr;
                     });
+
+            for (QObject* child : followed->children())
+            {
+                if (auto* keeper = dynamic_cast<WidthKeeper*>(child); keeper != nullptr)
+                {
+                    keeper->AlsoFit(follower);
+                }
+            }
 
             CopyEveryWidth();
         }

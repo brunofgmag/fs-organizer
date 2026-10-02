@@ -50,8 +50,10 @@
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/ImportViewModel.h"
+#include "tests/support/InstalledCatalogue.h"
 #include "tests/support/PageFloor.h"
 #include "view/panels/ContextPanel.h"
+#include "view/panels/FoldersOutsideNotice.h"
 #include "viewmodel/RowTagRoles.h"
 
 namespace
@@ -77,6 +79,14 @@ namespace
         static void ABatchStoppedByTheDiskSaysSoInsteadOfClaimingTheSelectionWasAlreadyRight();
         static void TheToolbarIsTwoLinesAt1024WithTheChipsUnderRefreshAndTheSearchAtTheMargin();
         static void TheToolbarIsOneLineAt1440WithTheDesignedGaps();
+        static void TheNoticeAppearsWithFoldersOutsideTheLibraryAndGoesWithNone();
+        static void TheImportButtonOfTheNoticeAsksForTheImport();
+        static void TheImportButtonOfTheNoticeIsOfNormalSize();
+        static void TheNoticeSpeaksPortugueseWhenTheCatalogueIsLoaded();
+        static void WithFoldersOutsideTheNoticeEndsTheFirstLineAtEveryWidth_data();
+        static void WithFoldersOutsideTheNoticeEndsTheFirstLineAtEveryWidth();
+        static void WithFourDigitsOutsideThePageFitsTheNarrowestWindow_data();
+        static void WithFourDigitsOutsideThePageFitsTheNarrowestWindow();
         static void TheToolbarKeepsItsHeightAndBottomWhenAnAddonIsSelected();
         static void TheChipsShowTheirCountsWithoutPaddingAndStartOnAll();
         static void AChipWithNoAddonsIsMarkedAsEmpty();
@@ -271,7 +281,7 @@ namespace
                                     linking, log,          LinkType::Junction};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};
         FakePackageList packageList;
-        CoverageService coverageService{packageList, processProbe, false};
+        CoverageService coverageService{packageList, processProbe, log, false};
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService sceneryService{filesystemProbe, sceneryParser, clock, sceneryCache};
@@ -743,26 +753,6 @@ namespace
         }
     };
 
-    struct Installed
-    {
-        explicit Installed(QTranslator& translator) : translator_(translator)
-        {
-            QCoreApplication::installTranslator(&translator_);
-            Settle();
-        }
-
-        ~Installed()
-        {
-            QCoreApplication::removeTranslator(&translator_);
-            Settle();
-        }
-
-        Installed(const Installed&) = delete;
-        Installed& operator=(const Installed&) = delete;
-
-        QTranslator& translator_;
-    };
-
     std::filesystem::path NumberedPath(const int index)
     {
         return std::filesystem::path(kLibrary) / kAircrafts
@@ -1121,6 +1111,178 @@ void AddonTreePageTest::TheToolbarIsOneLineAt1440WithTheDesignedGaps()
     QCOMPARE(hideEmpty.x() - Right(lastChip), kDesignedGapBetweenTheChipsAndTheCheckbox);
     QCOMPARE(search.x() - Right(hideEmpty), kToolbarGap);
     QCOMPARE(Right(search), bar->width() - kPageGutter);
+}
+
+namespace
+{
+    constexpr std::size_t kFourDigits = 1234;
+
+    QString Said(const std::size_t folders)
+    {
+        return QCoreApplication::translate("FoldersOutsideNotice", "%n folder outside the library", nullptr,
+                                           static_cast<int>(folders));
+    }
+
+    FoldersOutsideNotice* NoticeOf(const Screen& screen)
+    {
+        return ToolbarOf(screen)->findChild<FoldersOutsideNotice*>();
+    }
+
+}
+
+void AddonTreePageTest::TheNoticeAppearsWithFoldersOutsideTheLibraryAndGoesWithNone()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture f;
+    Screen screen(f);
+
+    const FoldersOutsideNotice* notice = NoticeOf(screen);
+    QVERIFY(notice != nullptr);
+    QVERIFY(!notice->isVisibleTo(&screen.page));
+
+    screen.page.ShowFoldersOutside(8);
+    Settle();
+
+    QVERIFY(notice->isVisibleTo(&screen.page));
+    QCOMPARE(notice->findChild<QLabel*>(QStringLiteral("TriageQuiet"))->text(), Said(8));
+
+    screen.page.ShowFoldersOutside(1);
+    Settle();
+
+    QCOMPARE(notice->findChild<QLabel*>(QStringLiteral("TriageQuiet"))->text(), Said(1));
+
+    screen.page.ShowFoldersOutside(0);
+    Settle();
+
+    QVERIFY(!notice->isVisibleTo(&screen.page));
+}
+
+void AddonTreePageTest::TheImportButtonOfTheNoticeAsksForTheImport()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture f;
+    Screen screen(f);
+    screen.page.ShowFoldersOutside(8);
+    Settle();
+
+    const QSignalSpy asked(&screen.page, &AddonTreePage::ImportRequested);
+    auto* import = NoticeOf(screen)->findChild<QPushButton*>();
+
+    QVERIFY(import != nullptr);
+    QVERIFY(import->isVisibleTo(&screen.page));
+
+    import->click();
+
+    QCOMPARE(asked.count(), 1);
+}
+
+void AddonTreePageTest::TheImportButtonOfTheNoticeIsOfNormalSize()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture f;
+    const Screen screen(f);
+
+    const auto* import = NoticeOf(screen)->findChild<QPushButton*>();
+
+    QVERIFY(import != nullptr);
+    QCOMPARE(import->property("scale"), QVariant{});
+}
+
+void AddonTreePageTest::TheNoticeSpeaksPortugueseWhenTheCatalogueIsLoaded()
+{
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, QStringLiteral("pt_BR")),
+             "app_pt_BR.qm is not beside the build: build the release_translations target");
+    const Installed installed(catalogue);
+
+    ApplyModernistTheme(*qApp);
+    Fixture f;
+    Screen screen(f);
+    screen.page.ShowFoldersOutside(8);
+    Settle();
+
+    const QLabel* said = NoticeOf(screen)->findChild<QLabel*>(QStringLiteral("TriageQuiet"));
+    const QPushButton* import = NoticeOf(screen)->findChild<QPushButton*>();
+
+    QCOMPARE(said->text(), Said(8));
+    QVERIFY(said->text() != QStringLiteral("8 folder outside the library"));
+    QVERIFY(import->text() != QStringLiteral("Import into the library…"));
+}
+
+void AddonTreePageTest::WithFoldersOutsideTheNoticeEndsTheFirstLineAtEveryWidth_data()
+{
+    LanguageChoices();
+}
+
+void AddonTreePageTest::WithFoldersOutsideTheNoticeEndsTheFirstLineAtEveryWidth()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language),
+             "app_pt_BR.qm is not beside the build: build the release_translations target");
+    const Installed installed(catalogue);
+
+    ApplyModernistTheme(*qApp);
+    Fixture f;
+    Screen screen(f);
+    screen.page.ShowFoldersOutside(kFourDigits);
+
+    for (const int width : {kWidestAPageMayBe, kWide, 1536, 1920})
+    {
+        ResizeTo(screen, width);
+
+        const QWidget* bar = ToolbarOf(screen);
+        const QString at = QStringLiteral("at %1 px").arg(width);
+
+        const QList<QPushButton*> actions = ActionsOf(*bar);
+        const QRect refresh = PlaceIn(*bar, *actions.at(0));
+        const QRect undo = PlaceIn(*bar, *actions.at(3));
+        const QRect notice = PlaceIn(*bar, *NoticeOf(screen));
+        const QRect chips = PlaceIn(*bar, *ChipHolderOf(*bar));
+        const QRect search = PlaceIn(*bar, *SearchOf(*bar));
+
+        QVERIFY2(NoticeOf(screen)->isVisibleTo(&screen.page), qPrintable(at + " the notice is not showing"));
+        QVERIFY2(notice.y() == refresh.y(), qPrintable(at + " the notice left the first line"));
+        QVERIFY2(Right(notice) == bar->width() - kPageGutter, qPrintable(at + " the notice does not end the line"));
+        QVERIFY2(notice.x() - Right(undo) >= kToolbarGap, qPrintable(at + " the notice touches Undo"));
+        QVERIFY2(chips.y() > Bottom(refresh), qPrintable(at + " the chips stayed on the first line"));
+        QVERIFY2(Right(search) == bar->width() - kPageGutter, qPrintable(at + " the search left the margin"));
+        QVERIFY2(bar->height() == bar->heightForWidth(bar->width()),
+                 qPrintable(at + " the bar is not as tall as asked"));
+    }
+
+    const QLabel* said = NoticeOf(screen)->findChild<QLabel*>(QStringLiteral("TriageQuiet"));
+    QVERIFY(said->text().contains(QString::number(kFourDigits)));
+    QCOMPARE(said->text(), Said(kFourDigits));
+}
+
+void AddonTreePageTest::WithFourDigitsOutsideThePageFitsTheNarrowestWindow_data()
+{
+    LanguageChoices();
+}
+
+void AddonTreePageTest::WithFourDigitsOutsideThePageFitsTheNarrowestWindow()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language),
+             "app_pt_BR.qm is not beside the build: build the release_translations target");
+    const Installed installed(catalogue);
+
+    Fixture f;
+    Screen screen(f);
+    screen.page.ShowFoldersOutside(kFourDigits);
+    screen.page.resize(kWidestAPageMayBe, 600);
+
+    ItFitsTheNarrowestWindow(screen.page, "The library page with four digits of folders outside the library");
+
+    const QWidget* bar = ToolbarOf(screen);
+
+    QVERIFY(NoticeOf(screen)->isVisibleTo(&screen.page));
+    QVERIFY2(PlaceIn(*bar, *NoticeOf(screen)).y() == PlaceIn(*bar, *ActionsOf(*bar).at(0)).y(),
+             "at the narrowest window the notice dropped under the actions");
 }
 
 void AddonTreePageTest::TheToolbarKeepsItsHeightAndBottomWhenAnAddonIsSelected()

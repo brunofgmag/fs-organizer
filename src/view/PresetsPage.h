@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_VIEW_PRESETS_PAGE_H
 #define FS_ORGANIZER_VIEW_PRESETS_PAGE_H
 
+#include <filesystem>
 #include <optional>
 
 #include <QtWidgets/QWidget>
@@ -77,6 +78,10 @@ private:
 
     void RecaptureStartup();
 
+    void AddStartupEntry(const std::filesystem::path& path) const;
+
+    void TakeStartupEntryOut(int index) const;
+
     void GovernStartupToggled(bool governs);
 
     void RefreshPreview() const;
@@ -120,5 +125,7 @@ private:
     bool stale_ = false;
     bool reloadQueued_ = false;
 };
+
+[[nodiscard]] QString TheWayBackIsCalled();
 
 #endif // FS_ORGANIZER_VIEW_PRESETS_PAGE_H

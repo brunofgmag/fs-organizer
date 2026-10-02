@@ -30,6 +30,9 @@ namespace
         static void TheOfferNamesTheVersionAndTurnsIntoARestartWhenItIsStaged();
         static void EveryWidgetItBuildsDiesWithTheWindow();
         static void ACleanInstallShowsNoTriageStrip();
+        static void FoldersOutsideTheLibraryAloneLeaveTheStripDown();
+        static void EachOfTheThreeThingsTheStripSaysBringsItUp_data();
+        static void EachOfTheThreeThingsTheStripSaysBringsItUp();
         static void TheStripOnlyRidesOnThePagesThatCarryIt();
         static void TheFooterCarriesTheSummaryOfThePageYouAreOn();
         static void ThePageTabsSitInARowAndStillSwitchPages();
@@ -120,6 +123,58 @@ void MainWindowTest::ACleanInstallShowsNoTriageStrip()
     QVERIFY(!strip->isVisibleTo(&window));
 
     window.ShowTriage({.broken = 28, .conflicts = 2, .unmanaged = 178});
+    QVERIFY(strip->isVisibleTo(&window));
+}
+
+void MainWindowTest::FoldersOutsideTheLibraryAloneLeaveTheStripDown()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    window.AddPage("Library", library);
+    window.CarryTriageOn(library);
+
+    const auto* strip = window.findChild<TriageStrip*>();
+    QVERIFY(strip != nullptr);
+
+    window.ShowTriage({.unmanaged = 178});
+    QVERIFY(!strip->isVisibleTo(&window));
+
+    window.ShowTriage({.broken = 1, .unmanaged = 178});
+    QVERIFY(strip->isVisibleTo(&window));
+
+    window.ShowTriage({.unmanaged = 178});
+    QVERIFY(!strip->isVisibleTo(&window));
+}
+
+void MainWindowTest::EachOfTheThreeThingsTheStripSaysBringsItUp_data()
+{
+    QTest::addColumn<std::size_t>("broken");
+    QTest::addColumn<std::size_t>("conflicts");
+    QTest::addColumn<std::size_t>("duplicated");
+
+    QTest::newRow("a broken link") << std::size_t{1} << std::size_t{0} << std::size_t{0};
+    QTest::newRow("a conflict") << std::size_t{0} << std::size_t{1} << std::size_t{0};
+    QTest::newRow("a duplicated addon") << std::size_t{0} << std::size_t{0} << std::size_t{1};
+}
+
+void MainWindowTest::EachOfTheThreeThingsTheStripSaysBringsItUp()
+{
+    QFETCH(const std::size_t, broken);
+    QFETCH(const std::size_t, conflicts);
+    QFETCH(const std::size_t, duplicated);
+
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    window.AddPage("Library", library);
+    window.CarryTriageOn(library);
+
+    const auto* strip = window.findChild<TriageStrip*>();
+    QVERIFY(strip != nullptr);
+
+    window.ShowTriage({.broken = broken, .conflicts = conflicts, .duplicated = duplicated});
+
     QVERIFY(strip->isVisibleTo(&window));
 }
 

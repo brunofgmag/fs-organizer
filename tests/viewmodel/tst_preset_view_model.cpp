@@ -55,6 +55,13 @@ namespace
         static void GoingBackDoesNotOverwriteTheReturnPreset();
         static void AGoverningPresetRowIsNotSatisfiedWhenTheStartupFileDisagrees();
         static void TheStartupRowsCarryTheLabelFromTheFileAndSettingAnActionIsStored();
+        static void ARowWhosePathHasNoEntryInTheFileIsMarkedAndTheOthersAreNot();
+        static void WithStartupManagementOffNoRowIsMarkedAsMissingFromAFileNobodyRead();
+        static void TheEntriesToAddAreTheOnesInTheFileThatThePresetDoesNotName();
+        static void TheFileHoldsEntriesOnlyWhenTheSnapshotCarriesAtLeastOne();
+        static void AddingAnEntryAppendsItAsEnableAndLeavesTheOtherRowsAlone();
+        static void TakingAnEntryOutRemovesOnlyThatRowAndRefusesAStaleOne();
+        static void APresetThatIsNotStoredRefusesBothGesturesAndTheReturnPresetIsUntouched();
         static void ApplyRunsInAWorkerAndASecondGestureWaitsItsTurn();
         static void ApplyDecidesTheSimulatorWarningFromTheWorkersReading();
         static void UndoDecidesTheSimulatorWarningFromTheWorkersReading();
@@ -674,6 +681,175 @@ void PresetViewModelTest::TheStartupRowsCarryTheLabelFromTheFileAndSettingAnActi
 
     QVERIFY(saved.has_value());
     QVERIFY(saved->startupEntries.front().action == PresetAction::Disable);
+}
+
+namespace
+{
+    const std::filesystem::path kFenixLauncher = "D:/MSFS 2024/Aircrafts/fenix-a320/launcher.exe";
+    const std::filesystem::path kCouatl = "C:/Program Files (x86)/Addon Manager/couatl64/couatl64_boot.exe";
+    const std::filesystem::path kRaas = "C:/Users/bruno/AppData/Local/LAND3.vRAAS/current/vRAAS.exe";
+
+    Preset GoverningPreset(const std::vector<std::filesystem::path>& named)
+    {
+        Preset preset;
+        preset.name = "Voo curto";
+        preset.governsStartup = true;
+
+        for (const std::filesystem::path& path : named)
+        {
+            preset.startupEntries.push_back(PresetStartupEntry{.path = path, .action = PresetAction::Enable});
+        }
+
+        return preset;
+    }
+
+    QStringList LabelsOf(const QList<PresetStartupCandidate>& candidates)
+    {
+        QStringList labels;
+
+        for (const PresetStartupCandidate& candidate : candidates)
+        {
+            labels << candidate.label;
+        }
+
+        return labels;
+    }
+}
+
+void PresetViewModelTest::ARowWhosePathHasNoEntryInTheFileIsMarkedAndTheOthersAreNot()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kFenixLauncher, .enabled = true});
+    f.session.RefreshEntries();
+
+    const QList<PresetStartupRow> rows = f.viewModel.StartupRows(GoverningPreset({kFenixLauncher, kCouatl}));
+
+    QCOMPARE(rows.size(), 2);
+    QVERIFY(!rows[0].hasNoEntry);
+    QCOMPARE(rows[0].label, QStringLiteral("Fenix"));
+    QVERIFY(rows[1].hasNoEntry);
+    QCOMPARE(rows[1].label, QStringLiteral("couatl64_boot"));
+}
+
+void PresetViewModelTest::WithStartupManagementOffNoRowIsMarkedAsMissingFromAFileNobodyRead()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kFenixLauncher, .enabled = true});
+    f.startup.service.Manage(false);
+    f.session.RefreshEntries();
+
+    const QList<PresetStartupRow> rows = f.viewModel.StartupRows(GoverningPreset({kFenixLauncher, kCouatl}));
+
+    QCOMPARE(rows.size(), 2);
+    QVERIFY2(!rows[0].hasNoEntry && !rows[1].hasNoEntry, "nobody read the file, so nobody can say what it lacks");
+
+    f.startup.service.Manage(true);
+    f.session.RefreshEntries();
+
+    const QList<PresetStartupRow> read = f.viewModel.StartupRows(GoverningPreset({kFenixLauncher, kCouatl}));
+
+    QVERIFY(!read[0].hasNoEntry);
+    QVERIFY(read[1].hasNoEntry);
+}
+
+void PresetViewModelTest::TheEntriesToAddAreTheOnesInTheFileThatThePresetDoesNotName()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kFenixLauncher, .enabled = true});
+    f.startup.entries.Carry(StartupEntry{.label = "Couatl", .path = kCouatl, .enabled = false});
+    f.startup.entries.Carry(StartupEntry{.label = "", .path = kRaas, .enabled = true});
+    f.session.RefreshEntries();
+
+    QCOMPARE(LabelsOf(f.viewModel.StartupCandidates(GoverningPreset({}))),
+             QStringList({QStringLiteral("Fenix"), QStringLiteral("Couatl"), QStringLiteral("vRAAS")}));
+    QCOMPARE(LabelsOf(f.viewModel.StartupCandidates(GoverningPreset({kCouatl}))),
+             QStringList({QStringLiteral("Fenix"), QStringLiteral("vRAAS")}));
+    QVERIFY(f.viewModel.StartupCandidates(GoverningPreset({kFenixLauncher, kCouatl, kRaas})).isEmpty());
+}
+
+void PresetViewModelTest::TheFileHoldsEntriesOnlyWhenTheSnapshotCarriesAtLeastOne()
+{
+    Fixture f;
+
+    QVERIFY(!f.viewModel.StartupFileHoldsEntries());
+
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kFenixLauncher, .enabled = true});
+    f.session.RefreshEntries();
+
+    QVERIFY(f.viewModel.StartupFileHoldsEntries());
+}
+
+void PresetViewModelTest::AddingAnEntryAppendsItAsEnableAndLeavesTheOtherRowsAlone()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kFenixLauncher, .enabled = true});
+    f.startup.entries.Carry(StartupEntry{.label = "Couatl", .path = kCouatl, .enabled = true});
+    f.session.RefreshEntries();
+
+    Preset preset = GoverningPreset({kFenixLauncher});
+    preset.startupEntries.front().action = PresetAction::Disable;
+    QVERIFY(f.repository.Save(kProfileId, preset));
+
+    const QSignalSpy changed(&f.viewModel, &PresetViewModel::Changed);
+
+    f.viewModel.AddStartupEntry("Voo curto", kCouatl);
+    QCOMPARE(changed.count(), 1);
+
+    const std::optional<Preset> saved = f.viewModel.Load("Voo curto");
+
+    QVERIFY(saved.has_value());
+    QCOMPARE(saved->startupEntries.size(), std::size_t{2});
+    QCOMPARE(saved->startupEntries[0].path, kFenixLauncher);
+    QVERIFY(saved->startupEntries[0].action == PresetAction::Disable);
+    QCOMPARE(saved->startupEntries[1].path, kCouatl);
+    QVERIFY(saved->startupEntries[1].action == PresetAction::Enable);
+}
+
+void PresetViewModelTest::TakingAnEntryOutRemovesOnlyThatRowAndRefusesAStaleOne()
+{
+    Fixture f;
+
+    QVERIFY(f.repository.Save(kProfileId, GoverningPreset({kFenixLauncher, kCouatl, kRaas})));
+
+    const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
+    const QSignalSpy changed(&f.viewModel, &PresetViewModel::Changed);
+
+    f.viewModel.TakeStartupEntryOut("Voo curto", 1, kRaas);
+    QCOMPARE(refused.count(), 1);
+    QCOMPARE(changed.count(), 1);
+    QCOMPARE(f.viewModel.Load("Voo curto")->startupEntries.size(), std::size_t{3});
+
+    f.viewModel.TakeStartupEntryOut("Voo curto", 1, kCouatl);
+    QCOMPARE(refused.count(), 1);
+    QCOMPARE(changed.count(), 2);
+
+    const std::optional<Preset> saved = f.viewModel.Load("Voo curto");
+
+    QVERIFY(saved.has_value());
+    QCOMPARE(saved->startupEntries.size(), std::size_t{2});
+    QCOMPARE(saved->startupEntries[0].path, kFenixLauncher);
+    QCOMPARE(saved->startupEntries[1].path, kRaas);
+}
+
+void PresetViewModelTest::APresetThatIsNotStoredRefusesBothGesturesAndTheReturnPresetIsUntouched()
+{
+    Fixture f;
+
+    Preset way = GoverningPreset({kFenixLauncher});
+    way.name = "Return";
+    QVERIFY(f.repository.SaveReturnPreset(kProfileId, way));
+
+    const QSignalSpy refused(&f.viewModel, &PresetViewModel::Refused);
+
+    f.viewModel.AddStartupEntry("Return", kCouatl);
+    f.viewModel.TakeStartupEntryOut("Return", 0, kFenixLauncher);
+
+    QCOMPARE(refused.count(), 2);
+
+    const std::optional<Preset> kept = f.viewModel.ReturnPreset();
+
+    QVERIFY(kept.has_value());
+    QCOMPARE(kept->startupEntries.size(), std::size_t{1});
 }
 
 void PresetViewModelTest::ApplyRunsInAWorkerAndASecondGestureWaitsItsTurn()

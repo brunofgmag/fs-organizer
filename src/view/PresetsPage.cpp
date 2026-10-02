@@ -21,6 +21,7 @@
 #include "view/delegates/CenteredCheckDelegate.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/panels/EmptyState.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/presets/OmittedDialog.h"
 #include "view/presets/PresetPlanPanel.h"
 #include "view/presets/PresetStartupPanel.h"
@@ -40,11 +41,6 @@ namespace
     constexpr int kNameTableWidth = 480;
     constexpr int kPresetRowHeight = 46;
 
-    QString TheWayBackIsCalled()
-    {
-        return QObject::tr("Back to the previous set");
-    }
-
     RowDelegate* TwoLineRows(QTableWidget* table)
     {
         auto* rows = new RowDelegate(table);
@@ -54,6 +50,11 @@ namespace
         return rows;
     }
 } // namespace
+
+QString TheWayBackIsCalled()
+{
+    return QObject::tr("Back to the previous set");
+}
 
 PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& notifier, QWidget* parent)
     : QWidget(parent), viewModel_(viewModel)
@@ -116,6 +117,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     LetTheColumnsBeDraggedAndStillFillTheTable(entries_, kAddonColumn);
     entries_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(entries_->horizontalHeader());
+    CapTheScrollBarOf(entries_, entries_->horizontalHeader());
 
     startupPanel_ = new PresetStartupPanel(this);
 
@@ -176,6 +178,8 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(startupPanel_, &PresetStartupPanel::ActionToggled, this, &PresetsPage::StartupActionToggled);
     connect(startupPanel_, &PresetStartupPanel::GovernToggled, this, &PresetsPage::GovernStartupToggled);
     connect(startupPanel_, &PresetStartupPanel::RecaptureRequested, this, &PresetsPage::RecaptureStartup);
+    connect(startupPanel_, &PresetStartupPanel::EntryAddRequested, this, &PresetsPage::AddStartupEntry);
+    connect(startupPanel_, &PresetStartupPanel::RowTakeOutRequested, this, &PresetsPage::TakeStartupEntryOut);
 
     connect(&viewModel_, &PresetViewModel::Changed, this, &PresetsPage::RequestReload);
     connect(&notifier, &SessionNotifier::Refreshed, this, &PresetsPage::RequestReload);
@@ -304,6 +308,7 @@ QTableWidget* PresetsPage::CreateNameTable()
     table->verticalHeader()->setDefaultSectionSize(kPresetRowHeight);
     DressTheHeaderOf(table->horizontalHeader());
     LetTheColumnsBeDraggedAndStillFillTheTable(table, kNameColumn);
+    CapTheScrollBarOf(table, table->horizontalHeader());
 
     return table;
 }
@@ -639,10 +644,13 @@ void PresetsPage::ShowStartupTab()
 
     startup_->setText(tr("Startup · %1").arg(stored));
 
-    startupPanel_->Show({.holdsOne = holdsOne,
-                         .governs = governs,
-                         .readOnly = showingReturn_,
-                         .rows = governs ? viewModel_.StartupRows(*selected_) : QList<PresetStartupRow>{}});
+    startupPanel_->Show(
+        {.holdsOne = holdsOne,
+         .governs = governs,
+         .readOnly = showingReturn_,
+         .fileHoldsEntries = viewModel_.StartupFileHoldsEntries(),
+         .rows = governs ? viewModel_.StartupRows(*selected_) : QList<PresetStartupRow>{},
+         .candidates = governs ? viewModel_.StartupCandidates(*selected_) : QList<PresetStartupCandidate>{}});
 }
 
 void PresetsPage::ActionToggled(const QTableWidgetItem* item)
@@ -705,6 +713,31 @@ void PresetsPage::RecaptureStartup()
     {
         viewModel_.RecaptureStartup(name);
     }
+}
+
+void PresetsPage::AddStartupEntry(const std::filesystem::path& path) const
+{
+    const QString name = SelectedName();
+
+    if (!name.isEmpty())
+    {
+        viewModel_.AddStartupEntry(name, path);
+    }
+}
+
+void PresetsPage::TakeStartupEntryOut(const int index) const
+{
+    const QString name = SelectedName();
+    const auto row = static_cast<std::size_t>(index);
+
+    if (name.isEmpty() || !selected_.has_value() || row >= selected_->startupEntries.size())
+    {
+        return;
+    }
+
+    const std::filesystem::path path = selected_->startupEntries[row].path;
+
+    viewModel_.TakeStartupEntryOut(name, row, path);
 }
 
 void PresetsPage::RefreshPreview() const

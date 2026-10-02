@@ -36,6 +36,10 @@ public:
 
     [[nodiscard]] FileResult Switch(const std::filesystem::path& entryPath, bool enabled, StartupBackup& backup);
 
+    [[nodiscard]] StartupApplied Apply(const StartupChange& change, StartupBackup& backup);
+
+    [[nodiscard]] std::vector<StartupRemovedEntry> Removed() const;
+
 private:
     StartupEntries& entries_;
     const ProcessProbe& processProbe_;

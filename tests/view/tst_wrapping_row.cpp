@@ -21,6 +21,11 @@ namespace
         static void AtTheNarrowestTwoLineWidthTheCheckboxSitsFortyPixelsFromTheLastChip();
         static void TheHeightForWidthIsTheBottomOfWhatWasPlacedAtEveryWidth();
         static void TakingAnItemOutClearsWhatTheRowKnewAboutIt();
+        static void WithTheNoticeShowingTheRestStepsDownAtEveryWidthAndTheNoticeEndsTheUpperLine();
+        static void WithTheNoticeShowingTheHeightIsStillTheBottomOfWhatWasPlaced();
+        static void AHiddenNoticeAsksForNothingNotEvenTheGapBesideIt();
+        static void ANoticeShownAgainTakesTheUpperLineBack();
+        static void TakingTheNoticeOutLeavesTheRowAsItWasWithoutOne();
     };
 }
 
@@ -37,6 +42,7 @@ namespace
     constexpr int kSearchMinimum = 120;
     constexpr int kSearchMaximum = 220;
     constexpr int kLeastSpring = 16;
+    constexpr int kNoticeWidth = 200;
     constexpr int kFirstWidth = 400;
     constexpr int kLastWidth = 2000;
 
@@ -50,7 +56,7 @@ namespace
 
     struct Bar
     {
-        Bar()
+        explicit Bar(const bool withNotice = false)
         {
             row = new WrappingRow(&host);
             row->setContentsMargins(kMargin, kMargin, kMargin, kMargin);
@@ -63,6 +69,12 @@ namespace
             }
 
             row->AddSpring();
+
+            if (withNotice)
+            {
+                notice = Plain(kNoticeWidth, kLineHeight, &host);
+                row->AddWidgetThatHoldsTheUpperLine(notice);
+            }
 
             filter = new QWidget(&host);
             filter->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -135,6 +147,7 @@ namespace
         QWidget host;
         WrappingRow* row = nullptr;
         QWidget* actions[4] = {};
+        QWidget* notice = nullptr;
         QWidget* filter = nullptr;
         QWidget* chips[3] = {};
         QWidget* checkbox = nullptr;
@@ -149,6 +162,40 @@ namespace
     int Bottom(const QRect& place)
     {
         return place.y() + place.height();
+    }
+
+    int TheNarrowestUpperLineThatFits()
+    {
+        return 2 * kMargin + 4 * kActionWidth + kLeastSpring + kNoticeWidth + 5 * kGap;
+    }
+
+    void TheHeightIsTheBottomOfWhatWasPlacedFrom(const Bar& bar, const int first)
+    {
+        for (int width = first; width <= kLastWidth; ++width)
+        {
+            const int promised = bar.row->heightForWidth(width);
+            bar.Lay(width);
+
+            int lowest = 0;
+            int rightmost = 0;
+
+            for (int at = 0; at < bar.row->count(); ++at)
+            {
+                if (const QRect place = bar.row->itemAt(at)->geometry(); !place.isEmpty())
+                {
+                    lowest = std::max(lowest, Bottom(place));
+                    rightmost = std::max(rightmost, Right(place));
+                }
+            }
+
+            QVERIFY2(lowest + kMargin == promised,
+                     qPrintable(QStringLiteral("at %1 px the row promised %2 and placed down to %3")
+                                    .arg(width)
+                                    .arg(promised)
+                                    .arg(lowest + kMargin)));
+            QVERIFY2(rightmost + kMargin <= width,
+                     qPrintable(QStringLiteral("at %1 px something reaches %2").arg(width).arg(rightmost + kMargin)));
+        }
     }
 }
 
@@ -245,31 +292,7 @@ void WrappingRowTest::TheHeightForWidthIsTheBottomOfWhatWasPlacedAtEveryWidth()
 {
     const Bar bar;
 
-    for (int width = kFirstWidth; width <= kLastWidth; ++width)
-    {
-        const int promised = bar.row->heightForWidth(width);
-        bar.Lay(width);
-
-        int lowest = 0;
-        int rightmost = 0;
-
-        for (int at = 0; at < bar.row->count(); ++at)
-        {
-            if (const QRect place = bar.row->itemAt(at)->geometry(); !place.isEmpty())
-            {
-                lowest = std::max(lowest, Bottom(place));
-                rightmost = std::max(rightmost, Right(place));
-            }
-        }
-
-        QVERIFY2(lowest + kMargin == promised,
-                 qPrintable(QStringLiteral("at %1 px the row promised %2 and placed down to %3")
-                                .arg(width)
-                                .arg(promised)
-                                .arg(lowest + kMargin)));
-        QVERIFY2(rightmost + kMargin <= width,
-                 qPrintable(QStringLiteral("at %1 px something reaches %2").arg(width).arg(rightmost + kMargin)));
-    }
+    TheHeightIsTheBottomOfWhatWasPlacedFrom(bar, kFirstWidth);
 }
 
 void WrappingRowTest::TakingAnItemOutClearsWhatTheRowKnewAboutIt()
@@ -288,6 +311,100 @@ void WrappingRowTest::TakingAnItemOutClearsWhatTheRowKnewAboutIt()
     QCOMPARE(bar.row->count(), 9);
     QCOMPARE(bar.row->sizeHint().width(), before + kGap + kLeastSpring);
     QVERIFY(bar.row->takeAt(42) == nullptr);
+}
+
+void WrappingRowTest::WithTheNoticeShowingTheRestStepsDownAtEveryWidthAndTheNoticeEndsTheUpperLine()
+{
+    const Bar bar(true);
+    const int firstLine = kMargin;
+    const int secondLine = kMargin + kLineHeight + kGap;
+
+    QVERIFY(bar.OneLineFrom() < kLastWidth);
+
+    for (int width = TheNarrowestUpperLineThatFits(); width <= kLastWidth; ++width)
+    {
+        bar.Lay(width);
+
+        const QString at = QStringLiteral("at %1 px").arg(width);
+
+        QVERIFY2(bar.PlaceOf(bar.notice).y() == firstLine, qPrintable(at + " the notice left the upper line"));
+        QVERIFY2(Right(bar.PlaceOf(bar.notice)) == width - kMargin,
+                 qPrintable(at + " the notice does not end the upper line"));
+        QVERIFY2(bar.PlaceOf(bar.notice).x() >= Right(bar.PlaceOf(bar.actions[3])) + kGap,
+                 qPrintable(at + " the notice touches the last action"));
+        QVERIFY2(bar.PlaceOf(bar.filter).y() == secondLine, qPrintable(at + " the chips stayed on the upper line"));
+        QVERIFY2(bar.PlaceOf(bar.checkbox).y() == secondLine, qPrintable(at + " the checkbox stayed up"));
+        QVERIFY2(bar.PlaceOf(bar.search).y() == secondLine, qPrintable(at + " the search stayed up"));
+        QVERIFY2(bar.row->heightForWidth(width) == 2 * kLineHeight + kGap + 2 * kMargin,
+                 qPrintable(at + " the row is not two lines tall"));
+    }
+}
+
+void WrappingRowTest::WithTheNoticeShowingTheHeightIsStillTheBottomOfWhatWasPlaced()
+{
+    const Bar bar(true);
+
+    TheHeightIsTheBottomOfWhatWasPlacedFrom(bar, TheNarrowestUpperLineThatFits());
+}
+
+void WrappingRowTest::AHiddenNoticeAsksForNothingNotEvenTheGapBesideIt()
+{
+    const Bar without;
+    const Bar hidden(true);
+    hidden.notice->hide();
+
+    QCOMPARE(hidden.row->sizeHint(), without.row->sizeHint());
+    QCOMPARE(hidden.row->minimumSize(), without.row->minimumSize());
+
+    for (const int width : {without.OneLineFrom() - 1, without.OneLineFrom(), without.OneLineFrom() + 1, kLastWidth})
+    {
+        QCOMPARE(hidden.row->heightForWidth(width), without.row->heightForWidth(width));
+
+        without.Lay(width);
+        hidden.Lay(width);
+
+        for (const int at : {0, 1, 2, 3})
+        {
+            QCOMPARE(hidden.PlaceOf(hidden.actions[at]), without.PlaceOf(without.actions[at]));
+        }
+
+        QCOMPARE(hidden.PlaceOf(hidden.filter), without.PlaceOf(without.filter));
+        QCOMPARE(hidden.PlaceOf(hidden.checkbox), without.PlaceOf(without.checkbox));
+        QCOMPARE(hidden.PlaceOf(hidden.search), without.PlaceOf(without.search));
+    }
+}
+
+void WrappingRowTest::ANoticeShownAgainTakesTheUpperLineBack()
+{
+    const Bar bar(true);
+    bar.notice->hide();
+    bar.Lay(kLastWidth);
+
+    QCOMPARE(bar.PlaceOf(bar.filter).y(), kMargin);
+
+    bar.notice->show();
+    bar.Lay(kLastWidth);
+
+    QCOMPARE(bar.PlaceOf(bar.notice).y(), kMargin);
+    QCOMPARE(bar.PlaceOf(bar.filter).y(), kMargin + kLineHeight + kGap);
+}
+
+void WrappingRowTest::TakingTheNoticeOutLeavesTheRowAsItWasWithoutOne()
+{
+    const Bar without;
+    const Bar bar(true);
+
+    QLayoutItem* taken = bar.row->takeAt(5);
+
+    QVERIFY(taken != nullptr);
+    QCOMPARE(taken->widget(), bar.notice);
+    QCOMPARE(bar.row->sizeHint(), without.row->sizeHint());
+
+    bar.Lay(kLastWidth);
+
+    QCOMPARE(bar.PlaceOf(bar.filter).y(), kMargin);
+
+    delete taken;
 }
 
 QTEST_MAIN(WrappingRowTest)

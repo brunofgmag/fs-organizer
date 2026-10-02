@@ -14,18 +14,27 @@ public:
 
     void Use(std::filesystem::path filePath);
 
+    void KeepRemovedEntriesIn(std::filesystem::path removedFilePath);
+
     [[nodiscard]] std::vector<StartupEntry> Entries() const override;
 
-    using StartupEntries::Switch;
+    [[nodiscard]] std::vector<StartupRemovedEntry> Removed() const override;
 
-    [[nodiscard]] FileResult
-    Switch(const std::filesystem::path& entryPath, bool enabled, StartupBackup& backup) override;
+    [[nodiscard]] StartupApplied Apply(const StartupChange& change, StartupBackup& backup) override;
 
 private:
-    [[nodiscard]] std::filesystem::path FilePath() const;
+    struct FilesInUse
+    {
+        std::filesystem::path startup{};
+        std::filesystem::path removed{};
+    };
+
+    [[nodiscard]] FilesInUse Files() const;
 
     mutable std::mutex guard_;
+    std::mutex applying_;
     std::filesystem::path filePath_;
+    std::filesystem::path removedFilePath_;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_SIM_EXE_XML_STARTUP_ENTRIES_H

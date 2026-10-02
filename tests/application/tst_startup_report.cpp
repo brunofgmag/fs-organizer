@@ -64,11 +64,11 @@ namespace
         Q_OBJECT
 
     private slots:
-        static void AnEnabledEntryWhoseExecutableIsGoneAlarms();
-        static void AnEnabledEntryBehindAnAddonThatIsOffNowAlarmsAboutTheAddon();
-        static void AnEnabledEntryThatOnlyPassesThroughADestinationDoesNotAlarm();
-        static void ADisabledEntryDoesNotAlarmWhateverTheExecutableIsDoing();
-        static void TheAlarmGoesAwayOnItsOwnWhenTheAddonComesBack();
+        static void AnEnabledEntryWhoseExecutableIsGoneIsBroken();
+        static void AnEnabledEntryBehindAnAddonThatIsOffNowIsBehindADisabledAddon();
+        static void AnEnabledEntryThatOnlyPassesThroughADestinationIsReachable();
+        static void ADisabledEntryStillReportsWhatIsWrongWithItsProgram();
+        static void TheConditionFollowsTheAddonComingBack();
         static void AnEntryOutsideEveryDestinationIsOutsideYourAddons();
         static void TheEntryInsideADestinationNamesTheFolderItReachesInto();
         static void AnExecutableMissingOutsideEveryDestinationIsMissingAndNotAnAddonThatIsOff();
@@ -78,6 +78,12 @@ namespace
         static void AnEntryInAnotherAddonOfTheSameDestinationIsNotCarried();
         static void AnEntryOutsideEveryDestinationIsNotCarried();
         static void TheFolderNameIsMatchedWithoutMindingItsCase();
+        static void AReachableExecutableIsReachableWhateverTheSwitchSays();
+        static void ABrokenExecutableIsBrokenEnabledOrNot();
+        static void AnExecutableBehindAnAddonThatIsOffIsSaidSoEnabledOrNot();
+        static void AnExecutableOnAVolumeThatIsNotMountedIsUnavailableAndNeverBroken();
+        static void AnEnabledEntryOnAnUnavailableVolumeIsUnavailableAndStaysEnabled();
+        static void TheLineCarriesTheCommandLineOfTheEntrySoTheEditCanOpenOnIt();
     };
 
     StartupReport ReportOf(const std::vector<StartupEntry>& entries, const FilesystemProbe& probe)
@@ -86,7 +92,7 @@ namespace
     }
 }
 
-void StartupReportTest::AnEnabledEntryWhoseExecutableIsGoneAlarms()
+void StartupReportTest::AnEnabledEntryWhoseExecutableIsGoneIsBroken()
 {
     InMemoryFileSystem disk;
     disk.AddDirectory(kCommunity);
@@ -96,10 +102,10 @@ void StartupReportTest::AnEnabledEntryWhoseExecutableIsGoneAlarms()
                                                       ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
 
     QCOMPARE(report.lines.size(), std::size_t{1});
-    QCOMPARE(report.lines.front().alarm, StartupAlarm::TheExecutableIsMissing);
+    QCOMPARE(report.lines.front().condition, StartupCondition::Broken);
 }
 
-void StartupReportTest::AnEnabledEntryBehindAnAddonThatIsOffNowAlarmsAboutTheAddon()
+void StartupReportTest::AnEnabledEntryBehindAnAddonThatIsOffNowIsBehindADisabledAddon()
 {
     InMemoryFileSystem disk;
     disk.AddDirectory(kCommunity);
@@ -111,11 +117,11 @@ void StartupReportTest::AnEnabledEntryBehindAnAddonThatIsOffNowAlarmsAboutTheAdd
                              SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
 
     QCOMPARE(report.lines.size(), std::size_t{1});
-    QCOMPARE(report.lines.front().alarm, StartupAlarm::TheAddonHoldingItIsOff);
+    QCOMPARE(report.lines.front().condition, StartupCondition::BehindADisabledAddon);
     QCOMPARE(report.lines.front().addonFolder, kFlowInTheDestination);
 }
 
-void StartupReportTest::AnEnabledEntryThatOnlyPassesThroughADestinationDoesNotAlarm()
+void StartupReportTest::AnEnabledEntryThatOnlyPassesThroughADestinationIsReachable()
 {
     InMemoryFileSystem disk;
     disk.AddFile(kFlowExecutable);
@@ -126,11 +132,11 @@ void StartupReportTest::AnEnabledEntryThatOnlyPassesThroughADestinationDoesNotAl
                              SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {kFlowInTheLibrary}), probe);
 
     QCOMPARE(report.lines.size(), std::size_t{1});
-    QCOMPARE(report.lines.front().alarm, StartupAlarm::None);
+    QCOMPARE(report.lines.front().condition, StartupCondition::Reachable);
     QCOMPARE(report.lines.front().reach, StartupReach::InsideAnAddon);
 }
 
-void StartupReportTest::ADisabledEntryDoesNotAlarmWhateverTheExecutableIsDoing()
+void StartupReportTest::ADisabledEntryStillReportsWhatIsWrongWithItsProgram()
 {
     InMemoryFileSystem disk;
     disk.AddDirectory(kCommunity);
@@ -142,12 +148,14 @@ void StartupReportTest::ADisabledEntryDoesNotAlarmWhateverTheExecutableIsDoing()
                              ProfileWithTheCommunity(), SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
 
     QCOMPARE(report.lines.size(), std::size_t{2});
-    QCOMPARE(report.lines[0].alarm, StartupAlarm::None);
-    QCOMPARE(report.lines[1].alarm, StartupAlarm::None);
+    QCOMPARE(report.lines[0].condition, StartupCondition::BehindADisabledAddon);
+    QCOMPARE(report.lines[1].condition, StartupCondition::Broken);
+    QVERIFY(!report.lines[0].enabled);
+    QVERIFY(!report.lines[1].enabled);
     QCOMPARE(report.lines[0].reach, StartupReach::InsideAnAddon);
 }
 
-void StartupReportTest::TheAlarmGoesAwayOnItsOwnWhenTheAddonComesBack()
+void StartupReportTest::TheConditionFollowsTheAddonComingBack()
 {
     InMemoryFileSystem disk;
     disk.AddDirectory(kCommunity);
@@ -159,16 +167,16 @@ void StartupReportTest::TheAlarmGoesAwayOnItsOwnWhenTheAddonComesBack()
 
     QCOMPARE(ReportStartupEntries(entries, profile, SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe)
                  .lines.front()
-                 .alarm,
-             StartupAlarm::TheAddonHoldingItIsOff);
+                 .condition,
+             StartupCondition::BehindADisabledAddon);
 
     disk.AddFile(kFlowExecutable);
 
     QCOMPARE(ReportStartupEntries(entries, profile,
                                   SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {kFlowInTheLibrary}), probe)
                  .lines.front()
-                 .alarm,
-             StartupAlarm::None);
+                 .condition,
+             StartupCondition::Reachable);
 }
 
 void StartupReportTest::AnEntryOutsideEveryDestinationIsOutsideYourAddons()
@@ -181,7 +189,7 @@ void StartupReportTest::AnEntryOutsideEveryDestinationIsOutsideYourAddons()
                                                       ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
 
     QCOMPARE(report.lines.front().reach, StartupReach::OutsideYourAddons);
-    QCOMPARE(report.lines.front().alarm, StartupAlarm::None);
+    QCOMPARE(report.lines.front().condition, StartupCondition::Reachable);
     QVERIFY(report.lines.front().addonFolder.empty());
 }
 
@@ -207,7 +215,7 @@ void StartupReportTest::AnExecutableMissingOutsideEveryDestinationIsMissingAndNo
     const StartupReport report = ReportStartupEntries({Entry("Simlink", kSimlink, true)}, ProfileWithTheCommunity(),
                                                       SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
 
-    QCOMPARE(report.lines.front().alarm, StartupAlarm::TheExecutableIsMissing);
+    QCOMPARE(report.lines.front().condition, StartupCondition::Broken);
     QCOMPARE(report.lines.front().reach, StartupReach::OutsideYourAddons);
 }
 
@@ -294,6 +302,88 @@ void StartupReportTest::TheFolderNameIsMatchedWithoutMindingItsCase()
         ReportOf({Entry("FlowPro", kFlowExecutable, true)}, probe), {kLibrary / "Utilities" / "P42-Util-Flow-Pro"});
 
     QCOMPARE(carried.size(), std::size_t{1});
+}
+
+void StartupReportTest::AReachableExecutableIsReachableWhateverTheSwitchSays()
+{
+    InMemoryFileSystem disk;
+    disk.AddFile(kFlowExecutable);
+    disk.AddFile(kSimlink);
+    const FakeFilesystemProbe probe(disk);
+
+    const StartupReport report =
+        ReportOf({Entry("FlowPro", kFlowExecutable, true), Entry("Simlink", kSimlink, false)}, probe);
+
+    QCOMPARE(report.lines[0].condition, StartupCondition::Reachable);
+    QCOMPARE(report.lines[1].condition, StartupCondition::Reachable);
+}
+
+void StartupReportTest::ABrokenExecutableIsBrokenEnabledOrNot()
+{
+    InMemoryFileSystem disk;
+    disk.AddDirectory(kCommunity);
+    const FakeFilesystemProbe probe(disk);
+
+    const StartupReport report =
+        ReportOf({Entry("FlowPro", kFlowExecutable, true), Entry("Simlink", kSimlink, false)}, probe);
+
+    QCOMPARE(report.lines[0].condition, StartupCondition::Broken);
+    QCOMPARE(report.lines[1].condition, StartupCondition::Broken);
+}
+
+void StartupReportTest::AnExecutableBehindAnAddonThatIsOffIsSaidSoEnabledOrNot()
+{
+    InMemoryFileSystem disk;
+    disk.AddDirectory(kCommunity);
+    disk.AddDirectory(kFlowInTheLibrary);
+    const FakeFilesystemProbe probe(disk);
+
+    for (const bool enabled : {true, false})
+    {
+        const StartupReport report =
+            ReportStartupEntries({Entry("FlowPro", kFlowExecutable, enabled)}, ProfileWithTheCommunity(),
+                                 SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
+
+        QCOMPARE(report.lines.front().condition, StartupCondition::BehindADisabledAddon);
+    }
+}
+
+void StartupReportTest::AnExecutableOnAVolumeThatIsNotMountedIsUnavailableAndNeverBroken()
+{
+    InMemoryFileSystem disk;
+    disk.MarkVolumeUnavailable(kSimlink);
+    const FakeFilesystemProbe probe(disk);
+
+    const StartupReport report =
+        ReportOf({Entry("Simlink", kSimlink, false), Entry("Other", "C:/Other/other.exe", false)}, probe);
+
+    QCOMPARE(report.lines[0].condition, StartupCondition::Unavailable);
+    QCOMPARE(report.lines[1].condition, StartupCondition::Unavailable);
+}
+
+void StartupReportTest::AnEnabledEntryOnAnUnavailableVolumeIsUnavailableAndStaysEnabled()
+{
+    InMemoryFileSystem disk;
+    disk.MarkVolumeUnavailable(kSimlink);
+    const FakeFilesystemProbe probe(disk);
+
+    const StartupReport report = ReportOf({Entry("Simlink", kSimlink, true)}, probe);
+
+    QCOMPARE(report.lines.front().condition, StartupCondition::Unavailable);
+    QVERIFY(report.lines.front().enabled);
+}
+
+void StartupReportTest::TheLineCarriesTheCommandLineOfTheEntrySoTheEditCanOpenOnIt()
+{
+    InMemoryFileSystem disk;
+    disk.AddFile(kSimlink);
+    const FakeFilesystemProbe probe(disk);
+
+    const StartupReport report = ReportOf(
+        {StartupEntry{.label = "Simlink", .path = kSimlink, .commandLine = "-minimized \"a b\"", .enabled = true}},
+        probe);
+
+    QCOMPARE(report.lines.front().commandLine, std::string("-minimized \"a b\""));
 }
 
 QTEST_APPLESS_MAIN(StartupReportTest)

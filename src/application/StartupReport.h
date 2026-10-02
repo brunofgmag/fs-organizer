@@ -16,11 +16,12 @@ enum class StartupReach : int
     InsideAnAddon = 1,
 };
 
-enum class StartupAlarm : int
+enum class StartupCondition : int
 {
-    None = 0,
-    TheExecutableIsMissing = 1,
-    TheAddonHoldingItIsOff = 2,
+    Reachable = 0,
+    BehindADisabledAddon = 1,
+    Broken = 2,
+    Unavailable = 3,
 };
 
 struct StartupLine
@@ -29,8 +30,9 @@ struct StartupLine
     std::filesystem::path path{};
     bool enabled = false;
     StartupReach reach = StartupReach::OutsideYourAddons;
-    StartupAlarm alarm = StartupAlarm::None;
     std::filesystem::path addonFolder{};
+    StartupCondition condition = StartupCondition::Reachable;
+    std::string commandLine{};
 };
 
 struct StartupReport

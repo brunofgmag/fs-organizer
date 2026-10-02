@@ -49,14 +49,57 @@ namespace
         return entry.IsASwap() ? entry.Last() : entry.First();
     }
 
-    bool IsAStartupStep(const OperationKind kind)
+    bool IsAStartupSwitch(const OperationKind kind)
     {
         return kind == OperationKind::TurnOffTheStartupEntry || kind == OperationKind::TurnOnTheStartupEntry;
     }
 
+    bool IsAboutSomethingOtherThanAnAddon(const OperationKind kind)
+    {
+        switch (kind)
+        {
+        case OperationKind::TurnOffTheStartupEntry:
+        case OperationKind::TurnOnTheStartupEntry:
+        case OperationKind::AddTheStartupEntry:
+        case OperationKind::RemoveTheStartupEntry:
+        case OperationKind::EditTheStartupEntry:
+        case OperationKind::RestoreTheStartupEntry:
+        case OperationKind::ForgetTheStartupEntry:
+        case OperationKind::TurnOffTheSimulatorPackage:
+        case OperationKind::TurnOnTheSimulatorPackage: return true;
+        case OperationKind::EnableAddon:
+        case OperationKind::DisableAddon:
+        case OperationKind::RemoveBrokenLink:
+        case OperationKind::RepointLink:
+        case OperationKind::ImportCopyToStaging:
+        case OperationKind::ImportVerifyStaging:
+        case OperationKind::ImportMoveIntoPlace:
+        case OperationKind::ImportRemoveSource:
+        case OperationKind::QuarantineFromDestination:
+        case OperationKind::QuarantineFromLibrary:
+        case OperationKind::RestoreFromQuarantine:
+        case OperationKind::DiscardFromQuarantine:
+        case OperationKind::DiscardStaging:
+        case OperationKind::MoveAddon:
+        case OperationKind::CreateCategory:
+        case OperationKind::RenameCategory:
+        case OperationKind::RemoveCategory:
+        case OperationKind::RecycleFromLibrary:
+        case OperationKind::DeleteFromLibrary:
+        case OperationKind::LinkTheOtherProgramsFolder:
+        case OperationKind::ImportFromAnotherProgram:
+        case OperationKind::GiveBackToAnotherProgram:
+        case OperationKind::UndoTheInterruptedSwap:
+        case OperationKind::RestoreOverTheOccupant:
+        case OperationKind::TakeBackTheCategoryMarker: return false;
+        }
+
+        return false;
+    }
+
     QString AddonName(const OperationRecord& record)
     {
-        if (record.addonId.folderName.empty() && IsAStartupStep(record.kind))
+        if (record.addonId.folderName.empty() && IsAboutSomethingOtherThanAnAddon(record.kind))
         {
             return QString::fromStdString(record.label);
         }
@@ -174,9 +217,27 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::TurnOffTheStartupEntry: return tr("Disable its startup entry");
     case OperationKind::TurnOnTheStartupEntry: return tr("Enable the startup entry again");
     case OperationKind::TakeBackTheCategoryMarker: return tr("Remove the category marker");
+    case OperationKind::AddTheStartupEntry: return tr("Add a startup entry");
+    case OperationKind::RemoveTheStartupEntry: return tr("Remove a startup entry");
+    case OperationKind::EditTheStartupEntry: return tr("Edit a startup entry");
+    case OperationKind::RestoreTheStartupEntry: return tr("Restore a removed startup entry");
+    case OperationKind::ForgetTheStartupEntry: return tr("Discard a removed startup entry");
+    case OperationKind::TurnOffTheSimulatorPackage: return tr("Disable a simulator package");
+    case OperationKind::TurnOnTheSimulatorPackage: return tr("Enable a simulator package");
     }
 
     return {};
+}
+
+QString JournalModel::StepLabel(const OperationRecord& record)
+{
+    if (IsAStartupSwitch(record.kind) && record.addonId.folderName.empty())
+    {
+        return record.kind == OperationKind::TurnOffTheStartupEntry ? tr("Disable a startup entry")
+                                                                    : tr("Enable a startup entry");
+    }
+
+    return KindLabel(record.kind);
 }
 
 QString JournalModel::LibraryLabel(const LibraryId& libraryId) const
@@ -316,7 +377,7 @@ QVariant JournalModel::StepColumn(const OperationRecord& record, const int colum
     switch (column)
     {
     case WhenColumn: return AsMoment(record.timestamp);
-    case OperationColumn: return KindLabel(record.kind);
+    case OperationColumn: return StepLabel(record);
     case AddonColumn: return AddonName(record);
     case LibraryColumn: return LibraryLabel(record.addonId.libraryId);
     case SourceColumn: return AsText(record.source);

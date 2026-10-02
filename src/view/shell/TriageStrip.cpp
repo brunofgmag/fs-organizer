@@ -13,7 +13,7 @@ TriageStrip::TriageStrip(QWidget* parent) : QWidget(parent)
     setObjectName(QStringLiteral("TriageStrip"));
 
     auto* row = new QHBoxLayout(this);
-    row->setContentsMargins(kPageGutter, 8, kPageGutter, 8);
+    row->setContentsMargins(kPageGutter, 8, kPageGutter, 0);
     row->setSpacing(10);
 
     broken_ = AddItem("filled", row);
@@ -29,13 +29,9 @@ TriageStrip::TriageStrip(QWidget* parent) : QWidget(parent)
 
     row->addStretch();
 
-    unmanaged_ = AddItem(nullptr, row);
-    unmanaged_.label->setObjectName(QStringLiteral("TriageQuiet"));
-
     connect(broken_.action, &QPushButton::clicked, this, &TriageStrip::RepairRequested);
     connect(conflicts_.action, &QPushButton::clicked, this, &TriageStrip::ResolveRequested);
     connect(duplicated_.action, &QPushButton::clicked, this, &TriageStrip::DuplicatesRequested);
-    connect(unmanaged_.action, &QPushButton::clicked, this, &TriageStrip::ImportRequested);
 
     ShowBreakdown({});
 }
@@ -53,11 +49,7 @@ QFrame* TriageStrip::AddSeparator(QHBoxLayout* into)
 TriageStrip::Item TriageStrip::AddItem(const char* tag, QHBoxLayout* into)
 {
     auto* label = new QLabel(this);
-
-    if (tag != nullptr)
-    {
-        label->setProperty("tag", tag);
-    }
+    label->setProperty("tag", tag);
 
     auto* button = new QPushButton(this);
     button->setProperty("scale", "small");
@@ -86,21 +78,18 @@ void TriageStrip::RetranslateUi()
     broken_.action->setText(tr("Repair broken links…"));
     conflicts_.action->setText(tr("Resolve conflicts…"));
     duplicated_.action->setText(tr("Show duplicates…"));
-    unmanaged_.action->setText(tr("Import into the library…"));
 
     broken_.label->setText(tr("%n broken link", nullptr, static_cast<int>(shown_.broken)));
     conflicts_.label->setText(tr("%n conflict", nullptr, static_cast<int>(shown_.conflicts)));
     duplicated_.label->setText(tr("%n duplicated", nullptr, static_cast<int>(shown_.duplicated)));
-    unmanaged_.label->setText(tr("%n folder outside the library", nullptr, static_cast<int>(shown_.unmanaged)));
 
     ShowItem(broken_, shown_.broken > 0);
     ShowItem(conflicts_, shown_.conflicts > 0);
     ShowItem(duplicated_, shown_.duplicated > 0);
-    ShowItem(unmanaged_, shown_.unmanaged > 0);
     beforeConflicts_->setVisible(shown_.broken > 0 && shown_.conflicts > 0);
     beforeDuplicated_->setVisible(shown_.duplicated > 0 && (shown_.broken > 0 || shown_.conflicts > 0));
 
-    anythingToSay_ = shown_.broken + shown_.conflicts + shown_.duplicated + shown_.unmanaged > 0;
+    anythingToSay_ = shown_.broken + shown_.conflicts + shown_.duplicated > 0;
 }
 
 void TriageStrip::changeEvent(QEvent* event)

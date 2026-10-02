@@ -28,8 +28,6 @@ signals:
 
     void DuplicatesRequested();
 
-    void ImportRequested();
-
 protected:
     void changeEvent(QEvent* event) override;
 
@@ -51,7 +49,6 @@ private:
     Item broken_;
     Item conflicts_;
     Item duplicated_;
-    Item unmanaged_;
     QFrame* beforeConflicts_ = nullptr;
     QFrame* beforeDuplicated_ = nullptr;
     AttentionBreakdown shown_;

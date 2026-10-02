@@ -53,22 +53,40 @@ namespace
         return addon != nullptr && !snapshot.enabled.Contains(addon->path);
     }
 
-    StartupAlarm AlarmFor(const StartupEntry& entry,
-                          const std::filesystem::path& addonFolder,
-                          const ProfileSnapshot& snapshot,
-                          const FilesystemProbe& filesystemProbe)
+    struct OnDisk
     {
-        if (!entry.enabled || filesystemProbe.EntryExistsWithoutFollowingLinks(entry.path))
+        bool exists = false;
+        bool addonIsOff = false;
+    };
+
+    OnDisk ReadOnDisk(const StartupEntry& entry,
+                      const std::filesystem::path& addonFolder,
+                      const ProfileSnapshot& snapshot,
+                      const FilesystemProbe& filesystemProbe)
+    {
+        if (filesystemProbe.EntryExistsWithoutFollowingLinks(entry.path))
         {
-            return StartupAlarm::None;
+            return {.exists = true, .addonIsOff = false};
         }
 
-        if (!addonFolder.empty() && AnAddonOfYoursLandsThereAndIsOffNow(snapshot, addonFolder))
+        return {.exists = false,
+                .addonIsOff = !addonFolder.empty() && AnAddonOfYoursLandsThereAndIsOffNow(snapshot, addonFolder)};
+    }
+
+    StartupCondition
+    ConditionOf(const std::filesystem::path& entryPath, const OnDisk& onDisk, const FilesystemProbe& filesystemProbe)
+    {
+        if (onDisk.exists)
         {
-            return StartupAlarm::TheAddonHoldingItIsOff;
+            return StartupCondition::Reachable;
         }
 
-        return StartupAlarm::TheExecutableIsMissing;
+        if (onDisk.addonIsOff)
+        {
+            return StartupCondition::BehindADisabledAddon;
+        }
+
+        return filesystemProbe.VolumeIsAvailable(entryPath) ? StartupCondition::Broken : StartupCondition::Unavailable;
     }
 }
 
@@ -108,14 +126,16 @@ StartupReport ReportStartupEntries(const std::vector<StartupEntry>& entries,
     for (const StartupEntry& entry : entries)
     {
         const std::filesystem::path addonFolder = AddonFolderReachedBy(profile, entry.path);
+        const OnDisk onDisk = ReadOnDisk(entry, addonFolder, snapshot, filesystemProbe);
 
         report.lines.push_back(
             StartupLine{.label = entry.label,
                         .path = entry.path,
                         .enabled = entry.enabled,
                         .reach = addonFolder.empty() ? StartupReach::OutsideYourAddons : StartupReach::InsideAnAddon,
-                        .alarm = AlarmFor(entry, addonFolder, snapshot, filesystemProbe),
-                        .addonFolder = addonFolder});
+                        .addonFolder = addonFolder,
+                        .condition = ConditionOf(entry.path, onDisk, filesystemProbe),
+                        .commandLine = entry.commandLine});
     }
 
     return report;

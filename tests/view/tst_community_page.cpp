@@ -1,4 +1,8 @@
+#include <algorithm>
+
+#include <QtCore/QTranslator>
 #include <QtTest/QtTest>
+#include <QtWidgets/QAbstractButton>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QLabel>
@@ -6,7 +10,9 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QScrollBar>
+#include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTableView>
+#include <QtWidgets/QVBoxLayout>
 
 #include "application/LibraryOrganizer.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -22,12 +28,16 @@
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
+#include "tests/support/InstalledCatalogue.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "view/community/CommunityPage.h"
 #include "view/community/ImportDialog.h"
 #include "view/community/RepairDialog.h"
 #include "view/panels/ContextPanel.h"
+#include "view/panels/FoldersOutsideNotice.h"
+#include "view/shell/TriageStrip.h"
+#include "view/theme/ModernistMetrics.h"
 #include "viewmodel/SessionNotifier.h"
 #include "tests/support/PageFloor.h"
 #include "tests/support/PhysicalRows.h"
@@ -40,6 +50,7 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void TheTriageStripLeavesTheRowBelowItItsOwnTopMarginAndNothingMore();
         static void ThePanelStartsLevelWithTheTable();
         static void TheColumnsFitTheViewportWithThePanelOpenAt1140Pixels();
         static void ThePanelTitleStripEndsWhereTheColumnHeaderEnds();
@@ -47,6 +58,14 @@ namespace
         static void ThePanelLeftLineRunsFromTheTitleStripToTheBottom();
         static void TheScrollBarCapGoesWhenTheScrollBarDoes();
         static void TheBarsSpanTheWholePageOverThePanel();
+        static void TheNoticeAppearsWithFoldersOutsideTheLibraryAndGoesWithNone();
+        static void TheImportButtonOfTheNoticeAsksForTheImport();
+        static void TheImportButtonOfTheNoticeIsOfNormalSize();
+        static void TheNoticeSpeaksPortugueseWhenTheCatalogueIsLoaded();
+        static void TheNoticeSitsBetweenTheActionsAndTheSearchWhichEndsTheLine_data();
+        static void TheNoticeSitsBetweenTheActionsAndTheSearchWhichEndsTheLine();
+        static void WithFourDigitsOutsideThePageFitsTheNarrowestWindow_data();
+        static void WithFourDigitsOutsideThePageFitsTheNarrowestWindow();
         static void TheTriageConflictActionLeavesEveryConflictedRowSelected();
         static void TheTriageImportActionLeavesEveryUnmanagedFolderSelected();
         static void TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow();
@@ -859,6 +878,258 @@ void CommunityPageTest::TheBarsSpanTheWholePageOverThePanel()
     QVERIFY(page.findChild<ContextPanel*>()->isVisible());
     QVERIFY(toolbar != nullptr);
     QCOMPARE(RightEdgeWithin(page, *toolbar), page.width());
+}
+
+namespace
+{
+    constexpr std::size_t kFourDigits = 1234;
+    constexpr int kDesignedGapBetweenTheNoticeAndTheSearch = 16;
+
+    QString Said(const std::size_t folders)
+    {
+        return QCoreApplication::translate("FoldersOutsideNotice", "%n folder outside the library", nullptr,
+                                           static_cast<int>(folders));
+    }
+
+    FoldersOutsideNotice* NoticeOf(const CommunityPage& page)
+    {
+        return page.findChild<FoldersOutsideNotice*>();
+    }
+
+    QRect PlaceIn(const QWidget& bar, const QWidget& widget)
+    {
+        return {widget.mapTo(&bar, QPoint{}), widget.size()};
+    }
+
+    int Right(const QRect& place)
+    {
+        return place.x() + place.width();
+    }
+
+    int CenterOf(const QRect& place)
+    {
+        return place.y() + place.height() / 2;
+    }
+}
+
+void CommunityPageTest::TheNoticeAppearsWithFoldersOutsideTheLibraryAndGoesWithNone()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    ApplyModernistTheme(*qApp);
+    page.resize(kWidestAPageMayBe, 600);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    const FoldersOutsideNotice* notice = NoticeOf(page);
+    QVERIFY(notice != nullptr);
+    QVERIFY(!notice->isVisibleTo(&page));
+
+    page.ShowFoldersOutside(8);
+
+    QVERIFY(notice->isVisibleTo(&page));
+    QCOMPARE(notice->findChild<QLabel*>(QStringLiteral("TriageQuiet"))->text(), Said(8));
+
+    page.ShowFoldersOutside(0);
+
+    QVERIFY(!notice->isVisibleTo(&page));
+}
+
+void CommunityPageTest::TheImportButtonOfTheNoticeAsksForTheImport()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    ApplyModernistTheme(*qApp);
+    page.resize(kWidestAPageMayBe, 600);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    page.ShowFoldersOutside(8);
+
+    const QSignalSpy asked(&page, &CommunityPage::ImportRequested);
+    auto* import = NoticeOf(page)->findChild<QPushButton*>();
+
+    QVERIFY(import != nullptr);
+    QVERIFY(import->isVisibleTo(&page));
+
+    import->click();
+
+    QCOMPARE(asked.count(), 1);
+}
+
+void CommunityPageTest::TheImportButtonOfTheNoticeIsOfNormalSize()
+{
+    Fixture f;
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+
+    const auto* import = NoticeOf(page)->findChild<QPushButton*>();
+
+    QVERIFY(import != nullptr);
+    QCOMPARE(import->property("scale"), QVariant{});
+}
+
+void CommunityPageTest::TheNoticeSpeaksPortugueseWhenTheCatalogueIsLoaded()
+{
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, QStringLiteral("pt_BR")),
+             "app_pt_BR.qm is not beside the build: build the release_translations target");
+    const Installed installed(catalogue);
+
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    ApplyModernistTheme(*qApp);
+    page.resize(kWidestAPageMayBe, 600);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    page.ShowFoldersOutside(8);
+
+    const QLabel* said = NoticeOf(page)->findChild<QLabel*>(QStringLiteral("TriageQuiet"));
+    const QPushButton* import = NoticeOf(page)->findChild<QPushButton*>();
+
+    QCOMPARE(said->text(), Said(8));
+    QVERIFY(said->text() != QStringLiteral("8 folder outside the library"));
+    QVERIFY(import->text() != QStringLiteral("Import into the library…"));
+}
+
+void CommunityPageTest::TheNoticeSitsBetweenTheActionsAndTheSearchWhichEndsTheLine_data()
+{
+    LanguageChoices();
+}
+
+void CommunityPageTest::TheNoticeSitsBetweenTheActionsAndTheSearchWhichEndsTheLine()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language),
+             "app_pt_BR.qm is not beside the build: build the release_translations target");
+    const Installed installed(catalogue);
+
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    ApplyModernistTheme(*qApp);
+    page.resize(kWidestAPageMayBe, 600);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    page.ShowFoldersOutside(kFourDigits);
+    QCoreApplication::processEvents();
+
+    const auto* bar = page.findChild<QWidget*>(QStringLiteral("PageToolbar"));
+    const auto* reread = bar->findChild<QPushButton*>(QStringLiteral("ReadDestinationsAgain"));
+    const auto* search = bar->findChild<QLineEdit*>();
+
+    QVERIFY(bar != nullptr);
+    QVERIFY(reread != nullptr);
+    QVERIFY(search != nullptr);
+
+    const QRect first = PlaceIn(*bar, *reread);
+    const QRect notice = PlaceIn(*bar, *NoticeOf(page));
+    const QRect last = PlaceIn(*bar, *search);
+
+    QVERIFY(NoticeOf(page)->isVisibleTo(&page));
+    QCOMPARE(CenterOf(notice), CenterOf(first));
+    QCOMPARE(CenterOf(last), CenterOf(first));
+    QVERIFY(notice.x() > Right(first));
+    QCOMPARE(last.x() - Right(notice), kDesignedGapBetweenTheNoticeAndTheSearch);
+    QCOMPARE(Right(last), bar->width() - kPageGutter);
+
+    const QLabel* said = NoticeOf(page)->findChild<QLabel*>(QStringLiteral("TriageQuiet"));
+    QCOMPARE(said->text(), Said(kFourDigits));
+}
+
+void CommunityPageTest::WithFourDigitsOutsideThePageFitsTheNarrowestWindow_data()
+{
+    LanguageChoices();
+}
+
+void CommunityPageTest::WithFourDigitsOutsideThePageFitsTheNarrowestWindow()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language),
+             "app_pt_BR.qm is not beside the build: build the release_translations target");
+    const Installed installed(catalogue);
+
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    page.ShowFoldersOutside(kFourDigits);
+    page.resize(kWidestAPageMayBe, 600);
+
+    ItFitsTheNarrowestWindow(page, "The destinations page with four digits of folders outside the library");
+
+    QVERIFY(NoticeOf(page)->isVisibleTo(&page));
+}
+
+namespace
+{
+    int FootOfTheLowestButton(const QWidget& inside, const QWidget& host)
+    {
+        int foot = 0;
+
+        for (const QPushButton* button : inside.findChildren<QPushButton*>())
+        {
+            if (button->isVisibleTo(&host))
+            {
+                foot = std::max(foot, button->mapTo(&host, QPoint(0, button->height())).y());
+            }
+        }
+
+        return foot;
+    }
+
+    const QAbstractButton* TheHighestButton(const QWidget& inside, const QWidget& host)
+    {
+        const QAbstractButton* highest = nullptr;
+
+        for (const auto* button : inside.findChildren<QAbstractButton*>())
+        {
+            if (button->isVisibleTo(&host)
+                && (highest == nullptr
+                    || button->mapTo(&host, QPoint(0, 0)).y() < highest->mapTo(&host, QPoint(0, 0)).y()))
+            {
+                highest = button;
+            }
+        }
+
+        return highest;
+    }
+}
+
+void CommunityPageTest::TheTriageStripLeavesTheRowBelowItItsOwnTopMarginAndNothingMore()
+{
+    Fixture f;
+    ApplyModernistTheme(*qApp);
+
+    QWidget host;
+    auto* strip = new TriageStrip(&host);
+    auto* pages = new QStackedWidget(&host);
+    auto* page = new CommunityPage(f.viewModel, f.importViewModel, f.model, pages);
+    pages->addWidget(page);
+
+    auto* column = new QVBoxLayout(&host);
+    column->setContentsMargins(0, 0, 0, 0);
+    column->setSpacing(0);
+    column->addWidget(strip);
+    column->addWidget(pages, 1);
+
+    strip->ShowBreakdown({.broken = 1});
+    host.resize(1140, 600);
+    host.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&host));
+    QCoreApplication::processEvents();
+
+    QVERIFY(strip->isVisibleTo(&host));
+
+    const QAbstractButton* firstBelow = TheHighestButton(*page, host);
+
+    QVERIFY(firstBelow != nullptr);
+    QVERIFY(firstBelow->parentWidget()->layout() != nullptr);
+
+    const int footOfTheStrip = FootOfTheLowestButton(*strip, host);
+    const int headOfTheRow = firstBelow->mapTo(&host, QPoint(0, 0)).y();
+
+    QVERIFY(footOfTheStrip > 0);
+    QCOMPARE(headOfTheRow - footOfTheStrip, firstBelow->parentWidget()->layout()->contentsMargins().top());
 }
 
 QTEST_MAIN(CommunityPageTest)

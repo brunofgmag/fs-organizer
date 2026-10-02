@@ -18,6 +18,7 @@
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/CommunityModel.h"
@@ -295,6 +296,7 @@ QWidget* DiagnosticsPage::CreateCountsPane()
     counts_->setColumnCount(2);
     counts_->header()->setStretchLastSection(true);
     DressTheHeaderOf(counts_->header());
+    CapTheScrollBarOf(counts_, counts_->header());
     DressTheRowsOf(counts_);
 
     AroundTheTableOf(pane)->addWidget(counts_, 1);
@@ -312,6 +314,7 @@ QWidget* DiagnosticsPage::CreateBrokenPane()
     troubled_->setColumnCount(2);
     troubled_->header()->setStretchLastSection(true);
     DressTheHeaderOf(troubled_->header());
+    CapTheScrollBarOf(troubled_, troubled_->header());
     DressTheRowsOf(troubled_);
 
     repair_ = new QPushButton(pane);
@@ -397,6 +400,7 @@ QWidget* DiagnosticsPage::CreateSizePane()
     sizes_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     sizes_->header()->setMinimumSectionSize(kNarrowestSizeSection);
     DressTheHeaderOf(sizes_->header());
+    CapTheScrollBarOf(sizes_, sizes_->header());
     DressTheRowsOf(sizes_);
 
     longestPaths_ = Quiet({}, pane);
@@ -448,6 +452,7 @@ QWidget* DiagnosticsPage::CreateSceneryPane()
     scenery_->setColumnCount(1);
     scenery_->header()->setStretchLastSection(true);
     DressTheHeaderOf(scenery_->header());
+    CapTheScrollBarOf(scenery_, scenery_->header());
     DressTheRowsOf(scenery_);
 
     auto* above = InsetLikeAToolbar();

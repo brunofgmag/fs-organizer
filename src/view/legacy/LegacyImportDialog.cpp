@@ -8,6 +8,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 
 namespace
@@ -83,6 +84,7 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
     tree_->setColumnCount(2);
     tree_->setHeaderLabels({tr("Proposal"), tr("Status")});
     tree_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    CapTheScrollBarOf(tree_, tree_->header());
     tree_->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     layout->addWidget(tree_, 1);
 

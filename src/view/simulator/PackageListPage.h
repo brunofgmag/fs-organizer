@@ -70,7 +70,7 @@ private:
     QLabel* conflictsHeading_ = nullptr;
     QLabel* conflictsPromise_ = nullptr;
     QLabel* turnedOffHeading_ = nullptr;
-    QLabel* readAt_ = nullptr;
+    QWidget* toolbar_ = nullptr;
     QPushButton* turnOff_ = nullptr;
     QPushButton* coexist_ = nullptr;
     QPushButton* turnBackOn_ = nullptr;

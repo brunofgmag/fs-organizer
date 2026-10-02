@@ -45,7 +45,7 @@ fsorg-shot -t dark -l en -s 1344x756 --edition flightsim-to -S vireo-efb-tablet 
 
 - Pick `QT_SCALE_FACTOR` so that the Windows scale times the factor is 1.5. At 125 % that is 1.2, and every window shot comes out at 2016 × 1134.
 - Check the `window` line in the log. It should read `window 1344x756 at scale 1.5`.
-- `--state` and `--simulator` replace the folders Windows reports, and the tool still works on a disposable copy of the state. With `--state` it skips `27-community-import`, `21-library-deep-root` and `30-library-shared-airports`, because those dialogs are drawn from names written into the tool.
+- `--state` and `--simulator` replace the folders Windows reports, and the tool still works on a disposable copy of the state. With `--state` it draws `27-community-import` from the demo, with the source inside the profile's first destination and the external origin on the same drive, and it skips `21-library-deep-root` and `30-library-shared-airports`, because those dialogs are drawn from names written into the tool.
 - `--edition flightsim-to` builds the updates and the Documents page the way that edition does. `-l en` also formats numbers in English (`8.93 GiB`).
 
 For the listing, take `02-community` from run B and these from run A: `01-library`, `22-simulator-packages`, `03b-presets-plan`, `31-diagnostics-bisection`, `28-documents-outline`, `26-documents`, `09-diagnostics-size`, `19-simulator-startup` and `04-journal`.

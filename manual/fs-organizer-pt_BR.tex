@@ -165,8 +165,15 @@ Se o gerenciamento de inicialização estiver desativado em \ui{Opções}, as
 entradas do preset não são aplicadas, e o programa diz quantas ficaram de fora.
 Os addons são aplicados normalmente.
 
-Se uma entrada que o preset cita não estiver mais no arquivo do simulador, o
-programa a lista. Ele nunca acrescenta entradas de inicialização.
+Se uma entrada que o preset cita não estiver mais no arquivo do simulador, a
+linha dela ganha a marca \ui{fora do arquivo}, e aplicar o preset a deixa de
+fora. \ui{Tirar do preset} remove a linha selecionada.
+
+\ui{Adicionar entrada} acrescenta ao preset uma entrada do arquivo que ele ainda
+não cita, sem mexer nas outras linhas. \ui{Atualizar com as entradas ativadas}
+faz outra coisa: troca a lista inteira pelas entradas ativadas naquele momento.
+
+Aplicar um preset nunca acrescenta entradas ao arquivo do simulador.
 
 \section{A primeira configuração}
 
@@ -396,21 +403,64 @@ Se o addon estiver ativado, ele é desativado antes.
 
 A aba \ui{Simulador} tem dois painéis, e os dois alteram arquivos do próprio
 simulador. Antes de alterar um deles, o programa guarda uma cópia de segurança
-ao lado. Nenhum dos painéis altera nada com o simulador aberto. Os dois começam sem
-gerenciamento, e enquanto for assim o programa não lê nem grava o arquivo:
-clique em \ui{Gerenciar as entradas de inicialização} ou em \ui{Gerenciar a
-lista de pacotes} para ligar cada um.
+ao lado. Nenhum dos painéis altera nada com o simulador aberto.
+
+As entradas de inicialização já começam gerenciadas, e a lista de pacotes
+começa sem gerenciamento. Enquanto um painel não é gerenciado, o programa não lê
+nem grava o arquivo dele. \ui{Gerenciar as entradas de inicialização} e
+\ui{Gerenciar a lista de pacotes} ligam cada um, e o botão de parar de
+gerenciar, na barra do painel, desliga.
 
 \subsection{Entradas de inicialização}
 
 O arquivo \where|EXE.xml| do simulador, ao lado do \where|UserCfg.opt|, lista os
 programas que ele abre junto consigo. O painel \ui{Entradas de inicialização}
-mostra esses programas e deixa você ativar ou desativar cada um sem editar XML.
-O programa só ativa ou desativa entradas que já existem. Ele nunca acrescenta,
-remove nem reordena.
+mostra esses programas e deixa você ativar, desativar, adicionar, editar e
+remover cada um sem editar XML. O programa mexe só na entrada que você pediu. O
+resto do arquivo fica como estava, e as outras entradas não mudam de lugar.
 
 \shot{19-simulator-startup.png}{As entradas de inicialização, com o programa que
-cada uma abre e o interruptor dela.}
+cada uma abre, o interruptor dela e o estado.}
+
+A coluna \ui{Estado} diz se o programa da entrada fica dentro de um addon seu ou
+fora dos seus addons. Quando o programa não existe mais, a entrada ganha a marca
+\ui{o programa não existe}. É o que sobra de um programa desinstalado, e
+costuma ser a entrada que vale remover. Se o programa está num addon desativado
+ou num disco que não está conectado, o estado diz isso em vez da marca, porque
+nesses dois casos ele pode voltar.
+
+\ui{Adicionar} pede o programa, um nome e, se você quiser, a linha de comando. A
+entrada nasce ativada. Adicionar não copia nem move o programa. Se o perfil
+ainda não tem \where|EXE.xml|, o arquivo é criado ao lado do
+\where|UserCfg.opt|.
+
+\shot{19c-startup-add-inside-an-addon.png}{Adicionar um programa que fica dentro
+de um addon da biblioteca. A entrada é gravada com o caminho do link do addon.}
+
+Quando o programa escolhido fica dentro de um addon da sua biblioteca, a entrada
+é gravada com o caminho do link do addon, que é o que os instaladores gravam. A
+janela mostra esse caminho antes de você confirmar. Assim a entrada acompanha o
+addon: desativar o addon avisa sobre ela, como descrito mais abaixo.
+
+\ui{Editar}, um duplo clique na linha ou a tecla F2 abrem a mesma janela com a
+entrada selecionada. Se você trocar o programa, os presets que citam a entrada
+passam a citar o caminho novo.
+
+\ui{Remover}, ou a tecla Delete, tira a entrada do arquivo. Desativar já impede
+o simulador de abrir o programa, então remover é para a entrada que você não
+quer mais ver na lista.
+
+Toda entrada removida fica guardada em \ui{Removidas}, com o nome, o caminho e a
+linha de comando. \ui{Repor entrada} a devolve ao arquivo como era.
+\ui{Esquecer} a apaga de vez, e isso não se desfaz. Uma edição que troca o
+programa também guarda ali a entrada como era antes.
+
+\shot{19b-simulator-startup-removed.png}{As entradas removidas, que podem ser
+repostas ou esquecidas.}
+
+O botão \ui{Desfazer}, ou Ctrl+Z, volta atrás a última adição, edição ou remoção
+feita nesse painel. Ele vale enquanto o programa estiver aberto. Depois disso, o
+caminho de volta de uma remoção é a lista \ui{Removidas}.
 
 Quando você desativa um addon que tem uma entrada de inicialização, o programa
 avisa: sem isso, o simulador seguiria tentando abrir um programa que não está

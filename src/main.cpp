@@ -20,6 +20,7 @@
 #include "application/SetupService.h"
 #include "application/DocumentService.h"
 #include "application/SizeService.h"
+#include "application/StartupEditor.h"
 #include "application/StartupService.h"
 #include "edition/Edition.h"
 #include "infrastructure/bisection/JsonBisectionStore.h"
@@ -50,6 +51,7 @@
 #include "infrastructure/sim/LoadingReportLocations.h"
 #include "infrastructure/sim/ProfileLoadingReport.h"
 #include "infrastructure/sim/ProfilePackages.h"
+#include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
@@ -292,16 +294,18 @@ int main(int argc, char* argv[])
     const LinkType storedLinkType = stored.linkType;
     const Verification storedVerification = stored.verification;
 
-    std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries{{}};
     StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
+
+    FilePresetRepository presetRepository(PresetsFolderPath());
+    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, log);
 
     std::vector<LoadingReportLocation> loadingReports = LoadingReportLocations(userCfgLocations, filesystemProbe);
     ProfileLoadingReport loadingReport(filesystemProbe, {});
 
     std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
     ContentXmlPackageList packageList{{}};
-    CoverageService coverageService(packageList, processProbe, stored.managePackageList);
+    CoverageService coverageService(packageList, processProbe, log, stored.managePackageList);
 
     const BglSceneryParser sceneryParser;
     JsonSceneryCache sceneryCache(SceneryCacheFilePath());
@@ -394,62 +398,53 @@ int main(int argc, char* argv[])
 
     auto* diagnosticsPage = new DiagnosticsPage(diagnosticsViewModel, bisectionViewModel);
 
-    StartupViewModel startupViewModel(startupService, session, clock);
+    StartupViewModel startupViewModel(startupService, startupEditor, session, clock);
     auto* startupPage = new StartupPage(startupViewModel);
     auto* packageListPage = new PackageListPage(coverageViewModel);
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    QObject::connect(
-        &notifier, &SessionNotifier::ScanFinished, startupPage,
-        [startupPage, &session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupFiles, &startupViewModel,
-         &packageList, &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
-        {
-            QTimer::singleShot(0, startupPage,
-                               [&session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupFiles,
-                                &startupViewModel, &packageList, &contentLists, &coverageViewModel, &loadingReport,
-                                &loadingReports]
-                               {
-                                   const SimulatorVariant variant = session.Profile().variant;
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
+                     [startupPage, &session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupViewModel,
+                      &packageList, &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
+                     {
+                         QTimer::singleShot(
+                             0, startupPage,
+                             [&session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupViewModel,
+                              &packageList, &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
+                             {
+                                 const SimulatorVariant variant = session.Profile().variant;
 
-                                   startupEntries.Use(PickLocatingAgainWhenMissing(
-                                       startupFiles,
-                                       [&userCfgLocations, &filesystemProbe]
-                                       {
-                                           return StartupFileLocations(userCfgLocations, filesystemProbe);
-                                       },
-                                       [variant](const std::vector<StartupFileLocation>& locations)
-                                       {
-                                           return StartupFileOf(locations, variant);
-                                       }));
-                                   loadingReport.Use(PickLocatingAgainWhenMissing(
-                                       loadingReports,
-                                       [&userCfgLocations, &filesystemProbe]
-                                       {
-                                           return LoadingReportLocations(userCfgLocations, filesystemProbe);
-                                       },
-                                       [variant](const std::vector<LoadingReportLocation>& locations)
-                                       {
-                                           return LoadingReportOf(locations, variant);
-                                       }));
-                                   startupViewModel.Show();
-                                   session.RefreshStartupEntries();
+                                 startupEntries.Use(StartupFileOrItsPlace(userCfgLocations, filesystemProbe, variant));
+                                 startupEntries.KeepRemovedEntriesIn(
+                                     RemovedStartupEntriesFileOf(RemovedStartupEntriesFolderPath(), variant));
+                                 loadingReport.Use(PickLocatingAgainWhenMissing(
+                                     loadingReports,
+                                     [&userCfgLocations, &filesystemProbe]
+                                     {
+                                         return LoadingReportLocations(userCfgLocations, filesystemProbe);
+                                     },
+                                     [variant](const std::vector<LoadingReportLocation>& locations)
+                                     {
+                                         return LoadingReportOf(locations, variant);
+                                     }));
+                                 startupViewModel.Show();
+                                 session.RefreshStartupEntries();
 
-                                   const std::optional<ChosenContentList> chosen = PickLocatingAgainWhenMissing(
-                                       contentLists,
-                                       [&userCfgLocations, &filesystemProbe]
-                                       {
-                                           return ContentListLocations(userCfgLocations, filesystemProbe);
-                                       },
-                                       [variant](const std::vector<ContentListLocation>& locations)
-                                       {
-                                           return ChooseContentList(locations, variant);
-                                       });
-                                   packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
-                                   coverageViewModel.Show();
-                               });
-        });
+                                 const std::optional<ChosenContentList> chosen = PickLocatingAgainWhenMissing(
+                                     contentLists,
+                                     [&userCfgLocations, &filesystemProbe]
+                                     {
+                                         return ContentListLocations(userCfgLocations, filesystemProbe);
+                                     },
+                                     [variant](const std::vector<ContentListLocation>& locations)
+                                     {
+                                         return ChooseContentList(locations, variant);
+                                     });
+                                 packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+                                 coverageViewModel.Show();
+                             });
+                     });
 
-    FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService, startupService);
     PresetViewModel presetViewModel(session, presetService, profileService, runner);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);
@@ -727,10 +722,14 @@ int main(int argc, char* argv[])
     QObject::connect(packageListPage, &PackageListPage::StatusChanged, &window, &MainWindow::ShowStatus);
 
     QObject::connect(&communityViewModel, &CommunityViewModel::BreakdownChanged, &window,
-                     [&window](const AttentionBreakdown& breakdown)
+                     [&window, page, communityPage](const AttentionBreakdown& breakdown)
                      {
                          window.ShowTriage(breakdown);
+                         page->ShowFoldersOutside(breakdown.unmanaged);
+                         communityPage->ShowFoldersOutside(breakdown.unmanaged);
                      });
+    QObject::connect(page, &AddonTreePage::ImportRequested, &window, &MainWindow::ImportRequested);
+    QObject::connect(communityPage, &CommunityPage::ImportRequested, &window, &MainWindow::ImportRequested);
     QObject::connect(&window, &MainWindow::RepairRequested, communityPage,
                      [communityButton, communityPage]
                      {

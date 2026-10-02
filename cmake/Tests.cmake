@@ -215,6 +215,14 @@ fsorg_add_qt_test(fsorg-in-memory-file-system-tests in-memory-file-system
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h)
 
+fsorg_add_qt_test(fsorg-fake-startup-entries-tests fake-startup-entries
+        tests/doubles/tst_fake_startup_entries.cpp
+        tests/doubles/FakeStartupEntries.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-fake-startup-entries-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-journal-entries-tests journal-entries
         tests/domain/journal/tst_journal_entries.cpp
         tests/support/EnumPrinting.h
@@ -287,6 +295,8 @@ target_link_libraries(fsorg-size-service-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-coverage-service-tests coverage-service
         tests/application/tst_coverage_service.cpp
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeOperationJournal.h
         tests/doubles/FakePackageList.h
         tests/doubles/FakeProcessProbe.h
         tests/support/EnumPrinting.h)
@@ -338,6 +348,21 @@ fsorg_add_qt_test(fsorg-startup-service-tests startup-service
         tests/support/PathPrinting.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-startup-service-tests PRIVATE fsorg-application)
+
+fsorg_add_qt_test(fsorg-startup-editor-tests startup-editor
+        tests/application/tst_startup_editor.cpp
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeFilesystemProbe.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
+        tests/doubles/FakeProcessProbe.h
+        tests/doubles/FakeStartupEntries.h
+        tests/doubles/InMemoryFileSystem.h
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-startup-editor-tests PRIVATE fsorg-application)
 
 fsorg_add_qt_test(fsorg-legacy-config-importer-tests legacy-config-importer
         tests/application/tst_legacy_config_importer.cpp
@@ -950,6 +975,7 @@ fsorg_add_qt_test(fsorg-startup-view-model-tests startup-view-model
         tests/doubles/FakeLibraryIdGenerator.h
         tests/doubles/FakeLinkService.h
         tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
         tests/doubles/FakeProcessProbe.h
         tests/doubles/FakeSettingsRepository.h
         tests/doubles/FakeStartupEntries.h
@@ -1066,6 +1092,7 @@ target_compile_definitions(fsorg-content-xml-document-tests PRIVATE
 fsorg_add_qt_test(fsorg-exe-xml-document-tests exe-xml-document
         tests/infrastructure/sim/tst_exe_xml_document.cpp
         tests/support/PathPrinting.h
+        tests/support/Utf16Text.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-exe-xml-document-tests PRIVATE fsorg-infrastructure)
 target_compile_definitions(fsorg-exe-xml-document-tests PRIVATE
@@ -1090,9 +1117,25 @@ fsorg_add_qt_test(fsorg-startup-on-real-disk-tests startup-on-real-disk
         tests/support/PathPrinting.h
         tests/support/StdFilesystemProbe.h
         tests/support/TempFiles.h
+        tests/support/Utf16Text.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-startup-on-real-disk-tests PRIVATE fsorg-infrastructure)
 target_compile_definitions(fsorg-startup-on-real-disk-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
+fsorg_add_qt_test(fsorg-startup-editor-on-real-disk-tests startup-editor-on-real-disk
+        tests/infrastructure/sim/tst_startup_editor_on_real_disk.cpp
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
+        tests/doubles/FakeProcessProbe.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        tests/support/StdFilesystemProbe.h
+        tests/support/TempFiles.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-startup-editor-on-real-disk-tests PRIVATE fsorg-infrastructure)
+target_compile_definitions(fsorg-startup-editor-on-real-disk-tests PRIVATE
         FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
 
 fsorg_add_qt_test(fsorg-startup-file-locations-tests startup-file-locations
@@ -1259,6 +1302,7 @@ if (WIN32)
     fsorg_add_qt_test(fsorg-startup-page-tests startup-page
             tests/view/tst_startup_page.cpp
             tests/support/ButtonLookup.h
+            tests/support/CatalogueBesideTheBuild.h
         tests/support/PageFloor.h
             tests/doubles/StartupOverFakes.h
             assets/resources.qrc
@@ -1269,6 +1313,7 @@ if (WIN32)
             tests/doubles/FakeLibraryIdGenerator.h
             tests/doubles/FakeLinkService.h
             tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakePresetRepository.h
             tests/doubles/FakeProcessProbe.h
             tests/doubles/FakeSettingsRepository.h
             tests/doubles/FakeStartupEntries.h
@@ -1278,6 +1323,13 @@ if (WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-startup-page-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-startup-page-tests startup-page)
+
+    fsorg_add_qt_test(fsorg-startup-draft-dialog-tests startup-draft-dialog
+            tests/view/tst_startup_draft_dialog.cpp
+            tests/support/ButtonLookup.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-startup-draft-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-startup-draft-dialog-tests startup-draft-dialog)
 
 
     fsorg_add_qt_test(fsorg-diagnostics-page-tests diagnostics-page
@@ -1304,11 +1356,15 @@ if (WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-diagnostics-page-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-diagnostics-page-tests diagnostics-page)
+    add_dependencies(fsorg-diagnostics-page-tests release_translations)
 
 
     fsorg_add_qt_test(fsorg-presets-page-tests presets-page
             tests/view/tst_presets_page.cpp
+        tests/support/InstalledCatalogue.h
         tests/support/PageFloor.h
+        tests/support/PaintedCells.h
+        tests/support/UnannouncedBoxes.h
             tests/doubles/StartupOverFakes.h
             assets/resources.qrc
             tests/doubles/FakeCatalogScanner.h
@@ -1491,6 +1547,7 @@ if (WIN32)
 
     fsorg_add_qt_test(fsorg-community-page-tests community-page
             tests/view/tst_community_page.cpp
+        tests/support/InstalledCatalogue.h
         tests/support/PageFloor.h
         tests/support/PhysicalRows.h
             tests/doubles/StartupOverFakes.h
@@ -1510,6 +1567,7 @@ if (WIN32)
             assets/resources.qrc)
     target_link_libraries(fsorg-community-page-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-community-page-tests community-page)
+    add_dependencies(fsorg-community-page-tests release_translations)
 
 
     fsorg_add_qt_test(fsorg-windows-process-probe-tests windows-process-probe
@@ -1552,6 +1610,7 @@ configure_fsorg_gui_test(fsorg-dependency-section-tests dependency-section)
 
 fsorg_add_qt_test(fsorg-row-delegate-tests row-delegate
         tests/view/delegates/tst_row_delegate.cpp
+        tests/support/PaintedCells.h
         assets/resources.qrc)
 target_link_libraries(fsorg-row-delegate-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-row-delegate-tests row-delegate)
@@ -1565,6 +1624,7 @@ configure_fsorg_gui_test(fsorg-paint-timing-tests paint-timing)
 fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/view/tst_addon_tree_page.cpp
         tests/support/ButtonLookup.h
+        tests/support/InstalledCatalogue.h
         tests/support/PageFloor.h
         tests/support/PhysicalRows.h
         tests/doubles/StartupOverFakes.h
@@ -1589,6 +1649,7 @@ fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-addon-tree-page-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-addon-tree-page-tests addon-tree-page)
+add_dependencies(fsorg-addon-tree-page-tests release_translations)
 
 fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/view/tst_documents_page.cpp
@@ -1693,6 +1754,7 @@ configure_fsorg_gui_test(fsorg-shared-airports-dialog-tests shared-airports-dial
 fsorg_add_qt_test(fsorg-package-list-page-tests package-list-page
         tests/view/tst_package_list_page.cpp
         tests/support/ButtonLookup.h
+        tests/support/CatalogueBesideTheBuild.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h

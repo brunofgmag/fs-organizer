@@ -11,6 +11,7 @@
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
@@ -49,6 +50,7 @@ LoadPanel::LoadPanel(QWidget* parent) : QWidget(parent)
     modules_->header()->setSectionResizeMode(2, QHeaderView::Stretch);
     modules_->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     DressTheHeaderOf(modules_->header());
+    CapTheScrollBarOf(modules_, modules_->header());
     modules_->setItemDelegate(new RowDelegate(modules_));
 
     body_ = new QStackedWidget(this);

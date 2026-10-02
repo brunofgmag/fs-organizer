@@ -11,6 +11,7 @@
 #include <numeric>
 
 #include "tests/support/CatalogueBesideTheBuild.h"
+#include "tests/support/ScrollBarCapRule.h"
 #include "view/library/SuggestionDialog.h"
 #include "view/theme/ModernistTheme.h"
 
@@ -24,6 +25,7 @@ namespace
         static void TheTableKeepsEveryCellOfASizedColumnWholeAndNeverScrollsSideways_data();
         static void TheTableKeepsEveryCellOfASizedColumnWholeAndNeverScrollsSideways();
         static void ADialogTooNarrowForItsColumnsScrollsAndTheMeasurementSeesIt();
+        static void TheScrollBarIsCappedAndTheCapFollowsTheBar();
     };
 }
 
@@ -232,6 +234,17 @@ void SuggestionDialogTest::ADialogTooNarrowForItsColumnsScrollsAndTheMeasurement
     QVERIFY(table != nullptr);
     QVERIFY2(table->horizontalScrollBar()->isVisible(), qPrintable(TheColumnsOf(*table)));
     QVERIFY(WhatTheSectionsAddUpTo(*table) > table->viewport()->width());
+}
+
+void SuggestionDialogTest::TheScrollBarIsCappedAndTheCapFollowsTheBar()
+{
+    SuggestionDialog dialog(Realistic());
+    Settle(dialog);
+
+    auto* table = dialog.findChild<QTableView*>();
+
+    QVERIFY(table != nullptr);
+    TheCapRidesWithTheScrollBar(table, table->horizontalHeader());
 }
 
 QTEST_MAIN(SuggestionDialogTest)
