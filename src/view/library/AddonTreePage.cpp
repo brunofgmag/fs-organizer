@@ -44,6 +44,7 @@
 #include "view/panels/ContextPanel.h"
 #include "view/panels/DependencySection.h"
 #include "view/panels/EmptyState.h"
+#include "view/panels/FoldersOutsideNotice.h"
 #include "view/panels/ModelRowDetail.h"
 #include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
@@ -58,7 +59,6 @@ namespace
     constexpr std::size_t kAskAboveThisMany = 10;
     constexpr int kAddonColumnWidth = 420;
     constexpr int kVersionColumnWidth = 92;
-    constexpr int kFilterGroupGap = 16;
     constexpr int kSearchMinimum = 120;
     constexpr int kSearchMaximum = 220;
     constexpr std::array kStates{AddonStateFilter::All, AddonStateFilter::Enabled, AddonStateFilter::Disabled};
@@ -359,6 +359,11 @@ void AddonTreePage::RetranslateUi() const
     inviteAction_->setText(tr("Add library…"));
 }
 
+void AddonTreePage::ShowFoldersOutside(const std::size_t folders) const
+{
+    outside_->ShowFolders(folders);
+}
+
 QWidget* AddonTreePage::CreateActions()
 {
     auto* bar = new QWidget(this);
@@ -375,6 +380,8 @@ QWidget* AddonTreePage::CreateActions()
     disable_ = new QPushButton(bar);
     undo_ = new QPushButton(bar);
     undo_->setEnabled(false);
+
+    outside_ = new FoldersOutsideNotice(bar);
 
     QWidget* stateFilter = CreateStateFilter(bar);
 
@@ -399,6 +406,7 @@ QWidget* AddonTreePage::CreateActions()
                 ToggleSelection(false);
             });
     connect(undo_, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::UndoLastBatch);
+    connect(outside_, &FoldersOutsideNotice::ImportRequested, this, &AddonTreePage::ImportRequested);
     connect(rescan_, &QPushButton::clicked, &viewModel_, &AddonTreeViewModel::ShowActiveProfile);
     connect(search_, &QLineEdit::textChanged, filter_, &AddonTreeFilterModel::Search);
     connect(hideEmpty_, &QCheckBox::toggled, filter_, &AddonTreeFilterModel::HideEmptyCategories);
@@ -411,6 +419,7 @@ QWidget* AddonTreePage::CreateActions()
     layout->addWidget(disable_);
     layout->addWidget(undo_);
     layout->AddSpring();
+    layout->AddWidgetThatHoldsTheUpperLine(outside_);
     layout->AddWidgetThatStepsDown(stateFilter);
     layout->AddSpringOnTheLowerLine();
     layout->AddWidgetThatStepsDown(hideEmpty_);

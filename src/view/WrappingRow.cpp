@@ -8,14 +8,15 @@
 
 #include <QtWidgets/QWidget>
 
+#include "view/theme/ModernistMetrics.h"
+
 namespace
 {
     constexpr int kDefaultGap = 8;
-    constexpr int kLeastSpring = 16;
 
     QSpacerItem* NewSpring()
     {
-        return new QSpacerItem(kLeastSpring, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        return new QSpacerItem(kSpringAtLeast, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
     }
 
     bool ItTakesTheSlack(const QLayoutItem* item)
@@ -26,6 +27,11 @@ namespace
     int HowMuchMoreItWillTake(const QLayoutItem* item)
     {
         return std::max(0, item->maximumSize().width() - item->sizeHint().width());
+    }
+
+    bool ItIsHidden(const QLayoutItem* item)
+    {
+        return item->widget() != nullptr && item->isEmpty();
     }
 
     int TallestIn(const QList<QLayoutItem*>& row)
@@ -70,6 +76,12 @@ void WrappingRow::AddSpringOnTheLowerLine()
     onlyOnTheLowerLine_.insert(items_.last());
 }
 
+void WrappingRow::AddWidgetThatHoldsTheUpperLine(QWidget* widget)
+{
+    addWidget(widget);
+    holdingTheUpperLine_ = items_.last();
+}
+
 void WrappingRow::addItem(QLayoutItem* item)
 {
     items_.append(item);
@@ -95,6 +107,10 @@ QLayoutItem* WrappingRow::takeAt(const int index)
     QLayoutItem* taken = items_.takeAt(index);
     steppingDown_.remove(taken);
     onlyOnTheLowerLine_.remove(taken);
+    if (holdingTheUpperLine_ == taken)
+    {
+        holdingTheUpperLine_ = nullptr;
+    }
 
     return taken;
 }
@@ -153,7 +169,7 @@ QSize WrappingRow::sizeHint() const
     const QMargins around = contentsMargins();
 
     return {WidthInOneLine(ItemsOnOneLine()) + around.left() + around.right(),
-            TallestIn(items_) + around.top() + around.bottom()};
+            TallestIn(ItemsPresent()) + around.top() + around.bottom()};
 }
 
 QSize WrappingRow::minimumSize() const
@@ -185,16 +201,38 @@ int WrappingRow::WidthInOneLine(const QList<QLayoutItem*>& items) const
     return width;
 }
 
+QList<QLayoutItem*> WrappingRow::ItemsPresent() const
+{
+    QList<QLayoutItem*> present;
+    std::ranges::copy_if(items_, std::back_inserter(present),
+                         [](const QLayoutItem* item)
+                         {
+                             return !ItIsHidden(item);
+                         });
+
+    return present;
+}
+
 QList<QLayoutItem*> WrappingRow::ItemsOnOneLine() const
 {
     QList<QLayoutItem*> kept;
-    std::ranges::copy_if(items_, std::back_inserter(kept),
+    std::ranges::copy_if(ItemsPresent(), std::back_inserter(kept),
                          [this](const QLayoutItem* item)
                          {
                              return !onlyOnTheLowerLine_.contains(item);
                          });
 
     return kept;
+}
+
+bool WrappingRow::TheUpperLineIsHeld() const
+{
+    return holdingTheUpperLine_ != nullptr && !ItIsHidden(holdingTheUpperLine_);
+}
+
+bool WrappingRow::TheRestMustStepDown(const QList<QLayoutItem*>& oneLine, const int width) const
+{
+    return !steppingDown_.isEmpty() && (TheUpperLineIsHeld() || WidthInOneLine(oneLine) > width);
 }
 
 QList<QList<QLayoutItem*>> WrappingRow::WrapInOrder(const QList<QLayoutItem*>& items, const int width) const
@@ -233,14 +271,14 @@ QList<QList<QLayoutItem*>> WrappingRow::WrapInOrder(const QList<QLayoutItem*>& i
 QList<QList<QLayoutItem*>> WrappingRow::LinesThatFit(const int width) const
 {
     const QList<QLayoutItem*> oneLine = ItemsOnOneLine();
-    if (steppingDown_.isEmpty() || WidthInOneLine(oneLine) <= width)
+    if (!TheRestMustStepDown(oneLine, width))
     {
         return WrapInOrder(oneLine, width);
     }
 
     QList<QLayoutItem*> staying;
     QList<QLayoutItem*> down;
-    for (QLayoutItem* item : items_)
+    for (QLayoutItem* item : ItemsPresent())
     {
         if (steppingDown_.contains(item))
         {

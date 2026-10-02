@@ -8,6 +8,7 @@
 
 #include "view/TableColumns.h"
 #include "view/delegates/RowDelegate.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/RowTagRoles.h"
@@ -35,6 +36,7 @@ OmittedDialog::OmittedDialog(const QList<OmittedAddon>& omitted, QWidget* parent
     table->verticalHeader()->setVisible(false);
     DressTheHeaderOf(table->horizontalHeader());
     LetTheColumnsBeDraggedAndStillFillTheTable(table, 0);
+    CapTheScrollBarOf(table, table->horizontalHeader());
 
     for (int row = 0; row < omitted.size(); ++row)
     {

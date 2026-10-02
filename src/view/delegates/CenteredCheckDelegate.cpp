@@ -7,10 +7,13 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QStyle>
 
+#include "view/delegates/PositionInTheRow.h"
+
 void CenteredCheckDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     QStyleOptionViewItem cell = option;
     initStyleOption(&cell, index);
+    TellWhereTheCellSitsInTheRow(cell, index);
 
     QStyle* style = cell.widget != nullptr ? cell.widget->style() : QApplication::style();
 

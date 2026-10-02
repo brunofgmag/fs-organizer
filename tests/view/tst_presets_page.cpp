@@ -8,6 +8,7 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QRadioButton>
@@ -37,12 +38,17 @@
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "view/PresetsPage.h"
+#include "view/presets/PresetStartupPanel.h"
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/PresetViewModel.h"
 #include "viewmodel/RowTagRoles.h"
 #include "viewmodel/SessionNotifier.h"
-#include "tests/support/CatalogueBesideTheBuild.h"
+#include "viewmodel/TagTone.h"
+#include "tests/support/InstalledCatalogue.h"
 #include "tests/support/PageFloor.h"
+#include "tests/support/PaintedCells.h"
+#include "tests/support/ScrollBarCapRule.h"
+#include "tests/support/UnannouncedBoxes.h"
 
 namespace
 {
@@ -51,12 +57,16 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ThePageFitsTheNarrowestWindow_data();
         static void ThePageFitsTheNarrowestWindow();
         static void TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow_data();
         static void TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow();
         static void TheTwoTablesKeepEveryNameWholeAndNeverScrollWhenAPresetMatches_data();
         static void TheTwoTablesKeepEveryNameWholeAndNeverScrollWhenAPresetMatches();
         static void TheColumnsKeepTheirWidthWhenAPresetBecomesSatisfied();
+        static void TheReturnRowShowsAThreeDigitCountWholeAndTheTwoTablesShareTheirColumns_data();
+        static void TheReturnRowShowsAThreeDigitCountWholeAndTheTwoTablesShareTheirColumns();
+        static void ARefusalTheTestAnnouncesOpensItsBoxWithTheExplanation();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void SelectingAPresetFillsThePanelPreview();
         static void ApplyingFromThePanelGoesThroughTheViewModel();
@@ -81,6 +91,18 @@ namespace
         static void ChoosingTheReturnPresetSticksAndItsEntriesAreNotEditable();
         static void TheStartupTabEditsTheStartupEntriesOfAGoverningPreset();
         static void ATargetTooLongForItsColumnLosesTheMiddleAndKeepsTheFileName();
+        static void ARowWhosePathTheFileLacksWearsTheChipAtTheEndOfItsTargetCellInEveryRow();
+        static void TheChipSaysWhatItMeansInATooltipThatKeepsTheWholePath();
+        static void TheAddMenuOffersOnlyWhatThePresetLacksAndLeavesTheOtherRowsAlone();
+        static void TheAddButtonIsOffWithItsReasonWhenThePresetNamesEveryEntryOfTheFile();
+        static void TheScrollBarOfTheThreeTablesIsCappedAndTheCapFollowsTheBar();
+        static void TheAddButtonIsOffWithoutAReasonWhenTheFileHasNoEntryAtAll();
+        static void TakingARowOutByTheButtonLeavesTheOtherRowsAlone();
+        static void TakingARowOutByTheContextMenuLeavesTheOtherRowsAlone();
+        static void AReadOnlyPresetOffersNoGestureToEditItsStartupEntries();
+        static void TheGesturesFitBesideTheUpdateButtonAtTheNarrowestWindow_data();
+        static void TheGesturesFitBesideTheUpdateButtonAtTheNarrowestWindow();
+        static void ASelectedRowIsOutlinedThroughTheLastColumnOfBothTablesThatCentreTheCheck();
         static void AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnceWhenShown();
         static void AHiddenPageReadsNothingOnALanguageChangeAndReadsOnceWhenShown();
         static void AShownPageReadsOnceWhenTheSessionRefreshesAndFinishesAScanInTheSameTurn();
@@ -106,12 +128,26 @@ namespace
         return node;
     }
 
-    TreeNode LibraryTree()
+    std::filesystem::path TheAddonNumber(const int number)
+    {
+        if (number == 0)
+        {
+            return kAddon;
+        }
+
+        return std::filesystem::path(kAircrafts) / QStringLiteral("addon-%1").arg(number).toStdString();
+    }
+
+    TreeNode LibraryTree(const int addons)
     {
         TreeNode aircrafts;
         aircrafts.kind = TreeNodeKind::Category;
         aircrafts.path = kAircrafts;
-        aircrafts.children = {AddonNode(kAddon)};
+
+        for (int number = 0; number < addons; ++number)
+        {
+            aircrafts.children.push_back(AddonNode(TheAddonNumber(number)));
+        }
 
         TreeNode library;
         library.kind = TreeNodeKind::Library;
@@ -282,14 +318,21 @@ namespace
 
     struct Fixture
     {
-        Fixture()
+        explicit Fixture(const int addons = 1)
         {
             fileSystem.AddDirectory(kCommunity);
             fileSystem.AddDirectory(kLibrary);
             fileSystem.AddDirectory(kAircrafts);
-            fileSystem.AddDirectory(kAddon);
-            fileSystem.AddLink(std::filesystem::path(kCommunity) / "aerosoft-crj", kAddon);
-            catalog.SetTree(kLibrary, LibraryTree());
+
+            for (int number = 0; number < addons; ++number)
+            {
+                const std::filesystem::path addon = TheAddonNumber(number);
+
+                fileSystem.AddDirectory(addon);
+                fileSystem.AddLink(std::filesystem::path(kCommunity) / addon.filename(), addon);
+            }
+
+            catalog.SetTree(kLibrary, LibraryTree(addons));
 
             session.ShowActiveProfile();
 
@@ -322,6 +365,7 @@ namespace
         FakePresetRepository presets;
         PresetService presetService{presets, service, startup.service};
         PresetViewModel viewModel{session, presetService, service, runner};
+        UnannouncedBoxes boxes;
     };
 }
 
@@ -1049,12 +1093,521 @@ void PresetsPageTest::ATargetTooLongForItsColumnLosesTheMiddleAndKeepsTheFileNam
     QVERIFY2(shown.endsWith(QStringLiteral("BrightwaterBridge.exe")), qPrintable(shown));
 }
 
+namespace
+{
+    constexpr auto kNoCatalogue = "app_pt_BR.qm is not beside the build: build the release_translations target";
+}
+
+void PresetsPageTest::ThePageFitsTheNarrowestWindow_data()
+{
+    LanguageChoices();
+}
+
 void PresetsPageTest::ThePageFitsTheNarrowestWindow()
 {
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language), kNoCatalogue);
+    const Installed installed(catalogue);
+
+    ApplyModernistTheme(*qApp);
+
     Fixture f;
     PresetsPage page(f.viewModel, f.notifier);
 
     ItFitsTheNarrowestWindow(page, "The presets page");
+}
+
+namespace
+{
+    const std::filesystem::path kFenixPath = "D:/MSFS 2024/Aircrafts/aerosoft-crj/launcher.exe";
+    const std::filesystem::path kCouatlPath = "C:/Program Files (x86)/Addon Manager/couatl64/couatl64_boot.exe";
+    const std::filesystem::path kRaasPath = "C:/Users/bruno/AppData/Local/LAND3.vRAAS/current/vRAAS.exe";
+
+    void CarryTheStartupFile(Fixture& f)
+    {
+        f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kFenixPath, .enabled = true});
+        f.startup.entries.Carry(StartupEntry{.label = "Couatl", .path = kCouatlPath, .enabled = false});
+        f.startup.entries.Carry(StartupEntry{.label = "RAAS", .path = kRaasPath, .enabled = true});
+        f.session.RefreshEntries();
+    }
+
+    void StoreAGoverningPreset(Fixture& f, const std::vector<std::filesystem::path>& named)
+    {
+        std::optional<Preset> stored = f.viewModel.Load(QStringLiteral("Voo de linha"));
+
+        QVERIFY(stored.has_value());
+
+        stored->governsStartup = true;
+        stored->startupEntries.clear();
+
+        for (const std::filesystem::path& path : named)
+        {
+            stored->startupEntries.push_back(PresetStartupEntry{.path = path, .action = PresetAction::Enable});
+        }
+
+        QVERIFY(f.presets.Save(kProfileId, *stored));
+    }
+
+    void ShowTheStartupTab(PresetsPage& page)
+    {
+        page.findChild<QPushButton*>(QStringLiteral("PresetStartupTab"))->click();
+        SettleTheQueuedReload();
+    }
+
+    QTableWidget* StartupEntriesOf(const QWidget& parent)
+    {
+        return parent.findChild<QTableWidget*>(QStringLiteral("PresetStartupEntries"));
+    }
+
+    QPushButton* AddButtonOf(const QWidget& parent)
+    {
+        return parent.findChild<QPushButton*>(QStringLiteral("PresetAddStartupEntry"));
+    }
+
+    QPushButton* TakeOutButtonOf(const QWidget& parent)
+    {
+        return parent.findChild<QPushButton*>(QStringLiteral("PresetTakeStartupEntryOut"));
+    }
+
+    QMenu* AddMenuOf(const QWidget& parent)
+    {
+        return parent.findChild<QMenu*>(QStringLiteral("PresetAddStartupMenu"));
+    }
+
+    QMenu* RowMenuOf(const QWidget& parent)
+    {
+        return parent.findChild<QMenu*>(QStringLiteral("PresetStartupRowMenu"));
+    }
+
+    QStringList LabelsOfTheActions(const QMenu& menu)
+    {
+        QStringList labels;
+
+        for (const QAction* action : menu.actions())
+        {
+            labels << action->text();
+        }
+
+        return labels;
+    }
+
+    QStringList PathsOfTheRows(const std::optional<Preset>& preset)
+    {
+        if (!preset.has_value())
+        {
+            return {QStringLiteral("the preset is gone")};
+        }
+
+        QStringList paths;
+
+        for (const PresetStartupEntry& entry : preset->startupEntries)
+        {
+            paths << QString::fromStdString(entry.path.generic_string());
+        }
+
+        return paths;
+    }
+
+    QStringList GenericPathsOf(const std::vector<std::filesystem::path>& named)
+    {
+        QStringList paths;
+
+        for (const std::filesystem::path& path : named)
+        {
+            paths << QString::fromStdString(path.generic_string());
+        }
+
+        return paths;
+    }
+
+    PresetStartupRow StartupRowOf(const QString& label, const QString& target, const bool hasNoEntry)
+    {
+        return PresetStartupRow{.label = label,
+                                .target = target,
+                                .path = std::filesystem::path(target.toStdWString()),
+                                .action = PresetAction::Enable,
+                                .hasNoEntry = hasNoEntry};
+    }
+
+    PresetStartupCandidate CandidateOf(const QString& label, const std::filesystem::path& path)
+    {
+        return PresetStartupCandidate{.label = label, .path = path};
+    }
+}
+
+void PresetsPageTest::ARowWhosePathTheFileLacksWearsTheChipAtTheEndOfItsTargetCellInEveryRow()
+{
+    ApplyModernistTheme(*qApp);
+
+    PresetStartupPanel panel;
+    panel.resize(760, 420);
+    panel.Show(
+        {.holdsOne = true,
+         .governs = true,
+         .readOnly = false,
+         .rows = {StartupRowOf(QStringLiteral("Fenix"), QStringLiteral(R"(E:\Fenix\launcher.exe)"), false),
+                  StartupRowOf(QStringLiteral("Manager"), QStringLiteral(R"(E:\m.exe)"), true),
+                  StartupRowOf(QStringLiteral("Couatl"),
+                               QStringLiteral(R"(C:\Program Files (x86)\Addon Manager\couatl64\couatl.exe)"), true)},
+         .candidates = {}});
+    ShowAndSettle(panel);
+
+    const QTableWidget* table = StartupEntriesOf(panel);
+    QVERIFY(table != nullptr);
+
+    constexpr int kTargetColumn = 1;
+
+    QVERIFY(table->item(0, kTargetColumn)->data(TagTextRole).toString().isEmpty());
+    QCOMPARE(table->item(1, kTargetColumn)->data(TagTextRole).toString(), QStringLiteral("not in the file"));
+    QCOMPARE(table->item(2, kTargetColumn)->data(TagTextRole).toString(), QStringLiteral("not in the file"));
+    QCOMPARE(table->item(1, kTargetColumn)->data(TagToneRole).toInt(), static_cast<int>(TagTone::Outlined));
+
+    const QImage painted = TheViewportAsPainted(*table);
+    const QRect shortRow = table->visualRect(table->model()->index(1, kTargetColumn));
+    const QRect longRow = table->visualRect(table->model()->index(2, kTargetColumn));
+
+    const int shortEnds = WhereTheInkEnds(painted, shortRow);
+    const int longEnds = WhereTheInkEnds(painted, longRow);
+
+    QVERIFY(shortEnds > shortRow.left());
+    QVERIFY2(shortEnds == longEnds,
+             qPrintable(QStringLiteral("the chip ends at %1 on the short path and at %2 on the "
+                                       "long one, so they do not share a column")
+                            .arg(shortEnds)
+                            .arg(longEnds)));
+    QVERIFY2(shortRow.right() - shortEnds <= kBreathingRoom + 1,
+             qPrintable(QStringLiteral("the chip ends %1 px short of its cell").arg(shortRow.right() - shortEnds)));
+}
+
+void PresetsPageTest::TheChipSaysWhatItMeansInATooltipThatKeepsTheWholePath()
+{
+    PresetStartupPanel panel;
+    const QString lacking = QStringLiteral(R"(E:\Community\p42\manager.exe)");
+    panel.Show({.holdsOne = true,
+                .governs = true,
+                .readOnly = false,
+                .rows = {StartupRowOf(QStringLiteral("Fenix"), QStringLiteral(R"(E:\Fenix\launcher.exe)"), false),
+                         StartupRowOf(QStringLiteral("Manager"), lacking, true)},
+                .candidates = {}});
+
+    const QTableWidget* table = StartupEntriesOf(panel);
+
+    QVERIFY(table != nullptr);
+    QVERIFY(table->item(0, 1)->toolTip().isEmpty());
+
+    const QString said = table->item(1, 1)->toolTip();
+
+    QVERIFY2(said.contains(QStringLiteral("This path has no entry in the startup file, so applying the preset leaves "
+                                          "it out.")),
+             qPrintable(said));
+    QVERIFY2(said.contains(lacking), "the tooltip took the whole path away from the cell it was cut in");
+}
+
+void PresetsPageTest::TheAddMenuOffersOnlyWhatThePresetLacksAndLeavesTheOtherRowsAlone()
+{
+    Fixture f;
+    CarryTheStartupFile(f);
+    StoreAGoverningPreset(f, {kFenixPath});
+
+    PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
+    ShowTheStartupTab(page);
+
+    QTableWidget* table = StartupEntriesOf(page);
+    const QPushButton* add = AddButtonOf(page);
+    const QMenu* menu = AddMenuOf(page);
+    QVERIFY(table != nullptr && add != nullptr && menu != nullptr);
+
+    QCOMPARE(table->rowCount(), 1);
+    QVERIFY(add->isEnabled());
+    QCOMPARE(LabelsOfTheActions(*menu), QStringList({QStringLiteral("Couatl"), QStringLiteral("RAAS")}));
+
+    table->item(0, 2)->setCheckState(Qt::Unchecked);
+    menu->actions().front()->trigger();
+    SettleTheQueuedReload();
+
+    QCOMPARE(table->rowCount(), 2);
+    QCOMPARE(table->item(0, 0)->text(), QStringLiteral("Fenix"));
+    QCOMPARE(table->item(0, 2)->checkState(), Qt::Unchecked);
+    QCOMPARE(table->item(1, 0)->text(), QStringLiteral("Couatl"));
+    QCOMPARE(table->item(1, 2)->checkState(), Qt::Checked);
+    QCOMPARE(LabelsOfTheActions(*menu), QStringList({QStringLiteral("RAAS")}));
+
+    const std::optional<Preset> saved = f.viewModel.Load(QStringLiteral("Voo de linha"));
+
+    QVERIFY(saved.has_value());
+    QCOMPARE(PathsOfTheRows(saved), GenericPathsOf({kFenixPath, kCouatlPath}));
+    QVERIFY(saved->startupEntries[0].action == PresetAction::Disable);
+    QVERIFY(saved->startupEntries[1].action == PresetAction::Enable);
+}
+
+void PresetsPageTest::TheScrollBarOfTheThreeTablesIsCappedAndTheCapFollowsTheBar()
+{
+    Fixture f;
+    const std::filesystem::path launcher = "D:/MSFS 2024/Aircrafts/aerosoft-crj/launcher.exe";
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = launcher, .enabled = true});
+    f.session.RefreshEntries();
+
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(1450, 760);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* entries = page.findChild<QTableWidget*>(QStringLiteral("PresetEntries"));
+
+    QVERIFY(names != nullptr && entries != nullptr);
+    TheCapRidesWithTheScrollBar(names, names->horizontalHeader());
+    TheCapRidesWithTheScrollBar(entries, entries->horizontalHeader());
+
+    page.findChild<QCheckBox*>(QStringLiteral("PresetGovernsStartup"))->click();
+    ShowTheStartupTab(page);
+
+    QTableWidget* startupEntries = StartupEntriesOf(page);
+
+    QVERIFY(startupEntries != nullptr);
+    QCOMPARE(startupEntries->rowCount(), 1);
+    TheCapRidesWithTheScrollBar(startupEntries, startupEntries->horizontalHeader());
+}
+
+void PresetsPageTest::TheAddButtonIsOffWithItsReasonWhenThePresetNamesEveryEntryOfTheFile()
+{
+    PresetStartupPanel panel;
+    const QList<PresetStartupRow> rows = {
+        StartupRowOf(QStringLiteral("Fenix"), QStringLiteral(R"(E:\Fenix\launcher.exe)"), false)};
+
+    panel.Show({.holdsOne = true,
+                .governs = true,
+                .readOnly = false,
+                .fileHoldsEntries = true,
+                .rows = rows,
+                .candidates = {}});
+
+    const QPushButton* add = AddButtonOf(panel);
+    QVERIFY(add != nullptr);
+
+    QVERIFY(!add->isEnabled());
+    QCOMPARE(add->toolTip(), QStringLiteral("Every entry in the startup file is already in this preset."));
+
+    panel.Show({.holdsOne = true,
+                .governs = true,
+                .readOnly = false,
+                .fileHoldsEntries = true,
+                .rows = rows,
+                .candidates = {CandidateOf(QStringLiteral("Couatl"), kCouatlPath)}});
+
+    QVERIFY(add->isEnabled());
+    QVERIFY(add->toolTip().isEmpty());
+}
+
+void PresetsPageTest::TheAddButtonIsOffWithoutAReasonWhenTheFileHasNoEntryAtAll()
+{
+    Fixture f;
+    StoreAGoverningPreset(f, {});
+
+    PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
+    ShowTheStartupTab(page);
+
+    const QPushButton* add = AddButtonOf(page);
+    QVERIFY(add != nullptr);
+
+    QVERIFY(!add->isEnabled());
+    QVERIFY2(add->toolTip().isEmpty(), qPrintable(add->toolTip()));
+}
+
+void PresetsPageTest::TakingARowOutByTheButtonLeavesTheOtherRowsAlone()
+{
+    Fixture f;
+    CarryTheStartupFile(f);
+    StoreAGoverningPreset(f, {kFenixPath, kCouatlPath, kRaasPath});
+
+    PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
+    ShowTheStartupTab(page);
+
+    QTableWidget* table = StartupEntriesOf(page);
+    QPushButton* takeOut = TakeOutButtonOf(page);
+    QVERIFY(table != nullptr && takeOut != nullptr);
+
+    QCOMPARE(table->rowCount(), 3);
+    QVERIFY(!takeOut->isEnabled());
+
+    table->selectRow(1);
+
+    QVERIFY(takeOut->isEnabled());
+
+    takeOut->click();
+    SettleTheQueuedReload();
+
+    QCOMPARE(table->rowCount(), 2);
+    QCOMPARE(table->item(0, 0)->text(), QStringLiteral("Fenix"));
+    QCOMPARE(table->item(1, 0)->text(), QStringLiteral("RAAS"));
+    QVERIFY2(!takeOut->isEnabled(), "a second click would take out the row that slid into the place of the first");
+
+    QCOMPARE(PathsOfTheRows(f.viewModel.Load(QStringLiteral("Voo de linha"))), GenericPathsOf({kFenixPath, kRaasPath}));
+}
+
+void PresetsPageTest::TakingARowOutByTheContextMenuLeavesTheOtherRowsAlone()
+{
+    Fixture f;
+    CarryTheStartupFile(f);
+    StoreAGoverningPreset(f, {kFenixPath, kCouatlPath, kRaasPath});
+
+    PresetsPage page(f.viewModel, f.notifier);
+    ShowAndSettle(page);
+    ShowTheStartupTab(page);
+
+    QTableWidget* table = StartupEntriesOf(page);
+    QMenu* menu = RowMenuOf(page);
+    QVERIFY(table != nullptr && menu != nullptr);
+
+    const QPoint onTheFirstRow = table->visualRect(table->model()->index(0, 0)).center();
+
+    Q_EMIT table->customContextMenuRequested(onTheFirstRow);
+
+    QVERIFY(menu->isVisible());
+    QCOMPARE(LabelsOfTheActions(*menu), QStringList({QStringLiteral("Remove from preset")}));
+
+    menu->actions().front()->trigger();
+    menu->hide();
+    SettleTheQueuedReload();
+
+    QCOMPARE(table->rowCount(), 2);
+    QCOMPARE(PathsOfTheRows(f.viewModel.Load(QStringLiteral("Voo de linha"))),
+             GenericPathsOf({kCouatlPath, kRaasPath}));
+}
+
+void PresetsPageTest::AReadOnlyPresetOffersNoGestureToEditItsStartupEntries()
+{
+    PresetStartupPanel panel;
+    const QList<PresetStartupRow> rows = {
+        StartupRowOf(QStringLiteral("Fenix"), QStringLiteral(R"(E:\Fenix\launcher.exe)"), false)};
+    const QList<PresetStartupCandidate> candidates = {CandidateOf(QStringLiteral("Couatl"), kCouatlPath)};
+
+    QTableWidget* table = StartupEntriesOf(panel);
+    const QPushButton* add = AddButtonOf(panel);
+    const QPushButton* takeOut = TakeOutButtonOf(panel);
+    const QMenu* menu = RowMenuOf(panel);
+    QVERIFY(table != nullptr && add != nullptr && takeOut != nullptr && menu != nullptr);
+
+    panel.Show({.holdsOne = true, .governs = true, .readOnly = false, .rows = rows, .candidates = candidates});
+    table->selectRow(0);
+
+    QVERIFY2(add->isEnabled() && takeOut->isEnabled(),
+             "an editable preset must offer both gestures, or this proves nothing");
+
+    panel.Show({.holdsOne = true, .governs = true, .readOnly = true, .rows = rows, .candidates = candidates});
+    table->selectRow(0);
+
+    QVERIFY(!add->isEnabled());
+    QVERIFY(!takeOut->isEnabled());
+
+    Q_EMIT table->customContextMenuRequested(table->visualRect(table->model()->index(0, 0)).center());
+
+    QVERIFY(!menu->isVisible());
+}
+
+void PresetsPageTest::TheGesturesFitBesideTheUpdateButtonAtTheNarrowestWindow_data()
+{
+    LanguageChoices();
+}
+
+void PresetsPageTest::TheGesturesFitBesideTheUpdateButtonAtTheNarrowestWindow()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language), kNoCatalogue);
+    const Installed installed(catalogue);
+
+    ApplyModernistTheme(*qApp);
+
+    Fixture f;
+    CarryTheStartupFile(f);
+    StoreAGoverningPreset(f, {kFenixPath});
+
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(kWidestAPageMayBe, 700);
+    ShowAndSettle(page);
+    SettleTheQueuedReload();
+    ShowTheStartupTab(page);
+
+    const PresetStartupPanel* panel = page.findChild<PresetStartupPanel*>();
+    const QPushButton* add = AddButtonOf(page);
+    const QPushButton* takeOut = TakeOutButtonOf(page);
+    const QPushButton* update = page.findChild<QPushButton*>(QStringLiteral("PresetUpdateStartup"));
+    QVERIFY(panel != nullptr && add != nullptr && takeOut != nullptr && update != nullptr);
+
+    const QString said = QStringLiteral("panel %1 px wide asks %2, buttons %3 + %4 + %5")
+                             .arg(panel->width())
+                             .arg(panel->minimumSizeHint().width())
+                             .arg(add->sizeHint().width())
+                             .arg(takeOut->sizeHint().width())
+                             .arg(update->sizeHint().width());
+
+    QVERIFY2(panel->minimumSizeHint().width() <= panel->width(), qPrintable(said));
+
+    for (const QPushButton* button : {add, takeOut, update})
+    {
+        QVERIFY2(button->width() >= button->sizeHint().width(),
+                 qPrintable(button->text() + QStringLiteral(": ") + said));
+    }
+
+    const int addEnds = add->mapTo(panel, QPoint(add->width(), 0)).x();
+    const int takeOutStarts = takeOut->mapTo(panel, QPoint(0, 0)).x();
+    const int updateEnds = update->mapTo(panel, QPoint(update->width(), 0)).x();
+
+    QVERIFY2(addEnds <= takeOutStarts, qPrintable(said));
+    QVERIFY2(updateEnds <= panel->width() - kPageGutter, qPrintable(said));
+
+    PresetStartupPanel tightest;
+    tightest.Show({.holdsOne = true, .governs = true, .readOnly = false, .rows = {}, .candidates = {}});
+    tightest.resize(tightest.minimumSizeHint().width(), 300);
+    ShowAndSettle(tightest);
+
+    const QPushButton* lastGesture = TakeOutButtonOf(tightest);
+    const QPushButton* theUpdate = tightest.findChild<QPushButton*>(QStringLiteral("PresetUpdateStartup"));
+    QVERIFY(lastGesture != nullptr && theUpdate != nullptr);
+
+    const int spring = theUpdate->mapTo(&tightest, QPoint(0, 0)).x()
+        - lastGesture->mapTo(&tightest, QPoint(lastGesture->width(), 0)).x();
+
+    QVERIFY2(
+        spring >= kSpringAtLeast,
+        qPrintable(QStringLiteral("at the narrowest the gestures leave %1 px before the update button").arg(spring)));
+}
+
+void PresetsPageTest::ASelectedRowIsOutlinedThroughTheLastColumnOfBothTablesThatCentreTheCheck()
+{
+    ApplyModernistTheme(*qApp);
+
+    Fixture f;
+    CarryTheStartupFile(f);
+    StoreAGoverningPreset(f, {kFenixPath, kCouatlPath});
+
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(kWidestAPageMayBe, 700);
+    ShowAndSettle(page);
+    SettleTheQueuedReload();
+
+    QTableWidget* content = page.findChild<QTableWidget*>(QStringLiteral("PresetEntries"));
+    QVERIFY(content != nullptr && content->rowCount() > 0);
+
+    content->selectRow(0);
+    QTest::qWait(60);
+    TheSelectedRowRunsThroughTheLastColumn(*content, 0);
+
+    ShowTheStartupTab(page);
+
+    QTableWidget* startup = StartupEntriesOf(page);
+    QVERIFY(startup != nullptr && startup->rowCount() > 0);
+
+    startup->selectRow(0);
+    QTest::qWait(60);
+    TheSelectedRowRunsThroughTheLastColumn(*startup, 0);
 }
 
 void PresetsPageTest::TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowestWindow_data()
@@ -1120,6 +1673,104 @@ void PresetsPageTest::TheNameTableShowsTheNamesAndTheReturnRowWholeAtTheNarrowes
     QVERIFY2(TheWholeTextFits(*back, 0), qPrintable(saidOfTheReturn));
 
     QCoreApplication::removeTranslator(&catalogue);
+}
+
+void PresetsPageTest::TheReturnRowShowsAThreeDigitCountWholeAndTheTwoTablesShareTheirColumns_data()
+{
+    LanguageChoices();
+}
+
+void PresetsPageTest::TheReturnRowShowsAThreeDigitCountWholeAndTheTwoTablesShareTheirColumns()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language), kNoCatalogue);
+    const Installed installed(catalogue);
+
+    constexpr int kManyAddons = 120;
+
+    Fixture f(kManyAddons);
+
+    for (int number = 0; number < kManyAddons; ++number)
+    {
+        const std::filesystem::path addon = TheAddonNumber(number);
+
+        f.fileSystem.RemoveNode(std::filesystem::path(kCommunity) / addon.filename());
+    }
+
+    f.session.RefreshEntries();
+
+    PresetsPage page(f.viewModel, f.notifier);
+    page.resize(kWidestAPageMayBe, 700);
+    ApplyModernistTheme(*qApp);
+    ShowAndSettle(page);
+    SettleTheQueuedReload();
+
+    f.boxes.Announce(
+        [](QWidget& box)
+        {
+            if (auto* question = qobject_cast<QMessageBox*>(&box))
+            {
+                question->button(QMessageBox::Yes)->click();
+            }
+        });
+
+    page.findChild<QPushButton*>(QStringLiteral("PresetApply"))->click();
+    SettleTheQueuedReload();
+    QTest::qWait(60);
+
+    auto* names = page.findChild<QTableWidget*>(QStringLiteral("PresetNames"));
+    auto* back = page.findChild<QTableWidget*>(QStringLiteral("PresetReturn"));
+    QVERIFY(names != nullptr && back != nullptr);
+    QCOMPARE(f.boxes.StillExpected(), std::size_t{0});
+    QVERIFY(!back->isHidden());
+    QVERIFY2(back->item(0, 2)->text().contains(QString::number(kManyAddons)), qPrintable(back->item(0, 2)->text()));
+
+    const QString said = QStringLiteral("names: %1; return: %2").arg(TheColumnsOf(*names), TheColumnsOf(*back));
+
+    QVERIFY2(TheWholeTextFits(*back, 2), qPrintable(said));
+    QVERIFY2(TheWholeTextFits(*names, 2), qPrintable(said));
+
+    for (int column = 0; column < names->columnCount(); ++column)
+    {
+        const auto startsAt = [&page, column](const QTableWidget& table)
+        {
+            return table.viewport()->mapTo(&page, QPoint(table.columnViewportPosition(column), 0)).x();
+        };
+
+        QCOMPARE(back->columnWidth(column), names->columnWidth(column));
+        QCOMPARE(startsAt(*back), startsAt(*names));
+    }
+
+    QVERIFY2(!names->horizontalScrollBar()->isVisible(), qPrintable(said));
+    ItFitsTheNarrowestWindow(page, "The presets page with a way back");
+}
+
+void PresetsPageTest::ARefusalTheTestAnnouncesOpensItsBoxWithTheExplanation()
+{
+    Fixture f;
+    PresetsPage page(f.viewModel, f.notifier);
+
+    QString title;
+    QString said;
+
+    f.boxes.Announce(
+        [&title, &said](QWidget& box)
+        {
+            title = box.windowTitle();
+
+            if (const auto* message = qobject_cast<QMessageBox*>(&box))
+            {
+                said = message->text();
+            }
+        });
+
+    f.viewModel.Create(QString());
+
+    QCOMPARE(f.boxes.StillExpected(), std::size_t{0});
+    QCOMPARE(title, QStringLiteral("Nothing changed"));
+    QCOMPARE(said, QStringLiteral("Enter a name for the preset."));
 }
 
 void PresetsPageTest::AHiddenPageReadsNothingWhenTheSessionRefreshesAndReadsOnceWhenShown()

@@ -28,6 +28,8 @@ namespace
         static void TwoAddonsEachCarryingAnEntryStayTwoOperations();
         static void TwoLinksOfTheSameAddonWithNoEntryStayTwoOperations();
         static void AnEntryTurnedOffAfterAnotherAddonsDisableIsNotPartOfIt();
+        static void ASwitchOfAnEntryWithNoAddonIsAnOperationOfItsOwn();
+        static void TheNewStartupAndPackageOperationsNeverJoinAnythingEvenNextToAnAddonStep();
     };
 }
 
@@ -53,6 +55,12 @@ namespace
     {
         return OperationRecord::OfLink(Moment(), kind, AddonId{.libraryId = "lib-1", .folderName = folder}, kTarget,
                                        kSource, failure);
+    }
+
+    OperationRecord Standalone(const OperationKind kind, const std::string& label)
+    {
+        return OperationRecord::OfImport(Moment(), kind, AddonId{}, {}, kTarget, FileResult::Completed,
+                                         OriginSource::Unknown, label);
     }
 
     std::vector<OperationRecord> AFinishedImportOf(const std::string& folder)
@@ -323,6 +331,54 @@ void JournalEntriesTest::AnEntryTurnedOffAfterAnotherAddonsDisableIsNotPartOfIt(
     QCOMPARE(entries.size(), std::size_t{2});
     QVERIFY(!entries.front().HasSteps());
     QVERIFY(!entries.back().HasSteps());
+}
+
+void JournalEntriesTest::ASwitchOfAnEntryWithNoAddonIsAnOperationOfItsOwn()
+{
+    const std::vector<OperationRecord> records = {
+        Standalone(OperationKind::TurnOffTheStartupEntry, "Any2GSX"),
+        Standalone(OperationKind::TurnOffTheStartupEntry, "Navigraph Simlink"),
+        Standalone(OperationKind::TurnOnTheStartupEntry, "Any2GSX"),
+        Link(OperationKind::DisableAddon, "simbridge"),
+        Standalone(OperationKind::TurnOffTheStartupEntry, "Navigraph Simlink"),
+        Link(OperationKind::EnableAddon, "simbridge"),
+        Standalone(OperationKind::TurnOnTheStartupEntry, "Navigraph Simlink"),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), records.size());
+
+    for (std::size_t at = 0; at < entries.size(); ++at)
+    {
+        QVERIFY(!entries[at].HasSteps());
+        QCOMPARE(entries[at].First().kind, records[at].kind);
+        QCOMPARE(entries[at].First().label, records[at].label);
+    }
+}
+
+void JournalEntriesTest::TheNewStartupAndPackageOperationsNeverJoinAnythingEvenNextToAnAddonStep()
+{
+    const std::vector<OperationRecord> records = {
+        Link(OperationKind::DisableAddon, "simbridge"),
+        Standalone(OperationKind::AddTheStartupEntry, "Tool"),
+        Standalone(OperationKind::RemoveTheStartupEntry, "Tool"),
+        Standalone(OperationKind::EditTheStartupEntry, "Tool"),
+        Standalone(OperationKind::RestoreTheStartupEntry, "Tool"),
+        Standalone(OperationKind::ForgetTheStartupEntry, "Tool"),
+        Standalone(OperationKind::TurnOffTheSimulatorPackage, "fs24-asobo-airport-eham-amsterdam"),
+        Standalone(OperationKind::TurnOnTheSimulatorPackage, "fs24-asobo-airport-eham-amsterdam"),
+        Link(OperationKind::EnableAddon, "simbridge"),
+    };
+
+    const std::vector<JournalEntry> entries = GroupOperations(records);
+
+    QCOMPARE(entries.size(), records.size());
+
+    for (const JournalEntry& entry : entries)
+    {
+        QVERIFY(!entry.HasSteps());
+    }
 }
 
 QTEST_APPLESS_MAIN(JournalEntriesTest)

@@ -101,6 +101,7 @@ QLabel[tag="muted"] { background: %raised%; color: %secondary%; padding: 2px 7px
 QLabel#TriageQuiet { color: %secondary%; }
 QFrame#TriageSeparator { background: %divider%; }
 QLabel#FooterRestart { color: %accentInk%; font-weight: 600; }
+QLabel#EntryRefusal { color: %accentInk%; }
 QLabel#FooterSummary { color: %secondary%; }
 QLabel#FooterAside { color: %secondary%; }
 QProgressBar#FooterMeter, QProgressBar#ImportMeter { background: %raised%; border: none; }

@@ -2476,6 +2476,22 @@ Também na biblioteca: %2</translation>
     </message>
 </context>
 <context>
+    <name>FoldersOutsideNotice</name>
+    <message numerus="yes">
+        <location filename="../src/view/panels/FoldersOutsideNotice.cpp" line="44"/>
+        <source>%n folder outside the library</source>
+        <translation>
+            <numerusform>%n pasta fora da biblioteca</numerusform>
+            <numerusform>%n pastas fora da biblioteca</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/panels/FoldersOutsideNotice.cpp" line="45"/>
+        <source>Import into the library…</source>
+        <translation>Importar para a biblioteca…</translation>
+    </message>
+</context>
+<context>
     <name>GithubManual</name>
     <message>
         <source>The manual was downloaded but could not be saved to %1.</source>
@@ -2730,6 +2746,51 @@ Também na biblioteca: %2</translation>
         <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
         <source>Remove the category marker</source>
         <translation>Remover o marcador de categoria</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="99"/>
+        <source>Add a startup entry</source>
+        <translation>Adicionar uma entrada de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="100"/>
+        <source>Remove a startup entry</source>
+        <translation>Remover uma entrada de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="101"/>
+        <source>Edit a startup entry</source>
+        <translation>Editar uma entrada de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="102"/>
+        <source>Restore a removed startup entry</source>
+        <translation>Repor uma entrada de inicialização removida</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="103"/>
+        <source>Discard a removed startup entry</source>
+        <translation>Esquecer uma entrada de inicialização removida</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="104"/>
+        <source>Disable a simulator package</source>
+        <translation>Desativar um pacote do simulador</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="105"/>
+        <source>Enable a simulator package</source>
+        <translation>Ativar um pacote do simulador</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="114"/>
+        <source>Disable a startup entry</source>
+        <translation>Desativar uma entrada de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="115"/>
+        <source>Enable a startup entry</source>
+        <translation>Ativar uma entrada de inicialização</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
@@ -3978,37 +4039,63 @@ Os links que já estão em %2 continuam lá funcionando, mas o FS Organizer deix
 <context>
     <name>PresetStartupPanel</name>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="279"/>
         <source>Enables</source>
         <translation>Ativa</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="139"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="284"/>
         <source>Update from enabled entries</source>
         <translation>Atualizar com as entradas ativadas</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="138"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="280"/>
         <source>This preset also controls startup entries</source>
         <translation>Este preset também controla as entradas de inicialização</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="279"/>
         <source>Entry</source>
         <translation>Entrada</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="279"/>
         <source>Target</source>
         <translation>Alvo</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="140"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="134"/>
+        <source>not in the file</source>
+        <translation>fora do arquivo</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <source>This path has no entry in the startup file, so applying the preset leaves it out.</source>
+        <translation>Este caminho não tem entrada no arquivo de inicialização, então aplicar o preset o deixa de fora.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="204"/>
+        <source>Every entry in the startup file is already in this preset.</source>
+        <translation>Todas as entradas do arquivo de inicialização já estão neste preset.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="281"/>
+        <source>Add entry…</source>
+        <translation>Adicionar entrada…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="282"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="283"/>
+        <source>Remove from preset</source>
+        <translation>Tirar do preset</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="286"/>
         <source>This preset does not control startup entries</source>
         <translation>Este preset não controla entradas de inicialização</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="141"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="287"/>
         <source>Check the box above to save the entries enabled right now. You can then enable or disable each one here.</source>
         <translation>Marque a caixa acima para guardar as entradas ativadas agora. Depois dá para ativar ou desativar cada uma aqui.</translation>
     </message>
@@ -4036,8 +4123,7 @@ Os links que já estão em %2 continuam lá funcionando, mas o FS Organizer deix
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="159"/>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="176"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="474"/>
         <source>Could not save the change to the preset &quot;%1&quot;. It may have changed on the disk, or the presets folder may be full or read-only.</source>
         <translation>Não foi possível salvar a mudança no preset &quot;%1&quot;. Ele pode ter mudado no disco, ou a pasta de presets pode estar cheia ou protegida contra escrita.</translation>
     </message>
@@ -4669,6 +4755,26 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>esta cópia está fora dos destinos e das bibliotecas do perfil, então não pode ir para a quarentena</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="134"/>
+        <source>the startup file already lists that program</source>
+        <translation>o arquivo de inicialização já lista esse programa</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="136"/>
+        <source>the startup file is not saved as UTF-8 and cannot hold these characters, so nothing changed</source>
+        <translation>o arquivo de inicialização não está salvo em UTF-8 e não comporta esses caracteres, então nada mudou</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="139"/>
+        <source>the removed entry could not be saved, so nothing was removed</source>
+        <translation>não foi possível guardar a entrada removida, então nada foi removido</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="139"/>
+        <source>that program file does not exist, so nothing changed</source>
+        <translation>esse arquivo de programa não existe, então nada mudou</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">o diário não sabe de onde isto veio</translation>
     </message>
@@ -5211,9 +5317,8 @@ Tamanho %2</translation>
         <translation>o addon dele está desativado</translation>
     </message>
     <message>
-        <location filename="../src/view/simulator/StartupPage.cpp" line="40"/>
         <source>Inside an addon</source>
-        <translation>Dentro de um addon</translation>
+        <translation type="vanished">Dentro de um addon</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="41"/>
@@ -5335,6 +5440,47 @@ Tamanho %2</translation>
         <translation>
             <numerusform>%1 e mais %n</numerusform>
             <numerusform>%1 e mais %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="47"/>
+        <source>its drive is not connected</source>
+        <translation>o disco dele não está conectado</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="51"/>
+        <source>inside an addon</source>
+        <translation>dentro de um addon</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="99"/>
+        <source>Undo: %1 added</source>
+        <translation>Desfazer: %1 adicionada</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="100"/>
+        <source>Undo: %1 edited</source>
+        <translation>Desfazer: %1 editada</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="104"/>
+        <source>Undo: %1 removed</source>
+        <translation>Desfazer: %1 removida</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="199"/>
+        <source>%n preset followed the new path.</source>
+        <translation>
+            <numerusform>%n preset acompanhou o caminho novo.</numerusform>
+            <numerusform>%n presets acompanharam o caminho novo.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="191"/>
+        <source>%n preset could not follow the new path and still names the old one: %1.</source>
+        <translation>
+            <numerusform>%n preset não conseguiu acompanhar o caminho novo e ainda cita o antigo: %1.</numerusform>
+            <numerusform>%n presets não conseguiram acompanhar o caminho novo e ainda citam o antigo: %1.</numerusform>
         </translation>
     </message>
 </context>
@@ -6151,6 +6297,107 @@ Tamanho %2</translation>
     </message>
 </context>
 <context>
+    <name>StartupDraftDialog</name>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="71"/>
+        <source>Edit startup entry</source>
+        <translation>Editar entrada de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="71"/>
+        <source>Add startup entry</source>
+        <translation>Adicionar entrada de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="78"/>
+        <source>Optional</source>
+        <translation>Opcional</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="80"/>
+        <source>Choose…</source>
+        <translation>Escolher…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="83"/>
+        <source>Program</source>
+        <translation>Programa</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="95"/>
+        <source>Name</source>
+        <translation>Nome</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="97"/>
+        <source>Command line</source>
+        <translation>Linha de comando</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="101"/>
+        <source>Save</source>
+        <translation>Salvar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="101"/>
+        <source>Add</source>
+        <translation>Adicionar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="102"/>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="165"/>
+        <source>No program chosen</source>
+        <translation>Nenhum programa escolhido</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="217"/>
+        <source>Inside the addon %1. The entry is written with the path of the addon&apos;s link:</source>
+        <translation>Dentro do addon %1. A entrada é gravada com o caminho do link do addon:</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="221"/>
+        <source>The addon is disabled now, so the program will not start until you enable it.</source>
+        <translation>O addon está desativado agora, então o programa só sobe quando você ativar o addon.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="224"/>
+        <source>%n preset names this entry and will follow the new path.</source>
+        <translation>
+            <numerusform>%n preset cita esta entrada e vai acompanhar o caminho novo.</numerusform>
+            <numerusform>%n presets citam esta entrada e vão acompanhar o caminho novo.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="227"/>
+        <source>The entry as it is now goes to Removed.</source>
+        <translation>A entrada como está agora vai para Removidas.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="248"/>
+        <source>The startup file already lists this program, as %1.</source>
+        <translation>O arquivo de inicialização já lista esse programa, como %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="250"/>
+        <source>That file does not exist.</source>
+        <translation>Esse arquivo não existe.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="197"/>
+        <source>Choose the program</source>
+        <translation>Escolha o programa</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="198"/>
+        <source>Programs (*.exe)</source>
+        <translation>Programas (*.exe)</translation>
+    </message>
+</context>
+<context>
     <name>StartupEntryDialog</name>
     <message>
         <location filename="../src/view/library/StartupEntryDialog.cpp" line="15"/>
@@ -6239,9 +6486,8 @@ Tamanho %2</translation>
         <translation>Nenhuma entrada de inicialização</translation>
     </message>
     <message>
-        <location filename="../src/view/simulator/StartupPage.cpp" line="180"/>
         <source>The simulator&apos;s startup file (EXE.xml) was not found next to this profile&apos;s UserCfg.opt, or it lists no programs.</source>
-        <translation>O arquivo de inicialização do simulador (EXE.xml) não foi encontrado ao lado do UserCfg.opt deste perfil, ou não lista nenhum programa.</translation>
+        <translation type="vanished">O arquivo de inicialização do simulador (EXE.xml) não foi encontrado ao lado do UserCfg.opt deste perfil, ou não lista nenhum programa.</translation>
     </message>
     <message>
         <source>The startup entries are left alone</source>
@@ -6275,9 +6521,8 @@ Tamanho %2</translation>
         <translation>As entradas de inicialização não são gerenciadas</translation>
     </message>
     <message>
-        <location filename="../src/view/simulator/StartupPage.cpp" line="183"/>
         <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you disable one without editing XML. It only enables or disables entries that already exist.</source>
-        <translation>Com as entradas gerenciadas, o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você desativar um sem editar XML. Ele só ativa ou desativa entradas que já existem.</translation>
+        <translation type="vanished">Com as entradas gerenciadas, o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você desativar um sem editar XML. Ele só ativa ou desativa entradas que já existem.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="186"/>
@@ -6341,6 +6586,205 @@ Tamanho %2</translation>
         <location filename="../src/view/simulator/StartupPage.cpp" line="281"/>
         <source>Check again</source>
         <translation>Verificar de novo</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="381"/>
+        <source>Add…</source>
+        <translation>Adicionar…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="382"/>
+        <source>Edit…</source>
+        <translation>Editar…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="383"/>
+        <source>Remove…</source>
+        <translation>Remover…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="384"/>
+        <source>Restore entry</source>
+        <translation>Repor entrada</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="385"/>
+        <source>Discard…</source>
+        <translation>Esquecer…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="386"/>
+        <source>Stop managing</source>
+        <translation>Parar de gerenciar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="389"/>
+        <source>Removed</source>
+        <translation>Removida</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="538"/>
+        <source>Removed %1</source>
+        <translation>Removidas %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="537"/>
+        <source>In the file %1</source>
+        <translation>No arquivo %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="550"/>
+        <source>Undo</source>
+        <translation>Desfazer</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="394"/>
+        <source>Add a program…</source>
+        <translation>Adicionar um programa…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="392"/>
+        <source>The simulator&apos;s startup file (EXE.xml) lists no programs, or it does not exist yet next to this profile&apos;s UserCfg.opt. Adding a program creates it.</source>
+        <translation>O arquivo de inicialização do simulador (EXE.xml) não lista nenhum programa, ou ainda não existe ao lado do UserCfg.opt deste perfil. Adicionar um programa cria o arquivo.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="395"/>
+        <source>No removed entries</source>
+        <translation>Nenhuma entrada removida</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="396"/>
+        <source>Entries you remove from the startup file stay here, with their name and command line, until you restore or discard them.</source>
+        <translation>As entradas que você remove do arquivo de inicialização ficam aqui, com o nome e a linha de comando, até você repor ou esquecer.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="400"/>
+        <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you add, edit, disable and remove them without editing XML.</source>
+        <translation>Com as entradas gerenciadas, o FS Organizer lê o arquivo de inicialização do simulador, lista os programas que ele abre junto consigo e deixa você adicionar, editar, desativar e remover esses programas sem editar XML.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="421"/>
+        <source>%n removed program, kept so you can restore it.</source>
+        <translation>
+            <numerusform>%n programa removido, guardado para você repor.</numerusform>
+            <numerusform>%n programas removidos, guardados para você repor.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="612"/>
+        <source>%1 added to the startup file.</source>
+        <translation>%1 adicionado ao arquivo de inicialização.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="641"/>
+        <source>%1 saved to the startup file.</source>
+        <translation>%1 salvo no arquivo de inicialização.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="656"/>
+        <source>Nothing to save: %1 is already like that.</source>
+        <translation>Nada a salvar: %1 já está assim.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="654"/>
+        <source>%1 removed from the startup file.</source>
+        <translation>%1 removido do arquivo de inicialização.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="667"/>
+        <source>%1 is back in the startup file.</source>
+        <translation>%1 voltou para o arquivo de inicialização.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="680"/>
+        <source>%1 discarded.</source>
+        <translation>%1 esquecido.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="696"/>
+        <source>Undid the last change to %1.</source>
+        <translation>A última alteração em %1 foi desfeita.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="764"/>
+        <source>Remove startup entry</source>
+        <translation>Remover entrada de inicialização</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="765"/>
+        <source>Remove %1 from the startup file?</source>
+        <translation>Remover %1 do arquivo de inicialização?</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="766"/>
+        <source>Remove</source>
+        <translation>Remover</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="785"/>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="741"/>
+        <source>Removing takes its name and command line out of the startup file.</source>
+        <translation>Remover tira do arquivo de inicialização o nome e a linha de comando dela.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="742"/>
+        <source>FS Organizer keeps the entry in Removed, where you can restore it.</source>
+        <translation>O FS Organizer guarda a entrada em Removidas, de onde você pode repor.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="749"/>
+        <source>Disabling this entry already stops the simulator from launching the program.</source>
+        <translation>Desativar a entrada já impede o simulador de abrir o programa.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="755"/>
+        <source>Its program is inside a disabled addon.</source>
+        <translation>O programa fica dentro de um addon desativado.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="756"/>
+        <source>The entry works again when you enable the addon.</source>
+        <translation>A entrada volta a valer quando você ativar o addon.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="758"/>
+        <source>Its program no longer exists.</source>
+        <translation>O programa dela não existe mais.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="760"/>
+        <source>Its drive is not connected right now, so the program may come back.</source>
+        <translation>O disco do programa não está conectado agora, então ele pode voltar.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="774"/>
+        <source>Discard removed entry</source>
+        <translation>Esquecer entrada removida</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="775"/>
+        <source>Discard %1 for good?</source>
+        <translation>Esquecer %1 de vez?</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="776"/>
+        <source>Discard</source>
+        <comment>forgets a removed startup entry for good</comment>
+        <translation>Esquecer</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="771"/>
+        <source>FS Organizer deletes the name, path and command line it kept.</source>
+        <translation>O FS Organizer apaga o nome, o caminho e a linha de comando que guardou.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="772"/>
+        <source>This cannot be undone.</source>
+        <translation>Não pode ser desfeito.</translation>
     </message>
 </context>
 <context>
@@ -6419,27 +6863,22 @@ Tamanho %2</translation>
 <context>
     <name>TriageStrip</name>
     <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="86"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="78"/>
         <source>Repair broken links…</source>
         <translation>Reparar links quebrados…</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="87"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="79"/>
         <source>Resolve conflicts…</source>
         <translation>Resolver conflitos…</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="88"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="80"/>
         <source>Show duplicates…</source>
         <translation>Ver duplicadas…</translation>
     </message>
-    <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="89"/>
-        <source>Import into the library…</source>
-        <translation>Importar para a biblioteca…</translation>
-    </message>
     <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="91"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="82"/>
         <source>%n broken link</source>
         <translation>
             <numerusform>%n link quebrado</numerusform>
@@ -6447,7 +6886,7 @@ Tamanho %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="92"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="83"/>
         <source>%n conflict</source>
         <translation>
             <numerusform>%n conflito</numerusform>
@@ -6455,19 +6894,11 @@ Tamanho %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="93"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="84"/>
         <source>%n duplicated</source>
         <translation>
             <numerusform>%n duplicada</numerusform>
             <numerusform>%n duplicadas</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="94"/>
-        <source>%n folder outside the library</source>
-        <translation>
-            <numerusform>%n pasta fora da biblioteca</numerusform>
-            <numerusform>%n pastas fora da biblioteca</numerusform>
         </translation>
     </message>
 </context>

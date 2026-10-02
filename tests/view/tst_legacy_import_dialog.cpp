@@ -23,6 +23,7 @@
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/ButtonLookup.h"
+#include "tests/support/ScrollBarCapRule.h"
 #include "view/legacy/LegacyImportDialog.h"
 
 namespace
@@ -40,6 +41,7 @@ namespace
         static void APresetOfTheOldProgramIsOfferedAndLandsInTheProfile();
         static void ANameThePresetCitesAndNoLibraryHasIsReportedInsteadOfVanishing();
         static void ThePresetsWaitForTheLibraryToBeReadInsteadOfLandingOnTheOldPicture();
+        static void TheScrollBarIsCappedAndTheCapFollowsTheBar();
     };
 }
 
@@ -312,6 +314,20 @@ void LegacyImportDialogTest::ThePresetsWaitForTheLibraryToBeReadInsteadOfLanding
     QCOMPARE(f.presets.Load("msfs2024", "Voo curto")->entries.size(), std::size_t{1});
     QVERIFY2(!said.front().front().toString().contains(QStringLiteral("was not found in any library")),
              "the presets were resolved against the picture taken before the new library was read");
+}
+
+void LegacyImportDialogTest::TheScrollBarIsCappedAndTheCapFollowsTheBar()
+{
+    Fixture f;
+    f.legacy.Add(InstallationAt(kLegacy2024, {"D:/MSFS 2024 Extra/Aircrafts", "D:/MSFS 2024 Extra/Sceneries"}));
+
+    LegacyImportDialog dialog(f.viewModel);
+    dialog.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+
+    QTreeWidget& tree = TreeOf(dialog);
+
+    TheCapRidesWithTheScrollBar(&tree, tree.header());
 }
 
 QTEST_MAIN(LegacyImportDialogTest)

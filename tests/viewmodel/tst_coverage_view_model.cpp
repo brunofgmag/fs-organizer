@@ -111,7 +111,7 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakePackageList packageList;
-        CoverageService coverageService{packageList, processProbe, false};
+        CoverageService coverageService{packageList, processProbe, log, false};
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};

@@ -10,6 +10,7 @@
 
 #include "view/delegates/PlainTextDelegate.h"
 #include "view/TableColumns.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 
 SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& suggestions, QWidget* parent)
@@ -31,6 +32,7 @@ SuggestionDialog::SuggestionDialog(const std::vector<CategorySuggestion>& sugges
     table->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     table->verticalHeader()->setVisible(false);
     LetTheColumnsBeDraggedAndStillFillTheTable(table);
+    CapTheScrollBarOf(table, table->horizontalHeader());
 
     auto* all = new QCheckBox(tr("Check all"), this);
     all->setTristate(true);

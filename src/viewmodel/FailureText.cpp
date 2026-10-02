@@ -130,6 +130,13 @@ QString Explain(const FileResult result)
     case FileResult::ThereIsNowhereToQuarantineIt:
         return QObject::tr(
             "this copy is outside the profile's destinations and libraries, so it cannot go to the quarantine");
+    case FileResult::TheStartupEntryIsAlreadyThere: return QObject::tr("the startup file already lists that program");
+    case FileResult::TheStartupFileIsNotUtf8:
+        return QObject::tr(
+            "the startup file is not saved as UTF-8 and cannot hold these characters, so nothing changed");
+    case FileResult::CouldNotKeepTheRemovedEntry:
+        return QObject::tr("the removed entry could not be saved, so nothing was removed");
+    case FileResult::TheProgramDoesNotExist: return QObject::tr("that program file does not exist, so nothing changed");
     }
 
     return {};

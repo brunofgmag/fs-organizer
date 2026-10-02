@@ -1,7 +1,10 @@
 #include "application/PresetService.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
+
+#include "domain/support/PathUtils.h"
 
 namespace
 {
@@ -177,6 +180,51 @@ bool PresetService::SetStartupAction(const std::string& profileId,
     }
 
     preset->startupEntries[index].action = action;
+
+    return presets_.Save(profileId, *preset);
+}
+
+bool PresetService::AddStartupEntry(const std::string& profileId,
+                                    const std::string& name,
+                                    const std::filesystem::path& entryPath) const
+{
+    std::optional<Preset> preset = presets_.Load(profileId, name);
+
+    if (!preset.has_value() || entryPath.empty())
+    {
+        return false;
+    }
+
+    const std::string wanted = ComparablePath(entryPath);
+    const bool alreadyNamed = std::ranges::any_of(preset->startupEntries,
+                                                  [&wanted](const PresetStartupEntry& entry)
+                                                  {
+                                                      return ComparablePath(entry.path) == wanted;
+                                                  });
+
+    if (alreadyNamed)
+    {
+        return false;
+    }
+
+    preset->startupEntries.push_back(PresetStartupEntry{.path = entryPath, .action = PresetAction::Enable});
+
+    return presets_.Save(profileId, *preset);
+}
+
+bool PresetService::TakeStartupEntryOut(const std::string& profileId,
+                                        const std::string& name,
+                                        const std::size_t index,
+                                        const std::filesystem::path& expected) const
+{
+    std::optional<Preset> preset = presets_.Load(profileId, name);
+
+    if (!preset.has_value() || index >= preset->startupEntries.size() || preset->startupEntries[index].path != expected)
+    {
+        return false;
+    }
+
+    preset->startupEntries.erase(preset->startupEntries.begin() + static_cast<std::ptrdiff_t>(index));
 
     return presets_.Save(profileId, *preset);
 }

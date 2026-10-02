@@ -156,6 +156,11 @@ std::vector<StartupEntry> ProfileService::StartupEntriesNow() const
     return startup_.Entries();
 }
 
+bool ProfileService::StartupEntriesAreRead() const
+{
+    return startup_.Managing();
+}
+
 LibraryReport ProfileService::RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const
 {
     const TreeNode tree = catalog_.Scan(path);
@@ -194,6 +199,7 @@ ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile, const Scan
     snapshot.enabled = std::move(read.enabled);
     snapshot.conflicts = std::move(read.conflicts);
     snapshot.startupEntries = std::move(read.startupEntries);
+    snapshot.startupEntriesWereRead = read.startupEntriesWereRead;
 
     return snapshot;
 }
@@ -212,6 +218,7 @@ EntriesRead ProfileService::Derived(EntriesStamp stamp,
     read.enabled = EnabledAddons(EnabledAddonFolders(read.entries));
     read.conflicts = FindCopyConflicts(read.entries, libraries);
     read.startupEntries = startup_.Entries();
+    read.startupEntriesWereRead = startup_.Managing();
 
     return read;
 }

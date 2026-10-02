@@ -369,6 +369,9 @@ void ContextPanelTest::TheStripKeepsQuietUntilSomethingBreaks()
     QVERIFY(!strip.HasAnythingToSay());
 
     strip.ShowBreakdown({.unmanaged = 178});
+    QVERIFY(!strip.HasAnythingToSay());
+
+    strip.ShowBreakdown({.broken = 3});
     QVERIFY(strip.HasAnythingToSay());
 
     strip.show();

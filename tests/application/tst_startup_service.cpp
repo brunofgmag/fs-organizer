@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
 #include "application/StartupService.h"
@@ -27,6 +28,11 @@ namespace
         static void TakingTheEntriesBackMakesTheFileReadableAgain();
         static void SwitchingAnEntryToTheValueItAlreadyHasWritesNothing();
         static void SwitchingAnEntryTheFileNoLongerCarriesWritesNothing();
+        static void AnApplyGoesThroughWhenTheSimulatorIsClosedAndTheFeatureIsOn();
+        static void AnApplyIsRefusedWithTheSimulatorRunningWhateverTheGestureThatTouchesTheStartupFile();
+        static void ForgettingAnEntryNeverTouchesTheStartupFileSoTheSimulatorRunningDoesNotRefuseIt();
+        static void AnApplyIsRefusedWhileTheEntriesAreLeftLooseWithoutTouchingTheFile();
+        static void TheRemovedListIsReadWithTheSimulatorRunningAndIsEmptyWhileLeftLoose();
     };
 
     constexpr auto kFlowManager = R"(E:\Flight Simulator 2024\Community\p42-util-flow-pro\Flow for MSFS2024.exe)";
@@ -160,6 +166,110 @@ void StartupServiceTest::SwitchingAnEntryTheFileNoLongerCarriesWritesNothing()
     QCOMPARE(service.Switch(PathFromUtf8(R"(C:\Nothing\Like\This\was-ever-installed.exe)"), true),
              FileResult::TheDiskDisagreesWithTheScan);
     QCOMPARE(entries.writes, std::size_t{0});
+}
+
+void StartupServiceTest::AnApplyGoesThroughWhenTheSimulatorIsClosedAndTheFeatureIsOn()
+{
+    FakeStartupEntries entries;
+    GiveItOneEntry(entries);
+
+    const FakeProcessProbe processProbe;
+    const Disk disk;
+    StartupService service(entries, processProbe, disk.probe, true);
+    StartupBackup backup;
+
+    const StartupApplied applied = service.Apply(StartupRemoval{.path = PathFromUtf8(kFlowManager)}, backup);
+
+    QCOMPARE(applied.result, FileResult::Completed);
+    QVERIFY(applied.was.has_value());
+    QCOMPARE(applied.was->label, std::string("Flow Manager"));
+    QVERIFY(service.Entries().empty());
+    QVERIFY(backup.taken);
+}
+
+void StartupServiceTest::AnApplyIsRefusedWithTheSimulatorRunningWhateverTheGestureThatTouchesTheStartupFile()
+{
+    FakeStartupEntries entries;
+    GiveItOneEntry(entries);
+
+    FakeProcessProbe processProbe;
+    processProbe.ReportTheSimulatorAsRunning();
+    const Disk disk;
+    StartupService service(entries, processProbe, disk.probe, true);
+    StartupBackup backup;
+
+    const std::vector<StartupChange> gestures{
+        StartupSwitching{.path = PathFromUtf8(kFlowManager), .enabled = false},
+        StartupAddition{.label = "New", .path = PathFromUtf8(R"(C:\New\new.exe)")},
+        StartupRemoval{.path = PathFromUtf8(kFlowManager)},
+        StartupEditing{.path = PathFromUtf8(kFlowManager), .label = "x", .newPath = PathFromUtf8(kFlowManager)},
+        StartupRestoring{.path = PathFromUtf8(kFlowManager)}};
+
+    for (const StartupChange& gesture : gestures)
+    {
+        QCOMPARE(service.Apply(gesture, backup).result, FileResult::TheSimulatorIsRunning);
+    }
+
+    QCOMPARE(entries.writes, std::size_t{0});
+    QCOMPARE(service.Entries().size(), std::size_t{1});
+}
+
+void StartupServiceTest::ForgettingAnEntryNeverTouchesTheStartupFileSoTheSimulatorRunningDoesNotRefuseIt()
+{
+    constexpr auto kGone = R"(C:\Gone\gone.exe)";
+
+    FakeStartupEntries entries;
+    GiveItOneEntry(entries);
+    entries.CarryRemoved(StartupEntry{.label = "Gone", .path = PathFromUtf8(kGone)});
+
+    FakeProcessProbe processProbe;
+    processProbe.ReportTheSimulatorAsRunning();
+    const Disk disk;
+    StartupService service(entries, processProbe, disk.probe, true);
+    StartupBackup backup;
+
+    QCOMPARE(service.Apply(StartupForgetting{.path = PathFromUtf8(kGone)}, backup).result, FileResult::Completed);
+    QVERIFY(service.Removed().empty());
+    QCOMPARE(entries.writes, std::size_t{0});
+
+    service.Manage(false);
+
+    QCOMPARE(service.Apply(StartupForgetting{.path = PathFromUtf8(kGone)}, backup).result,
+             FileResult::TheStartupEntriesAreLeftLoose);
+}
+
+void StartupServiceTest::AnApplyIsRefusedWhileTheEntriesAreLeftLooseWithoutTouchingTheFile()
+{
+    FakeStartupEntries entries;
+    GiveItOneEntry(entries);
+
+    const FakeProcessProbe processProbe;
+    const Disk disk;
+    StartupService service(entries, processProbe, disk.probe, false);
+    StartupBackup backup;
+
+    QCOMPARE(service.Apply(StartupRemoval{.path = PathFromUtf8(kFlowManager)}, backup).result,
+             FileResult::TheStartupEntriesAreLeftLoose);
+    QCOMPARE(entries.writes, std::size_t{0});
+    QCOMPARE(entries.reads, std::size_t{0});
+}
+
+void StartupServiceTest::TheRemovedListIsReadWithTheSimulatorRunningAndIsEmptyWhileLeftLoose()
+{
+    FakeStartupEntries entries;
+    entries.CarryRemoved(StartupEntry{.label = "Gone", .path = PathFromUtf8(R"(C:\Gone\gone.exe)")});
+
+    FakeProcessProbe processProbe;
+    processProbe.ReportTheSimulatorAsRunning();
+    const Disk disk;
+    StartupService service(entries, processProbe, disk.probe, true);
+
+    QCOMPARE(service.Removed().size(), std::size_t{1});
+    QCOMPARE(service.Removed().front().entry.label, std::string("Gone"));
+
+    service.Manage(false);
+
+    QVERIFY(service.Removed().empty());
 }
 
 QTEST_APPLESS_MAIN(StartupServiceTest)

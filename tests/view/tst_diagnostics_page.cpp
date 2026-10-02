@@ -32,6 +32,7 @@
 #include "tests/support/CatalogueBesideTheBuild.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/ScrollBarCapRule.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/diagnostics/DiagnosticsPage.h"
 #include "view/diagnostics/LoadPanel.h"
@@ -64,6 +65,7 @@ namespace
         static void ASwitchOfProfileWhileTheSizeSectionIsOpenMeasuresTheNewLibrariesOnScreen();
         static void ASwitchOfProfileWhileTheLoadSectionIsOpenReadsTheLoadAgain();
         static void ASwitchOfProfileWhileThePageIsHiddenIsCaughtUpWhenItIsShown();
+        static void EveryTableOfThePageIsCappedAndTheCapFollowsTheBarWhereThereAreRows();
     };
 }
 
@@ -635,6 +637,52 @@ void DiagnosticsPageTest::ASwitchOfProfileWhileThePageIsHiddenIsCaughtUpWhenItIs
 
     QCOMPARE(sizes->topLevelItemCount(), 1);
     QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(kLegacyBytes));
+}
+
+void DiagnosticsPageTest::EveryTableOfThePageIsCappedAndTheCapFollowsTheBarWhereThereAreRows()
+{
+    Fixture f;
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+    page.resize(1200, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    f.viewModel.Show();
+    f.viewModel.ShowSize();
+
+    const QList<QTreeWidget*> tables = page.findChildren<QTreeWidget*>();
+
+    QVERIFY(tables.size() >= 6);
+
+    for (const QTreeWidget* table : tables)
+    {
+        TheScrollBarIsCapped(table);
+    }
+
+    const QListWidget* rail = RailOf(page);
+    int ridden = 0;
+
+    for (int row = 0; row < rail->count(); ++row)
+    {
+        if ((rail->item(row)->flags() & Qt::ItemIsSelectable) == 0)
+        {
+            continue;
+        }
+
+        RailOf(page)->setCurrentRow(row);
+        QCoreApplication::processEvents();
+
+        for (QTreeWidget* table : tables)
+        {
+            if (table->isVisible() && table->topLevelItemCount() > 0)
+            {
+                TheCapRidesWithTheScrollBar(table, table->header());
+                ++ridden;
+            }
+        }
+    }
+
+    QVERIFY2(ridden >= 3, "the counts, the broken links and the sizes all hold rows in this fixture");
 }
 
 QTEST_MAIN(DiagnosticsPageTest)

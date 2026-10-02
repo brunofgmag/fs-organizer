@@ -18,6 +18,8 @@ public:
 
     void AddSpringOnTheLowerLine();
 
+    void AddWidgetThatHoldsTheUpperLine(QWidget* widget);
+
     void addItem(QLayoutItem* item) override;
 
     [[nodiscard]] int count() const override;
@@ -43,7 +45,13 @@ private:
 
     [[nodiscard]] int WidthInOneLine(const QList<QLayoutItem*>& items) const;
 
+    [[nodiscard]] QList<QLayoutItem*> ItemsPresent() const;
+
     [[nodiscard]] QList<QLayoutItem*> ItemsOnOneLine() const;
+
+    [[nodiscard]] bool TheUpperLineIsHeld() const;
+
+    [[nodiscard]] bool TheRestMustStepDown(const QList<QLayoutItem*>& oneLine, int width) const;
 
     [[nodiscard]] QList<QList<QLayoutItem*>> WrapInOrder(const QList<QLayoutItem*>& items, int width) const;
 
@@ -54,6 +62,7 @@ private:
     QList<QLayoutItem*> items_;
     QSet<const QLayoutItem*> steppingDown_;
     QSet<const QLayoutItem*> onlyOnTheLowerLine_;
+    const QLayoutItem* holdingTheUpperLine_ = nullptr;
 };
 
 #endif // FS_ORGANIZER_VIEW_WRAPPING_ROW_H

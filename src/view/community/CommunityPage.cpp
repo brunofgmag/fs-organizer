@@ -28,6 +28,7 @@
 #include "view/delegates/RowDelegate.h"
 #include "view/TableColumns.h"
 #include "view/panels/ContextPanel.h"
+#include "view/panels/FoldersOutsideNotice.h"
 #include "view/panels/ModelRowDetail.h"
 #include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
@@ -365,6 +366,11 @@ void CommunityPage::RetranslateUi()
     panel_->RenameTheFallback(tr("Entry selected"));
 }
 
+void CommunityPage::ShowFoldersOutside(const std::size_t folders) const
+{
+    outside_->ShowFolders(folders);
+}
+
 QWidget* CommunityPage::CreateActions()
 {
     auto* bar = new QWidget(this);
@@ -376,21 +382,26 @@ QWidget* CommunityPage::CreateActions()
     reread_->setObjectName(QStringLiteral("ReadDestinationsAgain"));
     reread_->setProperty("role", "primary");
 
+    outside_ = new FoldersOutsideNotice(bar);
+
     search_ = new QLineEdit(bar);
     search_->setClearButtonEnabled(true);
     search_->setMinimumWidth(180);
     search_->setMaximumWidth(240);
 
     connect(selectAll_, &QPushButton::clicked, table_, &QTableView::selectAll);
+    connect(outside_, &FoldersOutsideNotice::ImportRequested, this, &CommunityPage::ImportRequested);
     connect(reread_, &QPushButton::clicked, &viewModel_, &CommunityViewModel::ReadTheDestinationsAgain);
     connect(search_, &QLineEdit::textChanged, filter_, &CommunityFilterModel::ShowOnlyWhatHolds);
 
     auto* layout = new QHBoxLayout(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
-    layout->setSpacing(8);
+    layout->setSpacing(kToolbarGap);
     layout->addWidget(reread_);
     layout->addWidget(selectAll_);
     layout->addStretch();
+    layout->addWidget(outside_);
+    layout->addSpacing(kFilterGroupGap - kToolbarGap);
     layout->addWidget(search_);
 
     return bar;

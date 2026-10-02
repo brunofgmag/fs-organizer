@@ -1,15 +1,22 @@
 #include <QtTest/QtTest>
 
+#include <QtCore/QTimer>
+#include <QtCore/QTranslator>
+
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTreeWidget>
 
+#include <functional>
 #include <string>
 #include <vector>
 
 #include "application/CoverageService.h"
 #include "application/SceneryService.h"
+#include "application/StartupEditor.h"
 #include "domain/support/PathUtils.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -19,6 +26,7 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakePackageList.h"
+#include "tests/doubles/FakePresetRepository.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSceneryCache.h"
 #include "tests/doubles/FakeSceneryParser.h"
@@ -28,8 +36,11 @@
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/support/ButtonLookup.h"
+#include "tests/support/CatalogueBesideTheBuild.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/ScrollBarCapRule.h"
+#include "support/MomentText.h"
 #include "view/simulator/PackageListPage.h"
 #include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
@@ -44,12 +55,17 @@ namespace
         Q_OBJECT
 
     private slots:
-        static void ThePageFitsTheNarrowestWindow();
+        static void ThePageFitsTheNarrowestWindowInBothLanguages_data();
+        static void ThePageFitsTheNarrowestWindowInBothLanguages();
+        static void TheMomentOfTheReadingLivesOnTheTipOfTheBarAndNotOnTheBar();
         static void TurnedOffTheScreenSaysSoAndSaysWhereToTurnItOn();
         static void TurnedOffThePairBetweenTwoAddonsStaysOnTheScreenAndStaysSilenceable();
         static void AnInstallationWhereNobodyTurnedAnythingOffOpensWithAnEmptyHalf();
         static void ThePairOfTwoAddonsOffersNoWayToTurnEitherOff();
         static void ThePackageTheSimulatorShipsIsTheOnlyOneTheScreenOffersToTurnOff();
+        static void ThePackageChosenBeforeTheSimulatorWarningIsTheOneTurnedOffAfterIt();
+        static void ThePackageTurnedOffThatWasChosenBeforeTheWarningIsTheOneTurnedBackOn();
+        static void TheScrollBarOfBothTablesIsCappedAndTheCapFollowsTheBar();
         static void TheTwoButtonsOfTheTabSwapThePanelInsteadOfScrollingIt();
     };
 
@@ -131,7 +147,7 @@ namespace
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakePackageList packageList;
-        CoverageService coverageService{packageList, processProbe, true};
+        CoverageService coverageService{packageList, processProbe, log, true};
         FakeSceneryParser sceneryParser;
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
@@ -313,10 +329,156 @@ void PackageListPageTest::ThePackageTheSimulatorShipsIsTheOnlyOneTheScreenOffers
     QVERIFY(!f.packageList.switched.front().second);
 }
 
+void PackageListPageTest::ThePackageChosenBeforeTheSimulatorWarningIsTheOneTurnedOffAfterIt()
+{
+    Fixture f;
+    f.catalog.SetTree(kLibrary,
+                      TreeNode{.kind = TreeNodeKind::Category,
+                               .path = kLibrary,
+                               .addon = {},
+                               .children = {AddonNamed("one-eham"), AddonNamed("another-eham"),
+                                            AddonNamed("payware-lpma"), AddonNamed("payware-vqpr")},
+                               .declaredAsCategory = true});
+    f.fileSystem.AddFileWithContents(PathUnder(kLibrary, PathFromUtf8("payware-vqpr")) / "scenery" / "APX.bgl",
+                                     FakeSceneryParser::Carrying({"VQPR"}));
+    f.ReadEverySceneryFolder();
+
+    PackageListPage page(f.viewModel);
+    f.viewModel.Show();
+
+    QTreeWidget* conflicts = Conflicts(page);
+
+    QTreeWidgetItem* covered = nullptr;
+    for (int row = 0; row < conflicts->topLevelItemCount(); ++row)
+    {
+        if (conflicts->topLevelItem(row)->text(0) == QStringLiteral("LPMA"))
+        {
+            covered = conflicts->topLevelItem(row);
+        }
+    }
+
+    QVERIFY(covered != nullptr);
+    conflicts->setCurrentItem(covered);
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    bool warned = false;
+    std::function<void(int)> answer;
+    answer = [&](const int tries)
+    {
+        auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget());
+
+        if (box == nullptr)
+        {
+            if (tries > 0)
+            {
+                QTimer::singleShot(10, qApp,
+                                   [&answer, tries]
+                                   {
+                                       answer(tries - 1);
+                                   });
+            }
+
+            return;
+        }
+
+        warned = true;
+        f.processProbe.ReportTheSimulatorAsClosed();
+        static_cast<void>(f.packageList.Switch("fs24-asobo-airport-lpma-madeira", false));
+        static_cast<void>(f.packageList.Switch("fs24-asobo-airport-vqpr-paro", true));
+        f.packageList.switched.clear();
+        f.viewModel.Show();
+        ButtonSaying(*box, QStringLiteral("Check again"))->click();
+    };
+
+    QTimer::singleShot(10, qApp,
+                       [&answer]
+                       {
+                           answer(200);
+                       });
+    ButtonSaying(page, QStringLiteral("Disable the simulator's airport"))->click();
+
+    QVERIFY(warned);
+    QCOMPARE(f.packageList.switched.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.packageList.switched.front().first),
+             QStringLiteral("fs24-asobo-airport-lpma-madeira"));
+}
+
+void PackageListPageTest::ThePackageTurnedOffThatWasChosenBeforeTheWarningIsTheOneTurnedBackOn()
+{
+    Fixture f;
+
+    PackageListPage page(f.viewModel);
+    f.viewModel.Show();
+
+    QTreeWidget* turnedOff = TurnedOff(page);
+
+    QCOMPARE(turnedOff->topLevelItemCount(), 1);
+    turnedOff->setCurrentItem(turnedOff->topLevelItem(0));
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    bool warned = false;
+    std::function<void(int)> answer;
+    answer = [&](const int tries)
+    {
+        auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget());
+
+        if (box == nullptr)
+        {
+            if (tries > 0)
+            {
+                QTimer::singleShot(10, qApp,
+                                   [&answer, tries]
+                                   {
+                                       answer(tries - 1);
+                                   });
+            }
+
+            return;
+        }
+
+        warned = true;
+        f.processProbe.ReportTheSimulatorAsClosed();
+        static_cast<void>(f.packageList.Switch("fs24-asobo-airport-vqpr-paro", true));
+        f.packageList.switched.clear();
+        f.viewModel.Show();
+        ButtonSaying(*box, QStringLiteral("Check again"))->click();
+    };
+
+    QTimer::singleShot(10, qApp,
+                       [&answer]
+                       {
+                           answer(200);
+                       });
+    ButtonSaying(page, QStringLiteral("Enable again"))->click();
+
+    QVERIFY(warned);
+    QCOMPARE(f.packageList.switched.size(), std::size_t{1});
+    QCOMPARE(QString::fromStdString(f.packageList.switched.front().first),
+             QStringLiteral("fs24-asobo-airport-vqpr-paro"));
+    QVERIFY(f.packageList.switched.front().second);
+}
+
+void PackageListPageTest::TheScrollBarOfBothTablesIsCappedAndTheCapFollowsTheBar()
+{
+    Fixture f;
+    f.ReadEverySceneryFolder();
+
+    PackageListPage page(f.viewModel);
+    f.viewModel.Show();
+    page.resize(900, 600);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    TheCapRidesWithTheScrollBar(Conflicts(page), Conflicts(page)->header());
+    TheCapRidesWithTheScrollBar(TurnedOff(page), TurnedOff(page)->header());
+}
+
 void PackageListPageTest::TheTwoButtonsOfTheTabSwapThePanelInsteadOfScrollingIt()
 {
     Fixture f;
-    StartupViewModel startupViewModel(f.startup.service, f.session, f.clock);
+    FakePresetRepository presets;
+    StartupEditor editor(f.startup.service, presets, f.filesystemProbe, f.log);
+    StartupViewModel startupViewModel(f.startup.service, editor, f.session, f.clock);
 
     auto* startup = new StartupPage(startupViewModel);
     auto* packages = new PackageListPage(f.viewModel);
@@ -335,12 +497,55 @@ void PackageListPageTest::TheTwoButtonsOfTheTabSwapThePanelInsteadOfScrollingIt(
              "the two features that write into a file of the simulator live in one tab, and the bar swaps the panel");
 }
 
-void PackageListPageTest::ThePageFitsTheNarrowestWindow()
+void PackageListPageTest::ThePageFitsTheNarrowestWindowInBothLanguages_data()
+{
+    QTest::addColumn<QString>("language");
+
+    QTest::newRow("English") << QStringLiteral("en");
+    QTest::newRow("Brazilian Portuguese") << QStringLiteral("pt_BR");
+}
+
+void PackageListPageTest::ThePageFitsTheNarrowestWindowInBothLanguages()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+
+    if (language != QLatin1String("en"))
+    {
+        const QString file = TheCatalogueBesideTheBuild(language);
+
+        QVERIFY2(!file.isEmpty(), "app_pt_BR.qm is not beside the build: build the release_translations target");
+        QVERIFY(catalogue.load(file));
+        QVERIFY(QCoreApplication::installTranslator(&catalogue));
+    }
+
+    {
+        Fixture f;
+        PackageListPage page(f.viewModel);
+        f.viewModel.Show();
+
+        ItFitsTheNarrowestWindow(page, "The packages half of the simulator page");
+    }
+
+    QCoreApplication::removeTranslator(&catalogue);
+}
+
+void PackageListPageTest::TheMomentOfTheReadingLivesOnTheTipOfTheBarAndNotOnTheBar()
 {
     Fixture f;
     PackageListPage page(f.viewModel);
+    f.viewModel.Show();
 
-    ItFitsTheNarrowestWindow(page, "The packages half of the simulator page");
+    const auto* bar = page.findChild<QWidget*>(QStringLiteral("PageToolbar"));
+
+    QVERIFY(bar != nullptr);
+    QCOMPARE(bar->toolTip(), QStringLiteral("package list · read %1").arg(AsMoment(f.clock.now)));
+
+    for (const QLabel* label : bar->findChildren<QLabel*>())
+    {
+        QVERIFY2(!label->text().contains(AsMoment(f.clock.now)), "the bar carries buttons only, no reading label");
+    }
 }
 
 QTEST_MAIN(PackageListPageTest)

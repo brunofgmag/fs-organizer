@@ -61,6 +61,7 @@ struct EntriesRead
     EnabledAddons enabled{};
     CopyConflicts conflicts{};
     std::vector<StartupEntry> startupEntries{};
+    bool startupEntriesWereRead = false;
 };
 
 struct LinkBatchOutcome
@@ -96,6 +97,8 @@ public:
                                                                    const std::vector<const TreeNode*>& nodes) const;
 
     [[nodiscard]] std::vector<StartupEntry> StartupEntriesNow() const;
+
+    [[nodiscard]] bool StartupEntriesAreRead() const;
 
     [[nodiscard]] ProfileSnapshot Scan(const SimulatorProfile& profile, const ScanGate& gate = {}) const;
 

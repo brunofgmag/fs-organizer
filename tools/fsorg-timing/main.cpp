@@ -297,7 +297,7 @@ int main(int argc, char* argv[])
 
         ContentXmlPackageList packageList{{}};
         packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
-        CoverageService coverageService(packageList, processProbe, loaded.managePackageList);
+        CoverageService coverageService(packageList, processProbe, log, loaded.managePackageList);
         const BglSceneryParser sceneryParser;
         JsonSceneryCache storedSceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
         ColdableSceneryCache sceneryCache(storedSceneryCache);
@@ -379,8 +379,7 @@ int main(int argc, char* argv[])
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--toggle")))
     {
-        startupEntries.Use(
-            StartupFileOf(StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe), profile.variant));
+        startupEntries.Use(StartupFileOrItsPlace(WindowsUserCfgLocations(), filesystemProbe, profile.variant));
         session.RefreshStartupEntries();
         measurements.clear();
 

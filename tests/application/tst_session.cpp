@@ -49,6 +49,7 @@ namespace
         static void DroppingTheOverridesWhileEntriesAreBeingReadReadsThemAgainAfterwards();
         static void RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated();
         static void RefreshingTheStartupEntriesThatHaveNotChangedAnnouncesNothing();
+        static void AChangeOnlyInTheCommandLineOfAStartupEntryIsAnnounced();
         static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
         static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
         static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
@@ -712,6 +713,29 @@ void SessionTest::RefreshingTheStartupEntriesThatHaveNotChangedAnnouncesNothing(
     f.session.RefreshStartupEntries();
 
     QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+}
+
+void SessionTest::AChangeOnlyInTheCommandLineOfAStartupEntryIsAnnounced()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.session.ShowActiveProfile();
+
+    const int refreshedBefore = f.observer.refreshed;
+    StartupBackup backup;
+
+    QCOMPARE(f.startup.entries
+                 .Apply(StartupEditing{.path = "C:/Tools/Fenix.exe",
+                                       .label = "Fenix",
+                                       .newPath = "C:/Tools/Fenix.exe",
+                                       .commandLine = "--windowed"},
+                        backup)
+                 .result,
+             FileResult::Completed);
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    QCOMPARE(f.session.Snapshot().startupEntries.front().commandLine, std::string("--windowed"));
 }
 
 void SessionTest::CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt()

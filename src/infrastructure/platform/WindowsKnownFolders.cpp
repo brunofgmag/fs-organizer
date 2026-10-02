@@ -17,6 +17,7 @@ namespace
     constexpr auto kJournalFolderName = "journal";
     constexpr auto kJournalFileName = "operations.jsonl";
     constexpr auto kPresetsFolderName = "presets";
+    constexpr auto kRemovedStartupEntriesFolderName = "removed-startup-entries";
     constexpr auto kBisectionFolderName = "bisection";
     constexpr auto kDocumentIndexFileName = "document-index.json";
     constexpr auto kSceneryCacheFileName = "scenery-cache.json";
@@ -66,6 +67,11 @@ std::filesystem::path JournalFilePath()
 std::filesystem::path PresetsFolderPath()
 {
     return LocalAppDataFolder() / kApplicationFolderName / kPresetsFolderName;
+}
+
+std::filesystem::path RemovedStartupEntriesFolderPath()
+{
+    return LocalAppDataFolder() / kApplicationFolderName / kRemovedStartupEntriesFolderName;
 }
 
 std::filesystem::path BisectionFolderPath()

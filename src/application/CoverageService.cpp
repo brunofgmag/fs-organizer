@@ -2,8 +2,11 @@
 
 #include <algorithm>
 
-CoverageService::CoverageService(PackageList& packages, const ProcessProbe& processProbe, const bool managing)
-    : packages_(packages), processProbe_(processProbe), managing_(managing)
+CoverageService::CoverageService(PackageList& packages,
+                                 const ProcessProbe& processProbe,
+                                 const OperationLog& log,
+                                 const bool managing)
+    : packages_(packages), processProbe_(processProbe), log_(log), managing_(managing)
 {
 }
 
@@ -59,32 +62,45 @@ CoverageService::WhatTheSimulatorAlsoCovers(const std::vector<AirportsOfAnAddon>
     return AirportsTheSimulatorAlsoCovers(addons, packages_.AirportsTheSimulatorShips());
 }
 
-FileResult CoverageService::Switch(const std::string_view packageName, const bool activated)
+FileResult CoverageService::Refusal() const
 {
     if (!managing_)
     {
         return FileResult::ThePackageListIsLeftLoose;
     }
 
-    if (processProbe_.SimulatorIsRunning())
-    {
-        return FileResult::TheSimulatorIsRunning;
-    }
+    return processProbe_.SimulatorIsRunning() ? FileResult::TheSimulatorIsRunning : FileResult::Completed;
+}
 
-    return packages_.Switch(packageName, activated);
+void CoverageService::Record(const std::vector<std::string>& packageNames,
+                             const bool activated,
+                             const FileResult result) const
+{
+    const OperationKind kind =
+        activated ? OperationKind::TurnOnTheSimulatorPackage : OperationKind::TurnOffTheSimulatorPackage;
+
+    for (const std::string& name : packageNames)
+    {
+        log_.RecordImport(kind, AddonId{}, {}, {}, result, OriginSource::Unknown, name);
+    }
+}
+
+FileResult CoverageService::Switch(const std::string_view packageName, const bool activated)
+{
+    const FileResult refusal = Refusal();
+    const FileResult result = refusal == FileResult::Completed ? packages_.Switch(packageName, activated) : refusal;
+
+    Record({std::string(packageName)}, activated, result);
+
+    return result;
 }
 
 FileResult CoverageService::SwitchAll(const std::vector<std::string>& packageNames, const bool activated)
 {
-    if (!managing_)
-    {
-        return FileResult::ThePackageListIsLeftLoose;
-    }
+    const FileResult refusal = Refusal();
+    const FileResult result = refusal == FileResult::Completed ? packages_.SwitchAll(packageNames, activated) : refusal;
 
-    if (processProbe_.SimulatorIsRunning())
-    {
-        return FileResult::TheSimulatorIsRunning;
-    }
+    Record(packageNames, activated, result);
 
-    return packages_.SwitchAll(packageNames, activated);
+    return result;
 }
