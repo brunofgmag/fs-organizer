@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.57.0](https://github.com/brunofgmag/fs-organizer/compare/v0.56.5...v0.57.0) (2026-10-02)
+
+
+* add, edit and remove startup entries ([#210](https://github.com/brunofgmag/fs-organizer/issues/210)) ([0b6e16e](https://github.com/brunofgmag/fs-organizer/commit/0b6e16e41f6fe5315f8c8608e7e012e591bd03a7))
+
+
+### Features
+
+* add, edit and remove startup entries ([321fb96](https://github.com/brunofgmag/fs-organizer/commit/321fb967dd8c90f0b503ebb561a35ced489e6227)) ([0b6e16e](https://github.com/brunofgmag/fs-organizer/commit/0b6e16e41f6fe5315f8c8608e7e012e591bd03a7))
+
 ## [0.56.5](https://github.com/brunofgmag/fs-organizer/compare/v0.56.4...v0.56.5) (2026-10-01)
 
 
