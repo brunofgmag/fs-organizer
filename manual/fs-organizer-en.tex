@@ -197,6 +197,17 @@ checkbox on each row enables or disables the addon.
 \shot{01-library.png}{The library, with the categories open and the selected
 addon's panel on the right.}
 
+Three buttons above the tree filter it by state: \ui{All}, \ui{Enabled} and
+\ui{Disabled}, each with its count. The counts do not change while you search.
+The search box and \ui{Hide empty categories} work together with the button you
+chose, and a category shows only if it holds an addon that passes all of them.
+
+The filter only hides rows. When you select a whole category, \ui{Enable
+selected}, \ui{Disable selected}, the category's checkbox and the other actions
+reach only the addons you can see in it. While a filter or a search is on, the
+number next to each category reads as shown out of total, for example
+\ui{3 of 31}.
+
 \subsection{The columns}
 
 \begin{description}
@@ -248,11 +259,11 @@ destination. If a pinned destination is removed from the profile, the program
 tells you and uses the default destination until you choose another. The pin
 itself is kept.
 
-\subsection{Repointing}
+\subsection{Relinking}
 
-If a link points to the wrong place, or to a folder that no longer exists,
-\ui{Repoint to the library} fixes it. Only the link changes; the addon's files
-are not touched.
+If an addon is linked in the wrong destination, or its link points to a folder
+that no longer exists, \ui{Relink in the profile destination} fixes it. Only
+the links change; the addon's files are not touched.
 
 \section{Destinations}
 

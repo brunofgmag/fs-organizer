@@ -110,7 +110,7 @@ void BisectionDriftTest::AnAddonThatLeftTheLibraryIsADivergence()
 void BisectionDriftTest::AnAddonThatJoinedTheLibraryIsADivergence()
 {
     DiskAsItWas now = TheDiskWithBothLinks();
-    now.libraryAddons.push_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
+    now.libraryAddons.emplace_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
 
     const std::vector<Divergence> drift = DriftBetween(TheDiskWithBothLinks(), now);
 
@@ -145,7 +145,7 @@ void BisectionDriftTest::TheDivergencesComeOutInAStableOrder()
 void BisectionDriftTest::AnAddonThatOnlyJoinedTheLibraryLoadedNothing()
 {
     DiskAsItWas now = TheDiskWithBothLinks();
-    now.libraryAddons.push_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
+    now.libraryAddons.emplace_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
 
     QVERIFY(NothingThatLoadedMoved(DriftBetween(TheDiskWithBothLinks(), now)));
 }
@@ -176,7 +176,7 @@ void BisectionDriftTest::AnythingOtherThanAJoinedAddonMeansSomethingThatLoadedMo
 void BisectionDriftTest::AJoinedAddonAlongsideAnotherKindDoesNotCountAsHarmless()
 {
     DiskAsItWas now = TheDiskWithBothLinks();
-    now.libraryAddons.push_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
+    now.libraryAddons.emplace_back("D:/MSFS 2024/Airports/aerosoft-airport-eddf");
     now.entries.pop_back();
 
     const std::vector<Divergence> drift = DriftBetween(TheDiskWithBothLinks(), now);

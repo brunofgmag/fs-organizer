@@ -1,6 +1,8 @@
 #include "application/BisectionService.h"
 
-#include <algorithm>
+#include <map>
+#include <set>
+#include <string>
 
 #include "domain/linking/EntryClassifier.h"
 #include "domain/model/Manifest.h"
@@ -24,13 +26,31 @@ namespace
         return folders;
     }
 
-    [[nodiscard]] bool ItIsAmong(const std::vector<std::filesystem::path>& where, const std::filesystem::path& what)
+    [[nodiscard]] std::map<std::string, const TreeNode*> AddonsByComparablePath(const std::vector<TreeNode>& libraries)
     {
-        return std::ranges::any_of(where,
-                                   [&what](const std::filesystem::path& one)
-                                   {
-                                       return ComparablePath(one) == ComparablePath(what);
-                                   });
+        std::map<std::string, const TreeNode*> byPath;
+
+        for (const TreeNode& library : libraries)
+        {
+            for (const TreeNode* addon : AddonsUnder(library))
+            {
+                byPath.emplace(ComparablePath(addon->path), addon);
+            }
+        }
+
+        return byPath;
+    }
+
+    [[nodiscard]] std::set<std::string> ComparablePathsOf(const std::vector<std::filesystem::path>& paths)
+    {
+        std::set<std::string> comparable;
+
+        for (const std::filesystem::path& path : paths)
+        {
+            comparable.insert(ComparablePath(path));
+        }
+
+        return comparable;
     }
 }
 
@@ -78,15 +98,33 @@ BisectionReport BisectionService::WhereItStands(const SimulatorProfile& profile)
 
 BisectionReport BisectionService::Begin(const SimulatorProfile& profile, const ProfileSnapshot& shown)
 {
+    return BeginFrom(profile, shown, ReadTheDisk(profile));
+}
+
+BisectionReport
+BisectionService::BeginFrom(const SimulatorProfile& profile, const ProfileSnapshot& shown, const Reading& reading)
+{
     if (EnabledAddonFolders(shown.entries).empty())
     {
         return BisectionReport{.refusal = BisectionRefusal::NothingIsEnabledToSearch};
     }
 
     const BisectionRun run = RunFor(profile, shown);
-    const Reading reading = ReadTheDisk(profile);
 
     return TakeTheNextRound(profile, run, run, reading);
+}
+
+BisectionReport BisectionService::StartOver(const SimulatorProfile& profile)
+{
+    BisectionReport putBack = Stop(profile);
+
+    const Reading reading = ReadTheDisk(profile);
+    BisectionReport started = BeginFrom(profile, reading.snapshot, reading);
+
+    putBack.results.insert(putBack.results.end(), started.results.begin(), started.results.end());
+    started.results = std::move(putBack.results);
+
+    return started;
 }
 
 BisectionReport BisectionService::Answer(const SimulatorProfile& profile, const BisectionAnswer answer)
@@ -270,25 +308,29 @@ BisectionService::ApplyTheRound(const SimulatorProfile& profile, const Bisection
 {
     const BisectionRound round = TheRound(run);
 
+    const std::map<std::string, const TreeNode*> inTheLibraries = AddonsByComparablePath(reading.snapshot.libraries);
+    const std::set<std::string> turnedOn = ComparablePathsOf(round.addonsOn);
+
     LinkBatch batch;
 
     for (const std::filesystem::path& addon : TheSearchSpaceOf(run))
     {
-        const TreeNode* node = AddonAt(reading.snapshot.libraries, addon);
+        const std::string key = ComparablePath(addon);
+        const auto found = inTheLibraries.find(key);
 
-        if (node == nullptr)
+        if (found == inTheLibraries.end())
         {
             continue;
         }
 
-        if (ItIsAmong(round.addonsOn, addon))
+        if (turnedOn.contains(key))
         {
-            batch.toEnable.push_back(node);
+            batch.toEnable.push_back(found->second);
 
             continue;
         }
 
-        batch.toDisable.push_back(node);
+        batch.toDisable.push_back(found->second);
     }
 
     const LinkBatchReport applied = profiles_.SetEnabled(profile, reading.snapshot, batch);

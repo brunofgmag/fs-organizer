@@ -8,7 +8,6 @@
 #include "domain/importing/ImportEngine.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/journal/OperationLog.h"
-#include "domain/profile/ExternalOrigins.h"
 #include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"

@@ -228,12 +228,12 @@ namespace
     {
         if (chart.revision == ChartRevision::Previous)
         {
-            return QString("(previous edition)");
+            return "(previous edition)";
         }
 
         if (chart.name.empty())
         {
-            return QString("(unnamed)");
+            return "(unnamed)";
         }
 
         return QString::fromStdString(chart.name);
@@ -332,9 +332,10 @@ int main(int argc, char* argv[])
     SceneryService scenery(filesystemProbe, sceneryParser, clock, cache);
     const QtPdfChartVersions readTheVersions;
     const VersionsItCounts chartVersions(readTheVersions);
-    const DocumentService documents(scanner, filesystemProbe, catalogueParser, chartVersions);
+    const DocumentService documents(filesystemProbe, catalogueParser, chartVersions);
 
     std::vector<Library> libraries;
+    libraries.reserve(arguments.libraries.size());
     for (const std::filesystem::path& path : arguments.libraries)
     {
         libraries.push_back({.id = AsUtf8(path), .path = path, .label = AsUtf8(path.filename())});
@@ -342,10 +343,14 @@ int main(int argc, char* argv[])
 
     const std::chrono::steady_clock::time_point beforeTheCodes = std::chrono::steady_clock::now();
 
+    std::vector<AddonToRead> toRead;
     std::vector<AirportsOfAnAddon> airports;
     for (const Library& library : libraries)
     {
-        const std::vector<SceneryOfAnAddon> read = scenery.SceneryOfEach(AddonsOf(scanner, library), {});
+        const std::vector<AddonToRead> ofTheLibrary = AddonsOf(scanner, library);
+        const std::vector<SceneryOfAnAddon> read = scenery.SceneryOfEach(ofTheLibrary, {});
+
+        toRead.insert(toRead.end(), ofTheLibrary.begin(), ofTheLibrary.end());
 
         for (const AirportsOfAnAddon& carried : AirportsOfEachAddon(read))
         {
@@ -356,7 +361,7 @@ int main(int argc, char* argv[])
     const std::chrono::steady_clock::time_point beforeTheIndex = std::chrono::steady_clock::now();
 
     const std::vector<DocumentsOfAnAddon> indexed =
-        documents.IndexWhile(libraries, airports,
+        documents.IndexWhile(toRead, airports, {},
                              [](const DocumentsOfAnAddon&, const std::size_t indexedSoFar, const std::size_t outOf)
                              {
                                  Out() << "\r  " << QString::number(indexedSoFar) << "/" << QString::number(outOf)

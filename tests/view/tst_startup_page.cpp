@@ -1,7 +1,10 @@
 #include <QtCore/QTimer>
+#include <QtGui/QImage>
+#include <QtGui/QPainter>
 #include <QtTest/QtTest>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QStyleOptionViewItem>
 #include <QtWidgets/QTreeWidget>
 
 #include <cstddef>
@@ -28,6 +31,7 @@
 #include "tests/support/ButtonLookup.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "view/delegates/RowDelegate.h"
 #include "view/simulator/StartupPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/RowTagRoles.h"
@@ -42,6 +46,11 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void TheCheckOpensWithTheSameInsetAsTheTextOfACellWithoutOne();
+        static void AClickOnTheDrawnCheckTogglesTheEntry_data();
+        static void AClickOnTheDrawnCheckTogglesTheEntry();
+        static void AClickWhereTheCheckUsedToBeLeftOfTheDrawnOneDoesNothing();
+        static void ATableThatDoesNotAskForItKeepsTheCheckWhereTheStyleLaysIt();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void EachEntryLandsOnItsOwnRowWithTheSwitchItCarriesOnDisk();
         static void TheRowOfAnAlarmingEntryIsMarkedAlarmingInEveryColumn();
@@ -160,6 +169,100 @@ namespace
     QTreeWidget* TableOf(const StartupPage& page)
     {
         return page.findChild<QTreeWidget*>();
+    }
+
+    constexpr int kCellWidth = 200;
+    constexpr int kCellHeight = 29;
+
+    QTreeWidget* ShownTable(Fixture& fixture)
+    {
+        fixture.page.resize(1024, 600);
+        fixture.page.show();
+        static_cast<void>(QTest::qWaitForWindowExposed(&fixture.page));
+        QCoreApplication::processEvents();
+
+        return TableOf(fixture.page);
+    }
+
+    QStyleOptionViewItem OptionFor(const QTreeWidget& table, const QRect& rect)
+    {
+        QStyleOptionViewItem option;
+        option.initFrom(table.viewport());
+        option.widget = &table;
+        option.rect = rect;
+        option.state |= QStyle::State_Enabled | QStyle::State_Active;
+        option.features |= QStyleOptionViewItem::HasDisplay;
+
+        return option;
+    }
+
+    QRect InkOf(const QImage& image)
+    {
+        const QRgb ground = image.pixel(0, 0);
+        QRect ink;
+
+        for (int y = 0; y < image.height(); ++y)
+        {
+            for (int x = 0; x < image.width(); ++x)
+            {
+                if (image.pixel(x, y) != ground)
+                {
+                    ink = ink.isNull() ? QRect(x, y, 1, 1) : ink.united(QRect(x, y, 1, 1));
+                }
+            }
+        }
+
+        return ink;
+    }
+
+    QImage BlankFor(const QSize& size)
+    {
+        QImage image(size, QImage::Format_ARGB32_Premultiplied);
+        image.fill(Qt::white);
+
+        return image;
+    }
+
+    QImage PaintedCell(const QTreeWidget& table, const int row, const int column)
+    {
+        QImage image = BlankFor(QSize(kCellWidth, kCellHeight));
+        QPainter painter(&image);
+
+        table.itemDelegate()->paint(&painter, OptionFor(table, QRect(0, 0, kCellWidth, kCellHeight)),
+                                    table.model()->index(row, column));
+
+        return image;
+    }
+
+    QRect InkOfTheCheckAlone(const QTreeWidget& table, const QStyle::State state)
+    {
+        constexpr int kMargin = 8;
+
+        QStyleOptionViewItem laid = OptionFor(table, QRect(0, 0, kCellWidth, kCellHeight));
+        laid.features |= QStyleOptionViewItem::HasCheckIndicator;
+
+        const QSize box = table.style()->subElementRect(QStyle::SE_ItemViewItemCheckIndicator, &laid, &table).size();
+
+        QImage image = BlankFor(box + QSize(2 * kMargin, 2 * kMargin));
+        QPainter painter(&image);
+
+        QStyleOptionViewItem check = OptionFor(table, QRect(QPoint(kMargin, kMargin), box));
+        check.state |= state;
+        table.style()->drawPrimitive(QStyle::PE_IndicatorItemViewItemCheck, &check, &painter, &table);
+        painter.end();
+
+        return InkOf(image).translated(-kMargin, -kMargin);
+    }
+
+    QImage TheTextAlone(const QTreeWidget& table, const QString& text)
+    {
+        QImage image = BlankFor(QSize(kCellWidth, kCellHeight));
+        QPainter painter(&image);
+
+        painter.setFont(table.viewport()->font());
+        painter.drawText(QRect(0, 0, kCellWidth, kCellHeight), Qt::AlignLeft | Qt::AlignVCenter, text);
+
+        return image;
     }
 }
 
@@ -300,6 +403,100 @@ void StartupPageTest::ALanguageChangeReachesTheToolbarAndTheLooseState()
     QVERIFY(ButtonSaying(fixture.page, "Manage startup entries") != nullptr);
     QCOMPARE(fixture.page.findChild<QStackedWidget*>()->currentIndex(), 2);
     QCOMPARE(fixture.entries.reads, std::size_t{0});
+}
+
+void StartupPageTest::TheCheckOpensWithTheSameInsetAsTheTextOfACellWithoutOne()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture fixture;
+    fixture.viewModel.Show();
+    QTreeWidget* table = ShownTable(fixture);
+
+    const QRect checkOnItsOwn = InkOfTheCheckAlone(*table, QStyle::State_On);
+    const QImage checkedCell = PaintedCell(*table, 0, 0);
+    const int checkInset = InkOf(checkedCell).left() - checkOnItsOwn.left();
+
+    const QString path = table->model()->index(0, 1).data(Qt::DisplayRole).toString();
+    const int textInset = InkOf(PaintedCell(*table, 0, 1)).left() - InkOf(TheTextAlone(*table, path)).left();
+
+    QVERIFY(textInset > 0);
+    QCOMPARE(checkInset, textInset);
+}
+
+void StartupPageTest::AClickOnTheDrawnCheckTogglesTheEntry_data()
+{
+    QTest::addColumn<bool>("atTheFarEdge");
+
+    QTest::newRow("at the centre") << false;
+    QTest::newRow("at the far edge") << true;
+}
+
+void StartupPageTest::AClickOnTheDrawnCheckTogglesTheEntry()
+{
+    QFETCH(bool, atTheFarEdge);
+
+    ApplyModernistTheme(*qApp);
+    Fixture fixture;
+    fixture.viewModel.Show();
+    QTreeWidget* table = ShownTable(fixture);
+
+    const QRect cell = table->visualRect(table->model()->index(1, 0));
+    const QRect drawn = InkOfTheCheckAlone(*table, QStyle::State_Off);
+    const int drawnLeft = InkOf(PaintedCell(*table, 1, 0)).left();
+    const int inside = atTheFarEdge ? drawn.width() - 2 : drawn.width() / 2;
+
+    QCOMPARE(table->topLevelItem(1)->checkState(0), Qt::Unchecked);
+
+    QTest::mouseClick(table->viewport(), Qt::LeftButton, Qt::NoModifier,
+                      QPoint(cell.left() + drawnLeft + inside, cell.center().y()));
+
+    QCOMPARE(fixture.entries.writes, std::size_t{1});
+    QCOMPARE(table->topLevelItem(1)->checkState(0), Qt::Checked);
+}
+
+void StartupPageTest::AClickWhereTheCheckUsedToBeLeftOfTheDrawnOneDoesNothing()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture fixture;
+    fixture.viewModel.Show();
+    QTreeWidget* table = ShownTable(fixture);
+
+    const QRect cell = table->visualRect(table->model()->index(1, 0));
+    const int drawnLeft = InkOf(PaintedCell(*table, 1, 0)).left();
+
+    QVERIFY(drawnLeft > 2);
+
+    QTest::mouseClick(table->viewport(), Qt::LeftButton, Qt::NoModifier,
+                      QPoint(cell.left() + drawnLeft - 2, cell.center().y()));
+
+    QCOMPARE(fixture.entries.writes, std::size_t{0});
+    QCOMPARE(table->topLevelItem(1)->checkState(0), Qt::Unchecked);
+}
+
+void StartupPageTest::ATableThatDoesNotAskForItKeepsTheCheckWhereTheStyleLaysIt()
+{
+    ApplyModernistTheme(*qApp);
+
+    QTreeWidget tree;
+    tree.setColumnCount(1);
+    tree.setItemDelegate(new RowDelegate(&tree));
+
+    auto* item = new QTreeWidgetItem(&tree);
+    item->setCheckState(0, Qt::Checked);
+
+    tree.resize(400, 200);
+    tree.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&tree));
+
+    QStyleOptionViewItem option = OptionFor(tree, QRect(0, 0, kCellWidth, kCellHeight));
+    option.features |= QStyleOptionViewItem::HasCheckIndicator;
+    const int laidByTheStyle =
+        tree.style()->subElementRect(QStyle::SE_ItemViewItemCheckIndicator, &option, &tree).left();
+
+    const int drawnAt = InkOf(PaintedCell(tree, 0, 0)).left() - InkOfTheCheckAlone(tree, QStyle::State_On).left();
+
+    QVERIFY(laidByTheStyle > 0);
+    QCOMPARE(drawnAt, laidByTheStyle);
 }
 
 void StartupPageTest::ThePageFitsTheNarrowestWindow()

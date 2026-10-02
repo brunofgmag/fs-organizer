@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <optional>
-#include <ranges>
 #include <vector>
 
 #include "application/ImportService.h"
@@ -14,6 +13,10 @@
 #include "application/DeletionService.h"
 #include "application/SizeService.h"
 #include "application/StartupService.h"
+#include "domain/model/EnabledAddons.h"
+#include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
+#include "infrastructure/sim/StartupFileLocations.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
@@ -24,10 +27,10 @@
 #include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
+#include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ProfilePackages.h"
@@ -38,6 +41,7 @@
 
 #include "AppScroll.h"
 #include "LibraryScroll.h"
+#include "OpenCosts.h"
 #include "JournalScroll.h"
 #include "SessionForMeasuring.h"
 #include "application/Session.h"
@@ -69,7 +73,8 @@
 
 namespace
 {
-    constexpr qint64 kBudgetForTheMainThread = 300;
+    constexpr double kBudgetForTheMainThread = 300;
+    constexpr qsizetype kStageColumn = 46;
 
     QTextStream& Out()
     {
@@ -81,7 +86,7 @@ namespace
     {
         QString stage;
         bool onTheMainThread = false;
-        qint64 elapsed = 0;
+        double elapsedMilliseconds = 0;
     };
 
     std::vector<Measurement> measurements;
@@ -94,7 +99,9 @@ namespace
 
         std::forward<Work>(work)();
 
-        measurements.push_back({.stage = stage, .onTheMainThread = onTheMainThread, .elapsed = timer.elapsed()});
+        measurements.push_back({.stage = stage,
+                                .onTheMainThread = onTheMainThread,
+                                .elapsedMilliseconds = static_cast<double>(timer.nsecsElapsed()) / 1e6});
     }
 
     const SimulatorProfile* ActiveProfile(const AppSettings& settings)
@@ -113,12 +120,12 @@ namespace
         return settings.profiles.empty() ? nullptr : &settings.profiles.front();
     }
 
-    qint64 MainThreadTotal()
+    double MainThreadTotal()
     {
-        qint64 total = 0;
+        double total = 0;
         for (const Measurement& measurement : measurements)
         {
-            total += measurement.onTheMainThread ? measurement.elapsed : 0;
+            total += measurement.onTheMainThread ? measurement.elapsedMilliseconds : 0;
         }
 
         return total;
@@ -127,18 +134,51 @@ namespace
     void Report()
     {
         Out() << "\n"
-              << QStringLiteral("stage").leftJustified(34) << QStringLiteral("thread").leftJustified(10) << "ms\n";
+              << QStringLiteral("stage").leftJustified(kStageColumn) << QStringLiteral("thread").leftJustified(10)
+              << "ms\n";
 
         for (const Measurement& measurement : measurements)
         {
-            Out() << measurement.stage.leftJustified(34)
-                  << QString(measurement.onTheMainThread ? "main" : "worker").leftJustified(10) << measurement.elapsed
-                  << "\n";
+            Out() << measurement.stage.leftJustified(kStageColumn)
+                  << QString(measurement.onTheMainThread ? "main" : "worker").leftJustified(10)
+                  << QString::number(measurement.elapsedMilliseconds, 'f', 1) << "\n";
         }
 
-        Out() << "\ntotal on the main thread: " << MainThreadTotal() << " ms (budget " << kBudgetForTheMainThread
-              << " ms)\n";
+        Out() << "\ntotal on the main thread: " << QString::number(MainThreadTotal(), 'f', 1) << " ms (budget "
+              << kBudgetForTheMainThread << " ms)\n";
         Out() << (MainThreadTotal() > kBudgetForTheMainThread ? "RED: the interface freezes\n" : "GREEN\n");
+        Out().flush();
+    }
+
+    void ReportUsage()
+    {
+        Out() << "fsorg-timing: times what the app does on the main thread and which stages run on a worker.\n"
+              << "It measures a disposable copy of your settings and journal and never writes to the install.\n"
+              << "\n"
+              << "usage: fsorg-timing [option]\n"
+              << "\n"
+              << "with no option it times loading the active profile and exits 1 when the main thread spends\n"
+              << "more than " << kBudgetForTheMainThread
+              << " ms, 2 when it cannot stage the copy or finds no profile.\n"
+              << "\n"
+              << "  --help                      print this text and exit without measuring\n"
+              << "  --toggle                    time enabling and disabling one addon, three rounds, and check the\n"
+              << "                              incremental list against a full read of the same disk\n"
+              << "  --journal-scroll [W H]      scroll the Journal page at a fixed window size, W by H pixels\n"
+              << "                              (the last two arguments, read when there are two)\n"
+              << "  --app-journal               open the Journal in the real window, size its columns, search it\n"
+              << "                              keystroke by keystroke, then scroll and hover\n"
+              << "  --app-library               scroll the library tree in the real window, switch between tabs and\n"
+              << "                              time the model's data roles\n"
+              << "  --app-costs                 time what opening the library costs: the destination divergence,\n"
+              << "                              the Diagnostics load section and the selection after an enable\n"
+              << "      --airport-addon=<text>      with --app-costs, the airport addon to select, by part of its\n"
+              << "                                  folder name (default: the one with the most documents)\n"
+              << "      --aircraft-addon=<text>     with --app-costs, the aircraft addon to select, by part of its\n"
+              << "                                  folder name (default: the largest)\n"
+              << "      --stall-documents-ms=<n>    with --app-costs, hold the documents index for n ms to see what\n"
+              << "                                  a slow index does to the selection\n"
+              << "  -style <name>               the Qt style to draw with (default: windows11)\n";
         Out().flush();
     }
 }
@@ -146,6 +186,14 @@ namespace
 int main(int argc, char* argv[])
 {
     const QApplication application(argc, argv);
+
+    if (QCoreApplication::arguments().contains(QStringLiteral("--help")))
+    {
+        ReportUsage();
+
+        return 0;
+    }
+
     if (!QCoreApplication::arguments().contains(QStringLiteral("-style")))
     {
         QApplication::setStyle(QStringLiteral("windows11"));
@@ -184,12 +232,13 @@ int main(int argc, char* argv[])
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const JournalImportedFolders importedFolders(journal);
+    const JournalLinkedFolders theAppLinked(journal);
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
 
     const LinkingEngine linking(linkService, filesystemProbe);
-    const EntryClassifier classifier(linkService, filesystemProbe);
+    const EntryClassifier classifier(linkService, filesystemProbe, theAppLinked);
     const OperationLog log(journal, clock);
 
     ExeXmlStartupEntries startupEntries{{}};
@@ -222,13 +271,15 @@ int main(int argc, char* argv[])
 
     const bool measuringTheJournal = QCoreApplication::arguments().contains(QStringLiteral("--app-journal"));
     const bool measuringTheLibrary = QCoreApplication::arguments().contains(QStringLiteral("--app-library"));
+    const bool measuringTheOpenCosts = QCoreApplication::arguments().contains(QStringLiteral("--app-costs"));
 
-    if (measuringTheJournal || measuringTheLibrary)
+    if (measuringTheJournal || measuringTheLibrary || measuringTheOpenCosts)
     {
         MainWindow window(loaded);
         QtBackgroundRunner runner;
+        TimedRunner timedRunner(runner);
         SessionNotifier notifier;
-        Session session(profileService, organizer, settings, loaded, processProbe, runner, notifier);
+        Session session(profileService, organizer, settings, loaded, processProbe, timedRunner, notifier);
 
         SizeService sizes(catalog, filesystemProbe, clock, runner);
 
@@ -236,8 +287,7 @@ int main(int argc, char* argv[])
         ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
         packages.Reload(session.Profile().variant);
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
-        const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
-                                              sizes);
+        const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
         DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -249,20 +299,21 @@ int main(int argc, char* argv[])
         packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
         CoverageService coverageService(packageList, processProbe, loaded.managePackageList);
         const BglSceneryParser sceneryParser;
-        JsonSceneryCache sceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
+        JsonSceneryCache storedSceneryCache(QDir::tempPath().toStdString() + "/fsorg-timing-scenery-cache.json");
+        ColdableSceneryCache sceneryCache(storedSceneryCache);
         SceneryService sceneryService(filesystemProbe, sceneryParser, clock, sceneryCache);
         CoverageViewModel coverageViewModel(coverageService, sceneryService, session, clock, runner);
 
         const JsonChartCatalogueParser catalogueParser;
         const QtPdfChartVersions chartVersions;
-        const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+        const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
         AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
 
         auto* treePage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
                                            addonDocumentsViewModel, treeModel, notifier);
 
         CommunityModel communityModel;
-        CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
+        CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes, runner);
         auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
         QuarantineModel quarantineModel;
@@ -275,7 +326,7 @@ int main(int argc, char* argv[])
         auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
         PageTab* libraryTab = window.AddPage(PageNames::kLibrary, treePage);
-        window.AddPage(PageNames::kDestinations, communityPage);
+        PageTab* destinationsTab = window.AddPage(PageNames::kDestinations, communityPage);
         window.AddPage(PageNames::kQuarantine, quarantinePage);
         window.AddPage(PageNames::kJournal, journalPage);
 
@@ -286,11 +337,21 @@ int main(int argc, char* argv[])
             QThread::msleep(5);
         }
 
+        if (measuringTheOpenCosts)
+        {
+            libraryTab->click();
+
+            return MeasureTheOpenCosts(window, *treePage, treeModel, treeViewModel, addonDocumentsViewModel,
+                                       profileService, documentService, filesystemProbe, sceneryService, sceneryCache,
+                                       session);
+        }
+
         if (measuringTheLibrary)
         {
             libraryTab->click();
 
-            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, sceneryService, session);
+            return MeasureTheAppLibrary(window, *treePage, treeModel, coverageViewModel, communityViewModel,
+                                        *libraryTab, *destinationsTab, sceneryService, session, timedRunner);
         }
 
         return MeasureTheAppJournal(window, *journalPage, journalViewModel, journalModel);
@@ -302,7 +363,7 @@ int main(int argc, char* argv[])
     SessionNotifier notifier;
     Session session(profileService, organizer, settings, loaded, processProbe, runInline, notifier);
     SizeService inlineSizes(catalog, filesystemProbe, clock, runInline);
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, inlineSizes);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, inlineSizes, runInline);
 
     Measure("Session::ShowActiveProfile", false,
             [&]
@@ -315,6 +376,219 @@ int main(int argc, char* argv[])
             {
                 model.Show(session.Snapshot(), session.Profile());
             });
+
+    if (QCoreApplication::arguments().contains(QStringLiteral("--toggle")))
+    {
+        startupEntries.Use(
+            StartupFileOf(StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe), profile.variant));
+        session.RefreshStartupEntries();
+        measurements.clear();
+
+        std::vector<const TreeNode*> everyAddon;
+        for (const TreeNode& library : session.Snapshot().libraries)
+        {
+            std::ranges::copy(AddonsUnder(library), std::back_inserter(everyAddon));
+        }
+
+        const EnabledAddons enabledNow = session.Snapshot().enabled;
+        const auto enabledOne = std::ranges::find_if(everyAddon,
+                                                     [&enabledNow](const TreeNode* addon)
+                                                     {
+                                                         return enabledNow.Contains(addon->path);
+                                                     });
+        const auto disabledOne = std::ranges::find_if(everyAddon,
+                                                      [&enabledNow](const TreeNode* addon)
+                                                      {
+                                                          return !enabledNow.Contains(addon->path);
+                                                      });
+
+        if (enabledOne == everyAddon.end() || disabledOne == everyAddon.end())
+        {
+            Out() << "needs one enabled and one disabled addon\n";
+            Out().flush();
+            return 2;
+        }
+
+        const std::vector<const TreeNode*> turningOff{*enabledOne};
+        const std::vector<const TreeNode*> turningOn{*disabledOne};
+
+        const std::vector<DestinationEntry>& shownEntries = session.Snapshot().entries;
+        const auto itsLink =
+            std::ranges::find_if(shownEntries,
+                                 [&enabledOne](const DestinationEntry& entry)
+                                 {
+                                     return ComparablePath(entry.target) == ComparablePath((*enabledOne)->path);
+                                 });
+        const std::vector<std::filesystem::path> changed = itsLink == shownEntries.end()
+            ? std::vector<std::filesystem::path>{}
+            : std::vector<std::filesystem::path>{itsLink->path};
+
+        ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+        packages.Reload(session.Profile().variant);
+        AddonTreeViewModel treeViewModel(session, profileService, model, packages, inlineSizes, runInline, notifier);
+
+        bool theIncrementalListMatches = true;
+
+        for (int round = 1; round <= 3; ++round)
+        {
+            const QString tag = QStringLiteral("r%1 ").arg(round);
+
+            Measure(tag + "PlanToggle (enable)", true,
+                    [&]
+                    {
+                        static_cast<void>(treeViewModel.PlanToggle(turningOn, true));
+                    });
+            Measure(tag + "StartupEntriesAtRisk (disable)", true,
+                    [&]
+                    {
+                        static_cast<void>(treeViewModel.StartupEntriesAtRisk(turningOff));
+                    });
+            Measure(tag + "trees copied for the worker", true,
+                    [&]
+                    {
+                        const std::vector<TreeNode> copied = session.Snapshot().libraries;
+                        static_cast<void>(copied.size());
+                    });
+
+            std::vector<ExternalAddon> externals;
+            ProfileService::LinksOnDisk onDisk;
+            std::vector<DestinationEntry> incremental;
+
+            Measure(tag + "externals (sidecars)", false,
+                    [&]
+                    {
+                        externals =
+                            profileService.WhatCameFromAnotherProgram(session.Profile(), session.Snapshot().libraries);
+                    });
+            Measure(tag + "journal.Read() (copy)", false,
+                    [&]
+                    {
+                        static_cast<void>(journal.Read());
+                    });
+            Measure(tag + "WhatTheAppLinked (journal fold)", false,
+                    [&]
+                    {
+                        static_cast<void>(theAppLinked.WhatTheAppLinked());
+                    });
+            Measure(tag + "FoldersTheImporterBrought (journal fold)", false,
+                    [&]
+                    {
+                        static_cast<void>(importedFolders.WhatTheImporterBrought());
+                    });
+            Measure(tag + "ReadLinksNow", false,
+                    [&]
+                    {
+                        onDisk = profileService.ReadLinksNow(session.Profile(), externals);
+                    });
+
+            std::vector<std::filesystem::path> places;
+            std::vector<std::optional<std::filesystem::path>> targets;
+
+            Measure(tag + "  ChildDirectories (the places)", false,
+                    [&]
+                    {
+                        places.clear();
+                        for (const std::filesystem::path& root : session.Profile().destinations)
+                        {
+                            std::ranges::copy(filesystemProbe.ChildDirectories(root), std::back_inserter(places));
+                        }
+                    });
+            Measure(tag + "  TargetsAt (ReadLinkTargets)", false,
+                    [&]
+                    {
+                        targets = classifier.TargetsAt(places);
+                    });
+
+            std::size_t targetsChecked = 0;
+
+            Measure(tag + "  TargetDirectoryExists (every target)", false,
+                    [&]
+                    {
+                        for (const std::optional<std::filesystem::path>& target : targets)
+                        {
+                            if (target.has_value())
+                            {
+                                static_cast<void>(
+                                    filesystemProbe.TargetDirectoryExists(NormalizeReparseTarget(*target)));
+                                ++targetsChecked;
+                            }
+                        }
+                    });
+
+            const std::size_t readLinksNow = measurements.size() - 4;
+            measurements.push_back({.stage = tag + "  ReadLinksNow minus those three",
+                                    .onTheMainThread = false,
+                                    .elapsedMilliseconds = measurements[readLinksNow].elapsedMilliseconds
+                                        - measurements[readLinksNow + 1].elapsedMilliseconds
+                                        - measurements[readLinksNow + 2].elapsedMilliseconds
+                                        - measurements[readLinksNow + 3].elapsedMilliseconds});
+
+            Out() << tag << "places: " << places.size() << "  links read: " << targetsChecked
+                  << "  entries classified: " << onDisk.entries.size() << "\n";
+
+            Measure(
+                tag + "EntriesAfter (incremental)", false,
+                [&]
+                {
+                    incremental = profileService.EntriesAfter(
+                        session.Profile(), onDisk.entries,
+                        {LinkOperationResult{.linkPath = changed.empty() ? std::filesystem::path{} : changed.front()}},
+                        externals);
+                });
+            Measure(tag + "SimulatorIsRunning", false,
+                    [&]
+                    {
+                        static_cast<void>(processProbe.SimulatorIsRunning());
+                    });
+
+            const std::vector<DestinationEntry> full =
+                profileService.ResolveEntries(session.Profile(), session.Snapshot().libraries);
+
+            theIncrementalListMatches = theIncrementalListMatches && incremental.size() == full.size()
+                && std::ranges::equal(incremental, full,
+                                      [](const DestinationEntry& left, const DestinationEntry& right)
+                                      {
+                                          return left.path == right.path && left.target == right.target
+                                              && left.classification == right.classification;
+                                      });
+
+            EntriesRead read;
+
+            Measure(tag + "ReadEntries (resolve and derive)", false,
+                    [&]
+                    {
+                        read =
+                            profileService.ReadEntries(session.StampForAnEntriesRead(), session.Snapshot().libraries);
+                    });
+            Measure(tag + "Session::AdoptTheEntriesRead", true,
+                    [&]
+                    {
+                        session.AdoptTheEntriesRead(std::move(read));
+                    });
+            Measure(tag + "AddonTreeModel::Refresh", true,
+                    [&]
+                    {
+                        model.Refresh(session.Snapshot(), session.Profile());
+                    });
+        }
+
+        Out() << "journal records: " << journal.Read().size() << "  addons: " << everyAddon.size()
+              << "  entries: " << session.Snapshot().entries.size()
+              << "  startup entries: " << session.Snapshot().startupEntries.size() << "\n";
+        for (const EntryClassification classification : kEveryClassification)
+        {
+            Out() << "  classification #" << OrderOf(classification) << ": "
+                  << std::ranges::count(session.Snapshot().entries, classification, &DestinationEntry::classification)
+                  << "\n";
+        }
+        Out() << "incremental list equals a full read of the same disk: " << (theIncrementalListMatches ? "yes" : "NO")
+              << "\n";
+
+        Report();
+
+        return theIncrementalListMatches ? 0 : 1;
+    }
+
     Measure("CommunityViewModel::Show", true,
             [&]
             {

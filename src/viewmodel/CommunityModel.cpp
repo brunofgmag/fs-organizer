@@ -88,27 +88,47 @@ QString CommunityModel::ClassificationName(const EntryClassification classificat
     return {};
 }
 
-void CommunityModel::ShowEntries(std::vector<DestinationEntry> entries,
-                                 SimulatorProfile profile,
-                                 CopyConflicts conflicts)
+void CommunityModel::ShowEntries(const std::vector<DestinationEntry>& entries, const CopyConflicts& conflicts)
 {
+    if (entries == entries_ && conflicts.All() == conflicts_.All())
+    {
+        return;
+    }
+
     beginResetModel();
-    entries_ = std::move(entries);
-    profile_ = std::move(profile);
-    conflicts_ = std::move(conflicts);
+    entries_ = entries;
+    conflicts_ = conflicts;
+    ResolveTheConflictOfEachRow();
     endResetModel();
+}
+
+void CommunityModel::ResolveTheConflictOfEachRow()
+{
+    if (conflicts_.Count() == 0)
+    {
+        conflictOfRow_.assign(entries_.size(), nullptr);
+        return;
+    }
+
+    conflictOfRow_.clear();
+    conflictOfRow_.reserve(entries_.size());
+
+    for (const DestinationEntry& entry : entries_)
+    {
+        conflictOfRow_.push_back(entry.theOtherProgramTookItsFolderBack
+                                     ? conflicts_.OverTheProvenance(entry.externalOrigin)
+                                     : conflicts_.OverTheProvenance(entry.path));
+    }
+}
+
+const CopyConflict* CommunityModel::ConflictOnRow(const int row) const
+{
+    return conflictOfRow_[static_cast<std::size_t>(row)];
 }
 
 const CopyConflict* CommunityModel::ConflictAt(const QModelIndex& position) const
 {
-    const DestinationEntry* entry = EntryAt(position);
-    if (entry == nullptr)
-    {
-        return nullptr;
-    }
-
-    return entry->theOtherProgramTookItsFolderBack ? conflicts_.OverTheProvenance(entry->externalOrigin)
-                                                   : conflicts_.OverTheProvenance(entry->path);
+    return EntryAt(position) == nullptr ? nullptr : ConflictOnRow(position.row());
 }
 
 const DestinationEntry* CommunityModel::EntryAt(const QModelIndex& position) const
@@ -139,8 +159,6 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
         return {};
     }
 
-    const CopyConflict* conflict = ConflictAt(position);
-
     if (role == ClassificationRole)
     {
         return static_cast<int>(entry->classification);
@@ -148,12 +166,12 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
 
     if (role == ConflictRole)
     {
-        return conflict != nullptr;
+        return ConflictOnRow(position.row()) != nullptr;
     }
 
     if (role == AlarmingRole)
     {
-        return conflict != nullptr || entry->classification == EntryClassification::Broken
+        return ConflictOnRow(position.row()) != nullptr || entry->classification == EntryClassification::Broken
             || entry->classification == EntryClassification::Duplicated
             || entry->classification == EntryClassification::Substituted
             || entry->classification == EntryClassification::Vanished;
@@ -178,7 +196,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
 
     if (role == TagToneRole)
     {
-        return static_cast<int>(ToneOf(entry->classification, conflict != nullptr));
+        return static_cast<int>(ToneOf(entry->classification, ConflictOnRow(position.row()) != nullptr));
     }
 
     if (role == QuietRole)
@@ -188,6 +206,7 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
 
     if (role == Qt::ToolTipRole)
     {
+        const CopyConflict* conflict = ConflictOnRow(position.row());
         if (conflict == nullptr)
         {
             return {};
@@ -207,9 +226,13 @@ QVariant CommunityModel::data(const QModelIndex& position, const int role) const
     case NameColumn: return AsText(entry->path.filename());
     case DestinationColumn: return AsText(entry->path.parent_path().filename());
     case ClassificationColumn:
+    {
+        const CopyConflict* conflict = ConflictOnRow(position.row());
+
         return conflict == nullptr || conflict->theProvenanceIsAnotherProgram || conflict->ourLinkWasReplaced
             ? ClassificationName(entry->classification)
             : tr("%1 · in conflict").arg(ClassificationName(entry->classification));
+    }
     case TargetColumn: return WhatTheStateMeans(entry->classification);
     default: return {};
     }
@@ -250,10 +273,40 @@ void CommunityFilterModel::ShowOnlyTheConflicted(const bool only)
     invalidateRowsFilter();
 }
 
+void CommunityFilterModel::ShowOnlyWhatHolds(const QString& text)
+{
+    text_ = text;
+    invalidateRowsFilter();
+}
+
 bool CommunityFilterModel::filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const
 {
-    const QModelIndex position = sourceModel()->index(sourceRow, 0, sourceParent);
+    return TheKindIsWanted(sourceModel()->index(sourceRow, 0, sourceParent))
+        && TheTextIsWanted(sourceRow, sourceParent);
+}
 
+bool CommunityFilterModel::TheTextIsWanted(const int sourceRow, const QModelIndex& sourceParent) const
+{
+    if (text_.isEmpty())
+    {
+        return true;
+    }
+
+    for (int column = 0; column < sourceModel()->columnCount(sourceParent); ++column)
+    {
+        const QModelIndex cell = sourceModel()->index(sourceRow, column, sourceParent);
+
+        if (sourceModel()->data(cell, Qt::DisplayRole).toString().contains(text_, Qt::CaseInsensitive))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool CommunityFilterModel::TheKindIsWanted(const QModelIndex& position) const
+{
     if (conflictedOnly_)
     {
         return sourceModel()->data(position, CommunityModel::ConflictRole).toBool();

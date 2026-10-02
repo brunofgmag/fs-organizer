@@ -1,7 +1,6 @@
 #include <QtTest/QtTest>
 
 #include <string>
-#include <variant>
 
 #include "domain/support/PathSegment.h"
 

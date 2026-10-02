@@ -6,6 +6,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QTimeZone>
 
+#include "domain/importing/ImportPaths.h"
 #include "domain/support/PathUtils.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
@@ -186,6 +187,13 @@ QString QuarantineModel::WhenAndHowBigItIs(const QuarantinedItem& item) const
     return told.join(QStringLiteral(" · "));
 }
 
+QString QuarantineModel::VersionOf(const QModelIndex& position) const
+{
+    const QuarantineDetail* detail = DetailAt(position);
+
+    return detail == nullptr ? QString() : QString::fromStdString(detail->version);
+}
+
 QVariant QuarantineModel::data(const QModelIndex& position, const int role) const
 {
     const QuarantinedItem* item = ItemAt(position);
@@ -194,12 +202,11 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
         return {};
     }
 
-    const QuarantineDetail* detail = DetailAt(position);
-    const bool replaced = detail != nullptr && detail->WasReplaced();
-
     if (role == ReplacedRole)
     {
-        return replaced;
+        const QuarantineDetail* detail = DetailAt(position);
+
+        return detail != nullptr && detail->WasReplaced();
     }
 
     if (role == SecondLineRole)
@@ -230,8 +237,8 @@ QVariant QuarantineModel::data(const QModelIndex& position, const int role) cons
 
     switch (position.column())
     {
-    case NameColumn: return AsText(item->path.filename());
-    case VersionColumn: return detail == nullptr ? QString() : QString::fromStdString(detail->version);
+    case NameColumn: return AsText(ItemOfTheSwapSlot(item->path).filename());
+    case VersionColumn: return VersionOf(position);
     case OriginColumn: return item->KnowsWhereItCameFrom() ? AsText(item->origin) : tr("not recorded");
     case SourceColumn: return WhatTheSourcesSay(*item);
     default: return {};

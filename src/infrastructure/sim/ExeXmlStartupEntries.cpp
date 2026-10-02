@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iterator>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <utility>
@@ -30,19 +31,31 @@ ExeXmlStartupEntries::ExeXmlStartupEntries(std::filesystem::path filePath) : fil
 
 void ExeXmlStartupEntries::Use(std::filesystem::path filePath)
 {
+    const std::lock_guard lock(guard_);
+
     filePath_ = std::move(filePath);
+}
+
+std::filesystem::path ExeXmlStartupEntries::FilePath() const
+{
+    const std::lock_guard lock(guard_);
+
+    return filePath_;
 }
 
 std::vector<StartupEntry> ExeXmlStartupEntries::Entries() const
 {
-    const std::optional<std::string> document = BytesOf(filePath_);
+    const std::optional<std::string> document = BytesOf(FilePath());
 
     return document.has_value() ? StartupEntriesIn(*document) : std::vector<StartupEntry>{};
 }
 
-FileResult ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, const bool enabled)
+FileResult
+ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, const bool enabled, StartupBackup& backup)
 {
-    const std::optional<std::string> before = BytesOf(filePath_);
+    const std::filesystem::path filePath = FilePath();
+
+    const std::optional<std::string> before = BytesOf(filePath);
     if (!before.has_value())
     {
         return FileResult::CouldNotReadTheStartupFile;
@@ -59,10 +72,15 @@ FileResult ExeXmlStartupEntries::Switch(const std::filesystem::path& entryPath, 
         return FileResult::Completed;
     }
 
-    if (!WriteFileReplacing(BackupOfStartupFile(filePath_), *before))
+    if (!backup.taken)
     {
-        return FileResult::CouldNotWriteTheStartupFile;
+        if (!WriteFileReplacing(BackupOfStartupFile(filePath), *before))
+        {
+            return FileResult::CouldNotWriteTheStartupFile;
+        }
+
+        backup.taken = true;
     }
 
-    return WriteFileReplacing(filePath_, *after) ? FileResult::Completed : FileResult::CouldNotWriteTheStartupFile;
+    return WriteFileReplacing(filePath, *after) ? FileResult::Completed : FileResult::CouldNotWriteTheStartupFile;
 }

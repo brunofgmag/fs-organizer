@@ -52,6 +52,8 @@ public:
 
     void Begin();
 
+    void StartOver();
+
     void Answer(BisectionAnswer answer);
 
     void Refine();
@@ -84,7 +86,7 @@ signals:
     void Changed();
 
 private:
-    void Take(const BisectionReport& report);
+    void Take(const BisectionReport& report, bool aRunIsStored);
 
     void RunTheProcedure(std::function<BisectionReport()> work);
 

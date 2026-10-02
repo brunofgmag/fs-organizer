@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <utility>
 
 #include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
@@ -30,31 +31,49 @@ QStringList PresetViewModel::Names() const
     return names;
 }
 
-PresetRow PresetViewModel::RowFor(const Preset& preset, const PresetListing& listing, const ApplyMode mode) const
+PresetLookup PresetViewModel::LookupOfTheSnapshot() const
 {
-    const SimulatorProfile& profile = session_.Profile();
     const ProfileSnapshot& snapshot = session_.Snapshot();
-    const PresetContent content = ContentOf(preset, profile, snapshot.libraries);
-    const PresetPlan plan = PlanPresetApplication(preset, mode, profile, snapshot.libraries, snapshot.enabled);
+
+    return BuildPresetLookup(session_.Profile(), snapshot.libraries, snapshot.enabled);
+}
+
+PresetRow PresetViewModel::RowFor(const Preset& preset,
+                                  const PresetListing& listing,
+                                  const ApplyMode mode,
+                                  const PresetLookup& lookup) const
+{
+    const PresetContent content = ContentOf(preset, lookup);
+    const PresetPlan plan = PlanPresetApplication(preset, mode, lookup);
+
+    std::optional<PresetPlan> replaceOfAnotherMode;
+
+    if (mode != ApplyMode::Replace)
+    {
+        replaceOfAnotherMode = PlanPresetApplication(preset, ApplyMode::Replace, lookup);
+    }
+
+    const PresetPlan& replace = replaceOfAnotherMode.has_value() ? *replaceOfAnotherMode : plan;
 
     return {.name = QString::fromStdString(listing.name),
             .content = tr("%n addon", nullptr, static_cast<int>(content.addons))
                 + tr(" · %n category", nullptr, static_cast<int>(content.categories)),
             .updated = listing.writtenAt.has_value() ? AsDay(*listing.writtenAt) : QString{},
             .changes = AddonsThatWouldChange(plan),
-            .satisfied = service_.IsSatisfied(profile, snapshot, preset)};
+            .satisfied = service_.IsSatisfied(session_.Snapshot(), preset, replace)};
 }
 
 QList<PresetRow> PresetViewModel::Rows(const ApplyMode mode) const
 {
     const SimulatorProfile& profile = session_.Profile();
+    const PresetLookup lookup = LookupOfTheSnapshot();
     QList<PresetRow> rows;
 
     for (const PresetListing& listing : service_.List(profile.id))
     {
         const std::optional<Preset> preset = service_.Load(profile.id, listing.name);
 
-        rows.append(RowFor(preset.value_or(Preset{}), listing, mode));
+        rows.append(RowFor(preset.value_or(Preset{}), listing, mode, lookup));
     }
 
     return rows;
@@ -74,7 +93,7 @@ std::optional<PresetRow> PresetViewModel::ReturnRow(const ApplyMode mode) const
         return std::nullopt;
     }
 
-    return RowFor(*preset, PresetListing{}, mode);
+    return RowFor(*preset, PresetListing{}, mode, LookupOfTheSnapshot());
 }
 
 std::optional<Preset> PresetViewModel::Load(const QString& name) const
@@ -282,22 +301,25 @@ bool PresetViewModel::CanUndo() const
 
 void PresetViewModel::UndoLastBatch()
 {
-    const auto results = std::make_shared<std::vector<LinkOperationResult>>();
+    auto work = std::make_shared<UndoWork>();
+    work->stamp = session_.StampForAnEntriesRead();
+    work->libraries = session_.Snapshot().libraries;
 
     applying_.Run(
         [this]
         {
             emit ApplyStarted();
         },
-        [this, results]
+        [this, work]
         {
-            *results = profiles_.UndoLastBatch();
+            work->outcome = profiles_.UndoLastBatch(work->stamp, work->libraries);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
-        [this, results]
+        [this, work]
         {
-            session_.RefreshEntries();
+            session_.AdoptTheEntriesRead(std::move(work->outcome.read));
 
-            session_.NoteLinkResults(*results);
+            session_.NoteLinkResults(work->outcome.report.results, work->simulatorRunning);
 
             emit Changed();
         });
@@ -308,7 +330,7 @@ void PresetViewModel::Apply(const Preset& preset, const ApplyMode mode)
     RunTheApply(preset,
                 [this, mode](const ApplyWork& work)
                 {
-                    return service_.Apply(work.profile, work.snapshot, work.preset, mode);
+                    return service_.Apply(work.stamp, work.snapshot, work.preset, mode);
                 });
 }
 
@@ -317,14 +339,14 @@ void PresetViewModel::ApplyReturn(const Preset& preset)
     RunTheApply(preset,
                 [this](const ApplyWork& work)
                 {
-                    return service_.ApplyTheReturn(work.profile, work.snapshot, work.preset);
+                    return service_.ApplyTheReturn(work.stamp, work.snapshot, work.preset);
                 });
 }
 
-void PresetViewModel::RunTheApply(const Preset& preset, std::function<PresetApplyReport(const ApplyWork&)> apply)
+void PresetViewModel::RunTheApply(const Preset& preset, std::function<PresetApplyOutcome(const ApplyWork&)> apply)
 {
     auto work = std::make_shared<ApplyWork>();
-    work->profile = session_.Profile();
+    work->stamp = session_.StampForAnEntriesRead();
     work->snapshot = session_.Snapshot();
     work->preset = preset;
 
@@ -333,18 +355,21 @@ void PresetViewModel::RunTheApply(const Preset& preset, std::function<PresetAppl
         {
             emit ApplyStarted();
         },
-        [work, apply = std::move(apply)]
+        [this, work, apply = std::move(apply)]
         {
-            work->report = apply(*work);
+            work->outcome = apply(*work);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
         [this, work]
         {
-            NoteApplied(work->report);
+            NoteApplied(*work);
         });
 }
 
-void PresetViewModel::NoteApplied(const PresetApplyReport& report)
+void PresetViewModel::NoteApplied(ApplyWork& work)
 {
+    const PresetApplyReport& report = work.outcome.report;
+
     if (report.refusal == PresetApplyRefusal::TheReturnPresetCouldNotBeWritten)
     {
         emit Refused(tr("Nothing was applied: the addons enabled right now could not be saved to come back to later. "
@@ -352,9 +377,9 @@ void PresetViewModel::NoteApplied(const PresetApplyReport& report)
         return;
     }
 
-    session_.RefreshEntries();
+    session_.AdoptTheEntriesRead(std::move(work.outcome.read));
 
-    session_.NoteLinkResults(report.results);
+    session_.NoteLinkResults(report.results, work.simulatorRunning);
 
     QStringList unresolved;
     for (const AddonId& addonId : report.unresolved)

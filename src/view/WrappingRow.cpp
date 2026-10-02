@@ -1,12 +1,22 @@
 #include "view/WrappingRow.h"
 
 #include <algorithm>
+#include <functional>
+#include <iterator>
+
+#include <QtCore/QHash>
 
 #include <QtWidgets/QWidget>
 
 namespace
 {
     constexpr int kDefaultGap = 8;
+    constexpr int kLeastSpring = 16;
+
+    QSpacerItem* NewSpring()
+    {
+        return new QSpacerItem(kLeastSpring, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    }
 
     bool ItTakesTheSlack(const QLayoutItem* item)
     {
@@ -44,7 +54,20 @@ WrappingRow::~WrappingRow()
 
 void WrappingRow::AddSpring()
 {
-    addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    addItem(NewSpring());
+}
+
+void WrappingRow::AddWidgetThatStepsDown(QWidget* widget)
+{
+    addWidget(widget);
+    steppingDown_.insert(items_.last());
+}
+
+void WrappingRow::AddSpringOnTheLowerLine()
+{
+    addItem(NewSpring());
+    steppingDown_.insert(items_.last());
+    onlyOnTheLowerLine_.insert(items_.last());
 }
 
 void WrappingRow::addItem(QLayoutItem* item)
@@ -64,7 +87,16 @@ QLayoutItem* WrappingRow::itemAt(const int index) const
 
 QLayoutItem* WrappingRow::takeAt(const int index)
 {
-    return index >= 0 && index < items_.size() ? items_.takeAt(index) : nullptr;
+    if (index < 0 || index >= items_.size())
+    {
+        return nullptr;
+    }
+
+    QLayoutItem* taken = items_.takeAt(index);
+    steppingDown_.remove(taken);
+    onlyOnTheLowerLine_.remove(taken);
+
+    return taken;
 }
 
 Qt::Orientations WrappingRow::expandingDirections() const
@@ -97,6 +129,14 @@ void WrappingRow::setGeometry(const QRect& rect)
     const QMargins around = contentsMargins();
     const QRect inside = rect.adjusted(around.left(), around.top(), -around.right(), -around.bottom());
 
+    for (QLayoutItem* item : items_)
+    {
+        if (onlyOnTheLowerLine_.contains(item))
+        {
+            item->setGeometry(QRect());
+        }
+    }
+
     int y = inside.y();
     for (const QList<QLayoutItem*>& row : LinesThatFit(inside.width()))
     {
@@ -112,15 +152,8 @@ QSize WrappingRow::sizeHint() const
 {
     const QMargins around = contentsMargins();
 
-    int width = 0;
-    int height = 0;
-    for (const QLayoutItem* item : items_)
-    {
-        width += item->sizeHint().width() + Gap();
-        height = std::max(height, item->sizeHint().height());
-    }
-
-    return {width - Gap() + around.left() + around.right(), height + around.top() + around.bottom()};
+    return {WidthInOneLine(ItemsOnOneLine()) + around.left() + around.right(),
+            TallestIn(items_) + around.top() + around.bottom()};
 }
 
 QSize WrappingRow::minimumSize() const
@@ -141,13 +174,36 @@ int WrappingRow::Gap() const
     return spacing() >= 0 ? spacing() : kDefaultGap;
 }
 
-QList<QList<QLayoutItem*>> WrappingRow::LinesThatFit(const int width) const
+int WrappingRow::WidthInOneLine(const QList<QLayoutItem*>& items) const
+{
+    int width = Gap() * std::max(0, static_cast<int>(items.size()) - 1);
+    for (const QLayoutItem* item : items)
+    {
+        width += item->sizeHint().width();
+    }
+
+    return width;
+}
+
+QList<QLayoutItem*> WrappingRow::ItemsOnOneLine() const
+{
+    QList<QLayoutItem*> kept;
+    std::ranges::copy_if(items_, std::back_inserter(kept),
+                         [this](const QLayoutItem* item)
+                         {
+                             return !onlyOnTheLowerLine_.contains(item);
+                         });
+
+    return kept;
+}
+
+QList<QList<QLayoutItem*>> WrappingRow::WrapInOrder(const QList<QLayoutItem*>& items, const int width) const
 {
     QList<QList<QLayoutItem*>> lines;
     QList<QLayoutItem*> line;
     int taken = 0;
 
-    for (QLayoutItem* item : items_)
+    for (QLayoutItem* item : items)
     {
         const int wants = item->sizeHint().width();
         const int wouldBe = line.isEmpty() ? wants : taken + Gap() + wants;
@@ -174,30 +230,51 @@ QList<QList<QLayoutItem*>> WrappingRow::LinesThatFit(const int width) const
     return lines;
 }
 
-void WrappingRow::PlaceTheLine(const QList<QLayoutItem*>& row, const QRect& where) const
+QList<QList<QLayoutItem*>> WrappingRow::LinesThatFit(const int width) const
 {
-    int used = Gap() * static_cast<int>(row.size() - 1);
-    for (const QLayoutItem* item : row)
+    const QList<QLayoutItem*> oneLine = ItemsOnOneLine();
+    if (steppingDown_.isEmpty() || WidthInOneLine(oneLine) <= width)
     {
-        used += item->sizeHint().width();
+        return WrapInOrder(oneLine, width);
     }
 
-    int stillToGive = std::max(0, where.width() - used);
-    int takers = static_cast<int>(std::ranges::count_if(row, ItTakesTheSlack));
+    QList<QLayoutItem*> staying;
+    QList<QLayoutItem*> down;
+    for (QLayoutItem* item : items_)
+    {
+        if (steppingDown_.contains(item))
+        {
+            down.append(item);
+        }
+        else
+        {
+            staying.append(item);
+        }
+    }
+
+    return WrapInOrder(staying, width) + WrapInOrder(down, width);
+}
+
+void WrappingRow::PlaceTheLine(const QList<QLayoutItem*>& row, const QRect& where) const
+{
+    QList<QLayoutItem*> takers;
+    std::ranges::copy_if(row, std::back_inserter(takers), ItTakesTheSlack);
+    std::ranges::stable_sort(takers, std::less{}, HowMuchMoreItWillTake);
+
+    QHash<const QLayoutItem*, int> extra;
+    int stillToGive = std::max(0, where.width() - WidthInOneLine(row));
+    for (qsizetype at = 0; at < takers.size(); ++at)
+    {
+        const int fairShare = stillToGive / static_cast<int>(takers.size() - at);
+        const int share = std::min(fairShare, HowMuchMoreItWillTake(takers[at]));
+        extra.insert(takers[at], share);
+        stillToGive -= share;
+    }
 
     int x = where.x();
     for (QLayoutItem* item : row)
     {
-        int width = item->sizeHint().width();
-
-        if (ItTakesTheSlack(item) && takers > 0)
-        {
-            const int share = std::min(stillToGive / takers, HowMuchMoreItWillTake(item));
-            width += share;
-            stillToGive -= share;
-            --takers;
-        }
-
+        const int width = item->sizeHint().width() + extra.value(item);
         item->setGeometry(QRect(x, where.y(), width, where.height()));
         x += width + Gap();
     }

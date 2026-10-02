@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #include <QtCore/QCommandLineOption>
@@ -14,6 +15,8 @@
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QContextMenuEvent>
+#include <QtGui/QHelpEvent>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPixmap>
 #include <QtGui/QScreen>
@@ -23,6 +26,7 @@
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QRadioButton>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QTableView>
@@ -49,7 +53,6 @@
 #include "infrastructure/journal/JsonlOperationJournal.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "application/CoverageService.h"
@@ -302,31 +305,35 @@ namespace
         return true;
     }
 
-    bool SaveTheDialogOpenedBy(const std::function<void()>& opensIt, const QDir& folder, const QString& name)
+    bool SaveTheWidgetOpenedBy(const std::function<QWidget*()>& find,
+                               const std::function<void()>& settle,
+                               const std::function<void()>& opensIt,
+                               const QDir& folder,
+                               const QString& name)
     {
         QPixmap shot;
         bool opened = false;
 
         QTimer::singleShot(0, QCoreApplication::instance(),
-                           [&shot, &opened]
+                           [&shot, &opened, &find, &settle]
                            {
-                               QWidget* dialog = QApplication::activeModalWidget();
-                               if (dialog == nullptr)
+                               QWidget* shown = find();
+                               if (shown == nullptr)
                                {
                                    return;
                                }
 
                                opened = true;
-                               LetTheLayoutSettle();
-                               shot = dialog->grab();
-                               dialog->close();
+                               settle();
+                               shot = shown->grab();
+                               shown->close();
                            });
 
         opensIt();
 
         if (!opened)
         {
-            Out() << "no modal dialog opened for " << name << "\n";
+            Out() << "nothing opened for " << name << "\n";
             return false;
         }
 
@@ -339,6 +346,137 @@ namespace
 
         Out() << shot.width() << "x" << shot.height() << "  " << file << "\n";
         return true;
+    }
+
+    bool SaveTheDialogOpenedBy(const std::function<void()>& opensIt, const QDir& folder, const QString& name)
+    {
+        return SaveTheWidgetOpenedBy(
+            []
+            {
+                return QApplication::activeModalWidget();
+            },
+            LetTheLayoutSettle, opensIt, folder, name);
+    }
+
+    bool SaveThePopupOpenedBy(const std::function<void()>& opensIt, const QDir& folder, const QString& name)
+    {
+        return SaveTheWidgetOpenedBy(
+            []
+            {
+                return QApplication::activePopupWidget();
+            },
+            []
+            {
+                KeepTheEventLoopTurning(30);
+            },
+            opensIt, folder, name);
+    }
+
+    void RightClickTheCurrentRowOf(QAbstractItemView& view)
+    {
+        const QPoint at = view.visualRect(view.currentIndex()).center();
+        QContextMenuEvent request(QContextMenuEvent::Mouse, at, view.viewport()->mapToGlobal(at));
+
+        QApplication::sendEvent(view.viewport(), &request);
+    }
+
+    QWidget* TheTipOnScreen()
+    {
+        for (QWidget* top : QApplication::topLevelWidgets())
+        {
+            if (top->isVisible() && top->inherits("QTipLabel"))
+            {
+                return top;
+            }
+        }
+
+        return nullptr;
+    }
+
+    QWidget* TheTipRaisedByHoveringAt(QAbstractItemView& view, const QPoint at)
+    {
+        QWidget* viewport = view.viewport();
+        QHelpEvent hover(QEvent::ToolTip, at, viewport->mapToGlobal(at));
+
+        QApplication::sendEvent(viewport, &hover);
+        KeepTheEventLoopTurning(3);
+
+        return TheTipOnScreen();
+    }
+
+    QWidget* TheTipOverACroppedCellOf(QAbstractItemView& view)
+    {
+        constexpr int kGridStep = 6;
+        constexpr int kColumnStep = 24;
+
+        QList<QModelIndex> hovered;
+
+        for (int y = kGridStep / 2; y < view.viewport()->height(); y += kGridStep)
+        {
+            for (int x = kGridStep / 2; x < view.viewport()->width(); x += kColumnStep)
+            {
+                const QModelIndex cell = view.indexAt(QPoint(x, y));
+                if (!cell.isValid() || hovered.contains(cell))
+                {
+                    continue;
+                }
+
+                hovered.append(cell);
+
+                if (TheTipRaisedByHoveringAt(view, view.visualRect(cell).center()) != nullptr)
+                {
+                    KeepTheEventLoopTurning(30);
+
+                    return TheTipOnScreen();
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+    QWidget* TheTipOverTheFirstCroppedCellIn(const std::vector<std::pair<PageTab*, QWidget*>>& listings)
+    {
+        for (const auto& [tab, page] : listings)
+        {
+            tab->click();
+            LetTheLayoutSettle();
+
+            QAbstractItemView* rows = TheViewThatCarriesTheRows(*page);
+            QWidget* tip = rows != nullptr ? TheTipOverACroppedCellOf(*rows) : nullptr;
+
+            if (tip != nullptr)
+            {
+                Out() << "the tooltip comes from the " << tab->Label() << " page\n";
+
+                return tip;
+            }
+        }
+
+        return nullptr;
+    }
+
+    QPushButton* TheRemoveButtonOfAProfileOn(const QWidget& page)
+    {
+        for (const QRadioButton* choice : page.findChildren<QRadioButton*>())
+        {
+            if (!choice->isVisible() || choice->parentWidget() == nullptr)
+            {
+                continue;
+            }
+
+            const QList<QPushButton*> buttons =
+                choice->parentWidget()->findChildren<QPushButton*>(QString(), Qt::FindDirectChildrenOnly);
+
+            if (buttons.size() == 2 && buttons.back()->isEnabled())
+            {
+                return buttons.back();
+            }
+        }
+
+        Out() << "no profile row offers Remove, so there is no profile question to write\n";
+
+        return nullptr;
     }
 
     bool ClickingReaches(const QListWidget& navigation, const int row)
@@ -358,7 +496,7 @@ namespace
 
     QPushButton* ButtonNamed(const QWidget& page, const QString& objectName)
     {
-        QPushButton* button = page.findChild<QPushButton*>(objectName);
+        auto* button = page.findChild<QPushButton*>(objectName);
         if (button == nullptr)
         {
             Out() << "no button called " << objectName << " on this page, so the shot it opens is missing\n";
@@ -696,8 +834,7 @@ int main(int argc, char* argv[])
     ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe));
     packages.Reload(session.Profile().variant);
     AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
-    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
-                                          sizes);
+    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
     DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
@@ -714,7 +851,7 @@ int main(int argc, char* argv[])
 
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
-    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(staged->settingsFile.parent_path() / "document-index.json");
     DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache,
@@ -725,7 +862,7 @@ int main(int argc, char* argv[])
                                           addonDocumentsViewModel, treeModel, notifier);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes, runner);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;
@@ -746,8 +883,8 @@ int main(int argc, char* argv[])
         filesystemProbe,
         LoadingReportOf(LoadingReportLocations(userCfgLocations, filesystemProbe), session.Profile().variant));
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
-                                              runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, notifier, loadingReport,
+                                              clock, runner);
     const CouplingScan coupling(filesystemProbe);
     JsonBisectionStore bisectionStore(staged->settingsFile.parent_path() / "bisection");
     BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore, clock);
@@ -939,22 +1076,22 @@ int main(int argc, char* argv[])
         else
         {
             SharedAirportsDialog sharedDialog(
-                {{.turningOn = QStringLiteral("flytampa-airport-eham-amsterdam"),
-                  .alreadyOn = QStringLiteral("asobo-airport-eham-amsterdam"),
+                {{.turningOn = QStringLiteral("tidewater-airport-eham-amsterdam"),
+                  .alreadyOn = QStringLiteral("ferro-airport-eham-amsterdam"),
                   .codes = {QStringLiteral("EHAM")},
-                  .one = {.libraryId = "library-1", .folderName = "flytampa-airport-eham-amsterdam"},
-                  .other = {.libraryId = "library-1", .folderName = "asobo-airport-eham-amsterdam"}},
-                 {.turningOn = QStringLiteral("stalex-airport-lfpg-charlesdegaulle"),
-                  .alreadyOn = QStringLiteral("fs24-asobo-airport-lfpg-paris-charles-de-gaulle"),
+                  .one = {.libraryId = "library-1", .folderName = "tidewater-airport-eham-amsterdam"},
+                  .other = {.libraryId = "library-1", .folderName = "ferro-airport-eham-amsterdam"}},
+                 {.turningOn = QStringLiteral("tidewater-airport-lfpg-charlesdegaulle"),
+                  .alreadyOn = QStringLiteral("fs24-ferro-airport-lfpg-paris-charles-de-gaulle"),
                   .codes = {QStringLiteral("LFPG")},
-                  .one = {.libraryId = "library-1", .folderName = "stalex-airport-lfpg-charlesdegaulle"},
-                  .other = {.libraryId = "library-1", .folderName = "fs24-asobo-airport-lfpg-paris-charles-de-gaulle"}},
-                 {.turningOn = QStringLiteral("navigraph-nav-jepp"),
-                  .alreadyOn = QStringLiteral("navigraph-nav-base"),
+                  .one = {.libraryId = "library-1", .folderName = "tidewater-airport-lfpg-charlesdegaulle"},
+                  .other = {.libraryId = "library-1", .folderName = "fs24-ferro-airport-lfpg-paris-charles-de-gaulle"}},
+                 {.turningOn = QStringLiteral("vireo-nav-premium"),
+                  .alreadyOn = QStringLiteral("vireo-nav-base"),
                   .codes = {QStringLiteral("EHAM"), QStringLiteral("LFPG"), QStringLiteral("LEBL"),
                             QStringLiteral("SBGL"), QStringLiteral("KJFK"), QStringLiteral("EGLL")},
-                  .one = {.libraryId = "library-1", .folderName = "navigraph-nav-jepp"},
-                  .other = {.libraryId = "library-1", .folderName = "navigraph-nav-base"}}},
+                  .one = {.libraryId = "library-1", .folderName = "vireo-nav-premium"},
+                  .other = {.libraryId = "library-1", .folderName = "vireo-nav-base"}}},
                 &shell);
 
             landed = SaveTheDialogOpenedBy(
@@ -989,7 +1126,7 @@ int main(int argc, char* argv[])
             Out() << "no enabled startup entry reaches into an addon, so there is no warning to write\n";
         }
 
-        QPushButton* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
+        auto* remove = libraryPage->findChild<QPushButton*>(QStringLiteral("PanelDeleteAction"));
 
         if (SelectTheAddonNamed(*libraryPage, TheFirstAddonOf(session.Snapshot())) && remove != nullptr
             && remove->isEnabled())
@@ -1020,9 +1157,9 @@ int main(int argc, char* argv[])
     else
     {
         ImportRequest owned;
-        owned.source = PathFromUtf8("C:/Users/bruno/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
-                                    "fsdreamteam-gsx-pro");
-        owned.externalSource = PathFromUtf8("C:/Program Files (x86)/Addon Manager/MSFS/fsdreamteam-gsx-pro");
+        owned.source = PathFromUtf8("C:/Users/pilot/AppData/Roaming/Microsoft Flight Simulator/Packages/Community/"
+                                    "tidewater-util-sync");
+        owned.externalSource = PathFromUtf8("C:/Program Files (x86)/Hangar Desk/MSFS/tidewater-util-sync");
 
         ImportDialog importDialog({owned}, session.Snapshot().libraries, session.Profile(), 2147483648ULL, &shell);
 
@@ -1038,7 +1175,7 @@ int main(int argc, char* argv[])
     if (!demoState)
     {
         const std::filesystem::path deepRoot =
-            PathFromUtf8("C:/Users/bruno/Documents/Flight Simulator Addons/MSFS 2024 Library");
+            PathFromUtf8("C:/Users/pilot/Documents/Flight Simulator Addons/MSFS 2024 Library");
         LibraryRootDialog rootDialog(deepRoot, MeasureTheRoot(deepRoot), &shell);
 
         landed = SaveTheDialogOpenedBy(
@@ -1301,7 +1438,7 @@ int main(int argc, char* argv[])
     static_cast<void>(ClickingReaches(*navigation, 0));
     LetTheLayoutSettle();
 
-    if (QPushButton* unregister = optionsPage->findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"));
+    if (auto* unregister = optionsPage->findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"));
         unregister != nullptr)
     {
         landed = SaveTheDialogOpenedBy(
@@ -1317,7 +1454,7 @@ int main(int argc, char* argv[])
         Out() << "no library registered, so there is no unregister dialog to write\n";
     }
 
-    if (QPushButton* categories = optionsPage->findChild<QPushButton*>(QStringLiteral("DeclareCategories"));
+    if (auto* categories = optionsPage->findChild<QPushButton*>(QStringLiteral("DeclareCategories"));
         categories != nullptr)
     {
         landed = SaveTheDialogOpenedBy(
@@ -1326,6 +1463,17 @@ int main(int argc, char* argv[])
                          categories->click();
                      },
                      folder, QStringLiteral("15b-options-categories"))
+            && landed;
+    }
+
+    if (QPushButton* removeProfile = TheRemoveButtonOfAProfileOn(*optionsPage); removeProfile != nullptr)
+    {
+        landed = SaveTheDialogOpenedBy(
+                     [removeProfile]
+                     {
+                         removeProfile->click();
+                     },
+                     folder, QStringLiteral("41-message-box"))
             && landed;
     }
 
@@ -1347,6 +1495,41 @@ int main(int argc, char* argv[])
     back->click();
     LetTheLayoutSettle();
     landed = Save(shell, folder, QStringLiteral("12-came-back")) && landed;
+
+    libraryTab->click();
+    LetTheLayoutSettle();
+
+    QAbstractItemView* libraryRows = TheViewThatCarriesTheRows(*libraryPage);
+
+    if (libraryRows != nullptr && SelectTheAddonNamed(*libraryPage, TheFirstAddonOf(session.Snapshot())))
+    {
+        landed = SaveThePopupOpenedBy(
+                     [libraryRows]
+                     {
+                         RightClickTheCurrentRowOf(*libraryRows);
+                     },
+                     folder, QStringLiteral("40-library-context-menu"))
+            && landed;
+    }
+    else
+    {
+        Out() << "no addon row in the library, so there is no context menu to write\n";
+    }
+
+    const std::vector<std::pair<PageTab*, QWidget*>> listings{{libraryTab, libraryPage},
+                                                              {communityTab, communityPage},
+                                                              {quarantineTab, quarantinePage},
+                                                              {journalTab, journalPage},
+                                                              {presetsTab, presetsPage}};
+
+    if (QWidget* tip = TheTipOverTheFirstCroppedCellIn(listings); tip != nullptr)
+    {
+        landed = Save(*tip, folder, QStringLiteral("42-tooltip")) && landed;
+    }
+    else
+    {
+        Out() << "no cell of any listing is cropped, so there is no tooltip to write\n";
+    }
 
     return landed ? 0 : 1;
 }

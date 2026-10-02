@@ -11,6 +11,7 @@ namespace
     [[nodiscard]] std::vector<MemberOnScreen> MembersOf(const SearchUnit& unit)
     {
         std::vector<MemberOnScreen> members;
+        members.reserve(unit.writingApart.size());
 
         for (const std::filesystem::path& folder : unit.writingApart)
         {
@@ -72,21 +73,24 @@ void BisectionViewModel::Show()
 
     const SimulatorProfile profile = session_.Profile();
     const auto found = std::make_shared<BisectionReport>();
-
-    emit Changed();
+    const auto aRunIsStored = std::make_shared<bool>(false);
 
     reading_.Run(
-        [this, profile, snapshot, found]
+        [this]
         {
-            *found = bisection_.WhatWasInterrupted(profile.id).has_value()
-                ? bisection_.WhereItStands(profile)
-                : bisection_.WhatWouldBeSearched(profile, snapshot);
+            emit Changed();
         },
-        [this, found, read = std::move(enabled)]
+        [this, profile, snapshot, found, aRunIsStored]
+        {
+            *aRunIsStored = bisection_.WhatWasInterrupted(profile.id).has_value();
+            *found =
+                *aRunIsStored ? bisection_.WhereItStands(profile) : bisection_.WhatWouldBeSearched(profile, snapshot);
+        },
+        [this, found, aRunIsStored, read = std::move(enabled)]
         {
             readFor_ = read;
 
-            Take(*found);
+            Take(*found, *aRunIsStored);
         });
 }
 
@@ -97,16 +101,19 @@ void BisectionViewModel::RunTheProcedure(std::function<BisectionReport()> work)
         return;
     }
 
+    const std::string profileId = session_.Profile().id;
     const auto found = std::make_shared<BisectionReport>();
+    const auto aRunIsStored = std::make_shared<bool>(false);
 
     mutating_.Run(
-        [work = std::move(work), found]
+        [this, work = std::move(work), profileId, found, aRunIsStored]
         {
             *found = work();
+            *aRunIsStored = bisection_.WhatWasInterrupted(profileId).has_value();
         },
-        [this, found]
+        [this, found, aRunIsStored]
         {
-            Take(*found);
+            Take(*found, *aRunIsStored);
         });
 }
 
@@ -116,6 +123,15 @@ void BisectionViewModel::Begin()
         [this, profile = session_.Profile(), snapshot = session_.Snapshot()]
         {
             return bisection_.Begin(profile, snapshot);
+        });
+}
+
+void BisectionViewModel::StartOver()
+{
+    RunTheProcedure(
+        [this, profile = session_.Profile()]
+        {
+            return bisection_.StartOver(profile);
         });
 }
 
@@ -217,7 +233,7 @@ BisectionReport BisectionViewModel::EndedReport(BisectionReport ended, const Sim
     return announced;
 }
 
-void BisectionViewModel::Take(const BisectionReport& report)
+void BisectionViewModel::Take(const BisectionReport& report, const bool aRunIsStored)
 {
     report_ = report;
 
@@ -233,7 +249,7 @@ void BisectionViewModel::Take(const BisectionReport& report)
     {
         stage_ = BisectionStage::Finished;
     }
-    else if (AProcedureWasInterrupted())
+    else if (aRunIsStored)
     {
         stage_ = BisectionStage::Asking;
     }

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -67,7 +68,9 @@ public:
 
     [[nodiscard]] bool ShowsTheProfileInUse() const;
 
-    [[nodiscard]] bool RemoveProfile(const std::string& profileId, bool disablingWhatItLeftBehind);
+    [[nodiscard]] bool Busy() const;
+
+    void RemoveProfile(const std::string& profileId, bool disablingWhatItLeftBehind);
 
     [[nodiscard]] std::size_t AddonsInTheActiveProfile() const;
 
@@ -108,6 +111,8 @@ public:
 signals:
     void Changed();
 
+    void BusyChanged();
+
     void LibraryRegistered(const std::filesystem::path& path, const LibraryReport& report);
 
     void LinkTypeChosen(LinkType linkType);
@@ -118,11 +123,34 @@ signals:
 
     void LinksDisabled(const std::vector<LinkOperationResult>& results);
 
+    void ProfileRemoved(const QString& label);
+
+    void ProfileNotRemoved(const QString& label);
+
+    void LibraryUnregistered(const QString& label);
+
     void SettingsCouldNotBeSaved();
 
 private:
+    struct DisablingWork
+    {
+        SimulatorProfile profile{};
+        ProfileSnapshot snapshot{};
+        std::vector<const TreeNode*> nodes{};
+        std::vector<LinkOperationResult> results{};
+        bool simulatorRunning = false;
+    };
+
     bool Rewrite(const std::function<bool(AppSettings&)>& change);
-    [[nodiscard]] const TreeNode* TreeOf(const LibraryId& libraryId) const;
+    [[nodiscard]] const TreeNode* TreeOf(const LibraryId& libraryId, const std::vector<TreeNode>& libraries) const;
+    [[nodiscard]] std::shared_ptr<DisablingWork> WorkOnTheProfileInUse() const;
+    [[nodiscard]] QString LabelOfProfile(const std::string& profileId) const;
+    [[nodiscard]] QString LabelOfLibrary(const LibraryId& libraryId) const;
+    [[nodiscard]] bool WouldRemoveProfile(const std::string& profileId) const;
+    void RunInTheBackground(std::function<void()> work, std::function<void()> done);
+    void DisableThenRemove(const std::shared_ptr<DisablingWork>& work, std::function<void()> removal);
+    void FinishRemovingProfile(const std::string& profileId, const QString& label);
+    void FinishUnregistering(const LibraryId& libraryId, const QString& label);
 
     Session& session_;
     ProfileService& service_;

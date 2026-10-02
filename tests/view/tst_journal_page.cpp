@@ -1,9 +1,11 @@
 #include <QtTest/QtTest>
 #include <QtWidgets/QCheckBox>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QToolButton>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTreeView>
 
 #include <chrono>
@@ -31,6 +33,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PageFloor.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/PhysicalRows.h"
 #include "view/JournalPage.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/PanelRail.h"
@@ -44,11 +47,18 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void ThePanelStartsLevelWithTheTree();
+        static void ThePanelTitleStripEndsWhereTheColumnHeaderEnds();
+        static void ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine();
+        static void ThePanelLeftLineRunsFromTheTitleStripToTheBottom();
+        static void TheScrollBarCapGoesWhenTheScrollBarDoes();
+        static void TheToolbarSpansTheWholePageOverThePanel();
         static void TheTreeShowsWhatTheJournalRead();
         static void SelectingAnOperationOpensThePanelAndNamesItAfterTheOperation();
         static void ClosingThePanelLetsGoOfTheSelectionThatSummonedIt();
         static void KeepingOnlyWhatFailedLeavesTheFailureAlone();
         static void SearchingReachesTheAddonOfAnOperation();
+        static void ColumnsAreSizedFromASmallerSampleThanTheQtDefault();
         static void ReadingItAgainGoesBackToTheJournalInsteadOfTheModel();
         static void AJournalWithNothingInItSaysSoInsteadOfCountingOperations();
         static void ALanguageChangeKeepsTheToolbarAndTheOpenPanel();
@@ -267,6 +277,16 @@ void JournalPageTest::SearchingReachesTheAddonOfAnOperation()
              QStringLiteral("simbridge"));
 }
 
+void JournalPageTest::ColumnsAreSizedFromASmallerSampleThanTheQtDefault()
+{
+    Fixture f;
+    f.Open();
+
+    const QHeaderView untouched(Qt::Horizontal);
+
+    QVERIFY(TreeOf(f.page)->header()->resizeContentsPrecision() < untouched.resizeContentsPrecision());
+}
+
 void JournalPageTest::ReadingItAgainGoesBackToTheJournalInsteadOfTheModel()
 {
     Fixture f;
@@ -320,6 +340,124 @@ void JournalPageTest::ThePageFitsTheNarrowestWindow()
              "selected or because the panel came back folded from a previous run");
 
     ItFitsTheNarrowestWindow(f.page, "The journal page with an operation selected");
+}
+
+namespace
+{
+    int TopWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{}).y();
+    }
+
+    int BottomWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{0, widget.height()}).y();
+    }
+
+    int RightEdgeWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{widget.width(), 0}).x();
+    }
+}
+
+void JournalPageTest::ThePanelStartsLevelWithTheTree()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    ChooseTheNewestOperation(f.page);
+
+    const ContextPanel* panel = PanelOf(f.page);
+
+    QVERIFY(panel->isVisible());
+    QCOMPARE(TopWithin(f.page, *panel), TopWithin(f.page, *TreeOf(f.page)));
+}
+
+void JournalPageTest::ThePanelTitleStripEndsWhereTheColumnHeaderEnds()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    ChooseTheNewestOperation(f.page);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->isVisible());
+    QCOMPARE(BottomWithin(f.page, *strip), BottomWithin(f.page, *TreeOf(f.page)->header()));
+}
+
+void JournalPageTest::ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    ChooseTheNewestOperation(f.page);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    auto* header = TreeOf(f.page)->header();
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->isVisible());
+    LetTheScrollBarShow(f.page, *TreeOf(f.page));
+    QVERIFY(TreeOf(f.page)->verticalScrollBar()->isVisible());
+
+    const QWidget* cap = ScrollBarCapOf(*TreeOf(f.page));
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(cap->isVisible());
+    MakeTheColumnHeaderOnePixelShorter(*header);
+    TheThreeRulesLandOnTheSamePhysicalRows(f.page, *strip, *header, *cap);
+}
+
+void JournalPageTest::ThePanelLeftLineRunsFromTheTitleStripToTheBottom()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    ChooseTheNewestOperation(f.page);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    const auto* body = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelBody"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(body != nullptr);
+    QVERIFY(strip->isVisible());
+    LetTheScrollBarShow(f.page, *TreeOf(f.page));
+    QVERIFY(TreeOf(f.page)->verticalScrollBar()->isVisible());
+    TheLeftRuleRunsTheWholeHeightOfThePanel(f.page, *strip, *body);
+}
+
+void JournalPageTest::TheScrollBarCapGoesWhenTheScrollBarDoes()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    ChooseTheNewestOperation(f.page);
+    LetTheScrollBarGo(f.page);
+
+    const QWidget* cap = ScrollBarCapOf(*TreeOf(f.page));
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(!TreeOf(f.page)->verticalScrollBar()->isVisible());
+    QVERIFY(!cap->isVisible());
+}
+
+void JournalPageTest::TheToolbarSpansTheWholePageOverThePanel()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    ChooseTheNewestOperation(f.page);
+
+    const auto* toolbar = f.page.findChild<QWidget*>(QStringLiteral("PageToolbar"));
+
+    QVERIFY(PanelOf(f.page)->isVisible());
+    QVERIFY(toolbar != nullptr);
+    QCOMPARE(RightEdgeWithin(f.page, *toolbar), f.page.width());
 }
 
 QTEST_MAIN(JournalPageTest)

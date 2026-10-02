@@ -10,7 +10,6 @@
 
 #include "domain/model/AddonId.h"
 #include "domain/model/FileResult.h"
-#include "domain/support/PathUtils.h"
 
 enum class DeletionRoute : int
 {

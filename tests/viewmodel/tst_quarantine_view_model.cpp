@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "application/LibraryOrganizer.h"
+#include "domain/importing/ImportPaths.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -30,14 +31,25 @@ namespace
     private slots:
         static void TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing();
         static void TheQuarantineCatchesUpWhenTheActiveProfileFinallyLands();
+        static void ShowingListsWhatIsHeldOnTheRunnerInsteadOfTheCallingThread();
+        static void ALateListingDoesNotOverwriteTheNewerOne();
         static void TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards();
         static void AnItemAlreadyMeasuredElsewhereIsNotWalkedAgain();
         static void TheQuarantineIsCountedWhenTheScanLandsAndOnlyWeighedWhenTheScreenIsShown();
         static void AnItemWithNoOriginIsAskedWhereItShouldGoBackTo();
+        static void PreparingARestoreOfManyItemsScansTheirLibraryOnce();
         static void AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides();
         static void TheCollisionWeighsBothSidesAgainInsteadOfTrustingTheCache();
+        static void TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures();
         static void EmptyingTheQuarantineWaitsOnTheRunnerAndCountsItsWayThrough();
         static void RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallingThread();
+        static void AMixedGestureAnnouncesItsRescanOnceAndBeforeBothReports();
+        static void ARestoreOnlyGestureAnnouncesItsRescanOnce();
+        static void ASwapOnlyGestureAnnouncesItsRescanOnce();
+        static void AGestureWithNothingToDoAnnouncesNothing();
+        static void PreparingARestoreAnnouncesItBusyAtTheStartAndFreeAtTheLanding();
+        static void RestoringAnnouncesItBusyAtTheStartAndFreeAtTheLanding();
+        static void DiscardingAnnouncesItBusyAtTheStartAndFreeAtTheLanding();
     };
 }
 
@@ -124,6 +136,40 @@ namespace
     {
         return model.data(model.index(row, column, {}), Qt::DisplayRole).toString();
     }
+
+    QuarantinedItem HeldItem()
+    {
+        return QuarantinedItem{.path = kQuarantined, .origin = kDestination / "simbridge"};
+    }
+
+    void ExpectBusyBetweenTheStartAndTheLandingOf(Fixture& f, const std::function<void()>& gesture)
+    {
+        f.ScanLands();
+
+        std::vector<bool> readWhenAnnounced;
+        QObject::connect(&f.viewModel, &QuarantineViewModel::BusyChanged, &f.viewModel,
+                         [&f, &readWhenAnnounced]
+                         {
+                             readWhenAnnounced.push_back(f.viewModel.Busy());
+                         });
+
+        QVERIFY(!f.viewModel.Busy());
+
+        f.runner.defer = true;
+        gesture();
+
+        QCOMPARE(readWhenAnnounced, (std::vector<bool>{true}));
+        QVERIFY2(f.viewModel.Busy(), "between the start and the landing the page must still read the worker as busy");
+
+        gesture();
+
+        QCOMPARE(readWhenAnnounced.size(), std::size_t{1});
+
+        f.runner.Finish();
+
+        QCOMPARE(readWhenAnnounced, (std::vector<bool>{true, false}));
+        QVERIFY(!f.viewModel.Busy());
+    }
 }
 
 void QuarantineViewModelTest::TheQuarantineListsWhatBelongsToTheProfileTheSessionIsShowing()
@@ -147,6 +193,51 @@ void QuarantineViewModelTest::TheQuarantineCatchesUpWhenTheActiveProfileFinallyL
     f.ScanLands();
 
     QCOMPARE(f.model.rowCount({}), 1);
+}
+
+void QuarantineViewModelTest::ShowingListsWhatIsHeldOnTheRunnerInsteadOfTheCallingThread()
+{
+    Fixture f;
+    f.ScanLands();
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine/fenix");
+    f.runner.defer = true;
+
+    const std::size_t listedBefore = f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine");
+
+    f.viewModel.Show();
+
+    QVERIFY(f.runner.Pending());
+    QCOMPARE(f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine"), listedBefore);
+    QCOMPARE(f.model.rowCount({}), 1);
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QVERIFY(f.filesystemProbe.TimesEnumerated("E:/Sim/_fsorganizer-quarantine") > listedBefore);
+    QCOMPARE(f.model.rowCount({}), 2);
+}
+
+void QuarantineViewModelTest::ALateListingDoesNotOverwriteTheNewerOne()
+{
+    Fixture f;
+    f.ScanLands();
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+    f.runner.RunPendingWork();
+
+    f.fileSystem.AddDirectory("E:/Sim/_fsorganizer-quarantine/fenix");
+    f.viewModel.Show();
+
+    f.runner.FinishNewestDone();
+
+    QCOMPARE(f.model.rowCount({}), 2);
+
+    f.runner.Finish();
+
+    QCOMPARE(f.model.rowCount({}), 2);
 }
 
 void QuarantineViewModelTest::TheTableIsListedFirstAndTheVersionAndSizeArriveAfterwards()
@@ -238,6 +329,37 @@ void QuarantineViewModelTest::AnItemWithNoOriginIsAskedWhereItShouldGoBackTo()
     QCOMPARE(offers.front().places.size(), std::size_t{1});
     QCOMPARE(offers.front().places.front().place, kDestination);
     QCOMPARE(offers.front().places.front().target, std::filesystem::path{"E:/Sim/Community/simbridge"});
+}
+
+void QuarantineViewModelTest::PreparingARestoreOfManyItemsScansTheirLibraryOnce()
+{
+    Fixture f;
+    f.ScanLands();
+
+    std::vector<QuarantinedItem> items;
+    for (const char* name : {"first", "second", "third"})
+    {
+        items.push_back(QuarantinedItem{.path = QuarantineFolderInside(kLibrary) / name});
+    }
+
+    std::vector<RestoreOffer> offered;
+    QObject::connect(&f.viewModel, &QuarantineViewModel::RestoreOffersReady, &f.viewModel,
+                     [&offered](const std::vector<RestoreOffer>& offers)
+                     {
+                         offered = offers;
+                     });
+
+    const std::size_t scansBefore = f.catalog.scanned;
+
+    f.viewModel.PrepareRestore(items);
+
+    QCOMPARE(offered.size(), items.size());
+    QCOMPARE(f.catalog.scanned - scansBefore, f.session.Profile().libraries.size());
+    for (const RestoreOffer& offer : offered)
+    {
+        QVERIFY(offer.check.NeedsAPlace());
+        QVERIFY(!offer.places.empty());
+    }
 }
 
 void QuarantineViewModelTest::AnItemWhoseOriginIsTakenIsOfferedWithTheVersionOfBothSides()
@@ -347,6 +469,148 @@ void QuarantineViewModelTest::RestoringWaitsOnTheRunnerInsteadOfHoldingTheCallin
 
     QCOMPARE(restored.count(), 1);
     QVERIFY(f.fileSystem.Exists(origin));
+}
+
+void QuarantineViewModelTest::TheTableSizeStillLandsWhenACollisionIsWeighedWhileItMeasures()
+{
+    Fixture f;
+    const std::filesystem::path occupied = "E:/Sim/Community/simbridge";
+    f.fileSystem.AddFile(std::filesystem::path(kQuarantined) / "content.bin", 4096);
+    f.fileSystem.AddFile(occupied / "content.bin", 4096);
+    f.ScanLands();
+
+    bool bothSidesWeighed = false;
+
+    f.runner.defer = true;
+
+    f.viewModel.Show();
+    f.runner.Finish();
+    f.viewModel.WeighBothSidesOf(RestoreCheck{.item = QuarantinedItem{.path = kQuarantined},
+                                              .result = FileResult::TheOriginIsOccupied,
+                                              .occupant = occupied},
+                                 [&bothSidesWeighed](const TwoSides&)
+                                 {
+                                     bothSidesWeighed = true;
+                                 });
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QVERIFY(bothSidesWeighed);
+    QCOMPARE(f.model.TallyOf({f.model.index(0, QuarantineModel::NameColumn, {})}).measured, std::size_t{1});
+}
+
+void QuarantineViewModelTest::AMixedGestureAnnouncesItsRescanOnceAndBeforeBothReports()
+{
+    Fixture f;
+    f.ScanLands();
+
+    QStringList heard;
+    QObject::connect(&f.viewModel, &QuarantineViewModel::CameBack, &f.viewModel,
+                     [&heard]
+                     {
+                         heard.push_back("CameBack");
+                     });
+    QObject::connect(&f.viewModel, &QuarantineViewModel::Restored, &f.viewModel,
+                     [&heard](const std::vector<FileOperationResult>&)
+                     {
+                         heard.push_back("Restored");
+                     });
+    QObject::connect(&f.viewModel, &QuarantineViewModel::Swapped, &f.viewModel,
+                     [&heard](const std::vector<SwapResult>&)
+                     {
+                         heard.push_back("Swapped");
+                     });
+
+    const QuarantinedItem item{.path = kQuarantined, .origin = kDestination / "simbridge"};
+    f.viewModel.Restore({item}, {item});
+
+    QCOMPARE(heard, (QStringList{"CameBack", "Restored", "Swapped"}));
+}
+
+void QuarantineViewModelTest::ARestoreOnlyGestureAnnouncesItsRescanOnce()
+{
+    Fixture f;
+    f.ScanLands();
+
+    const QSignalSpy cameBack(&f.viewModel, &QuarantineViewModel::CameBack);
+    const QSignalSpy restored(&f.viewModel, &QuarantineViewModel::Restored);
+    const QSignalSpy swapped(&f.viewModel, &QuarantineViewModel::Swapped);
+
+    f.viewModel.Restore({QuarantinedItem{.path = kQuarantined, .origin = kDestination / "simbridge"}});
+
+    QCOMPARE(cameBack.count(), 1);
+    QCOMPARE(restored.count(), 1);
+    QCOMPARE(swapped.count(), 0);
+}
+
+void QuarantineViewModelTest::ASwapOnlyGestureAnnouncesItsRescanOnce()
+{
+    Fixture f;
+    f.ScanLands();
+
+    const QSignalSpy cameBack(&f.viewModel, &QuarantineViewModel::CameBack);
+    const QSignalSpy restored(&f.viewModel, &QuarantineViewModel::Restored);
+    const QSignalSpy swapped(&f.viewModel, &QuarantineViewModel::Swapped);
+
+    f.viewModel.Swap({QuarantinedItem{.path = kQuarantined, .origin = kDestination / "simbridge"}});
+
+    QCOMPARE(cameBack.count(), 1);
+    QCOMPARE(restored.count(), 0);
+    QCOMPARE(swapped.count(), 1);
+}
+
+void QuarantineViewModelTest::AGestureWithNothingToDoAnnouncesNothing()
+{
+    Fixture f;
+    f.ScanLands();
+
+    const QSignalSpy cameBack(&f.viewModel, &QuarantineViewModel::CameBack);
+    const QSignalSpy restored(&f.viewModel, &QuarantineViewModel::Restored);
+    const QSignalSpy swapped(&f.viewModel, &QuarantineViewModel::Swapped);
+
+    f.viewModel.Restore({}, {});
+    f.viewModel.Restore(std::vector<QuarantinedItem>{});
+    f.viewModel.Swap(std::vector<QuarantinedItem>{});
+
+    QCOMPARE(cameBack.count(), 0);
+    QCOMPARE(restored.count(), 0);
+    QCOMPARE(swapped.count(), 0);
+}
+
+void QuarantineViewModelTest::PreparingARestoreAnnouncesItBusyAtTheStartAndFreeAtTheLanding()
+{
+    Fixture f;
+
+    ExpectBusyBetweenTheStartAndTheLandingOf(f,
+                                             [&f]
+                                             {
+                                                 f.viewModel.PrepareRestore({HeldItem()});
+                                             });
+}
+
+void QuarantineViewModelTest::RestoringAnnouncesItBusyAtTheStartAndFreeAtTheLanding()
+{
+    Fixture f;
+
+    ExpectBusyBetweenTheStartAndTheLandingOf(f,
+                                             [&f]
+                                             {
+                                                 f.viewModel.Restore({HeldItem()});
+                                             });
+}
+
+void QuarantineViewModelTest::DiscardingAnnouncesItBusyAtTheStartAndFreeAtTheLanding()
+{
+    Fixture f;
+
+    ExpectBusyBetweenTheStartAndTheLandingOf(f,
+                                             [&f]
+                                             {
+                                                 f.viewModel.Discard({HeldItem()});
+                                             });
 }
 
 QTEST_MAIN(QuarantineViewModelTest)

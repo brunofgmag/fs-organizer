@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "application/LibraryOrganizer.h"
+#include "application/ports/ProcessProbe.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/support/PathSegment.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -11,7 +12,6 @@
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakePresetRepository.h"
-#include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
 #include "tests/doubles/FakeSidecarStore.h"
 #include "tests/doubles/StartupOverFakes.h"
@@ -56,6 +56,8 @@ namespace
         static void AGoverningPresetRowIsNotSatisfiedWhenTheStartupFileDisagrees();
         static void TheStartupRowsCarryTheLabelFromTheFileAndSettingAnActionIsStored();
         static void ApplyRunsInAWorkerAndASecondGestureWaitsItsTurn();
+        static void ApplyDecidesTheSimulatorWarningFromTheWorkersReading();
+        static void UndoDecidesTheSimulatorWarningFromTheWorkersReading();
     };
 }
 
@@ -106,6 +108,32 @@ namespace
         return profile;
     }
 
+    class ProcessProbeThatCounts final : public ProcessProbe
+    {
+    public:
+        void ReportTheSimulatorAsRunning()
+        {
+            running_ = true;
+        }
+
+        void ReportTheSimulatorAsClosed()
+        {
+            running_ = false;
+        }
+
+        [[nodiscard]] std::optional<std::string> RunningSimulator() const override
+        {
+            ++asked;
+
+            return running_ ? std::optional<std::string>{"FlightSimulator2024.exe"} : std::nullopt;
+        }
+
+        mutable int asked = 0;
+
+    private:
+        bool running_ = false;
+    };
+
     struct Fixture
     {
         Fixture()
@@ -130,7 +158,7 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         FakeFileOperations files{fileSystem};
         FakeSidecarStore sidecars{fileSystem};
-        FakeProcessProbe processProbe;
+        ProcessProbeThatCounts processProbe;
         FakeCatalogScanner catalog;
         FakeOperationJournal journal;
         FakeClock clock;
@@ -676,7 +704,67 @@ void PresetViewModelTest::ApplyRunsInAWorkerAndASecondGestureWaitsItsTurn()
     f.runner.Finish();
 
     QCOMPARE(applied.count(), 1);
+    QVERIFY2(!f.runner.Pending(), "the worker that wrote the links already carries the entries as they are after it");
     QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void PresetViewModelTest::ApplyDecidesTheSimulatorWarningFromTheWorkersReading()
+{
+    Fixture f;
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    const QSignalSpy warned(&f.notifier, &SessionNotifier::SimulatorIsRunning);
+
+    f.runner.defer = true;
+    f.viewModel.Apply(preset, ApplyMode::Cumulative);
+    f.runner.RunPendingWork();
+
+    f.processProbe.ReportTheSimulatorAsClosed();
+    const int askedWhileTheWorkerRan = f.processProbe.asked;
+
+    f.runner.Finish();
+
+    QCOMPARE(warned.count(), 1);
+    QCOMPARE(f.processProbe.asked, askedWhileTheWorkerRan);
+}
+
+void PresetViewModelTest::UndoDecidesTheSimulatorWarningFromTheWorkersReading()
+{
+    Fixture f;
+    f.LinkIn(kOtherAddon);
+    f.session.RefreshEntries();
+
+    Preset preset;
+    preset.name = "Voo curto";
+    preset.entries = {PresetEntry{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                                  .action = PresetAction::Enable}};
+
+    f.viewModel.Apply(preset, ApplyMode::Replace);
+
+    QVERIFY(f.viewModel.CanUndo());
+
+    f.processProbe.ReportTheSimulatorAsRunning();
+    const QSignalSpy warned(&f.notifier, &SessionNotifier::SimulatorIsRunning);
+
+    f.runner.defer = true;
+    f.viewModel.UndoLastBatch();
+    f.runner.RunPendingWork();
+
+    f.processProbe.ReportTheSimulatorAsClosed();
+    const int askedWhileTheWorkerRan = f.processProbe.asked;
+
+    f.runner.Finish();
+
+    QCOMPARE(warned.count(), 1);
+    QCOMPARE(f.processProbe.asked, askedWhileTheWorkerRan);
+    QVERIFY(!f.runner.Pending());
+    QVERIFY(f.session.Snapshot().enabled.Contains(kOtherAddon));
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
 }
 
 QTEST_MAIN(PresetViewModelTest)

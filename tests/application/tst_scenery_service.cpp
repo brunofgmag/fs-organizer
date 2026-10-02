@@ -33,6 +33,10 @@ namespace
         static void TheBatchToldToReadAgainReadsAgainInsteadOfAnsweringFromTheCache();
         static void ASceneryFileThatEndsEarlyIsCarriedAsARecordThatWasNotRead();
         static void TheBatchWritesTheCacheOnceAtTheEndAndTheSingleAskStillWrites();
+        static void AColdReadListsEachFolderOfTheAddonOnce();
+        static void AWarmReadListsEachFolderOfTheAddonOnceToo();
+        static void ReadingAgainAsksNoFolderWhenItWasLastWritten();
+        static void WhatComesBackNamesTheAddonWhetherItWasReadOrRemembered();
     };
 
     const std::filesystem::path kLibrary = PathFromUtf8("D:/Library/Sceneries");
@@ -63,6 +67,14 @@ namespace
         }
 
         return codes;
+    }
+
+    [[nodiscard]] AddonToRead NavigationData(const std::string& folderName)
+    {
+        AddonToRead addon = Addon(folderName);
+        addon.itIsNavigationData = true;
+
+        return addon;
     }
 
     struct Reading
@@ -314,6 +326,95 @@ void SceneryServiceTest::TheBatchWritesTheCacheOnceAtTheEndAndTheSingleAskStillW
     static_cast<void>(service.SceneryOf(Addon("one")));
 
     QCOMPARE(reading.cache.wroteDown, std::size_t{2});
+}
+
+void SceneryServiceTest::AColdReadListsEachFolderOfTheAddonOnce()
+{
+    Reading reading;
+    const std::filesystem::path addon = Addon("someone-airport-eham").folder;
+
+    reading.fileSystem.AddFileWithContents(addon / "scenery" / "world" / "APX.bgl",
+                                           FakeSceneryParser::Carrying({"EHAM"}));
+
+    SceneryService service = reading.Service();
+    QCOMPARE(CodesOf(service.SceneryOf(Addon("someone-airport-eham"))), QStringList({"EHAM"}));
+
+    QCOMPARE(reading.filesystemProbe.TimesTheDirectoriesOfWereListed(addon), std::size_t{1});
+    QCOMPARE(reading.filesystemProbe.TimesTheDirectoriesOfWereListed(addon / "scenery"), std::size_t{1});
+    QCOMPARE(reading.filesystemProbe.TimesTheDirectoriesOfWereListed(addon / "scenery" / "world"), std::size_t{1});
+}
+
+void SceneryServiceTest::AWarmReadListsEachFolderOfTheAddonOnceToo()
+{
+    Reading reading;
+    const std::filesystem::path addon = Addon("someone-airport-eham").folder;
+
+    reading.fileSystem.AddFileWithContents(addon / "scenery" / "world" / "APX.bgl",
+                                           FakeSceneryParser::Carrying({"EHAM"}));
+    reading.Touch(addon);
+    reading.Touch(addon / "scenery");
+    reading.Touch(addon / "scenery" / "world");
+
+    SceneryService service = reading.Service();
+    static_cast<void>(service.SceneryOf(Addon("someone-airport-eham")));
+    reading.filesystemProbe.directoriesListed.clear();
+
+    QCOMPARE(CodesOf(service.SceneryOf(Addon("someone-airport-eham"))), QStringList({"EHAM"}));
+
+    QCOMPARE(reading.filesystemProbe.TimesTheDirectoriesOfWereListed(addon), std::size_t{1});
+    QCOMPARE(reading.filesystemProbe.TimesTheDirectoriesOfWereListed(addon / "scenery"), std::size_t{1});
+    QCOMPARE(reading.filesystemProbe.TimesTheDirectoriesOfWereListed(addon / "scenery" / "world"), std::size_t{1});
+}
+
+void SceneryServiceTest::ReadingAgainAsksNoFolderWhenItWasLastWritten()
+{
+    Reading reading;
+    const std::filesystem::path addon = Addon("someone-airport-eham").folder;
+
+    reading.fileSystem.AddFileWithContents(addon / "scenery" / "APX.bgl", FakeSceneryParser::Carrying({"EHAM"}));
+    reading.Touch(addon);
+    reading.Touch(addon / "scenery");
+
+    SceneryService service = reading.Service();
+    static_cast<void>(service.SceneryOf(Addon("someone-airport-eham")));
+
+    reading.filesystemProbe.lastWriteTimesAsked = 0;
+
+    const std::vector<SceneryOfAnAddon> scenery =
+        service.SceneryOfEach({Addon("someone-airport-eham")}, {}, SceneryFreshness::ReadAgain);
+
+    QCOMPARE(scenery.size(), std::size_t{1});
+    QCOMPARE(CodesOf(scenery.front()), QStringList({"EHAM"}));
+    QCOMPARE(reading.filesystemProbe.lastWriteTimesAsked, std::size_t{0});
+}
+
+void SceneryServiceTest::WhatComesBackNamesTheAddonWhetherItWasReadOrRemembered()
+{
+    Reading reading;
+    const AddonToRead asked = NavigationData("someone-navdata");
+
+    reading.fileSystem.AddFileWithContents(asked.folder / "scenery" / "APX.bgl", FakeSceneryParser::Carrying({"EHAM"}));
+    reading.Touch(asked.folder);
+    reading.Touch(asked.folder / "scenery");
+
+    SceneryService service = reading.Service();
+
+    const auto verify = [&asked](const SceneryOfAnAddon& scenery)
+    {
+        QVERIFY(scenery.addon == asked.addon);
+        QCOMPARE(scenery.resolvedPath, asked.folder);
+        QVERIFY(scenery.itIsNavigationData);
+        QCOMPARE(CodesOf(scenery), QStringList({"EHAM"}));
+    };
+
+    verify(service.SceneryOf(asked));
+    verify(service.SceneryOf(asked));
+    QCOMPARE(reading.cache.kept, std::size_t{1});
+
+    const std::vector<SceneryOfAnAddon> remembered = service.WhatIsAlreadyKnown({asked});
+
+    QCOMPARE(remembered.size(), std::size_t{1});
+    verify(remembered.front());
 }
 
 QTEST_APPLESS_MAIN(SceneryServiceTest)

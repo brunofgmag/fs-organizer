@@ -4,6 +4,7 @@
 #include <QtCore/QSettings>
 #include <QtGui/QFont>
 #include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QToolButton>
@@ -13,6 +14,8 @@
 
 namespace
 {
+    constexpr int kRuleWidth = 1;
+
     QString SettingsKeyFor(const QWidget& panel)
     {
         return QStringLiteral("panels/%1/collapsed").arg(panel.objectName());
@@ -49,12 +52,12 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     close_->setCursor(Qt::PointingHandCursor);
 
     auto* headerRow = new QHBoxLayout(header);
-    headerRow->setContentsMargins(14, 8, 6, 8);
+    headerRow->setContentsMargins(14, 0, 6, 0);
     headerRow->setSpacing(6);
-    headerRow->addWidget(title_);
+    headerRow->addWidget(title_, 0, Qt::AlignVCenter);
     headerRow->addStretch();
-    headerRow->addWidget(toggle_);
-    headerRow->addWidget(close_);
+    headerRow->addWidget(toggle_, 0, Qt::AlignVCenter);
+    headerRow->addWidget(close_, 0, Qt::AlignVCenter);
 
     body_ = new QWidget(this);
     body_->setObjectName(QStringLiteral("PanelBody"));
@@ -66,11 +69,11 @@ ContextPanel::ContextPanel(const QString& title, const int expandedWidth, QWidge
     scrolled->viewport()->setAutoFillBackground(false);
 
     auto* scrollable = new QWidget(scrolled);
-    scrollable->setAutoFillBackground(false);
     scrolled->setWidget(scrollable);
+    scrollable->setAutoFillBackground(false);
 
     auto* bodyLayout = new QVBoxLayout(body_);
-    bodyLayout->setContentsMargins(0, 0, 0, 0);
+    bodyLayout->setContentsMargins(kRuleWidth, 0, 0, 0);
     bodyLayout->addWidget(scrolled);
 
     content_ = new QVBoxLayout(scrollable);
@@ -141,6 +144,23 @@ void ContextPanel::Summon(const bool summoned)
     setVisible(summoned);
 }
 
+void ContextPanel::LevelWith(QHeaderView* header)
+{
+    if (levelWith_ != nullptr)
+    {
+        levelWith_->removeEventFilter(this);
+    }
+
+    levelWith_ = header;
+
+    if (levelWith_ != nullptr)
+    {
+        levelWith_->installEventFilter(this);
+    }
+
+    MatchTheColumnHeader();
+}
+
 void ContextPanel::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange)
@@ -165,4 +185,27 @@ void ContextPanel::SetCollapsed(const bool collapsed)
     rail_->setVisible(collapsed);
 
     setFixedWidth(collapsed ? PanelRail::Width() : expandedWidth_);
+}
+
+bool ContextPanel::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched == levelWith_ && (event->type() == QEvent::Resize || event->type() == QEvent::Show))
+    {
+        MatchTheColumnHeader();
+    }
+
+    return QWidget::eventFilter(watched, event);
+}
+
+void ContextPanel::MatchTheColumnHeader()
+{
+    if (levelWith_ == nullptr || levelWith_->height() <= 0)
+    {
+        return;
+    }
+
+    const int height = levelWith_->height();
+
+    header_->setFixedHeight(height);
+    rail_->AlignTheArrowWithAStripOf(height);
 }

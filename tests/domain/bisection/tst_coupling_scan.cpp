@@ -106,8 +106,9 @@ required_tags = "A343_exterior"
         {
             const std::string under = "SimObjects/Airplanes/" + model;
 
-            for (const std::string& level :
-                 {under + "/liveries", under + "/liveries/vendor", under + "/liveries/vendor/" + name})
+            const std::string vendorFolder = under + "/liveries/vendor/";
+
+            for (const std::string& level : {under + "/liveries", under + "/liveries/vendor", vendorFolder + name})
             {
                 fileSystem.AddDirectory(PathUnder(addon, PathFromUtf8(level)));
             }

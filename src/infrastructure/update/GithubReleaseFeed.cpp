@@ -22,13 +22,6 @@ QNetworkRequest GithubRequest(const QString& url, const QString& currentVersion)
     return request;
 }
 
-QString HttpError(const QNetworkReply* reply)
-{
-    const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-    return status > 0 ? QStringLiteral("HTTP %1").arg(status) : reply->errorString();
-}
-
 GithubReleaseFeed::GithubReleaseFeed(QString feedUrl,
                                      QString currentVersion,
                                      std::function<void(const FeedAnswer&)> answered,

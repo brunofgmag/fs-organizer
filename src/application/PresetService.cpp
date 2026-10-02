@@ -3,13 +3,12 @@
 #include <algorithm>
 #include <vector>
 
-#include "domain/linking/EntryClassifier.h"
-
 namespace
 {
     std::vector<StartupSwitch> SwitchesFor(const PresetStartupPlan& plan)
     {
         std::vector<StartupSwitch> switches;
+        switches.reserve(plan.toTurnOff.size() + plan.toTurnOn.size());
 
         for (const StartupLine& line : plan.toTurnOff)
         {
@@ -201,12 +200,21 @@ bool PresetService::IsSatisfied(const SimulatorProfile& profile,
                                 const ProfileSnapshot& snapshot,
                                 const Preset& preset) const
 {
-    if (!PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled))
-    {
-        return false;
-    }
+    return PresetIsSatisfied(preset, profile, snapshot.libraries, snapshot.enabled)
+        && StartupIsInPlace(snapshot, preset);
+}
 
+bool PresetService::IsSatisfied(const ProfileSnapshot& snapshot,
+                                const Preset& preset,
+                                const PresetPlan& replacePlan) const
+{
+    return AddonsThatWouldChange(replacePlan) == 0 && StartupIsInPlace(snapshot, preset);
+}
+
+bool PresetService::StartupIsInPlace(const ProfileSnapshot& snapshot, const Preset& preset) const
+{
     std::vector<StartupLine> lines;
+    lines.reserve(snapshot.startupEntries.size());
     for (const StartupEntry& entry : snapshot.startupEntries)
     {
         lines.push_back(StartupLine{.label = entry.label, .path = entry.path, .enabled = entry.enabled});
@@ -261,28 +269,28 @@ PresetApplyPlan PresetService::Plan(const SimulatorProfile& profile,
             .startup = PlanPresetStartup(preset, mode, startup_.Report(profile, snapshot).lines, startup_.Managing())};
 }
 
-PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
-                                       const ProfileSnapshot& snapshot,
-                                       const Preset& preset,
-                                       const ApplyMode mode) const
+PresetApplyOutcome PresetService::Apply(const EntriesStamp& stamp,
+                                        const ProfileSnapshot& snapshot,
+                                        const Preset& preset,
+                                        const ApplyMode mode) const
 {
-    return Apply(profile, snapshot, preset, mode, true);
+    return Apply(stamp, snapshot, preset, mode, true);
 }
 
-PresetApplyReport PresetService::ApplyTheReturn(const SimulatorProfile& profile,
-                                                const ProfileSnapshot& snapshot,
-                                                const Preset& preset) const
+PresetApplyOutcome
+PresetService::ApplyTheReturn(const EntriesStamp& stamp, const ProfileSnapshot& snapshot, const Preset& preset) const
 {
-    return Apply(profile, snapshot, preset, ApplyMode::Replace, false);
+    return Apply(stamp, snapshot, preset, ApplyMode::Replace, false);
 }
 
-PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
-                                       const ProfileSnapshot& snapshot,
-                                       const Preset& preset,
-                                       const ApplyMode mode,
-                                       const bool recordReturn) const
+PresetApplyOutcome PresetService::Apply(const EntriesStamp& stamp,
+                                        const ProfileSnapshot& snapshot,
+                                        const Preset& preset,
+                                        const ApplyMode mode,
+                                        const bool recordReturn) const
 {
-    const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile);
+    const SimulatorProfile& profile = stamp.profile;
+    const ProfileService::LinksOnDisk onDisk = profiles_.ReadLinksNow(profile, snapshot.libraries);
     const PresetApplyPlan plan = Plan(profile, snapshot, preset, mode, onDisk.enabled);
 
     if (recordReturn)
@@ -293,7 +301,7 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
         if (!presets_.SaveReturnPreset(
                 profile.id, WhatIsOnRightNow(profile, snapshot.libraries, onDisk.enabled, lines, governsStartup)))
         {
-            return {.refusal = PresetApplyRefusal::TheReturnPresetCouldNotBeWritten};
+            return {.report = {.refusal = PresetApplyRefusal::TheReturnPresetCouldNotBeWritten}, .read = {}};
         }
     }
 
@@ -302,8 +310,12 @@ PresetApplyReport PresetService::Apply(const SimulatorProfile& profile,
                           .startupEntriesToTurnOff = {},
                           .startupSwitches = SwitchesFor(plan.startup)};
 
-    return {.results = profiles_.SetEnabled(profile, snapshot, batch, onDisk).results,
-            .unresolved = plan.addons.unresolved,
-            .startupUnresolved = plan.startup.unresolved,
-            .startupNotApplied = plan.startup.notApplied};
+    LinkBatchOutcome written = profiles_.SetEnabled(stamp, snapshot, batch, onDisk);
+
+    return {.report = {.results = std::move(written.report.results),
+                       .unresolved = plan.addons.unresolved,
+                       .startupUnresolved = plan.startup.unresolved,
+                       .startupNotApplied = plan.startup.notApplied,
+                       .refusal = PresetApplyRefusal::None},
+            .read = std::move(written.read)};
 }

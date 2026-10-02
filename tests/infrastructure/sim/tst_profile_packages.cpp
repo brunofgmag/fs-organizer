@@ -23,6 +23,8 @@ namespace
         static void ReloadingReadsTheFileAgainInsteadOfAnsweringFromTheFirstRead();
         static void WithNoListForTheVariantEveryNameIsUnverifiable();
         static void WithTwoAccountsTheChosenOneIsNamedAndWithOneThereIsNothingToName();
+        static void AListThatStartedToExistAfterTheFirstLookIsFoundOnTheNextReload();
+        static void ALocatedListIsNeverLocatedAgain();
     };
 
     struct Machine
@@ -145,6 +147,57 @@ void ProfilePackagesTest::WithTwoAccountsTheChosenOneIsNamedAndWithOneThereIsNot
     packages.Reload(SimulatorVariant::MSFS2020);
     QCOMPARE(packages.ListAccountFolder(), std::string());
     QVERIFY(packages.ListTakenAt().has_value());
+}
+
+void ProfilePackagesTest::AListThatStartedToExistAfterTheFirstLookIsFoundOnTheNextReload()
+{
+    const Machine machine;
+    const StdFilesystemProbe probe;
+    const std::filesystem::path file = machine.Root() / "2024/Bruno/Content.xml";
+    std::size_t looks = 0;
+
+    ProfilePackages packages(
+        probe, {},
+        [&]
+        {
+            ++looks;
+
+            return std::filesystem::exists(file)
+                ? std::vector<ContentListLocation>{{.variant = SimulatorVariant::MSFS2024, .listPath = file}}
+                : std::vector<ContentListLocation>{};
+        });
+    packages.Reload(SimulatorVariant::MSFS2024);
+
+    QCOMPARE(packages.PresenceOf("flown-since"), PackagePresence::Unverifiable);
+
+    static_cast<void>(machine.WriteList("2024/Bruno/Content.xml", {"fs24-flown-since"}));
+    packages.Reload(SimulatorVariant::MSFS2024);
+
+    QCOMPARE(packages.PresenceOf("flown-since"), PackagePresence::Present);
+    QCOMPARE(looks, std::size_t{2});
+}
+
+void ProfilePackagesTest::ALocatedListIsNeverLocatedAgain()
+{
+    const Machine machine;
+    const StdFilesystemProbe probe;
+    std::size_t looks = 0;
+
+    ProfilePackages packages(probe,
+                             {{.variant = SimulatorVariant::MSFS2024,
+                               .listPath = machine.WriteList("2024/Bruno/Content.xml", {"fs24-flown-before"})}},
+                             [&looks]
+                             {
+                                 ++looks;
+
+                                 return std::vector<ContentListLocation>{};
+                             });
+
+    packages.Reload(SimulatorVariant::MSFS2024);
+    packages.Reload(SimulatorVariant::MSFS2024);
+
+    QCOMPARE(looks, std::size_t{0});
+    QCOMPARE(packages.PresenceOf("flown-before"), PackagePresence::Present);
 }
 
 QTEST_APPLESS_MAIN(ProfilePackagesTest)

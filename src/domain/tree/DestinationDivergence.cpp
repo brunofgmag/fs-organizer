@@ -1,9 +1,9 @@
 #include "domain/tree/DestinationDivergence.h"
 
-#include <algorithm>
-#include <ranges>
+#include <string>
 
 #include "domain/linking/EntryClassifier.h"
+#include "domain/linking/LinksByTarget.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
@@ -29,9 +29,11 @@ DestinationAgreement WhereTheEnabledAddonsPoint(const TreeNode& category, const 
 {
     DestinationAgreement agreement{.destination = {}, .unanimous = true};
 
+    const LinksByTarget linksByTarget(entries);
+
     for (const TreeNode* addon : AddonsUnder(category))
     {
-        for (const std::filesystem::path& link : LinksPointingAt(entries, addon->path))
+        for (const std::filesystem::path& link : linksByTarget.PointingAt(addon->path))
         {
             const std::filesystem::path where = link.parent_path();
 

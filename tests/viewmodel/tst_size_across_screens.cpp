@@ -149,7 +149,7 @@ namespace
         AddonTreeViewModel tree{session, profiles, treeModel, packages, sizes, runner, notifier};
 
         CommunityModel communityModel;
-        CommunityViewModel community{profiles, session, notifier, communityModel, sizes};
+        CommunityViewModel community{profiles, session, notifier, communityModel, sizes, runner};
 
         QuarantineModel quarantineModel;
         QuarantineViewModel quarantine{imports, profiles, session, notifier, quarantineModel, sizes, runner};
@@ -158,7 +158,7 @@ namespace
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
         FakeLoadingReportSource loading;
-        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, loading, clock, runner};
+        DiagnosticsViewModel diagnostics{imports, sizes, scenery, session, notifier, loading, clock, runner};
     };
 
     SelectionSize LastSize(const QSignalSpy& measured)

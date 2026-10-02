@@ -35,6 +35,12 @@ struct PresetApplyReport
     PresetApplyRefusal refusal = PresetApplyRefusal::None;
 };
 
+struct PresetApplyOutcome
+{
+    PresetApplyReport report{};
+    EntriesRead read{};
+};
+
 class PresetService
 {
 public:
@@ -81,21 +87,26 @@ public:
     [[nodiscard]] PresetApplyPlan
     Plan(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset, ApplyMode mode) const;
 
-    [[nodiscard]] PresetApplyReport
-    Apply(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset, ApplyMode mode) const;
+    [[nodiscard]] PresetApplyOutcome
+    Apply(const EntriesStamp& stamp, const ProfileSnapshot& snapshot, const Preset& preset, ApplyMode mode) const;
 
-    [[nodiscard]] PresetApplyReport
-    ApplyTheReturn(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
+    [[nodiscard]] PresetApplyOutcome
+    ApplyTheReturn(const EntriesStamp& stamp, const ProfileSnapshot& snapshot, const Preset& preset) const;
 
     [[nodiscard]] bool
     IsSatisfied(const SimulatorProfile& profile, const ProfileSnapshot& snapshot, const Preset& preset) const;
 
+    [[nodiscard]] bool
+    IsSatisfied(const ProfileSnapshot& snapshot, const Preset& preset, const PresetPlan& replacePlan) const;
+
 private:
-    [[nodiscard]] PresetApplyReport Apply(const SimulatorProfile& profile,
-                                          const ProfileSnapshot& snapshot,
-                                          const Preset& preset,
-                                          ApplyMode mode,
-                                          bool recordReturn) const;
+    [[nodiscard]] bool StartupIsInPlace(const ProfileSnapshot& snapshot, const Preset& preset) const;
+
+    [[nodiscard]] PresetApplyOutcome Apply(const EntriesStamp& stamp,
+                                           const ProfileSnapshot& snapshot,
+                                           const Preset& preset,
+                                           ApplyMode mode,
+                                           bool recordReturn) const;
 
     [[nodiscard]] PresetApplyPlan Plan(const SimulatorProfile& profile,
                                        const ProfileSnapshot& snapshot,

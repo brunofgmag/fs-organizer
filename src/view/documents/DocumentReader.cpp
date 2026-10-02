@@ -25,18 +25,21 @@
 
 #include <array>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <optional>
 
 #include "support/PathText.h"
+#include "view/delegates/WithoutTheFocusFrame.h"
 #include "view/theme/ModernistMetrics.h"
 
 namespace
 {
     constexpr int kOutlineWidth = 210;
     constexpr int kPageSpacing = 8;
-    constexpr int kSearchWidth = 120;
+    constexpr int kSearchWidth = 100;
     constexpr int kStepWidth = 38;
+    constexpr int kBetweenSteps = 4;
     constexpr qreal kOneNotchCloser = 1.1;
     constexpr int kNotch = 120;
     constexpr int kTheOnlyColumn = 0;
@@ -134,18 +137,18 @@ DocumentReader::DocumentReader(QWidget* parent) : QWidget(parent)
     QLayout* bar = TheBar();
     bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, 0);
 
-    auto* pages = new QVBoxLayout;
+    auto* row = new QHBoxLayout;
+    row->setContentsMargins(0, 0, 0, 0);
+    row->setSpacing(12);
+    row->addWidget(view_, 1);
+    row->addWidget(outlinePane_);
+
+    auto* pages = new QVBoxLayout(this);
     pages->setContentsMargins(0, 0, 0, 0);
     pages->setSpacing(8);
     pages->addLayout(bar);
     pages->addWidget(caption_);
-    pages->addWidget(view_, 1);
-
-    auto* row = new QHBoxLayout(this);
-    row->setContentsMargins(0, 0, 0, 0);
-    row->setSpacing(12);
-    row->addLayout(pages, 1);
-    row->addWidget(outlinePane_);
+    pages->addLayout(row, 1);
 
     ConnectTheBar();
     ConnectThePane();
@@ -207,11 +210,11 @@ void DocumentReader::SayItIsDetached(const bool detached)
     Retranslate();
 }
 
-void DocumentReader::ZoomBy(const int notches)
+void DocumentReader::ZoomBy(const qreal notches)
 {
     fitWidth_->setChecked(false);
 
-    const qreal closer = notches > 0 ? kOneNotchCloser : 1 / kOneNotchCloser;
+    const qreal closer = std::pow(kOneNotchCloser, notches);
 
     view_->setZoomMode(QPdfView::ZoomMode::Custom);
     view_->setZoomFactor(view_->zoomFactor() * closer);
@@ -392,7 +395,14 @@ bool DocumentReader::TheGestureAnswersThe(QEvent* event)
             return false;
         }
 
-        ZoomBy(static_cast<QWheelEvent*>(event)->angleDelta().y());
+        const int turned = static_cast<QWheelEvent*>(event)->angleDelta().y();
+
+        if (turned == 0)
+        {
+            return false;
+        }
+
+        ZoomBy(static_cast<qreal>(turned) / kNotch);
 
         return true;
     }
@@ -565,16 +575,16 @@ void DocumentReader::JumpToTheResult(const int result)
     Retranslate();
 }
 
-int DocumentReader::WhereTheResultSitsInTheScrollbar(const QPdfLink& found) const
+int DocumentReader::WhereTheLocationSitsInTheScrollbar(const int page, const QPointF& location) const
 {
-    const WhereAPageSits sits = view_->WhereThePageSits(found.page());
+    const WhereAPageSits sits = view_->WhereThePageSits(page);
 
     if (sits.box.isEmpty())
     {
         return -1;
     }
 
-    return qRound(sits.box.y() + found.location().y() * sits.scale);
+    return qRound(sits.box.y() + location.y() * sits.scale);
 }
 
 void DocumentReader::BringTheResultIntoView(const QPdfLink& found) const
@@ -586,7 +596,7 @@ void DocumentReader::BringTheResultIntoView(const QPdfLink& found) const
         return;
     }
 
-    const int where = WhereTheResultSitsInTheScrollbar(found);
+    const int where = WhereTheLocationSitsInTheScrollbar(found.page(), found.location());
     const int lead = view_->viewport()->height() / 4;
 
     if (where < 0 || (where >= bar->value() + lead && where <= bar->value() + view_->viewport()->height() - lead))
@@ -595,6 +605,20 @@ void DocumentReader::BringTheResultIntoView(const QPdfLink& found) const
     }
 
     bar->setValue(std::clamp(where - lead, bar->minimum(), bar->maximum()));
+}
+
+void DocumentReader::BringTheLocationToTheTop(const int page, const QPointF& location) const
+{
+    const int where = WhereTheLocationSitsInTheScrollbar(page, location);
+
+    if (where < 0)
+    {
+        return;
+    }
+
+    QScrollBar* bar = view_->verticalScrollBar();
+
+    bar->setValue(std::clamp(where, bar->minimum(), bar->maximum()));
 }
 
 std::vector<bool> DocumentReader::WhichSectionsAreOpen() const
@@ -858,6 +882,8 @@ void DocumentReader::BuildTheOutlinePane()
     outlineView_->setObjectName(QStringLiteral("ReadingOutline"));
     outlineView_->setColumnCount(1);
     outlineView_->setHeaderHidden(true);
+    outlineView_->setUniformRowHeights(true);
+    outlineView_->setItemDelegate(new WithoutTheFocusFrame(outlineView_));
     outlineView_->setContextMenuPolicy(Qt::CustomContextMenu);
 
     rename_ = new QAction(this);
@@ -883,7 +909,7 @@ void DocumentReader::BuildTheOutlinePane()
     outlinePane_->setFixedWidth(kOutlineWidth);
 
     auto* outlineColumn = new QVBoxLayout(outlinePane_);
-    outlineColumn->setContentsMargins(0, kPageGutter, kPageGutter, 0);
+    outlineColumn->setContentsMargins(0, 0, kPageGutter, 0);
     outlineColumn->setSpacing(6);
     outlineColumn->addWidget(outlineHeading_);
     outlineColumn->addWidget(outlineView_);
@@ -949,7 +975,7 @@ QLayout* DocumentReader::TheBar()
 
     auto* bar = new QHBoxLayout;
     bar->setContentsMargins(0, 0, 0, 0);
-    bar->setSpacing(8);
+    bar->setSpacing(kBetweenSteps);
     bar->addWidget(previous_);
     bar->addWidget(next_);
     bar->addWidget(position_);
@@ -1050,8 +1076,11 @@ void DocumentReader::ConnectThePane()
     connect(outlineView_, &QTreeWidget::itemClicked, this,
             [this](const QTreeWidgetItem* entry)
             {
-                view_->pageNavigator()->jump(PageOf(*entry), entry->data(kTheOnlyColumn, kLocationRole).toPointF(),
-                                             entry->data(kTheOnlyColumn, kZoomRole).toReal());
+                const int page = PageOf(*entry);
+                const QPointF location = entry->data(kTheOnlyColumn, kLocationRole).toPointF();
+
+                view_->pageNavigator()->jump(page, location, entry->data(kTheOnlyColumn, kZoomRole).toReal());
+                BringTheLocationToTheTop(page, location);
             });
     connect(outlineView_, &QTreeWidget::currentItemChanged, this,
             [this]

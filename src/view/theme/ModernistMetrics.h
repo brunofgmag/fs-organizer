@@ -8,6 +8,8 @@
 #include <QtWidgets/QWidget>
 
 inline constexpr int kPageGutter = 10;
+inline constexpr int kToolbarGap = 8;
+inline constexpr int kChipGap = 6;
 inline constexpr int kReadableWidth = 420;
 inline constexpr int kMeterHeight = 4;
 

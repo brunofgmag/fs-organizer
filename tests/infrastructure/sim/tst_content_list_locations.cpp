@@ -47,7 +47,7 @@ namespace
             return configPath;
         }
 
-        std::filesystem::path AddFile(const std::string& relativePath) const
+        [[nodiscard]] std::filesystem::path AddFile(const std::string& relativePath) const
         {
             const std::filesystem::path file = Root() / relativePath;
             std::filesystem::create_directories(file.parent_path());
@@ -114,9 +114,9 @@ void ContentListLocationsTest::TheBackupsTheSimulatorLeavesBesideItAreNeverTheLi
     const Machine machine;
     const std::filesystem::path userCfg = machine.AddUserCfg("Microsoft Flight Simulator 2024");
     const std::filesystem::path list = machine.AddFile("Microsoft Flight Simulator 2024/NathosT/Content.xml");
-    machine.AddFile("Microsoft Flight Simulator 2024/NathosT/Content.xml_backup_20250914154450");
-    machine.AddFile("Microsoft Flight Simulator 2024/NathosT/Content.xml_backup_20250914154815");
-    machine.AddFile("Microsoft Flight Simulator 2024/Layouts/Content.xml_backup_20250914190942");
+    static_cast<void>(machine.AddFile("Microsoft Flight Simulator 2024/NathosT/Content.xml_backup_20250914154450"));
+    static_cast<void>(machine.AddFile("Microsoft Flight Simulator 2024/NathosT/Content.xml_backup_20250914154815"));
+    static_cast<void>(machine.AddFile("Microsoft Flight Simulator 2024/Layouts/Content.xml_backup_20250914190942"));
 
     const StdFilesystemProbe probe;
     const std::vector<ContentListLocation> found =

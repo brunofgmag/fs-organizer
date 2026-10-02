@@ -134,12 +134,21 @@ fsorg_add_qt_test(fsorg-enum-printing-tests enum-printing
         tests/support/tst_enum_printing.cpp
         tests/support/EnumPrinting.h)
 
+fsorg_add_qt_test(fsorg-file-clock-tests file-clock
+        tests/support/tst_file_clock.cpp
+        src/support/FileClock.h)
+
 fsorg_add_qt_test(fsorg-scenery-outside-the-scan-tests scenery-outside-the-scan
         tests/infrastructure/scenery/tst_scenery_outside_the_scan.cpp
         tests/doubles/FakeFilesystemProbe.h
         tests/doubles/InMemoryFileSystem.h
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-scenery-outside-the-scan-tests PRIVATE fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-json-scenery-cache-on-real-disk-tests json-scenery-cache-on-real-disk
+        tests/infrastructure/scenery/tst_json_scenery_cache_on_real_disk.cpp
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-json-scenery-cache-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-chart-file-naming-tests chart-file-naming
         tests/domain/documents/tst_chart_file_naming.cpp
@@ -407,6 +416,12 @@ fsorg_add_qt_test(fsorg-entry-classifier-tests entry-classifier
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-entry-classifier-tests PRIVATE fsorg-domain)
 
+fsorg_add_qt_test(fsorg-links-by-target-tests links-by-target
+        tests/domain/linking/tst_links_by_target.cpp
+        tests/support/PathPrinting.h
+        src/domain/support/PathUtils.h)
+target_link_libraries(fsorg-links-by-target-tests PRIVATE fsorg-domain)
+
 fsorg_add_qt_test(fsorg-repair-plan-tests repair-plan
         tests/domain/linking/tst_repair_plan.cpp
         tests/support/EnumPrinting.h
@@ -587,6 +602,12 @@ target_link_libraries(fsorg-filesystem-scanner-tests PRIVATE fsorg-infrastructur
 fsorg_add_qt_test(fsorg-jsonl-operation-journal-tests jsonl-operation-journal
         tests/infrastructure/journal/tst_jsonl_operation_journal.cpp)
 target_link_libraries(fsorg-jsonl-operation-journal-tests PRIVATE fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-journal-folds-tests journal-folds
+        tests/infrastructure/journal/tst_journal_folds.cpp
+        tests/doubles/FakeOperationJournal.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-journal-folds-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-json-settings-repository-tests json-settings-repository
         tests/infrastructure/settings/tst_json_settings_repository.cpp
@@ -1220,6 +1241,11 @@ if (WIN32)
 
     target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-sidecar-store-on-real-disk-tests sidecar-store-on-real-disk
+            tests/infrastructure/fileops/tst_sidecar_store_on_real_disk.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-sidecar-store-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-main-window-tests main-window
             tests/view/tst_main_window.cpp
         tests/support/PageFloor.h
@@ -1301,6 +1327,7 @@ if (WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-presets-page-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-presets-page-tests presets-page)
+    add_dependencies(fsorg-presets-page-tests release_translations)
 
 
     fsorg_add_qt_test(fsorg-options-page-tests options-page
@@ -1454,9 +1481,18 @@ if (WIN32)
     target_link_libraries(fsorg-omitted-dialog-tests PRIVATE fsorg-view)
     configure_fsorg_gui_test(fsorg-omitted-dialog-tests omitted-dialog)
 
+    fsorg_add_qt_test(fsorg-suggestion-dialog-tests suggestion-dialog
+            tests/view/tst_suggestion_dialog.cpp
+            tests/support/CatalogueBesideTheBuild.h
+            assets/resources.qrc)
+    target_link_libraries(fsorg-suggestion-dialog-tests PRIVATE fsorg-view)
+    configure_fsorg_gui_test(fsorg-suggestion-dialog-tests suggestion-dialog)
+    add_dependencies(fsorg-suggestion-dialog-tests release_translations)
+
     fsorg_add_qt_test(fsorg-community-page-tests community-page
             tests/view/tst_community_page.cpp
         tests/support/PageFloor.h
+        tests/support/PhysicalRows.h
             tests/doubles/StartupOverFakes.h
             tests/doubles/FakeCatalogScanner.h
             tests/doubles/FakeClock.h
@@ -1528,7 +1564,9 @@ configure_fsorg_gui_test(fsorg-paint-timing-tests paint-timing)
 
 fsorg_add_qt_test(fsorg-addon-tree-page-tests addon-tree-page
         tests/view/tst_addon_tree_page.cpp
+        tests/support/ButtonLookup.h
         tests/support/PageFloor.h
+        tests/support/PhysicalRows.h
         tests/doubles/StartupOverFakes.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1585,6 +1623,7 @@ configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
 fsorg_add_qt_test(fsorg-quarantine-page-tests quarantine-page
         tests/view/tst_quarantine_page.cpp
         tests/support/ButtonLookup.h
+        tests/support/PhysicalRows.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1608,6 +1647,7 @@ configure_fsorg_gui_test(fsorg-quarantine-page-tests quarantine-page)
 fsorg_add_qt_test(fsorg-journal-page-tests journal-page
         tests/view/tst_journal_page.cpp
         tests/support/ButtonLookup.h
+        tests/support/PhysicalRows.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1689,3 +1729,8 @@ fsorg_add_qt_test(fsorg-theme-contrast-tests theme-contrast
         tests/view/theme/tst_theme_contrast.cpp)
 target_link_libraries(fsorg-theme-contrast-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-theme-contrast-tests theme-contrast)
+
+fsorg_add_qt_test(fsorg-wrapping-row-tests wrapping-row
+        tests/view/tst_wrapping_row.cpp)
+target_link_libraries(fsorg-wrapping-row-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-wrapping-row-tests wrapping-row)

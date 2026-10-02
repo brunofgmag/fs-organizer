@@ -14,8 +14,10 @@
 #include <execution>
 #include <fstream>
 #include <iterator>
+#include <memory>
 #include <numeric>
 #include <string>
+#include <string_view>
 #include <system_error>
 
 #include <QtCore/QByteArrayView>
@@ -37,6 +39,22 @@ namespace
     DWORD AttributesWithoutFollowingLinks(const std::filesystem::path& path)
     {
         return GetFileAttributesW(NativePath(path).c_str());
+    }
+
+    std::size_t LengthOfTheExtendedPrefixOn(const std::filesystem::path& reachableRoot)
+    {
+        return reachableRoot.native().size() - WithoutExtendedPrefix(reachableRoot).native().size();
+    }
+
+    std::wstring_view BelowTheRoot(const std::wstring& entry, const std::size_t rootLength)
+    {
+        std::wstring_view below(entry);
+        below.remove_prefix(std::min(rootLength, below.size()));
+
+        const std::size_t firstName = below.find_first_not_of(L'\\');
+        below.remove_prefix(firstName == std::wstring_view::npos ? below.size() : firstName);
+
+        return below;
     }
 
     WriteAccess WhatTheProbeRanInto(const DWORD error)
@@ -64,34 +82,56 @@ namespace
         return GetLastError() == ERROR_SHARING_VIOLATION;
     }
 
+    struct FindHandleCloser
+    {
+        void operator()(const HANDLE handle) const
+        {
+            FindClose(handle);
+        }
+    };
+
+    using FindHandle = std::unique_ptr<void, FindHandleCloser>;
+
+    [[nodiscard]] bool ItIsADotEntry(const wchar_t* name)
+    {
+        return std::wcscmp(name, L".") == 0 || std::wcscmp(name, L"..") == 0;
+    }
+
     template<typename Wanted>
     std::vector<std::filesystem::path> ChildrenWhoseAttributesPass(const std::filesystem::path& path,
                                                                    const Wanted& wanted)
     {
-        std::error_code error;
-        std::filesystem::directory_iterator entry(WithExtendedPrefix(path),
-                                                  std::filesystem::directory_options::skip_permission_denied, error);
-        if (error)
+        std::wstring pattern = NativePath(path);
+        if (pattern.empty() || pattern.back() != L'\\')
+        {
+            pattern.push_back(L'\\');
+        }
+
+        pattern.push_back(L'*');
+
+        WIN32_FIND_DATAW found{};
+        const HANDLE opened = FindFirstFileExW(pattern.c_str(), FindExInfoBasic, &found, FindExSearchNameMatch, nullptr,
+                                               FIND_FIRST_EX_LARGE_FETCH);
+        if (opened == INVALID_HANDLE_VALUE)
         {
             return {};
         }
 
+        const FindHandle search(opened);
+
         std::vector<std::filesystem::path> children;
-        const std::filesystem::directory_iterator end;
 
-        while (entry != end)
+        do
         {
-            if (const DWORD attributes = AttributesWithoutFollowingLinks(entry->path());
-                attributes != INVALID_FILE_ATTRIBUTES && wanted(attributes))
+            if (!ItIsADotEntry(found.cFileName) && wanted(found.dwFileAttributes))
             {
-                children.push_back(path / entry->path().filename());
+                children.push_back(path / found.cFileName);
             }
+        } while (FindNextFileW(search.get(), &found) != FALSE);
 
-            entry.increment(error);
-            if (error)
-            {
-                return {};
-            }
+        if (GetLastError() != ERROR_NO_MORE_FILES)
+        {
+            return {};
         }
 
         return children;
@@ -168,6 +208,12 @@ bool WindowsFilesystemProbe::PhysicalDirectoryExists(const std::filesystem::path
 
 bool WindowsFilesystemProbe::TargetDirectoryExists(const std::filesystem::path& path) const
 {
+    if (const DWORD attributes = AttributesWithoutFollowingLinks(path);
+        attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
+    {
+        return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    }
+
     std::error_code error;
     return std::filesystem::is_directory(WithExtendedPrefix(path), error);
 }
@@ -374,6 +420,9 @@ std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std
         return std::nullopt;
     }
 
+    const std::size_t prefixLength = LengthOfTheExtendedPrefixOn(reachableRoot);
+    const std::size_t rootLength = reachableRoot.native().size();
+
     TreeFingerprint walked{.longestEntry = WithoutExtendedPrefix(root).wstring().size()};
     const std::filesystem::recursive_directory_iterator end;
 
@@ -385,7 +434,9 @@ std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std
             return std::nullopt;
         }
 
-        if (const std::size_t here = WithoutExtendedPrefix(entry->path()).wstring().size(); here > walked.longestEntry)
+        const std::wstring& native = entry->path().native();
+
+        if (const std::size_t here = native.size() - prefixLength; here > walked.longestEntry)
         {
             walked.longestEntry = here;
         }
@@ -398,8 +449,15 @@ std::optional<TreeFingerprint> WindowsFilesystemProbe::FingerprintTree(const std
                 return std::nullopt;
             }
 
-            walked.files.push_back(
-                FileFingerprint{.relativePath = entry->path().lexically_relative(reachableRoot), .size = size});
+            const std::filesystem::file_time_type written = entry->last_write_time(error);
+            if (error)
+            {
+                return std::nullopt;
+            }
+
+            walked.files.push_back(FileFingerprint{.relativePath = BelowTheRoot(native, rootLength),
+                                                   .size = size,
+                                                   .lastWriteTime = SystemTimeOf(written)});
         }
 
         entry.increment(error);

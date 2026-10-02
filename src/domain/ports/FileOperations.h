@@ -3,7 +3,6 @@
 
 #include <filesystem>
 #include <functional>
-#include <string>
 
 #include "domain/model/CopyOutcome.h"
 

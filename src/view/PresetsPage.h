@@ -14,6 +14,7 @@ class PresetStartupPanel;
 class QFrame;
 class QLineEdit;
 class QPushButton;
+class QShowEvent;
 class QStackedWidget;
 class QTableWidget;
 class QTableWidgetItem;
@@ -33,6 +34,8 @@ signals:
 protected:
     void changeEvent(QEvent* event) override;
 
+    void showEvent(QShowEvent* event) override;
+
 private:
     void RetranslateUi();
 
@@ -45,6 +48,10 @@ private:
     [[nodiscard]] QString SelectedName() const;
 
     [[nodiscard]] ApplyMode Mode() const;
+
+    void RequestReload();
+
+    void ReloadIfStale();
 
     void ReloadNames();
 
@@ -66,7 +73,7 @@ private:
 
     void ActionToggled(const QTableWidgetItem* item);
 
-    void StartupActionToggled(int row, PresetAction wanted);
+    void StartupActionToggled(int index, PresetAction wanted);
 
     void RecaptureStartup();
 
@@ -110,6 +117,8 @@ private:
     std::optional<Preset> selected_;
     bool showingReturn_ = false;
     bool populating_ = false;
+    bool stale_ = false;
+    bool reloadQueued_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_PRESETS_PAGE_H

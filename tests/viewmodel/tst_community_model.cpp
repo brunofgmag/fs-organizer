@@ -28,30 +28,20 @@ namespace
         static void TheNameCellCarriesUnderItTheFolderTheEntryPointsAt();
         static void EveryClassificationSaysWhatItMeansInsteadOfRepeatingThePath();
         static void APhysicalFolderCarriesItsOwnPathUnderTheName();
+        static void ShowingTheSameEntriesAgainDoesNotResetTheModel();
+        static void ShowingEntriesWithOneChangedResetsTheModelOnce();
+        static void ShowingTheSameEntriesWithAnotherConflictResetsTheModelOnce();
+        static void EveryRoleAnswersTheSameForEachRowWhateverItsConflict();
     };
 }
 
 namespace
 {
-    constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
-    constexpr auto kCommunity2024 = "E:/Flight Simulator 2024/Community2024";
-
     DestinationEntry Entry(const std::filesystem::path& path,
                            const std::filesystem::path& target,
                            const EntryClassification classification)
     {
         return {.path = path, .target = target, .classification = classification};
-    }
-
-    SimulatorProfile Profile()
-    {
-        SimulatorProfile profile;
-        profile.id = "msfs2024";
-        profile.variant = SimulatorVariant::MSFS2024;
-        profile.destinations = {kCommunity, kCommunity2024};
-        profile.defaultDestination = kCommunity;
-
-        return profile;
     }
 
     std::vector<DestinationEntry> OneOfEachClass()
@@ -72,7 +62,7 @@ namespace
 void CommunityModelTest::ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLeaveAlone()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile(), {});
+    model.ShowEntries(OneOfEachClass(), {});
 
     const auto rowNamed = [&model](const QString& name)
     {
@@ -110,7 +100,7 @@ void CommunityModelTest::ADuplicatedEntryLooksLikeADefectAndNotLikeSomethingToLe
 void CommunityModelTest::TheTableShowsOneRowPerEntry()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile(), {});
+    model.ShowEntries(OneOfEachClass(), {});
 
     QCOMPARE(model.rowCount({}), 6);
     QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), Qt::DisplayRole).toString(),
@@ -130,7 +120,7 @@ void CommunityModelTest::TheTableShowsOneRowPerEntry()
 void CommunityModelTest::FilteringByEachClassificationReturnsExactlyItsSubset()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile(), {});
+    model.ShowEntries(OneOfEachClass(), {});
 
     CommunityFilterModel filter;
     filter.setSourceModel(&model);
@@ -153,7 +143,7 @@ void CommunityModelTest::FilteringByEachClassificationReturnsExactlyItsSubset()
 void CommunityModelTest::ClearingTheFilterShowsEverythingAgain()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile(), {});
+    model.ShowEntries(OneOfEachClass(), {});
 
     CommunityFilterModel filter;
     filter.setSourceModel(&model);
@@ -171,7 +161,7 @@ void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
                                                 .libraryPath = "D:/MSFS 2024/Utils/physical"}}};
 
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile(), conflicts);
+    model.ShowEntries(OneOfEachClass(), conflicts);
 
     const QModelIndex conflicted = model.index(4, CommunityModel::ClassificationColumn);
     QVERIFY(model.data(conflicted, CommunityModel::ConflictRole).toBool());
@@ -194,7 +184,7 @@ void CommunityModelTest::AnEntryInConflictSaysSoAndCanBeFilteredOnItsOwn()
 void CommunityModelTest::ACellWithNothingExtraToSayLeavesTheTooltipToTheDelegate()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile(), {});
+    model.ShowEntries(OneOfEachClass(), {});
 
     for (int column = 0; column <= CommunityModel::TargetColumn; ++column)
     {
@@ -220,7 +210,7 @@ namespace
 void CommunityModelTest::ADivergentEntrySaysTwoCopiesExistInsteadOfShowingAPath()
 {
     CommunityModel model;
-    model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent)}, Profile(), CopyConflicts{});
+    model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent)}, CopyConflicts{});
 
     const QModelIndex classification = model.index(0, CommunityModel::ClassificationColumn);
     const QModelIndex target = model.index(0, CommunityModel::TargetColumn);
@@ -233,7 +223,7 @@ void CommunityModelTest::ADivergentEntrySaysTwoCopiesExistInsteadOfShowingAPath(
 void CommunityModelTest::AVanishedEntrySaysTheLibraryCopyIsGoneAndLooksLikeALoss()
 {
     CommunityModel model;
-    model.ShowEntries({FromAnotherProgram(EntryClassification::Vanished)}, Profile(), CopyConflicts{});
+    model.ShowEntries({FromAnotherProgram(EntryClassification::Vanished)}, CopyConflicts{});
 
     const QModelIndex classification = model.index(0, CommunityModel::ClassificationColumn);
     const QModelIndex target = model.index(0, CommunityModel::TargetColumn);
@@ -250,7 +240,7 @@ void CommunityModelTest::ADivergentEntryFindsItsConflictByTheFolderTheOtherProgr
         .provenancePath = kVendorFolder, .libraryPath = kLibraryCopy, .theProvenanceIsAnotherProgram = true}}};
 
     CommunityModel model;
-    model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent)}, Profile(), conflicts);
+    model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent)}, conflicts);
 
     const QModelIndex row = model.index(0, CommunityModel::ClassificationColumn);
 
@@ -265,7 +255,7 @@ void CommunityModelTest::TheNameCellCarriesUnderItTheFolderTheEntryPointsAt()
     model.ShowEntries({FromAnotherProgram(EntryClassification::Divergent),
                        Entry("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj",
                              EntryClassification::Managed)},
-                      Profile(), CopyConflicts{});
+                      CopyConflicts{});
 
     QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), SecondLineRole).toString(),
              AsText(std::filesystem::path{kVendorFolder}));
@@ -277,7 +267,7 @@ void CommunityModelTest::TheNameCellCarriesUnderItTheFolderTheEntryPointsAt()
 void CommunityModelTest::EveryClassificationSaysWhatItMeansInsteadOfRepeatingThePath()
 {
     CommunityModel model;
-    model.ShowEntries(OneOfEachClass(), Profile(), CopyConflicts{});
+    model.ShowEntries(OneOfEachClass(), CopyConflicts{});
 
     for (int row = 0; row < model.rowCount({}); ++row)
     {
@@ -292,10 +282,126 @@ void CommunityModelTest::APhysicalFolderCarriesItsOwnPathUnderTheName()
 {
     CommunityModel model;
     model.ShowEntries({Entry("E:/Flight Simulator 2024/Community/physical", {}, EntryClassification::Unmanaged)},
-                      Profile(), CopyConflicts{});
+                      CopyConflicts{});
 
     QCOMPARE(model.data(model.index(0, CommunityModel::NameColumn), SecondLineRole).toString(),
              AsText(std::filesystem::path{"E:/Flight Simulator 2024/Community/physical"}));
+}
+
+void CommunityModelTest::ShowingTheSameEntriesAgainDoesNotResetTheModel()
+{
+    const CopyConflicts conflicts{{CopyConflict{.provenancePath = "E:/Flight Simulator 2024/Community/physical",
+                                                .libraryPath = "D:/MSFS 2024/Utils/physical"}}};
+
+    CommunityModel model;
+    model.ShowEntries(OneOfEachClass(), conflicts);
+
+    const QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+
+    model.ShowEntries(OneOfEachClass(), conflicts);
+
+    QCOMPARE(resets.size(), 0);
+    QCOMPARE(model.rowCount({}), 6);
+    QVERIFY(model.ConflictAt(model.index(4, CommunityModel::NameColumn)) != nullptr);
+}
+
+void CommunityModelTest::ShowingEntriesWithOneChangedResetsTheModelOnce()
+{
+    CommunityModel model;
+    model.ShowEntries(OneOfEachClass(), {});
+
+    const QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+
+    std::vector<DestinationEntry> changed = OneOfEachClass();
+    changed[2].classification = EntryClassification::Managed;
+    model.ShowEntries(changed, {});
+
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(model.data(model.index(2, CommunityModel::NameColumn), CommunityModel::ClassificationRole).toInt(),
+             static_cast<int>(EntryClassification::Managed));
+
+    changed[5].target = "D:/MSFS 2024/Sceneries/somewhere-else";
+    model.ShowEntries(changed, {});
+
+    QCOMPARE(resets.size(), 2);
+
+    changed.pop_back();
+    model.ShowEntries(changed, {});
+
+    QCOMPARE(resets.size(), 3);
+    QCOMPARE(model.rowCount({}), 5);
+}
+
+void CommunityModelTest::ShowingTheSameEntriesWithAnotherConflictResetsTheModelOnce()
+{
+    const CopyConflicts conflicts{{CopyConflict{.provenancePath = "E:/Flight Simulator 2024/Community/physical",
+                                                .libraryPath = "D:/MSFS 2024/Utils/physical"}}};
+
+    CommunityModel model;
+    model.ShowEntries(OneOfEachClass(), {});
+
+    const QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+
+    QVERIFY(!model.data(model.index(4, CommunityModel::NameColumn), CommunityModel::ConflictRole).toBool());
+
+    model.ShowEntries(OneOfEachClass(), conflicts);
+
+    QCOMPARE(resets.size(), 1);
+    QVERIFY(model.data(model.index(4, CommunityModel::NameColumn), CommunityModel::ConflictRole).toBool());
+
+    model.ShowEntries(OneOfEachClass(), {});
+
+    QCOMPARE(resets.size(), 2);
+    QVERIFY(!model.data(model.index(4, CommunityModel::NameColumn), CommunityModel::ConflictRole).toBool());
+    QVERIFY(model.ConflictAt(model.index(4, CommunityModel::NameColumn)) == nullptr);
+}
+
+void CommunityModelTest::EveryRoleAnswersTheSameForEachRowWhateverItsConflict()
+{
+    std::vector<DestinationEntry> entries = OneOfEachClass();
+    entries.push_back(FromAnotherProgram(EntryClassification::Divergent));
+
+    const CopyConflicts conflicts{{CopyConflict{.provenancePath = "E:/Flight Simulator 2024/Community/physical",
+                                                .libraryPath = "D:/MSFS 2024/Utils/physical"},
+                                   CopyConflict{.provenancePath = kVendorFolder,
+                                                .libraryPath = kLibraryCopy,
+                                                .theProvenanceIsAnotherProgram = true}}};
+
+    CommunityModel model;
+    model.ShowEntries(entries, conflicts);
+
+    for (int row = 0; row < model.rowCount({}); ++row)
+    {
+        const DestinationEntry& entry = entries[static_cast<std::size_t>(row)];
+        const CopyConflict* expected = entry.theOtherProgramTookItsFolderBack
+            ? conflicts.OverTheProvenance(entry.externalOrigin)
+            : conflicts.OverTheProvenance(entry.path);
+
+        const QModelIndex name = model.index(row, CommunityModel::NameColumn);
+        const QModelIndex classification = model.index(row, CommunityModel::ClassificationColumn);
+
+        QCOMPARE(model.ConflictAt(name) != nullptr, expected != nullptr);
+        QCOMPARE(model.data(name, CommunityModel::ConflictRole).toBool(), expected != nullptr);
+
+        if (expected != nullptr)
+        {
+            QCOMPARE(model.ConflictAt(name)->libraryPath, expected->libraryPath);
+            QVERIFY(model.data(name, AlarmingRole).toBool());
+            QVERIFY(model.data(classification, Qt::ToolTipRole).toString().contains(AsText(expected->libraryPath)));
+        }
+        else
+        {
+            QVERIFY(model.data(classification, Qt::ToolTipRole).toString().isEmpty());
+        }
+
+        QCOMPARE(model.data(name, CommunityModel::ClassificationRole).toInt(), static_cast<int>(entry.classification));
+        QCOMPARE(model.data(name, Qt::DisplayRole).toString(), AsText(entry.path.filename()));
+        QVERIFY(model.data(model.index(row, CommunityModel::DestinationColumn), QuietRole).toBool());
+        QVERIFY(!model.data(name, QuietRole).toBool());
+    }
+
+    QVERIFY(model.ConflictAt(model.index(model.rowCount({}), 0)) == nullptr);
+    QVERIFY(model.ConflictAt({}) == nullptr);
 }
 
 QTEST_APPLESS_MAIN(CommunityModelTest)

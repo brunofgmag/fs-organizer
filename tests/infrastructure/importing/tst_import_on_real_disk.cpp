@@ -2,8 +2,6 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
-#include <variant>
-
 #include <fstream>
 #include <system_error>
 
@@ -56,6 +54,9 @@ namespace
         static void TheSwapReallyExchangesTheOccupantAndTheItemOnDisk();
         static void TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart();
         static void AnImportCheckedByTheHashReachesAsFarPastTheCeilingAsTheRestOfTheProbe();
+        static void ASecondFolderWithTheNameTheBatchJustLandedIsRefusedAndLeavesItsSourceWhole();
+        static void AnItemStrandedInItsSwapSlotIsListedAndRestoredUnderItsRealName();
+        static void AnItemWhoseSwapWasInterruptedBeforeTheOccupantMovedIsListedUnderItsRealNameToo();
     };
 }
 
@@ -721,6 +722,126 @@ void ImportOnRealDiskTest::AnImportCheckedByTheHashReachesAsFarPastTheCeilingAsT
     QVERIFY(ExistsPastTheCeiling(target / "aircraft.cfg"));
     QVERIFY(!ExistsPastTheCeiling(StagingPathFor(target)));
     QCOMPARE(NormalizeReparseTarget(engine.linkService.ReadLinkTarget(request.source).value()), target);
+}
+
+void ImportOnRealDiskTest::ASecondFolderWithTheNameTheBatchJustLandedIsRefusedAndLeavesItsSourceWhole()
+{
+    const Disk disk;
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    static_cast<void>(disk.AddFolder("Library/Sceneries"));
+    disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Sim/Community/simbridge/dist/simbridge.exe", std::string(2048, 'a'));
+    disk.AddFile("Sim/Community2024/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Sim/Community2024/simbridge/dist/simbridge.exe", std::string(1024, 'b'));
+
+    SimulatorProfile profile = disk.Profile();
+    profile.destinations.push_back(disk.Root() / "Sim" / "Community2024");
+
+    const ImportRequest first{.source = disk.Destination() / "simbridge", .category = disk.Category()};
+    const ImportRequest second{.source = disk.Root() / "Sim" / "Community2024" / "simbridge",
+                               .category = disk.Root() / "Library" / "Sceneries"};
+
+    const std::vector<ImportOperationResult> results = composed.service.Import(profile, {first, second}, {});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QCOMPARE(results.back().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(results.back().occupant, first.Target());
+
+    QVERIFY(std::filesystem::exists(first.Target() / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(second.Target()));
+    QVERIFY(!composed.engine.filesystemProbe.IsReparsePoint(second.source));
+    QCOMPARE(std::filesystem::file_size(second.source / "dist" / "simbridge.exe"), std::uintmax_t{1024});
+    QVERIFY(std::filesystem::exists(second.source / "manifest.json"));
+
+    QVERIFY2(composed.service.Leftovers(profile).empty(), "the refused folder left no staging behind");
+    QVERIFY(!std::filesystem::exists(StagingPathFor(second.Target())));
+}
+
+void ImportOnRealDiskTest::AnItemStrandedInItsSwapSlotIsListedAndRestoredUnderItsRealName()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+    const std::filesystem::path occupantHeld = quarantine / "simbridge";
+    const std::filesystem::path stranded = SwapSlotFor(occupantHeld);
+    const std::filesystem::path place = disk.Category() / "simbridge";
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge.fsorg-swap/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/Utils/pmdg-aircraft-77w/manifest.json", R"({"title": "77W"})");
+
+    composed.engine.log.RecordImport(OperationKind::QuarantineFromLibrary, AddonId{.libraryId = "lib-1"}, place,
+                                     occupantHeld, FileResult::Completed);
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(occupantHeld),
+                                           TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+
+    const std::vector<QuarantinedItem> items = composed.service.Quarantined(disk.Profile());
+
+    const auto found = std::ranges::find_if(items,
+                                            [&stranded](const QuarantinedItem& item)
+                                            {
+                                                return item.path == stranded;
+                                            });
+    QVERIFY2(found != items.end(), "the stranded item is not listed at all");
+
+    const QuarantinedItem& listed = *found;
+
+    QCOMPARE(listed.origin, place);
+    QCOMPARE(listed.source, OriginSource::Sidecar);
+    QVERIFY(listed.KnowsWhereItCameFrom());
+
+    const std::vector<RestorePlace> places = composed.service.PlacesFor(disk.Profile(), listed);
+    const auto chosen = std::ranges::find_if(places,
+                                             [&disk](const RestorePlace& offered)
+                                             {
+                                                 return offered.place == disk.Category();
+                                             });
+    QVERIFY(chosen != places.end());
+
+    QCOMPARE(chosen->target, place);
+
+    QuarantinedItem asTheDialogHandsItBack = listed;
+    asTheDialogHandsItBack.origin = chosen->target;
+
+    const std::vector<FileOperationResult> restored =
+        composed.service.Restore(disk.Profile(), {asTheDialogHandsItBack});
+
+    QCOMPARE(restored.size(), std::size_t{1});
+    QCOMPARE(restored.front().result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(place / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(disk.Category() / "simbridge.fsorg-swap"));
+    QVERIFY(!std::filesystem::exists(stranded));
+    QVERIFY(std::filesystem::exists(occupantHeld / "manifest.json"));
+}
+
+void ImportOnRealDiskTest::AnItemWhoseSwapWasInterruptedBeforeTheOccupantMovedIsListedUnderItsRealNameToo()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+    const std::filesystem::path held = quarantine / "simbridge";
+    const std::filesystem::path stranded = SwapSlotFor(held);
+    const std::filesystem::path place = disk.Category() / "simbridge";
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge.fsorg-swap/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+
+    const std::vector<QuarantinedItem> items = composed.service.Quarantined(disk.Profile());
+
+    QCOMPARE(items.size(), std::size_t{1});
+    QCOMPARE(items.front().path, stranded);
+    QCOMPARE(items.front().origin, place);
+    QCOMPARE(items.front().source, OriginSource::Sidecar);
 }
 
 QTEST_APPLESS_MAIN(ImportOnRealDiskTest)

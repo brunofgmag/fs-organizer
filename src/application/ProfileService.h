@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "application/model/LibraryReport.h"
+#include "domain/importing/CopyConflicts.h"
+#include "domain/model/EnabledAddons.h"
 #include "application/model/LinkBatchReport.h"
 #include "application/model/LinkOperationResult.h"
 #include "application/StartupService.h"
@@ -46,6 +48,27 @@ struct TakenPlace
     std::filesystem::path occupant{};
 };
 
+struct EntriesStamp
+{
+    SimulatorProfile profile{};
+    int adoptions = 0;
+};
+
+struct EntriesRead
+{
+    EntriesStamp stamp{};
+    std::vector<DestinationEntry> entries{};
+    EnabledAddons enabled{};
+    CopyConflicts conflicts{};
+    std::vector<StartupEntry> startupEntries{};
+};
+
+struct LinkBatchOutcome
+{
+    LinkBatchReport report{};
+    EntriesRead read{};
+};
+
 class ProfileService
 {
 public:
@@ -53,6 +76,7 @@ public:
     {
         std::vector<DestinationEntry> entries{};
         EnabledAddons enabled{};
+        std::vector<ExternalAddon> externals{};
     };
 
     ProfileService(const CatalogScanner& catalog,
@@ -77,13 +101,32 @@ public:
 
     [[nodiscard]] LibraryReport RegisterLibrary(SimulatorProfile& profile, const std::filesystem::path& path) const;
 
-    [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile,
-                                                               const std::vector<TreeNode>& libraries = {}) const;
+    [[nodiscard]] EntriesRead ReadEntries(const EntriesStamp& stamp, const std::vector<TreeNode>& libraries) const;
 
-    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile) const;
+    [[nodiscard]] std::vector<DestinationEntry> ResolveEntries(const SimulatorProfile& profile,
+                                                               const std::vector<TreeNode>& libraries) const;
+
+    [[nodiscard]] std::vector<ExternalAddon> WhatCameFromAnotherProgram(const SimulatorProfile& profile,
+                                                                        const std::vector<TreeNode>& libraries) const;
+
+    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile,
+                                           const std::vector<TreeNode>& libraries) const;
+
+    [[nodiscard]] LinksOnDisk ReadLinksNow(const SimulatorProfile& profile,
+                                           const std::vector<ExternalAddon>& externals) const;
+
+    [[nodiscard]] std::vector<DestinationEntry> EntriesAfter(const SimulatorProfile& profile,
+                                                             const std::vector<DestinationEntry>& before,
+                                                             const std::vector<LinkOperationResult>& results,
+                                                             const std::vector<ExternalAddon>& externals) const;
+
+    [[nodiscard]] std::vector<TakenPlace> PlacesTakenNow(const SimulatorProfile& profile,
+                                                         const std::vector<const TreeNode*>& nodes,
+                                                         const ProfileSnapshot& shown) const;
 
     [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
-                                                      const std::vector<const TreeNode*>& nodes) const;
+                                                      const std::vector<const TreeNode*>& nodes,
+                                                      const std::vector<TreeNode>& libraries) const;
 
     [[nodiscard]] std::vector<TakenPlace> PlacesTaken(const SimulatorProfile& profile,
                                                       const std::vector<const TreeNode*>& nodes,
@@ -102,17 +145,28 @@ public:
                                              const LinkBatch& batch,
                                              const LinksOnDisk& onDisk);
 
-    [[nodiscard]] LinkBatchReport
-    Relink(const SimulatorProfile& profile, const ProfileSnapshot& shown, const std::vector<const TreeNode*>& nodes);
+    [[nodiscard]] LinkBatchOutcome
+    SetEnabled(const EntriesStamp& stamp, const ProfileSnapshot& shown, const LinkBatch& batch);
 
-    [[nodiscard]] std::vector<LinkOperationResult> Repair(const SimulatorProfile& profile,
-                                                          const std::vector<RepairRequest>& requests);
+    [[nodiscard]] LinkBatchOutcome SetEnabled(const EntriesStamp& stamp,
+                                              const ProfileSnapshot& shown,
+                                              const LinkBatch& batch,
+                                              const LinksOnDisk& onDisk);
+
+    [[nodiscard]] LinkBatchOutcome
+    Relink(const EntriesStamp& stamp, const ProfileSnapshot& shown, const std::vector<const TreeNode*>& nodes);
+
+    [[nodiscard]] LinkBatchOutcome Repair(const EntriesStamp& stamp,
+                                          const std::vector<TreeNode>& libraries,
+                                          const std::vector<RepairRequest>& requests);
 
     [[nodiscard]] bool CanUndo() const;
 
     void ForgetUndo();
 
     [[nodiscard]] std::vector<LinkOperationResult> UndoLastBatch();
+
+    [[nodiscard]] LinkBatchOutcome UndoLastBatch(const EntriesStamp& stamp, const std::vector<TreeNode>& libraries);
 
 private:
     struct Step
@@ -147,14 +201,26 @@ private:
 
     [[nodiscard]] static std::vector<Step> Inverse(const SimulatorProfile& profile, const RepairRequest& request);
 
-    [[nodiscard]] LinkOperationResult Run(const Step& step) const;
+    [[nodiscard]] LinkBatchReport RepairWhatStillHolds(const SimulatorProfile& profile,
+                                                       const LinksOnDisk& onDisk,
+                                                       const std::vector<RepairRequest>& requests);
 
-    [[nodiscard]] LinkOperationResult RunTheStartupStep(const Step& step) const;
+    [[nodiscard]] EntriesRead
+    Derived(EntriesStamp stamp, std::vector<DestinationEntry> entries, const std::vector<TreeNode>& libraries) const;
+
+    [[nodiscard]] LinkBatchOutcome AfterTheBatch(const EntriesStamp& stamp,
+                                                 const std::vector<TreeNode>& libraries,
+                                                 const std::vector<DestinationEntry>& before,
+                                                 LinkBatchReport report,
+                                                 const std::vector<ExternalAddon>& externals) const;
+
+    [[nodiscard]] LinkOperationResult Run(const Step& step, StartupBackup& backup) const;
+
+    [[nodiscard]] LinkOperationResult RunTheStartupStep(const Step& step, StartupBackup& backup) const;
 
     [[nodiscard]] std::vector<LinkOperationResult> RunAsOneBatch(const std::vector<Step>& steps);
 
-    [[nodiscard]] std::vector<ExternalAddon> WhatCameFromAnotherProgram(const SimulatorProfile& profile,
-                                                                        const std::vector<TreeNode>& libraries) const;
+    [[nodiscard]] std::vector<LinkOperationResult> RunTheUndo();
 
     const CatalogScanner& catalog_;
     const FilesystemProbe& filesystemProbe_;

@@ -52,6 +52,38 @@
     </message>
 </context>
 <context>
+    <name>AddonTreeFilterModel</name>
+    <message>
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="189"/>
+        <source>%1 of %2</source>
+        <comment>addons shown out of all the addons under a category while a filter or a search is active</comment>
+        <translation>%1 of %2</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="196"/>
+        <source>%1 of %n addon</source>
+        <comment>addons shown out of all the addons of a library while a filter or a search is active</comment>
+        <translation>
+            <numerusform>%1 of %n addon</numerusform>
+            <numerusform>%1 of %n addons</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="200"/>
+        <source>%1 of %n category</source>
+        <comment>categories shown out of all the categories of a library while a filter or a search is active</comment>
+        <translation>
+            <numerusform>%1 of %n category</numerusform>
+            <numerusform>%1 of %n categories</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/AddonTreeFilterModel.cpp" line="206"/>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+</context>
+<context>
     <name>AddonTreeModel</name>
     <message>
         <location filename="../src/viewmodel/AddonTreeModel.cpp" line="207"/>
@@ -199,10 +231,26 @@
         <translation>Hide empty categories</translation>
     </message>
     <message>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="274"/>
-        <location filename="../src/view/library/AddonTreePage.cpp" line="538"/>
-        <source>Repoint to the library</source>
-        <translation>Repoint to the library</translation>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="421"/>
+        <source>All</source>
+        <comment>several addons</comment>
+        <translation>All</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="422"/>
+        <source>Disabled</source>
+        <comment>several addons</comment>
+        <translation>Disabled</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="470"/>
+        <source>No addon is enabled now, so the filter was cleared.</source>
+        <translation>No addon is enabled now, so the filter was cleared.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="471"/>
+        <source>No addon is disabled now, so the filter was cleared.</source>
+        <translation>No addon is disabled now, so the filter was cleared.</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="275"/>
@@ -322,6 +370,7 @@
         <translation>Addons</translation>
     </message>
     <message>
+        <location filename="../src/view/library/AddonTreePage.cpp" line="421"/>
         <location filename="../src/view/library/AddonTreePage.cpp" line="473"/>
         <source>Enabled</source>
         <comment>several addons</comment>
@@ -377,10 +426,10 @@
     </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="538"/>
-        <source>Repoint %n addon</source>
+        <source>Relink %n addon</source>
         <translation>
-            <numerusform>Repoint %n addon</numerusform>
-            <numerusform>Repoint %n addons</numerusform>
+            <numerusform>Relink %n addon</numerusform>
+            <numerusform>Relink %n addons</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1382,11 +1431,28 @@ Also in the library: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/community/CommunityPage.cpp" line="851"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="874"/>
         <source>%n failed</source>
         <translation>
             <numerusform>%n failed</numerusform>
             <numerusform>%n failed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/CommunityPage.cpp" line="866"/>
+        <source>Nothing changed: %n link had changed on the disk. The list has been refreshed.</source>
+        <translation>
+            <numerusform>Nothing changed: %n link had changed on the disk. The list has been refreshed.</numerusform>
+            <numerusform>Nothing changed: %n links had changed on the disk. The list has been refreshed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/community/CommunityPage.cpp" line="869"/>
+        <location filename="../src/view/community/CommunityPage.cpp" line="876"/>
+        <source>%n had changed on the disk</source>
+        <translation>
+            <numerusform>%n had changed on the disk</numerusform>
+            <numerusform>%n had changed on the disk</numerusform>
         </translation>
     </message>
     <message>
@@ -1495,6 +1561,11 @@ Also in the library: %2</translation>
         <location filename="../src/view/community/ConflictDialog.cpp" line="143"/>
         <source>Size:</source>
         <translation>Size:</translation>
+    </message>
+    <message>
+        <location filename="../src/view/community/ConflictDialog.cpp" line="144"/>
+        <source>could not be measured</source>
+        <translation>could not be measured</translation>
     </message>
     <message>
         <location filename="../src/view/community/ConflictDialog.cpp" line="144"/>
@@ -4129,9 +4200,8 @@ Links already in %2 stay there and keep working, but FS Organizer stops managing
         <translation>Preset</translation>
     </message>
     <message>
-        <location filename="../src/view/PresetsPage.cpp" line="231"/>
         <source>Content</source>
-        <translation>Content</translation>
+        <translation type="vanished">Content</translation>
     </message>
     <message>
         <location filename="../src/view/PresetsPage.cpp" line="231"/>
@@ -4927,7 +4997,7 @@ Apply the preset &quot;%2&quot;?</translation>
         <source>%n change</source>
         <translation>
             <numerusform>%n change</numerusform>
-            <numerusform>%n change</numerusform>
+            <numerusform>%n changes</numerusform>
         </translation>
     </message>
     <message>
@@ -5000,6 +5070,24 @@ Apply the preset &quot;%2&quot;?</translation>
         <location filename="../src/view/shell/StartupOffers.cpp" line="101"/>
         <source>Decide later</source>
         <translation>Decide later</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="118"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/view/shell/StartupOffers.cpp" line="31"/>
+        <source>Folder names not restored</source>
+        <translation>Folder names not restored</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/shell/StartupOffers.cpp" line="32"/>
+        <source>%n folder still has its temporary name. FS Organizer will ask again the next time it starts.</source>
+        <translation>
+            <numerusform>%n folder still has its temporary name. FS Organizer will ask again the next time it starts.</numerusform>
+            <numerusform>%n folders still have their temporary names. FS Organizer will ask again the next time it starts.</numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="216"/>

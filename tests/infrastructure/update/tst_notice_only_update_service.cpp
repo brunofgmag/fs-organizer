@@ -21,6 +21,7 @@ namespace
     private slots:
         static void ANewerVersionIsAnnouncedAndNothingIsDownloaded();
         static void TheSameVersionIsUpToDate();
+        static void AnAnswerCutShortIsReportedAsTheCutAndNotAsTheStatusItCarried();
         static void NothingIsEverStagedOrApplied();
     };
 }
@@ -90,20 +91,32 @@ namespace
 
             socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: "
                           + QByteArray::number(release.size()) + "\r\nConnection: close\r\n\r\n");
+
+            if (cutsTheAnswerShort)
+            {
+                socket->write(release.left(release.size() / 2));
+                socket->disconnectFromHost();
+                return;
+            }
+
             socket->write(release);
-            socket->disconnectFromHost();
         }
+
+        bool cutsTheAnswerShort = false;
     };
 
     struct Heard final : UpdateServiceObserver
     {
-        void
-        OnCheckFinished(const bool ok, const bool updateAvailable, const UpdateInfo& info, const std::string&) override
+        void OnCheckFinished(const bool ok,
+                             const bool updateAvailable,
+                             const UpdateInfo& info,
+                             const std::string& error) override
         {
             ++checks;
             succeeded = ok;
             available = updateAvailable;
             version = info.version;
+            whatWentWrong = error;
         }
 
         void OnDownloadProgress(long long, long long) override
@@ -122,6 +135,7 @@ namespace
         bool succeeded = false;
         bool available = false;
         std::string version;
+        std::string whatWentWrong;
     };
 
     struct Checking
@@ -160,7 +174,7 @@ void NoticeOnlyUpdateServiceTest::ANewerVersionIsAnnouncedAndNothingIsDownloaded
 
     QTRY_VERIFY_WITH_TIMEOUT(checking.heard.checks == 1, kAnswerTimeoutMs);
 
-    QVERIFY(checking.heard.succeeded);
+    QVERIFY2(checking.heard.succeeded, checking.heard.whatWentWrong.c_str());
     QVERIFY(checking.heard.available);
     QCOMPARE(QString::fromStdString(checking.heard.version), QStringLiteral("0.2.0"));
 
@@ -185,8 +199,22 @@ void NoticeOnlyUpdateServiceTest::TheSameVersionIsUpToDate()
 
     QTRY_VERIFY_WITH_TIMEOUT(checking.heard.checks == 1, kAnswerTimeoutMs);
 
-    QVERIFY(checking.heard.succeeded);
+    QVERIFY2(checking.heard.succeeded, checking.heard.whatWentWrong.c_str());
     QVERIFY(!checking.heard.available);
+}
+
+void NoticeOnlyUpdateServiceTest::AnAnswerCutShortIsReportedAsTheCutAndNotAsTheStatusItCarried()
+{
+    Checking checking(QStringLiteral("0.1.0"));
+    checking.host.cutsTheAnswerShort = true;
+    QVERIFY(checking.Begin());
+
+    QTRY_VERIFY_WITH_TIMEOUT(checking.heard.checks == 1, kAnswerTimeoutMs);
+
+    QVERIFY(!checking.heard.succeeded);
+    QVERIFY(!checking.heard.whatWentWrong.empty());
+    QVERIFY2(!QString::fromStdString(checking.heard.whatWentWrong).startsWith(QStringLiteral("HTTP ")),
+             checking.heard.whatWentWrong.c_str());
 }
 
 void NoticeOnlyUpdateServiceTest::NothingIsEverStagedOrApplied()

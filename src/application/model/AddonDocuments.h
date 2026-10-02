@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_APPLICATION_MODEL_ADDON_DOCUMENTS_H
 
 #include <filesystem>
+#include <string>
 #include <vector>
 
 #include "domain/documents/ChartIndex.h"
@@ -14,6 +15,7 @@ struct DocumentsOfAnAddon
     bool itWasWalked = true;
     std::vector<std::filesystem::path> documents{};
     std::vector<ChartsOfAnAirport> airports{};
+    std::string digest{};
 };
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_ADDON_DOCUMENTS_H

@@ -170,6 +170,31 @@ namespace
         };
     }
 
+    bool WasFound(const std::filesystem::path& picked)
+    {
+        return !picked.empty();
+    }
+
+    template<typename Found>
+    bool WasFound(const std::optional<Found>& picked)
+    {
+        return picked.has_value();
+    }
+
+    template<typename Locations, typename Locate, typename Pick>
+    auto PickLocatingAgainWhenMissing(Locations& locations, const Locate& locate, const Pick& pick)
+    {
+        auto picked = pick(locations);
+
+        if (!WasFound(picked))
+        {
+            locations = locate();
+            picked = pick(locations);
+        }
+
+        return picked;
+    }
+
     bool RunSetup(std::vector<SimulatorProfile> existing,
                   KeepTheProfile keep,
                   const SimulatorLocator& locator,
@@ -229,7 +254,11 @@ int main(int argc, char* argv[])
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
     const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
     const WindowsSimulatorLocator locator(userCfgLocations);
-    ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe));
+    ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe),
+                             [&userCfgLocations, &filesystemProbe]
+                             {
+                                 return ContentListLocations(userCfgLocations, filesystemProbe);
+                             });
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
     const SystemClock clock;
     JsonSettingsRepository settings(SettingsFilePath());
@@ -263,14 +292,14 @@ int main(int argc, char* argv[])
     const LinkType storedLinkType = stored.linkType;
     const Verification storedVerification = stored.verification;
 
-    const std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
+    std::vector<StartupFileLocation> startupFiles = StartupFileLocations(userCfgLocations, filesystemProbe);
     ExeXmlStartupEntries startupEntries{{}};
     StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
 
-    const std::vector<LoadingReportLocation> loadingReports = LoadingReportLocations(userCfgLocations, filesystemProbe);
+    std::vector<LoadingReportLocation> loadingReports = LoadingReportLocations(userCfgLocations, filesystemProbe);
     ProfileLoadingReport loadingReport(filesystemProbe, {});
 
-    const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
+    std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
     ContentXmlPackageList packageList{{}};
     CoverageService coverageService(packageList, processProbe, stored.managePackageList);
 
@@ -299,8 +328,7 @@ int main(int argc, char* argv[])
     AddonTreeModel model;
     AddonTreeViewModel treeViewModel(session, profileService, model, packages, sizes, runner, notifier);
 
-    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log,
-                                          sizes);
+    const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
     DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,
@@ -316,7 +344,7 @@ int main(int argc, char* argv[])
 
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
-    const DocumentService documentService(catalog, filesystemProbe, catalogueParser, chartVersions);
+    const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
     JsonDocumentIndexCache documentIndexCache(DocumentIndexFilePath());
     const EditionParts edition =
@@ -344,7 +372,7 @@ int main(int argc, char* argv[])
     LongOperationProgress progress(importViewModel, &window);
 
     CommunityModel communityModel;
-    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes);
+    CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes, runner);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
 
     QuarantineModel quarantineModel;
@@ -356,8 +384,8 @@ int main(int argc, char* argv[])
     JournalViewModel journalViewModel(journal, session, journalModel);
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
-    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, loadingReport, clock,
-                                              runner);
+    DiagnosticsViewModel diagnosticsViewModel(importService, sizes, sceneryService, session, notifier, loadingReport,
+                                              clock, runner);
 
     const CouplingScan coupling(filesystemProbe);
     JsonBisectionStore bisectionStore(BisectionFolderPath());
@@ -371,26 +399,55 @@ int main(int argc, char* argv[])
     auto* packageListPage = new PackageListPage(coverageViewModel);
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
-                     [startupPage, &session, &startupEntries, &startupFiles, &startupViewModel, &packageList,
-                      &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
-                     {
-                         QTimer::singleShot(
-                             0, startupPage,
-                             [&session, &startupEntries, &startupFiles, &startupViewModel, &packageList, &contentLists,
-                              &coverageViewModel, &loadingReport, &loadingReports]
-                             {
-                                 startupEntries.Use(StartupFileOf(startupFiles, session.Profile().variant));
-                                 loadingReport.Use(LoadingReportOf(loadingReports, session.Profile().variant));
-                                 startupViewModel.Show();
-                                 session.RefreshStartupEntries();
+    QObject::connect(
+        &notifier, &SessionNotifier::ScanFinished, startupPage,
+        [startupPage, &session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupFiles, &startupViewModel,
+         &packageList, &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
+        {
+            QTimer::singleShot(0, startupPage,
+                               [&session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupFiles,
+                                &startupViewModel, &packageList, &contentLists, &coverageViewModel, &loadingReport,
+                                &loadingReports]
+                               {
+                                   const SimulatorVariant variant = session.Profile().variant;
 
-                                 const std::optional<ChosenContentList> chosen =
-                                     ChooseContentList(contentLists, session.Profile().variant);
-                                 packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
-                                 coverageViewModel.Show();
-                             });
-                     });
+                                   startupEntries.Use(PickLocatingAgainWhenMissing(
+                                       startupFiles,
+                                       [&userCfgLocations, &filesystemProbe]
+                                       {
+                                           return StartupFileLocations(userCfgLocations, filesystemProbe);
+                                       },
+                                       [variant](const std::vector<StartupFileLocation>& locations)
+                                       {
+                                           return StartupFileOf(locations, variant);
+                                       }));
+                                   loadingReport.Use(PickLocatingAgainWhenMissing(
+                                       loadingReports,
+                                       [&userCfgLocations, &filesystemProbe]
+                                       {
+                                           return LoadingReportLocations(userCfgLocations, filesystemProbe);
+                                       },
+                                       [variant](const std::vector<LoadingReportLocation>& locations)
+                                       {
+                                           return LoadingReportOf(locations, variant);
+                                       }));
+                                   startupViewModel.Show();
+                                   session.RefreshStartupEntries();
+
+                                   const std::optional<ChosenContentList> chosen = PickLocatingAgainWhenMissing(
+                                       contentLists,
+                                       [&userCfgLocations, &filesystemProbe]
+                                       {
+                                           return ContentListLocations(userCfgLocations, filesystemProbe);
+                                       },
+                                       [variant](const std::vector<ContentListLocation>& locations)
+                                       {
+                                           return ChooseContentList(locations, variant);
+                                       });
+                                   packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+                                   coverageViewModel.Show();
+                               });
+        });
 
     FilePresetRepository presetRepository(PresetsFolderPath());
     PresetService presetService(presetRepository, profileService, startupService);
@@ -547,11 +604,12 @@ int main(int argc, char* argv[])
                      {
                          libraryButton->ShowCount(counted(model.AddonCount()));
                      });
-    QObject::connect(&communityModel, &QAbstractItemModel::modelReset, communityButton,
-                     [communityButton, &communityModel, counted]
-                     {
-                         communityButton->ShowCount(counted(static_cast<std::size_t>(communityModel.rowCount({}))));
-                     });
+    const auto showTheDestinationCount = [communityButton, &communityViewModel, counted]
+    {
+        communityButton->ShowCount(counted(communityViewModel.Snapshot().entries.size()));
+    };
+    QObject::connect(&notifier, &SessionNotifier::Refreshed, communityButton, showTheDestinationCount);
+    QObject::connect(&notifier, &SessionNotifier::ScanFinished, communityButton, showTheDestinationCount);
     const auto showThePresetCount = [presetsButton, &presetViewModel, counted]
     {
         presetsButton->ShowCount(counted(static_cast<std::size_t>(presetViewModel.Names().size())));
@@ -610,31 +668,8 @@ int main(int argc, char* argv[])
         treeViewModel.ShowActiveProfile();
     };
 
-    QObject::connect(&importViewModel, &ImportViewModel::Finished, page,
-                     [adoptWhatChangedOnDisk](const std::vector<ImportOperationResult>&)
-                     {
-                         adoptWhatChangedOnDisk();
-                     });
-    QObject::connect(&importViewModel, &ImportViewModel::ConflictsResolved, page,
-                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
-                     {
-                         adoptWhatChangedOnDisk();
-                     });
-    QObject::connect(&importViewModel, &ImportViewModel::GaveBack, page,
-                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
-                     {
-                         adoptWhatChangedOnDisk();
-                     });
-    QObject::connect(&quarantineViewModel, &QuarantineViewModel::Restored, page,
-                     [adoptWhatChangedOnDisk](const std::vector<FileOperationResult>&)
-                     {
-                         adoptWhatChangedOnDisk();
-                     });
-    QObject::connect(&quarantineViewModel, &QuarantineViewModel::Swapped, page,
-                     [adoptWhatChangedOnDisk](const std::vector<SwapResult>&)
-                     {
-                         adoptWhatChangedOnDisk();
-                     });
+    QObject::connect(&importViewModel, &ImportViewModel::TheDiskChanged, page, adoptWhatChangedOnDisk);
+    QObject::connect(&quarantineViewModel, &QuarantineViewModel::CameBack, page, adoptWhatChangedOnDisk);
     QObject::connect(&deletionViewModel, &DeletionViewModel::Deleted, page,
                      [adoptWhatChangedOnDisk](const std::vector<DeletionResult>&, const DeletionRoute)
                      {

@@ -1,5 +1,7 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
+
 #include "domain/linking/EntryClassifier.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
@@ -22,6 +24,8 @@ namespace
         static void ACategoryWithNoEnabledAddonIsUnchecked();
         static void ACategoryWithoutAddonsIsUnchecked();
         static void TheLibraryRootRollsUpFromEveryCategory();
+        static void NoneAllOrSomeBelowDecideTheCheckState();
+        static void TheCountsGiveTheCheckStateTheDerivationGives();
         static void AnEnabledAddonIsCheckedAndTheLookupIgnoresCase();
         static void AnAddonLinkedInTwoDestinationsIsCheckedRatherThanUnchecked();
         static void ATargetThatCameBackWithATrailingSeparatorStillMatchesItsAddon();
@@ -144,6 +148,53 @@ void AddonTreeTest::TheLibraryRootRollsUpFromEveryCategory()
     QCOMPARE(DeriveCheckState(library, everything), CheckState::Checked);
     QCOMPARE(DeriveCheckState(library, oneCategory), CheckState::Partial);
     QCOMPARE(DeriveCheckState(library, EnabledAddons()), CheckState::Unchecked);
+}
+
+void AddonTreeTest::NoneAllOrSomeBelowDecideTheCheckState()
+{
+    QCOMPARE(CheckStateOf(0, 0), CheckState::Unchecked);
+    QCOMPARE(CheckStateOf(0, 3), CheckState::Unchecked);
+    QCOMPARE(CheckStateOf(1, 3), CheckState::Partial);
+    QCOMPARE(CheckStateOf(2, 3), CheckState::Partial);
+    QCOMPARE(CheckStateOf(3, 3), CheckState::Checked);
+    QCOMPARE(CheckStateOf(1, 1), CheckState::Checked);
+}
+
+void AddonTreeTest::TheCountsGiveTheCheckStateTheDerivationGives()
+{
+    const TreeNode library = ReferenceLibrary();
+    const std::vector<std::vector<std::filesystem::path>> enabledSets = {
+        {},
+        {"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"},
+        {"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w", "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320"},
+        {"D:/MSFS 2024/Sceneries/ag-airport-bgqq-qaanaaq"},
+        {"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w", "D:/MSFS 2024/Aircrafts/Fenix/fenix-a320",
+         "D:/MSFS 2024/Sceneries/ag-airport-bgqq-qaanaaq"}};
+
+    std::vector<const TreeNode*> nodes = CategoriesUnder(library);
+
+    for (const TreeNode* addon : AddonsUnder(library))
+    {
+        nodes.push_back(addon);
+    }
+
+    for (const std::vector<std::filesystem::path>& folders : enabledSets)
+    {
+        const EnabledAddons enabled(folders);
+
+        for (const TreeNode* node : nodes)
+        {
+            const std::vector<const TreeNode*> addons = AddonsUnder(*node);
+            const auto enabledBelow =
+                static_cast<std::size_t>(std::ranges::count_if(addons,
+                                                               [&enabled](const TreeNode* addon)
+                                                               {
+                                                                   return enabled.Contains(addon->path);
+                                                               }));
+
+            QCOMPARE(CheckStateOf(enabledBelow, CountAddons(*node)), DeriveCheckState(*node, enabled));
+        }
+    }
 }
 
 void AddonTreeTest::AnEnabledAddonIsCheckedAndTheLookupIgnoresCase()

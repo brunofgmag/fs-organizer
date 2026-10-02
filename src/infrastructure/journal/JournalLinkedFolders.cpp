@@ -6,5 +6,13 @@ JournalLinkedFolders::JournalLinkedFolders(const OperationJournal& journal) : jo
 
 std::vector<LinkTheAppMade> JournalLinkedFolders::WhatTheAppLinked() const
 {
-    return WhereTheAppMadeLinks(journal_.Read());
+    const std::lock_guard lock(guard_);
+
+    for (const OperationRecord& record : journal_.ReadFrom(folded_))
+    {
+        made_.Fold(record);
+        ++folded_;
+    }
+
+    return made_.Links();
 }

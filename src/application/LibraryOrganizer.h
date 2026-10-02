@@ -11,6 +11,7 @@
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
+#include "domain/linking/LinksByTarget.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/ports/CatalogScanner.h"
 #include "domain/tree/StructureAdoption.h"
@@ -63,11 +64,10 @@ public:
 private:
     [[nodiscard]] std::vector<std::filesystem::path> WhatTheImporterBroughtInto(const Library& library) const;
 
-    [[nodiscard]] FileOperationResult
-    MoveOne(SimulatorProfile& profile,
-            const std::vector<TreeNode>& libraries,
-            const AddonMove& move,
-            std::map<std::string, std::vector<DestinationEntry>>& entriesByLibrary) const;
+    [[nodiscard]] FileOperationResult MoveOne(SimulatorProfile& profile,
+                                              const std::vector<TreeNode>& libraries,
+                                              const AddonMove& move,
+                                              std::map<std::string, LinksByTarget>& linksByLibrary) const;
 
     [[nodiscard]] bool
     Relink(const SimulatorProfile& profile, const AddonId& addon, const std::filesystem::path& folder) const;

@@ -14,4 +14,11 @@ void UnregisterLibrary(SimulatorProfile& profile, const LibraryId& libraryId);
 
 void RepointDestination(SimulatorProfile& profile, const std::filesystem::path& from, const std::filesystem::path& to);
 
+void CarryTheFolder(SimulatorProfile& profile,
+                    const Library& library,
+                    const std::filesystem::path& from,
+                    const std::filesystem::path& to);
+
+void ForgetTheFolder(SimulatorProfile& profile, const Library& library, const std::filesystem::path& folder);
+
 #endif // FS_ORGANIZER_DOMAIN_PROFILE_PROFILE_EDITS_H

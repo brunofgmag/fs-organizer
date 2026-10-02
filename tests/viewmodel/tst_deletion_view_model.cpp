@@ -41,6 +41,7 @@ namespace
         static void AnAddonNobodyMeasuredSaysSoInsteadOfBlamingTheBin();
         static void TheGestureIsPlannedOnceAndTheDeletionRunsAgainstThatSamePlan();
         static void AnAddonMeasuredByAnotherScreenIsWeighedAgainBeforeTheGuardsJudgeIt();
+        static void AFolderThatIsNoLongerInTheTreeIsLeftOutAndTheRestKeepsTheSelectionOrder();
         static void ADeletionThatTookSomethingAwayForgetsTheUndoOfTheLastBatch();
         static void ADeletionThatTookNothingAwayLeavesTheUndoWhereItWas();
         static void ACategoryInTheSelectionIsCountedApartAndTakesNoAddonWithIt();
@@ -189,7 +190,7 @@ namespace
         SessionNotifier notifier{};
         Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
+        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log};
         DeletionViewModel viewModel{session, profiles, service, sizes, runner};
     };
 
@@ -307,6 +308,20 @@ void DeletionViewModelTest::AnAddonMeasuredByAnotherScreenIsWeighedAgainBeforeTh
 
     QCOMPARE(plan.addons.front().bytes, std::optional<std::uintmax_t>{kMegabyte + 20 * kGigabyte});
     QVERIFY(!TheRecycleBinCanTake(plan));
+}
+
+void DeletionViewModelTest::AFolderThatIsNoLongerInTheTreeIsLeftOutAndTheRestKeepsTheSelectionOrder()
+{
+    Fixture f;
+    TreeNode vanished = AddonNode(kAtr.parent_path() / "vanished-addon");
+
+    const DeletionPlan plan = PlanFor(f.viewModel, {f.Node(kMd11), &vanished, f.Node(kCrj), f.Node(kAtr)});
+
+    QCOMPARE(plan.addons.size(), std::size_t{3});
+    QCOMPARE(plan.addons[0].folder, kMd11);
+    QCOMPARE(plan.addons[1].folder, kCrj);
+    QCOMPARE(plan.addons[2].folder, kAtr);
+    QCOMPARE(plan.nodesThatAreNotAddons, std::size_t{0});
 }
 
 void DeletionViewModelTest::ADeletionThatTookSomethingAwayForgetsTheUndoOfTheLastBatch()

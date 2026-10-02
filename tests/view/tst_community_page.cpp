@@ -1,6 +1,11 @@
 #include <QtTest/QtTest>
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTableView>
 
 #include "application/LibraryOrganizer.h"
@@ -21,9 +26,11 @@
 #include "tests/support/PathPrinting.h"
 #include "view/community/CommunityPage.h"
 #include "view/community/ImportDialog.h"
+#include "view/community/RepairDialog.h"
 #include "view/panels/ContextPanel.h"
 #include "viewmodel/SessionNotifier.h"
 #include "tests/support/PageFloor.h"
+#include "tests/support/PhysicalRows.h"
 
 namespace
 {
@@ -33,6 +40,13 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void ThePanelStartsLevelWithTheTable();
+        static void TheColumnsFitTheViewportWithThePanelOpenAt1140Pixels();
+        static void ThePanelTitleStripEndsWhereTheColumnHeaderEnds();
+        static void ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine();
+        static void ThePanelLeftLineRunsFromTheTitleStripToTheBottom();
+        static void TheScrollBarCapGoesWhenTheScrollBarDoes();
+        static void TheBarsSpanTheWholePageOverThePanel();
         static void TheTriageConflictActionLeavesEveryConflictedRowSelected();
         static void TheTriageImportActionLeavesEveryUnmanagedFolderSelected();
         static void TheImportButtonCountsTheWholeSelectionAndNotTheFirstRow();
@@ -44,6 +58,16 @@ namespace
         static void TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePortrait();
         static void AdoptingAFolderAnotherProgramOwnsSaysTheUpdateCanBreakIt();
         static void AFolderNoProgramOwnsGetsNoSuchWarning();
+        static void TypingInTheSearchFieldKeepsOnlyTheRowsThatHoldTheText();
+        static void TheSearchFieldWorksTogetherWithTheChipThatIsChosen();
+        static void AHiddenPageDoesNotRebuildItsTableAndShowsTheNewRowsTheMomentItIsShown();
+        static void ShowingThePageRebuildsNothingWhenNothingChangedAndStillSaysItsAside();
+        static void AHiddenAgainPageStopsRebuildingItsTable();
+        static void RepairingRightAfterTheTabIsSelectedPlansFromTheCurrentEntries();
+        static void ARepairWhereEveryLinkHadChangedSaysNothingChangedAndRefreshesTheList();
+        static void ARepairWhereOneLinkHadChangedSaysHowManyWereRepairedAndHowManyWereLeftAlone();
+        static void ARepairWithAFailureAndADriftedLinkAddsTheDriftToTheStatusLine();
+        static void ARepairWhereNothingHadChangedSaysWhatItAlwaysSaid();
     };
 }
 
@@ -129,7 +153,7 @@ namespace
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
         SizeService sizes{catalog, filesystemProbe, clock, runner};
         CommunityModel model;
-        CommunityViewModel viewModel{service, session, notifier, model, sizes};
+        CommunityViewModel viewModel{service, session, notifier, model, sizes, runner};
         ImportViewModel importViewModel{importService, service, processProbe, session, runner};
     };
 
@@ -277,7 +301,8 @@ void CommunityPageTest::NothingConflictedMeansNoResolveButtonAtAll()
 void CommunityPageTest::ARescanThatEmptiesTheTableAlsoEmptiesThePanel()
 {
     Fixture f;
-    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    page.show();
     f.viewModel.Show();
 
     page.SelectEverythingShown();
@@ -305,6 +330,7 @@ void CommunityPageTest::AFilterThatRanOutHandsTheTableBackInsteadOfLeavingItBlan
 {
     Fixture f;
     CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    page.show();
     f.viewModel.Show();
 
     page.FilterBy(EntryClassification::Unmanaged);
@@ -322,6 +348,7 @@ void CommunityPageTest::TheTabReadsTheDestinationsAgainInsteadOfRedrawingThePort
 {
     Fixture f;
     CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    page.show();
     f.viewModel.Show();
 
     const int before = f.model.rowCount({});
@@ -354,15 +381,11 @@ namespace
 
     [[nodiscard]] bool AnyOfThemWarnsAboutTheOtherProgram(const QStringList& said)
     {
-        for (const QString& line : said)
-        {
-            if (line.contains(QStringLiteral("will not know about the link")))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return std::ranges::any_of(said,
+                                   [](const QString& line)
+                                   {
+                                       return line.contains(QStringLiteral("will not know about the link"));
+                                   });
     }
 }
 
@@ -397,12 +420,445 @@ void CommunityPageTest::AFolderNoProgramOwnsGetsNoSuchWarning()
              "a folder no other program installed cannot be broken by that program, so the warning would be a lie");
 }
 
+void CommunityPageTest::TypingInTheSearchFieldKeepsOnlyTheRowsThatHoldTheText()
+{
+    Fixture f;
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+
+    auto* search = page.findChild<QLineEdit*>();
+    const QAbstractItemModel* shown = page.findChild<QTableView*>()->model();
+
+    QVERIFY(search != nullptr);
+    QCOMPARE(shown->rowCount(), 3);
+
+    search->setText(QStringLiteral("LOOSE"));
+    QCOMPARE(shown->rowCount(), 2);
+    QVERIFY(RowOf(page, QStringLiteral("loose-one")) >= 0);
+    QVERIFY(RowOf(page, QStringLiteral("loose-two")) >= 0);
+    QCOMPARE(RowOf(page, QString::fromUtf8(kShared)), -1);
+
+    search->setText(QStringLiteral("loose-one"));
+    QCOMPARE(shown->rowCount(), 1);
+
+    search->setText(QStringLiteral("community"));
+    QCOMPARE(shown->rowCount(), 3);
+
+    search->setText(QStringLiteral("in conflict"));
+    QCOMPARE(shown->rowCount(), 1);
+    QVERIFY(RowOf(page, QString::fromUtf8(kShared)) >= 0);
+
+    search->setText(QStringLiteral("not in a library"));
+    QCOMPARE(shown->rowCount(), 3);
+
+    search->setText(QStringLiteral("nothing is called this"));
+    QCOMPARE(shown->rowCount(), 0);
+
+    search->clear();
+    QCOMPARE(shown->rowCount(), 3);
+}
+
+void CommunityPageTest::TheSearchFieldWorksTogetherWithTheChipThatIsChosen()
+{
+    Fixture f;
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+
+    auto* search = page.findChild<QLineEdit*>();
+    const QAbstractItemModel* shown = page.findChild<QTableView*>()->model();
+
+    QVERIFY(search != nullptr);
+
+    page.FilterByConflicted();
+    QCOMPARE(shown->rowCount(), 1);
+
+    search->setText(QStringLiteral("loose"));
+    QCOMPARE(shown->rowCount(), 0);
+
+    search->setText(QString::fromUtf8(kShared));
+    QCOMPARE(shown->rowCount(), 1);
+
+    page.FilterBy(EntryClassification::Unmanaged);
+    QCOMPARE(shown->rowCount(), 1);
+
+    search->setText(QStringLiteral("loose"));
+    QCOMPARE(shown->rowCount(), 2);
+
+    page.FilterBy(EntryClassification::Broken);
+    QCOMPARE(shown->rowCount(), 0);
+}
+
+void CommunityPageTest::AHiddenPageDoesNotRebuildItsTableAndShowsTheNewRowsTheMomentItIsShown()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+
+    const int before = f.model.rowCount({});
+    const QSignalSpy resets(&f.model, &QAbstractItemModel::modelReset);
+
+    f.fileSystem.AddDirectory(std::filesystem::path(kCommunity) / "loose-three");
+    f.session.RefreshEntries();
+
+    QCOMPARE(resets.size(), 0);
+    QCOMPARE(f.model.rowCount({}), before);
+
+    page.show();
+
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(f.model.rowCount({}), before + 1);
+    QCOMPARE(page.findChild<QTableView*>()->model()->rowCount(), before + 1);
+}
+
+void CommunityPageTest::ShowingThePageRebuildsNothingWhenNothingChangedAndStillSaysItsAside()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+
+    const QSignalSpy resets(&f.model, &QAbstractItemModel::modelReset);
+    const QSignalSpy aside(&page, &CommunityPage::AsideChanged);
+
+    page.show();
+
+    QCOMPARE(resets.size(), 0);
+    QCOMPARE(aside.size(), 1);
+}
+
+void CommunityPageTest::AHiddenAgainPageStopsRebuildingItsTable()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    page.show();
+
+    const int before = f.model.rowCount({});
+    const QSignalSpy resets(&f.model, &QAbstractItemModel::modelReset);
+
+    f.fileSystem.AddDirectory(std::filesystem::path(kCommunity) / "loose-three");
+    f.session.RefreshEntries();
+
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(f.model.rowCount({}), before + 1);
+
+    page.hide();
+    f.fileSystem.AddDirectory(std::filesystem::path(kCommunity) / "loose-four");
+    f.session.RefreshEntries();
+
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(f.model.rowCount({}), before + 1);
+
+    page.show();
+
+    QCOMPARE(resets.size(), 2);
+    QCOMPARE(f.model.rowCount({}), before + 2);
+}
+
+void CommunityPageTest::RepairingRightAfterTheTabIsSelectedPlansFromTheCurrentEntries()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "gone", "D:/Removed/gone");
+    f.session.RefreshEntries();
+
+    page.show();
+
+    bool theDialogOpened = false;
+    QTimer::singleShot(0, &page,
+                       [&theDialogOpened]
+                       {
+                           if (auto* dialog = qobject_cast<RepairDialog*>(QApplication::activeModalWidget()))
+                           {
+                               theDialogOpened = true;
+                               dialog->reject();
+                           }
+                       });
+
+    page.StartRepair();
+
+    QVERIFY2(theDialogOpened, "the broken link read while the page was hidden has to reach the repair plan");
+    QVERIFY(RowOf(page, QStringLiteral("gone")) >= 0);
+}
+
+namespace
+{
+    const std::filesystem::path kGone = std::filesystem::path(kCommunity) / "gone";
+    const std::filesystem::path kLost = std::filesystem::path(kCommunity) / "lost";
+    const std::filesystem::path kKept = std::filesystem::path(kCommunity) / "kept";
+
+    void LeaveDeadLinksAt(Fixture& f, const std::vector<std::filesystem::path>& links)
+    {
+        for (const std::filesystem::path& link : links)
+        {
+            f.fileSystem.AddLink(link, std::filesystem::path("D:/Removed") / link.filename());
+        }
+
+        f.session.RefreshEntries();
+    }
+
+    void BringTheTargetBack(Fixture& f, const std::filesystem::path& link)
+    {
+        f.fileSystem.AddDirectory(std::filesystem::path("D:/Removed") / link.filename());
+    }
+
+    std::vector<RepairRequest> RemovalsOfWhatTheListShows(const Fixture& f)
+    {
+        std::vector<RepairRequest> requests;
+        for (const RepairCandidate& candidate : f.viewModel.PlanRepairs())
+        {
+            requests.push_back({.candidate = candidate, .action = RepairAction::RemoveDeadNode});
+        }
+
+        return requests;
+    }
+
+    QString TheStatusAfterRepairing(Fixture& f, const CommunityPage& page, const std::vector<RepairRequest>& requests)
+    {
+        const QSignalSpy status(&page, &CommunityPage::StatusChanged);
+
+        QTimer::singleShot(0, &page,
+                           []
+                           {
+                               if (auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget()))
+                               {
+                                   box->accept();
+                               }
+                           });
+
+        f.viewModel.Repair(requests);
+
+        return status.isEmpty() ? QString() : status.back().front().toString();
+    }
+}
+
+void CommunityPageTest::ARepairWhereEveryLinkHadChangedSaysNothingChangedAndRefreshesTheList()
+{
+    Fixture f;
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    LeaveDeadLinksAt(f, {kGone});
+
+    const std::vector<RepairRequest> requests = RemovalsOfWhatTheListShows(f);
+    BringTheTargetBack(f, kGone);
+
+    QCOMPARE(TheStatusAfterRepairing(f, page, requests),
+             QStringLiteral("Nothing changed: 1 link had changed on the disk. The list has been refreshed."));
+    QVERIFY(f.fileSystem.IsLink(kGone));
+}
+
+void CommunityPageTest::ARepairWhereOneLinkHadChangedSaysHowManyWereRepairedAndHowManyWereLeftAlone()
+{
+    Fixture f;
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    LeaveDeadLinksAt(f, {kGone, kLost});
+
+    const std::vector<RepairRequest> requests = RemovalsOfWhatTheListShows(f);
+    BringTheTargetBack(f, kLost);
+
+    QCOMPARE(TheStatusAfterRepairing(f, page, requests), QStringLiteral("1 repaired · 1 had changed on the disk"));
+    QVERIFY(!f.fileSystem.Exists(kGone));
+    QVERIFY(f.fileSystem.IsLink(kLost));
+}
+
+void CommunityPageTest::ARepairWithAFailureAndADriftedLinkAddsTheDriftToTheStatusLine()
+{
+    Fixture f;
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    LeaveDeadLinksAt(f, {kGone, kLost, kKept});
+
+    const std::vector<RepairRequest> requests = RemovalsOfWhatTheListShows(f);
+    BringTheTargetBack(f, kLost);
+    f.linkService.MakeTheRemovalFailFor(kGone);
+
+    QCOMPARE(TheStatusAfterRepairing(f, page, requests),
+             QStringLiteral("1 repaired · 1 failed · 1 had changed on the disk"));
+}
+
+void CommunityPageTest::ARepairWhereNothingHadChangedSaysWhatItAlwaysSaid()
+{
+    Fixture f;
+    const CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    LeaveDeadLinksAt(f, {kGone});
+
+    const std::vector<RepairRequest> requests = RemovalsOfWhatTheListShows(f);
+
+    QCOMPARE(TheStatusAfterRepairing(f, page, requests), QStringLiteral("1 link repaired."));
+    QVERIFY(!f.fileSystem.Exists(kGone));
+}
+
 void CommunityPageTest::ThePageFitsTheNarrowestWindow()
 {
     Fixture f;
     CommunityPage page(f.viewModel, f.importViewModel, f.model);
 
     ItFitsTheNarrowestWindow(page, "The destinations page");
+}
+
+namespace
+{
+    int TopWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{}).y();
+    }
+
+    int BottomWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{0, widget.height()}).y();
+    }
+
+    int RightEdgeWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{widget.width(), 0}).x();
+    }
+
+    void OpenWithARowSelected(Fixture& f, CommunityPage& page)
+    {
+        page.resize(kWidestAPageMayBe, 600);
+        page.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&page));
+        f.viewModel.Show();
+
+        const int loose = RowOf(page, QStringLiteral("loose-one"));
+
+        QVERIFY(loose >= 0);
+        page.findChild<QTableView*>()->selectRow(loose);
+        QCoreApplication::processEvents();
+    }
+}
+
+void CommunityPageTest::ThePanelStartsLevelWithTheTable()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    OpenWithARowSelected(f, page);
+
+    const auto* panel = page.findChild<ContextPanel*>();
+
+    QVERIFY(panel != nullptr);
+    QVERIFY(panel->isVisible());
+    QCOMPARE(TopWithin(page, *panel), TopWithin(page, *page.findChild<QTableView*>()));
+}
+
+void CommunityPageTest::TheColumnsFitTheViewportWithThePanelOpenAt1140Pixels()
+{
+    constexpr int kTheWindowOfTheDemo = 1140;
+
+    ApplyModernistTheme(*qApp);
+
+    Fixture f;
+    f.fileSystem.AddDirectory(std::filesystem::path(kCommunity) / "paperwing-livery-737-800-sunfield-airways-2");
+    for (int filler = 0; filler < 40; ++filler)
+    {
+        f.fileSystem.AddDirectory(std::filesystem::path(kCommunity)
+                                  / QStringLiteral("lanternfish-%1").arg(filler).toStdString());
+    }
+    f.session.RefreshEntries();
+
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    page.resize(kTheWindowOfTheDemo, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+    f.viewModel.Show();
+
+    const int loose = RowOf(page, QStringLiteral("loose-one"));
+
+    QVERIFY(loose >= 0);
+
+    auto* table = page.findChild<QTableView*>();
+    table->selectRow(loose);
+    QCoreApplication::processEvents();
+
+    const QHeaderView* header = table->horizontalHeader();
+    QStringList widths;
+    for (int column = 0; column < header->count(); ++column)
+    {
+        widths << QString::number(header->sectionSize(column));
+    }
+
+    const QString said = QStringLiteral("the columns add up to %1 px in a viewport of %2 px: %3")
+                             .arg(header->length())
+                             .arg(table->viewport()->width())
+                             .arg(widths.join(QLatin1Char('+')));
+
+    QVERIFY2(header->length() <= table->viewport()->width(), qPrintable(said));
+    QVERIFY(!table->horizontalScrollBar()->isVisible());
+}
+
+void CommunityPageTest::ThePanelTitleStripEndsWhereTheColumnHeaderEnds()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    OpenWithARowSelected(f, page);
+
+    const auto* strip = page.findChild<ContextPanel*>()->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->isVisible());
+    QCOMPARE(BottomWithin(page, *strip), BottomWithin(page, *page.findChild<QTableView*>()->horizontalHeader()));
+}
+
+void CommunityPageTest::ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    ApplyModernistTheme(*qApp);
+    OpenWithARowSelected(f, page);
+
+    const auto* strip = page.findChild<ContextPanel*>()->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+
+    auto* header = page.findChild<QTableView*>()->horizontalHeader();
+
+    QVERIFY(strip != nullptr);
+    LetTheScrollBarShow(page, *page.findChild<QTableView*>());
+    QVERIFY(page.findChild<QTableView*>()->verticalScrollBar()->isVisible());
+
+    const QWidget* cap = ScrollBarCapOf(*page.findChild<QTableView*>());
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(cap->isVisible());
+    MakeTheColumnHeaderOnePixelShorter(*header);
+    TheThreeRulesLandOnTheSamePhysicalRows(page, *strip, *header, *cap);
+}
+
+void CommunityPageTest::ThePanelLeftLineRunsFromTheTitleStripToTheBottom()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    ApplyModernistTheme(*qApp);
+    OpenWithARowSelected(f, page);
+
+    const auto* panel = page.findChild<ContextPanel*>();
+    const auto* strip = panel->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    const auto* body = panel->findChild<QWidget*>(QStringLiteral("PanelBody"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(body != nullptr);
+    LetTheScrollBarShow(page, *page.findChild<QTableView*>());
+    QVERIFY(page.findChild<QTableView*>()->verticalScrollBar()->isVisible());
+    TheLeftRuleRunsTheWholeHeightOfThePanel(page, *strip, *body);
+}
+
+void CommunityPageTest::TheScrollBarCapGoesWhenTheScrollBarDoes()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    ApplyModernistTheme(*qApp);
+    OpenWithARowSelected(f, page);
+    LetTheScrollBarGo(page);
+
+    const QWidget* cap = ScrollBarCapOf(*page.findChild<QTableView*>());
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(!page.findChild<QTableView*>()->verticalScrollBar()->isVisible());
+    QVERIFY(!cap->isVisible());
+}
+
+void CommunityPageTest::TheBarsSpanTheWholePageOverThePanel()
+{
+    Fixture f;
+    CommunityPage page(f.viewModel, f.importViewModel, f.model);
+    OpenWithARowSelected(f, page);
+
+    const auto* toolbar = page.findChild<QWidget*>(QStringLiteral("PageToolbar"));
+
+    QVERIFY(page.findChild<ContextPanel*>()->isVisible());
+    QVERIFY(toolbar != nullptr);
+    QCOMPARE(RightEdgeWithin(page, *toolbar), page.width());
 }
 
 QTEST_MAIN(CommunityPageTest)

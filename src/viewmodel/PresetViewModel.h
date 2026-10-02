@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <optional>
+#include <vector>
 
 #include <QtCore/QList>
 #include <QtCore/QObject>
@@ -122,21 +122,33 @@ signals:
 private:
     struct ApplyWork
     {
-        SimulatorProfile profile{};
+        EntriesStamp stamp{};
         ProfileSnapshot snapshot{};
         Preset preset{};
-        PresetApplyReport report{};
+        PresetApplyOutcome outcome{};
+        bool simulatorRunning = false;
     };
 
-    void RunTheApply(const Preset& preset, std::function<PresetApplyReport(const ApplyWork&)> apply);
+    struct UndoWork
+    {
+        EntriesStamp stamp{};
+        std::vector<TreeNode> libraries{};
+        LinkBatchOutcome outcome{};
+        bool simulatorRunning = false;
+    };
 
-    void NoteApplied(const PresetApplyReport& report);
+    void RunTheApply(const Preset& preset, std::function<PresetApplyOutcome(const ApplyWork&)> apply);
+
+    void NoteApplied(ApplyWork& work);
 
     void RefuseTheWriteOf(const QString& name);
 
     [[nodiscard]] bool Accepts(const QString& name);
 
-    [[nodiscard]] PresetRow RowFor(const Preset& preset, const PresetListing& listing, ApplyMode mode) const;
+    [[nodiscard]] PresetLookup LookupOfTheSnapshot() const;
+
+    [[nodiscard]] PresetRow
+    RowFor(const Preset& preset, const PresetListing& listing, ApplyMode mode, const PresetLookup& lookup) const;
 
     [[nodiscard]] static QString WhatTheStartupHalfLeftUndone(const PresetApplyReport& report);
 

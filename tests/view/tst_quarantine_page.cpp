@@ -1,7 +1,9 @@
 #include <QtTest/QtTest>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QToolButton>
 
@@ -27,6 +29,7 @@
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PageFloor.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/PhysicalRows.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/PanelRail.h"
 #include "view/quarantine/DiscardProgressDialog.h"
@@ -41,6 +44,12 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void ThePanelStartsLevelWithTheTable();
+        static void ThePanelTitleStripEndsWhereTheColumnHeaderEnds();
+        static void ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine();
+        static void ThePanelLeftLineRunsFromTheTitleStripToTheBottom();
+        static void TheScrollBarCapGoesWhenTheScrollBarDoes();
+        static void TheToolbarSpansTheWholePageOverThePanel();
         static void EverythingHeldLandsOnItsOwnRow();
         static void WithNothingHeldTheScreenSaysSoInsteadOfShowingAnEmptyTable();
         static void SelectingAnItemOpensThePanelAndNamesItAfterTheItem();
@@ -48,6 +57,8 @@ namespace
         static void TheActionsOnlyLightUpWhenSomethingIsSelected();
         static void EmptyingIsOfferedWhileAnythingIsHeldAndNeverWhenNothingIs();
         static void EmptyingPutsAProgressDialogUpAndTakesItDownWhenTheRunnerLands();
+        static void NoControlStartsAnotherGestureWhileThePreparationOfARestoreRuns();
+        static void NoControlStartsAnotherGestureWhileADiscardRuns();
         static void ClosingThePanelLetsGoOfTheSelectionThatSummonedIt();
         static void ALanguageChangeKeepsTheToolbarAndTheEmptyState();
     };
@@ -164,6 +175,47 @@ namespace
         return model.index(row, QuarantineModel::NameColumn, {}).data(Qt::DisplayRole).toString();
     }
 
+    struct GestureControls
+    {
+        explicit GestureControls(const QuarantinePage& page)
+            : restore(ButtonSaying(page, QStringLiteral("Restore selected"))),
+              discard(ButtonSaying(page, QStringLiteral("Discard selected"))),
+              empty(ButtonSaying(page, QStringLiteral("Empty the quarantine"))),
+              restoreFromPanel(ButtonSaying(page, QStringLiteral("Restore")))
+        {
+        }
+
+        [[nodiscard]] bool AllExist() const
+        {
+            return restore != nullptr && discard != nullptr && empty != nullptr && restoreFromPanel != nullptr;
+        }
+
+        [[nodiscard]] QStringList Enabled() const
+        {
+            QStringList enabled;
+
+            for (const QPushButton* button : {restore, discard, empty, restoreFromPanel})
+            {
+                if (button->isEnabled())
+                {
+                    enabled << button->text();
+                }
+            }
+
+            return enabled;
+        }
+
+        [[nodiscard]] QStringList Every() const
+        {
+            return {restore->text(), discard->text(), empty->text(), restoreFromPanel->text()};
+        }
+
+        const QPushButton* restore;
+        const QPushButton* discard;
+        const QPushButton* empty;
+        const QPushButton* restoreFromPanel;
+    };
+
     void Pick(const QuarantinePage& page, const int firstRow, const int lastRow)
     {
         QTableView* table = TableOf(page);
@@ -277,6 +329,65 @@ void QuarantinePageTest::EmptyingPutsAProgressDialogUpAndTakesItDownWhenTheRunne
     QVERIFY2(!progress->isVisible(), "the sign goes away with the work that summoned it");
 }
 
+void QuarantinePageTest::NoControlStartsAnotherGestureWhileThePreparationOfARestoreRuns()
+{
+    Fixture f;
+    f.Open();
+    Pick(f.page, 0, 0);
+
+    const GestureControls controls(f.page);
+
+    QVERIFY(controls.AllExist());
+    QCOMPARE(controls.Enabled(), controls.Every());
+
+    f.runner.defer = true;
+    ButtonSaying(f.page, QStringLiteral("Restore selected"))->click();
+
+    QVERIFY(f.viewModel.Busy());
+    QCOMPARE(controls.Enabled(), QStringList{});
+
+    Pick(f.page, 0, 1);
+
+    QCOMPARE(controls.Enabled(), QStringList{});
+
+    QStringList enabledWhenTheOffersArrived;
+    QTimer::singleShot(0, &f.page,
+                       [&controls, &enabledWhenTheOffersArrived]
+                       {
+                           enabledWhenTheOffersArrived = controls.Enabled();
+                           QApplication::activeModalWidget()->close();
+                       });
+
+    f.runner.Finish();
+
+    QCOMPARE(enabledWhenTheOffersArrived, controls.Every());
+    QCOMPARE(controls.Enabled(), controls.Every());
+}
+
+void QuarantinePageTest::NoControlStartsAnotherGestureWhileADiscardRuns()
+{
+    Fixture f;
+    f.Open();
+    Pick(f.page, 0, 0);
+
+    const GestureControls controls(f.page);
+
+    QVERIFY(controls.AllExist());
+
+    const QuarantinedItem* held = f.model.ItemAt(f.model.index(0, QuarantineModel::NameColumn, {}));
+    QVERIFY(held != nullptr);
+
+    f.runner.defer = true;
+    f.viewModel.Discard({*held});
+
+    QCOMPARE(controls.Enabled(), QStringList{});
+
+    f.runner.Finish();
+
+    QVERIFY(!f.viewModel.Busy());
+    QCOMPARE(controls.Enabled(), controls.Every());
+}
+
 void QuarantinePageTest::ClosingThePanelLetsGoOfTheSelectionThatSummonedIt()
 {
     Fixture f;
@@ -316,6 +427,124 @@ void QuarantinePageTest::ThePageFitsTheNarrowestWindow()
              "selected or because the panel came back folded from a previous run");
 
     ItFitsTheNarrowestWindow(f.page, "The quarantine page with an item selected");
+}
+
+namespace
+{
+    int TopWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{}).y();
+    }
+
+    int BottomWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{0, widget.height()}).y();
+    }
+
+    int RightEdgeWithin(const QWidget& page, const QWidget& widget)
+    {
+        return widget.mapTo(&page, QPoint{widget.width(), 0}).x();
+    }
+}
+
+void QuarantinePageTest::ThePanelStartsLevelWithTheTable()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const ContextPanel* panel = PanelOf(f.page);
+
+    QVERIFY(panel->isVisible());
+    QCOMPARE(TopWithin(f.page, *panel), TopWithin(f.page, *TableOf(f.page)));
+}
+
+void QuarantinePageTest::ThePanelTitleStripEndsWhereTheColumnHeaderEnds()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->isVisible());
+    QCOMPARE(BottomWithin(f.page, *strip), BottomWithin(f.page, *TableOf(f.page)->horizontalHeader()));
+}
+
+void QuarantinePageTest::ThePanelTitleStripLineLandsOnTheRowsOfTheColumnHeaderLine()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    auto* header = TableOf(f.page)->horizontalHeader();
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->isVisible());
+    LetTheScrollBarShow(f.page, *TableOf(f.page));
+    QVERIFY(TableOf(f.page)->verticalScrollBar()->isVisible());
+
+    const QWidget* cap = ScrollBarCapOf(*TableOf(f.page));
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(cap->isVisible());
+    MakeTheColumnHeaderOnePixelShorter(*header);
+    TheThreeRulesLandOnTheSamePhysicalRows(f.page, *strip, *header, *cap);
+}
+
+void QuarantinePageTest::ThePanelLeftLineRunsFromTheTitleStripToTheBottom()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* strip = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    const auto* body = PanelOf(f.page)->findChild<QWidget*>(QStringLiteral("PanelBody"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(body != nullptr);
+    QVERIFY(strip->isVisible());
+    LetTheScrollBarShow(f.page, *TableOf(f.page));
+    QVERIFY(TableOf(f.page)->verticalScrollBar()->isVisible());
+    TheLeftRuleRunsTheWholeHeightOfThePanel(f.page, *strip, *body);
+}
+
+void QuarantinePageTest::TheScrollBarCapGoesWhenTheScrollBarDoes()
+{
+    Fixture f;
+    f.Open();
+    ApplyModernistTheme(*qApp);
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+    LetTheScrollBarGo(f.page);
+
+    const QWidget* cap = ScrollBarCapOf(*TableOf(f.page));
+
+    QVERIFY(cap != nullptr);
+    QVERIFY(!TableOf(f.page)->verticalScrollBar()->isVisible());
+    QVERIFY(!cap->isVisible());
+}
+
+void QuarantinePageTest::TheToolbarSpansTheWholePageOverThePanel()
+{
+    Fixture f;
+    f.Open();
+    f.page.resize(kWidestAPageMayBe, 600);
+    Pick(f.page, 0, 0);
+
+    const auto* toolbar = f.page.findChild<QWidget*>(QStringLiteral("PageToolbar"));
+
+    QVERIFY(PanelOf(f.page)->isVisible());
+    QVERIFY(toolbar != nullptr);
+    QCOMPARE(RightEdgeWithin(f.page, *toolbar), f.page.width());
 }
 
 QTEST_MAIN(QuarantinePageTest)

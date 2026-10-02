@@ -5,6 +5,7 @@
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonTree.h"
 #include "domain/tree/DestinationDivergence.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
@@ -42,6 +43,11 @@ namespace
         static void AnEmptyFolderNobodyDeclaredIsLeftOutOfTheMoveTargets();
         static void ANestedCategoryIsOfferedByItsPathSoTwoOfTheSameNameStayApart();
         static void AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedTo();
+        static void TheMovableCountAgreesWithAskingEachAddonForItsCategoriesAcrossLibraries();
+        static void TheMovableCountIsZeroWhenTheOnlyCategoryIsTheOneTheAddonsSitIn();
+        static void AnAddonOfAnUnknownLibraryIsNeverMovable();
+        static void TheStrayedAddonsAreTheOnesTheFreeFunctionFindsOneByOne();
+        static void RelinkingTheStrayedAddonsGivenTouchesOnlyThoseAndRefusesAnEmptyList();
         static void AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees();
         static void AdoptingIsRefusedWhenTheEnabledAddonsPointAtDifferentDestinations();
         static void AdoptingIsRefusedWhenNoAddonInTheCategoryIsEnabled();
@@ -50,6 +56,9 @@ namespace
         static void RelinkingTouchesOnlyTheAddonsThatStrayedFromTheProfileDestination();
         static void RelinkingWhatNeverStrayedIsRefusedInsteadOfChurningTheLinks();
         static void OneUndoAfterARelinkPutsTheStrayLinkBackInsteadOfLeavingTheAddonOff();
+        static void TheAddonsNeedingARelinkAreTheStrayedAndTheBrokenOnceEach();
+        static void RelinkingABrokenAddonThatNeverStrayedLeavesOneLinkAtThePlannedPath();
+        static void OneUndoAfterRelinkingABrokenAddonPutsTheLinkUnderItsOwnNameBack();
         static void RenamingACategoryPutsTheUndoOutOfReachInsteadOfLettingItBreakALink();
         static void TheSuggestionsCoverTheAddonsUnderTheClickedNodeAndUseItsOwnLibrary();
         static void ApplyingSuggestionsSendsEachAddonToItsOwnSuggestedCategory();
@@ -65,6 +74,16 @@ namespace
         static void ARefusedSwapStillTurnsOnTheRestOfTheSelection();
         static void ASwapAgreedOnAPairThatChangedOnTheDiskIsNotCarriedOut();
         static void TheToggleBatchRunsInAWorkerAndASecondGestureWaitsItsTurn();
+        static void PlanningAToggleDoesNotReadTheDestinations();
+        static void AnAddonAlreadyStandingInItsOwnPlaceIsNoSwap();
+        static void AToggleStillReportsTheDriftWhenTheDiskChangedBehindTheScreen();
+        static void TheCallingThreadReadsNoDestinationWhileABatchRunsAndLands();
+        static void AToggleLandingAfterTheProfileChangedReadsTheCurrentProfileInsteadOfAdoptingTheStaleEntries();
+        static void LandingARelinkReadsNothingAndShowsTheLinkWhereTheProfileWantsIt();
+        static void ACategoryAndOneOfItsAddonsSelectedTogetherCountTheAddonOnce();
+        static void TheSwapsAndTheSelectionAreMeasuredAtTheSameTimeWithoutOneCancellingTheOther();
+        static void AddingALibraryRegistersAndSavesItWhenNothingChangedMeanwhile();
+        static void AddingALibraryWhenAnotherSaveLandsMeanwhileRegistersAgainAndKeepsBothChanges();
     };
 }
 
@@ -162,6 +181,13 @@ namespace
             fileSystem.AddLink(destination / addonFolder.filename(), addonFolder);
         }
 
+        void LeaveItBrokenUnderItsName(const std::filesystem::path& destination,
+                                       const std::filesystem::path& addonFolder)
+        {
+            fileSystem.AddLink(destination / addonFolder.filename(), addonFolder.parent_path() / "gone");
+            fileSystem.AddLink(destination / "renamed-link", addonFolder);
+        }
+
         void RegisterTheSpareLibrary()
         {
             fileSystem.AddDirectory(kSpare);
@@ -174,7 +200,9 @@ namespace
             spare.kind = TreeNodeKind::Library;
             catalog.SetTree(kSpare, std::move(spare));
 
-            QVERIFY(session.RegisterLibrary(kSpare).Accepted());
+            Session::LibraryRegistration registration = session.RegisterLibraryOn(session.BeginRegistration(), kSpare);
+            QVERIFY(registration.report.Accepted());
+            QVERIFY(session.AdoptTheRegistration(std::move(registration)));
 
             journal.appended.clear();
         }
@@ -383,6 +411,144 @@ void AddonTreeViewModelTest::AnAddonInALibraryWithNoCategoryHasNowhereToBeMovedT
     QVERIFY(f.viewModel.CategoriesFor(&addon).empty());
 }
 
+void AddonTreeViewModelTest::TheMovableCountAgreesWithAskingEachAddonForItsCategoriesAcrossLibraries()
+{
+    Fixture f;
+    const std::filesystem::path loose = std::filesystem::path{kLibrary} / "loose-addon";
+    f.fileSystem.AddDirectory(loose);
+
+    TreeNode tree = CategoryNode(kLibrary,
+                                 {CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)}),
+                                  DeclaredCategoryNode(kSceneries), AddonNode(loose)});
+    tree.kind = TreeNodeKind::Library;
+    f.catalog.SetTree(kLibrary, tree);
+    f.session.ShowActiveProfile();
+    f.RegisterTheSpareLibrary();
+
+    std::vector<const TreeNode*> addons;
+    for (const TreeNode& library : f.session.Snapshot().libraries)
+    {
+        for (const TreeNode* addon : AddonsUnder(library))
+        {
+            addons.push_back(addon);
+        }
+    }
+
+    QCOMPARE(addons.size(), std::size_t{5});
+
+    std::size_t expected = 0;
+    for (const TreeNode* addon : addons)
+    {
+        expected += f.viewModel.CategoriesFor(addon).empty() ? 0 : 1;
+    }
+
+    QCOMPARE(expected, std::size_t{3});
+    QCOMPARE(f.viewModel.MovableAmong(addons), expected);
+
+    for (const TreeNode* addon : addons)
+    {
+        QCOMPARE(f.viewModel.MovableAmong({addon}),
+                 f.viewModel.CategoriesFor(addon).empty() ? std::size_t{0} : std::size_t{1});
+    }
+
+    std::vector<const TreeNode*> twice = addons;
+    twice.insert(twice.end(), addons.begin(), addons.end());
+
+    QCOMPARE(f.viewModel.MovableAmong(twice), expected * 2);
+    QCOMPARE(f.viewModel.MovableAmong({}), std::size_t{0});
+}
+
+void AddonTreeViewModelTest::TheMovableCountIsZeroWhenTheOnlyCategoryIsTheOneTheAddonsSitIn()
+{
+    Fixture f;
+    TreeNode tree = CategoryNode(kLibrary, {CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)})});
+    tree.kind = TreeNodeKind::Library;
+    f.catalog.SetTree(kLibrary, tree);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> addons = AddonsUnder(f.session.Snapshot().libraries.front());
+
+    QCOMPARE(addons.size(), std::size_t{2});
+    QVERIFY(f.viewModel.CategoriesFor(addons.front()).empty());
+    QVERIFY(f.viewModel.CategoriesFor(addons.back()).empty());
+    QCOMPARE(f.viewModel.MovableAmong(addons), std::size_t{0});
+}
+
+void AddonTreeViewModelTest::AnAddonOfAnUnknownLibraryIsNeverMovable()
+{
+    const Fixture f;
+    const TreeNode stranger = AddonNode("G:/Nowhere/Aircrafts/stranger");
+
+    QVERIFY(f.viewModel.CategoriesFor(&stranger).empty());
+    QCOMPARE(f.viewModel.MovableAmong({&stranger}), std::size_t{0});
+}
+
+void AddonTreeViewModelTest::TheStrayedAddonsAreTheOnesTheFreeFunctionFindsOneByOne()
+{
+    Fixture f;
+    TreeNode tree =
+        CategoryNode(kLibrary,
+                     {CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon), AddonNode(kTrafficAddon)}),
+                      DeclaredCategoryNode(kSceneries)});
+    tree.kind = TreeNodeKind::Library;
+    f.catalog.SetTree(kLibrary, tree);
+    f.fileSystem.AddDirectory(kTrafficAddon);
+    f.session.ShowActiveProfile();
+
+    const TreeNode category =
+        CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon), AddonNode(kTrafficAddon)});
+
+    f.viewModel.OverrideDestination({&category}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.LinkIn(kCommunity, kOtherAddon);
+    f.LinkIn(kCommunity2024, kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const TreeNode& aircrafts = f.session.Snapshot().libraries.front().children.front();
+
+    std::vector<const TreeNode*> expected;
+    for (const TreeNode* addon : AddonsUnder(aircrafts))
+    {
+        if (!DestinationItStrayedTo(f.viewModel.Profile(), f.session.Snapshot().entries, addon->path).empty())
+        {
+            expected.push_back(addon);
+        }
+    }
+
+    const std::vector<const TreeNode*> strayed = f.viewModel.StrayedUnder({&aircrafts});
+
+    QCOMPARE(expected.size(), std::size_t{2});
+    QVERIFY(strayed == expected);
+    QVERIFY(f.viewModel.StrayedUnder({}).empty());
+}
+
+void AddonTreeViewModelTest::RelinkingTheStrayedAddonsGivenTouchesOnlyThoseAndRefusesAnEmptyList()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)});
+
+    f.viewModel.OverrideDestination({&category}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.LinkIn(kCommunity2024, kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> strayed = f.viewModel.StrayedUnder({&category});
+
+    QCOMPARE(strayed.size(), std::size_t{1});
+
+    f.viewModel.RelinkToTheProfileDestination(strayed);
+
+    QVERIFY(!f.fileSystem.Exists(std::filesystem::path{kCommunity} / "pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity2024} / "pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity2024} / "aerosoft-crj"));
+
+    const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
+
+    f.viewModel.RelinkToTheProfileDestination({});
+
+    QCOMPARE(refused.size(), 1);
+}
+
 void AddonTreeViewModelTest::AdoptingWritesTheOverrideOnTheCategoryWhenEveryEnabledAddonAgrees()
 {
     Fixture f;
@@ -439,11 +605,11 @@ void AddonTreeViewModelTest::OnlyACategoryHoldingAStrayAddonIsWorthOfferingTheAd
 
     f.LinkIn(kCommunity, kAddon);
     f.session.ShowActiveProfile();
-    QCOMPARE(f.viewModel.StrayAddonsUnder({&category}), std::size_t{0});
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{0});
 
     f.LinkIn(kCommunity2024, kOtherAddon);
     f.session.ShowActiveProfile();
-    QCOMPARE(f.viewModel.StrayAddonsUnder({&category}), std::size_t{1});
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{1});
 }
 
 void AddonTreeViewModelTest::ACategoryCountsOnlyTheAddonsThatWouldReallyChangeState()
@@ -832,6 +998,317 @@ void AddonTreeViewModelTest::TheToggleBatchRunsInAWorkerAndASecondGestureWaitsIt
     QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.journal.appended.front().kind, OperationKind::EnableAddon);
+}
+
+void AddonTreeViewModelTest::PlanningAToggleDoesNotReadTheDestinations()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+
+    f.LinkIn(kCommunity, kOtherAddon);
+    f.filesystemProbe.enumerated.clear();
+
+    static_cast<void>(f.viewModel.PlanToggle({&addon}, true));
+    static_cast<void>(f.viewModel.PlanToggle({&addon}, false));
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "planning asks about the places it needs and lists none");
+}
+
+void AddonTreeViewModelTest::AnAddonAlreadyStandingInItsOwnPlaceIsNoSwap()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+
+    f.LinkIn(kCommunity, kAddon);
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QVERIFY(f.viewModel.PlanToggle({&addon}, true).swapsNeeded.empty());
+    QVERIFY(f.viewModel.SwapsNeededTo({&addon}).empty());
+}
+
+void AddonTreeViewModelTest::AToggleStillReportsTheDriftWhenTheDiskChangedBehindTheScreen()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    f.LinkIn(kCommunity, kAddon);
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.Toggle({&addon}, true);
+
+    QCOMPARE(finished.size(), 1);
+
+    const auto report = finished.front().front().value<LinkBatchReport>();
+    QVERIFY(report.results.empty());
+    QCOMPARE(report.drifted, std::size_t{1});
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void AddonTreeViewModelTest::TheCallingThreadReadsNoDestinationWhileABatchRunsAndLands()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+
+    const QSignalSpy refreshed(&f.notifier, &SessionNotifier::Refreshed);
+
+    f.runner.defer = true;
+    f.filesystemProbe.enumerated.clear();
+
+    f.viewModel.Toggle({&addon}, true);
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "the gesture itself reads nothing");
+
+    f.runner.RunPendingWork();
+
+    QVERIFY2(!f.filesystemProbe.enumerated.empty(), "the worker is the one that reads the destinations");
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "landing the result reads nothing");
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(refreshed.size(), 1);
+
+    f.viewModel.UndoLastBatch();
+    f.runner.RunPendingWork();
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "landing an undo reads nothing either");
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(refreshed.size(), 2);
+}
+
+void AddonTreeViewModelTest::
+    AToggleLandingAfterTheProfileChangedReadsTheCurrentProfileInsteadOfAdoptingTheStaleEntries()
+{
+    Fixture f;
+    const TreeNode addon = AddonNode(kAddon);
+    const std::filesystem::path place = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w";
+    constexpr auto kMovedCommunity = "E:/Flight Simulator 2024/CommunityMoved";
+    f.fileSystem.AddDirectory(kMovedCommunity);
+
+    f.runner.defer = true;
+
+    f.viewModel.Toggle({&addon}, true);
+    f.runner.RunPendingWork();
+
+    QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+
+    f.runner.defer = false;
+    f.session.RepointDestination(kCommunity, kMovedCommunity);
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(!f.filesystemProbe.enumerated.empty(), "the entries read for the old destinations were not adopted");
+    QVERIFY(f.session.Snapshot().entries.empty());
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+}
+
+void AddonTreeViewModelTest::TheAddonsNeedingARelinkAreTheStrayedAndTheBrokenOnceEach()
+{
+    Fixture f;
+    const TreeNode strayed = AddonNode(kAddon);
+    const TreeNode category =
+        CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon), AddonNode(kTrafficAddon)});
+
+    f.fileSystem.AddDirectory(kTrafficAddon);
+    f.viewModel.OverrideDestination({&strayed}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.LeaveItBrokenUnderItsName(kCommunity, kOtherAddon);
+    f.LinkIn(kCommunity, kTrafficAddon);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> needing = f.viewModel.NeedingRelinkUnder({&category, &category.children[1]});
+
+    QCOMPARE(needing.size(), std::size_t{2});
+    QCOMPARE(needing.front()->path, std::filesystem::path{kAddon});
+    QCOMPARE(needing.back()->path, std::filesystem::path{kOtherAddon});
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{1});
+    QVERIFY(f.viewModel.NeedingRelinkUnder({}).empty());
+}
+
+void AddonTreeViewModelTest::RelinkingABrokenAddonThatNeverStrayedLeavesOneLinkAtThePlannedPath()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon)});
+    const std::filesystem::path planned = std::filesystem::path{kCommunity} / "pmdg-aircraft-77w";
+    const std::filesystem::path renamed = std::filesystem::path{kCommunity} / "renamed-link";
+
+    f.LeaveItBrokenUnderItsName(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    QVERIFY(f.viewModel.StrayedUnder({&category}).empty());
+    QCOMPARE(f.viewModel.NeedingRelinkUnder({&category}).size(), std::size_t{1});
+
+    const QSignalSpy refused(&f.viewModel, &AddonTreeViewModel::Refused);
+
+    f.viewModel.RelinkToTheProfileDestination({&category});
+
+    QCOMPARE(refused.size(), 0);
+    QVERIFY(f.fileSystem.IsLink(planned));
+    QCOMPARE(f.fileSystem.LinkTarget(planned).value_or(std::filesystem::path{}), std::filesystem::path{kAddon});
+    QVERIFY(!f.fileSystem.Exists(renamed));
+    QVERIFY(!f.journal.appended.empty());
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().entries.front().path, planned);
+    QCOMPARE(f.session.Snapshot().entries.front().target, std::filesystem::path{kAddon});
+    QVERIFY(f.viewModel.NeedingRelinkUnder({&category}).empty());
+}
+
+void AddonTreeViewModelTest::OneUndoAfterRelinkingABrokenAddonPutsTheLinkUnderItsOwnNameBack()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon)});
+    const std::filesystem::path planned = std::filesystem::path{kCommunity} / "pmdg-aircraft-77w";
+    const std::filesystem::path renamed = std::filesystem::path{kCommunity} / "renamed-link";
+
+    f.LeaveItBrokenUnderItsName(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+    f.viewModel.RelinkToTheProfileDestination({&category});
+
+    QVERIFY(f.viewModel.CanUndo());
+
+    f.viewModel.UndoLastBatch();
+
+    QVERIFY(f.fileSystem.IsLink(renamed));
+    QCOMPARE(f.fileSystem.LinkTarget(renamed).value_or(std::filesystem::path{}), std::filesystem::path{kAddon});
+    QVERIFY(!f.fileSystem.Exists(planned));
+}
+
+void AddonTreeViewModelTest::LandingARelinkReadsNothingAndShowsTheLinkWhereTheProfileWantsIt()
+{
+    Fixture f;
+    const TreeNode category = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)});
+
+    f.viewModel.OverrideDestination({&category}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    const std::vector<const TreeNode*> strayed = f.viewModel.StrayedUnder({&category});
+    QCOMPARE(strayed.size(), std::size_t{1});
+
+    f.runner.defer = true;
+    f.viewModel.RelinkToTheProfileDestination(strayed);
+    f.runner.RunPendingWork();
+
+    f.filesystemProbe.enumerated.clear();
+    f.runner.Finish();
+
+    QVERIFY2(f.filesystemProbe.enumerated.empty(), "landing a relink reads nothing");
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().entries.front().path, std::filesystem::path{kCommunity2024} / "pmdg-aircraft-77w");
+    QVERIFY(f.viewModel.StrayedUnder({&category}).empty());
+}
+
+void AddonTreeViewModelTest::ACategoryAndOneOfItsAddonsSelectedTogetherCountTheAddonOnce()
+{
+    Fixture f;
+    const TreeNode declared = CategoryNode(kAircrafts, {AddonNode(kAddon), AddonNode(kOtherAddon)});
+
+    f.viewModel.OverrideDestination({&declared}, kCommunity2024);
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    const TreeNode& category = f.session.Snapshot().libraries.front().children.front();
+    const TreeNode* addon = &category.children.front();
+
+    QCOMPARE(f.viewModel.StrayedUnder({&category}).size(), std::size_t{1});
+    QCOMPARE(f.viewModel.StrayedUnder({&category, addon}).size(), std::size_t{1});
+    QCOMPARE(f.viewModel.StrayedUnder({addon, &category, addon}).size(), std::size_t{1});
+}
+
+void AddonTreeViewModelTest::TheSwapsAndTheSelectionAreMeasuredAtTheSameTimeWithoutOneCancellingTheOther()
+{
+    Fixture f;
+    f.fileSystem.AddFile(std::filesystem::path(kAddon) / "content.bin", 300);
+    f.fileSystem.AddFile(std::filesystem::path(kOtherAddon) / "content.bin", 700);
+    f.runner.defer = true;
+
+    const QSignalSpy measured(&f.viewModel, &AddonTreeViewModel::SizeMeasured);
+    std::vector<WeighedSwap> weighed;
+    int weighings = 0;
+
+    f.viewModel.MeasureTheSelection({kAddon});
+    f.viewModel.WeighTheSwaps({TakenPlace{.addonFolder = kAddon,
+                                          .linkPath = std::filesystem::path{kCommunity} / "pmdg-aircraft-77w",
+                                          .occupant = kOtherAddon}},
+                              [&weighed, &weighings](const std::vector<WeighedSwap>& sides)
+                              {
+                                  weighed = sides;
+                                  ++weighings;
+                              });
+
+    f.runner.Finish();
+    f.runner.Finish();
+
+    QCOMPARE(measured.size(), 1);
+    QCOMPARE(LastSize(measured).bytes, std::uintmax_t{300});
+    QCOMPARE(weighings, 1);
+    QCOMPARE(weighed.size(), std::size_t{1});
+}
+
+void AddonTreeViewModelTest::AddingALibraryRegistersAndSavesItWhenNothingChangedMeanwhile()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kSpare);
+    f.catalog.SetTree(kSpare, TreeNode{});
+    int announced = 0;
+    bool accepted = false;
+    QObject::connect(&f.viewModel, &AddonTreeViewModel::LibraryRegistered, &f.viewModel,
+                     [&announced, &accepted](const std::filesystem::path&, const LibraryReport& report)
+                     {
+                         ++announced;
+                         accepted = report.Accepted();
+                     });
+
+    f.viewModel.AddLibrary(kSpare);
+
+    QCOMPARE(announced, 1);
+    QVERIFY(accepted);
+    QCOMPARE(f.settings.stored.profiles.front().libraries.size(), std::size_t{2});
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
+}
+
+void AddonTreeViewModelTest::AddingALibraryWhenAnotherSaveLandsMeanwhileRegistersAgainAndKeepsBothChanges()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kSpare);
+    f.catalog.SetTree(kSpare, TreeNode{});
+    f.runner.defer = true;
+    int announced = 0;
+    bool accepted = false;
+    QObject::connect(&f.viewModel, &AddonTreeViewModel::LibraryRegistered, &f.viewModel,
+                     [&announced, &accepted](const std::filesystem::path&, const LibraryReport& report)
+                     {
+                         ++announced;
+                         accepted = report.Accepted();
+                     });
+
+    f.viewModel.AddLibrary(kSpare);
+
+    const TreeNode addon = AddonNode(kAddon);
+    f.session.OverrideDestination({&addon}, kCommunity2024);
+
+    while (f.runner.Pending())
+    {
+        f.runner.Finish();
+    }
+
+    QCOMPARE(announced, 1);
+    QVERIFY(accepted);
+    QCOMPARE(f.settings.stored.profiles.front().libraries.size(), std::size_t{2});
+    QCOMPARE(f.settings.stored.profiles.front().destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
+    QCOMPARE(f.session.Profile().destinationOverrides.size(), std::size_t{1});
 }
 
 QTEST_MAIN(AddonTreeViewModelTest)

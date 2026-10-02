@@ -1,5 +1,7 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
+
 #include "application/LibraryOrganizer.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/journal/OperationLog.h"
@@ -33,9 +35,21 @@ namespace
         static void CancellingDuringTheCopyStopsTheRemainingFoldersAndSaysSo();
         static void AnImportGoesThroughTheRunnerTheViewModelWasGiven();
         static void GivingAnAddonBackForgetsWhereItCameFromInsteadOfRememberingIt();
+        static void ImportingFromAnotherProgramSavesTheOriginAndLeavesTheScanToTheRescanThatFollows();
+        static void GivingAnAddonBackStartsNoScanOfItsOwn();
         static void EveryLongOperationOpensAndClosesTheSameProgress();
+        static void AGestureOfManyFoldersAsksTheServiceOnceAndNamesTheFolderEachProgressBelongsTo();
         static void LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread();
         static void NoLeftoversMeansNoSignal();
+        static void WhatBecameOfEachInterruptedSwapReachesTheSignal();
+        static void ASwapRefusedForTheRunningSimulatorReachesTheSignalToo();
+        static void AResumeNamesTheFolderInCourseInsteadOfTheFirstForEveryFolder();
+        static void SettlingTheLeftoversNamesTheFolderInCourseToo();
+        static void CancellingAResumeStopsTheRemainingLeftoversAndSaysSo();
+        static void AnImportAnnouncesTheDiskChangeOnceAndBeforeItsReport();
+        static void AResumeAnnouncesTheDiskChangeOnceAndBeforeItsReport();
+        static void ResolvingConflictsAnnouncesTheDiskChangeOnceAndBeforeItsReport();
+        static void GivingBackAnnouncesTheDiskChangeOnceAndBeforeItsReport();
     };
 }
 
@@ -186,10 +200,47 @@ void ImportViewModelTest::GivingAnAddonBackForgetsWhereItCameFromInsteadOfRememb
     const auto results = gaveBack.front().front().value<std::vector<FileOperationResult>>();
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);
-    QVERIFY2(ExternalAddonsOf(f.session.Profile()).empty(),
+    QVERIFY2(f.settings.stored.profiles.front().externalOrigins.empty(),
              "an adoption that remembers would write back the origin the give back just erased");
     QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
     QVERIFY(!f.fileSystem.Exists(kVendorInLibrary));
+}
+
+void ImportViewModelTest::ImportingFromAnotherProgramSavesTheOriginAndLeavesTheScanToTheRescanThatFollows()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+    f.fileSystem.AddDirectory(kVendorFolder);
+    f.fileSystem.AddFile(kVendorFolder / "manifest.json", 900);
+    f.fileSystem.AddLink(kDestination / "gsx-pro", kVendorFolder);
+
+    const QSignalSpy finished(&f.viewModel, &ImportViewModel::Finished);
+    const QSignalSpy scans(&f.notifier, &SessionNotifier::ScanStarted);
+    const int runsBefore = f.runner.runs;
+
+    f.viewModel.Import(
+        {ImportRequest{.source = kDestination / "gsx-pro", .category = kLibrary, .externalSource = kVendorFolder}});
+
+    QCOMPARE(finished.size(), 1);
+    QCOMPARE(scans.size(), 0);
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QCOMPARE(f.settings.stored.profiles.front().externalOrigins.size(), std::size_t{1});
+
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.Profile().externalOrigins.size(), std::size_t{1});
+}
+
+void ImportViewModelTest::GivingAnAddonBackStartsNoScanOfItsOwn()
+{
+    Fixture f;
+    AManagedExternal(f);
+
+    const QSignalSpy scans(&f.notifier, &SessionNotifier::ScanStarted);
+
+    f.viewModel.GiveBack({kVendorInLibrary});
+
+    QCOMPARE(scans.size(), 0);
 }
 
 void ImportViewModelTest::EveryLongOperationOpensAndClosesTheSameProgress()
@@ -208,6 +259,29 @@ void ImportViewModelTest::EveryLongOperationOpensAndClosesTheSameProgress()
 
     QCOMPARE(started.size(), 3);
     QCOMPARE(idle.size(), 3);
+}
+
+void ImportViewModelTest::AGestureOfManyFoldersAsksTheServiceOnceAndNamesTheFolderEachProgressBelongsTo()
+{
+    Fixture f;
+    const QSignalSpy progressed(&f.viewModel, &ImportViewModel::Progressed);
+    const std::size_t scansBefore = f.catalog.scanned;
+
+    f.viewModel.Import(
+        {ImportRequest{.source = kSmall, .category = kLibrary}, ImportRequest{.source = kBig, .category = kLibrary}});
+
+    QCOMPARE(f.catalog.scanned - scansBefore, f.session.Profile().libraries.size());
+
+    std::vector<int> folders;
+    for (const QList<QVariant>& arguments : progressed)
+    {
+        folders.push_back(arguments.at(2).toInt());
+    }
+
+    QVERIFY(!folders.empty());
+    QCOMPARE(folders.front(), 1);
+    QCOMPARE(folders.back(), 2);
+    QVERIFY(std::ranges::is_sorted(folders));
 }
 
 void ImportViewModelTest::LookingForLeftoversDoesNotWalkTheDiskOnTheCallingThread()
@@ -248,6 +322,217 @@ void ImportViewModelTest::NoLeftoversMeansNoSignal()
 
     QCOMPARE(f.runner.HowManyPending(), std::size_t{0});
     QCOMPARE(found.size(), 0);
+}
+
+namespace
+{
+    InterruptedSwap ASwapLeftInTheRoom(Fixture& f)
+    {
+        f.fileSystem.AddDirectory(kVendorFolder.parent_path());
+        f.fileSystem.AddDirectory(SwapSlotFor(kVendorFolder));
+
+        return InterruptedSwap{
+            .room = SwapSlotFor(kVendorFolder), .folder = kVendorFolder, .libraryCopy = kVendorInLibrary};
+    }
+}
+
+void ImportViewModelTest::WhatBecameOfEachInterruptedSwapReachesTheSignal()
+{
+    Fixture f;
+    const InterruptedSwap swap = ASwapLeftInTheRoom(f);
+    const QSignalSpy undone(&f.viewModel, &ImportViewModel::InterruptedSwapsUndone);
+
+    f.viewModel.UndoInterruptedSwaps({swap});
+
+    QCOMPARE(undone.size(), 1);
+
+    const auto results = undone.front().front().value<std::vector<FileOperationResult>>();
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().path, kVendorFolder);
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(f.fileSystem.IsDirectory(kVendorFolder));
+}
+
+void ImportViewModelTest::ASwapRefusedForTheRunningSimulatorReachesTheSignalToo()
+{
+    Fixture f;
+    const InterruptedSwap swap = ASwapLeftInTheRoom(f);
+    const QSignalSpy undone(&f.viewModel, &ImportViewModel::InterruptedSwapsUndone);
+
+    f.processProbe.ReportTheSimulatorAsRunning();
+    f.viewModel.UndoInterruptedSwaps({swap});
+
+    QCOMPARE(undone.size(), 1);
+
+    const auto results = undone.front().front().value<std::vector<FileOperationResult>>();
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.Exists(SwapSlotFor(kVendorFolder)));
+    QVERIFY(!f.fileSystem.Exists(kVendorFolder));
+}
+
+namespace
+{
+    std::vector<StagingLeftover> TwoLeftovers(Fixture& f)
+    {
+        std::vector<StagingLeftover> leftovers;
+
+        for (const std::filesystem::path& source : {kSmall, kBig})
+        {
+            const std::filesystem::path target = kLibrary / source.filename();
+            const std::filesystem::path staging = StagingPathFor(target);
+
+            f.fileSystem.AddDirectory(staging);
+            f.fileSystem.AddFile(staging / "half.bin", 100);
+            leftovers.push_back(StagingLeftover{.staging = staging, .target = target, .source = source});
+        }
+
+        return leftovers;
+    }
+
+    std::vector<int> FoldersNamedBy(const QSignalSpy& progressed)
+    {
+        std::vector<int> folders;
+
+        for (const QList<QVariant>& arguments : progressed)
+        {
+            folders.push_back(arguments.at(2).toInt());
+        }
+
+        return folders;
+    }
+
+    void HearTheEndOfAGesture(const ImportViewModel& viewModel, QStringList& heard)
+    {
+        QObject::connect(&viewModel, &ImportViewModel::TheDiskChanged, &viewModel,
+                         [&heard]
+                         {
+                             heard.push_back("TheDiskChanged");
+                         });
+        QObject::connect(&viewModel, &ImportViewModel::Finished, &viewModel,
+                         [&heard](const std::vector<ImportOperationResult>&)
+                         {
+                             heard.push_back("Finished");
+                         });
+        QObject::connect(&viewModel, &ImportViewModel::ConflictsResolved, &viewModel,
+                         [&heard](const std::vector<FileOperationResult>&)
+                         {
+                             heard.push_back("ConflictsResolved");
+                         });
+        QObject::connect(&viewModel, &ImportViewModel::GaveBack, &viewModel,
+                         [&heard](const std::vector<FileOperationResult>&)
+                         {
+                             heard.push_back("GaveBack");
+                         });
+    }
+}
+
+void ImportViewModelTest::AResumeNamesTheFolderInCourseInsteadOfTheFirstForEveryFolder()
+{
+    Fixture f;
+    const std::vector<StagingLeftover> leftovers = TwoLeftovers(f);
+    const QSignalSpy progressed(&f.viewModel, &ImportViewModel::Progressed);
+
+    f.viewModel.Resume(leftovers);
+
+    const std::vector<int> folders = FoldersNamedBy(progressed);
+
+    QVERIFY(!folders.empty());
+    QCOMPARE(folders.front(), 1);
+    QCOMPARE(folders.back(), 2);
+    QVERIFY(std::ranges::is_sorted(folders));
+}
+
+void ImportViewModelTest::SettlingTheLeftoversNamesTheFolderInCourseToo()
+{
+    Fixture f;
+    const std::vector<StagingLeftover> leftovers = TwoLeftovers(f);
+    const QSignalSpy progressed(&f.viewModel, &ImportViewModel::Progressed);
+
+    f.viewModel.SettleTheLeftovers({}, leftovers);
+
+    const std::vector<int> folders = FoldersNamedBy(progressed);
+
+    QVERIFY(!folders.empty());
+    QCOMPARE(folders.front(), 1);
+    QCOMPARE(folders.back(), 2);
+}
+
+void ImportViewModelTest::CancellingAResumeStopsTheRemainingLeftoversAndSaysSo()
+{
+    Fixture f;
+    const std::vector<StagingLeftover> leftovers = TwoLeftovers(f);
+
+    QObject::connect(&f.viewModel, &ImportViewModel::Progressed, &f.viewModel,
+                     [&f]
+                     {
+                         f.viewModel.Cancel();
+                     });
+
+    const QSignalSpy finished(&f.viewModel, &ImportViewModel::Finished);
+
+    f.viewModel.Resume(leftovers);
+
+    QCOMPARE(finished.size(), 1);
+
+    const auto results = finished.front().front().value<std::vector<ImportOperationResult>>();
+    QCOMPARE(results.size(), std::size_t{2});
+    QVERIFY(!Succeeded(results.front().result));
+    QCOMPARE(results.back().result, FileResult::Cancelled);
+    QVERIFY(f.fileSystem.Exists(leftovers.back().staging / "half.bin"));
+}
+
+void ImportViewModelTest::AnImportAnnouncesTheDiskChangeOnceAndBeforeItsReport()
+{
+    Fixture f;
+    QStringList heard;
+    HearTheEndOfAGesture(f.viewModel, heard);
+
+    f.viewModel.Import({ImportRequest{.source = kSmall, .category = kLibrary}});
+
+    QCOMPARE(heard, (QStringList{"TheDiskChanged", "Finished"}));
+}
+
+void ImportViewModelTest::AResumeAnnouncesTheDiskChangeOnceAndBeforeItsReport()
+{
+    Fixture f;
+    const std::vector<StagingLeftover> leftovers = TwoLeftovers(f);
+    QStringList heard;
+    HearTheEndOfAGesture(f.viewModel, heard);
+
+    f.viewModel.Resume(leftovers);
+
+    QCOMPARE(heard, (QStringList{"TheDiskChanged", "Finished"}));
+
+    heard.clear();
+    f.viewModel.SettleTheLeftovers({}, leftovers);
+
+    QCOMPARE(heard, (QStringList{"TheDiskChanged", "Finished"}));
+}
+
+void ImportViewModelTest::ResolvingConflictsAnnouncesTheDiskChangeOnceAndBeforeItsReport()
+{
+    Fixture f;
+    QStringList heard;
+    HearTheEndOfAGesture(f.viewModel, heard);
+
+    f.viewModel.ResolveConflicts(
+        {ConflictToResolve{.conflict = CopyConflict{.provenancePath = kBig, .libraryPath = kLibrary / "big-addon"},
+                           .choice = ConflictChoice::KeepTheProvenanceCopy}});
+
+    QCOMPARE(heard, (QStringList{"TheDiskChanged", "ConflictsResolved"}));
+}
+
+void ImportViewModelTest::GivingBackAnnouncesTheDiskChangeOnceAndBeforeItsReport()
+{
+    Fixture f;
+    AManagedExternal(f);
+    QStringList heard;
+    HearTheEndOfAGesture(f.viewModel, heard);
+
+    f.viewModel.GiveBack({kVendorInLibrary});
+
+    QCOMPARE(heard, (QStringList{"TheDiskChanged", "GaveBack"}));
 }
 
 QTEST_MAIN(ImportViewModelTest)

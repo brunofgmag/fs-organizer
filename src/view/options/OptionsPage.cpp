@@ -22,7 +22,7 @@
 
 #include "support/PathText.h"
 #include "view/shell/LanguageSwitch.h"
-#include "view/theme/ModernistMetrics.h"
+#include "view/theme/ModernistPaint.h"
 #include "viewmodel/SimulatorText.h"
 
 namespace
@@ -169,6 +169,7 @@ OptionsPage::OptionsPage(OptionsViewModel& viewModel,
     connect(navigation_, &QListWidget::currentRowChanged, panes_, &QStackedWidget::setCurrentIndex);
 
     connect(&viewModel_, &OptionsViewModel::Changed, this, &OptionsPage::Reload);
+    connect(&viewModel_, &OptionsViewModel::BusyChanged, this, &OptionsPage::ApplyBusy);
 
     Reload();
 }
@@ -190,6 +191,8 @@ void OptionsPage::RetranslateUi()
     {
         navigation_->item(row)->setText(names.at(row));
     }
+
+    LetTheRailBeAsWideAsItsEntries(navigation_, kNavigationWidth);
 
     const int shown = panes_->currentIndex();
 
@@ -233,11 +236,13 @@ QWidget* OptionsPage::CreateNavigation()
 {
     navigation_ = new QListWidget(this);
     navigation_->setObjectName(QStringLiteral("SectionRail"));
+    navigation_->ensurePolished();
     navigation_->setFixedWidth(kNavigationWidth);
     navigation_->setFrameShape(QFrame::NoFrame);
     navigation_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     navigation_->addItems(PaneNames());
+    LetTheRailBeAsWideAsItsEntries(navigation_, kNavigationWidth);
     navigation_->setCurrentRow(0);
 
     return navigation_;
@@ -268,6 +273,9 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     addLibrary_ = new QPushButton(tr("Add library…"), pane);
     connect(addLibrary_, &QPushButton::clicked, this, &OptionsPage::AddLibrary);
     connect(&viewModel_, &OptionsViewModel::LibraryRegistered, this, &OptionsPage::SayTheLibraryWasRegistered);
+    connect(&viewModel_, &OptionsViewModel::ProfileRemoved, this, &OptionsPage::SayTheRemovalEnded);
+    connect(&viewModel_, &OptionsViewModel::LibraryUnregistered, this, &OptionsPage::SayTheRemovalEnded);
+    connect(&viewModel_, &OptionsViewModel::ProfileNotRemoved, this, &OptionsPage::SayTheProfileWasNotRemoved);
 
     importLegacy_ = new QPushButton(tr("Import from MSFS Addons Linker…"), pane);
     connect(importLegacy_, &QPushButton::clicked, this, &OptionsPage::LegacyImportRequested);
@@ -627,7 +635,7 @@ void OptionsPage::Reload()
 
     destinationsHeading_->setText(tr("Destinations of %1").arg(whose).toUpper());
     librariesHeading_->setText(tr("Libraries of %1").arg(whose).toUpper());
-    addLibrary_->setEnabled(inUse);
+    addLibrary_->setEnabled(CanChangeTheLibraries());
     importLegacy_->setEnabled(inUse);
     onlyForTheProfileInUse_->setVisible(!inUse);
 
@@ -649,6 +657,31 @@ void OptionsPage::Reload()
     }
 
     emit SummaryChanged(tr("%1 · saved on every change").arg(AsText(settingsFile_)));
+}
+
+bool OptionsPage::CanRemoveAProfile() const
+{
+    return !viewModel_.Busy() && viewModel_.Profiles().size() > 1;
+}
+
+bool OptionsPage::CanChangeTheLibraries() const
+{
+    return !viewModel_.Busy() && viewModel_.ShowsTheProfileInUse();
+}
+
+void OptionsPage::ApplyBusy() const
+{
+    addLibrary_->setEnabled(CanChangeTheLibraries());
+
+    for (QPushButton* remove : findChildren<QPushButton*>(QStringLiteral("RemoveProfile")))
+    {
+        remove->setEnabled(CanRemoveAProfile());
+    }
+
+    for (QPushButton* unregister : findChildren<QPushButton*>(QStringLiteral("UnregisterLibrary")))
+    {
+        unregister->setEnabled(CanChangeTheLibraries());
+    }
 }
 
 void OptionsPage::ReloadProfiles()
@@ -688,7 +721,8 @@ void OptionsPage::ReloadProfiles()
         layout->addWidget(edit);
 
         auto* remove = new QPushButton(tr("Remove"), row);
-        remove->setEnabled(viewModel_.Profiles().size() > 1);
+        remove->setObjectName(QStringLiteral("RemoveProfile"));
+        remove->setEnabled(CanRemoveAProfile());
         layout->addWidget(remove);
 
         connect(chosen, &QRadioButton::clicked, this,
@@ -778,7 +812,7 @@ void OptionsPage::ReloadLibraries()
 
         auto* unregister = new QPushButton(tr("Remove"), row);
         unregister->setObjectName(QStringLiteral("UnregisterLibrary"));
-        unregister->setEnabled(library.counted);
+        unregister->setEnabled(CanChangeTheLibraries());
         layout->addWidget(unregister);
 
         const std::filesystem::path path = library.path;
@@ -939,13 +973,7 @@ void OptionsPage::Remove(const ProfileLine& profile)
         return;
     }
 
-    if (!viewModel_.RemoveProfile(profile.id, disabling != nullptr && disabling->isChecked()))
-    {
-        emit StatusChanged(tr("%1 was not removed: at least one profile is needed.").arg(profile.label));
-        return;
-    }
-
-    emit StatusChanged(tr("Removed %1.").arg(profile.label));
+    viewModel_.RemoveProfile(profile.id, disabling != nullptr && disabling->isChecked());
 }
 
 void OptionsPage::Unregister(const LibraryLine& library)
@@ -978,6 +1006,14 @@ void OptionsPage::Unregister(const LibraryLine& library)
     }
 
     viewModel_.UnregisterLibrary(library.id, disabling != nullptr && disabling->isChecked());
+}
 
-    emit StatusChanged(tr("Removed %1.").arg(library.label));
+void OptionsPage::SayTheRemovalEnded(const QString& label)
+{
+    emit StatusChanged(tr("Removed %1.").arg(label));
+}
+
+void OptionsPage::SayTheProfileWasNotRemoved(const QString& label)
+{
+    emit StatusChanged(tr("%1 was not removed: at least one profile is needed.").arg(label));
 }

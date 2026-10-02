@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_TESTS_SUPPORT_A_PDF_H
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -9,6 +10,7 @@ struct ASectionOfAManual
 {
     std::string title{};
     int page = 0;
+    std::optional<int> heightFromTheFoot{};
 };
 
 [[nodiscard]] inline std::string TenDigitsOf(const std::size_t offset)
@@ -72,6 +74,7 @@ struct ASectionOfAManual
 }
 
 inline const std::string kOnEveryPage = "flight manual";
+inline const std::string kASquarePage = "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]";
 
 [[nodiscard]] inline std::string AManualOf(const int pages, const std::vector<ASectionOfAManual>& sections)
 {
@@ -116,8 +119,14 @@ inline const std::string kOnEveryPage = "flight manual";
         const std::size_t me = firstSection + which;
         const std::size_t target = firstPage + static_cast<std::size_t>(sections[which].page);
 
+        std::string position = "null null null";
+        if (sections[which].heightFromTheFoot.has_value())
+        {
+            position = "0 " + std::to_string(*sections[which].heightFromTheFoot) + " null";
+        }
+
         std::string item = "<</Title(" + sections[which].title + ")/Parent 3 0 R/Count 0/Dest[" + std::to_string(target)
-            + " 0 R/XYZ null null null]";
+            + " 0 R/XYZ " + position + "]";
 
         if (which > 0)
         {
@@ -146,15 +155,13 @@ inline const std::string kOnEveryPage = "flight manual";
     const std::string kStreamTail = "\nendstream";
     const std::string drawn = "BT /F1 12 Tf 20 100 Td (" + kOnEveryPage + ") Tj ET";
 
-    return APdfMadeOf(
-        {"<</Type/Catalog/Pages 2 0 R>>", "<</Type/Pages/Kids[3 0 R 4 0 R]/Count 2>>",
-         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Annots[5 0 R]/Contents 6 0 R/Resources<</Font<</F1 7 0 "
-         "R>>>>>>",
-         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 6 0 R/Resources<</Font<</F1 7 0 R>>>>>>",
-         "<</Type/Annot/Subtype/Link/Rect[0 0 200 200]/Border[0 0 0]/Dest[4 0 R/XYZ null null null]>>",
-         "<</Length " + std::to_string(drawn.size()) + ">>" + kStreamHead + drawn + kStreamTail,
-         "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"},
-        {});
+    return APdfMadeOf({"<</Type/Catalog/Pages 2 0 R>>", "<</Type/Pages/Kids[3 0 R 4 0 R]/Count 2>>",
+                       kASquarePage + "/Annots[5 0 R]/Contents 6 0 R/Resources<</Font<</F1 7 0 R>>>>>>",
+                       kASquarePage + "/Contents 6 0 R/Resources<</Font<</F1 7 0 R>>>>>>",
+                       "<</Type/Annot/Subtype/Link/Rect[0 0 200 200]/Border[0 0 0]/Dest[4 0 R/XYZ null null null]>>",
+                       "<</Length " + std::to_string(drawn.size()) + ">>" + kStreamHead + drawn + kStreamTail,
+                       "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"},
+                      {});
 }
 
 [[nodiscard]] inline std::string ATallPageWhereTheTermRepeats(const int times)
@@ -246,21 +253,21 @@ inline const std::string kAFewCodesTheEngineCannotMap = "<000400050006>";
     const std::string mostlyReadable =
         readable + "BT /F2 12 Tf 20 " + std::to_string(baseline) + " Td " + kAFewCodesTheEngineCannotMap + " Tj ET\n";
 
+    const std::string cidSystemInfo = "/CIDSystemInfo<</Registry(Adobe)/Ordering(Identity)/Supplement 0>>";
+    const std::string descriptorHead = "<</Type/FontDescriptor/FontName/Nothing/Flags 4/FontBBox[0 -200 1000 800]";
+
     return APdfMadeOf(
         {"<</Type/Catalog/Pages 2 0 R>>", "<</Type/Pages/Kids[3 0 R 4 0 R 5 0 R]/Count 3>>",
-         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 6 0 R/Resources<</Font<</F2 10 0 R>>>>>>",
-         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 7 0 R/Resources<</Font<</F1 9 0 R>>>>>>",
-         "<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 8 0 R/Resources<</Font<</F1 9 0 R/F2 10 0 "
-         "R>>>>>>",
+         kASquarePage + "/Contents 6 0 R/Resources<</Font<</F2 10 0 R>>>>>>",
+         kASquarePage + "/Contents 7 0 R/Resources<</Font<</F1 9 0 R>>>>>>",
+         kASquarePage + "/Contents 8 0 R/Resources<</Font<</F1 9 0 R/F2 10 0 R>>>>>>",
          "<</Length " + std::to_string(unmappable.size()) + ">>\nstream\n" + unmappable + "\nendstream",
          "<</Length " + std::to_string(readable.size()) + ">>\nstream\n" + readable + "\nendstream",
          "<</Length " + std::to_string(mostlyReadable.size()) + ">>\nstream\n" + mostlyReadable + "\nendstream",
          "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>",
          "<</Type/Font/Subtype/Type0/BaseFont/Nothing/Encoding/Identity-H/DescendantFonts[11 0 R]>>",
-         "<</Type/Font/Subtype/CIDFontType2/BaseFont/Nothing/CIDSystemInfo<</Registry(Adobe)/Ordering(Identity)"
-         "/Supplement 0>>/FontDescriptor 12 0 R/DW 500>>",
-         "<</Type/FontDescriptor/FontName/Nothing/Flags 4/FontBBox[0 -200 1000 800]/ItalicAngle 0/Ascent 800"
-         "/Descent -200/CapHeight 700/StemV 80>>"},
+         "<</Type/Font/Subtype/CIDFontType2/BaseFont/Nothing" + cidSystemInfo + "/FontDescriptor 12 0 R/DW 500>>",
+         descriptorHead + "/ItalicAngle 0/Ascent 800/Descent -200/CapHeight 700/StemV 80>>"},
         {});
 }
 

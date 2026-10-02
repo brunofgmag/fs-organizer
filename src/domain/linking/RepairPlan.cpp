@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "domain/model/AddonId.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/LibraryLookup.h"

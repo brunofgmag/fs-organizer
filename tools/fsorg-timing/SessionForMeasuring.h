@@ -1,12 +1,16 @@
 #ifndef FS_ORGANIZER_TOOLS_TIMING_SESSION_FOR_MEASURING_H
 #define FS_ORGANIZER_TOOLS_TIMING_SESSION_FOR_MEASURING_H
 
+#include <atomic>
+#include <chrono>
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <utility>
 
 #include "application/model/AppSettings.h"
 #include "application/ports/BackgroundRunner.h"
+#include "application/ports/SceneryCache.h"
 #include "application/ports/SessionObserver.h"
 #include "application/ports/SettingsRepository.h"
 #include "domain/model/TreeNode.h"
@@ -50,6 +54,94 @@ public:
         work();
         doneOnTheCallingThread();
     }
+};
+
+class TimedRunner final : public BackgroundRunner
+{
+public:
+    explicit TimedRunner(BackgroundRunner& inner) : inner_(inner)
+    {
+    }
+
+    void Run(std::function<void()> work, std::function<void()> doneOnTheCallingThread) override
+    {
+        inner_.Run(
+            [this, work = std::move(work)]
+            {
+                const auto began = std::chrono::steady_clock::now();
+
+                work();
+
+                worked_ = MillisecondsSince(began);
+            },
+            [this, done = std::move(doneOnTheCallingThread)]
+            {
+                const auto began = std::chrono::steady_clock::now();
+
+                done();
+
+                adopted_ = MillisecondsSince(began);
+                ++landed_;
+            });
+    }
+
+    [[nodiscard]] double LastWorkMilliseconds() const
+    {
+        return worked_;
+    }
+
+    [[nodiscard]] double LastAdoptionMilliseconds() const
+    {
+        return adopted_;
+    }
+
+    [[nodiscard]] int Landed() const
+    {
+        return landed_;
+    }
+
+private:
+    [[nodiscard]] static double MillisecondsSince(const std::chrono::steady_clock::time_point began)
+    {
+        return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began).count();
+    }
+
+    BackgroundRunner& inner_;
+    std::atomic<double> worked_ = 0;
+    std::atomic<double> adopted_ = 0;
+    std::atomic<int> landed_ = 0;
+};
+
+class ColdableSceneryCache final : public SceneryCache
+{
+public:
+    explicit ColdableSceneryCache(SceneryCache& inner) : inner_(inner)
+    {
+    }
+
+    void Forget(const bool forgetting)
+    {
+        forgetting_ = forgetting;
+    }
+
+    [[nodiscard]] std::optional<RememberedScenery> Remember(const std::filesystem::path& addonFolder) const override
+    {
+        return forgetting_ ? std::nullopt : inner_.Remember(addonFolder);
+    }
+
+    void Keep(const std::filesystem::path& addonFolder, const RememberedScenery& scenery) override
+    {
+        inner_.Keep(addonFolder, scenery);
+    }
+
+    void WriteWhatIsKept() override
+    {
+        inner_.WriteWhatIsKept();
+    }
+
+private:
+    SceneryCache& inner_;
+    std::atomic<bool> forgetting_ = false;
 };
 
 class NoLibrariesToScan final : public CatalogScanner

@@ -197,6 +197,7 @@ DiagnosticsPage::DiagnosticsPage(DiagnosticsViewModel& viewModel,
     connect(&viewModel_, &DiagnosticsViewModel::SceneryRead, this, &DiagnosticsPage::ShowWhatTheSceneryCarries);
     connect(&viewModel_, &DiagnosticsViewModel::SceneryProgressed, this, &DiagnosticsPage::ShowSceneryProgress);
     connect(&viewModel_, &DiagnosticsViewModel::LoadRead, this, &DiagnosticsPage::ShowWhatTheSimulatorLoaded);
+    connect(&viewModel_, &DiagnosticsViewModel::TheLibrariesChanged, this, &DiagnosticsPage::FollowTheLibraries);
     connect(bisection_, &BisectionPanel::StatusChanged, this, &DiagnosticsPage::StatusChanged);
     connect(bisection_, &BisectionPanel::ImportRequested, this, &DiagnosticsPage::ImportRequested);
     connect(&bisectionViewModel_, &BisectionViewModel::Changed, this, &DiagnosticsPage::DressTheRail);
@@ -269,7 +270,7 @@ void DiagnosticsPage::AddTheRailSeparator()
 {
     auto* item = new QListWidgetItem(rail_);
     item->setFlags(Qt::NoItemFlags);
-    item->setSizeHint(QSize(kRailWidth, kRailSeparatorRow));
+    item->setSizeHint(QSize(0, kRailSeparatorRow));
 
     auto* holder = new QWidget(rail_);
     auto* line = new QFrame(holder);
@@ -481,6 +482,38 @@ void DiagnosticsPage::RetranslateUi() const
 
     ShowTheLongestPaths();
     DressTheRail();
+}
+
+void DiagnosticsPage::showEvent(QShowEvent* event)
+{
+    QWidget::showEvent(event);
+
+    if (stale_)
+    {
+        CatchUp();
+    }
+}
+
+void DiagnosticsPage::FollowTheLibraries()
+{
+    stale_ = true;
+
+    ShowWhatWasMeasured();
+    scenery_->clear();
+    DressTheSceneryToolbar();
+
+    if (isVisible())
+    {
+        CatchUp();
+    }
+}
+
+void DiagnosticsPage::CatchUp()
+{
+    stale_ = false;
+
+    viewModel_.Show();
+    OpenSection(rail_->currentRow());
 }
 
 void DiagnosticsPage::OpenSection(const int row) const
@@ -745,6 +778,8 @@ void DiagnosticsPage::DressTheRail() const
                                                                    : tr("Modules loaded"));
 
     railItems_[FindTheCulprit]->setText(TheRailTextForTheSearch());
+
+    LetTheRailBeAsWideAsItsEntries(rail_, kRailWidth);
 }
 
 QString DiagnosticsPage::TheRailTextForTheSearch() const

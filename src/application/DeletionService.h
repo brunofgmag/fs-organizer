@@ -4,12 +4,13 @@
 #include <string>
 #include <vector>
 
-#include "application/SizeService.h"
 #include "application/model/DeletionPlan.h"
+#include "application/model/SizeReport.h"
 #include "application/ports/ProcessProbe.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/linking/LinkingEngine.h"
+#include "domain/linking/LinksByTarget.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/model/TreeNode.h"
 #include "domain/ports/FileOperations.h"
@@ -25,12 +26,12 @@ public:
                     const LinkingEngine& linking,
                     const EntryClassifier& classifier,
                     const ProcessProbe& processProbe,
-                    const OperationLog& log,
-                    const SizeService& sizes);
+                    const OperationLog& log);
 
     [[nodiscard]] DeletionPlan Plan(const SimulatorProfile& profile,
                                     const std::vector<SimulatorProfile>& everyProfile,
-                                    const std::vector<const TreeNode*>& nodes) const;
+                                    const std::vector<const TreeNode*>& nodes,
+                                    const FolderSizeReport& weighed) const;
 
     [[nodiscard]] std::vector<DeletionResult>
     Delete(const std::vector<SimulatorProfile>& everyProfile, const DeletionPlan& plan, DeletionRoute route) const;
@@ -39,7 +40,7 @@ private:
     struct LinksNow
     {
         std::string profileId{};
-        std::vector<DestinationEntry> entries{};
+        LinksByTarget linksByTarget{};
     };
 
     [[nodiscard]] std::vector<LinksNow> ReadLinksNow(const std::vector<SimulatorProfile>& everyProfile) const;
@@ -67,7 +68,6 @@ private:
     const EntryClassifier& classifier_;
     const ProcessProbe& processProbe_;
     const OperationLog& log_;
-    const SizeService& sizes_;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_DELETION_SERVICE_H

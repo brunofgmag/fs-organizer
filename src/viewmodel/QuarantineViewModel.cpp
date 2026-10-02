@@ -4,8 +4,6 @@
 #include <memory>
 #include <utility>
 
-#include "domain/support/PathUtils.h"
-
 QuarantineViewModel::QuarantineViewModel(const ImportService& service,
                                          ProfileService& profileService,
                                          const Session& session,
@@ -21,56 +19,55 @@ QuarantineViewModel::QuarantineViewModel(const ImportService& service,
       model_(model),
       sizes_(sizes),
       runner_(runner),
-      working_(runner),
-      caller_(sizes.NewCaller())
+      caller_(sizes.NewCaller()),
+      collisionCaller_(sizes.NewCaller()),
+      working_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this,
             [this]
             {
-                const int mine = ++listed_;
-                const SimulatorProfile profile = session_.Profile();
-                const auto items = std::make_shared<std::vector<QuarantinedItem>>();
-
-                runner_.Run(
-                    [this, profile, items]
-                    {
-                        *items = service_.Quarantined(profile);
-                    },
-                    [this, mine, items]
-                    {
-                        if (mine != listed_)
-                        {
-                            return;
-                        }
-
-                        model_.ShowItems(*items);
-
-                        if (shown_)
-                        {
-                            Describe(*items);
-                            Weigh(*items);
-                        }
-                    });
+                ListWhatIsHeld();
             });
 }
 
-std::vector<QuarantinedItem> QuarantineViewModel::ListWhatIsHeld()
+void QuarantineViewModel::ListWhatIsHeld()
 {
-    std::vector<QuarantinedItem> items = service_.Quarantined(session_.Profile());
+    const int mine = ++listed_;
+    const SimulatorProfile profile = session_.Profile();
+    const auto items = std::make_shared<std::vector<QuarantinedItem>>();
 
-    model_.ShowItems(items);
+    runner_.Run(
+        [this, profile, items]
+        {
+            *items = service_.Quarantined(profile);
+        },
+        [this, mine, items]
+        {
+            if (mine != listed_)
+            {
+                return;
+            }
 
-    return items;
+            model_.ShowItems(*items);
+
+            if (shown_)
+            {
+                Describe(*items);
+                Weigh(*items);
+            }
+        });
+}
+
+bool QuarantineViewModel::Busy() const
+{
+    return working_.Busy();
 }
 
 void QuarantineViewModel::Show()
 {
     shown_ = true;
 
-    const std::vector<QuarantinedItem> items = ListWhatIsHeld();
-
-    Describe(items);
-    Weigh(items);
+    ListWhatIsHeld();
 }
 
 void QuarantineViewModel::Describe(const std::vector<QuarantinedItem>& items)
@@ -124,20 +121,7 @@ void QuarantineViewModel::Weigh(const std::vector<QuarantinedItem>& items)
 
 std::vector<RestoreOffer> QuarantineViewModel::WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const
 {
-    std::vector<RestoreCheck> checks = service_.CheckRestore(session_.Profile(), items);
-
-    std::vector<RestoreOffer> offers;
-    offers.reserve(checks.size());
-
-    for (RestoreCheck& check : checks)
-    {
-        std::vector<RestorePlace> places =
-            check.NeedsAPlace() ? service_.PlacesFor(session_.Profile(), check.item) : std::vector<RestorePlace>{};
-
-        offers.push_back(RestoreOffer{.check = std::move(check), .places = std::move(places)});
-    }
-
-    return offers;
+    return service_.OffersFor(session_.Profile(), items);
 }
 
 void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& items)
@@ -151,22 +135,17 @@ void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& ite
     const auto offers = std::make_shared<std::vector<RestoreOffer>>();
 
     working_.Run(
+        [this]
+        {
+            emit BusyChanged();
+        },
         [this, profile, items, offers]
         {
-            std::vector<RestoreCheck> checks = service_.CheckRestore(profile, items);
-
-            offers->reserve(checks.size());
-
-            for (RestoreCheck& check : checks)
-            {
-                std::vector<RestorePlace> places =
-                    check.NeedsAPlace() ? service_.PlacesFor(profile, check.item) : std::vector<RestorePlace>{};
-
-                offers->push_back(RestoreOffer{.check = std::move(check), .places = std::move(places)});
-            }
+            *offers = service_.OffersFor(profile, items);
         },
         [this, offers]
         {
+            emit BusyChanged();
             emit RestoreOffersReady(*offers);
         });
 }
@@ -174,7 +153,7 @@ void QuarantineViewModel::PrepareRestore(const std::vector<QuarantinedItem>& ite
 void QuarantineViewModel::WeighBothSidesOf(const RestoreCheck& check, std::function<void(const TwoSides&)> onWeighed)
 {
     sizes_.MeasureFolders(
-        {check.item.path, check.occupant}, caller_, Freshness::MeasureAgain, {},
+        {check.item.path, check.occupant}, collisionCaller_, Freshness::MeasureAgain, {},
         [held = check.item.path, occupant = check.occupant,
          weighed = std::move(onWeighed)](const FolderSizeReport& report)
         {
@@ -206,6 +185,10 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
     const auto swapped = std::make_shared<std::vector<SwapResult>>();
 
     working_.Run(
+        [this]
+        {
+            emit BusyChanged();
+        },
         [this, profile, entries, going, replacing, restored, swapped]
         {
             if (!going.empty())
@@ -222,6 +205,8 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
         },
         [this, going, replacing, restored, swapped]
         {
+            emit BusyChanged();
+
             Show();
 
             const bool anythingCameBack = std::ranges::any_of(*restored,
@@ -239,6 +224,8 @@ void QuarantineViewModel::Restore(const std::vector<QuarantinedItem>& going,
             {
                 profileService_.ForgetUndo();
             }
+
+            emit CameBack();
 
             if (!going.empty())
             {
@@ -265,6 +252,7 @@ void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
     working_.Run(
         [this, count = static_cast<int>(items.size())]
         {
+            emit BusyChanged();
             emit DiscardStarted(count);
         },
         [this, profile, items, results]
@@ -278,6 +266,8 @@ void QuarantineViewModel::Discard(const std::vector<QuarantinedItem>& items)
         },
         [this, results]
         {
+            emit BusyChanged();
+
             Show();
 
             emit Discarded(*results);

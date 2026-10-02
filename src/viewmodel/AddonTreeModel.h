@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <QtCore/QAbstractItemModel>
@@ -46,6 +47,7 @@ public:
         EnabledRole,
         DivergentRole,
         BrokenRole,
+        LinkPathRole,
     };
 
     explicit AddonTreeModel(QObject* parent = nullptr);
@@ -63,6 +65,8 @@ public:
     [[nodiscard]] std::size_t EnabledCount() const;
 
     [[nodiscard]] SelectionTally TallyOf(const std::vector<const TreeNode*>& nodes) const;
+
+    [[nodiscard]] static bool ChangedInTheLastRefresh(const QModelIndex& position);
 
     [[nodiscard]] QModelIndex index(int row, int column, const QModelIndex& parent) const override;
 
@@ -83,6 +87,8 @@ public:
 signals:
     void ToggleRequested(const TreeNode* node);
 
+    void ValuesChanged();
+
 private:
     struct Reading
     {
@@ -96,6 +102,8 @@ private:
         bool enabled = false;
         bool broken = false;
         bool pinned = false;
+
+        [[nodiscard]] bool operator==(const Reading& other) const;
     };
 
     struct Item
@@ -104,6 +112,11 @@ private:
         Item* parent = nullptr;
         int row = 0;
         std::vector<Item*> children;
+        std::string key{};
+        std::size_t addonsBelow = 0;
+        std::size_t categoriesBelow = 0;
+        std::size_t enabledBelow = 0;
+        bool changed = false;
         Reading reading{};
     };
 
@@ -111,11 +124,13 @@ private:
 
     Item* AddItem(const TreeNode& node, Item* parent);
 
-    void ReadEveryRow();
+    [[nodiscard]] bool ReadEveryRow();
 
-    [[nodiscard]] Reading ReadingOf(const TreeNode& node) const;
+    [[nodiscard]] std::size_t EnabledBelow(const Item& item) const;
 
-    void AnnounceValues(const QModelIndex& parent);
+    [[nodiscard]] Reading ReadingOf(const Item& item) const;
+
+    void AnnounceChanges(const QModelIndex& parent);
 
     [[nodiscard]] static const Item* ItemAt(const QModelIndex& position);
 

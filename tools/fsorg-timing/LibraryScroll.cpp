@@ -18,6 +18,7 @@
 #include <QtWidgets/QTreeView>
 
 #include "application/SceneryService.h"
+#include "SessionForMeasuring.h"
 #include "application/Session.h"
 #include "domain/linking/EntryClassifier.h"
 #include "domain/support/PathUtils.h"
@@ -26,7 +27,9 @@
 #include "domain/tree/EffectiveDestination.h"
 #include "view/library/AddonTreePage.h"
 #include "view/shell/MainWindow.h"
+#include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeModel.h"
+#include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/RowTagRoles.h"
 
@@ -248,6 +251,18 @@ namespace
         return addons;
     }
 
+    std::size_t CategoriesOfTheLibraries(const ProfileSnapshot& snapshot)
+    {
+        std::size_t categories = 0;
+
+        for (const TreeNode& library : snapshot.libraries)
+        {
+            categories += CountCategoriesInside(library);
+        }
+
+        return categories;
+    }
+
     void Report(const QString& what, const double milliseconds)
     {
         Out() << what.leftJustified(44) << QString::number(milliseconds, 'f', 1).rightJustified(10) << " ms\n";
@@ -323,8 +338,12 @@ int MeasureTheAppLibrary(MainWindow& window,
                          AddonTreePage& page,
                          AddonTreeModel& model,
                          CoverageViewModel& coverage,
+                         CommunityViewModel& community,
+                         PageTab& libraryTab,
+                         PageTab& destinationsTab,
                          SceneryService& scenery,
-                         Session& session)
+                         Session& session,
+                         const TimedRunner& timing)
 {
     window.showMaximized();
     LetTheWindowSettle();
@@ -346,8 +365,9 @@ int MeasureTheAppLibrary(MainWindow& window,
         on += snapshot.enabled.Contains(addon->path) ? 1 : 0;
     }
 
-    Out() << "libraries: " << snapshot.libraries.size() << "  addons: " << addons.size() << "  on: " << on
-          << "  destination entries: " << snapshot.entries.size() << "\n";
+    Out() << "libraries: " << snapshot.libraries.size() << "  categories: " << CategoriesOfTheLibraries(snapshot)
+          << "  addons: " << addons.size() << "  on: " << on << "  destination entries: " << snapshot.entries.size()
+          << "\n";
 
     const double expanding = Milliseconds(
         [&view]
@@ -429,14 +449,78 @@ int MeasureTheAppLibrary(MainWindow& window,
                                }
                            }));
 
-    Out() << "\nwhat one toggle still costs the main thread\n";
+    Out() << "\nwhat one refresh of the entries costs, by thread\n";
 
-    Report("Session::RefreshEntries",
+    const int landedBefore = timing.Landed();
+
+    Report("RefreshEntries: the call [main]",
            Milliseconds(
                [&session]
                {
                    session.RefreshEntries();
                }));
+
+    QElapsedTimer untilItLanded;
+    untilItLanded.start();
+
+    while (timing.Landed() == landedBefore && untilItLanded.elapsed() < 30000)
+    {
+        QApplication::processEvents();
+        QThread::msleep(1);
+    }
+
+    Report("RefreshEntries: the read [worker]", timing.LastWorkMilliseconds());
+    Report("RefreshEntries: the adoption [main]", timing.LastAdoptionMilliseconds());
+    Report("RefreshEntries: wall clock until it landed", static_cast<double>(untilItLanded.elapsed()));
+
+    Out() << "\nwhat the adoption is made of [main]\n";
+
+    constexpr int kRuns = 5;
+
+    const auto MedianOfRuns = [](auto&& work)
+    {
+        std::vector<double> runs;
+        runs.reserve(kRuns);
+
+        for (int run = 0; run < kRuns; ++run)
+        {
+            runs.push_back(Milliseconds(work));
+        }
+
+        return Median(runs);
+    };
+
+    Report("AddonTreeModel::Refresh, page attached, no repaint",
+           MedianOfRuns(
+               [&model, &session]
+               {
+                   model.Refresh(session.Snapshot(), session.Profile());
+               }));
+    LetTheWindowSettle();
+
+    Report("CommunityViewModel::Show, page hidden",
+           MedianOfRuns(
+               [&community]
+               {
+                   community.Show();
+               }));
+    LetTheWindowSettle();
+
+    destinationsTab.click();
+    LetTheWindowSettle();
+
+    Report("CommunityViewModel::Show, page shown",
+           MedianOfRuns(
+               [&community]
+               {
+                   community.Show();
+                   LetTheWindowSettle();
+               }));
+
+    libraryTab.click();
+    LetTheWindowSettle();
+
+    Out() << "\nwhat one toggle still costs the main thread\n";
 
     Report("AddonTreeModel::Refresh, with the tree shown",
            Milliseconds(

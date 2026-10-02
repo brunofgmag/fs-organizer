@@ -1,5 +1,8 @@
 #include "application/ProfileService.h"
 
+#include <algorithm>
+#include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -7,6 +10,7 @@
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/profile/ExternalOrigins.h"
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonDestinations.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/EffectiveDestination.h"
 #include "domain/tree/LibraryLookup.h"
@@ -17,6 +21,7 @@ namespace
     std::vector<std::filesystem::path> LibraryRoots(const SimulatorProfile& profile)
     {
         std::vector<std::filesystem::path> roots;
+        roots.reserve(profile.libraries.size());
         for (const Library& library : profile.libraries)
         {
             roots.push_back(library.path);
@@ -24,6 +29,46 @@ namespace
 
         return roots;
     }
+
+    class ExternalSidecarsBesideTheAddons
+    {
+    public:
+        explicit ExternalSidecarsBesideTheAddons(const SidecarStore& store) : store_(store)
+        {
+        }
+
+        [[nodiscard]] std::optional<std::filesystem::path> OriginRecordedFor(const std::filesystem::path& addonFolder)
+        {
+            const std::filesystem::path sidecar = ExternalSidecarPathFor(addonFolder);
+            if (!Exists(sidecar))
+            {
+                return std::nullopt;
+            }
+
+            const std::optional<std::string> written = store_.Read(sidecar);
+
+            return written.has_value() ? ExternalOriginFromText(*written) : std::nullopt;
+        }
+
+    private:
+        [[nodiscard]] bool Exists(const std::filesystem::path& sidecar)
+        {
+            const std::filesystem::path folder = sidecar.parent_path();
+            const auto [known, isNew] = namesByFolder_.try_emplace(ComparablePath(folder));
+            if (isNew)
+            {
+                for (const std::filesystem::path& file : store_.FilesIn(folder))
+                {
+                    known->second.insert(ComparableFileName(file));
+                }
+            }
+
+            return known->second.contains(ComparableFileName(sidecar));
+        }
+
+        const SidecarStore& store_;
+        std::map<std::string, std::set<std::string>> namesByFolder_;
+    };
 
     std::map<std::string, const DestinationEntry*> LinksHeldByPath(const std::vector<DestinationEntry>& entries)
     {
@@ -38,6 +83,28 @@ namespace
         }
 
         return held;
+    }
+
+    std::map<std::string, std::string> BrokenTargetsByPath(const std::vector<DestinationEntry>& entries)
+    {
+        std::map<std::string, std::string> broken;
+
+        for (const DestinationEntry& entry : entries)
+        {
+            if (entry.classification == EntryClassification::Broken)
+            {
+                broken.emplace(ComparablePath(entry.path), ComparablePath(entry.target));
+            }
+        }
+
+        return broken;
+    }
+
+    bool StillBrokenAsShown(const std::map<std::string, std::string>& broken, const DestinationEntry& shown)
+    {
+        const auto found = broken.find(ComparablePath(shown.path));
+
+        return found != broken.end() && found->second == ComparablePath(shown.target);
     }
 }
 
@@ -121,12 +188,43 @@ ProfileSnapshot ProfileService::Scan(const SimulatorProfile& profile, const Scan
         return snapshot;
     }
 
-    snapshot.entries = ResolveEntries(profile, snapshot.libraries);
-    snapshot.enabled = EnabledAddons(EnabledAddonFolders(snapshot.entries));
-    snapshot.conflicts = FindCopyConflicts(snapshot.entries, snapshot.libraries);
-    snapshot.startupEntries = startup_.Entries();
+    EntriesRead read = Derived({}, ResolveEntries(profile, snapshot.libraries), snapshot.libraries);
+
+    snapshot.entries = std::move(read.entries);
+    snapshot.enabled = std::move(read.enabled);
+    snapshot.conflicts = std::move(read.conflicts);
+    snapshot.startupEntries = std::move(read.startupEntries);
 
     return snapshot;
+}
+
+EntriesRead ProfileService::ReadEntries(const EntriesStamp& stamp, const std::vector<TreeNode>& libraries) const
+{
+    return Derived(stamp, ResolveEntries(stamp.profile, libraries), libraries);
+}
+
+EntriesRead ProfileService::Derived(EntriesStamp stamp,
+                                    std::vector<DestinationEntry> entries,
+                                    const std::vector<TreeNode>& libraries) const
+{
+    EntriesRead read{.stamp = std::move(stamp), .entries = std::move(entries)};
+
+    read.enabled = EnabledAddons(EnabledAddonFolders(read.entries));
+    read.conflicts = FindCopyConflicts(read.entries, libraries);
+    read.startupEntries = startup_.Entries();
+
+    return read;
+}
+
+LinkBatchOutcome ProfileService::AfterTheBatch(const EntriesStamp& stamp,
+                                               const std::vector<TreeNode>& libraries,
+                                               const std::vector<DestinationEntry>& before,
+                                               LinkBatchReport report,
+                                               const std::vector<ExternalAddon>& externals) const
+{
+    std::vector<DestinationEntry> after = EntriesAfter(stamp.profile, before, report.results, externals);
+
+    return {.report = std::move(report), .read = Derived(stamp, std::move(after), libraries)};
 }
 
 std::vector<DestinationEntry> ProfileService::ResolveEntries(const SimulatorProfile& profile,
@@ -140,18 +238,14 @@ std::vector<ExternalAddon> ProfileService::WhatCameFromAnotherProgram(const Simu
                                                                       const std::vector<TreeNode>& libraries) const
 {
     std::vector<ExternalAddon> known = ExternalAddonsOf(profile);
+    ExternalSidecarsBesideTheAddons beside{sidecars_};
 
     for (const TreeNode& library : libraries)
     {
         for (const TreeNode* addon : AddonsUnder(library))
         {
-            const std::optional<std::string> written = sidecars_.Read(ExternalSidecarPathFor(addon->path));
-            if (!written.has_value())
-            {
-                continue;
-            }
-
-            if (const std::optional<std::filesystem::path> came = ExternalOriginFromText(*written); came.has_value())
+            if (const std::optional<std::filesystem::path> came = beside.OriginRecordedFor(addon->path);
+                came.has_value())
             {
                 RememberedByTheLibrary(known, addon->path, *came);
             }
@@ -161,12 +255,85 @@ std::vector<ExternalAddon> ProfileService::WhatCameFromAnotherProgram(const Simu
     return known;
 }
 
-ProfileService::LinksOnDisk ProfileService::ReadLinksNow(const SimulatorProfile& profile) const
+ProfileService::LinksOnDisk ProfileService::ReadLinksNow(const SimulatorProfile& profile,
+                                                         const std::vector<TreeNode>& libraries) const
 {
-    std::vector<DestinationEntry> entries = ResolveEntries(profile);
+    return ReadLinksNow(profile, WhatCameFromAnotherProgram(profile, libraries));
+}
+
+ProfileService::LinksOnDisk ProfileService::ReadLinksNow(const SimulatorProfile& profile,
+                                                         const std::vector<ExternalAddon>& externals) const
+{
+    std::vector<DestinationEntry> entries = classifier_.Resolve(profile.destinations, LibraryRoots(profile), externals);
     EnabledAddons enabled{EnabledAddonFolders(entries)};
 
-    return {.entries = std::move(entries), .enabled = std::move(enabled)};
+    return {.entries = std::move(entries), .enabled = std::move(enabled), .externals = externals};
+}
+
+std::vector<DestinationEntry> ProfileService::EntriesAfter(const SimulatorProfile& profile,
+                                                           const std::vector<DestinationEntry>& before,
+                                                           const std::vector<LinkOperationResult>& results,
+                                                           const std::vector<ExternalAddon>& externals) const
+{
+    std::vector<std::filesystem::path> changed;
+    changed.reserve(results.size());
+
+    for (const LinkOperationResult& result : results)
+    {
+        changed.push_back(result.linkPath);
+    }
+
+    return classifier_.Refresh(before, changed, profile.destinations, LibraryRoots(profile), externals);
+}
+
+std::vector<TakenPlace> ProfileService::PlacesTakenNow(const SimulatorProfile& profile,
+                                                       const std::vector<const TreeNode*>& nodes,
+                                                       const ProfileSnapshot& shown) const
+{
+    const AddonDestinations destinations(profile, shown.entries);
+
+    std::vector<const TreeNode*> wanting;
+    std::vector<std::filesystem::path> places;
+    std::set<std::string> asked;
+
+    for (const TreeNode* node : nodes)
+    {
+        for (const TreeNode* addon : AddonsUnder(*node))
+        {
+            if (shown.enabled.Contains(addon->path) || !asked.insert(ComparablePath(addon->path)).second)
+            {
+                continue;
+            }
+
+            wanting.push_back(addon);
+            places.push_back(destinations.Of(addon->path).destination / addon->path.filename());
+        }
+    }
+
+    const std::vector<std::optional<std::filesystem::path>> targets = classifier_.TargetsAt(places);
+    if (std::ranges::none_of(targets, &std::optional<std::filesystem::path>::has_value))
+    {
+        return {};
+    }
+
+    const std::vector<DestinationEntry> links = classifier_.LinksAmong(
+        places, targets, LibraryRoots(profile), WhatCameFromAnotherProgram(profile, shown.libraries));
+    const std::map<std::string, const DestinationEntry*> held = LinksHeldByPath(links);
+
+    std::vector<TakenPlace> taken;
+
+    for (std::size_t index = 0; index < wanting.size(); ++index)
+    {
+        const auto occupied = held.find(ComparablePath(places[index]));
+
+        if (occupied != held.end() && ComparablePath(occupied->second->target) != ComparablePath(wanting[index]->path))
+        {
+            taken.push_back(TakenPlace{
+                .addonFolder = wanting[index]->path, .linkPath = places[index], .occupant = occupied->second->target});
+        }
+    }
+
+    return taken;
 }
 
 std::size_t ProfileService::AddonsThatDrifted(const std::vector<const TreeNode*>& nodes,
@@ -190,9 +357,10 @@ std::size_t ProfileService::AddonsThatDrifted(const std::vector<const TreeNode*>
 }
 
 std::vector<TakenPlace> ProfileService::PlacesTaken(const SimulatorProfile& profile,
-                                                    const std::vector<const TreeNode*>& nodes) const
+                                                    const std::vector<const TreeNode*>& nodes,
+                                                    const std::vector<TreeNode>& libraries) const
 {
-    return PlacesTaken(profile, nodes, ReadLinksNow(profile));
+    return PlacesTaken(profile, nodes, ReadLinksNow(profile, libraries));
 }
 
 std::vector<TakenPlace> ProfileService::PlacesTaken(const SimulatorProfile& profile,
@@ -329,10 +497,10 @@ ProfileService::Step ProfileService::Inverse(const Step& step)
             .label = step.label};
 }
 
-LinkOperationResult ProfileService::RunTheStartupStep(const Step& step) const
+LinkOperationResult ProfileService::RunTheStartupStep(const Step& step, StartupBackup& backup) const
 {
     const bool turningOn = step.kind == OperationKind::TurnOnTheStartupEntry;
-    const FileResult result = startup_.Switch(step.linkPath, turningOn);
+    const FileResult result = startup_.Switch(step.linkPath, turningOn, backup);
 
     log_.RecordImport(step.kind, step.addonId, step.addonFolder, step.linkPath, result, OriginSource::Unknown,
                       step.label);
@@ -344,16 +512,15 @@ LinkOperationResult ProfileService::RunTheStartupStep(const Step& step) const
                                .outcome = LinkOutcome::OfFile(result)};
 }
 
-LinkOperationResult ProfileService::Run(const Step& step) const
+LinkOperationResult ProfileService::Run(const Step& step, StartupBackup& backup) const
 {
     if (step.kind == OperationKind::TurnOffTheStartupEntry || step.kind == OperationKind::TurnOnTheStartupEntry)
     {
-        return RunTheStartupStep(step);
+        return RunTheStartupStep(step, backup);
     }
 
     const LinkOutcome outcome = CreatesALink(step.kind)
-        ? linking_.Enable(Addon{.folderPath = step.addonFolder, .manifest = Manifest{}}, step.linkPath.parent_path(),
-                          linkType_)
+        ? linking_.LinkAt(step.linkPath, Addon{.folderPath = step.addonFolder, .manifest = Manifest{}}, linkType_)
         : linking_.Disable(step.linkPath);
 
     log_.RecordLink(step.kind, step.addonId, step.addonFolder, step.linkPath, outcome.Failure());
@@ -368,7 +535,23 @@ LinkOperationResult ProfileService::Run(const Step& step) const
 LinkBatchReport
 ProfileService::SetEnabled(const SimulatorProfile& profile, const ProfileSnapshot& shown, const LinkBatch& batch)
 {
-    return SetEnabled(profile, shown, batch, ReadLinksNow(profile));
+    return SetEnabled(profile, shown, batch, ReadLinksNow(profile, shown.libraries));
+}
+
+LinkBatchOutcome
+ProfileService::SetEnabled(const EntriesStamp& stamp, const ProfileSnapshot& shown, const LinkBatch& batch)
+{
+    return SetEnabled(stamp, shown, batch, ReadLinksNow(stamp.profile, shown.libraries));
+}
+
+LinkBatchOutcome ProfileService::SetEnabled(const EntriesStamp& stamp,
+                                            const ProfileSnapshot& shown,
+                                            const LinkBatch& batch,
+                                            const LinksOnDisk& onDisk)
+{
+    LinkBatchReport report = SetEnabled(stamp.profile, shown, batch, onDisk);
+
+    return AfterTheBatch(stamp, shown.libraries, onDisk.entries, std::move(report), onDisk.externals);
 }
 
 LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
@@ -401,12 +584,13 @@ std::vector<LinkOperationResult> ProfileService::RunAsOneBatch(const std::vector
 {
     const std::lock_guard lock(guard_);
 
+    StartupBackup backup;
     std::vector<LinkOperationResult> results;
     std::vector<Step> undo;
 
     for (const Step& step : steps)
     {
-        LinkOperationResult result = Run(step);
+        LinkOperationResult result = Run(step, backup);
 
         if (result.outcome.Succeeded())
         {
@@ -425,11 +609,12 @@ std::vector<LinkOperationResult> ProfileService::RunAsOneBatch(const std::vector
     return results;
 }
 
-LinkBatchReport ProfileService::Relink(const SimulatorProfile& profile,
-                                       const ProfileSnapshot& shown,
-                                       const std::vector<const TreeNode*>& nodes)
+LinkBatchOutcome ProfileService::Relink(const EntriesStamp& stamp,
+                                        const ProfileSnapshot& shown,
+                                        const std::vector<const TreeNode*>& nodes)
 {
-    const LinksOnDisk onDisk = ReadLinksNow(profile);
+    const SimulatorProfile& profile = stamp.profile;
+    const LinksOnDisk onDisk = ReadLinksNow(profile, shown.libraries);
 
     const std::size_t drifted = AddonsThatDrifted(nodes, shown.enabled, onDisk.enabled);
 
@@ -449,7 +634,9 @@ LinkBatchReport ProfileService::Relink(const SimulatorProfile& profile,
         }
     }
 
-    return {.results = RunAsOneBatch(steps), .drifted = drifted};
+    LinkBatchReport report{.results = RunAsOneBatch(steps), .drifted = drifted};
+
+    return AfterTheBatch(stamp, shown.libraries, onDisk.entries, std::move(report), onDisk.externals);
 }
 
 LinkBatchReport ProfileService::SetEnabled(const SimulatorProfile& profile,
@@ -507,12 +694,27 @@ std::vector<ProfileService::Step> ProfileService::Inverse(const SimulatorProfile
     return undo;
 }
 
-std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& profile,
-                                                        const std::vector<RepairRequest>& requests)
+LinkBatchOutcome ProfileService::Repair(const EntriesStamp& stamp,
+                                        const std::vector<TreeNode>& libraries,
+                                        const std::vector<RepairRequest>& requests)
 {
+    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, libraries);
+
+    LinkBatchReport report = RepairWhatStillHolds(stamp.profile, onDisk, requests);
+
+    return AfterTheBatch(stamp, libraries, onDisk.entries, std::move(report), onDisk.externals);
+}
+
+LinkBatchReport ProfileService::RepairWhatStillHolds(const SimulatorProfile& profile,
+                                                     const LinksOnDisk& onDisk,
+                                                     const std::vector<RepairRequest>& requests)
+{
+    const std::map<std::string, std::string> broken = BrokenTargetsByPath(onDisk.entries);
+
     const std::lock_guard lock(guard_);
 
-    std::vector<LinkOperationResult> results;
+    StartupBackup backup;
+    LinkBatchReport report;
     std::vector<Step> undo;
 
     for (const RepairRequest& request : requests)
@@ -523,7 +725,13 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
             continue;
         }
 
-        LinkOperationResult result = Run(*step);
+        if (!StillBrokenAsShown(broken, request.candidate.entry))
+        {
+            ++report.drifted;
+            continue;
+        }
+
+        LinkOperationResult result = Run(*step, backup);
 
         if (result.outcome.Succeeded())
         {
@@ -531,7 +739,7 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
             undo.insert(undo.end(), inverse.begin(), inverse.end());
         }
 
-        results.push_back(std::move(result));
+        report.results.push_back(std::move(result));
     }
 
     if (!undo.empty())
@@ -539,7 +747,7 @@ std::vector<LinkOperationResult> ProfileService::Repair(const SimulatorProfile& 
         undo_ = std::move(undo);
     }
 
-    return results;
+    return report;
 }
 
 bool ProfileService::CanUndo() const
@@ -560,12 +768,28 @@ std::vector<LinkOperationResult> ProfileService::UndoLastBatch()
 {
     const std::lock_guard lock(guard_);
 
+    return RunTheUndo();
+}
+
+LinkBatchOutcome ProfileService::UndoLastBatch(const EntriesStamp& stamp, const std::vector<TreeNode>& libraries)
+{
+    const LinksOnDisk onDisk = ReadLinksNow(stamp.profile, libraries);
+
+    LinkBatchReport report{.results = UndoLastBatch()};
+
+    return AfterTheBatch(stamp, libraries, onDisk.entries, std::move(report), onDisk.externals);
+}
+
+std::vector<LinkOperationResult> ProfileService::RunTheUndo()
+{
     const std::vector<Step> steps = std::exchange(undo_, {});
 
+    StartupBackup backup;
     std::vector<LinkOperationResult> results;
+    results.reserve(steps.size());
     for (const Step& step : steps)
     {
-        results.push_back(Run(step));
+        results.push_back(Run(step, backup));
     }
 
     return results;

@@ -72,15 +72,14 @@ std::size_t LegacyImportViewModel::PresetsWaitingIn(const std::filesystem::path&
 
 void LegacyImportViewModel::Import(const LegacyImportRequest& request, std::vector<std::filesystem::path> presetFolders)
 {
-    const auto imported = std::make_shared<Session::LegacyImport>();
-    imported->profile = session_.Profile();
+    const auto imported = std::make_shared<Session::LegacyImport>(session_.BeginLegacyImport());
 
     importing_.Run(
         [this, imported, request]
         {
-            *imported = session_.ImportLegacyOn(std::move(imported->profile), request);
+            *imported = session_.ImportLegacyOn(std::move(*imported), request);
         },
-        [this, imported, folders = std::move(presetFolders)]
+        [this, imported, request, folders = std::move(presetFolders)]
         {
             const LegacyImportReport report = imported->report;
 
@@ -90,16 +89,21 @@ void LegacyImportViewModel::Import(const LegacyImportRequest& request, std::vect
                 return;
             }
 
-            LandWhenTheLibrariesAreReadable(report, folders);
+            const QMetaObject::Connection landing = LandWhenTheLibrariesAreReadable(report, folders);
 
-            session_.AdoptTheLegacyImport(std::move(*imported));
+            if (!session_.AdoptTheLegacyImport(std::move(*imported)))
+            {
+                disconnect(landing);
+                Import(request, folders);
+            }
         });
 }
 
-void LegacyImportViewModel::LandWhenTheLibrariesAreReadable(const LegacyImportReport& report,
-                                                            const std::vector<std::filesystem::path>& presetFolders)
+QMetaObject::Connection
+LegacyImportViewModel::LandWhenTheLibrariesAreReadable(const LegacyImportReport& report,
+                                                       const std::vector<std::filesystem::path>& presetFolders)
 {
-    connect(
+    return connect(
         &notifier_, &SessionNotifier::ScanFinished, this,
         [this, report, presetFolders]
         {

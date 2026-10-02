@@ -1,10 +1,28 @@
 #include "viewmodel/DeletionViewModel.h"
 
 #include <algorithm>
+#include <map>
 #include <memory>
+#include <string>
 
-#include "domain/tree/AddonTree.h"
+#include "domain/support/PathUtils.h"
 #include "viewmodel/SimulatorText.h"
+
+namespace
+{
+    void FirstNodeAtEachWantedPath(const TreeNode& node, std::map<std::string, const TreeNode*>& wanted)
+    {
+        if (const auto slot = wanted.find(ComparablePath(node.path)); slot != wanted.end() && slot->second == nullptr)
+        {
+            slot->second = &node;
+        }
+
+        for (const TreeNode& child : node.children)
+        {
+            FirstNodeAtEachWantedPath(child, wanted);
+        }
+    }
+}
 
 DeletionViewModel::DeletionViewModel(Session& session,
                                      ProfileService& profileService,
@@ -32,12 +50,24 @@ std::vector<SimulatorProfile> DeletionViewModel::EveryProfile() const
 
 std::vector<const TreeNode*> DeletionViewModel::NodesStillThere(const std::vector<std::filesystem::path>& chosen) const
 {
+    std::map<std::string, const TreeNode*> wanted;
+
+    for (const std::filesystem::path& folder : chosen)
+    {
+        wanted.emplace(ComparablePath(folder), nullptr);
+    }
+
+    for (const TreeNode& library : session_.Snapshot().libraries)
+    {
+        FirstNodeAtEachWantedPath(library, wanted);
+    }
+
     std::vector<const TreeNode*> nodes;
     nodes.reserve(chosen.size());
 
     for (const std::filesystem::path& folder : chosen)
     {
-        if (const TreeNode* node = NodeAt(session_.Snapshot().libraries, folder))
+        if (const TreeNode* node = wanted.at(ComparablePath(folder)))
         {
             nodes.push_back(node);
         }
@@ -69,10 +99,11 @@ void DeletionViewModel::PlanToDelete(const std::vector<const TreeNode*>& nodes)
     emit Weighing();
 
     sizes_.MeasureFolders(addonFolders, caller_, Freshness::MeasureAgain, {},
-                          [this, chosen](const FolderSizeReport&)
+                          [this, chosen](const FolderSizeReport& weighed)
                           {
                               auto work = std::make_shared<PlanWork>();
                               work->profile = session_.Profile();
+                              work->weighed = weighed;
                               work->profiles = EveryProfile();
 
                               for (const TreeNode* node : NodesStillThere(chosen))
@@ -91,7 +122,8 @@ void DeletionViewModel::PlanToDelete(const std::vector<const TreeNode*>& nodes)
                                           stillThere.push_back(&node);
                                       }
 
-                                      work->plan = service_.Plan(work->profile, work->profiles, stillThere);
+                                      work->plan =
+                                          service_.Plan(work->profile, work->profiles, stillThere, work->weighed);
                                   },
                                   [this, work]
                                   {

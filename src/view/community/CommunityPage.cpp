@@ -6,6 +6,8 @@
 #include <QtCore/QEvent>
 #include <QtCore/QUrl>
 #include <QtGui/QDesktopServices>
+#include <QtGui/QHideEvent>
+#include <QtGui/QShowEvent>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QGridLayout>
@@ -20,7 +22,6 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
-#include "support/SizeText.h"
 #include "view/community/ConflictDialog.h"
 #include "view/community/ImportDialog.h"
 #include "view/community/RepairDialog.h"
@@ -28,6 +29,7 @@
 #include "view/TableColumns.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/ModelRowDetail.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/ModelRetranslation.h"
@@ -200,18 +202,18 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
     table_->verticalHeader()->setVisible(false);
     DressTheHeaderOf(table_->horizontalHeader());
 
-    auto* column = new QVBoxLayout;
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(0);
-    column->addWidget(CreateFilters());
-    column->addWidget(CreateActions());
-    column->addWidget(table_, 1);
-
-    auto* layout = new QHBoxLayout(this);
+    auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addLayout(column, 1);
-    layout->addWidget(CreatePanel());
+    layout->addWidget(CreateFilters());
+    layout->addWidget(CreateActions());
+
+    auto* body = new QHBoxLayout;
+    body->setContentsMargins(0, 0, 0, 0);
+    body->setSpacing(0);
+    body->addWidget(table_, 1);
+    body->addWidget(CreatePanel());
+    layout->addLayout(body, 1);
 
     connect(&model_, &QAbstractItemModel::modelReset, this, &CommunityPage::UpdateSummary);
     connect(&model_, &QAbstractItemModel::modelReset, this, &CommunityPage::ShowTheSelectedEntry);
@@ -242,8 +244,25 @@ CommunityPage::CommunityPage(CommunityViewModel& viewModel,
     connect(&importViewModel_, &ImportViewModel::ConflictsResolved, this, &CommunityPage::OnConflictsResolved);
     connect(&importViewModel_, &ImportViewModel::ConflictDetailsReady, this, &CommunityPage::OfferTheResolutions);
 
+    viewModel_.TheListIsOnScreen(false);
+
     RetranslateUi();
     UpdateSummary();
+}
+
+void CommunityPage::showEvent(QShowEvent* event)
+{
+    QWidget::showEvent(event);
+
+    viewModel_.TheListIsOnScreen(true);
+    ShowTheAside();
+}
+
+void CommunityPage::hideEvent(QHideEvent* event)
+{
+    viewModel_.TheListIsOnScreen(false);
+
+    QWidget::hideEvent(event);
 }
 
 QWidget* CommunityPage::CreateFilters()
@@ -255,7 +274,7 @@ QWidget* CommunityPage::CreateFilters()
     auto* group = new QButtonGroup(bar);
     auto* grid = new QGridLayout(bar);
     grid->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, 0);
-    grid->setSpacing(6);
+    grid->setSpacing(kChipGap);
 
     int column = 0;
     int row = 0;
@@ -364,7 +383,7 @@ QWidget* CommunityPage::CreateActions()
 
     connect(selectAll_, &QPushButton::clicked, table_, &QTableView::selectAll);
     connect(reread_, &QPushButton::clicked, &viewModel_, &CommunityViewModel::ReadTheDestinationsAgain);
-    connect(search_, &QLineEdit::textChanged, filter_, &QSortFilterProxyModel::setFilterFixedString);
+    connect(search_, &QLineEdit::textChanged, filter_, &CommunityFilterModel::ShowOnlyWhatHolds);
 
     auto* layout = new QHBoxLayout(bar);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
@@ -404,6 +423,8 @@ QWidget* CommunityPage::CreatePanel()
     panel_->Add(promise_);
 
     panel_->RestoreCollapsedState();
+    panel_->LevelWith(table_->horizontalHeader());
+    CapTheScrollBarOf(table_, table_->horizontalHeader());
     panel_->Summon(false);
     ShowWhatTheActionsWillTouch({});
 
@@ -833,10 +854,32 @@ void CommunityPage::OnImportFinished(const std::vector<ImportOperationResult>& r
     emit StatusChanged(tr("%n addon imported into the library.", nullptr, done));
 }
 
-void CommunityPage::OnRepairFinished(const std::vector<LinkOperationResult>& results)
+QString CommunityPage::StatusOfARepairThatFailedNowhere(const int repaired, const int drifted) const
+{
+    if (drifted == 0)
+    {
+        return tr("%n link repaired.", nullptr, repaired);
+    }
+
+    if (repaired == 0)
+    {
+        return tr("Nothing changed: %n link had changed on the disk. The list has been refreshed.", nullptr, drifted);
+    }
+
+    return tr("%1 · %2").arg(tr("%n repaired", nullptr, repaired), tr("%n had changed on the disk", nullptr, drifted));
+}
+
+QString CommunityPage::StatusOfARepairThatFailedSomewhere(const int repaired, const int failed, const int drifted) const
+{
+    const QString outcome = tr("%1 · %2").arg(tr("%n repaired", nullptr, repaired), tr("%n failed", nullptr, failed));
+
+    return drifted == 0 ? outcome : tr("%1 · %2").arg(outcome, tr("%n had changed on the disk", nullptr, drifted));
+}
+
+void CommunityPage::OnRepairFinished(const LinkBatchReport& report)
 {
     QStringList failed;
-    for (const LinkOperationResult& result : results)
+    for (const LinkOperationResult& result : report.results)
     {
         if (!result.outcome.Succeeded())
         {
@@ -844,23 +887,23 @@ void CommunityPage::OnRepairFinished(const std::vector<LinkOperationResult>& res
         }
     }
 
-    const auto done = static_cast<int>(results.size()) - static_cast<int>(failed.size());
+    const auto done = static_cast<int>(report.results.size()) - static_cast<int>(failed.size());
+    const auto drifted = static_cast<int>(report.drifted);
 
     if (failed.isEmpty())
     {
-        emit StatusChanged(tr("%n link repaired.", nullptr, done));
+        emit StatusChanged(StatusOfARepairThatFailedNowhere(done, drifted));
         return;
     }
 
-    QMessageBox report(QMessageBox::Warning, tr("Some links were not repaired"),
-                       tr("%n link could not be repaired.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
-                       this);
-    report.setInformativeText(tr("%n link repaired.", nullptr, done));
-    report.setDetailedText(failed.join('\n'));
-    report.exec();
+    QMessageBox warning(QMessageBox::Warning, tr("Some links were not repaired"),
+                        tr("%n link could not be repaired.", nullptr, static_cast<int>(failed.size())), QMessageBox::Ok,
+                        this);
+    warning.setInformativeText(tr("%n link repaired.", nullptr, done));
+    warning.setDetailedText(failed.join('\n'));
+    warning.exec();
 
-    emit StatusChanged(
-        tr("%1 · %2").arg(tr("%n repaired", nullptr, done), tr("%n failed", nullptr, static_cast<int>(failed.size()))));
+    emit StatusChanged(StatusOfARepairThatFailedSomewhere(done, static_cast<int>(failed.size()), drifted));
 }
 
 void CommunityPage::FitTheChips()
@@ -945,5 +988,10 @@ void CommunityPage::UpdateSummary()
                                  tr("%n broken", nullptr, broken),
                                  tr("%n in conflict", nullptr, counted.value(kConflictFilter))));
 
+    ShowTheAside();
+}
+
+void CommunityPage::ShowTheAside()
+{
     emit AsideChanged(tr("%n destination", nullptr, static_cast<int>(importViewModel_.Profile().destinations.size())));
 }

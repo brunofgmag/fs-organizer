@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "application/DeletionService.h"
+#include "application/SizeService.h"
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/journal/OperationLog.h"
@@ -36,6 +37,9 @@ namespace
         static void TheWalkThatSummedTheBytesIsTheOnlyOneThePlanNeeds();
         static void AnAddonTheShellCannotReachIsRefusedInsteadOfDeletedInSilence();
         static void AnAddonEnabledInAProfileThatIsNotTheActiveOneIsFoundByThePlan();
+        static void AnAddonEnabledInTwoProfilesHasBothLinksInThePlan();
+        static void TheIndexOfLinksByTargetAgreesWithLinksPointingAt();
+        static void ThePlanTakesBytesAndLongestEntryFromTheReportItWasGiven();
         static void DeletingAnEnabledAddonRemovesEveryLinkBeforeTheFolder();
         static void AFailedUnlinkAbortsTheDeletionAndSaysWhichLinksWentAway();
         static void ACategoryInTheSelectionDeletesNoAddonAtAll();
@@ -63,6 +67,7 @@ namespace
     const std::filesystem::path kAtr = "D:/Library/Aircrafts/hype-atr";
     const std::filesystem::path kCrjLink = "E:/Sim/Community/aerosoft-crj";
     const std::filesystem::path kCrjLinkElsewhere = "F:/Sim2020/Community/aerosoft-crj";
+    const std::filesystem::path kGone = "D:/Library/Aircrafts/gone";
     const std::filesystem::path kOtherProgramsFolder = "C:/Addon Manager/Aircraft/aerosoft-crj";
 
     TreeNode AddonNode(const std::filesystem::path& path)
@@ -91,7 +96,8 @@ namespace
         FakeCatalogScanner catalog;
         InlineBackgroundRunner runner;
         SizeService sizes{catalog, filesystemProbe, clock, runner};
-        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log, sizes};
+        DeletionService service{filesystemProbe, files, sidecars, linking, classifier, processProbe, log};
+        FolderSizeReport weighed;
 
         SimulatorProfile profile{.id = "msfs2024",
                                  .destinations = {kDestination},
@@ -167,12 +173,16 @@ namespace
         void Measure(const std::vector<std::filesystem::path>& folders)
         {
             sizes.MeasureFolders(folders, sizes.NewCaller(), Freshness::MeasureAgain, {},
-                                 [](const FolderSizeReport&) {});
+                                 [this](const FolderSizeReport& report)
+                                 {
+                                     weighed.folders.insert(weighed.folders.end(), report.folders.begin(),
+                                                            report.folders.end());
+                                 });
         }
 
         [[nodiscard]] DeletionPlan PlanFor(const std::vector<const TreeNode*>& nodes) const
         {
-            return service.Plan(profile, {profile, other}, nodes);
+            return service.Plan(profile, {profile, other}, nodes, weighed);
         }
 
         [[nodiscard]] std::vector<DeletionResult> Run(const std::vector<const TreeNode*>& nodes,
@@ -298,6 +308,91 @@ void DeletionServiceTest::AnAddonEnabledInAProfileThatIsNotTheActiveOneIsFoundBy
     QCOMPARE(plan.addons.front().enabled.size(), std::size_t{1});
     QCOMPARE(plan.addons.front().enabled.front().profileId, std::string{"msfs2020"});
     QCOMPARE(plan.addons.front().enabled.front().linkPath, kCrjLinkElsewhere);
+}
+
+void DeletionServiceTest::AnAddonEnabledInTwoProfilesHasBothLinksInThePlan()
+{
+    Fixture f;
+    f.fileSystem.AddLink(kCrjLink, kCrj);
+    f.fileSystem.AddLink(kCrjLinkElsewhere, kCrj);
+
+    const DeletionPlan plan = f.PlanFor({f.Node(kCrj), f.Node(kAtr)});
+
+    QCOMPARE(plan.addons.size(), std::size_t{2});
+    QCOMPARE(plan.addons.front().enabled.size(), std::size_t{2});
+    QCOMPARE(plan.addons.front().enabled.front().profileId, std::string{"msfs2024"});
+    QCOMPARE(plan.addons.front().enabled.front().linkPath, kCrjLink);
+    QCOMPARE(plan.addons.front().enabled.back().profileId, std::string{"msfs2020"});
+    QCOMPARE(plan.addons.front().enabled.back().linkPath, kCrjLinkElsewhere);
+    QVERIFY(plan.addons.back().enabled.empty());
+}
+
+void DeletionServiceTest::TheIndexOfLinksByTargetAgreesWithLinksPointingAt()
+{
+    Fixture f;
+    f.fileSystem.AddLink(kCrjLink, kCrj);
+    f.fileSystem.AddLink(kDestination / "aerosoft-crj-copy", kCrj);
+    f.fileSystem.AddLink(kDestination / "gone", kGone);
+    f.fileSystem.AddDirectory(kOtherProgramsFolder);
+    f.fileSystem.AddLink(kDestination / "external", kOtherProgramsFolder);
+    f.fileSystem.AddLinkWithUnreadableTarget(kDestination / "unreadable");
+    f.fileSystem.AddLink(kDestination / "hype-atr", kAtr);
+    f.fileSystem.AddLink(kCrjLinkElsewhere, kCrj);
+
+    const TreeNode gone = AddonNode(kGone);
+    const TreeNode external = AddonNode(kOtherProgramsFolder);
+
+    const DeletionPlan plan = f.PlanFor({f.Node(kCrj), f.Node(kAtr), &gone, &external});
+
+    QCOMPARE(plan.addons.size(), std::size_t{4});
+
+    for (const AddonToDelete& addon : plan.addons)
+    {
+        std::vector<EnabledSomewhere> expected;
+
+        for (const SimulatorProfile* profile : {&f.profile, &f.other})
+        {
+            const std::vector<std::filesystem::path> roots{profile->libraries.front().path};
+            const std::vector<DestinationEntry> entries = f.classifier.Resolve(profile->destinations, roots);
+
+            for (const std::filesystem::path& link : LinksPointingAt(entries, addon.folder))
+            {
+                expected.push_back(EnabledSomewhere{.profileId = profile->id, .linkPath = link});
+            }
+        }
+
+        QCOMPARE(addon.enabled.size(), expected.size());
+
+        for (std::size_t place = 0; place < expected.size(); ++place)
+        {
+            QCOMPARE(addon.enabled[place].profileId, expected[place].profileId);
+            QCOMPARE(addon.enabled[place].linkPath, expected[place].linkPath);
+        }
+    }
+
+    QCOMPARE(plan.addons[0].enabled.size(), std::size_t{3});
+    QCOMPARE(plan.addons[1].enabled.size(), std::size_t{1});
+    QVERIFY(plan.addons[2].enabled.empty());
+    QVERIFY(plan.addons[3].enabled.empty());
+}
+
+void DeletionServiceTest::ThePlanTakesBytesAndLongestEntryFromTheReportItWasGiven()
+{
+    Fixture f;
+    f.Measure({kCrj, kAtr});
+
+    const FolderSizeReport report{
+        .folders = {MeasuredFolder{.folder = kCrj, .bytes = 123, .longestEntry = 77, .measured = true},
+                    MeasuredFolder{.folder = kAtr, .bytes = 999, .longestEntry = 55, .measured = false}},
+        .complete = true};
+
+    const DeletionPlan plan = f.service.Plan(f.profile, {f.profile, f.other}, {f.Node(kCrj), f.Node(kAtr)}, report);
+
+    QCOMPARE(plan.addons.size(), std::size_t{2});
+    QCOMPARE(plan.addons.front().bytes, std::optional<std::uintmax_t>{123});
+    QCOMPARE(plan.addons.front().longestEntry, std::optional<std::size_t>{77});
+    QVERIFY(!plan.addons.back().bytes.has_value());
+    QVERIFY(!plan.addons.back().longestEntry.has_value());
 }
 
 void DeletionServiceTest::DeletingAnEnabledAddonRemovesEveryLinkBeforeTheFolder()

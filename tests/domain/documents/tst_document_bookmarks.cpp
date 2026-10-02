@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <optional>
-#include <string>
 #include <vector>
 
 #include "domain/documents/DocumentBookmarks.h"

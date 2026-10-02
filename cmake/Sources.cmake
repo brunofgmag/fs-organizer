@@ -22,6 +22,7 @@ set(DOMAIN_SOURCES
         src/domain/linking/DisableLinks.cpp
         src/domain/linking/EntryClassifier.cpp
         src/domain/linking/LinkingEngine.cpp
+        src/domain/linking/LinksByTarget.cpp
         src/domain/linking/RepairPlan.cpp
         src/domain/model/PackageVersion.cpp
         src/domain/preset/PresetPlan.cpp
@@ -188,6 +189,7 @@ set(VIEW_SOURCES
         src/view/delegates/CenteredCheckDelegate.cpp
         src/view/delegates/FittedText.cpp
         src/view/delegates/PlainTextDelegate.cpp
+        src/view/delegates/WithoutTheFocusFrame.cpp
         src/view/presets/OmittedDialog.cpp
         src/view/presets/PresetPlanPanel.cpp
         src/view/presets/PresetStartupPanel.cpp
@@ -218,6 +220,7 @@ set(VIEW_SOURCES
         src/view/panels/EmptyState.cpp
         src/view/panels/ModelRowDetail.cpp
         src/view/panels/PanelRail.cpp
+        src/view/panels/ScrollBarCap.cpp
         src/view/shell/TriageStrip.cpp
         src/view/theme/ModernistPaint.cpp
         src/view/theme/ModernistStyle.cpp

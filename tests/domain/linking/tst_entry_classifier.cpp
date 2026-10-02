@@ -46,6 +46,23 @@ namespace
         static void AFolderTheAppNeverLinkedIsStillUnmanaged();
         static void AFolderStandingWhereTheAppLinkedIsUnmanagedOnceTheLibraryCopyIsGone();
         static void ASubstitutedEntryIsNotEnabledSoTheLibraryStopsCountingIt();
+        static void RefreshingAfterALinkWasRemovedEqualsAFullResolve();
+        static void RefreshingAfterALinkWasAddedEqualsAFullResolve();
+        static void ADuplicatePairThatLosesAMemberLeavesTheSurvivorManaged();
+        static void ALinkAddedThatCreatesADuplicateMarksBothMembers();
+        static void ARepointedLinkReclassifiesTheGroupItLeftAndTheGroupItJoined();
+        static void AnEntryOutsideTheChangedSetIsLeftAsItWas();
+        static void AnEntryThatAppearedWithoutBeingAnnouncedIsClassifiedAnyway();
+        static void AnEntryThatWentAwayWithoutBeingAnnouncedStopsHoldingItsGroupTogether();
+        static void LinksAtAnswersOnlyForThePlacesThatAreLinks();
+        static void EntriesOnDifferentVolumesAreEachJudgedOnTheirOwnInOneRead();
+        static void WhenTwoExternalsNameTheSameAddonTheFirstOneIsTheOrigin();
+        static void WhenTwoExternalsNameTheSameFolderTheFirstLibraryCopyIsTheOneReported();
+        static void ManyOriginsOnTheSameRootAskTheVolumeOnceInOneRead();
+        static void ManyLibraryCopiesOfSubstitutedFoldersAskTheirVolumeOnceInOneRead();
+        static void RefreshReadsTheTouchedPlacesInOneBatchAndNoneOneByOne();
+        static void RefreshReadsTheStalePlacesInOneBatchAndNoneOneByOne();
+        static void LinksAtReadsEveryPlaceInOneBatch();
     };
 
     constexpr auto kVendorFolder = "C:/Program Files (x86)/Addon Manager/MSFS/gsx-pro";
@@ -61,6 +78,66 @@ namespace
         FakeFilesystemProbe filesystemProbe{fileSystem};
         EntryClassifier classifier{linkService, filesystemProbe};
     };
+
+    constexpr auto kCommunity = "E:/Sim/Community";
+    constexpr auto kCommunity2024 = "E:/Sim/Community2024";
+    constexpr auto kAddonA = "D:/Library/Aircrafts/addon-a";
+    constexpr auto kAddonB = "D:/Library/Aircrafts/addon-b";
+    constexpr auto kAddonC = "D:/Library/Aircrafts/addon-c";
+
+    struct RefreshFixture : Fixture
+    {
+        RefreshFixture()
+        {
+            fileSystem.AddDirectory(kCommunity);
+            fileSystem.AddDirectory(kCommunity2024);
+            fileSystem.AddDirectory(kAddonA);
+            fileSystem.AddDirectory(kAddonB);
+            fileSystem.AddDirectory(kAddonC);
+        }
+
+        [[nodiscard]] std::vector<DestinationEntry> Full() const
+        {
+            return classifier.Resolve(roots, libraries);
+        }
+
+        [[nodiscard]] std::vector<DestinationEntry> Incremental(const std::vector<DestinationEntry>& known,
+                                                                const std::vector<std::filesystem::path>& changed) const
+        {
+            return classifier.Refresh(known, changed, roots, libraries);
+        }
+
+        [[nodiscard]] static EntryClassification ClassificationOf(const std::vector<DestinationEntry>& entries,
+                                                                  const std::filesystem::path& place)
+        {
+            const auto found = std::ranges::find_if(entries,
+                                                    [&place](const DestinationEntry& entry)
+                                                    {
+                                                        return entry.path == place;
+                                                    });
+
+            return found == entries.end() ? EntryClassification::Unmanaged : found->classification;
+        }
+
+        std::vector<std::filesystem::path> roots{kCommunity, kCommunity2024};
+        std::vector<std::filesystem::path> libraries{"D:/Library"};
+    };
+
+    void VerifyTheSameEntries(const std::vector<DestinationEntry>& incremental,
+                              const std::vector<DestinationEntry>& full)
+    {
+        QCOMPARE(incremental.size(), full.size());
+
+        for (std::size_t index = 0; index < full.size(); ++index)
+        {
+            QCOMPARE(incremental[index].path, full[index].path);
+            QCOMPARE(incremental[index].target, full[index].target);
+            QCOMPARE(incremental[index].classification, full[index].classification);
+            QCOMPARE(incremental[index].externalOrigin, full[index].externalOrigin);
+            QCOMPARE(incremental[index].libraryCopy, full[index].libraryCopy);
+            QCOMPARE(incremental[index].theOtherProgramTookItsFolderBack, full[index].theOtherProgramTookItsFolderBack);
+        }
+    }
 
     struct FixtureWithAJournal
     {
@@ -549,6 +626,333 @@ void EntryClassifierTest::ASubstitutedEntryIsNotEnabledSoTheLibraryStopsCounting
 
     QVERIFY(EnabledAddonFolders(entries).empty());
     QVERIFY(LinksPointingAt(entries, kLibraryCopy).empty());
+}
+
+void EntryClassifierTest::RefreshingAfterALinkWasRemovedEqualsAFullResolve()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-c", kAddonC);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community/addon-a"));
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {"E:/Sim/Community/addon-a"});
+
+    QCOMPARE(incremental.size(), std::size_t{2});
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::RefreshingAfterALinkWasAddedEqualsAFullResolve()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddDirectory("E:/Sim/Community2024/a-physical-folder");
+    const std::vector<DestinationEntry> known = f.Full();
+
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {"E:/Sim/Community/addon-b"});
+
+    QCOMPARE(incremental.size(), std::size_t{3});
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-b"), EntryClassification::Managed);
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::ADuplicatePairThatLosesAMemberLeavesTheSurvivorManaged()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    QCOMPARE(f.ClassificationOf(known, "E:/Sim/Community2024/addon-a"), EntryClassification::Duplicated);
+
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community/addon-a"));
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {"E:/Sim/Community/addon-a"});
+
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community2024/addon-a"), EntryClassification::Managed);
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::ALinkAddedThatCreatesADuplicateMarksBothMembers()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonA);
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {"E:/Sim/Community2024/addon-a"});
+
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-a"), EntryClassification::Duplicated);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community2024/addon-a"), EntryClassification::Duplicated);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-b"), EntryClassification::Managed);
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::ARepointedLinkReclassifiesTheGroupItLeftAndTheGroupItJoined()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community2024/addon-a"));
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonB);
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {"E:/Sim/Community2024/addon-a"});
+
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-a"), EntryClassification::Managed);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-b"), EntryClassification::Duplicated);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community2024/addon-a"), EntryClassification::Duplicated);
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::AnEntryOutsideTheChangedSetIsLeftAsItWas()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    QVERIFY(f.fileSystem.RemoveNode(kAddonB));
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {"E:/Sim/Community/addon-a"});
+
+    QCOMPARE(f.ClassificationOf(f.Full(), "E:/Sim/Community/addon-b"), EntryClassification::Broken);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-b"), EntryClassification::Managed);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-a"), EntryClassification::Managed);
+}
+
+void EntryClassifierTest::AnEntryThatAppearedWithoutBeingAnnouncedIsClassifiedAnyway()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonA);
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {});
+
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-a"), EntryClassification::Duplicated);
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::AnEntryThatWentAwayWithoutBeingAnnouncedStopsHoldingItsGroupTogether()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonA);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community2024/addon-a"));
+
+    const std::vector<DestinationEntry> incremental = f.Incremental(known, {});
+
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-a"), EntryClassification::Managed);
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::LinksAtAnswersOnlyForThePlacesThatAreLinks()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddDirectory("E:/Sim/Community/a-physical-folder");
+    f.fileSystem.AddLink("E:/Sim/Community/a-dead-link", "D:/Library/Aircrafts/gone");
+
+    const std::vector<DestinationEntry> links =
+        f.classifier.LinksAt({"E:/Sim/Community/addon-a", "E:/Sim/Community/a-physical-folder",
+                              "E:/Sim/Community/a-dead-link", "E:/Sim/Community/nothing-here"},
+                             f.libraries);
+
+    QCOMPARE(links.size(), std::size_t{2});
+    QCOMPARE(links.front().path, std::filesystem::path{"E:/Sim/Community/addon-a"});
+    QCOMPARE(links.front().classification, EntryClassification::Managed);
+    QCOMPARE(links.front().target, std::filesystem::path{kAddonA});
+    QCOMPARE(links.back().classification, EntryClassification::Broken);
+}
+
+void EntryClassifierTest::EntriesOnDifferentVolumesAreEachJudgedOnTheirOwnInOneRead()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddDirectory("Y:/Library/kept");
+    f.fileSystem.AddLink("E:/Sim/Community/away-1", "Z:/Library/away-1");
+    f.fileSystem.AddLink("E:/Sim/Community/kept", "Y:/Library/kept");
+    f.fileSystem.AddLink("E:/Sim/Community/away-2", "Z:/Library/away-2");
+    f.fileSystem.MarkVolumeUnavailable("Z:/");
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"Y:/Library", "Z:/Library"});
+
+    QCOMPARE(entries.size(), std::size_t{3});
+    QCOMPARE(RefreshFixture::ClassificationOf(entries, "E:/Sim/Community/away-1"), EntryClassification::Unavailable);
+    QCOMPARE(RefreshFixture::ClassificationOf(entries, "E:/Sim/Community/kept"), EntryClassification::Managed);
+    QCOMPARE(RefreshFixture::ClassificationOf(entries, "E:/Sim/Community/away-2"), EntryClassification::Unavailable);
+}
+
+void EntryClassifierTest::WhenTwoExternalsNameTheSameAddonTheFirstOneIsTheOrigin()
+{
+    const std::filesystem::path first = "C:/Vendor/MSFS/first-gsx-pro";
+    const std::filesystem::path second = "C:/Vendor/MSFS/second-gsx-pro";
+
+    Fixture f;
+    f.fileSystem.AddDirectory(kLibraryCopy);
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddLink("E:/Sim/Community/gsx-pro", kLibraryCopy);
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"},
+                             {ExternalAddon{.addonFolder = kLibraryCopy, .externalPath = first},
+                              ExternalAddon{.addonFolder = "d:/LIBRARY/Utilities/GSX-PRO", .externalPath = second}});
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().externalOrigin, first);
+}
+
+void EntryClassifierTest::WhenTwoExternalsNameTheSameFolderTheFirstLibraryCopyIsTheOneReported()
+{
+    const std::filesystem::path firstCopy = "D:/Library/Utilities/first-copy";
+    const std::filesystem::path secondCopy = "D:/Library/Utilities/second-copy";
+
+    Fixture f;
+    f.fileSystem.AddDirectory(kVendorFolder);
+    f.fileSystem.AddDirectory(firstCopy);
+    f.fileSystem.AddDirectory(secondCopy);
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+    f.fileSystem.AddLink("E:/Sim/Community/gsx-pro", kVendorFolder);
+
+    const std::vector<DestinationEntry> entries =
+        f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"},
+                             {ExternalAddon{.addonFolder = firstCopy, .externalPath = kVendorFolder},
+                              ExternalAddon{.addonFolder = secondCopy, .externalPath = kVendorFolder}});
+
+    QCOMPARE(entries.size(), std::size_t{1});
+    QCOMPARE(entries.front().classification, EntryClassification::Divergent);
+    QCOMPARE(entries.front().libraryCopy, firstCopy);
+}
+
+void EntryClassifierTest::ManyOriginsOnTheSameRootAskTheVolumeOnceInOneRead()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+
+    std::vector<ExternalAddon> externals;
+    for (const std::string name : {"gsx-pro", "navigraph", "fenix-a320"})
+    {
+        const std::filesystem::path copy = "D:/Library/Utilities/" + name;
+        f.fileSystem.AddDirectory(copy);
+        f.fileSystem.AddLink("E:/Sim/Community/" + name, copy);
+        externals.push_back(ExternalAddon{.addonFolder = copy, .externalPath = "Y:/Vendor/MSFS/" + name});
+    }
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"}, externals);
+
+    QCOMPARE(entries.size(), std::size_t{3});
+    QCOMPARE(f.filesystemProbe.TimesTheVolumeWasAsked("Y:/"), std::size_t{1});
+    QCOMPARE(f.filesystemProbe.TimesTheVolumeWasAsked("D:/"), std::size_t{1});
+}
+
+void EntryClassifierTest::ManyLibraryCopiesOfSubstitutedFoldersAskTheirVolumeOnceInOneRead()
+{
+    FixtureWithAJournal f;
+    f.fileSystem.AddDirectory("E:/Sim/Community");
+
+    for (const std::string name : {"gsx-pro", "navigraph", "fenix-a320"})
+    {
+        const std::filesystem::path copy = "D:/Library/Utilities/" + name;
+        f.fileSystem.AddDirectory(copy);
+        f.fileSystem.AddDirectory("E:/Sim/Community/" + name);
+        f.theAppLinked.Remember("E:/Sim/Community/" + name, copy);
+    }
+
+    const std::vector<DestinationEntry> entries = f.classifier.Resolve({"E:/Sim/Community"}, {"D:/Library"});
+
+    QCOMPARE(entries.size(), std::size_t{3});
+    QCOMPARE(RefreshFixture::ClassificationOf(entries, "E:/Sim/Community/navigraph"), EntryClassification::Substituted);
+    QCOMPARE(f.filesystemProbe.TimesTheVolumeWasAsked("D:/"), std::size_t{1});
+}
+
+void EntryClassifierTest::RefreshReadsTheTouchedPlacesInOneBatchAndNoneOneByOne()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    const std::vector<DestinationEntry> known = f.Full();
+
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-c", kAddonC);
+    f.linkService.ForgetTheReads();
+
+    const std::vector<DestinationEntry> incremental =
+        f.Incremental(known, {"E:/Sim/Community/addon-b", "E:/Sim/Community2024/addon-c"});
+
+    QCOMPARE(incremental.size(), std::size_t{3});
+    QCOMPARE(f.linkService.SingleReads(), std::size_t{0});
+    QCOMPARE(f.linkService.BatchReads(), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
+    QCOMPARE(f.linkService.TimesRead("E:/Sim/Community/addon-a"), std::size_t{0});
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::RefreshReadsTheStalePlacesInOneBatchAndNoneOneByOne()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-a", kAddonA);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-b", kAddonB);
+    f.fileSystem.AddLink("E:/Sim/Community2024/addon-b", kAddonB);
+    f.fileSystem.AddLink("E:/Sim/Community/addon-c", kAddonC);
+    const std::vector<DestinationEntry> known = f.Full();
+    QCOMPARE(f.ClassificationOf(known, "E:/Sim/Community/addon-a"), EntryClassification::Duplicated);
+
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community2024/addon-a"));
+    QVERIFY(f.fileSystem.RemoveNode("E:/Sim/Community2024/addon-b"));
+    f.linkService.ForgetTheReads();
+
+    const std::vector<DestinationEntry> incremental =
+        f.Incremental(known, {"E:/Sim/Community2024/addon-a", "E:/Sim/Community2024/addon-b"});
+
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-a"), EntryClassification::Managed);
+    QCOMPARE(f.ClassificationOf(incremental, "E:/Sim/Community/addon-b"), EntryClassification::Managed);
+    QCOMPARE(f.linkService.SingleReads(), std::size_t{0});
+    QCOMPARE(f.linkService.BatchReads(), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), std::size_t{2});
+    QCOMPARE(f.linkService.TimesRead("E:/Sim/Community/addon-c"), std::size_t{0});
+    VerifyTheSameEntries(incremental, f.Full());
+}
+
+void EntryClassifierTest::LinksAtReadsEveryPlaceInOneBatch()
+{
+    RefreshFixture f;
+    f.fileSystem.AddLink("E:/Sim/Community/addon-a", kAddonA);
+    f.fileSystem.AddDirectory("E:/Sim/Community/a-physical-folder");
+    f.fileSystem.AddLink("E:/Sim/Community/a-dead-link", "D:/Library/Aircrafts/gone");
+
+    const std::vector<std::filesystem::path> places{"E:/Sim/Community/addon-a", "E:/Sim/Community/a-physical-folder",
+                                                    "E:/Sim/Community/a-dead-link", "E:/Sim/Community/nothing-here"};
+    f.linkService.ForgetTheReads();
+
+    const std::vector<DestinationEntry> links = f.classifier.LinksAt(places, f.libraries);
+
+    QCOMPARE(links.size(), std::size_t{2});
+    QCOMPARE(f.linkService.SingleReads(), std::size_t{0});
+    QCOMPARE(f.linkService.BatchReads(), std::size_t{1});
+    QCOMPARE(f.linkService.PlacesRead(), places.size());
+
+    f.linkService.ForgetTheReads();
+    const std::vector<DestinationEntry> classifiedAfterwards =
+        f.classifier.LinksAmong(places, f.classifier.TargetsAt(places), f.libraries);
+
+    QCOMPARE(f.linkService.PlacesRead(), places.size());
+    QCOMPARE(classifiedAfterwards.size(), links.size());
+    QCOMPARE(classifiedAfterwards.front().classification, links.front().classification);
+    QCOMPARE(classifiedAfterwards.back().classification, links.back().classification);
 }
 
 QTEST_APPLESS_MAIN(EntryClassifierTest)

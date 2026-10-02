@@ -1,5 +1,68 @@
 # Changelog
 
+## [0.56.5](https://github.com/brunofgmag/fs-organizer/compare/v0.56.4...v0.56.5) (2026-10-01)
+
+
+* pay the findings beside the third audit wave ([#207](https://github.com/brunofgmag/fs-organizer/issues/207)) ([7895e83](https://github.com/brunofgmag/fs-organizer/commit/7895e83a84f39f4c07ca7c752bb22997be93e56e))
+
+
+### Bug Fixes
+
+* pay the findings beside the third audit wave ([b173029](https://github.com/brunofgmag/fs-organizer/commit/b1730298165826284e95a1e876570946e4c26b05)) ([7895e83](https://github.com/brunofgmag/fs-organizer/commit/7895e83a84f39f4c07ca7c752bb22997be93e56e))
+
+## [0.56.4](https://github.com/brunofgmag/fs-organizer/compare/v0.56.3...v0.56.4) (2026-10-01)
+
+
+* run the third audit wave, show presets on two lines and refresh Diagnostics on a profile switch ([#205](https://github.com/brunofgmag/fs-organizer/issues/205)) ([d88b24c](https://github.com/brunofgmag/fs-organizer/commit/d88b24c0e078b8b77e6ffd43e18bb5790ee6ce4a))
+
+
+### Performance Improvements
+
+* run the third audit wave, show presets on two lines and refresh Diagnostics on a profile switch ([dcc0fa7](https://github.com/brunofgmag/fs-organizer/commit/dcc0fa7822dbaced3c923f767240c82e67a035f9)) ([d88b24c](https://github.com/brunofgmag/fs-organizer/commit/d88b24c0e078b8b77e6ffd43e18bb5790ee6ce4a))
+
+## [0.56.3](https://github.com/brunofgmag/fs-organizer/compare/v0.56.2...v0.56.3) (2026-10-01)
+
+
+* run the second audit wave and draw item views in the theme font ([#203](https://github.com/brunofgmag/fs-organizer/issues/203)) ([ac9b4bf](https://github.com/brunofgmag/fs-organizer/commit/ac9b4bf2c8fc5824d80801c7e828ae67cc6da803))
+
+
+### Performance Improvements
+
+* run the second audit wave and draw item views in the theme font ([60a335b](https://github.com/brunofgmag/fs-organizer/commit/60a335b10774173e10b98b580a5ea25a19addbfb)) ([ac9b4bf](https://github.com/brunofgmag/fs-organizer/commit/ac9b4bf2c8fc5824d80801c7e828ae67cc6da803))
+
+## [0.56.2](https://github.com/brunofgmag/fs-organizer/compare/v0.56.1...v0.56.2) (2026-10-01)
+
+
+* relink broken addons from the panel, fit the PDF reader in 1024 px and name dropped connections ([#201](https://github.com/brunofgmag/fs-organizer/issues/201)) ([58537a6](https://github.com/brunofgmag/fs-organizer/commit/58537a67b4ab06e8bb3738c86b4dd2a245c51afe))
+
+
+### Bug Fixes
+
+* relink broken addons from the panel, fit the PDF reader in 1024 px and name dropped connections ([91306c6](https://github.com/brunofgmag/fs-organizer/commit/91306c63d84498bd2812308ac26708c465245938)) ([58537a6](https://github.com/brunofgmag/fs-organizer/commit/58537a67b4ab06e8bb3738c86b4dd2a245c51afe))
+
+## [0.56.1](https://github.com/brunofgmag/fs-organizer/compare/v0.56.0...v0.56.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* zoom by how far the wheel turned and clear the clang-tidy findings ([f3591fa](https://github.com/brunofgmag/fs-organizer/commit/f3591faaee1e37b29b9cf933ad72819c7d1c58a2)) ([634c4a3](https://github.com/brunofgmag/fs-organizer/commit/634c4a3f11d948bc59ebf2c8fdbc6c4be3eb1767))
+
+
+### Performance Improvements
+
+* move the entries reads off the UI thread and fix what the performance audit found ([#199](https://github.com/brunofgmag/fs-organizer/issues/199)) ([634c4a3](https://github.com/brunofgmag/fs-organizer/commit/634c4a3f11d948bc59ebf2c8fdbc6c4be3eb1767))
+* read the entries off the UI thread and fix the defects the performance audit found ([81feb43](https://github.com/brunofgmag/fs-organizer/commit/81feb4376953e82ee0d1d67959bc7ee7e32fa7f2)) ([634c4a3](https://github.com/brunofgmag/fs-organizer/commit/634c4a3f11d948bc59ebf2c8fdbc6c4be3eb1767))
+
+## [0.56.0](https://github.com/brunofgmag/fs-organizer/compare/v0.55.0...v0.56.0) (2026-09-30)
+
+
+* filter the library by state, speed up toggling and line the side panels up with their tables ([#197](https://github.com/brunofgmag/fs-organizer/issues/197)) ([3f92b4f](https://github.com/brunofgmag/fs-organizer/commit/3f92b4f669ba1dd869deda740984a096b566dc45))
+
+
+### Features
+
+* filter the library by state, speed up toggling and line the side panels up with their tables ([03e6b58](https://github.com/brunofgmag/fs-organizer/commit/03e6b5884146be885f4add1b92e4365126d34da7)) ([3f92b4f](https://github.com/brunofgmag/fs-organizer/commit/3f92b4f669ba1dd869deda740984a096b566dc45))
+
 ## [0.55.0](https://github.com/brunofgmag/fs-organizer/compare/v0.54.13...v0.55.0) (2026-09-26)
 
 

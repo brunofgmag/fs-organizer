@@ -2,7 +2,6 @@
 
 #include "application/LibraryOrganizer.h"
 #include "application/Session.h"
-#include "domain/importing/ExternalSidecar.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/model/CategoryMarker.h"
 #include "domain/support/PathUtils.h"
@@ -43,11 +42,27 @@ namespace
         static void ADestinationAskedForOutsideEveryLibraryChangesNothingAndSavesNothing();
         static void RefreshingTheEntriesSeesALinkThatAppearedAfterTheScan();
         static void RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan();
+        static void RefreshingTheEntriesReadsTheDiskInAWorkerAndAdoptsItWhereTheWorkerLands();
+        static void RefreshingTheEntriesWhileOneIsBeingReadStartsExactlyOneMoreAfterItLands();
+        static void EntriesReadWhileAScanLandedAreDiscardedInsteadOfOverwritingTheScan();
+        static void EntriesAdoptedWhileOneIsBeingReadAreNotOverwrittenByTheOlderRead();
+        static void DroppingTheOverridesWhileEntriesAreBeingReadReadsThemAgainAfterwards();
         static void RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated();
+        static void RefreshingTheStartupEntriesThatHaveNotChangedAnnouncesNothing();
         static void CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt();
         static void RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain();
         static void ARefusedCategoryLeavesTheProfileAndTheDiskAlone();
         static void TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALink();
+        static void AdoptingAnEntriesReadTakesEverythingItCarriesWithoutReadingTheDiskAndAnnouncesOnce();
+        static void EntriesReadForTheCurrentProfileAreAdoptedWithoutReadingTheDiskAgain();
+        static void EntriesReadBeforeAnotherAdoptionAreDiscardedAndTheCurrentOneIsRead();
+        static void AnEntriesReadThatBeganBeforeTheStartupListChangedDoesNotOverwriteIt();
+        static void EntriesReadForAProfileWithOtherDestinationsAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileWithAnotherIdAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileWithOtherLibrariesAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileWithOtherExternalOriginsAreDiscardedAndTheCurrentOneIsRead();
+        static void EntriesReadForAProfileThatOnlyDiffersInItsOverridesAreStillAdopted();
+        static void TheSimulatorReadingTheWorkerTookDecidesTheWarningWithoutAskingTheProbeAgain();
         static void MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain();
         static void UnregisteringALibraryLeavesTheDiskUntouchedAndItsLinksBecomeThirdParty();
         static void RepointingADestinationCarriesTheOverrideAndReadsTheDiskAgain();
@@ -64,13 +79,34 @@ namespace
         static void ImportingALegacyLibraryScansInAWorkerAndTheTreeLandsWithIt();
         static void AnOverridePointingNowhereIsReportedInsteadOfDisappearingOnItsOwn();
         static void DroppingTheOverridesThatPointNowhereWritesTheProfileWithoutAnotherScan();
-        static void AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgain();
+        static void AnImportFromAnotherProgramIsRememberedInTheSettingsAndTheNextScanCarriesIt();
+        static void RememberingWhatCameFromAnotherProgramStartsNoScanOfItsOwn();
+        static void WhatWasRememberedSurvivesTheNextGestureThatSavesTheProfile();
+        static void WhatWasForgottenStaysForgottenAfterTheNextGestureThatSavesTheProfile();
         static void APlainImportRemembersNothingAndScansNothingAgain();
         static void MovingAnAddonCarriesTheRecordOfWhereItCameFrom();
         static void UnregisteringALibraryForgetsWhereItsAddonsCameFrom();
-        static void GivingAnAddonBackForgetsWhereItCameFromAndScansAgain();
+        static void GivingAnAddonBackForgetsWhereItCameFromAndTheNextScanSeesIt();
         static void ForgettingNothingNeitherSavesNorScans();
         static void RegisteringALibraryDeclaresTheStructureTheUserAlreadyBuilt();
+        static void ARegistrationStartedBeforeAnotherSaveIsNotAdoptedOverIt();
+        static void ARegistrationStartedAfterTheLastSaveIsAdoptedAndSaved();
+        static void TwoRemovalsBeforeTheScanLandsBothSurvive();
+        static void ARegistrationStartedOnAProfileThatIsNoLongerInUseDoesNotBringItBack();
+        static void ARepointBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void RememberingBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void ForgettingBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void DroppingTheOverridesBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void OverridingADestinationBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void AdoptingTheStructureBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void TakingBackTheMarkersBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void CreatingACategoryBeforeTheScanOfARemovalLandsKeepsTheRemoval();
+        static void WhatWasRememberedWhileAScanIsInFlightIsInTheProfileOnceTheScansLand();
+        static void ARenameStartedBeforeAnotherSaveKeepsTheOtherSaveAndCarriesTheOverride();
+        static void AMoveStartedBeforeAnotherSaveKeepsTheOtherSaveAndCarriesTheOverride();
+        static void ACategoryRemovalStartedBeforeAnotherSaveKeepsTheOtherSaveAndForgetsTheOverride();
+        static void ALegacyImportStartedBeforeAnotherSaveIsRefusedAndStoresNothing();
+        static void ALegacyImportStartedAfterTheLastSaveIsAdopted();
     };
 }
 
@@ -78,6 +114,7 @@ namespace
 {
     constexpr auto kLibrary = "D:/MSFS 2024";
     constexpr auto kExtraLibrary = "D:/MSFS 2024 Extra";
+    constexpr auto kThirdLibrary = "D:/Third Library";
     constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
     constexpr auto kOtherDestination = "E:/Flight Simulator 2024/Community2024";
     constexpr auto kAircrafts = "D:/MSFS 2024/Aircrafts";
@@ -86,12 +123,62 @@ namespace
 
     LegacyImportReport ImportLegacy(Session& session, const LegacyImportRequest& request)
     {
-        Session::LegacyImport imported = session.ImportLegacyOn(session.Profile(), request);
+        Session::LegacyImport imported = session.ImportLegacyOn(session.BeginLegacyImport(), request);
         const LegacyImportReport report = imported.report;
 
-        session.AdoptTheLegacyImport(std::move(imported));
+        static_cast<void>(session.AdoptTheLegacyImport(std::move(imported)));
 
         return report;
+    }
+
+    LibraryReport Register(Session& session, const std::filesystem::path& path)
+    {
+        Session::LibraryRegistration registration = session.RegisterLibraryOn(session.BeginRegistration(), path);
+        const LibraryReport report = registration.report;
+
+        static_cast<void>(session.AdoptTheRegistration(std::move(registration)));
+
+        return report;
+    }
+
+    std::vector<std::string> LibraryPathsIn(const SimulatorProfile& profile)
+    {
+        std::vector<std::string> paths;
+        paths.reserve(profile.libraries.size());
+
+        for (const Library& library : profile.libraries)
+        {
+            paths.push_back(ComparablePath(library.path));
+        }
+
+        return paths;
+    }
+
+    std::vector<std::string> LibraryPathsStored(const FakeSettingsRepository& repository)
+    {
+        return LibraryPathsIn(repository.stored.profiles.front());
+    }
+
+    FileOperationResult
+    RenameTheCategory(Session& session, const std::filesystem::path& category, const std::string& name)
+    {
+        Session::ReorganizedLibrary reorganized =
+            session.RenameCategoryOn(session.BeginReorganization(), category, name);
+        const FileOperationResult result = reorganized.results.front();
+
+        session.AdoptTheReorganization(reorganized);
+
+        return result;
+    }
+
+    std::vector<FileOperationResult> MoveTheAddons(Session& session, const std::vector<AddonMove>& moves)
+    {
+        Session::ReorganizedLibrary reorganized = session.MoveAddonsOn(session.BeginReorganization(), moves);
+        const std::vector<FileOperationResult> results = reorganized.results;
+
+        session.AdoptTheReorganization(reorganized);
+
+        return results;
     }
 
     TreeNode AddonNode(const std::filesystem::path& path)
@@ -234,6 +321,46 @@ namespace
         RecordingSessionObserver observer;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, observer};
     };
+
+    void SeedTheSecondLibrary(Fixture& f)
+    {
+        f.Seed(
+            [](SimulatorProfile& profile)
+            {
+                profile.libraries.push_back(Library{.id = "library-2", .path = kExtraLibrary, .label = "Extra"});
+            });
+    }
+
+    void RemoveTheSecondLibraryWhileTheScanIsPending(Fixture& f)
+    {
+        f.session.ShowActiveProfile();
+        f.runner.defer = true;
+
+        f.session.UnregisterLibrary("library-2");
+    }
+
+    void LandEveryScan(Fixture& f)
+    {
+        while (f.runner.Pending())
+        {
+            f.runner.Finish();
+        }
+    }
+
+    [[nodiscard]] EntriesRead ReadWhileTheAddonIsLinked(Fixture& f, const SimulatorProfile& readFor)
+    {
+        const std::filesystem::path place = std::filesystem::path(kCommunity) / "pmdg-aircraft-77w";
+
+        f.fileSystem.AddLink(place, kAddon);
+
+        EntriesRead read = f.service.ReadEntries(
+            EntriesStamp{.profile = readFor, .adoptions = f.session.StampForAnEntriesRead().adoptions},
+            f.session.Snapshot().libraries);
+
+        static_cast<void>(f.fileSystem.RemoveNode(place));
+
+        return read;
+    }
 }
 
 void SessionTest::TheProfileAndItsSnapshotOnlyLandTogetherWhenTheScanFinishes()
@@ -340,7 +467,7 @@ void SessionTest::TheSettingsFileIsNeverReadAgainAfterTheSessionIsBuilt()
 
     f.session.ShowActiveProfile();
     f.session.ChooseProfile("msfs2020");
-    static_cast<void>(f.session.RegisterLibrary(kExtraLibrary));
+    static_cast<void>(Register(f.session, kExtraLibrary));
     static_cast<void>(f.session.RemoveProfile("msfs2020"));
 
     QCOMPARE(f.settings.loads, 0);
@@ -354,7 +481,7 @@ void SessionTest::RegisteringALibrarySavesTheProfileAndReadsTheDiskAgain()
     f.fileSystem.AddDirectory(kExtraLibrary);
     f.catalog.SetTree(kExtraLibrary, TreeNode{});
 
-    const LibraryReport report = f.session.RegisterLibrary(kExtraLibrary);
+    const LibraryReport report = Register(f.session, kExtraLibrary);
 
     QVERIFY(report.Accepted());
     QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
@@ -433,6 +560,125 @@ void SessionTest::RefreshingTheEntriesSeesACopyThatAppearedAfterTheScan()
     QCOMPARE(f.session.Snapshot().conflicts.Count(), std::size_t{1});
 }
 
+void SessionTest::RefreshingTheEntriesReadsTheDiskInAWorkerAndAdoptsItWhereTheWorkerLands()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kAddon);
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.RefreshEntries();
+
+    QVERIFY(f.runner.Pending());
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+
+    f.runner.Finish();
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    QVERIFY(!f.runner.Pending());
+}
+
+void SessionTest::RefreshingTheEntriesWhileOneIsBeingReadStartsExactlyOneMoreAfterItLands()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
+
+    f.session.RefreshEntries();
+    f.session.RefreshEntries();
+    f.session.RefreshEntries();
+
+    QCOMPARE(f.runner.runs, runsBefore + 1);
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.runner.runs, runsBefore + 2);
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.runner.runs, runsBefore + 2);
+    QVERIFY(!f.runner.Pending());
+    QCOMPARE(f.observer.refreshed, 2);
+}
+
+void SessionTest::EntriesReadWhileAScanLandedAreDiscardedInsteadOfOverwritingTheScan()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.RefreshEntries();
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{2});
+
+    f.runner.FinishNewestDone();
+
+    QVERIFY(!f.session.Scanning());
+
+    const int refreshedBefore = f.observer.refreshed;
+    f.runner.Finish();
+
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+    QVERIFY(!f.runner.Pending());
+}
+
+void SessionTest::EntriesAdoptedWhileOneIsBeingReadAreNotOverwrittenByTheOlderRead()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.RefreshEntries();
+    f.session.AdoptTheEntriesRead(ReadWhileTheAddonIsLinked(f, f.session.Profile()));
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+
+    const int refreshedBefore = f.observer.refreshed;
+    f.runner.Finish();
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+}
+
+void SessionTest::DroppingTheOverridesWhileEntriesAreBeingReadReadsThemAgainAfterwards()
+{
+    Fixture f;
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Aircrafts",
+                                                                .destination = "E:/Flight Simulator 2024/Retired"}};
+        });
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.RefreshEntries();
+    f.session.DropOverridesPointingNowhere();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.fileSystem.AddLink(std::filesystem::path(kCommunity) / "pmdg-aircraft-77w", kAddon);
+    f.runner.Finish();
+
+    QCOMPARE(f.runner.HowManyPending(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QVERIFY(!f.runner.Pending());
+}
+
 void SessionTest::RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocated()
 {
     Fixture f;
@@ -446,6 +692,26 @@ void SessionTest::RefreshingTheStartupEntriesSeesWhatTheFileHoldsAfterItIsLocate
     QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
     QCOMPARE(QString::fromStdString(f.session.Snapshot().startupEntries.front().label), QString{"Fenix"});
     QCOMPARE(f.observer.refreshed, 1);
+}
+
+void SessionTest::RefreshingTheStartupEntriesThatHaveNotChangedAnnouncesNothing()
+{
+    Fixture f;
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.session.ShowActiveProfile();
+
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.observer.refreshed, refreshedBefore);
+
+    QCOMPARE(f.startup.entries.Switch("C:/Tools/Fenix.exe", false), FileResult::Completed);
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
 }
 
 void SessionTest::CreatingACategoryReadsTheDiskAgainSoTheTreeShowsIt()
@@ -473,7 +739,7 @@ void SessionTest::RenamingACategorySavesTheCarriedOverridesAndReadsTheDiskAgain(
         });
     f.session.ShowActiveProfile();
 
-    const FileOperationResult result = f.session.RenameCategory(kAircrafts, "Airplanes");
+    const FileOperationResult result = RenameTheCategory(f.session, kAircrafts, "Airplanes");
 
     QCOMPARE(result.result, FileResult::Completed);
     QVERIFY(f.fileSystem.Exists("D:/MSFS 2024/Airplanes"));
@@ -495,7 +761,7 @@ void SessionTest::ARefusedCategoryLeavesTheProfileAndTheDiskAlone()
     f.session.ShowActiveProfile();
     f.processProbe.ReportTheSimulatorAsRunning();
 
-    QCOMPARE(f.session.RenameCategory(kAircrafts, "Airplanes").result, FileResult::TheSimulatorIsRunning);
+    QCOMPARE(RenameTheCategory(f.session, kAircrafts, "Airplanes").result, FileResult::TheSimulatorIsRunning);
     QCOMPARE(f.session.CreateCategory(kLibrary, "Sceneries").result, FileResult::TheSimulatorIsRunning);
 
     QVERIFY(!f.fileSystem.Exists("D:/MSFS 2024/Airplanes"));
@@ -520,7 +786,7 @@ void SessionTest::MovingAnAddonCarriesItsOverrideAndReadsTheDiskAgain()
     f.session.ShowActiveProfile();
 
     const std::vector<FileOperationResult> results =
-        f.session.MoveAddons({AddonMove{.addonFolder = kAddon, .category = kSceneries}});
+        MoveTheAddons(f.session, {AddonMove{.addonFolder = kAddon, .category = kSceneries}});
 
     QCOMPARE(results.size(), std::size_t{1});
     QCOMPARE(results.front().result, FileResult::Completed);
@@ -542,11 +808,215 @@ void SessionTest::TheSimulatorWarningIsGivenOncePerSessionNoMatterWhoChangedALin
                             .kind = OperationKind::EnableAddon,
                             .outcome = LinkOutcome::Success()}};
 
-    f.session.NoteLinkResults(changed);
-    f.session.NoteLinkResults(changed);
+    f.session.NoteLinkResults(changed, f.session.SimulatorIsRunningAfter(changed));
+    f.session.NoteLinkResults(changed, f.session.SimulatorIsRunningAfter(changed));
 
     QCOMPARE(f.observer.simulatorWarnings, 1);
     QCOMPARE(f.observer.restartReports, 1);
+    QVERIFY(f.observer.restartPending);
+}
+
+void SessionTest::AdoptingAnEntriesReadTakesEverythingItCarriesWithoutReadingTheDiskAndAnnouncesOnce()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QVERIFY(f.session.Snapshot().startupEntries.empty());
+    QCOMPARE(f.session.Snapshot().conflicts.Count(), std::size_t{0});
+
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.fileSystem.AddDirectory(std::filesystem::path(kCommunity) / "pmdg-aircraft-77w");
+
+    EntriesRead read = f.service.ReadEntries(f.session.StampForAnEntriesRead(), f.session.Snapshot().libraries);
+
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+    const std::size_t startupReadsBefore = f.startup.entries.reads;
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.AdoptTheEntriesRead(std::move(read));
+
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+    QCOMPARE(f.session.Snapshot().conflicts.Count(), std::size_t{1});
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+    QCOMPARE(f.startup.entries.reads, startupReadsBefore);
+}
+
+namespace
+{
+    void ExpectTheEntriesToBeDiscardedWhenReadFor(Fixture& f, const std::function<void(SimulatorProfile&)>& change)
+    {
+        f.session.ShowActiveProfile();
+
+        SimulatorProfile other = f.session.Profile();
+        change(other);
+
+        EntriesRead read = ReadWhileTheAddonIsLinked(f, other);
+
+        const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+        const int refreshedBefore = f.observer.refreshed;
+
+        f.session.AdoptTheEntriesRead(std::move(read));
+
+        QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+        QVERIFY(f.session.Snapshot().entries.empty());
+        QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore + 1);
+        QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    }
+}
+
+void SessionTest::EntriesReadForTheCurrentProfileAreAdoptedWithoutReadingTheDiskAgain()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    EntriesRead read = ReadWhileTheAddonIsLinked(f, f.session.Profile());
+
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+    const int refreshedBefore = f.observer.refreshed;
+
+    f.session.AdoptTheEntriesRead(std::move(read));
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.session.Snapshot().entries.size(), std::size_t{1});
+    QCOMPARE(f.observer.refreshed, refreshedBefore + 1);
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+}
+
+void SessionTest::EntriesReadBeforeAnotherAdoptionAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    EntriesRead read = ReadWhileTheAddonIsLinked(f, f.session.Profile());
+
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.session.RefreshStartupEntries();
+
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+
+    f.session.AdoptTheEntriesRead(std::move(read));
+
+    QVERIFY(!f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore + 1);
+}
+
+void SessionTest::AnEntriesReadThatBeganBeforeTheStartupListChangedDoesNotOverwriteIt()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.RefreshEntries();
+    f.runner.RunPendingWork();
+
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = "C:/Tools/Fenix.exe", .enabled = true});
+    f.session.RefreshStartupEntries();
+
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+
+    f.runner.Finish();
+
+    QCOMPARE(f.session.Snapshot().startupEntries.size(), std::size_t{1});
+}
+
+void SessionTest::EntriesReadForAProfileWithOtherDestinationsAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(f,
+                                             [](SimulatorProfile& profile)
+                                             {
+                                                 profile.destinations = {kOtherDestination};
+                                             });
+}
+
+void SessionTest::EntriesReadForAProfileWithAnotherIdAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(f,
+                                             [](SimulatorProfile& profile)
+                                             {
+                                                 profile.id = "msfs2020";
+                                             });
+}
+
+void SessionTest::EntriesReadForAProfileWithOtherLibrariesAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(
+        f,
+        [](SimulatorProfile& profile)
+        {
+            profile.libraries.push_back(Library{.id = "library-2", .path = kExtraLibrary, .label = "Extra"});
+        });
+}
+
+void SessionTest::EntriesReadForAProfileWithOtherExternalOriginsAreDiscardedAndTheCurrentOneIsRead()
+{
+    Fixture f;
+
+    ExpectTheEntriesToBeDiscardedWhenReadFor(f,
+                                             [](SimulatorProfile& profile)
+                                             {
+                                                 profile.externalOrigins.push_back(
+                                                     ExternalOrigin{.libraryId = "library-1",
+                                                                    .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                                    .externalPath = "F:/Elsewhere/pmdg-aircraft-77w"});
+                                             });
+}
+
+void SessionTest::EntriesReadForAProfileThatOnlyDiffersInItsOverridesAreStillAdopted()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    SimulatorProfile other = f.session.Profile();
+    other.destinationOverrides.push_back(DestinationOverride{
+        .libraryId = "library-1", .relativePath = "Aircrafts/pmdg-aircraft-77w", .destination = kOtherDestination});
+
+    EntriesRead read = ReadWhileTheAddonIsLinked(f, other);
+
+    const std::size_t enumeratedBefore = f.filesystemProbe.TimesEnumerated(kCommunity);
+
+    f.session.AdoptTheEntriesRead(std::move(read));
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(kAddon));
+    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity), enumeratedBefore);
+}
+
+void SessionTest::TheSimulatorReadingTheWorkerTookDecidesTheWarningWithoutAskingTheProbeAgain()
+{
+    Fixture f;
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const std::vector<LinkOperationResult> changed = {
+        LinkOperationResult{.addonId = AddonId{.libraryId = "library-1", .folderName = "pmdg-aircraft-77w"},
+                            .addonFolder = kAddon,
+                            .linkPath = "E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                            .kind = OperationKind::EnableAddon,
+                            .outcome = LinkOutcome::Success()}};
+
+    QVERIFY(f.session.SimulatorIsRunningAfter(changed));
+    QVERIFY(!f.session.SimulatorIsRunningAfter({}));
+
+    f.session.NoteLinkResults(changed, false);
+
+    QCOMPARE(f.observer.simulatorWarnings, 0);
+    QVERIFY(!f.observer.restartPending);
+
+    f.session.NoteLinkResults({}, true);
+
+    QCOMPARE(f.observer.simulatorWarnings, 0);
+
+    f.session.NoteLinkResults(changed, true);
+
+    QCOMPARE(f.observer.simulatorWarnings, 1);
     QVERIFY(f.observer.restartPending);
 }
 
@@ -749,12 +1219,12 @@ void SessionTest::ImportingALegacyLibraryScansInAWorkerAndTheTreeLandsWithIt()
     f.runner.defer = true;
 
     Session::LegacyImport imported = f.session.ImportLegacyOn(
-        f.session.Profile(), LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
+        f.session.BeginLegacyImport(), LegacyImportRequest{.libraryRoots = {kExtraLibrary}, .categories = {}});
 
     QCOMPARE(imported.report.librariesRegistered, std::size_t{1});
     QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
 
-    f.session.AdoptTheLegacyImport(std::move(imported));
+    QVERIFY(f.session.AdoptTheLegacyImport(std::move(imported)));
 
     QVERIFY2(f.runner.Pending(), "the legacy import scanned on the calling thread instead of the worker");
     QCOMPARE(f.session.Snapshot().libraries.size(), std::size_t{1});
@@ -833,7 +1303,7 @@ namespace
     }
 }
 
-void SessionTest::AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgain()
+void SessionTest::AnImportFromAnotherProgramIsRememberedInTheSettingsAndTheNextScanCarriesIt()
 {
     Fixture f;
     f.session.ShowActiveProfile();
@@ -845,7 +1315,64 @@ void SessionTest::AnImportFromAnotherProgramIsRememberedInTheSettingsAndReadAgai
     QCOMPARE(remembered.front().libraryId, LibraryId{"library-1"});
     QCOMPARE(ComparablePath(remembered.front().relativePath), ComparablePath("Aircrafts/gsx-pro"));
     QCOMPARE(remembered.front().externalPath, std::filesystem::path{kVendorFolder});
+    QCOMPARE(f.observer.started, 1);
+    QCOMPARE(f.session.Profile().externalOrigins.size(), std::size_t{1});
+
+    f.session.ShowActiveProfile();
+
     QCOMPARE(f.observer.started, 2);
+    QCOMPARE(f.session.Profile().externalOrigins.size(), std::size_t{1});
+}
+
+void SessionTest::WhatWasRememberedSurvivesTheNextGestureThatSavesTheProfile()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+
+    f.session.RememberWhatCameFromAnotherProgram({LandedFromAnotherProgram()});
+
+    const TreeNode addon = AddonNode(kAddon);
+    f.session.OverrideDestination({&addon}, kOtherDestination);
+
+    const SimulatorProfile& stored = f.settings.stored.profiles.front();
+    QCOMPARE(stored.externalOrigins.size(), std::size_t{1});
+    QCOMPARE(stored.externalOrigins.front().externalPath, std::filesystem::path{kVendorFolder});
+    QCOMPARE(stored.destinationOverrides.size(), std::size_t{1});
+}
+
+void SessionTest::WhatWasForgottenStaysForgottenAfterTheNextGestureThatSavesTheProfile()
+{
+    Fixture f;
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.externalOrigins = {ExternalOrigin{.libraryId = "library-1",
+                                                      .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                      .externalPath = kVendorFolder}};
+        });
+    f.session.ShowActiveProfile();
+
+    f.session.ForgetWhatCameFromAnotherProgram({kAddon});
+
+    const TreeNode addon = AddonNode(kAddon);
+    f.session.OverrideDestination({&addon}, kOtherDestination);
+
+    const SimulatorProfile& stored = f.settings.stored.profiles.front();
+    QVERIFY(stored.externalOrigins.empty());
+    QCOMPARE(stored.destinationOverrides.size(), std::size_t{1});
+}
+
+void SessionTest::RememberingWhatCameFromAnotherProgramStartsNoScanOfItsOwn()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
+
+    f.session.RememberWhatCameFromAnotherProgram({LandedFromAnotherProgram()});
+
+    QCOMPARE(f.runner.runs, runsBefore);
+    QVERIFY(!f.session.Scanning());
 }
 
 void SessionTest::APlainImportRemembersNothingAndScansNothingAgain()
@@ -877,7 +1404,7 @@ void SessionTest::MovingAnAddonCarriesTheRecordOfWhereItCameFrom()
     f.session.ShowActiveProfile();
 
     const std::vector<FileOperationResult> results =
-        f.session.MoveAddons({AddonMove{.addonFolder = kAddon, .category = kSceneries}});
+        MoveTheAddons(f.session, {AddonMove{.addonFolder = kAddon, .category = kSceneries}});
 
     QCOMPARE(results.front().result, FileResult::Completed);
     QCOMPARE(ComparablePath(f.settings.stored.profiles.front().externalOrigins.front().relativePath),
@@ -901,7 +1428,7 @@ void SessionTest::UnregisteringALibraryForgetsWhereItsAddonsCameFrom()
     QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
 }
 
-void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
+void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndTheNextScanSeesIt()
 {
     Fixture f;
     f.Seed(
@@ -913,10 +1440,19 @@ void SessionTest::GivingAnAddonBackForgetsWhereItCameFromAndScansAgain()
         });
     f.session.ShowActiveProfile();
 
+    f.runner.defer = true;
+    const int runsBefore = f.runner.runs;
+
     f.session.ForgetWhatCameFromAnotherProgram({kAddon});
 
     QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
-    QCOMPARE(f.observer.started, 2);
+    QCOMPARE(f.runner.runs, runsBefore);
+    QCOMPARE(f.observer.started, 1);
+
+    f.session.ShowActiveProfile();
+    f.runner.Finish();
+
+    QVERIFY(f.session.Profile().externalOrigins.empty());
 }
 
 void SessionTest::ForgettingNothingNeitherSavesNorScans()
@@ -946,11 +1482,410 @@ void SessionTest::RegisteringALibraryDeclaresTheStructureTheUserAlreadyBuilt()
     f.fileSystem.AddDirectory(std::filesystem::path(kExtraLibrary) / "Sceneries" / "Brazil");
     f.catalog.SetTree(kExtraLibrary, TreeNode{});
 
-    QVERIFY(f.session.RegisterLibrary(kExtraLibrary).Accepted());
+    QVERIFY(Register(f.session, kExtraLibrary).Accepted());
 
     QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary) / "Sceneries")));
     QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary) / "Sceneries" / "Brazil")));
     QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary))));
+}
+
+void SessionTest::ARegistrationStartedBeforeAnotherSaveIsNotAdoptedOverIt()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kExtraLibrary);
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kExtraLibrary, TreeNode{});
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.libraries.push_back(Library{.id = "library-2", .path = kExtraLibrary, .label = "Extra"});
+        });
+    f.session.ShowActiveProfile();
+
+    Session::LibraryRegistration registration = f.session.BeginRegistration();
+    registration = f.session.RegisterLibraryOn(std::move(registration), kThirdLibrary);
+
+    QVERIFY(registration.report.Accepted());
+
+    f.session.UnregisterLibrary("library-2");
+
+    const int scansBefore = f.observer.started;
+
+    QVERIFY(!f.session.AdoptTheRegistration(std::move(registration)));
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{1});
+    QCOMPARE(f.observer.started, scansBefore);
+}
+
+void SessionTest::ARegistrationStartedAfterTheLastSaveIsAdoptedAndSaved()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    f.session.ShowActiveProfile();
+
+    Session::LibraryRegistration registration =
+        f.session.RegisterLibraryOn(f.session.BeginRegistration(), kThirdLibrary);
+
+    QVERIFY(f.session.AdoptTheRegistration(std::move(registration)));
+
+    QCOMPARE(LibraryPathsStored(f.settings),
+             (std::vector<std::string>{ComparablePath(kLibrary), ComparablePath(kThirdLibrary)}));
+    QCOMPARE(f.session.Profile().libraries.size(), std::size_t{2});
+}
+
+void SessionTest::TwoRemovalsBeforeTheScanLandsBothSurvive()
+{
+    Fixture f;
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.libraries.push_back(Library{.id = "library-2", .path = kExtraLibrary, .label = "Extra"});
+            profile.libraries.push_back(Library{.id = "library-3", .path = kThirdLibrary, .label = "Third"});
+        });
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.UnregisterLibrary("library-2");
+    f.session.UnregisterLibrary("library-3");
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+}
+
+void SessionTest::ARegistrationStartedOnAProfileThatIsNoLongerInUseDoesNotBringItBack()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    SimulatorProfile other = Profile("msfs2020");
+    other.libraries.clear();
+    f.Add(other);
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.id = "msfs2024";
+        });
+    f.session.ChooseProfile("msfs2024");
+
+    Session::LibraryRegistration registration =
+        f.session.RegisterLibraryOn(f.session.BeginRegistration(), kThirdLibrary);
+
+    f.session.ChooseProfile("msfs2020");
+    const bool adopted = f.session.AdoptTheRegistration(std::move(registration));
+
+    QCOMPARE(f.session.Profile().id, std::string{"msfs2020"});
+    QCOMPARE(f.settings.stored.activeProfileId, std::string{"msfs2020"});
+    QVERIFY(!adopted);
+}
+
+void SessionTest::ARepointBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory("E:/Flight Simulator 2024/Community2025");
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.libraries.push_back(Library{.id = "library-2", .path = kExtraLibrary, .label = "Extra"});
+        });
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.UnregisterLibrary("library-2");
+    f.session.RepointDestination(kOtherDestination, "E:/Flight Simulator 2024/Community2025");
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(f.settings.stored.profiles.front().destinations[1],
+             std::filesystem::path("E:/Flight Simulator 2024/Community2025"));
+}
+
+void SessionTest::RememberingBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    SeedTheSecondLibrary(f);
+    RemoveTheSecondLibraryWhileTheScanIsPending(f);
+
+    f.session.RememberWhatCameFromAnotherProgram({LandedFromAnotherProgram()});
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(f.settings.stored.profiles.front().externalOrigins.size(), std::size_t{1});
+
+    LandEveryScan(f);
+
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(f.session.Profile().externalOrigins.size(), std::size_t{1});
+}
+
+void SessionTest::ForgettingBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    SeedTheSecondLibrary(f);
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.externalOrigins = {ExternalOrigin{.libraryId = "library-1",
+                                                      .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                      .externalPath = kVendorFolder}};
+        });
+    RemoveTheSecondLibraryWhileTheScanIsPending(f);
+
+    f.session.ForgetWhatCameFromAnotherProgram({kAddon});
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+    QVERIFY(f.settings.stored.profiles.front().externalOrigins.empty());
+
+    LandEveryScan(f);
+
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+    QVERIFY(f.session.Profile().externalOrigins.empty());
+}
+
+void SessionTest::DroppingTheOverridesBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    SeedTheSecondLibrary(f);
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Aircrafts",
+                                                                .destination = "E:/Flight Simulator 2024/Retired"}};
+        });
+    RemoveTheSecondLibraryWhileTheScanIsPending(f);
+
+    f.session.DropOverridesPointingNowhere();
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+    QVERIFY(f.settings.stored.profiles.front().destinationOverrides.empty());
+
+    LandEveryScan(f);
+
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+    QVERIFY(f.session.Profile().destinationOverrides.empty());
+}
+
+void SessionTest::OverridingADestinationBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    SeedTheSecondLibrary(f);
+    RemoveTheSecondLibraryWhileTheScanIsPending(f);
+
+    const TreeNode addon = AddonNode(kAddon);
+    f.session.OverrideDestination({&addon}, kOtherDestination);
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(f.settings.stored.profiles.front().destinationOverrides.size(), std::size_t{1});
+
+    LandEveryScan(f);
+
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(f.session.Profile().destinationOverrides.size(), std::size_t{1});
+}
+
+void SessionTest::AdoptingTheStructureBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    SeedTheSecondLibrary(f);
+    RemoveTheSecondLibraryWhileTheScanIsPending(f);
+
+    static_cast<void>(f.session.AdoptTheStructureOf("library-1"));
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+
+    LandEveryScan(f);
+
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+}
+
+void SessionTest::TakingBackTheMarkersBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    SeedTheSecondLibrary(f);
+    RemoveTheSecondLibraryWhileTheScanIsPending(f);
+
+    static_cast<void>(f.session.TakeBackTheMarkersOf("library-1"));
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+
+    LandEveryScan(f);
+
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+}
+
+void SessionTest::CreatingACategoryBeforeTheScanOfARemovalLandsKeepsTheRemoval()
+{
+    Fixture f;
+    SeedTheSecondLibrary(f);
+    RemoveTheSecondLibraryWhileTheScanIsPending(f);
+
+    QCOMPARE(f.session.CreateCategory(kLibrary, "Sceneries").result, FileResult::Completed);
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+
+    LandEveryScan(f);
+
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+}
+
+void SessionTest::WhatWasRememberedWhileAScanIsInFlightIsInTheProfileOnceTheScansLand()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.runner.defer = true;
+
+    f.session.ShowActiveProfile();
+    f.session.RememberWhatCameFromAnotherProgram({LandedFromAnotherProgram()});
+
+    QVERIFY(f.session.Scanning());
+
+    LandEveryScan(f);
+
+    QCOMPARE(f.session.Profile().externalOrigins.size(), std::size_t{1});
+    QCOMPARE(f.settings.stored.profiles.front().externalOrigins.size(), std::size_t{1});
+}
+
+void SessionTest::ARenameStartedBeforeAnotherSaveKeepsTheOtherSaveAndCarriesTheOverride()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kAircrafts);
+    SeedTheSecondLibrary(f);
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{
+                .libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+        });
+    f.session.ShowActiveProfile();
+
+    Session::ReorganizedLibrary reorganized =
+        f.session.RenameCategoryOn(f.session.BeginReorganization(), kAircrafts, "Airplanes");
+
+    QCOMPARE(reorganized.results.front().result, FileResult::Completed);
+
+    f.session.UnregisterLibrary("library-2");
+    f.session.AdoptTheReorganization(reorganized);
+
+    const SimulatorProfile& stored = f.settings.stored.profiles.front();
+    QCOMPARE(LibraryPathsIn(stored), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(stored.destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(ComparablePath(stored.destinationOverrides.front().relativePath), ComparablePath("Airplanes"));
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(ComparablePath(f.session.Profile().destinationOverrides.front().relativePath),
+             ComparablePath("Airplanes"));
+}
+
+void SessionTest::AMoveStartedBeforeAnotherSaveKeepsTheOtherSaveAndCarriesTheOverride()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kAircrafts);
+    f.fileSystem.AddDirectory(kSceneries);
+    SeedTheSecondLibrary(f);
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {DestinationOverride{.libraryId = "library-1",
+                                                                .relativePath = "Aircrafts/pmdg-aircraft-77w",
+                                                                .destination = kOtherDestination}};
+        });
+    f.session.ShowActiveProfile();
+
+    Session::ReorganizedLibrary reorganized = f.session.MoveAddonsOn(
+        f.session.BeginReorganization(), {AddonMove{.addonFolder = kAddon, .category = kSceneries}});
+
+    QCOMPARE(reorganized.results.front().result, FileResult::Completed);
+
+    f.session.UnregisterLibrary("library-2");
+    f.session.AdoptTheReorganization(reorganized);
+
+    const SimulatorProfile& stored = f.settings.stored.profiles.front();
+    QCOMPARE(LibraryPathsIn(stored), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(stored.destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(ComparablePath(stored.destinationOverrides.front().relativePath),
+             ComparablePath("Sceneries/pmdg-aircraft-77w"));
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(ComparablePath(f.session.Profile().destinationOverrides.front().relativePath),
+             ComparablePath("Sceneries/pmdg-aircraft-77w"));
+}
+
+void SessionTest::ACategoryRemovalStartedBeforeAnotherSaveKeepsTheOtherSaveAndForgetsTheOverride()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kSceneries);
+    f.fileSystem.AddFile(CategoryMarkerPathIn(kSceneries));
+    TreeNode library = LibraryTree();
+    TreeNode declared = CategoryNode(kSceneries, {});
+    declared.declaredAsCategory = true;
+    library.children.push_back(std::move(declared));
+    f.catalog.SetTree(kLibrary, std::move(library));
+    SeedTheSecondLibrary(f);
+    f.Seed(
+        [](SimulatorProfile& profile)
+        {
+            profile.destinationOverrides = {
+                DestinationOverride{
+                    .libraryId = "library-1", .relativePath = "Sceneries", .destination = kOtherDestination},
+                DestinationOverride{
+                    .libraryId = "library-1", .relativePath = "Aircrafts", .destination = kOtherDestination}};
+        });
+    f.session.ShowActiveProfile();
+
+    Session::ReorganizedLibrary reorganized = f.session.RemoveCategoryOn(f.session.BeginReorganization(), kSceneries);
+
+    QCOMPARE(reorganized.results.front().result, FileResult::Completed);
+
+    f.session.UnregisterLibrary("library-2");
+    f.session.AdoptTheReorganization(reorganized);
+
+    const SimulatorProfile& stored = f.settings.stored.profiles.front();
+    QCOMPARE(LibraryPathsIn(stored), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(stored.destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(ComparablePath(stored.destinationOverrides.front().relativePath), ComparablePath("Aircrafts"));
+    QCOMPARE(f.session.Profile().destinationOverrides.size(), std::size_t{1});
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+}
+
+void SessionTest::ALegacyImportStartedBeforeAnotherSaveIsRefusedAndStoresNothing()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    SeedTheSecondLibrary(f);
+    f.session.ShowActiveProfile();
+
+    Session::LegacyImport imported = f.session.ImportLegacyOn(
+        f.session.BeginLegacyImport(), LegacyImportRequest{.libraryRoots = {kThirdLibrary}, .categories = {}});
+
+    QCOMPARE(imported.report.librariesRegistered, std::size_t{1});
+
+    f.session.UnregisterLibrary("library-2");
+
+    const int scansBefore = f.observer.started;
+
+    QVERIFY(!f.session.AdoptTheLegacyImport(std::move(imported)));
+
+    QCOMPARE(LibraryPathsStored(f.settings), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), std::vector<std::string>{ComparablePath(kLibrary)});
+    QCOMPARE(f.observer.started, scansBefore);
+}
+
+void SessionTest::ALegacyImportStartedAfterTheLastSaveIsAdopted()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(kThirdLibrary);
+    f.catalog.SetTree(kThirdLibrary, TreeNode{});
+    SeedTheSecondLibrary(f);
+    f.session.ShowActiveProfile();
+    f.session.UnregisterLibrary("library-2");
+
+    Session::LegacyImport imported = f.session.ImportLegacyOn(
+        f.session.BeginLegacyImport(), LegacyImportRequest{.libraryRoots = {kThirdLibrary}, .categories = {}});
+
+    QVERIFY(f.session.AdoptTheLegacyImport(std::move(imported)));
+
+    const std::vector<std::string> expected{ComparablePath(kLibrary), ComparablePath(kThirdLibrary)};
+    QCOMPARE(LibraryPathsStored(f.settings), expected);
+    QCOMPARE(LibraryPathsIn(f.session.Profile()), expected);
 }
 
 QTEST_MAIN(SessionTest)

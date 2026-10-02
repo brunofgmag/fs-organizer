@@ -189,6 +189,7 @@ std::vector<ProposedLibrary> ProposeLibraries(const LegacyInstallation& installa
     if (NamesARoot(ancestor))
     {
         std::vector<ProposedLibrary> apart;
+        apart.reserve(entries.size());
 
         for (const std::filesystem::path& entry : entries)
         {

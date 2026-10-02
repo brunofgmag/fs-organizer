@@ -1,16 +1,20 @@
 #include <functional>
 
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSettings>
 #include <QtGui/QStandardItemModel>
 #include <QtTest/QtTest>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QScrollBar>
+#include <QtWidgets/QTableView>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 
+#include "tests/support/PhysicalRows.h"
 #include "view/panels/ContextPanel.h"
 #include "view/panels/ModelRowDetail.h"
 #include "view/panels/PanelRail.h"
@@ -40,6 +44,13 @@ namespace
         static void TheStripKeepsQuietUntilSomethingBreaks();
         static void ADuplicatedAddonGetsItsOwnItemAndAsksToBeSeen();
         static void ClosingThePanelAsksForIt();
+        static void TheTitleStripHoldsItsContentInsideItself();
+        static void TheTitleStripIsAsTallAsTheColumnHeaderNextToIt();
+        static void TheLeftLineRunsTheWholeHeightOfAnOpenPanel();
+        static void TheBodyShowsTheGroundTheThemeDeclaresForIt();
+        static void TheRailKeepsTheLeftLineOnTheColumnOfTheOpenPanel();
+        static void TheTitleStripStaysLevelWithTheColumnHeaderWhenTheApplicationFontGrows();
+        static void TheTitleStripFollowsTheColumnHeaderWhenItsHeightChanges();
         static void ContentTallerThanThePanelScrollsInsteadOfBeingSquashed();
         static void APathWiderThanThePanelNeverAsksForMoreRoomThanItHas();
         static void AFieldHandsOutExactlyTheTextItShows();
@@ -134,8 +145,12 @@ namespace
 
     RailShot RailShotOf(const QString& title, const bool alarming)
     {
+        QHeaderView nextDoor(Qt::Horizontal);
+        nextDoor.resize(400, 32);
+
         ContextPanel panel(QStringLiteral("Addon selected"));
         panel.setObjectName(QStringLiteral("spine-test"));
+        panel.LevelWith(&nextDoor);
         panel.Add(new QLabel(QStringLiteral("content")));
         panel.resize(380, 400);
         panel.show();
@@ -411,6 +426,249 @@ void ContextPanelTest::ClosingThePanelAsksForIt()
 
     panel.Summon(true);
     QVERIFY(!panel.isHidden());
+}
+
+namespace
+{
+    int StripHeightBesideATable(const QFont& font, int& headerHeight)
+    {
+        const QFont before = QApplication::font();
+        QApplication::setFont(font);
+
+        const auto restore = qScopeGuard(
+            [&before]
+            {
+                QApplication::setFont(before);
+            });
+
+        QWidget host;
+
+        auto* beside = new QHBoxLayout(&host);
+        beside->setContentsMargins(0, 0, 0, 0);
+        beside->setSpacing(0);
+
+        QStandardItemModel model(2, 2);
+        model.setHorizontalHeaderLabels({QStringLiteral("Name"), QStringLiteral("Destination")});
+
+        auto* table = new QTableView(&host);
+        table->setModel(&model);
+        DressTheHeaderOf(table->horizontalHeader());
+        beside->addWidget(table, 1);
+
+        auto* panel = new ContextPanel(QStringLiteral("Entry selected"), 380, &host);
+        panel->setObjectName(QStringLiteral("strip-height-test"));
+        panel->LevelWith(table->horizontalHeader());
+        beside->addWidget(panel);
+
+        host.resize(900, 400);
+        host.show();
+
+        if (!QTest::qWaitForWindowExposed(&host))
+        {
+            return -1;
+        }
+
+        QCoreApplication::processEvents();
+
+        headerHeight = table->horizontalHeader()->height();
+
+        return panel->findChild<QWidget*>(QStringLiteral("PanelHeader"))->height();
+    }
+}
+
+void ContextPanelTest::TheTitleStripHoldsItsContentInsideItself()
+{
+    ContextPanel panel(QStringLiteral("Entry selected"));
+    panel.setObjectName(QStringLiteral("strip-content-test"));
+    panel.ShowTitle(QStringLiteral("halcyon-aircraft-a320neo"));
+    panel.resize(380, 400);
+    panel.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&panel));
+
+    const auto* strip = panel.findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    QVERIFY(strip != nullptr);
+    QVERIFY(strip->layout()->minimumSize().height() <= strip->height());
+
+    const QRect inside(QPoint{}, strip->size());
+
+    for (const QString& name :
+         {QStringLiteral("PanelTitle"), QStringLiteral("PanelToggle"), QStringLiteral("PanelClose")})
+    {
+        const auto* part = strip->findChild<QWidget*>(name);
+
+        QVERIFY(part != nullptr);
+        QVERIFY2(inside.contains(part->geometry()), qPrintable(name + " is pushed outside the title strip"));
+        QVERIFY2(part->sizeHint().height() <= strip->height(), qPrintable(name + " is taller than the title strip"));
+        QVERIFY2(qAbs(part->geometry().center().y() - inside.center().y()) <= 1,
+                 qPrintable(name + " is not vertically centred in the title strip"));
+    }
+}
+
+void ContextPanelTest::TheTitleStripIsAsTallAsTheColumnHeaderNextToIt()
+{
+    int headerHeight = 0;
+    const int stripHeight = StripHeightBesideATable(QApplication::font(), headerHeight);
+
+    QVERIFY(headerHeight > 0);
+    QCOMPARE(stripHeight, headerHeight);
+}
+
+void ContextPanelTest::TheLeftLineRunsTheWholeHeightOfAnOpenPanel()
+{
+    ContextPanel panel(QStringLiteral("Attention"));
+    panel.setObjectName(QStringLiteral("left-line-open-test"));
+    panel.Add(new QLabel(QStringLiteral("content")));
+    panel.resize(380, 400);
+    panel.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&panel));
+
+    const auto* strip = panel.findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    const auto* body = panel.findChild<QWidget*>(QStringLiteral("PanelBody"));
+
+    QVERIFY(strip != nullptr);
+    QVERIFY(body != nullptr);
+    TheLeftRuleRunsTheWholeHeightOfThePanel(panel, *strip, *body);
+}
+
+void ContextPanelTest::TheBodyShowsTheGroundTheThemeDeclaresForIt()
+{
+    ContextPanel panel(QStringLiteral("Attention"));
+    panel.setObjectName(QStringLiteral("body-ground-test"));
+    panel.Add(new QLabel(QStringLiteral("content")));
+    panel.resize(380, 400);
+    panel.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&panel));
+
+    const auto* body = panel.findChild<QWidget*>(QStringLiteral("PanelBody"));
+
+    QVERIFY(body != nullptr);
+
+    const QImage painted = panel.grab().toImage();
+    const QPoint belowTheContent = body->mapTo(&panel, QPoint(body->width() / 2, body->height() - 4));
+
+    QCOMPARE(painted.pixelColor(belowTheContent), TonesOf(CurrentColorScheme()).chrome);
+}
+
+void ContextPanelTest::TheRailKeepsTheLeftLineOnTheColumnOfTheOpenPanel()
+{
+    ContextPanel panel(QStringLiteral("Attention"));
+    panel.setObjectName(QStringLiteral("left-line-rail-test"));
+    panel.Add(new QLabel(QStringLiteral("content")));
+    panel.resize(380, 400);
+    panel.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&panel));
+
+    const auto* strip = panel.findChild<QWidget*>(QStringLiteral("PanelHeader"));
+
+    QVERIFY(strip != nullptr);
+
+    const std::vector<qreal> ratios{1.0, 1.25, 1.5, 1.75};
+    std::vector<std::vector<int>> whenOpen;
+    whenOpen.reserve(ratios.size());
+    for (const qreal ratio : ratios)
+    {
+        whenOpen.push_back(ColumnsOfTheRuleIn(PhotographAt(panel, ratio), panel, *strip, strip->height() / 2));
+    }
+
+    panel.findChild<QToolButton*>(QStringLiteral("PanelToggle"))->click();
+    QVERIFY(QTest::qWaitFor(
+        [&panel]
+        {
+            return panel.width() == PanelRail::Width();
+        }));
+    QCoreApplication::processEvents();
+
+    const auto* rail = panel.findChild<PanelRail*>();
+
+    QVERIFY(rail != nullptr);
+    QVERIFY(rail->isVisibleTo(&panel));
+
+    for (std::size_t at = 0; at < ratios.size(); ++at)
+    {
+        const QImage photo = PhotographAt(panel, ratios[at]);
+
+        QVERIFY2(!whenOpen[at].empty(),
+                 qPrintable(QStringLiteral("no left rule on the open panel at %1").arg(ratios[at])));
+
+        for (const int y : {1, rail->height() / 2, rail->height() - 2})
+        {
+            const std::vector<int> onTheRail = ColumnsOfTheRuleIn(photo, panel, *rail, y);
+
+            QVERIFY2(onTheRail == whenOpen[at],
+                     qPrintable(QStringLiteral("at %1 the open panel rule is on columns %2 and the rail rule, %3 rows "
+                                               "down, on %4")
+                                    .arg(ratios[at])
+                                    .arg(Spelled(whenOpen[at]))
+                                    .arg(y)
+                                    .arg(Spelled(onTheRail))));
+        }
+    }
+}
+
+void ContextPanelTest::TheTitleStripStaysLevelWithTheColumnHeaderWhenTheApplicationFontGrows()
+{
+    const QFont usual = QApplication::font();
+
+    QFont larger = usual;
+    larger.setPointSizeF(usual.pointSizeF() * 1.6);
+
+    int smallHeader = 0;
+    int largeHeader = 0;
+    const int smallStrip = StripHeightBesideATable(usual, smallHeader);
+    const int largeStrip = StripHeightBesideATable(larger, largeHeader);
+
+    QVERIFY(smallHeader > 0);
+    QVERIFY(largeHeader > 0);
+    QCOMPARE(smallStrip, smallHeader);
+    QCOMPARE(largeStrip, largeHeader);
+}
+
+void ContextPanelTest::TheTitleStripFollowsTheColumnHeaderWhenItsHeightChanges()
+{
+    QWidget host;
+
+    auto* beside = new QHBoxLayout(&host);
+    beside->setContentsMargins(0, 0, 0, 0);
+    beside->setSpacing(0);
+
+    QStandardItemModel model(2, 2);
+    model.setHorizontalHeaderLabels({QStringLiteral("Name"), QStringLiteral("Destination")});
+
+    auto* table = new QTableView(&host);
+    table->setModel(&model);
+    DressTheHeaderOf(table->horizontalHeader());
+    beside->addWidget(table, 1);
+
+    auto* panel = new ContextPanel(QStringLiteral("Entry selected"), 380, &host);
+    panel->setObjectName(QStringLiteral("strip-follows-test"));
+    panel->LevelWith(table->horizontalHeader());
+    beside->addWidget(panel);
+
+    host.resize(900, 400);
+    host.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&host));
+    QCoreApplication::processEvents();
+
+    const auto* strip = panel->findChild<QWidget*>(QStringLiteral("PanelHeader"));
+    QHeaderView* header = table->horizontalHeader();
+
+    QCOMPARE(strip->height(), header->height());
+
+    const int taller = header->height() + 7;
+    header->setMinimumHeight(taller);
+    header->resize(header->width(), taller);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(header->height(), taller);
+    QCOMPARE(strip->height(), taller);
+
+    const int shorter = taller - 11;
+    header->setMinimumHeight(0);
+    header->setMaximumHeight(shorter);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(header->height(), shorter);
+    QCOMPARE(strip->height(), shorter);
 }
 
 void ContextPanelTest::ContentTallerThanThePanelScrollsInsteadOfBeingSquashed()

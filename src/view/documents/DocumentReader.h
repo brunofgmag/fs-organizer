@@ -90,9 +90,11 @@ private:
 
     void JumpToTheResult(int result);
 
-    [[nodiscard]] int WhereTheResultSitsInTheScrollbar(const QPdfLink& found) const;
+    [[nodiscard]] int WhereTheLocationSitsInTheScrollbar(int page, const QPointF& location) const;
 
     void BringTheResultIntoView(const QPdfLink& found) const;
+
+    void BringTheLocationToTheTop(int page, const QPointF& location) const;
 
     [[nodiscard]] const ReadingGestures& TheGesturesInForce() const;
 
@@ -142,7 +144,7 @@ private:
 
     void RestTheCursor() const;
 
-    void ZoomBy(int notches);
+    void ZoomBy(qreal notches);
 
     QPdfDocument* document_ = nullptr;
     SelectablePages* view_ = nullptr;

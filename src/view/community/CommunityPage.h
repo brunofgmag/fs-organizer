@@ -1,7 +1,6 @@
 #ifndef FS_ORGANIZER_VIEW_COMMUNITY_COMMUNITY_PAGE_H
 #define FS_ORGANIZER_VIEW_COMMUNITY_COMMUNITY_PAGE_H
 
-#include <optional>
 #include <vector>
 
 #include <QtCore/QHash>
@@ -15,8 +14,10 @@
 
 class ContextPanel;
 class ModelRowDetail;
+class QHideEvent;
 class QLabel;
 class QPushButton;
+class QShowEvent;
 class QTableView;
 class QToolButton;
 
@@ -53,6 +54,10 @@ signals:
 
 protected:
     void changeEvent(QEvent* event) override;
+
+    void showEvent(QShowEvent* event) override;
+
+    void hideEvent(QHideEvent* event) override;
 
 private:
     void RetranslateUi();
@@ -96,7 +101,11 @@ private:
 
     void OpenTheSelectedFolder() const;
 
-    void OnRepairFinished(const std::vector<LinkOperationResult>& results);
+    [[nodiscard]] QString StatusOfARepairThatFailedNowhere(int repaired, int drifted) const;
+
+    [[nodiscard]] QString StatusOfARepairThatFailedSomewhere(int repaired, int failed, int drifted) const;
+
+    void OnRepairFinished(const LinkBatchReport& report);
 
     void ResolveThem(const std::vector<CopyConflict>& conflicts);
 
@@ -113,6 +122,8 @@ private:
     void LeaveAFilterThatRanOut(const QHash<int, int>& counted);
 
     void UpdateSummary();
+
+    void ShowTheAside();
 
     CommunityViewModel& viewModel_;
     ImportViewModel& importViewModel_;

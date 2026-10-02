@@ -5,7 +5,9 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <QtCore/QObject>
@@ -19,6 +21,7 @@
 #include "application/ports/BackgroundRunner.h"
 #include "application/ports/LoadingReportSource.h"
 #include "domain/ports/Clock.h"
+#include "viewmodel/SessionNotifier.h"
 
 struct ClassificationCount
 {
@@ -42,6 +45,14 @@ struct SceneryCensus
     std::size_t addons = 0;
 };
 
+struct LibrarySet
+{
+    std::string profileId{};
+    std::vector<std::string> roots{};
+
+    [[nodiscard]] bool operator==(const LibrarySet& other) const = default;
+};
+
 class DiagnosticsViewModel final : public QObject
 {
     Q_OBJECT
@@ -51,6 +62,7 @@ public:
                          SizeService& sizes,
                          SceneryService& scenery,
                          Session& session,
+                         const SessionNotifier& notifier,
                          const LoadingReportSource& loading,
                          const Clock& clock,
                          BackgroundRunner& runner,
@@ -109,10 +121,20 @@ signals:
 
     void SceneryRead();
 
+    void TheLibrariesChanged();
+
 private:
+    using StopToken = std::shared_ptr<std::atomic<bool>>;
+
+    void FollowTheLibraries();
+
+    void ForgetWhatBelongedToTheOldLibraries();
+
     void Count();
 
     void WeighTheQuarantine();
+
+    void LandTheQuarantine(const SimulatorProfile& profile, const std::vector<QuarantinedItem>& items);
 
     void Ask(Freshness freshness);
 
@@ -126,6 +148,7 @@ private:
     const Clock& clock_;
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
+    MeasurementCaller quarantineCaller_;
     std::vector<ClassificationCount> counts_;
     std::vector<DestinationEntry> broken_;
     std::vector<DestinationEntry> unavailable_;
@@ -136,10 +159,12 @@ private:
     std::optional<std::chrono::system_clock::time_point> countedAt_;
     std::optional<std::chrono::system_clock::time_point> measuredAt_;
     std::optional<std::chrono::system_clock::time_point> sceneryReadAt_;
+    LibrarySet libraries_;
     bool measuring_ = false;
     bool reading_ = false;
-    std::atomic<bool> cancelling_ = false;
-    std::atomic<bool> stopReading_ = false;
+    int weighing_ = 0;
+    StopToken sizeStop_ = std::make_shared<std::atomic<bool>>(false);
+    StopToken sceneryStop_ = std::make_shared<std::atomic<bool>>(false);
 };
 
 #endif // FS_ORGANIZER_VIEWMODEL_DIAGNOSTICS_VIEW_MODEL_H

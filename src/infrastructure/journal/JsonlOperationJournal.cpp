@@ -241,6 +241,10 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
         object[kLabel] = QString::fromStdString(record.label);
     }
 
+    const QByteArray line = QJsonDocument(object).toJson(QJsonDocument::Compact) + '\n';
+
+    const std::lock_guard lock(guard_);
+
     if (!stream_.is_open())
     {
         std::error_code error;
@@ -248,12 +252,8 @@ void JsonlOperationJournal::Append(const OperationRecord& record)
         stream_.open(file_, std::ios::binary | std::ios::app);
     }
 
-    const QByteArray line = QJsonDocument(object).toJson(QJsonDocument::Compact);
     stream_.write(line.constData(), line.size());
-    stream_.put('\n');
     stream_.flush();
-
-    const std::lock_guard lock(guard_);
 
     if (known_.has_value())
     {
@@ -265,6 +265,24 @@ std::vector<OperationRecord> JsonlOperationJournal::Read() const
 {
     const std::lock_guard lock(guard_);
 
+    return Known();
+}
+
+std::vector<OperationRecord> JsonlOperationJournal::ReadFrom(const std::size_t first) const
+{
+    const std::lock_guard lock(guard_);
+
+    const std::vector<OperationRecord>& known = Known();
+    if (first >= known.size())
+    {
+        return {};
+    }
+
+    return {known.begin() + static_cast<std::ptrdiff_t>(first), known.end()};
+}
+
+const std::vector<OperationRecord>& JsonlOperationJournal::Known() const
+{
     if (!known_.has_value())
     {
         known_ = WhatTheFileHolds();

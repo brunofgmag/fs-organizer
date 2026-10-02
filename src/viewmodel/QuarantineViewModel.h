@@ -31,6 +31,8 @@ public:
 
     void Show();
 
+    [[nodiscard]] bool Busy() const;
+
     [[nodiscard]] std::vector<RestoreOffer> WhatRestoringWouldDo(const std::vector<QuarantinedItem>& items) const;
 
     void PrepareRestore(const std::vector<QuarantinedItem>& items);
@@ -46,7 +48,11 @@ public:
     void Discard(const std::vector<QuarantinedItem>& items);
 
 signals:
+    void BusyChanged();
+
     void RestoreOffersReady(const std::vector<RestoreOffer>& offers);
+
+    void CameBack();
 
     void Restored(const std::vector<FileOperationResult>& results);
 
@@ -59,7 +65,7 @@ signals:
     void Discarded(const std::vector<FileOperationResult>& results);
 
 private:
-    [[nodiscard]] std::vector<QuarantinedItem> ListWhatIsHeld();
+    void ListWhatIsHeld();
 
     void Describe(const std::vector<QuarantinedItem>& items);
 
@@ -72,6 +78,7 @@ private:
     SizeService& sizes_;
     BackgroundRunner& runner_;
     MeasurementCaller caller_;
+    MeasurementCaller collisionCaller_;
     int listed_ = 0;
     GuardedRunner working_;
     bool shown_ = false;

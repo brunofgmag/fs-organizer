@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <memory>
-#include <optional>
 
 #include <QtCore/QCoreApplication>
 
+#include "domain/profile/ProfileEdits.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "viewmodel/SimulatorText.h"
@@ -69,33 +69,125 @@ bool OptionsViewModel::ShowsTheProfileInUse() const
     return ProfileShown().id == session_.Profile().id;
 }
 
-bool OptionsViewModel::RemoveProfile(const std::string& profileId, const bool disablingWhatItLeftBehind)
+bool OptionsViewModel::Busy() const
 {
-    if (disablingWhatItLeftBehind && profileId == session_.Profile().id)
-    {
-        std::vector<const TreeNode*> everything;
-        for (const TreeNode& library : session_.Snapshot().libraries)
+    return registering_.Busy();
+}
+
+void OptionsViewModel::RunInTheBackground(std::function<void()> work, std::function<void()> done)
+{
+    registering_.Run(
+        [this]
         {
-            everything.push_back(&library);
-        }
+            emit BusyChanged();
+        },
+        std::move(work),
+        [this, done = std::move(done)]
+        {
+            emit BusyChanged();
 
-        const std::vector<LinkOperationResult> results =
-            service_.SetEnabled(session_.Profile(), session_.Snapshot(), everything, false).results;
+            done();
+        });
+}
 
-        session_.NoteLinkResults(results);
-        emit LinksDisabled(results);
+void OptionsViewModel::RemoveProfile(const std::string& profileId, const bool disablingWhatItLeftBehind)
+{
+    const QString label = LabelOfProfile(profileId);
+
+    if (!WouldRemoveProfile(profileId))
+    {
+        emit ProfileNotRemoved(label);
+        return;
     }
 
+    if (!disablingWhatItLeftBehind || profileId != session_.Profile().id)
+    {
+        FinishRemovingProfile(profileId, label);
+        return;
+    }
+
+    const std::shared_ptr<DisablingWork> work = WorkOnTheProfileInUse();
+    for (const TreeNode& library : work->snapshot.libraries)
+    {
+        work->nodes.push_back(&library);
+    }
+
+    DisableThenRemove(work,
+                      [this, profileId, label]
+                      {
+                          FinishRemovingProfile(profileId, label);
+                      });
+}
+
+bool OptionsViewModel::WouldRemoveProfile(const std::string& profileId) const
+{
+    std::vector<SimulatorProfile> profiles = session_.Settings().profiles;
+
+    return ::RemoveProfile(profiles, profileId);
+}
+
+QString OptionsViewModel::LabelOfProfile(const std::string& profileId) const
+{
+    const std::vector<ProfileLine> lines = Profiles();
+    const auto found = std::ranges::find_if(lines,
+                                            [&profileId](const ProfileLine& line)
+                                            {
+                                                return line.id == profileId;
+                                            });
+
+    return found == lines.end() ? QString{} : found->label;
+}
+
+QString OptionsViewModel::LabelOfLibrary(const LibraryId& libraryId) const
+{
+    const std::vector<Library>& libraries = session_.Profile().libraries;
+    const auto found = std::ranges::find_if(libraries,
+                                            [&libraryId](const Library& library)
+                                            {
+                                                return library.id == libraryId;
+                                            });
+
+    return found == libraries.end() ? QString{} : QString::fromStdString(found->label);
+}
+
+std::shared_ptr<OptionsViewModel::DisablingWork> OptionsViewModel::WorkOnTheProfileInUse() const
+{
+    auto work = std::make_shared<DisablingWork>();
+    work->profile = session_.Profile();
+    work->snapshot = session_.Snapshot();
+
+    return work;
+}
+
+void OptionsViewModel::DisableThenRemove(const std::shared_ptr<DisablingWork>& work, std::function<void()> removal)
+{
+    RunInTheBackground(
+        [this, work]
+        {
+            work->results = service_.SetEnabled(work->profile, work->snapshot, work->nodes, false).results;
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->results);
+        },
+        [this, work, removal = std::move(removal)]
+        {
+            session_.NoteLinkResults(work->results, work->simulatorRunning);
+            emit LinksDisabled(work->results);
+
+            removal();
+        });
+}
+
+void OptionsViewModel::FinishRemovingProfile(const std::string& profileId, const QString& label)
+{
     if (!session_.RemoveProfile(profileId))
     {
-        return false;
+        emit Changed();
+        return;
     }
 
     shown_.clear();
 
     emit Changed();
-
-    return true;
+    emit ProfileRemoved(label);
 }
 
 std::size_t OptionsViewModel::AddonsInTheActiveProfile() const
@@ -149,7 +241,7 @@ std::vector<DestinationLine> OptionsViewModel::Destinations() const
     return lines;
 }
 
-const TreeNode* OptionsViewModel::TreeOf(const LibraryId& libraryId) const
+const TreeNode* OptionsViewModel::TreeOf(const LibraryId& libraryId, const std::vector<TreeNode>& libraries) const
 {
     const SimulatorProfile& profile = session_.Profile();
 
@@ -159,7 +251,7 @@ const TreeNode* OptionsViewModel::TreeOf(const LibraryId& libraryId) const
                                                 return library.id == libraryId;
                                             });
 
-    return known == profile.libraries.end() ? nullptr : LibraryTreeAt(session_.Snapshot().libraries, known->path);
+    return known == profile.libraries.end() ? nullptr : LibraryTreeAt(libraries, known->path);
 }
 
 std::vector<LibraryLine> OptionsViewModel::Libraries() const
@@ -356,19 +448,22 @@ bool OptionsViewModel::WouldAcceptLibrary(const std::filesystem::path& path) con
 
 void OptionsViewModel::RegisterLibrary(const std::filesystem::path& path)
 {
-    auto registration = std::make_shared<Session::LibraryRegistration>();
-    registration->profile = session_.Profile();
+    auto registration = std::make_shared<Session::LibraryRegistration>(session_.BeginRegistration());
 
-    registering_.Run(
+    RunInTheBackground(
         [this, registration, path]
         {
-            *registration = session_.RegisterLibraryOn(std::move(registration->profile), path);
+            *registration = session_.RegisterLibraryOn(std::move(*registration), path);
         },
         [this, registration, path]
         {
             const LibraryReport report = registration->report;
 
-            session_.AdoptTheRegistration(std::move(*registration));
+            if (!session_.AdoptTheRegistration(std::move(*registration)))
+            {
+                RegisterLibrary(path);
+                return;
+            }
 
             emit LibraryRegistered(path, report);
         });
@@ -376,19 +471,36 @@ void OptionsViewModel::RegisterLibrary(const std::filesystem::path& path)
 
 void OptionsViewModel::UnregisterLibrary(const LibraryId& libraryId, const bool disablingWhatItLeftBehind)
 {
-    if (disablingWhatItLeftBehind)
-    {
-        if (const TreeNode* tree = TreeOf(libraryId); tree != nullptr)
-        {
-            const std::vector<LinkOperationResult> results =
-                service_.SetEnabled(session_.Profile(), session_.Snapshot(), {tree}, false).results;
+    const QString label = LabelOfLibrary(libraryId);
 
-            session_.NoteLinkResults(results);
-            emit LinksDisabled(results);
-        }
+    if (!disablingWhatItLeftBehind)
+    {
+        FinishUnregistering(libraryId, label);
+        return;
     }
 
+    const std::shared_ptr<DisablingWork> work = WorkOnTheProfileInUse();
+    const TreeNode* tree = TreeOf(libraryId, work->snapshot.libraries);
+
+    if (tree == nullptr)
+    {
+        FinishUnregistering(libraryId, label);
+        return;
+    }
+
+    work->nodes = {tree};
+
+    DisableThenRemove(work,
+                      [this, libraryId, label]
+                      {
+                          FinishUnregistering(libraryId, label);
+                      });
+}
+
+void OptionsViewModel::FinishUnregistering(const LibraryId& libraryId, const QString& label)
+{
     session_.UnregisterLibrary(libraryId);
 
     emit Changed();
+    emit LibraryUnregistered(label);
 }

@@ -42,13 +42,13 @@ namespace
                 assets += ",";
             }
 
-            assets += "{\"name\": \"" + name.toUtf8()
+            assets += R"({"name": ")" + name.toUtf8()
                 + "\", \"browser_download_url\": "
                   "\"https://github.com/brunofgmag/fs-organizer/releases/download/v0.60.0/"
                 + name.toUtf8() + "\"}";
         }
 
-        return "{\"tag_name\": \"v0.60.0\", \"assets\": [" + assets + "]}";
+        return R"({"tag_name": "v0.60.0", "assets": [)" + assets + "]}";
     }
 }
 
@@ -112,8 +112,8 @@ void GithubReleaseParserTest::JsonThatIsNotAReleaseIsRefused()
 
 void GithubReleaseParserTest::AReleaseWithoutATagIsRefused()
 {
-    const QByteArray withoutTag = "{\"html_url\": \"https://example.com\"}";
-    const QByteArray blankTag = "{\"tag_name\": \"   \"}";
+    const QByteArray withoutTag = R"({"html_url": "https://example.com"})";
+    const QByteArray blankTag = R"({"tag_name": "   "})";
 
     QVERIFY(!ParseLatestRelease(withoutTag).has_value());
     QVERIFY(!ParseLatestRelease(blankTag).has_value());

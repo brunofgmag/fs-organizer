@@ -1,7 +1,6 @@
 #include "application/SetupService.h"
 
 #include <algorithm>
-#include <ranges>
 #include <string_view>
 
 #include "domain/support/PathUtils.h"
@@ -31,6 +30,7 @@ namespace
     bool IsInsideARegisteredLibrary(const std::vector<RegisteredLibrary>& libraries, const std::filesystem::path& path)
     {
         std::vector<Library> known;
+        known.reserve(libraries.size());
         for (const RegisteredLibrary& registered : libraries)
         {
             known.push_back(registered.library);

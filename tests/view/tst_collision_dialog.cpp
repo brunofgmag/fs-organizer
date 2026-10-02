@@ -5,9 +5,10 @@
 #include <QtWidgets/QLabel>
 
 #include <cstdint>
-#include <filesystem>
 
 #include "application/model/RestorePlan.h"
+#include "domain/importing/ImportPaths.h"
+#include "support/PathText.h"
 #include "support/SizeText.h"
 #include "tests/support/PathPrinting.h"
 #include "view/quarantine/CollisionDialog.h"
@@ -25,6 +26,7 @@ namespace
         static void NothingIsPreselectedAndTheReplaceButtonIsNotTheDefault();
         static void TheDialogOpensBeforeTheMeasurementAndFillsInWhenItLands();
         static void EnterOnAFreshDialogReplacesNothing();
+        static void AnItemInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwap();
     };
 
     constexpr std::uintmax_t kHeldBytes = 2040109466;
@@ -140,6 +142,19 @@ void CollisionDialogTest::EnterOnAFreshDialogReplacesNothing()
 
     QVERIFY2(dialog.isVisible(), "the choice is a click, and reading isDefault before showing never saw this");
     QCOMPARE(dialog.result(), static_cast<int>(QDialog::Rejected));
+}
+
+void CollisionDialogTest::AnItemInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwap()
+{
+    RestoreCheck stranded = ACollision();
+    const QString itsRealName = AsText(stranded.item.path.filename());
+    stranded.item.path = SwapSlotFor(stranded.item.path);
+
+    const CollisionDialog dialog(stranded);
+
+    const auto* title = dialog.findChild<QLabel*>(QStringLiteral("PanelTitle"));
+    QVERIFY(title != nullptr);
+    QCOMPARE(title->text(), itsRealName);
 }
 
 QTEST_MAIN(CollisionDialogTest)

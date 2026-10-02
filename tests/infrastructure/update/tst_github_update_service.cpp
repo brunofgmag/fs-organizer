@@ -120,7 +120,6 @@ namespace
             socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: "
                           + QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n");
             socket->write(body);
-            socket->disconnectFromHost();
         }
     };
 

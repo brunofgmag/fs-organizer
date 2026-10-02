@@ -21,6 +21,7 @@
 #include "view/panels/ContextPanel.h"
 #include "view/panels/EmptyState.h"
 #include "view/panels/ModelRowDetail.h"
+#include "view/panels/ScrollBarCap.h"
 #include "viewmodel/SizeSummary.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
@@ -68,20 +69,22 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
     panel_->Add(restoreFromPanel_);
     panel_->Add(openFolder_);
     panel_->RestoreCollapsedState();
+    panel_->LevelWith(table_->horizontalHeader());
+    CapTheScrollBarOf(table_, table_->horizontalHeader());
     panel_->Summon(false);
 
-    auto* column = new QVBoxLayout;
-    column->setContentsMargins(0, 0, 0, 0);
-    column->setSpacing(0);
-    column->addWidget(toolbar);
-    column->addWidget(table_, 1);
-
     auto* held = new QWidget(this);
-    auto* heldLayout = new QHBoxLayout(held);
+    auto* heldLayout = new QVBoxLayout(held);
     heldLayout->setContentsMargins(0, 0, 0, 0);
     heldLayout->setSpacing(0);
-    heldLayout->addLayout(column, 1);
-    heldLayout->addWidget(panel_);
+    heldLayout->addWidget(toolbar);
+
+    auto* body = new QHBoxLayout;
+    body->setContentsMargins(0, 0, 0, 0);
+    body->setSpacing(0);
+    body->addWidget(table_, 1);
+    body->addWidget(panel_);
+    heldLayout->addLayout(body, 1);
 
     pages_ = new QStackedWidget(this);
     pages_->addWidget(held);
@@ -108,6 +111,7 @@ QuarantinePage::QuarantinePage(QuarantineViewModel& viewModel, QuarantineModel& 
                 UpdateSummary();
             });
 
+    connect(&viewModel_, &QuarantineViewModel::BusyChanged, this, &QuarantinePage::GiveTheGesturesBack);
     connect(&viewModel_, &QuarantineViewModel::RestoreOffersReady, this, &QuarantinePage::OfferTheRestore);
     connect(&viewModel_, &QuarantineViewModel::Restored, this,
             [this](const std::vector<FileOperationResult>& results)
@@ -268,7 +272,7 @@ void QuarantinePage::ShowWhatTheActionsWillTouch(const QModelIndexList& rows) co
 {
     const auto held = static_cast<int>(rows.size());
 
-    restoreFromPanel_->setEnabled(held > 0);
+    restoreFromPanel_->setEnabled(!viewModel_.Busy() && held > 0);
     restoreFromPanel_->setText(held > 1 ? tr("Restore %n item", nullptr, held) : tr("Restore"));
     openFolder_->setEnabled(held == 1);
 }
@@ -478,7 +482,15 @@ void QuarantinePage::UpdateSummary()
     emit SummaryChanged(rows == 0 ? tr("0 items in the quarantine") : tr("%n item in the quarantine.", nullptr, rows));
     emit AsideChanged(rows == 0 ? tr("0 bytes") : QString());
 
-    restore_->setEnabled(selected > 0);
-    discard_->setEnabled(selected > 0);
-    empty_->setEnabled(rows > 0);
+    const bool free = !viewModel_.Busy();
+
+    restore_->setEnabled(free && selected > 0);
+    discard_->setEnabled(free && selected > 0);
+    empty_->setEnabled(free && rows > 0);
+}
+
+void QuarantinePage::GiveTheGesturesBack()
+{
+    UpdateSummary();
+    ShowWhatTheActionsWillTouch(table_->selectionModel()->selectedRows());
 }

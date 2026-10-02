@@ -1,6 +1,7 @@
 #include "view/PresetsPage.h"
 
 #include <QtCore/QEvent>
+#include <QtGui/QShowEvent>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFrame>
@@ -34,14 +35,23 @@ namespace
     constexpr int kLibraryColumn = 1;
     constexpr int kActionColumn = 2;
     constexpr int kNameColumn = 0;
-    constexpr int kContentColumn = 1;
-    constexpr int kUpdatedColumn = 2;
-    constexpr int kChangesColumn = 3;
-    constexpr int kNameTableWidth = 420;
+    constexpr int kUpdatedColumn = 1;
+    constexpr int kChangesColumn = 2;
+    constexpr int kNameTableWidth = 480;
+    constexpr int kPresetRowHeight = 46;
 
     QString TheWayBackIsCalled()
     {
         return QObject::tr("Back to the previous set");
+    }
+
+    RowDelegate* TwoLineRows(QTableWidget* table)
+    {
+        auto* rows = new RowDelegate(table);
+        rows->KeepRowsAtLeast(kPresetRowHeight);
+        rows->LetTheFirstCellLeadTheRow();
+
+        return rows;
     }
 } // namespace
 
@@ -51,6 +61,8 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     names_ = CreateNameTable();
 
     return_ = CreateReturnTable();
+
+    LetTheColumnsFollowThoseOf(return_, names_);
 
     returnRule_ = new QFrame(this);
     returnRule_->setObjectName(QStringLiteral("TriageSeparator"));
@@ -141,7 +153,7 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(goBack_, &QPushButton::clicked, this, &PresetsPage::GoBack);
     connect(planPanel_, &PresetPlanPanel::ApplyRequested, this, &PresetsPage::ApplySelected);
     connect(planPanel_, &PresetPlanPanel::OmittedRequested, this, &PresetsPage::ListTheOmitted);
-    connect(planPanel_, &PresetPlanPanel::ModeChanged, this, &PresetsPage::ReloadNames);
+    connect(planPanel_, &PresetPlanPanel::ModeChanged, this, &PresetsPage::RequestReload);
     connect(names_, &QTableWidget::currentCellChanged, this,
             [this](const int row, int, const int previous, int)
             {
@@ -165,9 +177,9 @@ PresetsPage::PresetsPage(PresetViewModel& viewModel, const SessionNotifier& noti
     connect(startupPanel_, &PresetStartupPanel::GovernToggled, this, &PresetsPage::GovernStartupToggled);
     connect(startupPanel_, &PresetStartupPanel::RecaptureRequested, this, &PresetsPage::RecaptureStartup);
 
-    connect(&viewModel_, &PresetViewModel::Changed, this, &PresetsPage::ReloadNames);
-    connect(&notifier, &SessionNotifier::Refreshed, this, &PresetsPage::ReloadNames);
-    connect(&notifier, &SessionNotifier::ScanFinished, this, &PresetsPage::ReloadNames);
+    connect(&viewModel_, &PresetViewModel::Changed, this, &PresetsPage::RequestReload);
+    connect(&notifier, &SessionNotifier::Refreshed, this, &PresetsPage::RequestReload);
+    connect(&notifier, &SessionNotifier::ScanFinished, this, &PresetsPage::RequestReload);
     connect(&viewModel_, &PresetViewModel::Refused, this,
             [this](const QString& explanation)
             {
@@ -220,10 +232,44 @@ void PresetsPage::changeEvent(QEvent* event)
     if (event->type() == QEvent::LanguageChange)
     {
         RetranslateUi();
-        ReloadNames();
+        RequestReload();
     }
 
     QWidget::changeEvent(event);
+}
+
+void PresetsPage::showEvent(QShowEvent* event)
+{
+    QWidget::showEvent(event);
+
+    if (stale_)
+    {
+        ReloadNames();
+    }
+}
+
+void PresetsPage::RequestReload()
+{
+    stale_ = true;
+
+    if (!isVisible() || reloadQueued_)
+    {
+        return;
+    }
+
+    reloadQueued_ = true;
+
+    QMetaObject::invokeMethod(this, &PresetsPage::ReloadIfStale, Qt::QueuedConnection);
+}
+
+void PresetsPage::ReloadIfStale()
+{
+    reloadQueued_ = false;
+
+    if (stale_ && isVisible())
+    {
+        ReloadNames();
+    }
 }
 
 void PresetsPage::RetranslateUi()
@@ -234,7 +280,7 @@ void PresetsPage::RetranslateUi()
     remove_->setText(tr("Delete"));
     filter_->setPlaceholderText(tr("Filter presets"));
     entries_->setHorizontalHeaderLabels({tr("Addon"), tr("Library"), tr("Enables")});
-    names_->setHorizontalHeaderLabels({tr("Preset"), tr("Content"), tr("Updated"), tr("If applied")});
+    names_->setHorizontalHeaderLabels({tr("Preset"), tr("Updated"), tr("If applied")});
     plan_->setText(tr("Plan"));
     startup_->setText(tr("Startup"));
     nothing_->Retell(tr("No preset in this profile yet."),
@@ -247,13 +293,15 @@ QTableWidget* PresetsPage::CreateNameTable()
 {
     auto* table = new QTableWidget(this);
     table->setObjectName(QStringLiteral("PresetNames"));
-    table->setColumnCount(4);
+    table->setColumnCount(3);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->setItemDelegate(new RowDelegate(table));
+    table->setItemDelegate(TwoLineRows(table));
     table->setShowGrid(false);
+    table->setWordWrap(false);
     table->verticalHeader()->setVisible(false);
+    table->verticalHeader()->setDefaultSectionSize(kPresetRowHeight);
     DressTheHeaderOf(table->horizontalHeader());
     LetTheColumnsBeDraggedAndStillFillTheTable(table, kNameColumn);
 
@@ -264,20 +312,20 @@ QTableWidget* PresetsPage::CreateReturnTable()
 {
     auto* table = new QTableWidget(this);
     table->setObjectName(QStringLiteral("PresetReturn"));
-    table->setColumnCount(4);
+    table->setColumnCount(3);
     table->setRowCount(1);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->setItemDelegate(new RowDelegate(table));
+    table->setItemDelegate(TwoLineRows(table));
     table->setShowGrid(false);
+    table->setWordWrap(false);
     table->verticalHeader()->setVisible(false);
     table->horizontalHeader()->setVisible(false);
     table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     table->setFrameShape(QFrame::NoFrame);
     table->hide();
-    LetTheColumnsBeDraggedAndStillFillTheTable(table, kNameColumn);
 
     return table;
 }
@@ -387,10 +435,17 @@ ApplyMode PresetsPage::Mode() const
 
 namespace
 {
-    QTableWidgetItem* ChangeCell(const PresetRow& row)
+    QTableWidgetItem* NameCell(const QString& name, const QString& content)
     {
-        auto* item = new QTableWidgetItem(QObject::tr("%n change", nullptr, static_cast<int>(row.changes)));
-        item->setData(QuietRole, row.changes == 0);
+        auto* item = new QTableWidgetItem(name);
+        item->setData(SecondLineRole, content);
+
+        return item;
+    }
+
+    QTableWidgetItem* NameCellOf(const PresetRow& row)
+    {
+        QTableWidgetItem* item = NameCell(row.name, row.content);
 
         if (row.satisfied)
         {
@@ -400,10 +455,28 @@ namespace
 
         return item;
     }
+
+    QTableWidgetItem* UpdatedCell(const QString& updated)
+    {
+        auto* item = new QTableWidgetItem(updated);
+        item->setData(QuietRole, true);
+
+        return item;
+    }
+
+    QTableWidgetItem* ChangeCell(const PresetRow& row)
+    {
+        auto* item = new QTableWidgetItem(QObject::tr("%n change", nullptr, static_cast<int>(row.changes)));
+        item->setData(QuietRole, row.changes == 0);
+
+        return item;
+    }
 } // namespace
 
 void PresetsPage::ReloadNames()
 {
+    stale_ = false;
+
     const QString wanted = SelectedName();
     const QList<PresetRow> rows = viewModel_.Rows(Mode());
 
@@ -415,13 +488,9 @@ void PresetsPage::ReloadNames()
 
     for (int row = 0; row < rows.size(); ++row)
     {
-        names_->setItem(row, kNameColumn, new QTableWidgetItem(rows[row].name));
-        names_->setItem(row, kContentColumn, new QTableWidgetItem(rows[row].content));
-        names_->setItem(row, kUpdatedColumn, new QTableWidgetItem(rows[row].updated));
+        names_->setItem(row, kNameColumn, NameCellOf(rows[row]));
+        names_->setItem(row, kUpdatedColumn, UpdatedCell(rows[row].updated));
         names_->setItem(row, kChangesColumn, ChangeCell(rows[row]));
-
-        names_->item(row, kContentColumn)->setData(QuietRole, true);
-        names_->item(row, kUpdatedColumn)->setData(QuietRole, true);
 
         if (rows[row].name == wanted)
         {
@@ -465,12 +534,10 @@ void PresetsPage::ShowTheWayBack()
 
     if (back.has_value())
     {
-        return_->setItem(0, kNameColumn, new QTableWidgetItem(TheWayBackIsCalled()));
-        return_->setItem(0, kContentColumn, new QTableWidgetItem(back->content));
+        return_->setItem(0, kNameColumn, NameCell(TheWayBackIsCalled(), back->content));
         return_->setItem(0, kUpdatedColumn, new QTableWidgetItem);
         return_->setItem(0, kChangesColumn, ChangeCell(*back));
-        return_->item(0, kContentColumn)->setData(QuietRole, true);
-        return_->resizeRowsToContents();
+        return_->setRowHeight(0, kPresetRowHeight);
         return_->setFixedHeight(return_->rowHeight(0) + 2);
     }
 
@@ -596,7 +663,7 @@ void PresetsPage::ActionToggled(const QTableWidgetItem* item)
 
     if (!viewModel_.SetAction(SelectedName(), row, selected_->entries[row].addonId, wanted))
     {
-        QMetaObject::invokeMethod(this, &PresetsPage::ReloadNames, Qt::QueuedConnection);
+        RequestReload();
         return;
     }
 
@@ -621,7 +688,7 @@ void PresetsPage::StartupActionToggled(const int index, const PresetAction wante
 
     if (!viewModel_.SetStartupAction(SelectedName(), row, selected_->startupEntries[row].path, wanted))
     {
-        QMetaObject::invokeMethod(this, &PresetsPage::ReloadNames, Qt::QueuedConnection);
+        RequestReload();
         return;
     }
 

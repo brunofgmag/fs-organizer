@@ -43,11 +43,7 @@ public:
 
     void Cancel();
 
-    [[nodiscard]] ConflictDetails DetailsOf(const CopyConflict& conflict) const;
-
     void PrepareConflictDetails(const std::vector<CopyConflict>& conflicts);
-
-    [[nodiscard]] std::uintmax_t TotalSizeOf(const std::vector<std::filesystem::path>& folders) const;
 
     void LookForLeftovers();
 
@@ -75,6 +71,8 @@ signals:
 
     void Idle();
 
+    void TheDiskChanged();
+
     void Finished(const std::vector<ImportOperationResult>& results);
 
     void ConflictsResolved(const std::vector<FileOperationResult>& results);
@@ -85,10 +83,18 @@ signals:
 
     void LeftoversFound(const std::vector<StagingLeftover>& leftovers);
 
+    void InterruptedSwapsUndone(const std::vector<FileOperationResult>& results);
+
 private:
     [[nodiscard]] std::function<void(OperationKind)> OnStep();
 
     [[nodiscard]] std::function<bool(const CopyProgress&)> OnProgressOfFolder(int folder);
+
+    [[nodiscard]] std::function<bool(const CopyProgress&)> OnProgressOfTheFolderInCourse();
+
+    [[nodiscard]] std::function<bool(std::size_t request)> GoOnWithTheNextFolder();
+
+    [[nodiscard]] bool Report(const CopyProgress& progress, int folder);
 
     void RunInAWorker(std::function<void()> work, std::function<void()> land, int folders);
 

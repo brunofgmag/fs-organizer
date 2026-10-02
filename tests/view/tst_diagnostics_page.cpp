@@ -1,3 +1,4 @@
+#include <QtCore/QTranslator>
 #include <QtTest/QtTest>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -28,6 +29,7 @@
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
+#include "tests/support/CatalogueBesideTheBuild.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "view/delegates/RowDelegate.h"
@@ -57,6 +59,11 @@ namespace
         static void TheSearchAnnouncesTheUnitsAndTheRoundsWithoutWritingAnything();
         static void AColumnCountedToTheRightCarriesItsHeadingThere();
         static void TheSizeTableFloorCoversWhatItsWidestRowAsksFor();
+        static void NoEntryOfTheSectionListIsCutInEitherLanguage_data();
+        static void NoEntryOfTheSectionListIsCutInEitherLanguage();
+        static void ASwitchOfProfileWhileTheSizeSectionIsOpenMeasuresTheNewLibrariesOnScreen();
+        static void ASwitchOfProfileWhileTheLoadSectionIsOpenReadsTheLoadAgain();
+        static void ASwitchOfProfileWhileThePageIsHiddenIsCaughtUpWhenItIsShown();
     };
 }
 
@@ -102,6 +109,37 @@ namespace
         return profile;
     }
 
+    constexpr auto kLegacyLibrary = "Z:/Legado";
+    constexpr auto kLegacyCommunity = "C:/Packages/Community";
+    constexpr std::uintmax_t kLegacyBytes = 100;
+
+    TreeNode LegacyTree()
+    {
+        TreeNode aircrafts;
+        aircrafts.kind = TreeNodeKind::Category;
+        aircrafts.path = "Z:/Legado/Aircrafts";
+        aircrafts.children = {AddonNode("Z:/Legado/Aircrafts/fenix-a320")};
+
+        TreeNode node;
+        node.kind = TreeNodeKind::Library;
+        node.path = kLegacyLibrary;
+        node.children = {aircrafts};
+
+        return node;
+    }
+
+    SimulatorProfile LegacyProfile()
+    {
+        SimulatorProfile profile;
+        profile.id = "msfs2020";
+        profile.variant = SimulatorVariant::MSFS2020;
+        profile.destinations = {kLegacyCommunity};
+        profile.defaultDestination = kLegacyCommunity;
+        profile.libraries = {Library{.id = "library-9", .path = kLegacyLibrary, .label = "Legado"}};
+
+        return profile;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -113,6 +151,22 @@ namespace
             catalog.SetTree(kLibrary, LibraryTree());
 
             session.ShowActiveProfile();
+        }
+
+        void AddTheLegacyProfile()
+        {
+            fileSystem.AddDirectory(kLegacyCommunity);
+            fileSystem.AddDirectory("Z:/Legado/Aircrafts/fenix-a320");
+            fileSystem.AddFile("Z:/Legado/Aircrafts/fenix-a320/model.bin", kLegacyBytes);
+            catalog.SetTree(kLegacyLibrary, LegacyTree());
+
+            static_cast<void>(session.Rewrite(
+                [](AppSettings& stored)
+                {
+                    stored.profiles.push_back(LegacyProfile());
+
+                    return true;
+                }));
         }
 
         InMemoryFileSystem fileSystem;
@@ -147,7 +201,7 @@ namespace
         FakeSceneryCache sceneryCache;
         SceneryService scenery{filesystemProbe, sceneryParser, clock, sceneryCache};
         FakeLoadingReportSource loading;
-        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, loading, clock, runner};
+        DiagnosticsViewModel viewModel{imports, sizes, scenery, session, notifier, loading, clock, runner};
         CouplingScan coupling{filesystemProbe};
         FakeBisectionStore store;
         BisectionService bisection{service, coupling, filesystemProbe, store, clock};
@@ -156,6 +210,8 @@ namespace
 
     constexpr int kUsableHeight = 621;
     constexpr int kSearchRow = 7;
+    constexpr int kSizeRow = 3;
+    constexpr int kLoadRow = 5;
 
     QListWidget* RailOf(const DiagnosticsPage& page)
     {
@@ -450,6 +506,135 @@ void DiagnosticsPageTest::TheSizeTableFloorCoversWhatItsWidestRowAsksFor()
              qPrintable(QStringLiteral("the size table floors its sections at %1 for a row that asks for %2")
                             .arg(sizes->header()->minimumSectionSize())
                             .arg(asked)));
+}
+
+void DiagnosticsPageTest::NoEntryOfTheSectionListIsCutInEitherLanguage_data()
+{
+    QTest::addColumn<QString>("language");
+
+    QTest::newRow("English") << QStringLiteral("en");
+    QTest::newRow("Brazilian Portuguese") << QStringLiteral("pt_BR");
+}
+
+void DiagnosticsPageTest::NoEntryOfTheSectionListIsCutInEitherLanguage()
+{
+    QFETCH(const QString, language);
+
+    QTranslator catalogue;
+
+    if (language != QLatin1String("en"))
+    {
+        const QString file = TheCatalogueBesideTheBuild(language);
+
+        QVERIFY2(!file.isEmpty(), "app_pt_BR.qm is not beside the build: build the release_translations target");
+        QVERIFY(catalogue.load(file));
+        QVERIFY(QCoreApplication::installTranslator(&catalogue));
+    }
+
+    ApplyModernistTheme(*qApp);
+
+    Fixture fixture;
+    fixture.fileSystem.AddFile("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/payload.bin", 134000000ULL);
+    fixture.fileSystem.AddLink("E:/Flight Simulator 2024/Community/also-gone", "D:/Removed/also-gone");
+    fixture.session.ShowActiveProfile();
+
+    DiagnosticsPage page(fixture.viewModel, fixture.bisectionViewModel);
+    page.resize(kWidestAPageMayBe, kUsableHeight);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    const QListWidget* rail = RailOf(page);
+
+    QVERIFY(rail != nullptr);
+
+    for (const int section : {1, 3})
+    {
+        RailOf(page)->setCurrentRow(section);
+        QCoreApplication::processEvents();
+    }
+
+    QStringList texts;
+    for (int row = 0; row < rail->count(); ++row)
+    {
+        texts << rail->item(row)->text();
+    }
+
+    const QString said = QStringLiteral("the list is %1 px wide inside and its widest entry asks for %2: %3")
+                             .arg(rail->viewport()->width())
+                             .arg(rail->sizeHintForColumn(0))
+                             .arg(texts.join(QLatin1Char('|')));
+
+    QVERIFY2(rail->sizeHintForColumn(0) <= rail->viewport()->width(), qPrintable(said));
+}
+
+void DiagnosticsPageTest::ASwitchOfProfileWhileTheSizeSectionIsOpenMeasuresTheNewLibrariesOnScreen()
+{
+    Fixture f;
+    f.AddTheLegacyProfile();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+    page.resize(1200, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    RailOf(page)->setCurrentRow(kSizeRow);
+
+    const QTreeWidget* sizes = TableNamed(page, QStringLiteral("DiagnosticsSizes"));
+
+    QCOMPARE(sizes->topLevelItemCount(), 1);
+    QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(4096));
+
+    f.session.ChooseProfile("msfs2020");
+
+    QCOMPARE(sizes->topLevelItemCount(), 1);
+    QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(kLegacyBytes));
+    QCOMPARE(f.viewModel.Size().libraries.front().path, std::filesystem::path(kLegacyLibrary));
+}
+
+void DiagnosticsPageTest::ASwitchOfProfileWhileTheLoadSectionIsOpenReadsTheLoadAgain()
+{
+    Fixture f;
+    f.AddTheLegacyProfile();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+    page.resize(1200, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    RailOf(page)->setCurrentRow(kLoadRow);
+
+    const QTreeWidget* modules = TableNamed(page, QStringLiteral("DiagnosticsModules"));
+
+    QCOMPARE(modules->topLevelItemCount(), 0);
+
+    f.loading.ReportAModule("fmc.wasm", "pmdg-aircraft-77w", 327680);
+    f.session.ChooseProfile("msfs2020");
+
+    QCOMPARE(modules->topLevelItemCount(), 1);
+}
+
+void DiagnosticsPageTest::ASwitchOfProfileWhileThePageIsHiddenIsCaughtUpWhenItIsShown()
+{
+    Fixture f;
+    f.AddTheLegacyProfile();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+
+    RailOf(page)->setCurrentRow(kSizeRow);
+
+    f.session.ChooseProfile("msfs2020");
+
+    QVERIFY(!f.viewModel.MeasuredAt().has_value());
+    QVERIFY(!f.viewModel.Measuring());
+
+    page.resize(1200, 700);
+    page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+    const QTreeWidget* sizes = TableNamed(page, QStringLiteral("DiagnosticsSizes"));
+
+    QCOMPARE(sizes->topLevelItemCount(), 1);
+    QCOMPARE(sizes->topLevelItem(0)->text(2), AsSize(kLegacyBytes));
 }
 
 QTEST_MAIN(DiagnosticsPageTest)

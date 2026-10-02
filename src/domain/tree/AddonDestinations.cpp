@@ -22,7 +22,7 @@ namespace
 }
 
 AddonDestinations::AddonDestinations(const SimulatorProfile& profile, const std::vector<DestinationEntry>& entries)
-    : profile_(profile)
+    : profile_(profile), defaultKey_(ComparablePath(profile.defaultDestination)), linksByTarget_(entries)
 {
     for (const DestinationOverride& candidate : profile.destinationOverrides)
     {
@@ -35,11 +35,6 @@ AddonDestinations::AddonDestinations(const SimulatorProfile& profile, const std:
 
     for (const DestinationEntry& entry : entries)
     {
-        if (CountsAsEnabled(entry.classification))
-        {
-            linksByTarget_.emplace(ComparablePath(entry.target), entry.path);
-        }
-
         if (entry.classification == EntryClassification::Broken)
         {
             brokenLinks_.insert(ComparablePath(entry.path));
@@ -77,28 +72,51 @@ std::filesystem::path AddonDestinations::DestinationOf(const std::filesystem::pa
     return Chosen(library->id, RelativeToLibrary(*library, addonFolder));
 }
 
-std::filesystem::path AddonDestinations::StrayedFrom(const std::filesystem::path& addonFolder,
-                                                     const std::filesystem::path& destination) const
+std::filesystem::path AddonDestinations::StrayedFrom(const std::string& folderKey,
+                                                     const std::string& destinationKey) const
 {
-    const std::string wanted = ComparablePath(destination);
-    const auto [first, last] = linksByTarget_.equal_range(ComparablePath(addonFolder));
-
-    for (auto link = first; link != last; ++link)
+    for (const std::filesystem::path& link : linksByTarget_.PointingAtComparable(folderKey))
     {
-        if (ComparablePath(link->second.parent_path()) != wanted)
+        if (ComparablePath(link.parent_path()) != destinationKey)
         {
-            return link->second.parent_path();
+            return link.parent_path();
         }
     }
 
     return {};
 }
 
+bool AddonDestinations::IsPinned(const std::filesystem::path& destination, const std::string& destinationKey) const
+{
+    return !destination.empty() && destinationKey != defaultKey_;
+}
+
 AddonDestination AddonDestinations::Of(const std::filesystem::path& addonFolder) const
 {
+    return Of(addonFolder, ComparablePath(addonFolder));
+}
+
+AddonDestination AddonDestinations::Of(const std::filesystem::path& addonFolder, const std::string& folderKey) const
+{
     const std::filesystem::path destination = DestinationOf(addonFolder);
+    const std::string destinationKey = ComparablePath(destination);
+    const bool linksNowhere =
+        !brokenLinks_.empty() && brokenLinks_.contains(ComparablePath(PathUnder(destination, addonFolder.filename())));
 
     return {.destination = destination,
-            .strayedTo = StrayedFrom(addonFolder, destination),
-            .linksNowhere = brokenLinks_.contains(ComparablePath(PathUnder(destination, addonFolder.filename())))};
+            .strayedTo = StrayedFrom(folderKey, destinationKey),
+            .linksNowhere = linksNowhere,
+            .linked = !linksByTarget_.PointingAtComparable(folderKey).empty(),
+            .pinned = IsPinned(destination, destinationKey)};
+}
+
+AddonDestination AddonDestinations::OfAFolderThatIsNotAnAddon(const std::filesystem::path& folder) const
+{
+    const std::filesystem::path destination = DestinationOf(folder);
+
+    return {.destination = destination,
+            .strayedTo = {},
+            .linksNowhere = false,
+            .linked = false,
+            .pinned = IsPinned(destination, ComparablePath(destination))};
 }

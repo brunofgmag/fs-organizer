@@ -25,6 +25,7 @@ class QLineEdit;
 class QMenu;
 class QPushButton;
 class QStackedWidget;
+class QToolButton;
 class QTreeView;
 
 class AddonTreePage final : public QWidget
@@ -58,9 +59,30 @@ protected:
     void changeEvent(QEvent* event) override;
 
 private:
+    struct Population
+    {
+        int all{};
+        int enabled{};
+        int disabled{};
+
+        [[nodiscard]] bool operator==(const Population& other) const = default;
+
+        [[nodiscard]] int Of(AddonStateFilter state) const;
+    };
+
     void RetranslateUi() const;
 
     [[nodiscard]] QWidget* CreateActions();
+
+    [[nodiscard]] QWidget* CreateStateFilter(QWidget* bar);
+
+    [[nodiscard]] Population PopulationNow() const;
+
+    void ShowTheChips(const Population& population) const;
+
+    void Recount();
+
+    void LeaveAStateThatRanOut(const Population& before, const Population& now);
 
     [[nodiscard]] QWidget* CreateInvite();
 
@@ -68,7 +90,15 @@ private:
 
     [[nodiscard]] std::vector<const TreeNode*> Chosen(const TreeNode* clicked) const;
 
+    [[nodiscard]] std::vector<const TreeNode*> SelectedNodes(const TreeNode* clicked) const;
+
+    [[nodiscard]] std::vector<const TreeNode*> ReachableAmong(const std::vector<const TreeNode*>& nodes) const;
+
+    void CollectTheShownAddons(const QModelIndex& parent, std::set<const TreeNode*>& found) const;
+
     [[nodiscard]] const TreeNode* Current() const;
+
+    [[nodiscard]] bool TheRefreshReachedTheSelection() const;
 
     void ShowTheSelectedAddon();
 
@@ -147,7 +177,7 @@ private:
 
     void AddDestinationActions(QMenu& menu, const TreeNode* node);
 
-    void ChooseDestination(const std::vector<const TreeNode*>& nodes, const std::filesystem::path& destination);
+    void ChooseDestination(const TreeNode* clicked, const std::filesystem::path& destination);
 
     [[nodiscard]] bool AskWhetherToRelink(std::size_t strayed);
 
@@ -182,6 +212,8 @@ private:
     QPushButton* rescan_ = nullptr;
     QLineEdit* search_ = nullptr;
     QCheckBox* hideEmpty_ = nullptr;
+    QList<QToolButton*> chips_;
+    Population counted_;
     EmptyState* invite_ = nullptr;
     QPushButton* inviteAction_ = nullptr;
     QList<ModelRowDetail::Field> fields_;

@@ -1,12 +1,14 @@
 #include "viewmodel/AddonTreeViewModel.h"
 
 #include <algorithm>
+#include <map>
 #include <set>
 #include <string>
 
 #include <QtCore/QStringList>
 
 #include "domain/support/PathUtils.h"
+#include "domain/tree/AddonDestinations.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/DestinationDivergence.h"
 #include "domain/tree/LibraryLookup.h"
@@ -48,6 +50,28 @@ namespace
 
         return wanted;
     }
+
+    template<typename Wanted>
+    std::vector<const TreeNode*> AddonsWhere(const AddonDestinations& destinations,
+                                             const std::vector<const TreeNode*>& nodes,
+                                             const Wanted& isWanted)
+    {
+        std::vector<const TreeNode*> found;
+        std::set<std::string> asked;
+
+        for (const TreeNode* node : nodes)
+        {
+            for (const TreeNode* addon : AddonsUnder(*node))
+            {
+                if (asked.insert(ComparablePath(addon->path)).second && isWanted(destinations.Of(addon->path)))
+                {
+                    found.push_back(addon);
+                }
+            }
+        }
+
+        return found;
+    }
 }
 
 AddonTreeViewModel::AddonTreeViewModel(Session& session,
@@ -64,8 +88,9 @@ AddonTreeViewModel::AddonTreeViewModel(Session& session,
       model_(model),
       packages_(packages),
       sizes_(sizes),
-      toggling_(runner),
-      caller_(sizes.NewCaller())
+      selectionCaller_(sizes.NewCaller()),
+      swapsCaller_(sizes.NewCaller()),
+      toggling_(runner)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &AddonTreeViewModel::AdoptScan);
 
@@ -86,7 +111,7 @@ void AddonTreeViewModel::MeasureTheSelection(const std::vector<std::filesystem::
 
     emit SizeMeasuring();
 
-    sizes_.MeasureFolders(addonFolders, caller_, Freshness::ReuseWhatIsKnown, {},
+    sizes_.MeasureFolders(addonFolders, selectionCaller_, Freshness::ReuseWhatIsKnown, {},
                           [this](const FolderSizeReport& report)
                           {
                               emit SizeMeasured(SelectionSize{.bytes = report.bytes,
@@ -107,7 +132,7 @@ void AddonTreeViewModel::WeighTheSwaps(const std::vector<TakenPlace>& swaps,
         folders.push_back(swap.addonFolder);
     }
 
-    sizes_.MeasureFolders(folders, caller_, Freshness::ReuseWhatIsKnown, {},
+    sizes_.MeasureFolders(folders, swapsCaller_, Freshness::ReuseWhatIsKnown, {},
                           [swaps, weighed = std::move(onWeighed)](const FolderSizeReport& report)
                           {
                               std::vector<WeighedSwap> sides;
@@ -184,13 +209,13 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes, const
 
 std::vector<TakenPlace> AddonTreeViewModel::SwapsNeededTo(const std::vector<const TreeNode*>& nodes) const
 {
-    const std::vector<TreeNode>& libraries = session_.Snapshot().libraries;
+    const ProfileSnapshot& snapshot = session_.Snapshot();
 
     std::vector<TakenPlace> swaps;
 
-    for (const TakenPlace& taken : service_.PlacesTaken(session_.Profile(), nodes))
+    for (const TakenPlace& taken : service_.PlacesTakenNow(session_.Profile(), nodes, snapshot))
     {
-        if (AddonAt(libraries, taken.occupant) != nullptr)
+        if (AddonAt(snapshot.libraries, taken.occupant) != nullptr)
         {
             swaps.push_back(taken);
         }
@@ -225,25 +250,7 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
 
 TogglePlan AddonTreeViewModel::PlanToggle(const std::vector<const TreeNode*>& nodes, const bool enable) const
 {
-    TogglePlan plan;
-    plan.onDisk = service_.ReadLinksNow(session_.Profile());
-
-    if (!enable)
-    {
-        return plan;
-    }
-
-    const std::vector<TreeNode>& libraries = session_.Snapshot().libraries;
-
-    for (const TakenPlace& taken : service_.PlacesTaken(session_.Profile(), nodes, plan.onDisk))
-    {
-        if (AddonAt(libraries, taken.occupant) != nullptr)
-        {
-            plan.swapsNeeded.push_back(taken);
-        }
-    }
-
-    return plan;
+    return TogglePlan{.swapsNeeded = enable ? SwapsNeededTo(nodes) : std::vector<TakenPlace>{}};
 }
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
@@ -256,14 +263,11 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
 
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
                                 const bool enable,
-                                TogglePlan plan,
+                                const TogglePlan& plan,
                                 const std::vector<TakenPlace>& agreedSwaps,
                                 const std::vector<StartupLine>& agreedEntries)
 {
-    auto work = std::make_shared<ToggleWork>();
-    work->profile = session_.Profile();
-    work->shown.enabled = session_.Snapshot().enabled;
-    work->onDisk = std::move(plan.onDisk);
+    const std::shared_ptr<ToggleWork> work = WorkOnTheShownProfile();
 
     if (!enable)
     {
@@ -277,7 +281,7 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
             }
         }
 
-        RunTheBatch(std::move(work));
+        RunTheBatch(work);
         return;
     }
 
@@ -309,10 +313,20 @@ void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes,
 
     work->leftAlone = heldBack.size();
 
-    RunTheBatch(std::move(work));
+    RunTheBatch(work);
 }
 
-void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
+std::shared_ptr<AddonTreeViewModel::ToggleWork> AddonTreeViewModel::WorkOnTheShownProfile() const
+{
+    auto work = std::make_shared<ToggleWork>();
+    work->stamp = session_.StampForAnEntriesRead();
+    work->shown.enabled = session_.Snapshot().enabled;
+    work->shown.libraries = session_.Snapshot().libraries;
+
+    return work;
+}
+
+void AddonTreeViewModel::RunTheBatch(const std::shared_ptr<ToggleWork>& work)
 {
     toggling_.Run(
         [this, work]
@@ -330,37 +344,39 @@ void AddonTreeViewModel::RunTheBatch(std::shared_ptr<ToggleWork> work)
                 batch.toEnable.push_back(&addon);
             }
 
-            work->report = service_.SetEnabled(work->profile, work->shown, batch, work->onDisk);
-            work->report.leftAlone = work->leftAlone;
+            work->outcome = service_.SetEnabled(work->stamp, work->shown, batch);
+            work->outcome.report.leftAlone = work->leftAlone;
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
         [this, work]
         {
-            ApplyResults(work->report);
+            ApplyResults(*work);
         });
 }
 
 void AddonTreeViewModel::UndoLastBatch()
 {
-    const auto results = std::make_shared<std::vector<LinkOperationResult>>();
+    const std::shared_ptr<ToggleWork> work = WorkOnTheShownProfile();
 
     toggling_.Run(
-        [this, results]
+        [this, work]
         {
-            *results = service_.UndoLastBatch();
+            work->outcome = service_.UndoLastBatch(work->stamp, work->shown.libraries);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
-        [this, results]
+        [this, work]
         {
-            ApplyResults({.results = *results, .drifted = 0});
+            ApplyResults(*work);
         });
 }
 
-void AddonTreeViewModel::ApplyResults(const LinkBatchReport& report)
+void AddonTreeViewModel::ApplyResults(ToggleWork& work)
 {
-    session_.RefreshEntries();
+    session_.AdoptTheEntriesRead(std::move(work.outcome.read));
 
-    session_.NoteLinkResults(report.results);
+    session_.NoteLinkResults(work.outcome.report.results, work.simulatorRunning);
 
-    emit BatchFinished(report);
+    emit BatchFinished(work.outcome.report);
 }
 
 void AddonTreeViewModel::OverrideDestination(const std::vector<const TreeNode*>& nodes,
@@ -414,19 +430,18 @@ std::filesystem::path AddonTreeViewModel::RenameCategory(const TreeNode* node, c
         return {};
     }
 
-    auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
-    reorganized->profile = session_.Profile();
+    auto reorganized = std::make_shared<Session::ReorganizedLibrary>(session_.BeginReorganization());
 
     toggling_.Run(
         [this, reorganized, category = node->path, chosen = wanted.toStdString()]
         {
-            *reorganized = session_.RenameCategoryOn(std::move(reorganized->profile), category, chosen);
+            *reorganized = session_.RenameCategoryOn(std::move(*reorganized), category, chosen);
         },
         [this, reorganized]
         {
-            const FileOperationResult& result = reorganized->results.front();
+            session_.AdoptTheReorganization(*reorganized);
 
-            session_.AdoptTheReorganization(std::move(reorganized->profile), TheFolderLanded(result.result));
+            const FileOperationResult& result = reorganized->results.front();
 
             if (!Succeeded(result.result))
             {
@@ -444,19 +459,18 @@ bool AddonTreeViewModel::CanRemoveCategory(const TreeNode* node)
 
 void AddonTreeViewModel::RemoveCategory(const TreeNode* node)
 {
-    auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
-    reorganized->profile = session_.Profile();
+    auto reorganized = std::make_shared<Session::ReorganizedLibrary>(session_.BeginReorganization());
 
     toggling_.Run(
         [this, reorganized, category = node->path]
         {
-            *reorganized = session_.RemoveCategoryOn(std::move(reorganized->profile), category);
+            *reorganized = session_.RemoveCategoryOn(std::move(*reorganized), category);
         },
         [this, reorganized]
         {
-            const FileOperationResult& result = reorganized->results.front();
+            session_.AdoptTheReorganization(*reorganized);
 
-            session_.AdoptTheReorganization(std::move(reorganized->profile), Succeeded(result.result));
+            const FileOperationResult& result = reorganized->results.front();
 
             if (!Succeeded(result.result))
             {
@@ -503,23 +517,16 @@ void AddonTreeViewModel::ApplySuggestions(const std::vector<CategorySuggestion>&
 
 void AddonTreeViewModel::Perform(const std::vector<AddonMove>& moves)
 {
-    auto reorganized = std::make_shared<Session::ReorganizedLibrary>();
-    reorganized->profile = session_.Profile();
+    auto reorganized = std::make_shared<Session::ReorganizedLibrary>(session_.BeginReorganization());
 
     toggling_.Run(
         [this, reorganized, moves]
         {
-            *reorganized = session_.MoveAddonsOn(std::move(reorganized->profile), moves);
+            *reorganized = session_.MoveAddonsOn(std::move(*reorganized), moves);
         },
         [this, reorganized]
         {
-            const bool landed = std::ranges::any_of(reorganized->results,
-                                                    [](const FileOperationResult& result)
-                                                    {
-                                                        return TheFolderLanded(result.result);
-                                                    });
-
-            session_.AdoptTheReorganization(std::move(reorganized->profile), landed);
+            session_.AdoptTheReorganization(*reorganized);
 
             QStringList refusals;
 
@@ -560,28 +567,20 @@ void AddonTreeViewModel::AdoptDestination(const TreeNode* category)
 
 std::vector<const TreeNode*> AddonTreeViewModel::StrayedUnder(const std::vector<const TreeNode*>& nodes) const
 {
-    const ProfileSnapshot& snapshot = session_.Snapshot();
-    const SimulatorProfile& profile = session_.Profile();
-
-    std::vector<const TreeNode*> strayed;
-
-    for (const TreeNode* node : nodes)
-    {
-        for (const TreeNode* addon : AddonsUnder(*node))
-        {
-            if (!DestinationItStrayedTo(profile, snapshot.entries, addon->path).empty())
-            {
-                strayed.push_back(addon);
-            }
-        }
-    }
-
-    return strayed;
+    return AddonsWhere(AddonDestinations(session_.Profile(), session_.Snapshot().entries), nodes,
+                       [](const AddonDestination& where)
+                       {
+                           return !where.strayedTo.empty();
+                       });
 }
 
-std::size_t AddonTreeViewModel::StrayAddonsUnder(const std::vector<const TreeNode*>& nodes) const
+std::vector<const TreeNode*> AddonTreeViewModel::NeedingRelinkUnder(const std::vector<const TreeNode*>& nodes) const
 {
-    return StrayedUnder(nodes).size();
+    return AddonsWhere(AddonDestinations(session_.Profile(), session_.Snapshot().entries), nodes,
+                       [](const AddonDestination& where)
+                       {
+                           return where.NeedsRelinking();
+                       });
 }
 
 void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const TreeNode*>& nodes)
@@ -591,19 +590,17 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
         return;
     }
 
-    const std::vector<const TreeNode*> strayed = StrayedUnder(nodes);
+    const std::vector<const TreeNode*> relinkable = NeedingRelinkUnder(nodes);
 
-    if (strayed.empty())
+    if (relinkable.empty())
     {
         emit Refused(tr("Every addon here is already linked in the profile destination."));
         return;
     }
 
-    auto work = std::make_shared<ToggleWork>();
-    work->profile = session_.Profile();
-    work->shown.enabled = session_.Snapshot().enabled;
+    const std::shared_ptr<ToggleWork> work = WorkOnTheShownProfile();
 
-    for (const TreeNode* addon : strayed)
+    for (const TreeNode* addon : relinkable)
     {
         work->toDisable.push_back(*addon);
     }
@@ -619,11 +616,12 @@ void AddonTreeViewModel::RelinkToTheProfileDestination(const std::vector<const T
                 relinking.push_back(&addon);
             }
 
-            work->report = service_.Relink(work->profile, work->shown, relinking);
+            work->outcome = service_.Relink(work->stamp, work->shown, relinking);
+            work->simulatorRunning = session_.SimulatorIsRunningAfter(work->outcome.report.results);
         },
         [this, work]
         {
-            ApplyResults(work->report);
+            ApplyResults(*work);
         });
 }
 
@@ -674,6 +672,40 @@ std::vector<MoveTarget> AddonTreeViewModel::CategoriesFor(const TreeNode* node) 
     return offered;
 }
 
+std::size_t AddonTreeViewModel::MovableAmong(const std::vector<const TreeNode*>& addons) const
+{
+    std::map<const TreeNode*, std::set<std::string>> offeredByTree;
+    std::size_t movable = 0;
+
+    for (const TreeNode* node : addons)
+    {
+        const TreeNode* tree = LibraryTreeHolding(*node);
+        if (tree == nullptr)
+        {
+            continue;
+        }
+
+        auto offered = offeredByTree.find(tree);
+        if (offered == offeredByTree.end())
+        {
+            std::set<std::string> categories;
+            for (const TreeNode* candidate : CategoriesOfferedIn(*tree, false))
+            {
+                categories.insert(ComparablePath(candidate->path));
+            }
+
+            offered = offeredByTree.emplace(tree, std::move(categories)).first;
+        }
+
+        const std::set<std::string>& categories = offered->second;
+        const std::size_t holdingIt = categories.contains(ComparablePath(CategoryHolding(*node))) ? 1 : 0;
+
+        movable += categories.size() > holdingIt ? 1 : 0;
+    }
+
+    return movable;
+}
+
 bool AddonTreeViewModel::WouldAcceptLibrary(const std::filesystem::path& path) const
 {
     return session_.WouldAcceptLibrary(path);
@@ -681,19 +713,22 @@ bool AddonTreeViewModel::WouldAcceptLibrary(const std::filesystem::path& path) c
 
 void AddonTreeViewModel::AddLibrary(const std::filesystem::path& path)
 {
-    auto registration = std::make_shared<Session::LibraryRegistration>();
-    registration->profile = session_.Profile();
+    auto registration = std::make_shared<Session::LibraryRegistration>(session_.BeginRegistration());
 
     toggling_.Run(
         [this, registration, path]
         {
-            *registration = session_.RegisterLibraryOn(std::move(registration->profile), path);
+            *registration = session_.RegisterLibraryOn(std::move(*registration), path);
         },
         [this, registration, path]
         {
             const LibraryReport report = registration->report;
 
-            session_.AdoptTheRegistration(std::move(*registration));
+            if (!session_.AdoptTheRegistration(std::move(*registration)))
+            {
+                AddLibrary(path);
+                return;
+            }
 
             emit LibraryRegistered(path, report);
         });

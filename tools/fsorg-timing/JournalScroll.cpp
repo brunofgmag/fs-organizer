@@ -1,7 +1,6 @@
 #include "JournalScroll.h"
 
 #include <algorithm>
-#include <numeric>
 #include <vector>
 
 #include <QtCore/QElapsedTimer>

@@ -6,7 +6,6 @@
 
 #include "application/PresetService.h"
 #include "application/preset/PresetStartupPlan.h"
-#include "domain/tree/LibraryTrees.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
@@ -35,7 +34,8 @@ namespace
         static void ReplaceLeavesAFolderTheAppDidNotLinkAlone();
         static void ApplyingReportsTheEntriesThatNoLongerResolve();
         static void ApplyingLinksAnAddonWhoseLinkVanishedAfterTheScan();
-        static void ApplyingWalksTheDestinationOnceAndPlansBothHalvesFromThatWalk();
+        static void ApplyingReadsTheLinkTargetsOnceAndPlansBothHalvesFromThatRead();
+        static void ApplyingReturnsTheEntriesAsTheBatchLeftThemEqualToAFullRead();
         static void APresetThatDoesNotGovernStartupPlansNothingEvenHoldingEntries();
         static void AGoverningPresetTurnsOnWhatItNamesAndLeavesWhatIsAlreadyOn();
         static void ReplaceTurnsOffTheStartupEntriesThePresetDoesNotName();
@@ -58,6 +58,7 @@ namespace
         static void ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction();
         static void SettingAStartupActionRefusesWhenTheRowNoLongerHoldsThatEntry();
         static void RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns();
+        static void SatisfactionFromTheReplacePlanAgreesWithSatisfactionFromTheSnapshot();
     };
 }
 
@@ -105,6 +106,11 @@ namespace
         profile.libraries = {Library{.id = kLibraryId, .path = kLibrary, .label = "MSFS 2024"}};
 
         return profile;
+    }
+
+    EntriesStamp Stamped(const SimulatorProfile& profile)
+    {
+        return {.profile = profile, .adoptions = 0};
     }
 
     struct Fixture
@@ -257,7 +263,8 @@ void PresetServiceTest::ApplyingInReplaceRestoresExactlyTheSavedSet()
     const std::optional<Preset> preset = f.service.Load(kProfileId, "Voo curto");
     QVERIFY(preset.has_value());
 
-    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), *preset, ApplyMode::Replace);
+    const PresetApplyReport report =
+        f.service.Apply(Stamped(profile), f.Snapshot(profile), *preset, ApplyMode::Replace).report;
 
     QCOMPARE(report.results.size(), std::size_t{2});
     QVERIFY(report.unresolved.empty());
@@ -279,7 +286,8 @@ void PresetServiceTest::ReplaceLeavesAFolderTheAppDidNotLinkAlone()
 
     const SimulatorProfile profile = Profile();
 
-    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace);
+    const PresetApplyReport report =
+        f.service.Apply(Stamped(profile), f.Snapshot(profile), preset, ApplyMode::Replace).report;
 
     QCOMPARE(report.results.size(), std::size_t{2});
     QVERIFY(f.fileSystem.IsDirectory("E:/Flight Simulator 2024/Community/some-other-package"));
@@ -300,7 +308,8 @@ void PresetServiceTest::ApplyingReportsTheEntriesThatNoLongerResolve()
 
     const SimulatorProfile profile = Profile();
 
-    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Cumulative);
+    const PresetApplyReport report =
+        f.service.Apply(Stamped(profile), f.Snapshot(profile), preset, ApplyMode::Cumulative).report;
 
     QCOMPARE(report.unresolved.size(), std::size_t{1});
     QCOMPARE(QString::fromStdString(report.unresolved.front().folderName), QString{"aircraft-que-sumiu"});
@@ -326,14 +335,14 @@ void PresetServiceTest::ApplyingLinksAnAddonWhoseLinkVanishedAfterTheScan()
 
     QVERIFY(f.fileSystem.RemoveNode(link));
 
-    const PresetApplyReport report = f.service.Apply(profile, shown, *preset, ApplyMode::Replace);
+    const PresetApplyReport report = f.service.Apply(Stamped(profile), shown, *preset, ApplyMode::Replace).report;
 
     QCOMPARE(report.results.size(), std::size_t{1});
     QVERIFY(report.results.front().outcome.Succeeded());
     QVERIFY(f.fileSystem.IsLink(link));
 }
 
-void PresetServiceTest::ApplyingWalksTheDestinationOnceAndPlansBothHalvesFromThatWalk()
+void PresetServiceTest::ApplyingReadsTheLinkTargetsOnceAndPlansBothHalvesFromThatRead()
 {
     Fixture f;
     f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
@@ -345,11 +354,11 @@ void PresetServiceTest::ApplyingWalksTheDestinationOnceAndPlansBothHalvesFromTha
     QVERIFY(preset.has_value());
 
     const ProfileSnapshot shown = f.Snapshot(profile);
-    const std::size_t before = f.filesystemProbe.TimesEnumerated(kCommunity);
+    f.linkService.ForgetTheReads();
 
-    static_cast<void>(f.service.Apply(profile, shown, *preset, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(Stamped(profile), shown, *preset, ApplyMode::Replace));
 
-    QCOMPARE(f.filesystemProbe.TimesEnumerated(kCommunity) - before, std::size_t{1});
+    QCOMPARE(f.linkService.TimesRead("E:/Flight Simulator 2024/Community/aerosoft-crj"), std::size_t{1});
 }
 
 namespace
@@ -471,6 +480,7 @@ namespace
     std::vector<std::string> FolderNamesOf(const Preset& preset)
     {
         std::vector<std::string> names;
+        names.reserve(preset.entries.size());
 
         for (const PresetEntry& entry : preset.entries)
         {
@@ -494,7 +504,8 @@ void PresetServiceTest::ApplyingWritesTheReturnPresetWithWhatWasOnBeforeIt()
         .name = "Voo curto",
         .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
 
-    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace);
+    const PresetApplyReport report =
+        f.service.Apply(Stamped(profile), f.Snapshot(profile), preset, ApplyMode::Replace).report;
 
     QVERIFY(report.refusal == PresetApplyRefusal::None);
 
@@ -517,10 +528,13 @@ void PresetServiceTest::NothingIsAppliedWhenTheReturnPresetCannotBeWritten()
         .name = "Voo curto",
         .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
 
-    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace);
+    const PresetApplyOutcome refused =
+        f.service.Apply(Stamped(profile), f.Snapshot(profile), preset, ApplyMode::Replace);
+    const PresetApplyReport& report = refused.report;
 
     QVERIFY(report.refusal == PresetApplyRefusal::TheReturnPresetCouldNotBeWritten);
     QVERIFY(report.results.empty());
+    QVERIFY(refused.read.entries.empty());
     QVERIFY(!f.service.ReturnPreset(kProfileId).has_value());
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
@@ -540,8 +554,8 @@ void PresetServiceTest::TheReturnPresetIsOverwrittenAtEachApplication()
         .name = "Dois",
         .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "fenix-a320"}, .action = PresetAction::Enable}}};
 
-    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), first, ApplyMode::Replace));
-    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), second, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(Stamped(profile), f.Snapshot(profile), first, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(Stamped(profile), f.Snapshot(profile), second, ApplyMode::Replace));
 
     const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
 
@@ -561,7 +575,7 @@ void PresetServiceTest::TheReturnPresetIsNotOneOfThePresetsOfTheProfile()
     const std::optional<Preset> preset = f.service.Load(kProfileId, "Voo curto");
     QVERIFY(preset.has_value());
 
-    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), *preset, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(Stamped(profile), f.Snapshot(profile), *preset, ApplyMode::Replace));
 
     QVERIFY(f.service.ReturnPreset(kProfileId).has_value());
     QCOMPARE(f.service.List(kProfileId).size(), std::size_t{1});
@@ -579,7 +593,7 @@ void PresetServiceTest::ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApp
         .name = "Voo curto",
         .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
 
-    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(Stamped(profile), f.Snapshot(profile), preset, ApplyMode::Replace));
 
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/aerosoft-crj"));
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
@@ -587,7 +601,7 @@ void PresetServiceTest::ApplyingTheReturnPresetPutsBackWhatWasOnBeforeTheLastApp
     const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
     QVERIFY(back.has_value());
 
-    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), *back, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(Stamped(profile), f.Snapshot(profile), *back, ApplyMode::Replace));
 
     QVERIFY(f.fileSystem.IsLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w"));
     QVERIFY(!f.fileSystem.Exists("E:/Flight Simulator 2024/Community/aerosoft-crj"));
@@ -604,13 +618,13 @@ void PresetServiceTest::ApplyingTheReturnPresetDoesNotOverwriteTheReturnPreset()
         .name = "Voo curto",
         .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}}};
 
-    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Replace));
+    static_cast<void>(f.service.Apply(Stamped(profile), f.Snapshot(profile), preset, ApplyMode::Replace));
 
     const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
     QVERIFY(back.has_value());
     QCOMPARE(FolderNamesOf(*back), std::vector<std::string>{"pmdg-aircraft-77w"});
 
-    static_cast<void>(f.service.ApplyTheReturn(profile, f.Snapshot(profile), *back));
+    static_cast<void>(f.service.ApplyTheReturn(Stamped(profile), f.Snapshot(profile), *back));
 
     const std::optional<Preset> anchor = f.service.ReturnPreset(kProfileId);
     QVERIFY(anchor.has_value());
@@ -628,7 +642,7 @@ void PresetServiceTest::TheReturnPresetGovernsStartupOnlyWhenTheAppliedPresetDid
     const SimulatorProfile profile = Profile();
     const Preset governing = GoverningStartup({TurningOn(kLauncher)});
 
-    static_cast<void>(f.service.Apply(profile, f.Snapshot(profile), governing, ApplyMode::Cumulative));
+    static_cast<void>(f.service.Apply(Stamped(profile), f.Snapshot(profile), governing, ApplyMode::Cumulative));
 
     const std::optional<Preset> back = f.service.ReturnPreset(kProfileId);
 
@@ -690,7 +704,8 @@ void PresetServiceTest::ApplyingAGoverningPresetActuallyFlipsTheStartupEntry()
     const SimulatorProfile profile = Profile();
     const Preset preset = GoverningStartup({TurningOn(kLauncher)});
 
-    const PresetApplyReport report = f.service.Apply(profile, f.Snapshot(profile), preset, ApplyMode::Cumulative);
+    const PresetApplyReport report =
+        f.service.Apply(Stamped(profile), f.Snapshot(profile), preset, ApplyMode::Cumulative).report;
 
     QVERIFY(report.refusal == PresetApplyRefusal::None);
     QCOMPARE(f.startup.entries.writes, std::size_t{1});
@@ -703,6 +718,38 @@ void PresetServiceTest::ApplyingAGoverningPresetActuallyFlipsTheStartupEntry()
 
     QCOMPARE(after.front().enabled, true);
     QCOMPARE(after.back().enabled, true);
+}
+
+void PresetServiceTest::ApplyingReturnsTheEntriesAsTheBatchLeftThemEqualToAFullRead()
+{
+    Fixture f;
+    f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/pmdg-aircraft-77w",
+                         "D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w");
+    f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = false});
+
+    const SimulatorProfile profile = Profile();
+    const ProfileSnapshot shown = f.Snapshot(profile);
+    const Preset preset{
+        .name = "Voo curto",
+        .entries = {PresetEntry{.addonId = AddonId{kLibraryId, "aerosoft-crj"}, .action = PresetAction::Enable}},
+        .startupEntries = {TurningOn(kLauncher)},
+        .governsStartup = true};
+    const EntriesStamp stamp = Stamped(profile);
+
+    const PresetApplyOutcome outcome = f.service.Apply(stamp, shown, preset, ApplyMode::Replace);
+
+    QCOMPARE(outcome.report.results.size(), std::size_t{3});
+
+    const EntriesRead full = f.profiles.ReadEntries(stamp, shown.libraries);
+
+    QCOMPARE(outcome.read.entries.size(), std::size_t{1});
+    QVERIFY(outcome.read.entries == full.entries);
+    QVERIFY(outcome.read.enabled.Contains("D:/MSFS 2024/Aircrafts/aerosoft-crj"));
+    QVERIFY(!outcome.read.enabled.Contains("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"));
+    QCOMPARE(outcome.read.startupEntries.size(), std::size_t{1});
+    QVERIFY(outcome.read.startupEntries.front().enabled);
+    QCOMPARE(outcome.read.startupEntries.front().enabled, full.startupEntries.front().enabled);
+    QCOMPARE(outcome.read.stamp.adoptions, stamp.adoptions);
 }
 
 void PresetServiceTest::AGoverningPresetIsNotSatisfiedWhenTheStartupFileDisagrees()
@@ -776,6 +823,55 @@ void PresetServiceTest::RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns()
     QVERIFY(saved->governsStartup);
     QCOMPARE(saved->startupEntries.size(), std::size_t{1});
     QCOMPARE(saved->startupEntries.front().path, std::filesystem::path{kLauncher});
+}
+
+void PresetServiceTest::SatisfactionFromTheReplacePlanAgreesWithSatisfactionFromTheSnapshot()
+{
+    const SimulatorProfile profile = Profile();
+
+    const PresetEntry crj{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "aerosoft-crj"},
+                          .action = PresetAction::Enable};
+    const PresetEntry fenix{.addonId = AddonId{.libraryId = kLibraryId, .folderName = "fenix-a320"},
+                            .action = PresetAction::Enable};
+
+    std::vector<Preset> presets;
+
+    for (const bool governsStartup : {false, true})
+    {
+        for (const std::vector<PresetEntry>& entries : {std::vector<PresetEntry>{}, {crj}, {fenix}, {crj, fenix}})
+        {
+            Preset preset = GoverningStartup({TurningOn(kLauncher)});
+            preset.governsStartup = governsStartup;
+            preset.entries = entries;
+            presets.push_back(preset);
+        }
+    }
+
+    std::size_t satisfied = 0;
+    std::size_t unsatisfied = 0;
+
+    for (const bool launcherOn : {false, true})
+    {
+        Fixture f;
+        f.fileSystem.AddLink("E:/Flight Simulator 2024/Community/aerosoft-crj", "D:/MSFS 2024/Aircrafts/aerosoft-crj");
+        f.startup.entries.Carry(StartupEntry{.label = "Fenix", .path = kLauncher, .enabled = launcherOn});
+
+        const ProfileSnapshot snapshot = f.Snapshot(profile);
+
+        for (const Preset& preset : presets)
+        {
+            const PresetPlan replace =
+                PlanPresetApplication(preset, ApplyMode::Replace, profile, snapshot.libraries, snapshot.enabled);
+            const bool viaPlan = f.service.IsSatisfied(snapshot, preset, replace);
+
+            QCOMPARE(viaPlan, f.service.IsSatisfied(profile, snapshot, preset));
+
+            ++(viaPlan ? satisfied : unsatisfied);
+        }
+    }
+
+    QVERIFY(satisfied > 0);
+    QVERIFY(unsatisfied > 0);
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)

@@ -92,6 +92,9 @@ QToolButton#FilterChip:checked {
     background: %accent%; border: 1px solid %accent%; color: %onAccent%; font-weight: 600;
 }
 QToolButton#FilterChip[population="none"] { border-color: %divider%; color: %faint%; }
+QToolButton#FilterChip[population="none"]:checked {
+    background: %accent%; border: 1px solid %accent%; color: %onAccent%;
+}
 QLabel[tag="filled"] { background: %accent%; color: %onAccent%; font-weight: 600; padding: 2px 7px; }
 QLabel[tag="outlined"] { border: 1px solid %accent%; color: %accentInk%; font-weight: 600; padding: 1px 6px; }
 QLabel[tag="muted"] { background: %raised%; color: %secondary%; padding: 2px 7px; }
@@ -103,7 +106,7 @@ QLabel#FooterAside { color: %secondary%; }
 QProgressBar#FooterMeter, QProgressBar#ImportMeter { background: %raised%; border: none; }
 QProgressBar#FooterMeter::chunk, QProgressBar#ImportMeter::chunk { background: %accent%; }
 QLabel#ImportQuiet { color: %secondary%; }
-#PanelHeader { background: %chrome%; border-left: 1px solid %divider%; border-bottom: 1px solid %divider%; }
+#PanelHeader { background: %chrome%; border-left: 1px solid %divider%; border-bottom: 2px solid %divider%; }
 #PanelBody { background: %chrome%; border-left: 1px solid %divider%; }
 #PanelRail { background: %chrome%; border-left: 1px solid %divider%; }
 QToolButton#PanelExpand {
@@ -136,7 +139,7 @@ QFrame#OptionsBox { background: %window%; border: 1px solid %divider%; }
 #OptionsRow[follows="true"] { border-top: 1px solid %raised%; }
 #OptionsChoice[follows="true"] { border-top: 1px solid %divider%; }
 QLabel#OptionsGroupName {
-    color: %secondary%; font-weight: 700; font-size: 11px; letter-spacing: 1px;
+    color: %secondary%; font-weight: 800; font-size: 10px; letter-spacing: 1px;
 }
 QLabel#OptionsChoiceName { font-weight: 600; }
 QLabel#AboutVersion { font-weight: 700; }
@@ -150,6 +153,7 @@ QHeaderView::section {
     border: none; border-bottom: 2px solid %divider%;
     padding: 6px 8px;
 }
+#ScrollBarCap { background: %window%; border: none; border-bottom: 2px solid %divider%; }
 QTableView, QTreeView { border: none; }
 QTableView { gridline-color: transparent; }
 QLineEdit, QComboBox, QSpinBox {
@@ -227,4 +231,5 @@ void RefreshModernistTheme(QApplication& app)
     QApplication::setStyle(new ModernistStyle(scheme));
     QApplication::setPalette(ModernistPalette(scheme));
     app.setStyleSheet(ModernistStyleSheet(scheme));
+    QApplication::setFont(QApplication::font());
 }

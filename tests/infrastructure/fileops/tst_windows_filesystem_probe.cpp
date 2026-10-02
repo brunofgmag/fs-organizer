@@ -5,8 +5,17 @@
 
 #include <aclapi.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
+#include <cwctype>
+#include <fstream>
+#include <optional>
+#include <string>
+#include <utility>
 #include <vector>
 
+#include "infrastructure/fileops/ExtendedPaths.h"
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/link/WindowsLinkService.h"
 #include "tests/support/DeepPaths.h"
@@ -26,6 +35,7 @@ namespace
         static void AnUnmountedDriveLetterIsNotAnAvailableVolume();
         static void AJunctionIsAReparsePointAndARealFolderIsNot();
         static void OnlyARealFolderIsPhysicalAndALiveJunctionOverItIsNot();
+        static void TargetDirectoryExistsAnswersLikeTheStandardLibraryForFilesAndChainsOfJunctions();
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
         static void AFolderThatIsNotThereIsNotTheSameAsOneThatRefusesTheWrite();
         static void AFolderThatWillNotTakeAFileSaysPermissionIsWhatStoppedIt();
@@ -35,6 +45,15 @@ namespace
         static void EveryQuestionAboutAnEntryPastTheOldCeilingIsAnswerable();
         static void ChildrenOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem();
         static void TheStandardLibraryDoubleAnswersPastTheOldCeilingTheSameWayThisProbeDoes();
+        static void TheFingerprintCarriesTheWriteTimeOfEachFileAsTheFileSystemHoldsIt();
+        static void TheFingerprintNamesEachFileRelativeToTheRootWhetherOrNotTheRootEndsInASeparator();
+        static void TheLongestEntryOfAFingerprintIsWhatTheOldMeasurementGivesForTheSameTree();
+        static void TheFingerprintOfARootReachedThroughTheNetworkShareAnswersLikeTheOldMeasurement();
+        static void AFolderAndAFileAreListedEachUnderItsOwnKindAndNeverTheDotEntries();
+        static void AJunctionToAFolderIsListedAsAFolderAndNotAsAFile();
+        static void ANameOutsideTheCodePageComesBackIntact();
+        static void FilesOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem();
+        static void AFolderThatIsNotThereOrHasNothingInItListsNothing();
     };
 }
 
@@ -87,6 +106,70 @@ namespace
             return linkPath;
         }
     };
+}
+
+namespace
+{
+    void WriteAccentedTree(const std::filesystem::path& root)
+    {
+        const std::vector<std::filesystem::path> files{
+            std::filesystem::path(L"manifest.json"),
+            std::filesystem::path(L"café") / std::filesystem::path(L"über-Ж.bgl"),
+            std::filesystem::path(L"café") / std::filesystem::path(L"日本語") / std::filesystem::path(L"layout.json"),
+            std::filesystem::path(L"scenery") / std::filesystem::path(L"world") / std::filesystem::path(L"a.bgl"),
+            std::filesystem::path(L"scenery") / std::filesystem::path(L"world") / std::filesystem::path(L"b.bgl"),
+        };
+
+        for (const std::filesystem::path& file : files)
+        {
+            std::filesystem::create_directories((root / file).parent_path());
+            std::ofstream(root / file) << "content";
+        }
+
+        std::filesystem::create_directories(root / std::filesystem::path(L"vazia-ção"));
+    }
+
+    std::vector<std::filesystem::path> RelativePathsOfFilesUnder(const std::filesystem::path& root)
+    {
+        std::vector<std::filesystem::path> relative;
+
+        for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(root))
+        {
+            if (entry.is_regular_file())
+            {
+                relative.push_back(entry.path().lexically_relative(root));
+            }
+        }
+
+        std::ranges::sort(relative);
+
+        return relative;
+    }
+
+    std::vector<std::filesystem::path> RelativePathsOf(const TreeFingerprint& fingerprint)
+    {
+        std::vector<std::filesystem::path> relative;
+
+        for (const FileFingerprint& file : fingerprint.files)
+        {
+            relative.push_back(file.relativePath);
+        }
+
+        std::ranges::sort(relative);
+
+        return relative;
+    }
+
+    std::optional<std::filesystem::path> ThroughTheAdministrativeShare(const std::filesystem::path& local)
+    {
+        const std::wstring text = local.wstring();
+        if (text.size() < 3 || text[1] != L':' || !std::iswalpha(text[0]))
+        {
+            return std::nullopt;
+        }
+
+        return std::filesystem::path(LR"(\\localhost\)" + std::wstring(1, text[0]) + L"$" + text.substr(2));
+    }
 }
 
 void WindowsFilesystemProbeTest::ADanglingJunctionIsStillAnEntryThatOccupiesItsPath()
@@ -170,6 +253,35 @@ void WindowsFilesystemProbeTest::OnlyARealFolderIsPhysicalAndALiveJunctionOverIt
     QVERIFY2(filesystemProbe.TargetDirectoryExists(live),
              "the two probes stopped disagreeing, so one of them is not answering what it promises");
     QVERIFY(!filesystemProbe.TargetDirectoryExists(dangling));
+}
+
+void WindowsFilesystemProbeTest::TargetDirectoryExistsAnswersLikeTheStandardLibraryForFilesAndChainsOfJunctions()
+{
+    const Disk disk;
+    const std::filesystem::path physical = disk.AddFolder("Library/Aircrafts/aerosoft-crj");
+    const std::filesystem::path file = disk.Root() / "Library/readme.txt";
+    std::ofstream(file, std::ios::binary) << "not a folder";
+
+    const std::filesystem::path live = disk.AddLiveJunction("Community/aerosoft-crj", physical);
+    const std::filesystem::path chained = disk.AddLiveJunction("Second/aerosoft-crj", live);
+    const std::filesystem::path dangling = disk.AddDanglingJunction("Community/ag-airport-bgqq");
+    const std::filesystem::path chainedToDangling = disk.AddLiveJunction("Second/ag-airport-bgqq", dangling);
+    const std::filesystem::path never = disk.Root() / "Community/never-created";
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    const std::vector<std::pair<std::filesystem::path, bool>> expected{
+        {physical, true},           {file, false},  {live, true}, {chained, true}, {dangling, false},
+        {chainedToDangling, false}, {never, false},
+    };
+
+    for (const auto& [path, isThere] : expected)
+    {
+        std::error_code error;
+
+        QCOMPARE(filesystemProbe.TargetDirectoryExists(path), isThere);
+        QCOMPARE(filesystemProbe.TargetDirectoryExists(path), std::filesystem::is_directory(path, error));
+    }
 }
 
 void WindowsFilesystemProbeTest::FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists()
@@ -420,6 +532,189 @@ void WindowsFilesystemProbeTest::TheStandardLibraryDoubleAnswersPastTheOldCeilin
     QCOMPARE(byTheDouble->files.size(), byProduction->files.size());
     QCOMPARE(byTheDouble->files.front().relativePath, byProduction->files.front().relativePath);
     QCOMPARE(byTheDouble->longestEntry, byProduction->longestEntry);
+}
+
+void WindowsFilesystemProbeTest::TheFingerprintCarriesTheWriteTimeOfEachFileAsTheFileSystemHoldsIt()
+{
+    constexpr std::int64_t kFileTimeTicksAtTheUnixBillennium = 126'444'736'000'000'000;
+    constexpr std::int64_t kUnixBillennium = 1'000'000'000;
+
+    const Disk disk;
+    const std::filesystem::path addon = disk.AddFolder("Community/asfs");
+    const std::filesystem::path first = addon / "manifest.json";
+    const std::filesystem::path second = addon / "scenery" / "world.bgl";
+    std::filesystem::create_directories(second.parent_path());
+    std::ofstream(first) << R"({"title": "ASFS"})";
+    std::ofstream(second) << "bgl";
+
+    const std::filesystem::file_time_type billennium{
+        std::filesystem::file_time_type::duration{kFileTimeTicksAtTheUnixBillennium}};
+    std::filesystem::last_write_time(first, billennium);
+    std::filesystem::last_write_time(second, billennium + std::chrono::milliseconds(7));
+
+    const WindowsFilesystemProbe production;
+    const StdFilesystemProbe double_;
+
+    for (const FilesystemProbe* probe :
+         {static_cast<const FilesystemProbe*>(&production), static_cast<const FilesystemProbe*>(&double_)})
+    {
+        const std::optional<TreeFingerprint> walked = probe->FingerprintTree(addon);
+
+        QVERIFY(walked.has_value());
+        QCOMPARE(walked->files.size(), std::size_t{2});
+
+        for (const FileFingerprint& file : walked->files)
+        {
+            QCOMPARE(file.lastWriteTime, production.LastWriteTime(addon / file.relativePath).value());
+        }
+
+        const auto whereIs = [&walked](const std::filesystem::path& relative)
+        {
+            return std::ranges::find(walked->files, relative, &FileFingerprint::relativePath)->lastWriteTime;
+        };
+
+        QCOMPARE(whereIs("manifest.json"),
+                 std::chrono::system_clock::time_point{std::chrono::seconds{kUnixBillennium}});
+        QCOMPARE(whereIs(std::filesystem::path("scenery") / "world.bgl"),
+                 std::chrono::system_clock::time_point{std::chrono::seconds{kUnixBillennium}}
+                     + std::chrono::milliseconds(7));
+    }
+}
+
+void WindowsFilesystemProbeTest::TheFingerprintNamesEachFileRelativeToTheRootWhetherOrNotTheRootEndsInASeparator()
+{
+    const Disk disk;
+    WriteAccentedTree(disk.Root());
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    for (const std::filesystem::path& root : {disk.Root(), disk.Root() / ""})
+    {
+        const std::optional<TreeFingerprint> walked = filesystemProbe.FingerprintTree(root);
+
+        QVERIFY(walked.has_value());
+        QCOMPARE(walked->files.size(), std::size_t{5});
+        QCOMPARE(RelativePathsOf(*walked), RelativePathsOfFilesUnder(root));
+    }
+}
+
+void WindowsFilesystemProbeTest::TheLongestEntryOfAFingerprintIsWhatTheOldMeasurementGivesForTheSameTree()
+{
+    const Disk disk;
+    const std::filesystem::path accented = disk.AddFolder("accented");
+    WriteAccentedTree(accented);
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root() / "deep", "tfdidesign-aircraft-md11");
+    WriteFilePastTheCeiling(deep / "manifest.json", R"({"title": "MD-11"})");
+    const std::filesystem::path empty = disk.AddFolder("empty");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    for (const std::filesystem::path& root : {accented, accented / "", disk.Root() / "deep", deep, empty})
+    {
+        const std::optional<TreeFingerprint> walked = filesystemProbe.FingerprintTree(root);
+        const std::optional<std::size_t> measured = LongestEntryUnder(root);
+
+        QVERIFY(walked.has_value());
+        QVERIFY(measured.has_value());
+        QCOMPARE(walked->longestEntry, *measured);
+    }
+
+    const std::optional<TreeFingerprint> pastTheCeiling = filesystemProbe.FingerprintTree(deep);
+    QVERIFY(pastTheCeiling.has_value());
+    QVERIFY(pastTheCeiling->longestEntry > kOldPathCeiling);
+}
+
+void WindowsFilesystemProbeTest::TheFingerprintOfARootReachedThroughTheNetworkShareAnswersLikeTheOldMeasurement()
+{
+    const Disk disk;
+    WriteAccentedTree(disk.Root());
+
+    const std::optional<std::filesystem::path> shared = ThroughTheAdministrativeShare(disk.Root());
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::optional<TreeFingerprint> walked =
+        shared.has_value() ? filesystemProbe.FingerprintTree(*shared) : std::nullopt;
+
+    if (!walked.has_value())
+    {
+        qInfo("the UNC branch was not exercised: this machine does not answer through its administrative share");
+
+        return;
+    }
+
+    qInfo("the UNC branch was exercised through %s", shared->string().c_str());
+
+    QCOMPARE(walked->files.size(), std::size_t{5});
+    QCOMPARE(RelativePathsOf(*walked), RelativePathsOfFilesUnder(*shared));
+    QCOMPARE(walked->longestEntry, LongestEntryUnder(*shared).value());
+    QVERIFY(walked->longestEntry > shared->wstring().size());
+}
+
+void WindowsFilesystemProbeTest::AFolderAndAFileAreListedEachUnderItsOwnKindAndNeverTheDotEntries()
+{
+    const Disk disk;
+    const std::filesystem::path destination = disk.AddFolder("Community");
+    const std::filesystem::path folder = disk.AddFolder("Community/asfs");
+    const std::filesystem::path file = destination / "readme.txt";
+    std::ofstream(file) << "hello";
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QCOMPARE(filesystemProbe.ChildDirectories(destination), std::vector<std::filesystem::path>{folder});
+    QCOMPARE(filesystemProbe.ChildFiles(destination), std::vector<std::filesystem::path>{file});
+}
+
+void WindowsFilesystemProbeTest::AJunctionToAFolderIsListedAsAFolderAndNotAsAFile()
+{
+    const Disk disk;
+    const std::filesystem::path target = disk.AddFolder("Library/fenix-a320");
+    const std::filesystem::path junction = disk.AddLiveJunction("Community/fenix-a320", target);
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QCOMPARE(filesystemProbe.ChildDirectories(junction.parent_path()), std::vector<std::filesystem::path>{junction});
+    QVERIFY(filesystemProbe.ChildFiles(junction.parent_path()).empty());
+}
+
+void WindowsFilesystemProbeTest::ANameOutsideTheCodePageComesBackIntact()
+{
+    const Disk disk;
+    const std::filesystem::path destination = disk.AddFolder("Community");
+    const std::filesystem::path folder = destination / std::filesystem::path(L"café-日本語");
+    const std::filesystem::path file = destination / std::filesystem::path(L"über-Ж.bgl");
+    std::filesystem::create_directories(folder);
+    std::ofstream(file) << "hello";
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QCOMPARE(filesystemProbe.ChildDirectories(destination), std::vector<std::filesystem::path>{folder});
+    QCOMPARE(filesystemProbe.ChildFiles(destination), std::vector<std::filesystem::path>{file});
+}
+
+void WindowsFilesystemProbeTest::FilesOfAFolderPastTheOldCeilingComeBackTheWayTheCallerNamesThem()
+{
+    const Disk disk;
+    const std::filesystem::path deep = FolderPastTheCeiling(disk.Root(), "Utils");
+    WriteFilePastTheCeiling(deep / "manifest.json", R"({"title": "MD-11"})");
+
+    const WindowsFilesystemProbe filesystemProbe;
+    const std::vector<std::filesystem::path> files = filesystemProbe.ChildFiles(deep);
+
+    QVERIFY(deep.wstring().size() > kOldPathCeiling);
+    QCOMPARE(files, std::vector<std::filesystem::path>{deep / "manifest.json"});
+    QVERIFY(filesystemProbe.ChildDirectories(deep).empty());
+}
+
+void WindowsFilesystemProbeTest::AFolderThatIsNotThereOrHasNothingInItListsNothing()
+{
+    const Disk disk;
+    const std::filesystem::path empty = disk.AddFolder("Community");
+
+    const WindowsFilesystemProbe filesystemProbe;
+
+    QVERIFY(filesystemProbe.ChildDirectories(empty).empty());
+    QVERIFY(filesystemProbe.ChildFiles(empty).empty());
+    QVERIFY(filesystemProbe.ChildDirectories(disk.Root() / "missing").empty());
+    QVERIFY(filesystemProbe.ChildFiles(disk.Root() / "missing").empty());
 }
 
 QTEST_APPLESS_MAIN(WindowsFilesystemProbeTest)

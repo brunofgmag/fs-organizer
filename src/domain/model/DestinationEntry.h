@@ -72,6 +72,8 @@ struct DestinationEntry
     std::filesystem::path externalOrigin{};
     std::filesystem::path libraryCopy{};
     bool theOtherProgramTookItsFolderBack = false;
+
+    [[nodiscard]] bool operator==(const DestinationEntry& other) const = default;
 };
 
 [[nodiscard]] inline bool ItPointsAtTheOtherProgramsFolder(const DestinationEntry& entry)
