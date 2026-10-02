@@ -2,9 +2,11 @@
 #include <QtCore/QLocale>
 #include <QtCore/QTranslator>
 #include <QtTest/QtTest>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTreeView>
 
+#include "view/panels/FoldersOutsideNotice.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/TriageStrip.h"
 #include "viewmodel/AddonTreeFilterModel.h"
@@ -56,6 +58,7 @@ namespace
 
     private slots:
         static void InstallingATranslatorRewritesWhatIsAlreadyOnTheScreen();
+        static void InstallingATranslatorRewritesTheNoticeOfFoldersOutsideTheLibrary();
         static void AStoredLanguageIsHonouredAndAnythingElseFallsBackTheSameWay();
         static void ALanguageThatCouldNotBeInstalledIsNotReportedAsInUse();
         static void ATreeViewOverAProxySurvivesTheModelBeingRetranslated();
@@ -80,6 +83,33 @@ void LanguageChangeTest::InstallingATranslatorRewritesWhatIsAlreadyOnTheScreen()
     QCoreApplication::processEvents();
 
     QVERIFY(HasActionLabelled(strip, QStringLiteral("Repair broken links…")));
+}
+
+void LanguageChangeTest::InstallingATranslatorRewritesTheNoticeOfFoldersOutsideTheLibrary()
+{
+    FoldersOutsideNotice notice;
+    notice.ShowFolders(3);
+
+    const QLabel* said = notice.findChild<QLabel*>(QStringLiteral("TriageQuiet"));
+
+    QVERIFY(said != nullptr);
+    const QString before = said->text();
+    QVERIFY(before.startsWith(QLatin1Char('3')));
+    QVERIFY(HasActionLabelled(notice, QStringLiteral("Import into the library…")));
+
+    MarkingTranslator marking;
+    QCoreApplication::installTranslator(&marking);
+    QCoreApplication::processEvents();
+
+    QVERIFY2(said->text().startsWith(QLatin1Char('<')), "the notice kept the old text after the switch");
+    QVERIFY2(HasActionLabelled(notice, QStringLiteral("<Import into the library…>")),
+             "the notice button kept the old text after the switch");
+
+    QCoreApplication::removeTranslator(&marking);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(said->text(), before);
+    QVERIFY(HasActionLabelled(notice, QStringLiteral("Import into the library…")));
 }
 
 void LanguageChangeTest::AStoredLanguageIsHonouredAndAnythingElseFallsBackTheSameWay()

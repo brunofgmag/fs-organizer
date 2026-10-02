@@ -11,6 +11,11 @@ public:
         running_ = "FlightSimulator2024.exe";
     }
 
+    void ReportTheSimulatorAsClosed()
+    {
+        running_.reset();
+    }
+
     [[nodiscard]] std::optional<std::string> RunningSimulator() const override
     {
         return running_;

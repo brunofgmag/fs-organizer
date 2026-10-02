@@ -1,5 +1,7 @@
 #include "application/StartupService.h"
 
+#include <variant>
+
 StartupService::StartupService(StartupEntries& entries,
                                const ProcessProbe& processProbe,
                                const FilesystemProbe& filesystemProbe,
@@ -63,4 +65,31 @@ FileResult StartupService::Switch(const std::filesystem::path& entryPath, const 
     }
 
     return entries_.Switch(entryPath, enabled, backup);
+}
+
+StartupApplied StartupService::Apply(const StartupChange& change, StartupBackup& backup)
+{
+    if (!managing_)
+    {
+        return StartupApplied{.result = FileResult::TheStartupEntriesAreLeftLoose};
+    }
+
+    const bool touchesTheStartupFile = !std::holds_alternative<StartupForgetting>(change);
+
+    if (touchesTheStartupFile && processProbe_.SimulatorIsRunning())
+    {
+        return StartupApplied{.result = FileResult::TheSimulatorIsRunning};
+    }
+
+    return entries_.Apply(change, backup);
+}
+
+std::vector<StartupRemovedEntry> StartupService::Removed() const
+{
+    if (!managing_)
+    {
+        return {};
+    }
+
+    return entries_.Removed();
 }

@@ -1,5 +1,6 @@
 #include "infrastructure/sim/StartupFileLocations.h"
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -32,6 +33,19 @@ namespace
 
         return std::nullopt;
     }
+
+    [[nodiscard]] std::optional<std::filesystem::path>
+    TheOnlyFolderIn(const std::vector<std::filesystem::path>& folders)
+    {
+        const bool oneFolder = !folders.empty()
+            && std::ranges::all_of(folders,
+                                   [&folders](const std::filesystem::path& folder)
+                                   {
+                                       return ComparablePath(folder) == ComparablePath(folders.front());
+                                   });
+
+        return oneFolder ? std::optional<std::filesystem::path>(folders.front()) : std::nullopt;
+    }
 }
 
 std::vector<StartupFileLocation> StartupFileLocations(const std::vector<UserCfgLocation>& userCfgLocations,
@@ -56,6 +70,35 @@ std::vector<StartupFileLocation> StartupFileLocations(const std::vector<UserCfgL
     }
 
     return found;
+}
+
+std::filesystem::path StartupFileOrItsPlace(const std::vector<UserCfgLocation>& userCfgLocations,
+                                            const FilesystemProbe& filesystemProbe,
+                                            const SimulatorVariant variant)
+{
+    std::vector<std::filesystem::path> foldersWithoutTheFile;
+
+    for (const UserCfgLocation& location : userCfgLocations)
+    {
+        if (location.variant != variant || !filesystemProbe.EntryExistsWithoutFollowingLinks(location.configPath))
+        {
+            continue;
+        }
+
+        const std::filesystem::path folder = location.configPath.parent_path();
+
+        if (const std::optional<std::filesystem::path> file = TheStartupFileBeside(folder, filesystemProbe);
+            file.has_value())
+        {
+            return *file;
+        }
+
+        foldersWithoutTheFile.push_back(folder);
+    }
+
+    const std::optional<std::filesystem::path> only = TheOnlyFolderIn(foldersWithoutTheFile);
+
+    return only.has_value() ? *only / kStartupFileNames[0] : std::filesystem::path{};
 }
 
 std::filesystem::path StartupFileOf(const std::vector<StartupFileLocation>& locations, const SimulatorVariant variant)

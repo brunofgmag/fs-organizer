@@ -8,6 +8,7 @@
 
 #include "application/ports/PackageList.h"
 #include "application/ports/ProcessProbe.h"
+#include "domain/journal/OperationLog.h"
 #include "domain/model/FileResult.h"
 #include "domain/scenery/AirportCoverage.h"
 
@@ -20,7 +21,7 @@ struct TurnedOffPackage
 class CoverageService
 {
 public:
-    CoverageService(PackageList& packages, const ProcessProbe& processProbe, bool managing);
+    CoverageService(PackageList& packages, const ProcessProbe& processProbe, const OperationLog& log, bool managing);
 
     void Manage(bool managing);
 
@@ -38,8 +39,13 @@ public:
     [[nodiscard]] FileResult SwitchAll(const std::vector<std::string>& packageNames, bool activated);
 
 private:
+    [[nodiscard]] FileResult Refusal() const;
+
+    void Record(const std::vector<std::string>& packageNames, bool activated, FileResult result) const;
+
     PackageList& packages_;
     const ProcessProbe& processProbe_;
+    const OperationLog& log_;
     bool managing_;
 };
 

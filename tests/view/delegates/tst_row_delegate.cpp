@@ -8,10 +8,13 @@
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QToolTip>
 
+#include "tests/support/PaintedCells.h"
+#include "view/delegates/CenteredCheckDelegate.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/theme/ModernistPaint.h"
 #include "view/theme/ModernistTheme.h"
 #include "viewmodel/RowTagRoles.h"
+#include "viewmodel/TagTone.h"
 
 namespace
 {
@@ -24,6 +27,8 @@ namespace
         static void ATextThatFitsItsColumnIsLeftWithoutATooltip();
         static void ATooltipTheModelSuppliesWinsOverTheOneMeasuredFromTheColumn();
         static void ASelectedRowInATableIsOutlinedOnceAndNotCellByCell();
+        static void ASelectedRowIsOutlinedThroughAColumnOfCentredChecks();
+        static void ATagSetToTheEndSitsAtTheEndOfItsCellWhateverTheTextBeforeIt();
         static void PointingAtOneCellLightsUpTheWholeRowAndNoOther();
         static void TheGroundGoesBackWhenThePointerLeaves();
         static void AScreenThatAsksForShorterRowsGetsThemWithoutLosingTheRest();
@@ -289,6 +294,81 @@ void RowDelegateTest::ASelectedRowInATableIsOutlinedOnceAndNotCellByCell()
     QVERIFY2(atTheLeftEdge != inside, "the selected row lost its left edge");
     QCOMPARE(atTheSeam, inside);
     QCOMPARE(afterTheSeam, inside);
+}
+
+void RowDelegateTest::ASelectedRowIsOutlinedThroughAColumnOfCentredChecks()
+{
+    ApplyModernistTheme(*qApp);
+
+    QStandardItemModel model(2, 3);
+    for (int row = 0; row < 2; ++row)
+    {
+        model.setItem(row, 0, new QStandardItem(QStringLiteral("cell")));
+        model.setItem(row, 1, new QStandardItem(QStringLiteral("cell")));
+
+        auto* check = new QStandardItem;
+        check->setCheckable(true);
+        check->setCheckState(Qt::Checked);
+        model.setItem(row, 2, check);
+    }
+
+    QTableView view;
+    view.setModel(&model);
+    view.setItemDelegate(new RowDelegate(&view));
+    view.setItemDelegateForColumn(2, new CenteredCheckDelegate(&view));
+    view.setSelectionBehavior(QAbstractItemView::SelectRows);
+    view.verticalHeader()->setVisible(false);
+    view.setShowGrid(false);
+    view.resize(420, 140);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    view.selectRow(0);
+    QTest::qWait(60);
+
+    TheSelectedRowRunsThroughTheLastColumn(view, 0);
+}
+
+void RowDelegateTest::ATagSetToTheEndSitsAtTheEndOfItsCellWhateverTheTextBeforeIt()
+{
+    ApplyModernistTheme(*qApp);
+
+    constexpr auto kShortTarget = "a.exe";
+    constexpr auto kLongTarget = R"(C:\Program Files\Some Vendor\longer-name.exe)";
+    constexpr int kRows = 4;
+
+    QStandardItemModel model(kRows, 1);
+    for (int row = 0; row < kRows; ++row)
+    {
+        auto* cell = new QStandardItem(QString::fromLatin1(row % 2 == 0 ? kShortTarget : kLongTarget));
+        cell->setData(QStringLiteral("not in the file"), TagTextRole);
+        cell->setData(static_cast<int>(TagTone::Outlined), TagToneRole);
+        cell->setData(row < 2, TagAtTheEndRole);
+        model.setItem(row, 0, cell);
+    }
+
+    QTableView view;
+    view.setModel(&model);
+    view.setItemDelegate(new RowDelegate(&view));
+    view.verticalHeader()->setVisible(false);
+    view.horizontalHeader()->setVisible(false);
+    view.setShowGrid(false);
+    view.resize(520, 200);
+    view.horizontalHeader()->resizeSection(0, 500);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    const QImage painted = TheViewportAsPainted(view);
+
+    const auto endOf = [&](const int row)
+    {
+        return WhereTheInkEnds(painted, view.visualRect(model.index(row, 0)));
+    };
+
+    QVERIFY(endOf(0) > 0);
+    QCOMPARE(endOf(0), endOf(1));
+    QVERIFY2(endOf(2) != endOf(3), "without the role the tag must follow the text, or this measure proves nothing");
+    QVERIFY(endOf(0) >= endOf(3));
 }
 
 namespace

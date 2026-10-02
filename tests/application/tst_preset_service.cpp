@@ -58,6 +58,9 @@ namespace
         static void ANonGoverningPresetLeavesTheStartupFileOutOfSatisfaction();
         static void SettingAStartupActionRefusesWhenTheRowNoLongerHoldsThatEntry();
         static void RecapturingTheStartupTakesWhatIsEnabledNowAndGoverns();
+        static void AddingAStartupEntryAppendsItTurnedOnAndLeavesTheOtherRowsAlone();
+        static void AddingAStartupEntryTheFileAlreadyNamesOrAPresetThatIsGoneIsRefused();
+        static void TakingAStartupEntryOutRemovesOnlyThatRowAndRefusesWhenTheRowMoved();
         static void SatisfactionFromTheReplacePlanAgreesWithSatisfactionFromTheSnapshot();
     };
 }
@@ -872,6 +875,67 @@ void PresetServiceTest::SatisfactionFromTheReplacePlanAgreesWithSatisfactionFrom
 
     QVERIFY(satisfied > 0);
     QVERIFY(unsatisfied > 0);
+}
+
+void PresetServiceTest::AddingAStartupEntryAppendsItTurnedOnAndLeavesTheOtherRowsAlone()
+{
+    Fixture f;
+
+    Preset stored;
+    stored.name = "Voo curto";
+    stored.governsStartup = true;
+    stored.startupEntries = {PresetStartupEntry{.path = kLauncher, .action = PresetAction::Disable}};
+    QVERIFY(f.repository.Save(kProfileId, stored));
+
+    QVERIFY(f.service.AddStartupEntry(kProfileId, "Voo curto", kOtherLauncher));
+
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
+
+    QVERIFY(saved.has_value());
+    QCOMPARE(saved->startupEntries.size(), std::size_t{2});
+    QCOMPARE(saved->startupEntries.front().path, std::filesystem::path(kLauncher));
+    QVERIFY(saved->startupEntries.front().action == PresetAction::Disable);
+    QCOMPARE(saved->startupEntries.back().path, std::filesystem::path(kOtherLauncher));
+    QVERIFY(saved->startupEntries.back().action == PresetAction::Enable);
+    QVERIFY(saved->governsStartup);
+}
+
+void PresetServiceTest::AddingAStartupEntryTheFileAlreadyNamesOrAPresetThatIsGoneIsRefused()
+{
+    Fixture f;
+
+    Preset stored;
+    stored.name = "Voo curto";
+    stored.startupEntries = {TurningOn(kLauncher)};
+    QVERIFY(f.repository.Save(kProfileId, stored));
+
+    QVERIFY(!f.service.AddStartupEntry(kProfileId, "Voo curto", "d:\\msfs 2024\\aircrafts\\FENIX-a320\\launcher.EXE"));
+    QVERIFY(!f.service.AddStartupEntry(kProfileId, "Voo curto", {}));
+    QVERIFY(!f.service.AddStartupEntry(kProfileId, "Nao existe", kOtherLauncher));
+    QCOMPARE(f.service.Load(kProfileId, "Voo curto")->startupEntries.size(), std::size_t{1});
+}
+
+void PresetServiceTest::TakingAStartupEntryOutRemovesOnlyThatRowAndRefusesWhenTheRowMoved()
+{
+    Fixture f;
+
+    Preset stored;
+    stored.name = "Voo curto";
+    stored.governsStartup = true;
+    stored.startupEntries = {TurningOn(kLauncher), TurningOn(kOtherLauncher)};
+    QVERIFY(f.repository.Save(kProfileId, stored));
+
+    QVERIFY(!f.service.TakeStartupEntryOut(kProfileId, "Voo curto", 0, kOtherLauncher));
+    QVERIFY(!f.service.TakeStartupEntryOut(kProfileId, "Voo curto", 5, kOtherLauncher));
+    QCOMPARE(f.service.Load(kProfileId, "Voo curto")->startupEntries.size(), std::size_t{2});
+
+    QVERIFY(f.service.TakeStartupEntryOut(kProfileId, "Voo curto", 0, kLauncher));
+
+    const std::optional<Preset> saved = f.service.Load(kProfileId, "Voo curto");
+
+    QVERIFY(saved.has_value());
+    QCOMPARE(saved->startupEntries.size(), std::size_t{1});
+    QCOMPARE(saved->startupEntries.front().path, std::filesystem::path(kOtherLauncher));
 }
 
 QTEST_APPLESS_MAIN(PresetServiceTest)

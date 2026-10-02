@@ -303,7 +303,7 @@ namespace
                                   [](const StartupEntry& one, const StartupEntry& other)
                                   {
                                       return one.label == other.label && one.path == other.path
-                                          && one.enabled == other.enabled;
+                                          && one.commandLine == other.commandLine && one.enabled == other.enabled;
                                   });
     }
 
@@ -326,6 +326,7 @@ bool Session::TakeTheEntriesRead(EntriesRead& read)
         snapshot_.enabled = std::move(read.enabled);
         snapshot_.conflicts = std::move(read.conflicts);
         snapshot_.startupEntries = std::move(read.startupEntries);
+        snapshot_.startupEntriesWereRead = read.startupEntriesWereRead;
     }
 
     return stillCurrent;
@@ -354,13 +355,15 @@ void Session::FinishTheRefresh()
 void Session::RefreshStartupEntries()
 {
     std::vector<StartupEntry> entries = service_.StartupEntriesNow();
+    const bool read = service_.StartupEntriesAreRead();
 
-    if (SameStartupEntries(entries, snapshot_.startupEntries))
+    if (SameStartupEntries(entries, snapshot_.startupEntries) && read == snapshot_.startupEntriesWereRead)
     {
         return;
     }
 
     snapshot_.startupEntries = std::move(entries);
+    snapshot_.startupEntriesWereRead = read;
     ++snapshotsAdopted_;
 
     observer_.OnRefreshed();

@@ -2476,6 +2476,22 @@ Also in the library: %2</translation>
     </message>
 </context>
 <context>
+    <name>FoldersOutsideNotice</name>
+    <message numerus="yes">
+        <location filename="../src/view/panels/FoldersOutsideNotice.cpp" line="44"/>
+        <source>%n folder outside the library</source>
+        <translation>
+            <numerusform>%n folder outside the library</numerusform>
+            <numerusform>%n folders outside the library</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/panels/FoldersOutsideNotice.cpp" line="45"/>
+        <source>Import into the library…</source>
+        <translation>Import into the library…</translation>
+    </message>
+</context>
+<context>
     <name>GithubManual</name>
     <message>
         <source>The manual was downloaded but could not be saved to %1.</source>
@@ -2730,6 +2746,51 @@ Also in the library: %2</translation>
         <location filename="../src/viewmodel/JournalModel.cpp" line="98"/>
         <source>Remove the category marker</source>
         <translation>Remove the category marker</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="99"/>
+        <source>Add a startup entry</source>
+        <translation>Add a startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="100"/>
+        <source>Remove a startup entry</source>
+        <translation>Remove a startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="101"/>
+        <source>Edit a startup entry</source>
+        <translation>Edit a startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="102"/>
+        <source>Restore a removed startup entry</source>
+        <translation>Restore a removed startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="103"/>
+        <source>Discard a removed startup entry</source>
+        <translation>Discard a removed startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="104"/>
+        <source>Disable a simulator package</source>
+        <translation>Disable a simulator package</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="105"/>
+        <source>Enable a simulator package</source>
+        <translation>Enable a simulator package</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="114"/>
+        <source>Disable a startup entry</source>
+        <translation>Disable a startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/JournalModel.cpp" line="115"/>
+        <source>Enable a startup entry</source>
+        <translation>Enable a startup entry</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="113"/>
@@ -3978,37 +4039,63 @@ Links already in %2 stay there and keep working, but FS Organizer stops managing
 <context>
     <name>PresetStartupPanel</name>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="279"/>
         <source>Enables</source>
         <translation>Enables</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="139"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="284"/>
         <source>Update from enabled entries</source>
         <translation>Update from enabled entries</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="138"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="280"/>
         <source>This preset also controls startup entries</source>
         <translation>This preset also controls startup entries</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="279"/>
         <source>Entry</source>
         <translation>Entry</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="279"/>
         <source>Target</source>
         <translation>Target</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="140"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="134"/>
+        <source>not in the file</source>
+        <translation>not in the file</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="137"/>
+        <source>This path has no entry in the startup file, so applying the preset leaves it out.</source>
+        <translation>This path has no entry in the startup file, so applying the preset leaves it out.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="204"/>
+        <source>Every entry in the startup file is already in this preset.</source>
+        <translation>Every entry in the startup file is already in this preset.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="281"/>
+        <source>Add entry…</source>
+        <translation>Add entry…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="282"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="283"/>
+        <source>Remove from preset</source>
+        <translation>Remove from preset</translation>
+    </message>
+    <message>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="286"/>
         <source>This preset does not control startup entries</source>
         <translation>This preset does not control startup entries</translation>
     </message>
     <message>
-        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="141"/>
+        <location filename="../src/view/presets/PresetStartupPanel.cpp" line="287"/>
         <source>Check the box above to save the entries enabled right now. You can then enable or disable each one here.</source>
         <translation>Check the box above to save the entries enabled right now. You can then enable or disable each one here.</translation>
     </message>
@@ -4036,8 +4123,7 @@ Links already in %2 stay there and keep working, but FS Organizer stops managing
         </translation>
     </message>
     <message>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="159"/>
-        <location filename="../src/viewmodel/PresetViewModel.cpp" line="176"/>
+        <location filename="../src/viewmodel/PresetViewModel.cpp" line="474"/>
         <source>Could not save the change to the preset &quot;%1&quot;. It may have changed on the disk, or the presets folder may be full or read-only.</source>
         <translation>Could not save the change to the preset &quot;%1&quot;. It may have changed on the disk, or the presets folder may be full or read-only.</translation>
     </message>
@@ -4669,6 +4755,26 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>this copy is outside the profile&apos;s destinations and libraries, so it cannot go to the quarantine</translation>
     </message>
     <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="134"/>
+        <source>the startup file already lists that program</source>
+        <translation>the startup file already lists that program</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="136"/>
+        <source>the startup file is not saved as UTF-8 and cannot hold these characters, so nothing changed</source>
+        <translation>the startup file is not saved as UTF-8 and cannot hold these characters, so nothing changed</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="139"/>
+        <source>the removed entry could not be saved, so nothing was removed</source>
+        <translation>the removed entry could not be saved, so nothing was removed</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="139"/>
+        <source>that program file does not exist, so nothing changed</source>
+        <translation>that program file does not exist, so nothing changed</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">the journal does not know where this came from</translation>
     </message>
@@ -5211,9 +5317,8 @@ Size %2</translation>
         <translation>its addon is disabled</translation>
     </message>
     <message>
-        <location filename="../src/view/simulator/StartupPage.cpp" line="40"/>
         <source>Inside an addon</source>
-        <translation>Inside an addon</translation>
+        <translation type="vanished">Inside an addon</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="41"/>
@@ -5335,6 +5440,47 @@ Size %2</translation>
         <translation>
             <numerusform>%1 and %n more</numerusform>
             <numerusform>%1 and %n more</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="47"/>
+        <source>its drive is not connected</source>
+        <translation>its drive is not connected</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="51"/>
+        <source>inside an addon</source>
+        <translation>inside an addon</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="99"/>
+        <source>Undo: %1 added</source>
+        <translation>Undo: %1 added</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="100"/>
+        <source>Undo: %1 edited</source>
+        <translation>Undo: %1 edited</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="104"/>
+        <source>Undo: %1 removed</source>
+        <translation>Undo: %1 removed</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="199"/>
+        <source>%n preset followed the new path.</source>
+        <translation>
+            <numerusform>%n preset followed the new path.</numerusform>
+            <numerusform>%n presets followed the new path.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="191"/>
+        <source>%n preset could not follow the new path and still names the old one: %1.</source>
+        <translation>
+            <numerusform>%n preset could not follow the new path and still names the old one: %1.</numerusform>
+            <numerusform>%n presets could not follow the new path and still name the old one: %1.</numerusform>
         </translation>
     </message>
 </context>
@@ -6151,6 +6297,107 @@ Size %2</translation>
     </message>
 </context>
 <context>
+    <name>StartupDraftDialog</name>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="71"/>
+        <source>Edit startup entry</source>
+        <translation>Edit startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="71"/>
+        <source>Add startup entry</source>
+        <translation>Add startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="78"/>
+        <source>Optional</source>
+        <translation>Optional</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="80"/>
+        <source>Choose…</source>
+        <translation>Choose…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="83"/>
+        <source>Program</source>
+        <translation>Program</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="95"/>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="97"/>
+        <source>Command line</source>
+        <translation>Command line</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="101"/>
+        <source>Save</source>
+        <translation>Save</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="101"/>
+        <source>Add</source>
+        <translation>Add</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="102"/>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="165"/>
+        <source>No program chosen</source>
+        <translation>No program chosen</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="217"/>
+        <source>Inside the addon %1. The entry is written with the path of the addon&apos;s link:</source>
+        <translation>Inside the addon %1. The entry is written with the path of the addon&apos;s link:</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="221"/>
+        <source>The addon is disabled now, so the program will not start until you enable it.</source>
+        <translation>The addon is disabled now, so the program will not start until you enable it.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="224"/>
+        <source>%n preset names this entry and will follow the new path.</source>
+        <translation>
+            <numerusform>%n preset names this entry and will follow the new path.</numerusform>
+            <numerusform>%n presets name this entry and will follow the new path.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="227"/>
+        <source>The entry as it is now goes to Removed.</source>
+        <translation>The entry as it is now goes to Removed.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="248"/>
+        <source>The startup file already lists this program, as %1.</source>
+        <translation>The startup file already lists this program, as %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="250"/>
+        <source>That file does not exist.</source>
+        <translation>That file does not exist.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="197"/>
+        <source>Choose the program</source>
+        <translation>Choose the program</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="198"/>
+        <source>Programs (*.exe)</source>
+        <translation>Programs (*.exe)</translation>
+    </message>
+</context>
+<context>
     <name>StartupEntryDialog</name>
     <message>
         <location filename="../src/view/library/StartupEntryDialog.cpp" line="15"/>
@@ -6235,9 +6482,8 @@ Size %2</translation>
         <translation>No startup entries</translation>
     </message>
     <message>
-        <location filename="../src/view/simulator/StartupPage.cpp" line="180"/>
         <source>The simulator&apos;s startup file (EXE.xml) was not found next to this profile&apos;s UserCfg.opt, or it lists no programs.</source>
-        <translation>The simulator&apos;s startup file (EXE.xml) was not found next to this profile&apos;s UserCfg.opt, or it lists no programs.</translation>
+        <translation type="vanished">The simulator&apos;s startup file (EXE.xml) was not found next to this profile&apos;s UserCfg.opt, or it lists no programs.</translation>
     </message>
     <message>
         <source>The startup entries are left alone</source>
@@ -6271,9 +6517,8 @@ Size %2</translation>
         <translation>The startup entries are not managed</translation>
     </message>
     <message>
-        <location filename="../src/view/simulator/StartupPage.cpp" line="183"/>
         <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you disable one without editing XML. It only enables or disables entries that already exist.</source>
-        <translation>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you disable one without editing XML. It only enables or disables entries that already exist.</translation>
+        <translation type="vanished">When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you disable one without editing XML. It only enables or disables entries that already exist.</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="186"/>
@@ -6337,6 +6582,205 @@ Size %2</translation>
         <location filename="../src/view/simulator/StartupPage.cpp" line="281"/>
         <source>Check again</source>
         <translation>Check again</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="381"/>
+        <source>Add…</source>
+        <translation>Add…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="382"/>
+        <source>Edit…</source>
+        <translation>Edit…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="383"/>
+        <source>Remove…</source>
+        <translation>Remove…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="384"/>
+        <source>Restore entry</source>
+        <translation>Restore entry</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="385"/>
+        <source>Discard…</source>
+        <translation>Discard…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="386"/>
+        <source>Stop managing</source>
+        <translation>Stop managing</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="389"/>
+        <source>Removed</source>
+        <translation>Removed</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="538"/>
+        <source>Removed %1</source>
+        <translation>Removed %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="537"/>
+        <source>In the file %1</source>
+        <translation>In the file %1</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="550"/>
+        <source>Undo</source>
+        <translation>Undo</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="394"/>
+        <source>Add a program…</source>
+        <translation>Add a program…</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="392"/>
+        <source>The simulator&apos;s startup file (EXE.xml) lists no programs, or it does not exist yet next to this profile&apos;s UserCfg.opt. Adding a program creates it.</source>
+        <translation>The simulator&apos;s startup file (EXE.xml) lists no programs, or it does not exist yet next to this profile&apos;s UserCfg.opt. Adding a program creates it.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="395"/>
+        <source>No removed entries</source>
+        <translation>No removed entries</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="396"/>
+        <source>Entries you remove from the startup file stay here, with their name and command line, until you restore or discard them.</source>
+        <translation>Entries you remove from the startup file stay here, with their name and command line, until you restore or discard them.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="400"/>
+        <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you add, edit, disable and remove them without editing XML.</source>
+        <translation>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you add, edit, disable and remove them without editing XML.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/simulator/StartupPage.cpp" line="421"/>
+        <source>%n removed program, kept so you can restore it.</source>
+        <translation>
+            <numerusform>%n removed program, kept so you can restore it.</numerusform>
+            <numerusform>%n removed programs, kept so you can restore them.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="612"/>
+        <source>%1 added to the startup file.</source>
+        <translation>%1 added to the startup file.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="641"/>
+        <source>%1 saved to the startup file.</source>
+        <translation>%1 saved to the startup file.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="656"/>
+        <source>Nothing to save: %1 is already like that.</source>
+        <translation>Nothing to save: %1 is already like that.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="654"/>
+        <source>%1 removed from the startup file.</source>
+        <translation>%1 removed from the startup file.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="667"/>
+        <source>%1 is back in the startup file.</source>
+        <translation>%1 is back in the startup file.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="680"/>
+        <source>%1 discarded.</source>
+        <translation>%1 discarded.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="696"/>
+        <source>Undid the last change to %1.</source>
+        <translation>Undid the last change to %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="764"/>
+        <source>Remove startup entry</source>
+        <translation>Remove startup entry</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="765"/>
+        <source>Remove %1 from the startup file?</source>
+        <translation>Remove %1 from the startup file?</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="766"/>
+        <source>Remove</source>
+        <translation>Remove</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="785"/>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="741"/>
+        <source>Removing takes its name and command line out of the startup file.</source>
+        <translation>Removing takes its name and command line out of the startup file.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="742"/>
+        <source>FS Organizer keeps the entry in Removed, where you can restore it.</source>
+        <translation>FS Organizer keeps the entry in Removed, where you can restore it.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="749"/>
+        <source>Disabling this entry already stops the simulator from launching the program.</source>
+        <translation>Disabling this entry already stops the simulator from launching the program.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="755"/>
+        <source>Its program is inside a disabled addon.</source>
+        <translation>Its program is inside a disabled addon.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="756"/>
+        <source>The entry works again when you enable the addon.</source>
+        <translation>The entry works again when you enable the addon.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="758"/>
+        <source>Its program no longer exists.</source>
+        <translation>Its program no longer exists.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="760"/>
+        <source>Its drive is not connected right now, so the program may come back.</source>
+        <translation>Its drive is not connected right now, so the program may come back.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="774"/>
+        <source>Discard removed entry</source>
+        <translation>Discard removed entry</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="775"/>
+        <source>Discard %1 for good?</source>
+        <translation>Discard %1 for good?</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="776"/>
+        <source>Discard</source>
+        <comment>forgets a removed startup entry for good</comment>
+        <translation>Discard</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="771"/>
+        <source>FS Organizer deletes the name, path and command line it kept.</source>
+        <translation>FS Organizer deletes the name, path and command line it kept.</translation>
+    </message>
+    <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="772"/>
+        <source>This cannot be undone.</source>
+        <translation>This cannot be undone.</translation>
     </message>
 </context>
 <context>
@@ -6415,27 +6859,22 @@ Size %2</translation>
 <context>
     <name>TriageStrip</name>
     <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="86"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="78"/>
         <source>Repair broken links…</source>
         <translation>Repair broken links…</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="87"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="79"/>
         <source>Resolve conflicts…</source>
         <translation>Resolve conflicts…</translation>
     </message>
     <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="88"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="80"/>
         <source>Show duplicates…</source>
         <translation>Show duplicates…</translation>
     </message>
-    <message>
-        <location filename="../src/view/shell/TriageStrip.cpp" line="89"/>
-        <source>Import into the library…</source>
-        <translation>Import into the library…</translation>
-    </message>
     <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="91"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="82"/>
         <source>%n broken link</source>
         <translation>
             <numerusform>%n broken link</numerusform>
@@ -6443,7 +6882,7 @@ Size %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="92"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="83"/>
         <source>%n conflict</source>
         <translation>
             <numerusform>%n conflict</numerusform>
@@ -6451,19 +6890,11 @@ Size %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="93"/>
+        <location filename="../src/view/shell/TriageStrip.cpp" line="84"/>
         <source>%n duplicated</source>
         <translation>
             <numerusform>%n duplicated</numerusform>
             <numerusform>%n duplicated</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <location filename="../src/view/shell/TriageStrip.cpp" line="94"/>
-        <source>%n folder outside the library</source>
-        <translation>
-            <numerusform>%n folder outside the library</numerusform>
-            <numerusform>%n folders outside the library</numerusform>
         </translation>
     </message>
 </context>

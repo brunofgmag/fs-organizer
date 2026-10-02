@@ -28,6 +28,11 @@ namespace
         static void TheFileOfEachVariantIsFoundBesideItsOwnUserCfg();
         static void TheProfileInUseIsAnsweredWithTheFileOfItsOwnVariant();
         static void AVariantWithNoFileOfItsOwnIsAnsweredWithNothingAndNotWithTheOtherOne();
+        static void TheFileThatExistsIsAnsweredWithTheNameTheDiskHas();
+        static void WithNoFileTheAnswerIsWhereItWouldBeBesideTheUserCfg();
+        static void AVariantWithNoUserCfgOfItsOwnHasNoPlaceForTheFile();
+        static void TheLocationThatHasTheFileWinsOverAnEarlierOneThatOnlyHasTheUserCfg();
+        static void WithNoFileAndTwoUserCfgsOfTheVariantTheAppDoesNotGuessWhereToCreateIt();
     };
 
     constexpr std::string_view kImpostors[] = {
@@ -185,6 +190,94 @@ void StartupFileLocationsTest::AVariantWithNoFileOfItsOwnIsAnsweredWithNothingAn
 
     QVERIFY(StartupFileOf(found, SimulatorVariant::MSFS2020).empty());
     QVERIFY(!StartupFileOf(found, SimulatorVariant::MSFS2024).empty());
+}
+
+void StartupFileLocationsTest::TheFileThatExistsIsAnsweredWithTheNameTheDiskHas()
+{
+    const TempFiles files;
+    const std::filesystem::path base = FolderWith(files, "Microsoft Flight Simulator", {"UserCfg.opt", "exe.xml"});
+
+    const StdFilesystemProbe probe;
+    const std::filesystem::path file =
+        StartupFileOrItsPlace({{.variant = SimulatorVariant::MSFS2020, .configPath = base / "UserCfg.opt"}}, probe,
+                              SimulatorVariant::MSFS2020);
+
+    QCOMPARE(file.filename(), std::filesystem::path("exe.xml"));
+    QCOMPARE(ComparablePath(file.parent_path()), ComparablePath(base));
+}
+
+void StartupFileLocationsTest::WithNoFileTheAnswerIsWhereItWouldBeBesideTheUserCfg()
+{
+    const TempFiles files;
+    const std::filesystem::path base = FolderWith(files, "Microsoft Flight Simulator 2024", {"UserCfg.opt"});
+
+    const StdFilesystemProbe probe;
+    const std::filesystem::path file =
+        StartupFileOrItsPlace({{.variant = SimulatorVariant::MSFS2024, .configPath = base / "UserCfg.opt"}}, probe,
+                              SimulatorVariant::MSFS2024);
+
+    QCOMPARE(file.filename(), std::filesystem::path("EXE.xml"));
+    QCOMPARE(ComparablePath(file.parent_path()), ComparablePath(base));
+    QVERIFY(!std::filesystem::exists(file));
+    QVERIFY(StartupFileOf(StartupFileLocations(
+                              {{.variant = SimulatorVariant::MSFS2024, .configPath = base / "UserCfg.opt"}}, probe),
+                          SimulatorVariant::MSFS2024)
+                .empty());
+}
+
+void StartupFileLocationsTest::AVariantWithNoUserCfgOfItsOwnHasNoPlaceForTheFile()
+{
+    const TempFiles files;
+    const std::filesystem::path newer = FolderWith(files, "Microsoft Flight Simulator 2024", {"UserCfg.opt"});
+    const std::filesystem::path missing = files.Root() / "Microsoft Flight Simulator";
+
+    const StdFilesystemProbe probe;
+    const std::vector<UserCfgLocation> locations{
+        {.variant = SimulatorVariant::MSFS2024, .configPath = newer / "UserCfg.opt"},
+        {.variant = SimulatorVariant::MSFS2020, .configPath = missing / "UserCfg.opt"}};
+
+    QVERIFY(StartupFileOrItsPlace(locations, probe, SimulatorVariant::MSFS2020).empty());
+    QVERIFY(StartupFileOrItsPlace({}, probe, SimulatorVariant::MSFS2024).empty());
+    QCOMPARE(ComparablePath(StartupFileOrItsPlace(locations, probe, SimulatorVariant::MSFS2024).parent_path()),
+             ComparablePath(newer));
+}
+
+void StartupFileLocationsTest::TheLocationThatHasTheFileWinsOverAnEarlierOneThatOnlyHasTheUserCfg()
+{
+    const TempFiles files;
+    const std::filesystem::path first = FolderWith(files, "Store/Microsoft Flight Simulator 2024", {"UserCfg.opt"});
+    const std::filesystem::path second =
+        FolderWith(files, "Steam/Microsoft Flight Simulator 2024", {"UserCfg.opt", "EXE.xml"});
+
+    const StdFilesystemProbe probe;
+    const std::vector<UserCfgLocation> locations{
+        {.variant = SimulatorVariant::MSFS2024, .configPath = first / "UserCfg.opt"},
+        {.variant = SimulatorVariant::MSFS2024, .configPath = second / "UserCfg.opt"}};
+
+    QCOMPARE(ComparablePath(StartupFileOrItsPlace(locations, probe, SimulatorVariant::MSFS2024).parent_path()),
+             ComparablePath(second));
+    QCOMPARE(
+        ComparablePath(StartupFileOf(StartupFileLocations(locations, probe), SimulatorVariant::MSFS2024).parent_path()),
+        ComparablePath(second));
+}
+
+void StartupFileLocationsTest::WithNoFileAndTwoUserCfgsOfTheVariantTheAppDoesNotGuessWhereToCreateIt()
+{
+    const TempFiles files;
+    const std::filesystem::path first = FolderWith(files, "Store/Microsoft Flight Simulator 2024", {"UserCfg.opt"});
+    const std::filesystem::path second = FolderWith(files, "Steam/Microsoft Flight Simulator 2024", {"UserCfg.opt"});
+    const std::filesystem::path older = FolderWith(files, "Microsoft Flight Simulator", {"UserCfg.opt"});
+
+    const StdFilesystemProbe probe;
+    const std::vector<UserCfgLocation> locations{
+        {.variant = SimulatorVariant::MSFS2024, .configPath = first / "UserCfg.opt"},
+        {.variant = SimulatorVariant::MSFS2024, .configPath = second / "UserCfg.opt"},
+        {.variant = SimulatorVariant::MSFS2020, .configPath = older / "UserCfg.opt"}};
+
+    QVERIFY2(StartupFileOrItsPlace(locations, probe, SimulatorVariant::MSFS2024).empty(),
+             "two places could take the file, and the app does not pick one");
+    QCOMPARE(ComparablePath(StartupFileOrItsPlace(locations, probe, SimulatorVariant::MSFS2020).parent_path()),
+             ComparablePath(older));
 }
 
 QTEST_APPLESS_MAIN(StartupFileLocationsTest)

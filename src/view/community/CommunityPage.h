@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_VIEW_COMMUNITY_COMMUNITY_PAGE_H
 #define FS_ORGANIZER_VIEW_COMMUNITY_COMMUNITY_PAGE_H
 
+#include <cstddef>
 #include <vector>
 
 #include <QtCore/QHash>
@@ -13,6 +14,7 @@
 #include "viewmodel/ImportViewModel.h"
 
 class ContextPanel;
+class FoldersOutsideNotice;
 class ModelRowDetail;
 class QHideEvent;
 class QLabel;
@@ -45,12 +47,16 @@ public:
 
     void SelectEverythingShown() const;
 
+    void ShowFoldersOutside(std::size_t folders) const;
+
 signals:
     void StatusChanged(const QString& message);
 
     void SummaryChanged(const QString& summary);
 
     void AsideChanged(const QString& aside);
+
+    void ImportRequested();
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -133,6 +139,7 @@ private:
     QList<QToolButton*> chips_;
     ContextPanel* panel_ = nullptr;
     QPushButton* selectAll_ = nullptr;
+    FoldersOutsideNotice* outside_ = nullptr;
     QPushButton* reread_ = nullptr;
     QLineEdit* search_ = nullptr;
     QLabel* promise_ = nullptr;

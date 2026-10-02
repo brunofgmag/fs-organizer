@@ -10,6 +10,37 @@
 #include "support/MomentText.h"
 #include "support/PathText.h"
 
+namespace
+{
+    [[nodiscard]] const StartupEntry* LineAt(const std::vector<StartupEntry>& lines, const std::filesystem::path& path)
+    {
+        const std::string wanted = ComparablePath(path);
+        const auto found = std::ranges::find_if(lines,
+                                                [&wanted](const StartupEntry& line)
+                                                {
+                                                    return ComparablePath(line.path) == wanted;
+                                                });
+
+        return found == lines.end() ? nullptr : &*found;
+    }
+
+    [[nodiscard]] QString LabelOf(const StartupEntry& line)
+    {
+        return line.label.empty() ? AsText(line.path.stem()) : QString::fromStdString(line.label);
+    }
+
+    [[nodiscard]] bool NamesThePath(const Preset& preset, const std::filesystem::path& path)
+    {
+        const std::string wanted = ComparablePath(path);
+
+        return std::ranges::any_of(preset.startupEntries,
+                                   [&wanted](const PresetStartupEntry& entry)
+                                   {
+                                       return ComparablePath(entry.path) == wanted;
+                                   });
+    }
+}
+
 PresetViewModel::PresetViewModel(Session& session,
                                  PresetService& service,
                                  ProfileService& profiles,
@@ -180,9 +211,7 @@ bool PresetViewModel::SetAction(const QString& name,
         return true;
     }
 
-    emit Refused(tr("Could not save the change to the preset \"%1\". It may have changed on the disk, or the presets "
-                    "folder may be full or read-only.")
-                     .arg(name));
+    RefuseTheChangeTo(name);
 
     return false;
 }
@@ -197,39 +226,72 @@ bool PresetViewModel::SetStartupAction(const QString& name,
         return true;
     }
 
-    emit Refused(tr("Could not save the change to the preset \"%1\". It may have changed on the disk, or the presets "
-                    "folder may be full or read-only.")
-                     .arg(name));
+    RefuseTheChangeTo(name);
 
     return false;
 }
 
+void PresetViewModel::AddStartupEntry(const QString& name, const std::filesystem::path& path)
+{
+    if (!service_.AddStartupEntry(session_.Profile().id, name.toStdString(), path))
+    {
+        RefuseTheChangeTo(name);
+    }
+
+    emit Changed();
+}
+
+void PresetViewModel::TakeStartupEntryOut(const QString& name,
+                                          const std::size_t index,
+                                          const std::filesystem::path& expected)
+{
+    if (!service_.TakeStartupEntryOut(session_.Profile().id, name.toStdString(), index, expected))
+    {
+        RefuseTheChangeTo(name);
+    }
+
+    emit Changed();
+}
+
 QList<PresetStartupRow> PresetViewModel::StartupRows(const Preset& preset) const
 {
-    const std::vector<StartupEntry>& lines = session_.Snapshot().startupEntries;
+    const ProfileSnapshot& snapshot = session_.Snapshot();
+    const std::vector<StartupEntry>& lines = snapshot.startupEntries;
 
     QList<PresetStartupRow> rows;
 
     for (const PresetStartupEntry& entry : preset.startupEntries)
     {
-        QString label;
+        const StartupEntry* line = LineAt(lines, entry.path);
 
-        for (const StartupEntry& line : lines)
-        {
-            if (ComparablePath(line.path) == ComparablePath(entry.path))
-            {
-                label = QString::fromStdString(line.label);
-                break;
-            }
-        }
-
-        rows.append(PresetStartupRow{.label = label.isEmpty() ? AsText(entry.path.stem()) : label,
+        rows.append(PresetStartupRow{.label = line != nullptr ? LabelOf(*line) : AsText(entry.path.stem()),
                                      .target = AsText(entry.path),
                                      .path = entry.path,
-                                     .action = entry.action});
+                                     .action = entry.action,
+                                     .hasNoEntry = snapshot.startupEntriesWereRead && line == nullptr});
     }
 
     return rows;
+}
+
+QList<PresetStartupCandidate> PresetViewModel::StartupCandidates(const Preset& preset) const
+{
+    QList<PresetStartupCandidate> candidates;
+
+    for (const StartupEntry& line : session_.Snapshot().startupEntries)
+    {
+        if (!NamesThePath(preset, line.path))
+        {
+            candidates.append(PresetStartupCandidate{.label = LabelOf(line), .path = line.path});
+        }
+    }
+
+    return candidates;
+}
+
+bool PresetViewModel::StartupFileHoldsEntries() const
+{
+    return !session_.Snapshot().startupEntries.empty();
 }
 
 bool PresetViewModel::GovernStartup(const QString& name, const bool governs)
@@ -411,6 +473,13 @@ QString PresetViewModel::WhatTheStartupHalfLeftUndone(const PresetApplyReport& r
 
     return tr("These preset startup entries are no longer in the simulator's file:\n\n%1")
         .arg(missing.join(QStringLiteral("\n")));
+}
+
+void PresetViewModel::RefuseTheChangeTo(const QString& name)
+{
+    emit Refused(tr("Could not save the change to the preset \"%1\". It may have changed on the disk, or the presets "
+                    "folder may be full or read-only.")
+                     .arg(name));
 }
 
 void PresetViewModel::RefuseTheWriteOf(const QString& name)

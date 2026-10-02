@@ -259,6 +259,10 @@ namespace QTest
         case FileResult::AnotherProgramIsHoldingIt: return qstrdup("AnotherProgramIsHoldingIt");
         case FileResult::TheQuarantineIsOccupied: return qstrdup("TheQuarantineIsOccupied");
         case FileResult::ThereIsNowhereToQuarantineIt: return qstrdup("ThereIsNowhereToQuarantineIt");
+        case FileResult::TheStartupEntryIsAlreadyThere: return qstrdup("TheStartupEntryIsAlreadyThere");
+        case FileResult::TheStartupFileIsNotUtf8: return qstrdup("TheStartupFileIsNotUtf8");
+        case FileResult::CouldNotKeepTheRemovedEntry: return qstrdup("CouldNotKeepTheRemovedEntry");
+        case FileResult::TheProgramDoesNotExist: return qstrdup("TheProgramDoesNotExist");
         }
 
         return qstrdup("FileResult(?)");
@@ -321,6 +325,13 @@ namespace QTest
         case OperationKind::TurnOffTheStartupEntry: return qstrdup("TurnOffTheStartupEntry");
         case OperationKind::TurnOnTheStartupEntry: return qstrdup("TurnOnTheStartupEntry");
         case OperationKind::TakeBackTheCategoryMarker: return qstrdup("TakeBackTheCategoryMarker");
+        case OperationKind::AddTheStartupEntry: return qstrdup("AddTheStartupEntry");
+        case OperationKind::RemoveTheStartupEntry: return qstrdup("RemoveTheStartupEntry");
+        case OperationKind::EditTheStartupEntry: return qstrdup("EditTheStartupEntry");
+        case OperationKind::RestoreTheStartupEntry: return qstrdup("RestoreTheStartupEntry");
+        case OperationKind::ForgetTheStartupEntry: return qstrdup("ForgetTheStartupEntry");
+        case OperationKind::TurnOffTheSimulatorPackage: return qstrdup("TurnOffTheSimulatorPackage");
+        case OperationKind::TurnOnTheSimulatorPackage: return qstrdup("TurnOnTheSimulatorPackage");
         }
 
         return qstrdup("OperationKind(?)");
@@ -352,16 +363,17 @@ namespace QTest
     }
 
     template<>
-    inline char* toString(const StartupAlarm& t)
+    inline char* toString(const StartupCondition& t)
     {
         switch (t)
         {
-        case StartupAlarm::None: return qstrdup("None");
-        case StartupAlarm::TheExecutableIsMissing: return qstrdup("TheExecutableIsMissing");
-        case StartupAlarm::TheAddonHoldingItIsOff: return qstrdup("TheAddonHoldingItIsOff");
+        case StartupCondition::Reachable: return qstrdup("Reachable");
+        case StartupCondition::BehindADisabledAddon: return qstrdup("BehindADisabledAddon");
+        case StartupCondition::Broken: return qstrdup("Broken");
+        case StartupCondition::Unavailable: return qstrdup("Unavailable");
         }
 
-        return qstrdup("StartupAlarm(?)");
+        return qstrdup("StartupCondition(?)");
     }
 
     template<>

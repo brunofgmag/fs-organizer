@@ -1,6 +1,7 @@
 #ifndef FS_ORGANIZER_TESTS_DOUBLES_FAKE_PRESET_REPOSITORY_H
 #define FS_ORGANIZER_TESTS_DOUBLES_FAKE_PRESET_REPOSITORY_H
 
+#include <algorithm>
 #include <chrono>
 #include <map>
 #include <optional>
@@ -79,7 +80,7 @@ public:
 
     [[nodiscard]] bool Save(const std::string& profileId, const Preset& preset) override
     {
-        if (refusing_)
+        if (refusing_ || std::ranges::find(refusedNames_, preset.name) != refusedNames_.end())
         {
             return false;
         }
@@ -129,7 +130,7 @@ public:
 
     [[nodiscard]] bool SaveReturnPreset(const std::string& profileId, const Preset& preset) override
     {
-        if (refusing_)
+        if (refusing_ || refusingTheReturn_)
         {
             return false;
         }
@@ -144,11 +145,23 @@ public:
         refusing_ = true;
     }
 
+    void RefuseToSave(const std::string& name)
+    {
+        refusedNames_.push_back(name);
+    }
+
+    void RefuseToSaveTheReturnPreset()
+    {
+        refusingTheReturn_ = true;
+    }
+
 private:
     std::map<std::string, std::map<std::string, Preset>> byProfile_;
     std::map<std::string, Preset> returns_;
     std::map<std::string, std::chrono::system_clock::time_point> writtenAt_;
     bool refusing_ = false;
+    bool refusingTheReturn_ = false;
+    std::vector<std::string> refusedNames_;
     mutable std::size_t listCalls_ = 0;
     mutable std::size_t loadCalls_ = 0;
 };

@@ -66,6 +66,8 @@ private:
 
     [[nodiscard]] QVariant StepColumn(const OperationRecord& record, int column) const;
 
+    [[nodiscard]] static QString StepLabel(const OperationRecord& record);
+
     [[nodiscard]] static QString NameOfTheGroup(const JournalEntry& entry);
 
     [[nodiscard]] static QString AddonsInTheGroup(const JournalEntry& entry);

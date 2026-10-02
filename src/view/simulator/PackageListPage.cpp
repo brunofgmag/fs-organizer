@@ -13,6 +13,7 @@
 #include "support/MomentText.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/panels/EmptyState.h"
+#include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/FailureText.h"
@@ -100,6 +101,7 @@ void PackageListPage::changeEvent(QEvent* event)
 QWidget* PackageListPage::CreateToolbar()
 {
     auto* toolbar = new QWidget(this);
+    toolbar_ = toolbar;
     toolbar->setObjectName(QStringLiteral("PageToolbar"));
 
     turnOff_ = new QPushButton(toolbar);
@@ -108,16 +110,12 @@ QWidget* PackageListPage::CreateToolbar()
     turnBackOn_ = new QPushButton(toolbar);
     leaveAlone_ = new QPushButton(toolbar);
 
-    readAt_ = new QLabel(toolbar);
-    readAt_->setObjectName(QStringLiteral("PanelPromise"));
-
     auto* bar = new QHBoxLayout(toolbar);
     bar->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     bar->setSpacing(8);
     bar->addWidget(turnOff_);
     bar->addWidget(coexist_);
     bar->addWidget(turnBackOn_);
-    bar->addWidget(readAt_);
     bar->addStretch();
     bar->addWidget(leaveAlone_);
 
@@ -154,6 +152,7 @@ QWidget* PackageListPage::CreateHalves()
         table->setColumnWidth(kCovered, kNameWidth);
         DressTheHeaderOf(table->header());
         table->setItemDelegate(new RowDelegate(table));
+        CapTheScrollBarOf(table, table->header());
     }
 
     const auto insetLikeAToolbar = [](QWidget* label)
@@ -268,8 +267,8 @@ void PackageListPage::DressTheToolbar() const
 {
     const std::optional<std::chrono::system_clock::time_point> read = viewModel_.ReadAt();
 
-    readAt_->setText(read.has_value() ? tr("package list · read %1").arg(AsMoment(*read))
-                                      : tr("package list · not read"));
+    toolbar_->setToolTip(read.has_value() ? tr("package list · read %1").arg(AsMoment(*read))
+                                          : tr("package list · not read"));
 
     for (QPushButton* onlyForTheSimulator : {turnOff_, turnBackOn_, leaveAlone_})
     {
@@ -302,15 +301,20 @@ void PackageListPage::DressTheActions() const
 
 void PackageListPage::TurnTheSimulatorsOneOff()
 {
-    const CoverageLine* chosen = TheChosenConflict();
-    if (chosen == nullptr || !chosen->againstTheSimulator || TheSimulatorIsInTheWay())
+    const CoverageLine* found = TheChosenConflict();
+    if (found == nullptr || !found->againstTheSimulator)
     {
         return;
     }
 
-    const QString name = chosen->andBy;
+    const CoverageLine chosen = *found;
 
-    Report(viewModel_.Switch(chosen->packageName, false), tr("%1 will not load with the simulator.").arg(name));
+    if (TheSimulatorIsInTheWay())
+    {
+        return;
+    }
+
+    Report(viewModel_.Switch(chosen.packageName, false), tr("%1 will not load with the simulator.").arg(chosen.andBy));
 }
 
 void PackageListPage::LetThemCoexist()
@@ -333,7 +337,7 @@ void PackageListPage::LetThemCoexist()
 void PackageListPage::TurnItBackOn()
 {
     const QList<QTreeWidgetItem*> chosen = turnedOff_->selectedItems();
-    if (chosen.isEmpty() || TheSimulatorIsInTheWay())
+    if (chosen.isEmpty())
     {
         return;
     }
@@ -346,6 +350,11 @@ void PackageListPage::TurnItBackOn()
     }
 
     const QString name = lines[static_cast<std::size_t>(at)].name;
+
+    if (TheSimulatorIsInTheWay())
+    {
+        return;
+    }
 
     Report(viewModel_.Switch(name.toStdString(), true), tr("%1 will load with the simulator again.").arg(name));
 }

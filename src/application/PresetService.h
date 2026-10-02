@@ -78,6 +78,15 @@ public:
                                         const std::filesystem::path& expected,
                                         PresetAction action) const;
 
+    [[nodiscard]] bool AddStartupEntry(const std::string& profileId,
+                                       const std::string& name,
+                                       const std::filesystem::path& entryPath) const;
+
+    [[nodiscard]] bool TakeStartupEntryOut(const std::string& profileId,
+                                           const std::string& name,
+                                           std::size_t index,
+                                           const std::filesystem::path& expected) const;
+
     [[nodiscard]] bool Rename(const std::string& profileId, const std::string& from, const std::string& to) const;
 
     void Remove(const std::string& profileId, const std::string& name) const;

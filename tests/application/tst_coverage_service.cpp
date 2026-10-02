@@ -5,6 +5,8 @@
 
 #include "application/CoverageService.h"
 #include "domain/support/PathUtils.h"
+#include "tests/doubles/FakeClock.h"
+#include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakePackageList.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/support/EnumPrinting.h"
@@ -22,6 +24,11 @@ namespace
         static void WritingIsRefusedWithTheSimulatorRunningAndReadingIsNot();
         static void WritingIsRefusedWhileTheFeatureIsOff();
         static void TheWarningBetweenTwoAddonsOfTheLibraryDoesNotDependOnTheFile();
+        static void ASwitchLeavesOneLineWithThePackageNameAndTheOutcome();
+        static void AnActivationLeavesTheLineThatSaysActivated();
+        static void ABatchLeavesOneLinePerPackageWithTheOutcomeOfTheBatch();
+        static void ARefusedSwitchLeavesItsLineWithTheReason();
+        static void AnEmptyBatchLeavesNothing();
     };
 
     const LibraryId kLibrary = "library-1";
@@ -36,6 +43,25 @@ namespace
         return {.addon = Named(folderName),
                 .resolvedPath = PathFromUtf8("D:/Library/Sceneries/" + folderName),
                 .files = {{.reading = SceneryReading::Read, .codes = std::move(codes)}}};
+    }
+
+    struct Journaled
+    {
+        FakeOperationJournal journal{};
+        FakeClock clock{};
+        OperationLog log{journal, clock};
+    };
+
+    [[nodiscard]] std::vector<std::string> LabelsOf(const FakeOperationJournal& journal)
+    {
+        std::vector<std::string> labels;
+
+        for (const OperationRecord& record : journal.appended)
+        {
+            labels.push_back(record.label);
+        }
+
+        return labels;
     }
 
     void FillWithTheReferenceList(FakePackageList& packages)
@@ -53,7 +79,8 @@ void CoverageServiceTest::TheFeatureIsBornOffAndReadsNothingWhileItIs()
     FillWithTheReferenceList(packages);
 
     const FakeProcessProbe processProbe;
-    const CoverageService service(packages, processProbe, false);
+    const Journaled journaled;
+    const CoverageService service(packages, processProbe, journaled.log, false);
 
     QVERIFY2(!service.Managing(), "in a new profile this one is born off, unlike the switch of the startup file");
     QVERIFY(service.TurnedOff().empty());
@@ -69,7 +96,8 @@ void CoverageServiceTest::TurnedOnItNamesThePackageThatCoversTheSameAirport()
     FillWithTheReferenceList(packages);
 
     const FakeProcessProbe processProbe;
-    const CoverageService service(packages, processProbe, true);
+    const Journaled journaled;
+    const CoverageService service(packages, processProbe, journaled.log, true);
 
     const std::vector<AirportTheSimulatorAlsoCovers> covered = service.WhatTheSimulatorAlsoCovers(
         AirportsOfEachAddon({AddonAt("payware-eham", {"EHAM"}), AddonAt("payware-lpma", {"LPMA"})}));
@@ -86,7 +114,8 @@ void CoverageServiceTest::OnlyTheEntriesTheUserTurnedOffAreOfferedBackForRelight
     FillWithTheReferenceList(packages);
 
     const FakeProcessProbe processProbe;
-    const CoverageService service(packages, processProbe, true);
+    const Journaled journaled;
+    const CoverageService service(packages, processProbe, journaled.log, true);
 
     const std::vector<TurnedOffPackage> turnedOff = service.TurnedOff();
 
@@ -105,7 +134,8 @@ void CoverageServiceTest::WritingIsRefusedWithTheSimulatorRunningAndReadingIsNot
     FakeProcessProbe processProbe;
     processProbe.ReportTheSimulatorAsRunning();
 
-    CoverageService service(packages, processProbe, true);
+    const Journaled journaled;
+    CoverageService service(packages, processProbe, journaled.log, true);
 
     QCOMPARE(service.Switch("fs24-asobo-airport-eham-amsterdam", false), FileResult::TheSimulatorIsRunning);
     QVERIFY(packages.switched.empty());
@@ -119,7 +149,8 @@ void CoverageServiceTest::WritingIsRefusedWhileTheFeatureIsOff()
     FillWithTheReferenceList(packages);
 
     const FakeProcessProbe processProbe;
-    CoverageService service(packages, processProbe, false);
+    const Journaled journaled;
+    CoverageService service(packages, processProbe, journaled.log, false);
 
     QCOMPARE(service.Switch("fs24-asobo-airport-eham-amsterdam", false), FileResult::ThePackageListIsLeftLoose);
     QVERIFY(packages.switched.empty());
@@ -137,6 +168,109 @@ void CoverageServiceTest::TheWarningBetweenTwoAddonsOfTheLibraryDoesNotDependOnT
 
     QVERIFY2(PairsOfTheSameAirport(addons, {}).size() == std::size_t{1},
              "this axis reads no file of the simulator, so turning the feature off leaves it working");
+}
+
+void CoverageServiceTest::ASwitchLeavesOneLineWithThePackageNameAndTheOutcome()
+{
+    FakePackageList packages;
+    FillWithTheReferenceList(packages);
+
+    const FakeProcessProbe processProbe;
+    const Journaled journaled;
+    CoverageService service(packages, processProbe, journaled.log, true);
+
+    QCOMPARE(service.Switch("fs24-asobo-airport-eham-amsterdam", false), FileResult::Completed);
+    QCOMPARE(service.Switch("not-in-the-list", false), FileResult::TheDiskDisagreesWithTheScan);
+
+    QCOMPARE(journaled.journal.appended.size(), std::size_t{2});
+
+    const OperationRecord& first = journaled.journal.appended.front();
+
+    QCOMPARE(first.kind, OperationKind::TurnOffTheSimulatorPackage);
+    QCOMPARE(first.label, std::string("fs24-asobo-airport-eham-amsterdam"));
+    QCOMPARE(std::get<FileResult>(first.outcome), FileResult::Completed);
+    QVERIFY(first.addonId.folderName.empty());
+    QCOMPARE(first.timestamp, journaled.clock.now);
+
+    const OperationRecord& second = journaled.journal.appended.back();
+
+    QCOMPARE(second.label, std::string("not-in-the-list"));
+    QCOMPARE(std::get<FileResult>(second.outcome), FileResult::TheDiskDisagreesWithTheScan);
+}
+
+void CoverageServiceTest::AnActivationLeavesTheLineThatSaysActivated()
+{
+    FakePackageList packages;
+    FillWithTheReferenceList(packages);
+
+    const FakeProcessProbe processProbe;
+    const Journaled journaled;
+    CoverageService service(packages, processProbe, journaled.log, true);
+
+    QCOMPARE(service.Switch("fs24-asobo-airport-lpma-madeira", true), FileResult::Completed);
+
+    QCOMPARE(journaled.journal.appended.size(), std::size_t{1});
+    QCOMPARE(journaled.journal.appended.front().kind, OperationKind::TurnOnTheSimulatorPackage);
+}
+
+void CoverageServiceTest::ABatchLeavesOneLinePerPackageWithTheOutcomeOfTheBatch()
+{
+    FakePackageList packages;
+    FillWithTheReferenceList(packages);
+    packages.answer = FileResult::CouldNotWriteTheStartupFile;
+
+    const FakeProcessProbe processProbe;
+    const Journaled journaled;
+    CoverageService service(packages, processProbe, journaled.log, true);
+
+    QCOMPARE(service.SwitchAll({"fs24-asobo-vcockpits-core", "fs24-asobo-airport-eham-amsterdam"}, false),
+             FileResult::CouldNotWriteTheStartupFile);
+
+    QCOMPARE(LabelsOf(journaled.journal),
+             (std::vector<std::string>{"fs24-asobo-vcockpits-core", "fs24-asobo-airport-eham-amsterdam"}));
+
+    for (const OperationRecord& record : journaled.journal.appended)
+    {
+        QCOMPARE(record.kind, OperationKind::TurnOffTheSimulatorPackage);
+        QCOMPARE(std::get<FileResult>(record.outcome), FileResult::CouldNotWriteTheStartupFile);
+    }
+}
+
+void CoverageServiceTest::ARefusedSwitchLeavesItsLineWithTheReason()
+{
+    FakePackageList packages;
+    FillWithTheReferenceList(packages);
+
+    FakeProcessProbe processProbe;
+    const Journaled journaled;
+    CoverageService service(packages, processProbe, journaled.log, false);
+
+    QCOMPARE(service.Switch("fs24-asobo-vcockpits-core", false), FileResult::ThePackageListIsLeftLoose);
+
+    service.Manage(true);
+    processProbe.ReportTheSimulatorAsRunning();
+
+    QCOMPARE(service.SwitchAll({"fs24-asobo-vcockpits-core", "fs24-asobo-airport-eham-amsterdam"}, true),
+             FileResult::TheSimulatorIsRunning);
+
+    QVERIFY(packages.switched.empty());
+    QCOMPARE(journaled.journal.appended.size(), std::size_t{3});
+    QCOMPARE(std::get<FileResult>(journaled.journal.appended[0].outcome), FileResult::ThePackageListIsLeftLoose);
+    QCOMPARE(std::get<FileResult>(journaled.journal.appended[1].outcome), FileResult::TheSimulatorIsRunning);
+    QCOMPARE(std::get<FileResult>(journaled.journal.appended[2].outcome), FileResult::TheSimulatorIsRunning);
+}
+
+void CoverageServiceTest::AnEmptyBatchLeavesNothing()
+{
+    FakePackageList packages;
+    FillWithTheReferenceList(packages);
+
+    const FakeProcessProbe processProbe;
+    const Journaled journaled;
+    CoverageService service(packages, processProbe, journaled.log, true);
+
+    QCOMPARE(service.SwitchAll({}, false), FileResult::Completed);
+    QVERIFY(journaled.journal.appended.empty());
 }
 
 QTEST_APPLESS_MAIN(CoverageServiceTest)

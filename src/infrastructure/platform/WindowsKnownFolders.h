@@ -15,6 +15,8 @@
 
 [[nodiscard]] std::filesystem::path PresetsFolderPath();
 
+[[nodiscard]] std::filesystem::path RemovedStartupEntriesFolderPath();
+
 [[nodiscard]] std::filesystem::path BisectionFolderPath();
 
 [[nodiscard]] std::filesystem::path SceneryCacheFilePath();

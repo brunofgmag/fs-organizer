@@ -32,7 +32,6 @@ namespace
                            .path = path,
                            .enabled = true,
                            .reach = StartupReach::InsideAnAddon,
-                           .alarm = StartupAlarm::None,
                            .addonFolder = "E:/Sim/Community/pmdg-aircraft-77w"};
     }
 

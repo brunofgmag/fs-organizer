@@ -50,7 +50,6 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
     connect(triage_, &TriageStrip::RepairRequested, this, &MainWindow::RepairRequested);
     connect(triage_, &TriageStrip::ResolveRequested, this, &MainWindow::ResolveRequested);
     connect(triage_, &TriageStrip::DuplicatesRequested, this, &MainWindow::DuplicatesRequested);
-    connect(triage_, &TriageStrip::ImportRequested, this, &MainWindow::ImportRequested);
 
     auto* central = new QWidget(this);
     auto* layout = new QVBoxLayout(central);

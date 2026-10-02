@@ -36,12 +36,16 @@ public:
 
     [[nodiscard]] int TimesItAskedTheFont() const;
 
+    [[nodiscard]] bool DoubleClickedTheCheck() const;
+
 private:
     void PointAt(const QModelIndex& index);
 
     [[nodiscard]] bool IsPointedAt(const QModelIndex& index) const;
 
     [[nodiscard]] int CheckShiftOf(const QStyleOptionViewItem& item) const;
+
+    [[nodiscard]] bool IsOnTheCheck(const QModelIndex& index, const QPoint& at) const;
 
     [[nodiscard]] QStyleOptionViewItem ItemAsDrawn(const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
@@ -50,6 +54,7 @@ private:
     int shortestRow_ = 0;
     bool checkAlignedWithText_ = false;
     bool firstCellLeadsTheRow_ = false;
+    bool doubleClickedTheCheck_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_DELEGATES_ROW_DELEGATE_H

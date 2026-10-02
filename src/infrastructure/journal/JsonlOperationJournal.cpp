@@ -72,6 +72,13 @@ namespace
         case OperationKind::TurnOffTheStartupEntry: return "turnOffTheStartupEntry";
         case OperationKind::TurnOnTheStartupEntry: return "turnOnTheStartupEntry";
         case OperationKind::TakeBackTheCategoryMarker: return "takeBackTheCategoryMarker";
+        case OperationKind::AddTheStartupEntry: return "addTheStartupEntry";
+        case OperationKind::RemoveTheStartupEntry: return "removeTheStartupEntry";
+        case OperationKind::EditTheStartupEntry: return "editTheStartupEntry";
+        case OperationKind::RestoreTheStartupEntry: return "restoreTheStartupEntry";
+        case OperationKind::ForgetTheStartupEntry: return "forgetTheStartupEntry";
+        case OperationKind::TurnOffTheSimulatorPackage: return "turnOffTheSimulatorPackage";
+        case OperationKind::TurnOnTheSimulatorPackage: return "turnOnTheSimulatorPackage";
         }
 
         return "unknown";
@@ -142,6 +149,10 @@ namespace
         case FileResult::AnotherProgramIsHoldingIt: return "anotherProgramIsHoldingIt";
         case FileResult::TheQuarantineIsOccupied: return "theQuarantineIsOccupied";
         case FileResult::ThereIsNowhereToQuarantineIt: return "thereIsNowhereToQuarantineIt";
+        case FileResult::TheStartupEntryIsAlreadyThere: return "theStartupEntryIsAlreadyThere";
+        case FileResult::TheStartupFileIsNotUtf8: return "theStartupFileIsNotUtf8";
+        case FileResult::CouldNotKeepTheRemovedEntry: return "couldNotKeepTheRemovedEntry";
+        case FileResult::TheProgramDoesNotExist: return "theProgramDoesNotExist";
         }
 
         return "unknown";
