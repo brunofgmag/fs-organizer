@@ -233,6 +233,7 @@ set(VIEW_SOURCES
         src/view/theme/ModernistTones.cpp
         src/view/shell/PageNames.cpp
         src/view/theme/PageTab.cpp
+        src/view/theme/ArrowButton.cpp
 )
 
 set(WINDOWS_SHELL_SOURCES

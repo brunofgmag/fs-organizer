@@ -20,6 +20,7 @@
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QStyledItemDelegate>
 
+#include <array>
 #include <cstddef>
 #include <fstream>
 #include <memory>
@@ -51,10 +52,12 @@
 #include "tests/support/ButtonLookup.h"
 #include "tests/support/APdf.h"
 #include "tests/support/EnumPrinting.h"
+#include "tests/support/InstalledCatalogue.h"
 #include "tests/support/PathPrinting.h"
 #include "view/documents/DocumentReader.h"
 #include "view/documents/DocumentsPage.h"
 #include "view/documents/SelectablePages.h"
+#include "view/theme/ArrowButton.h"
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/DocumentsViewModel.h"
 #include "viewmodel/SessionNotifier.h"
@@ -104,6 +107,11 @@ namespace
         static void ADocumentWithoutAnOutlineShowsThePaneOnceItCarriesAMark();
         static void TheMenuAnswersOnAMarkAndOnNothingElse();
         static void TheSearchStepsForwardAndBackThroughWhatItFound();
+        static void TheButtonsOfTheSearchAndTheFitDrawTheirOwnArrow_data();
+        static void TheButtonsOfTheSearchAndTheFitDrawTheirOwnArrow();
+        static void TheButtonsWithoutTextNameThemselvesInEitherLanguage_data();
+        static void TheButtonsWithoutTextNameThemselvesInEitherLanguage();
+        static void EveryButtonOfTheBarIsNamedByWhatItsTipSays();
         static void SteppingToAMatchFurtherDownTheSamePageScrollsToIt();
         static void AnEntryOnAnotherPageBringsItsTitleToTheTop();
         static void AnEntryOnThePageAlreadyCurrentBringsItsTitleToTheTopToo();
@@ -349,6 +357,15 @@ namespace
     [[nodiscard]] QPushButton* TheMarkButtonOf(const DocumentReader& reader)
     {
         return reader.findChild<QPushButton*>(QStringLiteral("BookmarkThePage"));
+    }
+
+    [[nodiscard]] QImage Rendered(QWidget& widget)
+    {
+        QImage surface(widget.size(), QImage::Format_ARGB32_Premultiplied);
+        surface.fill(Qt::magenta);
+        widget.render(&surface);
+
+        return surface;
     }
 
     [[nodiscard]] QTreeWidgetItem* SectionNamed(const QTreeWidget& pane, const QString& name)
@@ -1221,6 +1238,101 @@ void DocumentsPageTest::TheSearchStepsForwardAndBackThroughWhatItFound()
     QVERIFY2(found->text() == QStringLiteral("24 of 24"),
              "the only way back was the wrap, because until now the one gesture the search had was the Enter key and "
              "it only ever went forward");
+}
+
+void DocumentsPageTest::TheButtonsOfTheSearchAndTheFitDrawTheirOwnArrow_data()
+{
+    QTest::addColumn<QString>("name");
+    QTest::addColumn<ArrowHeading>("heading");
+
+    QTest::newRow("previous match") << QStringLiteral("PreviousMatch") << ArrowHeading::Up;
+    QTest::newRow("next match") << QStringLiteral("NextMatch") << ArrowHeading::Down;
+    QTest::newRow("fit the width") << QStringLiteral("FitTheWidth") << ArrowHeading::LeftAndRight;
+}
+
+void DocumentsPageTest::TheButtonsOfTheSearchAndTheFitDrawTheirOwnArrow()
+{
+    QFETCH(const QString, name);
+    QFETCH(const ArrowHeading, heading);
+
+    DocumentReader reader;
+    reader.resize(900, 600);
+    reader.show();
+
+    auto* button = reader.findChild<QPushButton*>(name);
+
+    QVERIFY(button != nullptr);
+    QVERIFY2(button->text().isEmpty(), "the button carries a glyph in its text next to the arrow it draws");
+
+    ArrowButton pointing;
+    pointing.LeadWith(heading);
+    pointing.setFixedSize(button->size());
+    pointing.setEnabled(button->isEnabled());
+
+    ArrowButton bare;
+    bare.setFixedSize(button->size());
+    bare.setEnabled(button->isEnabled());
+
+    QVERIFY2(Rendered(*button) == Rendered(pointing), "the button does not draw the arrow it was made for");
+    QVERIFY2(Rendered(*button) != Rendered(bare), "the button draws nothing");
+}
+
+void DocumentsPageTest::TheButtonsWithoutTextNameThemselvesInEitherLanguage_data()
+{
+    LanguageChoices();
+}
+
+void DocumentsPageTest::TheButtonsWithoutTextNameThemselvesInEitherLanguage()
+{
+    QFETCH(const QString, language);
+
+    struct Named
+    {
+        const char* object{};
+        const char* source{};
+    };
+
+    constexpr std::array kNamed{Named{.object = "FitTheWidth", .source = "Fit width"},
+                                Named{.object = "PreviousMatch", .source = "Previous match"},
+                                Named{.object = "NextMatch", .source = "Next match"}};
+
+    DocumentReader reader;
+
+    QTranslator catalogue;
+    QVERIFY2(LoadedTheCatalogue(catalogue, language),
+             "app_pt_BR.qm is not beside the build: build the release_translations target");
+    const Installed installed(catalogue);
+
+    for (const Named& named : kNamed)
+    {
+        const auto* button = reader.findChild<QPushButton*>(QString::fromLatin1(named.object));
+
+        QVERIFY(button != nullptr);
+
+        const QString expected = QCoreApplication::translate("DocumentReader", named.source);
+
+        QCOMPARE(button->accessibleName(), expected);
+        QVERIFY2(language == QLatin1String("en") || expected != QString::fromLatin1(named.source),
+                 "the catalogue does not translate the name of the button");
+    }
+}
+
+void DocumentsPageTest::EveryButtonOfTheBarIsNamedByWhatItsTipSays()
+{
+    constexpr std::array kButtons{"PreviousPage", "NextPage",        "PreviousMatch",    "NextMatch",
+                                  "ZoomIn",       "ZoomOut",         "WheelZooms",       "DragMovesThePage",
+                                  "FitTheWidth",  "BookmarkThePage", "DetachTheReading", "OpenTheFolder"};
+
+    const DocumentReader reader;
+
+    for (const char* name : kButtons)
+    {
+        const auto* button = reader.findChild<QPushButton*>(QString::fromLatin1(name));
+
+        QVERIFY2(button != nullptr, name);
+        QVERIFY2(!button->toolTip().isEmpty(), name);
+        QCOMPARE(button->accessibleName(), button->toolTip());
+    }
 }
 
 void DocumentsPageTest::SteppingToAMatchFurtherDownTheSamePageScrollsToIt()
