@@ -28,6 +28,7 @@
 #include "tests/doubles/FakeUpdateService.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
+#include "support/PathText.h"
 #include "view/options/OptionsPage.h"
 #include "view/shell/LanguageSwitch.h"
 #include "viewmodel/SessionNotifier.h"
@@ -55,7 +56,8 @@ namespace
         static void BothChecksAreOfferedAndTheTabOpensOnTheOneThatIsStored();
         static void ChoosingTheHashWritesItAndSaysWhatEveryImportWillDo();
         static void EachLibraryGetsARowNamingWhatIsInsideIt();
-        static void TheFooterNamesTheFileEveryChangeLands();
+        static void TheLanguageTabCarriesNoTextBesideTheChoices();
+        static void TheFooterSaysWhereTheSettingsAreSaved();
         static void OnlyOneProfileCanBeMarkedAtATime();
         static void NothingEnabledMeansTheQuestionCarriesNoCheckboxAtAll();
         static void WhatTheCheckboxOffersSitsInsideTheLayoutOfTheQuestion();
@@ -305,6 +307,22 @@ void OptionsPageTest::TheLanguageTabOffersBothAndOpensOnTheStoredOne()
     QVERIFY2(brazilian->isChecked(), "with pt_BR written, the tab must open on Brazilian Portuguese");
 }
 
+void OptionsPageTest::TheLanguageTabCarriesNoTextBesideTheChoices()
+{
+    Fixture f;
+
+    const auto* panes = f.page.findChild<QStackedWidget*>();
+    QVERIFY(panes != nullptr);
+
+    constexpr int kLanguage = 3;
+    const QWidget* pane = panes->widget(kLanguage);
+    QVERIFY(pane != nullptr);
+    QVERIFY(pane->findChild<QRadioButton*>(QStringLiteral("EnglishChoice")) != nullptr);
+
+    const auto sentences = pane->findChildren<QLabel*>(QStringLiteral("PanelPromise"));
+    QVERIFY2(sentences.isEmpty(), "the Language tab says something beside the choices");
+}
+
 void OptionsPageTest::TheUpdatesTabOffersTheThreeModesAndSaysWhereItStands()
 {
     Fixture f;
@@ -440,7 +458,7 @@ void OptionsPageTest::EachLibraryGetsARowNamingWhatIsInsideIt()
     QVERIFY2(!pluralOfOne, "a row counted one thing in the plural");
 }
 
-void OptionsPageTest::TheFooterNamesTheFileEveryChangeLands()
+void OptionsPageTest::TheFooterSaysWhereTheSettingsAreSaved()
 {
     Fixture f;
 
@@ -448,7 +466,7 @@ void OptionsPageTest::TheFooterNamesTheFileEveryChangeLands()
     f.page.Reload();
 
     QCOMPARE(summarised.count(), 1);
-    QVERIFY(summarised.front().front().toString().contains(QStringLiteral("settings.json")));
+    QCOMPARE(summarised.front().front().toString(), QStringLiteral("Saved to %1").arg(AsText(kSettingsFile)));
 }
 
 void OptionsPageTest::OnlyOneProfileCanBeMarkedAtATime()

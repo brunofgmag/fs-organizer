@@ -13,6 +13,7 @@
 #include "domain/documents/DocumentClassification.h"
 #include "view/documents/SelectablePages.h"
 
+class ArrowButton;
 class QAction;
 class QLabel;
 class QLayout;
@@ -156,14 +157,14 @@ private:
     QLabel* found_ = nullptr;
     QLabel* position_ = nullptr;
     QPushButton* previous_ = nullptr;
-    QPushButton* previousResult_ = nullptr;
-    QPushButton* nextResult_ = nullptr;
+    ArrowButton* previousResult_ = nullptr;
+    ArrowButton* nextResult_ = nullptr;
     QPushButton* closer_ = nullptr;
     QPushButton* further_ = nullptr;
     QPushButton* next_ = nullptr;
     QPushButton* wheelZoom_ = nullptr;
     QPushButton* dragMoves_ = nullptr;
-    QPushButton* fitWidth_ = nullptr;
+    ArrowButton* fitWidth_ = nullptr;
     QPushButton* bookmark_ = nullptr;
     QPushButton* detach_ = nullptr;
     QPushButton* openFolder_ = nullptr;

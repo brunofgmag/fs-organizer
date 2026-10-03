@@ -1655,6 +1655,7 @@ fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/view/tst_documents_page.cpp
         tests/doubles/FakeManualSource.h
         tests/support/ButtonLookup.h
+        tests/support/InstalledCatalogue.h
         tests/support/PageFloor.h
         assets/resources.qrc
         tests/doubles/FakeCatalogScanner.h
@@ -1680,6 +1681,7 @@ fsorg_add_qt_test(fsorg-documents-page-tests documents-page
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-documents-page-tests PRIVATE fsorg-view Qt6::PdfWidgets)
 configure_fsorg_gui_test(fsorg-documents-page-tests documents-page)
+add_dependencies(fsorg-documents-page-tests release_translations)
 
 fsorg_add_qt_test(fsorg-quarantine-page-tests quarantine-page
         tests/view/tst_quarantine_page.cpp
@@ -1791,6 +1793,11 @@ fsorg_add_qt_test(fsorg-theme-contrast-tests theme-contrast
         tests/view/theme/tst_theme_contrast.cpp)
 target_link_libraries(fsorg-theme-contrast-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-theme-contrast-tests theme-contrast)
+
+fsorg_add_qt_test(fsorg-arrow-tests arrow
+        tests/view/theme/tst_arrow.cpp)
+target_link_libraries(fsorg-arrow-tests PRIVATE fsorg-view)
+configure_fsorg_gui_test(fsorg-arrow-tests arrow)
 
 fsorg_add_qt_test(fsorg-wrapping-row-tests wrapping-row
         tests/view/tst_wrapping_row.cpp)

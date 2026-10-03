@@ -1,5 +1,6 @@
 #include "view/theme/PageTab.h"
 
+#include <QtCore/QtMath>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QPainter>
 
@@ -12,6 +13,7 @@ namespace
     constexpr int kBelowText = 10;
     constexpr int kUnderline = 3;
     constexpr int kBetweenNameAndCount = 6;
+    constexpr int kBetweenArrowAndName = 6;
 
     QFont NameFont(const QFont& base, const bool chosen)
     {
@@ -48,6 +50,13 @@ void PageTab::ShowCount(const std::optional<qsizetype> count)
     update();
 }
 
+void PageTab::LeadWith(const ArrowHeading heading)
+{
+    lead_ = heading;
+    updateGeometry();
+    update();
+}
+
 void PageTab::RememberSource(const char* source)
 {
     source_ = source;
@@ -68,11 +77,16 @@ QString PageTab::CountText() const
     return count_.has_value() ? QString::number(*count_) : QString();
 }
 
+int PageTab::LeadWidth() const
+{
+    return lead_.has_value() ? qCeil(ArrowExtent(*lead_).width()) + kBetweenArrowAndName : 0;
+}
+
 QSize PageTab::sizeHint() const
 {
     const QFontMetrics chosen(NameFont(font(), true));
 
-    int width = 2 * kPaddingX + chosen.horizontalAdvance(label_);
+    int width = 2 * kPaddingX + LeadWidth() + chosen.horizontalAdvance(label_);
 
     if (const QString count = CountText(); !count.isEmpty())
     {
@@ -103,10 +117,20 @@ void PageTab::paintEvent(QPaintEvent*)
     const QFont name = NameFont(font(), chosen);
     const QFontMetrics measured(name);
     const int baseline = kAboveText + measured.ascent();
+    const int nameStartsAt = kPaddingX + LeadWidth();
+    const QColor ink = chosen || warm ? tones.text : tones.secondary;
+
+    if (lead_.has_value())
+    {
+        const QSizeF extent = ArrowExtent(*lead_);
+
+        PaintArrow(painter, QRectF(kPaddingX, baseline - extent.height(), extent.width(), extent.height()), *lead_,
+                   ink);
+    }
 
     painter.setFont(name);
-    painter.setPen(chosen || warm ? tones.text : tones.secondary);
-    painter.drawText(kPaddingX, baseline, label_);
+    painter.setPen(ink);
+    painter.drawText(nameStartsAt, baseline, label_);
 
     const QString count = CountText();
     if (count.isEmpty())
@@ -116,5 +140,5 @@ void PageTab::paintEvent(QPaintEvent*)
 
     painter.setFont(font());
     painter.setPen(chosen ? tones.secondary : tones.faint);
-    painter.drawText(kPaddingX + measured.horizontalAdvance(label_) + kBetweenNameAndCount, baseline, count);
+    painter.drawText(nameStartsAt + measured.horizontalAdvance(label_) + kBetweenNameAndCount, baseline, count);
 }

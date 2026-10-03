@@ -31,6 +31,7 @@
 
 #include "support/PathText.h"
 #include "view/delegates/WithoutTheFocusFrame.h"
+#include "view/theme/ArrowButton.h"
 #include "view/theme/ModernistMetrics.h"
 
 namespace
@@ -51,13 +52,10 @@ namespace
     const QString kDisc = QString::fromUtf8("●");
     const QString kBack = QString::fromUtf8("‹");
     const QString kForth = QString::fromUtf8("›");
-    const QString kUp = QString::fromUtf8("↑");
-    const QString kDown = QString::fromUtf8("↓");
     const QString kWheel = QString::fromUtf8("⊙");
     const QString kMove = QString::fromUtf8("✥");
     const QString kCloser = QString::fromUtf8("＋");
     const QString kFurther = QString::fromUtf8("－");
-    const QString kAcross = QString::fromUtf8("↔");
     const QString kOutOfTheTab = QString::fromUtf8("❐");
     const QString kBackIntoTheTab = QString::fromUtf8("❏");
     const QString kOutward = QString::fromUtf8("🗀");
@@ -104,6 +102,12 @@ namespace
         {
             above->setExpanded(true);
         }
+    }
+
+    void SayWhatItDoes(QPushButton* button, const QString& what)
+    {
+        button->setToolTip(what);
+        button->setAccessibleName(what);
     }
 }
 
@@ -491,25 +495,27 @@ void DocumentReader::changeEvent(QEvent* event)
 
 void DocumentReader::Retranslate() const
 {
-    previous_->setToolTip(tr("Previous page"));
-    next_->setToolTip(tr("Next page"));
-    closer_->setToolTip(tr("Zoom in"));
-    further_->setToolTip(tr("Zoom out"));
-    fitWidth_->setToolTip(tr("Fit width"));
-    bookmark_->setToolTip(tr("Bookmark"));
+    SayWhatItDoes(previous_, tr("Previous page"));
+    SayWhatItDoes(next_, tr("Next page"));
+    SayWhatItDoes(closer_, tr("Zoom in"));
+    SayWhatItDoes(further_, tr("Zoom out"));
+    SayWhatItDoes(fitWidth_, tr("Fit width"));
+    SayWhatItDoes(bookmark_, tr("Bookmark"));
     detach_->setText(detached_ ? kBackIntoTheTab : kOutOfTheTab);
-    detach_->setToolTip(detached_ ? tr("Back into the tab") : tr("Open in a separate window"));
-    openFolder_->setToolTip(tr("Open folder"));
+    SayWhatItDoes(detach_, detached_ ? tr("Back into the tab") : tr("Open in a separate window"));
+    SayWhatItDoes(openFolder_, tr("Open folder"));
     outlineHeading_->setText(TheHeadingOfThePane());
     rename_->setText(tr("Rename this bookmark…"));
     forget_->setText(tr("Remove this bookmark"));
     wanted_->setPlaceholderText(tr("Search in this document"));
-    previousResult_->setToolTip(tr("Previous match"));
-    nextResult_->setToolTip(tr("Next match"));
-    wheelZoom_->setToolTip(kind_ == DocumentKind::Chart ? tr("The mouse wheel zooms the chart")
-                                                        : tr("The mouse wheel zooms the document"));
-    dragMoves_->setToolTip(dragMoves_->isChecked() ? tr("Dragging moves the page. Click to select text instead")
-                                                   : tr("Dragging selects text. Click to move the page instead"));
+    SayWhatItDoes(previousResult_, tr("Previous match"));
+    SayWhatItDoes(nextResult_, tr("Next match"));
+    SayWhatItDoes(wheelZoom_,
+                  kind_ == DocumentKind::Chart ? tr("The mouse wheel zooms the chart")
+                                               : tr("The mouse wheel zooms the document"));
+    SayWhatItDoes(dragMoves_,
+                  dragMoves_->isChecked() ? tr("Dragging moves the page. Click to select text instead")
+                                          : tr("Dragging selects text. Click to move the page instead"));
     copy_->setText(tr("Copy"));
 
     const bool anythingToStepThrough = !wanted_->text().isEmpty() && search_->rowCount({}) > 0;
@@ -918,6 +924,7 @@ void DocumentReader::BuildTheOutlinePane()
 QLayout* DocumentReader::TheBar()
 {
     previous_ = new QPushButton(kBack, this);
+    previous_->setObjectName(QStringLiteral("PreviousPage"));
     next_ = new QPushButton(kForth, this);
     next_->setObjectName(QStringLiteral("NextPage"));
     position_ = new QLabel(this);
@@ -926,10 +933,12 @@ QLayout* DocumentReader::TheBar()
     wanted_->setMinimumWidth(kSearchWidth);
     found_ = new QLabel(this);
     found_->setObjectName(QStringLiteral("PanelPromise"));
-    previousResult_ = new QPushButton(kUp, this);
+    previousResult_ = new ArrowButton(this);
     previousResult_->setObjectName(QStringLiteral("PreviousMatch"));
-    nextResult_ = new QPushButton(kDown, this);
+    previousResult_->LeadWith(ArrowHeading::Up);
+    nextResult_ = new ArrowButton(this);
     nextResult_->setObjectName(QStringLiteral("NextMatch"));
+    nextResult_->LeadWith(ArrowHeading::Down);
     closer_ = new QPushButton(kCloser, this);
     closer_->setObjectName(QStringLiteral("ZoomIn"));
     further_ = new QPushButton(kFurther, this);
@@ -939,12 +948,13 @@ QLayout* DocumentReader::TheBar()
     dragMoves_ = new QPushButton(kMove, this);
     dragMoves_->setObjectName(QStringLiteral("DragMovesThePage"));
 
-    fitWidth_ = new QPushButton(kAcross, this);
+    fitWidth_ = new ArrowButton(this);
     fitWidth_->setObjectName(QStringLiteral("FitTheWidth"));
+    fitWidth_->LeadWith(ArrowHeading::LeftAndRight);
     bookmark_ = new QPushButton(kDisc, this);
     bookmark_->setObjectName(QStringLiteral("BookmarkThePage"));
 
-    for (QPushButton* toggle : {fitWidth_, bookmark_, wheelZoom_, dragMoves_})
+    for (QPushButton* toggle : std::array<QPushButton*, 4>{fitWidth_, bookmark_, wheelZoom_, dragMoves_})
     {
         toggle->setCheckable(true);
         toggle->setProperty("toggle", "true");
@@ -957,8 +967,9 @@ QLayout* DocumentReader::TheBar()
     openFolder_ = new QPushButton(kOutward, this);
     openFolder_->setObjectName(QStringLiteral("OpenTheFolder"));
 
-    const std::array everyStep{previous_,  next_,      previousResult_, nextResult_, closer_, further_,
-                               wheelZoom_, dragMoves_, fitWidth_,       bookmark_,   detach_, openFolder_};
+    const std::array<QPushButton*, 12> everyStep{previous_, next_,     previousResult_, nextResult_,
+                                                 closer_,   further_,  wheelZoom_,      dragMoves_,
+                                                 fitWidth_, bookmark_, detach_,         openFolder_};
 
     int tallest = wanted_->sizeHint().height();
     for (const QPushButton* button : everyStep)
