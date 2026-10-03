@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.57.1](https://github.com/brunofgmag/fs-organizer/compare/v0.57.0...v0.57.1) (2026-10-03)
+
+
+* paint the arrows with a shorter stem and drop needless options copy ([#213](https://github.com/brunofgmag/fs-organizer/issues/213)) ([17063be](https://github.com/brunofgmag/fs-organizer/commit/17063be7f2b4e232c1ffe7b7dc5b4b49adf73075))
+
+
+### Bug Fixes
+
+* paint the arrows with a shorter stem and drop needless options copy ([ea1027f](https://github.com/brunofgmag/fs-organizer/commit/ea1027f364d067a01e2f7bd36d454820e38c4f69)) ([17063be](https://github.com/brunofgmag/fs-organizer/commit/17063be7f2b4e232c1ffe7b7dc5b4b49adf73075))
+
 ## [0.57.0](https://github.com/brunofgmag/fs-organizer/compare/v0.56.5...v0.57.0) (2026-10-02)
 
 
