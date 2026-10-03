@@ -565,7 +565,6 @@ QWidget* OptionsPage::CreateLanguage()
     }
 
     layout->addLayout(choices);
-    layout->addWidget(Quiet(tr("The interface changes right away."), pane));
     layout->addStretch();
 
     connect(languages_, &QButtonGroup::idClicked, this,
@@ -656,7 +655,7 @@ void OptionsPage::Reload()
         chosen->setChecked(true);
     }
 
-    emit SummaryChanged(tr("%1 · saved on every change").arg(AsText(settingsFile_)));
+    emit SummaryChanged(tr("Saved to %1").arg(AsText(settingsFile_)));
 }
 
 bool OptionsPage::CanRemoveAProfile() const

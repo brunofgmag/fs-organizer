@@ -4,6 +4,7 @@
 #include <QtCore/QRect>
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
+#include <QtCore/QSizeF>
 #include <QtCore/QString>
 #include <QtGui/QColor>
 #include <QtGui/QIcon>
@@ -15,7 +16,20 @@ class QHeaderView;
 class QListWidget;
 class QPainter;
 
+enum class ArrowHeading
+{
+    Left,
+    Right,
+    Up,
+    Down,
+    LeftAndRight,
+};
+
 [[nodiscard]] qreal OneDevicePixel(const QPainter& painter);
+
+[[nodiscard]] QSizeF ArrowExtent(ArrowHeading heading);
+
+void PaintArrow(QPainter& painter, const QRectF& box, ArrowHeading heading, const QColor& ink);
 
 [[nodiscard]] QRectF OutlineInside(const QPainter& painter, const QRectF& box);
 
@@ -35,7 +49,7 @@ void PaintTag(QPainter& painter, const QRect& box, const QString& text, TagTone 
 
 [[nodiscard]] QColor AlertInk();
 
-[[nodiscard]] QIcon GearIcon(int side);
+[[nodiscard]] QIcon GearIcon(int side, qreal ratio);
 
 void DressTheHeaderOf(QHeaderView* header);
 

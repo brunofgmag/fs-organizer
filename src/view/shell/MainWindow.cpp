@@ -11,7 +11,6 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QProgressBar>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QToolButton>
@@ -20,6 +19,7 @@
 #include "view/platform/WindowsTitleBar.h"
 #include "view/WheelGuard.h"
 #include "view/shell/TriageStrip.h"
+#include "view/theme/ArrowButton.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/theme/ModernistPaint.h"
 #include "view/theme/ModernistTheme.h"
@@ -32,7 +32,6 @@ namespace
     constexpr int kMeterWidth = 132;
     constexpr int kStatusBarAlreadyInsetsTheFirstWidgetBy = 2;
     constexpr int kGearGlyph = 14;
-    const QString kDownwards = QString::fromUtf8("↓");
     constexpr QSize kWindowStartsAt(1140, 760);
 
 }
@@ -69,7 +68,7 @@ MainWindow::MainWindow(const AppSettings& settings, QWidget* parent) : QMainWind
             [this]
             {
                 ApplySystemTitleBarTheme(*this);
-                gear_->setIcon(GearIcon(kGearGlyph));
+                gear_->setIcon(GearIcon(kGearGlyph, devicePixelRatioF()));
             });
 }
 
@@ -93,18 +92,18 @@ QWidget* MainWindow::CreateHeader()
 
     connect(profiles_, &QComboBox::activated, this, &MainWindow::OnProfileActivated);
 
-    update_ = new QPushButton(header);
+    update_ = new ArrowButton(header);
     update_->setObjectName(QStringLiteral("UpdateOffer"));
     update_->setProperty("role", "primary");
     update_->setCursor(Qt::PointingHandCursor);
     update_->setFixedHeight(profiles_->sizeHint().height());
     update_->setVisible(false);
 
-    connect(update_, &QPushButton::clicked, this, &MainWindow::UpdateOfferChosen);
+    connect(update_, &ArrowButton::clicked, this, &MainWindow::UpdateOfferChosen);
 
     gear_ = new QToolButton(header);
     gear_->setObjectName(QStringLiteral("Gear"));
-    gear_->setIcon(GearIcon(kGearGlyph));
+    gear_->setIcon(GearIcon(kGearGlyph, devicePixelRatioF()));
     gear_->setIconSize(QSize(kGearGlyph, kGearGlyph));
     gear_->setCursor(Qt::PointingHandCursor);
     gear_->setFixedHeight(profiles_->sizeHint().height());
@@ -134,6 +133,8 @@ QWidget* MainWindow::CreateTabStrip()
     tabs_->setSpacing(2);
 
     back_ = new PageTab(tr("Back"), strip);
+    back_->setObjectName(QStringLiteral("BackTab"));
+    back_->LeadWith(ArrowHeading::Left);
     back_->setCheckable(false);
     back_->setVisible(false);
     connect(back_, &PageTab::clicked, this, &MainWindow::LeaveOptions);
@@ -316,7 +317,8 @@ void MainWindow::ShowUpdateOffer(const UpdateOffer offer, const QString& version
 
     const bool staged = offer == UpdateOffer::Staged;
 
-    update_->setText(staged ? tr("Restart to update") : QStringLiteral("%1 v%2").arg(kDownwards, version));
+    update_->LeadWith(staged ? std::nullopt : std::optional(ArrowHeading::Down));
+    update_->setText(staged ? tr("Restart to update") : QStringLiteral("v%1").arg(version));
     update_->setToolTip(staged ? tr("Apply the update and restart now") : tr("Update available"));
 }
 
@@ -338,7 +340,7 @@ void MainWindow::changeEvent(QEvent* event)
 void MainWindow::DressTheBackTab() const
 {
     const PageTab* origin = tabsByPage_.value(behindTheOptions_);
-    back_->Relabel(origin != nullptr ? tr("← Back to %1").arg(origin->Label()) : tr("← Back"));
+    back_->Relabel(origin != nullptr ? tr("Back to %1").arg(origin->Label()) : tr("Back"));
 }
 
 void MainWindow::RetranslateUi()

@@ -3215,13 +3215,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="315"/>
-        <source>← Back to %1</source>
-        <translation>← Back to %1</translation>
-    </message>
-    <message>
-        <location filename="../src/view/shell/MainWindow.cpp" line="315"/>
-        <source>← Back</source>
-        <translation>← Back</translation>
+        <source>Back to %1</source>
+        <translation>Back to %1</translation>
     </message>
     <message>
         <location filename="../src/view/shell/MainWindow.cpp" line="291"/>
@@ -3538,8 +3533,8 @@ Also in the library: %2</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="617"/>
-        <source>%1 · saved on every change</source>
-        <translation>%1 · saved on every change</translation>
+        <source>Saved to %1</source>
+        <translation>Saved to %1</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/options/OptionsPage.cpp" line="638"/>
@@ -3605,11 +3600,6 @@ Also in the library: %2</translation>
         <location filename="../src/view/options/OptionsPage.cpp" line="428"/>
         <source>Tells you when a new version is available, without downloading it.</source>
         <translation>Tells you when a new version is available, without downloading it.</translation>
-    </message>
-    <message>
-        <location filename="../src/view/options/OptionsPage.cpp" line="531"/>
-        <source>The interface changes right away.</source>
-        <translation>The interface changes right away.</translation>
     </message>
     <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="656"/>

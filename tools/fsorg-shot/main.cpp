@@ -757,6 +757,10 @@ int main(int argc, char* argv[])
                                        "EXE.xml and the loading report, instead of the ones Windows knows.",
                                        "folder");
     const QCommandLineOption edition("edition", "github or flightsim-to.", "edition", "github");
+    const QCommandLineOption footer("footer",
+                                    "Carry the summary of each page into the footer, the way the app does. Off by "
+                                    "default, because a footer with text keeps the manual's figures from being "
+                                    "trimmed and shows the path of the disposable copy.");
     parser.addOption(out);
     parser.addOption(theme);
     parser.addOption(size);
@@ -766,6 +770,7 @@ int main(int argc, char* argv[])
     parser.addOption(state);
     parser.addOption(simulator);
     parser.addOption(edition);
+    parser.addOption(footer);
     parser.process(app);
 
     if (const QString wanted = parser.value(theme); wanted != QLatin1String("system"))
@@ -1017,6 +1022,36 @@ int main(int argc, char* argv[])
     PageTab* diagnosticsTab = shell.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     PageTab* journalTab = shell.AddPage(PageNames::kJournal, journalPage);
     shell.CarryOptionsOn(optionsPage);
+
+    const auto carryTheSummaryOf = [&shell](QWidget* pg)
+    {
+        return [&shell, pg](const QString& summary)
+        {
+            shell.ShowSummary(pg, summary);
+        };
+    };
+
+    if (parser.isSet(footer))
+    {
+        QObject::connect(libraryPage, &AddonTreePage::SummaryChanged, &shell, carryTheSummaryOf(libraryPage));
+        QObject::connect(communityPage, &CommunityPage::SummaryChanged, &shell, carryTheSummaryOf(communityPage));
+        QObject::connect(quarantinePage, &QuarantinePage::SummaryChanged, &shell, carryTheSummaryOf(quarantinePage));
+        QObject::connect(journalPage, &JournalPage::SummaryChanged, &shell, carryTheSummaryOf(journalPage));
+        QObject::connect(presetsPage, &PresetsPage::SummaryChanged, &shell, carryTheSummaryOf(presetsPage));
+        QObject::connect(diagnosticsPage, &DiagnosticsPage::SummaryChanged, &shell, carryTheSummaryOf(diagnosticsPage));
+        QObject::connect(startupPage, &StartupPage::SummaryChanged, simulatorPage,
+                         [simulatorPage, startupPage](const QString& summary)
+                         {
+                             simulatorPage->CarrySummaryFrom(startupPage, summary);
+                         });
+        QObject::connect(packageListPage, &PackageListPage::SummaryChanged, simulatorPage,
+                         [simulatorPage, packageListPage](const QString& summary)
+                         {
+                             simulatorPage->CarrySummaryFrom(packageListPage, summary);
+                         });
+        QObject::connect(simulatorPage, &SimulatorPage::SummaryChanged, &shell, carryTheSummaryOf(simulatorPage));
+        QObject::connect(optionsPage, &OptionsPage::SummaryChanged, &shell, carryTheSummaryOf(optionsPage));
+    }
 
     shell.CarryTriageOn(libraryPage);
     shell.CarryTriageOn(communityPage);
@@ -1500,6 +1535,12 @@ int main(int argc, char* argv[])
         landed = Save(shell, folder, diagnostics[section]) && landed;
     }
 
+    shell.ShowUpdateOffer(UpdateOffer::Available, QStringLiteral("0.58.0"));
+    LetTheLayoutSettle();
+    landed = Save(shell, folder, QStringLiteral("34-update-offer")) && landed;
+    shell.ShowUpdateOffer(UpdateOffer::None, {});
+    LetTheLayoutSettle();
+
     simulatorTab->click();
     simulatorPage->ShowTheStartupEntries();
     startupViewModel.Show();
@@ -1618,14 +1659,7 @@ int main(int argc, char* argv[])
             && landed;
     }
 
-    PageTab* back = nullptr;
-    for (PageTab* tab : shell.findChildren<PageTab*>())
-    {
-        if (tab->Label().startsWith(QChar(0x2190)))
-        {
-            back = tab;
-        }
-    }
+    auto* back = shell.findChild<PageTab*>(QStringLiteral("BackTab"));
 
     if (back == nullptr)
     {

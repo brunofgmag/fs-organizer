@@ -9,12 +9,12 @@
 #include "application/model/AppSettings.h"
 #include "viewmodel/AttentionBreakdown.h"
 
+class ArrowButton;
 class PageTab;
 class QComboBox;
 class QHBoxLayout;
 class QLabel;
 class QProgressBar;
-class QPushButton;
 class QToolButton;
 class QStackedWidget;
 class QTimer;
@@ -118,7 +118,7 @@ private:
     QStackedWidget* pages_ = nullptr;
     QHBoxLayout* tabs_ = nullptr;
     QToolButton* gear_ = nullptr;
-    QPushButton* update_ = nullptr;
+    ArrowButton* update_ = nullptr;
     PageTab* back_ = nullptr;
     QWidget* options_ = nullptr;
     QWidget* behindTheOptions_ = nullptr;

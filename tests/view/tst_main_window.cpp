@@ -15,6 +15,7 @@
 #include "view/shell/MainWindow.h"
 #include "view/theme/ModernistMetrics.h"
 #include "view/shell/TriageStrip.h"
+#include "view/theme/ArrowButton.h"
 #include "view/theme/PageTab.h"
 #include "tests/support/PageFloor.h"
 
@@ -44,6 +45,9 @@ namespace
         static void LeavingTheOptionsGivesBackThePageThatWasOpen();
         static void TheTriageStripStandsDownWhileTheOptionsAreOpen();
         static void ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked();
+        static void TheBackTabPointsLeftWithoutAGlyphInItsLabel();
+        static void TheOfferPointsDownWhileThereIsSomethingToDownload();
+        static void ADownloadedOfferCarriesNoArrow();
     };
 }
 
@@ -64,6 +68,17 @@ namespace
         settings.activeProfileId = "msfs2024";
 
         return settings;
+    }
+
+    [[nodiscard]] QImage Rendered(QWidget& widget, const QSize& size)
+    {
+        widget.resize(size);
+
+        QImage surface(size, QImage::Format_ARGB32_Premultiplied);
+        surface.fill(Qt::magenta);
+        widget.render(&surface);
+
+        return surface;
     }
 }
 
@@ -355,14 +370,10 @@ void MainWindowTest::TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom(
 
     QVERIFY(!communityTab->isVisibleTo(&window));
 
-    const auto tabs = window.findChildren<PageTab*>();
-    const auto back = std::ranges::find_if(tabs,
-                                           [&window](const PageTab* tab)
-                                           {
-                                               return tab->isVisibleTo(&window);
-                                           });
-    QVERIFY(back != tabs.end());
-    QCOMPARE((*back)->Label(), QStringLiteral("← Back to Destinations"));
+    const auto* back = window.findChild<PageTab*>(QStringLiteral("BackTab"));
+    QVERIFY(back != nullptr);
+    QVERIFY(back->isVisibleTo(&window));
+    QCOMPARE(back->Label(), QStringLiteral("Back to Destinations"));
 }
 
 void MainWindowTest::LeavingTheOptionsGivesBackThePageThatWasOpen()
@@ -428,14 +439,7 @@ void MainWindowTest::ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked()
 
     window.ShowOptions();
 
-    PageTab* back = nullptr;
-    for (PageTab* tab : window.findChildren<PageTab*>())
-    {
-        if (tab->Label().startsWith(QChar(0x2190)))
-        {
-            back = tab;
-        }
-    }
+    auto* back = window.findChild<PageTab*>(QStringLiteral("BackTab"));
 
     QVERIFY2(back != nullptr, "the back tab was not found, so the click under test is not the user's");
 
@@ -484,6 +488,82 @@ void MainWindowTest::TheOfferNamesTheVersionAndTurnsIntoARestartWhenItIsStaged()
     window.ShowUpdateOffer(UpdateOffer::None, {});
 
     QVERIFY(offer->isHidden());
+}
+
+void MainWindowTest::TheBackTabPointsLeftWithoutAGlyphInItsLabel()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* community = new QWidget(&window);
+    window.AddPage("Destinations", community)->click();
+    window.CarryOptionsOn(new QWidget(&window));
+    window.ShowOptions();
+
+    auto* back = window.findChild<PageTab*>(QStringLiteral("BackTab"));
+    QVERIFY(back != nullptr);
+    QVERIFY(!back->Label().contains(QChar(0x2190)));
+
+    PageTab pointing(back->Label());
+    pointing.LeadWith(ArrowHeading::Left);
+
+    PageTab bare(back->Label());
+
+    const QSize size = pointing.sizeHint();
+
+    QCOMPARE(back->sizeHint(), size);
+    QVERIFY2(Rendered(*back, size) == Rendered(pointing, size), "the back tab does not draw an arrow pointing left");
+    QVERIFY2(Rendered(*back, size) != Rendered(bare, size), "the back tab draws nothing before its name");
+}
+
+void MainWindowTest::TheOfferPointsDownWhileThereIsSomethingToDownload()
+{
+    MainWindow window(SettingsWithOneProfile());
+    auto* offer = window.findChild<ArrowButton*>(QStringLiteral("UpdateOffer"));
+    QVERIFY(offer != nullptr);
+
+    window.ShowUpdateOffer(UpdateOffer::Available, QStringLiteral("0.49.0"));
+
+    QCOMPARE(offer->text(), QStringLiteral("v0.49.0"));
+
+    ArrowButton pointing;
+    pointing.setText(offer->text());
+    pointing.LeadWith(ArrowHeading::Down);
+    pointing.setProperty("role", offer->property("role"));
+    pointing.setFixedHeight(offer->height());
+
+    ArrowButton bare;
+    bare.setText(offer->text());
+    bare.setProperty("role", offer->property("role"));
+    bare.setFixedHeight(offer->height());
+
+    const QSize size(pointing.sizeHint().width(), offer->height());
+
+    QCOMPARE(offer->sizeHint(), pointing.sizeHint());
+    QVERIFY2(Rendered(*offer, size) == Rendered(pointing, size), "the offer does not draw an arrow pointing down");
+    QVERIFY2(Rendered(*offer, size) != Rendered(bare, size), "the offer draws nothing before its version");
+}
+
+void MainWindowTest::ADownloadedOfferCarriesNoArrow()
+{
+    MainWindow window(SettingsWithOneProfile());
+    auto* offer = window.findChild<ArrowButton*>(QStringLiteral("UpdateOffer"));
+    QVERIFY(offer != nullptr);
+
+    window.ShowUpdateOffer(UpdateOffer::Available, QStringLiteral("0.49.0"));
+    window.ShowUpdateOffer(UpdateOffer::Staged, QStringLiteral("0.49.0"));
+
+    const QPushButton plain(offer->text());
+
+    QCOMPARE(offer->sizeHint(), plain.sizeHint());
+
+    ArrowButton bare;
+    bare.setText(offer->text());
+    bare.setProperty("role", offer->property("role"));
+    bare.setFixedHeight(offer->height());
+
+    const QSize size(plain.sizeHint().width(), offer->height());
+
+    QVERIFY2(Rendered(*offer, size) == Rendered(bare, size), "a staged update still carries the arrow of the download");
 }
 
 QTEST_MAIN(MainWindowTest)
