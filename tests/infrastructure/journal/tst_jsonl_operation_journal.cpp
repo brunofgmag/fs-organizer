@@ -19,6 +19,7 @@ namespace
         static void AppendingNeverRewritesWhatWasAlreadyThere();
         static void TheRepairKindsHaveTheirOwnStableNames();
         static void AnImportRecordCarriesItsResultAndNoLinkFailure();
+        static void TheInstallFromAnArchiveKindsAndResultsHaveTheirOwnStableNames();
         static void EveryKindAndEveryReasonSurvivesTheRoundTrip();
         static void ReadingSkipsALineWrittenByANewerVersion();
         static void AnOutcomeThisVersionCannotReadIsNotASuccess();
@@ -135,6 +136,29 @@ void JsonlOperationJournalTest::AnImportRecordCarriesItsResultAndNoLinkFailure()
     QCOMPARE(written.value("kind").toString(), QStringLiteral("importRemoveSource"));
     QCOMPARE(written.value("result").toString(), QStringLiteral("couldNotRemoveSource"));
     QVERIFY(!written.contains(QStringLiteral("failure")));
+}
+
+void JsonlOperationJournalTest::TheInstallFromAnArchiveKindsAndResultsHaveTheirOwnStableNames()
+{
+    const Storage storage;
+
+    JsonlOperationJournal journal(storage.File());
+    journal.Append(Record(OperationKind::InstallExtractToStaging, FileResult::CouldNotExtract));
+    journal.Append(Record(OperationKind::InstallMoveIntoPlace, FileResult::TheArchiveNeedsAPassword));
+
+    const QStringList lines = LinesOf(storage.File());
+    QCOMPARE(lines.size(), 2);
+
+    const QJsonObject extracted = QJsonDocument::fromJson(lines[0].toUtf8()).object();
+    const QJsonObject placed = QJsonDocument::fromJson(lines[1].toUtf8()).object();
+
+    const QStringList names{extracted.value("kind").toString(), extracted.value("result").toString(),
+                            placed.value("kind").toString(), placed.value("result").toString()};
+
+    const QStringList expected{QStringLiteral("installExtractToStaging"), QStringLiteral("couldNotExtract"),
+                               QStringLiteral("installMoveIntoPlace"), QStringLiteral("theArchiveNeedsAPassword")};
+
+    QCOMPARE(names.join(QStringLiteral(" | ")), expected.join(QStringLiteral(" | ")));
 }
 
 void JsonlOperationJournalTest::EveryKindAndEveryReasonSurvivesTheRoundTrip()
@@ -343,6 +367,7 @@ void JsonlOperationJournalTest::AppendsFromSeveralThreadsLeaveEveryLineWholeAndC
     QVERIFY(journal.Read().empty());
 
     std::vector<std::thread> writers;
+    writers.reserve(kThreads);
     for (int thread = 0; thread < kThreads; ++thread)
     {
         writers.emplace_back(

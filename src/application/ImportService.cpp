@@ -1,12 +1,12 @@
 #include "application/ImportService.h"
 
 #include <algorithm>
-#include <numeric>
 #include <ranges>
 #include <set>
 #include <string>
 
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/importing/FingerprintMeasures.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/importing/OriginSidecar.h"
 #include "domain/importing/WhatStoppedIt.h"
@@ -40,6 +40,20 @@ namespace
         const Library* library = LibraryContaining(profile, addon);
 
         return library == nullptr ? std::filesystem::path{} : QuarantineFolderInside(library->path) / addon.filename();
+    }
+
+    void PutTheRecordBack(SidecarStore& sidecars,
+                          const std::filesystem::path& item,
+                          const std::optional<std::string>& record)
+    {
+        if (record.has_value())
+        {
+            static_cast<void>(sidecars.Write(SidecarPathFor(item), *record));
+
+            return;
+        }
+
+        static_cast<void>(sidecars.Forget(SidecarPathFor(item)));
     }
 
     struct Resolution
@@ -143,9 +157,7 @@ namespace
             return std::nullopt;
         }
 
-        const auto sizes = walked->files | std::views::transform(&FileFingerprint::size);
-
-        return std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});
+        return TotalSizeOf(walked->files);
     }
 
     std::vector<TreeNode> LibrariesHoldingNothing(const SimulatorProfile& profile)
@@ -179,6 +191,11 @@ namespace
         const TreeNode* held = AddonHoldingTheIdentity(scanned, target, {});
 
         return held != nullptr ? held : AddonHoldingTheIdentity(landed, target, {});
+    }
+
+    bool IsTheInstallStaging(const std::filesystem::path& staging)
+    {
+        return ComparablePath(staging) == ComparablePath(InstallStagingIn(staging.parent_path()));
     }
 
     StagingLeftover LeftoverFrom(const std::filesystem::path& staging,
@@ -307,6 +324,366 @@ std::vector<ImportOperationResult> ImportService::Import(const SimulatorProfile&
     return results;
 }
 
+AdmissionCheck ImportService::AdmissionOf(const SimulatorProfile& profile,
+                                          const std::filesystem::path& wanted,
+                                          const std::vector<TreeNode>& scanned,
+                                          const std::vector<TreeNode>& landed) const
+{
+    AdmissionCheck check{.target = wanted};
+
+    if (LibraryContaining(profile, wanted) == nullptr)
+    {
+        check.result = FileResult::TheTargetIsNotInALibrary;
+
+        return check;
+    }
+
+    if (const TreeNode* twin = AddonHoldingTheIdentity(landed, wanted, {}))
+    {
+        check.result = FileResult::TheIdentityIsTaken;
+        check.occupant = twin->path;
+
+        return check;
+    }
+
+    if (const TreeNode* held = AddonHoldingTheIdentity(scanned, wanted, {}))
+    {
+        return AdmissionAgainst(profile, wanted, *held);
+    }
+
+    if (filesystemProbe_.EntryExistsWithoutFollowingLinks(wanted))
+    {
+        check.result = FileResult::TheOriginIsOccupied;
+        check.occupant = wanted;
+
+        return check;
+    }
+
+    check.result = FileResult::Completed;
+
+    return check;
+}
+
+AdmissionCheck ImportService::AdmissionAgainst(const SimulatorProfile& profile,
+                                               const std::filesystem::path& wanted,
+                                               const TreeNode& held) const
+{
+    AdmissionCheck check{.target = wanted, .occupant = held.path};
+
+    if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(ManifestPathIn(held.path)))
+    {
+        check.result = FileResult::TheOriginIsOccupied;
+
+        return check;
+    }
+
+    check.result = FileResult::Completed;
+    check.target = held.path;
+    check.occupantVersion = held.addon.has_value() ? held.addon->manifest.packageVersion : std::string{};
+    const std::filesystem::path quarantined = QuarantineInsideTheLibrary(profile, held.path);
+
+    check.theQuarantineHoldsAnEarlierCopy = filesystemProbe_.EntryExistsWithoutFollowingLinks(quarantined);
+
+    if (check.theQuarantineHoldsAnEarlierCopy)
+    {
+        check.quarantinedVersion = VersionIn(quarantined);
+        check.quarantinedCopy = quarantined;
+    }
+
+    return check;
+}
+
+std::vector<AdmissionCheck> ImportService::CheckAdmission(const SimulatorProfile& profile,
+                                                          const std::vector<std::filesystem::path>& wanted) const
+{
+    std::vector<AdmissionCheck> checks;
+    checks.reserve(wanted.size());
+
+    if (processProbe_.SimulatorIsRunning())
+    {
+        for (const std::filesystem::path& path : wanted)
+        {
+            checks.push_back(AdmissionCheck{.result = FileResult::TheSimulatorIsRunning, .target = path});
+        }
+
+        return checks;
+    }
+
+    const std::vector<TreeNode> scanned = LibraryTreesOf(catalog_, profile);
+
+    for (const std::filesystem::path& path : wanted)
+    {
+        checks.push_back(AdmissionOf(profile, path, scanned, {}));
+    }
+
+    return checks;
+}
+
+std::vector<AdmitResult> ImportService::Admit(const SimulatorProfile& profile,
+                                              const std::vector<DestinationEntry>& entries,
+                                              const std::vector<AdmitRequest>& requests,
+                                              const std::function<bool(const CopyProgress&)>& onProgress,
+                                              const std::function<void(OperationKind)>& onStep,
+                                              const std::function<bool(std::size_t request)>& goOn) const
+{
+    std::vector<AdmitResult> results;
+    results.reserve(requests.size());
+
+    std::optional<std::vector<TreeNode>> scanned;
+    std::vector<TreeNode> landed = LibrariesHoldingNothing(profile);
+    std::optional<FileResult> stopped;
+
+    for (std::size_t index = 0; index < requests.size(); ++index)
+    {
+        if (!stopped.has_value())
+        {
+            stopped = WhyTheBatchStopsAt(index, goOn);
+        }
+
+        if (stopped.has_value())
+        {
+            results.push_back(AdmitResult{.result = *stopped});
+            continue;
+        }
+
+        if (!scanned.has_value())
+        {
+            scanned = LibraryTreesOf(catalog_, profile);
+        }
+
+        results.push_back(AdmitOne(profile, entries, requests[index], *scanned, landed, onProgress, onStep));
+    }
+
+    return results;
+}
+
+AdmitResult ImportService::AdmitOne(const SimulatorProfile& profile,
+                                    const std::vector<DestinationEntry>& entries,
+                                    const AdmitRequest& request,
+                                    const std::vector<TreeNode>& scanned,
+                                    std::vector<TreeNode>& landed,
+                                    const std::function<bool(const CopyProgress&)>& onProgress,
+                                    const std::function<void(OperationKind)>& onStep) const
+{
+    const AdmissionCheck check = AdmissionOf(profile, request.category / request.staged.filename(), scanned, landed);
+
+    if (!Succeeded(check.result))
+    {
+        return AdmitResult{.result = check.result};
+    }
+
+    if (ComparablePath(check.occupant) != ComparablePath(request.replaces))
+    {
+        return AdmitResult{.result = FileResult::TheDiskDisagreesWithTheScan};
+    }
+
+    if (!OnTheSameVolume(request.staged, check.target)
+        || !filesystemProbe_.EntryExistsWithoutFollowingLinks(request.staged))
+    {
+        return AdmitResult{.result = FileResult::CouldNotMoveIntoPlace};
+    }
+
+    if (check.occupant.empty())
+    {
+        const FileResult moved = MoveIntoPlace(profile, request.staged, check.target);
+
+        if (!Succeeded(moved))
+        {
+            return AdmitResult{.result = moved};
+        }
+
+        RememberTheLanding(landed, check.target);
+
+        return AdmitResult{.result = moved, .landed = check.target};
+    }
+
+    if (const std::optional<FileResult> refused = WhyTheOccupantCannotGo(profile, request, check))
+    {
+        return AdmitResult{.result = *refused};
+    }
+
+    const AdmitResult replaced = ReplaceTheOccupant(profile, entries, request, check, onProgress, onStep);
+
+    if (!replaced.landed.empty())
+    {
+        RememberTheLanding(landed, check.target);
+    }
+
+    return replaced;
+}
+
+std::optional<FileResult> ImportService::WhyTheOccupantCannotGo(const SimulatorProfile& profile,
+                                                                const AdmitRequest& request,
+                                                                const AdmissionCheck& check) const
+{
+    if (QuarantineInsideTheLibrary(profile, check.occupant).empty())
+    {
+        return FileResult::ThereIsNowhereToQuarantineIt;
+    }
+
+    if (check.theQuarantineHoldsAnEarlierCopy && !request.discardTheEarlierQuarantinedCopy)
+    {
+        return FileResult::TheQuarantineIsOccupied;
+    }
+
+    return std::nullopt;
+}
+
+AdmitResult ImportService::ReplaceTheOccupant(const SimulatorProfile& profile,
+                                              const std::vector<DestinationEntry>& entries,
+                                              const AdmitRequest& request,
+                                              const AdmissionCheck& check,
+                                              const std::function<bool(const CopyProgress&)>& onProgress,
+                                              const std::function<void(OperationKind)>& onStep) const
+{
+    if (!check.theQuarantineHoldsAnEarlierCopy)
+    {
+        return ExchangeAndRelink(profile, entries, request, check, onProgress, onStep);
+    }
+
+    const EarlierCopy earlier = SetTheEarlierCopyAside(QuarantineInsideTheLibrary(profile, check.occupant));
+
+    if (!Succeeded(earlier.result))
+    {
+        return AdmitResult{.result = earlier.result};
+    }
+
+    const AdmitResult admitted = ExchangeAndRelink(profile, entries, request, check, onProgress, onStep);
+
+    if (admitted.landed.empty())
+    {
+        PutTheEarlierCopyBack(earlier);
+    }
+    else
+    {
+        static_cast<void>(DiscardOne(profile, earlier.item));
+    }
+
+    return admitted;
+}
+
+AdmitResult ImportService::ExchangeAndRelink(const SimulatorProfile& profile,
+                                             const std::vector<DestinationEntry>& entries,
+                                             const AdmitRequest& request,
+                                             const AdmissionCheck& check,
+                                             const std::function<bool(const CopyProgress&)>& onProgress,
+                                             const std::function<void(OperationKind)>& onStep) const
+{
+    const std::vector<std::filesystem::path> places = LinksPointingAt(entries, check.occupant);
+    const AddonId addon = IdentityOf(profile, check.occupant);
+
+    AdmitResult admitted{.result = FileResult::CouldNotRemoveTheLink};
+
+    if (DisableEveryLink(linking_, log_, places, addon, check.occupant))
+    {
+        admitted = ExchangeTheFolders(profile, request, check, onProgress, onStep);
+    }
+
+    if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(check.target))
+    {
+        return admitted;
+    }
+
+    const FileResult linked = LinkTheFolderAt(addon, check.target, PlacesThatCameDown(places));
+
+    if (Succeeded(admitted.result) && !Succeeded(linked))
+    {
+        admitted.result = linked;
+    }
+
+    return admitted;
+}
+
+ImportService::EarlierCopy ImportService::SetTheEarlierCopyAside(const std::filesystem::path& slot) const
+{
+    EarlierCopy earlier{
+        .item = WhereItCameFrom(log_.History(), slot), .slot = slot, .sidecar = sidecars_.Read(SidecarPathFor(slot))};
+
+    earlier.item.path = SwapSlotFor(slot);
+
+    if (!files_.Move(slot, earlier.item.path))
+    {
+        earlier.result = WhatStoppedIt(filesystemProbe_, slot, FileResult::CouldNotQuarantine);
+    }
+
+    return earlier;
+}
+
+void ImportService::PutTheEarlierCopyBack(const EarlierCopy& earlier) const
+{
+    if (!files_.Move(earlier.item.path, earlier.slot))
+    {
+        return;
+    }
+
+    PutTheRecordBack(sidecars_, earlier.slot, earlier.sidecar);
+}
+
+void ImportService::PutTheLinksBack(const AddonId& addon,
+                                    const std::filesystem::path& folder,
+                                    const std::vector<std::filesystem::path>& places) const
+{
+    if (filesystemProbe_.EntryExistsWithoutFollowingLinks(folder))
+    {
+        static_cast<void>(LinkTheFolderAt(addon, folder, PlacesThatCameDown(places)));
+    }
+}
+
+AdmitResult ImportService::ExchangeTheFolders(const SimulatorProfile& profile,
+                                              const AdmitRequest& request,
+                                              const AdmissionCheck& check,
+                                              const std::function<bool(const CopyProgress&)>& onProgress,
+                                              const std::function<void(OperationKind)>& onStep) const
+{
+    const std::filesystem::path quarantine = QuarantineInsideTheLibrary(profile, check.occupant);
+
+    if (const FileResult quarantined = QuarantineInto(quarantine, check.occupant, IdentityOf(profile, check.occupant),
+                                                      OperationKind::QuarantineFromLibrary, onProgress, onStep);
+        !Succeeded(quarantined))
+    {
+        return AdmitResult{.result = quarantined};
+    }
+
+    const FileResult moved = MoveIntoPlace(profile, request.staged, check.target);
+
+    if (Succeeded(moved))
+    {
+        return AdmitResult{.result = moved, .landed = check.target, .replaced = true};
+    }
+
+    static_cast<void>(RestoreOne(
+        profile, QuarantinedItem{.path = quarantine, .origin = check.occupant, .source = OriginSource::Sidecar}));
+
+    return AdmitResult{.result = moved};
+}
+
+FileResult ImportService::MoveIntoPlace(const SimulatorProfile& profile,
+                                        const std::filesystem::path& staged,
+                                        const std::filesystem::path& target) const
+{
+    const FileResult result = files_.Move(staged, target) ? FileResult::Completed : FileResult::CouldNotMoveIntoPlace;
+
+    Record(profile, OperationKind::InstallMoveIntoPlace, target, staged, target, result);
+
+    return result;
+}
+
+std::vector<std::filesystem::path>
+ImportService::PlacesThatCameDown(const std::vector<std::filesystem::path>& places) const
+{
+    std::vector<std::filesystem::path> down;
+
+    for (const std::filesystem::path& place : places)
+    {
+        if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(place))
+        {
+            down.push_back(place);
+        }
+    }
+
+    return down;
+}
+
 FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
                                           const std::vector<DestinationEntry>& entries,
                                           const CopyConflict& conflict,
@@ -334,10 +711,19 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
 
         return FileResult::ThereIsNowhereToQuarantineIt;
     }
+
+    if (const std::optional<FileResult> occupied =
+            WhyTheQuarantineRefuses(resolution.kind, addon, resolution.loser, resolution.quarantine))
+    {
+        return *occupied;
+    }
+
     const std::vector<std::filesystem::path> pointedAtTheLoser = LinksPointingAt(entries, resolution.loser);
 
     if (!DisableEveryLink(linking_, log_, pointedAtTheLoser, addon, resolution.loser))
     {
+        PutTheLinksBack(addon, resolution.loser, pointedAtTheLoser);
+
         return FileResult::CouldNotRemoveTheLink;
     }
 
@@ -345,6 +731,8 @@ FileResult ImportService::ResolveConflict(const SimulatorProfile& profile,
             QuarantineInto(resolution.quarantine, resolution.loser, addon, resolution.kind, onProgress, onStep);
         !Succeeded(quarantined))
     {
+        PutTheLinksBack(addon, resolution.loser, pointedAtTheLoser);
+
         return quarantined;
     }
 
@@ -367,20 +755,33 @@ FileResult ImportService::TheWinnerTakesTheirPlaces(const AddonId& addon,
     log_.RecordLink(linkKind, addon, conflict.libraryPath, conflict.provenancePath, standIn.Failure());
     if (!standIn.Succeeded())
     {
+        PutTheLinksBack(addon, conflict.libraryPath, places);
+
         return FileResult::CouldNotCreateLink;
     }
+
+    return LinkTheFolderAt(addon, conflict.libraryPath, places);
+}
+
+FileResult ImportService::LinkTheFolderAt(const AddonId& addon,
+                                          const std::filesystem::path& folder,
+                                          const std::vector<std::filesystem::path>& places) const
+{
+    const Addon winner{.folderPath = folder};
+
+    FileResult result = FileResult::Completed;
 
     for (const std::filesystem::path& place : places)
     {
         const LinkOutcome back = linking_.LinkAt(place, winner, linkType_);
-        log_.RecordLink(OperationKind::EnableAddon, addon, conflict.libraryPath, place, back.Failure());
+        log_.RecordLink(OperationKind::EnableAddon, addon, folder, place, back.Failure());
         if (!back.Succeeded())
         {
-            return FileResult::CouldNotCreateLink;
+            result = FileResult::CouldNotCreateLink;
         }
     }
 
-    return FileResult::Completed;
+    return result;
 }
 
 FileResult ImportService::TakeBackWhatWasReplaced(const SimulatorProfile& profile,
@@ -405,8 +806,18 @@ FileResult ImportService::TakeBackWhatWasReplaced(const SimulatorProfile& profil
         return FileResult::ThereIsNowhereToQuarantineIt;
     }
 
-    if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, conflict.libraryPath), addon, conflict.libraryPath))
+    if (const std::optional<FileResult> occupied =
+            WhyTheQuarantineRefuses(OperationKind::QuarantineFromLibrary, addon, conflict.libraryPath, quarantine))
     {
+        return *occupied;
+    }
+
+    const std::vector<std::filesystem::path> places = LinksPointingAt(entries, conflict.libraryPath);
+
+    if (!DisableEveryLink(linking_, log_, places, addon, conflict.libraryPath))
+    {
+        PutTheLinksBack(addon, conflict.libraryPath, places);
+
         return FileResult::CouldNotRemoveTheLink;
     }
 
@@ -414,12 +825,30 @@ FileResult ImportService::TakeBackWhatWasReplaced(const SimulatorProfile& profil
                                               OperationKind::QuarantineFromLibrary, onProgress, onStep);
         !Succeeded(put))
     {
+        PutTheLinksBack(addon, conflict.libraryPath, places);
+
         return put;
     }
 
     const ImportRequest request{.source = conflict.provenancePath, .category = conflict.libraryPath.parent_path()};
 
-    return engine_.Import(profile, request, onProgress, onStep).Result();
+    const FileResult imported = engine_.Import(profile, request, onProgress, onStep).Result();
+
+    if (!Succeeded(imported))
+    {
+        if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(conflict.libraryPath))
+        {
+            static_cast<void>(RestoreOne(
+                profile,
+                QuarantinedItem{.path = quarantine, .origin = conflict.libraryPath, .source = OriginSource::Sidecar}));
+        }
+
+        PutTheLinksBack(addon, conflict.libraryPath, places);
+
+        return imported;
+    }
+
+    return LinkTheFolderAt(addon, conflict.libraryPath, PlacesThatCameDown(places));
 }
 
 ConflictSide ImportService::SideOf(const std::filesystem::path& folder) const
@@ -449,11 +878,9 @@ FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine
                                          const std::function<bool(const CopyProgress&)>& onProgress,
                                          const std::function<void(OperationKind)>& onStep) const
 {
-    if (filesystemProbe_.EntryExistsWithoutFollowingLinks(quarantine))
+    if (const std::optional<FileResult> occupied = WhyTheQuarantineRefuses(kind, addon, loser, quarantine))
     {
-        log_.RecordImport(kind, addon, loser, quarantine, FileResult::TheQuarantineIsOccupied);
-
-        return FileResult::TheQuarantineIsOccupied;
+        return *occupied;
     }
 
     const std::filesystem::path sidecar = SidecarPathFor(quarantine);
@@ -476,6 +903,21 @@ FileResult ImportService::QuarantineInto(const std::filesystem::path& quarantine
     }
 
     return moved;
+}
+
+std::optional<FileResult> ImportService::WhyTheQuarantineRefuses(const OperationKind kind,
+                                                                 const AddonId& addon,
+                                                                 const std::filesystem::path& loser,
+                                                                 const std::filesystem::path& quarantine) const
+{
+    if (!filesystemProbe_.EntryExistsWithoutFollowingLinks(quarantine))
+    {
+        return std::nullopt;
+    }
+
+    log_.RecordImport(kind, addon, loser, quarantine, FileResult::TheQuarantineIsOccupied);
+
+    return FileResult::TheQuarantineIsOccupied;
 }
 
 void ImportService::ForgetTheOriginOf(const std::filesystem::path& item) const
@@ -847,21 +1289,40 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
         return swapped;
     }
 
-    if (!DisableEveryLink(linking_, log_, LinksPointingAt(entries, check.occupant), occupant, check.occupant))
+    const bool theItemSitsInTheSlot = ComparablePath(goes.quarantine) == ComparablePath(item.path);
+
+    if (!theItemSitsInTheSlot)
     {
+        if (const std::optional<FileResult> occupied =
+                WhyTheQuarantineRefuses(goes.kind, occupant, goes.loser, goes.quarantine))
+        {
+            swapped.result = *occupied;
+
+            return swapped;
+        }
+    }
+
+    const std::vector<std::filesystem::path> places = LinksPointingAt(entries, check.occupant);
+
+    if (!DisableEveryLink(linking_, log_, places, occupant, check.occupant))
+    {
+        PutTheLinksBack(occupant, check.occupant, places);
         swapped.result = FileResult::CouldNotRemoveTheLink;
 
         return swapped;
     }
 
     QuarantinedItem waiting = item;
+    std::optional<std::string> itsOwnRecord;
 
-    if (ComparablePath(goes.quarantine) == ComparablePath(item.path))
+    if (theItemSitsInTheSlot)
     {
+        itsOwnRecord = sidecars_.Read(SidecarPathFor(item.path));
         waiting.path = SwapSlotFor(item.path);
 
         if (!files_.Move(item.path, waiting.path))
         {
+            PutTheLinksBack(occupant, check.occupant, places);
             swapped.result = WhatStoppedIt(filesystemProbe_, item.path, FileResult::CouldNotQuarantine);
 
             return swapped;
@@ -871,17 +1332,25 @@ SwapResult ImportService::Swap(const SimulatorProfile& profile,
     if (const FileResult quarantined = QuarantineInto(goes.quarantine, goes.loser, occupant, goes.kind);
         !Succeeded(quarantined))
     {
-        if (waiting.path != item.path)
+        if (theItemSitsInTheSlot && files_.Move(waiting.path, item.path))
         {
-            static_cast<void>(files_.Move(waiting.path, item.path));
+            PutTheRecordBack(sidecars_, item.path, itsOwnRecord);
         }
 
+        PutTheLinksBack(occupant, check.occupant, places);
         swapped.result = quarantined;
 
         return swapped;
     }
 
-    return TheItemComesBack(profile, waiting, swapped, OperationKind::RestoreOverTheOccupant);
+    const SwapResult restored = TheItemComesBack(profile, waiting, swapped, OperationKind::RestoreOverTheOccupant);
+
+    if (restored.Succeeded())
+    {
+        PutTheLinksBack(occupant, check.occupant, places);
+    }
+
+    return restored;
 }
 
 SwapResult ImportService::TheItemComesBack(const SimulatorProfile& profile,
@@ -1060,6 +1529,12 @@ std::vector<StagingLeftover> ImportService::WhatAnImportLeftBehind(const Simulat
                     pending.push_back(child);
                 }
 
+                continue;
+            }
+
+            if (IsTheInstallStaging(child))
+            {
+                leftovers.push_back(StagingLeftover{.staging = child, .target = ImportedPathFor(child)});
                 continue;
             }
 

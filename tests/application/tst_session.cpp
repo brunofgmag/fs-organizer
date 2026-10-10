@@ -90,6 +90,9 @@ namespace
         static void GivingAnAddonBackForgetsWhereItCameFromAndTheNextScanSeesIt();
         static void ForgettingNothingNeitherSavesNorScans();
         static void RegisteringALibraryDeclaresTheStructureTheUserAlreadyBuilt();
+        static void RegisteringALibraryWhileTheSimulatorRunsRegistersItAndLeavesTheStructureUndeclared();
+        static void DeclaringTheStructureWhileTheSimulatorRunsTouchesNothingAndSaysSo();
+        static void TakingBackTheMarkersWhileTheSimulatorRunsTouchesNothingAndSaysSo();
         static void ARegistrationStartedBeforeAnotherSaveIsNotAdoptedOverIt();
         static void ARegistrationStartedAfterTheLastSaveIsAdoptedAndSaved();
         static void TwoRemovalsBeforeTheScanLandsBothSurvive();
@@ -1511,6 +1514,57 @@ void SessionTest::RegisteringALibraryDeclaresTheStructureTheUserAlreadyBuilt()
     QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary) / "Sceneries")));
     QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary) / "Sceneries" / "Brazil")));
     QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary))));
+}
+
+void SessionTest::RegisteringALibraryWhileTheSimulatorRunsRegistersItAndLeavesTheStructureUndeclared()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(kExtraLibrary);
+    f.fileSystem.AddDirectory(std::filesystem::path(kExtraLibrary) / "Sceneries");
+    f.catalog.SetTree(kExtraLibrary, TreeNode{});
+    f.processProbe.ReportTheSimulatorAsRunning();
+    const std::size_t journalBefore = f.journal.appended.size();
+
+    QVERIFY(Register(f.session, kExtraLibrary).Accepted());
+
+    QCOMPARE(LibraryPathsStored(f.settings),
+             (std::vector<std::string>{ComparablePath(kLibrary), ComparablePath(kExtraLibrary)}));
+    QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kExtraLibrary) / "Sceneries")));
+    QCOMPARE(f.journal.appended.size(), journalBefore);
+}
+
+void SessionTest::DeclaringTheStructureWhileTheSimulatorRunsTouchesNothingAndSaysSo()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(kSceneries);
+    f.processProbe.ReportTheSimulatorAsRunning();
+    const std::size_t journalBefore = f.journal.appended.size();
+
+    const std::vector<FileOperationResult> results = f.session.AdoptTheStructureOf("library-1");
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(kSceneries)));
+    QCOMPARE(f.journal.appended.size(), journalBefore);
+}
+
+void SessionTest::TakingBackTheMarkersWhileTheSimulatorRunsTouchesNothingAndSaysSo()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(kSceneries);
+    f.fileSystem.AddFile(CategoryMarkerPathIn(kSceneries));
+    f.processProbe.ReportTheSimulatorAsRunning();
+    const std::size_t journalBefore = f.journal.appended.size();
+
+    const std::vector<FileOperationResult> results = f.session.TakeBackTheMarkersOf("library-1");
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(kSceneries)));
+    QCOMPARE(f.journal.appended.size(), journalBefore);
 }
 
 void SessionTest::ARegistrationStartedBeforeAnotherSaveIsNotAdoptedOverIt()

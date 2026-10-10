@@ -40,6 +40,8 @@ enum class OperationKind : int
     ForgetTheStartupEntry = 31,
     TurnOffTheSimulatorPackage = 32,
     TurnOnTheSimulatorPackage = 33,
+    InstallExtractToStaging = 34,
+    InstallMoveIntoPlace = 35,
 };
 
 inline constexpr std::array kAllOperationKinds{
@@ -77,9 +79,11 @@ inline constexpr std::array kAllOperationKinds{
     OperationKind::ForgetTheStartupEntry,
     OperationKind::TurnOffTheSimulatorPackage,
     OperationKind::TurnOnTheSimulatorPackage,
+    OperationKind::InstallExtractToStaging,
+    OperationKind::InstallMoveIntoPlace,
 };
 
-static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::TurnOnTheSimulatorPackage) + 1,
+static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKind::InstallMoveIntoPlace) + 1,
               "Every OperationKind belongs in kAllOperationKinds, and the last one carries the highest value.");
 
 [[nodiscard]] constexpr bool CarriesAFileReason(const OperationKind kind)
@@ -114,6 +118,8 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::ForgetTheStartupEntry:
     case OperationKind::TurnOffTheSimulatorPackage:
     case OperationKind::TurnOnTheSimulatorPackage:
+    case OperationKind::InstallExtractToStaging:
+    case OperationKind::InstallMoveIntoPlace:
     case OperationKind::DeleteFromLibrary: return true;
     case OperationKind::EnableAddon:
     case OperationKind::DisableAddon:
@@ -162,6 +168,8 @@ static_assert(kAllOperationKinds.size() == static_cast<std::size_t>(OperationKin
     case OperationKind::ForgetTheStartupEntry:
     case OperationKind::TurnOffTheSimulatorPackage:
     case OperationKind::TurnOnTheSimulatorPackage:
+    case OperationKind::InstallExtractToStaging:
+    case OperationKind::InstallMoveIntoPlace:
     case OperationKind::DeleteFromLibrary: return false;
     }
 

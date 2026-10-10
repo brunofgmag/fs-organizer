@@ -137,6 +137,11 @@ QString Explain(const FileResult result)
     case FileResult::CouldNotKeepTheRemovedEntry:
         return QObject::tr("the removed entry could not be saved, so nothing was removed");
     case FileResult::TheProgramDoesNotExist: return QObject::tr("that program file does not exist, so nothing changed");
+    case FileResult::CouldNotExtract: return QObject::tr("the files could not be extracted or copied");
+    case FileResult::TheArchiveNeedsAPassword: return QObject::tr("the archive needs a password");
+    case FileResult::TheSourceIsInsideWhatWouldBeRemoved:
+        return QObject::tr(
+            "the source is inside a folder that the install would remove, or contains one, so nothing was changed");
     }
 
     return {};
@@ -269,6 +274,8 @@ QString NameOfImportStep(const OperationKind kind)
     case OperationKind::ImportMoveIntoPlace: return QObject::tr("Moving the copy into place…");
     case OperationKind::ImportRemoveSource: return QObject::tr("Removing the source folder…");
     case OperationKind::EnableAddon: return QObject::tr("Creating the link in the destination…");
+    case OperationKind::InstallExtractToStaging: return QObject::tr("Preparing the files…");
+    case OperationKind::InstallMoveIntoPlace: return QObject::tr("Moving the copy into place…");
     default: return {};
     }
 }

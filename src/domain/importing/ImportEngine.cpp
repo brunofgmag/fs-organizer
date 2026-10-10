@@ -1,10 +1,10 @@
 #include "domain/importing/ImportEngine.h"
 
 #include <algorithm>
-#include <numeric>
 #include <ranges>
 
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/importing/FingerprintMeasures.h"
 #include "domain/importing/WhatStoppedIt.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
@@ -34,13 +34,6 @@ namespace
         return onProgress && !onProgress(CopyProgress{.copiedBytes = read, .totalBytes = total});
     }
 
-    std::uintmax_t TotalSizeOf(const std::vector<FileFingerprint>& files)
-    {
-        const auto sizes = files | std::views::transform(&FileFingerprint::size);
-
-        return std::accumulate(sizes.begin(), sizes.end(), std::uintmax_t{0});
-    }
-
     bool IsUnderADestination(const SimulatorProfile& profile, const std::filesystem::path& path)
     {
         return std::ranges::any_of(profile.destinations,
@@ -57,23 +50,6 @@ namespace
         {
             onStep(kind);
         }
-    }
-
-    bool FingerprintsMatch(std::vector<FileFingerprint> left, std::vector<FileFingerprint> right)
-    {
-        const auto byPath = [](const FileFingerprint& a, const FileFingerprint& b)
-        {
-            return a.relativePath < b.relativePath;
-        };
-
-        std::ranges::sort(left, byPath);
-        std::ranges::sort(right, byPath);
-
-        return std::ranges::equal(left, right,
-                                  [](const FileFingerprint& a, const FileFingerprint& b)
-                                  {
-                                      return a.relativePath == b.relativePath && a.size == b.size;
-                                  });
     }
 }
 
@@ -561,20 +537,9 @@ ImportOutcome ImportEngine::CheckFreeSpace(const std::filesystem::path& category
                                            const std::uintmax_t sourceSize,
                                            const std::size_t files) const
 {
-    const std::uintmax_t needed = FreeSpaceNeededFor(sourceSize, files);
+    const FileResult room = RoomFor(filesystemProbe_, category, sourceSize, files);
 
-    const std::optional<std::uintmax_t> free = filesystemProbe_.FreeSpaceOn(category);
-    if (!free.has_value())
-    {
-        return ImportOutcome::Stopped(FileResult::CouldNotCheckFreeSpace);
-    }
-
-    if (*free < needed)
-    {
-        return ImportOutcome::Stopped(FileResult::NotEnoughFreeSpace);
-    }
-
-    return ImportOutcome::Completed();
+    return Succeeded(room) ? ImportOutcome::Completed() : ImportOutcome::Stopped(room);
 }
 
 ImportOutcome ImportEngine::CopyToStaging(const std::filesystem::path& source,

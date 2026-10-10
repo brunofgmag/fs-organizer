@@ -90,6 +90,7 @@ private:
     void SayTheLibraryWasRegistered(const std::filesystem::path& path, const LibraryReport& report);
     void SayTheRemovalEnded(const QString& label);
     void SayTheProfileWasNotRemoved(const QString& label);
+    void SayTheSimulatorIsInTheWay();
 
     void Unregister(const LibraryLine& library);
 

@@ -8,6 +8,8 @@
 
 #include "support/PathText.h"
 #include "support/SizeText.h"
+#include "view/HeadingsOverTheColumns.h"
+#include "view/ListUnderItsHeadings.h"
 #include "view/ScrollThatReportsItsContent.h"
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/AddonTreeViewModel.h"
@@ -28,25 +30,14 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
                                    this);
     explanation->setWordWrap(true);
 
+    auto* headings = new HeadingsOverTheColumns({tr("Will be disabled"), tr("Will be enabled"), tr("In")}, this);
+
     auto* listed = new QWidget(this);
     auto* grid = new QGridLayout(listed);
-    grid->setContentsMargins(0, 0, 0, 0);
+    headings->ShapeTheGridUnder(*grid);
     grid->setColumnStretch(2, 1);
-    grid->setHorizontalSpacing(12);
-    grid->setVerticalSpacing(6);
 
-    auto* goesOff = new QLabel(tr("Will be disabled"), listed);
-    goesOff->setObjectName(QStringLiteral("PanelSubHeading"));
-    auto* goesOn = new QLabel(tr("Will be enabled"), listed);
-    goesOn->setObjectName(QStringLiteral("PanelSubHeading"));
-    auto* where = new QLabel(tr("In"), listed);
-    where->setObjectName(QStringLiteral("PanelSubHeading"));
-
-    grid->addWidget(goesOff, 0, 0);
-    grid->addWidget(goesOn, 0, 1);
-    grid->addWidget(where, 0, 2);
-
-    int row = 1;
+    int row = 0;
     for (const TakenPlace& swap : swaps)
     {
         goesOff_.push_back(AddTheSide(*grid, row, 0, NameAndVersionOf(swap.occupant)));
@@ -56,6 +47,11 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
         place->setObjectName(QStringLiteral("PanelPromise"));
         place->setWordWrap(true);
         grid->addWidget(place, row, 2, Qt::AlignTop);
+
+        if (row == 0)
+        {
+            headings->StandOver({goesOff_.back(), goesOn_.back(), place});
+        }
 
         ++row;
     }
@@ -78,7 +74,7 @@ SwapDialog::SwapDialog(const std::vector<TakenPlace>& swaps, const AddonTreeView
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
-    layout->addWidget(scroll, 1);
+    layout->addLayout(ListUnderItsHeadings(*headings, *scroll, *this), 1);
     layout->addWidget(buttons);
 
     ShowTheSizes(std::vector<WeighedSwap>(swaps.size()));

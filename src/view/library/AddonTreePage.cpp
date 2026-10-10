@@ -4,6 +4,7 @@
 #include <array>
 #include <set>
 #include <string>
+#include <utility>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
@@ -986,6 +987,8 @@ void AddonTreePage::Apply(const std::vector<const TreeNode*>& nodes, const bool 
 {
     if (!TheUserMeantIt(nodes, enable))
     {
+        notEnabledNote_.clear();
+
         return;
     }
 
@@ -1005,6 +1008,7 @@ void AddonTreePage::OnTurningThemOnWasChecked(const WhatTurningThemOnFound& foun
 {
     TurnOffWhatTheSimulatorAlsoCovers(found.alsoCovered);
     SayWhatTheLibraryAlreadyCovers(found.shared);
+    SayWhatWasNotEnabled();
 }
 
 void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirportsLine>& shared)
@@ -1015,13 +1019,22 @@ void AddonTreePage::SayWhatTheLibraryAlreadyCovers(const std::vector<SharedAirpo
     }
 
     SharedAirportsDialog dialog(shared, this);
+    const int answer = dialog.exec();
+
+    if (answer == static_cast<int>(SharedAirportsAnswer::DisableWhatWasEnabled))
+    {
+        viewModel_.DisableAgain(dialog.WhatWasEnabled());
+
+        return;
+    }
+
     const std::vector<CoexistingPair> marked =
-        dialog.exec() == QDialog::Accepted ? dialog.Chosen() : std::vector<CoexistingPair>{};
+        answer == static_cast<int>(SharedAirportsAnswer::StopWarning) ? dialog.Chosen() : std::vector<CoexistingPair>{};
 
     if (marked.empty())
     {
         emit StatusChanged(tr("%n addon covers the same airport as another of your addons.", nullptr,
-                              static_cast<int>(shared.size())));
+                              static_cast<int>(dialog.WhatWasEnabled().size())));
 
         return;
     }
@@ -1121,6 +1134,169 @@ bool AddonTreePage::TheUserMeantIt(const std::vector<const TreeNode*>& nodes, co
 void AddonTreePage::RefreshUndoState() const
 {
     undo_->setEnabled(viewModel_.CanUndo());
+}
+
+bool AddonTreePage::HasALibrary() const
+{
+    return !viewModel_.Profile().libraries.empty();
+}
+
+QModelIndex AddonTreePage::TheCategoryRowOf(const QModelIndex& row) const
+{
+    const TreeNode* node = AddonTreeModel::NodeAt(filter_->mapToSource(row));
+
+    if (node == nullptr)
+    {
+        return {};
+    }
+
+    if (node->kind == TreeNodeKind::Category)
+    {
+        return row.siblingAtColumn(0);
+    }
+
+    const QModelIndex above = row.parent();
+    const TreeNode* holder = AddonTreeModel::NodeAt(filter_->mapToSource(above));
+
+    if (node->kind == TreeNodeKind::Addon && holder != nullptr && holder->kind == TreeNodeKind::Category)
+    {
+        return above.siblingAtColumn(0);
+    }
+
+    return {};
+}
+
+std::optional<DropCategory> AddonTreePage::CategoryUnder(const QWidget& over, const QPoint& point) const
+{
+    const QWidget* viewport = tree_->viewport();
+
+    if (!viewport->isVisible() || !over.isAncestorOf(viewport))
+    {
+        return std::nullopt;
+    }
+
+    const QPoint inside = viewport->mapFrom(&over, point);
+
+    if (!viewport->rect().contains(inside))
+    {
+        return std::nullopt;
+    }
+
+    const QModelIndex category = TheCategoryRowOf(tree_->indexAt(inside));
+
+    if (!category.isValid())
+    {
+        return std::nullopt;
+    }
+
+    const QRect cell = tree_->visualRect(category);
+    const QRect wholeRow = QRect(0, cell.y(), viewport->width(), cell.height()).intersected(viewport->rect());
+    const QRect shown = wholeRow.isEmpty() ? viewport->rect() : wholeRow;
+
+    return DropCategory{.path = AddonTreeModel::NodeAt(filter_->mapToSource(category))->path,
+                        .shown = category.data(Qt::DisplayRole).toString(),
+                        .row = QRect(viewport->mapTo(&over, shown.topLeft()), shown.size())};
+}
+
+void AddonTreePage::SelectOnceShown(const std::vector<std::filesystem::path>& folders)
+{
+    selected_.clear();
+    current_.clear();
+
+    for (const std::filesystem::path& folder : folders)
+    {
+        selected_.insert(ComparablePath(folder));
+    }
+
+    if (!folders.empty())
+    {
+        current_ = ComparablePath(folders.front());
+    }
+
+    revealing_ = true;
+}
+
+void AddonTreePage::RevealWhatLanded()
+{
+    if (!revealing_)
+    {
+        return;
+    }
+
+    revealing_ = false;
+
+    QModelIndexList found;
+    QModelIndex current;
+    GatherSelection({}, found, current);
+
+    for (const QModelIndex& position : found)
+    {
+        for (QModelIndex above = position.parent(); above.isValid(); above = above.parent())
+        {
+            tree_->expand(above);
+        }
+    }
+
+    if (!found.isEmpty())
+    {
+        tree_->scrollTo(current.isValid() ? current : found.front());
+    }
+}
+
+void AddonTreePage::CollectTheAddonsAt(const QModelIndex& parent,
+                                       const std::set<std::string>& wanted,
+                                       std::vector<const TreeNode*>& found) const
+{
+    for (int row = 0; row < model_.rowCount(parent); ++row)
+    {
+        const QModelIndex position = model_.index(row, 0, parent);
+
+        if (const TreeNode* node = AddonTreeModel::NodeAt(position);
+            node != nullptr && node->kind == TreeNodeKind::Addon && wanted.contains(ComparablePath(node->path)))
+        {
+            found.push_back(node);
+        }
+
+        CollectTheAddonsAt(position, wanted, found);
+    }
+}
+
+void AddonTreePage::EnableAddons(const std::vector<std::filesystem::path>& folders)
+{
+    std::set<std::string> wanted;
+
+    for (const std::filesystem::path& folder : folders)
+    {
+        wanted.insert(ComparablePath(folder));
+    }
+
+    std::vector<const TreeNode*> found;
+    CollectTheAddonsAt({}, wanted, found);
+
+    if (found.size() < wanted.size())
+    {
+        notEnabledNote_ =
+            tr("Installed, but not enabled: the library could not be read again. Enable it from the list.");
+    }
+
+    if (found.empty())
+    {
+        SayWhatWasNotEnabled();
+
+        return;
+    }
+
+    Apply(found, true);
+}
+
+void AddonTreePage::SayWhatWasNotEnabled()
+{
+    if (notEnabledNote_.isEmpty())
+    {
+        return;
+    }
+
+    emit StatusChanged(std::exchange(notEnabledNote_, QString()));
 }
 
 QString AddonTreePage::NothingChangedBecause(const LinkBatchReport& report) const
@@ -1236,6 +1412,7 @@ void AddonTreePage::OnShown()
         RestoreScrolling(scrolled);
     }
 
+    RevealWhatLanded();
     PublishSummary();
 }
 

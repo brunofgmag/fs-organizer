@@ -16,6 +16,7 @@
 #include "tests/support/PathPrinting.h"
 #include "view/quarantine/RestoreDialog.h"
 #include "view/theme/ModernistTheme.h"
+#include "viewmodel/FailureText.h"
 
 namespace
 {
@@ -34,6 +35,10 @@ namespace
         static void EveryOfferIsVisibleWithoutScrolling();
         static void TheViewportIsNoTallerThanWhatTheOffersNeed();
         static void AnItemInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwapInEveryKindOfRow();
+        static void TheReasonOfACollisionIsWrittenApartFromTheQuietDetailUnderIt();
+        static void TheOfferOfACollisionNeverBecomesTheDefaultButton();
+        static void TheOfferOfACollisionStandsToTheRightOfItsReason();
+        static void AgreeingToASwapLeavesEveryRowVisibleWithoutScrolling();
     };
 
     const std::filesystem::path kHeld = "D:/Library/_fsorganizer-quarantine/simbridge";
@@ -68,6 +73,21 @@ namespace
     QPushButton* TheOfferIn(const RestoreDialog& dialog)
     {
         return dialog.findChild<QPushButton*>(QStringLiteral("CompareAndReplace"));
+    }
+
+    QLabel* TheLabelSaying(const RestoreDialog& dialog, const QString& text)
+    {
+        const QList<QLabel*> labels = dialog.findChildren<QLabel*>();
+
+        for (QLabel* label : labels)
+        {
+            if (label->text() == text)
+            {
+                return label;
+            }
+        }
+
+        return nullptr;
     }
 
     AskAboutTheCollision AlwaysAgrees()
@@ -292,6 +312,77 @@ void RestoreDialogTest::AnItemInItsSwapSlotIsNamedByTheFolderItWasBeforeTheSwapI
     {
         QVERIFY2(names.contains(real), qPrintable(real));
     }
+}
+
+void RestoreDialogTest::TheReasonOfACollisionIsWrittenApartFromTheQuietDetailUnderIt()
+{
+    const RestoreOffer collision = ACollisionThatCanBeSwapped();
+    const RestoreDialog dialog({collision}, AlwaysAgrees());
+
+    const QString reason = Explain(collision.check.result);
+    const QLabel* said = TheLabelSaying(dialog, reason);
+
+    QVERIFY2(said != nullptr, "the reason has no label of its own");
+    QVERIFY(said->objectName() != QStringLiteral("PanelPromise"));
+
+    const QString quiet = ThePromiseIn(dialog);
+
+    QVERIFY(!quiet.contains(reason));
+    QVERIFY(quiet.contains(AsText(collision.check.occupant)));
+    QVERIFY(quiet.contains(QString::fromStdString(collision.check.version)));
+    QVERIFY(quiet.contains(QString::fromStdString(collision.check.occupantVersion)));
+}
+
+void RestoreDialogTest::TheOfferOfACollisionNeverBecomesTheDefaultButton()
+{
+    RestoreDialog dialog({ACollisionThatCanBeSwapped()}, AlwaysAgrees());
+    Expose(dialog);
+
+    QPushButton* offer = TheOfferIn(dialog);
+    offer->setFocus();
+
+    QVERIFY(!offer->autoDefault());
+    QVERIFY2(!offer->isDefault(), "the focused offer was promoted to the default button of the dialog");
+}
+
+void RestoreDialogTest::TheOfferOfACollisionStandsToTheRightOfItsReason()
+{
+    const RestoreOffer collision = ACollisionThatCanBeSwapped();
+    RestoreDialog dialog({collision}, AlwaysAgrees());
+    Expose(dialog);
+
+    const QPushButton* offer = TheOfferIn(dialog);
+    const QLabel* said = TheLabelSaying(dialog, Explain(collision.check.result));
+
+    QVERIFY(said != nullptr);
+
+    const QRect reason(said->mapTo(&dialog, QPoint(0, 0)), said->size());
+    const QRect button(offer->mapTo(&dialog, QPoint(0, 0)), offer->size());
+
+    QVERIFY2(button.left() > reason.right(), "the offer is not to the right of the reason");
+    QVERIFY2(button.top() < reason.bottom(), "the offer starts below the reason instead of beside it");
+}
+
+void RestoreDialogTest::AgreeingToASwapLeavesEveryRowVisibleWithoutScrolling()
+{
+    ApplyModernistTheme(*qobject_cast<QApplication*>(QCoreApplication::instance()));
+
+    RestoreOffer deep = ACollisionThatCanBeSwapped();
+    deep.check.item.path = kHeld.parent_path() / "a-folder-name-long-enough-to-squeeze-the-reason";
+    deep.check.occupant =
+        "D:/Library/Aircraft/Vendor With A Long Enough Name/Second Level Of Folders/Third Level Of Folders/simbridge";
+
+    RestoreDialog dialog({ACollisionThatCanBeSwapped(), deep, ASettledRestore()}, AlwaysAgrees());
+    Expose(dialog);
+
+    const QScrollArea* scroll = TheScrollIn(dialog);
+
+    QCOMPARE(scroll->verticalScrollBar()->maximum(), 0);
+
+    TheOfferIn(dialog)->click();
+    QCoreApplication::processEvents();
+
+    QCOMPARE(scroll->verticalScrollBar()->maximum(), 0);
 }
 
 QTEST_MAIN(RestoreDialogTest)

@@ -276,6 +276,7 @@ QWidget* OptionsPage::CreateProfilesAndLibraries()
     connect(&viewModel_, &OptionsViewModel::ProfileRemoved, this, &OptionsPage::SayTheRemovalEnded);
     connect(&viewModel_, &OptionsViewModel::LibraryUnregistered, this, &OptionsPage::SayTheRemovalEnded);
     connect(&viewModel_, &OptionsViewModel::ProfileNotRemoved, this, &OptionsPage::SayTheProfileWasNotRemoved);
+    connect(&viewModel_, &OptionsViewModel::TheSimulatorIsInTheWay, this, &OptionsPage::SayTheSimulatorIsInTheWay);
 
     importLegacy_ = new QPushButton(tr("Import from MSFS Addons Linker…"), pane);
     connect(importLegacy_, &QPushButton::clicked, this, &OptionsPage::LegacyImportRequested);
@@ -1015,4 +1016,9 @@ void OptionsPage::SayTheRemovalEnded(const QString& label)
 void OptionsPage::SayTheProfileWasNotRemoved(const QString& label)
 {
     emit StatusChanged(tr("%1 was not removed: at least one profile is needed.").arg(label));
+}
+
+void OptionsPage::SayTheSimulatorIsInTheWay()
+{
+    emit StatusChanged(tr("Files cannot be changed while the simulator is running."));
 }

@@ -12,12 +12,15 @@
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QDir>
 #include <QtCore/QLocale>
+#include <QtCore/QMimeData>
 #include <QtCore/QTextStream>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
+#include <QtCore/QUrl>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QContextMenuEvent>
+#include <QtGui/QDropEvent>
 #include <QtGui/QHelpEvent>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPixmap>
@@ -35,6 +38,7 @@
 #include <QtWidgets/QTableView>
 #include <QtWidgets/QTreeView>
 
+#include "application/ArchiveInstallService.h"
 #include "application/DeletionService.h"
 #include "application/ImportService.h"
 #include "application/SizeService.h"
@@ -43,6 +47,7 @@
 #include "application/BisectionService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "infrastructure/archive/TarExeArchiveReader.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
@@ -80,12 +85,15 @@
 #include "edition/Edition.h"
 #include "shared/DisposableState.h"
 #include "support/PathText.h"
+#include "support/SizeText.h"
 #include "view/JournalPage.h"
 #include "view/PresetsPage.h"
 #include "view/community/CommunityPage.h"
 #include "domain/tree/AddonTree.h"
 #include "view/documents/DocumentsPage.h"
 #include "view/library/AddonTreePage.h"
+#include "view/library/InstallDialog.h"
+#include "view/library/InstallReportDialog.h"
 #include "domain/support/PathUtils.h"
 #include "view/library/LibraryRootDialog.h"
 #include "view/community/ImportDialog.h"
@@ -100,13 +108,18 @@
 #include "view/simulator/SimulatorPage.h"
 #include "view/simulator/StartupPage.h"
 #include "view/quarantine/QuarantinePage.h"
+#include "view/quarantine/RestoreDialog.h"
+#include "view/shell/ArchiveDrop.h"
 #include "view/shell/ImportProgressDialog.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/shell/MainWindow.h"
 #include "view/shell/PageNames.h"
+#include "view/shell/StepProgressDialog.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
 #include "viewmodel/AddonTreeViewModel.h"
+#include "viewmodel/ArchiveInstallViewModel.h"
+#include "viewmodel/ArchiveRefusalText.h"
 #include "viewmodel/FailureText.h"
 #include "viewmodel/DeletionViewModel.h"
 #include "viewmodel/AddonDocumentsViewModel.h"
@@ -376,6 +389,341 @@ namespace
                 KeepTheEventLoopTurning(30);
             },
             opensIt, folder, name);
+    }
+
+    constexpr qulonglong kMebibyte = 1024ULL * 1024ULL;
+
+    std::optional<QPoint> APointOnACategory(MainWindow& shell, AddonTreePage& page)
+    {
+        auto* tree = page.findChild<QTreeView*>();
+
+        if (tree == nullptr)
+        {
+            return std::nullopt;
+        }
+
+        tree->expandToDepth(0);
+        QAbstractItemModel* model = tree->model();
+
+        for (int library = 0; library < model->rowCount({}); ++library)
+        {
+            const QModelIndex root = model->index(library, 0, {});
+
+            for (int row = 0; row < model->rowCount(root); ++row)
+            {
+                const QModelIndex category = model->index(row, 0, root);
+
+                if (model->rowCount(category) == 0)
+                {
+                    continue;
+                }
+
+                tree->scrollTo(category);
+                const QPoint at = tree->viewport()->mapTo(&shell, tree->visualRect(category).center());
+
+                if (page.CategoryUnder(shell, at).has_value())
+                {
+                    return at;
+                }
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    QPoint APointOffTheCategories(const MainWindow& shell, const AddonTreePage& page)
+    {
+        const int across = shell.width() * 3 / 8;
+
+        for (const int down : {shell.height() * 3 / 4, shell.height() * 5 / 8, shell.height() / 2})
+        {
+            const QPoint at(across, down);
+
+            if (!page.CategoryUnder(shell, at).has_value())
+            {
+                return at;
+            }
+        }
+
+        return QPoint(shell.width() / 2, shell.height() / 2);
+    }
+
+    bool
+    SaveWhileDragging(MainWindow& shell, const QString& file, const QPoint& at, const QDir& folder, const QString& name)
+    {
+        QMimeData dragged;
+        dragged.setUrls({QUrl::fromLocalFile(file)});
+
+        QDragEnterEvent enter(at, Qt::CopyAction, &dragged, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&shell, &enter);
+        LetTheLayoutSettle();
+
+        const bool saved = Save(shell, folder, name);
+
+        QDragLeaveEvent leave;
+        QApplication::sendEvent(&shell, &leave);
+        LetTheLayoutSettle();
+
+        return saved;
+    }
+
+    bool PhotographTheDragOverTheLibrary(MainWindow& shell,
+                                         PageTab& libraryTab,
+                                         AddonTreePage& libraryPage,
+                                         const QDir& folder)
+    {
+        libraryTab.click();
+        LetTheLayoutSettle();
+
+        const QString archive = QStringLiteral("C:/Users/pilot/Downloads/northwind-regional-pack.zip");
+        const std::optional<QPoint> onACategory = APointOnACategory(shell, libraryPage);
+        bool landed = true;
+
+        if (onACategory.has_value())
+        {
+            landed = SaveWhileDragging(shell, archive, *onACategory, folder, QStringLiteral("43-library-drop-category"))
+                && landed;
+        }
+        else
+        {
+            Out() << "no category row with addons in the library tree, so there is no drop on a category to write\n";
+        }
+
+        const QPoint elsewhere = APointOffTheCategories(shell, libraryPage);
+
+        landed =
+            SaveWhileDragging(shell, archive, elsewhere, folder, QStringLiteral("44-library-drop-window")) && landed;
+
+        return SaveWhileDragging(shell, QStringLiteral("C:/Users/pilot/Downloads/readme.txt"), elsewhere, folder,
+                                 QStringLiteral("45-library-drop-refusal"))
+            && landed;
+    }
+
+    std::vector<InstallLibraryChoice> LibrariesToInstallInto(const SimulatorProfile& profile,
+                                                             const std::vector<TreeNode>& trees)
+    {
+        std::vector<InstallLibraryChoice> offered;
+
+        for (const Library& library : profile.libraries)
+        {
+            InstallLibraryChoice choice{
+                .shown = library.label.empty()
+                    ? AsText(library.path)
+                    : QStringLiteral("%1 · %2").arg(QString::fromStdString(library.label), AsText(library.path)),
+                .path = AsText(library.path)};
+
+            if (const TreeNode* tree = LibraryTreeAt(trees, library.path); tree != nullptr)
+            {
+                for (const TreeNode* category : CategoriesOfferedIn(*tree, true))
+                {
+                    const std::filesystem::path relative = category->path.lexically_relative(library.path);
+
+                    choice.categories.push_back(InstallCategoryChoice{
+                        .shown = relative == "." ? QObject::tr("(library root)") : AsText(relative),
+                        .path = AsText(category->path)});
+                }
+            }
+
+            offered.push_back(std::move(choice));
+        }
+
+        return offered;
+    }
+
+    InstallAddonLine AnAddonStanding(const QString& folder,
+                                     const QString& version,
+                                     const qulonglong bytes,
+                                     const std::vector<InstallLibraryChoice>& libraries,
+                                     const InstallStandingInALibrary& standing)
+    {
+        InstallAddonLine line{.folderName = folder,
+                              .version = version,
+                              .bytes = bytes,
+                              .inEachLibrary = std::vector<InstallStandingInALibrary>(libraries.size(), standing),
+                              .root = folder};
+
+        for (const InstallLibraryChoice& library : libraries)
+        {
+            line.inEachCategory.emplace_back(library.categories.size(), standing);
+        }
+
+        return line;
+    }
+
+    InstallStandingInALibrary TheStandingOfAnAddonThatIsReplaced()
+    {
+        return {.standing = InstallStanding::Replaces,
+                .installedVersion = QStringLiteral("2.0.1"),
+                .installedIn = QStringLiteral("Utilities")};
+    }
+
+    InstallOffer TheOfferOfAReplacementAloneToPicture(const SimulatorProfile& profile,
+                                                      const std::vector<TreeNode>& trees)
+    {
+        std::vector<InstallLibraryChoice> libraries = LibrariesToInstallInto(profile, trees);
+
+        InstallOffer offer;
+        offer.archives = {InstallArchiveLine{
+            .fileName = QStringLiteral("northwind-weather-presets.zip"),
+            .addons = {AnAddonStanding(QStringLiteral("northwind-weather-presets"), QStringLiteral("2.1.0"),
+                                       3 * kMebibyte, libraries, TheStandingOfAnAddonThatIsReplaced())}}};
+        offer.libraries = std::move(libraries);
+
+        return offer;
+    }
+
+    InstallOffer TheOfferToPicture(const SimulatorProfile& profile, const std::vector<TreeNode>& trees)
+    {
+        std::vector<InstallLibraryChoice> libraries = LibrariesToInstallInto(profile, trees);
+
+        const InstallStandingInALibrary fresh{};
+        const InstallStandingInALibrary replaces = TheStandingOfAnAddonThatIsReplaced();
+        const InstallStandingInALibrary quarantined{.standing = InstallStanding::ReplacesAndTheQuarantineHoldsOne,
+                                                    .installedVersion = QStringLiteral("3.1.0"),
+                                                    .installedIn = QStringLiteral("Liveries"),
+                                                    .quarantinedVersion = QStringLiteral("3.0.2")};
+
+        InstallOffer offer;
+        offer.archives = {
+            InstallArchiveLine{
+                .fileName = QStringLiteral("northwind-regional-pack.zip"),
+                .addons = {AnAddonStanding(QStringLiteral("northwind-regional-field"), QStringLiteral("1.2.0"),
+                                           148 * kMebibyte, libraries, fresh),
+                           AnAddonStanding(QStringLiteral("northwind-weather-presets"), QStringLiteral("2.1.0"),
+                                           3 * kMebibyte, libraries, replaces)}},
+            InstallArchiveLine{
+                .fileName = QStringLiteral("northwind-liveries.rar"),
+                .addons = {AnAddonStanding(QStringLiteral("northwind-livery-pack"), QStringLiteral("3.2.0"),
+                                           612 * kMebibyte, libraries, quarantined)}},
+            InstallArchiveLine{.fileName = QStringLiteral("release-notes.7z"),
+                               .refusal = WhyTheArchiveIsRefused(NothingToInstall::NoPackage, SourceKind::Archive)}};
+        offer.libraries = std::move(libraries);
+
+        return offer;
+    }
+
+    RestoreOffer ACollisionToPicture(const std::filesystem::path& held,
+                                     const std::filesystem::path& occupied,
+                                     const std::string& version,
+                                     const std::string& occupantVersion)
+    {
+        return RestoreOffer{.check = RestoreCheck{.item = QuarantinedItem{.path = held, .origin = occupied},
+                                                  .target = occupied,
+                                                  .result = FileResult::TheIdentityIsTaken,
+                                                  .occupant = occupied,
+                                                  .version = version,
+                                                  .occupantVersion = occupantVersion,
+                                                  .occupantIsAnAddon = true}};
+    }
+
+    bool PhotographTheRestoreCollisions(MainWindow& shell, const QDir& folder)
+    {
+        const std::filesystem::path quarantine = "D:/Library/_fsorganizer-quarantine";
+        const std::filesystem::path deep =
+            "D:/Library/Aircraft/Northwind Simulations Third Party Collection/Regional Turboprops And Liveries";
+
+        const std::vector<RestoreOffer> offers{
+            ACollisionToPicture(quarantine / "briefing-panel", "D:/Library/Utils/briefing-panel", "2.1.1", "3.0.0"),
+            ACollisionToPicture(quarantine / "northwind-dash8-q400", deep / "northwind-dash8-q400", "1.4.0", "1.5.2"),
+            RestoreOffer{.check = RestoreCheck{.item = QuarantinedItem{.path = quarantine / "harbour-scenery",
+                                                                       .origin = "D:/Library/Scenery/harbour-scenery"},
+                                               .target = "D:/Library/Scenery/harbour-scenery"}}};
+
+        RestoreDialog restore(
+            offers,
+            [](const RestoreCheck&)
+            {
+                return true;
+            },
+            &shell);
+
+        return SaveTheDialogOpenedBy(
+            [&restore]
+            {
+                QTimer::singleShot(0, &restore,
+                                   [&restore]
+                                   {
+                                       if (auto* agreed =
+                                               restore.findChild<QPushButton*>(QStringLiteral("CompareAndReplace")))
+                                       {
+                                           agreed->click();
+                                       }
+                                   });
+
+                static_cast<void>(restore.exec());
+            },
+            folder, QStringLiteral("16-quarantine-restore-collisions"));
+    }
+
+    bool PhotographTheInstallFlow(MainWindow& shell,
+                                  const SimulatorProfile& profile,
+                                  const std::vector<TreeNode>& trees,
+                                  const QDir& folder)
+    {
+        bool landed = true;
+
+        InstallDialog install(TheOfferToPicture(profile, trees), &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&install]
+                     {
+                         static_cast<void>(install.exec());
+                     },
+                     folder, QStringLiteral("46-install-dialog"))
+            && landed;
+
+        InstallDialog replacement(TheOfferOfAReplacementAloneToPicture(profile, trees), &shell);
+
+        landed = SaveTheDialogOpenedBy(
+                     [&replacement]
+                     {
+                         static_cast<void>(replacement.exec());
+                     },
+                     folder, QStringLiteral("46-install-dialog-replaces"))
+            && landed;
+
+        StepProgressDialog progress(QCoreApplication::translate("ArchiveDrop", "Installing into the library"),
+                                    {QCoreApplication::translate("ArchiveDrop", "Extracting"),
+                                     QCoreApplication::translate("ArchiveDrop", "Checking what was extracted"),
+                                     QCoreApplication::translate("ArchiveDrop", "Putting into place")},
+                                    &shell);
+        progress.ShowTheSubject(QCoreApplication::translate("ArchiveDrop", "Archive %1 of %2 · %3")
+                                    .arg(1)
+                                    .arg(2)
+                                    .arg(QStringLiteral("northwind-regional-pack.zip")));
+        progress.ShowTheProgress(412 * kMebibyte, 786 * kMebibyte);
+        progress.ShowTheDetail(QCoreApplication::translate("ArchiveDrop", "%1 of %2")
+                                   .arg(AsSize(412 * kMebibyte), AsSize(786 * kMebibyte)));
+        progress.show();
+        LetTheLayoutSettle();
+
+        landed = Save(progress, folder, QStringLiteral("47-install-progress")) && landed;
+
+        progress.close();
+
+        const InstallReport report{
+            .kind = InstallReportKind::SomeWereNotInstalled,
+            .archives = {InstallReportArchive{
+                             .fileName = QStringLiteral("northwind-regional-pack.zip"),
+                             .lines = {InstallReportLine{
+                                 .addon = QStringLiteral("northwind-weather-presets"),
+                                 .reason = WhyItWasNotInstalled(FileResult::CouldNotCreateLink, SourceKind::Archive)}}},
+                         InstallReportArchive{
+                             .fileName = QStringLiteral("northwind-liveries.rar"),
+                             .lines = {InstallReportLine{
+                                 .reason = WhyItWasNotInstalled(FileResult::Cancelled, SourceKind::Archive)}}}},
+            .installed = 1,
+            .notInstalled = 2};
+
+        InstallReportDialog reported(report, &shell);
+
+        return SaveTheDialogOpenedBy(
+                   [&reported]
+                   {
+                       static_cast<void>(reported.exec());
+                   },
+                   folder, QStringLiteral("48-install-report"))
+            && landed;
     }
 
     void RightClickTheCurrentRowOf(QAbstractItemView& view)
@@ -971,6 +1319,13 @@ int main(int argc, char* argv[])
     auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
                                           addonDocumentsViewModel, treeModel, notifier);
 
+    const TarExeArchiveReader archiveReader;
+    const ArchiveInstallService archiveInstallService(archiveReader, manifestParser, filesystemProbe, files, log,
+                                                      importService);
+    ArchiveInstallViewModel archiveInstallViewModel(archiveInstallService, profileService, processProbe, session,
+                                                    notifier, runner);
+    ArchiveDrop archiveDrop(shell, archiveInstallViewModel, *libraryPage);
+
     CommunityModel communityModel;
     CommunityViewModel communityViewModel(profileService, session, notifier, communityModel, sizes, runner);
     auto* communityPage = new CommunityPage(communityViewModel, importViewModel, communityModel);
@@ -1327,6 +1682,18 @@ int main(int argc, char* argv[])
                      },
                      folder, QStringLiteral("21-library-deep-root"))
             && landed;
+    }
+
+    landed = PhotographTheDragOverTheLibrary(shell, *libraryTab, *libraryPage, folder) && landed;
+    landed = PhotographTheRestoreCollisions(shell, folder) && landed;
+
+    if (session.Profile().libraries.empty())
+    {
+        Out() << "the profile has no library, so there is no install dialog to write\n";
+    }
+    else
+    {
+        landed = PhotographTheInstallFlow(shell, session.Profile(), session.Snapshot().libraries, folder) && landed;
     }
 
     {

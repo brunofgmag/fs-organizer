@@ -7,6 +7,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
 
+#include "application/ArchiveInstallService.h"
 #include "application/CoverageService.h"
 #include "application/DeletionService.h"
 #include "application/BisectionService.h"
@@ -23,6 +24,9 @@
 #include "application/StartupEditor.h"
 #include "application/StartupService.h"
 #include "edition/Edition.h"
+#include "infrastructure/archive/ArchiveOrFolderReader.h"
+#include "infrastructure/archive/FolderArchiveReader.h"
+#include "infrastructure/archive/TarExeArchiveReader.h"
 #include "infrastructure/bisection/JsonBisectionStore.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
@@ -63,6 +67,7 @@
 #include "view/documents/DocumentsPage.h"
 #include "view/legacy/LegacyImportDialog.h"
 #include "view/JournalPage.h"
+#include "view/shell/ArchiveDrop.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/options/OptionsPage.h"
 #include "view/shell/LongOperationProgress.h"
@@ -77,6 +82,7 @@
 #include "view/simulator/StartupPage.h"
 #include "view/theme/ModernistTheme.h"
 #include "view/theme/PageTab.h"
+#include "viewmodel/ArchiveInstallViewModel.h"
 #include "viewmodel/CommunityViewModel.h"
 #include "viewmodel/CoverageViewModel.h"
 #include "viewmodel/DeletionViewModel.h"
@@ -317,6 +323,12 @@ int main(int argc, char* argv[])
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 storedLinkType);
 
+    const TarExeArchiveReader tarReader;
+    const FolderArchiveReader folderReader;
+    const ArchiveOrFolderReader archiveReader(folderReader, tarReader);
+    const ArchiveInstallService archiveInstallService(archiveReader, manifestParser, filesystemProbe, files, log,
+                                                      importService);
+
     LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, storedLinkType);
 
     MainWindow window(stored);
@@ -345,6 +357,8 @@ int main(int argc, char* argv[])
                                             });
                      });
     ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
+    ArchiveInstallViewModel archiveInstallViewModel(archiveInstallService, profileService, processProbe, session,
+                                                    notifier, runner);
 
     const JsonChartCatalogueParser catalogueParser;
     const QtPdfChartVersions chartVersions;
@@ -469,6 +483,14 @@ int main(int argc, char* argv[])
     PageTab* quarantineButton = window.AddPage(PageNames::kQuarantine, quarantinePage);
     window.AddPage(PageNames::kDiagnostics, diagnosticsPage);
     window.AddPage(PageNames::kJournal, journalPage);
+
+    ArchiveDrop archiveDrop(window, archiveInstallViewModel, *page);
+    QObject::connect(&archiveDrop, &ArchiveDrop::LibraryRequested, &window,
+                     [&window, page]
+                     {
+                         window.BringForward(page);
+                     });
+    QObject::connect(&archiveDrop, &ArchiveDrop::StatusChanged, &window, &MainWindow::ShowStatus);
 
     window.CarryOptionsOn(optionsPage);
     window.CarryTriageOn(page);

@@ -10,6 +10,7 @@
 inline constexpr auto kStagingSuffix = ".fsorg-partial";
 inline constexpr auto kSwapSlotSuffix = ".fsorg-swap";
 inline constexpr auto kQuarantineFolderName = "_fsorganizer-quarantine";
+inline constexpr auto kInstallStagingName = "_install";
 
 [[nodiscard]] inline std::filesystem::path SwapSlotFor(const std::filesystem::path& item)
 {
@@ -43,6 +44,11 @@ inline constexpr auto kQuarantineFolderName = "_fsorganizer-quarantine";
     staging += kStagingSuffix;
 
     return staging;
+}
+
+[[nodiscard]] inline std::filesystem::path InstallStagingIn(const std::filesystem::path& category)
+{
+    return StagingPathFor(category / kInstallStagingName);
 }
 
 [[nodiscard]] inline bool IsStagingPath(const std::filesystem::path& path)

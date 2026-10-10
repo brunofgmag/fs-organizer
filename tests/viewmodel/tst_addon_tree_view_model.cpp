@@ -7,6 +7,7 @@
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/DestinationDivergence.h"
+#include "domain/tree/LibraryLookup.h"
 #include "tests/doubles/FakeCatalogScanner.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -71,6 +72,10 @@ namespace
         static void ThePlaceTakenByAnAddonOfYoursIsOfferedAsASwapAndNothingElseIs();
         static void AnAgreedSwapTurnsOneOffAndTheOtherOnInASingleBatch();
         static void ARefusedSwapWritesNothingAndSaysTheAddonWasLeftAsItIs();
+        static void DisablingAgainTurnsOffTheEnabledAddonOfAGivenIdentityAndLeavesTheOthers();
+        static void DisablingAgainIgnoresAnIdentityThatIsNotEnabledAnyMore();
+        static void DisablingAgainIgnoresAnIdentityThatIsNotInTheSnapshot();
+        static void DisablingAgainHandsTheBatchNoStartupEntries();
         static void ARefusedSwapStillTurnsOnTheRestOfTheSelection();
         static void ASwapAgreedOnAPairThatChangedOnTheDiskIsNotCarriedOut();
         static void TheToggleBatchRunsInAWorkerAndASecondGestureWaitsItsTurn();
@@ -904,6 +909,76 @@ void AddonTreeViewModelTest::AnAgreedSwapTurnsOneOffAndTheOtherOnInASingleBatch(
     f.viewModel.UndoLastBatch();
 
     QCOMPARE(f.fileSystem.LinkTarget(place), std::optional<std::filesystem::path>{kAddon});
+}
+
+void AddonTreeViewModelTest::DisablingAgainTurnsOffTheEnabledAddonOfAGivenIdentityAndLeavesTheOthers()
+{
+    Fixture f;
+    f.LinkIn(kCommunity, kAddon);
+    f.LinkIn(kCommunity, kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.DisableAgain({IdentityOf(f.session.Profile(), kAddon)});
+
+    QCOMPARE(finished.size(), 1);
+    QVERIFY(!f.fileSystem.Exists(std::filesystem::path{kCommunity} / "pmdg-aircraft-77w"));
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity} / "aerosoft-crj"));
+    QCOMPARE(f.journal.appended.size(), std::size_t{1});
+    QVERIFY(f.journal.appended.front().kind == OperationKind::DisableAddon);
+}
+
+void AddonTreeViewModelTest::DisablingAgainIgnoresAnIdentityThatIsNotEnabledAnyMore()
+{
+    Fixture f;
+    f.LinkIn(kCommunity, kOtherAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.DisableAgain({IdentityOf(f.session.Profile(), kAddon)});
+
+    QCOMPARE(finished.size(), 0);
+    QVERIFY(f.journal.appended.empty());
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity} / "aerosoft-crj"));
+}
+
+void AddonTreeViewModelTest::DisablingAgainIgnoresAnIdentityThatIsNotInTheSnapshot()
+{
+    Fixture f;
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    const QSignalSpy finished(&f.viewModel, &AddonTreeViewModel::BatchFinished);
+
+    f.viewModel.DisableAgain({AddonId{.libraryId = "library-9", .folderName = "pmdg-aircraft-77w"},
+                              AddonId{.libraryId = "library-1", .folderName = "gone-from-the-library"}});
+
+    QCOMPARE(finished.size(), 0);
+    QVERIFY(f.journal.appended.empty());
+    QVERIFY(f.fileSystem.IsLink(std::filesystem::path{kCommunity} / "pmdg-aircraft-77w"));
+}
+
+void AddonTreeViewModelTest::DisablingAgainHandsTheBatchNoStartupEntries()
+{
+    Fixture f;
+    const std::filesystem::path launcher = std::filesystem::path{kCommunity} / "pmdg-aircraft-77w" / "launcher.exe";
+
+    f.startup.entries.Carry(StartupEntry{.label = "PMDG Operations Center", .path = launcher, .enabled = true});
+    f.LinkIn(kCommunity, kAddon);
+    f.session.ShowActiveProfile();
+
+    const TreeNode* addon = AddonAt(f.session.Snapshot().libraries, kAddon);
+    QVERIFY(addon != nullptr);
+    QVERIFY2(!f.viewModel.StartupEntriesAtRisk({addon}).empty(),
+             "the addon carries an entry, or this test could not tell passing it from not passing it");
+
+    f.viewModel.DisableAgain({IdentityOf(f.session.Profile(), kAddon)});
+
+    QVERIFY(!f.fileSystem.Exists(std::filesystem::path{kCommunity} / "pmdg-aircraft-77w"));
+    QCOMPARE(f.startup.entries.writes, std::size_t{0});
+    QVERIFY(f.startup.entries.Entries().front().enabled);
 }
 
 void AddonTreeViewModelTest::ARefusedSwapWritesNothingAndSaysTheAddonWasLeftAsItIs()

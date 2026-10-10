@@ -13,6 +13,7 @@ class QComboBox;
 class QGridLayout;
 class QLabel;
 class QPushButton;
+class ScrollThatReportsItsContent;
 
 using AskAboutTheCollision = std::function<bool(const RestoreCheck&)>;
 
@@ -54,12 +55,15 @@ private:
 
     void AskAbout(Collision& collision);
 
+    void GrowToWhatTheRowsNeedNow();
+
     void ShowHowManyWillGoBack() const;
 
     AskAboutTheCollision askAboutTheCollision_;
     std::vector<RestoreOffer> settled_;
     std::vector<Choice> asked_;
     std::vector<Collision> collided_;
+    ScrollThatReportsItsContent* scroll_ = nullptr;
     QLabel* counted_ = nullptr;
     QPushButton* restore_ = nullptr;
 };

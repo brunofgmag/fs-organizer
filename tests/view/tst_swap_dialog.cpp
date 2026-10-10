@@ -27,6 +27,7 @@
 #include "tests/doubles/FakeSimulatorPackages.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
+#include "tests/support/FixedHeadings.h"
 #include "tests/support/PathPrinting.h"
 #include "view/library/SwapDialog.h"
 #include "view/theme/ModernistTheme.h"
@@ -44,6 +45,9 @@ namespace
         static void TheSizeThatArrivesIsTheOneTheServiceMeasuredOnDisk();
         static void EverySwapIsVisibleWithoutScrolling();
         static void TheViewportIsNoTallerThanWhatTheSwapsNeed();
+        static void TheHeadingsLeaveTheScrollAndStandOverTheirColumns();
+        static void ScrollingTheListLeavesTheHeadingsWhereTheyAre();
+        static void TwoRulesFrameTheListAndTheListHasNoFrame();
     };
 
     constexpr std::uintmax_t kMegabyte = 1024 * 1024;
@@ -163,6 +167,16 @@ namespace
         return swaps;
     }
 
+    struct Window
+    {
+        explicit Window(const int tall)
+        {
+            parent.resize(900, tall);
+        }
+
+        QWidget parent;
+    };
+
     QScrollArea* TheScrollIn(const SwapDialog& dialog)
     {
         return dialog.findChild<QScrollArea*>();
@@ -280,6 +294,41 @@ void SwapDialogTest::TheViewportIsNoTallerThanWhatTheSwapsNeed()
              qPrintable(QStringLiteral("the viewport is %1 tall for content that needs %2")
                             .arg(scroll->viewport()->height())
                             .arg(needed)));
+}
+
+void SwapDialogTest::TheHeadingsLeaveTheScrollAndStandOverTheirColumns()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture fixture;
+    Window window(1600);
+    SwapDialog dialog(ManySwaps(3), fixture.viewModel, &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTheHeadingsAreOutsideTheScroll(
+        dialog, {QStringLiteral("Will be disabled"), QStringLiteral("Will be enabled"), QStringLiteral("In")});
+    VerifyEachHeadingStandsOverItsColumn(dialog);
+}
+
+void SwapDialogTest::ScrollingTheListLeavesTheHeadingsWhereTheyAre()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture fixture;
+    Window window(500);
+    SwapDialog dialog(ManySwaps(30), fixture.viewModel, &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTheListScrollsForRealAndTheHeadingsStay(dialog);
+}
+
+void SwapDialogTest::TwoRulesFrameTheListAndTheListHasNoFrame()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture fixture;
+    Window window(1600);
+    SwapDialog dialog(ManySwaps(3), fixture.viewModel, &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTwoRulesFrameTheList(dialog);
 }
 
 QTEST_MAIN(SwapDialogTest)

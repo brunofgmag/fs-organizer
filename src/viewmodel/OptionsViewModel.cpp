@@ -429,16 +429,30 @@ LibraryGrouping OptionsViewModel::GroupingOf(const LibraryId& libraryId) const
 
 void OptionsViewModel::DeclareTheCategoriesOf(const LibraryId& libraryId)
 {
-    static_cast<void>(session_.AdoptTheStructureOf(libraryId));
+    SayIfTheSimulatorRefused(session_.AdoptTheStructureOf(libraryId));
 
     emit Changed();
 }
 
 void OptionsViewModel::TakeBackTheMarkersOf(const LibraryId& libraryId)
 {
-    static_cast<void>(session_.TakeBackTheMarkersOf(libraryId));
+    SayIfTheSimulatorRefused(session_.TakeBackTheMarkersOf(libraryId));
 
     emit Changed();
+}
+
+void OptionsViewModel::SayIfTheSimulatorRefused(const std::vector<FileOperationResult>& results)
+{
+    const bool refused = std::ranges::any_of(results,
+                                             [](const FileOperationResult& result)
+                                             {
+                                                 return result.result == FileResult::TheSimulatorIsRunning;
+                                             });
+
+    if (refused)
+    {
+        emit TheSimulatorIsInTheWay();
+    }
 }
 
 bool OptionsViewModel::WouldAcceptLibrary(const std::filesystem::path& path) const
