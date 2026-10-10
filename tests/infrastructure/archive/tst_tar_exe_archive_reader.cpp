@@ -110,10 +110,10 @@ namespace
             WriteFile(package / "sub" / "big file.bin", kBig);
             std::filesystem::create_directories(package / "empty");
 
-            packed =
-                RunTar({QStringLiteral("-a"), QStringLiteral("-cf"), AsText(Zip()), QStringLiteral("-C"),
-                        AsText(Tree()), QString::fromUtf8(kPackage.data(), static_cast<qsizetype>(kPackage.size()))},
-                       Root())
+            packed = RunTar({QStringLiteral("-a"), QStringLiteral("-cf"), AsText(Zip()), QStringLiteral("--options"),
+                             QStringLiteral("zip:hdrcharset=UTF-8"), QStringLiteral("-C"), AsText(Tree()),
+                             QString::fromUtf8(kPackage.data(), static_cast<qsizetype>(kPackage.size()))},
+                            Root())
                 == 0;
         }
 
@@ -205,8 +205,9 @@ namespace
 
         const std::filesystem::path zip = source.Root() / "odd.zip";
         const int made =
-            RunTar({QStringLiteral("-a"), QStringLiteral("-cf"), AsText(zip), QStringLiteral("-C"), AsText(tree),
-                    QStringLiteral("--"), QString::fromUtf8(folder.data(), static_cast<qsizetype>(folder.size()))},
+            RunTar({QStringLiteral("-a"), QStringLiteral("-cf"), AsText(zip), QStringLiteral("--options"),
+                    QStringLiteral("zip:hdrcharset=UTF-8"), QStringLiteral("-C"), AsText(tree), QStringLiteral("--"),
+                    QString::fromUtf8(folder.data(), static_cast<qsizetype>(folder.size()))},
                    source.Root());
 
         return made == 0 ? zip : std::filesystem::path{};
@@ -892,11 +893,12 @@ void TarExeArchiveReaderTest::APasswordProtectedZipListsButNeedsAPasswordToReadO
 {
     const Source source;
     const std::filesystem::path locked = source.Root() / "locked.zip";
-    const int made = RunTar({QStringLiteral("-a"), QStringLiteral("-cf"), AsText(locked), QStringLiteral("--options"),
-                             QStringLiteral("zip:encryption=zipcrypt"), QStringLiteral("--passphrase"),
-                             QStringLiteral("secret"), QStringLiteral("-C"), AsText(source.Tree()),
-                             QString::fromUtf8(kPackage.data(), static_cast<qsizetype>(kPackage.size()))},
-                            source.Root());
+    const int made =
+        RunTar({QStringLiteral("-a"), QStringLiteral("-cf"), AsText(locked), QStringLiteral("--options"),
+                QStringLiteral("zip:encryption=zipcrypt,zip:hdrcharset=UTF-8"), QStringLiteral("--passphrase"),
+                QStringLiteral("secret"), QStringLiteral("-C"), AsText(source.Tree()),
+                QString::fromUtf8(kPackage.data(), static_cast<qsizetype>(kPackage.size()))},
+               source.Root());
     if (made != 0 || !std::filesystem::exists(locked))
     {
         QSKIP(qPrintable(QStringLiteral("this tar.exe could not create an encrypted zip, exit code %1").arg(made)));
@@ -921,8 +923,8 @@ void TarExeArchiveReaderTest::AMemberNamedPasswordInAnEncryptedZipStillNeedsAPas
     const std::filesystem::path locked = source.Root() / "locked-by-name.zip";
     const int made =
         RunTar({QStringLiteral("-a"), QStringLiteral("-cf"), AsText(locked), QStringLiteral("--options"),
-                QStringLiteral("zip:encryption=zipcrypt"), QStringLiteral("--passphrase"), QStringLiteral("secret"),
-                QStringLiteral("-C"), AsText(tree), QStringLiteral("password.txt")},
+                QStringLiteral("zip:encryption=zipcrypt,zip:hdrcharset=UTF-8"), QStringLiteral("--passphrase"),
+                QStringLiteral("secret"), QStringLiteral("-C"), AsText(tree), QStringLiteral("password.txt")},
                source.Root());
     if (made != 0 || !std::filesystem::exists(locked))
     {

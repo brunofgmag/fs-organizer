@@ -308,8 +308,14 @@ namespace
             WriteFile(source / "scenery" / "world" / "a.bgl", std::string(sceneryBytes, 'b'));
             std::filesystem::create_directories(Archive(version).parent_path());
 
-            QStringList arguments{QStringLiteral("-a"), QStringLiteral("-cf"),        AsText(Archive(version)),
-                                  QStringLiteral("-C"), AsText(source.parent_path()), Shown(kPackage)};
+            QStringList arguments{QStringLiteral("-a"),
+                                  QStringLiteral("-cf"),
+                                  AsText(Archive(version)),
+                                  QStringLiteral("--options"),
+                                  QStringLiteral("zip:hdrcharset=UTF-8"),
+                                  QStringLiteral("-C"),
+                                  AsText(source.parent_path()),
+                                  Shown(kPackage)};
 
             if (withAReadme)
             {
