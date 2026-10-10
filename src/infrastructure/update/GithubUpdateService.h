@@ -14,6 +14,8 @@
 class QNetworkReply;
 class QProcess;
 
+void StartExpandingTheUpdate(QProcess& process, const QString& zipPath, const QString& stagedRoot);
+
 class GithubUpdateService final : public QObject, public UpdateService
 {
     Q_OBJECT

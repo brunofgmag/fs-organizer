@@ -362,6 +362,63 @@ como está. A pasta original não é tocada em nenhum dos casos.
 Se a operação interrompida era uma resolução de conflito, a cópia parcial só
 pode ser descartada, porque as duas cópias continuam no lugar.
 
+\section{Instalar de um arquivo compactado ou de uma pasta}
+
+Solte um arquivo \texttt{.zip}, \texttt{.rar} ou \texttt{.7z}, ou uma pasta, na
+janela do programa. O programa lê o conteúdo sem extrair nada e abre
+\ui{Instalar na biblioteca}, que lista cada addon encontrado: toda pasta que
+tem um \texttt{manifest.json}, com a versão e o tamanho.
+
+Escolha a biblioteca e a categoria para onde vão os addons novos. Soltar sobre
+uma categoria da aba \ui{Biblioteca} já escolhe essa categoria. Marque
+\ui{Ativar depois de instalar} para os addons serem ativados assim que
+estiverem na biblioteca.
+
+Um addon que já está na biblioteca é substituído onde está, seja qual for a
+categoria escolhida, e a cópia substituída vai para a quarentena. A quarentena
+guarda uma cópia de cada nome de pasta; quando ela já tem uma, o diálogo pede
+que você concorde em descartá-la antes.
+
+\shot{46-install-dialog.png}{O diálogo de instalação: dois addons de um mesmo
+arquivo, um deles já instalado, e um terceiro que espera o descarte da cópia
+que está na quarentena.}
+
+O arquivo ou a pasta que você soltou nunca é alterado, movido nem excluído. A
+pasta é copiada, o arquivo compactado é extraído, e nos dois casos o resultado
+é conferido contra o que foi lido antes de qualquer addon ser posto no lugar.
+
+\subsection{O que é recusado}
+
+O programa não instala nada de um arquivo compactado ou de uma pasta que:
+
+\begin{itemize}
+  \item precisa de senha;
+  \item não tem nenhum addon, ou tem só um instalador (\texttt{.exe} ou
+    \texttt{.msi}), que o programa nunca executa;
+  \item tem um link, um caminho absoluto, \texttt{..} ou um nome que o Windows
+    não grava;
+  \item tem dois addons com o mesmo nome de pasta.
+\end{itemize}
+
+Nada pode ser instalado com o simulador aberto. Feche o simulador e clique em
+\ui{Verificar de novo} no diálogo.
+
+\subsection{O que cada Windows abre}
+
+Os arquivos compactados são abertos pelo \texttt{tar.exe} que vem com o
+Windows, então o que o programa consegue abrir depende da versão do seu
+Windows. Um \texttt{.zip} abre em qualquer uma. Um \texttt{.rar} ou
+\texttt{.7z} só abre se aquele Windows lê o formato: o Windows 10 não lê
+\texttt{.7z} nem \texttt{.rar} antigo. Quando um arquivo compactado não abrir,
+extraia você mesmo e solte a pasta.
+
+\subsection{Se uma instalação for interrompida}
+
+Os arquivos são extraídos ou copiados para uma pasta temporária dentro da
+categoria. Se o programa não conseguir excluir essa pasta, ela aparece em
+\ui{Importações incompletas} na próxima vez que o programa abrir, e ali só pode
+ser descartada.
+
 \section{Quarentena}
 
 Quando você resolve um conflito entre duas cópias de um addon, a cópia que você

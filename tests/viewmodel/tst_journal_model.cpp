@@ -32,6 +32,8 @@ namespace
         static void AStartupEntryOutsideYourAddonsIsNamedByItsLabel();
         static void ASwitchWithNoAddonSaysItsOwnWordsAndTheOneInsideAGroupKeepsTheirs();
         static void TheStartupAndPackageOperationsAreRowsNamedAfterTheEntryOrThePackage();
+        static void TheArchiveExtractionIsNamedAfterTheArchiveAndTheInstallAfterTheAddon();
+        static void AnExtractionRowThatCarriesTheStagingFolderNameStillShowsTheArchiveName();
     };
 }
 
@@ -443,6 +445,7 @@ void JournalModelTest::TheStartupAndPackageOperationsAreRowsNamedAfterTheEntryOr
     };
 
     std::vector<OperationRecord> records;
+    records.reserve(expected.size());
 
     for (std::size_t at = 0; at < expected.size(); ++at)
     {
@@ -470,6 +473,64 @@ void JournalModelTest::TheStartupAndPackageOperationsAreRowsNamedAfterTheEntryOr
         QCOMPARE(model.index(row, JournalModel::OutcomeColumn, {}).data(Qt::DisplayRole).toString(),
                  QStringLiteral("that program file does not exist, so nothing changed"));
     }
+}
+
+void JournalModelTest::TheArchiveExtractionIsNamedAfterTheArchiveAndTheInstallAfterTheAddon()
+{
+    const std::vector<OperationRecord> records{
+        OperationRecord::OfImport(Moment(0), OperationKind::InstallExtractToStaging, AddonId{}, {},
+                                  "D:/Library/.staging", FileResult::CouldNotExtract, OriginSource::Unknown,
+                                  "pacote ação.zip"),
+        OperationRecord::OfImport(
+            Moment(1), OperationKind::InstallMoveIntoPlace, AddonId{.libraryId = "lib-1", .folderName = "Pacote ação"},
+            {}, "D:/Library/Pacote ação", FileResult::Completed, OriginSource::Unknown, "pacote ação.zip"),
+        OperationRecord::OfImport(Moment(2), OperationKind::InstallMoveIntoPlace, AddonId{}, {}, "D:/Library/Outro",
+                                  FileResult::Completed, OriginSource::Unknown, "pacote ação.zip"),
+    };
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords(records, Profile());
+
+    QCOMPARE(model.rowCount({}), 3);
+
+    const auto cell = [&model](const int row, const int column)
+    {
+        return model.index(row, column, {}).data(Qt::DisplayRole).toString();
+    };
+
+    const QStringList shown{cell(2, JournalModel::OperationColumn), cell(2, JournalModel::AddonColumn),
+                            cell(2, JournalModel::OutcomeColumn),   cell(1, JournalModel::OperationColumn),
+                            cell(1, JournalModel::AddonColumn),     cell(0, JournalModel::AddonColumn)};
+
+    const QStringList expected{QStringLiteral("Stage the files to install"),
+                               QStringLiteral("pacote ação.zip"),
+                               QStringLiteral("the files could not be extracted or copied"),
+                               QStringLiteral("Move the staged addon into place"),
+                               QStringLiteral("Pacote ação"),
+                               QString{}};
+
+    QCOMPARE(shown.join(QStringLiteral(" | ")), expected.join(QStringLiteral(" | ")));
+}
+
+void JournalModelTest::AnExtractionRowThatCarriesTheStagingFolderNameStillShowsTheArchiveName()
+{
+    const std::vector<OperationRecord> records{
+        OperationRecord::OfImport(Moment(0), OperationKind::InstallExtractToStaging,
+                                  AddonId{.libraryId = "lib-1", .folderName = "_install"}, "D:/Downloads/pack.zip",
+                                  "D:/Library/Utils/_install.fsorg-partial", FileResult::VerificationFailed,
+                                  OriginSource::Unknown, "pack.zip"),
+    };
+
+    JournalModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Warning);
+
+    model.ShowRecords(records, Profile());
+
+    QCOMPARE(model.rowCount({}), 1);
+    QCOMPARE(model.index(0, JournalModel::AddonColumn, {}).data(Qt::DisplayRole).toString(),
+             QStringLiteral("pack.zip"));
 }
 
 QTEST_MAIN(JournalModelTest)

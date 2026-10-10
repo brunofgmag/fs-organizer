@@ -43,6 +43,9 @@ namespace
         static void TheFooterKeepsThePageGutterOnBothEdges();
         static void TheGearOpensTheOptionsAndTheBackButtonNamesWhereItCameFrom();
         static void LeavingTheOptionsGivesBackThePageThatWasOpen();
+        static void BringingAPageForwardShowsItAndMarksItsTab();
+        static void BringingAPageForwardWhileTheOptionsAreOpenLeavesThemFirst();
+        static void BringingForwardAPageTheWindowDoesNotCarryDoesNothing();
         static void TheTriageStripStandsDownWhileTheOptionsAreOpen();
         static void ClickingBackFromTheOptionsLeavesTheOriginTabStillMarked();
         static void TheBackTabPointsLeftWithoutAGlyphInItsLabel();
@@ -398,6 +401,70 @@ void MainWindowTest::LeavingTheOptionsGivesBackThePageThatWasOpen()
     QCOMPARE(landed.count(), 1);
     QCOMPARE(landed.front().front().value<QWidget*>(), community);
     QVERIFY(communityTab->isVisibleTo(&window));
+}
+
+void MainWindowTest::BringingAPageForwardShowsItAndMarksItsTab()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    auto* community = new QWidget(&window);
+    PageTab* libraryTab = window.AddPage("Library", library);
+    PageTab* communityTab = window.AddPage("Destinations", community);
+
+    communityTab->click();
+    QVERIFY(communityTab->isChecked());
+
+    QSignalSpy landed(&window, &MainWindow::PageSelected);
+    window.BringForward(library);
+
+    QCOMPARE(window.findChild<QStackedWidget*>()->currentWidget(), library);
+    QVERIFY(libraryTab->isChecked());
+    QVERIFY(!communityTab->isChecked());
+    QCOMPARE(landed.count(), 1);
+    QCOMPARE(landed.front().front().value<QWidget*>(), library);
+}
+
+void MainWindowTest::BringingAPageForwardWhileTheOptionsAreOpenLeavesThemFirst()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    auto* community = new QWidget(&window);
+    auto* options = new QWidget(&window);
+    PageTab* libraryTab = window.AddPage("Library", library);
+    PageTab* communityTab = window.AddPage("Destinations", community);
+    window.CarryOptionsOn(options);
+
+    communityTab->click();
+    window.ShowOptions();
+    QVERIFY(window.ShowingOptions());
+
+    window.BringForward(library);
+
+    QVERIFY(!window.ShowingOptions());
+    QCOMPARE(window.findChild<QStackedWidget*>()->currentWidget(), library);
+    QVERIFY(libraryTab->isChecked());
+    QVERIFY(libraryTab->isVisibleTo(&window));
+    QVERIFY(communityTab->isVisibleTo(&window));
+}
+
+void MainWindowTest::BringingForwardAPageTheWindowDoesNotCarryDoesNothing()
+{
+    MainWindow window(SettingsWithOneProfile());
+
+    auto* library = new QWidget(&window);
+    auto* options = new QWidget(&window);
+    auto* stranger = new QWidget(&window);
+    window.AddPage("Library", library);
+    window.CarryOptionsOn(options);
+    window.ShowOptions();
+
+    QSignalSpy landed(&window, &MainWindow::PageSelected);
+    window.BringForward(stranger);
+
+    QVERIFY(window.ShowingOptions());
+    QCOMPARE(landed.count(), 0);
 }
 
 void MainWindowTest::TheTriageStripStandsDownWhileTheOptionsAreOpen()

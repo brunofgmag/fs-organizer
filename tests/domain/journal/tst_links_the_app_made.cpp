@@ -20,6 +20,7 @@ namespace
         static void EveryPlaceTheAppLinkedIsRememberedWithTheFolderItPointedAt();
         static void ALinkTheAppTookAwayIsNotRememberedAsStillOurs();
         static void ALinkThatNeverGotMadeIsNotRemembered();
+        static void AnInstallFromAnArchiveMakesNoLink();
         static void MovingTheAddonInTheLibraryMovesWhatTheLinkPointedAt();
         static void TheLastWordOnAPlaceWins();
         static void AChainOfMovesFollowsTheLinkEveryTime();
@@ -121,6 +122,20 @@ void LinksTheAppMadeTest::ALinkThatNeverGotMadeIsNotRemembered()
 {
     const std::vector<LinkTheAppMade> made = WhereTheAppMadeLinks(
         {Link(OperationKind::EnableAddon, kLibraryCopy, kPlace, LinkFailure::DestinationHoldsRealFolder)});
+
+    QVERIFY(made.empty());
+}
+
+void LinksTheAppMadeTest::AnInstallFromAnArchiveMakesNoLink()
+{
+    const auto install = [](const OperationKind kind)
+    {
+        return OperationRecord::OfImport(std::chrono::system_clock::time_point{}, kind, AddonId{}, kLibraryCopy, kPlace,
+                                         FileResult::Completed);
+    };
+
+    const std::vector<LinkTheAppMade> made = WhereTheAppMadeLinks(
+        {install(OperationKind::InstallExtractToStaging), install(OperationKind::InstallMoveIntoPlace)});
 
     QVERIFY(made.empty());
 }

@@ -41,6 +41,15 @@ namespace
         return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
     }
 
+    void LetItBeRemoved(const std::filesystem::path& path, const DWORD attributes)
+    {
+        if ((attributes & FILE_ATTRIBUTE_READONLY) != 0)
+        {
+            static_cast<void>(SetFileAttributesW(NativePath(path).c_str(),
+                                                 attributes & ~static_cast<DWORD>(FILE_ATTRIBUTE_READONLY)));
+        }
+    }
+
     struct WalkedFile
     {
         std::filesystem::path path;
@@ -269,6 +278,8 @@ bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)
 
     if (!IsDirectory(attributes))
     {
+        LetItBeRemoved(path, attributes);
+
         return DeleteFileW(NativePath(path).c_str()) != FALSE;
     }
 
@@ -295,6 +306,8 @@ bool WindowsFileOperations::RemoveTree(const std::filesystem::path& path)
             return false;
         }
     }
+
+    LetItBeRemoved(path, attributes);
 
     return RemoveDirectoryW(NativePath(path).c_str()) != FALSE;
 }

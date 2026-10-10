@@ -2,6 +2,8 @@
 #define FS_ORGANIZER_VIEW_LIBRARY_ADDON_TREE_PAGE_H
 
 #include <cstddef>
+#include <filesystem>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -9,6 +11,7 @@
 #include <QtWidgets/QWidget>
 
 #include "view/panels/ModelRowDetail.h"
+#include "view/shell/ArchiveDropLibrary.h"
 #include "viewmodel/AddonTreeFilterModel.h"
 #include "viewmodel/AddonTreeViewModel.h"
 #include "viewmodel/CoverageViewModel.h"
@@ -30,7 +33,7 @@ class QStackedWidget;
 class QToolButton;
 class QTreeView;
 
-class AddonTreePage final : public QWidget
+class AddonTreePage final : public QWidget, public ArchiveDropLibrary
 {
     Q_OBJECT
 
@@ -44,7 +47,15 @@ public:
                   const SessionNotifier& notifier,
                   QWidget* parent = nullptr);
 
-    void RefreshUndoState() const;
+    void RefreshUndoState() const override;
+
+    [[nodiscard]] bool HasALibrary() const override;
+
+    [[nodiscard]] std::optional<DropCategory> CategoryUnder(const QWidget& over, const QPoint& point) const override;
+
+    void SelectOnceShown(const std::vector<std::filesystem::path>& folders) override;
+
+    void EnableAddons(const std::vector<std::filesystem::path>& folders) override;
 
     void ShowFoldersOutside(std::size_t folders) const;
 
@@ -149,6 +160,8 @@ private:
 
     void OnBatchFinished(const LinkBatchReport& report);
 
+    void SayWhatWasNotEnabled();
+
     [[nodiscard]] QString NothingChangedBecause(const LinkBatchReport& report) const;
 
     void OnShown();
@@ -166,6 +179,14 @@ private:
     [[nodiscard]] bool RestoreSelection();
 
     void RestoreScrolling(int value) const;
+
+    void RevealWhatLanded();
+
+    [[nodiscard]] QModelIndex TheCategoryRowOf(const QModelIndex& row) const;
+
+    void CollectTheAddonsAt(const QModelIndex& parent,
+                            const std::set<std::string>& wanted,
+                            std::vector<const TreeNode*>& found) const;
 
     void GatherSelection(const QModelIndex& parent, QModelIndexList& found, QModelIndex& current) const;
 
@@ -227,9 +248,11 @@ private:
     std::set<std::string> expanded_;
     std::set<std::string> selected_;
     std::string current_;
+    QString notEnabledNote_;
     int scrolled_ = 0;
     bool rebuilding_ = false;
     bool shownOnce_ = false;
+    bool revealing_ = false;
 };
 
 #endif // FS_ORGANIZER_VIEW_LIBRARY_ADDON_TREE_PAGE_H

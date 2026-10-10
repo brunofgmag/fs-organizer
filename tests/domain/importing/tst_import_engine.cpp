@@ -7,6 +7,7 @@
 
 #include "domain/journal/OperationLog.h"
 #include "domain/importing/ExternalSidecar.h"
+#include "domain/importing/FingerprintMeasures.h"
 #include "domain/importing/ImportEngine.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeFileOperations.h"
@@ -28,6 +29,8 @@ namespace
         static void AnImportThatDoesNotFitOnTheTargetVolumeTouchesNothing();
         static void AVolumeThatCannotReportItsFreeSpaceIsNotTheSameAsAFullOne();
         static void TheRoomAskedForGrowsWithTheFileCountAndNotOnlyWithTheBytes();
+        static void RoomForAnswersCompletedNotEnoughAndCouldNotCheck();
+        static void TheInstallStagingIsAStagingPathNoImportCanHaveLeftARecordAbout();
         static void CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact();
         static void ACopyThatFailsKeepsItsStagingForTheResumeToFind();
         static void AFinishedImportLandsTheAddonInTheLibraryAndTakesThePhysicalCopyAway();
@@ -187,6 +190,31 @@ void ImportEngineTest::TheRoomAskedForGrowsWithTheFileCountAndNotOnlyWithTheByte
 
     QCOMPARE(f.engine.Import(f.profile, f.request, {}).Result(), FileResult::Completed);
     QVERIFY(f.fileSystem.Exists(kTarget));
+}
+
+void ImportEngineTest::RoomForAnswersCompletedNotEnoughAndCouldNotCheck()
+{
+    Fixture f;
+    const std::uintmax_t needed = FreeSpaceNeededFor(10 * kMegabyte, 3);
+
+    f.fileSystem.SetFreeSpace("D:/Library", needed - 1);
+    QCOMPARE(RoomFor(f.filesystemProbe, kCategory, 10 * kMegabyte, 3), FileResult::NotEnoughFreeSpace);
+
+    f.fileSystem.SetFreeSpace("D:/Library", needed);
+    QCOMPARE(RoomFor(f.filesystemProbe, kCategory, 10 * kMegabyte, 3), FileResult::Completed);
+
+    f.fileSystem.MarkFreeSpaceUnknown("D:/Library");
+    QCOMPARE(RoomFor(f.filesystemProbe, kCategory, 10 * kMegabyte, 3), FileResult::CouldNotCheckFreeSpace);
+}
+
+void ImportEngineTest::TheInstallStagingIsAStagingPathNoImportCanHaveLeftARecordAbout()
+{
+    const std::filesystem::path staging = InstallStagingIn(kCategory);
+
+    QCOMPARE(staging, std::filesystem::path{"D:/Library/Utils/_install.fsorg-partial"});
+    QVERIFY(IsStagingPath(staging));
+    QCOMPARE(ImportedPathFor(staging), kCategory / kInstallStagingName);
+    QVERIFY(ComparablePath(ImportedPathFor(staging)) != ComparablePath(kTarget));
 }
 
 void ImportEngineTest::CancellingTheCopyRemovesTheStagingAndLeavesTheSourceIntact()

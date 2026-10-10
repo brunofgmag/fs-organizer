@@ -15,6 +15,7 @@
 #include <QtWidgets/QTreeView>
 
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -46,6 +47,7 @@
 #include "tests/doubles/FakeSceneryCache.h"
 #include "tests/doubles/FakeSceneryParser.h"
 #include "view/library/AddonTreePage.h"
+#include "view/library/SharedAirportsDialog.h"
 #include "support/PathText.h"
 #include "view/theme/ModernistMetrics.h"
 #include "viewmodel/DeletionViewModel.h"
@@ -123,12 +125,29 @@ namespace
         static void AToggleElsewhereLeavesThePanelOfTheSelectedAddonAlone();
         static void AToggleBelowTheSelectedCategoryRefreshesItsPanel();
         static void TheBatchPanelFollowsAToggleBelowASelectedCategoryThatStaysPartial();
+        static void AnsweringDisableWhatYouEnabledTurnsTheNewAddonOffAndLeavesTheOldOneOn();
+        static void KeepingBothChangesNothingAndTheStatusCountsAddonsNotPairs();
+        static void OverACategoryRowThePageAnswersThatCategoryItsShownNameAndItsRow();
+        static void OverAnAddonRowThePageAnswersTheCategoryItSitsIn();
+        static void WhenTheCategoryRowIsScrolledAwayTheRowIsTheWholeViewport();
+        static void OverALibraryRootRowOrOutsideTheTreeThePageAnswersNoCategory();
+        static void WhileTheTreeIsHiddenThePageAnswersNoCategory();
+        static void ThePageSaysWhetherTheProfileHasALibrary();
+        static void SelectingOnceShownWaitsForTheNextReadingAndThenSelectsExactlyThoseFolders();
+        static void SelectingOnceShownOpensTheCategoriesAndScrollsToTheFirstFolder();
+        static void EnablingByFolderEnablesExactlyThoseFoldersWithoutAnySelection();
+        static void EnablingByFolderGoesThroughTheSameCoverageCheckAsTheButton();
+        static void EnablingAFolderTheTreeDoesNotKnowEnablesNothingAndSaysSo();
+        static void EnablingFoldersOfWhichSomeAreUnknownEnablesTheKnownOnesAndSaysTheRest();
+        static void EnablingFoldersTheTreeKnowsNeverShowsTheNotEnabledNote();
     };
 }
 
 namespace
 {
     constexpr auto kLibrary = "D:/MSFS 2024";
+    const QString kInstalledButNotEnabled =
+        QStringLiteral("Installed, but not enabled: the library could not be read again. Enable it from the list.");
     constexpr auto kCommunity = "E:/Flight Simulator 2024/Community";
     constexpr auto kSecondCommunity = "E:/Flight Simulator 2024/Community2024";
     constexpr auto kChosen = "D:/MSFS 2024/Aircrafts/addon-17";
@@ -2225,7 +2244,7 @@ void AddonTreePageTest::AToggleBelowTheSelectedCategoryRefreshesItsPanel()
     f.viewModel.Toggle({AddonOf(screen, AddonPath(QStringLiteral("Sceneries"), 3))}, true);
     Settle();
 
-    QVERIFY(measuring.size() > 0);
+    QVERIFY(!measuring.empty());
 }
 
 void AddonTreePageTest::TheBatchPanelFollowsAToggleBelowASelectedCategoryThatStaysPartial()
@@ -2251,6 +2270,403 @@ void AddonTreePageTest::TheBatchPanelFollowsAToggleBelowASelectedCategoryThatSta
     Settle();
 
     QVERIFY(PanelField(screen, QStringLiteral("Enabled")) != before);
+}
+
+namespace
+{
+    constexpr auto kFirstToShareAirports = 0;
+    constexpr auto kSecondToShareAirports = 1;
+    constexpr auto kThirdToShareAirports = 2;
+
+    void LetTheseAddonsCarryTheSameAirport(Fixture& f, const std::vector<int>& indexes)
+    {
+        for (const int index : indexes)
+        {
+            f.fileSystem.AddFileWithContents(AddonPath(QStringLiteral("Aircrafts"), index) / "scenery" / "APX.bgl",
+                                             FakeSceneryParser::Carrying({"EHAM"}));
+        }
+    }
+
+    class AnswersTheSharedAirportsDialog
+    {
+    public:
+        explicit AnswersTheSharedAirportsDialog(QString button) : button_(std::move(button))
+        {
+            QObject::connect(&watch_, &QTimer::timeout, &watch_,
+                             [this]
+                             {
+                                 Look();
+                             });
+            watch_.start(5);
+        }
+
+        [[nodiscard]] bool Appeared() const
+        {
+            return appeared_;
+        }
+
+    private:
+        void Look()
+        {
+            auto* dialog = qobject_cast<SharedAirportsDialog*>(QApplication::activeModalWidget());
+
+            if (dialog == nullptr)
+            {
+                return;
+            }
+
+            appeared_ = true;
+            watch_.stop();
+
+            if (QPushButton* answer = ButtonStartingWith(*dialog, button_); answer != nullptr && answer->isEnabled())
+            {
+                answer->click();
+                return;
+            }
+
+            dialog->reject();
+        }
+
+        QString button_;
+        bool appeared_ = false;
+        QTimer watch_;
+    };
+
+    void EnableAndAnswer(const Screen& screen, const int index, const QString& button, const bool theDialogMustOpen)
+    {
+        AnswersTheSharedAirportsDialog answering(button);
+
+        Select(screen, AddonPath(QStringLiteral("Aircrafts"), index));
+        PressEnableSelected(screen);
+
+        QCOMPARE(answering.Appeared(), theDialogMustOpen);
+    }
+}
+
+void AddonTreePageTest::AnsweringDisableWhatYouEnabledTurnsTheNewAddonOffAndLeavesTheOldOneOn()
+{
+    Fixture f;
+    LetTheseAddonsCarryTheSameAirport(f, {kFirstToShareAirports, kSecondToShareAirports});
+    const Screen screen(f);
+
+    EnableAndAnswer(screen, kFirstToShareAirports, QStringLiteral("Keep both"), false);
+    EnableAndAnswer(screen, kSecondToShareAirports, QStringLiteral("Disable"), true);
+
+    const ProfileSnapshot& snapshot = f.session.Snapshot();
+
+    QVERIFY2(snapshot.enabled.Contains(AddonPath(QStringLiteral("Aircrafts"), kFirstToShareAirports)),
+             "the one that was already enabled stays as it was");
+    QVERIFY2(!snapshot.enabled.Contains(AddonPath(QStringLiteral("Aircrafts"), kSecondToShareAirports)),
+             "the one just enabled is turned back off");
+}
+
+void AddonTreePageTest::KeepingBothChangesNothingAndTheStatusCountsAddonsNotPairs()
+{
+    Fixture f;
+    LetTheseAddonsCarryTheSameAirport(f, {kFirstToShareAirports, kSecondToShareAirports, kThirdToShareAirports});
+    const Screen screen(f);
+
+    EnableAndAnswer(screen, kFirstToShareAirports, QStringLiteral("Keep both"), false);
+    EnableAndAnswer(screen, kSecondToShareAirports, QStringLiteral("Keep both"), true);
+
+    QSignalSpy said(&screen.page, &AddonTreePage::StatusChanged);
+
+    EnableAndAnswer(screen, kThirdToShareAirports, QStringLiteral("Keep both"), true);
+
+    const ProfileSnapshot& snapshot = f.session.Snapshot();
+
+    for (const int index : {kFirstToShareAirports, kSecondToShareAirports, kThirdToShareAirports})
+    {
+        QVERIFY(snapshot.enabled.Contains(AddonPath(QStringLiteral("Aircrafts"), index)));
+    }
+
+    QStringList statuses;
+    for (const QList<QVariant>& each : said)
+    {
+        statuses.append(each.front().toString());
+    }
+
+    QVERIFY2(statuses.contains(QStringLiteral("1 addon covers the same airport as another of your addons.")),
+             qPrintable(QStringLiteral("two pairs of one addon are one addon, and the page said: %1")
+                            .arg(statuses.join(QStringLiteral(" | ")))));
+}
+
+namespace
+{
+    const QPoint kInsideTheRow(40, 0);
+
+    [[nodiscard]] std::filesystem::path TheCategory(const QString& category)
+    {
+        return std::filesystem::path(kLibrary) / category.toStdString();
+    }
+
+    [[nodiscard]] QPoint InThePageAt(const Screen& screen, const QModelIndex& row)
+    {
+        const QRect cell = screen.tree->visualRect(row);
+
+        return screen.tree->viewport()->mapTo(&screen.page, QPoint(kInsideTheRow.x(), cell.center().y()));
+    }
+
+    [[nodiscard]] QRect TheWholeRowInThePage(const Screen& screen, const QModelIndex& row)
+    {
+        const QRect cell = screen.tree->visualRect(row);
+
+        return {screen.tree->viewport()->mapTo(&screen.page, QPoint(0, cell.y())),
+                QSize(screen.tree->viewport()->width(), cell.height())};
+    }
+
+    [[nodiscard]] std::vector<std::string> Sorted(std::vector<std::string> paths)
+    {
+        std::ranges::sort(paths);
+
+        return paths;
+    }
+
+    [[nodiscard]] std::vector<std::string> Comparable(const std::vector<std::filesystem::path>& folders)
+    {
+        std::vector<std::string> paths;
+        paths.reserve(folders.size());
+
+        for (const std::filesystem::path& folder : folders)
+        {
+            paths.push_back(ComparablePath(folder));
+        }
+
+        return Sorted(std::move(paths));
+    }
+}
+
+void AddonTreePageTest::OverACategoryRowThePageAnswersThatCategoryItsShownNameAndItsRow()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    const QModelIndex category = IndexOf(*screen.tree, TheCategory(QStringLiteral("Aircrafts")), {});
+    QVERIFY(category.isValid());
+
+    const std::optional<DropCategory> under = screen.page.CategoryUnder(screen.page, InThePageAt(screen, category));
+
+    QVERIFY(under.has_value());
+    QCOMPARE(under->path, TheCategory(QStringLiteral("Aircrafts")));
+    QCOMPARE(under->shown, category.data(Qt::DisplayRole).toString());
+    QVERIFY(under->shown.contains(QStringLiteral("Aircrafts")));
+    QCOMPARE(under->row, TheWholeRowInThePage(screen, category));
+}
+
+void AddonTreePageTest::OverAnAddonRowThePageAnswersTheCategoryItSitsIn()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    const QModelIndex category = IndexOf(*screen.tree, TheCategory(QStringLiteral("Aircrafts")), {});
+    const QModelIndex addon = IndexOf(*screen.tree, AddonPath(QStringLiteral("Aircrafts"), 0), {});
+    QVERIFY(category.isValid());
+    QVERIFY(addon.isValid());
+    QVERIFY(screen.tree->visualRect(addon).intersects(screen.tree->viewport()->rect()));
+
+    const std::optional<DropCategory> under = screen.page.CategoryUnder(screen.page, InThePageAt(screen, addon));
+
+    QVERIFY(under.has_value());
+    QCOMPARE(under->path, TheCategory(QStringLiteral("Aircrafts")));
+    QCOMPARE(under->shown, category.data(Qt::DisplayRole).toString());
+    QCOMPARE(under->row, TheWholeRowInThePage(screen, category));
+}
+
+void AddonTreePageTest::WhenTheCategoryRowIsScrolledAwayTheRowIsTheWholeViewport()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    const QModelIndex category = IndexOf(*screen.tree, TheCategory(QStringLiteral("Aircrafts")), {});
+    const QModelIndex addon = IndexOf(*screen.tree, AddonPath(QStringLiteral("Aircrafts"), 10), {});
+    screen.tree->scrollTo(addon, QAbstractItemView::PositionAtTop);
+    QVERIFY(!screen.tree->visualRect(category).intersects(screen.tree->viewport()->rect()));
+
+    const std::optional<DropCategory> under = screen.page.CategoryUnder(screen.page, InThePageAt(screen, addon));
+
+    QVERIFY(under.has_value());
+    QCOMPARE(under->path, TheCategory(QStringLiteral("Aircrafts")));
+    QCOMPARE(under->row,
+             QRect(screen.tree->viewport()->mapTo(&screen.page, QPoint(0, 0)), screen.tree->viewport()->size()));
+}
+
+void AddonTreePageTest::OverALibraryRootRowOrOutsideTheTreeThePageAnswersNoCategory()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    const QModelIndex root = IndexOf(*screen.tree, std::filesystem::path(kLibrary), {});
+    QVERIFY(root.isValid());
+    QVERIFY(!screen.page.CategoryUnder(screen.page, InThePageAt(screen, root)).has_value());
+
+    QVERIFY2(!screen.page.CategoryUnder(screen.page, QPoint(2, 2)).has_value(), "the point is in the toolbar");
+    QVERIFY(!screen.page.CategoryUnder(screen.page, QPoint(-30, -30)).has_value());
+}
+
+void AddonTreePageTest::WhileTheTreeIsHiddenThePageAnswersNoCategory()
+{
+    Fixture f;
+    const Screen screen(f);
+
+    const QModelIndex category = IndexOf(*screen.tree, TheCategory(QStringLiteral("Aircrafts")), {});
+    const QPoint over = InThePageAt(screen, category);
+    QVERIFY(screen.page.CategoryUnder(screen.page, over).has_value());
+
+    screen.tree->hide();
+
+    QVERIFY(!screen.page.CategoryUnder(screen.page, over).has_value());
+}
+
+void AddonTreePageTest::ThePageSaysWhetherTheProfileHasALibrary()
+{
+    Fixture withOne;
+    const Screen screen(withOne);
+
+    QVERIFY(screen.page.HasALibrary());
+
+    SimulatorProfile bare = Profile();
+    bare.libraries.clear();
+    Fixture withNone(bare);
+    const Screen empty(withNone);
+
+    QVERIFY(!empty.page.HasALibrary());
+}
+
+void AddonTreePageTest::SelectingOnceShownWaitsForTheNextReadingAndThenSelectsExactlyThoseFolders()
+{
+    Fixture f;
+    Screen screen(f);
+
+    Select(screen, kChosen);
+    const std::vector<std::filesystem::path> landed = {AddonPath(QStringLiteral("Traffic"), 3),
+                                                       AddonPath(QStringLiteral("Sceneries"), 7)};
+
+    screen.page.SelectOnceShown(landed);
+
+    QCOMPARE(screen.SelectedPaths(), std::vector<std::string>{ComparablePath(kChosen)});
+
+    f.viewModel.ShowActiveProfile();
+
+    QCOMPARE(Sorted(screen.SelectedPaths()), Comparable(landed));
+    QCOMPARE(screen.CurrentPath(), ComparablePath(landed.front()));
+}
+
+void AddonTreePageTest::SelectingOnceShownOpensTheCategoriesAndScrollsToTheFirstFolder()
+{
+    Fixture f;
+    Screen screen(f);
+
+    screen.tree->collapseAll();
+    const std::filesystem::path deep = AddonPath(QStringLiteral("Traffic"), kAddonsPerCategory - 1);
+
+    const std::filesystem::path other = AddonPath(QStringLiteral("Aircrafts"), 1);
+
+    screen.page.SelectOnceShown({deep, other});
+    f.viewModel.ShowActiveProfile();
+
+    const QModelIndex row = IndexOf(*screen.tree, deep, {});
+    const QModelIndex otherRow = IndexOf(*screen.tree, other, {});
+    QVERIFY(row.isValid());
+    QVERIFY(otherRow.isValid());
+    QVERIFY2(screen.tree->isExpanded(row.parent()), "the category of the landed folder is closed");
+    QVERIFY2(screen.tree->isExpanded(otherRow.parent()), "the category of the other landed folder is closed");
+    QVERIFY2(screen.tree->viewport()->rect().contains(screen.tree->visualRect(row).center()),
+             "the landed folder is out of sight");
+    QCOMPARE(Sorted(screen.SelectedPaths()), Comparable({deep, other}));
+}
+
+void AddonTreePageTest::EnablingByFolderEnablesExactlyThoseFoldersWithoutAnySelection()
+{
+    Fixture f;
+    Screen screen(f);
+    const std::vector<std::filesystem::path> folders = {AddonPath(QStringLiteral("Aircrafts"), 2),
+                                                        AddonPath(QStringLiteral("Sceneries"), 3)};
+
+    QVERIFY(screen.SelectedPaths().empty());
+
+    screen.page.EnableAddons(folders);
+    Settle();
+
+    const ProfileSnapshot& snapshot = f.session.Snapshot();
+
+    for (const std::filesystem::path& folder : folders)
+    {
+        QVERIFY2(snapshot.enabled.Contains(folder), qPrintable(AsText(folder)));
+    }
+
+    QVERIFY(!snapshot.enabled.Contains(AddonPath(QStringLiteral("Aircrafts"), 4)));
+    QVERIFY(!snapshot.enabled.Contains(AddonPath(QStringLiteral("Sceneries"), 2)));
+}
+
+void AddonTreePageTest::EnablingByFolderGoesThroughTheSameCoverageCheckAsTheButton()
+{
+    Fixture f;
+    LetTheseAddonsCarryTheSameAirport(f, {kFirstToShareAirports, kSecondToShareAirports});
+    Screen screen(f);
+
+    {
+        AnswersTheSharedAirportsDialog first(QStringLiteral("Keep both"));
+        screen.page.EnableAddons({AddonPath(QStringLiteral("Aircrafts"), kFirstToShareAirports)});
+        Settle();
+        QVERIFY2(!first.Appeared(), "nothing shares the airport yet");
+    }
+
+    AnswersTheSharedAirportsDialog second(QStringLiteral("Disable"));
+    screen.page.EnableAddons({AddonPath(QStringLiteral("Aircrafts"), kSecondToShareAirports)});
+    Settle();
+
+    QVERIFY2(second.Appeared(), "the check of shared airports did not run for the folder");
+
+    const ProfileSnapshot& snapshot = f.session.Snapshot();
+
+    QVERIFY(snapshot.enabled.Contains(AddonPath(QStringLiteral("Aircrafts"), kFirstToShareAirports)));
+    QVERIFY2(!snapshot.enabled.Contains(AddonPath(QStringLiteral("Aircrafts"), kSecondToShareAirports)),
+             "answering Disable must turn the new addon back off");
+}
+
+void AddonTreePageTest::EnablingAFolderTheTreeDoesNotKnowEnablesNothingAndSaysSo()
+{
+    Fixture f;
+    Screen screen(f);
+    const QSignalSpy said(&screen.page, &AddonTreePage::StatusChanged);
+    const int runs = f.runner.runs;
+
+    screen.page.EnableAddons({std::filesystem::path(kLibrary) / "Sceneries" / "not-there"});
+    Settle();
+
+    QCOMPARE(said.size(), 1);
+    QCOMPARE(said.front().front().toString(), kInstalledButNotEnabled);
+    QCOMPARE(f.runner.runs, runs);
+}
+
+void AddonTreePageTest::EnablingFoldersOfWhichSomeAreUnknownEnablesTheKnownOnesAndSaysTheRest()
+{
+    Fixture f;
+    Screen screen(f);
+    const QSignalSpy said(&screen.page, &AddonTreePage::StatusChanged);
+    const std::filesystem::path known = AddonPath(QStringLiteral("Aircrafts"), 2);
+
+    screen.page.EnableAddons({known, std::filesystem::path(kLibrary) / "Sceneries" / "not-there"});
+    Settle();
+
+    QVERIFY(f.session.Snapshot().enabled.Contains(known));
+    QVERIFY(!said.isEmpty());
+    QCOMPARE(said.back().front().toString(), kInstalledButNotEnabled);
+}
+
+void AddonTreePageTest::EnablingFoldersTheTreeKnowsNeverShowsTheNotEnabledNote()
+{
+    Fixture f;
+    Screen screen(f);
+    const QSignalSpy said(&screen.page, &AddonTreePage::StatusChanged);
+
+    screen.page.EnableAddons({AddonPath(QStringLiteral("Aircrafts"), 2), AddonPath(QStringLiteral("Sceneries"), 3)});
+    Settle();
+
+    for (const QList<QVariant>& statement : said)
+    {
+        QVERIFY2(statement.front().toString() != kInstalledButNotEnabled, "everything asked for was found");
+    }
 }
 
 QTEST_MAIN(AddonTreePageTest)

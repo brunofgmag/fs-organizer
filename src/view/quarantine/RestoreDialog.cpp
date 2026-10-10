@@ -38,10 +38,9 @@ namespace
         return sides.join(QStringLiteral(" · "));
     }
 
-    QString WhyItIsRefused(const RestoreCheck& check)
+    QString WhereItIsAndWhichVersions(const RestoreCheck& check)
     {
         QStringList lines;
-        lines.append(Explain(check.result));
 
         if (!check.occupant.empty())
         {
@@ -55,6 +54,13 @@ namespace
         }
 
         return lines.join(QStringLiteral("\n"));
+    }
+
+    QString WhyItIsRefused(const RestoreCheck& check)
+    {
+        const QString detail = WhereItIsAndWhichVersions(check);
+
+        return detail.isEmpty() ? Explain(check.result) : Explain(check.result) + QStringLiteral("\n") + detail;
     }
 }
 
@@ -102,10 +108,10 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
 
     grid->setRowStretch(row, 1);
 
-    auto* scroll = new ScrollThatReportsItsContent(this);
-    scroll->setWidget(listed);
-    scroll->setWidgetResizable(true);
-    scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
+    scroll_ = new ScrollThatReportsItsContent(this);
+    scroll_->setWidget(listed);
+    scroll_->setWidgetResizable(true);
+    scroll_->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
 
     counted_ = new QLabel(this);
     counted_->setWordWrap(true);
@@ -138,7 +144,7 @@ RestoreDialog::RestoreDialog(const std::vector<RestoreOffer>& offers,
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
-    layout->addWidget(scroll, 1);
+    layout->addWidget(scroll_, 1);
     layout->addWidget(counted_);
     layout->addWidget(buttons);
 
@@ -197,24 +203,31 @@ void RestoreDialog::AddTheCollisionRow(QGridLayout& grid, const Collision& colli
 
     collision.compare->setObjectName(QStringLiteral("CompareAndReplace"));
     collision.compare->setText(tr("Compare and replace…"));
+    collision.compare->setAutoDefault(false);
 
     collision.chosen->setObjectName(QStringLiteral("PanelPromise"));
     collision.chosen->setWordWrap(true);
+    collision.chosen->setVisible(false);
 
-    auto* why = new QLabel(WhyItIsRefused(collision.offer.check), grid.parentWidget());
-    why->setObjectName(QStringLiteral("PanelPromise"));
+    auto* why = new QLabel(Explain(collision.offer.check.result), grid.parentWidget());
     why->setWordWrap(true);
     why->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+    auto* detail = new QLabel(WhereItIsAndWhichVersions(collision.offer.check), grid.parentWidget());
+    detail->setObjectName(QStringLiteral("PanelPromise"));
+    detail->setWordWrap(true);
+    detail->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto* both = new QWidget(grid.parentWidget());
     auto* stacked = new QVBoxLayout(both);
     stacked->setContentsMargins(0, 0, 0, 0);
     stacked->setSpacing(4);
     stacked->addWidget(why);
-    stacked->addWidget(collision.compare, 0, Qt::AlignLeft);
+    stacked->addWidget(detail);
     stacked->addWidget(collision.chosen);
 
     grid.addWidget(both, row, 1);
+    grid.addWidget(collision.compare, row, 2, Qt::AlignTop);
 }
 
 void RestoreDialog::AskAbout(Collision& collision)
@@ -222,9 +235,21 @@ void RestoreDialog::AskAbout(Collision& collision)
     collision.agreed = askAboutTheCollision_ && askAboutTheCollision_(collision.offer.check);
 
     collision.chosen->setText(collision.agreed ? tr("it will replace what is there") : QString());
+    collision.chosen->setVisible(collision.agreed);
     collision.compare->setText(collision.agreed ? tr("Change this…") : tr("Compare and replace…"));
 
+    collision.chosen->parentWidget()->updateGeometry();
+
     ShowHowManyWillGoBack();
+    GrowToWhatTheRowsNeedNow();
+}
+
+void RestoreDialog::GrowToWhatTheRowsNeedNow()
+{
+    scroll_->MeasureTheContentAt(width() - 2 * kPageGutter);
+    scroll_->updateGeometry();
+
+    SizeToTheContent(*this, width());
 }
 
 void RestoreDialog::ShowHowManyWillGoBack() const

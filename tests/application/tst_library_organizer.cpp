@@ -48,6 +48,8 @@ namespace
         static void AFolderTheScanNeverSawIsRefusedInsteadOfRemovedOnFaith();
         static void TheLibraryRootIsNeverRemovedAsIfItWereACategory();
         static void NoCategoryIsRemovedWhileTheSimulatorIsRunning();
+        static void NoCategoryIsDeclaredWhileTheSimulatorIsRunning();
+        static void NoMarkerIsTakenBackWhileTheSimulatorIsRunning();
         static void RenamingACategoryCarriesItsEnabledAddonsAlong();
         static void AnOverrideCarriedByARenameKeepsTheSpellingItWasWrittenWith();
         static void ABatchOfMovesClassifiesTheDestinationsOncePerLibrary();
@@ -461,6 +463,37 @@ void LibraryOrganizerTest::NoCategoryIsRemovedWhileTheSimulatorIsRunning()
 
     QCOMPARE(f.organizer.RemoveCategory(f.profile, kAircrafts2024).result, FileResult::TheSimulatorIsRunning);
     QVERIFY(f.fileSystem.Exists(kAircrafts2024));
+}
+
+void LibraryOrganizerTest::NoCategoryIsDeclaredWhileTheSimulatorIsRunning()
+{
+    Fixture f;
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const std::vector<FileOperationResult> results =
+        f.organizer.AdoptTheStructure(f.profile, f.profile.libraries.front());
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().path, kLibrary);
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(kAircrafts)));
+    QVERIFY(f.journal.appended.empty());
+}
+
+void LibraryOrganizerTest::NoMarkerIsTakenBackWhileTheSimulatorIsRunning()
+{
+    Fixture f;
+    f.fileSystem.AddFile(CategoryMarkerPathIn(kAircrafts));
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const std::vector<FileOperationResult> results =
+        f.organizer.TakeBackEveryMarkerItWrote(f.profile, f.profile.libraries.front());
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().path, kLibrary);
+    QCOMPARE(results.front().result, FileResult::TheSimulatorIsRunning);
+    QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(kAircrafts)));
+    QVERIFY(f.journal.appended.empty());
 }
 
 void LibraryOrganizerTest::RenamingACategoryCarriesItsEnabledAddonsAlong()

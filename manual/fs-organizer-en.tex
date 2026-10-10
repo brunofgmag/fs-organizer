@@ -360,6 +360,62 @@ original folder is untouched in every case.
 If the interrupted operation was a conflict resolution, the partial copy can
 only be discarded, because both copies are still in place.
 
+\section{Installing from an archive or a folder}
+
+Drop a \texttt{.zip}, \texttt{.rar} or \texttt{.7z} file, or a folder, onto the
+program's window. The program reads it without extracting anything and opens
+\ui{Install into the library}, which lists every addon it found: each folder
+that has a \texttt{manifest.json}, with its version and size.
+
+Choose the library and the category the new addons go to. Dropping onto a
+category in the \ui{Library} tab chooses that category for you. Tick
+\ui{Enable after installing} to have the addons enabled as soon as they are in
+the library.
+
+An addon that is already in the library is replaced where it is, whatever
+category you choose, and the copy it replaces goes to the quarantine. The
+quarantine keeps one copy of each folder name, so when it already holds one,
+the dialog asks you to agree to discard it first.
+
+\shot{46-install-dialog.png}{The install dialog: two addons from one archive,
+one of them already installed, and a third that waits for the copy in the
+quarantine to be discarded.}
+
+The file or folder you dropped is never changed, moved or deleted. A folder is
+copied, an archive is extracted, and in both cases the result is checked
+against what was read before any addon is put into place.
+
+\subsection{What is refused}
+
+The program installs nothing from an archive or folder that:
+
+\begin{itemize}
+  \item needs a password;
+  \item holds no addon, or only an installer (\texttt{.exe} or \texttt{.msi}),
+    which the program never runs;
+  \item holds a link, an absolute path, \texttt{..} or a name Windows cannot
+    write;
+  \item holds two addons with the same folder name.
+\end{itemize}
+
+Nothing can be installed while the simulator is running. Close it and press
+\ui{Check again} in the dialog.
+
+\subsection{What each Windows opens}
+
+Archives are opened by the \texttt{tar.exe} that comes with Windows, so what
+the program can open depends on your Windows version. A \texttt{.zip} opens on
+any of them. A \texttt{.rar} or \texttt{.7z} opens only if that Windows reads
+the format: Windows 10 does not read \texttt{.7z} or older \texttt{.rar} files.
+When an archive cannot be opened, extract it yourself and drop the folder
+instead.
+
+\subsection{If an installation is interrupted}
+
+The files are extracted or copied into a temporary folder inside the category.
+If the program could not delete that folder, it appears under \ui{Unfinished
+imports} the next time the program opens, where it can only be discarded.
+
 \section{Quarantine}
 
 When you resolve a conflict between two copies of an addon, the copy you do not

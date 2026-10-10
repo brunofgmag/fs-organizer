@@ -38,6 +38,8 @@ public:
 
     PageTab* AddPage(const char* label, QWidget* page);
 
+    void BringForward(QWidget* page);
+
     void CarryOptionsOn(QWidget* page);
 
     void ShowOptions();

@@ -10,10 +10,12 @@ set(DOMAIN_SOURCES
         src/domain/documents/DocumentClassification.cpp
         src/domain/importing/CopyConflicts.cpp
         src/domain/importing/ExternalSidecar.cpp
+        src/domain/importing/FingerprintMeasures.cpp
         src/domain/importing/WhatTheImporterBrought.cpp
         src/domain/importing/ImportEngine.cpp
         src/domain/importing/OriginSidecar.cpp
         src/domain/importing/SidecarFile.cpp
+        src/domain/installing/PackagesInAnArchive.cpp
         src/domain/journal/JournalEntries.cpp
         src/domain/journal/LinksTheAppMade.cpp
         src/domain/journal/OperationLog.cpp
@@ -42,6 +44,7 @@ set(DOMAIN_SOURCES
 )
 
 set(APPLICATION_SOURCES
+        src/application/ArchiveInstallService.cpp
         src/application/BisectionService.cpp
         src/application/CoverageService.cpp
         src/application/DeletionService.cpp
@@ -66,6 +69,10 @@ set(APPLICATION_SOURCES
 )
 
 set(INFRASTRUCTURE_SOURCES
+        src/infrastructure/archive/ArchiveOrFolderReader.cpp
+        src/infrastructure/archive/EmptyStagingFolder.cpp
+        src/infrastructure/archive/FolderArchiveReader.cpp
+        src/infrastructure/archive/TarExeArchiveReader.cpp
         src/infrastructure/bisection/JsonBisectionStore.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonChartCatalogueParser.cpp
@@ -140,6 +147,8 @@ set(VIEWMODEL_SOURCES
         src/viewmodel/AddonTreeFilterModel.cpp
         src/viewmodel/AddonTreeModel.cpp
         src/viewmodel/AddonTreeViewModel.cpp
+        src/viewmodel/ArchiveInstallViewModel.cpp
+        src/viewmodel/ArchiveRefusalText.cpp
         src/viewmodel/BisectionViewModel.cpp
         src/viewmodel/CategorySuggestionModel.cpp
         src/viewmodel/CommunityModel.cpp
@@ -174,6 +183,8 @@ set(VIEW_SOURCES
         src/view/community/ConflictDialog.cpp
         src/view/library/CoverageDialog.cpp
         src/view/library/DeleteDialog.cpp
+        src/view/library/InstallDialog.cpp
+        src/view/library/InstallReportDialog.cpp
         src/view/diagnostics/BisectionPanel.cpp
         src/view/diagnostics/DiagnosticsPage.cpp
         src/view/documents/DocumentReader.cpp
@@ -182,10 +193,13 @@ set(VIEW_SOURCES
         src/view/diagnostics/LoadPanel.cpp
         src/view/community/ImportDialog.cpp
         src/view/JournalPage.cpp
+        src/view/shell/ArchiveDrop.cpp
+        src/view/shell/ArchiveDropSign.cpp
         src/view/shell/LanguageSwitch.cpp
         src/view/legacy/LegacyImportDialog.cpp
         src/view/library/LibraryRootDialog.cpp
         src/view/shell/ImportProgressDialog.cpp
+        src/view/shell/StepProgressDialog.cpp
         src/view/shell/LongOperationProgress.cpp
         src/view/options/OptionsPage.cpp
         src/view/delegates/CenteredCheckDelegate.cpp
@@ -203,6 +217,9 @@ set(VIEW_SOURCES
         src/view/community/RepairDialog.cpp
         src/view/quarantine/RestoreDialog.cpp
         src/view/delegates/RowDelegate.cpp
+        src/view/HeadingsOverTheColumns.cpp
+        src/view/ListUnderItsHeadings.cpp
+        src/view/PaintedRule.cpp
         src/view/ScrollThatReportsItsContent.cpp
         src/view/setup/SetupWizard.cpp
         src/view/setup/StagingLeftoverDialog.cpp

@@ -8,6 +8,8 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/HeadingsOverTheColumns.h"
+#include "view/ListUnderItsHeadings.h"
 #include "view/theme/ModernistMetrics.h"
 
 StartupEntryDialog::StartupEntryDialog(const std::vector<StartupLine>& carried, QWidget* parent) : QDialog(parent)
@@ -21,22 +23,14 @@ StartupEntryDialog::StartupEntryDialog(const std::vector<StartupLine>& carried, 
                    this);
     explanation->setWordWrap(true);
 
+    auto* headings = new HeadingsOverTheColumns({tr("Program"), tr("Launches")}, this);
+
     auto* listed = new QWidget(this);
     auto* grid = new QGridLayout(listed);
-    grid->setContentsMargins(0, 0, 0, 0);
+    headings->ShapeTheGridUnder(*grid);
     grid->setColumnStretch(1, 1);
-    grid->setHorizontalSpacing(12);
-    grid->setVerticalSpacing(6);
 
-    auto* program = new QLabel(tr("Program"), listed);
-    program->setObjectName(QStringLiteral("PanelSubHeading"));
-    auto* where = new QLabel(tr("Launches"), listed);
-    where->setObjectName(QStringLiteral("PanelSubHeading"));
-
-    grid->addWidget(program, 0, 0);
-    grid->addWidget(where, 0, 1);
-
-    int row = 1;
+    int row = 0;
     for (const StartupLine& line : carried)
     {
         auto* label = new QLabel(QString::fromStdString(line.label), listed);
@@ -47,6 +41,11 @@ StartupEntryDialog::StartupEntryDialog(const std::vector<StartupLine>& carried, 
         path->setObjectName(QStringLiteral("PanelPromise"));
         path->setWordWrap(true);
         grid->addWidget(path, row, 1, Qt::AlignTop);
+
+        if (row == 0)
+        {
+            headings->StandOver({label, path});
+        }
 
         ++row;
     }
@@ -73,7 +72,7 @@ StartupEntryDialog::StartupEntryDialog(const std::vector<StartupLine>& carried, 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
-    layout->addWidget(scroll, 1);
+    layout->addLayout(ListUnderItsHeadings(*headings, *scroll, *this), 1);
     layout->addWidget(buttons);
 
     SizeToTheContent(*this, 620);

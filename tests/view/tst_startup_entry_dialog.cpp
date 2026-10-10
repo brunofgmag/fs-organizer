@@ -8,6 +8,8 @@
 
 #include "support/PathText.h"
 #include "tests/support/ButtonLookup.h"
+#include "tests/support/FixedHeadings.h"
+#include "view/theme/ModernistTheme.h"
 #include "tests/support/PathPrinting.h"
 #include "view/library/StartupEntryDialog.h"
 
@@ -21,6 +23,9 @@ namespace
         static void EveryEntryAtRiskIsNamedWithTheProgramAndWhatItLaunches();
         static void TurningBothOffAcceptsAndTurningOnlyTheAddonOffRejects();
         static void TheButtonCountsTheEntriesInsteadOfAlwaysSayingTwo();
+        static void TheHeadingsLeaveTheScrollAndStandOverTheirColumns();
+        static void ScrollingTheListLeavesTheHeadingsWhereTheyAre();
+        static void TwoRulesFrameTheListAndTheListHasNoFrame();
     };
 
     const std::filesystem::path kLoader = "E:/Sim/Community/pmdg-aircraft-77w/bin/loader.exe";
@@ -34,6 +39,29 @@ namespace
                            .reach = StartupReach::InsideAnAddon,
                            .addonFolder = "E:/Sim/Community/pmdg-aircraft-77w"};
     }
+
+    std::vector<StartupLine> ManyEntries(const int count)
+    {
+        std::vector<StartupLine> lines;
+        lines.reserve(static_cast<std::size_t>(count));
+
+        for (int at = 0; at < count; ++at)
+        {
+            lines.push_back(Line("PMDG Operations Center " + std::to_string(at), kLoader));
+        }
+
+        return lines;
+    }
+
+    struct Window
+    {
+        explicit Window(const int tall)
+        {
+            parent.resize(900, tall);
+        }
+
+        QWidget parent;
+    };
 
     QStringList TextsOf(const QDialog& dialog)
     {
@@ -81,6 +109,37 @@ void StartupEntryDialogTest::TheButtonCountsTheEntriesInsteadOfAlwaysSayingTwo()
 
     const StartupEntryDialog several({Line("PMDG Operations Center", kLoader), Line("PMDG Updater", kUpdater)});
     QVERIFY(ButtonSaying(several, QStringLiteral("Disable the addon and the entries")) != nullptr);
+}
+
+void StartupEntryDialogTest::TheHeadingsLeaveTheScrollAndStandOverTheirColumns()
+{
+    ApplyModernistTheme(*qApp);
+    Window window(1600);
+    StartupEntryDialog dialog(ManyEntries(3), &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTheHeadingsAreOutsideTheScroll(dialog, {QStringLiteral("Program"), QStringLiteral("Launches")});
+    VerifyEachHeadingStandsOverItsColumn(dialog);
+}
+
+void StartupEntryDialogTest::ScrollingTheListLeavesTheHeadingsWhereTheyAre()
+{
+    ApplyModernistTheme(*qApp);
+    Window window(400);
+    StartupEntryDialog dialog(ManyEntries(30), &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTheListScrollsForRealAndTheHeadingsStay(dialog);
+}
+
+void StartupEntryDialogTest::TwoRulesFrameTheListAndTheListHasNoFrame()
+{
+    ApplyModernistTheme(*qApp);
+    Window window(1600);
+    StartupEntryDialog dialog(ManyEntries(3), &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTwoRulesFrameTheList(dialog);
 }
 
 QTEST_MAIN(StartupEntryDialogTest)

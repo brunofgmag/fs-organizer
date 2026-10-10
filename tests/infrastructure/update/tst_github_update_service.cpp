@@ -5,6 +5,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QProcess>
 #include <QtCore/QTemporaryDir>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QTcpServer>
@@ -26,6 +27,8 @@ namespace
         static void TheDefaultFolderIsUnderTheApplicationData();
         static void AZipThatFailsTheChecksumIsDeletedAndNothingIsPrepared();
         static void AZipThatPassesTheChecksumSurvivesAndThePreparationGoesOn();
+        static void TheUpdateIsExtractedWhateverTheFolderIsCalled_data();
+        static void TheUpdateIsExtractedWhateverTheFolderIsCalled();
     };
 }
 
@@ -61,6 +64,26 @@ namespace
     constexpr auto kZipName = "fs-organizer-9.9.9.zip";
     constexpr auto kZipBytes = "the bytes the release actually published";
     constexpr int kStageTimeoutMs = 30000;
+    constexpr int kExtractionTimeoutMs = 120000;
+    constexpr auto kPayloadName = "payload.txt";
+
+    [[nodiscard]] bool MakeAZip(const QString& zipPath, const QString& sourceFolder, QString& problem)
+    {
+        QProcess tar;
+        tar.start(QStringLiteral("tar.exe"),
+                  {QStringLiteral("-a"), QStringLiteral("-cf"), QDir::toNativeSeparators(zipPath), QStringLiteral("-C"),
+                   QDir::toNativeSeparators(sourceFolder), QString::fromLatin1(kPayloadName)});
+
+        if (!tar.waitForFinished(kStageTimeoutMs) || tar.exitCode() != 0)
+        {
+            problem = QStringLiteral("tar.exe could not make the zip: exit %1, %2")
+                          .arg(tar.exitCode())
+                          .arg(QString::fromLocal8Bit(tar.readAllStandardError()));
+            return false;
+        }
+
+        return true;
+    }
 
     QByteArray ChecksumFileFor(const QByteArray& bytes)
     {
@@ -245,6 +268,60 @@ void GithubUpdateServiceTest::AZipThatPassesTheChecksumSurvivesAndThePreparation
 
     QVERIFY2(attempt.KeptTheDownload(), "the zip that passed the checksum was deleted anyway");
     QVERIFY2(attempt.StartedPreparing(), "the preparation never started for a zip that passed the checksum");
+}
+
+void GithubUpdateServiceTest::TheUpdateIsExtractedWhateverTheFolderIsCalled_data()
+{
+    QTest::addColumn<QString>("folderName");
+
+    QTest::newRow("a plain folder") << QStringLiteral("Bruno");
+    QTest::newRow("an apostrophe in the folder") << QStringLiteral("O'Brien");
+    QTest::newRow("a typographic quote in the folder")
+        << QString(QStringLiteral("O") + QChar(0x2019) + QStringLiteral("Brien"));
+    QTest::newRow("a folder name that is code once the quote breaks")
+        << QStringLiteral("a'; Set-Content -LiteralPath marker.txt -Value x #");
+}
+
+void GithubUpdateServiceTest::TheUpdateIsExtractedWhateverTheFolderIsCalled()
+{
+    QFETCH(QString, folderName);
+
+    const QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString source = directory.path() + QStringLiteral("/source");
+    QVERIFY(QDir().mkpath(source));
+    {
+        QFile payload(source + QLatin1Char('/') + QLatin1String(kPayloadName));
+        QVERIFY(payload.open(QIODevice::WriteOnly));
+        payload.write("the bytes of the update");
+    }
+
+    const QString userFolder = directory.path() + QLatin1Char('/') + folderName;
+    const QString zipPath = userFolder + QStringLiteral("/update.zip");
+    const QString stagedRoot = userFolder + QStringLiteral("/staged");
+    const QString marker = directory.path() + QStringLiteral("/marker.txt");
+
+    const QString madeZip = directory.path() + QStringLiteral("/made.zip");
+    QString problem;
+    if (!MakeAZip(madeZip, source, problem))
+    {
+        QSKIP(qPrintable(problem));
+    }
+
+    QVERIFY(QDir().mkpath(userFolder));
+    QVERIFY(QFile::copy(madeZip, zipPath));
+
+    QProcess process;
+    process.setWorkingDirectory(directory.path());
+    StartExpandingTheUpdate(process, zipPath, stagedRoot);
+    const bool finished = process.waitForFinished(kExtractionTimeoutMs);
+
+    QVERIFY2(finished, "the extraction never finished");
+    QVERIFY2(!QFile::exists(marker), "a folder name was run as PowerShell code");
+    QVERIFY2(process.exitCode() == 0, qPrintable(QString::fromLocal8Bit(process.readAllStandardError())));
+    QVERIFY2(QFile::exists(stagedRoot + QLatin1Char('/') + QLatin1String(kPayloadName)),
+             "the extraction exited cleanly and left the file out");
 }
 
 QTEST_GUILESS_MAIN(GithubUpdateServiceTest)

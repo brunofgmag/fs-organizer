@@ -48,6 +48,11 @@ namespace
 
         return enabled;
     }
+
+    std::vector<FileOperationResult> TheSimulatorIsRunningOver(const Library& library)
+    {
+        return {FileOperationResult{.path = library.path, .result = FileResult::TheSimulatorIsRunning}};
+    }
 }
 
 LibraryOrganizer::LibraryOrganizer(const CatalogScanner& catalog,
@@ -359,6 +364,11 @@ LibraryGrouping LibraryOrganizer::HowItIsGrouped(const Library& library) const
 std::vector<FileOperationResult> LibraryOrganizer::AdoptTheStructure(const SimulatorProfile& profile,
                                                                      const Library& library) const
 {
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return TheSimulatorIsRunningOver(library);
+    }
+
     std::vector<FileOperationResult> results;
 
     for (const std::filesystem::path& folder : HowItIsGrouped(library).notYetDeclared)
@@ -376,6 +386,11 @@ std::vector<FileOperationResult> LibraryOrganizer::AdoptTheStructure(const Simul
 std::vector<FileOperationResult> LibraryOrganizer::TakeBackEveryMarkerItWrote(const SimulatorProfile& profile,
                                                                               const Library& library) const
 {
+    if (processProbe_.SimulatorIsRunning())
+    {
+        return TheSimulatorIsRunningOver(library);
+    }
+
     std::vector<FileOperationResult> results;
 
     for (const std::filesystem::path& folder : HowItIsGrouped(library).alreadyDeclared)

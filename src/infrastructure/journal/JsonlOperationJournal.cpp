@@ -79,6 +79,8 @@ namespace
         case OperationKind::ForgetTheStartupEntry: return "forgetTheStartupEntry";
         case OperationKind::TurnOffTheSimulatorPackage: return "turnOffTheSimulatorPackage";
         case OperationKind::TurnOnTheSimulatorPackage: return "turnOnTheSimulatorPackage";
+        case OperationKind::InstallExtractToStaging: return "installExtractToStaging";
+        case OperationKind::InstallMoveIntoPlace: return "installMoveIntoPlace";
         }
 
         return "unknown";
@@ -153,6 +155,9 @@ namespace
         case FileResult::TheStartupFileIsNotUtf8: return "theStartupFileIsNotUtf8";
         case FileResult::CouldNotKeepTheRemovedEntry: return "couldNotKeepTheRemovedEntry";
         case FileResult::TheProgramDoesNotExist: return "theProgramDoesNotExist";
+        case FileResult::CouldNotExtract: return "couldNotExtract";
+        case FileResult::TheArchiveNeedsAPassword: return "theArchiveNeedsAPassword";
+        case FileResult::TheSourceIsInsideWhatWouldBeRemoved: return "theSourceIsInsideWhatWouldBeRemoved";
         }
 
         return "unknown";

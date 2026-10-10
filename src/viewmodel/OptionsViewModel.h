@@ -131,6 +131,8 @@ signals:
 
     void SettingsCouldNotBeSaved();
 
+    void TheSimulatorIsInTheWay();
+
 private:
     struct DisablingWork
     {
@@ -149,6 +151,7 @@ private:
     [[nodiscard]] bool WouldRemoveProfile(const std::string& profileId) const;
     void RunInTheBackground(std::function<void()> work, std::function<void()> done);
     void DisableThenRemove(const std::shared_ptr<DisablingWork>& work, std::function<void()> removal);
+    void SayIfTheSimulatorRefused(const std::vector<FileOperationResult>& results);
     void FinishRemovingProfile(const std::string& profileId, const QString& label);
     void FinishUnregistering(const LibraryId& libraryId, const QString& label);
 

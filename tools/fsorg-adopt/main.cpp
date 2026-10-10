@@ -155,7 +155,13 @@ int main(int argc, char* argv[])
             }
         }
 
-        Out() << "  wrote " << written.size() << "\n";
+        const auto wrote = std::ranges::count_if(written,
+                                                 [](const FileOperationResult& result)
+                                                 {
+                                                     return Succeeded(result.result);
+                                                 });
+
+        Out() << "  wrote " << wrote << "\n";
     }
 
     if (!arguments.go)

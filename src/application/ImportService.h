@@ -4,8 +4,10 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <string>
 #include <vector>
 
+#include "application/model/Admission.h"
 #include "application/model/ConflictDetails.h"
 #include "application/model/FileOperationResult.h"
 #include "application/model/ImportOperationResult.h"
@@ -45,6 +47,16 @@ public:
            const std::function<bool(const CopyProgress&)>& onProgress,
            const std::function<void(OperationKind)>& onStep = {},
            const std::function<bool(std::size_t request)>& goOn = {}) const;
+
+    [[nodiscard]] std::vector<AdmissionCheck> CheckAdmission(const SimulatorProfile& profile,
+                                                             const std::vector<std::filesystem::path>& wanted) const;
+
+    [[nodiscard]] std::vector<AdmitResult> Admit(const SimulatorProfile& profile,
+                                                 const std::vector<DestinationEntry>& entries,
+                                                 const std::vector<AdmitRequest>& requests,
+                                                 const std::function<bool(const CopyProgress&)>& onProgress = {},
+                                                 const std::function<void(OperationKind)>& onStep = {},
+                                                 const std::function<bool(std::size_t request)>& goOn = {}) const;
 
     [[nodiscard]] FileResult ResolveConflict(const SimulatorProfile& profile,
                                              const std::vector<DestinationEntry>& entries,
@@ -107,6 +119,14 @@ public:
                                                const std::function<void(OperationKind)>& onStep = {}) const;
 
 private:
+    struct EarlierCopy
+    {
+        FileResult result = FileResult::Completed;
+        QuarantinedItem item{};
+        std::filesystem::path slot{};
+        std::optional<std::string> sidecar{};
+    };
+
     [[nodiscard]] FileResult TakeBackWhatWasReplaced(const SimulatorProfile& profile,
                                                      const std::vector<DestinationEntry>& entries,
                                                      const CopyConflict& conflict,
@@ -128,6 +148,70 @@ private:
                                                        const CopyConflict& conflict,
                                                        OperationKind linkKind,
                                                        const std::vector<std::filesystem::path>& places) const;
+
+    [[nodiscard]] FileResult LinkTheFolderAt(const AddonId& addon,
+                                             const std::filesystem::path& folder,
+                                             const std::vector<std::filesystem::path>& places) const;
+
+    [[nodiscard]] AdmissionCheck AdmissionOf(const SimulatorProfile& profile,
+                                             const std::filesystem::path& wanted,
+                                             const std::vector<TreeNode>& scanned,
+                                             const std::vector<TreeNode>& landed) const;
+
+    [[nodiscard]] AdmissionCheck
+    AdmissionAgainst(const SimulatorProfile& profile, const std::filesystem::path& wanted, const TreeNode& held) const;
+
+    [[nodiscard]] AdmitResult AdmitOne(const SimulatorProfile& profile,
+                                       const std::vector<DestinationEntry>& entries,
+                                       const AdmitRequest& request,
+                                       const std::vector<TreeNode>& scanned,
+                                       std::vector<TreeNode>& landed,
+                                       const std::function<bool(const CopyProgress&)>& onProgress,
+                                       const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] std::optional<FileResult> WhyTheOccupantCannotGo(const SimulatorProfile& profile,
+                                                                   const AdmitRequest& request,
+                                                                   const AdmissionCheck& check) const;
+
+    [[nodiscard]] AdmitResult ReplaceTheOccupant(const SimulatorProfile& profile,
+                                                 const std::vector<DestinationEntry>& entries,
+                                                 const AdmitRequest& request,
+                                                 const AdmissionCheck& check,
+                                                 const std::function<bool(const CopyProgress&)>& onProgress,
+                                                 const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] AdmitResult ExchangeAndRelink(const SimulatorProfile& profile,
+                                                const std::vector<DestinationEntry>& entries,
+                                                const AdmitRequest& request,
+                                                const AdmissionCheck& check,
+                                                const std::function<bool(const CopyProgress&)>& onProgress,
+                                                const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] EarlierCopy SetTheEarlierCopyAside(const std::filesystem::path& slot) const;
+
+    void PutTheEarlierCopyBack(const EarlierCopy& earlier) const;
+
+    void PutTheLinksBack(const AddonId& addon,
+                         const std::filesystem::path& folder,
+                         const std::vector<std::filesystem::path>& places) const;
+
+    [[nodiscard]] AdmitResult ExchangeTheFolders(const SimulatorProfile& profile,
+                                                 const AdmitRequest& request,
+                                                 const AdmissionCheck& check,
+                                                 const std::function<bool(const CopyProgress&)>& onProgress,
+                                                 const std::function<void(OperationKind)>& onStep) const;
+
+    [[nodiscard]] FileResult MoveIntoPlace(const SimulatorProfile& profile,
+                                           const std::filesystem::path& staged,
+                                           const std::filesystem::path& target) const;
+
+    [[nodiscard]] std::vector<std::filesystem::path>
+    PlacesThatCameDown(const std::vector<std::filesystem::path>& places) const;
+
+    [[nodiscard]] std::optional<FileResult> WhyTheQuarantineRefuses(OperationKind kind,
+                                                                    const AddonId& addon,
+                                                                    const std::filesystem::path& loser,
+                                                                    const std::filesystem::path& quarantine) const;
 
     void ForgetTheOriginOf(const std::filesystem::path& item) const;
 

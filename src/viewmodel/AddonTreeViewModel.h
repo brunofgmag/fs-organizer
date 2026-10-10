@@ -63,6 +63,8 @@ public:
 
     void Toggle(const std::vector<const TreeNode*>& nodes, bool enable);
 
+    void DisableAgain(const std::vector<AddonId>& addons);
+
     void Toggle(const std::vector<const TreeNode*>& nodes, bool enable, const std::vector<TakenPlace>& agreedSwaps);
 
     void Toggle(const std::vector<const TreeNode*>& nodes,
