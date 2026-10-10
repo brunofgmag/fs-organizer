@@ -57,7 +57,10 @@ if (UNTRANSLATED)
             "carries no translation for them.\n"
             "The build runs lrelease over the catalogues as they are committed and never lupdate, so a string "
             "added to the code is invisible here until somebody says it.\n"
-            "Fix it by running lupdate over i18n/app_en.ts and i18n/app_pt_BR.ts and translating what it adds.\n"
+            "Fix it by adding each string by hand to i18n/app_en.ts and i18n/app_pt_BR.ts, in the context of the "
+            "class that says it, with its translation.\n"
+            "Never run lupdate over the committed catalogues: it drops the vanished entries and the location "
+            "lines, and no guard sees that.\n"
             "${REPORT}")
 endif ()
 

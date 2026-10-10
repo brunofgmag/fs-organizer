@@ -4,6 +4,7 @@
 #include "application/LibraryOrganizer.h"
 #include "application/ports/ProcessProbe.h"
 #include "domain/journal/OperationLog.h"
+#include "domain/model/CategoryMarker.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "tests/doubles/FakeCatalogScanner.h"
@@ -60,6 +61,9 @@ namespace
         static void AProfileThatCouldNotBeSavedIsNotReportedAsMissing();
         static void AProfileThatCouldNotBeSavedAfterTheBatchIsNotReportedAsMissing();
         static void ARegistrationOvertakenBySaveIsRunAgainOnTheProfileAsItIsNow();
+        static void DeclaringTheCategoriesWhileTheSimulatorRunsSaysSoInsteadOfStayingMute();
+        static void TakingBackTheMarkersWhileTheSimulatorRunsSaysSoInsteadOfStayingMute();
+        static void DeclaringAndTakingBackWithTheSimulatorClosedSayNothingAboutIt();
     };
 }
 
@@ -834,6 +838,55 @@ void OptionsViewModelTest::ARegistrationOvertakenBySaveIsRunAgainOnTheProfileAsI
     QCOMPARE(f.runner.runs, runsBefore + 4);
     QCOMPARE(LibraryPathsStored(f.settings),
              (std::vector<std::string>{ComparablePath(kLibrary), ComparablePath(kThirdLibrary)}));
+}
+
+void OptionsViewModelTest::DeclaringTheCategoriesWhileTheSimulatorRunsSaysSoInsteadOfStayingMute()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(std::filesystem::path(kLibrary) / "Sceneries");
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const QSignalSpy blocked(&f.viewModel, &OptionsViewModel::TheSimulatorIsInTheWay);
+
+    f.viewModel.DeclareTheCategoriesOf("library-1");
+
+    QCOMPARE(blocked.count(), 1);
+    QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kLibrary) / "Sceneries")));
+}
+
+void OptionsViewModelTest::TakingBackTheMarkersWhileTheSimulatorRunsSaysSoInsteadOfStayingMute()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(std::filesystem::path(kLibrary) / "Sceneries");
+    f.fileSystem.AddFile(CategoryMarkerPathIn(std::filesystem::path(kLibrary) / "Sceneries"));
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    const QSignalSpy blocked(&f.viewModel, &OptionsViewModel::TheSimulatorIsInTheWay);
+
+    f.viewModel.TakeBackTheMarkersOf("library-1");
+
+    QCOMPARE(blocked.count(), 1);
+    QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kLibrary) / "Sceneries")));
+}
+
+void OptionsViewModelTest::DeclaringAndTakingBackWithTheSimulatorClosedSayNothingAboutIt()
+{
+    Fixture f;
+    f.session.ShowActiveProfile();
+    f.fileSystem.AddDirectory(std::filesystem::path(kLibrary) / "Sceneries");
+
+    const QSignalSpy blocked(&f.viewModel, &OptionsViewModel::TheSimulatorIsInTheWay);
+
+    f.viewModel.DeclareTheCategoriesOf("library-1");
+
+    QVERIFY(f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kLibrary) / "Sceneries")));
+
+    f.viewModel.TakeBackTheMarkersOf("library-1");
+
+    QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(std::filesystem::path(kLibrary) / "Sceneries")));
+    QCOMPARE(blocked.count(), 0);
 }
 
 QTEST_MAIN(OptionsViewModelTest)

@@ -51,6 +51,31 @@ namespace
         return wanted;
     }
 
+    std::vector<const TreeNode*> EnabledAddonsOf(const std::vector<AddonId>& identities,
+                                                 const SimulatorProfile& profile,
+                                                 const ProfileSnapshot& snapshot)
+    {
+        std::vector<const TreeNode*> found;
+
+        for (const TreeNode& library : snapshot.libraries)
+        {
+            for (const TreeNode* addon : AddonsUnder(library))
+            {
+                if (!snapshot.enabled.Contains(addon->path))
+                {
+                    continue;
+                }
+
+                if (std::ranges::find(identities, IdentityOf(profile, addon->path)) != identities.end())
+                {
+                    found.push_back(addon);
+                }
+            }
+        }
+
+        return found;
+    }
+
     template<typename Wanted>
     std::vector<const TreeNode*> AddonsWhere(const AddonDestinations& destinations,
                                              const std::vector<const TreeNode*>& nodes,
@@ -205,6 +230,18 @@ std::size_t AddonTreeViewModel::AddonsThatWouldChange(const std::vector<const Tr
 void AddonTreeViewModel::Toggle(const std::vector<const TreeNode*>& nodes, const bool enable)
 {
     Toggle(nodes, enable, {});
+}
+
+void AddonTreeViewModel::DisableAgain(const std::vector<AddonId>& addons)
+{
+    const std::vector<const TreeNode*> nodes = EnabledAddonsOf(addons, session_.Profile(), session_.Snapshot());
+
+    if (nodes.empty())
+    {
+        return;
+    }
+
+    Toggle(nodes, false);
 }
 
 std::vector<TakenPlace> AddonTreeViewModel::SwapsNeededTo(const std::vector<const TreeNode*>& nodes) const

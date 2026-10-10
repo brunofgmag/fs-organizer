@@ -6,6 +6,8 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 
+#include "view/HeadingsOverTheColumns.h"
+#include "view/ListUnderItsHeadings.h"
 #include "view/ScrollThatReportsItsContent.h"
 #include "view/theme/ModernistMetrics.h"
 
@@ -25,25 +27,18 @@ CoverageDialog::CoverageDialog(const std::vector<CoverageLine>& covered, QWidget
                    this);
     explanation->setWordWrap(true);
 
+    auto* headings = new HeadingsOverTheColumns({tr("Airport"), tr("Yours"), tr("The simulator's")}, this);
+
     auto* listed = new QWidget(this);
     auto* grid = new QGridLayout(listed);
-    grid->setContentsMargins(0, 0, 0, 0);
+    headings->ShapeTheGridUnder(*grid);
     grid->setColumnStretch(2, 1);
-    grid->setHorizontalSpacing(12);
-    grid->setVerticalSpacing(6);
 
-    for (const auto& [column, heading] :
-         {std::pair{0, tr("Airport")}, std::pair{1, tr("Yours")}, std::pair{2, tr("The simulator's")}})
-    {
-        auto* label = new QLabel(heading, listed);
-        label->setObjectName(QStringLiteral("PanelSubHeading"));
-        grid->addWidget(label, 0, column);
-    }
-
-    int row = 1;
+    int row = 0;
     for (const CoverageLine& line : covered)
     {
-        grid->addWidget(new QLabel(line.code, listed), row, 0, Qt::AlignTop);
+        auto* code = new QLabel(line.code, listed);
+        grid->addWidget(code, row, 0, Qt::AlignTop);
 
         auto* yours = new QLabel(line.covered, listed);
         yours->setWordWrap(true);
@@ -53,6 +48,11 @@ CoverageDialog::CoverageDialog(const std::vector<CoverageLine>& covered, QWidget
         theirs->setObjectName(QStringLiteral("PanelPromise"));
         theirs->setWordWrap(true);
         grid->addWidget(theirs, row, 2, Qt::AlignTop);
+
+        if (row == 0)
+        {
+            headings->StandOver({code, yours, theirs});
+        }
 
         ++row;
     }
@@ -84,7 +84,7 @@ CoverageDialog::CoverageDialog(const std::vector<CoverageLine>& covered, QWidget
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
-    layout->addWidget(scroll, 1);
+    layout->addLayout(ListUnderItsHeadings(*headings, *scroll, *this), 1);
     layout->addWidget(promise);
     layout->addWidget(buttons);
 

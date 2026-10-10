@@ -11,7 +11,9 @@
 #include "domain/bisection/BisectionRounds.h"
 #include "domain/documents/ChartIndex.h"
 #include "domain/documents/DocumentClassification.h"
+#include "domain/installing/PackagesInAnArchive.h"
 #include "domain/legacy/ProposedState.h"
+#include "domain/model/ArchiveEntry.h"
 #include "domain/model/CheckState.h"
 #include "domain/model/DestinationEntry.h"
 #include "domain/model/FileResult.h"
@@ -27,6 +29,7 @@
 #include "domain/model/Verification.h"
 #include "domain/model/WriteAccess.h"
 #include "domain/scenery/AirportCoverage.h"
+#include "viewmodel/InstallOffer.h"
 
 namespace QTest
 {
@@ -263,6 +266,9 @@ namespace QTest
         case FileResult::TheStartupFileIsNotUtf8: return qstrdup("TheStartupFileIsNotUtf8");
         case FileResult::CouldNotKeepTheRemovedEntry: return qstrdup("CouldNotKeepTheRemovedEntry");
         case FileResult::TheProgramDoesNotExist: return qstrdup("TheProgramDoesNotExist");
+        case FileResult::CouldNotExtract: return qstrdup("CouldNotExtract");
+        case FileResult::TheArchiveNeedsAPassword: return qstrdup("TheArchiveNeedsAPassword");
+        case FileResult::TheSourceIsInsideWhatWouldBeRemoved: return qstrdup("TheSourceIsInsideWhatWouldBeRemoved");
         }
 
         return qstrdup("FileResult(?)");
@@ -332,9 +338,58 @@ namespace QTest
         case OperationKind::ForgetTheStartupEntry: return qstrdup("ForgetTheStartupEntry");
         case OperationKind::TurnOffTheSimulatorPackage: return qstrdup("TurnOffTheSimulatorPackage");
         case OperationKind::TurnOnTheSimulatorPackage: return qstrdup("TurnOnTheSimulatorPackage");
+        case OperationKind::InstallExtractToStaging: return qstrdup("InstallExtractToStaging");
+        case OperationKind::InstallMoveIntoPlace: return qstrdup("InstallMoveIntoPlace");
         }
 
         return qstrdup("OperationKind(?)");
+    }
+
+    template<>
+    inline char* toString(const ArchiveFailure& t)
+    {
+        switch (t)
+        {
+        case ArchiveFailure::None: return qstrdup("None");
+        case ArchiveFailure::TheToolIsMissing: return qstrdup("TheToolIsMissing");
+        case ArchiveFailure::CouldNotOpen: return qstrdup("CouldNotOpen");
+        case ArchiveFailure::NeedsAPassword: return qstrdup("NeedsAPassword");
+        case ArchiveFailure::CouldNotExtract: return qstrdup("CouldNotExtract");
+        case ArchiveFailure::TookTooLong: return qstrdup("TookTooLong");
+        case ArchiveFailure::Cancelled: return qstrdup("Cancelled");
+        }
+
+        return qstrdup("ArchiveFailure(?)");
+    }
+
+    template<>
+    inline char* toString(const ArchiveEntryKind& t)
+    {
+        switch (t)
+        {
+        case ArchiveEntryKind::File: return qstrdup("File");
+        case ArchiveEntryKind::Folder: return qstrdup("Folder");
+        case ArchiveEntryKind::Other: return qstrdup("Other");
+        }
+
+        return qstrdup("ArchiveEntryKind(?)");
+    }
+
+    template<>
+    inline char* toString(const NothingToInstall& t)
+    {
+        switch (t)
+        {
+        case NothingToInstall::None: return qstrdup("None");
+        case NothingToInstall::NoPackage: return qstrdup("NoPackage");
+        case NothingToInstall::OnlyAnInstaller: return qstrdup("OnlyAnInstaller");
+        case NothingToInstall::AnEntryIsNotSafe: return qstrdup("AnEntryIsNotSafe");
+        case NothingToInstall::ThePackageHasNoFolder: return qstrdup("ThePackageHasNoFolder");
+        case NothingToInstall::TwoPackagesShareAName: return qstrdup("TwoPackagesShareAName");
+        case NothingToInstall::ThePackageNameIsReserved: return qstrdup("ThePackageNameIsReserved");
+        }
+
+        return qstrdup("NothingToInstall(?)");
     }
 
     template<>
@@ -451,6 +506,61 @@ namespace QTest
         }
 
         return toString(std::get<FileResult>(t));
+    }
+
+    template<>
+    inline char* toString(const InstallStanding& t)
+    {
+        switch (t)
+        {
+        case InstallStanding::New: return qstrdup("New");
+        case InstallStanding::Replaces: return qstrdup("Replaces");
+        case InstallStanding::ReplacesAndTheQuarantineHoldsOne: return qstrdup("ReplacesAndTheQuarantineHoldsOne");
+        case InstallStanding::AFolderIsInTheWay: return qstrdup("AFolderIsInTheWay");
+        }
+
+        return qstrdup("InstallStanding(?)");
+    }
+
+    template<>
+    inline char* toString(const SourceKind& t)
+    {
+        switch (t)
+        {
+        case SourceKind::Archive: return qstrdup("Archive");
+        case SourceKind::Folder: return qstrdup("Folder");
+        }
+
+        return qstrdup("SourceKind(?)");
+    }
+
+    template<>
+    inline char* toString(const InstallStep& t)
+    {
+        switch (t)
+        {
+        case InstallStep::Extracting: return qstrdup("Extracting");
+        case InstallStep::Copying: return qstrdup("Copying");
+        case InstallStep::Checking: return qstrdup("Checking");
+        case InstallStep::PuttingIntoPlace: return qstrdup("PuttingIntoPlace");
+        }
+
+        return qstrdup("InstallStep(?)");
+    }
+
+    template<>
+    inline char* toString(const InstallReportKind& t)
+    {
+        switch (t)
+        {
+        case InstallReportKind::NothingToInstall: return qstrdup("NothingToInstall");
+        case InstallReportKind::SomeWereNotInstalled: return qstrdup("SomeWereNotInstalled");
+        case InstallReportKind::NothingWasInstalled: return qstrdup("NothingWasInstalled");
+        case InstallReportKind::InstalledButNotLinked: return qstrdup("InstalledButNotLinked");
+        case InstallReportKind::InstalledButAFolderStayed: return qstrdup("InstalledButAFolderStayed");
+        }
+
+        return qstrdup("InstallReportKind(?)");
     }
 }
 

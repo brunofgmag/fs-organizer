@@ -30,6 +30,13 @@ inline bool LoadedTheCatalogue(QTranslator& catalogue, const QString& language)
     return !file.isEmpty() && catalogue.load(file);
 }
 
+inline bool LoadedTheShippedCatalogue(QTranslator& catalogue, const QString& language)
+{
+    const QString file = TheCatalogueBesideTheBuild(language);
+
+    return !file.isEmpty() && catalogue.load(file);
+}
+
 struct Installed
 {
     explicit Installed(QTranslator& translator) : translator_(translator)

@@ -66,6 +66,7 @@ namespace
         static void TheOnlyProfileCannotBeRemoved();
         static void RemovingTheProfileInUseStillCountsItsAddonsWhileAnotherIsShown();
         static void TheEndOfARemovalIsSaidFromWhatTheViewModelAnnounces();
+        static void DeclaringTheCategoriesWhileTheSimulatorRunsSaysSoInTheStatusLine();
         static void WhileTheRunnerWorksNoControlOffersAnotherRemovalOrRegistration();
         static void WhatWasOffDuringTheRunStaysOffForItsOwnReasonWhenTheRunLands();
     };
@@ -579,6 +580,25 @@ void OptionsPageTest::TheProfileThatIsNotInUseOffersNoButtonThatWouldChangeIt()
     QVERIFY(!ButtonSaying(f.page, QStringLiteral("Add library…"))->isEnabled());
     QVERIFY(!ButtonSaying(f.page, QStringLiteral("Import from MSFS Addons Linker…"))->isEnabled());
     QVERIFY(!f.page.findChild<QPushButton*>(QStringLiteral("UnregisterLibrary"))->isEnabled());
+}
+
+void OptionsPageTest::DeclaringTheCategoriesWhileTheSimulatorRunsSaysSoInTheStatusLine()
+{
+    Fixture f;
+    f.fileSystem.AddDirectory(std::filesystem::path(kLibrary) / "Sceneries");
+    f.processProbe.ReportTheSimulatorAsRunning();
+
+    QSignalSpy said(&f.page, &OptionsPage::StatusChanged);
+
+    f.viewModel.DeclareTheCategoriesOf("library-1");
+
+    QCOMPARE(said.count(), 1);
+    QCOMPARE(said.front().front().toString(),
+             QStringLiteral("Files cannot be changed while the simulator is running."));
+
+    f.viewModel.TakeBackTheMarkersOf("library-1");
+
+    QCOMPARE(said.count(), 2);
 }
 
 void OptionsPageTest::TheEndOfARemovalIsSaidFromWhatTheViewModelAnnounces()

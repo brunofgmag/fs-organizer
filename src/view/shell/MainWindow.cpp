@@ -215,6 +215,19 @@ PageTab* MainWindow::AddPage(const char* label, QWidget* page)
     return tab;
 }
 
+void MainWindow::BringForward(QWidget* page)
+{
+    PageTab* tab = tabsByPage_.value(page);
+
+    if (tab == nullptr)
+    {
+        return;
+    }
+
+    LeaveOptions();
+    tab->click();
+}
+
 void MainWindow::CarryOptionsOn(QWidget* page)
 {
     options_ = page;

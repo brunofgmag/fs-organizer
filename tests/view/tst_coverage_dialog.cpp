@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "tests/support/ButtonLookup.h"
+#include "tests/support/FixedHeadings.h"
+#include "view/theme/ModernistTheme.h"
 #include "view/library/CoverageDialog.h"
 
 namespace
@@ -20,6 +22,9 @@ namespace
         static void TheButtonCountsTheAirportsInsteadOfAlwaysSayingOne();
         static void NeitherSideOfTheOverlapIsCalledAProblem();
         static void TheWarningSaysTheCodeOfTheSimulatorCameFromTheName();
+        static void TheHeadingsLeaveTheScrollAndStandOverTheirColumns();
+        static void ScrollingTheListLeavesTheHeadingsWhereTheyAre();
+        static void TwoRulesFrameTheListAndTheListHasNoFrame();
     };
 
     [[nodiscard]] CoverageLine Covered(const QString& code, const QString& yours, const QString& theirs)
@@ -32,6 +37,31 @@ namespace
                 .one = {},
                 .other = {}};
     }
+
+    [[nodiscard]] std::vector<CoverageLine> ManyAirports(const int count)
+    {
+        std::vector<CoverageLine> lines;
+        lines.reserve(static_cast<std::size_t>(count));
+
+        for (int at = 0; at < count; ++at)
+        {
+            lines.push_back(Covered(QStringLiteral("SB%1").arg(at, 2, 10, QLatin1Char('0')),
+                                    QStringLiteral("gsx-pro-airport-sbgr-with-a-long-name-v%1").arg(at),
+                                    QStringLiteral("fs24-asobo-airport-sbgr-guarulhos-with-a-long-name-v%1").arg(at)));
+        }
+
+        return lines;
+    }
+
+    struct Window
+    {
+        explicit Window(const int tall)
+        {
+            parent.resize(900, tall);
+        }
+
+        QWidget parent;
+    };
 
     [[nodiscard]] QStringList TextsOf(const QDialog& dialog)
     {
@@ -113,6 +143,38 @@ void CoverageDialogTest::TheWarningSaysTheCodeOfTheSimulatorCameFromTheName()
     QVERIFY2(said.contains(QStringLiteral("package name")),
              "the app cannot open what the simulator ships, so it reads the code off the name, and the sentence that "
              "claims the overlap is where that has to be said");
+}
+
+void CoverageDialogTest::TheHeadingsLeaveTheScrollAndStandOverTheirColumns()
+{
+    ApplyModernistTheme(*qApp);
+    Window window(1600);
+    CoverageDialog dialog(ManyAirports(3), &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTheHeadingsAreOutsideTheScroll(
+        dialog, {QStringLiteral("Airport"), QStringLiteral("Yours"), QStringLiteral("The simulator's")});
+    VerifyEachHeadingStandsOverItsColumn(dialog);
+}
+
+void CoverageDialogTest::ScrollingTheListLeavesTheHeadingsWhereTheyAre()
+{
+    ApplyModernistTheme(*qApp);
+    Window window(500);
+    CoverageDialog dialog(ManyAirports(30), &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTheListScrollsForRealAndTheHeadingsStay(dialog);
+}
+
+void CoverageDialogTest::TwoRulesFrameTheListAndTheListHasNoFrame()
+{
+    ApplyModernistTheme(*qApp);
+    Window window(1600);
+    CoverageDialog dialog(ManyAirports(3), &window.parent);
+    ShowItSettled(dialog);
+
+    VerifyTwoRulesFrameTheList(dialog);
 }
 
 QTEST_MAIN(CoverageDialogTest)

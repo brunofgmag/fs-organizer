@@ -22,6 +22,9 @@ namespace
         static void ARefusedQuarantineRestoreAlsoSaysWhereTheOccupantIs();
         static void EachDeletedAddonSaysWhichOfTheTwoRoutesTookIt();
         static void ADeletionStoppedByALinkSaysWhichLinksAlreadyWentAway();
+        static void BothStepsOfAnInstallFromAnArchiveHaveTheirOwnNameInTheProgressDialog();
+        static void AnArchiveThatCouldNotBeReadSaysSoInWordsOfItsOwn();
+        static void ASourceInsideWhatWouldBeRemovedHasWordsOfItsOwn();
     };
 }
 
@@ -182,6 +185,30 @@ void FailureTextTest::ADeletionStoppedByALinkSaysWhichLinksAlreadyWentAway()
 
     QVERIFY(line.contains(Explain(FileResult::CouldNotRemoveTheLink)));
     QVERIFY(line.contains(AsText("E:/Sim/Community/aerosoft-crj")));
+}
+
+void FailureTextTest::BothStepsOfAnInstallFromAnArchiveHaveTheirOwnNameInTheProgressDialog()
+{
+    const QStringList names{NameOfImportStep(OperationKind::InstallExtractToStaging),
+                            NameOfImportStep(OperationKind::InstallMoveIntoPlace)};
+
+    QCOMPARE(names.join(QStringLiteral(" | ")), QStringLiteral("Preparing the files… | Moving the copy into place…"));
+}
+
+void FailureTextTest::AnArchiveThatCouldNotBeReadSaysSoInWordsOfItsOwn()
+{
+    const QStringList explanations{Explain(FileResult::CouldNotExtract), Explain(FileResult::TheArchiveNeedsAPassword)};
+
+    QCOMPARE(explanations.join(QStringLiteral(" | ")),
+             QStringLiteral("the files could not be extracted or copied | the archive needs a password"));
+}
+
+void FailureTextTest::ASourceInsideWhatWouldBeRemovedHasWordsOfItsOwn()
+{
+    QCOMPARE(
+        Explain(FileResult::TheSourceIsInsideWhatWouldBeRemoved),
+        QStringLiteral(
+            "the source is inside a folder that the install would remove, or contains one, so nothing was changed"));
 }
 
 QTEST_APPLESS_MAIN(FailureTextTest)

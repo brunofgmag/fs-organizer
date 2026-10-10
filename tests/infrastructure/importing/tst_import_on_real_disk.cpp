@@ -52,6 +52,7 @@ namespace
         static void TheRecordBesideTheItemIsNeverEnumeratedAsAnItem();
         static void AnAccentedOriginComesBackByteForByteFromTheRealFile();
         static void TheSwapReallyExchangesTheOccupantAndTheItemOnDisk();
+        static void TheSwapPutsTheRealJunctionBackOnTheRestoredCopy();
         static void TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart();
         static void AnImportCheckedByTheHashReachesAsFarPastTheCeilingAsTheRestOfTheProbe();
         static void ASecondFolderWithTheNameTheBatchJustLandedIsRefusedAndLeavesItsSourceWhole();
@@ -669,6 +670,47 @@ void ImportOnRealDiskTest::TheSwapReallyExchangesTheOccupantAndTheItemOnDisk()
 
     QVERIFY(recorded.has_value());
     QCOMPARE(recorded->origin, place);
+}
+
+void ImportOnRealDiskTest::TheSwapPutsTheRealJunctionBackOnTheRestoredCopy()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/dist/simbridge.exe", "the older build");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Library/Utils/simbridge/dist/simbridge.exe", "the newer build");
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+
+    const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "simbridge";
+    const std::filesystem::path place = disk.Category() / "simbridge";
+    const std::filesystem::path link = disk.Destination() / "simbridge";
+
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+    QVERIFY(composed.engine.linking
+                .Enable(Addon{.folderPath = place, .manifest = Manifest{}}, disk.Destination(), LinkType::Junction)
+                .Succeeded());
+    QCOMPARE(ContentsOfFile(link / "dist" / "simbridge.exe"), std::string{"the newer build"});
+
+    const QuarantinedItem item = composed.service.Quarantined(disk.Profile()).front();
+    const SwapResult swapped = composed.service.Swap(disk.Profile(), composed.Entries(disk), item);
+
+    QVERIFY(swapped.Succeeded());
+    QVERIFY(composed.engine.filesystemProbe.IsReparsePoint(link));
+    QCOMPARE(NormalizeReparseTarget(composed.engine.linkService.ReadLinkTarget(link).value()), place);
+    QCOMPARE(ContentsOfFile(link / "dist" / "simbridge.exe"), std::string{"the older build"});
+    QCOMPARE(ContentsOfFile(held / "dist" / "simbridge.exe"), std::string{"the newer build"});
+
+    const std::vector<OperationRecord> records = composed.engine.journal.Read();
+    const auto kindAt = [&records](const OperationKind kind)
+    {
+        return std::ranges::find(records, kind, &OperationRecord::kind) - records.begin();
+    };
+
+    QVERIFY(kindAt(OperationKind::DisableAddon) < kindAt(OperationKind::RestoreOverTheOccupant));
+    QVERIFY(kindAt(OperationKind::RestoreOverTheOccupant) < kindAt(OperationKind::EnableAddon));
 }
 
 void ImportOnRealDiskTest::TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart()

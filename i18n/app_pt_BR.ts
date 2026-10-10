@@ -552,6 +552,10 @@
         <source>Disable %1 addons?</source>
         <translation>Desativar %1 addons?</translation>
     </message>
+    <message>
+        <source>Installed, but not enabled: the library could not be read again. Enable it from the list.</source>
+        <translation>Instalado, mas não ativado: não foi possível ler a biblioteca de novo. Ative pela lista.</translation>
+    </message>
     <message numerus="yes">
         <location filename="../src/view/library/AddonTreePage.cpp" line="831"/>
         <source>Nothing changed: %n addon was skipped because its place in the destination is taken.</source>
@@ -851,6 +855,80 @@
         <location filename="../src/viewmodel/AddonTreeViewModel.cpp" line="444"/>
         <source>Every addon here is already linked in the profile destination.</source>
         <translation>Todos os addons daqui já têm o link no destino do perfil.</translation>
+    </message>
+</context>
+<context>
+    <name>ArchiveDrop</name>
+    <message>
+        <source>Drop to install into %1</source>
+        <translation>Solte para instalar em %1</translation>
+    </message>
+    <message>
+        <source>Drop to install into the library. You choose the category next.</source>
+        <translation>Solte para instalar na biblioteca. A categoria você escolhe em seguida.</translation>
+    </message>
+    <message>
+        <source>Only .zip, .rar and .7z archives and addon folders can be installed.</source>
+        <translation>Só dá para instalar arquivos .zip, .rar e .7z e pastas de addon.</translation>
+    </message>
+    <message>
+        <source>Add a library before installing an addon.</source>
+        <translation>Adicione uma biblioteca antes de instalar um addon.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n addon installed into the library.</source>
+        <translation>
+            <numerusform>%n addon instalado na biblioteca.</numerusform>
+            <numerusform>%n addons instalados na biblioteca.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Install into the library</source>
+        <translation>Instalar na biblioteca</translation>
+    </message>
+    <message>
+        <source>Installing into the library</source>
+        <translation>Instalando na biblioteca</translation>
+    </message>
+    <message>
+        <source>Reading what it holds</source>
+        <translation>Lendo o que ele tem</translation>
+    </message>
+    <message>
+        <source>Item %1 of %2 · %3</source>
+        <translation>Item %1 de %2 · %3</translation>
+    </message>
+    <message>
+        <source>Extracting</source>
+        <translation>Extraindo</translation>
+    </message>
+    <message>
+        <source>Checking what was extracted</source>
+        <translation>Conferindo o que foi extraído</translation>
+    </message>
+    <message>
+        <source>Putting into place</source>
+        <translation>Pondo no lugar</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 de %2</translation>
+    </message>
+    <message>
+        <source>Addon %1 of %2 · %3</source>
+        <translation>Addon %1 de %2 · %3</translation>
+    </message>
+    <message>
+        <source>Deleting the temporary copy…</source>
+        <translation>Apagando a cópia temporária…</translation>
+    </message>
+    <message>
+        <source>Copying</source>
+        <translation>Copiando</translation>
+    </message>
+    <message>
+        <source>Checking what was copied</source>
+        <translation>Conferindo o que foi copiado</translation>
     </message>
 </context>
 <context>
@@ -2611,6 +2689,181 @@ Também na biblioteca: %2</translation>
     </message>
 </context>
 <context>
+    <name>InstallDialog</name>
+    <message>
+        <source>Install into the library</source>
+        <translation>Instalar na biblioteca</translation>
+    </message>
+    <message>
+        <source>Addon</source>
+        <translation>Addon</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation>Versão</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Instalada</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>Tamanho</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Categoria</translation>
+    </message>
+    <message>
+        <source>not declared</source>
+        <translation>não declarada</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n addon</source>
+        <translation>
+            <numerusform>%n addon</numerusform>
+            <numerusform>%n addons</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Choose a category</source>
+        <translation>Escolha uma categoria</translation>
+    </message>
+    <message>
+        <source>Choose the category the new addons go to.</source>
+        <translation>Escolha a categoria para onde vão os addons novos.</translation>
+    </message>
+    <message>
+        <source>Library:</source>
+        <translation>Biblioteca:</translation>
+    </message>
+    <message>
+        <source>Category:</source>
+        <translation>Categoria:</translation>
+    </message>
+    <message>
+        <source>Enable after installing</source>
+        <translation>Ativar depois de instalar</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Instalar</translation>
+    </message>
+    <message numerus="yes">
+        <source>Install %n addon</source>
+        <translation>
+            <numerusform>Instalar %n addon</numerusform>
+            <numerusform>Instalar %n addons</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n addon checked · %1</source>
+        <translation>
+            <numerusform>%n addon marcado · %1</numerusform>
+            <numerusform>%n addons marcados · %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files cannot be changed while the simulator is running.</source>
+        <translation>Os arquivos não podem ser alterados com o simulador aberto.</translation>
+    </message>
+    <message>
+        <source>Close %1 and check again.</source>
+        <translation>Feche %1 e verifique de novo.</translation>
+    </message>
+    <message>
+        <source>Check again</source>
+        <translation>Verificar de novo</translation>
+    </message>
+    <message>
+        <source>Permanently discard version %1 from the quarantine to replace this one. It does not go to the recycle bin.</source>
+        <translation>Descartar definitivamente a versão %1 que está na quarentena, para poder substituir. Ela não vai para a lixeira.</translation>
+    </message>
+    <message>
+        <source>Permanently discard the copy in the quarantine to replace this one. It does not go to the recycle bin.</source>
+        <translation>Descartar definitivamente a cópia que está na quarentena, para poder substituir. Ela não vai para a lixeira.</translation>
+    </message>
+    <message>
+        <source>This category has a folder with this name that is not an addon (no manifest.json), and FS Organizer does not replace it.</source>
+        <translation>Esta categoria já tem uma pasta com este nome que não é addon (sem manifest.json), e o FS Organizer não a substitui.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n addon in this list is already installed in this library. It is replaced where it is, whatever category you choose: the installed copy goes to the quarantine, where you can restore it, and the new one keeps its links.</source>
+        <translation>
+            <numerusform>%n addon desta lista já está instalado nesta biblioteca. Ele é substituído onde está, seja qual for a categoria que você escolher: a cópia instalada vai para a quarentena, de onde você pode restaurá-la, e a nova fica com os links dela.</numerusform>
+            <numerusform>%n addons desta lista já estão instalados nesta biblioteca. Cada um é substituído onde está, seja qual for a categoria que você escolher: a cópia instalada vai para a quarentena, de onde você pode restaurá-la, e a nova fica com os links dela.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each addon stays where it is</source>
+        <translation>Cada addon fica onde está</translation>
+    </message>
+    <message>
+        <source>The quarantine keeps one copy of each folder name, so the copy it already holds has to be discarded before the addon is replaced again.</source>
+        <translation>A quarentena guarda uma cópia por nome de pasta, então a cópia que já está lá precisa ser descartada antes de o addon ser substituído de novo.</translation>
+    </message>
+    <message>
+        <source>Check all</source>
+        <translation>Marcar todos</translation>
+    </message>
+    <message>
+        <source>No addon checked</source>
+        <translation>Nenhum addon marcado</translation>
+    </message>
+</context>
+<context>
+    <name>InstallReportDialog</name>
+    <message>
+        <source>Nothing to install</source>
+        <translation>Nada para instalar</translation>
+    </message>
+    <message>
+        <source>Some addons were not installed</source>
+        <translation>Alguns addons não foram instalados</translation>
+    </message>
+    <message>
+        <source>Nothing was installed</source>
+        <translation>Nada foi instalado</translation>
+    </message>
+    <message>
+        <source>Installed, but not enabled</source>
+        <translation>Instalado, mas não ativado</translation>
+    </message>
+    <message>
+        <source>Installed, but a temporary folder was left behind</source>
+        <translation>Instalado, mas uma pasta temporária ficou para trás</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n addon is in the library, but its links could not be made again:</source>
+        <translation>
+            <numerusform>%n addon está na biblioteca, mas os links dele não puderam ser refeitos:</numerusform>
+            <numerusform>%n addons estão na biblioteca, mas os links deles não puderam ser refeitos:</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n addon is now in the library.</source>
+        <translation>
+            <numerusform>%n addon agora está na biblioteca.</numerusform>
+            <numerusform>%n addons agora estão na biblioteca.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n addon was not installed:</source>
+        <translation>
+            <numerusform>%n addon não foi instalado:</numerusform>
+            <numerusform>%n addons não foram instalados:</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing changed in the library, and what you dropped is where it was.</source>
+        <translation>Nada mudou na biblioteca, e o que você soltou continua onde estava.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Fechar</translation>
+    </message>
+</context>
+<context>
     <name>JournalModel</name>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="72"/>
@@ -2781,6 +3034,14 @@ Também na biblioteca: %2</translation>
         <location filename="../src/viewmodel/JournalModel.cpp" line="105"/>
         <source>Enable a simulator package</source>
         <translation>Ativar um pacote do simulador</translation>
+    </message>
+    <message>
+        <source>Stage the files to install</source>
+        <translation>Preparar os arquivos para instalar</translation>
+    </message>
+    <message>
+        <source>Move the staged addon into place</source>
+        <translation>Mover o addon preparado para o lugar</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="114"/>
@@ -3738,6 +3999,11 @@ Os links que já estão em %2 continuam lá funcionando, mas o FS Organizer deix
         <translation>%1 não foi removido: é preciso ter pelo menos um perfil.</translation>
     </message>
     <message>
+        <location filename="../src/view/options/OptionsPage.cpp" line="1020"/>
+        <source>Files cannot be changed while the simulator is running.</source>
+        <translation>Os arquivos não podem ser alterados com o simulador aberto.</translation>
+    </message>
+    <message>
         <location filename="../src/view/options/OptionsPage.cpp" line="860"/>
         <location filename="../src/view/options/OptionsPage.cpp" line="895"/>
         <source>Removed %1.</source>
@@ -4474,6 +4740,94 @@ Aplicar o preset &quot;%2&quot;?</translation>
 <context>
     <name>QObject</name>
     <message>
+        <source>Windows could not open it: it is damaged, or this Windows does not read it. Windows 10 does not read .7z or older .rar.</source>
+        <translation>O Windows não abriu: está danificado, ou este Windows não lê o formato. O Windows 10 não lê .7z nem .rar antigo.</translation>
+    </message>
+    <message>
+        <source>Windows could not open it: it is damaged or is not an archive.</source>
+        <translation>O Windows não abriu: está danificado ou não é um arquivo compactado.</translation>
+    </message>
+    <message>
+        <source>It needs a password, and FS Organizer does not open archives that have one.</source>
+        <translation>Precisa de senha, e o FS Organizer não abre arquivo compactado com senha.</translation>
+    </message>
+    <message>
+        <source>It holds no addon: no folder in it has a manifest.json.</source>
+        <translation>Não tem nenhum addon: nenhuma pasta dele tem um manifest.json.</translation>
+    </message>
+    <message>
+        <source>It holds an installer (.exe or .msi) and no addon. FS Organizer never runs an installer.</source>
+        <translation>Tem um instalador (.exe ou .msi) e nenhum addon. O FS Organizer nunca executa um instalador.</translation>
+    </message>
+    <message>
+        <source>It holds an entry that is not safe to extract: a link, an absolute path, .. or a name Windows cannot write.</source>
+        <translation>Tem uma entrada que não é seguro extrair: um link, um caminho absoluto, .. ou um nome que o Windows não grava.</translation>
+    </message>
+    <message>
+        <source>The addon sits loose at the top of the archive, without a folder of its own to be installed under.</source>
+        <translation>O addon está solto na raiz do arquivo compactado, sem uma pasta própria onde ser instalado.</translation>
+    </message>
+    <message>
+        <source>Two addons in it have the same folder name, and a library holds only one of each.</source>
+        <translation>Dois addons dele têm o mesmo nome de pasta, e a biblioteca só guarda um de cada.</translation>
+    </message>
+    <message>
+        <source>An addon in it has a folder name that FS Organizer keeps for its own files: _fsorganizer-quarantine, or any name ending in .fsorg-partial or .fsorg-swap.</source>
+        <translation>Um addon dele tem um nome de pasta que o FS Organizer reserva para os próprios arquivos: _fsorganizer-quarantine, ou qualquer nome terminado em .fsorg-partial ou .fsorg-swap.</translation>
+    </message>
+    <message>
+        <source>FS Organizer stopped reading or extracting it because it took too long.</source>
+        <translation>O FS Organizer parou de ler ou extrair porque demorou demais.</translation>
+    </message>
+    <message>
+        <source>This Windows does not have tar.exe, which FS Organizer uses to open archives.</source>
+        <translation>Este Windows não tem o tar.exe, que o FS Organizer usa para abrir arquivo compactado.</translation>
+    </message>
+    <message>
+        <source>There is not enough free space in the library to extract it.</source>
+        <translation>Não há espaço livre suficiente na biblioteca para extrair.</translation>
+    </message>
+    <message>
+        <source>Extracting the files failed. Nothing was installed.</source>
+        <translation>A extração dos arquivos falhou. Nada foi instalado.</translation>
+    </message>
+    <message>
+        <source>The extracted files do not match the archive&apos;s contents. Nothing was installed.</source>
+        <translation>Os arquivos extraídos não conferem com o conteúdo do arquivo compactado. Nada foi instalado.</translation>
+    </message>
+    <message>
+        <source>The simulator is running, so it was not installed.</source>
+        <translation>O simulador está em execução, então não foi instalado.</translation>
+    </message>
+    <message>
+        <source>FS Organizer could not delete a temporary folder that an earlier installation left in this category, so nothing was installed.</source>
+        <translation>O FS Organizer não conseguiu apagar uma pasta temporária que uma instalação anterior deixou nesta categoria, então nada foi instalado.</translation>
+    </message>
+    <message>
+        <source>The category already has a folder with this name that is not an addon. FS Organizer does not replace it.</source>
+        <translation>A categoria já tem uma pasta com este nome que não é addon. O FS Organizer não a substitui.</translation>
+    </message>
+    <message>
+        <source>The library or the archive changed after FS Organizer read them. Nothing was installed. Drop the archive again to read it again.</source>
+        <translation>Algo mudou na biblioteca ou no arquivo compactado depois que o FS Organizer os leu. Nada foi instalado. Solte o arquivo compactado de novo para ler outra vez.</translation>
+    </message>
+    <message>
+        <source>What you dropped is inside a folder that installing would remove, or contains one. It was not installed. Move it somewhere else and try again.</source>
+        <translation>O que você soltou está dentro de uma pasta que a instalação apagaria, ou contém uma. Não foi instalado. Mova para outro lugar e tente de novo.</translation>
+    </message>
+    <message>
+        <source>FS Organizer could not delete the temporary folder it extracted into. On the next start it lists that folder under &quot;Unfinished imports&quot;, where you can discard it.</source>
+        <translation>O FS Organizer não conseguiu apagar a pasta temporária para a qual extraiu. Na próxima vez que abrir, ele lista essa pasta em &quot;Importações incompletas&quot;, onde você pode descartá-la.</translation>
+    </message>
+    <message>
+        <source>You cancelled, so nothing was installed.</source>
+        <translation>Você cancelou, então nada foi instalado.</translation>
+    </message>
+    <message>
+        <source>(library root)</source>
+        <translation>(raiz da biblioteca)</translation>
+    </message>
+    <message>
         <source>Both copies declare the same version, so there is no telling which one is newer.</source>
         <translation>As duas cópias declaram a mesma versão, então não dá para saber qual é a mais nova.</translation>
     </message>
@@ -4765,6 +5119,19 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <translation>esse arquivo de programa não existe, então nada mudou</translation>
     </message>
     <message>
+        <source>the files could not be extracted or copied</source>
+        <translation>os arquivos não puderam ser extraídos ou copiados</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/FailureText.cpp" line="141"/>
+        <source>the archive needs a password</source>
+        <translation>o arquivo compactado pede senha</translation>
+    </message>
+    <message>
+        <source>the source is inside a folder that the install would remove, or contains one, so nothing was changed</source>
+        <translation>a origem está dentro de uma pasta que a instalação removeria, ou contém uma, então nada foi alterado</translation>
+    </message>
+    <message>
         <source>the journal does not know where this came from</source>
         <translation type="vanished">o diário não sabe de onde isto veio</translation>
     </message>
@@ -4978,6 +5345,10 @@ Aplicar o preset &quot;%2&quot;?</translation>
         <location filename="../src/viewmodel/FailureText.cpp" line="268"/>
         <source>Creating the link in the destination…</source>
         <translation>Criando o link no destino…</translation>
+    </message>
+    <message>
+        <source>Preparing the files…</source>
+        <translation>Preparando os arquivos…</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/JournalModel.cpp" line="21"/>
@@ -5472,6 +5843,38 @@ Tamanho %2</translation>
             <numerusform>%n preset não conseguiu acompanhar o caminho novo e ainda cita o antigo: %1.</numerusform>
             <numerusform>%n presets não conseguiram acompanhar o caminho novo e ainda citam o antigo: %1.</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Copying the files failed. Nothing was installed.</source>
+        <translation>A cópia dos arquivos falhou. Nada foi instalado.</translation>
+    </message>
+    <message>
+        <source>The copied files do not match what was in the folder. Nothing was installed.</source>
+        <translation>Os arquivos copiados não conferem com o que estava na pasta. Nada foi instalado.</translation>
+    </message>
+    <message>
+        <source>FS Organizer stopped reading or copying it because it took too long.</source>
+        <translation>O FS Organizer parou de ler ou copiar porque demorou demais.</translation>
+    </message>
+    <message>
+        <source>The library or the folder changed after FS Organizer read them. Nothing was installed. Drop the folder again to read it again.</source>
+        <translation>Algo mudou na biblioteca ou na pasta depois que o FS Organizer as leu. Nada foi instalado. Solte a pasta de novo para ler outra vez.</translation>
+    </message>
+    <message>
+        <source>FS Organizer could not delete the temporary folder it copied into. On the next start it lists that folder under &quot;Unfinished imports&quot;, where you can discard it.</source>
+        <translation>O FS Organizer não conseguiu apagar a pasta temporária para a qual copiou. Na próxima vez que abrir, ele lista essa pasta em &quot;Importações incompletas&quot;, onde você pode descartá-la.</translation>
+    </message>
+    <message>
+        <source>There is not enough free space in the library to copy it.</source>
+        <translation>Não há espaço livre suficiente na biblioteca para copiar.</translation>
+    </message>
+    <message>
+        <source>FS Organizer could not read this folder. It is a link, a drive root, or a folder it cannot open.</source>
+        <translation>O FS Organizer não conseguiu ler esta pasta. Ela é um link, a raiz de uma unidade ou uma pasta que ele não pode abrir.</translation>
+    </message>
+    <message>
+        <source>It holds something unsafe to copy: a link or junction, or a name Windows cannot write.</source>
+        <translation>Tem algo que não é seguro copiar: um link ou junção, ou um nome que o Windows não grava.</translation>
     </message>
 </context>
 <context>
@@ -6126,6 +6529,19 @@ Tamanho %2</translation>
         <source>Keep both enabled</source>
         <translation>Manter os dois ativados</translation>
     </message>
+    <message>
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="118"/>
+        <source>Disabling what you enabled changes nothing that was already enabled.</source>
+        <translation>Desativar o que você ativou não muda nada do que já estava ativado.</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/view/library/SharedAirportsDialog.cpp" line="131"/>
+        <source>Disable the %n you enabled</source>
+        <translation>
+            <numerusform>Desativar o que você ativou</numerusform>
+            <numerusform>Desativar os %n que você ativou</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>SimulatorPage</name>
@@ -6775,6 +7191,17 @@ Tamanho %2</translation>
         <location filename="../src/view/simulator/StartupPage.cpp" line="772"/>
         <source>This cannot be undone.</source>
         <translation>Não pode ser desfeito.</translation>
+    </message>
+</context>
+<context>
+    <name>StepProgressDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Cancelling…</source>
+        <translation>Cancelando…</translation>
     </message>
 </context>
 <context>

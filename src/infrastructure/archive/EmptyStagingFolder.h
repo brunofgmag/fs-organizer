@@ -1,0 +1,8 @@
+#ifndef FS_ORGANIZER_INFRASTRUCTURE_ARCHIVE_EMPTY_STAGING_FOLDER_H
+#define FS_ORGANIZER_INFRASTRUCTURE_ARCHIVE_EMPTY_STAGING_FOLDER_H
+
+#include <filesystem>
+
+[[nodiscard]] bool IsAnEmptyStagingFolder(const std::filesystem::path& folder);
+
+#endif // FS_ORGANIZER_INFRASTRUCTURE_ARCHIVE_EMPTY_STAGING_FOLDER_H

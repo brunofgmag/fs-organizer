@@ -8,6 +8,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QProcess>
+#include <QtCore/QProcessEnvironment>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkReply>
 
@@ -17,6 +18,9 @@ namespace
 {
     constexpr auto kZipRootFolder = "fs-organizer";
     constexpr int kTransferTimeoutMs = 30000;
+
+    constexpr auto kZipVariable = "FSORG_UPDATE_ZIP";
+    constexpr auto kStageVariable = "FSORG_UPDATE_STAGE";
 
     constexpr auto kApplyScriptResource = ":/scripts/apply.ps1";
 
@@ -297,6 +301,20 @@ GithubUpdateService::ChecksumVerdict GithubUpdateService::VerifyChecksum(const Q
     return ChecksumVerdict::Matches;
 }
 
+void StartExpandingTheUpdate(QProcess& process, const QString& zipPath, const QString& stagedRoot)
+{
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    environment.insert(QString::fromLatin1(kZipVariable), QDir::toNativeSeparators(zipPath));
+    environment.insert(QString::fromLatin1(kStageVariable), QDir::toNativeSeparators(stagedRoot));
+    process.setProcessEnvironment(environment);
+
+    process.start(QStringLiteral("powershell.exe"),
+                  {QStringLiteral("-NoProfile"), QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
+                   QStringLiteral("-NonInteractive"), QStringLiteral("-Command"),
+                   QStringLiteral("Expand-Archive -LiteralPath $env:%1 -DestinationPath $env:%2 -Force")
+                       .arg(QString::fromLatin1(kZipVariable), QString::fromLatin1(kStageVariable))});
+}
+
 void GithubUpdateService::StartExtraction(const QString& zipPath, const QString& stagedRoot)
 {
     static_cast<void>(QDir().mkpath(stagedRoot));
@@ -309,11 +327,7 @@ void GithubUpdateService::StartExtraction(const QString& zipPath, const QString&
                 OnExtractionFinished(exitCode);
             });
 
-    extraction_->start(QStringLiteral("powershell.exe"),
-                       {QStringLiteral("-NoProfile"), QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
-                        QStringLiteral("-NonInteractive"), QStringLiteral("-Command"),
-                        QStringLiteral("Expand-Archive -LiteralPath '%1' -DestinationPath '%2' -Force")
-                            .arg(QDir::toNativeSeparators(zipPath), QDir::toNativeSeparators(stagedRoot))});
+    StartExpandingTheUpdate(*extraction_, zipPath, stagedRoot);
 }
 
 void GithubUpdateService::OnExtractionFinished(const int exitCode)

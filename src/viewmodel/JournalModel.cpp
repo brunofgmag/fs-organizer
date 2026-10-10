@@ -66,7 +66,8 @@ namespace
         case OperationKind::RestoreTheStartupEntry:
         case OperationKind::ForgetTheStartupEntry:
         case OperationKind::TurnOffTheSimulatorPackage:
-        case OperationKind::TurnOnTheSimulatorPackage: return true;
+        case OperationKind::TurnOnTheSimulatorPackage:
+        case OperationKind::InstallExtractToStaging: return true;
         case OperationKind::EnableAddon:
         case OperationKind::DisableAddon:
         case OperationKind::RemoveBrokenLink:
@@ -91,15 +92,26 @@ namespace
         case OperationKind::GiveBackToAnotherProgram:
         case OperationKind::UndoTheInterruptedSwap:
         case OperationKind::RestoreOverTheOccupant:
+        case OperationKind::InstallMoveIntoPlace:
         case OperationKind::TakeBackTheCategoryMarker: return false;
         }
 
         return false;
     }
 
+    bool NamesItself(const OperationRecord& record)
+    {
+        if (record.kind == OperationKind::InstallExtractToStaging)
+        {
+            return true;
+        }
+
+        return record.addonId.folderName.empty() && IsAboutSomethingOtherThanAnAddon(record.kind);
+    }
+
     QString AddonName(const OperationRecord& record)
     {
-        if (record.addonId.folderName.empty() && IsAboutSomethingOtherThanAnAddon(record.kind))
+        if (NamesItself(record))
         {
             return QString::fromStdString(record.label);
         }
@@ -224,6 +236,8 @@ QString JournalModel::KindLabel(const OperationKind kind)
     case OperationKind::ForgetTheStartupEntry: return tr("Discard a removed startup entry");
     case OperationKind::TurnOffTheSimulatorPackage: return tr("Disable a simulator package");
     case OperationKind::TurnOnTheSimulatorPackage: return tr("Enable a simulator package");
+    case OperationKind::InstallExtractToStaging: return tr("Stage the files to install");
+    case OperationKind::InstallMoveIntoPlace: return tr("Move the staged addon into place");
     }
 
     return {};

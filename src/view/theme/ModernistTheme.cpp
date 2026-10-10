@@ -102,11 +102,14 @@ QLabel#TriageQuiet { color: %secondary%; }
 QFrame#TriageSeparator { background: %divider%; }
 QLabel#FooterRestart { color: %accentInk%; font-weight: 600; }
 QLabel#EntryRefusal { color: %accentInk%; }
+QLabel#InstallNotice, QLabel#InstallHint { color: %accentInk%; }
 QLabel#FooterSummary { color: %secondary%; }
 QLabel#FooterAside { color: %secondary%; }
 QProgressBar#FooterMeter, QProgressBar#ImportMeter { background: %raised%; border: none; }
 QProgressBar#FooterMeter::chunk, QProgressBar#ImportMeter::chunk { background: %accent%; }
 QLabel#ImportQuiet { color: %secondary%; }
+QLabel#StepName[stage="next"] { color: %faint%; }
+QLabel#StepName[stage="done"] { color: %secondary%; }
 #PanelHeader { background: %chrome%; border-left: 1px solid %divider%; border-bottom: 2px solid %divider%; }
 #PanelBody { background: %chrome%; border-left: 1px solid %divider%; }
 #PanelRail { background: %chrome%; border-left: 1px solid %divider%; }
@@ -118,7 +121,9 @@ QLabel#PanelTitle { color: %text%; }
 QLabel#PanelSubHeading { color: %secondary%; font-weight: 700; }
 QLabel#PresetPlanFor { color: %text%; font-weight: 700; }
 QLabel#PanelPromise { color: %secondary%; }
+QLabel#ReportPromise { color: %secondary%; }
 QLabel#SectionHeadline { color: %text%; font-weight: 700; }
+QLabel#ReportAddon { font-weight: 600; }
 QLabel#ReadingCaption { color: %secondary%; font-weight: 700; }
 QLabel#DetailFieldName { color: %secondary%; }
 QTextEdit#UncutText {

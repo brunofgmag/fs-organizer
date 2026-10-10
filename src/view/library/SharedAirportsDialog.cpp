@@ -1,12 +1,17 @@
 #include "view/library/SharedAirportsDialog.h"
 
+#include <algorithm>
+
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QVBoxLayout>
 
+#include "view/HeadingsOverTheColumns.h"
+#include "view/ListUnderItsHeadings.h"
 #include "view/ScrollThatReportsItsContent.h"
 #include "view/theme/ModernistMetrics.h"
 
@@ -25,37 +30,48 @@ namespace
         return QObject::tr("%1 and %n more", nullptr, static_cast<int>(codes.size()) - kAtMostSpelledOut)
             .arg(codes.mid(0, kAtMostSpelledOut).join(QStringLiteral(", ")));
     }
+
+    [[nodiscard]] std::vector<AddonId> WhatWasJustEnabled(const std::vector<SharedAirportsLine>& shared)
+    {
+        std::vector<AddonId> enabled;
+
+        for (const SharedAirportsLine& line : shared)
+        {
+            if (std::ranges::find(enabled, line.one) == enabled.end())
+            {
+                enabled.push_back(line.one);
+            }
+        }
+
+        return enabled;
+    }
 }
 
 SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>& shared, QWidget* parent)
-    : QDialog(parent)
+    : QDialog(parent), enabled_(WhatWasJustEnabled(shared))
 {
     setWindowTitle(tr("Two addons for the same airport"));
 
+    const int enabled = static_cast<int>(enabled_.size());
+
     auto* explanation = new QLabel(tr("%n addon you just enabled covers the same airport as another enabled addon. "
                                       "Only addons whose scenery has already been scanned are compared.",
-                                      nullptr, static_cast<int>(shared.size())),
+                                      nullptr, enabled),
                                    this);
     explanation->setWordWrap(true);
 
+    const QStringList named = {tr("Can coexist"), tr("You enabled"), tr("Already enabled"), tr("Airports")};
+    auto* headings = new HeadingsOverTheColumns(named, this);
+
     auto* listed = new QWidget(this);
     auto* grid = new QGridLayout(listed);
-    grid->setContentsMargins(0, 0, 0, 0);
-    grid->setColumnStretch(3, 1);
-    grid->setHorizontalSpacing(12);
-    grid->setVerticalSpacing(6);
-
-    for (const auto& [column, heading] : {std::pair{0, tr("Can coexist")}, std::pair{1, tr("You enabled")},
-                                          std::pair{2, tr("Already enabled")}, std::pair{3, tr("Airports")}})
-    {
-        auto* label = new QLabel(heading, listed);
-        label->setObjectName(QStringLiteral("PanelSubHeading"));
-        grid->addWidget(label, 0, column);
-    }
+    headings->ShapeTheGridUnder(*grid);
+    grid->setColumnStretch(1, 1);
+    grid->setColumnStretch(2, 1);
 
     rows_.reserve(shared.size());
 
-    int row = 1;
+    int row = 0;
     for (const SharedAirportsLine& line : shared)
     {
         auto* box = new QCheckBox(listed);
@@ -77,6 +93,11 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
         airports->setWordWrap(true);
         grid->addWidget(airports, row, 3, Qt::AlignTop);
 
+        if (row == 0)
+        {
+            headings->StandOver({box, yours, theirs, airports});
+        }
+
         ++row;
     }
 
@@ -85,13 +106,18 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
     auto* scroll = new ScrollThatReportsItsContent(this);
     scroll->setWidget(listed);
     scroll->setWidgetResizable(true);
-    scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter);
+    scroll->MeasureTheContentAt(kDialogWidth - 2 * kPageGutter - scroll->verticalScrollBar()->sizeHint().width());
 
     auto* promise = new QLabel(
         tr("Both stay enabled, and the simulator decides which one loads. Check a pair to stop the warnings about it."),
         this);
     promise->setObjectName(QStringLiteral("PanelPromise"));
     promise->setWordWrap(true);
+
+    auto* whatDisablingDoes =
+        new QLabel(tr("Disabling what you enabled changes nothing that was already enabled."), this);
+    whatDisablingDoes->setObjectName(QStringLiteral("PanelPromise"));
+    whatDisablingDoes->setWordWrap(true);
 
     auto* buttons = new QDialogButtonBox(this);
     QPushButton* leave = buttons->addButton(tr("Keep both enabled"), QDialogButtonBox::RejectRole);
@@ -100,6 +126,10 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
 
     QPushButton* remember = buttons->addButton(tr("Stop warning about the checked ones"), QDialogButtonBox::AcceptRole);
     remember->setEnabled(false);
+
+    QPushButton* turnBackOff =
+        buttons->addButton(tr("Disable the %n you enabled", nullptr, enabled), QDialogButtonBox::ResetRole);
+    turnBackOff->setObjectName(QStringLiteral("DisableWhatWasEnabled"));
 
     const auto SayHowManyAreChecked = [this, remember]
     {
@@ -125,13 +155,19 @@ SharedAirportsDialog::SharedAirportsDialog(const std::vector<SharedAirportsLine>
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    connect(turnBackOff, &QPushButton::clicked, this,
+            [this]
+            {
+                done(static_cast<int>(SharedAirportsAnswer::DisableWhatWasEnabled));
+            });
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(kPageGutter, kPageGutter, kPageGutter, kPageGutter);
     layout->addWidget(explanation);
     layout->addWidget(all);
-    layout->addWidget(scroll, 1);
+    layout->addLayout(ListUnderItsHeadings(*headings, *scroll, *this), 1);
     layout->addWidget(promise);
+    layout->addWidget(whatDisablingDoes);
     layout->addWidget(buttons);
 
     SizeToTheContent(*this, kDialogWidth);
@@ -150,4 +186,9 @@ std::vector<CoexistingPair> SharedAirportsDialog::Chosen() const
     }
 
     return chosen;
+}
+
+const std::vector<AddonId>& SharedAirportsDialog::WhatWasEnabled() const
+{
+    return enabled_;
 }
