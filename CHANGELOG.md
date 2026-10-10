@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.58.0](https://github.com/brunofgmag/fs-organizer/compare/v0.57.1...v0.58.0) (2026-10-10)
+
+
+* install addons from archives and folders dropped on the window ([#216](https://github.com/brunofgmag/fs-organizer/issues/216)) ([d21ee5b](https://github.com/brunofgmag/fs-organizer/commit/d21ee5b573e6efc9a8fb9e91d793c52361c1c9c9))
+
+
+### Features
+
+* install addons from archives and folders dropped on the window ([9c8b73f](https://github.com/brunofgmag/fs-organizer/commit/9c8b73f1cf9808e485b0d269efe988cb5b21642c)) ([d21ee5b](https://github.com/brunofgmag/fs-organizer/commit/d21ee5b573e6efc9a8fb9e91d793c52361c1c9c9))
+
 ## [0.57.1](https://github.com/brunofgmag/fs-organizer/compare/v0.57.0...v0.57.1) (2026-10-03)
 
 
