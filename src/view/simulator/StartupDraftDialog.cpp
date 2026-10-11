@@ -224,7 +224,7 @@ void StartupDraftDialog::ShowWhatTheCheckSays()
     addonIsOff_->setText(tr("The addon is disabled now, so the program will not start until you enable it."));
     addonIsOff_->setVisible(linked && check.addonIsOff);
     ShowTheRefusal(check);
-    presetsFollow_->setText(tr("%n preset names this entry and will follow the new path.", nullptr,
+    presetsFollow_->setText(tr("%n preset names this entry and will be updated to the new path.", nullptr,
                                static_cast<int>(check.presetsNamingTheEntry)));
     presetsFollow_->setVisible(moved && check.presetsNamingTheEntry > 0);
     goesToRemoved_->setText(tr("The entry as it is now goes to Removed."));

@@ -1322,7 +1322,7 @@ void StartupPageTest::AMovedPathSaysHowManyPresetsFollowedTheReturnPresetInclude
     ButtonSaying(f.page, "Edit…")->click();
 
     QVERIFY(opened);
-    QVERIFY(status.last().first().toString().contains(QStringLiteral("1 preset followed the new path.")));
+    QVERIFY(status.last().first().toString().contains(QStringLiteral("1 preset was updated to the new path.")));
 
     Preset returnPreset;
     returnPreset.name = "Back";
@@ -1370,7 +1370,7 @@ void StartupPageTest::AMovedPathNamesTheReturnPresetThatCouldNotFollow()
 
     QVERIFY(opened);
     QVERIFY(status.last().first().toString().contains(
-        QStringLiteral("1 preset could not follow the new path and still names the old one: "
+        QStringLiteral("1 preset could not be updated to the new path and still names the old one: "
                        "Back to the previous set.")));
 }
 
