@@ -138,7 +138,7 @@ namespace
             return QCoreApplication::translate(
                 "CommunityPage",
                 "Something wrote a regular folder over the link this app made. The simulator now loads that folder, "
-                "and enabling, presets and the culprit search no longer reach your library copy. Choose which copy "
+                "and enabling, presets and the culprit search no longer act on your library copy. Choose which copy "
                 "to keep.");
         case EntryClassification::Managed:
         case EntryClassification::Broken:

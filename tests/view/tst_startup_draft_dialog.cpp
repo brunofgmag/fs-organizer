@@ -250,7 +250,7 @@ void StartupDraftDialogTest::AnEditThatChangesThePathSaysWhatHappensToThePresets
 
     QCOMPARE(said.size(), 2);
     QVERIFY(said.at(0).startsWith(QStringLiteral("2 ")));
-    QVERIFY(said.at(0).contains(QStringLiteral("will follow the new path.")));
+    QVERIFY(said.at(0).contains(QStringLiteral("will be updated to the new path.")));
     QCOMPARE(said.at(1), QStringLiteral("The entry as it is now goes to Removed."));
     QVERIFY(Confirm(scene.dialog, "Save")->isEnabled());
 
