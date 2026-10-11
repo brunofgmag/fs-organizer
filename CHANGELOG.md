@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.0](https://github.com/brunofgmag/fs-organizer/compare/v0.58.0...v1.0.0) (2026-10-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* promote the app to version 1 ([31f86a6](https://github.com/brunofgmag/fs-organizer/commit/31f86a633517dcb39e328f7393b47e09807199b6))
+
+* promote the app to version 1 ([#219](https://github.com/brunofgmag/fs-organizer/issues/219)) ([9e1df3b](https://github.com/brunofgmag/fs-organizer/commit/9e1df3bd489bef2e7c30e008cd3ab77773552c1d))
+
+
+### Features
+
+* promote the app to version 1 ([31f86a6](https://github.com/brunofgmag/fs-organizer/commit/31f86a633517dcb39e328f7393b47e09807199b6)) ([9e1df3b](https://github.com/brunofgmag/fs-organizer/commit/9e1df3bd489bef2e7c30e008cd3ab77773552c1d))
+
 ## [0.58.0](https://github.com/brunofgmag/fs-organizer/compare/v0.57.1...v0.58.0) (2026-10-10)
 
 
