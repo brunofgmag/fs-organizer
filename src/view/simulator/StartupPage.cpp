@@ -207,7 +207,7 @@ namespace
         const auto followed =
             static_cast<int>(outcome.presetsThatFollowed.size()) + (outcome.returnPresetFollowed ? 1 : 0);
 
-        return followed == 0 ? QString() : QObject::tr("%n preset followed the new path.", nullptr, followed);
+        return followed == 0 ? QString() : QObject::tr("%n preset was updated to the new path.", nullptr, followed);
     }
 
     QString TheNoteOnThePresetsThatCouldNot(const StartupGestureOutcome& outcome)
@@ -229,7 +229,7 @@ namespace
             return {};
         }
 
-        return QObject::tr("%n preset could not follow the new path and still names the old one: %1.", nullptr,
+        return QObject::tr("%n preset could not be updated to the new path and still names the old one: %1.", nullptr,
                            static_cast<int>(names.size()))
             .arg(names.join(QStringLiteral(", ")));
     }
@@ -457,10 +457,10 @@ void StartupPage::RetranslateUi() const
     nothingRemoved_->Retell(tr("No removed entries"),
                             tr("Entries you remove from the startup file stay here, with their name and command "
                                "line, until you restore or discard them."));
-    leftAlone_->Retell(
-        tr("The startup entries are not managed"),
-        tr("When managed, FS Organizer reads the simulator's startup file, lists the programs it launches with itself, "
-           "and lets you add, edit, disable and remove them without editing XML."));
+    leftAlone_->Retell(tr("The startup entries are not managed"),
+                       tr("When managed, FS Organizer reads the simulator's startup file, lists the programs that "
+                          "start along with it, and lets you add, edit, disable and remove them without editing "
+                          "XML."));
     turnOn_->setText(tr("Manage startup entries"));
 }
 
@@ -487,7 +487,7 @@ void StartupPage::ShowWhatTheFileSays()
     }
 
     emit SummaryChanged(
-        tr("%n program the simulator launches with itself.", nullptr, static_cast<int>(viewModel_.Lines().size())));
+        tr("%n program that starts along with the simulator.", nullptr, static_cast<int>(viewModel_.Lines().size())));
 }
 
 void StartupPage::ChooseThePane()

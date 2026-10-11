@@ -1133,8 +1133,8 @@ Also in the library: %2</translation>
         <translation>Substituted</translation>
     </message>
     <message>
-        <source>Something wrote a regular folder over the link this app made. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy. Choose which copy to keep.</source>
-        <translation>Something wrote a regular folder over the link this app made. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy. Choose which copy to keep.</translation>
+        <source>Something wrote a regular folder over the link this app made. The simulator now loads that folder, and enabling, presets and the culprit search no longer act on your library copy. Choose which copy to keep.</source>
+        <translation>Something wrote a regular folder over the link this app made. The simulator now loads that folder, and enabling, presets and the culprit search no longer act on your library copy. Choose which copy to keep.</translation>
     </message>
     <message>
         <location filename="../src/view/community/CommunityPage.cpp" line="115"/>
@@ -4385,8 +4385,8 @@ Links already in %2 stay there and keep working, but FS Organizer stops managing
     </message>
     <message>
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="303"/>
-        <source>Nothing was applied: the addons enabled right now could not be saved to come back to later. The presets folder may be full or read-only.</source>
-        <translation>Nothing was applied: the addons enabled right now could not be saved to come back to later. The presets folder may be full or read-only.</translation>
+        <source>Nothing was applied: the addons enabled right now could not be saved, so you would not be able to return to them. The presets folder may be full or read-only.</source>
+        <translation>Nothing was applied: the addons enabled right now could not be saved, so you would not be able to return to them. The presets folder may be full or read-only.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/viewmodel/PresetViewModel.cpp" line="326"/>
@@ -4828,16 +4828,16 @@ Apply the preset &quot;%2&quot;?</translation>
         <translation>(library root)</translation>
     </message>
     <message>
-        <source>Both copies declare the same version, so there is no telling which one is newer.</source>
-        <translation>Both copies declare the same version, so there is no telling which one is newer.</translation>
+        <source>Both copies declare the same version, so FS Organizer cannot tell which one is newer.</source>
+        <translation>Both copies declare the same version, so FS Organizer cannot tell which one is newer.</translation>
     </message>
     <message>
-        <source>At least one copy declares no version, so there is no telling which one is newer.</source>
-        <translation>At least one copy declares no version, so there is no telling which one is newer.</translation>
+        <source>At least one copy declares no version, so FS Organizer cannot tell which one is newer.</source>
+        <translation>At least one copy declares no version, so FS Organizer cannot tell which one is newer.</translation>
     </message>
     <message>
-        <source>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy.</source>
-        <translation>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder, and enabling, presets and the culprit search no longer reach your library copy.</translation>
+        <source>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder, and enabling, presets and the culprit search no longer act on your library copy.</source>
+        <translation>This folder was a link to your library until something wrote a regular folder over it. The simulator now loads that folder, and enabling, presets and the culprit search no longer act on your library copy.</translation>
     </message>
     <message>
         <source>Folder in place of the link</source>
@@ -5830,18 +5830,18 @@ Size %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/simulator/StartupPage.cpp" line="199"/>
-        <source>%n preset followed the new path.</source>
+        <source>%n preset was updated to the new path.</source>
         <translation>
-            <numerusform>%n preset followed the new path.</numerusform>
-            <numerusform>%n presets followed the new path.</numerusform>
+            <numerusform>%n preset was updated to the new path.</numerusform>
+            <numerusform>%n presets were updated to the new path.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/simulator/StartupPage.cpp" line="191"/>
-        <source>%n preset could not follow the new path and still names the old one: %1.</source>
+        <source>%n preset could not be updated to the new path and still names the old one: %1.</source>
         <translation>
-            <numerusform>%n preset could not follow the new path and still names the old one: %1.</numerusform>
-            <numerusform>%n presets could not follow the new path and still name the old one: %1.</numerusform>
+            <numerusform>%n preset could not be updated to the new path and still names the old one: %1.</numerusform>
+            <numerusform>%n presets could not be updated to the new path and still name the old one: %1.</numerusform>
         </translation>
     </message>
     <message>
@@ -6771,10 +6771,10 @@ Size %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/simulator/StartupDraftDialog.cpp" line="224"/>
-        <source>%n preset names this entry and will follow the new path.</source>
+        <source>%n preset names this entry and will be updated to the new path.</source>
         <translation>
-            <numerusform>%n preset names this entry and will follow the new path.</numerusform>
-            <numerusform>%n presets name this entry and will follow the new path.</numerusform>
+            <numerusform>%n preset names this entry and will be updated to the new path.</numerusform>
+            <numerusform>%n presets name this entry and will be updated to the new path.</numerusform>
         </translation>
     </message>
     <message>
@@ -6938,10 +6938,10 @@ Size %2</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/simulator/StartupPage.cpp" line="205"/>
-        <source>%n program the simulator launches with itself.</source>
+        <source>%n program that starts along with the simulator.</source>
         <translation>
-            <numerusform>%n program the simulator launches with itself.</numerusform>
-            <numerusform>%n programs the simulator launches with itself.</numerusform>
+            <numerusform>%n program that starts along with the simulator.</numerusform>
+            <numerusform>%n programs that start along with the simulator.</numerusform>
         </translation>
     </message>
     <message>
@@ -7061,8 +7061,8 @@ Size %2</translation>
     </message>
     <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="400"/>
-        <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you add, edit, disable and remove them without editing XML.</source>
-        <translation>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs it launches with itself, and lets you add, edit, disable and remove them without editing XML.</translation>
+        <source>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs that start along with it, and lets you add, edit, disable and remove them without editing XML.</source>
+        <translation>When managed, FS Organizer reads the simulator&apos;s startup file, lists the programs that start along with it, and lets you add, edit, disable and remove them without editing XML.</translation>
     </message>
     <message numerus="yes">
         <location filename="../src/view/simulator/StartupPage.cpp" line="421"/>

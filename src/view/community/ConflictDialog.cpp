@@ -55,7 +55,7 @@ namespace
             .title = ConflictDialog::tr("The link was replaced"),
             .explanation = QObject::tr("This folder was a link to your library until something wrote a regular folder "
                                        "over it. The simulator now loads that folder, and enabling, presets and the "
-                                       "culprit search no longer reach your library copy."),
+                                       "culprit search no longer act on your library copy."),
             .provenanceSide = QObject::tr("Folder in place of the link"),
             .keepTheProvenanceOne = QObject::tr("Move this folder into the library and link it back"),
             .warning = QObject::tr("The library copy is enabled in %1. It is moved to the quarantine first.")};
@@ -112,9 +112,10 @@ namespace
             HowTheVersionCompares(details.provenance.manifest.packageVersion, details.library.manifest.packageVersion))
         {
         case VersionOrder::TheSame:
-            return QObject::tr("Both copies declare the same version, so there is no telling which one is newer.");
+            return QObject::tr("Both copies declare the same version, so FS Organizer cannot tell which one is newer.");
         case VersionOrder::NoOneCanTell:
-            return QObject::tr("At least one copy declares no version, so there is no telling which one is newer.");
+            return QObject::tr(
+                "At least one copy declares no version, so FS Organizer cannot tell which one is newer.");
         case VersionOrder::Newer:
         case VersionOrder::Older: break;
         }

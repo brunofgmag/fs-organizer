@@ -434,8 +434,8 @@ void PresetViewModel::NoteApplied(ApplyWork& work)
 
     if (report.refusal == PresetApplyRefusal::TheReturnPresetCouldNotBeWritten)
     {
-        emit Refused(tr("Nothing was applied: the addons enabled right now could not be saved to come back to later. "
-                        "The presets folder may be full or read-only."));
+        emit Refused(tr("Nothing was applied: the addons enabled right now could not be saved, so you would not be "
+                        "able to return to them. The presets folder may be full or read-only."));
         return;
     }
 
