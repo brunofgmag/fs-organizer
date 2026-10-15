@@ -43,6 +43,11 @@ std::filesystem::path CacheHomeFolder()
     return Writable(QStandardPaths::GenericCacheLocation);
 }
 
+std::filesystem::path RuntimeFolder()
+{
+    return Writable(QStandardPaths::RuntimeLocation);
+}
+
 AppFolders LinuxAppFolders()
 {
     const std::filesystem::path config = ConfigHomeFolder() / kApplicationFolderName;

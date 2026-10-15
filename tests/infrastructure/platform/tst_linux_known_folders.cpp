@@ -2,6 +2,8 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
+#include <optional>
+
 #include "infrastructure/platform/LinuxKnownFolders.h"
 #include "support/PathText.h"
 #include "tests/support/PathPrinting.h"
@@ -16,17 +18,19 @@ namespace
         void init();
         void cleanup();
         void TheConfigDataAndCacheHomesFollowTheXdgVariables();
+        void TheRuntimeFolderFollowsTheXdgVariableAndIsPrivateToTheUser();
         void WithoutTheVariablesTheHomesAreTheUsualOnesUnderTheHomeFolder();
         void TheSettingsLiveInTheConfigHomeAndTheCacheableFilesInTheCacheHome();
         void EverythingTheUserBuiltLivesInTheDataHome();
         void NothingIsCreatedOnDiskJustByAskingWhereItWouldGo();
 
     private:
-        QTemporaryDir root_;
+        std::optional<QTemporaryDir> root_{};
         QByteArray home_{};
         QByteArray config_{};
         QByteArray data_{};
         QByteArray cache_{};
+        QByteArray runtime_{};
     };
 }
 
@@ -36,13 +40,15 @@ void LinuxKnownFoldersTest::init()
     config_ = qgetenv("XDG_CONFIG_HOME");
     data_ = qgetenv("XDG_DATA_HOME");
     cache_ = qgetenv("XDG_CACHE_HOME");
+    runtime_ = qgetenv("XDG_RUNTIME_DIR");
 
-    QVERIFY(root_.isValid());
+    root_.emplace();
+    QVERIFY(root_->isValid());
 
-    qputenv("HOME", root_.filePath(QStringLiteral("home")).toUtf8());
-    qputenv("XDG_CONFIG_HOME", root_.filePath(QStringLiteral("config")).toUtf8());
-    qputenv("XDG_DATA_HOME", root_.filePath(QStringLiteral("data")).toUtf8());
-    qputenv("XDG_CACHE_HOME", root_.filePath(QStringLiteral("cache")).toUtf8());
+    qputenv("HOME", root_->filePath(QStringLiteral("home")).toUtf8());
+    qputenv("XDG_CONFIG_HOME", root_->filePath(QStringLiteral("config")).toUtf8());
+    qputenv("XDG_DATA_HOME", root_->filePath(QStringLiteral("data")).toUtf8());
+    qputenv("XDG_CACHE_HOME", root_->filePath(QStringLiteral("cache")).toUtf8());
 }
 
 void LinuxKnownFoldersTest::cleanup()
@@ -62,14 +68,25 @@ void LinuxKnownFoldersTest::cleanup()
     restore("XDG_CONFIG_HOME", config_);
     restore("XDG_DATA_HOME", data_);
     restore("XDG_CACHE_HOME", cache_);
+    restore("XDG_RUNTIME_DIR", runtime_);
 }
 
 void LinuxKnownFoldersTest::TheConfigDataAndCacheHomesFollowTheXdgVariables()
 {
-    QCOMPARE(ConfigHomeFolder(), AsPath(root_.filePath(QStringLiteral("config"))));
-    QCOMPARE(DataHomeFolder(), AsPath(root_.filePath(QStringLiteral("data"))));
-    QCOMPARE(CacheHomeFolder(), AsPath(root_.filePath(QStringLiteral("cache"))));
-    QCOMPARE(HomeFolder(), AsPath(root_.filePath(QStringLiteral("home"))));
+    QCOMPARE(ConfigHomeFolder(), AsPath(root_->filePath(QStringLiteral("config"))));
+    QCOMPARE(DataHomeFolder(), AsPath(root_->filePath(QStringLiteral("data"))));
+    QCOMPARE(CacheHomeFolder(), AsPath(root_->filePath(QStringLiteral("cache"))));
+    QCOMPARE(HomeFolder(), AsPath(root_->filePath(QStringLiteral("home"))));
+}
+
+void LinuxKnownFoldersTest::TheRuntimeFolderFollowsTheXdgVariableAndIsPrivateToTheUser()
+{
+    const QString runtime = root_->filePath(QStringLiteral("runtime"));
+    QVERIFY(QDir().mkpath(runtime));
+    QVERIFY(QFile::setPermissions(runtime, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+    qputenv("XDG_RUNTIME_DIR", runtime.toUtf8());
+
+    QCOMPARE(RuntimeFolder(), AsPath(runtime));
 }
 
 void LinuxKnownFoldersTest::WithoutTheVariablesTheHomesAreTheUsualOnesUnderTheHomeFolder()
@@ -78,7 +95,7 @@ void LinuxKnownFoldersTest::WithoutTheVariablesTheHomesAreTheUsualOnesUnderTheHo
     qunsetenv("XDG_DATA_HOME");
     qunsetenv("XDG_CACHE_HOME");
 
-    const std::filesystem::path home = AsPath(root_.filePath(QStringLiteral("home")));
+    const std::filesystem::path home = AsPath(root_->filePath(QStringLiteral("home")));
 
     QCOMPARE(ConfigHomeFolder(), home / ".config");
     QCOMPARE(DataHomeFolder(), home / ".local" / "share");
@@ -110,7 +127,7 @@ void LinuxKnownFoldersTest::NothingIsCreatedOnDiskJustByAskingWhereItWouldGo()
 {
     static_cast<void>(LinuxAppFolders());
 
-    QVERIFY(QDir(root_.path()).isEmpty());
+    QVERIFY(QDir(root_->path()).isEmpty());
 }
 
 QTEST_APPLESS_MAIN(LinuxKnownFoldersTest)

@@ -22,7 +22,7 @@ PlatformParts BuildThePlatform()
     std::unique_ptr<SimulatorLocator> locator = std::make_unique<ProtonSimulatorLocator>(userCfgLocations);
 
     return PlatformParts{
-        .instance = std::make_unique<LinuxInstanceGuard>(),
+        .instance = std::make_unique<LinuxInstanceGuard>(RuntimeFolder() / "fs-organizer.lock"),
         .links = std::make_unique<PosixLinkService>(),
         .filesystem = std::make_unique<PosixFilesystemProbe>(),
         .files = std::make_unique<PosixFileOperations>(),

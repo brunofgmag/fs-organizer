@@ -13,6 +13,8 @@
 
 [[nodiscard]] std::filesystem::path CacheHomeFolder();
 
+[[nodiscard]] std::filesystem::path RuntimeFolder();
+
 [[nodiscard]] AppFolders LinuxAppFolders();
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_LINUX_KNOWN_FOLDERS_H
