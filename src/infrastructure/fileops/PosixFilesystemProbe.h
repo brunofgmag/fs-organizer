@@ -33,6 +33,8 @@ public:
     [[nodiscard]] std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,
                                                           std::size_t most) const override;
 
+    [[nodiscard]] std::optional<std::string> HashOf(const std::filesystem::path& path) const;
+
     [[nodiscard]] std::vector<std::optional<std::string>>
     HashesOf(const std::filesystem::path& root, const std::vector<std::filesystem::path>& below) const override;
 
