@@ -11,6 +11,7 @@
 
 #include <QtCore/QFile>
 
+#include "infrastructure/fileops/FileDescriptor.h"
 #include "support/PathText.h"
 
 namespace
@@ -41,27 +42,6 @@ namespace
         const std::function<bool(const CopyProgress&)>* onProgress = nullptr;
         std::uintmax_t copiedBefore = 0;
         std::uintmax_t totalBytes = 0;
-    };
-
-    struct Descriptor
-    {
-        explicit Descriptor(const int value) : value(value)
-        {
-        }
-
-        Descriptor(const Descriptor&) = delete;
-
-        Descriptor& operator=(const Descriptor&) = delete;
-
-        ~Descriptor()
-        {
-            if (value >= 0)
-            {
-                ::close(value);
-            }
-        }
-
-        int value;
     };
 
     std::optional<Walk> FilesUnder(const std::filesystem::path& root)
@@ -169,14 +149,14 @@ namespace
 
     Copied CopyOneFile(const std::filesystem::path& from, const std::filesystem::path& to, CopyState& state)
     {
-        const Descriptor source(::open(from.c_str(), O_RDONLY | O_CLOEXEC));
-        if (source.value < 0)
+        const FileDescriptor source(::open(from.c_str(), O_RDONLY | O_CLOEXEC));
+        if (!source.IsOpen())
         {
             return Copied::Failed;
         }
 
-        const Descriptor target(::open(to.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600));
-        if (target.value < 0)
+        const FileDescriptor target(::open(to.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600));
+        if (!target.IsOpen())
         {
             return Copied::Failed;
         }
@@ -187,7 +167,7 @@ namespace
 
         while (outcome == Copied::Done)
         {
-            const ssize_t read = ::read(source.value, block.data(), block.size());
+            const ssize_t read = ::read(source.Value(), block.data(), block.size());
             if (read < 0 && errno == EINTR)
             {
                 continue;
@@ -198,7 +178,7 @@ namespace
                 break;
             }
 
-            if (read < 0 || !WroteAll(target.value, block.data(), read))
+            if (read < 0 || !WroteAll(target.Value(), block.data(), read))
             {
                 outcome = Copied::Failed;
                 break;
@@ -298,9 +278,9 @@ bool PosixFileOperations::CreateFolder(const std::filesystem::path& path)
 
 bool PosixFileOperations::WriteHiddenFile(const std::filesystem::path& path)
 {
-    const Descriptor file(::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
+    const FileDescriptor file(::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
 
-    return file.value >= 0;
+    return file.IsOpen();
 }
 
 bool PosixFileOperations::Move(const std::filesystem::path& source, const std::filesystem::path& destination)
