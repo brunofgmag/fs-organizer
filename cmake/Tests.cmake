@@ -2009,6 +2009,15 @@ if (NOT WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-linux-known-folders-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-libarchive-archive-reader-tests libarchive-archive-reader
+            tests/infrastructure/archive/tst_libarchive_archive_reader.cpp
+            tests/support/ArchiveBuilders.h
+            tests/support/EnumPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-libarchive-archive-reader-tests PRIVATE fsorg-infrastructure)
+    target_compile_definitions(fsorg-libarchive-archive-reader-tests PRIVATE
+            FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
+
     fsorg_add_qt_test(fsorg-linux-platform-tests linux-platform
             tests/platform/tst_linux_platform.cpp
             ${PLATFORM_COMPOSITION_SOURCES})
