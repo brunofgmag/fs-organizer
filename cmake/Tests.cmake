@@ -2014,3 +2014,21 @@ if (NOT WIN32)
             ${PLATFORM_COMPOSITION_SOURCES})
     target_link_libraries(fsorg-linux-platform-tests PRIVATE fsorg-infrastructure)
 endif ()
+
+if (NOT WIN32)
+    fsorg_add_qt_test(fsorg-replaceable-app-image-tests replaceable-app-image
+            tests/infrastructure/update/tst_replaceable_app_image.cpp
+            src/infrastructure/update/ReplaceableAppImage.cpp)
+
+    fsorg_add_qt_test(fsorg-app-image-update-service-tests app-image-update-service
+            tests/infrastructure/update/tst_app_image_update_service.cpp
+            src/infrastructure/update/AppImageUpdateService.cpp
+            src/infrastructure/update/GithubReleaseFeed.cpp)
+    target_link_libraries(fsorg-app-image-update-service-tests PRIVATE fsorg-infrastructure Qt6::Network)
+
+    fsorg_add_qt_test(fsorg-linux-self-updater-tests linux-self-updater
+            tests/edition/tst_linux_self_updater.cpp
+            ${LINUX_SELF_UPDATER_SOURCES}
+            src/infrastructure/update/GithubReleaseFeed.cpp)
+    target_link_libraries(fsorg-linux-self-updater-tests PRIVATE fsorg-infrastructure Qt6::Network)
+endif ()

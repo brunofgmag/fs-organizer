@@ -165,6 +165,8 @@ set(WINDOWS_SELF_UPDATER_SOURCES
 set(LINUX_SELF_UPDATER_SOURCES
         src/edition/LinuxSelfUpdater.cpp
         src/infrastructure/update/AppImageUpdateService.cpp
+        src/infrastructure/update/NoticeOnlyUpdateService.cpp
+        src/infrastructure/update/ReplaceableAppImage.cpp
 )
 
 if (WIN32)
