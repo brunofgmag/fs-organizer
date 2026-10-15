@@ -71,6 +71,7 @@ set(APPLICATION_SOURCES
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/archive/ArchiveOrFolderReader.cpp
         src/infrastructure/archive/EmptyStagingFolder.cpp
+        src/infrastructure/archive/FolderEntryPaths.cpp
         src/infrastructure/bisection/JsonBisectionStore.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonChartCatalogueParser.cpp
