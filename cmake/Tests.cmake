@@ -1970,6 +1970,12 @@ if (NOT WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-posix-link-service-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-posix-file-operations-tests posix-file-operations
+            tests/infrastructure/fileops/tst_posix_file_operations.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-posix-file-operations-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-posix-filesystem-probe-tests posix-filesystem-probe
             tests/infrastructure/fileops/tst_posix_filesystem_probe.cpp
             tests/support/EnumPrinting.h
