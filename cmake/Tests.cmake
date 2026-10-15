@@ -1992,6 +1992,12 @@ if (NOT WIN32)
             tests/infrastructure/sim/tst_proc_process_probe.cpp)
     target_link_libraries(fsorg-proc-process-probe-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-proton-user-cfg-locations-tests proton-user-cfg-locations
+            tests/infrastructure/sim/tst_proton_user_cfg_locations.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-proton-user-cfg-locations-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-linux-instance-guard-tests linux-instance-guard
             tests/infrastructure/platform/tst_linux_instance_guard.cpp)
     target_link_libraries(fsorg-linux-instance-guard-tests PRIVATE fsorg-infrastructure)

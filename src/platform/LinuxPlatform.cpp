@@ -18,7 +18,7 @@
 
 PlatformParts BuildThePlatform()
 {
-    std::vector<UserCfgLocation> userCfgLocations = ProtonUserCfgLocations();
+    std::vector<UserCfgLocation> userCfgLocations = ProtonUserCfgLocations(SteamLibraries());
     std::unique_ptr<SimulatorLocator> locator = std::make_unique<ProtonSimulatorLocator>(userCfgLocations);
 
     return PlatformParts{
