@@ -10,6 +10,9 @@ struct UpdateInfo
     std::string zipUrl;
     std::string shaUrl;
     std::string zipName;
+    std::string appImageUrl;
+    std::string appImageShaUrl;
+    std::string appImageName;
 };
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_UPDATE_INFO_H
