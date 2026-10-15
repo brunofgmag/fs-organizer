@@ -1964,6 +1964,12 @@ configure_fsorg_gui_test(fsorg-archive-drop-tests archive-drop)
 add_dependencies(fsorg-archive-drop-tests release_translations)
 
 if (NOT WIN32)
+    fsorg_add_qt_test(fsorg-posix-link-service-tests posix-link-service
+            tests/infrastructure/link/tst_posix_link_service.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-posix-link-service-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-linux-known-folders-tests linux-known-folders
             tests/infrastructure/platform/tst_linux_known_folders.cpp
             tests/support/PathPrinting.h)
