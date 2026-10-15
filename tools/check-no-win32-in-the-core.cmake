@@ -4,7 +4,7 @@ endif ()
 
 set(CORE_TREES "src/domain" "src/application" "src/viewmodel")
 
-set(WIN32_HEADERS "windows.h" "shlobj.h" "shlobj_core.h" "tlhelp32.h" "dwmapi.h" "winioctl.h" "objbase.h")
+set(WIN32_HEADERS "windows.h" "shlobj.h" "shlobj_core.h" "tlhelp32.h" "dwmapi.h" "winioctl.h" "objbase.h" "shellapi.h" "aclapi.h")
 
 set(OFFENCES "")
 set(SCANNED "")
