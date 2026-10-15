@@ -17,6 +17,8 @@ namespace
         static void AnEmptyPathHasAnEmptyKey();
         static void ReparsePrefixesAreStripped();
         static void TheLastComponentIsReadWhicheverSeparatorWroteIt();
+        static void TheParentIsReadWhicheverSeparatorWroteTheChild();
+        static void TheParentOfAFolderAtTheRootIsTheRootAndTheRootHasNoParent();
         static void AFolderIsInsideTheRootOfItsOwnVolume();
         static void ASiblingWhoseNameStartsWithTheRootIsNotInsideIt();
         static void NothingIsInsideARootThatWasNeverNamed();
@@ -117,6 +119,30 @@ void PathUtilsTest::TheLastComponentIsReadWhicheverSeparatorWroteIt()
     QCOMPARE(ComparableFileName("D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w/"), std::string("pmdg-aircraft-77w"));
     QCOMPARE(ComparableFileName("pmdg-aircraft-77w"), std::string("pmdg-aircraft-77w"));
     QCOMPARE(ComparableFileName({}), std::string());
+}
+
+void PathUtilsTest::TheParentIsReadWhicheverSeparatorWroteTheChild()
+{
+    const std::string expected = "e:/flight simulator 2024/community";
+
+    QCOMPARE(ComparablePath(ParentOf("E:/Flight Simulator 2024/Community/aerosoft-crj")), expected);
+    QCOMPARE(ComparablePath(ParentOf(PathFromUtf8(R"(E:\Flight Simulator 2024\community\aerosoft-crj)"))), expected);
+    QCOMPARE(AsUtf8(ParentOf(PathFromUtf8(R"(E:\Flight Simulator 2024\community\aerosoft-crj)"))),
+             std::string(R"(E:\Flight Simulator 2024\community)"));
+    QCOMPARE(AsUtf8(ParentOf("/home/pilot/Community/aerosoft-crj")), std::string("/home/pilot/Community"));
+    QVERIFY(ParentOf("aerosoft-crj").empty());
+    QVERIFY(ParentOf({}).empty());
+}
+
+void PathUtilsTest::TheParentOfAFolderAtTheRootIsTheRootAndTheRootHasNoParent()
+{
+    QCOMPARE(AsUtf8(ParentOf(PathFromUtf8(R"(E:\Community)"))), std::string(R"(E:\)"));
+    QCOMPARE(AsUtf8(ParentOf("E:/Community")), std::string("E:/"));
+    QCOMPARE(AsUtf8(ParentOf("/Community")), std::string("/"));
+    QCOMPARE(AsUtf8(ParentOf(PathFromUtf8(R"(\\nas\share\Community)"))), std::string(R"(\\nas\share\)"));
+    QVERIFY(ParentOf("E:/").empty());
+    QVERIFY(ParentOf("/").empty());
+    QVERIFY(ParentOf(PathFromUtf8(R"(\\nas\share)")).empty());
 }
 
 void PathUtilsTest::AFolderIsInsideTheRootOfItsOwnVolume()

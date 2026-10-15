@@ -16,9 +16,9 @@ std::filesystem::path DestinationItStrayedTo(const SimulatorProfile& profile,
 
     for (const std::filesystem::path& link : LinksPointingAt(entries, addonFolder))
     {
-        if (ComparablePath(link.parent_path()) != wanted)
+        if (ComparablePath(ParentOf(link)) != wanted)
         {
-            return link.parent_path();
+            return ParentOf(link);
         }
     }
 
@@ -35,7 +35,7 @@ DestinationAgreement WhereTheEnabledAddonsPoint(const TreeNode& category, const 
     {
         for (const std::filesystem::path& link : linksByTarget.PointingAt(addon->path))
         {
-            const std::filesystem::path where = link.parent_path();
+            const std::filesystem::path where = ParentOf(link);
 
             if (agreement.destination.empty())
             {
