@@ -41,6 +41,8 @@ function(configure_fsorg_test TARGET_NAME TEST_NAME)
 
     if (WIN32)
         add_dependencies(${TARGET_NAME} fsorg-test-runtime)
+    else ()
+        set_property(TEST ${TEST_NAME} APPEND PROPERTY ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endif ()
 endfunction()
 
