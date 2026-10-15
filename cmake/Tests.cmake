@@ -1988,6 +1988,10 @@ if (NOT WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-posix-sidecar-store-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-proc-process-probe-tests proc-process-probe
+            tests/infrastructure/sim/tst_proc_process_probe.cpp)
+    target_link_libraries(fsorg-proc-process-probe-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-linux-instance-guard-tests linux-instance-guard
             tests/infrastructure/platform/tst_linux_instance_guard.cpp)
     target_link_libraries(fsorg-linux-instance-guard-tests PRIVATE fsorg-infrastructure)
