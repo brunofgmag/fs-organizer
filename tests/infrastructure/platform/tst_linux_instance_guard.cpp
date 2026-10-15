@@ -1,6 +1,8 @@
+#include <QtCore/QLockFile>
 #include <QtCore/QProcess>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
+#include <QtWidgets/QWidget>
 
 #include <fstream>
 
@@ -21,12 +23,24 @@ namespace
         static void TheFolderOfTheLockIsCreatedWhenItIsNotThere();
         static void ALockLeftByAProcessThatIsGoneDoesNotStopTheNextLaunch();
         static void ALockThatCannotBeWrittenDoesNotStopTheLaunchEither();
-        static void BringingTheRunningOneForwardSaysSoOnTheLog();
+        static void ASecondLaunchBringsTheMainWindowOfTheFirstForward();
+        static void ASecondLaunchShowsAMainWindowThatWasHidden();
+        static void ASecondLaunchLeavesAnyOtherWindowAlone();
+        static void ASecondLaunchWithNobodyAnsweringSaysSoAndReturns();
+        static void TheSocketGoesAwayWithTheGuardThatOwnedIt();
+        static void ASocketLeftByARunThatDiedDoesNotStopTheNextOneFromAnswering();
     };
 }
 
 namespace
 {
+    constexpr int kAnswerTimeoutMs = 10000;
+
+    void ExpectTheOffscreenPluginToRefuseRaise()
+    {
+        QTest::ignoreMessage(QtWarningMsg, QRegularExpression(QStringLiteral("does not support raise")));
+    }
+
     std::filesystem::path LockIn(const QTemporaryDir& directory, const char* name = "fs-organizer.lock")
     {
         return AsPath(directory.path()) / name;
@@ -114,21 +128,118 @@ void LinuxInstanceGuardTest::ALockThatCannotBeWrittenDoesNotStopTheLaunchEither(
     const std::filesystem::path blocker = LockIn(directory, "not-a-folder");
     std::ofstream(blocker) << "x";
 
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(QStringLiteral("could not listen")));
+
     const LinuxInstanceGuard guard(blocker / "fs-organizer.lock");
 
     QVERIFY(!guard.AnotherIsRunning());
 }
 
-void LinuxInstanceGuardTest::BringingTheRunningOneForwardSaysSoOnTheLog()
+void LinuxInstanceGuardTest::ASecondLaunchBringsTheMainWindowOfTheFirstForward()
 {
     const QTemporaryDir directory;
-    const LinuxInstanceGuard guard(LockIn(directory));
+    const LinuxInstanceGuard first(LockIn(directory));
+    const LinuxInstanceGuard second(LockIn(directory));
+    QVERIFY(second.AnotherIsRunning());
 
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(QStringLiteral("already running")));
+    QWidget main;
+    main.setWindowTitle(QCoreApplication::applicationName());
+    main.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&main));
+
+    QWidget other;
+    other.setWindowTitle(QStringLiteral("a dialog"));
+    other.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&other));
+    other.activateWindow();
+    QTRY_COMPARE(QApplication::activeWindow(), &other);
+
+    ExpectTheOffscreenPluginToRefuseRaise();
+    second.BringTheRunningOneForward();
+
+    QTRY_COMPARE_WITH_TIMEOUT(QApplication::activeWindow(), &main, kAnswerTimeoutMs);
+}
+
+void LinuxInstanceGuardTest::ASecondLaunchShowsAMainWindowThatWasHidden()
+{
+    const QTemporaryDir directory;
+    const LinuxInstanceGuard first(LockIn(directory));
+    const LinuxInstanceGuard second(LockIn(directory));
+
+    QWidget main;
+    main.setWindowTitle(QCoreApplication::applicationName());
+    QVERIFY(!main.isVisible());
+
+    ExpectTheOffscreenPluginToRefuseRaise();
+    second.BringTheRunningOneForward();
+
+    QTRY_VERIFY_WITH_TIMEOUT(main.isVisible(), kAnswerTimeoutMs);
+}
+
+void LinuxInstanceGuardTest::ASecondLaunchLeavesAnyOtherWindowAlone()
+{
+    const QTemporaryDir directory;
+    const LinuxInstanceGuard first(LockIn(directory));
+    const LinuxInstanceGuard second(LockIn(directory));
+
+    QWidget main;
+    main.setWindowTitle(QCoreApplication::applicationName());
+
+    QWidget other;
+    other.setWindowTitle(QStringLiteral("not the main window"));
+
+    ExpectTheOffscreenPluginToRefuseRaise();
+    second.BringTheRunningOneForward();
+
+    QTRY_VERIFY_WITH_TIMEOUT(main.isVisible(), kAnswerTimeoutMs);
+    QVERIFY2(!other.isVisible(), "a window that is not the main one was shown");
+}
+
+void LinuxInstanceGuardTest::ASecondLaunchWithNobodyAnsweringSaysSoAndReturns()
+{
+    const QTemporaryDir directory;
+    QLockFile held(QString::fromStdString(LockIn(directory).string()));
+    QVERIFY(held.tryLock(0));
+
+    const LinuxInstanceGuard guard(LockIn(directory));
+    QVERIFY(guard.AnotherIsRunning());
+
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(QStringLiteral("did not answer")));
 
     guard.BringTheRunningOneForward();
 }
 
-QTEST_APPLESS_MAIN(LinuxInstanceGuardTest)
+void LinuxInstanceGuardTest::TheSocketGoesAwayWithTheGuardThatOwnedIt()
+{
+    const QTemporaryDir directory;
+    const QString socket = directory.path() + QStringLiteral("/fs-organizer.sock");
+
+    {
+        const LinuxInstanceGuard first(LockIn(directory));
+        QVERIFY(QFileInfo::exists(socket));
+    }
+
+    QVERIFY2(!QFileInfo::exists(socket), "the socket of a guard that is gone was left on disk");
+}
+
+void LinuxInstanceGuardTest::ASocketLeftByARunThatDiedDoesNotStopTheNextOneFromAnswering()
+{
+    const QTemporaryDir directory;
+    const QString socket = directory.path() + QStringLiteral("/fs-organizer.sock");
+    std::ofstream(socket.toStdString()) << "left behind";
+
+    const LinuxInstanceGuard first(LockIn(directory));
+    const LinuxInstanceGuard second(LockIn(directory));
+
+    QWidget main;
+    main.setWindowTitle(QCoreApplication::applicationName());
+
+    ExpectTheOffscreenPluginToRefuseRaise();
+    second.BringTheRunningOneForward();
+
+    QTRY_VERIFY_WITH_TIMEOUT(main.isVisible(), kAnswerTimeoutMs);
+}
+
+QTEST_MAIN(LinuxInstanceGuardTest)
 
 #include "tst_linux_instance_guard.moc"

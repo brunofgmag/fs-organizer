@@ -2,8 +2,11 @@
 #define FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_LINUX_INSTANCE_GUARD_H
 
 #include <filesystem>
+#include <memory>
 
 #include <QtCore/QLockFile>
+#include <QtCore/QString>
+#include <QtNetwork/QLocalServer>
 
 #include "infrastructure/platform/InstanceGuard.h"
 
@@ -17,8 +20,12 @@ public:
     void BringTheRunningOneForward() const override;
 
 private:
+    void AnswerTheNextLaunch();
+
     QLockFile lock_;
+    QString socketName_;
     bool anotherIsRunning_ = false;
+    std::unique_ptr<QLocalServer> server_;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_LINUX_INSTANCE_GUARD_H

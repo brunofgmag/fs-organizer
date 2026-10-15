@@ -21,6 +21,8 @@ target_link_libraries(fsorg-infrastructure PUBLIC Qt6::Widgets)
 
 if (WIN32)
     target_link_libraries(fsorg-infrastructure PUBLIC dwmapi)
+else ()
+    target_link_libraries(fsorg-infrastructure PUBLIC Qt6::Network)
 endif ()
 
 fsorg_add_layer(fsorg-viewmodel ${VIEWMODEL_SOURCES})
