@@ -30,12 +30,7 @@ class StdFilesystemProbe final : public FilesystemProbe
 public:
     [[nodiscard]] static bool IsALinkWithoutFollowing(const std::filesystem::file_status& status)
     {
-        if (std::filesystem::is_symlink(status))
-        {
-            return true;
-        }
-
-        return status.type() == std::filesystem::file_type::junction;
+        return std::filesystem::is_symlink(status) || std::filesystem::is_other(status);
     }
 
     [[nodiscard]] bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const override

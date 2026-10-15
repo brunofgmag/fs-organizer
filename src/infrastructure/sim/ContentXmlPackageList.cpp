@@ -1,13 +1,13 @@
 #include "infrastructure/sim/ContentXmlPackageList.h"
 
 #include <fstream>
-#include <iterator>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include "infrastructure/sim/ContentXmlDocument.h"
 #include "infrastructure/sim/PackageNaming.h"
+#include "support/FileReading.h"
 #include "support/FileWriting.h"
 
 namespace
@@ -22,7 +22,7 @@ namespace
             return std::nullopt;
         }
 
-        return std::string(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>());
+        return BytesRemainingIn(stream);
     }
 }
 

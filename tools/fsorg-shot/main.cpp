@@ -1365,7 +1365,7 @@ int main(int argc, char* argv[])
 
     UpdateViewModel updateViewModel(*parts->updates, UpdateMode::Notify, false, parts->updateDelivery);
 
-    OptionsViewModel optionsViewModel(session, profileService, runner, notifier);
+    OptionsViewModel optionsViewModel(session, profileService, runner, notifier, {.offersJunctions = true});
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);

@@ -156,7 +156,7 @@ bool ClassificationLookups::IsInsideALibrary(const std::string& comparablePath) 
 
 bool ClassificationLookups::VolumeIsAvailable(const std::filesystem::path& path) const
 {
-    const std::filesystem::path root = path.root_path();
+    const std::filesystem::path root = RootOf(path);
     if (root.empty())
     {
         return filesystemProbe_.VolumeIsAvailable(path);

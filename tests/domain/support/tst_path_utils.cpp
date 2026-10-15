@@ -13,6 +13,7 @@ namespace
     private slots:
         static void TwoPathsThatNameTheSameFolderShareAKey();
         static void ARootKeepsItsSeparator();
+        static void TheRootOfAPathIsReadFromItsTextWhicheverSystemRunsTheTest();
         static void AnEmptyPathHasAnEmptyKey();
         static void ReparsePrefixesAreStripped();
         static void TheLastComponentIsReadWhicheverSeparatorWroteIt();
@@ -23,6 +24,19 @@ namespace
         static void BytesThatAreNotUtf8AreCarriedThrough();
         static void ANameOutsideTheHostCodePageStillBecomesUtf8();
     };
+}
+
+void PathUtilsTest::TheRootOfAPathIsReadFromItsTextWhicheverSystemRunsTheTest()
+{
+    QCOMPARE(AsUtf8(RootOf(PathFromUtf8("D:/Library/Sceneries"))), std::string("D:/"));
+    QCOMPARE(AsUtf8(RootOf(PathFromUtf8(R"(D:\Library\Sceneries)"))), std::string("D:/"));
+    QCOMPARE(AsUtf8(RootOf(PathFromUtf8("D:"))), std::string("D:/"));
+    QCOMPARE(AsUtf8(RootOf(PathFromUtf8(R"(\\nas\share\Library)"))), std::string("//nas/share/"));
+    QCOMPARE(AsUtf8(RootOf(PathFromUtf8("//nas/share"))), std::string("//nas/share/"));
+    QCOMPARE(AsUtf8(RootOf(PathFromUtf8(R"(\\?\D:\Library)"))), std::string("//?/D:/"));
+    QCOMPARE(AsUtf8(RootOf(PathFromUtf8("/home/pilot/Library"))), std::string("/"));
+    QVERIFY(RootOf(PathFromUtf8("Library/Sceneries")).empty());
+    QVERIFY(RootOf(std::filesystem::path{}).empty());
 }
 
 void PathUtilsTest::ANameOutsideTheHostCodePageStillBecomesUtf8()

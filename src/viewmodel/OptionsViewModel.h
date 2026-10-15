@@ -13,6 +13,7 @@
 
 #include "application/ProfileService.h"
 #include "application/Session.h"
+#include "application/model/PlatformCapabilities.h"
 #include "application/model/UpdateMode.h"
 #include "application/ports/BackgroundRunner.h"
 #include "viewmodel/GuardedRunner.h"
@@ -58,6 +59,7 @@ public:
                      ProfileService& service,
                      BackgroundRunner& runner,
                      const SessionNotifier& notifier,
+                     PlatformCapabilities capabilities,
                      QObject* parent = nullptr);
 
     [[nodiscard]] std::vector<ProfileLine> Profiles() const;
@@ -79,6 +81,8 @@ public:
     [[nodiscard]] std::vector<DestinationLine> Destinations() const;
 
     [[nodiscard]] std::vector<LibraryLine> Libraries() const;
+
+    [[nodiscard]] bool OffersJunctions() const;
 
     [[nodiscard]] LinkType TypeOfLink() const;
 
@@ -158,6 +162,7 @@ private:
     Session& session_;
     ProfileService& service_;
     GuardedRunner registering_;
+    PlatformCapabilities capabilities_;
     std::string shown_;
 };
 

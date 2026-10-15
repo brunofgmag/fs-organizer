@@ -53,6 +53,31 @@
     return PathFromUtf8("/");
 }
 
+[[nodiscard]] inline std::filesystem::path RootOf(const std::filesystem::path& path)
+{
+    const std::string text = WithGenericSeparators(AsUtf8(path));
+
+    if (text.size() >= 2 && text[1] == ':')
+    {
+        return PathFromUtf8(text.substr(0, 2) + "/");
+    }
+
+    if (text.starts_with("//"))
+    {
+        const std::size_t server = text.find('/', 2);
+        const std::size_t share = server == std::string::npos ? server : text.find('/', server + 1);
+
+        return PathFromUtf8(text.substr(0, share) + "/");
+    }
+
+    if (text.starts_with('/'))
+    {
+        return PathFromUtf8("/");
+    }
+
+    return {};
+}
+
 [[nodiscard]] inline bool OnTheSameVolume(const std::filesystem::path& left, const std::filesystem::path& right)
 {
     return LoweredForComparison(AsUtf8(VolumeOf(left))) == LoweredForComparison(AsUtf8(VolumeOf(right)));

@@ -87,7 +87,7 @@ public:
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override
     {
-        volumesAsked.push_back(ComparablePath(path.root_path()));
+        volumesAsked.push_back(ComparablePath(RootOf(path)));
 
         return fileSystem_.VolumeIsAvailable(path);
     }

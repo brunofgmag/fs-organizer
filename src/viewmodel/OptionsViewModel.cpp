@@ -14,8 +14,9 @@ OptionsViewModel::OptionsViewModel(Session& session,
                                    ProfileService& service,
                                    BackgroundRunner& runner,
                                    const SessionNotifier& notifier,
+                                   const PlatformCapabilities capabilities,
                                    QObject* parent)
-    : QObject(parent), session_(session), service_(service), registering_(runner)
+    : QObject(parent), session_(session), service_(service), registering_(runner), capabilities_(capabilities)
 {
     connect(&notifier, &SessionNotifier::ScanFinished, this, &OptionsViewModel::Changed);
 }
@@ -295,6 +296,11 @@ std::vector<LibraryLine> OptionsViewModel::Libraries() const
     }
 
     return lines;
+}
+
+bool OptionsViewModel::OffersJunctions() const
+{
+    return capabilities_.offersJunctions;
 }
 
 LinkType OptionsViewModel::TypeOfLink() const

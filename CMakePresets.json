@@ -53,6 +53,39 @@
       "inherits": "msvc-qt-base"
     },
     {
+      "name": "linux-qt-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Qt GCC Linux x64 - Debug",
+      "description": "Debug build of the executable on Linux with GCC and Ninja.",
+      "inherits": "linux-qt-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Qt GCC Linux x64 - Release",
+      "description": "Release build of the executable on Linux with GCC and Ninja.",
+      "inherits": "linux-qt-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
       "name": "clangd-db",
       "displayName": "Compile DB (Ninja) for clangd",
       "description": "Writes compile_commands.json with cl.exe. Configure it from an x64 Native Tools Command Prompt.",
@@ -96,6 +129,18 @@
       "configurePreset": "relwithdebinfo",
       "configuration": "RelWithDebInfo",
       "jobs": 0
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Build Qt GCC Linux Debug",
+      "configurePreset": "linux-debug",
+      "jobs": 0
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Build Qt GCC Linux Release",
+      "configurePreset": "linux-release",
+      "jobs": 0
     }
   ],
   "testPresets": [
@@ -113,6 +158,22 @@
       "displayName": "Test Qt MSVC Release",
       "configurePreset": "release",
       "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Test Qt GCC Linux Debug",
+      "configurePreset": "linux-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Test Qt GCC Linux Release",
+      "configurePreset": "linux-release",
       "output": {
         "outputOnFailure": true
       }

@@ -26,6 +26,7 @@ namespace
         static void TheBackupIsTheVersionImmediatelyBeforeTheWrite();
         static void NothingIsWrittenWhenTheBackupCannotBeMade();
         static void AFileThatIsNotThereIsRefusedBeforeAnythingIsWritten();
+        static void AFileThatIsAFolderIsRefusedBeforeAnythingIsWritten();
         static void APackageTheFileNoLongerCarriesIsRefusedAndNoBackupIsLeft();
         static void SwitchingAnEntryToTheValueItAlreadyHasWritesNothing();
         static void TheFileIsRereadAtTheInstantOfWriting();
@@ -145,6 +146,18 @@ void PackageListOnRealDiskTest::AFileThatIsNotThereIsRefusedBeforeAnythingIsWrit
     QVERIFY(list.Entries().empty());
     QCOMPARE(list.Switch(kLpma, true), FileResult::CouldNotReadThePackageList);
     QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{0});
+}
+
+void PackageListOnRealDiskTest::AFileThatIsAFolderIsRefusedBeforeAnythingIsWritten()
+{
+    const TempFiles files;
+    const std::filesystem::path file = files.Root() / "Content.xml";
+    std::filesystem::create_directories(file);
+    ContentXmlPackageList list(file);
+
+    QCOMPARE(list.Switch(kLpma, true), FileResult::CouldNotReadThePackageList);
+    QVERIFY(std::filesystem::is_directory(file));
+    QCOMPARE(HowManyFilesIn(files.Root()), std::size_t{1});
 }
 
 void PackageListOnRealDiskTest::APackageTheFileNoLongerCarriesIsRefusedAndNoBackupIsLeft()

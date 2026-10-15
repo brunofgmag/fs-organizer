@@ -4,7 +4,6 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
-#include <iterator>
 #include <mutex>
 #include <optional>
 #include <ranges>
@@ -17,6 +16,7 @@
 #include "infrastructure/sim/ExeXmlDocument.h"
 #include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
+#include "support/FileReading.h"
 #include "support/FileWriting.h"
 
 namespace
@@ -57,8 +57,13 @@ namespace
             return {};
         }
 
-        return {.reading = Reading::Read,
-                .bytes = std::string(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>())};
+        std::optional<std::string> bytes = BytesRemainingIn(stream);
+        if (!bytes.has_value())
+        {
+            return {};
+        }
+
+        return {.reading = Reading::Read, .bytes = std::move(*bytes)};
     }
 
     [[nodiscard]] std::vector<StartupEntry> EntriesOfFile(const std::filesystem::path& file)

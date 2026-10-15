@@ -71,27 +71,18 @@ set(APPLICATION_SOURCES
 set(INFRASTRUCTURE_SOURCES
         src/infrastructure/archive/ArchiveOrFolderReader.cpp
         src/infrastructure/archive/EmptyStagingFolder.cpp
-        src/infrastructure/archive/FolderArchiveReader.cpp
-        src/infrastructure/archive/TarExeArchiveReader.cpp
         src/infrastructure/bisection/JsonBisectionStore.cpp
         src/infrastructure/catalog/FilesystemScanner.cpp
         src/infrastructure/catalog/JsonChartCatalogueParser.cpp
         src/infrastructure/catalog/JsonManifestParser.cpp
         src/infrastructure/documents/JsonDocumentIndexCache.cpp
         src/infrastructure/fileops/ExtendedPaths.cpp
-        src/infrastructure/fileops/WindowsFileOperations.cpp
-        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
-        src/infrastructure/fileops/WindowsSidecarStore.cpp
         src/infrastructure/id/UuidLibraryIdGenerator.cpp
         src/infrastructure/journal/JournalImportedFolders.cpp
         src/infrastructure/journal/JournalLinkedFolders.cpp
         src/infrastructure/journal/JsonlOperationJournal.cpp
         src/infrastructure/legacy/IniLegacyConfigReader.cpp
         src/infrastructure/legacy/LegacyPresetReader.cpp
-        src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
-        src/infrastructure/link/WindowsLinkService.cpp
-        src/infrastructure/platform/SingleInstance.cpp
-        src/infrastructure/platform/WindowsKnownFolders.cpp
         src/infrastructure/preset/FilePresetRepository.cpp
         src/infrastructure/scenery/BglSceneryParser.cpp
         src/infrastructure/scenery/JsonSceneryCache.cpp
@@ -109,22 +100,83 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/RemovedStartupEntriesFile.cpp
         src/infrastructure/sim/StartupFileLocations.cpp
+        src/infrastructure/update/GithubReleaseParser.cpp
+)
+
+set(WINDOWS_PLATFORM_SOURCES
+        src/infrastructure/archive/FolderArchiveReader.cpp
+        src/infrastructure/archive/TarExeArchiveReader.cpp
+        src/infrastructure/fileops/WindowsFileOperations.cpp
+        src/infrastructure/fileops/WindowsFilesystemProbe.cpp
+        src/infrastructure/fileops/WindowsSidecarStore.cpp
+        src/infrastructure/legacy/WindowsLegacyConfigSource.cpp
+        src/infrastructure/link/WindowsLinkService.cpp
+        src/infrastructure/platform/SingleInstance.cpp
+        src/infrastructure/platform/WindowsInstanceGuard.cpp
+        src/infrastructure/platform/WindowsKnownFolders.cpp
         src/infrastructure/sim/WindowsProcessProbe.cpp
         src/infrastructure/sim/WindowsSimulatorLocator.cpp
         src/infrastructure/sim/WindowsUserCfgLocations.cpp
-        src/infrastructure/update/GithubReleaseParser.cpp
         src/view/platform/WindowsTitleBar.cpp
 )
+
+set(LINUX_PLATFORM_SOURCES
+        src/infrastructure/archive/LibarchiveArchiveReader.cpp
+        src/infrastructure/archive/PosixFolderArchiveReader.cpp
+        src/infrastructure/fileops/PosixFileOperations.cpp
+        src/infrastructure/fileops/PosixFilesystemProbe.cpp
+        src/infrastructure/fileops/PosixSidecarStore.cpp
+        src/infrastructure/legacy/ProtonLegacyConfigSource.cpp
+        src/infrastructure/link/PosixLinkService.cpp
+        src/infrastructure/platform/LinuxInstanceGuard.cpp
+        src/infrastructure/platform/LinuxKnownFolders.cpp
+        src/infrastructure/sim/ProcProcessProbe.cpp
+        src/infrastructure/sim/ProtonSimulatorLocator.cpp
+        src/infrastructure/sim/ProtonUserCfgLocations.cpp
+        src/view/platform/LinuxTitleBar.cpp
+)
+
+set(WINDOWS_PLATFORM_COMPOSITION_SOURCES
+        src/platform/WindowsPlatform.cpp
+)
+
+set(LINUX_PLATFORM_COMPOSITION_SOURCES
+        src/platform/LinuxPlatform.cpp
+)
+
+if (WIN32)
+    set(PLATFORM_SOURCES ${WINDOWS_PLATFORM_SOURCES})
+    set(PLATFORM_COMPOSITION_SOURCES ${WINDOWS_PLATFORM_COMPOSITION_SOURCES})
+else ()
+    set(PLATFORM_SOURCES ${LINUX_PLATFORM_SOURCES})
+    set(PLATFORM_COMPOSITION_SOURCES ${LINUX_PLATFORM_COMPOSITION_SOURCES})
+endif ()
 
 set(NETWORK_INFRASTRUCTURE_SOURCES
         src/infrastructure/update/GithubReleaseFeed.cpp
 )
 
+set(WINDOWS_SELF_UPDATER_SOURCES
+        src/edition/WindowsSelfUpdater.cpp
+        src/infrastructure/update/GithubUpdateService.cpp
+        assets/updater.qrc
+)
+
+set(LINUX_SELF_UPDATER_SOURCES
+        src/edition/LinuxSelfUpdater.cpp
+        src/infrastructure/update/AppImageUpdateService.cpp
+)
+
+if (WIN32)
+    set(SELF_UPDATER_SOURCES ${WINDOWS_SELF_UPDATER_SOURCES})
+else ()
+    set(SELF_UPDATER_SOURCES ${LINUX_SELF_UPDATER_SOURCES})
+endif ()
+
 set(GITHUB_EDITION_SOURCES
         src/edition/GithubEdition.cpp
         src/infrastructure/manual/GithubManual.cpp
-        src/infrastructure/update/GithubUpdateService.cpp
-        assets/updater.qrc
+        ${SELF_UPDATER_SOURCES}
 )
 
 set(FLIGHTSIM_TO_EDITION_SOURCES
@@ -259,6 +311,7 @@ set(WINDOWS_SHELL_SOURCES
 
 set(APP_SOURCES
         src/main.cpp
+        ${PLATFORM_COMPOSITION_SOURCES}
         ${EDITION_SOURCES}
         ${NETWORK_INFRASTRUCTURE_SOURCES}
         ${PDF_INFRASTRUCTURE_SOURCES}
@@ -266,7 +319,12 @@ set(APP_SOURCES
 )
 
 list(APPEND APP_SOURCES
-        assets/app.rc
-        assets/app.manifest
         assets/resources.qrc
 )
+
+if (WIN32)
+    list(APPEND APP_SOURCES
+            assets/app.rc
+            assets/app.manifest
+    )
+endif ()

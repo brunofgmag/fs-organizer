@@ -1,4 +1,4 @@
-#include "view/platform/WindowsTitleBar.h"
+#include "view/platform/SystemTitleBar.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN

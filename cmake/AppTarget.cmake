@@ -8,9 +8,12 @@ list(GET FSORG_VERSION_PARTS 0 FSORG_VERSION_MAJOR)
 list(GET FSORG_VERSION_PARTS 1 FSORG_VERSION_MINOR)
 list(GET FSORG_VERSION_PARTS 2 FSORG_VERSION_PATCH)
 
-configure_file("${CMAKE_SOURCE_DIR}/assets/version.rc.in" "${CMAKE_BINARY_DIR}/version.rc" @ONLY)
+if (WIN32)
+    configure_file("${CMAKE_SOURCE_DIR}/assets/version.rc.in" "${CMAKE_BINARY_DIR}/version.rc" @ONLY)
+    list(APPEND APP_SOURCES "${CMAKE_BINARY_DIR}/version.rc")
+endif ()
 
-qt_add_executable(${APP_NAME} ${APP_SOURCES} "${CMAKE_BINARY_DIR}/version.rc")
+qt_add_executable(${APP_NAME} ${APP_SOURCES})
 
 qt_add_translations(${APP_NAME}
         TS_FILES i18n/app_en.ts i18n/app_pt_BR.ts
@@ -20,11 +23,13 @@ qt_add_translations(${APP_NAME}
 target_include_directories(${APP_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src")
 
 target_compile_definitions(${APP_NAME} PRIVATE
-        WIN32_LEAN_AND_MEAN
-        NOMINMAX
         FSORG_VERSION="${FSORG_VERSION}"
         $<$<CONFIG:Release>:NDEBUG>
 )
+
+if (WIN32)
+    target_compile_definitions(${APP_NAME} PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+endif ()
 
 if (MSVC)
     target_compile_options(${APP_NAME} PRIVATE /permissive- /Zc:preprocessor)
@@ -48,8 +53,11 @@ target_link_libraries(${APP_NAME} PRIVATE
         Qt6::Network
         Qt6::Pdf
         Qt6::PdfWidgets
-        dwmapi
 )
+
+if (WIN32)
+    target_link_libraries(${APP_NAME} PRIVATE dwmapi)
+endif ()
 
 if (MINGW)
     target_compile_definitions(${APP_NAME} PRIVATE MINGW_HAS_SECURE_API)
