@@ -3,6 +3,8 @@
 
 #include <unistd.h>
 
+#include <utility>
+
 class FileDescriptor
 {
 public:
@@ -12,7 +14,13 @@ public:
 
     FileDescriptor(const FileDescriptor&) = delete;
 
+    FileDescriptor(FileDescriptor&& other) noexcept : value_(std::exchange(other.value_, -1))
+    {
+    }
+
     FileDescriptor& operator=(const FileDescriptor&) = delete;
+
+    FileDescriptor& operator=(FileDescriptor&&) = delete;
 
     ~FileDescriptor()
     {

@@ -2009,6 +2009,13 @@ if (NOT WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-linux-known-folders-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-posix-folder-archive-reader-tests posix-folder-archive-reader
+            tests/infrastructure/archive/tst_posix_folder_archive_reader.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-posix-folder-archive-reader-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-libarchive-archive-reader-tests libarchive-archive-reader
             tests/infrastructure/archive/tst_libarchive_archive_reader.cpp
             tests/support/ArchiveBuilders.h
