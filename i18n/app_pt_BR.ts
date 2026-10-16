@@ -3281,9 +3281,14 @@ Também na biblioteca: %2</translation>
         <translation>a importar</translation>
     </message>
     <message>
-        <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="140"/>
-        <source>No MSFS Addons Linker installation was found.</source>
-        <translation>Nenhuma instalação do MSFS Addons Linker foi encontrada.</translation>
+        <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="91"/>
+        <source>No MSFS Addons Linker installation found</source>
+        <translation>Nenhuma instalação do MSFS Addons Linker encontrada</translation>
+    </message>
+    <message>
+        <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="92"/>
+        <source>Nothing to import. FS Organizer looks for the configuration the MSFS Addons Linker keeps in ProgramData.</source>
+        <translation>Nada para importar. O FS Organizer procura a configuração que o MSFS Addons Linker guarda em ProgramData.</translation>
     </message>
     <message>
         <location filename="../src/view/legacy/LegacyImportDialog.cpp" line="234"/>

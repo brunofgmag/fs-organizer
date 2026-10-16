@@ -7,6 +7,7 @@
 #include "application/model/LegacyMigration.h"
 #include "viewmodel/LegacyImportViewModel.h"
 
+class EmptyState;
 class QPushButton;
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -40,6 +41,7 @@ private:
 
     LegacyImportViewModel& viewModel_;
     QTreeWidget* tree_ = nullptr;
+    EmptyState* nothingFound_ = nullptr;
     QPushButton* import_ = nullptr;
 };
 
