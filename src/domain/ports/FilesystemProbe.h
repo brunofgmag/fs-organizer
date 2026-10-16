@@ -33,6 +33,8 @@ public:
 
     [[nodiscard]] virtual bool VolumeIsAvailable(const std::filesystem::path& path) const = 0;
 
+    [[nodiscard]] virtual std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const = 0;
+
     [[nodiscard]] virtual WriteAccess ProbeWritable(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual bool SomethingIsHoldingItOpen(const std::filesystem::path& path) const = 0;

@@ -3,9 +3,15 @@
 
 #include "domain/ports/FilesystemProbe.h"
 
+inline const std::filesystem::path kSystemMountInfo = "/proc/self/mountinfo";
+inline const std::filesystem::path kSystemFstab = "/etc/fstab";
+
 class PosixFilesystemProbe final : public FilesystemProbe
 {
 public:
+    explicit PosixFilesystemProbe(std::filesystem::path mountInfo = kSystemMountInfo,
+                                  std::filesystem::path fstab = kSystemFstab);
+
     [[nodiscard]] bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool TargetDirectoryExists(const std::filesystem::path& path) const override;
@@ -19,6 +25,8 @@ public:
     [[nodiscard]] std::vector<std::filesystem::path> ChildFiles(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;
+
+    [[nodiscard]] std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const override;
 
     [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override;
 
@@ -42,6 +50,10 @@ public:
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override;
+
+private:
+    std::filesystem::path mountInfo_;
+    std::filesystem::path fstab_;
 };
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_FILEOPS_POSIX_FILESYSTEM_PROBE_H

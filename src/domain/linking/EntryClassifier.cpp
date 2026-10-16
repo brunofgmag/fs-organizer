@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <ranges>
 #include <set>
 
@@ -157,12 +158,13 @@ bool ClassificationLookups::IsInsideALibrary(const std::string& comparablePath) 
 bool ClassificationLookups::VolumeIsAvailable(const std::filesystem::path& path) const
 {
     const std::filesystem::path root = RootOf(path);
-    if (root.empty())
+    const std::optional<std::string> volume = filesystemProbe_.VolumeIdentityOf(path);
+    if (root.empty() || !volume.has_value())
     {
         return filesystemProbe_.VolumeIsAvailable(path);
     }
 
-    const auto [known, isNew] = volumes_.try_emplace(ComparablePath(root), false);
+    const auto [known, isNew] = volumes_.try_emplace(ComparablePath(root) + "|" + *volume, false);
     if (isNew)
     {
         known->second = filesystemProbe_.VolumeIsAvailable(path);

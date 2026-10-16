@@ -92,6 +92,11 @@ public:
         return fileSystem_.VolumeIsAvailable(path);
     }
 
+    [[nodiscard]] std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const override
+    {
+        return InMemoryFileSystem::VolumeIdentityOf(path);
+    }
+
     [[nodiscard]] std::size_t TimesTheVolumeWasAsked(const std::filesystem::path& root) const
     {
         return static_cast<std::size_t>(std::ranges::count(volumesAsked, ComparablePath(root)));

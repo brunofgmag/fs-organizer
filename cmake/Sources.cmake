@@ -124,6 +124,7 @@ set(WINDOWS_PLATFORM_SOURCES
 set(LINUX_PLATFORM_SOURCES
         src/infrastructure/archive/LibarchiveArchiveReader.cpp
         src/infrastructure/archive/PosixFolderArchiveReader.cpp
+        src/infrastructure/fileops/MountPoints.cpp
         src/infrastructure/fileops/PosixFileOperations.cpp
         src/infrastructure/fileops/PosixFilesystemProbe.cpp
         src/infrastructure/fileops/PosixSidecarStore.cpp

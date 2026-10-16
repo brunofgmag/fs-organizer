@@ -1,6 +1,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
+#include <sys/mount.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -12,8 +13,11 @@
 #include <string>
 #include <vector>
 
+#include "domain/importing/VolumeSharing.h"
+#include "infrastructure/fileops/MountPoints.h"
 #include "infrastructure/fileops/PosixFilesystemProbe.h"
 #include "support/FileClock.h"
+#include "tests/support/StdFilesystemProbe.h"
 #include "support/PathText.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
@@ -31,8 +35,16 @@ namespace
         static void TargetDirectoryExistsFollowsLinksAndChainsOfLinks();
         static void AFolderAndAFileAreListedEachUnderItsOwnKind();
         static void ALinkToAFolderIsListedAsAFolderAndADanglingOneStaysAmongThem();
+        static void TheStandardLibraryDoubleAnswersALinkTheSameWayThisProbeDoes();
+        static void ANameWithAccentsAndOneThatIsNotUtf8ComeBackIntact();
         static void AFolderThatIsNotThereOrHasNothingInItListsNothing();
         static void AnAbsolutePathIsOnAnAvailableVolumeAndARelativeOneIsNot();
+        static void TwoPathsInTheSameFolderShareAVolumeAndAPathNotThereYetFollowsItsParent();
+        static void APathOnAnotherFilesystemSharesNoVolumeWithTheDisk();
+        static void ABindMountOfTheSameFilesystemIsAnotherVolume();
+        static void APathThatIsRelativeOrEmptyHasNoVolumeToShare();
+        static void AMountThatIsConfiguredButNotMountedMakesTheVolumeUnavailable();
+        static void EveryMountOfThisMachineIsAnAvailableVolume();
         static void AFolderThatIsNotThereIsNotTheSameAsOneThatRefusesTheWrite();
         static void AFolderThatTakesTheWriteLeavesNoProbeBehind();
         static void AFolderTheProcessCannotWriteSaysPermissionIsWhatStoppedIt();
@@ -91,6 +103,54 @@ namespace
             return link;
         }
     };
+
+    class RemovedAtTheEnd
+    {
+    public:
+        explicit RemovedAtTheEnd(std::filesystem::path path) : path_(std::move(path))
+        {
+        }
+
+        RemovedAtTheEnd(const RemovedAtTheEnd&) = delete;
+        RemovedAtTheEnd& operator=(const RemovedAtTheEnd&) = delete;
+
+        ~RemovedAtTheEnd()
+        {
+            std::error_code error;
+            std::filesystem::remove_all(path_, error);
+        }
+
+    private:
+        std::filesystem::path path_;
+    };
+
+    dev_t DeviceOf(const std::filesystem::path& path)
+    {
+        struct stat status
+        {
+        };
+
+        return ::stat(path.c_str(), &status) == 0 ? status.st_dev : 0;
+    }
+
+    std::filesystem::path AFolderOnAnotherFilesystem(const std::filesystem::path& besides)
+    {
+        for (const char* candidate : {"/dev/shm", "/run"})
+        {
+            std::error_code error;
+            std::filesystem::path folder = candidate;
+            std::filesystem::path mine = folder / ("fsorg-volume-" + std::to_string(::getpid()));
+            if (DeviceOf(folder) == 0 || DeviceOf(folder) == DeviceOf(besides)
+                || !std::filesystem::create_directories(mine, error))
+            {
+                continue;
+            }
+
+            return mine;
+        }
+
+        return {};
+    }
 
     std::vector<std::string> NamesOf(const std::vector<std::filesystem::path>& paths)
     {
@@ -200,6 +260,60 @@ void PosixFilesystemProbeTest::ALinkToAFolderIsListedAsAFolderAndADanglingOneSta
     QCOMPARE(NamesOf(probe.ChildFiles(community)), (std::vector<std::string>{"to-a-file"}));
 }
 
+void PosixFilesystemProbeTest::TheStandardLibraryDoubleAnswersALinkTheSameWayThisProbeDoes()
+{
+    const Disk disk;
+    const std::filesystem::path destination = disk.AddFolder("Community");
+    const std::filesystem::path physical = disk.AddFolder("Community/asfs");
+    const std::filesystem::path live = disk.AddFolder("live-target");
+    const std::filesystem::path liveLink = disk.AddLink("Community/ag-airport-live", live);
+    const std::filesystem::path gone = disk.AddFolder("gone-target");
+    const std::filesystem::path dangling = disk.AddLink("Community/ag-airport-bgqq", gone);
+    std::filesystem::remove_all(gone);
+
+    const PosixFilesystemProbe production;
+    const StdFilesystemProbe double_;
+
+    for (const std::filesystem::path& entry : {physical, liveLink, dangling})
+    {
+        QCOMPARE(double_.IsReparsePoint(entry), production.IsReparsePoint(entry));
+        QCOMPARE(double_.EntryExistsWithoutFollowingLinks(entry), production.EntryExistsWithoutFollowingLinks(entry));
+    }
+
+    std::vector<std::filesystem::path> byTheDouble = double_.ChildDirectories(destination);
+    std::vector<std::filesystem::path> byProduction = production.ChildDirectories(destination);
+    std::ranges::sort(byTheDouble);
+    std::ranges::sort(byProduction);
+
+    QCOMPARE(byProduction.size(), std::size_t{3});
+    QCOMPARE(byTheDouble, byProduction);
+}
+
+void PosixFilesystemProbeTest::ANameWithAccentsAndOneThatIsNotUtf8ComeBackIntact()
+{
+    const Disk disk;
+    const RemovedAtTheEnd cleanup(disk.Root());
+    const std::filesystem::path destination = disk.AddFolder("Community");
+    const std::filesystem::path folder = destination / PathFromUtf8("caf\xC3\xA9-\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E");
+    const std::filesystem::path file = destination
+        / PathFromUtf8("\xC3\xBC"
+                       "ber-\xD0\x96.bgl");
+    const std::filesystem::path odd = destination / "bad\xFF\xFE.bgl";
+    std::filesystem::create_directories(folder);
+    std::ofstream(file) << "hello";
+    std::ofstream(odd) << "odd";
+
+    const PosixFilesystemProbe probe;
+    std::vector<std::filesystem::path> files = probe.ChildFiles(destination);
+    std::ranges::sort(files);
+    std::vector<std::filesystem::path> expected{file, odd};
+    std::ranges::sort(expected);
+
+    QCOMPARE(probe.ChildDirectories(destination), std::vector<std::filesystem::path>{folder});
+    QCOMPARE(files, expected);
+    QVERIFY(probe.EntryExistsWithoutFollowingLinks(odd));
+}
+
 void PosixFilesystemProbeTest::AFolderThatIsNotThereOrHasNothingInItListsNothing()
 {
     const Disk disk;
@@ -222,6 +336,117 @@ void PosixFilesystemProbeTest::AnAbsolutePathIsOnAnAvailableVolumeAndARelativeOn
     QVERIFY(probe.VolumeIsAvailable(disk.Root() / "library"));
     QVERIFY(!probe.VolumeIsAvailable("library/fenix"));
     QVERIFY(!probe.VolumeIsAvailable(std::filesystem::path{}));
+}
+
+void PosixFilesystemProbeTest::TwoPathsInTheSameFolderShareAVolumeAndAPathNotThereYetFollowsItsParent()
+{
+    const Disk disk;
+    const std::filesystem::path first = disk.AddFolder("library/fenix");
+    const std::filesystem::path second = disk.AddFolder("library/pmdg");
+
+    const PosixFilesystemProbe probe;
+
+    QVERIFY(probe.VolumeIdentityOf(first).has_value());
+    QCOMPARE(probe.VolumeIdentityOf(first), probe.VolumeIdentityOf(second));
+    QCOMPARE(probe.VolumeIdentityOf(disk.Root() / "library" / "never" / "there" / "yet"),
+             probe.VolumeIdentityOf(first));
+    QVERIFY(ShareAVolume(probe, first, disk.Root() / "library" / "never" / "there" / "yet"));
+}
+
+void PosixFilesystemProbeTest::APathOnAnotherFilesystemSharesNoVolumeWithTheDisk()
+{
+    const Disk disk;
+    const std::filesystem::path other = AFolderOnAnotherFilesystem(disk.Root());
+    if (other.empty())
+    {
+        QSKIP("no second filesystem to compare with: the identity of two volumes was not exercised");
+    }
+    qInfo() << "a second filesystem is mounted at" << AsText(other).toStdString().c_str()
+            << ": the identity of two volumes is exercised";
+    const RemovedAtTheEnd cleanup(other);
+
+    const PosixFilesystemProbe probe;
+
+    QVERIFY(probe.VolumeIdentityOf(other).has_value());
+    QVERIFY(probe.VolumeIdentityOf(other) != probe.VolumeIdentityOf(disk.Root()));
+    QVERIFY(!ShareAVolume(probe, other / "landing", disk.Root() / "landing"));
+    QVERIFY(ShareAVolume(probe, other / "landing", other / "elsewhere" / "deeper"));
+}
+
+void PosixFilesystemProbeTest::ABindMountOfTheSameFilesystemIsAnotherVolume()
+{
+    const Disk disk;
+    const std::filesystem::path original = disk.AddFolder("original");
+    const std::filesystem::path mirror = disk.AddFolder("mirror");
+
+    const bool bound = ::mount(original.c_str(), mirror.c_str(), nullptr, MS_BIND, nullptr) == 0;
+    qInfo() << (bound ? "this process may mount: a bind mount of the same filesystem must be another volume"
+                      : "this process may not mount: two folders of one filesystem must share the volume");
+    const PosixFilesystemProbe probe;
+
+    const bool shared = ShareAVolume(probe, original / "landing", mirror / "landing");
+    const bool sameDevice = DeviceOf(original) == DeviceOf(mirror);
+
+    if (bound)
+    {
+        QCOMPARE(::umount2(mirror.c_str(), MNT_DETACH), 0);
+    }
+
+    QCOMPARE(shared, !bound);
+    QVERIFY(sameDevice);
+}
+
+void PosixFilesystemProbeTest::APathThatIsRelativeOrEmptyHasNoVolumeToShare()
+{
+    const Disk disk;
+
+    const PosixFilesystemProbe probe;
+
+    QVERIFY(!probe.VolumeIdentityOf("library/fenix").has_value());
+    QVERIFY(!probe.VolumeIdentityOf(std::filesystem::path{}).has_value());
+    QVERIFY(!ShareAVolume(probe, "library/fenix", "library/pmdg"));
+    QVERIFY(!ShareAVolume(probe, disk.Root(), "library/pmdg"));
+}
+
+void PosixFilesystemProbeTest::AMountThatIsConfiguredButNotMountedMakesTheVolumeUnavailable()
+{
+    const Disk disk;
+    const std::filesystem::path mountInfo = disk.AddFile(
+        "mountinfo",
+        "28 1 259:2 / / rw - ext4 /dev/a rw\n41 28 8:17 / /run/media/bruno/MOUNTED rw - exfat /dev/b rw\n");
+    const std::filesystem::path fstab = disk.AddFile("fstab", "UUID=1 /home/bruno/Jogos ext4 defaults 0 2\n");
+    const std::filesystem::path unplugged = disk.Root() / "unplugged";
+
+    const PosixFilesystemProbe probe(mountInfo, fstab);
+
+    QVERIFY(!probe.VolumeIsAvailable("/home/bruno/Jogos/SteamLibrary"));
+    QVERIFY(!probe.VolumeIsAvailable("/run/media/bruno/UNPLUGGED/SteamLibrary"));
+    QVERIFY(probe.VolumeIsAvailable("/run/media/bruno/MOUNTED/SteamLibrary"));
+    QVERIFY(probe.VolumeIsAvailable("/home/bruno/Documents"));
+    QVERIFY(probe.VolumeIsAvailable(disk.Root() / "library"));
+    QVERIFY(!probe.VolumeIdentityOf("/home/bruno/Jogos/SteamLibrary").has_value());
+    QVERIFY(!probe.VolumeIdentityOf("/run/media/bruno/UNPLUGGED/SteamLibrary").has_value());
+    QVERIFY(!ShareAVolume(probe, "/home/bruno/Jogos/a", "/home/bruno/Jogos/b"));
+    QVERIFY(!probe.VolumeIsAvailable("library/fenix"));
+    QVERIFY(PosixFilesystemProbe(unplugged / "no-mountinfo", unplugged / "no-fstab").VolumeIsAvailable("/home/bruno"));
+}
+
+void PosixFilesystemProbeTest::EveryMountOfThisMachineIsAnAvailableVolume()
+{
+    std::ifstream table(kSystemMountInfo, std::ios::binary);
+    QVERIFY(table.is_open());
+    const std::string text{std::istreambuf_iterator<char>(table), std::istreambuf_iterator<char>()};
+    const PosixFilesystemProbe probe;
+    std::size_t checked = 0;
+
+    for (const std::filesystem::path& mount : MountedPointsIn(text))
+    {
+        QVERIFY2(probe.VolumeIsAvailable(mount), mount.c_str());
+        QVERIFY2(probe.VolumeIsAvailable(mount / "anything" / "below"), mount.c_str());
+        ++checked;
+    }
+
+    QVERIFY(checked > 0);
 }
 
 void PosixFilesystemProbeTest::AFolderThatIsNotThereIsNotTheSameAsOneThatRefusesTheWrite()

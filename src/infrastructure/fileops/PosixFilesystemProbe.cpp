@@ -1,6 +1,7 @@
 #include "infrastructure/fileops/PosixFilesystemProbe.h"
 
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -10,11 +11,13 @@
 #include <string>
 #include <system_error>
 #include <thread>
+#include <utility>
 
 #include <QtCore/QByteArrayView>
 #include <QtCore/QCryptographicHash>
 
 #include "domain/support/PathUtils.h"
+#include "infrastructure/fileops/MountPoints.h"
 #include "support/FileClock.h"
 #include "support/FileReading.h"
 
@@ -22,6 +25,7 @@ namespace
 {
     constexpr std::size_t kBytesReadAtATime = 1024 * 1024;
     constexpr auto kWriteProbeName = ".fsorg-write-probe";
+    constexpr unsigned int kMountIdMask = 0x00001000U;
 
     bool IsAFolderOrALinkThatMayBeOne(const std::filesystem::directory_entry& entry)
     {
@@ -59,6 +63,17 @@ namespace
         std::ranges::sort(children);
 
         return children;
+    }
+
+    std::optional<std::string> TextOfTheFile(const std::filesystem::path& file)
+    {
+        std::ifstream stream(file, std::ios::binary);
+        if (!stream.is_open())
+        {
+            return std::nullopt;
+        }
+
+        return BytesRemainingIn(stream);
     }
 
     WriteAccess WhatTheProbeRanInto(const int error)
@@ -120,17 +135,57 @@ std::vector<std::filesystem::path> PosixFilesystemProbe::ChildFiles(const std::f
                                    });
 }
 
+PosixFilesystemProbe::PosixFilesystemProbe(std::filesystem::path mountInfo, std::filesystem::path fstab)
+    : mountInfo_(std::move(mountInfo)), fstab_(std::move(fstab))
+{
+}
+
 bool PosixFilesystemProbe::VolumeIsAvailable(const std::filesystem::path& path) const
 {
-    const std::filesystem::path root = path.root_path();
-    if (root.empty())
+    if (!path.is_absolute())
     {
         return false;
     }
 
-    std::error_code error;
+    const std::optional<std::string> mounted = TextOfTheFile(mountInfo_);
+    if (!mounted.has_value())
+    {
+        return true;
+    }
 
-    return std::filesystem::is_directory(root, error);
+    return !TheMountIsMissing(path, MountedPointsIn(*mounted),
+                              ConfiguredPointsIn(TextOfTheFile(fstab_).value_or(std::string{})));
+}
+
+std::optional<std::string> PosixFilesystemProbe::VolumeIdentityOf(const std::filesystem::path& path) const
+{
+    if (!VolumeIsAvailable(path))
+    {
+        return std::nullopt;
+    }
+
+    std::filesystem::path place = path.lexically_normal();
+
+    struct statx described
+    {
+    };
+
+    while (
+        ::statx(AT_FDCWD, place.c_str(), AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT, STATX_TYPE | kMountIdMask, &described)
+        != 0)
+    {
+        if ((errno != ENOENT && errno != ENOTDIR) || !place.has_relative_path())
+        {
+            return std::nullopt;
+        }
+
+        place = place.parent_path();
+    }
+
+    const std::string device = std::to_string(described.stx_dev_major) + ":" + std::to_string(described.stx_dev_minor);
+    const bool knowsTheMount = (described.stx_mask & kMountIdMask) != 0;
+
+    return knowsTheMount ? device + ":" + std::to_string(described.stx_mnt_id) : device;
 }
 
 WriteAccess PosixFilesystemProbe::ProbeWritable(const std::filesystem::path& path) const

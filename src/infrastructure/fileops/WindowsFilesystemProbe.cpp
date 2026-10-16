@@ -247,6 +247,11 @@ bool WindowsFilesystemProbe::VolumeIsAvailable(const std::filesystem::path& path
     return GetDriveTypeW(NativePath(root).c_str()) != DRIVE_NO_ROOT_DIR;
 }
 
+std::optional<std::string> WindowsFilesystemProbe::VolumeIdentityOf(const std::filesystem::path& path) const
+{
+    return LoweredForComparison(AsUtf8(VolumeOf(path)));
+}
+
 WriteAccess WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& path) const
 {
     if (!TargetDirectoryExists(path))

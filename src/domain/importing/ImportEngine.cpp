@@ -5,6 +5,7 @@
 
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/importing/FingerprintMeasures.h"
+#include "domain/importing/VolumeSharing.h"
 #include "domain/importing/WhatStoppedIt.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/LibraryLookup.h"
@@ -201,7 +202,7 @@ ImportOutcome ImportEngine::Quarantine(const QuarantineRequest& request,
         return outcome;
     };
 
-    if (OnTheSameVolume(request.loser, request.quarantine))
+    if (ShareAVolume(filesystemProbe_, request.loser, request.quarantine))
     {
         if (files_.Move(request.loser, request.quarantine))
         {

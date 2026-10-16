@@ -9,6 +9,7 @@
 #include "domain/importing/FingerprintMeasures.h"
 #include "domain/importing/ImportPaths.h"
 #include "domain/importing/OriginSidecar.h"
+#include "domain/importing/VolumeSharing.h"
 #include "domain/importing/WhatStoppedIt.h"
 #include "domain/linking/DisableLinks.h"
 #include "domain/model/LandingPath.h"
@@ -477,7 +478,7 @@ AdmitResult ImportService::AdmitOne(const SimulatorProfile& profile,
         return AdmitResult{.result = FileResult::TheDiskDisagreesWithTheScan};
     }
 
-    if (!OnTheSameVolume(request.staged, check.target)
+    if (!ShareAVolume(filesystemProbe_, request.staged, check.target)
         || !filesystemProbe_.EntryExistsWithoutFollowingLinks(request.staged))
     {
         return AdmitResult{.result = FileResult::CouldNotMoveIntoPlace};

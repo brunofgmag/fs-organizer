@@ -109,6 +109,11 @@ public:
         return true;
     }
 
+    [[nodiscard]] std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const override
+    {
+        return LoweredForComparison(AsUtf8(VolumeOf(path)));
+    }
+
     [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override
     {
         return TargetDirectoryExists(path) ? WriteAccess::ItAccepts : WriteAccess::TheFolderIsNotThere;

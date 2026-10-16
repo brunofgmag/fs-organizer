@@ -1982,8 +1982,14 @@ if (NOT WIN32)
             tests/infrastructure/fileops/tst_posix_filesystem_probe.cpp
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h
+            tests/support/StdFilesystemProbe.h
             src/support/FileClock.h)
     target_link_libraries(fsorg-posix-filesystem-probe-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-mount-points-tests mount-points
+            tests/infrastructure/fileops/tst_mount_points.cpp
+            tests/support/PathPrinting.h)
+    target_link_libraries(fsorg-mount-points-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-posix-sidecar-store-tests posix-sidecar-store
             tests/infrastructure/fileops/tst_posix_sidecar_store.cpp
@@ -2008,6 +2014,13 @@ if (NOT WIN32)
             tests/infrastructure/platform/tst_linux_known_folders.cpp
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-linux-known-folders-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-posix-import-on-real-disk-tests posix-import-on-real-disk
+            tests/infrastructure/importing/tst_posix_import_on_real_disk.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-posix-import-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-posix-folder-archive-reader-tests posix-folder-archive-reader
             tests/infrastructure/archive/tst_posix_folder_archive_reader.cpp

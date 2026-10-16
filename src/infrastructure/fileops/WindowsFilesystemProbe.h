@@ -20,6 +20,8 @@ public:
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const override;
+
     [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool SomethingIsHoldingItOpen(const std::filesystem::path& path) const override;
