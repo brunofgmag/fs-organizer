@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=FS Organizer
+GenericName=Flight simulator addon manager
+GenericName[pt_BR]=Gerenciador de addons de simulador de voo
+Comment=Link, import and organize the addons of Microsoft Flight Simulator
+Comment[pt_BR]=Vincule, importe e organize os addons do Microsoft Flight Simulator
+Exec=fs-organizer
+Icon=fs-organizer
+Terminal=false
+Categories=Utility;
+Keywords=flight;simulator;msfs;addons;community;
+StartupWMClass=fs-organizer
