@@ -2,6 +2,7 @@
 #define FS_ORGANIZER_VIEW_SIMULATOR_UNDO_BUTTON_H
 
 #include <algorithm>
+#include <cmath>
 
 #include <QtGui/QFontMetrics>
 #include <QtWidgets/QPushButton>
@@ -42,12 +43,12 @@ public:
 
     [[nodiscard]] QSize sizeHint() const override
     {
-        return effect_.isEmpty() ? QPushButton::sizeHint() : SizeSaying(effect_.arg(entry_));
+        return effect_.isEmpty() ? QPushButton::sizeHint() : SizeNaming(entry_);
     }
 
     [[nodiscard]] QSize minimumSizeHint() const override
     {
-        return effect_.isEmpty() ? QPushButton::minimumSizeHint() : SizeSaying(effect_.arg(Cut(kUndoNameAtLeast)));
+        return effect_.isEmpty() ? QPushButton::minimumSizeHint() : SizeNaming(Cut(kUndoNameAtLeast));
     }
 
 protected:
@@ -63,9 +64,15 @@ private:
         return QPushButton::sizeHint().width() - fontMetrics().horizontalAdvance(text());
     }
 
-    [[nodiscard]] QSize SizeSaying(const QString& said) const
+    [[nodiscard]] int AroundTheName() const
     {
-        return {AroundTheText() + fontMetrics().horizontalAdvance(said), QPushButton::sizeHint().height()};
+        return AroundTheText() + fontMetrics().horizontalAdvance(effect_.arg(QString()));
+    }
+
+    [[nodiscard]] QSize SizeNaming(const QString& name) const
+    {
+        const int wholeName = static_cast<int>(std::ceil(QFontMetricsF(font()).horizontalAdvance(name)));
+        return {AroundTheName() + wholeName, QPushButton::sizeHint().height()};
     }
 
     [[nodiscard]] QString Cut(const int room) const
@@ -80,7 +87,7 @@ private:
             return;
         }
 
-        const int roomForTheName = width() - AroundTheText() - fontMetrics().horizontalAdvance(effect_.arg(QString()));
+        const int roomForTheName = width() - AroundTheName();
         const QString fitting = effect_.arg(AsMenuText(Cut(std::max(roomForTheName, kUndoNameAtLeast))));
 
         if (fitting != text())
