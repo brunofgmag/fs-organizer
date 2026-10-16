@@ -11,9 +11,15 @@
 
 [[nodiscard]] std::filesystem::path DesktopIconUnder(const std::filesystem::path& dataHome);
 
-[[nodiscard]] bool InstallTheDesktopEntry(const std::filesystem::path& appImage,
-                                          const std::filesystem::path& dataHome,
-                                          std::string_view shippedEntry,
-                                          std::string_view icon);
+struct DesktopEntryInstall
+{
+    bool held{};
+    bool iconWritten{};
+};
+
+[[nodiscard]] DesktopEntryInstall InstallTheDesktopEntry(const std::filesystem::path& appImage,
+                                                         const std::filesystem::path& dataHome,
+                                                         std::string_view shippedEntry,
+                                                         std::string_view icon);
 
 #endif // FS_ORGANIZER_INFRASTRUCTURE_PLATFORM_APP_IMAGE_DESKTOP_ENTRY_H

@@ -23,6 +23,7 @@ namespace
         static void InstallingWritesTheEntryAndTheIconUnderTheDataHome();
         static void InstallingAgainFromTheSamePlaceLeavesTheFilesAlone();
         static void InstallingFromANewPlaceRewritesWhatTheEntryLaunches();
+        static void OnlyAnIconJustWrittenAsksTheDesktopToReloadItsIcons();
     };
 }
 
@@ -106,7 +107,7 @@ void AppImageDesktopEntryTest::InstallingWritesTheEntryAndTheIconUnderTheDataHom
     const QTemporaryDir dataHome;
     const std::filesystem::path home = AsPath(dataHome.path());
 
-    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon));
+    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon).held);
 
     QCOMPARE(DesktopEntryUnder(home), home / "applications" / "fs-organizer.desktop");
     QCOMPARE(DesktopIconUnder(home), home / "icons" / "hicolor" / "256x256" / "apps" / "fs-organizer.png");
@@ -119,13 +120,13 @@ void AppImageDesktopEntryTest::InstallingAgainFromTheSamePlaceLeavesTheFilesAlon
     const QTemporaryDir dataHome;
     const std::filesystem::path home = AsPath(dataHome.path());
 
-    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon));
+    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon).held);
 
     const auto longAgo = std::filesystem::file_time_type::clock::now() - std::chrono::hours(24);
     std::filesystem::last_write_time(DesktopEntryUnder(home), longAgo);
     std::filesystem::last_write_time(DesktopIconUnder(home), longAgo);
 
-    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon));
+    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon).held);
 
     QVERIFY2(std::filesystem::last_write_time(DesktopEntryUnder(home)) == longAgo,
              "every start runs the installer, and rewriting an unchanged entry makes the desktop rebuild its menus");
@@ -138,10 +139,24 @@ void AppImageDesktopEntryTest::InstallingFromANewPlaceRewritesWhatTheEntryLaunch
     const std::filesystem::path home = AsPath(dataHome.path());
     const std::filesystem::path moved = "/home/pilot/Downloads/fs-organizer-1.0.0-x86_64.AppImage";
 
-    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon));
-    QVERIFY(InstallTheDesktopEntry(moved, home, ShippedEntry(), kIcon));
+    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon).held);
+    QVERIFY(InstallTheDesktopEntry(moved, home, ShippedEntry(), kIcon).held);
 
     QCOMPARE(ContentOf(DesktopEntryUnder(home)), DesktopEntryLaunching(ShippedEntry(), moved));
+}
+
+void AppImageDesktopEntryTest::OnlyAnIconJustWrittenAsksTheDesktopToReloadItsIcons()
+{
+    const QTemporaryDir dataHome;
+    const std::filesystem::path home = AsPath(dataHome.path());
+    const std::filesystem::path moved = "/home/pilot/Downloads/fs-organizer-1.0.0-x86_64.AppImage";
+
+    QVERIFY2(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon).iconWritten,
+             "a running menu keeps the lookup it made before the icon existed, and only this tells it to look again");
+    QVERIFY2(!InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon).iconWritten,
+             "every start runs the installer, and asking every desktop process to reload its icons on each start "
+             "is noise");
+    QVERIFY(!InstallTheDesktopEntry(moved, home, ShippedEntry(), kIcon).iconWritten);
 }
 
 QTEST_APPLESS_MAIN(AppImageDesktopEntryTest)

@@ -69,17 +69,24 @@ namespace
         return read.str();
     }
 
-    [[nodiscard]] bool Holding(const std::filesystem::path& file, const std::string_view wanted)
+    enum class Holding
+    {
+        AlreadyHeld,
+        Written,
+        Failed,
+    };
+
+    [[nodiscard]] Holding MakeItHold(const std::filesystem::path& file, const std::string_view wanted)
     {
         if (ContentOf(file) == std::optional<std::string>(wanted))
         {
-            return true;
+            return Holding::AlreadyHeld;
         }
 
         std::error_code error;
         std::filesystem::create_directories(file.parent_path(), error);
 
-        return !error && WriteFileReplacing(file, wanted);
+        return !error && WriteFileReplacing(file, wanted) ? Holding::Written : Holding::Failed;
     }
 }
 
@@ -121,13 +128,16 @@ std::filesystem::path DesktopIconUnder(const std::filesystem::path& dataHome)
     return dataHome / "icons" / "hicolor" / "256x256" / "apps" / "fs-organizer.png";
 }
 
-bool InstallTheDesktopEntry(const std::filesystem::path& appImage,
-                            const std::filesystem::path& dataHome,
-                            const std::string_view shippedEntry,
-                            const std::string_view icon)
+DesktopEntryInstall InstallTheDesktopEntry(const std::filesystem::path& appImage,
+                                           const std::filesystem::path& dataHome,
+                                           const std::string_view shippedEntry,
+                                           const std::string_view icon)
 {
-    const bool iconHeld = Holding(DesktopIconUnder(dataHome), icon);
-    const bool entryHeld = Holding(DesktopEntryUnder(dataHome), DesktopEntryLaunching(shippedEntry, appImage));
+    const Holding iconHeld = MakeItHold(DesktopIconUnder(dataHome), icon);
+    const Holding entryHeld = MakeItHold(DesktopEntryUnder(dataHome), DesktopEntryLaunching(shippedEntry, appImage));
 
-    return iconHeld && entryHeld;
+    return DesktopEntryInstall{
+        .held = iconHeld != Holding::Failed && entryHeld != Holding::Failed,
+        .iconWritten = iconHeld == Holding::Written,
+    };
 }

@@ -21,6 +21,7 @@ if (BUILD_TESTING)
 endif ()
 
 if (NOT WIN32)
+    find_package(Qt6 6.8 REQUIRED COMPONENTS DBus)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(LIBARCHIVE REQUIRED IMPORTED_TARGET libarchive>=3.6)
 endif ()

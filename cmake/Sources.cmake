@@ -132,6 +132,7 @@ set(LINUX_PLATFORM_SOURCES
         src/infrastructure/legacy/ProtonLegacyConfigSource.cpp
         src/infrastructure/link/PosixLinkService.cpp
         src/infrastructure/platform/AppImageDesktopEntry.cpp
+        src/infrastructure/platform/DesktopIconReload.cpp
         src/infrastructure/platform/LinuxInstanceGuard.cpp
         src/infrastructure/platform/LinuxKnownFolders.cpp
         src/infrastructure/sim/ChildNamedIgnoringCase.cpp

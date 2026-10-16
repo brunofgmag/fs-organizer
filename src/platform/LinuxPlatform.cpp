@@ -14,6 +14,7 @@
 #include "infrastructure/legacy/ProtonLegacyConfigSource.h"
 #include "infrastructure/link/PosixLinkService.h"
 #include "infrastructure/platform/AppImageDesktopEntry.h"
+#include "infrastructure/platform/DesktopIconReload.h"
 #include "infrastructure/platform/LinuxInstanceGuard.h"
 #include "infrastructure/platform/LinuxKnownFolders.h"
 #include "infrastructure/sim/ProcProcessProbe.h"
@@ -64,6 +65,11 @@ void IntegrateWithTheDesktop()
         return;
     }
 
-    static_cast<void>(InstallTheDesktopEntry(AsPath(appImage), DataHomeFolder(), shippedEntry.readAll().toStdString(),
-                                             icon.readAll().toStdString()));
+    const DesktopEntryInstall installed = InstallTheDesktopEntry(
+        AsPath(appImage), DataHomeFolder(), shippedEntry.readAll().toStdString(), icon.readAll().toStdString());
+
+    if (installed.iconWritten)
+    {
+        AskTheDesktopToReloadItsIcons();
+    }
 }
