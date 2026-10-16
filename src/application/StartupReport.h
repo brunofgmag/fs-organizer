@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "application/model/ProfileSnapshot.h"
+#include "application/ports/PathMapper.h"
 #include "application/ports/StartupEntries.h"
 #include "domain/model/SimulatorProfile.h"
 #include "domain/ports/FilesystemProbe.h"
@@ -28,6 +29,7 @@ struct StartupLine
 {
     std::string label{};
     std::filesystem::path path{};
+    std::filesystem::path hostPath{};
     bool enabled = false;
     StartupReach reach = StartupReach::OutsideYourAddons;
     std::filesystem::path addonFolder{};
@@ -43,7 +45,8 @@ struct StartupReport
 [[nodiscard]] StartupReport ReportStartupEntries(const std::vector<StartupEntry>& entries,
                                                  const SimulatorProfile& profile,
                                                  const ProfileSnapshot& snapshot,
-                                                 const FilesystemProbe& filesystemProbe);
+                                                 const FilesystemProbe& filesystemProbe,
+                                                 const PathMapper& pathMapper);
 
 [[nodiscard]] std::vector<StartupLine> EntriesCarriedBy(const StartupReport& report,
                                                         const std::vector<std::filesystem::path>& addonFolders);

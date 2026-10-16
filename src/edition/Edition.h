@@ -9,6 +9,7 @@
 #include "application/model/UpdateDelivery.h"
 #include "application/ports/ManualSource.h"
 #include "application/ports/UpdateService.h"
+#include "infrastructure/platform/AppFolders.h"
 
 struct EditionParts
 {
@@ -18,6 +19,7 @@ struct EditionParts
     ManualDelivery manualDelivery{};
 };
 
-[[nodiscard]] EditionParts BuildTheEdition(const QString& updateFeed, const QString& currentVersion);
+[[nodiscard]] EditionParts
+BuildTheEdition(const QString& updateFeed, const QString& currentVersion, const AppFolders& folders);
 
 #endif // FS_ORGANIZER_EDITION_EDITION_H

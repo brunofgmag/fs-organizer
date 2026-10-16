@@ -1789,13 +1789,13 @@ void AddonTreePage::ChooseDestination(const TreeNode* clicked, const std::filesy
 
 bool AddonTreePage::TheRootIsWorthKeeping(const std::filesystem::path& root)
 {
-    const RootDepth depth = MeasureTheRoot(root);
-    if (depth.ItLeavesRoom())
+    const std::optional<RootDepth> depth = viewModel_.DepthOfTheRootThePlatformWarnsAbout(root);
+    if (!depth.has_value())
     {
         return true;
     }
 
-    LibraryRootDialog dialog(root, depth, this);
+    LibraryRootDialog dialog(root, *depth, this);
 
     return dialog.exec() == QDialog::Accepted;
 }

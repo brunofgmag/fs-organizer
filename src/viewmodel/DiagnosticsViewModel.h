@@ -102,6 +102,8 @@ public:
 
     [[nodiscard]] const SizeReport& Size() const;
 
+    [[nodiscard]] std::optional<std::size_t> RecycleBinPathCeiling() const;
+
     [[nodiscard]] bool Measuring() const;
 
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point> CountedAt() const;

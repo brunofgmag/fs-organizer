@@ -3,18 +3,20 @@
 
 #include "application/StartupService.h"
 #include "domain/ports/FilesystemProbe.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeStartupEntries.h"
 
 struct StartupOverFakes
 {
     explicit StartupOverFakes(const FilesystemProbe& filesystemProbe)
-        : service(entries, processProbe, filesystemProbe, true)
+        : service(entries, processProbe, filesystemProbe, pathMapper, true)
     {
     }
 
     FakeStartupEntries entries;
     FakeProcessProbe processProbe;
+    WindowsPathMapper pathMapper;
     StartupService service;
 };
 

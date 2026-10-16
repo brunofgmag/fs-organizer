@@ -153,6 +153,7 @@ std::vector<VolumeRoom> DeletionService::RoomOnEachVolume(const std::vector<Addo
             if (const std::optional<RecycleBinRoom> bin = filesystemProbe_.RecycleBinOn(volume))
             {
                 room.quota = bin->quota;
+                room.quotaIsUnlimited = !bin->quota.has_value();
                 room.itRecycles = bin->itRecycles;
             }
 
@@ -203,6 +204,7 @@ DeletionPlan DeletionService::Plan(const SimulatorProfile& profile,
     }
 
     plan.volumes = RoomOnEachVolume(plan.addons);
+    plan.pathCeiling = filesystemProbe_.RecycleBinPathCeiling();
 
     return plan;
 }

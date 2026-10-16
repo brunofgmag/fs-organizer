@@ -15,11 +15,10 @@
 #include "domain/tree/AddonTree.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 
 namespace
@@ -354,8 +353,9 @@ int main(int argc, char* argv[])
 
     const BglSceneryParser parser;
     const JsonManifestParser manifestParser;
-    const WindowsFilesystemProbe filesystemProbe;
-    const JsonlOperationJournal journal(JournalFilePath());
+    const PlatformParts platform = BuildThePlatform();
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
+    const JsonlOperationJournal journal(platform.folders.journalFile);
     const JournalImportedFolders importedFolders(journal);
     const FilesystemScanner scanner(manifestParser, filesystemProbe, importedFolders);
 

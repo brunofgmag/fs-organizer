@@ -162,11 +162,12 @@ QHeaderView::section {
 #ScrollBarCap { background: %window%; border: none; border-bottom: 2px solid %divider%; }
 QTableView, QTreeView { border: none; }
 QTableView { gridline-color: transparent; }
-QLineEdit, QComboBox, QSpinBox {
+QLineEdit, QSpinBox {
     background: %raised%; border: 1px solid %edge%; border-radius: 0; padding: 3px 8px;
     selection-background-color: %accent%; selection-color: %onAccent%;
 }
-QLineEdit:focus, QComboBox:focus, QSpinBox:focus { border: 1px solid %accent%; }
+QComboBox { padding: 3px 8px; selection-background-color: %accent%; selection-color: %onAccent%; }
+QLineEdit:focus, QSpinBox:focus { border: 1px solid %accent%; }
 QPushButton {
     background: transparent; border: 1px solid %edge%; border-radius: 0;
     padding: 5px 12px; font-weight: 600;

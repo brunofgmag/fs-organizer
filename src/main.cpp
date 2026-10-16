@@ -25,26 +25,17 @@
 #include "application/StartupService.h"
 #include "edition/Edition.h"
 #include "infrastructure/archive/ArchiveOrFolderReader.h"
-#include "infrastructure/archive/FolderArchiveReader.h"
-#include "infrastructure/archive/TarExeArchiveReader.h"
 #include "infrastructure/bisection/JsonBisectionStore.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/documents/JsonDocumentIndexCache.h"
 #include "infrastructure/documents/QtPdfChartVersions.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/legacy/WindowsLegacyConfigSource.h"
-#include "infrastructure/link/WindowsLinkService.h"
-#include "infrastructure/platform/SingleInstance.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/scenery/BglSceneryParser.h"
 #include "infrastructure/scenery/JsonSceneryCache.h"
@@ -57,9 +48,7 @@
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
-#include "infrastructure/sim/WindowsSimulatorLocator.h"
-#include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 #include "view/library/AddonTreePage.h"
 #include "view/community/CommunityPage.h"
@@ -103,7 +92,6 @@
 
 namespace
 {
-    constexpr auto kSingleInstanceName = L"Local\\fs-organizer-single-instance";
     constexpr auto kDefaultUpdateFeed = "https://api.github.com/repos/brunofgmag/fs-organizer/releases/latest";
     constexpr int kFirstUpdateCheckDelayMs = 3000;
 
@@ -229,14 +217,15 @@ int main(int argc, char* argv[])
     QApplication::setOrganizationName(QStringLiteral("fs-organizer"));
     QApplication::setWindowIcon(BrandIcon());
 
-    const SingleInstance onlyOne(kSingleInstanceName);
-    if (onlyOne.AnotherIsRunning())
+    const PlatformParts platform = BuildThePlatform();
+    if (platform.instance->AnotherIsRunning())
     {
-        BringTheRunningInstanceForward(QApplication::applicationName().toStdWString());
+        platform.instance->BringTheRunningOneForward();
 
         return 0;
     }
 
+    IntegrateWithTheDesktop();
     ApplyModernistTheme(app);
 
     QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, &app,
@@ -248,28 +237,28 @@ int main(int argc, char* argv[])
     LanguageSwitch language;
     static_cast<void>(language.Use({}));
 
-    WindowsLinkService linkService;
-    const WindowsFilesystemProbe filesystemProbe;
-    WindowsFileOperations files;
-    WindowsSidecarStore sidecars;
+    LinkService& linkService = *platform.links;
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
+    FileOperations& files = *platform.files;
+    SidecarStore& sidecars = *platform.sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
-    JsonlOperationJournal journal(JournalFilePath());
+    JsonlOperationJournal journal(platform.folders.journalFile);
 
     const JournalImportedFolders importedFolders(journal);
     const JournalLinkedFolders theAppLinked(journal);
 
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
-    const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
-    const WindowsSimulatorLocator locator(userCfgLocations);
+    const std::vector<UserCfgLocation>& userCfgLocations = platform.userCfgLocations;
+    const SimulatorLocator& locator = *platform.locator;
     ProfilePackages packages(filesystemProbe, ContentListLocations(userCfgLocations, filesystemProbe),
                              [&userCfgLocations, &filesystemProbe]
                              {
                                  return ContentListLocations(userCfgLocations, filesystemProbe);
                              });
-    const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
+    const ProcessProbe& processProbe = *platform.processes;
     const SystemClock clock;
-    JsonSettingsRepository settings(SettingsFilePath());
+    JsonSettingsRepository settings(platform.folders.settingsFile);
 
     const std::optional<AppSettings> loaded = settings.Load();
     if (!loaded.has_value())
@@ -277,7 +266,7 @@ int main(int argc, char* argv[])
         QMessageBox::critical(nullptr, QObject::tr("Unreadable configuration"),
                               QObject::tr("The settings file could not be read, so FS Organizer will not overwrite it. "
                                           "Fix or move %1 and open the program again.")
-                                  .arg(AsText(SettingsFilePath())));
+                                  .arg(AsText(platform.folders.settingsFile)));
 
         return 1;
     }
@@ -300,11 +289,13 @@ int main(int argc, char* argv[])
     const LinkType storedLinkType = stored.linkType;
     const Verification storedVerification = stored.verification;
 
+    const PathMapper& pathMapper = *platform.paths;
     ExeXmlStartupEntries startupEntries{{}};
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, pathMapper,
+                                  stored.manageStartupEntries);
 
-    FilePresetRepository presetRepository(PresetsFolderPath());
-    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, log);
+    FilePresetRepository presetRepository(platform.folders.presetsFolder);
+    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, pathMapper, log);
 
     std::vector<LoadingReportLocation> loadingReports = LoadingReportLocations(userCfgLocations, filesystemProbe);
     ProfileLoadingReport loadingReport(filesystemProbe, {});
@@ -314,7 +305,7 @@ int main(int argc, char* argv[])
     CoverageService coverageService(packageList, processProbe, log, stored.managePackageList);
 
     const BglSceneryParser sceneryParser;
-    JsonSceneryCache sceneryCache(SceneryCacheFilePath());
+    JsonSceneryCache sceneryCache(platform.folders.sceneryCacheFile);
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, storedLinkType);
@@ -323,9 +314,7 @@ int main(int argc, char* argv[])
     ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log,
                                 storedLinkType);
 
-    const TarExeArchiveReader tarReader;
-    const FolderArchiveReader folderReader;
-    const ArchiveOrFolderReader archiveReader(folderReader, tarReader);
+    const ArchiveOrFolderReader archiveReader(*platform.folderArchives, *platform.packedArchives);
     const ArchiveInstallService archiveInstallService(archiveReader, manifestParser, filesystemProbe, files, log,
                                                       importService);
 
@@ -364,10 +353,10 @@ int main(int argc, char* argv[])
     const QtPdfChartVersions chartVersions;
     const DocumentService documentService(filesystemProbe, catalogueParser, chartVersions);
     AddonDocumentsViewModel addonDocumentsViewModel(documentService, sceneryService, session, runner);
-    JsonDocumentIndexCache documentIndexCache(DocumentIndexFilePath());
+    JsonDocumentIndexCache documentIndexCache(platform.folders.documentIndexFile);
     const EditionParts edition =
         BuildTheEdition(qEnvironmentVariable("FSORG_UPDATE_FEED", QString::fromLatin1(kDefaultUpdateFeed)),
-                        QCoreApplication::applicationVersion());
+                        QCoreApplication::applicationVersion(), platform.folders);
 
     DocumentsViewModel documentsViewModel(documentService, sceneryService, session, runner, documentIndexCache,
                                           *edition.manual, edition.manualDelivery, clock);
@@ -406,7 +395,7 @@ int main(int argc, char* argv[])
                                               clock, runner);
 
     const CouplingScan coupling(filesystemProbe);
-    JsonBisectionStore bisectionStore(BisectionFolderPath());
+    JsonBisectionStore bisectionStore(platform.folders.bisectionFolder);
     BisectionService bisectionService(profileService, coupling, filesystemProbe, bisectionStore, clock);
     BisectionViewModel bisectionViewModel(bisectionService, session, runner);
 
@@ -417,47 +406,48 @@ int main(int argc, char* argv[])
     auto* packageListPage = new PackageListPage(coverageViewModel);
     auto* simulatorPage = new SimulatorPage(startupPage, packageListPage);
 
-    QObject::connect(&notifier, &SessionNotifier::ScanFinished, startupPage,
-                     [startupPage, &session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupViewModel,
-                      &packageList, &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
-                     {
-                         QTimer::singleShot(
-                             0, startupPage,
-                             [&session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupViewModel,
-                              &packageList, &contentLists, &coverageViewModel, &loadingReport, &loadingReports]
-                             {
-                                 const SimulatorVariant variant = session.Profile().variant;
+    QObject::connect(
+        &notifier, &SessionNotifier::ScanFinished, startupPage,
+        [startupPage, &session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupViewModel, &packageList,
+         &contentLists, &coverageViewModel, &loadingReport, &loadingReports, &platform]
+        {
+            QTimer::singleShot(
+                0, startupPage,
+                [&session, &userCfgLocations, &filesystemProbe, &startupEntries, &startupViewModel, &packageList,
+                 &contentLists, &coverageViewModel, &loadingReport, &loadingReports, &platform]
+                {
+                    const SimulatorVariant variant = session.Profile().variant;
 
-                                 startupEntries.Use(StartupFileOrItsPlace(userCfgLocations, filesystemProbe, variant));
-                                 startupEntries.KeepRemovedEntriesIn(
-                                     RemovedStartupEntriesFileOf(RemovedStartupEntriesFolderPath(), variant));
-                                 loadingReport.Use(PickLocatingAgainWhenMissing(
-                                     loadingReports,
-                                     [&userCfgLocations, &filesystemProbe]
-                                     {
-                                         return LoadingReportLocations(userCfgLocations, filesystemProbe);
-                                     },
-                                     [variant](const std::vector<LoadingReportLocation>& locations)
-                                     {
-                                         return LoadingReportOf(locations, variant);
-                                     }));
-                                 startupViewModel.Show();
-                                 session.RefreshStartupEntries();
+                    startupEntries.Use(StartupFileOrItsPlace(userCfgLocations, filesystemProbe, variant));
+                    startupEntries.KeepRemovedEntriesIn(
+                        RemovedStartupEntriesFileOf(platform.folders.removedStartupEntriesFolder, variant));
+                    loadingReport.Use(PickLocatingAgainWhenMissing(
+                        loadingReports,
+                        [&userCfgLocations, &filesystemProbe]
+                        {
+                            return LoadingReportLocations(userCfgLocations, filesystemProbe);
+                        },
+                        [variant](const std::vector<LoadingReportLocation>& locations)
+                        {
+                            return LoadingReportOf(locations, variant);
+                        }));
+                    startupViewModel.Show();
+                    session.RefreshStartupEntries();
 
-                                 const std::optional<ChosenContentList> chosen = PickLocatingAgainWhenMissing(
-                                     contentLists,
-                                     [&userCfgLocations, &filesystemProbe]
-                                     {
-                                         return ContentListLocations(userCfgLocations, filesystemProbe);
-                                     },
-                                     [variant](const std::vector<ContentListLocation>& locations)
-                                     {
-                                         return ChooseContentList(locations, variant);
-                                     });
-                                 packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
-                                 coverageViewModel.Show();
-                             });
-                     });
+                    const std::optional<ChosenContentList> chosen = PickLocatingAgainWhenMissing(
+                        contentLists,
+                        [&userCfgLocations, &filesystemProbe]
+                        {
+                            return ContentListLocations(userCfgLocations, filesystemProbe);
+                        },
+                        [variant](const std::vector<ContentListLocation>& locations)
+                        {
+                            return ChooseContentList(locations, variant);
+                        });
+                    packageList.Use(chosen.has_value() ? chosen->listPath : std::filesystem::path{});
+                    coverageViewModel.Show();
+                });
+        });
 
     PresetService presetService(presetRepository, profileService, startupService);
     PresetViewModel presetViewModel(session, presetService, profileService, runner);
@@ -468,11 +458,10 @@ int main(int argc, char* argv[])
 
     UpdateViewModel updateViewModel(updateService, stored.updateMode, UpdatesAreOn(), edition.updateDelivery);
 
-    OptionsViewModel optionsViewModel(session, profileService, runner, notifier);
-    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, SettingsFilePath());
+    OptionsViewModel optionsViewModel(session, profileService, runner, notifier, platform.capabilities);
+    auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, platform.folders.settingsFile);
 
-    const WindowsLegacyConfigSource legacyConfig(ProgramDataFolder());
-    const LegacyConfigImporter legacyImporter(legacyConfig, filesystemProbe);
+    const LegacyConfigImporter legacyImporter(*platform.legacyConfig, filesystemProbe);
     LegacyImportViewModel legacyViewModel(session, notifier, legacyImporter, presetService, runner);
 
     PageTab* libraryButton = window.AddPage(PageNames::kLibrary, page);
@@ -528,14 +517,13 @@ int main(int argc, char* argv[])
             }
         });
 
-    QObject::connect(
-        &optionsViewModel, &OptionsViewModel::SettingsCouldNotBeSaved, &window,
-        [&window]
-        {
-            QMessageBox::warning(
-                &window, QObject::tr("Could not save"),
-                QObject::tr("Could not save the option to %1, so it was not changed.").arg(AsText(SettingsFilePath())));
-        });
+    QObject::connect(&optionsViewModel, &OptionsViewModel::SettingsCouldNotBeSaved, &window,
+                     [&window, &platform]
+                     {
+                         QMessageBox::warning(&window, QObject::tr("Could not save"),
+                                              QObject::tr("Could not save the option to %1, so it was not changed.")
+                                                  .arg(AsText(platform.folders.settingsFile)));
+                     });
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &updateViewModel,
                      [&updateViewModel, &updateService]
@@ -816,7 +804,7 @@ int main(int argc, char* argv[])
                          QMessageBox::warning(&window, QObject::tr("Could not save"),
                                               QObject::tr("The change was applied, but the profile could not be saved "
                                                           "to %1, so the program will not remember it next time.")
-                                                  .arg(AsText(SettingsFilePath())));
+                                                  .arg(AsText(platform.folders.settingsFile)));
                      });
 
     QObject::connect(&notifier, &SessionNotifier::ScanFinished, &window,

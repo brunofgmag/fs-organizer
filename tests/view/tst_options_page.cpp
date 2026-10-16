@@ -52,6 +52,8 @@ namespace
         static void WhereTheProgramCannotUpdateItselfTheUpdatesTabOffersNoWayToInstall();
         static void ThePageThatCannotUpdateItselfFitsTheNarrowestWindow();
         static void TheLinksTabOpensOnTheTypeThatIsStored();
+        static void WhereTheSystemHasNoJunctionsTheLinksTabDoesNotOfferTheChoice();
+        static void WhereTheSystemHasJunctionsTheLinksTabOffersBothKindsOfLink();
         static void ChoosingSymlinkWritesItAndSaysWhatChanges();
         static void BothChecksAreOfferedAndTheTabOpensOnTheOneThatIsStored();
         static void ChoosingTheHashWritesItAndSaysWhatEveryImportWillDo();
@@ -198,7 +200,9 @@ namespace
 
     struct Fixture
     {
-        explicit Fixture(const UpdateDelivery chosen = UpdateDelivery::SelfUpdate) : delivery(chosen)
+        explicit Fixture(const UpdateDelivery chosen = UpdateDelivery::SelfUpdate,
+                         const PlatformCapabilities offered = {.offersJunctions = true})
+            : capabilities(offered), delivery(chosen)
         {
             fileSystem.AddDirectory(kCommunity);
             fileSystem.AddDirectory(kLibrary);
@@ -243,7 +247,8 @@ namespace
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
-        OptionsViewModel viewModel{session, service, runner, notifier};
+        PlatformCapabilities capabilities;
+        OptionsViewModel viewModel{session, service, runner, notifier, capabilities};
         FakeUpdateService updateService;
         UpdateDelivery delivery{};
         UpdateViewModel updates{updateService, UpdateMode::Notify, true, delivery};
@@ -378,6 +383,30 @@ void OptionsPageTest::TheLinksTabOpensOnTheTypeThatIsStored()
     QVERIFY(symbolic->isChecked());
     QVERIFY(!junction->isChecked());
     QVERIFY(hashed != nullptr);
+}
+
+void OptionsPageTest::WhereTheSystemHasNoJunctionsTheLinksTabDoesNotOfferTheChoice()
+{
+    Fixture f{UpdateDelivery::SelfUpdate, {.offersJunctions = false}};
+    f.page.show();
+
+    const auto* group = f.page.findChild<QWidget*>(QStringLiteral("LinkTypeGroup"));
+    const auto* hashed = f.page.findChild<QRadioButton*>(QStringLiteral("HashChoice"));
+
+    QVERIFY(group != nullptr);
+    QVERIFY(!group->isVisibleTo(group->parentWidget()));
+    QVERIFY2(hashed != nullptr && hashed->isEnabled(), "hiding the link type took the verification choice with it");
+}
+
+void OptionsPageTest::WhereTheSystemHasJunctionsTheLinksTabOffersBothKindsOfLink()
+{
+    Fixture f;
+    f.page.show();
+
+    const auto* group = f.page.findChild<QWidget*>(QStringLiteral("LinkTypeGroup"));
+
+    QVERIFY(group != nullptr);
+    QVERIFY(group->isVisibleTo(group->parentWidget()));
 }
 
 void OptionsPageTest::ChoosingSymlinkWritesItAndSaysWhatChanges()

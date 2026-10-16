@@ -12,14 +12,9 @@
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/link/WindowsLinkService.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
-#include "infrastructure/sim/WindowsSimulatorLocator.h"
-#include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 
 namespace
@@ -268,15 +263,16 @@ int main(int argc, char* argv[])
         return 2;
     }
 
-    const WindowsLinkService linkService;
-    const WindowsFilesystemProbe filesystemProbe;
+    const PlatformParts platform = BuildThePlatform();
+    const LinkService& linkService = *platform.links;
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
     const JsonManifestParser manifestParser;
-    const JsonlOperationJournal journal(JournalFilePath());
+    const JsonlOperationJournal journal(platform.folders.journalFile);
     const JournalImportedFolders importedFolders(journal);
     const JournalLinkedFolders theAppLinked(journal);
     const FilesystemScanner scanner(manifestParser, filesystemProbe, importedFolders);
-    const WindowsSimulatorLocator locator(WindowsUserCfgLocations());
-    const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
+    const SimulatorLocator& locator = *platform.locator;
+    const ProcessProbe& processProbe = *platform.processes;
     const EntryClassifier classifier(linkService, filesystemProbe, theAppLinked);
 
     Out() << "Simulator running: " << (processProbe.SimulatorIsRunning() ? "yes" : "no") << "\n";

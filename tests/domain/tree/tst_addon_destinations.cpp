@@ -18,6 +18,7 @@ namespace
         static void ItAnswersTheSameDestinationTheFreeFunctionDoes();
         static void ItAnswersTheSameStrayedFolderTheFreeFunctionDoes();
         static void ItReadsTheFirstStrayedLinkJustLikeTheFreeFunction();
+        static void ALinkSpelledWithBackslashesStraysToTheFolderItsTextNames();
         static void ABrokenLinkAtThePlannedPathIsWhatLinksNowhereMeans();
         static void ABrokenLinkSomewhereElseLeavesTheAddonAlone();
         static void AnOverrideNamingAPathThatIsNoLongerADestinationDoesNotDecide();
@@ -126,6 +127,19 @@ void AddonDestinationsTest::ItReadsTheFirstStrayedLinkJustLikeTheFreeFunction()
 
     QCOMPARE(prepared.Of(folder).strayedTo, DestinationItStrayedTo(profile, entries, folder));
     QCOMPARE(prepared.Of(folder).strayedTo, std::filesystem::path("E:/Flight Simulator 2024/Community2024"));
+}
+
+void AddonDestinationsTest::ALinkSpelledWithBackslashesStraysToTheFolderItsTextNames()
+{
+    const SimulatorProfile profile = ProfileWith({});
+    const std::filesystem::path folder = "D:/MSFS 2024/Sceneries/Europe/orbx-lfmn";
+    const std::vector<DestinationEntry> entries = {
+        LinkAt(PathFromUtf8(R"(E:\Flight Simulator 2024\Community2024\orbx-lfmn)"), folder)};
+
+    const AddonDestinations prepared(profile, entries);
+
+    QCOMPARE(ComparablePath(prepared.Of(folder).strayedTo), ComparablePath(kCommunity2024));
+    QCOMPARE(ComparablePath(DestinationItStrayedTo(profile, entries, folder)), ComparablePath(kCommunity2024));
 }
 
 void AddonDestinationsTest::ABrokenLinkAtThePlannedPathIsWhatLinksNowhereMeans()

@@ -345,7 +345,11 @@ QWidget* OptionsPage::CreateLinks()
     layout->setContentsMargins(kBodyMarginX, kBodyMarginY, kBodyMarginX, kBodyMarginY);
     layout->setSpacing(kBetweenGroups);
 
-    auto* links = new QVBoxLayout;
+    auto* linkGroup = new QWidget(pane);
+    linkGroup->setObjectName(QStringLiteral("LinkTypeGroup"));
+    linkGroup->setVisible(viewModel_.OffersJunctions());
+
+    auto* links = new QVBoxLayout(linkGroup);
     links->setContentsMargins(0, 0, 0, 0);
     links->setSpacing(kInsideGroup);
     links->addWidget(Heading(tr("Link type"), pane));
@@ -367,7 +371,7 @@ QWidget* OptionsPage::CreateLinks()
         Choice(tr("Symbolic link"),
                tr("Only needed for a library on a network share. Requires Developer Mode or administrator rights."),
                symbolic, true));
-    layout->addLayout(links);
+    layout->addWidget(linkGroup);
 
     connect(linkTypes_, &QButtonGroup::idClicked, this,
             [this](const int chosen)

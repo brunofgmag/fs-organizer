@@ -30,9 +30,9 @@ namespace
             + QObject::tr("leaves %n for the addon", nullptr, static_cast<int>(depth.leavesForTheAddon));
     }
 
-    QString TheShortRootForComparison()
+    QString TheShortRootForComparison(const std::size_t ceiling)
     {
-        return AsText(kAShortRoot) + QStringLiteral(" · ") + HowMuchItLeaves(MeasureTheRoot(kAShortRoot));
+        return AsText(kAShortRoot) + QStringLiteral(" · ") + HowMuchItLeaves(MeasureTheRoot(kAShortRoot, ceiling));
     }
 }
 
@@ -51,7 +51,7 @@ LibraryRootDialog::LibraryRootDialog(const std::filesystem::path& root, const Ro
                       "own folder, and some Windows operations, including the Recycle Bin, fail past %3.")
                        .arg(tr("%n character", nullptr, static_cast<int>(depth.characters)))
                        .arg(kAddonsRoutinelyNest)
-                       .arg(kTheRecycleBinStopsAt),
+                       .arg(depth.ceiling),
                    this);
     explanation->setWordWrap(true);
 
@@ -64,7 +64,7 @@ LibraryRootDialog::LibraryRootDialog(const std::filesystem::path& root, const Ro
     grid->setColumnStretch(1, 1);
 
     AddTheSide(*grid, 0, tr("This folder"), HowMuchItLeaves(depth));
-    AddTheSide(*grid, 1, tr("A short path, for comparison"), TheShortRootForComparison());
+    AddTheSide(*grid, 1, tr("A short path, for comparison"), TheShortRootForComparison(depth.ceiling));
 
     auto* buttons = new QDialogButtonBox(this);
     QPushButton* another = buttons->addButton(tr("Choose another folder"), QDialogButtonBox::RejectRole);

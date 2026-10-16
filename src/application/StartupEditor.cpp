@@ -56,11 +56,6 @@ namespace
         return true;
     }
 
-    std::filesystem::path InWindowsForm(std::filesystem::path path)
-    {
-        return path.make_preferred();
-    }
-
     bool NeverChangesItsMind(const FileResult result)
     {
         return result == FileResult::TheStartupEntryIsAlreadyThere || result == FileResult::TheDiskDisagreesWithTheScan;
@@ -95,8 +90,9 @@ namespace
 StartupEditor::StartupEditor(StartupService& startup,
                              PresetRepository& presets,
                              const FilesystemProbe& filesystemProbe,
+                             const PathMapper& pathMapper,
                              const OperationLog& log)
-    : startup_(startup), presets_(presets), filesystemProbe_(filesystemProbe), log_(log)
+    : startup_(startup), presets_(presets), filesystemProbe_(filesystemProbe), pathMapper_(pathMapper), log_(log)
 {
 }
 
@@ -106,14 +102,16 @@ StartupDraftCheck StartupEditor::Check(const SimulatorProfile& profile,
                                        const std::optional<std::filesystem::path>& editedEntry) const
 {
     StartupDraftCheck check;
-    const std::filesystem::path file = InWindowsForm(chosenFile);
-    const bool keepsTheEntryPath = editedEntry.has_value() && SamePath(*editedEntry, file);
+    const std::filesystem::path file = pathMapper_.ToSimulator(profile.variant, chosenFile);
+    const bool keepsTheEntryPath =
+        editedEntry.has_value() && SamePath(pathMapper_.ToHost(profile.variant, *editedEntry), chosenFile);
 
     check.pathToWrite = keepsTheEntryPath ? *editedEntry : file;
 
-    if (const TreeNode* addon = keepsTheEntryPath ? nullptr : AddonHolding(snapshot.libraries, file); addon != nullptr)
+    if (const TreeNode* addon = keepsTheEntryPath ? nullptr : AddonHolding(snapshot.libraries, chosenFile);
+        addon != nullptr)
     {
-        check.pathToWrite = InWindowsForm(PathOfTheLinkTo(profile, *addon, file));
+        check.pathToWrite = pathMapper_.ToSimulator(profile.variant, PathOfTheLinkTo(profile, *addon, chosenFile));
         check.insideAnAddon = true;
         check.addonFolderName = AsUtf8(addon->path.filename());
         check.addonIsOff = !snapshot.enabled.Contains(addon->path);
@@ -144,7 +142,7 @@ StartupDraftCheck StartupEditor::Check(const SimulatorProfile& profile,
 
     const bool needsTheProgram = !editedEntry.has_value() || check.changesThePath;
 
-    if (needsTheProgram && !filesystemProbe_.EntryExistsWithoutFollowingLinks(file))
+    if (needsTheProgram && !filesystemProbe_.EntryExistsWithoutFollowingLinks(chosenFile))
     {
         check.refusal = FileResult::TheProgramDoesNotExist;
     }

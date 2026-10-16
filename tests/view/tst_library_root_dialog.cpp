@@ -23,6 +23,7 @@ namespace
         static void ARootThatFillsTheWholeLimitLeavesNothingInsteadOfWrappingAround();
         static void WhatTheRootTakesCountsTheSeparatorTheAddonNameSitsAfter();
         static void TheAcceptButtonCarriesTheRoleTheThemePaints();
+        static void TheWarningNamesTheCeilingItWasMeasuredAgainstAndNeverAFixedOne();
     };
 }
 
@@ -51,29 +52,29 @@ namespace
 
 void LibraryRootDialogTest::ARootThatLeavesRoomForAnAddonIsNotWorthAWarning()
 {
-    QVERIFY(MeasureTheRoot(kShallowRoot).ItLeavesRoom());
-    QVERIFY(!MeasureTheRoot(kDeepRoot).ItLeavesRoom());
+    QVERIFY(MeasureTheRoot(kShallowRoot, kTheWindowsRecycleBinStopsAt).ItLeavesRoom());
+    QVERIFY(!MeasureTheRoot(kDeepRoot, kTheWindowsRecycleBinStopsAt).ItLeavesRoom());
 }
 
 void LibraryRootDialogTest::TheWarningSaysHowManyCharactersTheRootTakesAndWhatItLeaves()
 {
-    const RootDepth depth = MeasureTheRoot(kDeepRoot);
+    const RootDepth depth = MeasureTheRoot(kDeepRoot, kTheWindowsRecycleBinStopsAt);
     const LibraryRootDialog dialog(kDeepRoot, depth);
 
     const QString said = TextOfTheDialog(dialog);
 
     QVERIFY(said.contains(QString::number(depth.characters)));
     QVERIFY(said.contains(QString::number(depth.leavesForTheAddon)));
-    QVERIFY(said.contains(QString::number(kTheRecycleBinStopsAt)));
-    QCOMPARE(depth.characters + depth.leavesForTheAddon, kTheRecycleBinStopsAt);
+    QVERIFY(said.contains(QString::number(kTheWindowsRecycleBinStopsAt)));
+    QCOMPARE(depth.characters + depth.leavesForTheAddon, kTheWindowsRecycleBinStopsAt);
 }
 
 void LibraryRootDialogTest::TheShortRootItComparesAgainstIsMeasuredAndNeverRetyped()
 {
-    const LibraryRootDialog dialog(kDeepRoot, MeasureTheRoot(kDeepRoot));
+    const LibraryRootDialog dialog(kDeepRoot, MeasureTheRoot(kDeepRoot, kTheWindowsRecycleBinStopsAt));
 
     const QString said = TextOfTheDialog(dialog);
-    const RootDepth shallow = MeasureTheRoot(kShallowRoot);
+    const RootDepth shallow = MeasureTheRoot(kShallowRoot, kTheWindowsRecycleBinStopsAt);
 
     QVERIFY2(said.contains(QString::number(shallow.leavesForTheAddon)),
              "the comparison root has to be measured by the same call the production uses");
@@ -82,8 +83,8 @@ void LibraryRootDialogTest::TheShortRootItComparesAgainstIsMeasuredAndNeverRetyp
 
 void LibraryRootDialogTest::PickingAnotherFolderRefusesAndUsingThisOneAccepts()
 {
-    LibraryRootDialog refused(kDeepRoot, MeasureTheRoot(kDeepRoot));
-    LibraryRootDialog kept(kDeepRoot, MeasureTheRoot(kDeepRoot));
+    LibraryRootDialog refused(kDeepRoot, MeasureTheRoot(kDeepRoot, kTheWindowsRecycleBinStopsAt));
+    LibraryRootDialog kept(kDeepRoot, MeasureTheRoot(kDeepRoot, kTheWindowsRecycleBinStopsAt));
 
     QVERIFY(ButtonNamed(refused, QStringLiteral("PickAnotherFolder")) != nullptr);
     QVERIFY(ButtonNamed(kept, QStringLiteral("UseThisRoot")) != nullptr);
@@ -97,9 +98,9 @@ void LibraryRootDialogTest::PickingAnotherFolderRefusesAndUsingThisOneAccepts()
 
 void LibraryRootDialogTest::ARootThatFillsTheWholeLimitLeavesNothingInsteadOfWrappingAround()
 {
-    const std::filesystem::path absurd{std::string(kTheRecycleBinStopsAt + 40, 'x')};
+    const std::filesystem::path absurd{std::string(kTheWindowsRecycleBinStopsAt + 40, 'x')};
 
-    const RootDepth depth = MeasureTheRoot(absurd);
+    const RootDepth depth = MeasureTheRoot(absurd, kTheWindowsRecycleBinStopsAt);
 
     QCOMPARE(depth.leavesForTheAddon, std::size_t{0});
     QVERIFY(!depth.ItLeavesRoom());
@@ -107,7 +108,7 @@ void LibraryRootDialogTest::ARootThatFillsTheWholeLimitLeavesNothingInsteadOfWra
 
 void LibraryRootDialogTest::TheAcceptButtonCarriesTheRoleTheThemePaints()
 {
-    const LibraryRootDialog dialog(kDeepRoot, MeasureTheRoot(kDeepRoot));
+    const LibraryRootDialog dialog(kDeepRoot, MeasureTheRoot(kDeepRoot, kTheWindowsRecycleBinStopsAt));
 
     const QAbstractButton* keep = ButtonNamed(dialog, QStringLiteral("UseThisRoot"));
 
@@ -119,7 +120,21 @@ void LibraryRootDialogTest::WhatTheRootTakesCountsTheSeparatorTheAddonNameSitsAf
 {
     const std::filesystem::path child = kShallowRoot / "x";
 
-    QCOMPARE(child.native().size(), MeasureTheRoot(kShallowRoot).characters + 1);
+    QCOMPARE(child.native().size(), MeasureTheRoot(kShallowRoot, kTheWindowsRecycleBinStopsAt).characters + 1);
+}
+
+void LibraryRootDialogTest::TheWarningNamesTheCeilingItWasMeasuredAgainstAndNeverAFixedOne()
+{
+    constexpr std::size_t kAnotherCeiling = kTheWindowsRecycleBinStopsAt + 55;
+    const RootDepth depth = MeasureTheRoot(kDeepRoot, kAnotherCeiling);
+    const LibraryRootDialog dialog(kDeepRoot, depth);
+
+    const QString said = TextOfTheDialog(dialog);
+
+    QVERIFY(said.contains(QString::number(kAnotherCeiling)));
+    QVERIFY(!said.contains(QString::number(kTheWindowsRecycleBinStopsAt)));
+    QVERIFY(said.contains(QStringLiteral("leaves %1 for the addon")
+                              .arg(MeasureTheRoot(kShallowRoot, kAnotherCeiling).leavesForTheAddon)));
 }
 
 QTEST_MAIN(LibraryRootDialogTest)

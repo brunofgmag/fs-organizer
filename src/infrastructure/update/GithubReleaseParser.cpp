@@ -10,6 +10,7 @@ namespace
 {
     constexpr auto kAssetPrefix = "fs-organizer-";
     constexpr auto kZipSuffix = ".zip";
+    constexpr auto kAppImageSuffix = "-x86_64.AppImage";
     constexpr auto kChecksumSuffix = ".sha256";
 
     QString WithoutTheTagPrefix(const QString& tag)
@@ -46,6 +47,9 @@ std::optional<UpdateInfo> ParseLatestRelease(const QByteArray& json)
 
     const QString zipName = QLatin1String(kAssetPrefix) + WithoutTheTagPrefix(tag) + QLatin1String(kZipSuffix);
     const QString checksumName = zipName + QLatin1String(kChecksumSuffix);
+    const QString appImageName =
+        QLatin1String(kAssetPrefix) + WithoutTheTagPrefix(tag) + QLatin1String(kAppImageSuffix);
+    const QString appImageChecksumName = appImageName + QLatin1String(kChecksumSuffix);
 
     for (const QJsonValue value : release.value(QStringLiteral("assets")).toArray())
     {
@@ -61,6 +65,15 @@ std::optional<UpdateInfo> ParseLatestRelease(const QByteArray& json)
         {
             info.zipName = name.toStdString();
             info.zipUrl = url.toStdString();
+        }
+        else if (name == appImageChecksumName)
+        {
+            info.appImageShaUrl = url.toStdString();
+        }
+        else if (name == appImageName)
+        {
+            info.appImageName = name.toStdString();
+            info.appImageUrl = url.toStdString();
         }
     }
 

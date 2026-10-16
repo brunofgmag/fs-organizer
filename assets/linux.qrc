@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/linux">
+        <file alias="fs-organizer.desktop">linux/fs-organizer.desktop</file>
+    </qresource>
+</RCC>

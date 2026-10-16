@@ -16,7 +16,7 @@
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 
-#include "view/platform/WindowsTitleBar.h"
+#include "view/platform/SystemTitleBar.h"
 #include "view/WheelGuard.h"
 #include "view/shell/TriageStrip.h"
 #include "view/theme/ArrowButton.h"

@@ -23,6 +23,7 @@
 #include <QtCore/QByteArrayView>
 #include <QtCore/QCryptographicHash>
 
+#include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
 #include "infrastructure/fileops/ExtendedPaths.h"
 #include "support/FileClock.h"
@@ -247,6 +248,11 @@ bool WindowsFilesystemProbe::VolumeIsAvailable(const std::filesystem::path& path
     return GetDriveTypeW(NativePath(root).c_str()) != DRIVE_NO_ROOT_DIR;
 }
 
+std::optional<std::string> WindowsFilesystemProbe::VolumeIdentityOf(const std::filesystem::path& path) const
+{
+    return LoweredForComparison(AsUtf8(VolumeOf(path)));
+}
+
 WriteAccess WindowsFilesystemProbe::ProbeWritable(const std::filesystem::path& path) const
 {
     if (!TargetDirectoryExists(path))
@@ -329,6 +335,11 @@ std::optional<RecycleBinRoom> WindowsFilesystemProbe::RecycleBinOn(const std::fi
 
     return RecycleBinRoom{.quota = static_cast<std::uintmax_t>(*megabytes) * 1024 * 1024,
                           .itRecycles = !nuke.has_value() || *nuke == 0};
+}
+
+std::optional<std::size_t> WindowsFilesystemProbe::RecycleBinPathCeiling() const
+{
+    return kTheWindowsRecycleBinStopsAt;
 }
 
 std::optional<std::chrono::system_clock::time_point>

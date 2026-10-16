@@ -15,9 +15,7 @@
 #include "domain/tree/AddonDestinations.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
-#include "infrastructure/link/WindowsLinkService.h"
+#include "RealAdapters.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeOperationJournal.h"
@@ -94,9 +92,9 @@ namespace
     struct Linking
     {
         JsonManifestParser manifestParser;
-        WindowsFilesystemProbe filesystemProbe;
-        WindowsSidecarStore sidecars;
-        WindowsLinkService linkService;
+        RealFilesystemProbe filesystemProbe;
+        RealSidecarStore sidecars;
+        RealLinkService linkService;
         FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
         FakeOperationJournal journal;
         FakeClock clock;
@@ -106,8 +104,8 @@ namespace
         EntryClassifier classifier{linkService, filesystemProbe};
         StartupOverFakes startup{filesystemProbe};
 
-        ProfileService profiles{scanner, filesystemProbe, sidecars,        classifier,        linking,
-                                log,     identities,      startup.service, LinkType::Junction};
+        ProfileService profiles{scanner, filesystemProbe, sidecars,        classifier,   linking,
+                                log,     identities,      startup.service, kRealLinkType};
         FakePresetRepository presets;
         PresetService service{presets, profiles, startup.service};
     };
@@ -318,7 +316,7 @@ void LinkPlanOnRealDiskTest::TheIncrementalEntriesEqualAFullReadAfterARealEnable
     QCOMPARE(afterEnabling.size(), std::size_t{2});
     verifyTheSame(afterEnabling);
 
-    QCOMPARE(linking.linkService.CreateLink(second / addons[0].path.filename(), addons[0].path, LinkType::Junction),
+    QCOMPARE(linking.linkService.CreateLink(second / addons[0].path.filename(), addons[0].path, kRealLinkType),
              LinkFailure::None);
 
     const ProfileService::LinksOnDisk duplicated = linking.profiles.ReadLinksNow(profile, externals);
@@ -416,8 +414,8 @@ void LinkPlanOnRealDiskTest::RelinkingABrokenAddonThatNeverStrayedReplacesTheDea
     const std::filesystem::path doomed = disk.Root() / "doomed-target";
     std::filesystem::create_directories(doomed);
 
-    QCOMPARE(linking.linkService.CreateLink(renamed, disk.Addon(), LinkType::Junction), LinkFailure::None);
-    QCOMPARE(linking.linkService.CreateLink(disk.Link(), doomed, LinkType::Junction), LinkFailure::None);
+    QCOMPARE(linking.linkService.CreateLink(renamed, disk.Addon(), kRealLinkType), LinkFailure::None);
+    QCOMPARE(linking.linkService.CreateLink(disk.Link(), doomed, kRealLinkType), LinkFailure::None);
     std::filesystem::remove_all(doomed);
 
     const SimulatorProfile profile = ProfileOn(disk);
@@ -484,7 +482,7 @@ void LinkPlanOnRealDiskTest::AFullReadClassifiesEveryKindOfEntryOnRealJunctions(
     };
     const auto junction = [&linking](const std::filesystem::path& place, const std::filesystem::path& target)
     {
-        QCOMPARE(linking.linkService.CreateLink(place, target, LinkType::Junction), LinkFailure::None);
+        QCOMPARE(linking.linkService.CreateLink(place, target, kRealLinkType), LinkFailure::None);
     };
 
     folder(second);
@@ -606,8 +604,8 @@ void LinkPlanOnRealDiskTest::ARepairRemovesTheJunctionWhoseTargetStayedDeletedAn
         std::filesystem::create_directories(target);
     }
 
-    QCOMPARE(linking.linkService.CreateLink(staysPlace, stays, LinkType::Junction), LinkFailure::None);
-    QCOMPARE(linking.linkService.CreateLink(returnsPlace, returns, LinkType::Junction), LinkFailure::None);
+    QCOMPARE(linking.linkService.CreateLink(staysPlace, stays, kRealLinkType), LinkFailure::None);
+    QCOMPARE(linking.linkService.CreateLink(returnsPlace, returns, kRealLinkType), LinkFailure::None);
 
     for (const std::filesystem::path& target : {stays, returns})
     {

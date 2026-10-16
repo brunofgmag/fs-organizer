@@ -19,7 +19,14 @@ public:
                        QPainter* painter,
                        const QWidget* widget) const override;
 
+    void drawComplexControl(ComplexControl control,
+                            const QStyleOptionComplex* option,
+                            QPainter* painter,
+                            const QWidget* widget) const override;
+
 private:
+    void DrawComboBox(const QStyleOptionComboBox& option, QPainter& painter, const QWidget* widget) const;
+
     void DrawCheckBox(const QStyleOption& option, QPainter& painter) const;
 
     void DrawRadioButton(const QStyleOption& option, QPainter& painter) const;

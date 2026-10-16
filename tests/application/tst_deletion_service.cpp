@@ -51,6 +51,11 @@ namespace
         static void TheRecycleBinRouteTakesTheRecordOfWhereItCameFromToo();
         static void AFailedDeletionLeavesTheRecordOfWhereItCameFromAlone();
         static void TheCategoryThatLosesItsLastAddonIsDeclaredAndTheLibraryRootIsNot();
+        static void ATrashWithoutAQuotaTakesASelectionOfAnySize();
+        static void ATrashWithoutAPathCeilingTakesAnAddonWhoseLongestPathIsFarPastWindows();
+        static void ATrashWithoutLimitsDoesNotWaitForTheAddonToBeMeasured();
+        static void ATrashThatCannotMoveTheFolderAnswersCouldNotDeleteAndLeavesTheFolder();
+        static void APlanCarriesTheCeilingOfTheBinThePlatformReports();
     };
 }
 
@@ -261,7 +266,7 @@ void DeletionServiceTest::AnAddonNobodyMeasuredIsNeverCountedAsWeighingNothing()
 void DeletionServiceTest::AnAddonNobodyMeasuredHasNoLengthToJudgeEither()
 {
     Fixture f;
-    f.BuryAFileUnder(kCrj, kTheRecycleBinStopsAt);
+    f.BuryAFileUnder(kCrj, kTheWindowsRecycleBinStopsAt);
 
     const DeletionPlan plan = f.PlanFor({f.Node(kCrj)});
 
@@ -284,12 +289,12 @@ void DeletionServiceTest::TheWalkThatSummedTheBytesIsTheOnlyOneThePlanNeeds()
 void DeletionServiceTest::AnAddonTheShellCannotReachIsRefusedInsteadOfDeletedInSilence()
 {
     Fixture f;
-    f.BuryAFileUnder(kCrj, kTheRecycleBinStopsAt);
+    f.BuryAFileUnder(kCrj, kTheWindowsRecycleBinStopsAt);
     f.Measure({kCrj});
 
     const DeletionPlan plan = f.PlanFor({f.Node(kCrj)});
 
-    QCOMPARE(plan.addons.front().longestEntry, std::optional<std::size_t>{kTheRecycleBinStopsAt});
+    QCOMPARE(plan.addons.front().longestEntry, std::optional<std::size_t>{kTheWindowsRecycleBinStopsAt});
     QVERIFY(!TheRecycleBinCanTake(plan));
 
     const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::RecycleBin);
@@ -494,7 +499,7 @@ void DeletionServiceTest::APermanentDeletionNeverAsksTheRecycleBinAnything()
 {
     Fixture f;
     f.fileSystem.MakeTheVolumeDeletePermanently("D:");
-    f.BuryAFileUnder(kCrj, 2 * kTheRecycleBinStopsAt);
+    f.BuryAFileUnder(kCrj, 2 * kTheWindowsRecycleBinStopsAt);
 
     const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::Permanently);
 
@@ -566,6 +571,74 @@ void DeletionServiceTest::TheCategoryThatLosesItsLastAddonIsDeclaredAndTheLibrar
     QVERIFY2(f.fileSystem.Exists(CategoryMarkerPathIn(airbus)),
              "the emptied category was left to read as an addon on the next scan");
     QVERIFY(!f.fileSystem.Exists(CategoryMarkerPathIn(kLibrary)));
+}
+
+void DeletionServiceTest::ATrashWithoutAQuotaTakesASelectionOfAnySize()
+{
+    Fixture f;
+    f.filesystemProbe.BeLikeTheTrash();
+    f.fileSystem.AddFile(kCrj / "big.bin", 20 * kGigabyte);
+    f.Measure({kCrj});
+
+    QVERIFY(TheRecycleBinCanTake(f.PlanFor({f.Node(kCrj)})));
+
+    const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::RecycleBin);
+
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(!f.fileSystem.Exists(kCrj));
+}
+
+void DeletionServiceTest::ATrashWithoutAPathCeilingTakesAnAddonWhoseLongestPathIsFarPastWindows()
+{
+    Fixture f;
+    f.filesystemProbe.BeLikeTheTrash();
+    f.BuryAFileUnder(kCrj, 2 * kTheWindowsRecycleBinStopsAt);
+    f.Measure({kCrj});
+
+    const DeletionPlan plan = f.PlanFor({f.Node(kCrj)});
+
+    QVERIFY(*plan.addons.front().longestEntry > kTheWindowsRecycleBinStopsAt);
+    QVERIFY(!plan.pathCeiling.has_value());
+    QVERIFY(TheRecycleBinCanTake(plan));
+    QCOMPARE(f.Run({f.Node(kCrj)}, DeletionRoute::RecycleBin).front().result, FileResult::Completed);
+}
+
+void DeletionServiceTest::ATrashWithoutLimitsDoesNotWaitForTheAddonToBeMeasured()
+{
+    Fixture f;
+    f.filesystemProbe.BeLikeTheTrash();
+
+    const DeletionPlan plan = f.PlanFor({f.Node(kCrj)});
+
+    QVERIFY(!plan.addons.front().bytes.has_value());
+    QVERIFY(TheRecycleBinCanTake(plan));
+    QCOMPARE(f.Run({f.Node(kCrj)}, DeletionRoute::RecycleBin).front().result, FileResult::Completed);
+}
+
+void DeletionServiceTest::ATrashThatCannotMoveTheFolderAnswersCouldNotDeleteAndLeavesTheFolder()
+{
+    Fixture f;
+    f.filesystemProbe.BeLikeTheTrash();
+    f.files.MakeTheRemovalFailFor(kCrj);
+    f.Measure({kCrj});
+
+    const std::vector<DeletionResult> results = f.Run({f.Node(kCrj)}, DeletionRoute::RecycleBin);
+
+    QCOMPARE(results.front().result, FileResult::CouldNotDelete);
+    QVERIFY(f.fileSystem.Exists(kCrj));
+    QVERIFY(f.fileSystem.Exists(kCrj / "manifest.json"));
+}
+
+void DeletionServiceTest::APlanCarriesTheCeilingOfTheBinThePlatformReports()
+{
+    Fixture f;
+    f.Measure({kCrj});
+
+    QCOMPARE(f.PlanFor({f.Node(kCrj)}).pathCeiling, std::optional<std::size_t>{kTheWindowsRecycleBinStopsAt});
+
+    f.filesystemProbe.BeLikeTheTrash();
+
+    QVERIFY(!f.PlanFor({f.Node(kCrj)}).pathCeiling.has_value());
 }
 
 QTEST_MAIN(DeletionServiceTest)

@@ -858,6 +858,29 @@
     </message>
 </context>
 <context>
+    <name>AppImageUpdateService</name>
+    <message>
+        <location filename="../src/infrastructure/update/AppImageUpdateService.cpp" line="73"/>
+        <source>This release has no files to download.</source>
+        <translation>Esta versão não tem arquivos para baixar.</translation>
+    </message>
+    <message>
+        <location filename="../src/infrastructure/update/AppImageUpdateService.cpp" line="179"/>
+        <source>The checksum file is invalid.</source>
+        <translation>O arquivo de verificação é inválido.</translation>
+    </message>
+    <message>
+        <location filename="../src/infrastructure/update/AppImageUpdateService.cpp" line="186"/>
+        <source>Could not save the downloaded file.</source>
+        <translation>Não foi possível salvar o arquivo baixado.</translation>
+    </message>
+    <message>
+        <location filename="../src/infrastructure/update/AppImageUpdateService.cpp" line="257"/>
+        <source>The downloaded file failed verification and was discarded.</source>
+        <translation>O arquivo baixado não passou na verificação e foi descartado.</translation>
+    </message>
+</context>
+<context>
     <name>ArchiveDrop</name>
     <message>
         <source>Drop to install into %1</source>
@@ -7344,6 +7367,11 @@ Tamanho %2</translation>
     <message>
         <source>Version %1 is available. Download it again from flightsim.to.</source>
         <translation>A versão %1 está disponível. Baixe de novo no flightsim.to.</translation>
+    </message>
+    <message>
+        <location filename="../src/viewmodel/UpdateViewModel.cpp" line="63"/>
+        <source>Version %1 is available. Download it from the GitHub releases page.</source>
+        <translation>A versão %1 está disponível. Baixe na página de versões do GitHub.</translation>
     </message>
     <message>
         <location filename="../src/viewmodel/UpdateViewModel.cpp" line="39"/>

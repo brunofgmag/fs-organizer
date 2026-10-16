@@ -246,7 +246,7 @@ bool WindowsFileOperations::Recycle(const std::filesystem::path& path)
         return false;
     }
 
-    if (!TheRecycleBinReaches(LongestEntryUnder(path)))
+    if (!TheRecycleBinReaches(LongestEntryUnder(path), kTheWindowsRecycleBinStopsAt))
     {
         return false;
     }

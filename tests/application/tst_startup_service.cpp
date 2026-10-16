@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "application/StartupService.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "domain/support/PathUtils.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/FakeProcessProbe.h"
@@ -46,6 +47,7 @@ namespace
     {
         InMemoryFileSystem fileSystem{};
         FakeFilesystemProbe probe{fileSystem};
+        WindowsPathMapper pathMapper{};
     };
 }
 
@@ -56,7 +58,7 @@ void StartupServiceTest::TheSwitchGoesThroughWhenTheSimulatorIsNotRunning()
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
 
     QCOMPARE(service.Switch(PathFromUtf8(kFlowManager), false), FileResult::Completed);
     QCOMPARE(entries.writes, std::size_t{1});
@@ -71,7 +73,7 @@ void StartupServiceTest::TheSimulatorRunningRefusesTheWriteWithTheReasonThatBars
     FakeProcessProbe processProbe;
     processProbe.ReportTheSimulatorAsRunning();
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
 
     QCOMPARE(service.Switch(PathFromUtf8(kFlowManager), false), FileResult::TheSimulatorIsRunning);
     QCOMPARE(entries.writes, std::size_t{0});
@@ -86,7 +88,7 @@ void StartupServiceTest::TheSimulatorRunningStillLetsTheEntriesBeRead()
     FakeProcessProbe processProbe;
     processProbe.ReportTheSimulatorAsRunning();
     const Disk disk;
-    const StartupService service(entries, processProbe, disk.probe, true);
+    const StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
 
     const std::vector<StartupEntry> read = service.Entries();
 
@@ -101,7 +103,7 @@ void StartupServiceTest::WithTheEntriesLeftLooseTheFileIsNeverRead()
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    const StartupService service(entries, processProbe, disk.probe, false);
+    const StartupService service(entries, processProbe, disk.probe, disk.pathMapper, false);
 
     QVERIFY(service.Entries().empty());
     QVERIFY(service.Report(SimulatorProfile{}, ProfileSnapshot{}).lines.empty());
@@ -115,7 +117,7 @@ void StartupServiceTest::WithTheEntriesLeftLooseTheSwitchIsRefusedWithoutTouchin
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, false);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, false);
 
     QCOMPARE(service.Switch(PathFromUtf8(kFlowManager), false), FileResult::TheStartupEntriesAreLeftLoose);
     QCOMPARE(entries.writes, std::size_t{0});
@@ -129,7 +131,7 @@ void StartupServiceTest::TakingTheEntriesBackMakesTheFileReadableAgain()
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, false);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, false);
 
     QVERIFY(!service.Managing());
 
@@ -147,7 +149,7 @@ void StartupServiceTest::SwitchingAnEntryToTheValueItAlreadyHasWritesNothing()
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
 
     QCOMPARE(service.Switch(PathFromUtf8(kFlowManager), true), FileResult::Completed);
     QCOMPARE(entries.writes, std::size_t{0});
@@ -161,7 +163,7 @@ void StartupServiceTest::SwitchingAnEntryTheFileNoLongerCarriesWritesNothing()
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
 
     QCOMPARE(service.Switch(PathFromUtf8(R"(C:\Nothing\Like\This\was-ever-installed.exe)"), true),
              FileResult::TheDiskDisagreesWithTheScan);
@@ -175,7 +177,7 @@ void StartupServiceTest::AnApplyGoesThroughWhenTheSimulatorIsClosedAndTheFeature
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
     StartupBackup backup;
 
     const StartupApplied applied = service.Apply(StartupRemoval{.path = PathFromUtf8(kFlowManager)}, backup);
@@ -195,7 +197,7 @@ void StartupServiceTest::AnApplyIsRefusedWithTheSimulatorRunningWhateverTheGestu
     FakeProcessProbe processProbe;
     processProbe.ReportTheSimulatorAsRunning();
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
     StartupBackup backup;
 
     const std::vector<StartupChange> gestures{
@@ -225,7 +227,7 @@ void StartupServiceTest::ForgettingAnEntryNeverTouchesTheStartupFileSoTheSimulat
     FakeProcessProbe processProbe;
     processProbe.ReportTheSimulatorAsRunning();
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
     StartupBackup backup;
 
     QCOMPARE(service.Apply(StartupForgetting{.path = PathFromUtf8(kGone)}, backup).result, FileResult::Completed);
@@ -245,7 +247,7 @@ void StartupServiceTest::AnApplyIsRefusedWhileTheEntriesAreLeftLooseWithoutTouch
 
     const FakeProcessProbe processProbe;
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, false);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, false);
     StartupBackup backup;
 
     QCOMPARE(service.Apply(StartupRemoval{.path = PathFromUtf8(kFlowManager)}, backup).result,
@@ -262,7 +264,7 @@ void StartupServiceTest::TheRemovedListIsReadWithTheSimulatorRunningAndIsEmptyWh
     FakeProcessProbe processProbe;
     processProbe.ReportTheSimulatorAsRunning();
     const Disk disk;
-    StartupService service(entries, processProbe, disk.probe, true);
+    StartupService service(entries, processProbe, disk.probe, disk.pathMapper, true);
 
     QCOMPARE(service.Removed().size(), std::size_t{1});
     QCOMPARE(service.Removed().front().entry.label, std::string("Gone"));

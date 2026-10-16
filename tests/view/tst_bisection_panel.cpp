@@ -101,7 +101,7 @@ namespace
         {
             fileSystem.AddDirectory(kCommunity);
 
-            for (const std::filesystem::path& addon : {kCrj, kFenix, kPmdg})
+            for (const std::filesystem::path addon : {kCrj, kFenix, kPmdg})
             {
                 fileSystem.AddDirectory(addon);
                 fileSystem.AddFileWithContents(ManifestPathIn(addon), "{}");

@@ -143,7 +143,7 @@ base_container = "..\TFDi_Design_MD-11F_PW"
         {
             fileSystem.AddDirectory(kCommunity);
 
-            for (const std::filesystem::path& addon : {kCrj, kFenix, kMd11, kPmdg, kLivery, kLiveryTwo})
+            for (const std::filesystem::path addon : {kCrj, kFenix, kMd11, kPmdg, kLivery, kLiveryTwo})
             {
                 fileSystem.AddDirectory(addon);
                 fileSystem.AddFileWithContents(ManifestPathIn(addon), "{}");
@@ -197,7 +197,7 @@ base_container = "..\TFDi_Design_MD-11F_PW"
         {
             std::vector<std::filesystem::path> on;
 
-            for (const std::filesystem::path& addon : {kCrj, kFenix, kMd11, kPmdg, kLivery, kLiveryTwo})
+            for (const std::filesystem::path addon : {kCrj, kFenix, kMd11, kPmdg, kLivery, kLiveryTwo})
             {
                 if (fileSystem.IsLink(LinkFor(addon)))
                 {
@@ -776,7 +776,7 @@ void BisectionServiceTest::ARoundStoredWithAnotherCaseOfTheFoldersStillTurnsTheS
 
     QVERIFY(f.store.Save(kProfileId, *run));
 
-    for (const std::filesystem::path& addon : {kCrj, kFenix, kMd11, kLivery})
+    for (const std::filesystem::path addon : {kCrj, kFenix, kMd11, kLivery})
     {
         if (!Holds(turnedOn, addon))
         {

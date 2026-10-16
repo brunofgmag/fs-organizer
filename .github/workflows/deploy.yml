@@ -68,10 +68,13 @@ jobs:
           zip="fs-organizer-$VER.zip"
           sha="$zip.sha256"
           flightsim="flightsim-to-fs-organizer-$VER.zip"
+          image="fs-organizer-$VER-x86_64.AppImage"
+          image_sha="$image.sha256"
           if names="$(gh release view "$TAG" --json assets --jq '.assets[].name' 2>/dev/null)"; then
-            if grep -qxF "$zip" <<<"$names" && grep -qxF "$sha" <<<"$names" && grep -qxF "$flightsim" <<<"$names"; then
+            if grep -qxF "$zip" <<<"$names" && grep -qxF "$sha" <<<"$names" && grep -qxF "$flightsim" <<<"$names" \
+              && grep -qxF "$image" <<<"$names" && grep -qxF "$image_sha" <<<"$names"; then
               echo "exists=true" >> "$GITHUB_OUTPUT"
-              echo "::notice::Release $TAG already published with all three assets; nothing to do."
+              echo "::notice::Release $TAG already published with all five assets; nothing to do."
             else
               echo "exists=false" >> "$GITHUB_OUTPUT"
               echo "::warning::Release $TAG exists but is missing assets; rebuilding and re-uploading."
@@ -170,9 +173,65 @@ jobs:
             ${{ matrix.zip }}-*.zip.sha256
           if-no-files-found: error
 
+  build-linux:
+    name: Build + Package (linux)
+    needs: version
+    if: needs.version.outputs.release_exists == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.version.outputs.build_ref }}
+          fetch-depth: 0
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libfontconfig1-dev libdbus-1-dev libegl1 libarchive-dev libssl-dev libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4.3.1
+        with:
+          version: 6.8.3
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          modules: qtpdf
+          cache: true
+
+      - name: Configure
+        run: cmake --preset linux-release -DBUILD_TESTING=OFF
+
+      - name: Build
+        run: cmake --build --preset linux-release --parallel 4 --target fs-organizer
+
+      - name: Package
+        env:
+          VER: ${{ needs.version.outputs.version }}
+        run: tools/package-appimage.sh build/linux-release dist "$VER"
+
+      - name: Smoke test
+        run: |
+          export APPIMAGE_EXTRACT_AND_RUN=1 QT_QPA_PLATFORM=offscreen HOME="$RUNNER_TEMP/home"
+          mkdir -p "$HOME"
+          status=0
+          timeout 15 dist/fs-organizer-*-x86_64.AppImage || status=$?
+          test "$status" -eq 124
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-bundle-linux
+          path: |
+            dist/fs-organizer-*-x86_64.AppImage
+            dist/fs-organizer-*-x86_64.AppImage.sha256
+          if-no-files-found: error
+
   publish:
     name: Publish
-    needs: [ version, build ]
+    needs: [ version, build, build-linux ]
     if: needs.version.outputs.release_exists == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -200,3 +259,5 @@ jobs:
             fs-organizer-${{ needs.version.outputs.version }}.zip
             fs-organizer-${{ needs.version.outputs.version }}.zip.sha256
             flightsim-to-fs-organizer-${{ needs.version.outputs.version }}.zip
+            fs-organizer-${{ needs.version.outputs.version }}-x86_64.AppImage
+            fs-organizer-${{ needs.version.outputs.version }}-x86_64.AppImage.sha256

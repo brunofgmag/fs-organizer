@@ -53,3 +53,24 @@ if (MSVC)
             COMMENT "Deploying the Qt runtime, pruned"
             VERBATIM)
 endif ()
+
+if (NOT WIN32)
+    include(GNUInstallDirs)
+
+    install(TARGETS ${APP_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+    install(FILES "${CMAKE_SOURCE_DIR}/assets/linux/fs-organizer.desktop"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+
+    foreach (ICON_SIZE 16 24 32 48 64 128 256)
+        install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/icon_${ICON_SIZE}.png"
+                DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/${ICON_SIZE}x${ICON_SIZE}/apps"
+                RENAME "${APP_NAME}.png")
+    endforeach ()
+
+    install(FILES "${CMAKE_SOURCE_DIR}/LICENSE"
+            DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+    install(FILES "${CMAKE_SOURCE_DIR}/assets/fonts/OFL.txt"
+            DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+            RENAME "Archivo-OFL.txt")
+endif ()

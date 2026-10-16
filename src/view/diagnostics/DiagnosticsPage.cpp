@@ -716,6 +716,7 @@ void DiagnosticsPage::ShowWhatWasMeasured() const
 void DiagnosticsPage::ShowTheLongestPaths() const
 {
     QStringList said;
+    const std::optional<std::size_t> ceiling = viewModel_.RecycleBinPathCeiling();
 
     for (const MeasuredNode& library : viewModel_.Size().libraries)
     {
@@ -728,9 +729,9 @@ void DiagnosticsPage::ShowTheLongestPaths() const
             tr("%1 · longest path %2")
                 .arg(AsText(library.path), tr("%n character", nullptr, static_cast<int>(library.longestEntry)));
 
-        said << (TheRecycleBinReaches(library.longestEntry)
+        said << (TheRecycleBinReaches(library.longestEntry, ceiling)
                      ? measured
-                     : tr("%1, over the Recycle Bin limit of %2").arg(measured).arg(kTheRecycleBinStopsAt));
+                     : tr("%1, over the Recycle Bin limit of %2").arg(measured).arg(*ceiling));
     }
 
     longestPaths_->setText(said.join(QStringLiteral("\n")));

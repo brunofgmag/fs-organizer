@@ -38,6 +38,7 @@ struct VolumeRoom
     std::filesystem::path volume{};
     std::optional<std::uintmax_t> selected{};
     std::optional<std::uintmax_t> quota{};
+    bool quotaIsUnlimited = false;
     bool itRecycles = true;
 };
 
@@ -46,6 +47,7 @@ struct DeletionPlan
     std::vector<AddonToDelete> addons{};
     std::size_t nodesThatAreNotAddons = 0;
     std::vector<VolumeRoom> volumes{};
+    std::optional<std::size_t> pathCeiling{};
 };
 
 struct DeletionResult

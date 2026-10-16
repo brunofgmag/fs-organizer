@@ -4,6 +4,7 @@
 
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
+#include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "domain/tree/DestinationDivergence.h"
@@ -33,6 +34,9 @@ namespace
         Q_OBJECT
 
     private slots:
+        static void ARootTooDeepForTheRecycleBinOfThePlatformIsWorthAWarning();
+        static void ARootThatLeavesRoomForAnAddonIsNotWorthAWarning();
+        static void NoRootIsWorthAWarningWhereTheRecycleBinHasNoPathCeiling();
         static void ABlankCategoryNameIsRefusedBeforeItReachesTheJournal();
         static void ACategoryAskedForOnAnAddonLandsBesideItInsteadOfInsideIt();
         static void RenamingACategoryToTheNameItAlreadyHasIsNotAFailure();
@@ -255,6 +259,35 @@ namespace
     {
         return measured.isEmpty() ? SelectionSize{} : measured.back().front().value<SelectionSize>();
     }
+}
+
+void AddonTreeViewModelTest::ARootTooDeepForTheRecycleBinOfThePlatformIsWorthAWarning()
+{
+    const Fixture f;
+    const std::filesystem::path deep{std::string(kTheWindowsRecycleBinStopsAt - 20, 'x')};
+
+    const std::optional<RootDepth> depth = f.viewModel.DepthOfTheRootThePlatformWarnsAbout(deep);
+
+    QVERIFY(depth.has_value());
+    QCOMPARE(depth->ceiling, kTheWindowsRecycleBinStopsAt);
+    QCOMPARE(depth->characters, deep.native().size() + kTheSeparatorBeforeTheAddon);
+    QVERIFY(!depth->ItLeavesRoom());
+}
+
+void AddonTreeViewModelTest::ARootThatLeavesRoomForAnAddonIsNotWorthAWarning()
+{
+    const Fixture f;
+
+    QVERIFY(!f.viewModel.DepthOfTheRootThePlatformWarnsAbout("D:/MSFS 2024").has_value());
+}
+
+void AddonTreeViewModelTest::NoRootIsWorthAWarningWhereTheRecycleBinHasNoPathCeiling()
+{
+    Fixture f;
+    f.filesystemProbe.BeLikeTheTrash();
+    const std::filesystem::path absurd{std::string(kTheWindowsRecycleBinStopsAt + 40, 'x')};
+
+    QVERIFY(!f.viewModel.DepthOfTheRootThePlatformWarnsAbout(absurd).has_value());
 }
 
 void AddonTreeViewModelTest::ABlankCategoryNameIsRefusedBeforeItReachesTheJournal()

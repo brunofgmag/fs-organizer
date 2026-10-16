@@ -53,6 +53,31 @@
     return PathFromUtf8("/");
 }
 
+[[nodiscard]] inline std::filesystem::path RootOf(const std::filesystem::path& path)
+{
+    const std::string text = WithGenericSeparators(AsUtf8(path));
+
+    if (text.size() >= 2 && text[1] == ':')
+    {
+        return PathFromUtf8(text.substr(0, 2) + "/");
+    }
+
+    if (text.starts_with("//"))
+    {
+        const std::size_t server = text.find('/', 2);
+        const std::size_t share = server == std::string::npos ? server : text.find('/', server + 1);
+
+        return PathFromUtf8(text.substr(0, share) + "/");
+    }
+
+    if (text.starts_with('/'))
+    {
+        return PathFromUtf8("/");
+    }
+
+    return {};
+}
+
 [[nodiscard]] inline bool OnTheSameVolume(const std::filesystem::path& left, const std::filesystem::path& right)
 {
     return LoweredForComparison(AsUtf8(VolumeOf(left))) == LoweredForComparison(AsUtf8(VolumeOf(right)));
@@ -69,14 +94,16 @@
 [[nodiscard]] inline std::filesystem::path ParentOf(const std::filesystem::path& path)
 {
     const std::string text = AsUtf8(path);
-    const std::size_t separator = WithGenericSeparators(text).find_last_of('/');
+    const std::string generic = WithGenericSeparators(text);
+    const std::size_t separator = generic.find_last_of('/');
+    const std::size_t rootSize = AsUtf8(RootOf(path)).size();
 
-    if (separator == std::string::npos)
+    if (separator == std::string::npos || generic.size() <= rootSize)
     {
         return {};
     }
 
-    return PathFromUtf8(text.substr(0, separator));
+    return PathFromUtf8(text.substr(0, (std::max)(separator, rootSize)));
 }
 
 [[nodiscard]] inline std::size_t PartsIn(const std::filesystem::path& path)
