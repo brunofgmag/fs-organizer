@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.1](https://github.com/brunofgmag/fs-organizer/compare/v1.3.0...v1.3.1) (2026-10-16)
+
+
+* polish dialogs on Linux ([#233](https://github.com/brunofgmag/fs-organizer/issues/233)) ([b5b99b9](https://github.com/brunofgmag/fs-organizer/commit/b5b99b9841ea712be3f40c4b10b9d7e720b91426))
+
+
+### Bug Fixes
+
+* polish dialogs on Linux ([19a8e7f](https://github.com/brunofgmag/fs-organizer/commit/19a8e7f81b0e9af4e50f27339f213d2bb203056d)) ([b5b99b9](https://github.com/brunofgmag/fs-organizer/commit/b5b99b9841ea712be3f40c4b10b9d7e720b91426))
+
 ## [1.3.0](https://github.com/brunofgmag/fs-organizer/compare/v1.2.0...v1.3.0) (2026-10-16)
 
 
