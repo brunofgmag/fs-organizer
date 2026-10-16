@@ -2113,6 +2113,12 @@ if (NOT WIN32)
     target_compile_definitions(fsorg-libarchive-archive-reader-tests PRIVATE
             FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
 
+    fsorg_add_qt_test(fsorg-app-image-desktop-entry-tests app-image-desktop-entry
+            tests/infrastructure/platform/tst_app_image_desktop_entry.cpp)
+    target_link_libraries(fsorg-app-image-desktop-entry-tests PRIVATE fsorg-infrastructure)
+    target_compile_definitions(fsorg-app-image-desktop-entry-tests PRIVATE
+            FSORG_DESKTOP_ENTRY=\"${CMAKE_SOURCE_DIR}/assets/linux/fs-organizer.desktop\")
+
     fsorg_add_qt_test(fsorg-linux-platform-tests linux-platform
             tests/platform/tst_linux_platform.cpp
             ${PLATFORM_COMPOSITION_SOURCES})

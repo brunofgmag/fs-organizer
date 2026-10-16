@@ -225,6 +225,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    IntegrateWithTheDesktop();
     ApplyModernistTheme(app);
 
     QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, &app,

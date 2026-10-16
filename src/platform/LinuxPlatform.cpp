@@ -3,6 +3,9 @@
 #include <string>
 #include <utility>
 
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+
 #include "infrastructure/archive/LibarchiveArchiveReader.h"
 #include "infrastructure/archive/PosixFolderArchiveReader.h"
 #include "infrastructure/fileops/PosixFileOperations.h"
@@ -10,6 +13,7 @@
 #include "infrastructure/fileops/PosixSidecarStore.h"
 #include "infrastructure/legacy/ProtonLegacyConfigSource.h"
 #include "infrastructure/link/PosixLinkService.h"
+#include "infrastructure/platform/AppImageDesktopEntry.h"
 #include "infrastructure/platform/LinuxInstanceGuard.h"
 #include "infrastructure/platform/LinuxKnownFolders.h"
 #include "infrastructure/sim/ProcProcessProbe.h"
@@ -17,6 +21,7 @@
 #include "infrastructure/sim/ProtonPrefixes.h"
 #include "infrastructure/sim/ProtonSimulatorLocator.h"
 #include "infrastructure/sim/ProtonUserCfgLocations.h"
+#include "support/PathText.h"
 
 PlatformParts BuildThePlatform()
 {
@@ -42,4 +47,23 @@ PlatformParts BuildThePlatform()
         .folders = LinuxAppFolders(),
         .capabilities = {.offersJunctions = false},
     };
+}
+
+void IntegrateWithTheDesktop()
+{
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    if (appImage.isEmpty() || !QFileInfo(appImage).isFile())
+    {
+        return;
+    }
+
+    QFile shippedEntry(QStringLiteral(":/linux/fs-organizer.desktop"));
+    QFile icon(QStringLiteral(":/icons/app-icon_256.png"));
+    if (!shippedEntry.open(QIODevice::ReadOnly) || !icon.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+
+    static_cast<void>(InstallTheDesktopEntry(AsPath(appImage), DataHomeFolder(), shippedEntry.readAll().toStdString(),
+                                             icon.readAll().toStdString()));
 }

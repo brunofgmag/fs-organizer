@@ -57,3 +57,7 @@ PlatformParts BuildThePlatform()
         .capabilities = {.offersJunctions = true},
     };
 }
+
+void IntegrateWithTheDesktop()
+{
+}

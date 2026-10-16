@@ -38,4 +38,6 @@ struct PlatformParts
 
 [[nodiscard]] PlatformParts BuildThePlatform();
 
+void IntegrateWithTheDesktop();
+
 #endif // FS_ORGANIZER_PLATFORM_PLATFORM_H

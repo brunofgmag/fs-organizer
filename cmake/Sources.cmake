@@ -131,6 +131,7 @@ set(LINUX_PLATFORM_SOURCES
         src/infrastructure/fileops/PosixSidecarStore.cpp
         src/infrastructure/legacy/ProtonLegacyConfigSource.cpp
         src/infrastructure/link/PosixLinkService.cpp
+        src/infrastructure/platform/AppImageDesktopEntry.cpp
         src/infrastructure/platform/LinuxInstanceGuard.cpp
         src/infrastructure/platform/LinuxKnownFolders.cpp
         src/infrastructure/sim/ChildNamedIgnoringCase.cpp
@@ -150,6 +151,7 @@ set(WINDOWS_PLATFORM_COMPOSITION_SOURCES
 
 set(LINUX_PLATFORM_COMPOSITION_SOURCES
         src/platform/LinuxPlatform.cpp
+        assets/linux.qrc
 )
 
 if (WIN32)
