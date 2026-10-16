@@ -10,12 +10,14 @@
 #include <array>
 #include <cerrno>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <optional>
 #include <system_error>
 
 #include <QtCore/QString>
 
+#include "domain/support/CaseFolding.h"
 #include "domain/support/PathSegment.h"
 #include "domain/support/PathUtils.h"
 #include "infrastructure/archive/EmptyStagingFolder.h"
@@ -184,34 +186,6 @@ namespace
         };
     }
 
-    [[nodiscard]] std::optional<std::filesystem::path> RelativePathOf(const std::string& entry)
-    {
-        std::filesystem::path relative;
-        std::size_t from = 0;
-
-        while (true)
-        {
-            const std::size_t slash = entry.find('/', from);
-            const bool isLast = slash == std::string::npos;
-            const std::optional<PathSegment> segment =
-                PathSegment::From(entry.substr(from, isLast ? slash : slash - from));
-
-            if (!segment.has_value())
-            {
-                return std::nullopt;
-            }
-
-            relative /= PathFromUtf8(segment->Text());
-
-            if (isLast)
-            {
-                return relative;
-            }
-
-            from = slash + 1;
-        }
-    }
-
     [[nodiscard]] ArchiveFailure FailureOf(const Next ending, const ArchiveFailure otherwise)
     {
         return ending == Next::Encrypted ? ArchiveFailure::NeedsAPassword : otherwise;
@@ -282,6 +256,42 @@ namespace
         }
 
     private:
+        [[nodiscard]] std::optional<std::filesystem::path> RelativePathOf(const std::string& entry,
+                                                                          const bool isAFolder)
+        {
+            std::filesystem::path relative;
+            std::string place;
+            std::size_t from = 0;
+
+            while (true)
+            {
+                const std::size_t slash = entry.find('/', from);
+                const bool isLast = slash == std::string::npos;
+                const std::optional<PathSegment> segment =
+                    PathSegment::From(entry.substr(from, isLast ? slash : slash - from));
+
+                if (!segment.has_value())
+                {
+                    return std::nullopt;
+                }
+
+                place += "/" + LoweredForComparison(segment->Text());
+                const bool namesAFolder = !isLast || isAFolder;
+                const std::string& spelled = namesAFolder
+                    ? foldersSpelledAs_.try_emplace(place, segment->Text()).first->second
+                    : segment->Text();
+
+                relative /= PathFromUtf8(spelled);
+
+                if (isLast)
+                {
+                    return relative;
+                }
+
+                from = slash + 1;
+            }
+        }
+
         [[nodiscard]] bool Report()
         {
             reported_ = Clock::now();
@@ -302,7 +312,8 @@ namespace
                 return ArchiveFailure::None;
             }
 
-            const std::optional<std::filesystem::path> relative = RelativePathOf(described.path);
+            const std::optional<std::filesystem::path> relative =
+                RelativePathOf(described.path, described.kind == ArchiveEntryKind::Folder);
             if (!relative.has_value())
             {
                 return ArchiveFailure::CouldNotExtract;
@@ -393,6 +404,7 @@ namespace
         const std::function<bool(const CopyProgress&)>& onProgress_;
         std::chrono::milliseconds idleLimit_;
         CopyProgress progress_;
+        std::map<std::string, std::string> foldersSpelledAs_{};
         Clock::time_point reported_{};
         Clock::time_point moved_{};
     };

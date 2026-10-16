@@ -49,6 +49,7 @@ namespace
         static void AnEntryThatClimbsOutOfTheFolderIsRefusedAndWritesNothingOutside();
         static void AnAbsoluteEntryIsRefusedAndWritesNothingOutside();
         static void AFileWrittenThroughALinkEntryIsRefusedAndTheTargetStaysUntouched();
+        static void FoldersWrittenInTwoCasesAreMergedIntoTheFirstSpellingAsTheyAreOnWindows();
         static void AnEntryRepeatedInTheArchiveNeverOverwritesTheFirstCopy();
         static void TheManifestIsReadByItsLiteralNameAndMostCutsTheBytes();
         static void AnEntryThatIsNotThereOrIsAFolderCouldNotBeOpened();
@@ -546,6 +547,23 @@ void LibarchiveArchiveReaderTest::AFileWrittenThroughALinkEntryIsRefusedAndTheTa
 
     QVERIFY(!std::filesystem::exists(outside / "planted.txt"));
     QVERIFY(std::filesystem::is_empty(outside));
+}
+
+void LibarchiveArchiveReaderTest::FoldersWrittenInTwoCasesAreMergedIntoTheFirstSpellingAsTheyAreOnWindows()
+{
+    const Source source;
+    const std::filesystem::path zip = source.ZipOfItems({{.name = "Pkg/manifest.json", .content = "{}"},
+                                                         {.name = "pkg/sub/b.txt", .content = "bravo!"},
+                                                         {.name = "PKG/a.txt", .content = "alpha"}},
+                                                        "cases.zip");
+    const std::filesystem::path into = source.EmptyStaging();
+
+    QCOMPARE(LibarchiveArchiveReader().ExtractAll(zip, {}, into, {}), ArchiveFailure::None);
+
+    QCOMPARE(
+        TreeOf(into),
+        (QStringList{QStringLiteral("Pkg/"), QStringLiteral("Pkg/a.txt | 5"), QStringLiteral("Pkg/manifest.json | 2"),
+                     QStringLiteral("Pkg/sub/"), QStringLiteral("Pkg/sub/b.txt | 6")}));
 }
 
 void LibarchiveArchiveReaderTest::AnEntryRepeatedInTheArchiveNeverOverwritesTheFirstCopy()
