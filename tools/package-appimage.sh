@@ -28,7 +28,7 @@ fetch() {
 }
 
 library_path() {
-  ldconfig -p | awk -v name="$1" '$1 == name { print $NF; exit }'
+  ldconfig -p | awk -v name="$1" '$1 == name && !found { print $NF; found = 1 }'
 }
 
 fetch "$linuxdeploy_url" "$linuxdeploy_sha"
