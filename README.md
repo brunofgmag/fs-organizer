@@ -7,10 +7,11 @@
 
 # FS Organizer
 
-An addon manager for Microsoft Flight Simulator on Windows. Your addons live in a
-folder of your own, outside the simulator, and turning one on or off creates or
-removes an NTFS junction. No files move during normal use, so switching tens of
-gigabytes of content takes a moment.
+An addon manager for Microsoft Flight Simulator on Windows and Linux. Your addons
+live in a folder of your own, outside the simulator, and turning one on or off
+creates or removes a link: an NTFS junction on Windows, a symbolic link on Linux.
+No files move during normal use, so switching tens of gigabytes of content takes
+a moment.
 
 Built for MSFS 2024, and works with 2020 through the same mechanism.
 
@@ -25,7 +26,25 @@ On Linux, take `fs-organizer-<version>-x86_64.AppImage` from the same page, make
 executable and run it. The `.sha256` file beside it checks the download. When the
 folder the AppImage sits in is writable, the app downloads a new version, checks
 it against its checksum and replaces itself the next time you close it. In any
-other case it only tells you that a new version exists.
+other case it only tells you that a new version exists. Each time it starts, it
+adds itself and its icon to your desktop's application menu.
+
+## Linux
+
+FS Organizer runs natively on Linux and works with MSFS 2020 and MSFS 2024 run
+by Steam through Proton. It looks for Steam in `~/.local/share/Steam` and
+`~/.steam/steam`, follows every library listed there, and reads each
+simulator's Proton prefix. It does not support Steam installed as a Flatpak,
+whose sandbox would not let the simulator see a library outside the folders it
+allows.
+
+The simulator writes its own paths in Windows form inside the prefix, in
+`UserCfg.opt` and `EXE.xml`, and the app translates them through the drive
+letters of that prefix. It reads an MSFS Addons Linker setup from the
+`ProgramData` folder of each prefix.
+
+The AppImage is built on Ubuntu 24.04 and needs an x86_64 system with glibc 2.39
+or newer.
 
 ## How it works
 
@@ -45,7 +64,7 @@ come across with it.
 tick to turn it off. To install a new addon, drop a `.zip`, `.rar` or `.7z`
 file, or a folder, onto the window and choose the category it goes to. You can
 drag addons between categories, and send the ones you no longer want to the
-Recycle Bin or delete them for good.
+Recycle Bin (the Trash on Linux) or delete them for good.
 
 **Destinations** shows the simulator's own folders and says where each entry came
 from: what the app manages, what some other program left there, and which links
@@ -72,8 +91,8 @@ search for the addon that crashes the simulator.
 **Journal** lists every operation that changed files on disk, and you can undo
 the last change in one step.
 
-The interface speaks English and Brazilian Portuguese, follows the Windows light
-or dark theme, and changes language without a restart.
+The interface speaks English and Brazilian Portuguese, follows the light or dark
+theme of the system, and changes language without a restart.
 
 ## Manual
 
