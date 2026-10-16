@@ -7,10 +7,13 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QDialog>
+#include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QProxyStyle>
+#include <QtWidgets/QStyleFactory>
 #include <QtWidgets/QStyleOption>
 #include <QtWidgets/QVBoxLayout>
 
@@ -47,7 +50,38 @@ namespace
         static void ADialogNeverGrowsTallerThanTheWindowThatOpenedIt();
         static void ADialogWithNoWindowBehindItFallsBackToTheScreen();
         static void ContentThatCanShrinkIsCappedWithoutLettingGoOfTheLayoutMinimum();
+        static void ADialogButtonCarriesNoIconEvenWhenTheDesktopAsksForOne();
     };
+
+    class ADesktopThatWantsIconsOnDialogButtons final : public QProxyStyle
+    {
+    public:
+        ADesktopThatWantsIconsOnDialogButtons() : QProxyStyle(QStyleFactory::create(QStringLiteral("Fusion")))
+        {
+        }
+
+        [[nodiscard]] int styleHint(const StyleHint hint,
+                                    const QStyleOption* option,
+                                    const QWidget* widget,
+                                    QStyleHintReturn* returnData) const override
+        {
+            if (hint == SH_DialogButtonBox_ButtonsHaveIcons)
+            {
+                return 1;
+            }
+
+            return QProxyStyle::styleHint(hint, option, widget, returnData);
+        }
+    };
+
+    QIcon CancelIconUnder(QStyle& style)
+    {
+        QDialogButtonBox buttons;
+        buttons.setStyle(&style);
+        buttons.setStandardButtons(QDialogButtonBox::Cancel);
+
+        return buttons.button(QDialogButtonBox::Cancel)->icon();
+    }
 
     QImage Painted(QWidget& widget)
     {
@@ -467,6 +501,18 @@ void ModernistThemeTest::ContentThatCanShrinkIsCappedWithoutLettingGoOfTheLayout
     QVERIFY2(dialog.height() <= window.height(),
              qPrintable(QStringLiteral("dialog %1, window %2").arg(dialog.height()).arg(window.height())));
     QCOMPARE(column->sizeConstraint(), QLayout::SetDefaultConstraint);
+}
+
+void ModernistThemeTest::ADialogButtonCarriesNoIconEvenWhenTheDesktopAsksForOne()
+{
+    ADesktopThatWantsIconsOnDialogButtons desktop;
+    QVERIFY2(!CancelIconUnder(desktop).isNull(),
+             "the fixture only proves anything if the desktop style alone puts an icon on Cancel");
+
+    ModernistStyle style(Qt::ColorScheme::Dark);
+    style.setBaseStyle(new ADesktopThatWantsIconsOnDialogButtons);
+
+    QVERIFY(CancelIconUnder(style).isNull());
 }
 
 QTEST_MAIN(ModernistThemeTest)
