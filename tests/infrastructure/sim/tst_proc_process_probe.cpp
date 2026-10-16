@@ -1,5 +1,8 @@
+#include <QtCore/QFile>
 #include <QtCore/QProcess>
+#include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QUuid>
 #include <QtTest/QtTest>
 
 #include <unistd.h>
@@ -184,13 +187,21 @@ void ProcProcessProbeTest::WithoutNamesNothingIsEverRunning()
 
 void ProcProcessProbeTest::ARealProcessIsFoundThroughTheRealProc()
 {
+    const QTemporaryDir directory;
+    const QString name = QStringLiteral("fsorg-probe-target-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString target = directory.filePath(name);
+    const QString sleep = QStandardPaths::findExecutable(QStringLiteral("sleep"));
+
+    QVERIFY(!sleep.isEmpty());
+    QVERIFY(QFile::copy(sleep, target));
+
     QProcess sleeper;
-    sleeper.start(QStringLiteral("sleep"), {QStringLiteral("30")});
+    sleeper.start(target, {QStringLiteral("30")});
     QVERIFY(sleeper.waitForStarted());
 
-    const ProcProcessProbe probe({"sleep"});
+    const ProcProcessProbe probe({name.toStdString()});
 
-    QCOMPARE(probe.RunningSimulator(), std::optional<std::string>("sleep"));
+    QCOMPARE(probe.RunningSimulator(), std::optional<std::string>(name.toStdString()));
 
     sleeper.kill();
     sleeper.waitForFinished();
