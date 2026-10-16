@@ -20,6 +20,17 @@ qt_add_translations(${APP_NAME}
         RESOURCE_PREFIX "/i18n"
 )
 
+if (NOT WIN32)
+    qt_add_lrelease(${APP_NAME}
+            TS_FILES i18n/linux/platform_en.ts i18n/linux/platform_pt_BR.ts
+            LRELEASE_TARGET platform_wording_translations
+            QM_FILES_OUTPUT_VARIABLE PLATFORM_WORDING_QM_FILES)
+    qt_add_resources(${APP_NAME} platform_wording
+            PREFIX "/i18n"
+            BASE "${CMAKE_CURRENT_BINARY_DIR}"
+            FILES ${PLATFORM_WORDING_QM_FILES})
+endif ()
+
 target_include_directories(${APP_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src")
 
 target_compile_definitions(${APP_NAME} PRIVATE

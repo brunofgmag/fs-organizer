@@ -2041,3 +2041,17 @@ if (NOT WIN32)
             src/infrastructure/update/GithubReleaseFeed.cpp)
     target_link_libraries(fsorg-linux-self-updater-tests PRIVATE fsorg-infrastructure Qt6::Network)
 endif ()
+
+if (NOT WIN32)
+    fsorg_add_qt_test(fsorg-linux-wording-tests linux-wording
+            tests/view/tst_linux_wording.cpp
+            tests/support/CatalogueBesideTheBuild.h
+            tests/support/InstalledCatalogue.h)
+    target_link_libraries(fsorg-linux-wording-tests PRIVATE fsorg-view)
+    target_compile_definitions(fsorg-linux-wording-tests PRIVATE FSORG_I18N_DIR=\"${CMAKE_SOURCE_DIR}/i18n\")
+    qt_add_resources(fsorg-linux-wording-tests linux_wording
+            PREFIX "/i18n"
+            BASE "${CMAKE_CURRENT_BINARY_DIR}"
+            FILES ${PLATFORM_WORDING_QM_FILES})
+    add_dependencies(fsorg-linux-wording-tests platform_wording_translations release_translations)
+endif ()
