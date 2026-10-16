@@ -103,7 +103,7 @@
         return {};
     }
 
-    return PathFromUtf8(text.substr(0, std::max(separator, rootSize)));
+    return PathFromUtf8(text.substr(0, (std::max)(separator, rootSize)));
 }
 
 [[nodiscard]] inline std::size_t PartsIn(const std::filesystem::path& path)
