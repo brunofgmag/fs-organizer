@@ -19,6 +19,7 @@
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/WindowsForm.h"
 
 namespace
 {
@@ -186,7 +187,7 @@ namespace
         FakeOperationJournal journal;
         FakeClock clock;
         OperationLog log{journal, clock};
-        StartupEditor editor{startup.service, presets, probe, log};
+        StartupEditor editor{startup.service, presets, probe, startup.pathMapper, log};
     };
 
     [[nodiscard]] FileResult ResultOf(const OperationRecord& record)
@@ -201,7 +202,7 @@ void StartupEditorTest::ACheckOutsideTheLibrariesKeepsTheChosenFileAndWritesNoth
 
     const StartupDraftCheck check = f.editor.Check(Profile(), SnapshotHoldingFlow(true), kSimlink, std::nullopt);
 
-    QCOMPARE(check.pathToWrite, kSimlink);
+    QCOMPARE(check.pathToWrite, InWindowsForm(kSimlink));
     QVERIFY(!check.insideAnAddon);
     QVERIFY(check.addonFolderName.empty());
     QVERIFY(!check.addonIsOff);
@@ -220,7 +221,7 @@ void StartupEditorTest::ACheckInsideAnEnabledAddonGivesTheLinkPathOfTheAddon()
     const StartupDraftCheck check =
         f.editor.Check(Profile(), SnapshotHoldingFlow(true), kFlowExecutableInTheLibrary, std::nullopt);
 
-    QCOMPARE(check.pathToWrite, kFlowExecutableByTheLink);
+    QCOMPARE(check.pathToWrite, InWindowsForm(kFlowExecutableByTheLink));
     QVERIFY(check.insideAnAddon);
     QCOMPARE(check.addonFolderName, std::string("p42-util-flow-pro"));
     QVERIFY(!check.addonIsOff);
@@ -234,7 +235,7 @@ void StartupEditorTest::ACheckInsideADisabledAddonSaysSoAndStillAcceptsIt()
     const StartupDraftCheck check =
         f.editor.Check(Profile(), SnapshotHoldingFlow(false), kFlowExecutableInTheLibrary, std::nullopt);
 
-    QCOMPARE(check.pathToWrite, kFlowExecutableByTheLink);
+    QCOMPARE(check.pathToWrite, InWindowsForm(kFlowExecutableByTheLink));
     QVERIFY(check.insideAnAddon);
     QVERIFY(check.addonIsOff);
     QCOMPARE(check.refusal, FileResult::Completed);
@@ -296,7 +297,7 @@ void StartupEditorTest::ACheckOfAnEditOnlyLooksForTheProgramWhenThePathChanges()
     const StartupDraftCheck movingToARealOne = f.editor.Check(Profile(), SnapshotHoldingFlow(true), kSimlink, gone);
 
     QCOMPARE(movingToARealOne.refusal, FileResult::Completed);
-    QCOMPARE(movingToARealOne.pathToWrite, kSimlink);
+    QCOMPARE(movingToARealOne.pathToWrite, InWindowsForm(kSimlink));
     QVERIFY(movingToARealOne.changesThePath);
 }
 
@@ -387,7 +388,7 @@ void StartupEditorTest::AddingWritesTheEntryAndLeavesOneLineInTheJournal()
         f.editor.Add(Profile(), SnapshotHoldingFlow(true), Fixture::Draft("Navigraph Simlink", kSimlink, "-x"));
 
     QCOMPARE(outcome.result, FileResult::Completed);
-    QCOMPARE(outcome.entryPath, kSimlink);
+    QCOMPARE(outcome.entryPath, InWindowsForm(kSimlink));
 
     const std::vector<StartupEntry> entries = f.startup.entries.Entries();
 
@@ -399,7 +400,7 @@ void StartupEditorTest::AddingWritesTheEntryAndLeavesOneLineInTheJournal()
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.LastLine().kind, OperationKind::AddTheStartupEntry);
     QCOMPARE(f.LastLine().label, std::string("Navigraph Simlink"));
-    QCOMPARE(f.LastLine().target, kSimlink);
+    QCOMPARE(f.LastLine().target, InWindowsForm(kSimlink));
     QVERIFY(f.LastLine().addonId.folderName.empty());
     QCOMPARE(ResultOf(f.LastLine()), FileResult::Completed);
     QCOMPARE(f.LastLine().timestamp, f.clock.now);
@@ -413,8 +414,8 @@ void StartupEditorTest::AddingInsideAnAddonWritesTheLinkPath()
         f.editor.Add(Profile(), SnapshotHoldingFlow(false), Fixture::Draft("Flow", kFlowExecutableInTheLibrary)).result,
         FileResult::Completed);
 
-    QCOMPARE(f.startup.entries.Entries().at(0).path, kFlowExecutableByTheLink);
-    QCOMPARE(f.LastLine().target, kFlowExecutableByTheLink);
+    QCOMPARE(f.startup.entries.Entries().at(0).path, InWindowsForm(kFlowExecutableByTheLink));
+    QCOMPARE(f.LastLine().target, InWindowsForm(kFlowExecutableByTheLink));
 }
 
 void StartupEditorTest::AnAddingThatTheCheckRefusesWritesNothingAndLeavesItsLine()
@@ -638,7 +639,7 @@ void StartupEditorTest::EditingThePathMakesEveryPresetFollowWithTheSameActionInO
                                                         Fixture::Draft("Navigraph Simlink", kSimlinkMoved));
 
     QCOMPARE(outcome.result, FileResult::Completed);
-    QCOMPARE(outcome.entryPath, kSimlinkMoved);
+    QCOMPARE(outcome.entryPath, InWindowsForm(kSimlinkMoved));
     QCOMPARE(outcome.presetsThatFollowed, (std::vector<std::string>{"Long", "Short"}));
     QVERIFY(outcome.presetsThatCouldNotBeWritten.empty());
     QVERIFY(outcome.returnPresetFollowed);
@@ -646,19 +647,19 @@ void StartupEditorTest::EditingThePathMakesEveryPresetFollowWithTheSameActionInO
     const Preset shortOne = *f.presets.Load(kProfileId, "Short");
     const Preset longOne = *f.presets.Load(kProfileId, "Long");
 
-    QCOMPARE(shortOne.startupEntries.front().path, kSimlinkMoved);
+    QCOMPARE(shortOne.startupEntries.front().path, InWindowsForm(kSimlinkMoved));
     QVERIFY(shortOne.startupEntries.front().action == PresetAction::Enable);
     QCOMPARE(longOne.startupEntries.front().path, kAny2Gsx);
-    QCOMPARE(longOne.startupEntries.back().path, kSimlinkMoved);
+    QCOMPARE(longOne.startupEntries.back().path, InWindowsForm(kSimlinkMoved));
     QVERIFY(longOne.startupEntries.back().action == PresetAction::Disable);
     QCOMPARE(f.presets.Load(kProfileId, "Without")->startupEntries.front().path, kAny2Gsx);
     QCOMPARE(f.presets.Load(kOtherProfileId, "Short")->startupEntries.front().path, kSimlink);
-    QCOMPARE(f.presets.LoadReturnPreset(kProfileId)->startupEntries.front().path, kSimlinkMoved);
+    QCOMPARE(f.presets.LoadReturnPreset(kProfileId)->startupEntries.front().path, InWindowsForm(kSimlinkMoved));
 
     QCOMPARE(f.journal.appended.size(), std::size_t{1});
     QCOMPARE(f.LastLine().kind, OperationKind::EditTheStartupEntry);
     QCOMPARE(f.LastLine().source, kSimlink);
-    QCOMPARE(f.LastLine().target, kSimlinkMoved);
+    QCOMPARE(f.LastLine().target, InWindowsForm(kSimlinkMoved));
     QCOMPARE(f.LastLine().label, std::string("Navigraph Simlink"));
 }
 
@@ -676,7 +677,7 @@ void StartupEditorTest::APresetThatCannotBeWrittenIsNamedAndTheEditIsKept()
     QCOMPARE(outcome.result, FileResult::Completed);
     QCOMPARE(outcome.presetsThatFollowed, (std::vector<std::string>{"Short"}));
     QCOMPARE(outcome.presetsThatCouldNotBeWritten, (std::vector<std::string>{"Locked"}));
-    QCOMPARE(f.startup.entries.Entries().at(0).path, kSimlinkMoved);
+    QCOMPARE(f.startup.entries.Entries().at(0).path, InWindowsForm(kSimlinkMoved));
     QCOMPARE(f.presets.Load(kProfileId, "Locked")->startupEntries.front().path, kSimlink);
     QCOMPARE(ResultOf(f.LastLine()), FileResult::Completed);
 }
@@ -777,7 +778,7 @@ void StartupEditorTest::UndoingAnEditBringsTheEntryAndThePresetsBack()
                        Fixture::Draft("Simlink, moved", kSimlinkMoved, "--other"))
                  .result,
              FileResult::Completed);
-    QCOMPARE(f.presets.Load(kProfileId, "Short")->startupEntries.front().path, kSimlinkMoved);
+    QCOMPARE(f.presets.Load(kProfileId, "Short")->startupEntries.front().path, InWindowsForm(kSimlinkMoved));
 
     const std::optional<StartupUndoPlan> plan = f.editor.WhatUndoWouldDo(kProfileId);
 
@@ -800,7 +801,7 @@ void StartupEditorTest::UndoingAnEditBringsTheEntryAndThePresetsBack()
     QCOMPARE(f.presets.Load(kProfileId, "Short")->startupEntries.front().path, kSimlink);
     QVERIFY(f.presets.Load(kProfileId, "Short")->startupEntries.front().action == PresetAction::Disable);
     QCOMPARE(f.LastLine().kind, OperationKind::EditTheStartupEntry);
-    QCOMPARE(f.LastLine().source, kSimlinkMoved);
+    QCOMPARE(f.LastLine().source, InWindowsForm(kSimlinkMoved));
     QCOMPARE(f.LastLine().target, kSimlink);
     QVERIFY(!f.editor.WhatUndoWouldDo(kProfileId).has_value());
 }

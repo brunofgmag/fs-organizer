@@ -13,13 +13,17 @@
 #include "infrastructure/platform/LinuxInstanceGuard.h"
 #include "infrastructure/platform/LinuxKnownFolders.h"
 #include "infrastructure/sim/ProcProcessProbe.h"
+#include "infrastructure/sim/ProtonPathMapper.h"
+#include "infrastructure/sim/ProtonPrefixes.h"
 #include "infrastructure/sim/ProtonSimulatorLocator.h"
 #include "infrastructure/sim/ProtonUserCfgLocations.h"
 
 PlatformParts BuildThePlatform()
 {
-    std::vector<UserCfgLocation> userCfgLocations = ProtonUserCfgLocations(SteamLibraries());
-    std::unique_ptr<SimulatorLocator> locator = std::make_unique<ProtonSimulatorLocator>(userCfgLocations);
+    const std::vector<ProtonPrefix> prefixes = ProtonPrefixes(SteamLibraries(SteamRoots()));
+    std::vector<UserCfgLocation> userCfgLocations = ProtonUserCfgLocations(prefixes);
+    std::unique_ptr<PathMapper> paths = std::make_unique<ProtonPathMapper>(prefixes);
+    std::unique_ptr<SimulatorLocator> locator = std::make_unique<ProtonSimulatorLocator>(userCfgLocations, *paths);
 
     return PlatformParts{
         .instance = std::make_unique<LinuxInstanceGuard>(RuntimeFolder() / "fs-organizer.lock"),
@@ -32,7 +36,8 @@ PlatformParts BuildThePlatform()
         .folderArchives = std::make_unique<PosixFolderArchiveReader>(),
         .packedArchives = std::make_unique<LibarchiveArchiveReader>(),
         .locator = std::move(locator),
-        .legacyConfig = std::make_unique<ProtonLegacyConfigSource>(),
+        .legacyConfig = std::make_unique<ProtonLegacyConfigSource>(prefixes),
+        .paths = std::move(paths),
         .userCfgLocations = std::move(userCfgLocations),
         .folders = LinuxAppFolders(),
         .capabilities = {.offersJunctions = false},

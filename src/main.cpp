@@ -288,11 +288,13 @@ int main(int argc, char* argv[])
     const LinkType storedLinkType = stored.linkType;
     const Verification storedVerification = stored.verification;
 
+    const PathMapper& pathMapper = *platform.paths;
     ExeXmlStartupEntries startupEntries{{}};
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, stored.manageStartupEntries);
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, pathMapper,
+                                  stored.manageStartupEntries);
 
     FilePresetRepository presetRepository(platform.folders.presetsFolder);
-    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, log);
+    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, pathMapper, log);
 
     std::vector<LoadingReportLocation> loadingReports = LoadingReportLocations(userCfgLocations, filesystemProbe);
     ProfileLoadingReport loadingReport(filesystemProbe, {});

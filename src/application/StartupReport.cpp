@@ -59,12 +59,12 @@ namespace
         bool addonIsOff = false;
     };
 
-    OnDisk ReadOnDisk(const StartupEntry& entry,
+    OnDisk ReadOnDisk(const std::filesystem::path& program,
                       const std::filesystem::path& addonFolder,
                       const ProfileSnapshot& snapshot,
                       const FilesystemProbe& filesystemProbe)
     {
-        if (filesystemProbe.EntryExistsWithoutFollowingLinks(entry.path))
+        if (filesystemProbe.EntryExistsWithoutFollowingLinks(program))
         {
             return {.exists = true, .addonIsOff = false};
         }
@@ -119,22 +119,25 @@ std::vector<StartupLine> EntriesCarriedBy(const StartupReport& report,
 StartupReport ReportStartupEntries(const std::vector<StartupEntry>& entries,
                                    const SimulatorProfile& profile,
                                    const ProfileSnapshot& snapshot,
-                                   const FilesystemProbe& filesystemProbe)
+                                   const FilesystemProbe& filesystemProbe,
+                                   const PathMapper& pathMapper)
 {
     StartupReport report;
 
     for (const StartupEntry& entry : entries)
     {
-        const std::filesystem::path addonFolder = AddonFolderReachedBy(profile, entry.path);
-        const OnDisk onDisk = ReadOnDisk(entry, addonFolder, snapshot, filesystemProbe);
+        const std::filesystem::path program = pathMapper.ToHost(profile.variant, entry.path);
+        const std::filesystem::path addonFolder = AddonFolderReachedBy(profile, program);
+        const OnDisk onDisk = ReadOnDisk(program, addonFolder, snapshot, filesystemProbe);
 
         report.lines.push_back(
             StartupLine{.label = entry.label,
                         .path = entry.path,
+                        .hostPath = program,
                         .enabled = entry.enabled,
                         .reach = addonFolder.empty() ? StartupReach::OutsideYourAddons : StartupReach::InsideAnAddon,
                         .addonFolder = addonFolder,
-                        .condition = ConditionOf(entry.path, onDisk, filesystemProbe),
+                        .condition = ConditionOf(program, onDisk, filesystemProbe),
                         .commandLine = entry.commandLine});
     }
 

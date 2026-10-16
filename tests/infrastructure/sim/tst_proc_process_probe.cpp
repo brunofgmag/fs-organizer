@@ -20,6 +20,7 @@ namespace
     private slots:
         static void AWindowsProgramUnderProtonIsFoundByTheNameOfItsExecutable();
         static void TheLauncherThatCarriesTheExecutableAmongItsArgumentsCountsToo();
+        static void TheSimulatorOnADriveOfThePrefixIsFoundWhateverTheLetterAndTheNameWineGivesIt();
         static void TheNamesAreComparedWithoutCaseAndTheConfiguredSpellingIsTheAnswer();
         static void ATextThatOnlyMentionsTheNameIsNotTheProgram();
         static void AnotherProgramWhoseNameEndsTheSameIsNotTheProgram();
@@ -81,6 +82,26 @@ void ProcProcessProbeTest::TheLauncherThatCarriesTheExecutableAmongItsArgumentsC
     const ProcProcessProbe probe(kNames, proc.Root());
 
     QCOMPARE(probe.RunningSimulator(), std::optional<std::string>("FlightSimulator.exe"));
+}
+
+void ProcProcessProbeTest::TheSimulatorOnADriveOfThePrefixIsFoundWhateverTheLetterAndTheNameWineGivesIt()
+{
+    const FakeProc proc;
+    proc.Process("4021", {"ACE: WinMain_Z"});
+    proc.Process("4022",
+                 {R"(S:\steamapps\common\MicrosoftFlightSimulator2024\FlightSimulator2024.exe)", "-FastLaunch"});
+    proc.Process("4023", {"ACE: WinMain_Z", R"(s:\steamapps\common\MicrosoftFlightSimulator\flightsimulator.exe)"});
+
+    const ProcProcessProbe probe(kNames, proc.Root());
+
+    QCOMPARE(probe.RunningSimulator(), std::optional<std::string>("FlightSimulator2024.exe"));
+
+    const FakeProc onlyTheSecond;
+    onlyTheSecond.Process("4023",
+                          {"ACE: WinMain_Z", R"(s:\steamapps\common\MicrosoftFlightSimulator\flightsimulator.exe)"});
+
+    QCOMPARE(ProcProcessProbe(kNames, onlyTheSecond.Root()).RunningSimulator(),
+             std::optional<std::string>("FlightSimulator.exe"));
 }
 
 void ProcProcessProbeTest::TheNamesAreComparedWithoutCaseAndTheConfiguredSpellingIsTheAnswer()

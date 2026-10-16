@@ -10,6 +10,7 @@
 
 #include "application/StartupService.h"
 #include "application/model/ProfileSnapshot.h"
+#include "application/ports/PathMapper.h"
 #include "application/ports/PresetRepository.h"
 #include "domain/journal/OperationLog.h"
 #include "domain/model/FileResult.h"
@@ -66,6 +67,7 @@ public:
     StartupEditor(StartupService& startup,
                   PresetRepository& presets,
                   const FilesystemProbe& filesystemProbe,
+                  const PathMapper& pathMapper,
                   const OperationLog& log);
 
     [[nodiscard]] StartupDraftCheck Check(const SimulatorProfile& profile,
@@ -159,6 +161,7 @@ private:
     StartupService& startup_;
     PresetRepository& presets_;
     const FilesystemProbe& filesystemProbe_;
+    const PathMapper& pathMapper_;
     const OperationLog& log_;
     mutable std::mutex guard_;
     std::optional<Undoable> undoable_{};

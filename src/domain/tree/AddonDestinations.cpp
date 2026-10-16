@@ -13,7 +13,7 @@ namespace
         return key == "." ? std::string{} : key;
     }
 
-    std::string ParentOf(const std::string& key)
+    std::string KeyAbove(const std::string& key)
     {
         const std::size_t separator = key.rfind('/');
 
@@ -45,7 +45,7 @@ AddonDestinations::AddonDestinations(const SimulatorProfile& profile, const std:
 std::filesystem::path AddonDestinations::Chosen(const LibraryId& libraryId,
                                                 const std::filesystem::path& relativePath) const
 {
-    for (std::string key = RelativeKey(relativePath);; key = ParentOf(key))
+    for (std::string key = RelativeKey(relativePath);; key = KeyAbove(key))
     {
         const auto match = overrides_.find(std::pair{libraryId, key});
 
@@ -77,9 +77,9 @@ std::filesystem::path AddonDestinations::StrayedFrom(const std::string& folderKe
 {
     for (const std::filesystem::path& link : linksByTarget_.PointingAtComparable(folderKey))
     {
-        if (ComparablePath(link.parent_path()) != destinationKey)
+        if (ComparablePath(ParentOf(link)) != destinationKey)
         {
-            return link.parent_path();
+            return ParentOf(link);
         }
     }
 

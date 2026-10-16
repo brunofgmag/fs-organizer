@@ -414,6 +414,7 @@ fsorg_add_qt_test(fsorg-startup-editor-tests startup-editor
         tests/doubles/StartupOverFakes.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        tests/support/WindowsForm.h
         src/domain/support/PathUtils.h)
 target_link_libraries(fsorg-startup-editor-tests PRIVATE fsorg-application)
 
@@ -1037,7 +1038,8 @@ fsorg_add_qt_test(fsorg-startup-view-model-tests startup-view-model
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h)
+        tests/support/PathPrinting.h
+        tests/support/WindowsForm.h)
 target_link_libraries(fsorg-startup-view-model-tests PRIVATE fsorg-viewmodel)
 
 fsorg_add_qt_test(fsorg-quarantine-view-model-tests quarantine-view-model
@@ -1216,6 +1218,7 @@ fsorg_add_qt_test(fsorg-startup-editor-on-real-disk-tests startup-editor-on-real
         tests/doubles/FakeProcessProbe.h
         tests/support/EnumPrinting.h
         tests/support/PathPrinting.h
+        tests/support/WindowsForm.h
         tests/support/StdFilesystemProbe.h
         tests/support/TempFiles.h
         src/domain/support/PathUtils.h)
@@ -1428,7 +1431,8 @@ fsorg_add_qt_test(fsorg-startup-page-tests startup-page
         tests/doubles/InMemoryFileSystem.h
         tests/doubles/InlineBackgroundRunner.h
         tests/support/EnumPrinting.h
-        tests/support/PathPrinting.h)
+        tests/support/PathPrinting.h
+        tests/support/WindowsForm.h)
 target_link_libraries(fsorg-startup-page-tests PRIVATE fsorg-view)
 configure_fsorg_gui_test(fsorg-startup-page-tests startup-page)
 
@@ -2019,6 +2023,53 @@ if (NOT WIN32)
             tests/support/EnumPrinting.h
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-proton-user-cfg-locations-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-steam-library-folders-tests steam-library-folders
+            tests/infrastructure/sim/tst_steam_library_folders.cpp
+            tests/support/PathPrinting.h
+            tests/support/TempFiles.h)
+    target_link_libraries(fsorg-steam-library-folders-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-proton-prefixes-tests proton-prefixes
+            tests/infrastructure/sim/tst_proton_prefixes.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h)
+    target_link_libraries(fsorg-proton-prefixes-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-proton-path-mapper-tests proton-path-mapper
+            tests/infrastructure/sim/tst_proton_path_mapper.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h
+            src/domain/support/PathUtils.h)
+    target_link_libraries(fsorg-proton-path-mapper-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-proton-simulator-locator-tests proton-simulator-locator
+            tests/infrastructure/sim/tst_proton_simulator_locator.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h)
+    target_link_libraries(fsorg-proton-simulator-locator-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-proton-legacy-config-source-tests proton-legacy-config-source
+            tests/infrastructure/legacy/tst_proton_legacy_config_source.cpp
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h
+            src/domain/support/PathUtils.h)
+    target_link_libraries(fsorg-proton-legacy-config-source-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-startup-in-a-proton-prefix-tests startup-in-a-proton-prefix
+            tests/infrastructure/sim/tst_startup_in_a_proton_prefix.cpp
+            tests/doubles/FakeClock.h
+            tests/doubles/FakeOperationJournal.h
+            tests/doubles/FakePresetRepository.h
+            tests/doubles/FakeProcessProbe.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h
+            src/domain/support/PathUtils.h)
+    target_link_libraries(fsorg-startup-in-a-proton-prefix-tests PRIVATE fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-linux-instance-guard-tests linux-instance-guard
             tests/infrastructure/platform/tst_linux_instance_guard.cpp)

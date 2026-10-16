@@ -101,6 +101,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/RemovedStartupEntriesFile.cpp
         src/infrastructure/sim/StartupFileLocations.cpp
+        src/infrastructure/sim/UserCfgPackagesPath.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
 )
 
@@ -132,9 +133,14 @@ set(LINUX_PLATFORM_SOURCES
         src/infrastructure/link/PosixLinkService.cpp
         src/infrastructure/platform/LinuxInstanceGuard.cpp
         src/infrastructure/platform/LinuxKnownFolders.cpp
+        src/infrastructure/sim/ChildNamedIgnoringCase.cpp
+        src/infrastructure/sim/PrefixPathMapper.cpp
         src/infrastructure/sim/ProcProcessProbe.cpp
+        src/infrastructure/sim/ProtonPathMapper.cpp
+        src/infrastructure/sim/ProtonPrefixes.cpp
         src/infrastructure/sim/ProtonSimulatorLocator.cpp
         src/infrastructure/sim/ProtonUserCfgLocations.cpp
+        src/infrastructure/sim/SteamLibraryFolders.cpp
         src/view/platform/LinuxTitleBar.cpp
 )
 

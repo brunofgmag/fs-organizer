@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
 
     const PlatformParts platform = BuildThePlatform();
     const ProcessProbe& processProbe = *platform.processes;
+    const PathMapper& pathMapper = *platform.paths;
     const std::optional<std::string> running = processProbe.RunningSimulator();
 
     Out() << "Simulator running: " << (running.has_value() ? QString::fromStdString(*running) : QString("no")) << "\n";
@@ -89,7 +90,7 @@ int main(int argc, char* argv[])
         Out() << "    backup     " << AsText(BackupOfStartupFile(location.filePath)) << "\n";
 
         ExeXmlStartupEntries startup(location.filePath);
-        const StartupService service(startup, processProbe, filesystemProbe, true);
+        const StartupService service(startup, processProbe, filesystemProbe, pathMapper, true);
 
         ReportEntries(service);
     }

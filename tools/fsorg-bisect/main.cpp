@@ -330,7 +330,7 @@ namespace
         EntryClassifier classifier{linkService, filesystemProbe, theAppLinked};
         ExeXmlStartupEntries startupEntries{{}};
         const ProcessProbe& processProbe{*platform.processes};
-        StartupService startup{startupEntries, processProbe, filesystemProbe, false};
+        StartupService startup{startupEntries, processProbe, filesystemProbe, *platform.paths, false};
 
         ProfileService profiles{catalog, filesystemProbe, sidecars, classifier,          linking,
                                 log,     identities,      startup,  LinkTypeOf(platform)};

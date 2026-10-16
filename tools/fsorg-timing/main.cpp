@@ -239,7 +239,8 @@ int main(int argc, char* argv[])
     const OperationLog log(journal, clock);
 
     ExeXmlStartupEntries startupEntries{{}};
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, false);
+    const PathMapper& pathMapper = *platform.paths;
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, pathMapper, false);
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, linkType);

@@ -26,6 +26,7 @@
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/WindowsForm.h"
 #include "viewmodel/SessionNotifier.h"
 #include "viewmodel/StartupViewModel.h"
 
@@ -164,9 +165,9 @@ namespace
         SessionNotifier notifier{};
         Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakeStartupEntries& entries = startup.entries;
-        StartupService service{entries, processProbe, filesystemProbe, true};
+        StartupService service{entries, processProbe, filesystemProbe, startup.pathMapper, true};
         FakePresetRepository presets;
-        StartupEditor editor{service, presets, filesystemProbe, log};
+        StartupEditor editor{service, presets, filesystemProbe, startup.pathMapper, log};
         StartupViewModel viewModel{service, editor, session, clock};
     };
 }
@@ -302,7 +303,7 @@ void StartupViewModelTest::AddingAnEntryWritesItAndReadsTheLinesTheSnapshotAndTh
         fixture.viewModel.Add(StartupDraft{.label = "Any2GSX", .file = kAny2Gsx, .commandLine = "-x"});
 
     QCOMPARE(outcome.result, FileResult::Completed);
-    QCOMPARE(outcome.entryPath, kAny2Gsx);
+    QCOMPARE(outcome.entryPath, InWindowsForm(kAny2Gsx));
     QCOMPARE(fixture.viewModel.Lines().size(), std::size_t{3});
     QCOMPARE(fixture.viewModel.Lines().back().label, std::string("Any2GSX"));
     QCOMPARE(fixture.viewModel.Lines().back().commandLine, std::string("-x"));
@@ -325,10 +326,10 @@ void StartupViewModelTest::AddingAProgramInsideAnAddonWritesThePathOfTheLink()
     const StartupDraftCheck check = fixture.viewModel.Check(kFlowTool, std::nullopt);
 
     QVERIFY(check.insideAnAddon);
-    QCOMPARE(check.pathToWrite, kFlowToolByTheLink);
+    QCOMPARE(check.pathToWrite, InWindowsForm(kFlowToolByTheLink));
 
     QCOMPARE(fixture.viewModel.Add(StartupDraft{.label = "Tool", .file = kFlowTool}).result, FileResult::Completed);
-    QCOMPARE(fixture.viewModel.Lines().back().path, kFlowToolByTheLink);
+    QCOMPARE(fixture.viewModel.Lines().back().path, InWindowsForm(kFlowToolByTheLink));
     QCOMPARE(fixture.viewModel.Lines().back().reach, StartupReach::InsideAnAddon);
 }
 
@@ -427,11 +428,11 @@ void StartupViewModelTest::EditingRewritesTheLineAndAPathChangeCarriesThePresets
 
     QCOMPARE(moved.result, FileResult::Completed);
     QCOMPARE(moved.presetsThatFollowed, (std::vector<std::string>{"Short"}));
-    QCOMPARE(fixture.viewModel.Lines().back().path, kAny2Gsx);
-    QCOMPARE(fixture.session.Snapshot().startupEntries.back().path, kAny2Gsx);
+    QCOMPARE(fixture.viewModel.Lines().back().path, InWindowsForm(kAny2Gsx));
+    QCOMPARE(fixture.session.Snapshot().startupEntries.back().path, InWindowsForm(kAny2Gsx));
     QCOMPARE(fixture.viewModel.Removed().size(), std::size_t{1});
     QCOMPARE(fixture.viewModel.Removed().front().entry.path, kSimlink);
-    QCOMPARE(fixture.presets.Load("msfs2024", "Short")->startupEntries.front().path, kAny2Gsx);
+    QCOMPARE(fixture.presets.Load("msfs2024", "Short")->startupEntries.front().path, InWindowsForm(kAny2Gsx));
     QCOMPARE(fixture.viewModel.UndoPlan()->effect, StartupUndoEffect::EditsTheEntryBack);
 }
 
@@ -452,7 +453,7 @@ void StartupViewModelTest::APresetThatCouldNotFollowAnEditIsNamedInTheOutcome()
 
     QCOMPARE(outcome.result, FileResult::Completed);
     QCOMPARE(outcome.presetsThatCouldNotBeWritten, (std::vector<std::string>{"Locked"}));
-    QCOMPARE(fixture.viewModel.Lines().back().path, kAny2Gsx);
+    QCOMPARE(fixture.viewModel.Lines().back().path, InWindowsForm(kAny2Gsx));
 }
 
 void StartupViewModelTest::UndoingGoesThroughTheEditorAndReadsAgain()
