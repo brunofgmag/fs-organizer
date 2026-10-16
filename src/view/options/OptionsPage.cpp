@@ -21,6 +21,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/TextThatIsNeverCut.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/SimulatorText.h"
@@ -67,6 +68,14 @@ namespace
         label->setObjectName(QStringLiteral("PanelPromise"));
 
         return label;
+    }
+
+    QWidget* PathDetail(const QString& text, QWidget* parent)
+    {
+        auto* path = new TextThatIsNeverCut(text, parent);
+        path->setProperty("quiet", true);
+
+        return path;
     }
 
     QLabel* Tag(const QString& text, const char* tone, QWidget* parent)
@@ -763,9 +772,10 @@ void OptionsPage::ReloadDestinations()
         auto* layout = qobject_cast<QHBoxLayout*>(row->layout());
 
         layout->addWidget(Tag(destination.isDefault ? tr("Default") : tr("Extra"),
-                              destination.isDefault ? "filled" : "outlined", row));
+                              destination.isDefault ? "filled" : "outlined", row),
+                          0, Qt::AlignVCenter);
         layout->addWidget(new QLabel(AsText(destination.path.filename()), row));
-        layout->addWidget(Detail(AsText(destination.path), row), 1);
+        layout->addWidget(PathDetail(AsText(destination.path), row), 1);
 
         auto* repoint = new QPushButton(tr("Switch…"), row);
         repoint->setEnabled(viewModel_.ShowsTheProfileInUse());
@@ -804,7 +814,7 @@ void OptionsPage::ReloadLibraries()
                        tr("%n addon", nullptr, static_cast<int>(library.addons)))
             : AsText(library.path);
 
-        layout->addWidget(Detail(counted, row), 1);
+        layout->addWidget(PathDetail(counted, row), 1);
 
         auto* open = new QPushButton(tr("Open"), row);
         layout->addWidget(open);
