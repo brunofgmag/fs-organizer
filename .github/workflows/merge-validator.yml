@@ -21,4 +21,6 @@ jobs:
     uses: brunofgmag/gsx-integrator-ci/.github/workflows/merge-validator.yml@main
     with:
       qt-modules: qtpdf
+      linux-preset: linux-release
+      linux-packages: libdbus-1-dev libegl1 libxcb-cursor0 libarchive-dev
     secrets: inherit
