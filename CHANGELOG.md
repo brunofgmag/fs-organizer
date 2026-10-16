@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0](https://github.com/brunofgmag/fs-organizer/compare/v1.2.0...v1.3.0) (2026-10-16)
+
+
+* show where a startup entry sits on disk in its path tip ([#230](https://github.com/brunofgmag/fs-organizer/issues/230)) ([bdc337e](https://github.com/brunofgmag/fs-organizer/commit/bdc337e6dff1a2eca9908d47f5a8d877a25a257b))
+
+
+### Features
+
+* show where a startup entry sits on disk in its path tip ([fab8416](https://github.com/brunofgmag/fs-organizer/commit/fab84167731be70be7c1bdd83ac3d01c174e278c)) ([bdc337e](https://github.com/brunofgmag/fs-organizer/commit/bdc337e6dff1a2eca9908d47f5a8d877a25a257b))
+
 ## [1.2.0](https://github.com/brunofgmag/fs-organizer/compare/v1.1.0...v1.2.0) (2026-10-16)
 
 
