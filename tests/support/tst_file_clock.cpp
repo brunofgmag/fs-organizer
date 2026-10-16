@@ -26,7 +26,6 @@ namespace
     constexpr int kConversions = 1000;
     constexpr std::chrono::milliseconds kAgreement{5};
     constexpr std::int64_t kUnixBillennium = 1'000'000'000;
-    constexpr std::int64_t kFileTimeTicksAtTheUnixBillennium = 126'444'736'000'000'000;
 
     [[nodiscard]] std::chrono::system_clock::time_point
     TheTwoClockFormula(const std::filesystem::file_time_type written)
@@ -71,8 +70,8 @@ void FileClockTest::TheConversionAgreesWithTheTwoClockFormulaForAFileWrittenNow(
 
 void FileClockTest::AKnownFileTimeConvertsToItsKnownUnixTime()
 {
-    const std::filesystem::file_time_type billennium{
-        std::filesystem::file_time_type::duration{kFileTimeTicksAtTheUnixBillennium}};
+    const std::filesystem::file_time_type billennium = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(
+        std::chrono::system_clock::time_point{std::chrono::seconds{kUnixBillennium}});
 
     const std::chrono::system_clock::time_point converted = SystemTimeOf(billennium);
 

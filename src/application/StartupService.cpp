@@ -5,8 +5,13 @@
 StartupService::StartupService(StartupEntries& entries,
                                const ProcessProbe& processProbe,
                                const FilesystemProbe& filesystemProbe,
+                               const PathMapper& pathMapper,
                                const bool managing)
-    : entries_(entries), processProbe_(processProbe), filesystemProbe_(filesystemProbe), managing_(managing)
+    : entries_(entries),
+      processProbe_(processProbe),
+      filesystemProbe_(filesystemProbe),
+      pathMapper_(pathMapper),
+      managing_(managing)
 {
 }
 
@@ -42,7 +47,7 @@ StartupReport StartupService::Report(const SimulatorProfile& profile, const Prof
         return {};
     }
 
-    return ReportStartupEntries(entries_.Entries(), profile, snapshot, filesystemProbe_);
+    return ReportStartupEntries(entries_.Entries(), profile, snapshot, filesystemProbe_, pathMapper_);
 }
 
 FileResult StartupService::Switch(const std::filesystem::path& entryPath, const bool enabled)

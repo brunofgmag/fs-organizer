@@ -12,15 +12,11 @@
 #include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "RealAdapters.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/doubles/RecordingSessionObserver.h"
@@ -103,7 +99,7 @@ namespace
 
     struct Stack
     {
-        explicit Stack(const Disk& disk, const LinkType linkType = LinkType::Junction)
+        explicit Stack(const Disk& disk, const LinkType linkType = kRealLinkType)
             : journalFile(disk.Root() / "journal" / "operations.jsonl"),
               journal(journalFile),
               settingsFile(disk.SettingsFile()),
@@ -128,10 +124,10 @@ namespace
         {
         }
 
-        WindowsLinkService linkService;
-        WindowsFilesystemProbe filesystemProbe;
-        WindowsFileOperations files;
-        WindowsSidecarStore sidecars;
+        RealLinkService linkService;
+        RealFilesystemProbe filesystemProbe;
+        RealFileOperations files;
+        RealSidecarStore sidecars;
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe};
         SystemClock clock;
@@ -141,7 +137,7 @@ namespace
         UuidLibraryIdGenerator identities;
         JsonManifestParser manifestParser;
         FilesystemScanner catalog{manifestParser, filesystemProbe, nothingWasImported};
-        WindowsProcessProbe processProbe{std::vector<std::string>{}};
+        RealProcessProbe processProbe{std::vector<std::string>{}};
         std::filesystem::path settingsFile;
         JsonSettingsRepository settings;
         StartupOverFakes startup{filesystemProbe};
@@ -218,7 +214,7 @@ void OptionsOnRealDiskTest::AskingForASymlinkEitherLandsOnDiskOrNamesThePrivileg
         QVERIFY2(!std::filesystem::exists(linkPath), "the refusal left rubbish behind in the destination");
     }
 
-    Stack junction(disk, LinkType::Junction);
+    Stack junction(disk, kRealLinkType);
     junction.session.ShowActiveProfile();
 
     const TreeNode* again = AddonUnder(junction, kAddon);

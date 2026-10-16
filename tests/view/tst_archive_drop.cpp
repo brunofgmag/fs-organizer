@@ -273,7 +273,7 @@ namespace
 
             for (const QString& file : files)
             {
-                urls.append(file.contains(QStringLiteral("://")) ? QUrl(file) : QUrl::fromLocalFile(file));
+                urls.append(QUrl(file.contains(QStringLiteral("://")) ? file : QStringLiteral("file:") + file));
             }
 
             mime.setUrls(urls);

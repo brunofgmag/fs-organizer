@@ -46,6 +46,7 @@
 #include "tests/support/CatalogueBesideTheBuild.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
+#include "tests/support/WindowsForm.h"
 #include "tests/support/ScrollBarCapRule.h"
 #include "view/delegates/RowDelegate.h"
 #include "view/simulator/StartupDraftDialog.h"
@@ -224,9 +225,9 @@ namespace
         SessionNotifier notifier{};
         Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakeStartupEntries& entries = startup.entries;
-        StartupService service{entries, processProbe, filesystemProbe, true};
+        StartupService service{entries, processProbe, filesystemProbe, startup.pathMapper, true};
         FakePresetRepository presets;
-        StartupEditor editor{service, presets, filesystemProbe, log};
+        StartupEditor editor{service, presets, filesystemProbe, startup.pathMapper, log};
         StartupViewModel viewModel{service, editor, session, clock};
         StartupPage page{viewModel};
     };
@@ -1428,7 +1429,7 @@ void StartupPageTest::EditingWritesWhatTheDialogSaysAndAPresetThatCouldNotFollow
     ButtonSaying(f.page, "Edit…")->click();
 
     QVERIFY(opened);
-    QCOMPARE(f.viewModel.Lines()[1].path, kAny2Gsx);
+    QCOMPARE(f.viewModel.Lines()[1].path, InWindowsForm(kAny2Gsx));
     QCOMPARE(f.viewModel.Lines()[1].label, std::string("Navigraph Simlink"));
     QCOMPARE(f.viewModel.Lines()[1].commandLine, std::string("-x"));
     QVERIFY(status.last().first().toString().contains(QStringLiteral("Navigraph Simlink saved")));

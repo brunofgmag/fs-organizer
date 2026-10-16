@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #include "application/BisectionService.h"
@@ -11,18 +12,14 @@
 #include "infrastructure/bisection/JsonBisectionStore.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 
 namespace
@@ -306,13 +303,23 @@ namespace
         Out() << "\n" << report.results.size() << " link operations went out as one batch\n";
     }
 
+    LinkType LinkTypeOf(const PlatformParts& platform)
+    {
+        return platform.capabilities.offersJunctions ? LinkType::Junction : LinkType::Symbolic;
+    }
+
     struct World
     {
-        WindowsLinkService linkService;
-        WindowsFilesystemProbe filesystemProbe;
-        WindowsSidecarStore sidecars;
+        explicit World(PlatformParts parts) : platform(std::move(parts))
+        {
+        }
+
+        PlatformParts platform;
+        LinkService& linkService{*platform.links};
+        const FilesystemProbe& filesystemProbe{*platform.filesystem};
+        SidecarStore& sidecars{*platform.sidecars};
         JsonManifestParser manifestParser;
-        JsonlOperationJournal journal{JournalFilePath()};
+        JsonlOperationJournal journal{platform.folders.journalFile};
         JournalImportedFolders importedFolders{journal};
         JournalLinkedFolders theAppLinked{journal};
         FilesystemScanner catalog{manifestParser, filesystemProbe, importedFolders};
@@ -322,13 +329,13 @@ namespace
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe, theAppLinked};
         ExeXmlStartupEntries startupEntries{{}};
-        WindowsProcessProbe processProbe{{"FlightSimulator.exe", "FlightSimulator2024.exe"}};
-        StartupService startup{startupEntries, processProbe, filesystemProbe, false};
+        const ProcessProbe& processProbe{*platform.processes};
+        StartupService startup{startupEntries, processProbe, filesystemProbe, *platform.paths, false};
 
-        ProfileService profiles{catalog, filesystemProbe, sidecars, classifier,        linking,
-                                log,     identities,      startup,  LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars, classifier,          linking,
+                                log,     identities,      startup,  LinkTypeOf(platform)};
         CouplingScan coupling{filesystemProbe};
-        JsonBisectionStore store{BisectionFolderPath()};
+        JsonBisectionStore store{platform.folders.bisectionFolder};
         BisectionService service{profiles, coupling, filesystemProbe, store, clock};
     };
 }
@@ -349,7 +356,8 @@ int main(int argc, char* argv[])
         return asked ? 0 : 2;
     }
 
-    const JsonSettingsRepository settings(SettingsFilePath());
+    PlatformParts platform = BuildThePlatform();
+    const JsonSettingsRepository settings(platform.folders.settingsFile);
     const std::optional<AppSettings> stored = settings.Load();
 
     if (!stored.has_value() || stored->profiles.empty())
@@ -368,7 +376,7 @@ int main(int argc, char* argv[])
 
     const SimulatorProfile& profile = active == stored->profiles.end() ? stored->profiles.front() : *active;
 
-    World world;
+    World world(std::move(platform));
 
     if (arguments.command == Command::Units)
     {

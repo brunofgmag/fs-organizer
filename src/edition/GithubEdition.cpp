@@ -1,16 +1,18 @@
 #include "edition/Edition.h"
 
-#include "infrastructure/manual/GithubManual.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
-#include "infrastructure/update/GithubUpdateService.h"
+#include <utility>
 
-EditionParts BuildTheEdition(const QString& updateFeed, const QString& currentVersion)
+#include "edition/SelfUpdater.h"
+#include "infrastructure/manual/GithubManual.h"
+
+EditionParts BuildTheEdition(const QString& updateFeed, const QString& currentVersion, const AppFolders& folders)
 {
+    SelfUpdater updater = BuildTheSelfUpdater(updateFeed, currentVersion);
+
     return EditionParts{
-        .updates = std::make_unique<GithubUpdateService>(updateFeed, currentVersion,
-                                                         GithubUpdateService::DefaultUpdatesFolder()),
-        .manual = std::make_unique<GithubManual>(currentVersion.toStdString(), ManualFolderPath()),
-        .updateDelivery = UpdateDelivery::SelfUpdate,
+        .updates = std::move(updater.service),
+        .manual = std::make_unique<GithubManual>(currentVersion.toStdString(), folders.manualFolder),
+        .updateDelivery = updater.delivery,
         .manualDelivery = ManualDelivery::Download,
     };
 }

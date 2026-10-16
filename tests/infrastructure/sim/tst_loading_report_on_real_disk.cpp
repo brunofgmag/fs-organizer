@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "application/ports/LoadingReportSource.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "RealAdapters.h"
 #include "infrastructure/sim/LoadingReportLocations.h"
 #include "infrastructure/sim/ProfileLoadingReport.h"
 #include "tests/support/PathPrinting.h"
@@ -47,7 +47,7 @@ namespace
         const std::filesystem::path written =
             profile.WriteText("Report-loading.toml", Fixture("simulator-report-loading.toml"));
 
-        const WindowsFilesystemProbe filesystemProbe;
+        const RealFilesystemProbe filesystemProbe;
         const std::vector<LoadingReportLocation> found = LoadingReportLocations(PointingAt(userCfg), filesystemProbe);
 
         QCOMPARE(found.size(), std::size_t{1});
@@ -67,7 +67,7 @@ namespace
         const TempFiles profile;
         const std::filesystem::path userCfg = profile.WriteText("UserCfg.opt", "InstalledPackagesPath \"D:\\\\\"\n");
 
-        const WindowsFilesystemProbe filesystemProbe;
+        const RealFilesystemProbe filesystemProbe;
         const std::vector<LoadingReportLocation> found = LoadingReportLocations(PointingAt(userCfg), filesystemProbe);
 
         QVERIFY(found.empty());
@@ -76,7 +76,7 @@ namespace
 
     void LoadingReportOnRealDiskTest::ThePathTheLocatorSkippedLeavesTheSourceAnsweringNothing()
     {
-        const WindowsFilesystemProbe filesystemProbe;
+        const RealFilesystemProbe filesystemProbe;
         const ProfileLoadingReport source(filesystemProbe, {});
 
         QVERIFY(!source.LastReport().has_value());
@@ -87,7 +87,7 @@ namespace
         const TempFiles profile;
         const std::filesystem::path written = profile.WriteText("Report-loading.toml", "not a report at all\n");
 
-        const WindowsFilesystemProbe filesystemProbe;
+        const RealFilesystemProbe filesystemProbe;
         const ProfileLoadingReport source(filesystemProbe, written);
 
         QVERIFY(!source.LastReport().has_value());

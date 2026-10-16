@@ -29,6 +29,8 @@ public:
 
     [[nodiscard]] static bool LoadNativeWidgets(QTranslator& translator, const QString& language);
 
+    [[nodiscard]] static bool LoadPlatformWording(QTranslator& translator, const QString& language);
+
     [[nodiscard]] bool Use(const QString& language);
 
     [[nodiscard]] QString InUse() const;
@@ -38,6 +40,7 @@ private:
 
     QTranslator interface_;
     QTranslator nativeWidgets_;
+    QTranslator platform_;
     QString inUse_;
     bool installed_ = false;
 };

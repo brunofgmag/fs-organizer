@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "application/StartupReport.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "tests/doubles/FakeFilesystemProbe.h"
 #include "tests/doubles/InMemoryFileSystem.h"
 #include "tests/support/EnumPrinting.h"
@@ -88,7 +89,8 @@ namespace
 
     StartupReport ReportOf(const std::vector<StartupEntry>& entries, const FilesystemProbe& probe)
     {
-        return ReportStartupEntries(entries, ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
+        return ReportStartupEntries(entries, ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe,
+                                    WindowsPathMapper{});
     }
 }
 
@@ -98,8 +100,9 @@ void StartupReportTest::AnEnabledEntryWhoseExecutableIsGoneIsBroken()
     disk.AddDirectory(kCommunity);
     const FakeFilesystemProbe probe(disk);
 
-    const StartupReport report = ReportStartupEntries({Entry("FlowPro", kFlowExecutable, true)},
-                                                      ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
+    const StartupReport report =
+        ReportStartupEntries({Entry("FlowPro", kFlowExecutable, true)}, ProfileWithTheCommunity(),
+                             SnapshotHolding({}, {}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.size(), std::size_t{1});
     QCOMPARE(report.lines.front().condition, StartupCondition::Broken);
@@ -114,7 +117,7 @@ void StartupReportTest::AnEnabledEntryBehindAnAddonThatIsOffNowIsBehindADisabled
 
     const StartupReport report =
         ReportStartupEntries({Entry("FlowPro", kFlowExecutable, true)}, ProfileWithTheCommunity(),
-                             SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
+                             SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.size(), std::size_t{1});
     QCOMPARE(report.lines.front().condition, StartupCondition::BehindADisabledAddon);
@@ -127,9 +130,9 @@ void StartupReportTest::AnEnabledEntryThatOnlyPassesThroughADestinationIsReachab
     disk.AddFile(kFlowExecutable);
     const FakeFilesystemProbe probe(disk);
 
-    const StartupReport report =
-        ReportStartupEntries({Entry("FlowPro", kFlowExecutable, true)}, ProfileWithTheCommunity(),
-                             SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {kFlowInTheLibrary}), probe);
+    const StartupReport report = ReportStartupEntries(
+        {Entry("FlowPro", kFlowExecutable, true)}, ProfileWithTheCommunity(),
+        SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {kFlowInTheLibrary}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.size(), std::size_t{1});
     QCOMPARE(report.lines.front().condition, StartupCondition::Reachable);
@@ -143,9 +146,9 @@ void StartupReportTest::ADisabledEntryStillReportsWhatIsWrongWithItsProgram()
     disk.AddDirectory(kFlowInTheLibrary);
     const FakeFilesystemProbe probe(disk);
 
-    const StartupReport report =
-        ReportStartupEntries({Entry("FlowPro", kFlowExecutable, false), Entry("Simlink", kSimlink, false)},
-                             ProfileWithTheCommunity(), SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
+    const StartupReport report = ReportStartupEntries(
+        {Entry("FlowPro", kFlowExecutable, false), Entry("Simlink", kSimlink, false)}, ProfileWithTheCommunity(),
+        SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.size(), std::size_t{2});
     QCOMPARE(report.lines[0].condition, StartupCondition::BehindADisabledAddon);
@@ -165,7 +168,8 @@ void StartupReportTest::TheConditionFollowsTheAddonComingBack()
     const std::vector<StartupEntry> entries = {Entry("FlowPro", kFlowExecutable, true)};
     const SimulatorProfile profile = ProfileWithTheCommunity();
 
-    QCOMPARE(ReportStartupEntries(entries, profile, SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe)
+    QCOMPARE(ReportStartupEntries(entries, profile, SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe,
+                                  WindowsPathMapper{})
                  .lines.front()
                  .condition,
              StartupCondition::BehindADisabledAddon);
@@ -173,7 +177,8 @@ void StartupReportTest::TheConditionFollowsTheAddonComingBack()
     disk.AddFile(kFlowExecutable);
 
     QCOMPARE(ReportStartupEntries(entries, profile,
-                                  SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {kFlowInTheLibrary}), probe)
+                                  SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {kFlowInTheLibrary}), probe,
+                                  WindowsPathMapper{})
                  .lines.front()
                  .condition,
              StartupCondition::Reachable);
@@ -185,8 +190,9 @@ void StartupReportTest::AnEntryOutsideEveryDestinationIsOutsideYourAddons()
     disk.AddFile(kSimlink);
     const FakeFilesystemProbe probe(disk);
 
-    const StartupReport report = ReportStartupEntries({Entry("Navigraph Simlink", kSimlink, true)},
-                                                      ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
+    const StartupReport report =
+        ReportStartupEntries({Entry("Navigraph Simlink", kSimlink, true)}, ProfileWithTheCommunity(),
+                             SnapshotHolding({}, {}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.front().reach, StartupReach::OutsideYourAddons);
     QCOMPARE(report.lines.front().condition, StartupCondition::Reachable);
@@ -199,8 +205,9 @@ void StartupReportTest::TheEntryInsideADestinationNamesTheFolderItReachesInto()
     disk.AddFile(kFlowExecutable);
     const FakeFilesystemProbe probe(disk);
 
-    const StartupReport report = ReportStartupEntries({Entry("FlowPro", kFlowExecutable, true)},
-                                                      ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
+    const StartupReport report =
+        ReportStartupEntries({Entry("FlowPro", kFlowExecutable, true)}, ProfileWithTheCommunity(),
+                             SnapshotHolding({}, {}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.front().reach, StartupReach::InsideAnAddon);
     QCOMPARE(report.lines.front().addonFolder, kFlowInTheDestination);
@@ -212,8 +219,9 @@ void StartupReportTest::AnExecutableMissingOutsideEveryDestinationIsMissingAndNo
     disk.AddDirectory(kFlowInTheLibrary);
     const FakeFilesystemProbe probe(disk);
 
-    const StartupReport report = ReportStartupEntries({Entry("Simlink", kSimlink, true)}, ProfileWithTheCommunity(),
-                                                      SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
+    const StartupReport report =
+        ReportStartupEntries({Entry("Simlink", kSimlink, true)}, ProfileWithTheCommunity(),
+                             SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.front().condition, StartupCondition::Broken);
     QCOMPARE(report.lines.front().reach, StartupReach::OutsideYourAddons);
@@ -229,7 +237,7 @@ void StartupReportTest::EveryEntryOfTheFileGetsALineAndTheOrderIsTheFileOrder()
     const StartupReport report =
         ReportStartupEntries({Entry("FlowPro", kFlowExecutable, true), Entry("Navigraph Simlink", kSimlink, true),
                               Entry("GSX Pro", "C:/Program Files/Addon Manager/couatl64/couatl64_MSFS.exe", true)},
-                             ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe);
+                             ProfileWithTheCommunity(), SnapshotHolding({}, {}), probe, WindowsPathMapper{});
 
     QCOMPARE(report.lines.size(), std::size_t{3});
     QCOMPARE(report.lines[0].label, std::string("FlowPro"));
@@ -342,7 +350,7 @@ void StartupReportTest::AnExecutableBehindAnAddonThatIsOffIsSaidSoEnabledOrNot()
     {
         const StartupReport report =
             ReportStartupEntries({Entry("FlowPro", kFlowExecutable, enabled)}, ProfileWithTheCommunity(),
-                                 SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe);
+                                 SnapshotHolding({AddonNode(kFlowInTheLibrary)}, {}), probe, WindowsPathMapper{});
 
         QCOMPARE(report.lines.front().condition, StartupCondition::BehindADisabledAddon);
     }

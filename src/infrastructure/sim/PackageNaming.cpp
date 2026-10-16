@@ -9,6 +9,7 @@ namespace
     constexpr std::string_view kShippedPrefixes[] = {"fs24-", "fs20-"};
     constexpr std::string_view kGenerationPrefixes[] = {"communityfs24-", "communityfs20-", "fs24-", "fs20-"};
     constexpr std::string_view kAirportMarker = "-airport-";
+    constexpr std::string_view kAirportSuffix = "-airport";
     constexpr std::size_t kShortestCode = 3;
     constexpr std::size_t kLongestCode = 4;
 
@@ -54,27 +55,58 @@ std::string WithoutTheGenerationPrefix(const std::string_view packageName)
     return std::string(packageName);
 }
 
+namespace
+{
+    [[nodiscard]] std::string CodeAt(const std::string_view name, const std::size_t from)
+    {
+        std::size_t to = from;
+
+        while (to < name.size() && ItIsAnIdentifierCharacter(name[to]))
+        {
+            ++to;
+        }
+
+        const std::size_t wide = to - from;
+        if (wide < kShortestCode || wide > kLongestCode)
+        {
+            return {};
+        }
+
+        return Uppercased(name.substr(from, wide));
+    }
+
+    [[nodiscard]] std::string CodeAfterTheMarker(const std::string_view packageName)
+    {
+        const std::size_t marker = packageName.find(kAirportMarker);
+        if (marker == std::string_view::npos)
+        {
+            return {};
+        }
+
+        return CodeAt(packageName, marker + kAirportMarker.size());
+    }
+
+    [[nodiscard]] std::string CodeAfterTheVendor(const std::string_view packageName)
+    {
+        if (!packageName.ends_with(kAirportSuffix))
+        {
+            return {};
+        }
+
+        const std::string named = WithoutTheGenerationPrefix(packageName);
+        const std::size_t vendorEnds = named.find('-');
+        if (vendorEnds == std::string::npos)
+        {
+            return {};
+        }
+
+        std::string code = CodeAt(named, vendorEnds + 1);
+        return code.size() == kLongestCode ? code : std::string{};
+    }
+}
+
 std::string AirportCodeInAPackageName(const std::string_view packageName)
 {
-    const std::size_t marker = packageName.find(kAirportMarker);
-    if (marker == std::string_view::npos)
-    {
-        return {};
-    }
-
-    const std::size_t from = marker + kAirportMarker.size();
-    std::size_t to = from;
-
-    while (to < packageName.size() && ItIsAnIdentifierCharacter(packageName[to]))
-    {
-        ++to;
-    }
-
-    const std::size_t wide = to - from;
-    if (wide < kShortestCode || wide > kLongestCode)
-    {
-        return {};
-    }
-
-    return Uppercased(packageName.substr(from, wide));
+    std::string code = CodeAfterTheMarker(packageName);
+    return code.empty() ? CodeAfterTheVendor(packageName) : code;
 }

@@ -7,7 +7,7 @@
 
 #include <QtCore/QDir>
 
-#include "infrastructure/platform/WindowsKnownFolders.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 
 struct DisposableState final
@@ -19,26 +19,31 @@ struct DisposableState final
 
 [[nodiscard]] inline DisposableState StateLaidOutUnder(const std::filesystem::path& folder)
 {
-    return DisposableState{.settingsFile = folder / SettingsFilePath().filename(),
-                           .journalFile =
-                               folder / JournalFilePath().parent_path().filename() / JournalFilePath().filename(),
-                           .presetsFolder = folder / PresetsFolderPath().filename()};
+    const AppFolders installed = BuildThePlatform().folders;
+
+    return DisposableState{.settingsFile = folder / installed.settingsFile.filename(),
+                           .journalFile = folder / installed.journalFile.parent_path().filename()
+                               / installed.journalFile.filename(),
+                           .presetsFolder = folder / installed.presetsFolder.filename()};
 }
 
-[[nodiscard]] inline std::filesystem::path TheInstalledStateFolder()
+[[nodiscard]] inline DisposableState TheInstalledState()
 {
-    return SettingsFilePath().parent_path();
+    const AppFolders installed = BuildThePlatform().folders;
+
+    return DisposableState{.settingsFile = installed.settingsFile,
+                           .journalFile = installed.journalFile,
+                           .presetsFolder = installed.presetsFolder};
 }
 
-[[nodiscard]] inline std::optional<DisposableState>
-StageStateWhereWritingIsHarmless(const std::string& toolName, const std::filesystem::path& sourceFolder)
+[[nodiscard]] inline std::optional<DisposableState> StageStateWhereWritingIsHarmless(const std::string& toolName,
+                                                                                     const DisposableState& source)
 {
     const std::filesystem::path folder = AsPath(QDir::tempPath()) / (toolName + "-state");
 
     std::error_code failure;
     std::filesystem::remove_all(folder, failure);
 
-    const DisposableState source = StateLaidOutUnder(sourceFolder);
     const DisposableState staged = StateLaidOutUnder(folder);
 
     std::filesystem::create_directories(staged.journalFile.parent_path(), failure);
@@ -76,7 +81,7 @@ StageStateWhereWritingIsHarmless(const std::string& toolName, const std::filesys
 
 [[nodiscard]] inline std::optional<DisposableState> StageStateWhereWritingIsHarmless(const std::string& toolName)
 {
-    return StageStateWhereWritingIsHarmless(toolName, TheInstalledStateFolder());
+    return StageStateWhereWritingIsHarmless(toolName, TheInstalledState());
 }
 
 #endif // FS_ORGANIZER_TOOLS_SHARED_DISPOSABLE_STATE_H

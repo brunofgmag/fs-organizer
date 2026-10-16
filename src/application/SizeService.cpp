@@ -297,3 +297,8 @@ std::optional<std::size_t> SizeService::LongestEntryOf(const std::filesystem::pa
 
     return known.has_value() ? std::optional(known->longestEntry) : std::nullopt;
 }
+
+std::optional<std::size_t> SizeService::RecycleBinPathCeiling() const
+{
+    return filesystemProbe_.RecycleBinPathCeiling();
+}

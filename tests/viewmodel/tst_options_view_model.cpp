@@ -52,6 +52,7 @@ namespace
         static void OnlyTheActiveProfileIsAskedForItsAddonCount();
         static void TheProfileMarkedActiveIsTheOneTheOtherPanelsDescribe();
         static void TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLands();
+        static void TheViewModelOffersJunctionsOnlyWhereThePlatformDoes();
         static void TheChosenTypeOfLinkIsWrittenWhereTheNextStartupReadsIt();
         static void TheChosenTypeOfLinkReachesTheNextLinkWithoutReopeningTheApp();
         static void TheChosenCheckIsWrittenDownAndAnnouncedToWhoeverImportsNext();
@@ -197,7 +198,7 @@ namespace
         InlineBackgroundRunner runner;
         SessionNotifier notifier;
         Session session{service, organizer, settings, settings.stored, processProbe, runner, notifier};
-        OptionsViewModel viewModel{session, service, runner, notifier};
+        OptionsViewModel viewModel{session, service, runner, notifier, {.offersJunctions = true}};
         int linksDisabledAnnouncements = 0;
         std::size_t linksDisabledResults = 0;
         std::size_t librariesWhenLinksWereDisabled = 0;
@@ -656,6 +657,15 @@ void OptionsViewModelTest::TheScreenIsToldToRedrawWhenTheScanForTheNewProfileLan
     const std::vector<ProfileLine> profiles = f.viewModel.Profiles();
     QVERIFY(profiles[1].active);
     QCOMPARE(f.viewModel.Destinations().front().path, std::filesystem::path("C:/Packages/Community"));
+}
+
+void OptionsViewModelTest::TheViewModelOffersJunctionsOnlyWhereThePlatformDoes()
+{
+    Fixture f;
+    const OptionsViewModel withoutJunctions{f.session, f.service, f.runner, f.notifier, {.offersJunctions = false}};
+
+    QVERIFY(f.viewModel.OffersJunctions());
+    QVERIFY(!withoutJunctions.OffersJunctions());
 }
 
 void OptionsViewModelTest::TheChosenTypeOfLinkIsWrittenWhereTheNextStartupReadsIt()

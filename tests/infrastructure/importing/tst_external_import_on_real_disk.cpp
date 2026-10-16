@@ -11,13 +11,9 @@
 #include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
+#include "RealAdapters.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/StartupOverFakes.h"
 #include "tests/support/EnumPrinting.h"
@@ -115,7 +111,7 @@ namespace
         }
 
     private:
-        WindowsLinkService real_{};
+        RealLinkService real_{};
     };
 
     std::string ContentsOfFile(const std::filesystem::path& file)
@@ -132,8 +128,8 @@ namespace
         disk.AddFile(disk.VendorFolder() / "manifest.json", R"({"title": "GSX Pro", "package_version": "2.9.1"})");
         disk.AddFile(disk.VendorFolder() / "SimObjects" / "gsx.bgl", std::string(2048, 'g'));
 
-        WindowsLinkService links;
-        QCOMPARE(links.CreateLink(disk.Entry(), disk.VendorFolder(), LinkType::Junction), LinkFailure::None);
+        RealLinkService links;
+        QCOMPARE(links.CreateLink(disk.Entry(), disk.VendorFolder(), kRealLinkType), LinkFailure::None);
     }
 
     [[nodiscard]] ImportRequest RequestFor(const Disk& disk)
@@ -144,17 +140,16 @@ namespace
 
     struct Engine
     {
-        WindowsLinkService linkService{};
-        WindowsFilesystemProbe filesystemProbe{};
-        WindowsFileOperations files{};
-        WindowsSidecarStore sidecars{};
+        RealLinkService linkService{};
+        RealFilesystemProbe filesystemProbe{};
+        RealFileOperations files{};
+        RealSidecarStore sidecars{};
         LinkingEngine linking{linkService, filesystemProbe};
         SystemClock clock{};
         std::filesystem::path journalFile{};
         JsonlOperationJournal journal{journalFile};
         OperationLog log{journal, clock};
-        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
-                            Verification::ByStructure};
+        ImportEngine engine{filesystemProbe, files, sidecars, linking, log, kRealLinkType, Verification::ByStructure};
     };
 }
 
@@ -224,14 +219,14 @@ void ExternalImportOnRealDiskTest::TheRecordBesideTheAddonIsOnDiskAndBringsTheLi
 
     QVERIFY(std::filesystem::exists(ExternalSidecarPathFor(disk.Landing())));
 
-    WindowsProcessProbe processProbe{std::vector<std::string>{}};
+    RealProcessProbe processProbe{std::vector<std::string>{}};
     JsonManifestParser manifestParser;
     FilesystemScanner catalog{manifestParser, engine.filesystemProbe, nothingWasImported};
     EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
     FakeLibraryIdGenerator identities;
     StartupOverFakes startup{engine.filesystemProbe};
     const ProfileService profiles(catalog, engine.filesystemProbe, engine.sidecars, classifier, engine.linking,
-                                  engine.log, identities, startup.service, LinkType::Junction);
+                                  engine.log, identities, startup.service, kRealLinkType);
 
     const SimulatorProfile forgetful = disk.Profile();
     QVERIFY(forgetful.externalOrigins.empty());
@@ -248,15 +243,14 @@ void ExternalImportOnRealDiskTest::AnInterruptedImportPutsTheOtherProgramsFolder
     PutTheOtherProgramsAddonOnDisk(disk);
 
     ALinkServiceThatRefusesToCreate refusing;
-    WindowsFilesystemProbe filesystemProbe;
-    WindowsFileOperations files;
-    WindowsSidecarStore sidecars;
+    RealFilesystemProbe filesystemProbe;
+    RealFileOperations files;
+    RealSidecarStore sidecars;
     const LinkingEngine linking{refusing, filesystemProbe};
     SystemClock clock;
     JsonlOperationJournal journal{disk.Root() / "journal" / "operations.jsonl"};
     const OperationLog log{journal, clock};
-    const ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Junction,
-                              Verification::ByStructure};
+    const ImportEngine engine{filesystemProbe, files, sidecars, linking, log, kRealLinkType, Verification::ByStructure};
 
     QCOMPARE(engine.Import(disk.Profile(), RequestFor(disk), {}).Result(), FileResult::CouldNotCreateLink);
 
@@ -271,7 +265,7 @@ void ExternalImportOnRealDiskTest::AJunctionIsNotAPhysicalDirectoryAndThatIsHowD
     const Disk disk;
     PutTheOtherProgramsAddonOnDisk(disk);
 
-    const WindowsFilesystemProbe filesystemProbe;
+    const RealFilesystemProbe filesystemProbe;
 
     QVERIFY(filesystemProbe.PhysicalDirectoryExists(disk.VendorFolder()));
     QVERIFY(!filesystemProbe.PhysicalDirectoryExists(disk.Entry()));

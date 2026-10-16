@@ -477,7 +477,7 @@ void PackageListPageTest::TheTwoButtonsOfTheTabSwapThePanelInsteadOfScrollingIt(
 {
     Fixture f;
     FakePresetRepository presets;
-    StartupEditor editor(f.startup.service, presets, f.filesystemProbe, f.log);
+    StartupEditor editor(f.startup.service, presets, f.filesystemProbe, f.startup.pathMapper, f.log);
     StartupViewModel startupViewModel(f.startup.service, editor, f.session, f.clock);
 
     auto* startup = new StartupPage(startupViewModel);

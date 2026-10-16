@@ -5,6 +5,7 @@
 #include <QtGui/QPainterPath>
 #include <QtTest/QtTest>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QComboBox>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -41,6 +42,7 @@ namespace
         static void ATagKeepsRoomAroundItsWord();
         static void TheFocusRingTakesTheBorderOfAButtonAndTheBoxOfAnItem();
         static void AButtonWearingTheStyleSheetStillShowsWhereTheKeyboardIs();
+        static void AComboBoxPaintsOnlyItsGroundBetweenTheArrowAndTheBorder();
         static void TheDefaultButtonKeepsItsHoverTone();
         static void ADialogNeverGrowsTallerThanTheWindowThatOpenedIt();
         static void ADialogWithNoWindowBehindItFallsBackToTheScreen();
@@ -345,6 +347,45 @@ void ModernistThemeTest::AButtonWearingTheStyleSheetStillShowsWhereTheKeyboardIs
 
     QVERIFY2(Painted(button).pixelColor(onTheBorder) != resting.pixelColor(onTheBorder),
              "the style sheet takes the native focus ring away, so it has to put one back");
+}
+
+void ModernistThemeTest::AComboBoxPaintsOnlyItsGroundBetweenTheArrowAndTheBorder()
+{
+    constexpr qreal kScale = 1.25;
+
+    ApplyModernistTheme(*qApp);
+
+    QComboBox combo;
+    combo.addItem(QStringLiteral("Flight Simulator 2024"));
+    combo.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&combo));
+
+    for (int width = 220; width < 224; ++width)
+    {
+        combo.resize(width, 30);
+
+        QImage surface((QSizeF(combo.size()) * kScale).toSize(), QImage::Format_ARGB32_Premultiplied);
+        surface.setDevicePixelRatio(kScale);
+        surface.fill(Qt::magenta);
+        combo.render(&surface);
+
+        const int besideTheRightBorder = surface.width() - 3;
+        const int besideTheLeftBorder = 2;
+
+        for (int y = 3; y < surface.height() - 3; ++y)
+        {
+            const QColor right = surface.pixelColor(besideTheRightBorder, y);
+            const QColor left = surface.pixelColor(besideTheLeftBorder, y);
+
+            QVERIFY2(right == left,
+                     qPrintable(QStringLiteral("%1 px wide, row %2: inside the right border reads %3 and inside the "
+                                               "left border %4, so a bevel line runs beside the arrow, and at a "
+                                               "fractional position on screen it lands on the border")
+                                    .arg(width)
+                                    .arg(y)
+                                    .arg(right.name(), left.name())));
+        }
+    }
 }
 
 void ModernistThemeTest::TheDefaultButtonKeepsItsHoverTone()

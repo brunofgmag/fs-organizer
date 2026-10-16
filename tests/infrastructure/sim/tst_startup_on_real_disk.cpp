@@ -18,6 +18,7 @@
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "tests/support/EnumPrinting.h"
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
@@ -322,7 +323,8 @@ void StartupOnRealDiskTest::TheEntryOfTheRealFileIsRecognisedAsCarriedByTheAddon
     profile.destinations = {PathFromUtf8(R"(E:\Flight Simulator 2024\Community)")};
 
     const StdFilesystemProbe probe;
-    const StartupReport report = ReportStartupEntries(startup.Entries(), profile, ProfileSnapshot{}, probe);
+    const StartupReport report =
+        ReportStartupEntries(startup.Entries(), profile, ProfileSnapshot{}, probe, WindowsPathMapper{});
 
     const std::vector<StartupLine> carried =
         EntriesCarriedBy(report, {PathFromUtf8(R"(D:\MSFS 2024\Utilities\rkapps-fsrealistic)")});

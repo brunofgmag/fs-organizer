@@ -33,6 +33,8 @@ public:
 
     [[nodiscard]] virtual bool VolumeIsAvailable(const std::filesystem::path& path) const = 0;
 
+    [[nodiscard]] virtual std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const = 0;
+
     [[nodiscard]] virtual WriteAccess ProbeWritable(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual bool SomethingIsHoldingItOpen(const std::filesystem::path& path) const = 0;
@@ -40,6 +42,8 @@ public:
     [[nodiscard]] virtual std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const = 0;
+
+    [[nodiscard]] virtual std::optional<std::size_t> RecycleBinPathCeiling() const = 0;
 
     [[nodiscard]] virtual std::optional<std::string> ContentsOf(const std::filesystem::path& path) const = 0;
 

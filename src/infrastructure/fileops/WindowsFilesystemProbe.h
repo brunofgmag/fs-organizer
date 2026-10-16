@@ -20,6 +20,8 @@ public:
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const override;
+
     [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override;
 
     [[nodiscard]] bool SomethingIsHoldingItOpen(const std::filesystem::path& path) const override;
@@ -27,6 +29,8 @@ public:
     [[nodiscard]] std::optional<std::uintmax_t> FreeSpaceOn(const std::filesystem::path& path) const override;
 
     [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override;
+
+    [[nodiscard]] std::optional<std::size_t> RecycleBinPathCeiling() const override;
 
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override;
 

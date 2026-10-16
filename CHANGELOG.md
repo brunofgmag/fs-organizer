@@ -1,5 +1,96 @@
 # Changelog
 
+## [1.2.0](https://github.com/brunofgmag/fs-organizer/compare/v1.1.0...v1.2.0) (2026-10-16)
+
+
+* build and ship a native Linux AppImage ([#224](https://github.com/brunofgmag/fs-organizer/issues/224)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+
+
+### Features
+
+* decide the volume of a path through the filesystem probe ([b401fee](https://github.com/brunofgmag/fs-organizer/commit/b401fee3b320c2a606686048057442754d1c1432)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* install the desktop entry and icon from the AppImage ([dfe8ad9](https://github.com/brunofgmag/fs-organizer/commit/dfe8ad971cc62c11fb5a3a177149c9aba305d71d)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** answer every filesystem question in PosixFilesystemProbe ([c8836ef](https://github.com/brunofgmag/fs-organizer/commit/c8836efca2924460e15c5a5afa6f7681e55fca30)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** build the app on Linux behind a platform composition ([7cada00](https://github.com/brunofgmag/fs-organizer/commit/7cada0070a22b88fcb2c5d5934aee64371c105db)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** copy loose folders through PosixFolderArchiveReader ([fe019b7](https://github.com/brunofgmag/fs-organizer/commit/fe019b7f6f8b4e38849bc0b463deafca0f7a9cf6)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** copy, move, remove and trash folders in PosixFileOperations ([12bce88](https://github.com/brunofgmag/fs-organizer/commit/12bce88ac9cd77a11bcdb18a1922d66716d1ad50)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** create, read and remove symlinks in PosixLinkService ([f5dc5df](https://github.com/brunofgmag/fs-organizer/commit/f5dc5df483beedbfcfaa5265d79b097d79c5aab6)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** find the Proton prefixes through the Steam library files ([534acdc](https://github.com/brunofgmag/fs-organizer/commit/534acdcb4d93d5361e5ef6c4dd5a8e0f6c4fd03d)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** find the running simulator through /proc in ProcProcessProbe ([7891756](https://github.com/brunofgmag/fs-organizer/commit/78917568688a0fe95744d3bfaa20c0aca8465b61)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** guard the single instance with a lock file ([3b7e7cc](https://github.com/brunofgmag/fs-organizer/commit/3b7e7cc07e342eb8f3c15e06ac1f5f8a66521213)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** offer the Steam Proton prefixes as UserCfg locations ([84f8f90](https://github.com/brunofgmag/fs-organizer/commit/84f8f90f1e4641cfa782389b22c17f0c2d00b5be)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** raise the running window when a second launch arrives ([1ed88a4](https://github.com/brunofgmag/fs-organizer/commit/1ed88a4d6b3909abd2f3a942cfa003712dfc3803)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** read the simulator and the Addons Linker config through the prefix drives ([4332b30](https://github.com/brunofgmag/fs-organizer/commit/4332b30af248947ee3f04b2f66f6a26d9a9014f7)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** read zip, 7z and rar archives through libarchive ([c496c59](https://github.com/brunofgmag/fs-organizer/commit/c496c59de8b17b197310013f5583e174d18912d1)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** say Trash and drop the Windows advice where Linux has none ([c88c1b0](https://github.com/brunofgmag/fs-organizer/commit/c88c1b024843d397e7100cea8c5001ae6a78a741)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** translate startup entry paths through the dosdevices of the prefix ([91991de](https://github.com/brunofgmag/fs-organizer/commit/91991de8e75840ca526d88c890a01e04996b97cf)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** write, read and list sidecar files in PosixSidecarStore ([0c8f9c6](https://github.com/brunofgmag/fs-organizer/commit/0c8f9c67c944ee5e11c4aa1afdf1dec010cb2687)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **update:** let the AppImage replace itself and fall back to a notice ([f912912](https://github.com/brunofgmag/fs-organizer/commit/f91291272d8be37d142c65f1c6bc47bcfadca82f)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **update:** recognise the AppImage and its checksum in the release feed ([2ceacef](https://github.com/brunofgmag/fs-organizer/commit/2ceacef5c2943c1e698764bc8bead19a8c8d46db)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+
+
+### Bug Fixes
+
+* ask the desktop to reload its icons after installing ours ([9cd6477](https://github.com/brunofgmag/fs-organizer/commit/9cd64778db636ab0ad8b73f94190e12c6a100173)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* convert file times through clock_cast instead of the FILETIME epoch ([d633b42](https://github.com/brunofgmag/fs-organizer/commit/d633b4263c41c15b138e0a1d4646a0c6e2d7db53)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* keep the windows.h max macro out of the parent path helper ([31a984e](https://github.com/brunofgmag/fs-organizer/commit/31a984eb92715074c408cf2417b6dbc58b058011)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **linux:** merge archive folders written in two cases into the first spelling ([13958a2](https://github.com/brunofgmag/fs-organizer/commit/13958a23ffbb08bffc02367c8b3c33d79936ce1a)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* make the Recycle Bin path ceiling and quota a property of each platform ([42d917c](https://github.com/brunofgmag/fs-organizer/commit/42d917c7ff430ff0fda2582c6648a3ce44152ee7)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* paint the combo box frame in the theme style ([4fca91e](https://github.com/brunofgmag/fs-organizer/commit/4fca91e5bdc24e28a3889dc09bd9f7469636b74c)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* read the airport code that comes before a trailing airport word ([14a43c1](https://github.com/brunofgmag/fs-organizer/commit/14a43c10303eaf81513ae921c63a7a3bcb8ce932)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* read the parent of a link by the same separators the comparison reads ([5ce971a](https://github.com/brunofgmag/fs-organizer/commit/5ce971af2c652ce8068553aa0c2a45392cc24aa5)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* refresh the icon theme the way xdg-icon-resource does after installing ours ([2451855](https://github.com/brunofgmag/fs-organizer/commit/2451855401f85b63d410f251bc1d70a8e989eefe)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* size the undo button for the fractional width of the name ([a58e406](https://github.com/brunofgmag/fs-organizer/commit/a58e406451d09ebea51dc4d72705eff5cc8406c3)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* survive a large ldconfig cache when packaging the AppImage ([f26cdd3](https://github.com/brunofgmag/fs-organizer/commit/f26cdd3cec8222c25fbdf9a5c527a2d711f2e60e)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* **view:** size a scrolling dialog for the width the scrollbar leaves ([de1e85e](https://github.com/brunofgmag/fs-organizer/commit/de1e85e4647bbc528ad636837c75bd58867624cd)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* walk the process folders in pid order ([a8f5c7c](https://github.com/brunofgmag/fs-organizer/commit/a8f5c7c3c07226dc95c5e4895200592a439d0ea2)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+* wrap long paths in the options rows instead of widening the pane ([c855244](https://github.com/brunofgmag/fs-organizer/commit/c855244da2f2127fdeb4890940e3d9aebffe6279)) ([eb90870](https://github.com/brunofgmag/fs-organizer/commit/eb90870931626b7e97c35451ffae3ee8ef967efc))
+
+## [1.1.0](https://github.com/brunofgmag/fs-organizer/compare/v1.0.0...v1.1.0) (2026-10-16)
+
+
+* build natively on Linux and ship an AppImage ([#222](https://github.com/brunofgmag/fs-organizer/issues/222)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+
+
+### Features
+
+* decide the volume of a path through the filesystem probe ([b401fee](https://github.com/brunofgmag/fs-organizer/commit/b401fee3b320c2a606686048057442754d1c1432)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* install the desktop entry and icon from the AppImage ([dfe8ad9](https://github.com/brunofgmag/fs-organizer/commit/dfe8ad971cc62c11fb5a3a177149c9aba305d71d)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** answer every filesystem question in PosixFilesystemProbe ([c8836ef](https://github.com/brunofgmag/fs-organizer/commit/c8836efca2924460e15c5a5afa6f7681e55fca30)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** build the app on Linux behind a platform composition ([7cada00](https://github.com/brunofgmag/fs-organizer/commit/7cada0070a22b88fcb2c5d5934aee64371c105db)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** copy loose folders through PosixFolderArchiveReader ([fe019b7](https://github.com/brunofgmag/fs-organizer/commit/fe019b7f6f8b4e38849bc0b463deafca0f7a9cf6)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** copy, move, remove and trash folders in PosixFileOperations ([12bce88](https://github.com/brunofgmag/fs-organizer/commit/12bce88ac9cd77a11bcdb18a1922d66716d1ad50)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** create, read and remove symlinks in PosixLinkService ([f5dc5df](https://github.com/brunofgmag/fs-organizer/commit/f5dc5df483beedbfcfaa5265d79b097d79c5aab6)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** find the Proton prefixes through the Steam library files ([534acdc](https://github.com/brunofgmag/fs-organizer/commit/534acdcb4d93d5361e5ef6c4dd5a8e0f6c4fd03d)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** find the running simulator through /proc in ProcProcessProbe ([7891756](https://github.com/brunofgmag/fs-organizer/commit/78917568688a0fe95744d3bfaa20c0aca8465b61)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** guard the single instance with a lock file ([3b7e7cc](https://github.com/brunofgmag/fs-organizer/commit/3b7e7cc07e342eb8f3c15e06ac1f5f8a66521213)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** offer the Steam Proton prefixes as UserCfg locations ([84f8f90](https://github.com/brunofgmag/fs-organizer/commit/84f8f90f1e4641cfa782389b22c17f0c2d00b5be)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** raise the running window when a second launch arrives ([1ed88a4](https://github.com/brunofgmag/fs-organizer/commit/1ed88a4d6b3909abd2f3a942cfa003712dfc3803)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** read the simulator and the Addons Linker config through the prefix drives ([4332b30](https://github.com/brunofgmag/fs-organizer/commit/4332b30af248947ee3f04b2f66f6a26d9a9014f7)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** read zip, 7z and rar archives through libarchive ([c496c59](https://github.com/brunofgmag/fs-organizer/commit/c496c59de8b17b197310013f5583e174d18912d1)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** say Trash and drop the Windows advice where Linux has none ([c88c1b0](https://github.com/brunofgmag/fs-organizer/commit/c88c1b024843d397e7100cea8c5001ae6a78a741)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** translate startup entry paths through the dosdevices of the prefix ([91991de](https://github.com/brunofgmag/fs-organizer/commit/91991de8e75840ca526d88c890a01e04996b97cf)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** write, read and list sidecar files in PosixSidecarStore ([0c8f9c6](https://github.com/brunofgmag/fs-organizer/commit/0c8f9c67c944ee5e11c4aa1afdf1dec010cb2687)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **update:** let the AppImage replace itself and fall back to a notice ([f912912](https://github.com/brunofgmag/fs-organizer/commit/f91291272d8be37d142c65f1c6bc47bcfadca82f)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **update:** recognise the AppImage and its checksum in the release feed ([2ceacef](https://github.com/brunofgmag/fs-organizer/commit/2ceacef5c2943c1e698764bc8bead19a8c8d46db)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+
+
+### Bug Fixes
+
+* ask the desktop to reload its icons after installing ours ([9cd6477](https://github.com/brunofgmag/fs-organizer/commit/9cd64778db636ab0ad8b73f94190e12c6a100173)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* convert file times through clock_cast instead of the FILETIME epoch ([d633b42](https://github.com/brunofgmag/fs-organizer/commit/d633b4263c41c15b138e0a1d4646a0c6e2d7db53)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* keep the windows.h max macro out of the parent path helper ([31a984e](https://github.com/brunofgmag/fs-organizer/commit/31a984eb92715074c408cf2417b6dbc58b058011)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **linux:** merge archive folders written in two cases into the first spelling ([13958a2](https://github.com/brunofgmag/fs-organizer/commit/13958a23ffbb08bffc02367c8b3c33d79936ce1a)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* make the Recycle Bin path ceiling and quota a property of each platform ([42d917c](https://github.com/brunofgmag/fs-organizer/commit/42d917c7ff430ff0fda2582c6648a3ce44152ee7)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* paint the combo box frame in the theme style ([4fca91e](https://github.com/brunofgmag/fs-organizer/commit/4fca91e5bdc24e28a3889dc09bd9f7469636b74c)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* read the airport code that comes before a trailing airport word ([14a43c1](https://github.com/brunofgmag/fs-organizer/commit/14a43c10303eaf81513ae921c63a7a3bcb8ce932)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* read the parent of a link by the same separators the comparison reads ([5ce971a](https://github.com/brunofgmag/fs-organizer/commit/5ce971af2c652ce8068553aa0c2a45392cc24aa5)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* refresh the icon theme the way xdg-icon-resource does after installing ours ([2451855](https://github.com/brunofgmag/fs-organizer/commit/2451855401f85b63d410f251bc1d70a8e989eefe)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* size the undo button for the fractional width of the name ([a58e406](https://github.com/brunofgmag/fs-organizer/commit/a58e406451d09ebea51dc4d72705eff5cc8406c3)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* survive a large ldconfig cache when packaging the AppImage ([f26cdd3](https://github.com/brunofgmag/fs-organizer/commit/f26cdd3cec8222c25fbdf9a5c527a2d711f2e60e)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* **view:** size a scrolling dialog for the width the scrollbar leaves ([de1e85e](https://github.com/brunofgmag/fs-organizer/commit/de1e85e4647bbc528ad636837c75bd58867624cd)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+* walk the process folders in pid order ([a8f5c7c](https://github.com/brunofgmag/fs-organizer/commit/a8f5c7c3c07226dc95c5e4895200592a439d0ea2)) ([0bbaf9f](https://github.com/brunofgmag/fs-organizer/commit/0bbaf9f04912f06cee9d0bdbfca8e3c9db861a76))
+
 ## [1.0.0](https://github.com/brunofgmag/fs-organizer/compare/v0.58.0...v1.0.0) (2026-10-11)
 
 

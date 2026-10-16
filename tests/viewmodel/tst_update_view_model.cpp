@@ -20,9 +20,12 @@ namespace
         static void ChoosingAutomaticWhileAVersionWaitsStartsTheDownload();
         static void AQuietCheckHoldsTheDoorSoAHandCheckDoesNotStackOnTopOfIt();
         static void AVersionThatBroughtNoFileIsNotOfferedForDownload();
+        static void AVersionThatBroughtOnlyAnAppImageIsOfferedForDownload();
         static void AStoredAutomaticThatCannotUpdateItselfNeverDownloads();
         static void ChoosingAutomaticIsIgnoredWhereTheProgramCannotUpdateItself();
         static void AVersionFoundWhereTheProgramCannotUpdateItselfSendsTheUserToFlightsimTo();
+        static void AVersionFoundByAnAppImageThatCannotUpdateItselfSendsTheUserToGithub();
+        static void ASelfUpdatingCopyNeverSendsTheUserAnywhere();
         static void NothingIsAppliedOnExitWhereTheProgramCannotUpdateItself();
         static void EachDeliverySaysWhetherTheProgramUpdatesItself();
     };
@@ -184,6 +187,24 @@ void UpdateViewModelTest::AVersionThatBroughtNoFileIsNotOfferedForDownload()
     QVERIFY2(!viewModel.CanDownload(), "the screen offered to download a version that brought no file at all");
 }
 
+void UpdateViewModelTest::AVersionThatBroughtOnlyAnAppImageIsOfferedForDownload()
+{
+    FakeUpdateService service;
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true, UpdateDelivery::SelfUpdate);
+
+    UpdateInfo onlyTheAppImage;
+    onlyTheAppImage.version = "0.2.0";
+    onlyTheAppImage.appImageUrl = "https://example.invalid/fs-organizer-0.2.0-x86_64.AppImage";
+    onlyTheAppImage.appImageShaUrl = onlyTheAppImage.appImageUrl + ".sha256";
+    onlyTheAppImage.appImageName = "fs-organizer-0.2.0-x86_64.AppImage";
+
+    viewModel.Check();
+    service.SayTheCheckFound(onlyTheAppImage, true);
+
+    QCOMPARE(viewModel.State(), UpdateState::Available);
+    QVERIFY2(viewModel.CanDownload(), "a release with an AppImage and no zip was not offered for download");
+}
+
 void UpdateViewModelTest::AStoredAutomaticThatCannotUpdateItselfNeverDownloads()
 {
     FakeUpdateService service;
@@ -232,6 +253,39 @@ void UpdateViewModelTest::AVersionFoundWhereTheProgramCannotUpdateItselfSendsThe
              "the notice did not say where the new version is downloaded from");
 }
 
+void UpdateViewModelTest::AVersionFoundByAnAppImageThatCannotUpdateItselfSendsTheUserToGithub()
+{
+    FakeUpdateService service;
+    UpdateViewModel viewModel(service, UpdateMode::Automatic, true, UpdateDelivery::NoticeOnlyOnGithub);
+
+    QCOMPARE(viewModel.Mode(), UpdateMode::Notify);
+
+    viewModel.Check();
+    service.SayTheCheckFound(Version("0.2.0"), true);
+
+    const QString said = viewModel.WhatIsGoingOn();
+
+    QVERIFY(said.contains(QStringLiteral("0.2.0")));
+    QVERIFY2(said.contains(QStringLiteral("GitHub")), "the notice did not say where the new version is");
+    QVERIFY2(!said.contains(QStringLiteral("flightsim.to")), "the notice sent a GitHub copy to flightsim.to");
+    QVERIFY(!viewModel.CanDownload());
+    QCOMPARE(service.downloads, 0);
+}
+
+void UpdateViewModelTest::ASelfUpdatingCopyNeverSendsTheUserAnywhere()
+{
+    FakeUpdateService service;
+    UpdateViewModel viewModel(service, UpdateMode::Notify, true, UpdateDelivery::SelfUpdate);
+
+    viewModel.Check();
+    service.SayTheCheckFound(Version("0.2.0"), true);
+
+    const QString said = viewModel.WhatIsGoingOn();
+
+    QVERIFY2(!said.contains(QStringLiteral("flightsim.to")), "a self-updating copy sent the user to flightsim.to");
+    QVERIFY2(!said.contains(QStringLiteral("GitHub")), "a self-updating copy sent the user to GitHub");
+}
+
 void UpdateViewModelTest::NothingIsAppliedOnExitWhereTheProgramCannotUpdateItself()
 {
     FakeUpdateService service;
@@ -254,9 +308,11 @@ void UpdateViewModelTest::EachDeliverySaysWhetherTheProgramUpdatesItself()
     FakeUpdateService service;
     const UpdateViewModel itself(service, UpdateMode::Notify, true, UpdateDelivery::SelfUpdate);
     const UpdateViewModel noticeOnly(service, UpdateMode::Notify, true, UpdateDelivery::NoticeOnly);
+    const UpdateViewModel noticeOnGithub(service, UpdateMode::Notify, true, UpdateDelivery::NoticeOnlyOnGithub);
 
     QVERIFY(itself.UpdatesItself());
     QVERIFY(!noticeOnly.UpdatesItself());
+    QVERIFY(!noticeOnGithub.UpdatesItself());
 }
 
 QTEST_APPLESS_MAIN(UpdateViewModelTest)

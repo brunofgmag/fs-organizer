@@ -10,8 +10,7 @@
 #include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/link/WindowsLinkService.h"
+#include "RealAdapters.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/InlineBackgroundRunner.h"
 #include "tests/support/PathPrinting.h"
@@ -74,10 +73,10 @@ namespace
         {
             std::filesystem::create_directories(linkPath.parent_path());
 
-            WindowsLinkService linkService;
+            RealLinkService linkService;
             [&]
             {
-                QCOMPARE(linkService.CreateLink(linkPath, target, LinkType::Junction), LinkFailure::None);
+                QCOMPARE(linkService.CreateLink(linkPath, target, kRealLinkType), LinkFailure::None);
             }();
         }
     };
@@ -85,7 +84,7 @@ namespace
     struct Measuring
     {
         JsonManifestParser manifestParser;
-        WindowsFilesystemProbe filesystemProbe;
+        RealFilesystemProbe filesystemProbe;
         FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
         FakeClock clock;
         InlineBackgroundRunner runner;

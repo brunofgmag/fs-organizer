@@ -13,10 +13,8 @@
 #include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
+#include "RealAdapters.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
@@ -92,9 +90,9 @@ namespace
 
     struct Composition
     {
-        WindowsLinkService linkService{};
-        WindowsFilesystemProbe filesystemProbe{};
-        WindowsSidecarStore sidecars{};
+        RealLinkService linkService{};
+        RealFilesystemProbe filesystemProbe{};
+        RealSidecarStore sidecars{};
         LinkingEngine linking{linkService, filesystemProbe};
         SystemClock clock{};
         std::filesystem::path journalFile{};
@@ -106,8 +104,8 @@ namespace
         FakeLibraryIdGenerator identities{};
         StartupOverFakes startup{filesystemProbe};
 
-        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
-                                log,     identities,      startup.service, LinkType::Junction};
+        ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,   linking,
+                                log,     identities,      startup.service, kRealLinkType};
         std::filesystem::path presetRoot{};
         FilePresetRepository presets{presetRoot};
         PresetService service{presets, profiles, startup.service};
@@ -150,7 +148,7 @@ namespace
     void ReallyEnable(const Composition& composed, const Disk& disk, const std::string& category, const int index)
     {
         QVERIFY(composed.linking
-                    .Enable(Addon{AddonFolder(disk, category, index), Manifest{}}, disk.Community(), LinkType::Junction)
+                    .Enable(Addon{AddonFolder(disk, category, index), Manifest{}}, disk.Community(), kRealLinkType)
                     .Succeeded());
     }
 

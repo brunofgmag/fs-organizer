@@ -13,6 +13,7 @@ namespace
     private slots:
         static void TheGenerationPrefixSeparatesWhatTheSimulatorShipsFromWhatTheAppManages();
         static void TheCodeComesOutOfTheNameInBothLengthsTheListUses();
+        static void ANameThatEndsInAirportCarriesTheCodeRightAfterTheVendor();
         static void ANameThatCarriesNoCodeCarriesNoCode();
         static void TheCodeIsReadInUpperCaseBecauseThatIsWhatTheSceneryReaderAnswers();
     };
@@ -37,6 +38,17 @@ void PackageNamingTest::TheCodeComesOutOfTheNameInBothLengthsTheListUses()
     QCOMPARE(AirportCodeInAPackageName("fs20-pauloricardo-airport-sbsp"), std::string("SBSP"));
     QCOMPARE(AirportCodeInAPackageName("fs24-asobo-airport-c53-lowerloon"), std::string("C53"));
     QCOMPARE(AirportCodeInAPackageName("fs24-microsoft-airport-n15-kingston"), std::string("N15"));
+}
+
+void PackageNamingTest::ANameThatEndsInAirportCarriesTheCodeRightAfterTheVendor()
+{
+    QCOMPARE(AirportCodeInAPackageName("fs20-exabit-sbsv-salvador-bahia-airport"), std::string("SBSV"));
+
+    QVERIFY2(AirportCodeInAPackageName("fs20-exabit-salvador-airport").empty(),
+             "the segment after the vendor is the city, and eight characters is not an identifier");
+    QVERIFY2(AirportCodeInAPackageName("fs24-asobo-travelbook-extremeairports").empty(),
+             "the name has to end in the word airport, not in a word that starts with it");
+    QVERIFY(AirportCodeInAPackageName("fs24-fs-base-genericairports").empty());
 }
 
 void PackageNamingTest::ANameThatCarriesNoCodeCarriesNoCode()

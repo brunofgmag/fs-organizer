@@ -39,6 +39,26 @@ cmake -S . -B build/debug
 
 `build.ps1` warns when it finds a build directory older than `cmake/`.
 
+## Building on Linux
+
+Requires GCC 13 or newer, Ninja, Qt 6.8 or newer (the `gcc_64` kit, with Qt PDF)
+and the development packages for libarchive and OpenSSL. On Ubuntu that means
+`libarchive-dev` and `libssl-dev`, plus `libgl1-mesa-dev`, `libxkbcommon-dev`,
+`libfontconfig1-dev`, `libdbus-1-dev`, `libegl1` and `libxcb-cursor0` for Qt.
+
+```bash
+CI=1 QT_ROOT_DIR=/opt/Qt/6.8.3/gcc_64 cmake --preset linux-release
+cmake --build --preset linux-release --parallel 4
+ctest --preset linux-release
+```
+
+Setting `CI` keeps CMake from installing the git hooks, which run PowerShell.
+
+To build the AppImage from a finished build, run
+`tools/package-appimage.sh build/linux-release dist`. It downloads linuxdeploy
+and its Qt plugin, checks them against the hashes pinned in the script, and
+writes `fs-organizer-<version>-x86_64.AppImage` with its `.sha256` into `dist/`.
+
 ## Commits and language
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org), and

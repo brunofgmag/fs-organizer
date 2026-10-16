@@ -14,7 +14,7 @@
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/documents/QtPdfChartVersions.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
+#include "RealAdapters.h"
 #include "tests/support/APdf.h"
 #include "tests/support/PathPrinting.h"
 
@@ -52,7 +52,7 @@ namespace
     {
         JsonManifestParser manifestParser;
         JsonChartCatalogueParser catalogueParser;
-        WindowsFilesystemProbe filesystemProbe;
+        RealFilesystemProbe filesystemProbe;
         FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
         QtPdfChartVersions chartVersions;
         DocumentService service{filesystemProbe, catalogueParser, chartVersions};

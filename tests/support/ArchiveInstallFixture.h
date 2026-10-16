@@ -164,7 +164,7 @@ namespace
         return {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"}};
     }
 
-    std::vector<Library> TwoLibraries()
+    inline std::vector<Library> TwoLibraries()
     {
         return {Library{.id = "library-1", .path = kLibrary, .label = "MSFS 2024"},
                 Library{.id = "library-2", .path = kSpare}};

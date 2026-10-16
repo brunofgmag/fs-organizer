@@ -236,7 +236,7 @@ namespace
         {
             const std::filesystem::path beside = FolderOf("addon") / "NavDataPro" / "EDDM";
 
-            for (const std::string& chart : {"1.pdf", "2.pdf", "3.pdf"})
+            for (const std::string chart : {"1.pdf", "2.pdf", "3.pdf"})
             {
                 fileSystem.AddFile(beside / chart);
             }
@@ -297,11 +297,11 @@ namespace
         {
             catalogueParser.Answer(kTheCatalogueOfMunich, TheMunichCatalogue());
 
-            for (const std::string& addon : {"one", "two"})
+            for (const std::string addon : {"one", "two"})
             {
                 const std::filesystem::path beside = FolderOf(addon) / "NavDataPro" / "EDDM";
 
-                for (const std::string& chart : {"1.pdf", "2.pdf", "3.pdf"})
+                for (const std::string chart : {"1.pdf", "2.pdf", "3.pdf"})
                 {
                     fileSystem.AddFile(beside / chart, 100);
                     fileSystem.SetLastWriteTime(beside / chart,
@@ -386,7 +386,7 @@ namespace
     {
         TwoAirportsOfRepeatedPages munich;
 
-        for (const std::string& addon : {"one", "two"})
+        for (const std::string addon : {"one", "two"})
         {
             munich.fileSystem.AddFile(FolderOf(addon) / "texture" / "ground.dds", 100);
             munich.fileSystem.SetLastWriteTime(FolderOf(addon) / "texture" / "ground.dds",

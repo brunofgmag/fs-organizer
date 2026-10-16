@@ -33,7 +33,7 @@
 #include "infrastructure/sim/LoadingReportLocations.h"
 #include "infrastructure/sim/LoadingReportText.h"
 #include "infrastructure/sim/ProfileLoadingReport.h"
-#include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 #include "view/library/AddonTreePage.h"
 #include "view/shell/MainWindow.h"
@@ -97,7 +97,7 @@ namespace
         Out() << "\nDiagnostics, the Load section: what ShowTheLoad does on the main thread, ms\n";
 
         const std::filesystem::path path = LoadingReportOf(
-            LoadingReportLocations(WindowsUserCfgLocations(), filesystemProbe), session.Profile().variant);
+            LoadingReportLocations(BuildThePlatform().userCfgLocations, filesystemProbe), session.Profile().variant);
         const std::optional<std::string> contents = path.empty() ? std::nullopt : filesystemProbe.ContentsOf(path);
 
         if (!contents.has_value())

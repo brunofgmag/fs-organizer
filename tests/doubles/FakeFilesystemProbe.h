@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <string_view>
 
+#include "domain/model/RecycleLimits.h"
 #include "domain/ports/FilesystemProbe.h"
 #include "domain/support/PathUtils.h"
 #include "tests/doubles/InMemoryFileSystem.h"
@@ -87,9 +88,14 @@ public:
 
     [[nodiscard]] bool VolumeIsAvailable(const std::filesystem::path& path) const override
     {
-        volumesAsked.push_back(ComparablePath(path.root_path()));
+        volumesAsked.push_back(ComparablePath(RootOf(path)));
 
         return fileSystem_.VolumeIsAvailable(path);
+    }
+
+    [[nodiscard]] std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const override
+    {
+        return InMemoryFileSystem::VolumeIdentityOf(path);
     }
 
     [[nodiscard]] std::size_t TimesTheVolumeWasAsked(const std::filesystem::path& root) const
@@ -114,9 +120,25 @@ public:
         return recycleBinAsked;
     }
 
+    void BeLikeTheTrash()
+    {
+        recycleBinCeiling_ = std::nullopt;
+        recycleBinHasNoQuota_ = true;
+    }
+
+    [[nodiscard]] std::optional<std::size_t> RecycleBinPathCeiling() const override
+    {
+        return recycleBinCeiling_;
+    }
+
     [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override
     {
         ++recycleBinAsked;
+
+        if (recycleBinHasNoQuota_)
+        {
+            return RecycleBinRoom{.quota = std::nullopt, .itRecycles = true};
+        }
 
         const std::optional<std::uintmax_t> quota = fileSystem_.RecycleBinQuotaOn(path);
         if (!quota.has_value())
@@ -265,6 +287,8 @@ private:
     std::vector<std::string> unreadable_;
     std::vector<std::filesystem::path> held_;
     mutable std::size_t recycleBinAsked = 0;
+    std::optional<std::size_t> recycleBinCeiling_ = kTheWindowsRecycleBinStopsAt;
+    bool recycleBinHasNoQuota_ = false;
 };
 
 #endif // FS_ORGANIZER_TESTS_DOUBLES_FAKE_FILESYSTEM_PROBE_H

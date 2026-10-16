@@ -89,6 +89,11 @@ public:
         return VolumeOf(left) == VolumeOf(right);
     }
 
+    [[nodiscard]] static std::string VolumeIdentityOf(const std::filesystem::path& path)
+    {
+        return VolumeOf(path);
+    }
+
     void MarkReadOnly(const std::filesystem::path& path)
     {
         refusedPaths_[Key(path)] = WriteAccess::TheVolumeIsReadOnly;

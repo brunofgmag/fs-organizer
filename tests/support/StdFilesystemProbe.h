@@ -30,12 +30,7 @@ class StdFilesystemProbe final : public FilesystemProbe
 public:
     [[nodiscard]] static bool IsALinkWithoutFollowing(const std::filesystem::file_status& status)
     {
-        if (std::filesystem::is_symlink(status))
-        {
-            return true;
-        }
-
-        return status.type() == std::filesystem::file_type::junction;
+        return std::filesystem::is_symlink(status) || std::filesystem::is_other(status);
     }
 
     [[nodiscard]] bool EntryExistsWithoutFollowingLinks(const std::filesystem::path& path) const override
@@ -114,6 +109,11 @@ public:
         return true;
     }
 
+    [[nodiscard]] std::optional<std::string> VolumeIdentityOf(const std::filesystem::path& path) const override
+    {
+        return LoweredForComparison(AsUtf8(VolumeOf(path)));
+    }
+
     [[nodiscard]] WriteAccess ProbeWritable(const std::filesystem::path& path) const override
     {
         return TargetDirectoryExists(path) ? WriteAccess::ItAccepts : WriteAccess::TheFolderIsNotThere;
@@ -133,6 +133,11 @@ public:
     }
 
     [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path&) const override
+    {
+        return std::nullopt;
+    }
+
+    [[nodiscard]] std::optional<std::size_t> RecycleBinPathCeiling() const override
     {
         return std::nullopt;
     }

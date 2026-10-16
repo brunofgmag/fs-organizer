@@ -8,7 +8,7 @@ namespace
 {
     UpdateMode WhatTheDeliveryAllows(const UpdateMode stored, const UpdateDelivery delivery)
     {
-        if (delivery == UpdateDelivery::NoticeOnly && stored == UpdateMode::Automatic)
+        if (delivery != UpdateDelivery::SelfUpdate && stored == UpdateMode::Automatic)
         {
             return UpdateMode::Notify;
         }
@@ -53,9 +53,14 @@ QString UpdateViewModel::WhatIsGoingOn() const
     case UpdateState::Checking: return tr("Looking for a new version…");
     case UpdateState::UpToDate: return tr("You have the latest version.");
     case UpdateState::Available:
-        if (!UpdatesItself())
+        if (delivery_ == UpdateDelivery::NoticeOnly)
         {
             return tr("Version %1 is available. Download it again from flightsim.to.").arg(OfferedVersion());
+        }
+
+        if (!UpdatesItself())
+        {
+            return tr("Version %1 is available. Download it from the GitHub releases page.").arg(OfferedVersion());
         }
 
         return tr("Version %1 is available.").arg(OfferedVersion());
@@ -91,7 +96,8 @@ bool UpdateViewModel::CanCheck() const
 
 bool UpdateViewModel::CanDownload() const
 {
-    return UpdatesItself() && updatesAreOn_ && state_ == UpdateState::Available && !offered_.zipUrl.empty();
+    return UpdatesItself() && updatesAreOn_ && state_ == UpdateState::Available
+        && (!offered_.zipUrl.empty() || !offered_.appImageUrl.empty());
 }
 
 UpdateMode UpdateViewModel::Mode() const

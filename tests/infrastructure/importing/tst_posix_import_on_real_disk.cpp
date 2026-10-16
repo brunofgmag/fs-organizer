@@ -1,0 +1,989 @@
+#include <QtCore/QCryptographicHash>
+#include <QtCore/QTemporaryDir>
+#include <QtTest/QtTest>
+
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <fstream>
+#include <system_error>
+
+#include "application/ImportService.h"
+#include "application/LibraryOrganizer.h"
+#include "domain/importing/ImportEngine.h"
+#include "domain/importing/ImportPaths.h"
+#include "domain/importing/OriginSidecar.h"
+#include "domain/importing/VolumeSharing.h"
+#include "domain/journal/OperationLog.h"
+#include "domain/ports/ImportedFolders.h"
+#include "infrastructure/catalog/FilesystemScanner.h"
+#include "infrastructure/catalog/JsonManifestParser.h"
+#include "infrastructure/fileops/PosixFileOperations.h"
+#include "infrastructure/fileops/PosixFilesystemProbe.h"
+#include "infrastructure/fileops/PosixSidecarStore.h"
+#include "infrastructure/journal/JsonlOperationJournal.h"
+#include "infrastructure/link/PosixLinkService.h"
+#include "infrastructure/platform/SystemClock.h"
+#include "infrastructure/sim/ProcProcessProbe.h"
+#include "tests/support/EnumPrinting.h"
+#include "support/PathText.h"
+#include "tests/support/PathPrinting.h"
+
+namespace
+{
+    const NothingWasImported nothingWasImported;
+
+    class PosixImportOnRealDiskTest : public QObject
+    {
+        Q_OBJECT
+
+    private slots:
+        static void APhysicalAddonReallyMovesIntoTheLibraryAndLeavesALinkBehind();
+        static void AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFreeSpace();
+        static void TheSourceSurvivesWhenTheCopyFails();
+        static void ALiveLinkOfAnotherProgramIsNeverReplaced();
+        static void AQuarantineAcrossFilesystemsCopiesTheFolderAndThenRemovesTheSource();
+        static void AQuarantineAcrossFilesystemsThatFailsToCopyLeavesTheSourceWhole();
+        static void TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds();
+        static void RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder();
+        static void MovingAnEnabledAddonReallyCarriesItsLinkToTheNewFolder();
+        static void ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused();
+        static void AStagingLeftoverIsFoundAndTheDiscardEmptiesTheQueue();
+        static void AStagingLeftoverResumesIntoAFinishedImport();
+        static void TheQuarantineDetailReadsTheVersionOutOfARealManifestOnBothSides();
+        static void TheRestoreGuardTellsATakenIdentityFromAnOccupiedOriginOnRealDisk();
+        static void AnItemWithNoOriginIsOfferedTheRealCategoriesOfTheLibraryHoldingIt();
+        static void RestoringIntoTheChosenCategoryReallyMovesTheFolderThere();
+        static void TheOriginBesideTheItemOutlivesTheJournalFile();
+        static void TheRecordBesideTheItemIsNeverEnumeratedAsAnItem();
+        static void AnAccentedOriginComesBackByteForByteFromTheRealFile();
+        static void TheSwapReallyExchangesTheOccupantAndTheItemOnDisk();
+        static void TheSwapPutsTheRealLinkBackOnTheRestoredCopy();
+        static void TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart();
+        static void ASecondFolderWithTheNameTheBatchJustLandedIsRefusedAndLeavesItsSourceWhole();
+        static void AnItemStrandedInItsSwapSlotIsListedAndRestoredUnderItsRealName();
+        static void AnItemWhoseSwapWasInterruptedBeforeTheOccupantMovedIsListedUnderItsRealNameToo();
+    };
+}
+
+namespace
+{
+    struct Disk
+    {
+        QTemporaryDir directory;
+
+        [[nodiscard]] std::filesystem::path Root() const
+        {
+            return AsPath(directory.path());
+        }
+
+        [[nodiscard]] std::filesystem::path Destination() const
+        {
+            return Root() / "Sim" / "Community";
+        }
+
+        [[nodiscard]] std::filesystem::path Category() const
+        {
+            return Root() / "Library" / "Utils";
+        }
+
+        [[nodiscard]] std::filesystem::path AddFolder(const std::filesystem::path& relative) const
+        {
+            const std::filesystem::path folder = Root() / relative;
+            std::filesystem::create_directories(folder);
+
+            return folder;
+        }
+
+        void AddFile(const std::filesystem::path& relative, const std::string& content) const
+        {
+            const std::filesystem::path file = Root() / relative;
+            std::filesystem::create_directories(file.parent_path());
+
+            std::ofstream stream(file, std::ios::binary);
+            stream << content;
+        }
+
+        [[nodiscard]] SimulatorProfile Profile() const
+        {
+            SimulatorProfile profile;
+            profile.destinations = {Destination()};
+            profile.defaultDestination = Destination();
+            profile.libraries = {Library{.id = "lib-1", .path = Root() / "Library", .label = "Biblioteca"}};
+
+            return profile;
+        }
+    };
+
+    struct Engine
+    {
+        PosixLinkService linkService{};
+        PosixFilesystemProbe filesystemProbe{};
+        PosixFileOperations files{};
+        PosixSidecarStore sidecars{};
+        LinkingEngine linking{linkService, filesystemProbe};
+        SystemClock clock{};
+        std::filesystem::path journalFile{};
+        JsonlOperationJournal journal{journalFile};
+        OperationLog log{journal, clock};
+        ImportEngine engine{filesystemProbe,          files, sidecars, linking, log, LinkType::Symbolic,
+                            Verification::ByStructure};
+    };
+
+    struct Service
+    {
+        Engine engine{};
+        ProcProcessProbe processProbe{std::vector<std::string>{}};
+        JsonManifestParser manifestParser{};
+        FilesystemScanner catalog{manifestParser, engine.filesystemProbe, nothingWasImported};
+        ImportService service{engine.engine,  processProbe, engine.filesystemProbe,
+                              catalog,        engine.files, engine.sidecars,
+                              engine.linking, engine.log,   LinkType::Symbolic};
+        EntryClassifier classifier{engine.linkService, engine.filesystemProbe};
+        LibraryOrganizer organizer{catalog,    engine.filesystemProbe, engine.files, engine.linking,
+                                   classifier, processProbe,           engine.log,   LinkType::Symbolic};
+
+        [[nodiscard]] std::vector<DestinationEntry> Entries(const Disk& disk) const
+        {
+            return classifier.Resolve(disk.Profile().destinations, {disk.Root() / "Library"});
+        }
+    };
+
+    [[nodiscard]] SimulatorProfile ProfileWithTheLibraryAt(const Disk& disk, const std::filesystem::path& library)
+    {
+        SimulatorProfile profile;
+        profile.destinations = {disk.Destination()};
+        profile.defaultDestination = disk.Destination();
+        profile.libraries = {Library{.id = "lib-1", .path = library, .label = "Biblioteca"}};
+
+        return profile;
+    }
+
+    class RemovedAtTheEnd
+    {
+    public:
+        explicit RemovedAtTheEnd(std::filesystem::path path) : path_(std::move(path))
+        {
+        }
+
+        RemovedAtTheEnd(const RemovedAtTheEnd&) = delete;
+        RemovedAtTheEnd& operator=(const RemovedAtTheEnd&) = delete;
+
+        ~RemovedAtTheEnd()
+        {
+            std::error_code error;
+            std::filesystem::remove_all(path_, error);
+        }
+
+    private:
+        std::filesystem::path path_;
+    };
+
+    dev_t DeviceOf(const std::filesystem::path& path)
+    {
+        struct stat status
+        {
+        };
+
+        return ::stat(path.c_str(), &status) == 0 ? status.st_dev : 0;
+    }
+
+    std::filesystem::path AFolderOnAnotherFilesystem(const std::filesystem::path& besides)
+    {
+        for (const char* candidate : {"/dev/shm", "/run"})
+        {
+            std::error_code error;
+            const std::filesystem::path folder = candidate;
+            std::filesystem::path mine = folder / ("fsorg-volume-" + std::to_string(::getpid()));
+            if (DeviceOf(folder) == 0 || DeviceOf(folder) == DeviceOf(besides)
+                || !std::filesystem::create_directories(mine, error))
+            {
+                continue;
+            }
+
+            return mine;
+        }
+
+        return {};
+    }
+
+    void WriteFileAt(const std::filesystem::path& file, const std::string& content)
+    {
+        std::filesystem::create_directories(file.parent_path());
+
+        std::ofstream stream(file, std::ios::binary);
+        stream << content;
+    }
+
+    std::string ContentsOfFile(const std::filesystem::path& file)
+    {
+        std::ifstream stream(file, std::ios::binary);
+
+        return std::string(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+    }
+
+    void PutTwoCopiesOfTheSameAddonOnDisk(const Disk& disk, const std::string& name)
+    {
+        disk.AddFile("Library/Utils/" + name + "/manifest.json", R"({"title": "MD-11", "package_version": "0.6.3"})");
+        disk.AddFile("Library/Utils/" + name + "/aircraft.cfg", "the library copy");
+        disk.AddFile("Sim/Community/" + name + "/manifest.json", R"({"title": "MD-11", "package_version": "0.7.0"})");
+        disk.AddFile("Sim/Community/" + name + "/aircraft.cfg", "the destination copy");
+    }
+}
+
+void PosixImportOnRealDiskTest::APhysicalAddonReallyMovesIntoTheLibraryAndLeavesALinkBehind()
+{
+    const Disk disk;
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge"})");
+    disk.AddFile("Sim/Community/simbridge/dist/simbridge.exe", std::string(4096, 'x'));
+
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+
+    const ImportRequest request{.source = disk.Destination() / "simbridge", .category = disk.Category()};
+    const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::Completed);
+
+    const std::filesystem::path landed = disk.Category() / "simbridge";
+    QVERIFY(std::filesystem::exists(landed / "manifest.json"));
+    QCOMPARE(std::filesystem::file_size(landed / "dist" / "simbridge.exe"), std::uintmax_t{4096});
+    QVERIFY(!std::filesystem::exists(disk.Category() / "simbridge.fsorg-partial"));
+
+    QVERIFY(engine.filesystemProbe.IsReparsePoint(request.source));
+    QCOMPARE(NormalizeReparseTarget(engine.linkService.ReadLinkTarget(request.source).value()), landed);
+    QVERIFY(std::filesystem::exists(request.source / "manifest.json"));
+
+    QCOMPARE(engine.journal.Read().size(), std::size_t{5});
+    QCOMPARE(engine.journal.Read().back().kind, OperationKind::EnableAddon);
+    QCOMPARE(std::get<FileResult>(engine.journal.Read().front().outcome), FileResult::Completed);
+}
+
+void PosixImportOnRealDiskTest::AnImportIntoAFolderThatDoesNotExistYetStillKnowsTheFreeSpace()
+{
+    const Disk disk;
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    disk.AddFile("Sim/Community/tlc-bgjn/manifest.json", R"({"title": "Ilulissat"})");
+
+    const PosixFilesystemProbe filesystemProbe;
+
+    PosixSidecarStore sidecars;
+    QVERIFY(filesystemProbe.FreeSpaceOn(disk.Category()).has_value());
+    QVERIFY(!filesystemProbe.FreeSpaceOn(disk.Category() / "tlc-bgjn").has_value());
+
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+
+    QCOMPARE(engine.engine
+                 .Import(disk.Profile(),
+                         ImportRequest{.source = disk.Destination() / "tlc-bgjn", .category = disk.Category()}, {})
+                 .Result(),
+             FileResult::Completed);
+}
+
+void PosixImportOnRealDiskTest::TheSourceSurvivesWhenTheCopyFails()
+{
+    const Disk disk;
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    disk.AddFile("Sim/Community/fenix-a320/manifest.json", R"({"title": "A320"})");
+    disk.AddFile("Library/Utils/fenix-a320.fsorg-partial/manifest.json", "restos de outra tentativa");
+
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+
+    const ImportRequest request{.source = disk.Destination() / "fenix-a320", .category = disk.Category()};
+    const ImportOutcome outcome = engine.engine.Import(disk.Profile(), request, {});
+
+    QCOMPARE(outcome.Result(), FileResult::CouldNotCopy);
+    QVERIFY(std::filesystem::exists(request.source / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(disk.Category() / "fenix-a320"));
+    QCOMPARE(engine.journal.Read().size(), std::size_t{1});
+    QCOMPARE(std::get<FileResult>(engine.journal.Read().front().outcome), FileResult::CouldNotCopy);
+}
+
+void PosixImportOnRealDiskTest::ALiveLinkOfAnotherProgramIsNeverReplaced()
+{
+    const Disk disk;
+    const std::filesystem::path foreign = disk.AddFolder("Outro Programa/fsdreamteam-gsx-pro");
+    disk.AddFile("Outro Programa/fsdreamteam-gsx-pro/manifest.json", R"({"title": "GSX"})");
+    const std::filesystem::path library = disk.AddFolder("Library/Utils/fsdreamteam-gsx-pro");
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+
+    Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+
+    const std::filesystem::path linkPath = disk.Destination() / "fsdreamteam-gsx-pro";
+    QCOMPARE(engine.linkService.CreateLink(linkPath, foreign, LinkType::Symbolic), LinkFailure::None);
+
+    const LinkOutcome outcome =
+        engine.linking.Enable(Addon{.folderPath = library}, disk.Destination(), LinkType::Symbolic);
+
+    QCOMPARE(outcome.Failure(), LinkFailure::DestinationHoldsLiveLink);
+    QVERIFY(outcome.Occupation() != nullptr);
+    QCOMPARE(outcome.Occupation()->existingTarget, foreign);
+    QCOMPARE(NormalizeReparseTarget(engine.linkService.ReadLinkTarget(linkPath).value()), foreign);
+    QVERIFY(std::filesystem::exists(foreign / "manifest.json"));
+}
+
+void PosixImportOnRealDiskTest::AQuarantineAcrossFilesystemsCopiesTheFolderAndThenRemovesTheSource()
+{
+    const Disk disk;
+    const std::filesystem::path other = AFolderOnAnotherFilesystem(disk.Root());
+    if (other.empty())
+    {
+        QSKIP("no second filesystem to move across: the cross-volume quarantine was not exercised");
+    }
+    const RemovedAtTheEnd cleanup(other);
+    qInfo() << "a second filesystem is mounted at" << other.c_str() << ": the cross-volume quarantine is exercised";
+    const std::string big(3 * 1024 * 1024 + 11, 'k');
+    WriteFileAt(other / "OtherProgram" / "gsx" / "manifest.json", R"({"title": "GSX"})");
+    WriteFileAt(other / "OtherProgram" / "gsx" / "deep" / "model.bin", big);
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+    const std::filesystem::path loser = other / "OtherProgram" / "gsx";
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library") / "gsx";
+
+    QVERIFY(!ShareAVolume(engine.filesystemProbe, loser, quarantine));
+    PosixFileOperations plainMoves;
+    QVERIFY(!plainMoves.Move(loser, quarantine));
+
+    const ImportOutcome outcome =
+        engine.engine.Quarantine(QuarantineRequest{.addon = AddonId{.libraryId = "lib-1"},
+                                                   .loser = loser,
+                                                   .quarantine = quarantine,
+                                                   .kind = OperationKind::QuarantineFromDestination},
+                                 {}, {});
+
+    QCOMPARE(outcome.Result(), FileResult::Completed);
+    QVERIFY(!std::filesystem::exists(loser));
+    QCOMPARE(ContentsOfFile(quarantine / "manifest.json"), std::string(R"({"title": "GSX"})"));
+    QVERIFY(ContentsOfFile(quarantine / "deep" / "model.bin") == big);
+    QVERIFY(!std::filesystem::exists(StagingPathFor(quarantine)));
+}
+
+void PosixImportOnRealDiskTest::AQuarantineAcrossFilesystemsThatFailsToCopyLeavesTheSourceWhole()
+{
+    const Disk disk;
+    const std::filesystem::path other = AFolderOnAnotherFilesystem(disk.Root());
+    if (other.empty())
+    {
+        QSKIP("no second filesystem to move across: the cross-volume quarantine was not exercised");
+    }
+    const RemovedAtTheEnd cleanup(other);
+    WriteFileAt(other / "OtherProgram" / "gsx" / "manifest.json", R"({"title": "GSX"})");
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    disk.AddFile("Library/_fsorganizer-quarantine/gsx.fsorg-partial/manifest.json", "leftovers of another attempt");
+    const Engine engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"};
+    const std::filesystem::path loser = other / "OtherProgram" / "gsx";
+
+    const ImportOutcome outcome = engine.engine.Quarantine(
+        QuarantineRequest{.addon = AddonId{.libraryId = "lib-1"},
+                          .loser = loser,
+                          .quarantine = QuarantineFolderInside(disk.Root() / "Library") / "gsx",
+                          .kind = OperationKind::QuarantineFromDestination},
+        {}, {});
+
+    QVERIFY(!outcome.Succeeded());
+    QVERIFY(std::filesystem::exists(loser / "manifest.json"));
+}
+
+void PosixImportOnRealDiskTest::TheFirstQuarantineOfALibraryCreatesTheFolderItNeeds()
+{
+    const Disk disk;
+    PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+    QVERIFY(!std::filesystem::exists(quarantine));
+
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
+    const FileResult result = composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
+                                                               ConflictChoice::KeepTheProvenanceCopy);
+
+    QCOMPARE(result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(quarantine / "tfdidesign-aircraft-md11" / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(conflict.libraryPath));
+    QVERIFY(std::filesystem::exists(conflict.provenancePath / "aircraft.cfg"));
+
+    const std::vector<OperationRecord> history = composed.engine.journal.Read();
+    QCOMPARE(history.size(), std::size_t{1});
+    QCOMPARE(history.front().kind, OperationKind::QuarantineFromLibrary);
+    QCOMPARE(std::get<FileResult>(history.front().outcome), FileResult::Completed);
+}
+
+void PosixImportOnRealDiskTest::RestoringPutsTheAddonBackEvenWithoutItsCategoryFolder()
+{
+    const Disk disk;
+    PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
+    QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
+                                              ConflictChoice::KeepTheProvenanceCopy),
+             FileResult::Completed);
+
+    std::filesystem::remove_all(disk.Category());
+
+    const std::vector<QuarantinedItem> quarantined = composed.service.Quarantined(disk.Profile());
+    QCOMPARE(quarantined.size(), std::size_t{1});
+    QCOMPARE(quarantined.front().origin, conflict.libraryPath);
+
+    const std::vector<FileOperationResult> results = composed.service.Restore(disk.Profile(), quarantined);
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(conflict.libraryPath / "aircraft.cfg"));
+    QVERIFY(!std::filesystem::exists(QuarantineFolderInside(disk.Root() / "Library") / "tfdidesign-aircraft-md11"));
+}
+
+void PosixImportOnRealDiskTest::MovingAnEnabledAddonReallyCarriesItsLinkToTheNewFolder()
+{
+    const Disk disk;
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+    static_cast<void>(disk.AddFolder("Library/Aircrafts (2024)"));
+    disk.AddFile("Library/Aircrafts/aerosoft-crj/manifest.json", R"({"title": "CRJ", "content_type": "AIRCRAFT"})");
+    disk.AddFile("Library/Aircrafts/aerosoft-crj/SimObjects/plane.cfg", std::string(2048, 'c'));
+
+    const Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    SimulatorProfile profile = disk.Profile();
+
+    const std::filesystem::path addon = disk.Root() / "Library" / "Aircrafts" / "aerosoft-crj";
+    const std::filesystem::path link = disk.Destination() / "aerosoft-crj";
+
+    QVERIFY(service.engine.linking
+                .Enable(Addon{.folderPath = addon, .manifest = Manifest{}}, disk.Destination(), LinkType::Symbolic)
+                .Succeeded());
+    QVERIFY(service.engine.filesystemProbe.IsReparsePoint(link));
+
+    const std::filesystem::path category = disk.Root() / "Library" / "Aircrafts (2024)";
+    const std::vector<FileOperationResult> results =
+        service.organizer.Move(profile, {AddonMove{.addonFolder = addon, .category = category}});
+
+    QCOMPARE(results.size(), std::size_t{1});
+    QCOMPARE(results.front().result, FileResult::Completed);
+
+    const std::filesystem::path landed = category / "aerosoft-crj";
+    QVERIFY(std::filesystem::exists(landed / "manifest.json"));
+    QCOMPARE(std::filesystem::file_size(landed / "SimObjects" / "plane.cfg"), std::uintmax_t{2048});
+    QVERIFY(!std::filesystem::exists(addon));
+
+    QVERIFY(service.engine.filesystemProbe.IsReparsePoint(link));
+    QCOMPARE(NormalizeReparseTarget(service.engine.linkService.ReadLinkTarget(link).value()), landed);
+
+    QCOMPARE(service.engine.journal.Read().size(), std::size_t{3});
+    QCOMPARE(service.engine.journal.Read()[0].kind, OperationKind::DisableAddon);
+    QCOMPARE(service.engine.journal.Read()[1].kind, OperationKind::MoveAddon);
+    QCOMPARE(service.engine.journal.Read()[1].target, landed);
+    QCOMPARE(service.engine.journal.Read()[2].kind, OperationKind::EnableAddon);
+}
+
+void PosixImportOnRealDiskTest::ACreatedCategoryIsARealFolderAndTheSecondAttemptIsRefused()
+{
+    const Disk disk;
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+    static_cast<void>(disk.AddFolder("Library"));
+
+    const Service service{.engine = Engine{.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const SimulatorProfile profile = disk.Profile();
+    const std::filesystem::path library = disk.Root() / "Library";
+
+    QCOMPARE(service.organizer.CreateCategory(profile, library, "Sceneries").result, FileResult::Completed);
+    QVERIFY(std::filesystem::is_directory(library / "Sceneries"));
+
+    QCOMPARE(service.organizer.CreateCategory(profile, library, "Sceneries").result,
+             FileResult::CouldNotCreateTheCategory);
+
+    QCOMPARE(service.organizer.CreateCategory(profile, disk.Destination(), "Sceneries").result,
+             FileResult::TheTargetIsNotInALibrary);
+    QVERIFY(!std::filesystem::exists(disk.Destination() / "Sceneries"));
+}
+
+void PosixImportOnRealDiskTest::AStagingLeftoverIsFoundAndTheDiscardEmptiesTheQueue()
+{
+    const Disk disk;
+    const std::filesystem::path library = disk.Root() / "Library";
+    const std::filesystem::path staging = library / "Utils" / "tfdidesign-aircraft-md11.fsorg-partial";
+
+    disk.AddFile("Library/Utils/tfdidesign-aircraft-md11.fsorg-partial/manifest.json", R"({"title": "MD-11"})");
+    disk.AddFile("Library/Utils/tfdidesign-aircraft-md11.fsorg-partial/SimObjects/Airplanes/md11/model.gltf",
+                 "vertices");
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const SimulatorProfile profile = ProfileWithTheLibraryAt(disk, library);
+
+    const std::vector<StagingLeftover> leftovers = composed.service.Leftovers(profile);
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().staging, staging);
+
+    const std::vector<FileOperationResult> discarded = composed.service.DiscardLeftovers(profile, leftovers);
+    QCOMPARE(discarded.size(), std::size_t{1});
+    QCOMPARE(discarded.front().result, FileResult::Completed);
+
+    QVERIFY(!std::filesystem::exists(staging));
+    QVERIFY(composed.service.Leftovers(profile).empty());
+}
+
+void PosixImportOnRealDiskTest::AStagingLeftoverResumesIntoAFinishedImport()
+{
+    const Disk disk;
+    const std::filesystem::path library = disk.Root() / "Library";
+    const std::filesystem::path category = disk.Category();
+    disk.AddFile("Sim/Community/tfdidesign-aircraft-md11/manifest.json", R"({"title": "MD-11"})");
+    disk.AddFile("Sim/Community/tfdidesign-aircraft-md11/aircraft.cfg", "the destination copy");
+
+    const std::filesystem::path target = category / "tfdidesign-aircraft-md11";
+    QCOMPARE(disk.AddFolder("Library/Utils/tfdidesign-aircraft-md11"), target);
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+    const SimulatorProfile profile = ProfileWithTheLibraryAt(disk, library);
+    const ImportRequest request{.source = disk.Destination() / "tfdidesign-aircraft-md11", .category = category};
+
+    QCOMPARE(composed.engine.engine.Import(profile, request, {}).Result(), FileResult::CouldNotMoveIntoPlace);
+
+    const std::vector<StagingLeftover> leftovers = composed.service.Leftovers(profile);
+    QCOMPARE(leftovers.size(), std::size_t{1});
+    QCOMPARE(leftovers.front().staging, StagingPathFor(target));
+    QVERIFY(leftovers.front().CanBeResumed());
+    QCOMPARE(leftovers.front().source, request.source);
+
+    QVERIFY(std::filesystem::remove(target));
+
+    const std::vector<ImportOperationResult> resumed = composed.service.Resume(profile, leftovers, {});
+    QCOMPARE(resumed.size(), std::size_t{1});
+    QCOMPARE(resumed.front().result, FileResult::Completed);
+
+    QVERIFY(std::filesystem::exists(target / "aircraft.cfg"));
+    QVERIFY(!std::filesystem::exists(StagingPathFor(target)));
+    QVERIFY(composed.service.Leftovers(profile).empty());
+    QCOMPARE(NormalizeReparseTarget(composed.engine.linkService.ReadLinkTarget(request.source).value()), target);
+}
+
+void PosixImportOnRealDiskTest::TheQuarantineDetailReadsTheVersionOutOfARealManifestOnBothSides()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Sim/Community/nothing-declared/marker.txt", "no manifest here");
+
+    const std::vector<QuarantinedItem> held = composed.service.Quarantined(disk.Profile());
+    QCOMPARE(held.size(), std::size_t{1});
+
+    const std::vector<QuarantineDetail> details = composed.service.Describe(composed.Entries(disk), held);
+
+    QCOMPARE(details.size(), std::size_t{1});
+    QCOMPARE(details.front().version, std::string{"0.6.3"});
+    QVERIFY(details.front().WasReplaced());
+    QCOMPARE(details.front().replacedBy, disk.Destination() / "simbridge");
+    QCOMPARE(details.front().replacementVersion, std::string{"0.7.0"});
+}
+
+void PosixImportOnRealDiskTest::TheRestoreGuardTellsATakenIdentityFromAnOccupiedOriginOnRealDisk()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+
+    const std::filesystem::path held = disk.Root() / "Library" / "_fsorganizer-quarantine" / "simbridge";
+    const std::vector<QuarantinedItem> items{QuarantinedItem{.path = held, .origin = disk.Category() / "simbridge"}};
+
+    const std::vector<RestoreCheck> occupied = composed.service.CheckRestore(disk.Profile(), items);
+
+    QCOMPARE(occupied.size(), std::size_t{1});
+    QCOMPARE(occupied.front().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(occupied.front().occupant, disk.Category() / "simbridge");
+    QCOMPARE(occupied.front().version, std::string{"0.6.3"});
+    QCOMPARE(occupied.front().occupantVersion, std::string{"0.7.0"});
+
+    static_cast<void>(disk.AddFolder("Library/Sceneries/simbridge"));
+    const std::vector<QuarantinedItem> intoSceneries{
+        QuarantinedItem{.path = held, .origin = disk.Root() / "Library" / "Sceneries" / "simbridge"}};
+
+    const std::vector<RestoreCheck> taken = composed.service.CheckRestore(disk.Profile(), intoSceneries);
+
+    QCOMPARE(taken.front().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(taken.front().occupant, disk.Category() / "simbridge");
+
+    QVERIFY(std::filesystem::remove_all(disk.Category() / "simbridge") > 0);
+
+    const std::vector<RestoreCheck> onlyTheFolder = composed.service.CheckRestore(disk.Profile(), intoSceneries);
+
+    QCOMPARE(onlyTheFolder.front().result, FileResult::TheOriginIsOccupied);
+    QCOMPARE(onlyTheFolder.front().occupant, disk.Root() / "Library" / "Sceneries" / "simbridge");
+    QVERIFY(onlyTheFolder.front().occupantVersion.empty());
+    QCOMPARE(onlyTheFolder.front().version, std::string{"0.6.3"});
+}
+
+void PosixImportOnRealDiskTest::AnItemWithNoOriginIsOfferedTheRealCategoriesOfTheLibraryHoldingIt()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json", R"({"title": "SimBridge"})");
+    disk.AddFile("Library/Utils/pmdg-aircraft-77w/manifest.json", R"({"title": "77W"})");
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+
+    const std::filesystem::path held = disk.Root() / "Library" / "_fsorganizer-quarantine" / "simbridge";
+
+    const std::vector<QuarantinedItem> items{QuarantinedItem{.path = held}};
+    QCOMPARE(composed.service.CheckRestore(disk.Profile(), items).front().result, FileResult::TheOriginIsUnknown);
+
+    const std::vector<RestorePlace> places = composed.service.PlacesFor(disk.Profile(), items.front());
+
+    QCOMPARE(places.size(), std::size_t{2});
+    QCOMPARE(places.front().place, disk.Root() / "Library");
+    QCOMPARE(places.back().place, disk.Category());
+    QCOMPARE(places.back().target, disk.Category() / "simbridge");
+    QCOMPARE(places.back().label, std::filesystem::path{"Utils"});
+}
+
+void PosixImportOnRealDiskTest::RestoringIntoTheChosenCategoryReallyMovesTheFolderThere()
+{
+    const Disk disk;
+    const Service composed;
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json", R"({"title": "SimBridge"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/dist/simbridge.exe", std::string(2048, 'x'));
+    disk.AddFile("Library/Utils/pmdg-aircraft-77w/manifest.json", R"({"title": "77W"})");
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+
+    const std::filesystem::path held = disk.Root() / "Library" / "_fsorganizer-quarantine" / "simbridge";
+    const std::vector<RestorePlace> places = composed.service.PlacesFor(disk.Profile(), QuarantinedItem{.path = held});
+
+    const auto chosen = std::ranges::find_if(places,
+                                             [&disk](const RestorePlace& place)
+                                             {
+                                                 return place.place == disk.Category();
+                                             });
+    QVERIFY(chosen != places.end());
+
+    const std::vector<FileOperationResult> restored =
+        composed.service.Restore(disk.Profile(), {QuarantinedItem{.path = held, .origin = chosen->target}});
+
+    QCOMPARE(restored.size(), std::size_t{1});
+    QCOMPARE(restored.front().result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(disk.Category() / "simbridge" / "dist" / "simbridge.exe"));
+    QVERIFY(!std::filesystem::exists(held));
+}
+
+void PosixImportOnRealDiskTest::TheOriginBesideTheItemOutlivesTheJournalFile()
+{
+    const Disk disk;
+    PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
+
+    const std::filesystem::path journalFile = disk.Root() / "journal" / "operations.jsonl";
+    const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "tfdidesign-aircraft-md11";
+
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
+
+    {
+        const Service wrote{.engine = {.journalFile = journalFile}};
+
+        QCOMPARE(wrote.service.ResolveConflict(disk.Profile(), wrote.Entries(disk), conflict,
+                                               ConflictChoice::KeepTheProvenanceCopy),
+                 FileResult::Completed);
+    }
+
+    QVERIFY(std::filesystem::exists(SidecarPathFor(held)));
+
+    std::error_code error;
+    QVERIFY(std::filesystem::remove(journalFile, error));
+
+    const Service afterwards{.engine = {.journalFile = journalFile}};
+
+    QVERIFY(afterwards.engine.journal.Read().empty());
+
+    const std::vector<QuarantinedItem> items = afterwards.service.Quarantined(disk.Profile());
+
+    QCOMPARE(items.size(), std::size_t{1});
+    QCOMPARE(items.front().origin, conflict.libraryPath);
+    QCOMPARE(items.front().source, OriginSource::Sidecar);
+    QVERIFY(items.front().quarantinedAt.has_value());
+
+    const std::vector<FileOperationResult> restored = afterwards.service.Restore(disk.Profile(), items);
+
+    QCOMPARE(restored.front().result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(conflict.libraryPath / "aircraft.cfg"));
+    QVERIFY(!std::filesystem::exists(SidecarPathFor(held)));
+}
+
+void PosixImportOnRealDiskTest::TheRecordBesideTheItemIsNeverEnumeratedAsAnItem()
+{
+    const Disk disk;
+    PutTwoCopiesOfTheSameAddonOnDisk(disk, "tfdidesign-aircraft-md11");
+
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const CopyConflict conflict{.provenancePath = disk.Destination() / "tfdidesign-aircraft-md11",
+                                .libraryPath = disk.Category() / "tfdidesign-aircraft-md11"};
+
+    QCOMPARE(composed.service.ResolveConflict(disk.Profile(), composed.Entries(disk), conflict,
+                                              ConflictChoice::KeepTheProvenanceCopy),
+             FileResult::Completed);
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+
+    QCOMPARE(std::distance(std::filesystem::directory_iterator(quarantine), std::filesystem::directory_iterator{}),
+             std::ptrdiff_t{2});
+    QCOMPARE(composed.engine.filesystemProbe.ChildDirectories(quarantine).size(), std::size_t{1});
+    QCOMPARE(composed.service.Quarantined(disk.Profile()).size(), std::size_t{1});
+}
+
+void PosixImportOnRealDiskTest::AnAccentedOriginComesBackByteForByteFromTheRealFile()
+{
+    const Disk disk;
+    Service composed;
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+    const std::filesystem::path held = quarantine / "aviao";
+
+    static_cast<void>(disk.AddFolder("Library/_fsorganizer-quarantine/aviao"));
+
+    const std::filesystem::path accented = disk.Category()
+        / PathFromUtf8("Avi\xC3\xB5"
+                       "es");
+
+    QVERIFY(
+        composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = accented})));
+
+    const std::vector<QuarantinedItem> items = composed.service.Quarantined(disk.Profile());
+
+    QCOMPARE(items.size(), std::size_t{1});
+    QCOMPARE(items.front().origin, accented);
+    QCOMPARE(items.front().source, OriginSource::Sidecar);
+}
+
+void PosixImportOnRealDiskTest::TheSwapReallyExchangesTheOccupantAndTheItemOnDisk()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/dist/simbridge.exe", "the older build");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Library/Utils/simbridge/dist/simbridge.exe", "the newer build");
+
+    const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "simbridge";
+    const std::filesystem::path place = disk.Category() / "simbridge";
+
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+
+    const QuarantinedItem item = composed.service.Quarantined(disk.Profile()).front();
+    const SwapResult swapped = composed.service.Swap(disk.Profile(), composed.Entries(disk), item);
+
+    QVERIFY(swapped.Succeeded());
+    QCOMPARE(swapped.stoppedAt, SwapStep::RestoreTheItem);
+    QCOMPARE(swapped.inTheLibrary, place);
+
+    QCOMPARE(ContentsOfFile(place / "dist" / "simbridge.exe"), std::string{"the older build"});
+    QCOMPARE(ContentsOfFile(held / "dist" / "simbridge.exe"), std::string{"the newer build"});
+    QVERIFY(!std::filesystem::exists(SwapSlotFor(held)));
+
+    const std::optional<QuarantineOrigin> recorded =
+        OriginFromText(composed.engine.filesystemProbe.ContentsOf(SidecarPathFor(held)).value_or(std::string{}));
+
+    QVERIFY(recorded.has_value());
+    QCOMPARE(recorded->origin, place);
+}
+
+void PosixImportOnRealDiskTest::TheSwapPutsTheRealLinkBackOnTheRestoredCopy()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/dist/simbridge.exe", "the older build");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Library/Utils/simbridge/dist/simbridge.exe", "the newer build");
+    static_cast<void>(disk.AddFolder("Sim/Community"));
+
+    const std::filesystem::path held = QuarantineFolderInside(disk.Root() / "Library") / "simbridge";
+    const std::filesystem::path place = disk.Category() / "simbridge";
+    const std::filesystem::path link = disk.Destination() / "simbridge";
+
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+    QVERIFY(composed.engine.linking
+                .Enable(Addon{.folderPath = place, .manifest = Manifest{}}, disk.Destination(), LinkType::Symbolic)
+                .Succeeded());
+    QCOMPARE(ContentsOfFile(link / "dist" / "simbridge.exe"), std::string{"the newer build"});
+
+    const QuarantinedItem item = composed.service.Quarantined(disk.Profile()).front();
+    const SwapResult swapped = composed.service.Swap(disk.Profile(), composed.Entries(disk), item);
+
+    QVERIFY(swapped.Succeeded());
+    QVERIFY(composed.engine.filesystemProbe.IsReparsePoint(link));
+    QCOMPARE(NormalizeReparseTarget(composed.engine.linkService.ReadLinkTarget(link).value()), place);
+    QCOMPARE(ContentsOfFile(link / "dist" / "simbridge.exe"), std::string{"the older build"});
+    QCOMPARE(ContentsOfFile(held / "dist" / "simbridge.exe"), std::string{"the newer build"});
+
+    const std::vector<OperationRecord> records = composed.engine.journal.Read();
+    const auto kindAt = [&records](const OperationKind kind)
+    {
+        return std::ranges::find(records, kind, &OperationRecord::kind) - records.begin();
+    };
+
+    QVERIFY(kindAt(OperationKind::DisableAddon) < kindAt(OperationKind::RestoreOverTheOccupant));
+    QVERIFY(kindAt(OperationKind::RestoreOverTheOccupant) < kindAt(OperationKind::EnableAddon));
+}
+
+void PosixImportOnRealDiskTest::TheHashOfARealFileSurvivesBeingReadInBlocksAndTellsTwinSizesApart()
+{
+    const Disk disk;
+
+    const std::string many(2 * 1024 * 1024 + 517, 'a');
+    disk.AddFile("bytes/long.bin", many);
+    disk.AddFile("bytes/twin.bin", many);
+    disk.AddFile("bytes/nearly.bin", many.substr(0, many.size() - 1) + "b");
+
+    const PosixFilesystemProbe probe;
+
+    const std::optional<std::string> read = probe.HashOf(disk.Root() / "bytes" / "long.bin");
+    const std::optional<std::string> twin = probe.HashOf(disk.Root() / "bytes" / "twin.bin");
+    const std::optional<std::string> nearly = probe.HashOf(disk.Root() / "bytes" / "nearly.bin");
+
+    QVERIFY(read.has_value());
+    QCOMPARE(*read,
+             QCryptographicHash::hash(QByteArrayView(many.data(), static_cast<qsizetype>(many.size())),
+                                      QCryptographicHash::Sha256)
+                 .toHex()
+                 .toStdString());
+
+    QCOMPARE(*read, *twin);
+    QCOMPARE(std::filesystem::file_size(disk.Root() / "bytes" / "nearly.bin"), std::uintmax_t{many.size()});
+    QVERIFY2(*read != *nearly, "one byte apart at the same size is the whole reason this check exists");
+
+    QVERIFY(!probe.HashOf(disk.Root() / "bytes" / "never-written.bin").has_value());
+}
+
+void PosixImportOnRealDiskTest::ASecondFolderWithTheNameTheBatchJustLandedIsRefusedAndLeavesItsSourceWhole()
+{
+    const Disk disk;
+    const Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    static_cast<void>(disk.AddFolder("Library/Utils"));
+    static_cast<void>(disk.AddFolder("Library/Sceneries"));
+    disk.AddFile("Sim/Community/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Sim/Community/simbridge/dist/simbridge.exe", std::string(2048, 'a'));
+    disk.AddFile("Sim/Community2024/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Sim/Community2024/simbridge/dist/simbridge.exe", std::string(1024, 'b'));
+
+    SimulatorProfile profile = disk.Profile();
+    profile.destinations.push_back(disk.Root() / "Sim" / "Community2024");
+
+    const ImportRequest first{.source = disk.Destination() / "simbridge", .category = disk.Category()};
+    const ImportRequest second{.source = disk.Root() / "Sim" / "Community2024" / "simbridge",
+                               .category = disk.Root() / "Library" / "Sceneries"};
+
+    const std::vector<ImportOperationResult> results = composed.service.Import(profile, {first, second}, {});
+
+    QCOMPARE(results.size(), std::size_t{2});
+    QCOMPARE(results.front().result, FileResult::Completed);
+    QCOMPARE(results.back().result, FileResult::TheIdentityIsTaken);
+    QCOMPARE(results.back().occupant, first.Target());
+
+    QVERIFY(std::filesystem::exists(first.Target() / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(second.Target()));
+    QVERIFY(!composed.engine.filesystemProbe.IsReparsePoint(second.source));
+    QCOMPARE(std::filesystem::file_size(second.source / "dist" / "simbridge.exe"), std::uintmax_t{1024});
+    QVERIFY(std::filesystem::exists(second.source / "manifest.json"));
+
+    QVERIFY2(composed.service.Leftovers(profile).empty(), "the refused folder left no staging behind");
+    QVERIFY(!std::filesystem::exists(StagingPathFor(second.Target())));
+}
+
+void PosixImportOnRealDiskTest::AnItemStrandedInItsSwapSlotIsListedAndRestoredUnderItsRealName()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+    const std::filesystem::path occupantHeld = quarantine / "simbridge";
+    const std::filesystem::path stranded = SwapSlotFor(occupantHeld);
+    const std::filesystem::path place = disk.Category() / "simbridge";
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.7.0"})");
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge.fsorg-swap/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/Utils/pmdg-aircraft-77w/manifest.json", R"({"title": "77W"})");
+
+    composed.engine.log.RecordImport(OperationKind::QuarantineFromLibrary, AddonId{.libraryId = "lib-1"}, place,
+                                     occupantHeld, FileResult::Completed);
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(occupantHeld),
+                                           TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+
+    const std::vector<QuarantinedItem> items = composed.service.Quarantined(disk.Profile());
+
+    const auto found = std::ranges::find_if(items,
+                                            [&stranded](const QuarantinedItem& item)
+                                            {
+                                                return item.path == stranded;
+                                            });
+    QVERIFY2(found != items.end(), "the stranded item is not listed at all");
+
+    const QuarantinedItem& listed = *found;
+
+    QCOMPARE(listed.origin, place);
+    QCOMPARE(listed.source, OriginSource::Sidecar);
+    QVERIFY(listed.KnowsWhereItCameFrom());
+
+    const std::vector<RestorePlace> places = composed.service.PlacesFor(disk.Profile(), listed);
+    const auto chosen = std::ranges::find_if(places,
+                                             [&disk](const RestorePlace& offered)
+                                             {
+                                                 return offered.place == disk.Category();
+                                             });
+    QVERIFY(chosen != places.end());
+
+    QCOMPARE(chosen->target, place);
+
+    QuarantinedItem asTheDialogHandsItBack = listed;
+    asTheDialogHandsItBack.origin = chosen->target;
+
+    const std::vector<FileOperationResult> restored =
+        composed.service.Restore(disk.Profile(), {asTheDialogHandsItBack});
+
+    QCOMPARE(restored.size(), std::size_t{1});
+    QCOMPARE(restored.front().result, FileResult::Completed);
+    QVERIFY(std::filesystem::exists(place / "manifest.json"));
+    QVERIFY(!std::filesystem::exists(disk.Category() / "simbridge.fsorg-swap"));
+    QVERIFY(!std::filesystem::exists(stranded));
+    QVERIFY(std::filesystem::exists(occupantHeld / "manifest.json"));
+}
+
+void PosixImportOnRealDiskTest::AnItemWhoseSwapWasInterruptedBeforeTheOccupantMovedIsListedUnderItsRealNameToo()
+{
+    const Disk disk;
+    Service composed{.engine = {.journalFile = disk.Root() / "journal" / "operations.jsonl"}};
+
+    const std::filesystem::path quarantine = QuarantineFolderInside(disk.Root() / "Library");
+    const std::filesystem::path held = quarantine / "simbridge";
+    const std::filesystem::path stranded = SwapSlotFor(held);
+    const std::filesystem::path place = disk.Category() / "simbridge";
+
+    disk.AddFile("Library/_fsorganizer-quarantine/simbridge.fsorg-swap/manifest.json",
+                 R"({"title": "SimBridge", "package_version": "0.6.3"})");
+    disk.AddFile("Library/Utils/simbridge/manifest.json", R"({"title": "SimBridge", "package_version": "0.7.0"})");
+
+    QVERIFY(composed.engine.sidecars.Write(SidecarPathFor(held), TextOfTheOrigin(QuarantineOrigin{.origin = place})));
+
+    const std::vector<QuarantinedItem> items = composed.service.Quarantined(disk.Profile());
+
+    QCOMPARE(items.size(), std::size_t{1});
+    QCOMPARE(items.front().path, stranded);
+    QCOMPARE(items.front().origin, place);
+    QCOMPARE(items.front().source, OriginSource::Sidecar);
+}
+
+QTEST_APPLESS_MAIN(PosixImportOnRealDiskTest)
+
+#include "tst_posix_import_on_real_disk.moc"

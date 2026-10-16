@@ -5,9 +5,23 @@
 #include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
 
+namespace
+{
+    bool TheSizeDecidesWhetherItFits(const DeletionPlan& plan, const VolumeRoom* room)
+    {
+        return room == nullptr || !room->quotaIsUnlimited || plan.pathCeiling.has_value();
+    }
+}
+
 bool TheVolumeCanTake(const VolumeRoom& room)
 {
-    return room.itRecycles && room.selected.has_value() && room.quota.has_value() && *room.selected <= *room.quota;
+    if (!room.itRecycles)
+    {
+        return false;
+    }
+
+    return room.quotaIsUnlimited
+        || (room.selected.has_value() && room.quota.has_value() && *room.selected <= *room.quota);
 }
 
 const VolumeRoom* VolumeHolding(const DeletionPlan& plan, const std::filesystem::path& folder)
@@ -25,19 +39,19 @@ const VolumeRoom* VolumeHolding(const DeletionPlan& plan, const std::filesystem:
 
 FileResult WhatTheRecycleBinRefuses(const DeletionPlan& plan, const AddonToDelete& addon)
 {
-    if (!addon.bytes.has_value())
+    const VolumeRoom* room = VolumeHolding(plan, addon.folder);
+
+    if (!addon.bytes.has_value() && TheSizeDecidesWhetherItFits(plan, room))
     {
         return FileResult::TheAddonWasNeverMeasured;
     }
-
-    const VolumeRoom* room = VolumeHolding(plan, addon.folder);
 
     if (room == nullptr || !TheVolumeCanTake(*room))
     {
         return FileResult::TheRecycleBinIsTooSmall;
     }
 
-    if (!TheRecycleBinReaches(addon.longestEntry))
+    if (!TheRecycleBinReaches(addon.longestEntry, plan.pathCeiling))
     {
         return FileResult::TheRecycleBinCannotReachIt;
     }

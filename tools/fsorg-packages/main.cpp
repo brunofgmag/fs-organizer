@@ -3,10 +3,9 @@
 
 #include <vector>
 
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ContentXmlPackages.h"
-#include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "platform/Platform.h"
 #include "support/MomentText.h"
 #include "support/PathText.h"
 
@@ -71,7 +70,7 @@ namespace
         }
     }
 
-    void ReportNothingFound(const WindowsFilesystemProbe& filesystemProbe, const std::vector<QString>& names)
+    void ReportNothingFound(const FilesystemProbe& filesystemProbe, const std::vector<QString>& names)
     {
         Out() << "\nNo package list was found under any profile.\n";
 
@@ -97,8 +96,9 @@ int main(int argc, char* argv[])
 
     const std::vector<QString> names = ParsePackageArguments(QCoreApplication::arguments());
 
-    const WindowsFilesystemProbe filesystemProbe;
-    const std::vector<ContentListLocation> locations = ContentListLocations(WindowsUserCfgLocations(), filesystemProbe);
+    const PlatformParts platform = BuildThePlatform();
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
+    const std::vector<ContentListLocation> locations = ContentListLocations(platform.userCfgLocations, filesystemProbe);
 
     Out() << "Package lists found: " << locations.size() << "\n";
 

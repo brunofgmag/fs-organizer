@@ -21,6 +21,12 @@ Take the latest zip from
 anywhere and run `fs-organizer.exe`. There is no installer and nothing else to
 install. The app can check for new versions and install one when you close it.
 
+On Linux, take `fs-organizer-<version>-x86_64.AppImage` from the same page, make it
+executable and run it. The `.sha256` file beside it checks the download. When the
+folder the AppImage sits in is writable, the app downloads a new version, checks
+it against its checksum and replaces itself the next time you close it. In any
+other case it only tells you that a new version exists.
+
 ## How it works
 
 The real files live in a library, a folder you choose and organise into

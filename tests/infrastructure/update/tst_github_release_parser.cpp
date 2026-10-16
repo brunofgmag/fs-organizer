@@ -14,6 +14,11 @@ namespace
         static void ARealPayloadOfAnotherProjectParsesWithoutOfferingAnything();
         static void TheFlightsimToZipBesideOursIsNeverTakenForIt();
         static void AZipNamedForAnotherVersionIsNotOffered();
+        static void TheAppImageAndItsChecksumAreTakenBesideTheZip();
+        static void TheAppImageNeverStandsInForTheZip();
+        static void AnAppImageOfAnotherVersionOrArchitectureIsNotOffered_data();
+        static void AnAppImageOfAnotherVersionOrArchitectureIsNotOffered();
+        static void AnAppImageWithoutItsChecksumLeavesTheChecksumEmpty();
         static void JsonThatIsNotAReleaseIsRefused();
         static void AReleaseWithoutATagIsRefused();
         static void TheChecksumFileIsReadWhateverComesAfterTheHash();
@@ -101,6 +106,72 @@ void GithubReleaseParserTest::AZipNamedForAnotherVersionIsNotOffered()
     QVERIFY(info.has_value());
     QVERIFY(info->zipUrl.empty());
     QVERIFY(info->zipName.empty());
+}
+
+void GithubReleaseParserTest::TheAppImageAndItsChecksumAreTakenBesideTheZip()
+{
+    const QStringList assets = {
+        QStringLiteral("fs-organizer-0.60.0.zip"),
+        QStringLiteral("fs-organizer-0.60.0.zip.sha256"),
+        QStringLiteral("fs-organizer-0.60.0-x86_64.AppImage"),
+        QStringLiteral("fs-organizer-0.60.0-x86_64.AppImage.sha256"),
+    };
+
+    const std::optional<UpdateInfo> info = ParseLatestRelease(ReleaseCarrying(assets));
+
+    QVERIFY(info.has_value());
+    QCOMPARE(QString::fromStdString(info->appImageName), QStringLiteral("fs-organizer-0.60.0-x86_64.AppImage"));
+    QVERIFY(QString::fromStdString(info->appImageUrl).endsWith(QStringLiteral("/fs-organizer-0.60.0-x86_64.AppImage")));
+    QVERIFY(QString::fromStdString(info->appImageShaUrl)
+                .endsWith(QStringLiteral("/fs-organizer-0.60.0-x86_64.AppImage.sha256")));
+    QCOMPARE(QString::fromStdString(info->zipName), QStringLiteral("fs-organizer-0.60.0.zip"));
+    QVERIFY(QString::fromStdString(info->shaUrl).endsWith(QStringLiteral("/fs-organizer-0.60.0.zip.sha256")));
+}
+
+void GithubReleaseParserTest::TheAppImageNeverStandsInForTheZip()
+{
+    const std::optional<UpdateInfo> info =
+        ParseLatestRelease(ReleaseCarrying({QStringLiteral("fs-organizer-0.60.0-x86_64.AppImage"),
+                                            QStringLiteral("fs-organizer-0.60.0-x86_64.AppImage.sha256")}));
+
+    QVERIFY(info.has_value());
+    QVERIFY(info->zipUrl.empty());
+    QVERIFY(info->zipName.empty());
+    QVERIFY(info->shaUrl.empty());
+    QVERIFY(!info->appImageUrl.empty());
+}
+
+void GithubReleaseParserTest::AnAppImageOfAnotherVersionOrArchitectureIsNotOffered_data()
+{
+    QTest::addColumn<QString>("asset");
+
+    QTest::newRow("another version") << QStringLiteral("fs-organizer-0.59.0-x86_64.AppImage");
+    QTest::newRow("another architecture") << QStringLiteral("fs-organizer-0.60.0-aarch64.AppImage");
+    QTest::newRow("another product") << QStringLiteral("flightsim-to-fs-organizer-0.60.0-x86_64.AppImage");
+    QTest::newRow("no version") << QStringLiteral("fs-organizer-x86_64.AppImage");
+}
+
+void GithubReleaseParserTest::AnAppImageOfAnotherVersionOrArchitectureIsNotOffered()
+{
+    QFETCH(QString, asset);
+
+    const std::optional<UpdateInfo> info =
+        ParseLatestRelease(ReleaseCarrying({asset, asset + QStringLiteral(".sha256")}));
+
+    QVERIFY(info.has_value());
+    QVERIFY(info->appImageUrl.empty());
+    QVERIFY(info->appImageName.empty());
+    QVERIFY(info->appImageShaUrl.empty());
+}
+
+void GithubReleaseParserTest::AnAppImageWithoutItsChecksumLeavesTheChecksumEmpty()
+{
+    const std::optional<UpdateInfo> info =
+        ParseLatestRelease(ReleaseCarrying({QStringLiteral("fs-organizer-0.60.0-x86_64.AppImage")}));
+
+    QVERIFY(info.has_value());
+    QVERIFY(!info->appImageUrl.empty());
+    QVERIFY(info->appImageShaUrl.empty());
 }
 
 void GithubReleaseParserTest::JsonThatIsNotAReleaseIsRefused()

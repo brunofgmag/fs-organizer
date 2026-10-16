@@ -138,6 +138,37 @@ void ModernistStyle::drawPrimitive(const PrimitiveElement element,
     QProxyStyle::drawPrimitive(element, option, painter, widget);
 }
 
+void ModernistStyle::drawComplexControl(const ComplexControl control,
+                                        const QStyleOptionComplex* option,
+                                        QPainter* painter,
+                                        const QWidget* widget) const
+{
+    const auto* combo = qstyleoption_cast<const QStyleOptionComboBox*>(option);
+
+    if (control == CC_ComboBox && combo != nullptr && painter != nullptr)
+    {
+        DrawComboBox(*combo, *painter, widget);
+        return;
+    }
+
+    QProxyStyle::drawComplexControl(control, option, painter, widget);
+}
+
+void ModernistStyle::DrawComboBox(const QStyleOptionComboBox& option, QPainter& painter, const QWidget* widget) const
+{
+    const PainterState kept(painter);
+    const bool focused = option.state.testFlag(State_HasFocus);
+
+    painter.fillRect(option.rect, tones_.raised);
+    painter.setPen(QPen(focused ? tones_.accent : tones_.edge, OneDevicePixel(painter)));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(OutlineInside(painter, QRectF(option.rect)));
+
+    QStyleOption arrow = option;
+    arrow.rect = subControlRect(CC_ComboBox, &option, SC_ComboBoxArrow, widget);
+    drawPrimitive(PE_IndicatorArrowDown, &arrow, &painter, widget);
+}
+
 void ModernistStyle::DrawCheckBox(const QStyleOption& option, QPainter& painter) const
 {
     const QRectF box = SquareInside(option.rect, kCheckSide);

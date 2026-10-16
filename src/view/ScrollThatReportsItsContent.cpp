@@ -1,5 +1,8 @@
 #include "view/ScrollThatReportsItsContent.h"
 
+#include <algorithm>
+
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QWidget>
 
 ScrollThatReportsItsContent::ScrollThatReportsItsContent(QWidget* parent) : QScrollArea(parent)
@@ -27,5 +30,9 @@ QSize ScrollThatReportsItsContent::sizeHint() const
         return hint + QSize(frame, frame);
     }
 
-    return {hint.width() + frame, widget()->heightForWidth(wide_ - frame) + frame};
+    const int room = wide_ - frame;
+    const int barred = room - verticalScrollBar()->sizeHint().width();
+    const int tall = std::max(widget()->heightForWidth(room), barred > 0 ? widget()->heightForWidth(barred) : 0);
+
+    return {hint.width() + frame, tall + frame};
 }

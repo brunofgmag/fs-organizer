@@ -21,6 +21,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/TextThatIsNeverCut.h"
 #include "view/shell/LanguageSwitch.h"
 #include "view/theme/ModernistPaint.h"
 #include "viewmodel/SimulatorText.h"
@@ -67,6 +68,14 @@ namespace
         label->setObjectName(QStringLiteral("PanelPromise"));
 
         return label;
+    }
+
+    QWidget* PathDetail(const QString& text, QWidget* parent)
+    {
+        auto* path = new TextThatIsNeverCut(text, parent);
+        path->setProperty("quiet", true);
+
+        return path;
     }
 
     QLabel* Tag(const QString& text, const char* tone, QWidget* parent)
@@ -345,7 +354,11 @@ QWidget* OptionsPage::CreateLinks()
     layout->setContentsMargins(kBodyMarginX, kBodyMarginY, kBodyMarginX, kBodyMarginY);
     layout->setSpacing(kBetweenGroups);
 
-    auto* links = new QVBoxLayout;
+    auto* linkGroup = new QWidget(pane);
+    linkGroup->setObjectName(QStringLiteral("LinkTypeGroup"));
+    linkGroup->setVisible(viewModel_.OffersJunctions());
+
+    auto* links = new QVBoxLayout(linkGroup);
     links->setContentsMargins(0, 0, 0, 0);
     links->setSpacing(kInsideGroup);
     links->addWidget(Heading(tr("Link type"), pane));
@@ -367,7 +380,7 @@ QWidget* OptionsPage::CreateLinks()
         Choice(tr("Symbolic link"),
                tr("Only needed for a library on a network share. Requires Developer Mode or administrator rights."),
                symbolic, true));
-    layout->addLayout(links);
+    layout->addWidget(linkGroup);
 
     connect(linkTypes_, &QButtonGroup::idClicked, this,
             [this](const int chosen)
@@ -759,9 +772,10 @@ void OptionsPage::ReloadDestinations()
         auto* layout = qobject_cast<QHBoxLayout*>(row->layout());
 
         layout->addWidget(Tag(destination.isDefault ? tr("Default") : tr("Extra"),
-                              destination.isDefault ? "filled" : "outlined", row));
+                              destination.isDefault ? "filled" : "outlined", row),
+                          0, Qt::AlignVCenter);
         layout->addWidget(new QLabel(AsText(destination.path.filename()), row));
-        layout->addWidget(Detail(AsText(destination.path), row), 1);
+        layout->addWidget(PathDetail(AsText(destination.path), row), 1);
 
         auto* repoint = new QPushButton(tr("Switch…"), row);
         repoint->setEnabled(viewModel_.ShowsTheProfileInUse());
@@ -800,7 +814,7 @@ void OptionsPage::ReloadLibraries()
                        tr("%n addon", nullptr, static_cast<int>(library.addons)))
             : AsText(library.path);
 
-        layout->addWidget(Detail(counted, row), 1);
+        layout->addWidget(PathDetail(counted, row), 1);
 
         auto* open = new QPushButton(tr("Open"), row);
         layout->addWidget(open);
