@@ -84,6 +84,36 @@ namespace
 
         return false;
     }
+
+    bool ComesBefore(const std::string& left, const std::string& right)
+    {
+        if (left.size() != right.size())
+        {
+            return left.size() < right.size();
+        }
+
+        return left < right;
+    }
+
+    std::vector<std::string> OtherProcessesIn(const std::filesystem::path& procFolder)
+    {
+        const std::string own = std::to_string(::getpid());
+        std::vector<std::string> processes;
+        std::error_code error;
+
+        for (std::filesystem::directory_iterator entries(procFolder, error), end; !error && entries != end;
+             entries.increment(error))
+        {
+            std::string name = entries->path().filename().string();
+            if (IsAProcessFolder(name) && name != own)
+            {
+                processes.push_back(std::move(name));
+            }
+        }
+
+        std::ranges::sort(processes, ComesBefore);
+        return processes;
+    }
 }
 
 ProcProcessProbe::ProcProcessProbe(std::vector<std::string> executableNames, std::filesystem::path procFolder)
@@ -98,19 +128,9 @@ std::optional<std::string> ProcProcessProbe::RunningSimulator() const
         return std::nullopt;
     }
 
-    const std::string own = std::to_string(::getpid());
-    std::error_code error;
-
-    for (std::filesystem::directory_iterator processes(procFolder_, error), end; !error && processes != end;
-         processes.increment(error))
+    for (const std::string& process : OtherProcessesIn(procFolder_))
     {
-        const std::string name = processes->path().filename().string();
-        if (!IsAProcessFolder(name) || name == own)
-        {
-            continue;
-        }
-
-        const std::vector<std::string> arguments = ArgumentsOf(processes->path() / "cmdline");
+        const std::vector<std::string> arguments = ArgumentsOf(procFolder_ / process / "cmdline");
 
         for (const std::string& executable : executableNames_)
         {
