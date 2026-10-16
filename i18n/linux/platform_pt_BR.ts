@@ -9,13 +9,6 @@
     </message>
 </context>
 <context>
-    <name>LibraryRootDialog</name>
-    <message>
-        <source>The path of this folder already takes %1. Addons often add another %2 characters below their own folder, and some Windows operations, including the Recycle Bin, fail past %3.</source>
-        <translation>O caminho desta pasta já ocupa %1. Addons costumam somar mais %2 caracteres abaixo da própria pasta, e o FS Organizer não move para a Lixeira um caminho acima de %3 caracteres.</translation>
-    </message>
-</context>
-<context>
     <name>QObject</name>
     <message>
         <source>Windows could not open it: it is damaged, or this Windows does not read it. Windows 10 does not read .7z or older .rar.</source>
@@ -44,10 +37,6 @@
     <message>
         <source>Windows refused the operation</source>
         <translation>o sistema recusou a operação</translation>
-    </message>
-    <message>
-        <source>this addon has a path longer than the 260 characters the Recycle Bin accepts</source>
-        <translation>este addon tem um caminho maior que 260 caracteres, que o FS Organizer não move para a Lixeira</translation>
     </message>
 </context>
 </TS>

@@ -20,13 +20,6 @@
     </message>
 </context>
 <context>
-    <name>DiagnosticsPage</name>
-    <message>
-        <source>%1, over the Recycle Bin limit of %2</source>
-        <translation>%1, over the limit of %2 for the Trash</translation>
-    </message>
-</context>
-<context>
     <name>InstallDialog</name>
     <message>
         <source>Permanently discard version %1 from the quarantine to replace this one. It does not go to the recycle bin.</source>
@@ -42,13 +35,6 @@
     <message>
         <source>Move addon to the Recycle Bin</source>
         <translation>Move addon to the Trash</translation>
-    </message>
-</context>
-<context>
-    <name>LibraryRootDialog</name>
-    <message>
-        <source>The path of this folder already takes %1. Addons often add another %2 characters below their own folder, and some Windows operations, including the Recycle Bin, fail past %3.</source>
-        <translation>The path of this folder already takes %1. Addons often add another %2 characters below their own folder, and FS Organizer does not move a path past %3 characters to the Trash.</translation>
     </message>
 </context>
 <context>
@@ -88,10 +74,6 @@
     <message>
         <source>the selection does not fit in the Recycle Bin of that volume</source>
         <translation>the Trash of that volume cannot take the selection</translation>
-    </message>
-    <message>
-        <source>this addon has a path longer than the 260 characters the Recycle Bin accepts</source>
-        <translation>this addon has a path longer than 260 characters, which FS Organizer does not move to the Trash</translation>
     </message>
     <message>
         <source>moved to the Recycle Bin</source>

@@ -1662,15 +1662,22 @@ int main(int argc, char* argv[])
         Out() << "the profile has no destination to draw the import from, so there is no import dialog to write\n";
     }
 
+    const std::optional<std::size_t> recycleBinCeiling = filesystemProbe.RecycleBinPathCeiling();
+
     if (demoState)
     {
         Out() << "skipped 21-library-deep-root: its path is written into this tool, not read from --state\n";
+    }
+    else if (!recycleBinCeiling.has_value())
+    {
+        Out() << "skipped 21-library-deep-root: the Recycle Bin of this platform has no path limit, so no dialog warns "
+                 "about one\n";
     }
     else
     {
         const std::filesystem::path deepRoot =
             PathFromUtf8("C:/Users/pilot/Documents/Flight Simulator Addons/MSFS 2024 Library");
-        LibraryRootDialog rootDialog(deepRoot, MeasureTheRoot(deepRoot), &shell);
+        LibraryRootDialog rootDialog(deepRoot, MeasureTheRoot(deepRoot, *recycleBinCeiling), &shell);
 
         landed = SaveTheDialogOpenedBy(
                      [&rootDialog]

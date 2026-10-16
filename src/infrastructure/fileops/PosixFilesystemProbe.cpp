@@ -229,6 +229,11 @@ std::optional<std::uintmax_t> PosixFilesystemProbe::FreeSpaceOn(const std::files
 
 std::optional<RecycleBinRoom> PosixFilesystemProbe::RecycleBinOn(const std::filesystem::path&) const
 {
+    return RecycleBinRoom{.quota = std::nullopt, .itRecycles = true};
+}
+
+std::optional<std::size_t> PosixFilesystemProbe::RecycleBinPathCeiling() const
+{
     return std::nullopt;
 }
 

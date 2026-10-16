@@ -285,6 +285,11 @@ const QuarantineWeight& DiagnosticsViewModel::Quarantine() const
     return quarantine_;
 }
 
+std::optional<std::size_t> DiagnosticsViewModel::RecycleBinPathCeiling() const
+{
+    return sizes_.RecycleBinPathCeiling();
+}
+
 const SizeReport& DiagnosticsViewModel::Size() const
 {
     return size_;

@@ -137,6 +137,11 @@ public:
         return std::nullopt;
     }
 
+    [[nodiscard]] std::optional<std::size_t> RecycleBinPathCeiling() const override
+    {
+        return std::nullopt;
+    }
+
     [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
     LastWriteTime(const std::filesystem::path& path) const override
     {

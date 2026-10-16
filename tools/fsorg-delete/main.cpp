@@ -92,15 +92,24 @@ namespace
               << "  --go                actually delete, and write the real journal\n";
     }
 
+    QString QuotaOf(const VolumeRoom& room)
+    {
+        if (room.quotaIsUnlimited)
+        {
+            return QString("unlimited");
+        }
+
+        return room.quota.has_value() ? AsSize(*room.quota) : QString("unknown");
+    }
+
     void ReportPlan(const DeletionPlan& plan)
     {
         for (const VolumeRoom& room : plan.volumes)
         {
             const QString selected = room.selected.has_value() ? AsSize(*room.selected) : QString("not measured");
-            const QString quota = room.quota.has_value() ? AsSize(*room.quota) : QString("unknown");
 
-            Out() << "Volume " << AsText(room.volume) << ": selection " << selected << ", Recycle Bin quota " << quota
-                  << (room.itRecycles ? "" : ", set to delete permanently") << "\n";
+            Out() << "Volume " << AsText(room.volume) << ": selection " << selected << ", Recycle Bin quota "
+                  << QuotaOf(room) << (room.itRecycles ? "" : ", set to delete permanently") << "\n";
         }
 
         for (const AddonToDelete& addon : plan.addons)

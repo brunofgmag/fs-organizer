@@ -36,6 +36,8 @@ public:
 
     [[nodiscard]] std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const override;
 
+    [[nodiscard]] std::optional<std::size_t> RecycleBinPathCeiling() const override;
+
     [[nodiscard]] std::optional<std::string> ContentsOf(const std::filesystem::path& path) const override;
 
     [[nodiscard]] std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,

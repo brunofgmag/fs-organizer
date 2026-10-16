@@ -252,7 +252,7 @@ void DeletionViewModelTest::ASelectionOnTwoVolumesWherePartFitsTheBinAnswersForE
 void DeletionViewModelTest::AnAddonTooDeepForTheBinIsTheOnlyOneOfTheSelectionLeftBehind()
 {
     Fixture f;
-    const std::string buried(kTheRecycleBinStopsAt - ComparablePath(kAtr).size() - 1, 'x');
+    const std::string buried(kTheWindowsRecycleBinStopsAt - ComparablePath(kAtr).size() - 1, 'x');
     f.fileSystem.AddFile(kAtr / PathFromUtf8(buried), kMegabyte);
 
     const DeletionPlan plan = PlanFor(f.viewModel, {f.Node(kCrj), f.Node(kAtr)});

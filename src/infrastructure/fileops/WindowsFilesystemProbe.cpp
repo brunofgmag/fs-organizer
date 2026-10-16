@@ -23,6 +23,7 @@
 #include <QtCore/QByteArrayView>
 #include <QtCore/QCryptographicHash>
 
+#include "domain/model/RecycleLimits.h"
 #include "domain/support/PathUtils.h"
 #include "infrastructure/fileops/ExtendedPaths.h"
 #include "support/FileClock.h"
@@ -334,6 +335,11 @@ std::optional<RecycleBinRoom> WindowsFilesystemProbe::RecycleBinOn(const std::fi
 
     return RecycleBinRoom{.quota = static_cast<std::uintmax_t>(*megabytes) * 1024 * 1024,
                           .itRecycles = !nuke.has_value() || *nuke == 0};
+}
+
+std::optional<std::size_t> WindowsFilesystemProbe::RecycleBinPathCeiling() const
+{
+    return kTheWindowsRecycleBinStopsAt;
 }
 
 std::optional<std::chrono::system_clock::time_point>

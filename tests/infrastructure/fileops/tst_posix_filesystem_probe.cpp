@@ -51,7 +51,7 @@ namespace
         static void AProbeNameTakenByAFolderIsARefusalForAnotherReason();
         static void NothingHoldsAFileOpenBecauseUnlinkingAnOpenFileWorksOnLinux();
         static void FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExists();
-        static void ThereIsNoQuotaToReportForTheTrash();
+        static void TheTrashReportsNoQuotaAndNoPathCeiling();
         static void ContentsAndFirstBytesComeBackByteForByte();
         static void AFolderIsNotReadAsAFile();
         static void TheHashIsTheSha256OfTheContents();
@@ -526,13 +526,18 @@ void PosixFilesystemProbeTest::FreeSpaceIsOnlyAnswerableForAFolderThatAlreadyExi
     QVERIFY(!probe.FreeSpaceOn(disk.Root() / "never-there").has_value());
 }
 
-void PosixFilesystemProbeTest::ThereIsNoQuotaToReportForTheTrash()
+void PosixFilesystemProbeTest::TheTrashReportsNoQuotaAndNoPathCeiling()
 {
     const Disk disk;
 
     const PosixFilesystemProbe probe;
 
-    QVERIFY(!probe.RecycleBinOn(disk.Root()).has_value());
+    const std::optional<RecycleBinRoom> room = probe.RecycleBinOn(disk.Root());
+
+    QVERIFY(room.has_value());
+    QVERIFY(!room->quota.has_value());
+    QVERIFY(room->itRecycles);
+    QVERIFY(!probe.RecycleBinPathCeiling().has_value());
 }
 
 void PosixFilesystemProbeTest::ContentsAndFirstBytesComeBackByteForByte()

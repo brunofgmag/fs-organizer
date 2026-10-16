@@ -43,6 +43,8 @@ public:
 
     [[nodiscard]] virtual std::optional<RecycleBinRoom> RecycleBinOn(const std::filesystem::path& path) const = 0;
 
+    [[nodiscard]] virtual std::optional<std::size_t> RecycleBinPathCeiling() const = 0;
+
     [[nodiscard]] virtual std::optional<std::string> ContentsOf(const std::filesystem::path& path) const = 0;
 
     [[nodiscard]] virtual std::optional<std::string> FirstBytesOf(const std::filesystem::path& path,

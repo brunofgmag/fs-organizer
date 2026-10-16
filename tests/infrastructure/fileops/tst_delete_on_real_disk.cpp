@@ -84,7 +84,7 @@ void DeleteOnRealDiskTest::AFolderPastTheCeilingIsRefusedInsteadOfDestroyedInSil
     const std::filesystem::path addon = FolderPastTheCeiling(files.Root(), "hype-atr");
     WriteFilePastTheCeiling(addon / "manifest.json", R"({"title":"probe"})");
 
-    QVERIFY(addon.wstring().size() > kTheRecycleBinStopsAt);
+    QVERIFY(addon.wstring().size() > kTheWindowsRecycleBinStopsAt);
 
     const std::size_t before = ItemsInTheRecycleBin(files.Root());
 

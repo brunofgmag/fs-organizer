@@ -2,8 +2,10 @@
 #define FS_ORGANIZER_VIEWMODEL_ADDON_TREE_VIEW_MODEL_H
 
 #include <cstddef>
+#include <filesystem>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,6 +18,7 @@
 #include "viewmodel/GuardedRunner.h"
 #include "application/Session.h"
 #include "application/SizeService.h"
+#include "domain/model/RecycleLimits.h"
 #include "domain/ports/SimulatorPackages.h"
 #include "domain/tree/CategorySuggester.h"
 #include "viewmodel/AddonTreeModel.h"
@@ -123,6 +126,8 @@ public:
     [[nodiscard]] DependencyReport DependenciesOf(const TreeNode* node) const;
 
     [[nodiscard]] bool WouldAcceptLibrary(const std::filesystem::path& path) const;
+
+    [[nodiscard]] std::optional<RootDepth> DepthOfTheRootThePlatformWarnsAbout(const std::filesystem::path& root) const;
 
     void AddLibrary(const std::filesystem::path& path);
 

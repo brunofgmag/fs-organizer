@@ -748,6 +748,20 @@ bool AddonTreeViewModel::WouldAcceptLibrary(const std::filesystem::path& path) c
     return session_.WouldAcceptLibrary(path);
 }
 
+std::optional<RootDepth>
+AddonTreeViewModel::DepthOfTheRootThePlatformWarnsAbout(const std::filesystem::path& root) const
+{
+    const std::optional<std::size_t> ceiling = sizes_.RecycleBinPathCeiling();
+    if (!ceiling.has_value())
+    {
+        return std::nullopt;
+    }
+
+    const RootDepth depth = MeasureTheRoot(root, *ceiling);
+
+    return depth.ItLeavesRoom() ? std::nullopt : std::optional(depth);
+}
+
 void AddonTreeViewModel::AddLibrary(const std::filesystem::path& path)
 {
     auto registration = std::make_shared<Session::LibraryRegistration>(session_.BeginRegistration());

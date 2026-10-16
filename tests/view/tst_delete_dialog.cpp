@@ -225,7 +225,7 @@ void DeleteDialogTest::CancellingDeletesNothingAndTellsNobodyItDidAnything()
 void DeleteDialogTest::TheRouteThatCannotTakeEverythingSaysWhichAddonsItLeavesBehind()
 {
     Fixture f;
-    BuryAFileUnder(f.fileSystem, kAtr, kTheRecycleBinStopsAt);
+    BuryAFileUnder(f.fileSystem, kAtr, kTheWindowsRecycleBinStopsAt);
 
     const DeleteDialog dialog(f.PlanFor({f.Node(kCrj), f.Node(kAtr)}), f.viewModel);
     const QString said = EverythingItSays(dialog);
@@ -240,7 +240,7 @@ void DeleteDialogTest::TheRouteThatCannotTakeEverythingSaysWhichAddonsItLeavesBe
 void DeleteDialogTest::ARouteNoAddonCanTakeIsOfferedDisabledAndTheOtherOneIsChosen()
 {
     Fixture f;
-    BuryAFileUnder(f.fileSystem, kCrj, kTheRecycleBinStopsAt);
+    BuryAFileUnder(f.fileSystem, kCrj, kTheWindowsRecycleBinStopsAt);
 
     const DeleteDialog dialog(f.PlanFor({f.Node(kCrj)}), f.viewModel);
 
@@ -256,7 +256,7 @@ void DeleteDialogTest::ARouteNoAddonCanTakeIsOfferedDisabledAndTheOtherOneIsChos
 void DeleteDialogTest::TheGestureConcludesAndTheOutcomeOfEachAddonComesBackSeparately()
 {
     Fixture f;
-    BuryAFileUnder(f.fileSystem, kAtr, kTheRecycleBinStopsAt);
+    BuryAFileUnder(f.fileSystem, kAtr, kTheWindowsRecycleBinStopsAt);
 
     DeleteDialog dialog(f.PlanFor({f.Node(kCrj), f.Node(kAtr)}), f.viewModel);
     const QSignalSpy deleted(&f.viewModel, &DeletionViewModel::Deleted);

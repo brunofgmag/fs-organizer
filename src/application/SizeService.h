@@ -53,6 +53,8 @@ public:
 
     [[nodiscard]] std::optional<std::size_t> LongestEntryOf(const std::filesystem::path& folder) const;
 
+    [[nodiscard]] std::optional<std::size_t> RecycleBinPathCeiling() const;
+
 private:
     [[nodiscard]] SizeReport MeasureLibraries(const std::vector<std::filesystem::path>& libraryRoots,
                                               const std::map<std::string, MeasuredTree>& known,

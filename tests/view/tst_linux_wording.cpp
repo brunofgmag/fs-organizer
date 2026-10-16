@@ -20,7 +20,9 @@ namespace
     private slots:
         static void EverySentenceTheOverlayRewordsIsStillInTheCatalogue_data();
         static void EverySentenceTheOverlayRewordsIsStillInTheCatalogue();
-        static void EverySentenceWordedForWindowsIsRewordedOrKnownToBeTrueOnLinux();
+        static void EverySentenceWordedForWindowsIsRewordedOrKnownToBeTrueOrNeverShownOnLinux();
+        static void ASentenceAboutALimitOnlyWindowsHasIsInTheCatalogueAndNotRewordedForLinux_data();
+        static void ASentenceAboutALimitOnlyWindowsHasIsInTheCatalogueAndNotRewordedForLinux();
         static void TheLinuxWordingSaysNothingThatIsFalseOnLinux_data();
         static void TheLinuxWordingSaysNothingThatIsFalseOnLinux();
         static void TheLanguageSwitchPutsTheLinuxWordingOverTheCatalogue();
@@ -140,6 +142,19 @@ namespace
         return sentences;
     }
 
+    const QStringList& TheLimitsOnlyWindowsHas()
+    {
+        static const QStringList sentences = {
+            QStringLiteral("LibraryRootDialog|The path of this folder already takes %1. Addons often add another %2 "
+                           "characters below their own folder, and some Windows operations, including the Recycle "
+                           "Bin, fail past %3."),
+            QStringLiteral("DiagnosticsPage|%1, over the Recycle Bin limit of %2"),
+            QStringLiteral("QObject|this addon has a path longer than the 260 characters the Recycle Bin accepts"),
+        };
+
+        return sentences;
+    }
+
     void LanguageChoicesTheOverlayHas()
     {
         QTest::addColumn<QString>("language");
@@ -171,7 +186,7 @@ void LinuxWordingTest::EverySentenceTheOverlayRewordsIsStillInTheCatalogue()
     }
 }
 
-void LinuxWordingTest::EverySentenceWordedForWindowsIsRewordedOrKnownToBeTrueOnLinux()
+void LinuxWordingTest::EverySentenceWordedForWindowsIsRewordedOrKnownToBeTrueOrNeverShownOnLinux()
 {
     const QSet<QString> reworded = KeysOf(TheOverlay(QStringLiteral("en")));
 
@@ -182,9 +197,34 @@ void LinuxWordingTest::EverySentenceWordedForWindowsIsRewordedOrKnownToBeTrueOnL
             continue;
         }
 
-        QVERIFY2(reworded.contains(sentence.Key()) || TrueOnLinuxToo().contains(sentence.Key()),
+        QVERIFY2(reworded.contains(sentence.Key()) || TrueOnLinuxToo().contains(sentence.Key())
+                     || TheLimitsOnlyWindowsHas().contains(sentence.Key()),
                  qPrintable(QStringLiteral("this sentence talks about Windows and reaches a Linux user as it is: %1")
                                 .arg(sentence.Key())));
+    }
+}
+
+void LinuxWordingTest::ASentenceAboutALimitOnlyWindowsHasIsInTheCatalogueAndNotRewordedForLinux_data()
+{
+    LanguageChoicesTheOverlayHas();
+}
+
+void LinuxWordingTest::ASentenceAboutALimitOnlyWindowsHasIsInTheCatalogueAndNotRewordedForLinux()
+{
+    QFETCH(QString, language);
+
+    const QSet<QString> inTheCode = KeysOf(TheCatalogue());
+    const QSet<QString> reworded = KeysOf(TheOverlay(language));
+
+    for (const QString& key : TheLimitsOnlyWindowsHas())
+    {
+        QVERIFY2(
+            inTheCode.contains(key),
+            qPrintable(QStringLiteral("a sentence listed as a Windows-only limit is gone from the code: %1").arg(key)));
+        QVERIFY2(
+            !reworded.contains(key),
+            qPrintable(
+                QStringLiteral("a Windows-only limit is reworded for Linux, where it does not exist: %1").arg(key)));
     }
 }
 

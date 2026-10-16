@@ -10,6 +10,7 @@
 #include "application/ImportService.h"
 #include "application/LibraryOrganizer.h"
 #include "application/SizeService.h"
+#include "domain/model/RecycleLimits.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "tests/doubles/FakeBisectionStore.h"
@@ -49,6 +50,8 @@ namespace
 
     private slots:
         static void ThePageFitsTheNarrowestWindow();
+        static void ALibraryPastTheCeilingOfTheRecycleBinIsFlaggedWithThatCeiling();
+        static void ALibraryPastWhatWindowsReachesIsNotFlaggedWhereTheRecycleBinHasNoCeiling();
         static void BuildingAndTearingDownAloneDoesNotCrash();
         static void WhatSupportsTheNameIsQuietInTheThreeTables();
         static void TheThreeTablesKeepTheShippedRowHeight();
@@ -142,6 +145,21 @@ namespace
         return profile;
     }
 
+    QString TextOfTheLongestPaths(const DiagnosticsPage& page)
+    {
+        QString said;
+
+        for (const QLabel* label : page.findChildren<QLabel*>())
+        {
+            if (label->text().contains(QStringLiteral("longest path")))
+            {
+                said += label->text();
+            }
+        }
+
+        return said;
+    }
+
     struct Fixture
     {
         Fixture()
@@ -153,6 +171,13 @@ namespace
             catalog.SetTree(kLibrary, LibraryTree());
 
             session.ShowActiveProfile();
+        }
+
+        void BuryAFileDeeperThanTheWindowsCeiling()
+        {
+            fileSystem.AddFile(std::filesystem::path{"D:/MSFS 2024/Aircrafts/pmdg-aircraft-77w"}
+                                   / std::string(kTheWindowsRecycleBinStopsAt + 40, 'x'),
+                               1);
         }
 
         void AddTheLegacyProfile()
@@ -241,6 +266,37 @@ namespace
     {
         return item->childCount() == 0 ? item : DeepestOf(item->child(0));
     }
+}
+
+void DiagnosticsPageTest::ALibraryPastTheCeilingOfTheRecycleBinIsFlaggedWithThatCeiling()
+{
+    Fixture f;
+    f.BuryAFileDeeperThanTheWindowsCeiling();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+    f.viewModel.ShowSize();
+
+    const QString said = TextOfTheLongestPaths(page);
+
+    QVERIFY(said.contains(QStringLiteral("longest path")));
+    QVERIFY2(said.contains(QStringLiteral("over the Recycle Bin limit of %1").arg(kTheWindowsRecycleBinStopsAt)),
+             qPrintable(said));
+}
+
+void DiagnosticsPageTest::ALibraryPastWhatWindowsReachesIsNotFlaggedWhereTheRecycleBinHasNoCeiling()
+{
+    Fixture f;
+    f.filesystemProbe.BeLikeTheTrash();
+    f.BuryAFileDeeperThanTheWindowsCeiling();
+
+    DiagnosticsPage page(f.viewModel, f.bisectionViewModel);
+    f.viewModel.ShowSize();
+
+    const QString said = TextOfTheLongestPaths(page);
+
+    QVERIFY(said.contains(QStringLiteral("longest path")));
+    QVERIFY2(!said.contains(QStringLiteral("limit")), qPrintable(said));
+    QVERIFY2(!said.contains(QStringLiteral("Recycle")), qPrintable(said));
 }
 
 void DiagnosticsPageTest::BuildingAndTearingDownAloneDoesNotCrash()
