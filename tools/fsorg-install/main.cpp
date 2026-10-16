@@ -5,26 +5,20 @@
 #include <map>
 #include <optional>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #include "application/ArchiveInstallService.h"
 #include "application/model/AppSettings.h"
 #include "infrastructure/archive/ArchiveOrFolderReader.h"
-#include "infrastructure/archive/FolderArchiveReader.h"
-#include "infrastructure/archive/TarExeArchiveReader.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
 #include "viewmodel/FailureText.h"
@@ -185,30 +179,30 @@ namespace
 
     struct Wiring
     {
-        Wiring(const LinkType linkType, const Verification verification)
-            : importEngine(filesystemProbe, files, sidecars, linking, log, linkType, verification),
+        Wiring(PlatformParts parts, const LinkType linkType, const Verification verification)
+            : platform(std::move(parts)),
+              importEngine(filesystemProbe, files, sidecars, linking, log, linkType, verification),
               importing(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking, log, linkType),
               installing(archives, manifestParser, filesystemProbe, files, log, importing)
         {
         }
 
-        WindowsLinkService linkService{};
-        WindowsFilesystemProbe filesystemProbe{};
-        WindowsFileOperations files{};
-        WindowsSidecarStore sidecars{};
+        PlatformParts platform;
+        LinkService& linkService{*platform.links};
+        const FilesystemProbe& filesystemProbe{*platform.filesystem};
+        FileOperations& files{*platform.files};
+        SidecarStore& sidecars{*platform.sidecars};
         JsonManifestParser manifestParser{};
-        JsonlOperationJournal journal{JournalFilePath()};
+        JsonlOperationJournal journal{platform.folders.journalFile};
         JournalImportedFolders importedFolders{journal};
         JournalLinkedFolders theAppLinked{journal};
         FilesystemScanner catalog{manifestParser, filesystemProbe, importedFolders};
-        WindowsProcessProbe processProbe{std::vector<std::string>{"FlightSimulator.exe", "FlightSimulator2024.exe"}};
+        const ProcessProbe& processProbe{*platform.processes};
         SystemClock clock{};
         LinkingEngine linking{linkService, filesystemProbe};
         EntryClassifier classifier{linkService, filesystemProbe, theAppLinked};
         OperationLog log{journal, clock};
-        TarExeArchiveReader tarArchives{};
-        FolderArchiveReader folders{};
-        ArchiveOrFolderReader archives{folders, tarArchives};
+        ArchiveOrFolderReader archives{*platform.folderArchives, *platform.packedArchives};
         ImportEngine importEngine;
         ImportService importing;
         ArchiveInstallService installing;
@@ -470,7 +464,8 @@ int main(int argc, char* argv[])
         return RefuseTheArguments();
     }
 
-    const JsonSettingsRepository settings(SettingsFilePath());
+    PlatformParts platform = BuildThePlatform();
+    const JsonSettingsRepository settings(platform.folders.settingsFile);
     const AppSettings stored = settings.Load().value_or(AppSettings{});
     const std::optional<SimulatorProfile> profile = ActiveProfileOf(stored);
 
@@ -482,7 +477,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const Wiring wiring(stored.linkType, stored.verification);
+    const Wiring wiring(std::move(platform), stored.linkType, stored.verification);
     const SimulatorProfile theProfile = profile.value_or(SimulatorProfile{});
 
     const int exitCode = Run(wiring, theProfile, arguments);

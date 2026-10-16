@@ -9,16 +9,12 @@
 #include "application/model/AppSettings.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
-#include "infrastructure/platform/WindowsKnownFolders.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 #include "viewmodel/FailureText.h"
 
@@ -88,7 +84,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    const JsonSettingsRepository settings(SettingsFilePath());
+    const PlatformParts platform = BuildThePlatform();
+    const JsonSettingsRepository settings(platform.folders.settingsFile);
     const std::optional<AppSettings> stored = settings.Load();
 
     if (!stored.has_value() || stored->profiles.empty())
@@ -107,17 +104,17 @@ int main(int argc, char* argv[])
 
     const SimulatorProfile& profile = active == stored->profiles.end() ? stored->profiles.front() : *active;
 
-    WindowsLinkService linkService;
-    const WindowsFilesystemProbe filesystemProbe;
-    WindowsFileOperations files;
+    LinkService& linkService = *platform.links;
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
+    FileOperations& files = *platform.files;
     const JsonManifestParser manifestParser;
-    JsonlOperationJournal journal(JournalFilePath());
+    JsonlOperationJournal journal(platform.folders.journalFile);
 
     const JournalImportedFolders importedFolders(journal);
     const JournalLinkedFolders theAppLinked(journal);
 
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
-    const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
+    const ProcessProbe& processProbe = *platform.processes;
     const SystemClock clock;
 
     const LinkingEngine linking(linkService, filesystemProbe);

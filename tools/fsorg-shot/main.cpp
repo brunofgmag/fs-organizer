@@ -47,19 +47,14 @@
 #include "application/BisectionService.h"
 #include "application/ProfileService.h"
 #include "application/Session.h"
-#include "infrastructure/archive/TarExeArchiveReader.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/documents/JsonDocumentIndexCache.h"
 #include "infrastructure/documents/QtPdfChartVersions.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/preset/FilePresetRepository.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
@@ -78,11 +73,10 @@
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
-#include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "infrastructure/update/GithubUpdateService.h"
 #include "infrastructure/update/NoticeOnlyUpdateService.h"
 #include "edition/Edition.h"
+#include "platform/Platform.h"
 #include "shared/DisposableState.h"
 #include "support/PathText.h"
 #include "support/SizeText.h"
@@ -1017,11 +1011,12 @@ namespace
         return {parts[0].toInt(), parts[1].toInt()};
     }
 
-    std::vector<UserCfgLocation> TheSimulatorFilesIn(const std::filesystem::path& userFolder)
+    std::vector<UserCfgLocation> TheSimulatorFilesIn(const std::vector<UserCfgLocation>& known,
+                                                     const std::filesystem::path& userFolder)
     {
         std::vector<UserCfgLocation> locations;
 
-        for (const UserCfgLocation& installed : WindowsUserCfgLocations())
+        for (const UserCfgLocation& installed : known)
         {
             const bool alreadyThere = std::ranges::any_of(locations,
                                                           [&installed](const UserCfgLocation& kept)
@@ -1102,7 +1097,7 @@ int main(int argc, char* argv[])
                                    "folder");
     const QCommandLineOption simulator("simulator",
                                        "The simulator's user folder, the one that holds UserCfg.opt, Content.xml, "
-                                       "EXE.xml and the loading report, instead of the ones Windows knows.",
+                                       "EXE.xml and the loading report, instead of the ones the system knows.",
                                        "folder");
     const QCommandLineOption edition("edition", "github or flightsim-to.", "edition", "github");
     const QCommandLineOption footer("footer",
@@ -1196,8 +1191,9 @@ int main(int argc, char* argv[])
     }
 
     const bool demoState = parser.isSet(state);
-    const std::filesystem::path stateSource = demoState ? AsPath(parser.value(state)) : TheInstalledStateFolder();
-    if (demoState && !std::filesystem::is_directory(stateSource))
+    const std::filesystem::path stateFolder = AsPath(parser.value(state));
+    const DisposableState stateSource = demoState ? StateLaidOutUnder(stateFolder) : TheInstalledState();
+    if (demoState && !std::filesystem::is_directory(stateFolder))
     {
         Out() << "no such state folder: " << parser.value(state) << "\n";
         return 1;
@@ -1211,8 +1207,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    const PlatformParts platform = BuildThePlatform();
     const std::vector<UserCfgLocation> userCfgLocations =
-        demoSimulator ? TheSimulatorFilesIn(simulatorFolder) : WindowsUserCfgLocations();
+        demoSimulator ? TheSimulatorFilesIn(platform.userCfgLocations, simulatorFolder) : platform.userCfgLocations;
 
     const std::optional<DisposableState> staged = StageStateWhereWritingIsHarmless("fsorg-shot", stateSource);
     if (!staged.has_value())
@@ -1221,10 +1218,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    Out() << "reading a copy of " << AsText(stateSource)
+    Out() << "reading a copy of " << AsText(stateSource.settingsFile.parent_path())
           << ", so it is never written: " << AsText(staged->settingsFile.parent_path()) << "\n";
     Out() << "edition " << parser.value(edition) << ", numbers in " << QLocale().name() << ", simulator files from "
-          << (demoSimulator ? AsText(simulatorFolder) : QStringLiteral("the folders Windows knows")) << "\n";
+          << (demoSimulator ? AsText(simulatorFolder) : QStringLiteral("the folders the system knows")) << "\n";
 
     JsonSettingsRepository settings(staged->settingsFile);
 
@@ -1241,10 +1238,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    WindowsLinkService linkService;
-    const WindowsFilesystemProbe filesystemProbe;
-    WindowsFileOperations files;
-    WindowsSidecarStore sidecars;
+    LinkService& linkService = *platform.links;
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
+    FileOperations& files = *platform.files;
+    SidecarStore& sidecars = *platform.sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     JsonlOperationJournal journal(staged->journalFile);
@@ -1252,7 +1249,7 @@ int main(int argc, char* argv[])
     const JournalImportedFolders importedFolders(journal);
 
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
-    const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
+    const ProcessProbe& processProbe = *platform.processes;
     const SystemClock clock;
 
     const LinkingEngine linking(linkService, filesystemProbe);
@@ -1319,9 +1316,8 @@ int main(int argc, char* argv[])
     auto* libraryPage = new AddonTreePage(treeViewModel, deletionViewModel, importViewModel, coverageViewModel,
                                           addonDocumentsViewModel, treeModel, notifier);
 
-    const TarExeArchiveReader archiveReader;
-    const ArchiveInstallService archiveInstallService(archiveReader, manifestParser, filesystemProbe, files, log,
-                                                      importService);
+    const ArchiveInstallService archiveInstallService(*platform.packedArchives, manifestParser, filesystemProbe, files,
+                                                      log, importService);
     ArchiveInstallViewModel archiveInstallViewModel(archiveInstallService, profileService, processProbe, session,
                                                     notifier, runner);
     ArchiveDrop archiveDrop(shell, archiveInstallViewModel, *libraryPage);
@@ -1365,7 +1361,7 @@ int main(int argc, char* argv[])
 
     UpdateViewModel updateViewModel(*parts->updates, UpdateMode::Notify, false, parts->updateDelivery);
 
-    OptionsViewModel optionsViewModel(session, profileService, runner, notifier, {.offersJunctions = true});
+    OptionsViewModel optionsViewModel(session, profileService, runner, notifier, platform.capabilities);
     auto* optionsPage = new OptionsPage(optionsViewModel, updateViewModel, staged->settingsFile);
 
     PageTab* libraryTab = shell.AddPage(PageNames::kLibrary, libraryPage);

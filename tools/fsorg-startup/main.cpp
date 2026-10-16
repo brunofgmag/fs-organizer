@@ -8,11 +8,9 @@
 #include <vector>
 
 #include "application/StartupService.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/StartupFileLocations.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
-#include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "platform/Platform.h"
 #include "support/PathText.h"
 
 namespace
@@ -74,13 +72,14 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
+    const PlatformParts platform = BuildThePlatform();
+    const ProcessProbe& processProbe = *platform.processes;
     const std::optional<std::string> running = processProbe.RunningSimulator();
 
     Out() << "Simulator running: " << (running.has_value() ? QString::fromStdString(*running) : QString("no")) << "\n";
 
-    const WindowsFilesystemProbe filesystemProbe;
-    const std::vector<StartupFileLocation> locations = StartupFileLocations(WindowsUserCfgLocations(), filesystemProbe);
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
+    const std::vector<StartupFileLocation> locations = StartupFileLocations(platform.userCfgLocations, filesystemProbe);
 
     Out() << "Startup files found: " << locations.size() << "\n";
 

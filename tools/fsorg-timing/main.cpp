@@ -22,20 +22,15 @@
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
 #include "infrastructure/documents/QtPdfChartVersions.h"
-#include "infrastructure/fileops/WindowsFileOperations.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/journal/JournalImportedFolders.h"
 #include "infrastructure/journal/JournalLinkedFolders.h"
 #include "infrastructure/journal/JsonlOperationJournal.h"
-#include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/SystemClock.h"
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/sim/ContentListLocations.h"
 #include "infrastructure/sim/ProfilePackages.h"
-#include "infrastructure/sim/WindowsProcessProbe.h"
-#include "infrastructure/sim/WindowsUserCfgLocations.h"
+#include "platform/Platform.h"
 #include "shared/DisposableState.h"
 #include "support/PathText.h"
 
@@ -225,16 +220,18 @@ int main(int argc, char* argv[])
 
     const SimulatorProfile profile = *active;
 
-    WindowsLinkService linkService;
-    const WindowsFilesystemProbe filesystemProbe;
-    WindowsFileOperations files;
-    WindowsSidecarStore sidecars;
+    const PlatformParts platform = BuildThePlatform();
+    const LinkType linkType = platform.capabilities.offersJunctions ? LinkType::Junction : LinkType::Symbolic;
+    LinkService& linkService = *platform.links;
+    const FilesystemProbe& filesystemProbe = *platform.filesystem;
+    FileOperations& files = *platform.files;
+    SidecarStore& sidecars = *platform.sidecars;
     const UuidLibraryIdGenerator identities;
     const JsonManifestParser manifestParser;
     const JournalImportedFolders importedFolders(journal);
     const JournalLinkedFolders theAppLinked(journal);
     const FilesystemScanner catalog(manifestParser, filesystemProbe, importedFolders);
-    const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
+    const ProcessProbe& processProbe = *platform.processes;
     const SystemClock clock;
 
     const LinkingEngine linking(linkService, filesystemProbe);
@@ -245,20 +242,19 @@ int main(int argc, char* argv[])
     StartupService startupService(startupEntries, processProbe, filesystemProbe, false);
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                  startupService, LinkType::Junction);
+                                  startupService, linkType);
 
-    const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, LinkType::Junction,
+    const ImportEngine importEngine(filesystemProbe, files, sidecars, linking, log, linkType,
                                     Verification::ByStructure);
     const ImportService importService(importEngine, processProbe, filesystemProbe, catalog, files, sidecars, linking,
-                                      log, LinkType::Junction);
-    const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log,
-                                     LinkType::Junction);
+                                      log, linkType);
+    const LibraryOrganizer organizer(catalog, filesystemProbe, files, linking, classifier, processProbe, log, linkType);
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--journal-scroll")))
     {
         const NoLibrariesToScan nothingToScan;
         ProfileService justTheProfile(nothingToScan, filesystemProbe, sidecars, classifier, linking, log, identities,
-                                      startupService, LinkType::Junction);
+                                      startupService, linkType);
         OneProfileRepository onlySettings(profile);
         InlineRunner runInline;
         SilentObserver silent;
@@ -284,14 +280,14 @@ int main(int argc, char* argv[])
         SizeService sizes(catalog, filesystemProbe, clock, runner);
 
         AddonTreeModel treeModel;
-        ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+        ProfilePackages packages(filesystemProbe, ContentListLocations(platform.userCfgLocations, filesystemProbe));
         packages.Reload(session.Profile().variant);
         AddonTreeViewModel treeViewModel(session, profileService, treeModel, packages, sizes, runner, notifier);
         const DeletionService deletionService(filesystemProbe, files, sidecars, linking, classifier, processProbe, log);
         DeletionViewModel deletionViewModel(session, profileService, deletionService, sizes, runner);
         ImportViewModel importViewModel(importService, profileService, processProbe, session, runner);
 
-        const std::vector<UserCfgLocation> userCfgLocations = WindowsUserCfgLocations();
+        const std::vector<UserCfgLocation>& userCfgLocations = platform.userCfgLocations;
         const std::vector<ContentListLocation> contentLists = ContentListLocations(userCfgLocations, filesystemProbe);
         const std::optional<ChosenContentList> chosen = ChooseContentList(contentLists, profile.variant);
 
@@ -379,7 +375,7 @@ int main(int argc, char* argv[])
 
     if (QCoreApplication::arguments().contains(QStringLiteral("--toggle")))
     {
-        startupEntries.Use(StartupFileOrItsPlace(WindowsUserCfgLocations(), filesystemProbe, profile.variant));
+        startupEntries.Use(StartupFileOrItsPlace(platform.userCfgLocations, filesystemProbe, profile.variant));
         session.RefreshStartupEntries();
         measurements.clear();
 
@@ -422,7 +418,7 @@ int main(int argc, char* argv[])
             ? std::vector<std::filesystem::path>{}
             : std::vector<std::filesystem::path>{itsLink->path};
 
-        ProfilePackages packages(filesystemProbe, ContentListLocations(WindowsUserCfgLocations(), filesystemProbe));
+        ProfilePackages packages(filesystemProbe, ContentListLocations(platform.userCfgLocations, filesystemProbe));
         packages.Reload(session.Profile().variant);
         AddonTreeViewModel treeViewModel(session, profileService, model, packages, inlineSizes, runInline, notifier);
 
