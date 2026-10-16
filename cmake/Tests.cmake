@@ -2027,6 +2027,14 @@ if (NOT WIN32)
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-posix-import-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-posix-archive-install-on-real-disk-tests posix-archive-install-on-real-disk
+            tests/infrastructure/archive/tst_posix_archive_install_on_real_disk.cpp
+            tests/support/ArchiveBuilders.h
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            src/domain/importing/ImportPaths.h)
+    target_link_libraries(fsorg-posix-archive-install-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-posix-folder-archive-reader-tests posix-folder-archive-reader
             tests/infrastructure/archive/tst_posix_folder_archive_reader.cpp
             tests/support/EnumPrinting.h
