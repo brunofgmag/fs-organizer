@@ -5,6 +5,8 @@
 
 #include "view/theme/ModernistTones.h"
 
+class QStyleOptionComboBox;
+
 class ModernistStyle final : public QProxyStyle
 {
     Q_OBJECT
@@ -13,6 +15,11 @@ public:
     explicit ModernistStyle(Qt::ColorScheme scheme);
 
     [[nodiscard]] int pixelMetric(PixelMetric metric, const QStyleOption* option, const QWidget* widget) const override;
+
+    [[nodiscard]] int styleHint(StyleHint hint,
+                                const QStyleOption* option,
+                                const QWidget* widget,
+                                QStyleHintReturn* returnData) const override;
 
     void drawPrimitive(PrimitiveElement element,
                        const QStyleOption* option,

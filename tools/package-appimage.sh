@@ -81,9 +81,7 @@ install -m 644 "$root/assets/linux/apprun-hook.sh" "$app_dir/apprun-hooks/linuxd
 
 translations="$app_dir/usr/translations"
 find "$translations" -type f -delete
-for catalogue in qt_en qt_pt_BR qtbase_pt_BR; do
-  install -m 644 "$qt_root/translations/$catalogue.qm" "$translations/"
-done
+install -m 644 "$qt_root/translations/qtbase_pt_BR.qm" "$translations/qt_pt_BR.qm"
 
 (
   cd "$work_dir"
