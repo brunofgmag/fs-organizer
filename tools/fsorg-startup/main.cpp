@@ -11,6 +11,7 @@
 #include "infrastructure/fileops/WindowsFilesystemProbe.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/StartupFileLocations.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "support/PathText.h"
@@ -75,6 +76,7 @@ int main(int argc, char* argv[])
     }
 
     const WindowsProcessProbe processProbe({"FlightSimulator.exe", "FlightSimulator2024.exe"});
+    const WindowsPathMapper pathMapper;
     const std::optional<std::string> running = processProbe.RunningSimulator();
 
     Out() << "Simulator running: " << (running.has_value() ? QString::fromStdString(*running) : QString("no")) << "\n";
@@ -90,7 +92,7 @@ int main(int argc, char* argv[])
         Out() << "    backup     " << AsText(BackupOfStartupFile(location.filePath)) << "\n";
 
         ExeXmlStartupEntries startup(location.filePath);
-        const StartupService service(startup, processProbe, filesystemProbe, true);
+        const StartupService service(startup, processProbe, filesystemProbe, pathMapper, true);
 
         ReportEntries(service);
     }

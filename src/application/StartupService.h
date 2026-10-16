@@ -9,6 +9,7 @@
 
 #include "application/StartupReport.h"
 #include "application/model/ProfileSnapshot.h"
+#include "application/ports/PathMapper.h"
 #include "application/ports/ProcessProbe.h"
 #include "application/ports/StartupEntries.h"
 #include "domain/model/SimulatorProfile.h"
@@ -20,6 +21,7 @@ public:
     StartupService(StartupEntries& entries,
                    const ProcessProbe& processProbe,
                    const FilesystemProbe& filesystemProbe,
+                   const PathMapper& pathMapper,
                    bool managing);
 
     void Manage(bool managing);
@@ -44,6 +46,7 @@ private:
     StartupEntries& entries_;
     const ProcessProbe& processProbe_;
     const FilesystemProbe& filesystemProbe_;
+    const PathMapper& pathMapper_;
     std::atomic<bool> managing_;
 };
 

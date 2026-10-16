@@ -17,6 +17,7 @@
 #include "domain/support/PathUtils.h"
 #include "domain/tree/AddonTree.h"
 #include "infrastructure/sim/StartupFileLocations.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonChartCatalogueParser.h"
@@ -242,7 +243,8 @@ int main(int argc, char* argv[])
     const OperationLog log(journal, clock);
 
     ExeXmlStartupEntries startupEntries{{}};
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, false);
+    const WindowsPathMapper pathMapper;
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, pathMapper, false);
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
                                   startupService, LinkType::Junction);

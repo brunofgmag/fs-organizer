@@ -673,7 +673,7 @@ void StartupPage::EditTheLine(const StartupLine& wanted)
         {
             return viewModel_.Check(file, entryPath);
         },
-        StartupDraft{.label = line.label, .file = line.path, .commandLine = line.commandLine}, this);
+        StartupDraft{.label = line.label, .file = line.hostPath, .commandLine = line.commandLine}, this);
 
     if (dialog.exec() != QDialog::Accepted)
     {

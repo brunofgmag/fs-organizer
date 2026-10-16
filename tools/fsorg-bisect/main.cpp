@@ -22,6 +22,7 @@
 #include "infrastructure/settings/JsonSettingsRepository.h"
 #include "infrastructure/id/UuidLibraryIdGenerator.h"
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "support/PathText.h"
 
@@ -323,7 +324,8 @@ namespace
         EntryClassifier classifier{linkService, filesystemProbe, theAppLinked};
         ExeXmlStartupEntries startupEntries{{}};
         WindowsProcessProbe processProbe{{"FlightSimulator.exe", "FlightSimulator2024.exe"}};
-        StartupService startup{startupEntries, processProbe, filesystemProbe, false};
+        WindowsPathMapper pathMapper;
+        StartupService startup{startupEntries, processProbe, filesystemProbe, pathMapper, false};
 
         ProfileService profiles{catalog, filesystemProbe, sidecars, classifier,        linking,
                                 log,     identities,      startup,  LinkType::Junction};

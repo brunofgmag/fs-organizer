@@ -78,6 +78,7 @@
 #include "infrastructure/sim/ProfilePackages.h"
 #include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
 #include "infrastructure/update/GithubUpdateService.h"
@@ -1260,7 +1261,8 @@ int main(int argc, char* argv[])
     const OperationLog log(journal, clock);
 
     ExeXmlStartupEntries startupEntries{{}};
-    StartupService startupService(startupEntries, processProbe, filesystemProbe, true);
+    const WindowsPathMapper pathMapper;
+    StartupService startupService(startupEntries, processProbe, filesystemProbe, pathMapper, true);
     const std::filesystem::path removedStartupFolder = staged->settingsFile.parent_path() / "removed-startup-entries";
 
     ProfileService profileService(catalog, filesystemProbe, sidecars, classifier, linking, log, identities,
@@ -1340,7 +1342,7 @@ int main(int argc, char* argv[])
     auto* journalPage = new JournalPage(journalViewModel, journalModel);
 
     FilePresetRepository presetRepository(staged->presetsFolder);
-    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, log);
+    StartupEditor startupEditor(startupService, presetRepository, filesystemProbe, pathMapper, log);
     PresetService presetService(presetRepository, profileService, startupService);
     PresetViewModel presetViewModel(session, presetService, profileService, runner);
     auto* presetsPage = new PresetsPage(presetViewModel, notifier);

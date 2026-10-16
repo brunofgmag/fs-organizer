@@ -130,7 +130,10 @@ set(LINUX_PLATFORM_SOURCES
         src/infrastructure/link/PosixLinkService.cpp
         src/infrastructure/platform/LinuxInstanceGuard.cpp
         src/infrastructure/platform/LinuxKnownFolders.cpp
+        src/infrastructure/sim/ChildNamedIgnoringCase.cpp
+        src/infrastructure/sim/PrefixPathMapper.cpp
         src/infrastructure/sim/ProcProcessProbe.cpp
+        src/infrastructure/sim/ProtonPathMapper.cpp
         src/infrastructure/sim/ProtonPrefixes.cpp
         src/infrastructure/sim/ProtonSimulatorLocator.cpp
         src/infrastructure/sim/ProtonUserCfgLocations.cpp

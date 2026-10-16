@@ -17,6 +17,7 @@
 #include "infrastructure/sim/ExeXmlStartupEntries.h"
 #include "infrastructure/sim/RemovedStartupEntriesFile.h"
 #include "infrastructure/sim/StartupFileLocations.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeOperationJournal.h"
 #include "tests/doubles/FakePresetRepository.h"
@@ -25,6 +26,7 @@
 #include "tests/support/PathPrinting.h"
 #include "tests/support/StdFilesystemProbe.h"
 #include "tests/support/TempFiles.h"
+#include "tests/support/WindowsForm.h"
 
 namespace
 {
@@ -132,12 +134,13 @@ namespace
         StdFilesystemProbe probe;
         ExeXmlStartupEntries startupEntries{files.Root() / "profile" / "EXE.xml"};
         FakeProcessProbe processProbe;
-        StartupService service{startupEntries, processProbe, probe, true};
+        WindowsPathMapper pathMapper;
+        StartupService service{startupEntries, processProbe, probe, pathMapper, true};
         FakePresetRepository presets;
         FakeOperationJournal journal;
         FakeClock clock;
         OperationLog log{journal, clock};
-        StartupEditor editor{service, presets, probe, log};
+        StartupEditor editor{service, presets, probe, pathMapper, log};
     };
 
     [[nodiscard]] StartupDraft
@@ -170,8 +173,7 @@ namespace
     [[nodiscard]] std::string
     BlockOf(const std::string& label, const std::filesystem::path& program, const std::string& extra = {})
     {
-        std::filesystem::path native = program;
-        native.make_preferred();
+        const std::filesystem::path native = WindowsPathMapper{}.ToSimulator(SimulatorVariant::MSFS2024, program);
 
         return "    <Launch.Addon>\n        <Name>" + label + "</Name>\n" + extra + "        <Path>" + AsUtf8(native)
             + "</Path>\n    </Launch.Addon>\n";
@@ -199,8 +201,7 @@ void StartupEditorOnRealDiskTest::AddingToAProfileWithoutTheFileCreatesItBesideU
     QCOMPARE(s.editor.Add(Profile(), ProfileSnapshot{}, Draft("First", first, "-a")).result, FileResult::Completed);
 
     const std::string afterTheFirst = BytesOf(s.StartupFile());
-    std::filesystem::path firstInWindowsForm = first;
-    firstInWindowsForm.make_preferred();
+    const std::filesystem::path firstInWindowsForm = s.pathMapper.ToSimulator(SimulatorVariant::MSFS2024, first);
 
     const StartupDocumentChange expected = WithStartupEntryAdded(
         NewStartupDocument(), StartupAddition{.label = "First", .path = firstInWindowsForm, .commandLine = "-a"});
@@ -271,7 +272,7 @@ void StartupEditorOnRealDiskTest::EditingThePathAndUndoingGivesTheBytesAndThePre
     QCOMPARE(edited.result, FileResult::Completed);
     QCOMPARE(edited.presetsThatFollowed, (std::vector<std::string>{"Short"}));
     QVERIFY(FirstDifference(BytesOf(s.StartupFile()), original) != std::string::npos);
-    QCOMPARE(s.presets.Load(kProfileId, "Short")->startupEntries.front().path, moved);
+    QCOMPARE(s.presets.Load(kProfileId, "Short")->startupEntries.front().path, InWindowsForm(moved));
 
     QCOMPARE(UndoResultOf(s.editor), std::optional<FileResult>(FileResult::Completed));
 
@@ -305,9 +306,9 @@ void StartupEditorOnRealDiskTest::TheRemovedListAndTheUndoSurviveOnlyWhereTheySh
 
     QCOMPARE(s.editor.Remove(kProfileId, PathFromUtf8(kIFly)).result, FileResult::Completed);
 
-    StartupService otherService{s.startupEntries, s.processProbe, s.probe, true};
+    StartupService otherService{s.startupEntries, s.processProbe, s.probe, s.pathMapper, true};
     FakePresetRepository otherPresets;
-    StartupEditor afterARestart{otherService, otherPresets, s.probe, s.log};
+    StartupEditor afterARestart{otherService, otherPresets, s.probe, s.pathMapper, s.log};
 
     QCOMPARE(afterARestart.Removed().size(), std::size_t{1});
     QVERIFY2(!afterARestart.WhatUndoWouldDo(kProfileId).has_value(), "the undo is in memory and does not outlive it");
@@ -328,7 +329,7 @@ void StartupEditorOnRealDiskTest::AProgramPickedWithForwardSlashesIsAddedWithThe
     QCOMPARE(written.size(), std::size_t{1});
     QVERIFY2(written.front().find('/') == std::string::npos, qPrintable(QString::fromStdString(written.front())));
     QVERIFY(written.front().find('\\') != std::string::npos);
-    QCOMPARE(s.service.Entries().front().path, picked);
+    QCOMPARE(ComparablePath(s.service.Entries().front().path), ComparablePath(picked));
 }
 
 void StartupEditorOnRealDiskTest::AProgramPickedWithForwardSlashesIsEditedInWithTheSeparatorOfWindows()

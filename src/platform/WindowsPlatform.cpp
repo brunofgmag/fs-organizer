@@ -12,6 +12,7 @@
 #include "infrastructure/link/WindowsLinkService.h"
 #include "infrastructure/platform/WindowsInstanceGuard.h"
 #include "infrastructure/platform/WindowsKnownFolders.h"
+#include "infrastructure/sim/WindowsPathMapper.h"
 #include "infrastructure/sim/WindowsProcessProbe.h"
 #include "infrastructure/sim/WindowsSimulatorLocator.h"
 #include "infrastructure/sim/WindowsUserCfgLocations.h"
@@ -50,6 +51,7 @@ PlatformParts BuildThePlatform()
         .packedArchives = std::make_unique<TarExeArchiveReader>(),
         .locator = std::move(locator),
         .legacyConfig = std::make_unique<WindowsLegacyConfigSource>(ProgramDataFolder()),
+        .paths = std::make_unique<WindowsPathMapper>(),
         .userCfgLocations = std::move(userCfgLocations),
         .folders = WindowsAppFolders(),
         .capabilities = {.offersJunctions = true},
