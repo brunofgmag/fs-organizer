@@ -33,6 +33,10 @@ else ()
     set(REAL_ADAPTERS_FOLDER "${CMAKE_SOURCE_DIR}/tests/platform/posix")
 endif ()
 
+if (NOT WIN32)
+    configure_file("${CMAKE_SOURCE_DIR}/tests/support/fonts.conf.in" "${CMAKE_BINARY_DIR}/test-fonts.conf" @ONLY)
+endif ()
+
 function(configure_fsorg_test TARGET_NAME TEST_NAME)
     target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Core Qt6::Test)
     target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src"
@@ -49,7 +53,8 @@ function(configure_fsorg_test TARGET_NAME TEST_NAME)
     if (WIN32)
         add_dependencies(${TARGET_NAME} fsorg-test-runtime)
     else ()
-        set_property(TEST ${TEST_NAME} APPEND PROPERTY ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+        set_property(TEST ${TEST_NAME} APPEND PROPERTY ENVIRONMENT
+                "QT_QPA_PLATFORM=offscreen" "FONTCONFIG_FILE=${CMAKE_BINARY_DIR}/test-fonts.conf")
     endif ()
 endfunction()
 
@@ -60,9 +65,13 @@ function(configure_fsorg_gui_test TARGET_NAME TEST_NAME)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM fsorg-gui-test-precompiled)
     endif ()
 
-    set_tests_properties(${TEST_NAME} PROPERTIES
-            ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1;QT_QPA_PLATFORM=offscreen")
-
+    if (WIN32)
+        set_tests_properties(${TEST_NAME} PROPERTIES
+                ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1;QT_QPA_PLATFORM=offscreen")
+    else ()
+        set_tests_properties(${TEST_NAME} PROPERTIES
+                ENVIRONMENT "QT_ASSUME_STDERR_HAS_CONSOLE=1;QT_QPA_PLATFORM=offscreen;FONTCONFIG_FILE=${CMAKE_BINARY_DIR}/test-fonts.conf")
+    endif ()
 endfunction()
 
 function(fsorg_add_qt_test TARGET_NAME TEST_NAME)
@@ -2055,4 +2064,36 @@ if (NOT WIN32)
             tests/platform/tst_linux_platform.cpp
             ${PLATFORM_COMPOSITION_SOURCES})
     target_link_libraries(fsorg-linux-platform-tests PRIVATE fsorg-infrastructure)
+endif ()
+
+if (NOT WIN32)
+    fsorg_add_qt_test(fsorg-replaceable-app-image-tests replaceable-app-image
+            tests/infrastructure/update/tst_replaceable_app_image.cpp
+            src/infrastructure/update/ReplaceableAppImage.cpp)
+
+    fsorg_add_qt_test(fsorg-app-image-update-service-tests app-image-update-service
+            tests/infrastructure/update/tst_app_image_update_service.cpp
+            src/infrastructure/update/AppImageUpdateService.cpp
+            src/infrastructure/update/GithubReleaseFeed.cpp)
+    target_link_libraries(fsorg-app-image-update-service-tests PRIVATE fsorg-infrastructure Qt6::Network)
+
+    fsorg_add_qt_test(fsorg-linux-self-updater-tests linux-self-updater
+            tests/edition/tst_linux_self_updater.cpp
+            ${LINUX_SELF_UPDATER_SOURCES}
+            src/infrastructure/update/GithubReleaseFeed.cpp)
+    target_link_libraries(fsorg-linux-self-updater-tests PRIVATE fsorg-infrastructure Qt6::Network)
+endif ()
+
+if (NOT WIN32)
+    fsorg_add_qt_test(fsorg-linux-wording-tests linux-wording
+            tests/view/tst_linux_wording.cpp
+            tests/support/CatalogueBesideTheBuild.h
+            tests/support/InstalledCatalogue.h)
+    target_link_libraries(fsorg-linux-wording-tests PRIVATE fsorg-view)
+    target_compile_definitions(fsorg-linux-wording-tests PRIVATE FSORG_I18N_DIR=\"${CMAKE_SOURCE_DIR}/i18n\")
+    qt_add_resources(fsorg-linux-wording-tests linux_wording
+            PREFIX "/i18n"
+            BASE "${CMAKE_CURRENT_BINARY_DIR}"
+            FILES ${PLATFORM_WORDING_QM_FILES})
+    add_dependencies(fsorg-linux-wording-tests platform_wording_translations release_translations)
 endif ()

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>@CMAKE_SOURCE_DIR@/assets/fonts</dir>
+  <cachedir>@CMAKE_BINARY_DIR@/fontconfig-cache</cachedir>
+</fontconfig>

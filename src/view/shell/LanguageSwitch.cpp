@@ -19,6 +19,11 @@ bool LanguageSwitch::LoadNativeWidgets(QTranslator& translator, const QString& l
     return translator.load(name, beside) || translator.load(name, QLibraryInfo::path(QLibraryInfo::TranslationsPath));
 }
 
+bool LanguageSwitch::LoadPlatformWording(QTranslator& translator, const QString& language)
+{
+    return translator.load(QStringLiteral(":/i18n/platform_%1").arg(language));
+}
+
 const std::array<LanguageSwitch::Offer, 2>& LanguageSwitch::Offered()
 {
     static const std::array<Offer, 2> offered{
@@ -83,6 +88,11 @@ bool LanguageSwitch::Use(const QString& language)
     inUse_ = onScreen ? wanted : QLatin1String(kSourceLanguage);
     installed_ = true;
 
+    if (LoadPlatformWording(platform_, inUse_))
+    {
+        QCoreApplication::installTranslator(&platform_);
+    }
+
     return onScreen;
 }
 
@@ -100,5 +110,6 @@ void LanguageSwitch::Uninstall()
 
     QCoreApplication::removeTranslator(&interface_);
     QCoreApplication::removeTranslator(&nativeWidgets_);
+    QCoreApplication::removeTranslator(&platform_);
     installed_ = false;
 }

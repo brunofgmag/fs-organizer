@@ -5,6 +5,7 @@ enum class UpdateDelivery
 {
     SelfUpdate,
     NoticeOnly,
+    NoticeOnlyOnGithub,
 };
 
 #endif // FS_ORGANIZER_APPLICATION_MODEL_UPDATE_DELIVERY_H
