@@ -2025,6 +2025,20 @@ if (NOT WIN32)
             src/domain/support/PathUtils.h)
     target_link_libraries(fsorg-proton-path-mapper-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-proton-simulator-locator-tests proton-simulator-locator
+            tests/infrastructure/sim/tst_proton_simulator_locator.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h)
+    target_link_libraries(fsorg-proton-simulator-locator-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-proton-legacy-config-source-tests proton-legacy-config-source
+            tests/infrastructure/legacy/tst_proton_legacy_config_source.cpp
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h
+            src/domain/support/PathUtils.h)
+    target_link_libraries(fsorg-proton-legacy-config-source-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-startup-in-a-proton-prefix-tests startup-in-a-proton-prefix
             tests/infrastructure/sim/tst_startup_in_a_proton_prefix.cpp
             tests/doubles/FakeClock.h

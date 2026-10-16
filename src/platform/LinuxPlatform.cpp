@@ -23,7 +23,7 @@ PlatformParts BuildThePlatform()
     const std::vector<ProtonPrefix> prefixes = ProtonPrefixes(SteamLibraries(SteamRoots()));
     std::vector<UserCfgLocation> userCfgLocations = ProtonUserCfgLocations(prefixes);
     std::unique_ptr<PathMapper> paths = std::make_unique<ProtonPathMapper>(prefixes);
-    std::unique_ptr<SimulatorLocator> locator = std::make_unique<ProtonSimulatorLocator>(userCfgLocations);
+    std::unique_ptr<SimulatorLocator> locator = std::make_unique<ProtonSimulatorLocator>(userCfgLocations, *paths);
 
     return PlatformParts{
         .instance = std::make_unique<LinuxInstanceGuard>(RuntimeFolder() / "fs-organizer.lock"),
@@ -36,7 +36,7 @@ PlatformParts BuildThePlatform()
         .folderArchives = std::make_unique<PosixFolderArchiveReader>(),
         .packedArchives = std::make_unique<LibarchiveArchiveReader>(),
         .locator = std::move(locator),
-        .legacyConfig = std::make_unique<ProtonLegacyConfigSource>(),
+        .legacyConfig = std::make_unique<ProtonLegacyConfigSource>(prefixes),
         .paths = std::move(paths),
         .userCfgLocations = std::move(userCfgLocations),
         .folders = LinuxAppFolders(),

@@ -100,6 +100,7 @@ set(INFRASTRUCTURE_SOURCES
         src/infrastructure/sim/ProfilePackages.cpp
         src/infrastructure/sim/RemovedStartupEntriesFile.cpp
         src/infrastructure/sim/StartupFileLocations.cpp
+        src/infrastructure/sim/UserCfgPackagesPath.cpp
         src/infrastructure/update/GithubReleaseParser.cpp
 )
 
