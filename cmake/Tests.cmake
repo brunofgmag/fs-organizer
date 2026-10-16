@@ -34,6 +34,8 @@ else ()
 endif ()
 
 if (NOT WIN32)
+    configure_file("${CMAKE_SOURCE_DIR}/assets/fonts/Archivo-Regular.ttf"
+                   "${CMAKE_BINARY_DIR}/test-fonts/Archivo-Regular.ttf" COPYONLY)
     configure_file("${CMAKE_SOURCE_DIR}/tests/support/fonts.conf.in" "${CMAKE_BINARY_DIR}/test-fonts.conf" @ONLY)
 endif ()
 

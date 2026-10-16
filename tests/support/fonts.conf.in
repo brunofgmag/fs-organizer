@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
-  <dir>@CMAKE_SOURCE_DIR@/assets/fonts</dir>
+  <dir>@CMAKE_BINARY_DIR@/test-fonts</dir>
   <cachedir>@CMAKE_BINARY_DIR@/fontconfig-cache</cachedir>
+  <match target="pattern">
+    <edit name="antialias" mode="assign"><bool>true</bool></edit>
+    <edit name="hinting" mode="assign"><bool>true</bool></edit>
+    <edit name="hintstyle" mode="assign"><const>hintslight</const></edit>
+  </match>
 </fontconfig>
