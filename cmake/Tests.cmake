@@ -27,9 +27,16 @@ if (WIN32)
             VERBATIM)
 endif ()
 
+if (WIN32)
+    set(REAL_ADAPTERS_FOLDER "${CMAKE_SOURCE_DIR}/tests/platform/windows")
+else ()
+    set(REAL_ADAPTERS_FOLDER "${CMAKE_SOURCE_DIR}/tests/platform/posix")
+endif ()
+
 function(configure_fsorg_test TARGET_NAME TEST_NAME)
     target_link_libraries(${TARGET_NAME} PRIVATE Qt6::Core Qt6::Test)
-    target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
+    target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src"
+            "${REAL_ADAPTERS_FOLDER}")
     if (MSVC)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM fsorg-test-precompiled)
     endif ()
@@ -1137,15 +1144,13 @@ fsorg_add_qt_test(fsorg-load-report-tests load-report
         tests/support/PathPrinting.h)
 target_link_libraries(fsorg-load-report-tests PRIVATE fsorg-application)
 
-if (WIN32)
-    fsorg_add_qt_test(fsorg-loading-report-on-real-disk-tests loading-report-on-real-disk
-            tests/infrastructure/sim/tst_loading_report_on_real_disk.cpp
-            tests/support/PathPrinting.h
-            tests/support/TempFiles.h)
-    target_link_libraries(fsorg-loading-report-on-real-disk-tests PRIVATE fsorg-infrastructure)
-    target_compile_definitions(fsorg-loading-report-on-real-disk-tests PRIVATE
-            FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
-endif ()
+fsorg_add_qt_test(fsorg-loading-report-on-real-disk-tests loading-report-on-real-disk
+        tests/infrastructure/sim/tst_loading_report_on_real_disk.cpp
+        tests/support/PathPrinting.h
+        tests/support/TempFiles.h)
+target_link_libraries(fsorg-loading-report-on-real-disk-tests PRIVATE fsorg-infrastructure)
+target_compile_definitions(fsorg-loading-report-on-real-disk-tests PRIVATE
+        FSORG_FIXTURES_DIR=\"${CMAKE_SOURCE_DIR}/tests/fixtures\")
 
 fsorg_add_qt_test(fsorg-loading-report-text-tests loading-report-text
         tests/infrastructure/sim/tst_loading_report_text.cpp)
@@ -1245,47 +1250,6 @@ if (WIN32)
 
     target_link_libraries(fsorg-windows-file-operations-tests PRIVATE fsorg-infrastructure)
 
-    fsorg_add_qt_test(fsorg-link-plan-on-real-disk-tests link-plan-on-real-disk
-            tests/infrastructure/link/tst_link_plan_on_real_disk.cpp
-            tests/doubles/StartupOverFakes.h
-            tests/doubles/FakeClock.h
-            tests/doubles/FakeLibraryIdGenerator.h
-            tests/doubles/FakeOperationJournal.h
-            tests/doubles/FakePresetRepository.h
-            tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h
-            src/domain/importing/ImportPaths.h)
-    target_link_libraries(fsorg-link-plan-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
-
-    fsorg_add_qt_test(fsorg-bisection-on-real-disk-tests bisection-on-real-disk
-            tests/infrastructure/bisection/tst_bisection_on_real_disk.cpp
-            tests/doubles/StartupOverFakes.h
-            tests/doubles/FakeClock.h
-            tests/doubles/FakeLibraryIdGenerator.h
-            tests/doubles/FakeOperationJournal.h
-            tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h)
-    target_link_libraries(fsorg-bisection-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
-
-    fsorg_add_qt_test(fsorg-chart-versions-on-real-disk-tests chart-versions-on-real-disk
-            tests/infrastructure/documents/tst_chart_versions_on_real_disk.cpp
-            ${PDF_INFRASTRUCTURE_SOURCES}
-            src/support/PathText.h)
-    target_link_libraries(fsorg-chart-versions-on-real-disk-tests PRIVATE fsorg-domain Qt6::Pdf)
-
-    fsorg_add_qt_test(fsorg-document-index-cache-on-real-disk-tests document-index-cache-on-real-disk
-            tests/infrastructure/documents/tst_document_index_cache_on_real_disk.cpp
-            tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h)
-    target_link_libraries(fsorg-document-index-cache-on-real-disk-tests PRIVATE fsorg-infrastructure)
-
-    fsorg_add_qt_test(fsorg-documents-on-real-disk-tests documents-on-real-disk
-            tests/application/tst_documents_on_real_disk.cpp
-            tests/support/APdf.h
-            tests/support/PathPrinting.h
-            ${PDF_INFRASTRUCTURE_SOURCES})
-    target_link_libraries(fsorg-documents-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure Qt6::Pdf)
-
     fsorg_add_qt_test(fsorg-catalog-on-real-disk-tests catalog-on-real-disk
             tests/infrastructure/catalog/tst_catalog_on_real_disk.cpp
             tests/support/DeepPaths.h
@@ -1305,14 +1269,6 @@ if (WIN32)
             tests/support/PathPrinting.h
             tests/support/TempFiles.h)
     target_link_libraries(fsorg-delete-on-real-disk-tests PRIVATE fsorg-infrastructure)
-
-    fsorg_add_qt_test(fsorg-size-on-real-disk-tests size-on-real-disk
-            tests/infrastructure/fileops/tst_size_on_real_disk.cpp
-            tests/doubles/FakeClock.h
-            tests/doubles/InlineBackgroundRunner.h
-            tests/support/PathPrinting.h
-            src/domain/importing/ImportPaths.h)
-    target_link_libraries(fsorg-size-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
 
     fsorg_add_qt_test(fsorg-import-on-real-disk-tests import-on-real-disk
             tests/infrastructure/importing/tst_import_on_real_disk.cpp
@@ -1344,31 +1300,6 @@ if (WIN32)
             src/domain/importing/ImportPaths.h)
     target_link_libraries(fsorg-archive-install-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
 
-    fsorg_add_qt_test(fsorg-external-import-on-real-disk-tests external-import-on-real-disk
-            tests/infrastructure/importing/tst_external_import_on_real_disk.cpp
-            tests/doubles/StartupOverFakes.h
-            tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h
-            src/domain/importing/ImportPaths.h)
-    target_link_libraries(fsorg-external-import-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
-
-    fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
-            tests/infrastructure/options/tst_options_on_real_disk.cpp
-            tests/doubles/StartupOverFakes.h
-            tests/doubles/InlineBackgroundRunner.h
-            tests/doubles/RecordingSessionObserver.h
-            tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h)
-    target_link_libraries(fsorg-options-on-real-disk-tests PRIVATE fsorg-infrastructure)
-
-    fsorg_add_qt_test(fsorg-preset-on-real-disk-tests preset-on-real-disk
-            tests/infrastructure/preset/tst_preset_on_real_disk.cpp
-            tests/doubles/StartupOverFakes.h
-            tests/doubles/FakeLibraryIdGenerator.h
-            tests/support/EnumPrinting.h
-            tests/support/PathPrinting.h)
-    target_link_libraries(fsorg-preset-on-real-disk-tests PRIVATE fsorg-infrastructure)
-
     fsorg_add_qt_test(fsorg-windows-filesystem-probe-tests windows-filesystem-probe
             tests/infrastructure/fileops/tst_windows_filesystem_probe.cpp
             tests/support/DeepPaths.h
@@ -1376,12 +1307,86 @@ if (WIN32)
             tests/support/PathPrinting.h)
 
     target_link_libraries(fsorg-windows-filesystem-probe-tests PRIVATE fsorg-infrastructure)
-
-    fsorg_add_qt_test(fsorg-sidecar-store-on-real-disk-tests sidecar-store-on-real-disk
-            tests/infrastructure/fileops/tst_sidecar_store_on_real_disk.cpp
-            tests/support/PathPrinting.h)
-    target_link_libraries(fsorg-sidecar-store-on-real-disk-tests PRIVATE fsorg-infrastructure)
 endif ()
+
+fsorg_add_qt_test(fsorg-sidecar-store-on-real-disk-tests sidecar-store-on-real-disk
+        tests/infrastructure/fileops/tst_sidecar_store_on_real_disk.cpp
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-sidecar-store-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-link-plan-on-real-disk-tests link-plan-on-real-disk
+        tests/infrastructure/link/tst_link_plan_on_real_disk.cpp
+        tests/doubles/StartupOverFakes.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeOperationJournal.h
+        tests/doubles/FakePresetRepository.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/importing/ImportPaths.h)
+target_link_libraries(fsorg-link-plan-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-bisection-on-real-disk-tests bisection-on-real-disk
+        tests/infrastructure/bisection/tst_bisection_on_real_disk.cpp
+        tests/doubles/StartupOverFakes.h
+        tests/doubles/FakeClock.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/doubles/FakeOperationJournal.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-bisection-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-options-on-real-disk-tests options-on-real-disk
+        tests/infrastructure/options/tst_options_on_real_disk.cpp
+        tests/doubles/StartupOverFakes.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/doubles/RecordingSessionObserver.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-options-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-preset-on-real-disk-tests preset-on-real-disk
+        tests/infrastructure/preset/tst_preset_on_real_disk.cpp
+        tests/doubles/StartupOverFakes.h
+        tests/doubles/FakeLibraryIdGenerator.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-preset-on-real-disk-tests PRIVATE fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-external-import-on-real-disk-tests external-import-on-real-disk
+        tests/infrastructure/importing/tst_external_import_on_real_disk.cpp
+        tests/doubles/StartupOverFakes.h
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h
+        src/domain/importing/ImportPaths.h)
+target_link_libraries(fsorg-external-import-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-size-on-real-disk-tests size-on-real-disk
+        tests/infrastructure/fileops/tst_size_on_real_disk.cpp
+        tests/doubles/FakeClock.h
+        tests/doubles/InlineBackgroundRunner.h
+        tests/support/PathPrinting.h
+        src/domain/importing/ImportPaths.h)
+target_link_libraries(fsorg-size-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure)
+
+fsorg_add_qt_test(fsorg-documents-on-real-disk-tests documents-on-real-disk
+        tests/application/tst_documents_on_real_disk.cpp
+        tests/support/APdf.h
+        tests/support/PathPrinting.h
+        ${PDF_INFRASTRUCTURE_SOURCES})
+target_link_libraries(fsorg-documents-on-real-disk-tests PRIVATE fsorg-application fsorg-infrastructure Qt6::Pdf)
+
+fsorg_add_qt_test(fsorg-chart-versions-on-real-disk-tests chart-versions-on-real-disk
+        tests/infrastructure/documents/tst_chart_versions_on_real_disk.cpp
+        ${PDF_INFRASTRUCTURE_SOURCES}
+        src/support/PathText.h)
+target_link_libraries(fsorg-chart-versions-on-real-disk-tests PRIVATE fsorg-domain Qt6::Pdf)
+
+fsorg_add_qt_test(fsorg-document-index-cache-on-real-disk-tests document-index-cache-on-real-disk
+        tests/infrastructure/documents/tst_document_index_cache_on_real_disk.cpp
+        tests/support/EnumPrinting.h
+        tests/support/PathPrinting.h)
+target_link_libraries(fsorg-document-index-cache-on-real-disk-tests PRIVATE fsorg-infrastructure)
 
 fsorg_add_qt_test(fsorg-main-window-tests main-window
         tests/view/tst_main_window.cpp

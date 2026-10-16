@@ -10,7 +10,7 @@
 
 #include "domain/importing/ExternalSidecar.h"
 #include "domain/support/PathUtils.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
+#include "RealAdapters.h"
 #include "tests/support/PathPrinting.h"
 
 namespace
@@ -55,7 +55,7 @@ void SidecarStoreOnRealDiskTest::FilesInListsOnlyTheFilesHeldDirectlyInTheFolder
     Touch(folder / "Nested" / "deeper.fsorg-external");
     QVERIFY(std::filesystem::create_directories(folder / "folder.fsorg-external"));
 
-    const WindowsSidecarStore store;
+    const RealSidecarStore store;
     const std::vector<std::filesystem::path> files = store.FilesIn(folder);
 
     QCOMPARE(NamesOf(files), (std::set<std::string>{"Aerosoft-CRJ.FSORG-External", "notes.txt"}));
@@ -71,7 +71,7 @@ void SidecarStoreOnRealDiskTest::FilesInAFolderThatIsNotThereIsEmpty()
     const QTemporaryDir directory;
     QVERIFY(directory.isValid());
 
-    const WindowsSidecarStore store;
+    const RealSidecarStore store;
 
     QVERIFY(store.FilesIn(std::filesystem::path(directory.path().toStdWString()) / "missing").empty());
 }
@@ -83,7 +83,7 @@ void SidecarStoreOnRealDiskTest::AFileWrittenByTheStoreIsListedAndReadBack()
     const std::filesystem::path folder = std::filesystem::path(directory.path().toStdWString());
     const std::filesystem::path sidecar = ExternalSidecarPathFor(folder / "fenix-a320");
 
-    WindowsSidecarStore store;
+    RealSidecarStore store;
     QVERIFY(store.Write(sidecar, TextOfTheExternalOrigin("C:/Other/fenix")));
 
     const std::vector<std::filesystem::path> files = store.FilesIn(folder);

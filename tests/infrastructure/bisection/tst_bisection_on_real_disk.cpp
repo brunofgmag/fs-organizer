@@ -12,9 +12,7 @@
 #include "domain/ports/ImportedFolders.h"
 #include "infrastructure/catalog/FilesystemScanner.h"
 #include "infrastructure/catalog/JsonManifestParser.h"
-#include "infrastructure/fileops/WindowsFilesystemProbe.h"
-#include "infrastructure/fileops/WindowsSidecarStore.h"
-#include "infrastructure/link/WindowsLinkService.h"
+#include "RealAdapters.h"
 #include "tests/doubles/FakeClock.h"
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeOperationJournal.h"
@@ -121,9 +119,9 @@ namespace
         }
 
         JsonManifestParser manifestParser;
-        WindowsFilesystemProbe filesystemProbe;
-        WindowsSidecarStore sidecars;
-        WindowsLinkService linkService;
+        RealFilesystemProbe filesystemProbe;
+        RealSidecarStore sidecars;
+        RealLinkService linkService;
         FilesystemScanner scanner{manifestParser, filesystemProbe, nothingWasImported};
         FakeOperationJournal journal;
         FakeClock clock;
@@ -133,8 +131,8 @@ namespace
         EntryClassifier classifier{linkService, filesystemProbe};
         StartupOverFakes startup{filesystemProbe};
 
-        ProfileService profiles{scanner, filesystemProbe, sidecars,        classifier,        linking,
-                                log,     identities,      startup.service, LinkType::Junction};
+        ProfileService profiles{scanner, filesystemProbe, sidecars,        classifier,   linking,
+                                log,     identities,      startup.service, kRealLinkType};
         CouplingScan coupling{filesystemProbe};
         JsonBisectionStore store;
         BisectionService service{profiles, coupling, filesystemProbe, store, clock};
