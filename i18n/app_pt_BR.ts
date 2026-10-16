@@ -5837,6 +5837,13 @@ Tamanho %2</translation>
         <translation>dentro de um addon</translation>
     </message>
     <message>
+        <location filename="../src/view/simulator/StartupPage.cpp" line="60"/>
+        <source>In EXE.xml: %1
+On disk: %2</source>
+        <translation>No EXE.xml: %1
+No disco: %2</translation>
+    </message>
+    <message>
         <location filename="../src/view/simulator/StartupPage.cpp" line="99"/>
         <source>Undo: %1 added</source>
         <translation>Desfazer: %1 adicionada</translation>

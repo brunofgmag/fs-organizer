@@ -52,6 +52,14 @@ namespace
                                                          : QObject::tr("outside your addons");
     }
 
+    QString PathTip(const StartupLine& line)
+    {
+        const QString written = AsText(line.path);
+        const QString onDisk = AsText(line.hostPath);
+
+        return onDisk == written ? written : QObject::tr("In EXE.xml: %1\nOn disk: %2").arg(written, onDisk);
+    }
+
     bool ItsLaunchWouldFailNow(const StartupLine& line)
     {
         return line.enabled && line.condition != StartupCondition::Reachable;
@@ -63,7 +71,7 @@ namespace
         row->setCheckState(kSwitch, line.enabled ? Qt::Checked : Qt::Unchecked);
         row->setData(kSwitch, Qt::UserRole, AsText(line.path));
         row->setText(kPath, AsText(line.path));
-        row->setToolTip(kPath, AsText(line.path));
+        row->setToolTip(kPath, PathTip(line));
 
         const bool tagged = line.condition == StartupCondition::Broken;
         const bool alarming = ItsLaunchWouldFailNow(line);
