@@ -2000,6 +2000,19 @@ if (NOT WIN32)
             tests/support/PathPrinting.h)
     target_link_libraries(fsorg-proton-user-cfg-locations-tests PRIVATE fsorg-infrastructure)
 
+    fsorg_add_qt_test(fsorg-steam-library-folders-tests steam-library-folders
+            tests/infrastructure/sim/tst_steam_library_folders.cpp
+            tests/support/PathPrinting.h
+            tests/support/TempFiles.h)
+    target_link_libraries(fsorg-steam-library-folders-tests PRIVATE fsorg-infrastructure)
+
+    fsorg_add_qt_test(fsorg-proton-prefixes-tests proton-prefixes
+            tests/infrastructure/sim/tst_proton_prefixes.cpp
+            tests/support/EnumPrinting.h
+            tests/support/PathPrinting.h
+            tests/support/ProtonTree.h)
+    target_link_libraries(fsorg-proton-prefixes-tests PRIVATE fsorg-infrastructure)
+
     fsorg_add_qt_test(fsorg-linux-instance-guard-tests linux-instance-guard
             tests/infrastructure/platform/tst_linux_instance_guard.cpp)
     target_link_libraries(fsorg-linux-instance-guard-tests PRIVATE fsorg-infrastructure)

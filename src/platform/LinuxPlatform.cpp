@@ -13,12 +13,14 @@
 #include "infrastructure/platform/LinuxInstanceGuard.h"
 #include "infrastructure/platform/LinuxKnownFolders.h"
 #include "infrastructure/sim/ProcProcessProbe.h"
+#include "infrastructure/sim/ProtonPrefixes.h"
 #include "infrastructure/sim/ProtonSimulatorLocator.h"
 #include "infrastructure/sim/ProtonUserCfgLocations.h"
 
 PlatformParts BuildThePlatform()
 {
-    std::vector<UserCfgLocation> userCfgLocations = ProtonUserCfgLocations(SteamLibraries());
+    std::vector<UserCfgLocation> userCfgLocations =
+        ProtonUserCfgLocations(ProtonPrefixes(SteamLibraries(SteamRoots())));
     std::unique_ptr<SimulatorLocator> locator = std::make_unique<ProtonSimulatorLocator>(userCfgLocations);
 
     return PlatformParts{

@@ -131,8 +131,10 @@ set(LINUX_PLATFORM_SOURCES
         src/infrastructure/platform/LinuxInstanceGuard.cpp
         src/infrastructure/platform/LinuxKnownFolders.cpp
         src/infrastructure/sim/ProcProcessProbe.cpp
+        src/infrastructure/sim/ProtonPrefixes.cpp
         src/infrastructure/sim/ProtonSimulatorLocator.cpp
         src/infrastructure/sim/ProtonUserCfgLocations.cpp
+        src/infrastructure/sim/SteamLibraryFolders.cpp
         src/view/platform/LinuxTitleBar.cpp
 )
 
