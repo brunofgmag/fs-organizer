@@ -10,7 +10,10 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QRadioButton>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QTextEdit>
 
 #include "application/LibraryOrganizer.h"
 #include "domain/journal/OperationLog.h"
@@ -58,6 +61,7 @@ namespace
         static void BothChecksAreOfferedAndTheTabOpensOnTheOneThatIsStored();
         static void ChoosingTheHashWritesItAndSaysWhatEveryImportWillDo();
         static void EachLibraryGetsARowNamingWhatIsInsideIt();
+        static void ALongPathBreaksInsideItsRowInsteadOfWideningThePane();
         static void TheLanguageTabCarriesNoTextBesideTheChoices();
         static void TheFooterSaysWhereTheSettingsAreSaved();
         static void OnlyOneProfileCanBeMarkedAtATime();
@@ -100,6 +104,28 @@ namespace
         root.children = {std::move(aircrafts)};
 
         return root;
+    }
+
+    constexpr auto kDeepCommunity = "E:/SteamLibrary/steamapps/compatdata/2537590/pfx/drive_c/users/steamuser/AppData/"
+                                    "Roaming/MicrosoftFlightSimulator2024/Packages/Community";
+    constexpr auto kDeepLibrary = "D:/FlightAddons/MicrosoftFlightSimulator2024/EveryAddonIEverBought/"
+                                  "SortedByTheYearIBoughtIt/AndThenByTheDeveloper";
+
+    QStringList TextsShown(const QWidget& page)
+    {
+        QStringList shown;
+
+        for (const QLabel* label : page.findChildren<QLabel*>())
+        {
+            shown << label->text();
+        }
+
+        for (const QTextEdit* text : page.findChildren<QTextEdit*>())
+        {
+            shown << text->toPlainText();
+        }
+
+        return shown;
     }
 
     struct Question
@@ -468,24 +494,69 @@ void OptionsPageTest::ChoosingTheHashWritesItAndSaysWhatEveryImportWillDo()
 void OptionsPageTest::EachLibraryGetsARowNamingWhatIsInsideIt()
 {
     const Fixture f;
-    const auto labels = f.page.findChildren<QLabel*>();
-    const bool named = std::ranges::any_of(labels,
-                                           [](const QLabel* label)
+    const QStringList shown = TextsShown(f.page);
+    const bool named = std::ranges::any_of(shown,
+                                           [](const QString& text)
                                            {
-                                               return label->text().contains(QStringLiteral("1 category"))
-                                                   && label->text().contains(QStringLiteral("1 addon"));
+                                               return text.contains(QStringLiteral("1 category"))
+                                                   && text.contains(QStringLiteral("1 addon"));
                                            });
 
     QVERIFY2(named, "no library row said what is inside it");
 
-    const bool pluralOfOne = std::ranges::any_of(labels,
-                                                 [](const QLabel* label)
+    const bool pluralOfOne = std::ranges::any_of(shown,
+                                                 [](const QString& text)
                                                  {
-                                                     return label->text().contains(QStringLiteral("1 categories"))
-                                                         || label->text().contains(QStringLiteral("1 addons"));
+                                                     return text.contains(QStringLiteral("1 categories"))
+                                                         || text.contains(QStringLiteral("1 addons"));
                                                  });
 
     QVERIFY2(!pluralOfOne, "a row counted one thing in the plural");
+}
+
+void OptionsPageTest::ALongPathBreaksInsideItsRowInsteadOfWideningThePane()
+{
+    ApplyModernistTheme(*qApp);
+
+    Fixture f;
+    f.Seed(
+        [](AppSettings& settings)
+        {
+            SimulatorProfile& profile = settings.profiles.front();
+            profile.destinations = {kDeepCommunity};
+            profile.defaultDestination = kDeepCommunity;
+            profile.libraries = {Library{.id = "library-1", .path = kDeepLibrary, .label = "MSFS 2024"}};
+        });
+    f.session.ShowActiveProfile();
+    f.page.Reload();
+
+    f.page.resize(kWidestAPageMayBe, 700);
+    f.page.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&f.page));
+    QCoreApplication::processEvents();
+
+    const auto* panes = f.page.findChild<QStackedWidget*>();
+    QVERIFY(panes != nullptr);
+
+    const auto* scroll = qobject_cast<const QScrollArea*>(panes->widget(0));
+    QVERIFY(scroll != nullptr);
+
+    const QString said = QStringLiteral("the pane is %1 px wide in a viewport of %2: a path is holding it open. %3")
+                             .arg(scroll->widget()->width())
+                             .arg(scroll->viewport()->width())
+                             .arg(WhatIsHoldingItOpen(*scroll->widget()));
+
+    QVERIFY2(scroll->widget()->width() <= scroll->viewport()->width(), qPrintable(said));
+    QVERIFY2(!scroll->horizontalScrollBar()->isVisible(), qPrintable(said));
+
+    const QStringList shown = TextsShown(f.page);
+    QVERIFY2(shown.contains(AsText(kDeepCommunity)), "the destination path is no longer shown whole");
+    QVERIFY2(std::ranges::any_of(shown,
+                                 [](const QString& text)
+                                 {
+                                     return text.startsWith(AsText(kDeepLibrary));
+                                 }),
+             "the library path is no longer shown whole");
 }
 
 void OptionsPageTest::TheFooterSaysWhereTheSettingsAreSaved()

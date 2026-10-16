@@ -130,6 +130,7 @@ QTextEdit#UncutText {
     background: transparent; border: none;
     selection-background-color: %accent%; selection-color: %onAccent%;
 }
+QTextEdit#UncutText[quiet="true"] { color: %secondary%; }
 QToolButton#PanelToggle, QToolButton#PanelClose {
     background: transparent; border: none; color: %secondary%; padding: 2px 6px;
 }
