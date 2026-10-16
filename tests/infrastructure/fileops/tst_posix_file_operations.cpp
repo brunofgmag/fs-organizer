@@ -1,7 +1,10 @@
+#include <QtCore/QDir>
+#include <QtCore/QStorageInfo>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <chrono>
 #include <filesystem>
@@ -37,6 +40,8 @@ namespace
         static void OnlyAnEmptyPhysicalFolderIsRemovedAsEmpty();
         static void RecyclingPutsTheFolderInTheTrashAndTakesItOutOfThePlace();
         static void RecyclingWhatIsNotThereFails();
+        static void RecyclingFromAnotherFilesystemGoesToTheTrashOfThatFilesystem();
+        static void RecyclingFromAFilesystemThatCannotHoldATrashFailsAndLeavesTheFolder();
     };
 }
 
@@ -70,6 +75,88 @@ namespace
             return file;
         }
     };
+
+    struct DataHomeAt
+    {
+        explicit DataHomeAt(const QString& folder) : kept_(qgetenv("XDG_DATA_HOME"))
+        {
+            qputenv("XDG_DATA_HOME", folder.toUtf8());
+        }
+
+        DataHomeAt(const DataHomeAt&) = delete;
+        DataHomeAt& operator=(const DataHomeAt&) = delete;
+
+        ~DataHomeAt()
+        {
+            if (kept_.isNull())
+            {
+                qunsetenv("XDG_DATA_HOME");
+            }
+            else
+            {
+                qputenv("XDG_DATA_HOME", kept_);
+            }
+        }
+
+    private:
+        QByteArray kept_;
+    };
+
+    struct LibraryOnAnotherFilesystem
+    {
+        LibraryOnAnotherFilesystem(const QString& anotherFilesystem, const QString& homeFilesystem)
+            : directory(anotherFilesystem + QStringLiteral("/fsorg-posix-file-operations-XXXXXX"))
+        {
+            if (!directory.isValid())
+            {
+                return;
+            }
+
+            struct stat onTheLibrary
+            {
+            };
+
+            struct stat onTheHome
+            {
+            };
+
+            topTrash =
+                QStorageInfo(directory.path()).rootPath() + QStringLiteral("/.Trash-") + QString::number(::getuid());
+            separate = ::stat(directory.path().toUtf8().constData(), &onTheLibrary) == 0
+                && ::stat(homeFilesystem.toUtf8().constData(), &onTheHome) == 0
+                && onTheLibrary.st_dev != onTheHome.st_dev;
+            untouched = !QFileInfo(topTrash).isSymLink() && !QFileInfo::exists(topTrash);
+        }
+
+        LibraryOnAnotherFilesystem(const LibraryOnAnotherFilesystem&) = delete;
+        LibraryOnAnotherFilesystem& operator=(const LibraryOnAnotherFilesystem&) = delete;
+
+        ~LibraryOnAnotherFilesystem()
+        {
+            if (untouched)
+            {
+                QFile::remove(topTrash);
+                QDir(topTrash).removeRecursively();
+            }
+        }
+
+        [[nodiscard]] bool Usable() const
+        {
+            return directory.isValid() && separate && untouched;
+        }
+
+        [[nodiscard]] std::filesystem::path Root() const
+        {
+            return AsPath(directory.path());
+        }
+
+        QTemporaryDir directory;
+        QString topTrash{};
+        bool separate = false;
+        bool untouched = false;
+    };
+
+    constexpr auto kAnotherFilesystem = "/dev/shm";
 
     std::string BytesOf(const std::filesystem::path& file)
     {
@@ -381,26 +468,15 @@ void PosixFileOperationsTest::OnlyAnEmptyPhysicalFolderIsRemovedAsEmpty()
 void PosixFileOperationsTest::RecyclingPutsTheFolderInTheTrashAndTakesItOutOfThePlace()
 {
     const Disk disk;
-    const QByteArray kept = qgetenv("XDG_DATA_HOME");
-    qputenv("XDG_DATA_HOME", disk.directory.filePath(QStringLiteral("data")).toUtf8());
+    const DataHomeAt home(disk.directory.filePath(QStringLiteral("data")));
     static_cast<void>(disk.AddFolder("data"));
 
     const std::filesystem::path folder = disk.AddFolder("library/fenix");
     static_cast<void>(disk.AddFile("library/fenix/aircraft.cfg", "x"));
 
     PosixFileOperations operations;
-    const bool recycled = operations.Recycle(folder);
 
-    if (kept.isNull())
-    {
-        qunsetenv("XDG_DATA_HOME");
-    }
-    else
-    {
-        qputenv("XDG_DATA_HOME", kept);
-    }
-
-    QVERIFY(recycled);
+    QVERIFY(operations.Recycle(folder));
     QVERIFY(NothingIsAt(folder));
     QVERIFY(std::filesystem::is_regular_file(disk.Root() / "data" / "Trash" / "files" / "fenix" / "aircraft.cfg"));
     QVERIFY(std::filesystem::is_regular_file(disk.Root() / "data" / "Trash" / "info" / "fenix.trashinfo"));
@@ -413,6 +489,53 @@ void PosixFileOperationsTest::RecyclingWhatIsNotThereFails()
     PosixFileOperations operations;
 
     QVERIFY(!operations.Recycle(disk.Root() / "never-there"));
+}
+
+void PosixFileOperationsTest::RecyclingFromAnotherFilesystemGoesToTheTrashOfThatFilesystem()
+{
+    const Disk disk;
+    const LibraryOnAnotherFilesystem library(QString::fromLatin1(kAnotherFilesystem), disk.directory.path());
+    if (!library.Usable())
+    {
+        QSKIP("needs a writable /dev/shm that is not the filesystem of the home Trash and holds no Trash of its own");
+    }
+
+    const DataHomeAt home(disk.directory.filePath(QStringLiteral("data")));
+    static_cast<void>(disk.AddFolder("data"));
+    const std::filesystem::path folder = library.Root() / "fenix";
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "aircraft.cfg") << "x";
+
+    PosixFileOperations operations;
+
+    QVERIFY(operations.Recycle(folder));
+    QVERIFY(NothingIsAt(folder));
+    QVERIFY(QFileInfo::exists(library.topTrash + QStringLiteral("/files/fenix/aircraft.cfg")));
+    QVERIFY(!std::filesystem::exists(disk.Root() / "data" / "Trash" / "files" / "fenix"));
+}
+
+void PosixFileOperationsTest::RecyclingFromAFilesystemThatCannotHoldATrashFailsAndLeavesTheFolder()
+{
+    const Disk disk;
+    const LibraryOnAnotherFilesystem library(QString::fromLatin1(kAnotherFilesystem), disk.directory.path());
+    if (!library.Usable())
+    {
+        QSKIP("needs a writable /dev/shm that is not the filesystem of the home Trash and holds no Trash of its own");
+    }
+
+    std::ofstream(library.topTrash.toStdString()) << "a file where the Trash of this filesystem would be";
+
+    const DataHomeAt home(disk.directory.filePath(QStringLiteral("data")));
+    static_cast<void>(disk.AddFolder("data"));
+    const std::filesystem::path folder = library.Root() / "fenix";
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "aircraft.cfg") << "kept";
+
+    PosixFileOperations operations;
+
+    QVERIFY(!operations.Recycle(folder));
+    QCOMPARE(BytesOf(folder / "aircraft.cfg"), std::string("kept"));
+    QVERIFY(!std::filesystem::exists(disk.Root() / "data" / "Trash" / "files" / "fenix"));
 }
 
 QTEST_APPLESS_MAIN(PosixFileOperationsTest)
