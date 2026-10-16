@@ -34,6 +34,7 @@
 #include "tests/doubles/FakeLibraryIdGenerator.h"
 #include "tests/doubles/FakeLinkService.h"
 #include "tests/doubles/FakeOperationJournal.h"
+#include "tests/doubles/FakePrefixPathMapper.h"
 #include "tests/doubles/FakePresetRepository.h"
 #include "tests/doubles/FakeProcessProbe.h"
 #include "tests/doubles/FakeSettingsRepository.h"
@@ -94,6 +95,8 @@ namespace
         static void TheChipsCountTheFileAndTheRemovedAndSwitchTheView();
         static void TheRefreshButtonCarriesTheMomentOfTheReadingAndTheBarNoLongerSaysIt();
         static void OnlyOneRowIsSelectedAndAPathIsCutInTheMiddle();
+        static void WhereTheFileAndTheDiskDisagreeThePathTipCarriesBothForms();
+        static void WhereTheyAgreeThePathTipIsThePathAlone();
         static void RemovingFromTheBarAsksAndTakesTheEntryOut();
         static void CancellingTheQuestionLeavesTheEntryWhereItWas();
         static void DeleteRemovesTheSelectedRowAfterTheQuestion();
@@ -175,7 +178,9 @@ namespace
 
     struct Fixture
     {
-        explicit Fixture(const bool managing = true, const bool withEntries = true) : settings(Stored(managing))
+        explicit Fixture(const bool managing = true, const bool withEntries = true, const bool throughAPrefix = false)
+            : paths(throughAPrefix ? static_cast<const PathMapper&>(prefix) : startup.pathMapper),
+              settings(Stored(managing))
         {
             fileSystem.AddDirectory(kDestination);
             fileSystem.AddDirectory(kLibrary);
@@ -215,6 +220,8 @@ namespace
         EntryClassifier classifier{linkService, filesystemProbe};
         LinkingEngine linking{linkService, filesystemProbe};
         StartupOverFakes startup{filesystemProbe};
+        FakePrefixPathMapper prefix;
+        const PathMapper& paths;
 
         ProfileService profiles{catalog, filesystemProbe, sidecars,        classifier,        linking,
                                 log,     identities,      startup.service, LinkType::Junction};
@@ -225,9 +232,9 @@ namespace
         SessionNotifier notifier{};
         Session session{profiles, organizer, settings, settings.stored, processProbe, runner, notifier};
         FakeStartupEntries& entries = startup.entries;
-        StartupService service{entries, processProbe, filesystemProbe, startup.pathMapper, true};
+        StartupService service{entries, processProbe, filesystemProbe, paths, true};
         FakePresetRepository presets;
-        StartupEditor editor{service, presets, filesystemProbe, startup.pathMapper, log};
+        StartupEditor editor{service, presets, filesystemProbe, paths, log};
         StartupViewModel viewModel{service, editor, session, clock};
         StartupPage page{viewModel};
     };
@@ -1073,6 +1080,33 @@ void StartupPageTest::OnlyOneRowIsSelectedAndAPathIsCutInTheMiddle()
 
         QCOMPARE(table->selectedItems().size(), 1);
     }
+}
+
+void StartupPageTest::WhereTheFileAndTheDiskDisagreeThePathTipCarriesBothForms()
+{
+    Fixture f(true, false, true);
+    const std::filesystem::path written = "C:/users/steamuser/Flow/Flow for MSFS2024.exe";
+    const std::filesystem::path onDisk = f.prefix.ToHost(SimulatorVariant::MSFS2024, written);
+    f.fileSystem.AddFile(onDisk);
+    f.entries.Carry(StartupEntry{.label = "Flow", .path = written, .enabled = true});
+    f.viewModel.Show();
+
+    const QTreeWidgetItem* row = TableOf(f.page)->topLevelItem(0);
+    QVERIFY(row != nullptr);
+
+    QCOMPARE(row->text(1), AsText(written));
+    QCOMPARE(row->toolTip(1), QStringLiteral("In EXE.xml: %1\nOn disk: %2").arg(AsText(written), AsText(onDisk)));
+}
+
+void StartupPageTest::WhereTheyAgreeThePathTipIsThePathAlone()
+{
+    Fixture f;
+    f.viewModel.Show();
+
+    const QTreeWidgetItem* row = TableOf(f.page)->topLevelItem(0);
+    QVERIFY(row != nullptr);
+
+    QCOMPARE(row->toolTip(1), row->text(1));
 }
 
 void StartupPageTest::RemovingFromTheBarAsksAndTakesTheEntryOut()
