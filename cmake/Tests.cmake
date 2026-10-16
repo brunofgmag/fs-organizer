@@ -2119,6 +2119,12 @@ if (NOT WIN32)
     target_compile_definitions(fsorg-app-image-desktop-entry-tests PRIVATE
             FSORG_DESKTOP_ENTRY=\"${CMAKE_SOURCE_DIR}/assets/linux/fs-organizer.desktop\")
 
+    fsorg_add_qt_test(fsorg-desktop-icon-reload-tests desktop-icon-reload
+            tests/infrastructure/platform/tst_desktop_icon_reload.cpp)
+    target_link_libraries(fsorg-desktop-icon-reload-tests PRIVATE fsorg-infrastructure)
+    target_compile_definitions(fsorg-desktop-icon-reload-tests PRIVATE
+            FSORG_BRAND_ICON=\"${CMAKE_SOURCE_DIR}/assets/branding/icon_256.png\")
+
     fsorg_add_qt_test(fsorg-linux-platform-tests linux-platform
             tests/platform/tst_linux_platform.cpp
             ${PLATFORM_COMPOSITION_SOURCES})

@@ -24,6 +24,7 @@ namespace
         static void InstallingAgainFromTheSamePlaceLeavesTheFilesAlone();
         static void InstallingFromANewPlaceRewritesWhatTheEntryLaunches();
         static void OnlyAnIconJustWrittenAsksTheDesktopToReloadItsIcons();
+        static void AnIconJustWrittenTouchesTheThemeFolderTheWayXdgIconResourceDoes();
     };
 }
 
@@ -157,6 +158,29 @@ void AppImageDesktopEntryTest::OnlyAnIconJustWrittenAsksTheDesktopToReloadItsIco
              "every start runs the installer, and asking every desktop process to reload its icons on each start "
              "is noise");
     QVERIFY(!InstallTheDesktopEntry(moved, home, ShippedEntry(), kIcon).iconWritten);
+}
+
+void AppImageDesktopEntryTest::AnIconJustWrittenTouchesTheThemeFolderTheWayXdgIconResourceDoes()
+{
+    const QTemporaryDir dataHome;
+    const std::filesystem::path home = AsPath(dataHome.path());
+    const std::filesystem::path theme = IconThemeUnder(home);
+
+    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon).held);
+    QCOMPARE(theme, home / "icons" / "hicolor");
+
+    const auto longAgo = std::filesystem::file_time_type::clock::now() - std::chrono::hours(24);
+
+    std::filesystem::last_write_time(theme, longAgo);
+    QVERIFY(InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon + "a newer drawing").iconWritten);
+    QVERIFY2(std::filesystem::last_write_time(theme) != longAgo,
+             "GTK rescans a theme when the theme folder changes, and an icon written two folders down does not "
+             "change it");
+    QVERIFY2(!std::filesystem::exists(theme / ".fs-organizer-touch"), "the touch leaves nothing behind");
+
+    std::filesystem::last_write_time(theme, longAgo);
+    QVERIFY(!InstallTheDesktopEntry(kImage, home, ShippedEntry(), kIcon + "a newer drawing").iconWritten);
+    QVERIFY(std::filesystem::last_write_time(theme) == longAgo);
 }
 
 QTEST_APPLESS_MAIN(AppImageDesktopEntryTest)

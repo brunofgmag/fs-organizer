@@ -70,6 +70,7 @@ void IntegrateWithTheDesktop()
 
     if (installed.iconWritten)
     {
+        RefreshTheIconThemeCacheIn(IconThemeUnder(DataHomeFolder()));
         AskTheDesktopToReloadItsIcons();
     }
 }

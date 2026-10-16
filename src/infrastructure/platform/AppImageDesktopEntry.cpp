@@ -88,6 +88,16 @@ namespace
 
         return !error && WriteFileReplacing(file, wanted) ? Holding::Written : Holding::Failed;
     }
+
+    void Touch(const std::filesystem::path& folder)
+    {
+        const std::filesystem::path dummy = folder / ".fs-organizer-touch";
+
+        static_cast<void>(WriteFileReplacing(dummy, {}));
+
+        std::error_code discarded;
+        std::filesystem::remove(dummy, discarded);
+    }
 }
 
 std::string DesktopEntryLaunching(const std::string_view shippedEntry, const std::filesystem::path& appImage)
@@ -123,9 +133,14 @@ std::filesystem::path DesktopEntryUnder(const std::filesystem::path& dataHome)
     return dataHome / "applications" / "fs-organizer.desktop";
 }
 
+std::filesystem::path IconThemeUnder(const std::filesystem::path& dataHome)
+{
+    return dataHome / "icons" / "hicolor";
+}
+
 std::filesystem::path DesktopIconUnder(const std::filesystem::path& dataHome)
 {
-    return dataHome / "icons" / "hicolor" / "256x256" / "apps" / "fs-organizer.png";
+    return IconThemeUnder(dataHome) / "256x256" / "apps" / "fs-organizer.png";
 }
 
 DesktopEntryInstall InstallTheDesktopEntry(const std::filesystem::path& appImage,
@@ -135,6 +150,11 @@ DesktopEntryInstall InstallTheDesktopEntry(const std::filesystem::path& appImage
 {
     const Holding iconHeld = MakeItHold(DesktopIconUnder(dataHome), icon);
     const Holding entryHeld = MakeItHold(DesktopEntryUnder(dataHome), DesktopEntryLaunching(shippedEntry, appImage));
+
+    if (iconHeld == Holding::Written)
+    {
+        Touch(IconThemeUnder(dataHome));
+    }
 
     return DesktopEntryInstall{
         .held = iconHeld != Holding::Failed && entryHeld != Holding::Failed,

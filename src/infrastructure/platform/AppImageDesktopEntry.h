@@ -11,6 +11,8 @@
 
 [[nodiscard]] std::filesystem::path DesktopIconUnder(const std::filesystem::path& dataHome);
 
+[[nodiscard]] std::filesystem::path IconThemeUnder(const std::filesystem::path& dataHome);
+
 struct DesktopEntryInstall
 {
     bool held{};
