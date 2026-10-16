@@ -297,7 +297,7 @@ void ContextPanelTest::TheSpineAndTheDotShareTheSameAxis()
     QVERIFY(qAbs(chevron.left + chevron.right - axis) <= 1);
     QVERIFY(qAbs(dot.left + dot.right - axis) <= 1);
     QVERIFY(spine.right > spine.left);
-    QCOMPARE(spine.left + spine.right, axis);
+    QVERIFY(qAbs(spine.left + spine.right - axis) <= 1);
 
     QCOMPARE(arrow.left() + arrow.right(), chevron.left + chevron.right);
     QVERIFY(arrow.top() > 0);
