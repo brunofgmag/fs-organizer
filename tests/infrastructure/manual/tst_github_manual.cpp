@@ -27,7 +27,7 @@ namespace
     void Write(const std::filesystem::path& file)
     {
         QFile born(AsText(file));
-        born.open(QIODevice::WriteOnly | QIODevice::Truncate);
+        QVERIFY(born.open(QIODevice::WriteOnly | QIODevice::Truncate));
         born.write("%PDF-1.5");
         born.close();
     }

@@ -49,7 +49,7 @@ namespace
             QDir().mkpath(QFileInfo(full).absolutePath());
 
             QFile file(full);
-            file.open(QIODevice::WriteOnly);
+            QVERIFY(file.open(QIODevice::WriteOnly));
             file.write("x");
         }
 
